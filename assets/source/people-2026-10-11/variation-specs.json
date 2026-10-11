@@ -1,0 +1,56 @@
+[
+  {
+    "id": "lumberjack",
+    "character": "a stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers, brown boots",
+    "walk": "a stout axe resting across one shoulder, broad slate axe head clearly visible above that shoulder; hand grips short thick wooden handle",
+    "carry": "one thick short bark-covered log balanced on the same shoulder, warm pale endgrain visible; hand braces the log, no axe"
+  },
+  {
+    "id": "stone-mason",
+    "character": "an adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron, moss trousers, brown boots",
+    "walk": "a broad heavy masonry hammer in one hand, short thick handle and large simple slate hammer head",
+    "carry": "one pale dressed limestone stone block cradled against chest in BOTH arms, broad simple squared facets, no hammer"
+  },
+  {
+    "id": "farmer",
+    "character": "an older adult woman with warm olive skin, grey-brown hair under a broad straw hat, muted teal work smock, charcoal trousers, brown boots",
+    "walk": "a substantial three-tine pitchfork held in one hand, chunky short wooden shaft close to body and broad clearly readable fork head above shoulder, not a thin stick",
+    "carry": "one broad tied golden-oat wheat sheaf balanced on one shoulder, thick clustered ears and one broad binding; one hand braces it, no pitchfork"
+  },
+  {
+    "id": "pump-hand",
+    "character": "an older adult man with deep warm brown skin and grey hair at temples, moss flat cap, rolled sleeves on a muted slate-blue shirt, charcoal trousers, brown boots",
+    "walk": "empty hands swinging naturally; no tools or extra objects",
+    "carry": "a broad wooden shoulder yoke carrying TWO full wooden water buckets, one on each side; thick short supports close to torso, large clear bucket silhouettes with teal water visible, no spills"
+  },
+  {
+    "id": "railway-worker",
+    "character": "an adult woman with fair warm skin and dark hair tucked under a navy peaked cap, matching navy work jacket, oat shirt, slate trousers, brown boots",
+    "walk": "a broad square railway lantern in one hand, dark metal frame with ivory glass; solid cream glass, NO glow or light rays",
+    "carry": null
+  },
+  {
+    "id": "passenger-variant-01",
+    "character": "an adult woman with deep warm brown skin and short dark hair, moss flat cap, muted teal waistcoat, oat rolled-sleeve blouse, slate trousers, brown boots",
+    "walk": "a small copper-brown cross-body leather satchel on her left hip; otherwise empty hands",
+    "carry": null
+  },
+  {
+    "id": "passenger-variant-02",
+    "character": "an older adult man with warm tan skin, silver hair and a small grey beard, slate cap, muted copper waistcoat, ivory rolled-sleeve shirt, charcoal trousers, brown boots",
+    "walk": "a small forest-green cross-body canvas satchel on his left hip; otherwise empty hands",
+    "carry": null
+  },
+  {
+    "id": "passenger-variant-03",
+    "character": "an adult woman with warm olive skin, dark hair under a simple oat bonnet, forest-green short travel jacket, plain moss ankle-length skirt, sturdy brown shoes",
+    "walk": "a small copper leather satchel at her left hip; skirt hem permits both shoes to read while walking, no additional objects",
+    "carry": null
+  },
+  {
+    "id": "passenger-variant-04",
+    "character": "a young adult man with fair warm skin and dark curly hair, NO hat, muted teal suspenders over an oat rolled-sleeve shirt, slate trousers, brown boots",
+    "walk": "a small copper-brown leather satchel on his left hip; otherwise empty hands",
+    "carry": null
+  }
+]

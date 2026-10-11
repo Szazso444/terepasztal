@@ -1,0 +1,462 @@
+[
+  {
+    "id": "lumberjack-front-walk",
+    "profession": "lumberjack",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: a stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers, brown boots. WALK EQUIPMENT: a stout axe resting across one shoulder, broad slate axe head clearly visible above that shoulder; hand grips short thick wooden handle. Paint ONLY this profession, same equipment and grip across all phases.\nReferences in order:1 grey pose/layout guide,2 original passenger style authority,3 game scale/context,4 game palette/theme.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/lumberjack-front-walk.png",
+    "file": "lumberjack-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-93fa1fcc-5a78-4bd6-b1bc-0af27cd04178.png"
+  },
+  {
+    "id": "lumberjack-back-walk",
+    "profession": "lumberjack",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: exactly the person from reference1: a stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers, brown boots. EQUIPMENT: a stout axe resting across one shoulder, broad slate axe head clearly visible above that shoulder; hand grips short thick wooden handle. Preserve the outfit, hair, skin tone, tool and carrying hand of reference1, viewed from BEHIND. Turn whole person AWAY toward UPPER RIGHT, show BACK panel and RIGHT side; no face/front chest/apron panel visible (apron straps and ties are visible from behind). Tool stays same anatomical shoulder/hand, do not mirror it. Legs now step toward UPPER RIGHT, shoes point away. View change takes precedence over the front pose of reference1. Reference2 is leg-cycle/layout only; reference3 is style only.",
+    "references": [
+      "exec-93fa1fcc-5a78-4bd6-b1bc-0af27cd04178.png",
+      "walk-layout-v2.png",
+      "reference-passenger.png"
+    ],
+    "generatedPath": "inputs/variations/lumberjack-back-walk.png",
+    "file": "lumberjack-back-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-9b5075c4-f61d-4d07-83a1-5811218ee26f.png"
+  },
+  {
+    "id": "lumberjack-front-carry",
+    "profession": "lumberjack",
+    "view": "front",
+    "pose": "carry",
+    "prompt": "Edit exact sprite sheet. Keep same character/outfit/load/camera/style. Correct ONLY spacing: shrink each complete figure WITH the entire load by 20 percent and recenter within its own quarter of the canvas. Exactly 4 figures with wide transparent gaps. All hands, boots and load tips fully contained inside each quarter with 40px minimum side margins. Do not crop anything or change load shape. Transparent RGBA outside opaque figures, no glow/shadow/background. Four distinct successive walk phases right-forward, passing, left-forward, opposite passing.",
+    "references": [
+      "exec-118839bd-cae4-46c2-b2cb-343230d06eb0.png"
+    ],
+    "generatedPath": "inputs/variations/lumberjack-front-carry.png",
+    "file": "lumberjack-front-carry.png",
+    "status": "generated",
+    "attempts": [
+      {
+        "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nEdit reference1 into the CARRY walk strip of EXACTLY the same person, same headwear, shirt, trousers, boots and skin. SUBJECT: a stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers, brown boots. REPLACE the work tool with ONLY this load: one thick short bark-covered log balanced on the same shoulder, warm pale endgrain visible; hand braces the log, no axe. All four figures carry exactly that same load with the same grip while legs walk. Completely remove walking tool, NO extra axe/hammer/pitchfork. FRONT3/4 toward lower right, face/front-right visible, camera30degrees down. Preserve source character identity and outfit, broad simple load silhouette readable at9px. One load per figure (not loose accessories). Reference2 supplies four distinct leg phases/layout; reference3painted style. No change to clothing or age.",
+        "generatedPath": "exec-118839bd-cae4-46c2-b2cb-343230d06eb0.png",
+        "reason": "source column edge contact"
+      }
+    ],
+    "generatedOutput": "exec-39803441-1b56-476c-87d6-f88a709dcd24.png"
+  },
+  {
+    "id": "lumberjack-back-carry",
+    "profession": "lumberjack",
+    "view": "back",
+    "pose": "carry",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nCreate BACK carry cycle of EXACTLY same worker and load as reference1 (front carry). Reference2 shows the worker's back outfit, headwear, and anatomical tool/shoulder side. SUBJECT:a stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers, brown boots. ONLY LOAD:one thick short bark-covered log balanced on the same shoulder, warm pale endgrain visible; hand braces the log, no axe. Same load held in same anatomical arms/shoulder, back-right3/4 AWAY toward UPPER RIGHT, face/front chest hidden. REPLACE walking tool completely; no extra axe/hammer/pitchfork. The stone is held in FRONT of chest with BOTH arms: from behind it only peeks around right side, never put stone on back. Shoulder log/sheaf has same dimensions and binding as reference1, seen from behind. Same four opposite-leg walk phases, not four identical stances. Reference3legguide. Keep all load ends and boots intact inside columns, generous30pxmargins.",
+    "references": [
+      "exec-118839bd-cae4-46c2-b2cb-343230d06eb0.png",
+      "exec-9b5075c4-f61d-4d07-83a1-5811218ee26f.png",
+      "walk-layout-v2.png"
+    ],
+    "generatedPath": "inputs/variations/lumberjack-back-carry.png",
+    "file": "lumberjack-back-carry.png",
+    "status": "generated",
+    "generatedOutput": "exec-a7fbec0a-3722-4b79-8ac8-f6f9f3d18e6b.png"
+  },
+  {
+    "id": "stone-mason-front-walk",
+    "profession": "stone-mason",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: an adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron, moss trousers, brown boots. WALK EQUIPMENT: a broad heavy masonry hammer in one hand, short thick handle and large simple slate hammer head. Paint ONLY this profession, same equipment and grip across all phases.\nReferences in order:1 grey pose/layout guide,2 original passenger style authority,3 game scale/context,4 game palette/theme.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/stone-mason-front-walk.png",
+    "file": "stone-mason-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-5adbd3ed-e6f0-4b8b-86dc-77c202e50a26.png"
+  },
+  {
+    "id": "stone-mason-back-walk",
+    "profession": "stone-mason",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Correct this exact BACK masonry-worker sprite strip. The hammer at the RIGHT edge of every column is clipped and leaks into next column. KEEP character, back-right3/4 camera facing AWAY upper right, outfit, apron straps, skin tone, and existing leg phases. Repaint all four figures about15percent NARROWER as whole silhouettes, centre them inside their384px columns, move the hammer nearer the right thigh so its ENTIRE head and handle have at least35px clear empty margin to column edge. Do not crop or remove hammer. Every full-body figure and its tool fully intact, 4equal columns,1536x1024 transparent RGBA. Same character dimensions every frame, baseliney960, smooth broad painted shades and upperleftlight. No added ground/floor/shadow/glow/text/borders/labels or objects. Only correct spacing and fit, preserve the back view and character identity.",
+    "references": [
+      "exec-1c94ab90-26b7-4a78-aedc-1ef52f4263f0.png"
+    ],
+    "generatedPath": "inputs/variations/stone-mason-back-walk.png",
+    "file": "stone-mason-back-walk.png",
+    "status": "generated",
+    "attempts": [
+      {
+        "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: exactly the person from reference1: an adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron, moss trousers, brown boots. EQUIPMENT: a broad heavy masonry hammer in one hand, short thick handle and large simple slate hammer head. Preserve the outfit, hair, skin tone, tool and carrying hand of reference1, viewed from BEHIND. Turn whole person AWAY toward UPPER RIGHT, show BACK panel and RIGHT side; no face/front chest/apron panel visible (apron straps and ties are visible from behind). Tool stays same anatomical shoulder/hand, do not mirror it. Legs now step toward UPPER RIGHT, shoes point away. View change takes precedence over the front pose of reference1. Reference2 is leg-cycle/layout only; reference3 is style only.",
+        "generatedPath": "exec-1c94ab90-26b7-4a78-aedc-1ef52f4263f0.png",
+        "reason": "hammer clipped at column boundary"
+      }
+    ],
+    "generatedOutput": "exec-7b3a2761-a501-4479-a881-cd540cb3b746.png"
+  },
+  {
+    "id": "stone-mason-front-carry",
+    "profession": "stone-mason",
+    "view": "front",
+    "pose": "carry",
+    "prompt": "Edit exact sprite sheet. Keep same character/outfit/load/camera/style. Correct ONLY spacing: shrink each complete figure WITH the entire load by 20 percent and recenter within its own quarter of the canvas. Exactly 4 figures with wide transparent gaps. All hands, boots and load tips fully contained inside each quarter with 40px minimum side margins. Do not crop anything or change load shape. Transparent RGBA outside opaque figures, no glow/shadow/background. Four distinct successive walk phases right-forward, passing, left-forward, opposite passing.",
+    "references": [
+      "exec-8d43c744-b38d-42cc-835e-d2062ad8efd3.png"
+    ],
+    "generatedPath": "inputs/variations/stone-mason-front-carry.png",
+    "file": "stone-mason-front-carry.png",
+    "status": "generated",
+    "attempts": [
+      {
+        "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nEdit reference1 into the CARRY walk strip of EXACTLY the same person, same headwear, shirt, trousers, boots and skin. SUBJECT: an adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron, moss trousers, brown boots. REPLACE the work tool with ONLY this load: one pale dressed limestone stone block cradled against chest in BOTH arms, broad simple squared facets, no hammer. All four figures carry exactly that same load with the same grip while legs walk. Completely remove walking tool, NO extra axe/hammer/pitchfork. FRONT3/4 toward lower right, face/front-right visible, camera30degrees down. Preserve source character identity and outfit, broad simple load silhouette readable at9px. One load per figure (not loose accessories). Reference2 supplies four distinct leg phases/layout; reference3painted style. No change to clothing or age.",
+        "generatedPath": "exec-8d43c744-b38d-42cc-835e-d2062ad8efd3.png",
+        "reason": "source column edge contact"
+      }
+    ],
+    "generatedOutput": "exec-ea37a04f-21a3-4881-9a53-351379f53500.png"
+  },
+  {
+    "id": "stone-mason-back-carry",
+    "profession": "stone-mason",
+    "view": "back",
+    "pose": "carry",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nCreate BACK carry cycle of EXACTLY same worker and load as reference1 (front carry). Reference2 shows the worker's back outfit, headwear, and anatomical tool/shoulder side. SUBJECT:an adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron, moss trousers, brown boots. ONLY LOAD:one pale dressed limestone stone block cradled against chest in BOTH arms, broad simple squared facets, no hammer. Same load held in same anatomical arms/shoulder, back-right3/4 AWAY toward UPPER RIGHT, face/front chest hidden. REPLACE walking tool completely; no extra axe/hammer/pitchfork. The stone is held in FRONT of chest with BOTH arms: from behind it only peeks around right side, never put stone on back. Shoulder log/sheaf has same dimensions and binding as reference1, seen from behind. Same four opposite-leg walk phases, not four identical stances. Reference3legguide. Keep all load ends and boots intact inside columns, generous30pxmargins.",
+    "references": [
+      "exec-8d43c744-b38d-42cc-835e-d2062ad8efd3.png",
+      "exec-1c94ab90-26b7-4a78-aedc-1ef52f4263f0.png",
+      "walk-layout-v2.png"
+    ],
+    "generatedPath": "inputs/variations/stone-mason-back-carry.png",
+    "file": "stone-mason-back-carry.png",
+    "status": "generated",
+    "generatedOutput": "exec-ec92d9c0-c632-425e-9610-f418773af989.png"
+  },
+  {
+    "id": "farmer-front-walk",
+    "profession": "farmer",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: an older adult woman with warm olive skin, grey-brown hair under a broad straw hat, muted teal work smock, charcoal trousers, brown boots. WALK EQUIPMENT: a substantial three-tine pitchfork held in one hand, chunky short wooden shaft close to body and broad clearly readable fork head above shoulder, not a thin stick. Paint ONLY this profession, same equipment and grip across all phases.\nReferences in order:1 grey pose/layout guide,2 original passenger style authority,3 game scale/context,4 game palette/theme.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/farmer-front-walk.png",
+    "file": "farmer-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-85f7fae8-9a02-4001-8e92-274269eb9b17.png"
+  },
+  {
+    "id": "farmer-back-walk",
+    "profession": "farmer",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: exactly the person from reference1: an older adult woman with warm olive skin, grey-brown hair under a broad straw hat, muted teal work smock, charcoal trousers, brown boots. EQUIPMENT: a substantial three-tine pitchfork held in one hand, chunky short wooden shaft close to body and broad clearly readable fork head above shoulder, not a thin stick. Preserve the outfit, hair, skin tone, tool and carrying hand of reference1, viewed from BEHIND. Turn whole person AWAY toward UPPER RIGHT, show BACK panel and RIGHT side; no face/front chest/apron panel visible (apron straps and ties are visible from behind). Tool stays same anatomical shoulder/hand, do not mirror it. Legs now step toward UPPER RIGHT, shoes point away. View change takes precedence over the front pose of reference1. Reference2 is leg-cycle/layout only; reference3 is style only.",
+    "references": [
+      "exec-85f7fae8-9a02-4001-8e92-274269eb9b17.png",
+      "walk-layout-v2.png",
+      "reference-passenger.png"
+    ],
+    "generatedPath": "inputs/variations/farmer-back-walk.png",
+    "file": "farmer-back-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-c7204f16-f99e-4620-95b2-7762129122cd.png"
+  },
+  {
+    "id": "farmer-front-carry",
+    "profession": "farmer",
+    "view": "front",
+    "pose": "carry",
+    "prompt": "Edit exact sprite sheet. Keep same character/outfit/load/camera/style. Correct ONLY spacing: shrink each complete figure WITH the entire load by 20 percent and recenter within its own quarter of the canvas. Exactly 4 figures with wide transparent gaps. All hands, boots and load tips fully contained inside each quarter with 40px minimum side margins. Do not crop anything or change load shape. Transparent RGBA outside opaque figures, no glow/shadow/background. Four distinct successive walk phases right-forward, passing, left-forward, opposite passing.",
+    "references": [
+      "exec-2207e9ad-2242-4006-bf6f-e60697afbb21.png"
+    ],
+    "generatedPath": "inputs/variations/farmer-front-carry.png",
+    "file": "farmer-front-carry.png",
+    "status": "generated",
+    "attempts": [
+      {
+        "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nEdit reference1 into the CARRY walk strip of EXACTLY the same person, same headwear, shirt, trousers, boots and skin. SUBJECT: an older adult woman with warm olive skin, grey-brown hair under a broad straw hat, muted teal work smock, charcoal trousers, brown boots. REPLACE the work tool with ONLY this load: one broad tied golden-oat wheat sheaf balanced on one shoulder, thick clustered ears and one broad binding; one hand braces it, no pitchfork. All four figures carry exactly that same load with the same grip while legs walk. Completely remove walking tool, NO extra axe/hammer/pitchfork. FRONT3/4 toward lower right, face/front-right visible, camera30degrees down. Preserve source character identity and outfit, broad simple load silhouette readable at9px. One load per figure (not loose accessories). Reference2 supplies four distinct leg phases/layout; reference3painted style. No change to clothing or age.",
+        "generatedPath": "exec-2207e9ad-2242-4006-bf6f-e60697afbb21.png",
+        "reason": "source column edge contact"
+      }
+    ],
+    "generatedOutput": "exec-c108215e-776d-45f4-95e2-36bd450076df.png"
+  },
+  {
+    "id": "farmer-back-carry",
+    "profession": "farmer",
+    "view": "back",
+    "pose": "carry",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nCreate BACK carry cycle of EXACTLY same worker and load as reference1 (front carry). Reference2 shows the worker's back outfit, headwear, and anatomical tool/shoulder side. SUBJECT:an older adult woman with warm olive skin, grey-brown hair under a broad straw hat, muted teal work smock, charcoal trousers, brown boots. ONLY LOAD:one broad tied golden-oat wheat sheaf balanced on one shoulder, thick clustered ears and one broad binding; one hand braces it, no pitchfork. Same load held in same anatomical arms/shoulder, back-right3/4 AWAY toward UPPER RIGHT, face/front chest hidden. REPLACE walking tool completely; no extra axe/hammer/pitchfork. The stone is held in FRONT of chest with BOTH arms: from behind it only peeks around right side, never put stone on back. Shoulder log/sheaf has same dimensions and binding as reference1, seen from behind. Same four opposite-leg walk phases, not four identical stances. Reference3legguide. Keep all load ends and boots intact inside columns, generous30pxmargins.",
+    "references": [
+      "exec-2207e9ad-2242-4006-bf6f-e60697afbb21.png",
+      "exec-c7204f16-f99e-4620-95b2-7762129122cd.png",
+      "walk-layout-v2.png"
+    ],
+    "generatedPath": "inputs/variations/farmer-back-carry.png",
+    "file": "farmer-back-carry.png",
+    "status": "generated",
+    "generatedOutput": "exec-845bf161-c4c9-4a5a-a521-a20434af4e07.png"
+  },
+  {
+    "id": "pump-hand-front-walk",
+    "profession": "pump-hand",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: an older adult man with deep warm brown skin and grey hair at temples, moss flat cap, rolled sleeves on a muted slate-blue shirt, charcoal trousers, brown boots. WALK EQUIPMENT: empty hands swinging naturally; no tools or extra objects.\nReferences:1 pose/layout guide,2 passenger painted style ONLY,3 scalecontext,4 palette. Keep EXACT subject skin tone and outfit named here, same character in all four columns.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/pump-hand-front-walk.png",
+    "file": "pump-hand-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-919dca1d-e69a-42da-80fb-aca0ecb0d169.png"
+  },
+  {
+    "id": "pump-hand-back-walk",
+    "profession": "pump-hand",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: EXACTLY reference1's person: an older adult man with deep warm brown skin and grey hair at temples, moss flat cap, rolled sleeves on a muted slate-blue shirt, charcoal trousers, brown boots. EQUIPMENT: empty hands swinging naturally; no tools or extra objects. Turn whole person away toward UPPER RIGHT, show BACK and RIGHT side, face/front waistcoat/jacket panels hidden. Preserve skin tone, hair, headwear and outfit from reference1, viewed behind. If satchel: same anatomical LEFT hip, so bag peeks from SCREEN LEFT behind, strap goes from SCREEN RIGHT shoulder across back to SCREEN LEFT hip. Lantern stays same hand with NO glow. Shoes point AWAY up-right. Reference2poseguide, reference3paintedstyle; do NOT copy front view.",
+    "references": [
+      "exec-919dca1d-e69a-42da-80fb-aca0ecb0d169.png",
+      "walk-layout-v2.png",
+      "reference-passenger.png"
+    ],
+    "generatedPath": "inputs/variations/pump-hand-back-walk.png",
+    "file": "pump-hand-back-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-d2bf7b9c-db3e-49f6-b3fc-fefe5d69fd60.png"
+  },
+  {
+    "id": "pump-hand-front-carry",
+    "profession": "pump-hand",
+    "view": "front",
+    "pose": "carry",
+    "prompt": "Edit the exact supplied four-column pump-hand carry sprite sheet. Fix ONLY frame spacing and clipping. Reduce each complete man AND BOTH buckets AND yoke to 75% of current size. Centre the WHOLE man-and-load silhouette in its own quarter of1536x1024. Four distinct separate figures, each entire load under300px wide, at least40px fully transparent padding on each side within its384px column. Every bucket's curved rim and outline intact, especially rightmost bucket of the last figure. Exactly TWO buckets per man. Keep character identity, slate-blue shirt, moss cap, grey hair, camera FRONT-RIGHT facing lower right, current poses and painted style. No background, alpha0 transparent outside opaque figures, no haze,ground,shadow,glow,text or extras.",
+    "references": [
+      "exec-d5311aa9-2aca-4c79-be48-818014fb27c7.png"
+    ],
+    "generatedPath": "inputs/variations/pump-hand-front-carry.png",
+    "file": "pump-hand-front-carry.png",
+    "status": "generated",
+    "attempts": [
+      {
+        "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nEdit reference1 pump hand into CARRY walk strip, same older deep-brown-skinned man, grey temples, moss cap, slate-blue rolled-sleeve shirt and charcoal trousers. LOAD: a stout wooden YOKE resting across BOTH shoulders with exactly TWO full wooden WATER BUCKETS, one each side. Broad compact yoke, short thick bucket supports close to body, generous bucket shapes with slate/teal water tops. Both buckets visible in every column, all supports and buckets remain within column; full silhouette width under320px. One hand steadies yoke, other naturally balances. No extra tools/objects, no loose water or spills. Same four walk phases from reference2, FRONT3/4 facing lower right,30degree camera. Plain broad painted material clusters, no fine stave/rope detail.",
+        "generatedPath": "exec-d5311aa9-2aca-4c79-be48-818014fb27c7.png",
+        "reason": "bucket clipped at source column edge"
+      }
+    ],
+    "generatedOutput": "exec-0555c721-f892-405c-a3e2-b22bc01b4ac2.png"
+  },
+  {
+    "id": "pump-hand-back-carry",
+    "profession": "pump-hand",
+    "view": "back",
+    "pose": "carry",
+    "prompt": "Edit the exact supplied four-column pump-hand carry sprite sheet. Fix ONLY frame spacing and clipping. Reduce each complete man AND BOTH buckets AND yoke to 75% of current size. Centre the WHOLE man-and-load silhouette in its own quarter of1536x1024. Four distinct separate figures, each entire load under300px wide, at least40px fully transparent padding on each side within its384px column. Every bucket's curved rim and outline intact, especially rightmost bucket of the last figure. Exactly TWO buckets per man. Keep character identity, slate-blue shirt, moss cap, grey hair, camera BACK-RIGHT facing away upper right, current poses and painted style. No background, alpha0 transparent outside opaque figures, no haze,ground,shadow,glow,text or extras.",
+    "references": [
+      "exec-ac44847e-d582-4258-a6b6-cf9e1e4db177.png"
+    ],
+    "generatedPath": "inputs/variations/pump-hand-back-carry.png",
+    "file": "pump-hand-back-carry.png",
+    "status": "generated",
+    "attempts": [
+      {
+        "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nUse reference1 as exact character and TWO bucket yoke load authority. Reference2 BACK camera/outfit authority. Paint BACK CARRY: same older man walking away upper right, viewed back-right, shoulder yoke with two full buckets compact and entire load visible in every column. Shrink complete figure AND load to have generous 35px padding each side within each column. Reference3 four distinct leg phases. No face, no front shirt panel, no spills. Exactly TWO buckets each person.",
+        "generatedPath": "exec-ac44847e-d582-4258-a6b6-cf9e1e4db177.png",
+        "reason": "bucket clipped at source column edge"
+      }
+    ],
+    "generatedOutput": "exec-ec7d1d56-106e-4609-883e-5a7cf87a0226.png"
+  },
+  {
+    "id": "railway-worker-front-walk",
+    "profession": "railway-worker",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: an adult woman with fair warm skin and dark hair tucked under a navy peaked cap, matching navy work jacket, oat shirt, slate trousers, brown boots. WALK EQUIPMENT: a broad square railway lantern in one hand, dark metal frame with ivory glass; solid cream glass, NO glow or light rays.\nReferences:1 pose/layout guide,2 passenger painted style ONLY,3 scalecontext,4 palette. Keep EXACT subject skin tone and outfit named here, same character in all four columns.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/railway-worker-front-walk.png",
+    "file": "railway-worker-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-f08dc566-e76a-4816-8671-5c2316e28f9e.png"
+  },
+  {
+    "id": "railway-worker-back-walk",
+    "profession": "railway-worker",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: EXACTLY reference1's person: an adult woman with fair warm skin and dark hair tucked under a navy peaked cap, matching navy work jacket, oat shirt, slate trousers, brown boots. EQUIPMENT: a broad square railway lantern in one hand, dark metal frame with ivory glass; solid cream glass, NO glow or light rays. Turn whole person away toward UPPER RIGHT, show BACK and RIGHT side, face/front waistcoat/jacket panels hidden. Preserve skin tone, hair, headwear and outfit from reference1, viewed behind. If satchel: same anatomical LEFT hip, so bag peeks from SCREEN LEFT behind, strap goes from SCREEN RIGHT shoulder across back to SCREEN LEFT hip. Lantern stays same hand with NO glow. Shoes point AWAY up-right. Reference2poseguide, reference3paintedstyle; do NOT copy front view.",
+    "references": [
+      "exec-f08dc566-e76a-4816-8671-5c2316e28f9e.png",
+      "walk-layout-v2.png",
+      "reference-passenger.png"
+    ],
+    "generatedPath": "inputs/variations/railway-worker-back-walk.png",
+    "file": "railway-worker-back-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-fd0522c1-1535-4e8d-a90a-f774485f46c0.png"
+  },
+  {
+    "id": "passenger-variant-01-front-walk",
+    "profession": "passenger-variant-01",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: an adult woman with deep warm brown skin and short dark hair, moss flat cap, muted teal waistcoat, oat rolled-sleeve blouse, slate trousers, brown boots. WALK EQUIPMENT: a small copper-brown cross-body leather satchel on her left hip; otherwise empty hands.\nReferences:1 pose/layout guide,2 passenger painted style ONLY,3 scalecontext,4 palette. Keep EXACT subject skin tone and outfit named here, same character in all four columns.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-01-front-walk.png",
+    "file": "passenger-variant-01-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-6a96e1a6-cab4-4af0-8aca-e277e4f35838.png"
+  },
+  {
+    "id": "passenger-variant-01-back-walk",
+    "profession": "passenger-variant-01",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Edit this exact sprite sheet. Keep all four bodies, walking poses, size, camera, face, outfit and style unchanged. Correct ONLY bag consistency: every figure has the SAME copper-brown satchel on SCREEN LEFT hip, strap from SCREEN RIGHT shoulder to SCREEN LEFT hip. Frame1 already has bag at screen left; match that placement in frames2,3,4. Transparent RGBA background with no shadows, haze or glow.",
+    "references": [
+      "exec-1383c2bf-d60f-4ae4-a1e2-369ad97a79cc.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-01-back-walk.png",
+    "file": "passenger-variant-01-back-walk.png",
+    "status": "generated",
+    "attempts": [
+      {
+        "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: EXACTLY reference1's person: an adult woman with deep warm brown skin and short dark hair, moss flat cap, muted teal waistcoat, oat rolled-sleeve blouse, slate trousers, brown boots. EQUIPMENT: a small copper-brown cross-body leather satchel on her left hip; otherwise empty hands. Turn whole person away toward UPPER RIGHT, show BACK and RIGHT side, face/front waistcoat/jacket panels hidden. Preserve skin tone, hair, headwear and outfit from reference1, viewed behind. If satchel: same anatomical LEFT hip, so bag peeks from SCREEN LEFT behind, strap goes from SCREEN RIGHT shoulder across back to SCREEN LEFT hip. Lantern stays same hand with NO glow. Shoes point AWAY up-right. Reference2poseguide, reference3paintedstyle; do NOT copy front view.",
+        "generatedPath": "exec-1383c2bf-d60f-4ae4-a1e2-369ad97a79cc.png",
+        "reason": "inconsistent satchel side"
+      }
+    ],
+    "generatedOutput": "exec-078ae354-746f-4b76-ba59-c2ff8c9b0a13.png"
+  },
+  {
+    "id": "passenger-variant-02-front-walk",
+    "profession": "passenger-variant-02",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: an older adult man with warm tan skin, silver hair and a small grey beard, slate cap, muted copper waistcoat, ivory rolled-sleeve shirt, charcoal trousers, brown boots. EQUIPMENT: a small forest-green cross-body canvas satchel on his left hip; otherwise empty hands. This is a DISTINCT passenger variant, not the original man recoloured. Keep age, hair/headwear, clothing cut and silhouette specified here. Same unique person across all four phases. References1poseguide,2paintedstyleauthority,3scalecontext,4palette.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-02-front-walk.png",
+    "file": "passenger-variant-02-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-db75206b-5c08-4334-8a66-9788fed13ee2.png"
+  },
+  {
+    "id": "passenger-variant-02-back-walk",
+    "profession": "passenger-variant-02",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: EXACTLY the unique passenger from reference1, not original man: an older adult man with warm tan skin, silver hair and a small grey beard, slate cap, muted copper waistcoat, ivory rolled-sleeve shirt, charcoal trousers, brown boots. EQUIPMENT: a small forest-green cross-body canvas satchel on his left hip; otherwise empty hands. Preserve outfit, age, hair/headwear and skin tone from reference1. TURN person AWAY toward UPPER RIGHT; see BACK and RIGHT side only, face and shirt/waistcoat front hidden. Satchel stays anatomical LEFT hip (peeking SCREEN LEFT in this back-right view); strap from SCREEN RIGHT shoulder crosses back to SCREEN LEFT hip. Same skirt/suspenders/headwear as reference1. Shoes point up-right. Reference2poseguide,reference3paintedstyle. Never copy reference1's front view, never change clothing.",
+    "references": [
+      "exec-db75206b-5c08-4334-8a66-9788fed13ee2.png",
+      "walk-layout-v2.png",
+      "reference-passenger.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-02-back-walk.png",
+    "file": "passenger-variant-02-back-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-2c6452fb-2f79-40c2-b692-2da035920ca4.png"
+  },
+  {
+    "id": "passenger-variant-03-front-walk",
+    "profession": "passenger-variant-03",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: an adult woman with warm olive skin, dark hair under a simple oat bonnet, forest-green short travel jacket, plain moss ankle-length skirt, sturdy brown shoes. EQUIPMENT: a small copper leather satchel at her left hip; skirt hem permits both shoes to read while walking, no additional objects. This is a DISTINCT passenger variant, not the original man recoloured. Keep age, hair/headwear, clothing cut and silhouette specified here. Same unique person across all four phases. References1poseguide,2paintedstyleauthority,3scalecontext,4palette.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-03-front-walk.png",
+    "file": "passenger-variant-03-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-c512cc25-7fd6-4b00-a4ab-1bd1a9fde69c.png"
+  },
+  {
+    "id": "passenger-variant-03-back-walk",
+    "profession": "passenger-variant-03",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: EXACTLY the unique passenger from reference1, not original man: an adult woman with warm olive skin, dark hair under a simple oat bonnet, forest-green short travel jacket, plain moss ankle-length skirt, sturdy brown shoes. EQUIPMENT: a small copper leather satchel at her left hip; skirt hem permits both shoes to read while walking, no additional objects. Preserve outfit, age, hair/headwear and skin tone from reference1. TURN person AWAY toward UPPER RIGHT; see BACK and RIGHT side only, face and shirt/waistcoat front hidden. Satchel stays anatomical LEFT hip (peeking SCREEN LEFT in this back-right view); strap from SCREEN RIGHT shoulder crosses back to SCREEN LEFT hip. Same skirt/suspenders/headwear as reference1. Shoes point up-right. Reference2poseguide,reference3paintedstyle. Never copy reference1's front view, never change clothing.",
+    "references": [
+      "exec-c512cc25-7fd6-4b00-a4ab-1bd1a9fde69c.png",
+      "walk-layout-v2.png",
+      "reference-passenger.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-03-back-walk.png",
+    "file": "passenger-variant-03-back-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-a6896a56-94ad-448e-926d-91a8a820e23d.png"
+  },
+  {
+    "id": "passenger-variant-04-front-walk",
+    "profession": "passenger-variant-04",
+    "view": "front",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. Front camera orthographic 2:1 isometric30degrees down, face and FRONT-RIGHT side in3/4, walking toward LOWER RIGHT. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: a young adult man with fair warm skin and dark curly hair, NO hat, muted teal suspenders over an oat rolled-sleeve shirt, slate trousers, brown boots. EQUIPMENT: a small copper-brown leather satchel on his left hip; otherwise empty hands. This is a DISTINCT passenger variant, not the original man recoloured. Keep age, hair/headwear, clothing cut and silhouette specified here. Same unique person across all four phases. References1poseguide,2paintedstyleauthority,3scalecontext,4palette.",
+    "references": [
+      "walk-layout-v2.png",
+      "reference-passenger.png",
+      "people-walker.png",
+      "03-theme-town-growth.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-04-front-walk.png",
+    "file": "passenger-variant-04-front-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-297dfdb2-7209-4c58-a675-f23efc2254d0.png"
+  },
+  {
+    "id": "passenger-variant-04-back-walk",
+    "profession": "passenger-variant-04",
+    "view": "back",
+    "pose": "walk",
+    "prompt": "Production sprite strip for the tiny people in a painted isometric railway game. Four equal columns, exactly ONE full-body adult in each, SAME person/outfit/tool/size across all four, realistic adult proportions 7 to 7.5 heads (not chibi). Transparent RGBA, working canvas1536x1024 for export768x512. Each body about720px tall; body centres x192/576/960/1344; planted feet all baseliney960, top of hat abouty240. BACK camera orthographic 2:1 isometric30degrees down, BACK and RIGHT side in3/4, walking AWAY toward UPPER RIGHT; face and front clothing panels hidden. Pose guide is layout/leg-phase authority: four successive IN-PLACE phases RIGHT foot forward, passing, LEFT foot forward, opposite passing. In pose3 reverse the THIGH OVERLAP and arm swing from pose1, do not duplicate it. Pose4 lifts the opposite foot from pose2. Heads remain centred above hips with maximum14pxbob. Keep silhouettes inside columns with at least25px clear margin, all tools/bags intact. Original passenger reference is painted STYLE authority only; do not copy his identity/clothes/standing pose. Broad flat painted colour clusters, smooth clean contours, just3or4 shades per material, selective dark lower/side rims only, ONE upper-left light. Subdued palette forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42, navy permitted, warm natural skin/hair. Simplify aggressively for a9px-tall figure: readable hat/head/body/legs and large clear tool shape; no tiny facial/clothing detail or thin sticks. Opaque figures, alpha0 outside. NO ground,floor,cast/ground shadow,glow,text,labels,borders,numbers,dividers,extraobjects or additionalpeople.\nSUBJECT: EXACTLY the unique passenger from reference1, not original man: a young adult man with fair warm skin and dark curly hair, NO hat, muted teal suspenders over an oat rolled-sleeve shirt, slate trousers, brown boots. EQUIPMENT: a small copper-brown leather satchel on his left hip; otherwise empty hands. Preserve outfit, age, hair/headwear and skin tone from reference1. TURN person AWAY toward UPPER RIGHT; see BACK and RIGHT side only, face and shirt/waistcoat front hidden. Satchel stays anatomical LEFT hip (peeking SCREEN LEFT in this back-right view); strap from SCREEN RIGHT shoulder crosses back to SCREEN LEFT hip. Same skirt/suspenders/headwear as reference1. Shoes point up-right. Reference2poseguide,reference3paintedstyle. Never copy reference1's front view, never change clothing.",
+    "references": [
+      "exec-297dfdb2-7209-4c58-a675-f23efc2254d0.png",
+      "walk-layout-v2.png",
+      "reference-passenger.png"
+    ],
+    "generatedPath": "inputs/variations/passenger-variant-04-back-walk.png",
+    "file": "passenger-variant-04-back-walk.png",
+    "status": "generated",
+    "generatedOutput": "exec-7480030f-6f5c-4bd3-99c8-bbb2591a1c14.png"
+  }
+]

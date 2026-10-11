@@ -1,0 +1,2388 @@
+{
+  "lumberjack-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 13,
+          "top": 121,
+          "width": 166,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 30,
+          "top": 119,
+          "width": 147,
+          "height": 318
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 17,
+          "top": 121,
+          "width": 159,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 38,
+          "top": 118,
+          "width": 142,
+          "height": 321
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 16,
+          "top": 121,
+          "width": 160,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 30,
+          "top": 118,
+          "width": 143,
+          "height": 321
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 156,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 119,
+          "width": 139,
+          "height": 320
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "stone-mason-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 155,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 117,
+          "width": 149,
+          "height": 347
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 31,
+          "top": 121,
+          "width": 131,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 42,
+          "top": 118,
+          "width": 127,
+          "height": 348
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 14,
+          "top": 121,
+          "width": 165,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 117,
+          "width": 159,
+          "height": 347
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 30,
+          "top": 121,
+          "width": 133,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 42,
+          "top": 118,
+          "width": 128,
+          "height": 347
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "farmer-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 154,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 91,
+          "width": 156,
+          "height": 365
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 27,
+          "top": 121,
+          "width": 138,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 41,
+          "top": 85,
+          "width": 143,
+          "height": 373
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 21,
+          "top": 121,
+          "width": 151,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 86,
+          "width": 155,
+          "height": 370
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 25,
+          "top": 121,
+          "width": 143,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 86,
+          "width": 147,
+          "height": 371
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "pump-hand-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 21,
+          "top": 121,
+          "width": 151,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 30,
+          "top": 103,
+          "width": 146,
+          "height": 348
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 32,
+          "top": 121,
+          "width": 128,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 40,
+          "top": 103,
+          "width": 124,
+          "height": 348
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 15,
+          "top": 121,
+          "width": 163,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 28,
+          "top": 103,
+          "width": 157,
+          "height": 346
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 29,
+          "top": 121,
+          "width": 135,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 33,
+          "top": 103,
+          "width": 130,
+          "height": 347
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "railway-worker-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 14,
+          "top": 121,
+          "width": 164,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 28,
+          "top": 111,
+          "width": 154,
+          "height": 338
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 24,
+          "top": 121,
+          "width": 145,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 35,
+          "top": 111,
+          "width": 137,
+          "height": 341
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 12,
+          "top": 121,
+          "width": 169,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 28,
+          "top": 111,
+          "width": 159,
+          "height": 338
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 23,
+          "top": 121,
+          "width": 146,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 34,
+          "top": 111,
+          "width": 138,
+          "height": 341
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-01-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 155,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 110,
+          "width": 152,
+          "height": 354
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 148,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 110,
+          "width": 147,
+          "height": 357
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 15,
+          "top": 121,
+          "width": 163,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 24,
+          "top": 110,
+          "width": 160,
+          "height": 353
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 26,
+          "top": 121,
+          "width": 140,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 34,
+          "top": 110,
+          "width": 139,
+          "height": 358
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "lumberjack-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 16,
+          "top": 121,
+          "width": 160,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 103,
+          "width": 150,
+          "height": 338
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 26,
+          "top": 121,
+          "width": 140,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 41,
+          "top": 102,
+          "width": 131,
+          "height": 337
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 157,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 24,
+          "top": 102,
+          "width": 149,
+          "height": 341
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 156,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 20,
+          "top": 102,
+          "width": 146,
+          "height": 336
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "stone-mason-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 13,
+          "top": 121,
+          "width": 167,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 86,
+          "width": 163,
+          "height": 352
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 20,
+          "top": 121,
+          "width": 152,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 35,
+          "top": 86,
+          "width": 151,
+          "height": 357
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 15,
+          "top": 121,
+          "width": 163,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 29,
+          "top": 86,
+          "width": 160,
+          "height": 353
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 149,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 34,
+          "top": 86,
+          "width": 148,
+          "height": 357
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "farmer-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 154,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 22,
+          "top": 82,
+          "width": 162,
+          "height": 378
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 31,
+          "top": 121,
+          "width": 131,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 44,
+          "top": 82,
+          "width": 138,
+          "height": 378
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 21,
+          "top": 121,
+          "width": 150,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 21,
+          "top": 81,
+          "width": 158,
+          "height": 379
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 23,
+          "top": 121,
+          "width": 147,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 30,
+          "top": 84,
+          "width": 152,
+          "height": 373
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-03-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 148,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 104,
+          "width": 142,
+          "height": 345
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 37,
+          "top": 121,
+          "width": 119,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 50,
+          "top": 104,
+          "width": 114,
+          "height": 346
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 21,
+          "top": 121,
+          "width": 150,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 38,
+          "top": 104,
+          "width": 143,
+          "height": 344
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 42,
+          "top": 121,
+          "width": 108,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 52,
+          "top": 104,
+          "width": 104,
+          "height": 346
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-03-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 156,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 103,
+          "width": 146,
+          "height": 336
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 148,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 40,
+          "top": 103,
+          "width": 137,
+          "height": 333
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 154,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 34,
+          "top": 103,
+          "width": 144,
+          "height": 336
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 149,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 44,
+          "top": 102,
+          "width": 137,
+          "height": 330
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-04-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 17,
+          "top": 121,
+          "width": 158,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 107,
+          "width": 149,
+          "height": 340
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 24,
+          "top": 121,
+          "width": 145,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 38,
+          "top": 105,
+          "width": 139,
+          "height": 346
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 156,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 35,
+          "top": 105,
+          "width": 148,
+          "height": 341
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 148,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 105,
+          "width": 140,
+          "height": 341
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-04-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 20,
+          "top": 121,
+          "width": 152,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 93,
+          "width": 149,
+          "height": 352
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 148,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 93,
+          "width": 143,
+          "height": 347
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 156,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 18,
+          "top": 93,
+          "width": 153,
+          "height": 352
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 148,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 93,
+          "width": 138,
+          "height": 335
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "lumberjack-front-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 34,
+          "top": 119,
+          "width": 143,
+          "height": 264
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 39,
+          "top": 118,
+          "width": 133,
+          "height": 264
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 30,
+          "top": 119,
+          "width": 136,
+          "height": 263
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 34,
+          "top": 121,
+          "width": 131,
+          "height": 261
+        }
+      }
+    ],
+    "notes": [
+      "frame 0: width constrained to fit column",
+      "frame 1: width constrained to fit column",
+      "frame 2: width constrained to fit column",
+      "frame 3: width constrained to fit column"
+    ],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "lumberjack-back-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 16,
+          "top": 121,
+          "width": 160,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 29,
+          "top": 105,
+          "width": 150,
+          "height": 337
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 154,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 29,
+          "top": 104,
+          "width": 142,
+          "height": 333
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 13,
+          "top": 121,
+          "width": 167,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 11,
+          "top": 104,
+          "width": 157,
+          "height": 339
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 15,
+          "top": 121,
+          "width": 162,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 10,
+          "top": 104,
+          "width": 152,
+          "height": 338
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "stone-mason-front-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 13,
+          "top": 121,
+          "width": 166,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 32,
+          "top": 111,
+          "width": 140,
+          "height": 303
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 26,
+          "top": 121,
+          "width": 141,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 45,
+          "top": 111,
+          "width": 120,
+          "height": 306
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 11,
+          "top": 121,
+          "width": 171,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 33,
+          "top": 115,
+          "width": 141,
+          "height": 297
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 21,
+          "top": 121,
+          "width": 150,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 39,
+          "top": 114,
+          "width": 125,
+          "height": 301
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "stone-mason-back-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 20,
+          "top": 121,
+          "width": 153,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 25,
+          "top": 90,
+          "width": 151,
+          "height": 356
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 30,
+          "top": 121,
+          "width": 133,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 47,
+          "top": 91,
+          "width": 134,
+          "height": 362
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 154,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 27,
+          "top": 91,
+          "width": 154,
+          "height": 361
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 34,
+          "top": 121,
+          "width": 125,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 50,
+          "top": 91,
+          "width": 127,
+          "height": 367
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "farmer-front-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 25,
+          "top": 111,
+          "width": 154,
+          "height": 285
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 29,
+          "top": 110,
+          "width": 149,
+          "height": 290
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 23,
+          "top": 109,
+          "width": 156,
+          "height": 286
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 28,
+          "top": 110,
+          "width": 144,
+          "height": 287
+        }
+      }
+    ],
+    "notes": [
+      "frame 0: width constrained to fit column",
+      "frame 1: width constrained to fit column",
+      "frame 2: width constrained to fit column",
+      "frame 3: width constrained to fit column"
+    ],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "farmer-back-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 11,
+          "top": 121,
+          "width": 170,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 15,
+          "top": 106,
+          "width": 166,
+          "height": 352
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 11,
+          "top": 121,
+          "width": 171,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 16,
+          "top": 108,
+          "width": 168,
+          "height": 353
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 12,
+          "top": 121,
+          "width": 169,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 13,
+          "top": 107,
+          "width": 167,
+          "height": 355
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 13,
+          "top": 121,
+          "width": 167,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 13,
+          "top": 107,
+          "width": 164,
+          "height": 353
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "pump-hand-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 20,
+          "top": 121,
+          "width": 153,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 95,
+          "width": 151,
+          "height": 355
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 148,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 35,
+          "top": 94,
+          "width": 146,
+          "height": 356
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 17,
+          "top": 121,
+          "width": 159,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 97,
+          "width": 157,
+          "height": 355
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 22,
+          "top": 121,
+          "width": 149,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 30,
+          "top": 97,
+          "width": 147,
+          "height": 356
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "pump-hand-front-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 20,
+          "top": 115,
+          "width": 155,
+          "height": 278
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 22,
+          "top": 115,
+          "width": 152,
+          "height": 276
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 19,
+          "top": 115,
+          "width": 164,
+          "height": 277
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 18,
+          "top": 116,
+          "width": 157,
+          "height": 277
+        }
+      }
+    ],
+    "notes": [
+      "frame 0: width constrained to fit column",
+      "frame 1: width constrained to fit column",
+      "frame 2: width constrained to fit column",
+      "frame 3: width constrained to fit column"
+    ],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "pump-hand-back-carry": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 24,
+          "top": 133,
+          "width": 145,
+          "height": 255
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 25,
+          "top": 133,
+          "width": 147,
+          "height": 255
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 25,
+          "top": 133,
+          "width": 146,
+          "height": 255
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 8,
+          "top": 121,
+          "width": 176,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 24,
+          "top": 133,
+          "width": 144,
+          "height": 255
+        }
+      }
+    ],
+    "notes": [
+      "frame 0: width constrained to fit column",
+      "frame 1: width constrained to fit column",
+      "frame 2: width constrained to fit column",
+      "frame 3: width constrained to fit column"
+    ],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "railway-worker-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 12,
+          "top": 121,
+          "width": 168,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 101,
+          "width": 159,
+          "height": 341
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 154,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 42,
+          "top": 102,
+          "width": 147,
+          "height": 343
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 14,
+          "top": 121,
+          "width": 164,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 31,
+          "top": 101,
+          "width": 155,
+          "height": 340
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 157,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 38,
+          "top": 102,
+          "width": 146,
+          "height": 334
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-01-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 15,
+          "top": 121,
+          "width": 163,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 21,
+          "top": 87,
+          "width": 168,
+          "height": 371
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 155,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 24,
+          "top": 87,
+          "width": 161,
+          "height": 373
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 17,
+          "top": 121,
+          "width": 158,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 19,
+          "top": 87,
+          "width": 164,
+          "height": 373
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 19,
+          "top": 121,
+          "width": 154,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 16,
+          "top": 87,
+          "width": 160,
+          "height": 373
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-02-front-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 16,
+          "top": 121,
+          "width": 160,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 111,
+          "width": 152,
+          "height": 341
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 34,
+          "top": 121,
+          "width": 124,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 45,
+          "top": 111,
+          "width": 118,
+          "height": 343
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 16,
+          "top": 121,
+          "width": 160,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 111,
+          "width": 151,
+          "height": 340
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 24,
+          "top": 121,
+          "width": 145,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 39,
+          "top": 111,
+          "width": 137,
+          "height": 341
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  },
+  "passenger-variant-02-back-walk": {
+    "canvas": [
+      768,
+      512
+    ],
+    "rgba": true,
+    "phaseCount": 4,
+    "figureHeight": 360,
+    "gameHeight": 9,
+    "frames": [
+      {
+        "frame": 0,
+        "anchor": [
+          96,
+          480
+        ],
+        "bounds": {
+          "left": 14,
+          "top": 121,
+          "width": 165,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 22,
+          "top": 92,
+          "width": 164,
+          "height": 357
+        }
+      },
+      {
+        "frame": 1,
+        "anchor": [
+          288,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 157,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 26,
+          "top": 93,
+          "width": 157,
+          "height": 359
+        }
+      },
+      {
+        "frame": 2,
+        "anchor": [
+          480,
+          480
+        ],
+        "bounds": {
+          "left": 13,
+          "top": 121,
+          "width": 166,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 19,
+          "top": 93,
+          "width": 164,
+          "height": 356
+        }
+      },
+      {
+        "frame": 3,
+        "anchor": [
+          672,
+          480
+        ],
+        "bounds": {
+          "left": 18,
+          "top": 121,
+          "width": 157,
+          "height": 360
+        },
+        "sourceBounds": {
+          "left": 24,
+          "top": 93,
+          "width": 157,
+          "height": 359
+        }
+      }
+    ],
+    "notes": [],
+    "visualReview": "All four phases inspected at 9px on final review sheets; cast silhouette readable. Animation phase alternation and body-anchor alignment remain draft.",
+    "productionApproved": false
+  }
+}

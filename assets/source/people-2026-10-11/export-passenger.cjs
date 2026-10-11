@@ -68,21 +68,28 @@ async function strip(name, sources) {
   const frames = [];
   for (const source of sources) frames.push(await frame(...source));
   const file = path.join(root, name);
-  await sharp({ create: { width: 1536, height: 1024, channels: 4, background: '#00000000' } })
+  const full = await sharp({ create: { width: 1536, height: 1024, channels: 4, background: '#00000000' } })
     .composite(frames.map((f, k) => ({ input: f.input, left: 384 * k + f.left, top: f.top })))
-    .png().toFile(file);
+    .png().toBuffer();
+  const scaled = await sharp(full).resize(768, 512).raw().toBuffer();
+  for (let y=0; y<512; y++) for (let x=0; x<768; x++) {
+    const i=(y*768+x)*4;
+    if (y>480 || scaled[i+3]<=8) scaled[i]=scaled[i+1]=scaled[i+2]=scaled[i+3]=0;
+    else if (scaled[i+3]>=245) scaled[i+3]=255;
+  }
+  await sharp(scaled,{raw:{width:768,height:512,channels:4}}).png().toFile(file);
   const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
   const measurements = [];
   for (let k = 0; k < 4; k++) {
-    const c = await sharp(file).extract({ left: 384 * k, top: 0, width: 384, height: 1024 }).raw().toBuffer();
-    const bounds = box(c, 384, 1024, 1);
-    if (bounds.top + bounds.height - 1 !== 960) throw new Error('Baseline error');
+    const c = await sharp(file).extract({ left: 192 * k, top: 0, width: 192, height: 512 }).raw().toBuffer();
+    const bounds = box(c, 192, 512, 1);
+    if (bounds.top + bounds.height - 1 !== 480) throw new Error('Baseline error');
     const tiny = await sharp(frames[k].input).resize({ height: 9 }).png().toBuffer();
     await sharp(tiny).toFile(path.join(root, 'review', name.replace('.png', '-f' + k + '-9px.png')));
-    measurements.push({ frame: k, anchor: [192 + 384 * k, 960], bounds, sourceBounds: frames[k].sourceBounds, nativePreviewHeight: 9 });
+    measurements.push({ frame: k, anchor: [96 + 192 * k, 480], bounds, sourceBounds: frames[k].sourceBounds, nativePreviewHeight: 9 });
   }
   if (info.channels !== 4 || data[3] !== 0) throw new Error('RGBA/transparency error');
-  report[name] = { canvas: [1536, 1024], rgba: true, frames: measurements };
+  report[name] = { canvas: [768, 512], rgba: true, frames: measurements };
 }
 (async () => {
   fs.mkdirSync(path.join(root, 'review'), { recursive: true });

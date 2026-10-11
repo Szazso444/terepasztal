@@ -1,0 +1,1855 @@
+{
+  "stripCount": 28,
+  "frameCount": 112,
+  "reviewScriptSyntax": "passed",
+  "checks": [
+    {
+      "file": "farmer-back-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            11,
+            121,
+            180,
+            480
+          ],
+          "opaquePixels": 32296
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            11,
+            121,
+            181,
+            480
+          ],
+          "opaquePixels": 30351
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            12,
+            121,
+            180,
+            480
+          ],
+          "opaquePixels": 31465
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            13,
+            121,
+            179,
+            480
+          ],
+          "opaquePixels": 30200
+        }
+      ]
+    },
+    {
+      "file": "farmer-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 26238
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            31,
+            121,
+            161,
+            480
+          ],
+          "opaquePixels": 24150
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            21,
+            121,
+            170,
+            480
+          ],
+          "opaquePixels": 25835
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            23,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 24689
+        }
+      ]
+    },
+    {
+      "file": "farmer-front-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 32926
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 32054
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 32211
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 32807
+        }
+      ]
+    },
+    {
+      "file": "farmer-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 26604
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            27,
+            121,
+            164,
+            480
+          ],
+          "opaquePixels": 23396
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            21,
+            121,
+            171,
+            480
+          ],
+          "opaquePixels": 25973
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            25,
+            121,
+            167,
+            480
+          ],
+          "opaquePixels": 23710
+        }
+      ]
+    },
+    {
+      "file": "lumberjack-back-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            16,
+            121,
+            175,
+            480
+          ],
+          "opaquePixels": 31482
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 29796
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            13,
+            121,
+            179,
+            480
+          ],
+          "opaquePixels": 31184
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            15,
+            121,
+            176,
+            480
+          ],
+          "opaquePixels": 30671
+        }
+      ]
+    },
+    {
+      "file": "lumberjack-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            16,
+            121,
+            175,
+            480
+          ],
+          "opaquePixels": 29178
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            26,
+            121,
+            165,
+            480
+          ],
+          "opaquePixels": 26895
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            174,
+            480
+          ],
+          "opaquePixels": 28228
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 27385
+        }
+      ]
+    },
+    {
+      "file": "lumberjack-front-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 31349
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 31258
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 32444
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 31709
+        }
+      ]
+    },
+    {
+      "file": "lumberjack-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            13,
+            121,
+            178,
+            480
+          ],
+          "opaquePixels": 29878
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            17,
+            121,
+            175,
+            480
+          ],
+          "opaquePixels": 26695
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            16,
+            121,
+            175,
+            480
+          ],
+          "opaquePixels": 28373
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 27038
+        }
+      ]
+    },
+    {
+      "file": "passenger-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            21,
+            120,
+            182,
+            480
+          ],
+          "opaquePixels": 25853
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            23,
+            120,
+            183,
+            480
+          ],
+          "opaquePixels": 28074
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            14,
+            120,
+            175,
+            480
+          ],
+          "opaquePixels": 22428
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            24,
+            120,
+            182,
+            480
+          ],
+          "opaquePixels": 26685
+        }
+      ]
+    },
+    {
+      "file": "passenger-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            22,
+            120,
+            177,
+            480
+          ],
+          "opaquePixels": 27728
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            31,
+            120,
+            166,
+            480
+          ],
+          "opaquePixels": 25767
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            22,
+            120,
+            182,
+            480
+          ],
+          "opaquePixels": 22730
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            25,
+            120,
+            174,
+            480
+          ],
+          "opaquePixels": 26451
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-01-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            15,
+            121,
+            177,
+            480
+          ],
+          "opaquePixels": 25837
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 24281
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            17,
+            121,
+            174,
+            480
+          ],
+          "opaquePixels": 25523
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 24295
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-01-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 26099
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 24224
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            15,
+            121,
+            177,
+            480
+          ],
+          "opaquePixels": 26124
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            26,
+            121,
+            165,
+            480
+          ],
+          "opaquePixels": 23440
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-02-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            14,
+            121,
+            178,
+            480
+          ],
+          "opaquePixels": 27791
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            174,
+            480
+          ],
+          "opaquePixels": 25830
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            13,
+            121,
+            178,
+            480
+          ],
+          "opaquePixels": 27985
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            174,
+            480
+          ],
+          "opaquePixels": 25682
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-02-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            16,
+            121,
+            175,
+            480
+          ],
+          "opaquePixels": 28718
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            34,
+            121,
+            157,
+            480
+          ],
+          "opaquePixels": 24438
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            16,
+            121,
+            175,
+            480
+          ],
+          "opaquePixels": 28594
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            24,
+            121,
+            168,
+            480
+          ],
+          "opaquePixels": 25955
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-03-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 30059
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 28318
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 29917
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            170,
+            480
+          ],
+          "opaquePixels": 28266
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-03-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 30377
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            37,
+            121,
+            155,
+            480
+          ],
+          "opaquePixels": 25477
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            21,
+            121,
+            170,
+            480
+          ],
+          "opaquePixels": 29837
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            42,
+            121,
+            149,
+            480
+          ],
+          "opaquePixels": 25078
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-04-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            20,
+            121,
+            171,
+            480
+          ],
+          "opaquePixels": 25472
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 24805
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 25592
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 26672
+        }
+      ]
+    },
+    {
+      "file": "passenger-variant-04-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            17,
+            121,
+            174,
+            480
+          ],
+          "opaquePixels": 27758
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            24,
+            121,
+            168,
+            480
+          ],
+          "opaquePixels": 25429
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 26547
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 25891
+        }
+      ]
+    },
+    {
+      "file": "pump-hand-back-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 30214
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 28894
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 30703
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 29567
+        }
+      ]
+    },
+    {
+      "file": "pump-hand-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            20,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 25835
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            169,
+            480
+          ],
+          "opaquePixels": 24728
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            17,
+            121,
+            175,
+            480
+          ],
+          "opaquePixels": 25486
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            170,
+            480
+          ],
+          "opaquePixels": 24900
+        }
+      ]
+    },
+    {
+      "file": "pump-hand-front-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 31517
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 30834
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 30462
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            8,
+            121,
+            183,
+            480
+          ],
+          "opaquePixels": 30585
+        }
+      ]
+    },
+    {
+      "file": "pump-hand-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            21,
+            121,
+            171,
+            480
+          ],
+          "opaquePixels": 26319
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            32,
+            121,
+            159,
+            480
+          ],
+          "opaquePixels": 24304
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            15,
+            121,
+            177,
+            480
+          ],
+          "opaquePixels": 24013
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            29,
+            121,
+            163,
+            480
+          ],
+          "opaquePixels": 23996
+        }
+      ]
+    },
+    {
+      "file": "railway-worker-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            12,
+            121,
+            179,
+            480
+          ],
+          "opaquePixels": 28465
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 25924
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            14,
+            121,
+            177,
+            480
+          ],
+          "opaquePixels": 27821
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            18,
+            121,
+            174,
+            480
+          ],
+          "opaquePixels": 27264
+        }
+      ]
+    },
+    {
+      "file": "railway-worker-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            14,
+            121,
+            177,
+            480
+          ],
+          "opaquePixels": 27688
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            24,
+            121,
+            168,
+            480
+          ],
+          "opaquePixels": 25442
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            12,
+            121,
+            180,
+            480
+          ],
+          "opaquePixels": 27455
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            23,
+            121,
+            168,
+            480
+          ],
+          "opaquePixels": 25846
+        }
+      ]
+    },
+    {
+      "file": "stone-mason-back-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            20,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 27885
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            30,
+            121,
+            162,
+            480
+          ],
+          "opaquePixels": 25437
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            172,
+            480
+          ],
+          "opaquePixels": 27199
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            34,
+            121,
+            158,
+            480
+          ],
+          "opaquePixels": 23828
+        }
+      ]
+    },
+    {
+      "file": "stone-mason-back-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            13,
+            121,
+            179,
+            480
+          ],
+          "opaquePixels": 27650
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            20,
+            121,
+            171,
+            480
+          ],
+          "opaquePixels": 25378
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            15,
+            121,
+            177,
+            480
+          ],
+          "opaquePixels": 27176
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            22,
+            121,
+            170,
+            480
+          ],
+          "opaquePixels": 24587
+        }
+      ]
+    },
+    {
+      "file": "stone-mason-front-carry.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            13,
+            121,
+            178,
+            480
+          ],
+          "opaquePixels": 29606
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            26,
+            121,
+            166,
+            480
+          ],
+          "opaquePixels": 27180
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            11,
+            121,
+            181,
+            480
+          ],
+          "opaquePixels": 30011
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            21,
+            121,
+            170,
+            480
+          ],
+          "opaquePixels": 29031
+        }
+      ]
+    },
+    {
+      "file": "stone-mason-front-walk.png",
+      "canvas": [
+        768,
+        512
+      ],
+      "rgba": true,
+      "frames": [
+        {
+          "frame": 0,
+          "anchor": [
+            96,
+            480
+          ],
+          "bounds": [
+            19,
+            121,
+            173,
+            480
+          ],
+          "opaquePixels": 26748
+        },
+        {
+          "frame": 1,
+          "anchor": [
+            288,
+            480
+          ],
+          "bounds": [
+            31,
+            121,
+            161,
+            480
+          ],
+          "opaquePixels": 24073
+        },
+        {
+          "frame": 2,
+          "anchor": [
+            480,
+            480
+          ],
+          "bounds": [
+            14,
+            121,
+            178,
+            480
+          ],
+          "opaquePixels": 28080
+        },
+        {
+          "frame": 3,
+          "anchor": [
+            672,
+            480
+          ],
+          "bounds": [
+            30,
+            121,
+            162,
+            480
+          ],
+          "opaquePixels": 24615
+        }
+      ]
+    }
+  ]
+}
