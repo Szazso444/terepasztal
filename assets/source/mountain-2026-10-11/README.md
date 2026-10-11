@@ -30,9 +30,9 @@ read. Review PNGs are thumbnails only, not finished game pieces.
 
 Typecheck, lint and production build pass. New scripts and JSON pass Prettier. The full
 formatting gate reports 374 unchanged baseline files; no files outside this folder were
-changed to repair that baseline. Gate logs are retained under `review/`. Initial npm/test
-commands encountered a full C: drive; direct tool entry points and temporary storage in
-this folder allow the checks to run without deleting unrelated files.
+changed to repair that baseline. The gate logs were dropped, as they held local paths.
+Initial npm/test commands encountered a full C: drive; direct tool entry points and temporary
+storage in this folder allow the checks to run without deleting unrelated files.
 
 The full suite finishes with 1972 passed, 1 failed and 2 skipped tests across 110 passing
 and 2 failing files. Untouched `tools/agents/ownership.test.mjs` fails to load with
