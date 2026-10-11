@@ -1,0 +1,32 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 10,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r10-c5.jpeg",
+        "sha256": "6b5302774a726ea4086cc700107a7bc3e2a416df2270dc9e875a66ca38180969"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r10-c6.jpeg",
+        "sha256": "c77c0d8fd50b78b43cb063ef73e0031f8093423ca17870b2b89cf46931414279"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk45-rear.png",
+        "sha256": "50c355a7e93c5a8a3851e1faa60641f7b41726b1787dd68c2bd8d94a61e7185f",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B10: M\u00c1V Mk45 | G10: B'B' (model image) | Y10: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA10: Model image (front + rear view) ready. Two 2-axle bogies. Width differs by source (2.49 m hu.wiki, 2.3 m others). | BV10: Boxy hood diesel, cab near one end, long hood behind, short nose in front. White upper body, red lower band, blue-red-blue stripe forming a V on the nose, light grey frame and bogies. | CI10: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "preparation_job_sha256": "daad2848bb05e3c4ae106cec0077a311ac3bc742f0d502eff331638e752d052b",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.glb",
+  "glb_sha256": "57301ddd6305ca33ccd8822a991d6da7d43413644616ec5acea1759944e0be97"
+}

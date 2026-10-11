@@ -1,0 +1,25 @@
+{
+  "mk45": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": -0.1385711340203055,
+        "part": "body",
+        "up": 19.146285714285714
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.0944657383541203,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.0944657383541203,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

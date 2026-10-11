@@ -1,0 +1,108 @@
+{
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\samples\\drg01\\painted-310foznq\\engine-t0",
+  "part": {
+    "canvas": 256,
+    "effects": {},
+    "frame_prefix": "loco_drg01_engine-t0",
+    "length_tiles": 0.17421017199389624,
+    "max_phase_bounds_drift": 2,
+    "name": "engine-t0",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\drg01\\engine-t0.blend",
+    "source_sha256": "565cf6eafc570205df6a6c0843e44bb3e38826b1e5602c3fc40fa500e05b6deb",
+    "wheel": {
+      "mode": "timeline",
+      "period_frames": 8,
+      "radius": 0.057470849950483405,
+      "start": 1,
+      "symmetry": 1
+    }
+  },
+  "phases": [
+    0,
+    3
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "colour_gain": 1.12,
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-reference-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "None",
+    "metallic_cap": 0.18,
+    "normal_contrast": 0.1,
+    "normal_light": [
+      -0.4,
+      -0.6,
+      0.8
+    ],
+    "paint_low": 0.98,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "surface_mode": "reference_colour",
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "Standard",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "id": "class08",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\class08-picture-2026-10-09\\style.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\class08-picture-2026-10-09\\model\\body.blend",
+      "source_sha256": "e29ba53f76c64192b620ab7a1362f7478c9ac2ef30beb56bab32d9523e6977e4",
+      "frame_prefix": "loco_class08_body",
+      "length_tiles": 1.3937304357519593,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            3.469,
+            0,
+            2.96
+          ],
+          [
+            3.469,
+            -0.62,
+            1.27
+          ],
+          [
+            3.469,
+            0.62,
+            1.27
+          ],
+          [
+            -3.724,
+            0,
+            3.2
+          ]
+        ]
+      },
+      "window_materials": [
+        "Opaque blue grey cab glazing"
+      ],
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.57,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 1
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "png-pictures-and-owner-notes",
+    "pictures": [
+      {
+        "id": "view1",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\class08-picture-2026-10-09\\references\\01.png",
+        "sha256": "5b905e039a042d61475ebbd21646a04164b1a35db172f72f0e185f8293695b96",
+        "original_name": "locomotive-wheels-bogies-v9.xlsx / Locomotives!E17 embedded PNG",
+        "original_sha256": "71b5c40e9e8c696b0c72c209c108cb31da62fb8272bc261ca13b716ac1ec7d9d",
+        "source_workbook": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v9.xlsx",
+        "source_workbook_sha256": "e0da5a3fbd8680b6e50fc153d2b86cbae29ec787c9c0852ae9488f9541c4862e"
+      },
+      {
+        "id": "view2",
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\class08-picture-2026-10-09\\references\\02.png",
+        "sha256": "7b9b07475eb4c7ffc7021d69d5b7653ff6875bd05cfab6e484eaa3163ca28290",
+        "original_name": "loco-class08-rear.png",
+        "original_sha256": "a2988f25430420e512554241e3caf368982e34a798b813bd07f4f97e0c45be1a"
+      }
+    ],
+    "observations": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\class08-picture-2026-10-09\\observations.json",
+      "sha256": "2a812025c9b8421fde190d6147163480c00d2447437dd2ae242e94698e14d1c9"
+    },
+    "guidelines": "Only the locked PNG references and recorded observations determine appearance. Fresh C50-helper geometry; no in-game model or runtime fit/gear table used.",
+    "prepared_sources": {
+      "body": "e29ba53f76c64192b620ab7a1362f7478c9ac2ef30beb56bab32d9523e6977e4"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "id": "sw1",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\body.blend",
+      "source_sha256": "bc3cd8cb27fb37abb8b75b041b1731ef0765e713dc69517969be6331a72b3b58",
+      "frame_prefix": "loco_sw1_body",
+      "length_tiles": 1.4403051262892996,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            -0.349,
+            0.143,
+            3.519
+          ]
+        ],
+        "headlamps": [
+          [
+            3.927,
+            -0.198,
+            2.79
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\body-window-mask.png",
+        "sha256": "cfef237a638fc5323599a2bf64290c1861d36c542e2f9c7116f94badc637a940"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\body-t0.blend",
+      "source_sha256": "0a42f5fe2dc0706682c9a4361b44551d71dd55fdd014f5e03d74642426e83560",
+      "frame_prefix": "loco_sw1_body-t0",
+      "length_tiles": 0.28574727060391514,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheelpivot",
+        "count": 4,
+        "radius": 0.5,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\body-t1.blend",
+      "source_sha256": "54d220c00f0f5fbe3f51982541aa80851da0c4dd5df29316e125fc0df42486eb",
+      "frame_prefix": "loco_sw1_body-t1",
+      "length_tiles": 0.28681875691947856,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheelpivot",
+        "count": 4,
+        "radius": 0.5,
+        "symmetry": 5
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 21,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r21-c5.jpeg",
+        "sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-sw1-rear.png",
+        "sha256": "bbc1817d34e7a82f18ee8ee0fe267a1ae76782bd8eaa8a9bc10c89f8c44df434",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B21: EMD SW1 | G21: B-B | Y21: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA21: Game data has the SW1 as small (1 tile) with baked axles. | CI21: Slightly too wide: slightly narrower.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; Reconstructed truck fragments replaced by clean reference-authored axle groups, fixed technical rail gauge, dark treads. No runtime geometry used.",
+    "prepared_sources": {
+      "body": "bc3cd8cb27fb37abb8b75b041b1731ef0765e713dc69517969be6331a72b3b58",
+      "body-t0": "0a42f5fe2dc0706682c9a4361b44551d71dd55fdd014f5e03d74642426e83560",
+      "body-t1": "54d220c00f0f5fbe3f51982541aa80851da0c4dd5df29316e125fc0df42486eb"
+    }
+  }
+}

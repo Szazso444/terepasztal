@@ -1,0 +1,26 @@
+{
+  "files": {
+    "atlas\\rolling-painted-1.json": "736eebf9a2b22b0cb7b65d27101474b8017a87fddcd1688d3da92d2dfc08d51a",
+    "atlas\\rolling-painted-1.png": "60f52c38569abcd71ba89e23f56371041fe5522d1cebee3db5d9e6b8bd3afb5e",
+    "fit-patch.json": "afcaefe7dbd11cb902c46f2ca8f5113f5f140ba55300035e842a08f48e1a1777",
+    "frames\\loco_class08_body_f0.png": "f404071b37599ff77da5b9f509c5f134db0d36602a97370d2cd18e596fa87e10",
+    "frames\\loco_class08_body_f24.png": "3b36edaa6e29da7ab18e978c00710a6b8ed05bfe411c316615c8dd85a24e24c7",
+    "frames\\loco_class08_body_f48.png": "abbca2ea6bb481eaea6d9e2ee530a005e28580a92044df2cf5eddeb1e6ee0959",
+    "frames\\loco_class08_body_f72.png": "18d9873ba9b8b676de25e708742f687f797ee555d13c25e5c85fed80706b7026",
+    "frames\\loco_class08_body_lit_f0.png": "807a5c15dce34a92b709012bea6aedfc6916415de34d938ee9479547be250b93",
+    "frames\\loco_class08_body_lit_f24.png": "83fc12a27b9a967f25800acb67f8bcb3c73c07b349d022171e7456d7bb48b0e4",
+    "frames\\loco_class08_body_lit_f48.png": "59702a809fc16d3bbaf6dd4e1ba0d0b268824647506d2c2478aea058ac452317",
+    "frames\\loco_class08_body_lit_f72.png": "2d55ea1e0d8d31ff8fb2eab87dd8a7447d42c222a018fcf7397f769e91d6de33",
+    "frames\\loco_class08_body_w0_f0.png": "f404071b37599ff77da5b9f509c5f134db0d36602a97370d2cd18e596fa87e10",
+    "frames\\loco_class08_body_w0_f24.png": "3b36edaa6e29da7ab18e978c00710a6b8ed05bfe411c316615c8dd85a24e24c7",
+    "frames\\loco_class08_body_w0_f48.png": "abbca2ea6bb481eaea6d9e2ee530a005e28580a92044df2cf5eddeb1e6ee0959",
+    "frames\\loco_class08_body_w0_f72.png": "18d9873ba9b8b676de25e708742f687f797ee555d13c25e5c85fed80706b7026",
+    "frames\\loco_class08_body_w3_f0.png": "cfc5d4b6d617e31a3ed775a144535ba737e76744ec5809c6f1259826f89ba3f5",
+    "frames\\loco_class08_body_w3_f24.png": "9a0ce301701d280a295cd79b73add40847fa949581368899d2ac1862bd8989d8",
+    "frames\\loco_class08_body_w3_f48.png": "f90cb03d66c50f287de5205cecb3f6640a956bd6526d6d3344b09542f459efa2",
+    "frames\\loco_class08_body_w3_f72.png": "e6f0d64c162b29ad25368c8f8e88514228c177aba5ebc4b8cbff3c73e77c8e24",
+    "inputs.json": "bff02af84e49a1a2880139861bf213f001a09edb19db2f9b5cf0f6fb6cdce6a8",
+    "report.json": "0514fbf4c8d60789c5f74a6cf025bc46b20d16dcd9694bdaeaebd816bef60973"
+  },
+  "key": "995bcd57f52594c5a8e00675ae8566e21d63a8293f4de1d960e1d8f6f36c22a1"
+}

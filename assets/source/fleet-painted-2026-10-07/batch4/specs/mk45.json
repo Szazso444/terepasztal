@@ -1,0 +1,231 @@
+{
+  "schema": 1,
+  "id": "mk45",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 10,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r10-c5.jpeg",
+        "sha256": "6b5302774a726ea4086cc700107a7bc3e2a416df2270dc9e875a66ca38180969"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r10-c6.jpeg",
+        "sha256": "c77c0d8fd50b78b43cb063ef73e0031f8093423ca17870b2b89cf46931414279"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk45-rear.png",
+        "sha256": "50c355a7e93c5a8a3851e1faa60641f7b41726b1787dd68c2bd8d94a61e7185f",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B10: M\u00c1V Mk45 | G10: B'B' (model image) | Y10: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA10: Model image (front + rear view) ready. Two 2-axle bogies. Width differs by source (2.49 m hu.wiki, 2.3 m others). | BV10: Boxy hood diesel, cab near one end, long hood behind, short nose in front. White upper body, red lower band, blue-red-blue stripe forming a V on the nose, light grey frame and bogies. | CI10: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "reconstruction": {
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.glb",
+      "sha256": "57301ddd6305ca33ccd8822a991d6da7d43413644616ec5acea1759944e0be97"
+    },
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.source.png",
+      "sha256": "b4ee14ed19c11bd8c71dd7fd9c101c6b2a00df53b06dcd390eabd3bc8072f9e2"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.mask.png",
+      "sha256": "329b262e7a5f3a5b5d962f79e2c02ed12ef5703cbb2de89030c498455ecd73c2"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "geometry": {
+    "length_m": 10.2,
+    "width_m": 2.49,
+    "height_m": 3.1,
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "gear": [
+      {
+        "rigid": [],
+        "trucks": [
+          [
+            0.14,
+            0.28
+          ],
+          [
+            0.72,
+            0.86
+          ]
+        ],
+        "rigid_f": [],
+        "trucks_f": [
+          [
+            0.14,
+            0.28
+          ],
+          [
+            0.72,
+            0.86
+          ]
+        ],
+        "from": 0,
+        "to": 1,
+        "wheels": {
+          "trucks": [
+            {
+              "d": 0.75,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            },
+            {
+              "d": 0.75,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "notes": "Shape from row 10 pictures; axle layout manually read from pictured wheels. Rough fractions are refined against raw mesh wheel centres. Rigid alignment and uniform scale only.",
+    "gauge": "narrow"
+  },
+  "projection": {
+    "annot": {
+      "id": "mk45",
+      "windows": [
+        [
+          [
+            224,
+            308
+          ],
+          [
+            252,
+            321
+          ],
+          [
+            251,
+            382
+          ],
+          [
+            225,
+            368
+          ]
+        ],
+        [
+          [
+            267,
+            330
+          ],
+          [
+            295,
+            344
+          ],
+          [
+            294,
+            403
+          ],
+          [
+            268,
+            388
+          ]
+        ],
+        [
+          [
+            305,
+            352
+          ],
+          [
+            333,
+            366
+          ],
+          [
+            333,
+            424
+          ],
+          [
+            306,
+            410
+          ]
+        ],
+        [
+          [
+            348,
+            361
+          ],
+          [
+            365,
+            357
+          ],
+          [
+            365,
+            419
+          ],
+          [
+            349,
+            424
+          ]
+        ]
+      ],
+      "headlamps": [
+        [
+          905,
+          578
+        ],
+        [
+          946,
+          695
+        ],
+        [
+          844,
+          749
+        ]
+      ],
+      "smoke": [
+        [
+          415,
+          262
+        ]
+      ],
+      "pantograph_raised": false,
+      "notes": "Diesel. Four glazed panes: three cab side windows plus the narrow front windscreen sliver at the cab corner. Headlamps: the big lit roof lamp on the nose plus the two small lower marker lamps on the nose end. The rear roof lamp housing (about 132,175) is seen from behind, lens not visible, and a red tail lamp peeks out at about (83,353); both left out. Smoke: the dark slotted outlet on the hood roof just ahead of the cab; the round capped fitting on the rear hood roof (163,180) looks like a filler cap, so the exhaust point is a best guess."
+    },
+    "nose_px": [
+      900,
+      640
+    ],
+    "views": [
+      "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk45-rear.png"
+    ]
+  },
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk45"
+}

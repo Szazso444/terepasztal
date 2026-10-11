@@ -1,0 +1,161 @@
+{
+  "blender": "Blender 5.2.1 LTS\n\tbuild date: 2026-08-25\n\tbuild time: 02:38:20\n\tbuild commit date: 2026-08-24\n\tbuild commit time: 16:50\n\tbuild hash: 9e2066aef7ef\n\tbuild branch: blender-v5.2-release\n\tbuild platform: Windows\n\tbuild type: Release\n\tbuild c flags:  /W3 -Werror=implicit-function-declaration -Werror=return-type -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wstrict-prototypes -Wmissing-prototypes -Wunused-parameter -Wundef -Wundef-prefix -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /MP /nologo /J /Gy /Gd /showFilenames -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild c++ flags:  /W3 -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wno-overloaded-virtual -Wno-sign-compare -Wno-invalid-offsetof -Wno-suggest-override -Wundef -Wundef-prefix -Wunused-parameter -Wmismatched-tags -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /EHsc  /Gy /MP /nologo /J /Gd /showFilenames /EHsc -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild link flags: /MACHINE:X64  /SUBSYSTEM:CONSOLE /STACK:2097152 /ignore:4049 /ignore:4217 /ignore:4221\n\tbuild system: CMake\n",
+  "manifest": {
+    "id": "muki",
+    "parts": [
+      {
+        "canvas": 256,
+        "effects": {
+          "headlamps": [
+            [
+              1.715,
+              -0.446,
+              1.352
+            ],
+            [
+              1.796,
+              0.402,
+              1.318
+            ]
+          ],
+          "smoke": [
+            [
+              0.271,
+              -0.19,
+              1.776
+            ]
+          ]
+        },
+        "frame_prefix": "loco_muki_body",
+        "length_tiles": 0.624799563418537,
+        "max_phase_bounds_drift": 2,
+        "name": "body",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\muki\\body.blend",
+        "source_sha256": "8c36f1a450e63ec5b8c75b3271c9aa163746eedaa437867847cd8b954a9e56ab",
+        "wheel": {
+          "mode": "timeline",
+          "period_frames": 8,
+          "radius": 0.07249507657835833,
+          "start": 1,
+          "symmetry": 1
+        },
+        "window_mask": {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\muki\\body-window-mask.png",
+          "sha256": "8c686facda5f6e34518af4c61dcf48e14d4133758856652705c807beb7762375"
+        }
+      }
+    ],
+    "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+    "reference": {
+      "authority": "workbook-pictures-and-owner-notes",
+      "guidelines": "B7: Muki (MD-40 P-2) | G7: B (model image) | Y7: Frame [body]: 1-2 (rigid, baked; 2 virtual rail supports; chain-driven axles in a rigid frame) | AA7: Model image (front + rear view) ready. 2 axles under axle-box covers. 'Muki' comes from a flower-decorated name sign a local woman hung on its grille in 2000. The only MD-40 with this body style left; symbol of the Kemence forest railway. | BV7: Very small two-axle hood loco: tall rear cab with sloped roof and four windows, short front hood with a slatted radiator grille and two round headlights. Dark green with a big white V on the nose (older livery: drab olive-grey). | CI7: Good.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.",
+      "pictures": [
+        {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r7-c5.jpeg",
+          "sha256": "d5389ea770f72ba80813f062b5547376410b29c648a5a2afb9923867831319aa"
+        },
+        {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r7-c6.jpeg",
+          "sha256": "2632262d8941c88fcfe449f58452147254883c48093ca3226bc15dc1fc1fcde8"
+        },
+        {
+          "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\muki-rear.png",
+          "role": "Supplementary rear colour view from source art; workbook remains geometry authority",
+          "sha256": "bc19584db70d25a9d5d54f8ce0ae146c5d696fc1bfb34b44e29c31198b4ef6c0"
+        }
+      ],
+      "prepared_sources": {
+        "body": "8c36f1a450e63ec5b8c75b3271c9aa163746eedaa437867847cd8b954a9e56ab"
+      },
+      "row": 7,
+      "schema": 1,
+      "sheet": "Locomotives",
+      "workbook": {
+        "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+        "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+      }
+    },
+    "schema": 1
+  },
+  "packer": "a36493411a58067cfa4b753ff2ddb5e06017c5808c9ad0c6b40db4638a083423",
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "colour_gain": 1.12,
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-reference-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "None",
+    "metallic_cap": 0.18,
+    "normal_contrast": 0.1,
+    "normal_light": [
+      -0.4,
+      -0.6,
+      0.8
+    ],
+    "paint_low": 0.98,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "surface_mode": "reference_colour",
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "Standard",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  },
+  "reference_validator": "e57ddd60f7a6f3052668ebebb34e406c8a6c577fd64413deeff9a62e2fedbf33",
+  "renderer": "1763ae485fe3ff06ecee6e6e4d25de1fe71f746f995d2bfc896bff69143bf0a9",
+  "runner": "be86b4e70450762ecbd9f134cc11b2b9f097dc5ff0e7110178f806f0ba6fb181"
+}

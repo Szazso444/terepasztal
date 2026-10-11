@@ -1,0 +1,337 @@
+{
+  "asset": {
+    "id": "mav375",
+    "category": "vehicle",
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.source.png",
+    "size_tiles": 1.5557175925890778,
+    "length_m": 9.7,
+    "width_m": 2.8,
+    "height_m": 3.8,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30,
+    "azimuth_deg": 45
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": false,
+    "ambient": 0.6,
+    "sun_azimuth_deg": -100,
+    "sun_elevation_deg": 45,
+    "sun_strength": 3,
+    "force_dielectric": true,
+    "debug_views": false
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65,
+      20
+    ],
+    "roll_range": [
+      -25,
+      25
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": false,
+    "max_dim_error": 0.2
+  },
+  "landmarks": {
+    "symmetric": false
+  },
+  "gear_parts": [
+    [
+      "body",
+      1,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [
+        0.15,
+        0.34,
+        0.52,
+        0.7
+      ],
+      "trucks": [],
+      "rigid_f": [
+        0.15,
+        0.34,
+        0.52,
+        0.7
+      ],
+      "trucks_f": [],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "rigid": {
+          "d": [
+            0.72,
+            1.18,
+            1.18,
+            1.18
+          ],
+          "spokes": [
+            8,
+            12,
+            12,
+            12
+          ],
+          "frame": "inside",
+          "color": [
+            45,
+            47,
+            49
+          ],
+          "tyre": [
+            65,
+            68,
+            72
+          ],
+          "drivers": [
+            1,
+            2,
+            3
+          ],
+          "rods": {
+            "cylinders": "front"
+          }
+        }
+      }
+    }
+  ],
+  "fit": {
+    "standard": true,
+    "stance": "support",
+    "stance_mode": "turn",
+    "length_m": 9.7,
+    "height_m": 3.8,
+    "rail_half_m": 0.499,
+    "deperspective": 0,
+    "gauge_warp": false,
+    "box_body": false
+  },
+  "annot": {
+    "id": "mav375",
+    "windows": [
+      [
+        [
+          96,
+          299
+        ],
+        [
+          140,
+          311
+        ],
+        [
+          178,
+          326
+        ],
+        [
+          188,
+          340
+        ],
+        [
+          188,
+          398
+        ],
+        [
+          180,
+          405
+        ],
+        [
+          168,
+          400
+        ],
+        [
+          100,
+          368
+        ],
+        [
+          94,
+          355
+        ],
+        [
+          94,
+          305
+        ]
+      ],
+      [
+        [
+          205,
+          350
+        ],
+        [
+          218,
+          348
+        ],
+        [
+          224,
+          358
+        ],
+        [
+          224,
+          400
+        ],
+        [
+          218,
+          406
+        ],
+        [
+          206,
+          402
+        ],
+        [
+          201,
+          392
+        ],
+        [
+          201,
+          358
+        ]
+      ],
+      [
+        [
+          260,
+          354
+        ],
+        [
+          269,
+          345
+        ],
+        [
+          281,
+          347
+        ],
+        [
+          285,
+          357
+        ],
+        [
+          285,
+          404
+        ],
+        [
+          277,
+          413
+        ],
+        [
+          266,
+          412
+        ],
+        [
+          260,
+          402
+        ]
+      ],
+      [
+        [
+          431,
+          290
+        ],
+        [
+          436,
+          279
+        ],
+        [
+          446,
+          276
+        ],
+        [
+          453,
+          285
+        ],
+        [
+          453,
+          332
+        ],
+        [
+          431,
+          326
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        809,
+        483
+      ],
+      [
+        920,
+        658
+      ],
+      [
+        775,
+        706
+      ]
+    ],
+    "smoke": [
+      [
+        752,
+        357
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Steam tank engine. Windows: large open cab side opening (no glass, interior visible; a far-side oval window shows through it), two oval glazed cab side windows, and one arched front spectacle window on the cab front (its lower edge hidden behind the sand box). Three front headlamps (smokebox top, two on the buffer beam). Smoke at chimney top opening. Review: moved the right buffer-beam headlamp from (912,670) to the lens centre (920,658); everything else unchanged."
+  },
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mav375\\prepared-texture.png"
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-mav375-rear.png"
+  ],
+  "parts": {},
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mav375\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mav375\\debug_dir",
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mav375\\unused-legacy-meta.json"
+}

@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "id": "sd40",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sd40\\body.blend",
+      "source_sha256": "fadf7150fd9640c1f5801199d45614577cf0ca8a635b9cd026e7b7f848cd76b9",
+      "frame_prefix": "loco_sd40_body",
+      "length_tiles": 2.9950482986978986,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            1.491,
+            -0.041,
+            4.605
+          ]
+        ],
+        "lamps": [
+          [
+            6.677,
+            -0.217,
+            4.146
+          ],
+          [
+            6.788,
+            -0.094,
+            4.206
+          ],
+          [
+            8.756,
+            -1.144,
+            1.834
+          ],
+          [
+            8.681,
+            0.707,
+            1.657
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sd40\\window-mask.png",
+        "sha256": "acd7a471c63e1c538effedded198c211fe9221df2cbac681abf195d0fbda5cb5"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sd40\\body-t0.blend",
+      "source_sha256": "86e063ddb9c6b1f78016122be484762457290e02fca90440ee61296b8932ce20",
+      "frame_prefix": "loco_sd40_body-t0",
+      "length_tiles": 0.7134756122054234,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1270056445873325,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sd40\\body-t1.blend",
+      "source_sha256": "ba2660d8cfa24d2f369fe0147c7204deac8e676937038634e8a5730a919156c8",
+      "frame_prefix": "loco_sd40_body-t1",
+      "length_tiles": 0.7588615107343931,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1270056445873325,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

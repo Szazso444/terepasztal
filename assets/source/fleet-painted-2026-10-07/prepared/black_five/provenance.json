@@ -1,0 +1,7 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\black_five.json",
+  "job_sha256": "0f945c09e5b4425f86c09adf38756b05918a4dcf373eaea3bd9a508b2fd5fbaa",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\black_five.glb",
+  "glb_sha256": "c4c0721ebdc3fede297a457972c2d03e7044093115cb2c6ce639ee413884467c"
+}

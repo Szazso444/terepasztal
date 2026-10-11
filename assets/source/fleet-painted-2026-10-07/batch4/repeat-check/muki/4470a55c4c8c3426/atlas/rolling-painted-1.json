@@ -1,0 +1,134 @@
+{
+  "frames": {
+    "rolling/loco_muki_body_f0": {
+      "ax": 26.0,
+      "ay": 41.0,
+      "h": 51,
+      "w": 52,
+      "x": 106,
+      "y": 2
+    },
+    "rolling/loco_muki_body_f24": {
+      "ax": 24.0,
+      "ay": 41.0,
+      "h": 53,
+      "w": 50,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_muki_body_f48": {
+      "ax": 26.0,
+      "ay": 32.0,
+      "h": 42,
+      "w": 52,
+      "x": 419,
+      "y": 2
+    },
+    "rolling/loco_muki_body_f72": {
+      "ax": 26.0,
+      "ay": 33.0,
+      "h": 44,
+      "w": 50,
+      "x": 315,
+      "y": 2
+    },
+    "rolling/loco_muki_body_lit_f0": {
+      "ax": 25.0,
+      "ay": 40.0,
+      "h": 48,
+      "w": 49,
+      "x": 264,
+      "y": 2
+    },
+    "rolling/loco_muki_body_lit_f24": {
+      "ax": 24.0,
+      "ay": 40.0,
+      "h": 49,
+      "w": 48,
+      "x": 214,
+      "y": 2
+    },
+    "rolling/loco_muki_body_lit_f48": {
+      "ax": 24.0,
+      "ay": 30.0,
+      "h": 38,
+      "w": 50,
+      "x": 575,
+      "y": 2
+    },
+    "rolling/loco_muki_body_lit_f72": {
+      "ax": 24.0,
+      "ay": 30.0,
+      "h": 40,
+      "w": 46,
+      "x": 527,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w0_f0": {
+      "ax": 26.0,
+      "ay": 41.0,
+      "h": 51,
+      "w": 52,
+      "x": 106,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w0_f24": {
+      "ax": 24.0,
+      "ay": 41.0,
+      "h": 53,
+      "w": 50,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w0_f48": {
+      "ax": 26.0,
+      "ay": 32.0,
+      "h": 42,
+      "w": 52,
+      "x": 419,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w0_f72": {
+      "ax": 26.0,
+      "ay": 33.0,
+      "h": 44,
+      "w": 50,
+      "x": 315,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w3_f0": {
+      "ax": 26.0,
+      "ay": 41.0,
+      "h": 51,
+      "w": 52,
+      "x": 160,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w3_f24": {
+      "ax": 24.0,
+      "ay": 41.0,
+      "h": 53,
+      "w": 50,
+      "x": 54,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w3_f48": {
+      "ax": 26.0,
+      "ay": 32.0,
+      "h": 42,
+      "w": 52,
+      "x": 473,
+      "y": 2
+    },
+    "rolling/loco_muki_body_w3_f72": {
+      "ax": 26.0,
+      "ay": 33.0,
+      "h": 44,
+      "w": 50,
+      "x": 367,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 2
+}

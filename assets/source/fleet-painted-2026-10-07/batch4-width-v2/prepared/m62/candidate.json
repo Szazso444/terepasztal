@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "id": "m62",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\m62\\body.blend",
+      "source_sha256": "f95e786481583bd373dcf5246273bda96572243cf1ae34b6a557ed9f343d9b81",
+      "frame_prefix": "loco_m62_body",
+      "length_tiles": 2.396335796810146,
+      "canvas": 320,
+      "effects": {
+        "smoke": [
+          [
+            2.928,
+            -0.08754999999999999,
+            3.948
+          ]
+        ],
+        "headlamps": [
+          [
+            6.503,
+            -0.0527,
+            3.353
+          ],
+          [
+            6.897,
+            0.7012499999999999,
+            1.623
+          ],
+          [
+            6.758,
+            -0.8517,
+            1.787
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\m62\\body-window-mask.png",
+        "sha256": "2136c116e5580d2b1377d5429333a894a70a404c9532b87dfc062a37d227d7ee"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\m62\\body-t0.blend",
+      "source_sha256": "240c50c9446641567f247a4958602d76fc4305823ade31d0fd17ba7959a6ff86",
+      "frame_prefix": "loco_m62_body-t0",
+      "length_tiles": 0.773978735803492,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1312550815678861,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\m62\\body-t1.blend",
+      "source_sha256": "a872f1d5975c6de506273d1c6089a8bbc82db13910e3f285332167f4294f6ba6",
+      "frame_prefix": "loco_m62_body-t1",
+      "length_tiles": 0.7253719064873927,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1312550815678861,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 30,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r30-c5.jpeg",
+        "sha256": "2c4052ca91bab9034e2a9a18879b2938cf677c5f33bff4edb58c32be162a1d68"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-m62-rear.png",
+        "sha256": "60236dd23babc3a9f9146d0d886a1b33130a494c538e255d90b08b359ed2f26a",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B30: M62 Szergej | G30: Co-Co | Y30: Rear bogie [body]: 1-3 (swivelling bogie / truck sprite)\nFront bogie [body]: 4-6 (swivelling bogie / truck sprite) | CI30: Contracted: longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; 2026-10-08 owner width correction: body transverse width reduced 15%; standard gauge wheel tread centres +/-0.99761036797m; length/height unchanged. M62 retains original picture reconstruction, simplified replacement rejected.",
+    "prepared_sources": {
+      "body": "f95e786481583bd373dcf5246273bda96572243cf1ae34b6a557ed9f343d9b81",
+      "body-t0": "240c50c9446641567f247a4958602d76fc4305823ade31d0fd17ba7959a6ff86",
+      "body-t1": "a872f1d5975c6de506273d1c6089a8bbc82db13910e3f285332167f4294f6ba6"
+    }
+  }
+}

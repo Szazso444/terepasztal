@@ -1,0 +1,6 @@
+{
+  "reference": "assets/source/base-v1/loco-gmam.png",
+  "parts": "mirrored engine units with central boiler",
+  "drivers_per_engine": 4,
+  "status": "reference-built candidate"
+}

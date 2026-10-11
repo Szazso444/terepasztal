@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "id": "big_boy",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\engine.blend",
+      "source_sha256": "8e86f5ff1b360fb0c795c0b95dcefdd26d3fe65e36b7efd5c61e44c47befc561",
+      "frame_prefix": "loco_big_boy_engine",
+      "length_tiles": 2.647416056626878,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            5.054,
+            -0.305,
+            4.549
+          ]
+        ],
+        "lamps": [
+          [
+            7.044,
+            -0.376,
+            3.15
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\window-mask.png",
+        "sha256": "94f958ef79ba15ec5739c2085b2aa4369e6750c7c99f6577786433ce42baf611"
+      }
+    },
+    {
+      "name": "engine-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\engine-t0.blend",
+      "source_sha256": "6fdee2010e8892069e5b8b0285e08e208ffee88d8645c949651fa1342e6d7329",
+      "frame_prefix": "loco_big_boy_engine-t0",
+      "length_tiles": 0.9354450557469306,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.4487532775419081,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "engine-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\engine-t1.blend",
+      "source_sha256": "8001365baed1b1b85572d2974e99bd72fc7169fc41038d4fc4b38a998a1e11a7",
+      "frame_prefix": "loco_big_boy_engine-t1",
+      "length_tiles": 1.7058021611121073,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.4487532775419081,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "tender",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\tender.blend",
+      "source_sha256": "f3602c183d37ed0e2b647c3bf98b0a0bcce6eca2ab9b72e5f024acecbf5a8fc6",
+      "frame_prefix": "loco_big_boy_tender",
+      "length_tiles": 1.3203457685912217,
+      "canvas": 512,
+      "effects": {},
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\window-mask.png",
+        "sha256": "94f958ef79ba15ec5739c2085b2aa4369e6750c7c99f6577786433ce42baf611"
+      }
+    },
+    {
+      "name": "tender-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\tender-t0.blend",
+      "source_sha256": "9a6956a273122c10f33bdaae271a1eaec5030cf68d696114ff4165f33edece20",
+      "frame_prefix": "loco_big_boy_tender-t0",
+      "length_tiles": 0.6589967874188554,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1333718423110083,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "tender-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\big_boy\\tender-t1.blend",
+      "source_sha256": "76b90a18f7f2a625719d2fe74cc045a839385c3913533f05ac44297d563bc52a",
+      "frame_prefix": "loco_big_boy_tender-t1",
+      "length_tiles": 0.5949661379574851,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1333718423110083,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

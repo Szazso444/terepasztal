@@ -1,0 +1,344 @@
+{
+  "asset": {
+    "id": "sw1",
+    "category": "vehicle",
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.source.png",
+    "size_tiles": 2.149135643370479,
+    "length_m": 13.4,
+    "width_m": 3.0,
+    "height_m": 4.2,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30,
+    "azimuth_deg": 45
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": false,
+    "ambient": 0.6,
+    "sun_azimuth_deg": -100,
+    "sun_elevation_deg": 45,
+    "sun_strength": 3,
+    "force_dielectric": true,
+    "debug_views": false
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65,
+      20
+    ],
+    "roll_range": [
+      -25,
+      25
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": false,
+    "max_dim_error": 0.2
+  },
+  "landmarks": {
+    "symmetric": false
+  },
+  "gear_parts": [
+    [
+      "body",
+      1,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.17,
+          0.3
+        ],
+        [
+          0.71,
+          0.84
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.17,
+          0.3
+        ],
+        [
+          0.71,
+          0.84
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 1.0,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          },
+          {
+            "d": 1.0,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "standard": true,
+    "stance": "support",
+    "stance_mode": "turn",
+    "length_m": 13.4,
+    "height_m": 4.2,
+    "rail_half_m": 0.499,
+    "deperspective": 0,
+    "gauge_warp": false,
+    "box_body": false
+  },
+  "annot": {
+    "id": "sw1",
+    "windows": [
+      [
+        [
+          96,
+          281
+        ],
+        [
+          116,
+          287
+        ],
+        [
+          116,
+          337
+        ],
+        [
+          96,
+          328
+        ]
+      ],
+      [
+        [
+          156,
+          303
+        ],
+        [
+          175,
+          310
+        ],
+        [
+          175,
+          367
+        ],
+        [
+          156,
+          360
+        ]
+      ],
+      [
+        [
+          180,
+          313
+        ],
+        [
+          200,
+          319
+        ],
+        [
+          200,
+          377
+        ],
+        [
+          180,
+          369
+        ]
+      ],
+      [
+        [
+          237,
+          304
+        ],
+        [
+          266,
+          296
+        ],
+        [
+          266,
+          355
+        ],
+        [
+          237,
+          366
+        ]
+      ],
+      [
+        [
+          283,
+          279
+        ],
+        [
+          303,
+          273
+        ],
+        [
+          303,
+          317
+        ],
+        [
+          283,
+          325
+        ]
+      ],
+      [
+        [
+          312,
+          266
+        ],
+        [
+          332,
+          260
+        ],
+        [
+          332,
+          304
+        ],
+        [
+          312,
+          313
+        ]
+      ],
+      [
+        [
+          342,
+          258
+        ],
+        [
+          360,
+          252
+        ],
+        [
+          360,
+          296
+        ],
+        [
+          342,
+          303
+        ]
+      ],
+      [
+        [
+          374,
+          257
+        ],
+        [
+          394,
+          251
+        ],
+        [
+          394,
+          295
+        ],
+        [
+          374,
+          297
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        862,
+        512
+      ]
+    ],
+    "smoke": [
+      [
+        480,
+        283
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Diesel switcher. 8 panes: rear cab door window, 2-pane sliding side window, 5 panes on the hood-facing cab wall. One front headlamp on the nose; no rear lamp visible. Smoke = top of the capped exhaust stack on the hood just ahead of the cab. A second open pipe on the cab roof at about (206,168) looks like a heater/stove vent and was not marked as exhaust."
+  },
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\prepared-texture.png"
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-sw1-rear.png"
+  ],
+  "parts": {},
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\debug_dir",
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\sw1\\unused-legacy-meta.json"
+}

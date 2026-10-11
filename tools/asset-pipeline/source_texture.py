@@ -561,7 +561,7 @@ def reproject(obj, view, out_path, cfg, mirror=None, extras=()):
               "texture": str(out_path)}
     log(f"source texture: {report['source_share']:.0%} of texels from the source, {report['extra_share']:.0%} from "
         f"extra views, {report['mirrored_share']:.0%} from mirror twins, {report['nearest_share']:.0%} from the "
-        f"nearest seen surface; generated colours dE {before:.1f} -> {after:.1f} after transfer")
+        f"hidden-surface fill ({cfg.get('hidden', 'nearest')}); generated colours dE {before:.1f} -> {after:.1f} after transfer")
     return report
 
 

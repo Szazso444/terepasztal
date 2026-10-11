@@ -1,0 +1,16 @@
+{
+  "frames": [
+    "loco_m62_body-t1_w0_f0.png",
+    "loco_m62_body-t1_w3_f0.png",
+    "loco_m62_body-t1_w0_f24.png",
+    "loco_m62_body-t1_w3_f24.png",
+    "loco_m62_body-t1_w0_f48.png",
+    "loco_m62_body-t1_w3_f48.png",
+    "loco_m62_body-t1_w0_f72.png",
+    "loco_m62_body-t1_w3_f72.png"
+  ],
+  "scale": 1.0000000000000002,
+  "cycle": 0.13226295123544227,
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef"
+}

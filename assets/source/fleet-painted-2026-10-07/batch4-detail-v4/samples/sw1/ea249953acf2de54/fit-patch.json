@@ -1,0 +1,32 @@
+{
+  "sw1": {
+    "lamps": [
+      {
+        "across": 0.0,
+        "along": 0.6302153945137008,
+        "part": "body",
+        "up": 17.537142617361887
+      }
+    ],
+    "smoke": [
+      {
+        "along": -0.05715713429302662,
+        "part": "body",
+        "up": 22.119428907121932
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.12596471546232593,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.12596471546232593,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

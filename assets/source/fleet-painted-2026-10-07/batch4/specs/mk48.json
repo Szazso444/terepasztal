@@ -1,0 +1,238 @@
+{
+  "schema": 1,
+  "id": "mk48",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 11,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r11-c5.jpeg",
+        "sha256": "443d23943215866667341bf77099beeddb45483b4047c8185448e695466c5d45"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r11-c6.jpeg",
+        "sha256": "c2e43b0f7668eee99956e94b592d0aa5b91af4dc1f6a28b0459529b8d4b8e344"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk48-rear.png",
+        "sha256": "829db2d2746ceaa81d98d651830db583a571804e8409be304c2ddebbbce4a45f",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B11: M\u00c1V Mk48 | G11: B'B' (model image) | Y11: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA11: Model image (front + rear view) ready. Two 2-axle bogies. Front = the short hood beside the cab (yellow front with the number plate). Power: 100 kW original, 147 kW after 1970s re-engining (table uses 147). | BV11: Single cab near one end, short nose in front, long louvred engine hood behind. All red, yellow short-nose front and warning ends, black frame, grey bogies. | CI11: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "reconstruction": {
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.glb",
+      "sha256": "37714a2e94d9d851d73f66465f4df3e12e6bb50296a37dfc5a2cab50186f0fed"
+    },
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.source.png",
+      "sha256": "78fa0f23ef2fcf432a81d497cadc9bce04ed7e2fcf062adc0b38730c6a322f7c"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.mask.png",
+      "sha256": "b4177634fe7a5884fc678ed64fe1e467b55b4c32cfb995a121d1fb0951b5102e"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "geometry": {
+    "length_m": 8.2,
+    "width_m": 2.2,
+    "height_m": 3.1,
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "gear": [
+      {
+        "rigid": [],
+        "trucks": [
+          [
+            0.16,
+            0.29
+          ],
+          [
+            0.71,
+            0.84
+          ]
+        ],
+        "rigid_f": [],
+        "trucks_f": [
+          [
+            0.16,
+            0.29
+          ],
+          [
+            0.71,
+            0.84
+          ]
+        ],
+        "from": 0,
+        "to": 1,
+        "wheels": {
+          "trucks": [
+            {
+              "d": 0.7,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            },
+            {
+              "d": 0.7,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "notes": "Shape from row 11 pictures; axle layout manually read from pictured wheels. Rough fractions are refined against raw mesh wheel centres. Rigid alignment and uniform scale only.",
+    "yaw_offset_deg": 180,
+    "gauge": "narrow"
+  },
+  "projection": {
+    "annot": {
+      "id": "mk48",
+      "windows": [
+        [
+          [
+            215,
+            277
+          ],
+          [
+            238,
+            287
+          ],
+          [
+            238,
+            354
+          ],
+          [
+            215,
+            344
+          ]
+        ],
+        [
+          [
+            262,
+            298
+          ],
+          [
+            293,
+            311
+          ],
+          [
+            293,
+            386
+          ],
+          [
+            262,
+            371
+          ]
+        ],
+        [
+          [
+            322,
+            319
+          ],
+          [
+            357,
+            335
+          ],
+          [
+            358,
+            407
+          ],
+          [
+            322,
+            389
+          ]
+        ],
+        [
+          [
+            390,
+            334
+          ],
+          [
+            445,
+            309
+          ],
+          [
+            445,
+            361
+          ],
+          [
+            391,
+            389
+          ]
+        ],
+        [
+          [
+            496,
+            285
+          ],
+          [
+            546,
+            263
+          ],
+          [
+            546,
+            320
+          ],
+          [
+            497,
+            344
+          ]
+        ]
+      ],
+      "headlamps": [
+        [
+          863,
+          599
+        ]
+      ],
+      "smoke": [
+        [
+          817,
+          530
+        ]
+      ],
+      "pantograph_raised": false,
+      "notes": "5 glazed panes: 3 on the cab left side (rear side window, door window, front side window) and 2 windscreens on the cab front wall facing the hood. One headlamp on the nose end. No distinct exhaust stack is drawn; smoke point is a guess: the round capped stub on the hood top near the nose (the similar cap on the cab roof at ~394,198 is the alternative). Small yellow knobs at ~(840,500) and ~(188,267) are treated as marker/horn fittings, not headlamps."
+    },
+    "views": [
+      "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk48-rear.png"
+    ]
+  },
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48"
+}

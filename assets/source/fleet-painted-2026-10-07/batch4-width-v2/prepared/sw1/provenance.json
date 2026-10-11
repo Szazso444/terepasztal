@@ -1,0 +1,28 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 21,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r21-c5.jpeg",
+        "sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-sw1-rear.png",
+        "sha256": "bbc1817d34e7a82f18ee8ee0fe267a1ae76782bd8eaa8a9bc10c89f8c44df434",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B21: EMD SW1 | G21: B-B | Y21: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA21: Game data has the SW1 as small (1 tile) with baked axles. | CI21: Slightly too wide: slightly narrower.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "preparation_job_sha256": "e5c221e630f2f1461401355df9a27f52e36868f7ce4ba1a10116b61309f423b3",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.glb",
+  "glb_sha256": "32487b51da5293cee71eed984e32220dc10359b56a5ac160ea49075ae90aeb3d"
+}

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "bm50",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-painted-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\handbuilt\\bm50\\body.blend",
+      "source_sha256": "26fc75c6e9e2d2d5ed35cf9579a1a3a7bef6ada9500120825895b4e7047ae932",
+      "frame_prefix": "loco_bm50_body",
+      "length_tiles": 0.6996,
+      "canvas": 128,
+      "wheel": {
+        "mode": "pivots",
+        "prefix": "Wheel pivot",
+        "count": 4,
+        "radius": 0.29,
+        "symmetry": 5
+      },
+      "effects": {}
+    }
+  ]
+}

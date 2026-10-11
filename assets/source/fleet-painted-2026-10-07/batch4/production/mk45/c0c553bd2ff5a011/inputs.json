@@ -1,0 +1,194 @@
+{
+  "blender": "Blender 5.2.1 LTS\n\tbuild date: 2026-08-25\n\tbuild time: 02:38:20\n\tbuild commit date: 2026-08-24\n\tbuild commit time: 16:50\n\tbuild hash: 9e2066aef7ef\n\tbuild branch: blender-v5.2-release\n\tbuild platform: Windows\n\tbuild type: Release\n\tbuild c flags:  /W3 -Werror=implicit-function-declaration -Werror=return-type -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wstrict-prototypes -Wmissing-prototypes -Wunused-parameter -Wundef -Wundef-prefix -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /MP /nologo /J /Gy /Gd /showFilenames -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild c++ flags:  /W3 -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wno-overloaded-virtual -Wno-sign-compare -Wno-invalid-offsetof -Wno-suggest-override -Wundef -Wundef-prefix -Wunused-parameter -Wmismatched-tags -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /EHsc  /Gy /MP /nologo /J /Gd /showFilenames /EHsc -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild link flags: /MACHINE:X64  /SUBSYSTEM:CONSOLE /STACK:2097152 /ignore:4049 /ignore:4217 /ignore:4221\n\tbuild system: CMake\n",
+  "manifest": {
+    "id": "mk45",
+    "parts": [
+      {
+        "canvas": 256,
+        "effects": {
+          "headlamps": [
+            [
+              3.986,
+              -0.214,
+              2.434
+            ],
+            [
+              3.965,
+              0.324,
+              1.264
+            ],
+            [
+              3.909,
+              -0.687,
+              1.27
+            ]
+          ],
+          "smoke": [
+            [
+              -0.864,
+              -0.003,
+              3.046
+            ]
+          ]
+        },
+        "frame_prefix": "loco_mk45_body",
+        "length_tiles": 1.42027840321323,
+        "name": "body",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk45\\body.blend",
+        "source_sha256": "6d8ecbea3de52bbdedc1ac7bf2104f08e72227e3ffa45c1325466bd5662f97e7",
+        "window_mask": {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk45\\body-window-mask.png",
+          "sha256": "da8e7df9c8bed80aa296fef82c18e6b04384c925defed2ff68f59f65f364a94e"
+        }
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_mk45_body-t0",
+        "length_tiles": 0.32594419659822993,
+        "max_phase_bounds_drift": 2,
+        "name": "body-t0",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk45\\body-t0.blend",
+        "source_sha256": "d6744d36b1a47564b1c22bbf4fc6beba96a919941a4ae83ad56d5d11da043441",
+        "wheel": {
+          "count": 4,
+          "mode": "pivots",
+          "prefix": "Wheelpivot",
+          "radius": 0.375,
+          "symmetry": 5
+        }
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_mk45_body-t1",
+        "length_tiles": 0.3137333249848939,
+        "max_phase_bounds_drift": 2,
+        "name": "body-t1",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk45\\body-t1.blend",
+        "source_sha256": "adfdb7094c3e8afec7986da7444ee649b521e9f070761d668b812489c8038f7e",
+        "wheel": {
+          "count": 4,
+          "mode": "pivots",
+          "prefix": "Wheelpivot",
+          "radius": 0.375,
+          "symmetry": 5
+        }
+      }
+    ],
+    "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+    "reference": {
+      "authority": "workbook-pictures-and-owner-notes",
+      "guidelines": "B10: M\u00c1V Mk45 | G10: B'B' (model image) | Y10: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA10: Model image (front + rear view) ready. Two 2-axle bogies. Width differs by source (2.49 m hu.wiki, 2.3 m others). | BV10: Boxy hood diesel, cab near one end, long hood behind, short nose in front. White upper body, red lower band, blue-red-blue stripe forming a V on the nose, light grey frame and bogies. | CI10: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; Reconstructed truck fragments replaced by clean reference-authored axle groups, fixed technical rail gauge, dark treads. No runtime geometry used.",
+      "pictures": [
+        {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r10-c5.jpeg",
+          "sha256": "6b5302774a726ea4086cc700107a7bc3e2a416df2270dc9e875a66ca38180969"
+        },
+        {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r10-c6.jpeg",
+          "sha256": "c77c0d8fd50b78b43cb063ef73e0031f8093423ca17870b2b89cf46931414279"
+        },
+        {
+          "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk45-rear.png",
+          "role": "Supplementary rear colour view from source art; workbook remains geometry authority",
+          "sha256": "50c355a7e93c5a8a3851e1faa60641f7b41726b1787dd68c2bd8d94a61e7185f"
+        }
+      ],
+      "prepared_sources": {
+        "body": "6d8ecbea3de52bbdedc1ac7bf2104f08e72227e3ffa45c1325466bd5662f97e7",
+        "body-t0": "d6744d36b1a47564b1c22bbf4fc6beba96a919941a4ae83ad56d5d11da043441",
+        "body-t1": "adfdb7094c3e8afec7986da7444ee649b521e9f070761d668b812489c8038f7e"
+      },
+      "row": 10,
+      "schema": 1,
+      "sheet": "Locomotives",
+      "workbook": {
+        "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+        "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+      }
+    },
+    "schema": 1
+  },
+  "packer": "a36493411a58067cfa4b753ff2ddb5e06017c5808c9ad0c6b40db4638a083423",
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "colour_gain": 1.12,
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-reference-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "None",
+    "metallic_cap": 0.18,
+    "normal_contrast": 0.1,
+    "normal_light": [
+      -0.4,
+      -0.6,
+      0.8
+    ],
+    "paint_low": 0.98,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "surface_mode": "reference_colour",
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "Standard",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  },
+  "reference_validator": "e57ddd60f7a6f3052668ebebb34e406c8a6c577fd64413deeff9a62e2fedbf33",
+  "renderer": "1763ae485fe3ff06ecee6e6e4d25de1fe71f746f995d2bfc896bff69143bf0a9",
+  "runner": "be86b4e70450762ecbd9f134cc11b2b9f097dc5ff0e7110178f806f0ba6fb181"
+}

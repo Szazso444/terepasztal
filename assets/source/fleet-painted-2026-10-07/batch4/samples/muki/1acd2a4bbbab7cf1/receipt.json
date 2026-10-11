@@ -1,0 +1,26 @@
+{
+  "files": {
+    "atlas\\rolling-painted-1.json": "249a8d917562b649c218cf8624e90f1187a16ea61e1691fdab239d549d0e0f2d",
+    "atlas\\rolling-painted-1.png": "77b1a916e2a5ddffff61b978640ffe90a321592632a6025a44438fde94bb8843",
+    "fit-patch.json": "865715b23f021d9e6c3eba4a7fdd1f1520f1f021ce0da773d74b4249a90c106d",
+    "frames\\loco_muki_body_f0.png": "877c57358657bcfac78830fd27763fd53df886d022052819a49bb6ff3d2a1eb1",
+    "frames\\loco_muki_body_f24.png": "e88cec3b251a570fe4702f46ba36b888b3999624a75866c31baaaea486d03abe",
+    "frames\\loco_muki_body_f48.png": "76300ab771f331e0c0423fb2e2b94ae18a8255ece42c9716fe53f025a9e5ced2",
+    "frames\\loco_muki_body_f72.png": "a34094a9aca8fbea9fd7b2f6f40fb0cc6817568513cd5e94c10d2b1e21705601",
+    "frames\\loco_muki_body_lit_f0.png": "821d89a5cf486a94e164a56053a1a8fe3101b094408f266caea9f49c3fcee289",
+    "frames\\loco_muki_body_lit_f24.png": "50c0fcfead42a79158892284d1498cbdeb91e6b6e50a5389ac22c1dbb2b0d084",
+    "frames\\loco_muki_body_lit_f48.png": "07d14f6f79bd1713455d501feb21670d8d4972edc8e991e3e05e7f76e8e1a0dd",
+    "frames\\loco_muki_body_lit_f72.png": "391203507d1e91d7705928803ed565a884b53e436d786e2478d5a8e299a9500d",
+    "frames\\loco_muki_body_w0_f0.png": "877c57358657bcfac78830fd27763fd53df886d022052819a49bb6ff3d2a1eb1",
+    "frames\\loco_muki_body_w0_f24.png": "e88cec3b251a570fe4702f46ba36b888b3999624a75866c31baaaea486d03abe",
+    "frames\\loco_muki_body_w0_f48.png": "76300ab771f331e0c0423fb2e2b94ae18a8255ece42c9716fe53f025a9e5ced2",
+    "frames\\loco_muki_body_w0_f72.png": "a34094a9aca8fbea9fd7b2f6f40fb0cc6817568513cd5e94c10d2b1e21705601",
+    "frames\\loco_muki_body_w3_f0.png": "7a78d134c3a17533353446080dc4c5cd73dd2ba030b6fc9260f9220ca0d066fc",
+    "frames\\loco_muki_body_w3_f24.png": "063dd5e0f834463873422a8f1483a431397bcc98979b2f4f2aa273d328901081",
+    "frames\\loco_muki_body_w3_f48.png": "7a628db86767abd8269d5722dffa1a99b6e0625fe6a91b471e07cad26763eb83",
+    "frames\\loco_muki_body_w3_f72.png": "bac9cc200264c9361e584ded602c83cfb8afe956ceb6006515bd49490363b30a",
+    "inputs.json": "eb2a107737392131f59fd275336dae8d37e8b473c5cd1110cfeec3a03dc2c43e",
+    "report.json": "2dcf76a0446da9c8b7ae7598a61e1cb4582a8223dbcd966dab67a5c5a090293b"
+  },
+  "key": "1acd2a4bbbab7cf12bd58ec8b24e216b81c131f6c89a8f58cff6180dc48c8527"
+}

@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "id": "gmam",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\handbuilt\\gmam\\engine.blend",
+      "source_sha256": "21085aada97dbc70e81d44b87dfea23f6c8c34dfe3da40fd4117ed1079c857a0",
+      "frame_prefix": "loco_gmam_engine",
+      "length_tiles": 0.95,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            2.68,
+            0,
+            2.65
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.52,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "cradle",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\handbuilt\\gmam\\cradle.blend",
+      "source_sha256": "4d4b4ba6ecf7bf7f0454a21feccba708e880274534d5550786edac1c224c074c",
+      "frame_prefix": "loco_gmam_cradle",
+      "length_tiles": 1.25,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            2.72,
+            0,
+            4.19
+          ]
+        ]
+      }
+    }
+  ]
+}

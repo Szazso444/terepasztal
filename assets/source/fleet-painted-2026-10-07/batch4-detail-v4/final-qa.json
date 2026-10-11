@@ -1,0 +1,53 @@
+{
+  "status": "ready for owner review",
+  "models": [
+    {
+      "id": "mav375",
+      "bundle_key": "f41472d869a8cba8",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32,
+      "model_lamps": 3
+    },
+    {
+      "id": "class08",
+      "bundle_key": "6907975ff28cc68d",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32,
+      "model_lamps": 3
+    },
+    {
+      "id": "sw1",
+      "bundle_key": "ed9df605d84506ea",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32,
+      "model_lamps": 1
+    },
+    {
+      "id": "drg01",
+      "bundle_key": "292d014d6a3ecde8",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32,
+      "model_lamps": 2
+    },
+    {
+      "id": "m62",
+      "bundle_key": "a6f477351680224c",
+      "facings": 96,
+      "stationary_frozen": true,
+      "curve_frames_reviewed": 32,
+      "model_lamps": 3
+    }
+  ],
+  "gallery_images_http200": 40,
+  "source_tests": 197,
+  "pipeline_tests": 11,
+  "game_tests": 329,
+  "typecheck": "passed",
+  "lint": "passed",
+  "build": "passed",
+  "workbook": "v9; 18 intended cell changes; COUNTA retained; all 107 reference images unchanged"
+}

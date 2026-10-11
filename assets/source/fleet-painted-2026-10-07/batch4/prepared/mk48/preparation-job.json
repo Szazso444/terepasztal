@@ -1,0 +1,294 @@
+{
+  "asset": {
+    "id": "mk48",
+    "category": "vehicle",
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.source.png",
+    "size_tiles": 1.3151427071371584,
+    "length_m": 8.2,
+    "width_m": 2.2,
+    "height_m": 3.1,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": 180,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30,
+    "azimuth_deg": 45
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": false,
+    "ambient": 0.6,
+    "sun_azimuth_deg": -100,
+    "sun_elevation_deg": 45,
+    "sun_strength": 3,
+    "force_dielectric": true,
+    "debug_views": false
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65,
+      20
+    ],
+    "roll_range": [
+      -25,
+      25
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": false,
+    "max_dim_error": 0.2
+  },
+  "landmarks": {
+    "symmetric": false,
+    "nose_px": [
+      860,
+      650
+    ]
+  },
+  "gear_parts": [
+    [
+      "body",
+      1,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.16,
+          0.29
+        ],
+        [
+          0.71,
+          0.84
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.16,
+          0.29
+        ],
+        [
+          0.71,
+          0.84
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 0.7,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          },
+          {
+            "d": 0.7,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "standard": true,
+    "stance": "support",
+    "stance_mode": "turn",
+    "length_m": 8.2,
+    "height_m": 3.1,
+    "rail_half_m": 0.499,
+    "deperspective": 0,
+    "gauge_warp": false,
+    "box_body": false
+  },
+  "annot": {
+    "id": "mk48",
+    "windows": [
+      [
+        [
+          215,
+          277
+        ],
+        [
+          238,
+          287
+        ],
+        [
+          238,
+          354
+        ],
+        [
+          215,
+          344
+        ]
+      ],
+      [
+        [
+          262,
+          298
+        ],
+        [
+          293,
+          311
+        ],
+        [
+          293,
+          386
+        ],
+        [
+          262,
+          371
+        ]
+      ],
+      [
+        [
+          322,
+          319
+        ],
+        [
+          357,
+          335
+        ],
+        [
+          358,
+          407
+        ],
+        [
+          322,
+          389
+        ]
+      ],
+      [
+        [
+          390,
+          334
+        ],
+        [
+          445,
+          309
+        ],
+        [
+          445,
+          361
+        ],
+        [
+          391,
+          389
+        ]
+      ],
+      [
+        [
+          496,
+          285
+        ],
+        [
+          546,
+          263
+        ],
+        [
+          546,
+          320
+        ],
+        [
+          497,
+          344
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        863,
+        599
+      ]
+    ],
+    "smoke": [
+      [
+        817,
+        530
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "5 glazed panes: 3 on the cab left side (rear side window, door window, front side window) and 2 windscreens on the cab front wall facing the hood. One headlamp on the nose end. No distinct exhaust stack is drawn; smoke point is a guess: the round capped stub on the hood top near the nose (the similar cap on the cab roof at ~394,198 is the alternative). Small yellow knobs at ~(840,500) and ~(188,267) are treated as marker/horn fittings, not headlamps."
+  },
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\prepared-texture.png"
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mk48-rear.png"
+  ],
+  "parts": {},
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\debug_dir",
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4\\prepared\\mk48\\unused-legacy-meta.json"
+}

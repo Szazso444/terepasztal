@@ -1,0 +1,83 @@
+{
+  "id": "c50",
+  "source_sha256": "f97fe211d8d08ef6882a2f1db085bbed39be5b719f2d4c2bf3183480f0158586",
+  "mesh_sha256": "ba35e42f2c27beac1c086bee85b6ef575533fb5cb6a439f6b3b8fc8b1767a0dd",
+  "orientation_score": 0.8392377865796742,
+  "rotation_degrees": {
+    "yaw": 38.0,
+    "pitch": -14.25,
+    "roll": -0.75
+  },
+  "uniform_scale": 4.618651110329099,
+  "rigid_matrix": [
+    [
+      3.630072832107544,
+      -2.756032705307007,
+      -0.7475233674049377,
+      0.05162999406456947
+    ],
+    [
+      2.855008602142334,
+      3.5275609493255615,
+      0.8585890531539917,
+      0.03402211517095566
+    ],
+    [
+      0.058596085757017136,
+      -1.1368961334228516,
+      4.476155757904053,
+      1.1507782936096191
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "material_policy": "Original imported materials, unchanged; neutral scene lighting.",
+  "candidate_limit": "Whole-model normal-based alignment only; wheel stance and nose direction need owner review.",
+  "renders": [
+    {
+      "mode": "raw",
+      "heading": 0,
+      "file": "c50-raw-000.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 45,
+      "file": "c50-raw-045.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 135,
+      "file": "c50-raw-135.png"
+    },
+    {
+      "mode": "raw",
+      "heading": 225,
+      "file": "c50-raw-225.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 0,
+      "file": "c50-rigid-000.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 45,
+      "file": "c50-rigid-045.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 135,
+      "file": "c50-rigid-135.png"
+    },
+    {
+      "mode": "rigid",
+      "heading": 225,
+      "file": "c50-rigid-225.png"
+    }
+  ],
+  "mesh_unchanged": true
+}

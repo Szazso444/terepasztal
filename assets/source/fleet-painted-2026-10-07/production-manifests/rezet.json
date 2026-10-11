@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "id": "rezet",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-painted-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\rezet\\engine.blend",
+      "source_sha256": "d264c941e1acb0a3200273f93724f84988da511e7cc82194080478f943d27d13",
+      "frame_prefix": "loco_rezet_engine",
+      "length_tiles": 1.0818216439936534,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            2.178,
+            0.157,
+            3.174
+          ]
+        ],
+        "lamps": [
+          [
+            3.032,
+            -0.023,
+            2.433
+          ],
+          [
+            3.039,
+            0.625,
+            1.081
+          ],
+          [
+            3.023,
+            -0.722,
+            1.126
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.3750008769131238,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\rezet\\window-mask.png",
+        "sha256": "54ba4fd8d4e84cea2a404729fa19e34c438fbc64a89a40189202cb2ecee763a2"
+      }
+    }
+  ]
+}

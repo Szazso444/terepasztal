@@ -1,0 +1,20 @@
+{
+  "reference": "locomotive-wheels-bogies-v8.xlsx: Locomotives row6 front AND rear",
+  "axle_x": [
+    -1.17,
+    0.16,
+    1.4
+  ],
+  "wheel_radius": 0.275,
+  "red_apron_z": [
+    0.27,
+    1.05
+  ],
+  "bonnet_z": [
+    1.055,
+    1.89
+  ],
+  "bonnet_width": 1.58,
+  "open_driving_position": true,
+  "source": "new geometry, not previous BM50 mesh"
+}

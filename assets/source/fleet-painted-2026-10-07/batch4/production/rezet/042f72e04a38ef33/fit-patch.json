@@ -1,0 +1,20 @@
+{
+  "rezet": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": 0.4434597055163712,
+        "part": "body",
+        "up": 22.13828571428571
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body": {
+        "cycle": 0.4786638304208354,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

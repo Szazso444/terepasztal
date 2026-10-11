@@ -1,0 +1,32 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 9,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r9-c5.jpeg",
+        "sha256": "5d98fa0bd5177a2dfa84d8aef5f83a0546d3920af6f2852f7c0c8ce5d032aec5"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r9-c6.jpeg",
+        "sha256": "32b1c094000b925bb64997a169defcc29d7a48b195f6149aab366bc060d6ca8a"
+      },
+      {
+        "path": "G:\\DEV\\Terepasztal\\pipeline-out\\inputs\\mav490-rear.png",
+        "sha256": "da2ea8261680d137e3b04952efaaecc1c215a02f58f4a2bd27ef9f510789a51b",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B9: M\u00c1V 490 | G9: 0-8-0T (model image) | Y9: Frame [engine]: 1-4 (rigid, baked; 2 virtual rail supports; four coupled drivers and rods drawn with the body) | AA9: Model image (front + rear view) ready. 4 coupled spoked drivers with side rods. Axles 1 and 4 are Klien-Lindner axles that shift sideways for 30 m curves; the model can ignore that. Power figures vary by source: 88\u2013215 kW. | BV9: Black with thin red lining and a red number plate. Tall chimney with spark arrester, two domes and a sand dome, side tanks, cab with round front/back windows, coal bunker behind the cab, outside cylinders and rods. | CI9: Angle is off; wheels come out white.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, lighter accepted reference-colour style.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "preparation_job_sha256": "64ca1950f1690f32557536398a2acfd71fbf373a091f39440ffd1fd9eebdf314",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav490.glb",
+  "glb_sha256": "694f32c678e78e9edab82950d852f74eb73514832a4c659564f5bcbeb68a23c2"
+}

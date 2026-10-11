@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "id": "drg01",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\drg01\\engine.blend",
+      "source_sha256": "7e44dc9ae613110b3540c4ae8b136809ab7c2a7e66d8906ed740583b1bb0d979",
+      "frame_prefix": "loco_drg01_engine",
+      "length_tiles": 1.9265340969895888,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            3.711,
+            -0.39949999999999997,
+            4.37
+          ]
+        ],
+        "headlamps": [
+          [
+            5.262,
+            -1.33365,
+            2.051
+          ],
+          [
+            5.362,
+            0.17934999999999998,
+            1.901
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 1.0,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 3,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\drg01\\engine-window-mask.png",
+        "sha256": "a0c7c50477d0b33e355ffdd04022f5c0e42d63a0df98d8fd1d948c5aec0d7298"
+      }
+    },
+    {
+      "name": "engine-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\drg01\\engine-t0.blend",
+      "source_sha256": "f416d321d182271e6e735e208d9f54f30afdd1c8eb822003d1131f2995bc4f3e",
+      "frame_prefix": "loco_drg01_engine-t0",
+      "length_tiles": 0.20208290225007824,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.06666666666666667,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 3
+    },
+    {
+      "name": "engine-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\drg01\\engine-t1.blend",
+      "source_sha256": "797c1e282f6627d815a961e3328ef7f9c7ea05691e6b577fd53d16dcde5ef8e0",
+      "frame_prefix": "loco_drg01_engine-t1",
+      "length_tiles": 0.41885185395452396,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.05555555555555555,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 3
+    },
+    {
+      "name": "tender",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\drg01\\tender.blend",
+      "source_sha256": "ffe01b31fe6b2dff1727da7fb99ad6ca28dabf720a40cee8095f1c15c594d489",
+      "frame_prefix": "loco_drg01_tender",
+      "length_tiles": 1.0489064944522322,
+      "canvas": 256,
+      "effects": {}
+    },
+    {
+      "name": "tender-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\drg01\\tender-t0.blend",
+      "source_sha256": "90f04c55ccc26edb14840683482962d7d9a190fa619adc77be87622b8c395533",
+      "frame_prefix": "loco_drg01_tender-t0",
+      "length_tiles": 0.37818372635445957,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.05555555555555555,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 3
+    },
+    {
+      "name": "tender-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\drg01\\tender-t1.blend",
+      "source_sha256": "625b4b0515d3cfc7e2da926003c846e7efe009c1c2ee6035847881bf00cef578",
+      "frame_prefix": "loco_drg01_tender-t1",
+      "length_tiles": 0.37818372635445957,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.05555555555555555,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 3
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 25,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r25-c5.jpeg",
+        "sha256": "4bcf4fce358abd4334548ee612f89ea5ffe13b02eb053072b332cd2b7e0b19d4"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-drg01-rear.png",
+        "sha256": "fca9d76420fbb256ea6ed1e0c20e9f45e2236b9f2a472c6d2f31d01ef558e201",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B25: DRG Class 01 | G25: 4-6-2 + 4-axle tender | Y25: Tender rear bogie [tender]: 1-2 (swivelling bogie / truck sprite)\nTender front bogie [tender]: 3-4 (swivelling bogie / truck sprite)\nTrailing truck [engine]: 5 (swivelling bogie / truck sprite)\nFrame [engine]: 6-8 (rigid, drawn with the body; coupled drivers and rods)\nLeading bogie [engine]: 9-10 (swivelling bogie / truck sprite) | AA25: The four tender axles are drawn evenly spaced. | CI25: 2026-10-06: Same distortion and angle problems as Black Five, but this model looks better. Tender does not fit the rails. At the front only the angles are wrong. Restore the original model.\n\nEarlier review: Correct, fits well.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; DRG01 tender freshly handbuilt from row25: rectangular black coal/water bunker, red frame, four axles. Original raw tender was distorted; no game mesh used.; DRG01 tender freshly handbuilt from row25: rectangular black coal/water bunker, red frame, four axles. Original raw tender was distorted; no game mesh used.; Reconstructed truck fragments replaced by clean reference-authored axle groups, fixed technical rail gauge, dark treads. No runtime geometry used.; 2026-10-08 owner width correction: body transverse width reduced 15%; standard gauge wheel tread centres +/-0.99761036797m; length/height unchanged. M62 retains original picture reconstruction, simplified replacement rejected.; 2026-10-08 owner: standard rail gauge reduced25% to0.24tile. Axles and diameters now authored from workbook proportions, no automatic detector or shrink-to-fit. Body wheel apertures cleared; original M62 body preserved.",
+    "prepared_sources": {
+      "engine": "7e44dc9ae613110b3540c4ae8b136809ab7c2a7e66d8906ed740583b1bb0d979",
+      "engine-t0": "f416d321d182271e6e735e208d9f54f30afdd1c8eb822003d1131f2995bc4f3e",
+      "engine-t1": "797c1e282f6627d815a961e3328ef7f9c7ea05691e6b577fd53d16dcde5ef8e0",
+      "tender": "ffe01b31fe6b2dff1727da7fb99ad6ca28dabf720a40cee8095f1c15c594d489",
+      "tender-t0": "90f04c55ccc26edb14840683482962d7d9a190fa619adc77be87622b8c395533",
+      "tender-t1": "625b4b0515d3cfc7e2da926003c846e7efe009c1c2ee6035847881bf00cef578"
+    }
+  }
+}

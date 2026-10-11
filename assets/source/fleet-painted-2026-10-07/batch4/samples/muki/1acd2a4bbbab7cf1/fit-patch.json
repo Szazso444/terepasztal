@@ -1,0 +1,20 @@
+{
+  "muki": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": 0.043463862638313415,
+        "part": "body",
+        "up": 11.163428571428572
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body": {
+        "cycle": 0.07305457354889948,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

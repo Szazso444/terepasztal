@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "id": "ice1",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\body-repaired.blend",
+      "source_sha256": "f09163c2f4c82eafe24789bc25ba3675a6f73ab5438f7da0421f448f6f1e5242",
+      "frame_prefix": "loco_ice1_body",
+      "length_tiles": 2.6449702553968804,
+      "canvas": 256,
+      "effects": {
+        "lamps": [
+          [
+            6.688,
+            0.026,
+            2.41
+          ],
+          [
+            7.392,
+            0.678,
+            1.813
+          ],
+          [
+            7.33,
+            -0.825,
+            1.912
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\window-mask.png",
+        "sha256": "08eb54ff05011b4e3d7c7860d3c4ccf84b61c6ad79763eb6669f216e24935f98"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\body-t0-repaired.blend",
+      "source_sha256": "197d148dfb76003de76b348d8f6dfea403ee48faa053fef0b1ff15295dd6b9b1",
+      "frame_prefix": "loco_ice1_body-t0",
+      "length_tiles": 0.6372281928655013,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.12999775751746012,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\body-t1-repaired.blend",
+      "source_sha256": "d84c93c82e843651ca7ff422e1d7621cb95d8e5b17aee2a862995b9ea7c496a7",
+      "frame_prefix": "loco_ice1_body-t1",
+      "length_tiles": 0.7077515609042875,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.12999775751746012,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "repairs": [
+    "Filled the missing equipment section between bogies"
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 28,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r28-c5.jpeg",
+        "sha256": "84a8aacbefa0eeb935d95d9e1eb79454b73b4bb65b4d2381b71c21d0adef7b9d"
+      }
+    ],
+    "guidelines": "Geometry already explicitly accepted by owner in the 2026-10-07 review. Preserve approved shape. Use lighter painted style; no added cast shadows.",
+    "prepared_sources": {
+      "body": "f09163c2f4c82eafe24789bc25ba3675a6f73ab5438f7da0421f448f6f1e5242",
+      "body-t0": "197d148dfb76003de76b348d8f6dfea403ee48faa053fef0b1ff15295dd6b9b1",
+      "body-t1": "d84c93c82e843651ca7ff422e1d7621cb95d8e5b17aee2a862995b9ea7c496a7"
+    },
+    "owner_approved": true
+  }
+}

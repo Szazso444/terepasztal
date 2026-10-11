@@ -1,0 +1,180 @@
+{
+  "blender": "Blender 5.2.1 LTS\n\tbuild date: 2026-08-25\n\tbuild time: 02:38:20\n\tbuild commit date: 2026-08-24\n\tbuild commit time: 16:50\n\tbuild hash: 9e2066aef7ef\n\tbuild branch: blender-v5.2-release\n\tbuild platform: Windows\n\tbuild type: Release\n\tbuild c flags:  /W3 -Werror=implicit-function-declaration -Werror=return-type -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wstrict-prototypes -Wmissing-prototypes -Wunused-parameter -Wundef -Wundef-prefix -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /MP /nologo /J /Gy /Gd /showFilenames -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild c++ flags:  /W3 -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wno-overloaded-virtual -Wno-sign-compare -Wno-invalid-offsetof -Wno-suggest-override -Wundef -Wundef-prefix -Wunused-parameter -Wmismatched-tags -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /EHsc  /Gy /MP /nologo /J /Gd /showFilenames /EHsc -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild link flags: /MACHINE:X64  /SUBSYSTEM:CONSOLE /STACK:2097152 /ignore:4049 /ignore:4217 /ignore:4221\n\tbuild system: CMake\n",
+  "manifest": {
+    "id": "sw1",
+    "parts": [
+      {
+        "canvas": 256,
+        "effects": {
+          "headlamps": [
+            [
+              3.927,
+              -0.1683,
+              2.79
+            ]
+          ],
+          "smoke": [
+            [
+              -0.349,
+              0.12154999999999999,
+              3.519
+            ]
+          ]
+        },
+        "frame_prefix": "loco_sw1_body",
+        "length_tiles": 1.4403051262892996,
+        "name": "body",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\sw1\\body.blend",
+        "source_sha256": "16122277d0481d86f20b3f94383b3586e5c96ef61bf7babed4e461b95dda8bc4",
+        "window_mask": {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\sw1\\body-window-mask.png",
+          "sha256": "cfef237a638fc5323599a2bf64290c1861d36c542e2f9c7116f94badc637a940"
+        }
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_sw1_body-t0",
+        "length_tiles": 0.3556421053531265,
+        "max_phase_bounds_drift": 3,
+        "name": "body-t0",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\sw1\\body-t0.blend",
+        "source_sha256": "70b81693d3ffe8ba6d47097f00f97753c5a1063ea7a098c1a54aba698ec1de0a",
+        "wheel": {
+          "mode": "timeline",
+          "period_frames": 8,
+          "radius": 0.125,
+          "start": 1,
+          "symmetry": 1
+        }
+      },
+      {
+        "canvas": 256,
+        "effects": {},
+        "frame_prefix": "loco_sw1_body-t1",
+        "length_tiles": 0.3556421053531265,
+        "max_phase_bounds_drift": 3,
+        "name": "body-t1",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\sw1\\body-t1.blend",
+        "source_sha256": "a16248b215bdf13bed7ecfaeeac42f2988c2fd6c822d6cdd13403f47752ee356",
+        "wheel": {
+          "mode": "timeline",
+          "period_frames": 8,
+          "radius": 0.125,
+          "start": 1,
+          "symmetry": 1
+        }
+      }
+    ],
+    "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+    "reference": {
+      "authority": "workbook-pictures-and-owner-notes",
+      "guidelines": "B21: EMD SW1 | G21: B-B | Y21: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA21: Game data has the SW1 as small (1 tile) with baked axles. | CI21: Slightly too wide: slightly narrower.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; Reconstructed truck fragments replaced by clean reference-authored axle groups, fixed technical rail gauge, dark treads. No runtime geometry used.; 2026-10-08 owner width correction: body transverse width reduced 15%; standard gauge wheel tread centres +/-0.99761036797m; length/height unchanged. M62 retains original picture reconstruction, simplified replacement rejected.; 2026-10-08 owner: standard rail gauge reduced25% to0.24tile. Axles and diameters now authored from workbook proportions, no automatic detector or shrink-to-fit. Body wheel apertures cleared; original M62 body preserved.",
+      "pictures": [
+        {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r21-c5.jpeg",
+          "sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+        },
+        {
+          "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-sw1-rear.png",
+          "role": "Supplementary rear colour view from source art; workbook remains geometry authority",
+          "sha256": "bbc1817d34e7a82f18ee8ee0fe267a1ae76782bd8eaa8a9bc10c89f8c44df434"
+        }
+      ],
+      "prepared_sources": {
+        "body": "16122277d0481d86f20b3f94383b3586e5c96ef61bf7babed4e461b95dda8bc4",
+        "body-t0": "70b81693d3ffe8ba6d47097f00f97753c5a1063ea7a098c1a54aba698ec1de0a",
+        "body-t1": "a16248b215bdf13bed7ecfaeeac42f2988c2fd6c822d6cdd13403f47752ee356"
+      },
+      "row": 21,
+      "schema": 1,
+      "sheet": "Locomotives",
+      "workbook": {
+        "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+        "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+      }
+    },
+    "schema": 1
+  },
+  "packer": "a36493411a58067cfa4b753ff2ddb5e06017c5808c9ad0c6b40db4638a083423",
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "colour_gain": 1.12,
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-reference-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "None",
+    "metallic_cap": 0.18,
+    "normal_contrast": 0.1,
+    "normal_light": [
+      -0.4,
+      -0.6,
+      0.8
+    ],
+    "paint_low": 0.98,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "surface_mode": "reference_colour",
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "Standard",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  },
+  "reference_validator": "aedd91df4cf0a5fd145d702fd23af04f8ed60e9546bb38256fcfbe065b74e887",
+  "renderer": "1763ae485fe3ff06ecee6e6e4d25de1fe71f746f995d2bfc896bff69143bf0a9",
+  "runner": "be86b4e70450762ecbd9f134cc11b2b9f097dc5ff0e7110178f806f0ba6fb181"
+}

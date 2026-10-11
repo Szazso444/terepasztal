@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "id": "sw1",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sw1\\body.blend",
+      "source_sha256": "0549acbe661cd3db94b10c6efa5e02cbb05fb5d82083c18edd46e33904376625",
+      "frame_prefix": "loco_sw1_body",
+      "length_tiles": 1.5297924972299253,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            -0.773,
+            0.287,
+            3.736
+          ]
+        ],
+        "lamps": [
+          [
+            4.122,
+            -0.066,
+            3.151
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sw1\\window-mask.png",
+        "sha256": "e595c68b5744bf8766c13daefc0cc84ebec140d2a942cc5cfb5302026782facf"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sw1\\body-t0.blend",
+      "source_sha256": "1e6e06961a92f0ddb5ee9f3059f87bcf6162588202cef3df74d95ededefc8d50",
+      "frame_prefix": "loco_sw1_body-t0",
+      "length_tiles": 0.557566777318196,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1270056445873325,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sw1\\body-t1.blend",
+      "source_sha256": "09c1aa3561125738addf6a2cd8b10eeebd9f0a43e0fcd87edb7ca8b19b932f3c",
+      "frame_prefix": "loco_sw1_body-t1",
+      "length_tiles": 0.5260323380549516,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1270056445873325,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

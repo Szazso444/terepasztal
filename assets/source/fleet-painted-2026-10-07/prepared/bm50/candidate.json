@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "id": "bm50",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\bm50\\body.blend",
+      "source_sha256": "87abda3e0ef2860bed1ac5dc80c3eb38d069cad2e27bcb890ae907aea9800334",
+      "frame_prefix": "loco_bm50_body",
+      "length_tiles": 0.6954698623104276,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            1.445,
+            -0.024,
+            1.447
+          ]
+        ],
+        "headlamps": [
+          [
+            1.941,
+            0.073,
+            1.304
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.05624535688867581,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

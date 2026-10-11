@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "drg01",
+  "recipe": "build.py",
+  "helpers": "c50_primitives.py",
+  "profile": "style.json",
+  "observations": "observations.json",
+  "pictures": [
+    {
+      "id": "view1",
+      "path": "references\\01.png",
+      "sha256": "1982f0d1a73827661b7e2ba2de28f1cd43eaea03541d8f04b6b45c2d45e145d0",
+      "original_name": "drawing1-r25-c5.jpeg",
+      "original_sha256": "4bcf4fce358abd4334548ee612f89ea5ffe13b02eb053072b332cd2b7e0b19d4"
+    },
+    {
+      "id": "view2",
+      "path": "references\\02.png",
+      "sha256": "ec7f3d64683a485e17a20a2321b8d9064842c120924936fe74d7daeb065625c0",
+      "original_name": "loco-drg01-rear.png",
+      "original_sha256": "fca9d76420fbb256ea6ed1e0c20e9f45e2236b9f2a472c6d2f31d01ef558e201"
+    }
+  ],
+  "gauge": "standard",
+  "output": "model"
+}

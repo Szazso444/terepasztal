@@ -1,0 +1,414 @@
+{
+  "asset": {
+    "id": "gg1",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-gg1.png",
+    "size_tiles": 3.5,
+    "length_m": 24.23,
+    "width_m": 3.15,
+    "height_m": 4.57,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\gg1.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "body",
+      3.5,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.07,
+          0.155,
+          0.256,
+          0.348,
+          0.423
+        ],
+        [
+          0.529,
+          0.623,
+          0.704,
+          0.8,
+          0.902
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.07,
+          0.155,
+          0.256,
+          0.348,
+          0.423
+        ],
+        [
+          0.529,
+          0.623,
+          0.704,
+          0.8,
+          0.902
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": [
+              0.914,
+              0.914,
+              1.448,
+              1.448,
+              1.448
+            ],
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          },
+          {
+            "d": [
+              1.448,
+              1.448,
+              1.448,
+              0.914,
+              0.914
+            ],
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 3.5,
+    "length_m": 24.23,
+    "width_m": 3.15,
+    "height_m": 4.57,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "roof_height_m": 4.29,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0,
+    "stance_mode": "turn",
+    "box_body": true
+  },
+  "annot": {
+    "id": "gg1",
+    "windows": [
+      [
+        [
+          99,
+          325
+        ],
+        [
+          109,
+          329
+        ],
+        [
+          109,
+          349
+        ],
+        [
+          99,
+          347
+        ]
+      ],
+      [
+        [
+          113,
+          331
+        ],
+        [
+          124,
+          336
+        ],
+        [
+          124,
+          357
+        ],
+        [
+          113,
+          353
+        ]
+      ],
+      [
+        [
+          251,
+          383
+        ],
+        [
+          265,
+          389
+        ],
+        [
+          265,
+          417
+        ],
+        [
+          246,
+          408
+        ],
+        [
+          246,
+          400
+        ]
+      ],
+      [
+        [
+          268,
+          390
+        ],
+        [
+          284,
+          396
+        ],
+        [
+          285,
+          424
+        ],
+        [
+          268,
+          418
+        ]
+      ],
+      [
+        [
+          313,
+          407
+        ],
+        [
+          321,
+          410
+        ],
+        [
+          321,
+          438
+        ],
+        [
+          313,
+          435
+        ]
+      ],
+      [
+        [
+          512,
+          484
+        ],
+        [
+          520,
+          488
+        ],
+        [
+          520,
+          518
+        ],
+        [
+          512,
+          514
+        ]
+      ],
+      [
+        [
+          542,
+          494
+        ],
+        [
+          563,
+          502
+        ],
+        [
+          563,
+          532
+        ],
+        [
+          545,
+          526
+        ],
+        [
+          542,
+          520
+        ]
+      ],
+      [
+        [
+          566,
+          503
+        ],
+        [
+          578,
+          508
+        ],
+        [
+          583,
+          530
+        ],
+        [
+          583,
+          541
+        ],
+        [
+          566,
+          534
+        ]
+      ],
+      [
+        [
+          744,
+          558
+        ],
+        [
+          758,
+          565
+        ],
+        [
+          758,
+          588
+        ],
+        [
+          744,
+          582
+        ]
+      ],
+      [
+        [
+          763,
+          567
+        ],
+        [
+          777,
+          574
+        ],
+        [
+          777,
+          596
+        ],
+        [
+          763,
+          590
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        887,
+        587
+      ]
+    ],
+    "smoke": [],
+    "pantograph_raised": true,
+    "notes": "Electric (GG1): no smoke outlet. 10 panes on the visible side: rear nose side window (2 panes), two centre-cab side windows (2 panes each, split by a mullion), two narrow cab door windows, front nose side window (2 panes). One main headlamp on the nose. The small cylindrical marker lamps on the nose sides (lens about 826,595 front; about 88,339 rear) are not marked as headlamps. Both pantographs are drawn raised. Side louvre grilles are excluded."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-gg1-rear.png"
+  ],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\gg1.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\gg1.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\gg1\\prepared-texture.png"
+  }
+}

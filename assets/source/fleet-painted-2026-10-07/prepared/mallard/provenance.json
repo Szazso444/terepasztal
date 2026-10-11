@@ -1,0 +1,7 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\mallard.json",
+  "job_sha256": "28cc8b529546317d0df16d4e5995a7d23aeb3d660698be24bd50716e4ca40784",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mallard.glb",
+  "glb_sha256": "deb2a5c26c0a1a6655a0769404e4a6ff27795c0276716c1e428296c41fe44c22"
+}

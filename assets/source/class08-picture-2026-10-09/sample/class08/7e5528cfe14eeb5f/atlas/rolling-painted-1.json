@@ -1,0 +1,134 @@
+{
+  "frames": {
+    "rolling/loco_class08_body_f0": {
+      "ax": 104.0,
+      "ay": 135.0,
+      "h": 174,
+      "w": 208,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_class08_body_f24": {
+      "ax": 104.0,
+      "ay": 135.0,
+      "h": 174,
+      "w": 208,
+      "x": 212,
+      "y": 2
+    },
+    "rolling/loco_class08_body_f48": {
+      "ax": 104.0,
+      "ay": 116.0,
+      "h": 155,
+      "w": 208,
+      "x": 1253,
+      "y": 2
+    },
+    "rolling/loco_class08_body_f72": {
+      "ax": 104.0,
+      "ay": 116.0,
+      "h": 155,
+      "w": 208,
+      "x": 1463,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f0": {
+      "ax": 102.0,
+      "ay": 133.0,
+      "h": 167,
+      "w": 204,
+      "x": 842,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f24": {
+      "ax": 102.0,
+      "ay": 133.0,
+      "h": 167,
+      "w": 203,
+      "x": 1048,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f48": {
+      "ax": 102.0,
+      "ay": 115.0,
+      "h": 149,
+      "w": 204,
+      "x": 2093,
+      "y": 2
+    },
+    "rolling/loco_class08_body_lit_f72": {
+      "ax": 102.0,
+      "ay": 115.0,
+      "h": 149,
+      "w": 203,
+      "x": 2299,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f0": {
+      "ax": 104.0,
+      "ay": 135.0,
+      "h": 174,
+      "w": 208,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f24": {
+      "ax": 104.0,
+      "ay": 135.0,
+      "h": 174,
+      "w": 208,
+      "x": 212,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f48": {
+      "ax": 104.0,
+      "ay": 116.0,
+      "h": 155,
+      "w": 208,
+      "x": 1253,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w0_f72": {
+      "ax": 104.0,
+      "ay": 116.0,
+      "h": 155,
+      "w": 208,
+      "x": 1463,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f0": {
+      "ax": 104.0,
+      "ay": 135.0,
+      "h": 174,
+      "w": 208,
+      "x": 422,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f24": {
+      "ax": 104.0,
+      "ay": 135.0,
+      "h": 174,
+      "w": 208,
+      "x": 632,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f48": {
+      "ax": 104.0,
+      "ay": 116.0,
+      "h": 155,
+      "w": 208,
+      "x": 1673,
+      "y": 2
+    },
+    "rolling/loco_class08_body_w3_f72": {
+      "ax": 104.0,
+      "ay": 116.0,
+      "h": 155,
+      "w": 208,
+      "x": 1883,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 4
+}

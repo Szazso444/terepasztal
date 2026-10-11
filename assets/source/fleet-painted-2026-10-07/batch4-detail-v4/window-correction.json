@@ -1,0 +1,10 @@
+{
+  "affected_frames": 96,
+  "body_and_bogie_frames_unchanged": true,
+  "id": "m62",
+  "key": "a6f477351680224c",
+  "new_mask_pixels": 8277,
+  "old_mask_pixels": 35103,
+  "previous_key": "25c5a7f7746543b6",
+  "rule": "Restrict source UV window mask to blue/teal glazing, inset one texture pixel."
+}

@@ -1,0 +1,20 @@
+{
+  "size": [
+    1254,
+    1254
+  ],
+  "alpha_bounds": [
+    49,
+    51,
+    1216,
+    1228
+  ],
+  "sha256": "fe4e257f784cd705053c712daf450adfd58492231855682fb8276f50f0019ad8",
+  "tool": "built-in imagegen",
+  "prompt_files": [
+    "prompt.txt",
+    "prompt-edit.txt"
+  ],
+  "selected": "c50-reference-v2.png",
+  "review": "full object present, transparent alpha, no text or rails, front exhaust and louvers corrected"
+}

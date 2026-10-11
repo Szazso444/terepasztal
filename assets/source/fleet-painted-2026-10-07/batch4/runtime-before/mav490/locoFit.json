@@ -1,0 +1,2219 @@
+{
+  "rocket": {
+    "tiles": 0.7538,
+    "sprite": true,
+    "smoke": [
+      {
+        "along": 0.1555717592589078,
+        "part": "engine",
+        "up": 21.171857142857142
+      }
+    ],
+    "wheels": {
+      "engine": {
+        "cycle": 0.578431839250316,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.34,
+        0.347,
+        0.091,
+        0.313
+      ]
+    },
+    "trucks": {},
+    "truckOffsets": {},
+    "lamps": [],
+    "spriteFacings": 96
+  },
+  "bm50": {
+    "tiles": 0.7596,
+    "sprite": true,
+    "smoke": [],
+    "lamps": [
+      {
+        "across": 0.0,
+        "along": 0.30980569735720803,
+        "part": "body",
+        "up": 9.802453719773402
+      }
+    ],
+    "wheels": {
+      "body": {
+        "cycle": 0.04614705315273424,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "body": [
+        -0.348,
+        0.348,
+        0.071,
+        0.223
+      ]
+    },
+    "trucks": {},
+    "spriteFacings": 96
+  },
+  "muki": {
+    "tiles": 0.689,
+    "sprite": true,
+    "smoke": [
+      {
+        "along": 0.043463862638313415,
+        "part": "body",
+        "up": 11.163428571428572
+      }
+    ],
+    "lamps": [],
+    "wheels": {
+      "body": {
+        "cycle": 0.07305457354889948,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "body": [
+        -0.264,
+        0.263,
+        0.087,
+        0.311
+      ]
+    },
+    "trucks": {},
+    "truckOffsets": {},
+    "spriteFacings": 96
+  },
+  "c50": {
+    "tiles": 0.8839,
+    "sprite": true,
+    "smoke": [
+      {
+        "along": 0.1780589731149431,
+        "part": "body",
+        "up": 14.311752954284096
+      }
+    ],
+    "lamps": [
+      {
+        "across": -0.09506538395119843,
+        "along": 0.34706410013929584,
+        "part": "body",
+        "up": 11.295639728381252
+      },
+      {
+        "across": 0.09506538395119843,
+        "along": 0.34706410013929584,
+        "part": "body",
+        "up": 11.295639728381252
+      }
+    ],
+    "boxes": {
+      "body": [
+        -0.41,
+        0.41,
+        0.118,
+        0.387
+      ]
+    },
+    "spriteFacings": 96,
+    "wheels": {
+      "body": {
+        "cycle": 0.08153802291280288,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  },
+  "mav490": {
+    "tiles": 1.0614,
+    "sprite": true,
+    "smoke": [
+      {
+        "along": 0.3720891561656351,
+        "part": "engine",
+        "up": 19.730857142857143
+      }
+    ],
+    "wheels": {
+      "engine": {
+        "cycle": 0.3545432278533418,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.498,
+        0.499,
+        0.111,
+        0.423
+      ]
+    },
+    "trucks": {},
+    "truckOffsets": {},
+    "lamps": [],
+    "spriteFacings": 96
+  },
+  "mk45": {
+    "tiles": 1.5024,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": -0.191,
+        "up": 18.9
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.643,
+        "across": -0.016,
+        "up": 17.2
+      },
+      {
+        "part": "body",
+        "along": 0.628,
+        "across": 0.075,
+        "up": 8.7
+      },
+      {
+        "part": "body",
+        "along": 0.63,
+        "across": -0.098,
+        "up": 8.7
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.0945
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.0945
+      }
+    },
+    "boxes": {
+      "body": [
+        -0.719,
+        0.719,
+        0.122,
+        0.449
+      ],
+      "body-t0": [
+        -0.172,
+        0.196,
+        0.16,
+        0.15
+      ],
+      "body-t1": [
+        -0.192,
+        0.17,
+        0.159,
+        0.137
+      ]
+    }
+  },
+  "mk48": {
+    "tiles": 1.1143,
+    "sprite": true,
+    "smoke": [
+      {
+        "along": 0.3956654949399232,
+        "part": "body",
+        "up": 15.821142857142858
+      }
+    ],
+    "lamps": [
+      {
+        "across": -0.010264528445948556,
+        "along": 0.4524411679065762,
+        "part": "body",
+        "up": 13.633714285714285
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.0881787146809768,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.08817871468097682,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "body": [
+        -0.525,
+        0.524,
+        0.133,
+        0.403
+      ],
+      "body-t0": [
+        -0.169,
+        0.199,
+        0.171,
+        0.139
+      ],
+      "body-t1": [
+        -0.173,
+        0.132,
+        0.143,
+        0.143
+      ]
+    },
+    "truckOffsets": {
+      "body-t0": 0.014093065110963216,
+      "body-t1": -0.020298736096777955
+    },
+    "spriteFacings": 96
+  },
+  "rezet": {
+    "tiles": 1.146,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.349,
+        "up": 20
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.486,
+        "across": -0.004,
+        "up": 15.3
+      },
+      {
+        "part": "engine",
+        "along": 0.487,
+        "across": 0.1,
+        "up": 6.8
+      },
+      {
+        "part": "engine",
+        "along": 0.485,
+        "across": -0.116,
+        "up": 7.1
+      }
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.3779
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.541,
+        0.541,
+        0.103,
+        0.428
+      ]
+    }
+  },
+  "mav375": {
+    "tiles": 1.3432,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.365,
+        "up": 24.7
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.477,
+        "across": 0,
+        "up": 19.9
+      },
+      {
+        "part": "engine",
+        "along": 0.556,
+        "across": 0.12,
+        "up": 10.7
+      },
+      {
+        "part": "engine",
+        "along": 0.556,
+        "across": -0.126,
+        "up": 11.3
+      }
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.3887
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.64,
+        0.639,
+        0.181,
+        0.547
+      ]
+    }
+  },
+  "j94": {
+    "tiles": 1.3401,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.377,
+        "up": 22.5
+      }
+    ],
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.5587
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.635,
+        0.629,
+        0.172,
+        0.5
+      ]
+    }
+  },
+  "class08": {
+    "tiles": 1.428,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": 0.038,
+        "up": 24.2
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.574,
+        "across": -0.016,
+        "up": 21.4
+      },
+      {
+        "part": "body",
+        "along": 0.595,
+        "across": 0.114,
+        "up": 11.4
+      },
+      {
+        "part": "body",
+        "along": 0.591,
+        "across": -0.13,
+        "up": 11.9
+      }
+    ],
+    "wheels": {
+      "body": {
+        "phases": 8,
+        "cycle": 0.6639
+      }
+    },
+    "boxes": {
+      "body": [
+        -0.682,
+        0.679,
+        0.169,
+        0.565
+      ]
+    }
+  },
+  "general": {
+    "tiles": 1.5763,
+    "sprite": true,
+    "smoke": [
+      {
+        "along": 0.3169173157686616,
+        "part": "engine",
+        "up": 24.92914285714286
+      }
+    ],
+    "lamps": [
+      {
+        "across": -0.005934180507814008,
+        "along": 0.5350385452450684,
+        "part": "engine",
+        "up": 17.725714285714286
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "cycle": 0.6383734777095162,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t0": {
+        "cycle": 0.03990335433362502,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.756,
+        0.756,
+        0.118,
+        0.478
+      ],
+      "engine-t0": [
+        -0.152,
+        0.126,
+        0.172,
+        0.104
+      ]
+    },
+    "truckOffsets": {
+      "engine-t0": -0.012956727122723145
+    },
+    "spriteFacings": 96
+  },
+  "jupiter": {
+    "tiles": 1.764,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.378,
+        "up": 27.1
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.7679
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0384
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.854,
+        0.85,
+        0.142,
+        0.574
+      ],
+      "engine-t0": [
+        -0.197,
+        0.167,
+        0.174,
+        0.125
+      ]
+    }
+  },
+  "kando_v40": {
+    "tiles": 1.9396,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.854,
+        "across": -0.036,
+        "up": 24.2
+      },
+      {
+        "part": "body",
+        "along": 0.859,
+        "across": 0.097,
+        "up": 13.1
+      },
+      {
+        "part": "body",
+        "along": 0.846,
+        "across": -0.102,
+        "up": 13
+      }
+    ],
+    "wheels": {
+      "body": {
+        "phases": 8,
+        "cycle": 0.6273
+      }
+    },
+    "boxes": {
+      "body": [
+        -0.938,
+        0.938,
+        0.193,
+        0.741
+      ]
+    }
+  },
+  "sw1": {
+    "tiles": 1.5939,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": -0.124,
+        "up": 23.5
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.661,
+        "across": -0.011,
+        "up": 19.8
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.128
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.128
+      }
+    },
+    "boxes": {
+      "body": [
+        -0.765,
+        0.765,
+        0.192,
+        0.565
+      ],
+      "body-t0": [
+        -0.26,
+        0.298,
+        0.273,
+        0.207
+      ],
+      "body-t1": [
+        -0.282,
+        0.244,
+        0.261,
+        0.194
+      ]
+    }
+  },
+  "black_five": {
+    "tiles": 2.3874,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.42,
+        "up": 22.7
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.64,
+        "across": -0.186,
+        "up": 10
+      },
+      {
+        "part": "engine",
+        "along": 0.668,
+        "across": 0.119,
+        "up": 8.8
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6482
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0355
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0448
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.747,
+        0.765,
+        0.217,
+        0.561
+      ],
+      "engine-t0": [
+        -0.162,
+        0.122,
+        0.17,
+        0.116
+      ],
+      "tender": [
+        -0.368,
+        0.326,
+        0.169,
+        0.492
+      ]
+    }
+  },
+  "crocodile": {
+    "tiles": 3.0022,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "engine",
+        "along": -0.359,
+        "across": -0.024,
+        "up": 20.2
+      },
+      {
+        "part": "engine",
+        "along": 0.305,
+        "across": -0.011,
+        "up": 15.9
+      },
+      {
+        "part": "engine",
+        "along": 0.319,
+        "across": 0.172,
+        "up": 10.8
+      },
+      {
+        "part": "engine",
+        "along": 0.286,
+        "across": -0.08,
+        "up": 10.1
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6802
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0479
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.883,
+        0.438,
+        0.176,
+        0.476
+      ],
+      "engine-t0": [
+        -0.095,
+        0.064,
+        0.174,
+        0.156
+      ],
+      "cradle": [
+        -0.522,
+        0.523,
+        0.232,
+        0.719
+      ]
+    }
+  },
+  "deltic": {
+    "tiles": 2.7777,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": 0.009,
+        "up": 22.9
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.293,
+        "across": -0.122,
+        "up": 12.8
+      },
+      {
+        "part": "body",
+        "along": 1.293,
+        "across": 0.103,
+        "up": 11.9
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1376
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1376
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.357,
+        1.338,
+        0.197,
+        0.606
+      ],
+      "body-t0": [
+        -0.396,
+        0.443,
+        0.298,
+        0.208
+      ],
+      "body-t1": [
+        -0.435,
+        0.437,
+        0.303,
+        0.206
+      ]
+    }
+  },
+  "drg01": {
+    "tiles": 2.9565,
+    "sprite": true,
+    "smoke": [
+      {
+        "along": 0.6123432751036185,
+        "part": "engine",
+        "up": 27.39942857142857
+      }
+    ],
+    "lamps": [
+      {
+        "across": -0.2097813001140736,
+        "along": 0.8809852305249284,
+        "part": "engine",
+        "up": 12.81657142857143
+      },
+      {
+        "across": 0.07971047871306924,
+        "along": 0.8740887504753067,
+        "part": "engine",
+        "up": 11.810857142857143
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0,
+        1
+      ],
+      "tender": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "cycle": 0.845315994175257,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t0": {
+        "cycle": 0.048034785461899876,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t1": {
+        "cycle": 0.04696021764021465,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t0": {
+        "cycle": 0.05056884092199343,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t1": {
+        "cycle": 0.05056884092199343,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.966,
+        0.986,
+        0.263,
+        0.645
+      ],
+      "engine-t0": [
+        -0.061,
+        0.116,
+        0.172,
+        0.172
+      ],
+      "engine-t1": [
+        -0.296,
+        0.253,
+        0.172,
+        0.138
+      ],
+      "tender": [
+        -0.421,
+        0.403,
+        0.258,
+        0.513
+      ],
+      "tender-t0": [
+        -0.193,
+        0.232,
+        0.287,
+        0.193
+      ],
+      "tender-t1": [
+        -0.232,
+        0.146,
+        0.282,
+        0.198
+      ]
+    },
+    "truckOffsets": {
+      "engine-t0": 0.02748835006714803,
+      "engine-t1": -0.02139446050903598,
+      "tender-t0": 0.008739904449241062,
+      "tender-t1": -0.017937993701076908
+    },
+    "spriteFacings": 96
+  },
+  "f7": {
+    "tiles": 2.5111,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": -0.732,
+        "up": 27.7
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.139,
+        "across": -0.017,
+        "up": 19.7
+      },
+      {
+        "part": "body",
+        "along": 1.113,
+        "across": -0.161,
+        "up": 12
+      },
+      {
+        "part": "body",
+        "along": 1.127,
+        "across": 0.131,
+        "up": 11.1
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.128
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.128
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.224,
+        1.224,
+        0.225,
+        0.685
+      ],
+      "body-t0": [
+        -0.264,
+        0.352,
+        0.296,
+        0.203
+      ],
+      "body-t1": [
+        -0.34,
+        0.305,
+        0.278,
+        0.202
+      ]
+    }
+  },
+  "flying_scotsman": {
+    "tiles": 2.6159,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.516,
+        "up": 24.4
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.756,
+        "across": -0.183,
+        "up": 11.5
+      },
+      {
+        "part": "engine",
+        "along": 0.783,
+        "across": 0.123,
+        "up": 10.9
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.7522
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0345
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0357
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0439
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.874,
+        0.859,
+        0.164,
+        0.6
+      ],
+      "engine-t0": [
+        -0.094,
+        0.179,
+        0.199,
+        0.236
+      ],
+      "engine-t1": [
+        -0.184,
+        0.101,
+        0.17,
+        0.117
+      ],
+      "tender": [
+        -0.354,
+        0.371,
+        0.168,
+        0.499
+      ]
+    }
+  },
+  "ice1": {
+    "tiles": 2.7091,
+    "sprite": true,
+    "lamps": [
+      {
+        "across": 0.0041699646811666005,
+        "along": 1.072643222601624,
+        "part": "body",
+        "up": 15.14857142857143
+      },
+      {
+        "across": 0.10873984822426751,
+        "along": 1.1855530355070583,
+        "part": "body",
+        "up": 11.395999999999999
+      },
+      {
+        "across": -0.13231618699855557,
+        "along": 1.1756092735750454,
+        "part": "body",
+        "up": 12.018285714285714
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.13100104429141843,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.13100104429141846,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.323,
+        1.323,
+        0.226,
+        0.683
+      ],
+      "body-t0": [
+        -0.278,
+        0.359,
+        0.275,
+        0.198
+      ],
+      "body-t1": [
+        -0.357,
+        0.351,
+        0.257,
+        0.197
+      ]
+    },
+    "truckOffsets": {
+      "body-t0": 0.031094719316104986,
+      "body-t1": -0.010201899912165331
+    },
+    "smoke": [],
+    "spriteFacings": 96
+  },
+  "k4s": {
+    "tiles": 3.0713,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.533,
+        "up": 28.8
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.662,
+        "across": 0.157,
+        "up": 14.3
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0,
+        1
+      ],
+      "tender": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.8013
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0417
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0901
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.1151
+      },
+      "tender-t1": {
+        "phases": 4,
+        "cycle": 0.1151
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.96,
+        0.997,
+        0.223,
+        0.683
+      ],
+      "engine-t0": [
+        -0.134,
+        0.149,
+        0.235,
+        0.239
+      ],
+      "engine-t1": [
+        -0.19,
+        0.17,
+        0.174,
+        0.118
+      ],
+      "tender": [
+        -0.474,
+        0.44,
+        0.217,
+        0.526
+      ],
+      "tender-t0": [
+        -0.192,
+        0.266,
+        0.285,
+        0.194
+      ],
+      "tender-t1": [
+        -0.23,
+        0.178,
+        0.289,
+        0.182
+      ]
+    }
+  },
+  "m62": {
+    "tiles": 2.6091,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": 0.423,
+        "up": 27.3
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.095,
+        "across": -0.009,
+        "up": 23.8
+      },
+      {
+        "part": "body",
+        "along": 1.153,
+        "across": 0.147,
+        "up": 11.4
+      },
+      {
+        "part": "body",
+        "along": 1.148,
+        "across": -0.174,
+        "up": 12.6
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1323
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1323
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.272,
+        1.272,
+        0.236,
+        0.693
+      ],
+      "body-t0": [
+        -0.371,
+        0.407,
+        0.277,
+        0.218
+      ],
+      "body-t1": [
+        -0.461,
+        0.397,
+        0.261,
+        0.209
+      ]
+    }
+  },
+  "mallard": {
+    "tiles": 2.7478,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.535,
+        "up": 24.6
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.602,
+        "across": -0.018,
+        "up": 21.7
+      },
+      {
+        "part": "engine",
+        "along": 0.772,
+        "across": -0.15,
+        "up": 10.6
+      },
+      {
+        "part": "engine",
+        "along": 0.772,
+        "across": 0.14,
+        "up": 8.8
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6845
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0314
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0325
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0533
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.876,
+        0.884,
+        0.192,
+        0.587
+      ],
+      "engine-t0": [
+        -0.042,
+        0.165,
+        0.243,
+        0.222
+      ],
+      "engine-t1": [
+        -0.206,
+        0.193,
+        0.17,
+        0.106
+      ],
+      "tender": [
+        -0.416,
+        0.417,
+        0.176,
+        0.544
+      ]
+    }
+  },
+  "re460": {
+    "tiles": 2.5645,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.163,
+        "across": -0.137,
+        "up": 10.3
+      },
+      {
+        "part": "body",
+        "along": 1.153,
+        "across": 0.142,
+        "up": 9.4
+      },
+      {
+        "part": "body",
+        "along": 0.981,
+        "across": -0.006,
+        "up": 21
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1386
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1386
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.25,
+        1.25,
+        0.199,
+        0.637
+      ],
+      "body-t0": [
+        -0.287,
+        0.342,
+        0.267,
+        0.217
+      ],
+      "body-t1": [
+        -0.353,
+        0.297,
+        0.254,
+        0.213
+      ]
+    }
+  },
+  "taurus": {
+    "tiles": 2.1296,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.895,
+        "across": -0.166,
+        "up": 11.2
+      },
+      {
+        "part": "body",
+        "along": 0.913,
+        "across": 0.124,
+        "up": 10.3
+      },
+      {
+        "part": "body",
+        "along": 0.909,
+        "across": -0.038,
+        "up": 15.2
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1449
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1449
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.018,
+        0.986,
+        0.192,
+        0.624
+      ],
+      "body-t0": [
+        -0.266,
+        0.311,
+        0.264,
+        0.224
+      ],
+      "body-t1": [
+        -0.301,
+        0.273,
+        0.246,
+        0.225
+      ]
+    }
+  },
+  "tgv": {
+    "tiles": 2.6974,
+    "sprite": true,
+    "lamps": [
+      {
+        "across": -0.13504270236701066,
+        "along": 1.1598917143921867,
+        "part": "body",
+        "up": 12.665714285714287
+      },
+      {
+        "across": -0.10825869845336367,
+        "along": 1.1699958595811673,
+        "part": "body",
+        "up": 12.621714285714285
+      },
+      {
+        "across": 0.06992710003802453,
+        "along": 1.1741658242623338,
+        "part": "body",
+        "up": 12.144
+      },
+      {
+        "across": 0.1003999188619343,
+        "along": 1.1725619916926544,
+        "part": "body",
+        "up": 12.074857142857143
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.11589294148503791,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.11589294148503793,
+        "integrated": true,
+        "phases": 8
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.317,
+        1.317,
+        0.192,
+        0.646
+      ],
+      "body-t0": [
+        -0.211,
+        0.252,
+        0.249,
+        0.168
+      ],
+      "body-t1": [
+        -0.293,
+        0.278,
+        0.242,
+        0.177
+      ]
+    },
+    "truckOffsets": {
+      "body-t0": 0.018532639716380472,
+      "body-t1": -0.00622848462183892
+    },
+    "smoke": [],
+    "spriteFacings": 96
+  },
+  "v63": {
+    "tiles": 2.1817,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.948,
+        "across": -0.015,
+        "up": 21.2
+      },
+      {
+        "part": "body",
+        "along": 1.01,
+        "across": 0.094,
+        "up": 10.8
+      },
+      {
+        "part": "body",
+        "along": 1.007,
+        "across": -0.143,
+        "up": 11.5
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1574
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1574
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.059,
+        1.059,
+        0.172,
+        0.619
+      ],
+      "body-t0": [
+        -0.297,
+        0.355,
+        0.257,
+        0.232
+      ],
+      "body-t1": [
+        -0.343,
+        0.297,
+        0.255,
+        0.229
+      ]
+    }
+  },
+  "daylight": {
+    "tiles": 3.4006,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.6,
+        "up": 29.6
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.809,
+        "across": -0.025,
+        "up": 29.1
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0,
+        1
+      ],
+      "tender": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.695
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0782
+      },
+      "engine-t1": {
+        "phases": 4,
+        "cycle": 0.0782
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.0779
+      },
+      "tender-t1": {
+        "phases": 4,
+        "cycle": 0.0779
+      }
+    },
+    "boxes": {
+      "engine": [
+        -1.169,
+        1.207,
+        0.216,
+        0.709
+      ],
+      "engine-t0": [
+        -0.196,
+        0.236,
+        0.294,
+        0.233
+      ],
+      "engine-t1": [
+        -0.242,
+        0.217,
+        0.172,
+        0.102
+      ],
+      "tender": [
+        -0.43,
+        0.389,
+        0.231,
+        0.67
+      ],
+      "tender-t0": [
+        -0.231,
+        0.289,
+        0.309,
+        0.182
+      ],
+      "tender-t1": [
+        -0.126,
+        0.17,
+        0.303,
+        0.184
+      ]
+    }
+  },
+  "dda40x": {
+    "tiles": 4.2995,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": -0.651,
+        "up": 32.1
+      },
+      {
+        "part": "rear",
+        "along": 0.544,
+        "up": 32.5
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 0.987,
+        "across": -0.042,
+        "up": 21.9
+      },
+      {
+        "part": "body",
+        "along": 0.992,
+        "across": -0.045,
+        "up": 19.3
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ],
+      "rear": [
+        0
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1174
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.1174
+      },
+      "rear-t0": {
+        "phases": 4,
+        "cycle": 0.0988
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.087,
+        1.135,
+        0.256,
+        0.755
+      ],
+      "body-t0": [
+        -0.334,
+        0.383,
+        0.223,
+        0.185
+      ],
+      "body-t1": [
+        -0.408,
+        0.328,
+        0.228,
+        0.195
+      ],
+      "rear": [
+        -0.951,
+        0.905,
+        0.28,
+        0.802
+      ],
+      "rear-t0": [
+        -0.287,
+        0.364,
+        0.253,
+        0.194
+      ]
+    }
+  },
+  "gg1": {
+    "tiles": 3.1513,
+    "sprite": true,
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.33,
+        "across": -0.021,
+        "up": 22
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.1442
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.091
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.523,
+        1.544,
+        0.201,
+        0.767
+      ],
+      "body-t0": [
+        -0.721,
+        0.719,
+        0.264,
+        0.286
+      ],
+      "body-t1": [
+        -0.689,
+        0.654,
+        0.263,
+        0.283
+      ]
+    }
+  },
+  "mav424": {
+    "tiles": 2.6806,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.499,
+        "up": 27.9
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.697,
+        "across": -0.003,
+        "up": 23.5
+      },
+      {
+        "part": "engine",
+        "along": 0.774,
+        "across": -0.155,
+        "up": 10.7
+      },
+      {
+        "part": "engine",
+        "along": 0.783,
+        "across": 0.158,
+        "up": 9.7
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0
+      ],
+      "tender": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.6712
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.0435
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.0435
+      },
+      "tender-t1": {
+        "phases": 4,
+        "cycle": 0.0435
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.898,
+        0.913,
+        0.221,
+        0.675
+      ],
+      "engine-t0": [
+        -0.171,
+        0.128,
+        0.172,
+        0.142
+      ],
+      "tender": [
+        -0.368,
+        0.344,
+        0.273,
+        0.497
+      ],
+      "tender-t0": [
+        -0.191,
+        0.251,
+        0.3,
+        0.206
+      ],
+      "tender-t1": [
+        -0.197,
+        0.124,
+        0.298,
+        0.199
+      ]
+    }
+  },
+  "nine_f": {
+    "tiles": 2.6873,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.472,
+        "up": 23.9
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 0.772,
+        "across": -0.173,
+        "up": 10.5
+      },
+      {
+        "part": "engine",
+        "along": 0.819,
+        "across": 0.112,
+        "up": 10.3
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0
+      ]
+    },
+    "wheels": {
+      "engine": {
+        "phases": 8,
+        "cycle": 0.5342
+      },
+      "engine-t0": {
+        "phases": 4,
+        "cycle": 0.032
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0505
+      }
+    },
+    "boxes": {
+      "engine": [
+        -0.845,
+        0.878,
+        0.208,
+        0.605
+      ],
+      "engine-t0": [
+        -0.084,
+        0.023,
+        0.17,
+        0.105
+      ],
+      "tender": [
+        -0.396,
+        0.397,
+        0.194,
+        0.488
+      ]
+    }
+  },
+  "sd40": {
+    "tiles": 3.0592,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": 0.239,
+        "up": 28.9
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.071,
+        "across": -0.035,
+        "up": 26.1
+      },
+      {
+        "part": "body",
+        "along": 1.089,
+        "across": -0.015,
+        "up": 26.4
+      },
+      {
+        "part": "body",
+        "along": 1.404,
+        "across": -0.183,
+        "up": 11.5
+      },
+      {
+        "part": "body",
+        "along": 1.392,
+        "across": 0.113,
+        "up": 10.4
+      }
+    ],
+    "trucks": {
+      "body": [
+        0,
+        1
+      ]
+    },
+    "wheels": {
+      "body-t0": {
+        "phases": 4,
+        "cycle": 0.128
+      },
+      "body-t1": {
+        "phases": 4,
+        "cycle": 0.128
+      }
+    },
+    "boxes": {
+      "body": [
+        -1.498,
+        1.498,
+        0.285,
+        0.728
+      ],
+      "body-t0": [
+        -0.319,
+        0.394,
+        0.268,
+        0.194
+      ],
+      "body-t1": [
+        -0.385,
+        0.374,
+        0.254,
+        0.193
+      ]
+    }
+  },
+  "big_boy": {
+    "tiles": 4.2092,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "engine",
+        "along": 0.742,
+        "up": 29.2
+      }
+    ],
+    "lamps": [
+      {
+        "part": "engine",
+        "along": 1.053,
+        "across": -0.024,
+        "up": 21.2
+      }
+    ],
+    "trucks": {
+      "engine": [
+        0,
+        1
+      ],
+      "tender": [
+        0
+      ]
+    },
+    "wheels": {
+      "engine-t0": {
+        "phases": 8,
+        "cycle": 0.4636
+      },
+      "engine-t1": {
+        "phases": 8,
+        "cycle": 0.4636
+      },
+      "tender": {
+        "phases": 4,
+        "cycle": 0.0587
+      },
+      "tender-t0": {
+        "phases": 4,
+        "cycle": 0.0587
+      }
+    },
+    "boxes": {
+      "engine": [
+        -1.319,
+        1.285,
+        0.223,
+        0.707
+      ],
+      "engine-t0": [
+        -0.404,
+        0.57,
+        0.291,
+        0.316
+      ],
+      "engine-t1": [
+        -0.746,
+        0.851,
+        0.304,
+        0.323
+      ],
+      "tender": [
+        -0.663,
+        0.611,
+        0.239,
+        0.584
+      ],
+      "tender-t0": [
+        -0.24,
+        0.242,
+        0.331,
+        0.204
+      ]
+    }
+  },
+  "koutetsujou": {
+    "tiles": 4.3138,
+    "sprite": true,
+    "smoke": [
+      {
+        "part": "body",
+        "along": 0.256,
+        "up": 34.1
+      }
+    ],
+    "lamps": [
+      {
+        "part": "body",
+        "along": 1.456,
+        "across": -0.124,
+        "up": 20.5
+      }
+    ],
+    "boxes": {
+      "body": [
+        -2.125,
+        2.102,
+        0.3,
+        0.77
+      ]
+    }
+  },
+  "gmam": {
+    "tiles": 3.27,
+    "sprite": true,
+    "trucks": {},
+    "lamps": [
+      {
+        "across": 0.0,
+        "along": 0.4201320336975958,
+        "part": "engine",
+        "up": 16.28142766546733
+      }
+    ],
+    "smoke": [
+      {
+        "along": 0.4387096774193549,
+        "part": "cradle",
+        "up": 26.486095541320044
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "engine": {
+        "cycle": 0.5121936787411159,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "source_geometry": "Fresh editable primitives authored from the locked PNGs",
+  "world_axes": "+X locomotive front; Y wheel axles; Z up",
+  "wheel_centres_x_m": [
+    -1.3,
+    -0.13,
+    1.04
+  ],
+  "wheel_centres_y_m": [
+    -0.7482077759774072,
+    0.7482077759774072
+  ],
+  "wheel_radius_m": 0.46,
+  "wheel_count": 6,
+  "rod_carriers": 2,
+  "body_edges_parallel_to_X": true,
+  "lamp_lens_centres": [
+    [
+      3.469,
+      0,
+      2.96
+    ],
+    [
+      3.469,
+      -0.62,
+      1.27
+    ],
+    [
+      3.469,
+      0.62,
+      1.27
+    ]
+  ],
+  "length_tiles_from_authored_geometry": 1.3937304357519593,
+  "assumptions": "Scale/axle spacing are proportional inferences, not prototype measurements."
+}

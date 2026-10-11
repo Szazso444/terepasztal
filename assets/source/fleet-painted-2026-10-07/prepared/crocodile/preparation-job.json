@@ -1,0 +1,433 @@
+{
+  "asset": {
+    "id": "crocodile",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-crocodile.png",
+    "size_tiles": 3,
+    "length_m": 19.46,
+    "width_m": 3.09,
+    "height_m": 4.5,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": 0.0,
+    "plan": null,
+    "split_m": [
+      4.25,
+      10.4
+    ],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\crocodile.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "engine",
+      0.828,
+      true
+    ],
+    [
+      "cradle",
+      1.215,
+      true
+    ],
+    [
+      "engine",
+      0.936,
+      false
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [
+        0.2,
+        0.5,
+        0.8
+      ],
+      "trucks": [],
+      "rigid_f": [
+        0.7792,
+        0.862,
+        0.9448
+      ],
+      "trucks_f": [],
+      "from": 0.724,
+      "to": 1,
+      "wheels": {
+        "rigid": {
+          "d": [
+            1.35,
+            1.35,
+            1.35
+          ],
+          "spokes": [
+            12,
+            12,
+            12
+          ],
+          "frame": "inside",
+          "rods": {
+            "cylinders": "jackshaft"
+          },
+          "drivers": [
+            0,
+            1,
+            2
+          ],
+          "color": [
+            44,
+            46,
+            50
+          ],
+          "tyre": [
+            120,
+            124,
+            128
+          ],
+          "rod": [
+            170,
+            172,
+            174
+          ]
+        }
+      }
+    },
+    {
+      "rigid": [
+        0.2,
+        0.5,
+        0.8
+      ],
+      "trucks": [],
+      "rigid_f": [
+        0.397,
+        0.5185,
+        0.64
+      ],
+      "trucks_f": [],
+      "from": 0.316,
+      "to": 0.721,
+      "wheels": {
+        "rigid": {
+          "d": [
+            1.35,
+            1.35,
+            1.35
+          ],
+          "spokes": [
+            12,
+            12,
+            12
+          ],
+          "frame": "inside",
+          "rods": {
+            "cylinders": "jackshaft"
+          },
+          "drivers": [
+            0,
+            1,
+            2
+          ],
+          "color": [
+            44,
+            46,
+            50
+          ],
+          "tyre": [
+            120,
+            124,
+            128
+          ],
+          "rod": [
+            170,
+            172,
+            174
+          ]
+        }
+      }
+    },
+    {
+      "rigid": [
+        0.2,
+        0.5,
+        0.8
+      ],
+      "trucks": [],
+      "rigid_f": [
+        0.062400000000000004,
+        0.156,
+        0.24960000000000002
+      ],
+      "trucks_f": [],
+      "from": 0,
+      "to": 0.312,
+      "wheels": {
+        "rigid": {
+          "d": [
+            1.35,
+            1.35,
+            1.35
+          ],
+          "spokes": [
+            12,
+            12,
+            12
+          ],
+          "frame": "inside",
+          "rods": {
+            "cylinders": "jackshaft"
+          },
+          "drivers": [
+            0,
+            1,
+            2
+          ],
+          "color": [
+            44,
+            46,
+            50
+          ],
+          "tyre": [
+            120,
+            124,
+            128
+          ],
+          "rod": [
+            170,
+            172,
+            174
+          ]
+        }
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 3,
+    "length_m": 19.46,
+    "width_m": 3.09,
+    "height_m": 4.5,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "roof_height_m": 3.755,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.35,
+    "stance_mode": "turn",
+    "box_body": true
+  },
+  "annot": {
+    "id": "crocodile",
+    "windows": [
+      [
+        [
+          322,
+          415
+        ],
+        [
+          337,
+          421
+        ],
+        [
+          337,
+          454
+        ],
+        [
+          322,
+          446
+        ]
+      ],
+      [
+        [
+          427,
+          465
+        ],
+        [
+          443,
+          472
+        ],
+        [
+          443,
+          502
+        ],
+        [
+          427,
+          495
+        ]
+      ],
+      [
+        [
+          537,
+          508
+        ],
+        [
+          552,
+          514
+        ],
+        [
+          552,
+          548
+        ],
+        [
+          537,
+          541
+        ]
+      ],
+      [
+        [
+          582,
+          516
+        ],
+        [
+          596,
+          516
+        ],
+        [
+          596,
+          547
+        ],
+        [
+          582,
+          547
+        ]
+      ],
+      [
+        [
+          622,
+          511
+        ],
+        [
+          647,
+          517
+        ],
+        [
+          647,
+          532
+        ],
+        [
+          622,
+          532
+        ]
+      ],
+      [
+        [
+          689,
+          498
+        ],
+        [
+          702,
+          492
+        ],
+        [
+          702,
+          510
+        ],
+        [
+          689,
+          517
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        675,
+        516
+      ],
+      [
+        887,
+        641
+      ],
+      [
+        937,
+        665
+      ],
+      [
+        861,
+        701
+      ]
+    ],
+    "smoke": [],
+    "pantograph_raised": true,
+    "notes": "Electric (crocodile): no smoke outlet. 6 glass panes: 3 body-side windows, cab corner window, 2 windscreen panes either side of the cab-front top lamp. 4 headlamps: cab-front top lamp plus 3 on the nose. Both pantographs raised. Far cab has no visible glass."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-crocodile-rear.png"
+  ],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\crocodile.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\crocodile.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\crocodile\\prepared-texture.png"
+  }
+}

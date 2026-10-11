@@ -1,0 +1,186 @@
+{
+  "geometry": {
+    "gauge": "standard",
+    "gear": [
+      {
+        "from": 0,
+        "rigid": [
+          0.29,
+          0.49,
+          0.69
+        ],
+        "rigid_f": [
+          0.29,
+          0.49,
+          0.69
+        ],
+        "to": 1,
+        "trucks": [],
+        "trucks_f": [],
+        "wheels": {
+          "rigid": {
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "d": 1.25,
+            "drivers": [
+              0,
+              1,
+              2
+            ],
+            "frame": "inside",
+            "rods": {
+              "cylinders": "none"
+            },
+            "spokes": 12,
+            "tyre": [
+              65,
+              68,
+              72
+            ]
+          }
+        }
+      }
+    ],
+    "height_m": 3.9,
+    "length_m": 8.9,
+    "notes": "Workbook row 17: manually read approximate axle positions and wheel sizes; refine from original raw mesh, rigid alignment and uniform scale only.",
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "width_m": 2.6
+  },
+  "id": "class08",
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-detail-v4\\prepared\\class08",
+  "projection": {
+    "annot": {
+      "headlamps": [
+        [
+          833,
+          499
+        ],
+        [
+          909,
+          652
+        ],
+        [
+          775,
+          702
+        ]
+      ],
+      "id": "class08",
+      "notes": "Diesel shunter. 3 cab panes: rear-end window, cab side window, cab front quarter window facing the bonnet. 3 front lamps: top centre above radiator, lower right, lower left. Copper exhaust stack on bonnet roof.",
+      "pantograph_raised": false,
+      "smoke": [
+        [
+          525,
+          314
+        ]
+      ],
+      "windows": [
+        [
+          [
+            93,
+            285
+          ],
+          [
+            113,
+            296
+          ],
+          [
+            113,
+            358
+          ],
+          [
+            93,
+            349
+          ]
+        ],
+        [
+          [
+            141,
+            308
+          ],
+          [
+            184,
+            330
+          ],
+          [
+            184,
+            401
+          ],
+          [
+            141,
+            381
+          ]
+        ],
+        [
+          [
+            210,
+            327
+          ],
+          [
+            230,
+            319
+          ],
+          [
+            230,
+            385
+          ],
+          [
+            210,
+            395
+          ]
+        ]
+      ]
+    },
+    "views": [
+      "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-class08-rear.png"
+    ]
+  },
+  "reconstruction": {
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.source.png",
+      "sha256": "629d500ea6608a50551b55ef6f51d6211d5b6da85e3f8df71b3632136b6234c5"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.mask.png",
+      "sha256": "23cb9e78965a7d0841d85f20140b9087e1157298fcd76f398b696dc5e582f1f3"
+    },
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.glb",
+      "sha256": "90bab394daad1f9b06695bf255df44badc724d7d1a04b03d04e32ba0253dea40"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "reference": {
+    "authority": "workbook-pictures-and-owner-notes",
+    "guidelines": "B17: BR Class 08 | G17: 0-6-0 (rod drive) | Y17: Frame [body]: 1-3 (rigid, baked; 2 virtual rail supports) | CI17: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry.; Latest authority: workbook v9, owner corrections dated 2026-10-08 override earlier notes.",
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r17-c5.jpeg",
+        "sha256": "71b5c40e9e8c696b0c72c209c108cb31da62fb8272bc261ca13b716ac1ec7d9d"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-class08-rear.png",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority",
+        "sha256": "a2988f25430420e512554241e3caf368982e34a798b813bd07f4f97e0c45be1a"
+      }
+    ],
+    "row": 17,
+    "schema": 1,
+    "sheet": "Locomotives",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v9.xlsx",
+      "sha256": "e0da5a3fbd8680b6e50fc153d2b86cbae29ec787c9c0852ae9488f9541c4862e"
+    }
+  },
+  "schema": 1
+}

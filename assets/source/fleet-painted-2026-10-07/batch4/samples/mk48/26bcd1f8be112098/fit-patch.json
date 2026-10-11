@@ -1,0 +1,25 @@
+{
+  "mk48": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": 0.36134347794878274,
+        "part": "body",
+        "up": 13.684
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.08593334908342556,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.08593334908342556,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "mav375",
+    "previous_key": "bb4169d11daa9dc5",
+    "key": "f41472d869a8cba8",
+    "rendered_bytes_identical": true,
+    "change": "Workbook H15 preserves COUNTA(I15:X15), evaluated value remains 3; no other workbook values changed."
+  },
+  {
+    "id": "class08",
+    "previous_key": "4b63ddfb73fb6afa",
+    "key": "6907975ff28cc68d",
+    "rendered_bytes_identical": true,
+    "change": "Workbook H15 preserves COUNTA(I15:X15), evaluated value remains 3; no other workbook values changed."
+  },
+  {
+    "id": "sw1",
+    "previous_key": "b8cbc27753db91a0",
+    "key": "ed9df605d84506ea",
+    "rendered_bytes_identical": true,
+    "change": "Workbook H15 preserves COUNTA(I15:X15), evaluated value remains 3; no other workbook values changed."
+  },
+  {
+    "id": "drg01",
+    "previous_key": "7bd426d7afb9a1f6",
+    "key": "292d014d6a3ecde8",
+    "rendered_bytes_identical": true,
+    "change": "Workbook H15 preserves COUNTA(I15:X15), evaluated value remains 3; no other workbook values changed."
+  },
+  {
+    "id": "m62",
+    "previous_key": "39b6207645a1e867",
+    "key": "25c5a7f7746543b6",
+    "rendered_bytes_identical": true,
+    "change": "Workbook H15 preserves COUNTA(I15:X15), evaluated value remains 3; no other workbook values changed."
+  }
+]

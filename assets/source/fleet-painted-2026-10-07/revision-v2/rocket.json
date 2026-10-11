@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "id": "rocket",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\rocket\\engine.blend",
+      "source_sha256": "088fda54627e617f1882b4788c80b3b0386dce9d488f42fbe1873265dd0ebfad",
+      "frame_prefix": "loco_rocket_engine",
+      "length_tiles": 0.6878540069685659,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            0.97,
+            0.191,
+            3.501
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.7175023144468826,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

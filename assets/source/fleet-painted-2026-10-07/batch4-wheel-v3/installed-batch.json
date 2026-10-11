@@ -1,0 +1,32 @@
+{
+  "mav375": {
+    "key": "0e91b0584816aafd",
+    "bundle": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\production\\mav375\\0e91b0584816aafd",
+    "backup": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\painted-install-m934k90l",
+    "revision": "reference-batch4-wheel-v3"
+  },
+  "class08": {
+    "key": "b5e896983179997c",
+    "bundle": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\production\\class08\\b5e896983179997c",
+    "backup": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\painted-install-07jh_zr6",
+    "revision": "reference-batch4-wheel-v3"
+  },
+  "sw1": {
+    "key": "956a1f9e4d54b9f9",
+    "bundle": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\production\\sw1\\956a1f9e4d54b9f9",
+    "backup": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\painted-install-lsuanlc1",
+    "revision": "reference-batch4-wheel-v3"
+  },
+  "drg01": {
+    "key": "77884bd369c687d8",
+    "bundle": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\production\\drg01\\77884bd369c687d8",
+    "backup": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\painted-install-hagc5sgo",
+    "revision": "reference-batch4-wheel-v3"
+  },
+  "m62": {
+    "key": "25acf415a5a90a1b",
+    "bundle": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\production\\m62\\25acf415a5a90a1b",
+    "backup": "C:\\Users\\Zso\\terepasztal-playtest\\scratchpad\\painted-install-ni2gnfv8",
+    "revision": "reference-batch4-wheel-v3"
+  }
+}

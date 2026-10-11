@@ -1,0 +1,119 @@
+{
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\AppData\\Local\\Temp\\painted-mj277e14\\body",
+  "part": {
+    "canvas": 256,
+    "effects": {
+      "headlamps": [
+        [
+          3.927,
+          -0.1683,
+          2.79
+        ]
+      ],
+      "smoke": [
+        [
+          -0.349,
+          0.12154999999999999,
+          3.519
+        ]
+      ]
+    },
+    "frame_prefix": "loco_sw1_body",
+    "length_tiles": 1.4403051262892996,
+    "name": "body",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\sw1\\body.blend",
+    "source_sha256": "16122277d0481d86f20b3f94383b3586e5c96ef61bf7babed4e461b95dda8bc4",
+    "window_mask": {
+      "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\sw1\\body-window-mask.png",
+      "sha256": "cfef237a638fc5323599a2bf64290c1861d36c542e2f9c7116f94badc637a940"
+    }
+  },
+  "phases": [
+    0,
+    3
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "colour_gain": 1.12,
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-reference-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "None",
+    "metallic_cap": 0.18,
+    "normal_contrast": 0.1,
+    "normal_light": [
+      -0.4,
+      -0.6,
+      0.8
+    ],
+    "paint_low": 0.98,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "surface_mode": "reference_colour",
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "Standard",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

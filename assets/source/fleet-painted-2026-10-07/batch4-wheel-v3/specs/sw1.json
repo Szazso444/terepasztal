@@ -1,0 +1,287 @@
+{
+  "schema": 1,
+  "id": "sw1",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 21,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r21-c5.jpeg",
+        "sha256": "49c4ed1239c9b6daf81e2a8cc015faf3202323ab12e938bcf83c8c0e6ecbcb1f"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-sw1-rear.png",
+        "sha256": "bbc1817d34e7a82f18ee8ee0fe267a1ae76782bd8eaa8a9bc10c89f8c44df434",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B21: EMD SW1 | G21: B-B | Y21: Rear bogie [body]: 1-2 (swivelling bogie / truck sprite)\nFront bogie [body]: 3-4 (swivelling bogie / truck sprite) | AA21: Game data has the SW1 as small (1 tile) with baked axles. | CI21: Slightly too wide: slightly narrower.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "reconstruction": {
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.glb",
+      "sha256": "32487b51da5293cee71eed984e32220dc10359b56a5ac160ea49075ae90aeb3d"
+    },
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.source.png",
+      "sha256": "b0ac6cf0a221222884ce318b040c383f802e7133f34eaef639cf1f5eb034fc55"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.mask.png",
+      "sha256": "2ca0bca980aab9acd8cc964fc6f2ee7104423fa06b66fb8b9186a29a600139f0"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "geometry": {
+    "length_m": 13.4,
+    "width_m": 3.0,
+    "height_m": 4.2,
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "gear": [
+      {
+        "rigid": [],
+        "trucks": [
+          [
+            0.17,
+            0.3
+          ],
+          [
+            0.71,
+            0.84
+          ]
+        ],
+        "rigid_f": [],
+        "trucks_f": [
+          [
+            0.17,
+            0.3
+          ],
+          [
+            0.71,
+            0.84
+          ]
+        ],
+        "from": 0,
+        "to": 1,
+        "wheels": {
+          "trucks": [
+            {
+              "d": 1.0,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            },
+            {
+              "d": 1.0,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "notes": "Workbook row 21: manually read approximate axle positions and wheel sizes; refine from original raw mesh, rigid alignment and uniform scale only.",
+    "gauge": "standard"
+  },
+  "projection": {
+    "annot": {
+      "id": "sw1",
+      "windows": [
+        [
+          [
+            96,
+            281
+          ],
+          [
+            116,
+            287
+          ],
+          [
+            116,
+            337
+          ],
+          [
+            96,
+            328
+          ]
+        ],
+        [
+          [
+            156,
+            303
+          ],
+          [
+            175,
+            310
+          ],
+          [
+            175,
+            367
+          ],
+          [
+            156,
+            360
+          ]
+        ],
+        [
+          [
+            180,
+            313
+          ],
+          [
+            200,
+            319
+          ],
+          [
+            200,
+            377
+          ],
+          [
+            180,
+            369
+          ]
+        ],
+        [
+          [
+            237,
+            304
+          ],
+          [
+            266,
+            296
+          ],
+          [
+            266,
+            355
+          ],
+          [
+            237,
+            366
+          ]
+        ],
+        [
+          [
+            283,
+            279
+          ],
+          [
+            303,
+            273
+          ],
+          [
+            303,
+            317
+          ],
+          [
+            283,
+            325
+          ]
+        ],
+        [
+          [
+            312,
+            266
+          ],
+          [
+            332,
+            260
+          ],
+          [
+            332,
+            304
+          ],
+          [
+            312,
+            313
+          ]
+        ],
+        [
+          [
+            342,
+            258
+          ],
+          [
+            360,
+            252
+          ],
+          [
+            360,
+            296
+          ],
+          [
+            342,
+            303
+          ]
+        ],
+        [
+          [
+            374,
+            257
+          ],
+          [
+            394,
+            251
+          ],
+          [
+            394,
+            295
+          ],
+          [
+            374,
+            297
+          ]
+        ]
+      ],
+      "headlamps": [
+        [
+          862,
+          512
+        ]
+      ],
+      "smoke": [
+        [
+          480,
+          283
+        ]
+      ],
+      "pantograph_raised": false,
+      "notes": "Diesel switcher. 8 panes: rear cab door window, 2-pane sliding side window, 5 panes on the hood-facing cab wall. One front headlamp on the nose; no rear lamp visible. Smoke = top of the capped exhaust stack on the hood just ahead of the cab. A second open pipe on the cab roof at about (206,168) looks like a heater/stove vent and was not marked as exhaust."
+    },
+    "views": [
+      "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-sw1-rear.png"
+    ]
+  },
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\sw1"
+}

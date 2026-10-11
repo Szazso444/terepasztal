@@ -1,0 +1,28 @@
+{
+  "status": "candidate, needs visual geometry review",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 25,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r25-c5.jpeg",
+        "sha256": "4bcf4fce358abd4334548ee612f89ea5ffe13b02eb053072b332cd2b7e0b19d4"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-drg01-rear.png",
+        "sha256": "fca9d76420fbb256ea6ed1e0c20e9f45e2236b9f2a472c6d2f31d01ef558e201",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B25: DRG Class 01 | G25: 4-6-2 + 4-axle tender | Y25: Tender rear bogie [tender]: 1-2 (swivelling bogie / truck sprite)\nTender front bogie [tender]: 3-4 (swivelling bogie / truck sprite)\nTrailing truck [engine]: 5 (swivelling bogie / truck sprite)\nFrame [engine]: 6-8 (rigid, drawn with the body; coupled drivers and rods)\nLeading bogie [engine]: 9-10 (swivelling bogie / truck sprite) | AA25: The four tender axles are drawn evenly spaced. | CI25: 2026-10-06: Same distortion and angle problems as Black Five, but this model looks better. Tender does not fit the rails. At the front only the angles are wrong. Restore the original model.\n\nEarlier review: Correct, fits well.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "preparation_job_sha256": "b429ed57d9fb4a7b3cd922b250d2c4eb5f313b26152a5a1cb21d5d6033b4a286",
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.glb",
+  "glb_sha256": "5f016f6b986cc648a54fe660150131d6f4efebaeaa4fdce0b05f0afb541e1e63"
+}

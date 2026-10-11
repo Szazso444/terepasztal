@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "id": "general",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-reference-v2.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\revision-v3\\models\\general\\engine.blend",
+      "source_sha256": "4d89ce0b23be60b77f688b659fc186a83cdf25a5a2dfedf1893303727fef1c1f",
+      "frame_prefix": "loco_general_engine",
+      "length_tiles": 1.5123986373834335,
+      "canvas": 256,
+      "effects": {
+        "smoke": [
+          [
+            1.976,
+            0.261,
+            3.966
+          ]
+        ],
+        "lamps": [
+          [
+            3.336,
+            -0.037,
+            2.82
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.6334844199886711,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\general\\window-mask.png",
+        "sha256": "0c316ed0909304eb0609bdce72e8c2e53539778f5db4988c04c5888c3e0cf8c4"
+      }
+    },
+    {
+      "name": "engine-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\revision-v3\\models\\general\\engine-t0.blend",
+      "source_sha256": "4598116f421135e1a2f9c30c11fc40469c4c3eab0bde28fca843e935252da26a",
+      "frame_prefix": "loco_general_engine-t0",
+      "length_tiles": 0.2772347355554599,
+      "canvas": 256,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.03959774984126356,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 18,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r18-c5.jpeg",
+        "sha256": "01bdaef22029c7b6a34ce1d0d2c3d601926e314bbe7aab809c1298362dec911e"
+      }
+    ],
+    "guidelines": "Geometry already explicitly accepted by owner in the 2026-10-07 review. Preserve approved shape. Use lighter painted style; no added cast shadows.",
+    "prepared_sources": {
+      "engine": "4d89ce0b23be60b77f688b659fc186a83cdf25a5a2dfedf1893303727fef1c1f",
+      "engine-t0": "4598116f421135e1a2f9c30c11fc40469c4c3eab0bde28fca843e935252da26a"
+    },
+    "owner_approved": true
+  }
+}

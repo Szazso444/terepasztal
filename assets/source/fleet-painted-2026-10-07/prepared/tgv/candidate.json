@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "id": "tgv",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\tgv\\body.blend",
+      "source_sha256": "c0a8d1e95c611a69ac8b1621b7df0bcd9d9f8bbf8c402c100d383fcbd932a911",
+      "frame_prefix": "loco_tgv_body",
+      "length_tiles": 2.63328232187446,
+      "canvas": 512,
+      "effects": {
+        "lamps": [
+          [
+            7.232,
+            -0.842,
+            2.015
+          ],
+          [
+            7.295,
+            -0.675,
+            2.008
+          ],
+          [
+            7.321,
+            0.436,
+            1.932
+          ],
+          [
+            7.311,
+            0.626,
+            1.921
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\tgv\\window-mask.png",
+        "sha256": "751c73e88d168137fad54b1fa38bfc91c5317a9bcb8bfa659533808be49a190e"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\tgv\\body-t0.blend",
+      "source_sha256": "16542afa060f01ace4459b26edd79df9594953aa29d128a9f3130b9a7d11d488",
+      "frame_prefix": "loco_tgv_body-t0",
+      "length_tiles": 0.4627461892337748,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.11500536187820358,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\tgv\\body-t1.blend",
+      "source_sha256": "ab791f39476478fdb8dd7be5fd012dfe6e224cc899376c681c081b831a45e357",
+      "frame_prefix": "loco_tgv_body-t1",
+      "length_tiles": 0.5701291836264709,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.11500536187820358,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}

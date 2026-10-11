@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "id": "mav490",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mav490\\engine.blend",
+      "source_sha256": "3708ce9fa0789593b1a6ec0466a5e05c3bc807cf8d40d7c775f47ab411a4ced9",
+      "frame_prefix": "loco_mav490_engine",
+      "length_tiles": 0.9964323915487368,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            2.32,
+            0.013,
+            3.139
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.35182791719894385,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\mav490\\window-mask.png",
+        "sha256": "83712d0c8a5601cc4c0286fa26a2defe543fb4e11a5d2add984939c80b0e0bf5"
+      }
+    }
+  ]
+}

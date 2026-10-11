@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "id": "bm50",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 768,
+      "part": "body",
+      "phase_bounds_drift_px": 0,
+      "scale": 0.823028523956236
+    }
+  ],
+  "profile": "fleet-reference-v2",
+  "repeat_pixel_match": false
+}

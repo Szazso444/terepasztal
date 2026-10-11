@@ -1,0 +1,27 @@
+{
+  "gmam": {
+    "lamps": [
+      {
+        "across": 0.0,
+        "along": 0.4201320336975958,
+        "part": "engine",
+        "up": 16.28142766546733
+      }
+    ],
+    "smoke": [
+      {
+        "along": 0.4387096774193549,
+        "part": "cradle",
+        "up": 26.486095541320044
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "engine": {
+        "cycle": 0.5121936787411159,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

@@ -1,0 +1,298 @@
+{
+  "asset": {
+    "id": "ice1",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-ice1.png",
+    "size_tiles": 2.5,
+    "length_m": 20.56,
+    "width_m": 3.07,
+    "height_m": 3.84,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\ice1.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "body",
+      2.5,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.104,
+          0.247
+        ],
+        [
+          0.631,
+          0.793
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.104,
+          0.247
+        ],
+        [
+          0.631,
+          0.793
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 1.04,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          },
+          {
+            "d": 1.04,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 2.5,
+    "length_m": 20.56,
+    "width_m": 3.07,
+    "height_m": 3.84,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "roof_height_m": 3.84,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.65,
+    "stance_mode": "turn",
+    "box_body": true
+  },
+  "annot": {
+    "id": "ice1",
+    "windows": [
+      [
+        [
+          758,
+          594
+        ],
+        [
+          848,
+          561
+        ],
+        [
+          904,
+          626
+        ],
+        [
+          815,
+          655
+        ]
+      ],
+      [
+        [
+          682,
+          581
+        ],
+        [
+          714,
+          601
+        ],
+        [
+          751,
+          650
+        ],
+        [
+          720,
+          638
+        ],
+        [
+          682,
+          621
+        ]
+      ],
+      [
+        [
+          610,
+          574
+        ],
+        [
+          621,
+          575
+        ],
+        [
+          625,
+          580
+        ],
+        [
+          625,
+          617
+        ],
+        [
+          620,
+          619
+        ],
+        [
+          610,
+          613
+        ]
+      ],
+      [
+        [
+          72,
+          376
+        ],
+        [
+          84,
+          378
+        ],
+        [
+          86,
+          382
+        ],
+        [
+          86,
+          416
+        ],
+        [
+          82,
+          419
+        ],
+        [
+          72,
+          414
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        875,
+        653
+      ],
+      [
+        942,
+        693
+      ],
+      [
+        870,
+        718
+      ]
+    ],
+    "smoke": [],
+    "pantograph_raised": true,
+    "notes": "Electric power car (ICE 1): no smoke outlet. Windows: single-pane windscreen, triangular cab side window, front cab door window, rear door window. The grey panels on the side are louvres/grilles, not glass. Three lit headlamps on the nose (top centre under the windscreen, two lower). Rear pantograph raised, front one folded."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-ice1-rear.png"
+  ],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\ice1.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\ice1.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\ice1\\prepared-texture.png"
+  }
+}

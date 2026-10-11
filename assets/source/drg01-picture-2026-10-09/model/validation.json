@@ -1,0 +1,49 @@
+{
+  "id": "drg01",
+  "geometry_source": "locked PNG images and picture-authored observations only",
+  "model_parts": [
+    "engine",
+    "engine-t0",
+    "engine-t1",
+    "tender",
+    "tender-t0",
+    "tender-t1"
+  ],
+  "body_axes_parallel": true,
+  "driver_axles": 3,
+  "driver_wheel_radius": 0.62,
+  "driver_wheel_animation": "8-phase authored rods and rotating wheels",
+  "engine_trucks": 2,
+  "engine_leading_axles": 2,
+  "engine_trailing_axles": 1,
+  "tender_axles": 4,
+  "tender_trucks": 2,
+  "derived_length_tiles": {
+    "engine": 1.8203499512908499,
+    "engine-t0": 0.20849822641066038,
+    "engine-t1": 0.09622995800460253,
+    "tender": 0.9911685005302966,
+    "tender-t0": 0.2469902096125014,
+    "tender-t1": 0.2469902096125014
+  },
+  "leading_truck_centre": 3.63,
+  "lamp_lens_centres": [
+    [
+      5.49,
+      -0.6,
+      1.35
+    ],
+    [
+      5.49,
+      0.6,
+      1.35
+    ]
+  ],
+  "window_materials": [
+    "Dark rear cab glazing",
+    "Blue green forward cab glazing",
+    "Blue green spectacle glazing"
+  ],
+  "primitive_helper_sha256": "ec7b81633d2c74cdf55fb6087d7392a427c253c7ccdbeeafcb430ec189f0c804",
+  "notes": "Leading truck placement follows owner annotated correction. Wheel sizing is newly authored to image scale; previous-model dimensions were not reused."
+}

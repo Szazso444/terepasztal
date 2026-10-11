@@ -1,0 +1,9 @@
+{
+  "prompt_id": "d8e115e9-7e82-49a8-ac83-1de42b2092bb",
+  "elapsed_seconds": 332,
+  "bytes": 18970204,
+  "sha256": "f97fe211d8d08ef6882a2f1db085bbed39be5b719f2d4c2bf3183480f0158586",
+  "reference": "c50-reference-v2.png",
+  "workflow": "tools/asset-pipeline/workflows/image_to_3d_api.json",
+  "status": "complete"
+}

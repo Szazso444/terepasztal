@@ -1,0 +1,20 @@
+{
+  "mav375": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": 0.38812748186242974,
+        "part": "body",
+        "up": 23.357714285714287
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body": {
+        "cycle": 0.36331619200948845,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

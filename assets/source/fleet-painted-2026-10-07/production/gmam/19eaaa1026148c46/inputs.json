@@ -1,0 +1,126 @@
+{
+  "blender": "Blender 5.2.1 LTS\n\tbuild date: 2026-08-25\n\tbuild time: 02:38:20\n\tbuild commit date: 2026-08-24\n\tbuild commit time: 16:50\n\tbuild hash: 9e2066aef7ef\n\tbuild branch: blender-v5.2-release\n\tbuild platform: Windows\n\tbuild type: Release\n\tbuild c flags:  /W3 -Werror=implicit-function-declaration -Werror=return-type -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wstrict-prototypes -Wmissing-prototypes -Wunused-parameter -Wundef -Wundef-prefix -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /MP /nologo /J /Gy /Gd /showFilenames -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild c++ flags:  /W3 -Wno-tautological-compare -Wno-unknown-pragmas -Wno-char-subscripts -Wno-overloaded-virtual -Wno-sign-compare -Wno-invalid-offsetof -Wno-suggest-override -Wundef -Wundef-prefix -Wunused-parameter -Wmismatched-tags -Werror=unguarded-availability-new /DWIN32 /D_WINDOWS /EHsc  /Gy /MP /nologo /J /Gd /showFilenames /EHsc -Wno-unused-command-line-argument -Wno-microsoft-enum-forward-reference /clang:-funsigned-char /clang:-fno-strict-aliasing /clang:-ffp-contract=off -march=x86-64-v2 \n\tbuild link flags: /MACHINE:X64  /SUBSYSTEM:CONSOLE /STACK:2097152 /ignore:4049 /ignore:4217 /ignore:4221\n\tbuild system: CMake\n",
+  "manifest": {
+    "id": "gmam",
+    "parts": [
+      {
+        "canvas": 256,
+        "effects": {
+          "lamps": [
+            [
+              2.68,
+              0,
+              2.65
+            ]
+          ]
+        },
+        "frame_prefix": "loco_gmam_engine",
+        "length_tiles": 0.95,
+        "max_phase_bounds_drift": 2,
+        "name": "engine",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\handbuilt\\gmam\\engine.blend",
+        "source_sha256": "cbb7ccb8f6e0edb348d2bd762770ac4ebe8ef1f44aba37fc6e905fcf9f27b94c",
+        "wheel": {
+          "mode": "timeline",
+          "period_frames": 8,
+          "radius": 0.52,
+          "start": 1,
+          "symmetry": 1
+        },
+        "window_materials": [
+          "glazing"
+        ]
+      },
+      {
+        "canvas": 256,
+        "effects": {
+          "smoke": [
+            [
+              2.72,
+              0,
+              3.78
+            ]
+          ]
+        },
+        "frame_prefix": "loco_gmam_cradle",
+        "length_tiles": 1.25,
+        "name": "cradle",
+        "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\handbuilt\\gmam\\cradle.blend",
+        "source_sha256": "a8f359d5726dd3477716e0e7b3f83e38ceb0931547e604a619a0f34e2fd9973c"
+      }
+    ],
+    "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\fleet-painted-v1.json",
+    "schema": 1
+  },
+  "packer": "a36493411a58067cfa4b753ff2ddb5e06017c5808c9ad0c6b40db4638a083423",
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.48,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "fleet-painted-v1",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.78,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 2,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  },
+  "renderer": "52c8af3d3fdf2faeee8b0da6d9c1062d698ff811721806a9ba3b2d40e752ec47",
+  "runner": "dc0969642557976d743a93d69809b32f2e9c46409d2992eb0cbae76dc44df553"
+}

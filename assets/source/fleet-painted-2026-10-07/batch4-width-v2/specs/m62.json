@@ -1,0 +1,303 @@
+{
+  "schema": 1,
+  "id": "m62",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 30,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r30-c5.jpeg",
+        "sha256": "2c4052ca91bab9034e2a9a18879b2938cf677c5f33bff4edb58c32be162a1d68"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-m62-rear.png",
+        "sha256": "60236dd23babc3a9f9146d0d886a1b33130a494c538e255d90b08b359ed2f26a",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B30: M62 Szergej | G30: Co-Co | Y30: Rear bogie [body]: 1-3 (swivelling bogie / truck sprite)\nFront bogie [body]: 4-6 (swivelling bogie / truck sprite) | CI30: Contracted: longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "reconstruction": {
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.glb",
+      "sha256": "97acd30cfef61e4dff10b1e8d958661b479944fe5f29bcce25188d19dcb41454"
+    },
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.source.png",
+      "sha256": "230f9dcf773e3835f8873635a8e7646398a56082de025076f6373ae5a88b9c2b"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.mask.png",
+      "sha256": "877bed1a57a2638da852b22b560a9dad762ccadbf0d2df5d8de2b3feb2559748"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "geometry": {
+    "length_m": 17.55,
+    "width_m": 2.95,
+    "height_m": 4.4,
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "gear": [
+      {
+        "rigid": [],
+        "trucks": [
+          [
+            0.12,
+            0.21,
+            0.3
+          ],
+          [
+            0.7,
+            0.79,
+            0.88
+          ]
+        ],
+        "rigid_f": [],
+        "trucks_f": [
+          [
+            0.12,
+            0.21,
+            0.3
+          ],
+          [
+            0.7,
+            0.79,
+            0.88
+          ]
+        ],
+        "from": 0,
+        "to": 1,
+        "wheels": {
+          "trucks": [
+            {
+              "d": 1.05,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            },
+            {
+              "d": 1.05,
+              "spokes": 0,
+              "frame": "outside",
+              "color": [
+                45,
+                47,
+                49
+              ],
+              "tyre": [
+                65,
+                68,
+                72
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "notes": "Workbook row 30: manually read approximate axle positions and wheel sizes; refine from original raw mesh, rigid alignment and uniform scale only.",
+    "gauge": "standard"
+  },
+  "projection": {
+    "annot": {
+      "id": "m62",
+      "windows": [
+        [
+          [
+            795,
+            603
+          ],
+          [
+            861,
+            589
+          ],
+          [
+            866,
+            626
+          ],
+          [
+            803,
+            644
+          ]
+        ],
+        [
+          [
+            880,
+            582
+          ],
+          [
+            935,
+            564
+          ],
+          [
+            940,
+            602
+          ],
+          [
+            888,
+            623
+          ]
+        ],
+        [
+          [
+            738,
+            597
+          ],
+          [
+            757,
+            604
+          ],
+          [
+            757,
+            637
+          ],
+          [
+            739,
+            629
+          ]
+        ],
+        [
+          [
+            759,
+            607
+          ],
+          [
+            768,
+            609
+          ],
+          [
+            772,
+            644
+          ],
+          [
+            759,
+            639
+          ]
+        ],
+        [
+          [
+            710,
+            590
+          ],
+          [
+            720,
+            593
+          ],
+          [
+            720,
+            623
+          ],
+          [
+            711,
+            619
+          ]
+        ],
+        [
+          [
+            82,
+            286
+          ],
+          [
+            93,
+            291
+          ],
+          [
+            93,
+            323
+          ],
+          [
+            77,
+            315
+          ],
+          [
+            79,
+            300
+          ]
+        ],
+        [
+          [
+            98,
+            295
+          ],
+          [
+            109,
+            299
+          ],
+          [
+            109,
+            332
+          ],
+          [
+            98,
+            327
+          ]
+        ],
+        [
+          [
+            134,
+            313
+          ],
+          [
+            147,
+            318
+          ],
+          [
+            147,
+            350
+          ],
+          [
+            134,
+            344
+          ]
+        ]
+      ],
+      "headlamps": [
+        [
+          868,
+          557
+        ],
+        [
+          941,
+          683
+        ],
+        [
+          822,
+          717
+        ]
+      ],
+      "smoke": [
+        [
+          640,
+          415
+        ]
+      ],
+      "pantograph_raised": false,
+      "notes": "Diesel. 8 panes: two front windscreens, front cab side window (2 panes), front cab door window, rear cab side window (2 panes), rear cab door window. Three front headlamps (top centre + two lower); rear lamps not visible. No exhaust stack is drawn: smoke point is a guess, placed on the raised roof hatch between the two radiator fans and the front cab."
+    },
+    "views": [
+      "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-m62-rear.png"
+    ]
+  },
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-width-v2\\prepared\\m62"
+}

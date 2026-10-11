@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "id": "class08",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\class08\\body.blend",
+      "source_sha256": "f0c2a8371fcda21a618c5007e00e0ee8c3456ba4e16286cc1cd6a46ebb0276c0",
+      "frame_prefix": "loco_class08_body",
+      "length_tiles": 1.3605640985009628,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            0.238,
+            -0.178,
+            3.857
+          ]
+        ],
+        "lamps": [
+          [
+            3.581,
+            -0.102,
+            3.408
+          ],
+          [
+            3.712,
+            0.708,
+            1.815
+          ],
+          [
+            3.687,
+            -0.808,
+            1.894
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.6588537179175192,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\class08\\window-mask.png",
+        "sha256": "e2c434c0399f50dfcb58a021965a65eea70c10222f47753f035b2765657001d4"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "observed": [
+    {"picture":"view1","region":[0.02,0.05,0.98,0.96],"detail":"Three-quarter pixel illustration of a compact green diesel shunter. One long low hood leads to a taller cab at the rear; nose is the grille end at image right."},
+    {"picture":"view1","region":[0.20,0.28,0.82,0.63],"detail":"Long hood has rounded shoulders and a straight, nearly level roof. Green access doors and two louvred vent panels divide the visible side; thin cream piping runs above them."},
+    {"picture":"view1","region":[0.03,0.08,0.40,0.52],"detail":"Rear cab is taller than the hood, with a grey curved roof and cream-framed blue-grey glazing. The near side shows a narrow rear pane and a larger rectangular sliding pane; the end view shows a three-pane arrangement."},
+    {"picture":"view1","region":[0.22,0.49,0.78,0.88],"detail":"Three large spoked driving wheels sit beneath the hood on the visible side. Pale steel tyre rims surround dark spokes and warm orange-brown crank pins; one straight connecting rod links all three wheels."},
+    {"picture":"view1","region":[0.74,0.32,0.98,0.87],"detail":"Nose has a tall dark radiator grille, cream upper edge trim, one round lamp above the grille, two smaller low lamps, corner grab rails, a brown buffer beam, round buffers and a central hanging coupler."},
+    {"picture":"view1","region":[0.37,0.10,0.72,0.36],"detail":"Roof fittings include three flat rectangular access covers and one short orange exhaust stack. No second stack or large fan is visible."},
+    {"picture":"view2","region":[0.03,0.04,0.98,0.97],"detail":"Opposite-end three-quarter illustration confirms the cab end has three framed windows, a small upper lamp, brown buffer beam, buffers and a central coupler. The long green hood and three-wheel side arrangement continue toward the other end."}
+  ],
+  "inferred": [
+    {"detail":"The shell and side equipment are built bilaterally, while the pictures show only one side clearly; unseen opposite-side small fittings are not claimed to match an exact prototype drawing."},
+    {"detail":"Wheel axles are parallel to Y and the longitudinal body, deck edges and roof edges are parallel to X. The PNGs establish the side-view alignment; the exact real-world scale and axle spacing are not measured."},
+    {"detail":"All three coupled wheels rotate at the same phase and a linked rod translates with their crank pins. The illustrations show the connection but do not specify its exact motion timing."},
+    {"detail":"Internal diesel equipment, hidden frame members, exact axle bearings and the unpictured back of the nose are simplified. Standard track gauge is a rendering compatibility constraint."}
+  ],
+  "omitted": [
+    "Unseen cab interior, seats, dashboard and engine internals",
+    "Unpictured badges, lettering, side numbers, extra roof vents and pipes",
+    "Unverified rear-facing livery or extra rear windows beyond those in view2",
+    "Fine piping and mechanical detail too small to read in the source pictures"
+  ],
+  "guidelines": "Only the two hashed PNGs in this project determine appearance and shape. View1 is the workbook v9 BR Class 08 picture; view2 is the paired extracted rear reference. Build new editable primitives using the frozen C50 helpers and c50-lighter-v2 profile. Do not use any runtime geometry, fit/gear table, existing reconstruction or game screenshot as a shape source. Keep the locomotive longitudinal axis aligned to +X and parallel to the rails. Preserve visible glazing, lamps, all three coupled wheels and their moving connecting rod; use minimal inferred closures and omit unsupported detail."
+}

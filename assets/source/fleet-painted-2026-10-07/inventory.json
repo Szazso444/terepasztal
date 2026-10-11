@@ -1,0 +1,3103 @@
+[
+  {
+    "id": "rocket",
+    "name": "Stephenson's Rocket",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\rocket.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\rocket.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-rocket.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 4.5082
+        },
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          0.7538,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "bm50",
+    "name": "BM-50",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\bm50.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\bm50.glb",
+    "glb_exists": true,
+    "reference": "G:/DEV/Terepasztal/pipeline-out/inputs/bm50.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.3534
+        },
+        "tiles": [
+          0.7596,
+          1
+        ]
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          0.7596,
+          1
+        ]
+      },
+      {
+        "part": "body@w0",
+        "wheels": null,
+        "tiles": [
+          0.7596,
+          1
+        ]
+      },
+      {
+        "part": "body@w1",
+        "wheels": null,
+        "tiles": [
+          0.7596,
+          1
+        ]
+      },
+      {
+        "part": "body@w2",
+        "wheels": null,
+        "tiles": [
+          0.7596,
+          1
+        ]
+      },
+      {
+        "part": "body@w3",
+        "wheels": null,
+        "tiles": [
+          0.7596,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "muki",
+    "name": "Muki",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\muki.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\muki.glb",
+    "glb_exists": true,
+    "reference": "G:/DEV/Terepasztal/pipeline-out/inputs/muki.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.3927
+        },
+        "tiles": [
+          0.5922,
+          1
+        ]
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          0.5922,
+          1
+        ]
+      },
+      {
+        "part": "body@w0",
+        "wheels": null,
+        "tiles": [
+          0.5922,
+          1
+        ]
+      },
+      {
+        "part": "body@w1",
+        "wheels": null,
+        "tiles": [
+          0.5922,
+          1
+        ]
+      },
+      {
+        "part": "body@w2",
+        "wheels": null,
+        "tiles": [
+          0.5922,
+          1
+        ]
+      },
+      {
+        "part": "body@w3",
+        "wheels": null,
+        "tiles": [
+          0.5922,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "c50",
+    "name": "C-50",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\c50.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\c50.glb",
+    "glb_exists": true,
+    "reference": "G:/DEV/Terepasztal/pipeline-out/inputs/c50.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.4712
+        },
+        "tiles": [
+          0.8839,
+          1
+        ]
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          0.8839,
+          1
+        ]
+      },
+      {
+        "part": "body@w0",
+        "wheels": null,
+        "tiles": [
+          0.8839,
+          1
+        ]
+      },
+      {
+        "part": "body@w1",
+        "wheels": null,
+        "tiles": [
+          0.8839,
+          1
+        ]
+      },
+      {
+        "part": "body@w2",
+        "wheels": null,
+        "tiles": [
+          0.8839,
+          1
+        ]
+      },
+      {
+        "part": "body@w3",
+        "wheels": null,
+        "tiles": [
+          0.8839,
+          1
+        ]
+      }
+    ],
+    "status": "approved"
+  },
+  {
+    "id": "mav490",
+    "name": "MÁV 490",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\mav490.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav490.glb",
+    "glb_exists": true,
+    "reference": "G:/DEV/Terepasztal/pipeline-out/inputs/mav490.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 2.2106
+        },
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          1.0614,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "mk45",
+    "name": "MÁV Mk45",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\mk45.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk45.glb",
+    "glb_exists": true,
+    "reference": "G:/DEV/Terepasztal/pipeline-out/inputs/mk45.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          1.5024,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.589
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.589
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          1.5024,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "rezet",
+    "name": "Rezét",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\rezet.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\rezet.glb",
+    "glb_exists": true,
+    "reference": "G:/DEV/Terepasztal/pipeline-out/inputs/rezet.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 2.3562
+        },
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          1.146,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "mav375",
+    "name": "MÁV 375",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\mav375.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-mav375.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 2.4237
+        },
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          1.3432,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "general",
+    "name": "The General",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\general.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\general.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-general.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 3.9803
+        },
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.2488
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          1.5763,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "drg01",
+    "name": "DRG Class 01",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\drg01.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\drg01.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-drg01.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 5.2706
+        },
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.2995
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.2928
+        },
+        "tiles": null
+      },
+      {
+        "part": "tender",
+        "wheels": null,
+        "tiles": [
+          0.91,
+          1
+        ]
+      },
+      {
+        "part": "tender-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.3153
+        },
+        "tiles": null
+      },
+      {
+        "part": "tender-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.3153
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          2.0465,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender@lit",
+        "wheels": null,
+        "tiles": [
+          0.91,
+          1
+        ]
+      },
+      {
+        "part": "tender-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "daylight",
+    "name": "SP 4449 Daylight",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\daylight.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\daylight.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-daylight.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 4.3334
+        },
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.4873
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.4873
+        },
+        "tiles": null
+      },
+      {
+        "part": "tender",
+        "wheels": null,
+        "tiles": [
+          0.9207,
+          1
+        ]
+      },
+      {
+        "part": "tender-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.4856
+        },
+        "tiles": null
+      },
+      {
+        "part": "tender-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.4856
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          2.4799,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender@lit",
+        "wheels": null,
+        "tiles": [
+          0.9207,
+          1
+        ]
+      },
+      {
+        "part": "tender-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "mallard",
+    "name": "Mallard",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\mallard.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mallard.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-mallard.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 4.2677
+        },
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.1957
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.2027
+        },
+        "tiles": null
+      },
+      {
+        "part": "tender",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.3325
+        },
+        "tiles": [
+          0.9158,
+          1
+        ]
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          1.832,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender@lit",
+        "wheels": null,
+        "tiles": [
+          0.9158,
+          1
+        ]
+      },
+      {
+        "part": "tender@w0",
+        "wheels": null,
+        "tiles": [
+          0.9158,
+          1
+        ]
+      },
+      {
+        "part": "tender@w1",
+        "wheels": null,
+        "tiles": [
+          0.9158,
+          1
+        ]
+      },
+      {
+        "part": "tender@w2",
+        "wheels": null,
+        "tiles": [
+          0.9158,
+          1
+        ]
+      },
+      {
+        "part": "tender@w3",
+        "wheels": null,
+        "tiles": [
+          0.9158,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "big_boy",
+    "name": "Big Boy 4014",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\big_boy.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\big_boy.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-big-boy.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": null,
+        "tiles": [
+          2.817,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 2.8908
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine-t1",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 2.8908
+        },
+        "tiles": null
+      },
+      {
+        "part": "tender",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.3663
+        },
+        "tiles": [
+          1.3921,
+          1
+        ]
+      },
+      {
+        "part": "tender-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.3663
+        },
+        "tiles": null
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          2.817,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w4",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w5",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w6",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w7",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w4",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w5",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w6",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t1@w7",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender@lit",
+        "wheels": null,
+        "tiles": [
+          1.3921,
+          1
+        ]
+      },
+      {
+        "part": "tender@w0",
+        "wheels": null,
+        "tiles": [
+          1.3921,
+          1
+        ]
+      },
+      {
+        "part": "tender@w1",
+        "wheels": null,
+        "tiles": [
+          1.3921,
+          1
+        ]
+      },
+      {
+        "part": "tender@w2",
+        "wheels": null,
+        "tiles": [
+          1.3921,
+          1
+        ]
+      },
+      {
+        "part": "tender@w3",
+        "wheels": null,
+        "tiles": [
+          1.3921,
+          1
+        ]
+      },
+      {
+        "part": "tender-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender-t0@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "sw1",
+    "name": "EMD SW1",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\sw1.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sw1.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-sw1.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          1.5939,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.798
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.798
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          1.5939,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "class08",
+    "name": "BR Class 08",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\class08.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-class08.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 4.1397
+        },
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w0",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w1",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w2",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w3",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w4",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w5",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w6",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      },
+      {
+        "part": "body@w7",
+        "wheels": null,
+        "tiles": [
+          1.428,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "m62",
+    "name": "M62 Szergej",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\m62.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\m62.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-m62.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          2.6091,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8247
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8247
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          2.6091,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "sd40",
+    "name": "EMD SD40-2",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\sd40.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\sd40.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-sd40.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          3.0592,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.798
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.798
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          3.0592,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "deltic",
+    "name": "Deltic Class 55",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\deltic.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\deltic.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-deltic.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          2.7777,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8577
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8577
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          2.7777,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "dda40x",
+    "name": "DDA40X Centennial",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\dda40x.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\dda40x.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-dda40x.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          2.3336,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.7319
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.7319
+        },
+        "tiles": null
+      },
+      {
+        "part": "rear",
+        "wheels": null,
+        "tiles": [
+          1.9659,
+          1
+        ]
+      },
+      {
+        "part": "rear-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.6163
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          2.3336,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "rear@lit",
+        "wheels": null,
+        "tiles": [
+          1.9659,
+          1
+        ]
+      },
+      {
+        "part": "rear-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "rear-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "rear-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "rear-t0@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "kando_v40",
+    "name": "Kandó V40",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\kando_v40.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\kando_v40.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-kando-v40.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 3.9113
+        },
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w0",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w1",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w2",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w3",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w4",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w5",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w6",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      },
+      {
+        "part": "body@w7",
+        "wheels": null,
+        "tiles": [
+          1.9396,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "crocodile",
+    "name": "SBB Ce 6/8 Crocodile",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\crocodile.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\crocodile.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-crocodile.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 4.2412
+        },
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.2985
+        },
+        "tiles": null
+      },
+      {
+        "part": "cradle",
+        "wheels": null,
+        "tiles": [
+          1.1138,
+          1
+        ]
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          0.9442,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "cradle@lit",
+        "wheels": null,
+        "tiles": [
+          1.1138,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "taurus",
+    "name": "ÖBB 1116 Taurus",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\taurus.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\taurus.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-taurus.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          2.1296,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.9032
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.9032
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          2.1296,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "re460",
+    "name": "SBB Re 460",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\re460.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\re460.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-re460.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          2.5645,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8639
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8639
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          2.5645,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "gg1",
+    "name": "PRR GG1",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\gg1.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\gg1.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-gg1.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          3.1513,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.899
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.5675
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          3.1513,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "black_five",
+    "name": "LMS Black Five",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\black_five.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\black_five.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-black-five.png",
+    "sprite_sets": [
+      {
+        "part": "engine",
+        "wheels": {
+          "phases": 8,
+          "cycle_m": 4.0417
+        },
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.2216
+        },
+        "tiles": null
+      },
+      {
+        "part": "tender",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.2793
+        },
+        "tiles": [
+          0.7865,
+          1
+        ]
+      },
+      {
+        "part": "engine@lit",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w0",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w1",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w2",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w3",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w4",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w5",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w6",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine@w7",
+        "wheels": null,
+        "tiles": [
+          1.6008,
+          1
+        ]
+      },
+      {
+        "part": "engine-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "engine-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "tender@lit",
+        "wheels": null,
+        "tiles": [
+          0.7865,
+          1
+        ]
+      },
+      {
+        "part": "tender@w0",
+        "wheels": null,
+        "tiles": [
+          0.7865,
+          1
+        ]
+      },
+      {
+        "part": "tender@w1",
+        "wheels": null,
+        "tiles": [
+          0.7865,
+          1
+        ]
+      },
+      {
+        "part": "tender@w2",
+        "wheels": null,
+        "tiles": [
+          0.7865,
+          1
+        ]
+      },
+      {
+        "part": "tender@w3",
+        "wheels": null,
+        "tiles": [
+          0.7865,
+          1
+        ]
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "gmam",
+    "name": "GMAM Garratt",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\gmam.json",
+    "job_exists": false,
+    "glb": null,
+    "glb_exists": false,
+    "reference": null,
+    "sprite_sets": [],
+    "status": "inventory"
+  },
+  {
+    "id": "tgv",
+    "name": "TGV Sud-Est",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\tgv.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\tgv.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-tgv.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          2.6974,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.7226
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.7226
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          2.6974,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "ice1",
+    "name": "ICE 1",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\ice1.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\ice1.glb",
+    "glb_exists": true,
+    "reference": "../../assets/source/base-v1/loco-ice1.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          2.7091,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8168
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.8168
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          2.7091,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  },
+  {
+    "id": "mk48",
+    "name": "MÁV Mk48",
+    "job": "G:\\DEV\\Terepasztal\\pipeline-out-std\\jobs\\mk48.json",
+    "job_exists": true,
+    "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mk48.glb",
+    "glb_exists": true,
+    "reference": "G:/DEV/Terepasztal/pipeline-out/inputs/mk48.png",
+    "sprite_sets": [
+      {
+        "part": "body",
+        "wheels": null,
+        "tiles": [
+          1.1143,
+          1
+        ]
+      },
+      {
+        "part": "body-t0",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.5498
+        },
+        "tiles": null
+      },
+      {
+        "part": "body-t1",
+        "wheels": {
+          "phases": 4,
+          "cycle_m": 0.5498
+        },
+        "tiles": null
+      },
+      {
+        "part": "body@lit",
+        "wheels": null,
+        "tiles": [
+          1.1143,
+          1
+        ]
+      },
+      {
+        "part": "body-t0@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t0@w3",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w0",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w1",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w2",
+        "wheels": null,
+        "tiles": null
+      },
+      {
+        "part": "body-t1@w3",
+        "wheels": null,
+        "tiles": null
+      }
+    ],
+    "status": "inventory"
+  }
+]

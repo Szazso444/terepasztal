@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "id": "mav375",
+  "reference": {
+    "schema": 1,
+    "authority": "workbook-pictures-and-owner-notes",
+    "workbook": {
+      "path": "G:\\DEV\\Terepasztal\\locomotive-wheels-bogies-v8.xlsx",
+      "sha256": "42db22944c8f9b5c88fa447c0a493c51fd00ae559a0534532a5b59f8e57a0278"
+    },
+    "sheet": "Locomotives",
+    "row": 15,
+    "pictures": [
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\reference-v8\\drawing1-r15-c5.jpeg",
+        "sha256": "4c23cdbe73f344ab7d9fc8ad4b2e60fd36df20000e965011eed9dda22aef32e1"
+      },
+      {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-mav375-rear.png",
+        "sha256": "ec9641f8ad5af43f6f3898e0daa97298b46dd7a0ccff102debff6e9dc2129f8e",
+        "role": "Supplementary rear colour view from source art; workbook remains geometry authority"
+      }
+    ],
+    "guidelines": "B15: M\u00c1V 375 | G15: 0-6-2T as drawn | Y15: Frame [engine]: 1-4 (rigid, baked; 2 virtual rail supports) | AA15: Wheel 1 is half hidden behind the cab steps. No leading wheel is drawn (cylinders sit there); the prototype is 2-6-2T. | CI15: 2026-10-06: Wheels do not match the source picture: they are smaller in the game.\n\nEarlier review: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.; Owner: no baked shadows, brighter reference colour.; Rear colour source visually checked in rear-source-contact.jpg. It supplements hidden surface colour, never imports game geometry."
+  },
+  "reconstruction": {
+    "kind": "image-reconstruction",
+    "model": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.glb",
+      "sha256": "66c91e324bcecac34c7905c1028e32c2c0e68522f2c109795b4c0add64f3ab38"
+    },
+    "conditioning_image": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.source.png",
+      "sha256": "6cc987b37ee80e9455fc919f702388c32bee20fdecae92968698bff982d73617"
+    },
+    "conditioning_mask": {
+      "path": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\mav375.mask.png",
+      "sha256": "d4407e566b227212c10d2917e5b49f0b5addc3ef16f0b80c70dedfb862a31d91"
+    },
+    "picture_match_review": "2026-10-07: workbook and original conditioning crop visually compared side by side in source-match-contact.jpg; same illustrated body, livery and details."
+  },
+  "geometry": {
+    "length_m": 9.7,
+    "width_m": 2.8,
+    "height_m": 3.8,
+    "parts": [
+      [
+        "body",
+        1,
+        true
+      ]
+    ],
+    "gear": [
+      {
+        "rigid": [
+          0.15,
+          0.34,
+          0.52,
+          0.7
+        ],
+        "trucks": [],
+        "rigid_f": [
+          0.15,
+          0.34,
+          0.52,
+          0.7
+        ],
+        "trucks_f": [],
+        "from": 0,
+        "to": 1,
+        "wheels": {
+          "rigid": {
+            "d": [
+              0.72,
+              1.18,
+              1.18,
+              1.18
+            ],
+            "spokes": [
+              8,
+              12,
+              12,
+              12
+            ],
+            "frame": "inside",
+            "color": [
+              45,
+              47,
+              49
+            ],
+            "tyre": [
+              65,
+              68,
+              72
+            ],
+            "drivers": [
+              1,
+              2,
+              3
+            ],
+            "rods": {
+              "cylinders": "front"
+            }
+          }
+        }
+      }
+    ],
+    "notes": "Workbook row 15: manually read approximate axle positions and wheel sizes; refine from original raw mesh, rigid alignment and uniform scale only.",
+    "gauge": "standard"
+  },
+  "projection": {
+    "annot": {
+      "id": "mav375",
+      "windows": [
+        [
+          [
+            96,
+            299
+          ],
+          [
+            140,
+            311
+          ],
+          [
+            178,
+            326
+          ],
+          [
+            188,
+            340
+          ],
+          [
+            188,
+            398
+          ],
+          [
+            180,
+            405
+          ],
+          [
+            168,
+            400
+          ],
+          [
+            100,
+            368
+          ],
+          [
+            94,
+            355
+          ],
+          [
+            94,
+            305
+          ]
+        ],
+        [
+          [
+            205,
+            350
+          ],
+          [
+            218,
+            348
+          ],
+          [
+            224,
+            358
+          ],
+          [
+            224,
+            400
+          ],
+          [
+            218,
+            406
+          ],
+          [
+            206,
+            402
+          ],
+          [
+            201,
+            392
+          ],
+          [
+            201,
+            358
+          ]
+        ],
+        [
+          [
+            260,
+            354
+          ],
+          [
+            269,
+            345
+          ],
+          [
+            281,
+            347
+          ],
+          [
+            285,
+            357
+          ],
+          [
+            285,
+            404
+          ],
+          [
+            277,
+            413
+          ],
+          [
+            266,
+            412
+          ],
+          [
+            260,
+            402
+          ]
+        ],
+        [
+          [
+            431,
+            290
+          ],
+          [
+            436,
+            279
+          ],
+          [
+            446,
+            276
+          ],
+          [
+            453,
+            285
+          ],
+          [
+            453,
+            332
+          ],
+          [
+            431,
+            326
+          ]
+        ]
+      ],
+      "headlamps": [
+        [
+          809,
+          483
+        ],
+        [
+          920,
+          658
+        ],
+        [
+          775,
+          706
+        ]
+      ],
+      "smoke": [
+        [
+          752,
+          357
+        ]
+      ],
+      "pantograph_raised": false,
+      "notes": "Steam tank engine. Windows: large open cab side opening (no glass, interior visible; a far-side oval window shows through it), two oval glazed cab side windows, and one arched front spectacle window on the cab front (its lower edge hidden behind the sand box). Three front headlamps (smokebox top, two on the buffer beam). Smoke at chimney top opening. Review: moved the right buffer-beam headlamp from (912,670) to the lens centre (920,658); everything else unchanged."
+    },
+    "views": [
+      "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-mav375-rear.png"
+    ]
+  },
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\batch4-wheel-v3\\prepared\\mav375"
+}

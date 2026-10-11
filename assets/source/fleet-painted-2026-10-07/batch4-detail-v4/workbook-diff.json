@@ -1,0 +1,110 @@
+[
+  [
+    "xl/worksheets/sheet1.xml",
+    "AA15",
+    "Wheel 1 is half hidden behind the cab steps. No leading wheel is drawn (cylinders sit there); the prototype is 2-6-2T.",
+    "Three coupled wheel pairs are shown. The rear step is not a fourth wheel. This describes the illustration; the prototype arrangement remains separately recorded."
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "CA15",
+    "One rigid chassis with 2 fixed axles (4 wheels), baked into the body artwork; no separately swivelling bogie sprites. The solver uses 2 virtual rail supports, not 2 physical bogies.",
+    "One rigid chassis with 3 coupled driving axles (6 wheels), baked into the body artwork. The solver uses 2 virtual rail supports, not physical bogies."
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "CI15",
+    "2026-10-06: Wheels do not match the source picture: they are smaller in the game.\n\nEarlier review: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.",
+    "2026-10-08 owner correction: The model image has only three coupled driving axles. Remove the nonexistent rearmost small wheel pair. No separate trailing axle in this illustration. Lamp and window light must originate on the visible lenses and glazing.\n\nEarlier review:\n2026-10-06: Wheels do not match the source picture: they are smaller in the game.\n\nEarlier review: Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted."
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "CI17",
+    "Slightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.",
+    "2026-10-08 owner correction: Align the body longitudinal axis parallel to straight rails. Preserve the reference shape. Calibrate lamp and window light to the actual lenses and glazing.\n\nEarlier review:\nSlightly contracted: slightly longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted."
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "CI21",
+    "Slightly too wide: slightly narrower.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.",
+    "2026-10-08 owner correction: Centre the nose on the chassis, widen the narrow hood and make the body bilaterally symmetric in plan view. Calibrate lamp and window light to the actual lenses and glazing.\n\nEarlier review:\nSlightly too wide: slightly narrower.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted."
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "CI25",
+    "2026-10-06: Same distortion and angle problems as Black Five, but this model looks better. Tender does not fit the rails. At the front only the angles are wrong. Restore the original model.\n\nEarlier review: Correct, fits well.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.",
+    "2026-10-08 owner correction: Reduce all model wheel diameters by approximately 25% relative to wheel-v3. Move the leading bogie centre rearward below the cylinder assembly as marked in the owner image (current correction: 0.70 model metres). Align the engine body parallel to straight rails. Calibrate lamp and window light to the actual lenses and glazing.\n\nEarlier review:\n2026-10-06: Same distortion and angle problems as Black Five, but this model looks better. Tender does not fit the rails. At the front only the angles are wrong. Restore the original model.\n\nEarlier review: Correct, fits well.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted."
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "CI30",
+    "Contracted: longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted.",
+    "2026-10-08 owner: Body shape accepted. Render each swivelling bogie as a complete assembly, including front and rear crossmembers, longitudinal frames, centre bolster and traction motors; not only wheels. Calibrate lamp and window light to the actual lenses and glazing.\n\nEarlier review:\nContracted: longer.\n\n2026-10-06, fleet: Stop mesh reshaping and bending sprites between headings. Align the whole reconstructed model rigidly, use one uniform scale, and render actual 3D headings. Review originals for 4, 18, 21 and 32 before a fleet rerender. Discuss far-side mirroring and gear widening first; rail gauge stays. Remaining faults where applicable: pulsing on turns, poor cut surfaces, split-looking fronts. Other individual models are accepted."
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "CI4",
+    "Owner's model review (latest: 2026-10-06)",
+    "Owner's model review (latest: 2026-10-08)"
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "G15",
+    "0-6-2T as drawn",
+    "0-6-0T as illustrated (owner correction)"
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "I15",
+    "trailing (small, half hidden)",
+    "driver"
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "L15",
+    "driver",
+    null
+  ],
+  [
+    "xl/worksheets/sheet1.xml",
+    "Y15",
+    "Frame [engine]: 1-4 (rigid, baked; 2 virtual rail supports)",
+    "Frame [body]: 1-3 (rigid coupled drivers; 2 virtual rail supports)"
+  ],
+  [
+    "xl/worksheets/sheet5.xml",
+    "H14",
+    "1-4",
+    "1-3"
+  ],
+  [
+    "xl/worksheets/sheet5.xml",
+    "I14",
+    "4",
+    "3"
+  ],
+  [
+    "xl/worksheets/sheet5.xml",
+    "K14",
+    null,
+    "Owner 2026-10-08: no rearmost small wheel pair in the model image."
+  ],
+  [
+    "xl/worksheets/sheet5.xml",
+    "K37",
+    null,
+    "Owner 2026-10-08: leading bogie centre below cylinder assembly, 0.70 model metres rearward of wheel-v3. Wheel diameters 25% smaller."
+  ],
+  [
+    "xl/worksheets/sheet5.xml",
+    "K51",
+    null,
+    "Complete swivelling frame with front and rear crossmembers, bolster and traction motors."
+  ],
+  [
+    "xl/worksheets/sheet5.xml",
+    "K52",
+    null,
+    "Complete swivelling frame with front and rear crossmembers, bolster and traction motors."
+  ]
+]

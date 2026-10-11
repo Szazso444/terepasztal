@@ -1,0 +1,38 @@
+{
+  "muki": {
+    "report": "assets\\source\\fleet-painted-2026-10-07\\batch4\\repeat-check\\muki\\4470a55c4c8c3426\\report.json",
+    "repeat_pixel_match": true,
+    "parts": [
+      {
+        "frames": 12,
+        "part": "body",
+        "phase_bounds_drift_px": 0,
+        "scale": 1.0
+      }
+    ]
+  },
+  "m62": {
+    "report": "assets\\source\\fleet-painted-2026-10-07\\batch4\\repeat-check\\m62\\c5cbe8547b0cf289\\report.json",
+    "repeat_pixel_match": true,
+    "parts": [
+      {
+        "frames": 8,
+        "part": "body",
+        "phase_bounds_drift_px": 0,
+        "scale": 0.9999999999999999
+      },
+      {
+        "frames": 8,
+        "part": "body-t0",
+        "phase_bounds_drift_px": 0,
+        "scale": 1.0
+      },
+      {
+        "frames": 8,
+        "part": "body-t1",
+        "phase_bounds_drift_px": 0,
+        "scale": 1.0
+      }
+    ]
+  }
+}

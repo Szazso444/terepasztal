@@ -208,6 +208,10 @@ def main():
     game_groups = {}
     try:
         assets = load_assets(csv_path, only)
+        if any(a['category'] == 'vehicle' for a in assets) and set(stages) & {'blender', 'post', 'game'}:
+            raise PipelineError('Vehicle preparation/export from legacy game fit and gear tables is disabled. '
+                                'Use painted/prepare_reference.py with locked workbook pictures, then painted/run.py. '
+                                'This command still supports --stages comfy for original image reconstruction.')
         log.info(f"{len(assets)} assets, stages {stages}, out {out}")
         if "comfy" in stages:
             comfy = comfy_client.Comfy(cfg["comfy"]["url"], cfg["comfy"]["timeout_s"], cfg["comfy"]["poll_s"],

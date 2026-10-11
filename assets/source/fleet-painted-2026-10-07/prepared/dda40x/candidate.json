@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "id": "dda40x",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "body",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\dda40x\\body-repaired.blend",
+      "source_sha256": "7859c020de85a1faddbaf2000031be8e802410cb5f1193296f05d0f929e92abe",
+      "frame_prefix": "loco_dda40x_body",
+      "length_tiles": 2.2576398014288515,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            -4.059,
+            -0.23,
+            5.1
+          ]
+        ],
+        "lamps": [
+          [
+            6.151,
+            -0.264,
+            3.477
+          ],
+          [
+            6.183,
+            -0.281,
+            3.063
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\dda40x\\window-mask.png",
+        "sha256": "40f6ee57a297998ed0048ddcfdc3a761414d8953c24c573fc1ffde2e51601d28"
+      }
+    },
+    {
+      "name": "body-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\dda40x\\body-t0-repaired.blend",
+      "source_sha256": "b6c29fd0caf4c4c5ef2aff750b48805ad2717a852fe4b9d540b912947e0e4d7a",
+      "frame_prefix": "loco_dda40x_body-t0",
+      "length_tiles": 0.7171540648292204,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1164855028489582,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "body-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\dda40x\\body-t1-repaired.blend",
+      "source_sha256": "70329a14c91dc55e4c5fc39e67f5a642421dbc399fa53c126efc8bb540ef707f",
+      "frame_prefix": "loco_dda40x_body-t1",
+      "length_tiles": 0.7354798314606199,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.1164855028489582,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "rear",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\dda40x\\rear-repaired.blend",
+      "source_sha256": "e172613f18eaa0f02b80093e682e17e22b658a16c460806232e853d9cae0189f",
+      "frame_prefix": "loco_dda40x_rear",
+      "length_tiles": 1.855336433917974,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            3.389,
+            -0.221,
+            5.166
+          ]
+        ]
+      },
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\dda40x\\window-mask.png",
+        "sha256": "40f6ee57a297998ed0048ddcfdc3a761414d8953c24c573fc1ffde2e51601d28"
+      }
+    },
+    {
+      "name": "rear-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\dda40x\\rear-t0-repaired.blend",
+      "source_sha256": "23f592cdfdb3c62e50a4303dbaf893dec12e4e456f8440635954afe05b439789",
+      "frame_prefix": "loco_dda40x_rear-t0",
+      "length_tiles": 0.6511218290293331,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.0980871914275351,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ],
+  "repairs": [
+    "Accordion bellows at the body/rear hinge"
+  ]
+}

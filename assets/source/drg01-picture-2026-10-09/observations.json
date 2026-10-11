@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "observed": [
+    {"picture":"view1","region":[0.02,0.02,0.99,0.98],"detail":"Workbook side three-quarter illustration: a black/red 4-6-2 Pacific with a separate four-axle tender. Nose points right; body long axes are straight and parallel."},
+    {"picture":"view1","region":[0.27,0.28,0.76,0.76],"detail":"Boiler is a long dark cylindrical barrel with a larger round smokebox at the front, several narrow cream boiler bands, small domes, a short open-topped chimney with copper rim, and thin brass side pipes/handrails."},
+    {"picture":"view1","region":[0.29,0.47,0.82,0.98],"detail":"Three large red spoked coupled drivers sit beneath the boiler with visible connecting/coupling rods; a small trailing truck is behind them and a small leading truck sits under the forward cylinder assembly. Front truck centre follows the owner blue-circle annotation, shifted rearward under the cylinders."},
+    {"picture":"view1","region":[0.71,0.50,0.99,0.99],"detail":"Front has a circular smokebox door, gold centre latch, dark cylinder blocks, red buffer beam, two round buffers, coupling hardware, and two ivory headlamp lenses on the beam. The upper small round details are not additional lamps."},
+    {"picture":"view1","region":[0.20,0.10,0.36,0.54],"detail":"Cab behind the boiler has two side panes: rear pane is dark, forward pane is blue-green. A narrow spectacle pane is on the cab front. Roof is curved with two low rectangular raised fittings; no extra unseen panes."},
+    {"picture":"view1","region":[0.01,0.12,0.29,0.78],"detail":"Tender has a tall charcoal rectangular tank, raised open coal bunker filled with black coal, red underframe, and four evenly spaced axles in two two-axle trucks."},
+    {"picture":"view2","region":[0.00,0.07,0.99,0.97],"detail":"Supplementary opposite-end colour/shape image shows the same black boiler and tender, red frame and wheels, cream bands, brass fittings and coal load. Its more detailed illustration is used only to clarify surfaces hidden in view1."}
+  ],
+  "inferred": [
+    {"detail":"The unseen far-side shell and wheel arrangement are built bilaterally symmetric from the visible side; asymmetric cab-pane colours follow the illustrated forward/rear arrangement on both sides."},
+    {"detail":"Internal boiler, tender and chassis construction is minimal. The images do not show structural internals or exact real-world dimensions."},
+    {"detail":"A neutral end closure and basic coupler shank connect the independently rendered engine and tender; no unsupported rear decoration is asserted."}
+  ],
+  "omitted": ["Unsupported nameplates, numbers, crew, smoke, unseen lamps, additional pipes, and rear cab windows", "Unreferenced internal locomotive mechanisms"],
+  "guidelines": "Shape is authored from the locked PNG workbook illustration; supplementary rear PNG only clarifies hidden colour/surfaces. Follow workbook v9 Locomotives row 25 component ordering and its owner corrections. The leading bogie is visibly moved rearwards under the cylinder assembly by the owner's annotated image; all wheel diameters are reduced approximately 25% from the earlier reconstructed model. Keep main engine/body rails parallel and explicitly record fitted glazing and actual lamp-lens centres. These are image-authored geometry and owner direction only; no reconstructed mesh, runtime model, or fit/gear dimensions inform this recipe. Use the frozen C50 primitives and c50-lighter-v2 profile."
+}

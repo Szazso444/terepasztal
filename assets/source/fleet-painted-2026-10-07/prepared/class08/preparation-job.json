@@ -1,0 +1,258 @@
+{
+  "asset": {
+    "id": "class08",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-class08.png",
+    "size_tiles": 1.125,
+    "length_m": 8.92,
+    "width_m": 2.591,
+    "height_m": 3.877,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\class08\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\class08\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\class08\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "body",
+      1.125,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [
+        0.339,
+        0.53,
+        0.721
+      ],
+      "trucks": [],
+      "rigid_f": [
+        0.339,
+        0.53,
+        0.721
+      ],
+      "trucks_f": [],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "rigid": {
+          "d": [
+            1.372,
+            1.372,
+            1.372
+          ],
+          "spokes": [
+            12,
+            12,
+            12
+          ],
+          "frame": "inside",
+          "rods": {
+            "cylinders": "none"
+          },
+          "drivers": [
+            0,
+            1,
+            2
+          ],
+          "color": [
+            44,
+            46,
+            50
+          ],
+          "tyre": [
+            196,
+            192,
+            180
+          ],
+          "rod": [
+            176,
+            96,
+            52
+          ]
+        }
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 1.125,
+    "length_m": 8.92,
+    "width_m": 2.591,
+    "height_m": 3.877,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.65,
+    "stance_mode": "turn",
+    "box_body": true
+  },
+  "annot": {
+    "id": "class08",
+    "windows": [
+      [
+        [
+          93,
+          285
+        ],
+        [
+          113,
+          296
+        ],
+        [
+          113,
+          358
+        ],
+        [
+          93,
+          349
+        ]
+      ],
+      [
+        [
+          141,
+          308
+        ],
+        [
+          184,
+          330
+        ],
+        [
+          184,
+          401
+        ],
+        [
+          141,
+          381
+        ]
+      ],
+      [
+        [
+          210,
+          327
+        ],
+        [
+          230,
+          319
+        ],
+        [
+          230,
+          385
+        ],
+        [
+          210,
+          395
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        833,
+        499
+      ],
+      [
+        909,
+        652
+      ],
+      [
+        775,
+        702
+      ]
+    ],
+    "smoke": [
+      [
+        525,
+        314
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Diesel shunter. 3 cab panes: rear-end window, cab side window, cab front quarter window facing the bonnet. 3 front lamps: top centre above radiator, lower right, lower left. Copper exhaust stack on bonnet roof."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [
+    "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\base-v1\\loco-class08-rear.png"
+  ],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\class08.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\class08\\prepared-texture.png"
+  }
+}

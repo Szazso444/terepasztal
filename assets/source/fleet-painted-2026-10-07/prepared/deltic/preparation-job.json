@@ -1,0 +1,424 @@
+{
+  "asset": {
+    "id": "deltic",
+    "category": "vehicle",
+    "image": "../../assets/source/base-v1/loco-deltic.png",
+    "size_tiles": 2,
+    "length_m": 21.18,
+    "width_m": 2.68,
+    "height_m": 3.91,
+    "align": "auto",
+    "game_frame": "",
+    "yaw_offset_deg": null,
+    "plan": null,
+    "split_m": [],
+    "clip_below_m": [],
+    "anchor_offset_m": 0.0,
+    "length_factor": null
+  },
+  "glb": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\deltic.glb",
+  "grid": {
+    "metre": "human",
+    "human_px": 11,
+    "human_m": 1.75,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE",
+    "device": "GPU",
+    "resolution": 2,
+    "shading": "painted",
+    "ambient_level": 0.8,
+    "light_level": 0.4,
+    "light_cam": [
+      -0.5,
+      0.7,
+      0.5
+    ],
+    "samples": 32,
+    "supersample": 2,
+    "pad_px": 4,
+    "shadow": true,
+    "sun_azimuth_deg": -100.0,
+    "sun_elevation_deg": 45.0,
+    "sun_strength": 3.0,
+    "ambient": 0.6,
+    "force_dielectric": true,
+    "debug_views": false,
+    "debug_res": 320
+  },
+  "align": {
+    "enabled": true,
+    "pitch_range": [
+      -65.0,
+      20.0
+    ],
+    "roll_range": [
+      -25.0,
+      25.0
+    ],
+    "sample_faces": 20000,
+    "min_score": 0.7
+  },
+  "class_cfg": {
+    "dirs": "game",
+    "coupler_gap_m": 0.4,
+    "compress_range": [
+      0.35,
+      2.0
+    ],
+    "stretch_max": 1.25,
+    "shadow": false,
+    "width_follows_length": true,
+    "max_dim_error": 0.2
+  },
+  "meta_path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\unused-legacy-meta.json",
+  "sprites_raw_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\sprites_raw_dir",
+  "debug_dir": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\debug_dir",
+  "landmarks": null,
+  "gear_parts": [
+    [
+      "body",
+      2,
+      true
+    ]
+  ],
+  "gear_info": [
+    {
+      "rigid": [],
+      "trucks": [
+        [
+          0.051,
+          0.152,
+          0.272
+        ],
+        [
+          0.693,
+          0.803,
+          0.915
+        ]
+      ],
+      "rigid_f": [],
+      "trucks_f": [
+        [
+          0.051,
+          0.152,
+          0.272
+        ],
+        [
+          0.693,
+          0.803,
+          0.915
+        ]
+      ],
+      "from": 0,
+      "to": 1,
+      "wheels": {
+        "trucks": [
+          {
+            "d": 1.092,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          },
+          {
+            "d": 1.092,
+            "spokes": 0,
+            "frame": "outside",
+            "color": [
+              58,
+              56,
+              54
+            ],
+            "tyre": [
+              112,
+              116,
+              120
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "fit": {
+    "tiles": 2,
+    "length_m": 21.18,
+    "width_m": 2.68,
+    "height_m": 3.91,
+    "stance": "support",
+    "rail_half_m": 0.998,
+    "standard": true,
+    "gauge_warp": true,
+    "deperspective": 0.1,
+    "stance_mode": "turn",
+    "box_body": true
+  },
+  "annot": {
+    "id": "deltic",
+    "windows": [
+      [
+        [
+          116,
+          281
+        ],
+        [
+          131,
+          287
+        ],
+        [
+          124,
+          317
+        ],
+        [
+          106,
+          309
+        ]
+      ],
+      [
+        [
+          134,
+          289
+        ],
+        [
+          151,
+          296
+        ],
+        [
+          144,
+          327
+        ],
+        [
+          127,
+          319
+        ]
+      ],
+      [
+        [
+          165,
+          310
+        ],
+        [
+          182,
+          315
+        ],
+        [
+          180,
+          348
+        ],
+        [
+          163,
+          342
+        ]
+      ],
+      [
+        [
+          692,
+          554
+        ],
+        [
+          708,
+          560
+        ],
+        [
+          707,
+          588
+        ],
+        [
+          692,
+          581
+        ]
+      ],
+      [
+        [
+          734,
+          551
+        ],
+        [
+          756,
+          561
+        ],
+        [
+          749,
+          595
+        ],
+        [
+          727,
+          585
+        ]
+      ],
+      [
+        [
+          759,
+          562
+        ],
+        [
+          774,
+          568
+        ],
+        [
+          772,
+          605
+        ],
+        [
+          753,
+          597
+        ]
+      ],
+      [
+        [
+          791,
+          562
+        ],
+        [
+          829,
+          547
+        ],
+        [
+          837,
+          575
+        ],
+        [
+          794,
+          593
+        ]
+      ],
+      [
+        [
+          839,
+          543
+        ],
+        [
+          864,
+          536
+        ],
+        [
+          878,
+          562
+        ],
+        [
+          850,
+          571
+        ]
+      ],
+      [
+        [
+          245,
+          392
+        ],
+        [
+          267,
+          402
+        ],
+        [
+          266,
+          421
+        ],
+        [
+          245,
+          411
+        ]
+      ],
+      [
+        [
+          324,
+          427
+        ],
+        [
+          347,
+          438
+        ],
+        [
+          346,
+          456
+        ],
+        [
+          324,
+          447
+        ]
+      ],
+      [
+        [
+          545,
+          529
+        ],
+        [
+          567,
+          539
+        ],
+        [
+          567,
+          557
+        ],
+        [
+          545,
+          549
+        ]
+      ],
+      [
+        [
+          626,
+          566
+        ],
+        [
+          650,
+          575
+        ],
+        [
+          650,
+          596
+        ],
+        [
+          626,
+          585
+        ]
+      ]
+    ],
+    "headlamps": [
+      [
+        869,
+        688
+      ],
+      [
+        936,
+        663
+      ]
+    ],
+    "smoke": [
+      [
+        486,
+        381
+      ]
+    ],
+    "pantograph_raised": false,
+    "notes": "Diesel. 12 panes: per cab 2 side panes + 1 door pane (both cabs), 2 front windscreens, and 4 small dark bodyside (engine-room) windows which are glass but would only glow if the engine room is lit. Roof grilles and bodyside louvres excluded. Headlamps: the two round white lenses on the yellow nose; the copper-coloured round items beside them are not marked. No exhaust stack is drawn: smoke point is a guess, on the roof centreline midway between the two round roof fans (fan centres about 453,365 and 518,397)."
+  },
+  "source_cfg": {
+    "enabled": true,
+    "min_iou": 0.8,
+    "mask_erode_px": 3,
+    "depth_tol": 0.012,
+    "facing_ramp": [
+      0.12,
+      0.4
+    ]
+  },
+  "views": [],
+  "parts": {},
+  "source": {
+    "image": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\deltic.source.png",
+    "mask": "G:\\DEV\\Terepasztal\\pipeline-out-std\\models_raw\\deltic.mask.png",
+    "texture": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\deltic\\prepared-texture.png"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "id": "daylight",
+  "profile": "C:\\Users\\Zso\\terepasztal-local\\tools\\asset-pipeline\\painted\\profiles\\c50-approved-v1.json",
+  "parts": [
+    {
+      "name": "engine",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\engine.blend",
+      "source_sha256": "9df5869ea810273de21255d4e18b2661fa17f56dad26039ce44a70dde63df7d6",
+      "frame_prefix": "loco_daylight_engine",
+      "length_tiles": 2.3766214810391806,
+      "canvas": 512,
+      "effects": {
+        "smoke": [
+          [
+            3.744,
+            -0.151,
+            4.709
+          ]
+        ],
+        "lamps": [
+          [
+            5.043,
+            -0.155,
+            4.633
+          ]
+        ]
+      },
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.6896820303944193,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2,
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\window-mask.png",
+        "sha256": "a2b396bae27872840800686af72525b1624ec6175bd96cf29c287e5c6e9a7189"
+      }
+    },
+    {
+      "name": "engine-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\engine-t0.blend",
+      "source_sha256": "582c8c1697bb68d18b027ca9f66a36aaf4bd50cd63dbc96b685852705feb8804",
+      "frame_prefix": "loco_daylight_engine-t0",
+      "length_tiles": 0.43277436007127545,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.0775562037686806,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "engine-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\engine-t1.blend",
+      "source_sha256": "fde3aaeedad5765f312439747fcc654a99102078f0b4b42a2cd641d2319a9eb7",
+      "frame_prefix": "loco_daylight_engine-t1",
+      "length_tiles": 0.4595798819271031,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.0775562037686806,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "tender",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\tender.blend",
+      "source_sha256": "576f83afaefdd0000c5d9b1fc7a338f22822a62ab826f63388e1bb0e6b1df234",
+      "frame_prefix": "loco_daylight_tender",
+      "length_tiles": 0.8187674660480291,
+      "canvas": 512,
+      "effects": {},
+      "window_mask": {
+        "path": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\window-mask.png",
+        "sha256": "a2b396bae27872840800686af72525b1624ec6175bd96cf29c287e5c6e9a7189"
+      }
+    },
+    {
+      "name": "tender-t0",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\tender-t0.blend",
+      "source_sha256": "3287e35467bc2bb98bbde9751f73a22a2428afe4e393abf9892232d373c2db9b",
+      "frame_prefix": "loco_daylight_tender-t0",
+      "length_tiles": 0.5205123265800136,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.07728564036542437,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    },
+    {
+      "name": "tender-t1",
+      "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\daylight\\tender-t1.blend",
+      "source_sha256": "6a084c6284d194664118426e17e5993fa924c8b4c3eba71700b43c21381824a0",
+      "frame_prefix": "loco_daylight_tender-t1",
+      "length_tiles": 0.2965323011285664,
+      "canvas": 512,
+      "effects": {},
+      "wheel": {
+        "mode": "timeline",
+        "start": 1,
+        "period_frames": 8,
+        "radius": 0.07728564036542437,
+        "symmetry": 1
+      },
+      "max_phase_bounds_drift": 2
+    }
+  ]
+}
