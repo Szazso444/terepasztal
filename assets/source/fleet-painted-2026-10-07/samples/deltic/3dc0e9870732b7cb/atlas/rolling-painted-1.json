@@ -1,0 +1,230 @@
+{
+  "frames": {
+    "rolling/loco_deltic_body-t0_f0": {
+      "ax": 82.0,
+      "ay": 69.0,
+      "h": 102,
+      "w": 166,
+      "x": 1626,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t0_f24": {
+      "ax": 84.0,
+      "ay": 69.0,
+      "h": 102,
+      "w": 166,
+      "x": 1794,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t0_f48": {
+      "ax": 84.0,
+      "ay": 70.0,
+      "h": 101,
+      "w": 166,
+      "x": 677,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t0_f72": {
+      "ax": 82.0,
+      "ay": 70.0,
+      "h": 101,
+      "w": 166,
+      "x": 845,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t0_w0_f0": {
+      "ax": 82.0,
+      "ay": 69.0,
+      "h": 102,
+      "w": 166,
+      "x": 1962,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t0_w0_f24": {
+      "ax": 84.0,
+      "ay": 69.0,
+      "h": 102,
+      "w": 166,
+      "x": 2130,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t0_w0_f48": {
+      "ax": 84.0,
+      "ay": 70.0,
+      "h": 101,
+      "w": 166,
+      "x": 1013,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t0_w0_f72": {
+      "ax": 82.0,
+      "ay": 70.0,
+      "h": 101,
+      "w": 166,
+      "x": 1181,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t0_w3_f0": {
+      "ax": 82.0,
+      "ay": 69.0,
+      "h": 102,
+      "w": 166,
+      "x": 2298,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t0_w3_f24": {
+      "ax": 84.0,
+      "ay": 69.0,
+      "h": 102,
+      "w": 166,
+      "x": 2466,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t0_w3_f48": {
+      "ax": 84.0,
+      "ay": 70.0,
+      "h": 101,
+      "w": 166,
+      "x": 1349,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t0_w3_f72": {
+      "ax": 82.0,
+      "ay": 70.0,
+      "h": 101,
+      "w": 166,
+      "x": 1517,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t1_f0": {
+      "ax": 81.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 2634,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_f24": {
+      "ax": 86.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 166,
+      "x": 2803,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_f48": {
+      "ax": 86.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 2971,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_f72": {
+      "ax": 81.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 3140,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_w0_f0": {
+      "ax": 81.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 3309,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_w0_f24": {
+      "ax": 86.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 166,
+      "x": 3478,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_w0_f48": {
+      "ax": 86.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 3646,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_w0_f72": {
+      "ax": 81.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 3815,
+      "y": 2
+    },
+    "rolling/loco_deltic_body-t1_w3_f0": {
+      "ax": 81.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 2,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t1_w3_f24": {
+      "ax": 86.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 166,
+      "x": 171,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t1_w3_f48": {
+      "ax": 86.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 339,
+      "y": 255
+    },
+    "rolling/loco_deltic_body-t1_w3_f72": {
+      "ax": 81.0,
+      "ay": 70.0,
+      "h": 102,
+      "w": 167,
+      "x": 508,
+      "y": 255
+    },
+    "rolling/loco_deltic_body_f0": {
+      "ax": 206.0,
+      "ay": 168.0,
+      "h": 251,
+      "w": 404,
+      "x": 2,
+      "y": 2
+    },
+    "rolling/loco_deltic_body_f24": {
+      "ax": 198.0,
+      "ay": 168.0,
+      "h": 251,
+      "w": 404,
+      "x": 408,
+      "y": 2
+    },
+    "rolling/loco_deltic_body_f48": {
+      "ax": 198.0,
+      "ay": 164.0,
+      "h": 249,
+      "w": 404,
+      "x": 814,
+      "y": 2
+    },
+    "rolling/loco_deltic_body_f72": {
+      "ax": 206.0,
+      "ay": 164.0,
+      "h": 249,
+      "w": 404,
+      "x": 1220,
+      "y": 2
+    }
+  },
+  "partial": true,
+  "resolution": 4
+}

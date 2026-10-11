@@ -1,0 +1,31 @@
+{
+  "max_locomotives_before_owner_review": 10,
+  "current_batch": [
+    "muki",
+    "mav490",
+    "mk45",
+    "mk48",
+    "rezet",
+    "mav375",
+    "class08",
+    "sw1",
+    "drg01",
+    "m62"
+  ],
+  "stop_after_current_batch": true,
+  "accepted_unchanged": [
+    "rocket",
+    "general",
+    "bm50",
+    "ice1"
+  ],
+  "additional_authorized_adjustment": "C50 slightly lighter; no separate presentation",
+  "pending_reference": [
+    "gmam"
+  ],
+  "status": "sw1_tank_four_windows_complete_stopped_for_owner_review",
+  "current_correction_batch": [
+    "sw1"
+  ],
+  "construction_method": "PNG-only observed details + explicit hidden-side assumptions -> authored recipe with frozen C50 helpers/style -> verified model/render replay. tools/asset-pipeline/handbuilt/README.md. No game models as shape inputs."
+}

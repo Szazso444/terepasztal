@@ -1,0 +1,121 @@
+{
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\AppData\\Local\\Temp\\painted-m995_ewy\\body",
+  "part": {
+    "canvas": 512,
+    "effects": {
+      "lamps": [
+        [
+          6.677,
+          -0.217,
+          4.146
+        ],
+        [
+          6.788,
+          -0.094,
+          4.206
+        ],
+        [
+          8.756,
+          -1.144,
+          1.834
+        ],
+        [
+          8.681,
+          0.707,
+          1.657
+        ]
+      ],
+      "smoke": [
+        [
+          1.491,
+          -0.041,
+          4.605
+        ]
+      ]
+    },
+    "frame_prefix": "loco_sd40_body",
+    "length_tiles": 2.9950482986978986,
+    "name": "body",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\fleet-painted-2026-10-07\\prepared\\sd40\\body.blend",
+    "source_sha256": "fadf7150fd9640c1f5801199d45614577cf0ca8a635b9cd026e7b7f848cd76b9"
+  },
+  "phases": [
+    0,
+    3
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.48,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "engine": "BLENDER_EEVEE",
+    "facings": 96,
+    "id": "c50-approved-v1",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.78,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 4,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "frames": [
+    "loco_dda40x_rear_f0.png",
+    "loco_dda40x_rear_f24.png",
+    "loco_dda40x_rear_f48.png",
+    "loco_dda40x_rear_f72.png"
+  ],
+  "scale": 1.0,
+  "cycle": null,
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef"
+}

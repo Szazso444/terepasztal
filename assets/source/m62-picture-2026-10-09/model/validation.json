@@ -1,0 +1,8 @@
+{
+  "axes_parallel": true,
+  "body_width": 2.8,
+  "gauge_half_m": 0.7482077759774072,
+  "bogies": 2,
+  "axles_per_bogie": 3,
+  "shape_authority": "PNG-only authored geometry"
+}

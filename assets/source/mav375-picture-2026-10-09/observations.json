@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "observed": [
+    {
+      "feature": "Overall silhouette",
+      "region": [
+        0.018,
+        0.018,
+        0.982,
+        0.987
+      ],
+      "picture": "view1",
+      "detail": "Small 0-6-2T tank locomotive, cab at rear (-X), cylindrical boiler along X, smokebox at nose (+X), short rear bunker, low continuous running plate."
+    },
+    {
+      "feature": "Running wheels",
+      "region": [
+        0.2,
+        0.6,
+        0.69,
+        0.96
+      ],
+      "picture": "view1",
+      "detail": "Exactly three large coupled spoked axles visible along the side; one rear wheel partly obscured by cab step. No leading wheel is drawn; cylinders occupy the forward lower area. Dark rims and spokes with warm brass crank pins and coupling rods."
+    },
+    {
+      "feature": "Boiler and fittings",
+      "region": [
+        0.31,
+        0.25,
+        0.81,
+        0.76
+      ],
+      "picture": "view1",
+      "detail": "Charcoal/near-black barrel, round smokebox at nose, two raised domes, tall open chimney, thin warm metal boiler bands and handrails; brass pipes and small fittings."
+    },
+    {
+      "feature": "Cab",
+      "region": [
+        0.018,
+        0.02,
+        0.47,
+        0.67
+      ],
+      "picture": "view1",
+      "detail": "Rear box cab with gently curved roof and thin warm trim. Two oval side windows and one forward-facing arched spectacle window. Coal piled in an open rear roof bunker. Cab side includes a large open access area; no glass in that opening."
+    },
+    {
+      "feature": "Lamps",
+      "region": [
+        0.71,
+        0.35,
+        0.99,
+        0.91
+      ],
+      "picture": "view1",
+      "detail": "One small lamp near the top/side of the smokebox and two lamps at the front buffer beam, one on each side. Warm metallic housings and pale lenses."
+    },
+    {
+      "feature": "Paint and trim",
+      "region": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "picture": "view1",
+      "detail": "Dark graphite body with subtle lighter charcoal planar faces, narrow muted gold/bronze line work. Black wheels, steel tyres, brass accents. No baked cast shadow is part of the asset."
+    }
+  ],
+  "inferred": [
+    {
+      "feature": "Hidden side",
+      "reason": "Only one three-quarter illustration is available; far-side cab and boiler fittings are assumed symmetric where necessary."
+    },
+    {
+      "feature": "Exact dimensions",
+      "reason": "Illustration is not a measured drawing; authored metre proportions are approximate and taken from visible component ratios."
+    },
+    {
+      "feature": "Internal cab and unseen rear face",
+      "reason": "Only simple dark interior and plain closure are used; no unseen instruments or decorations are invented."
+    },
+    {
+      "feature": "Wheel motion",
+      "reason": "Three coupled axles are animated in phase and linked by a simplified side rod; the illustration does not specify detailed valve gear."
+    }
+  ],
+  "omitted": [
+    "Any fourth/rearmost axle or wheel; the owner confirms the locomotive has only three coupled axles.",
+    "A leading wheel or pilot wheel not shown in the picture.",
+    "Unseen badges, extra lamps, extra windows, complex valve gear, arbitrary cab instruments, smoke, and cast shadows."
+  ],
+  "guidelines": "Use only the locked workbook picture for shape, wheel layout and livery. Owner correction: the MÁV 375 has three coupled axles; omit the nonexistent rearmost wheel. One forward spectacle pane; two oval cab-side panes. Use the frozen c50-lighter-v2 style, complete visible running gear, explicit window materials and actual lens centres. No game geometry or runtime fit/gear data are shape inputs."
+}

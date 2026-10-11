@@ -1,0 +1,53 @@
+{
+  "drg01": {
+    "lamps": [
+      {
+        "across": -0.2097813001140736,
+        "along": 0.8809852305249284,
+        "part": "engine",
+        "up": 12.81657142857143
+      },
+      {
+        "across": 0.07971047871306924,
+        "along": 0.8740887504753067,
+        "part": "engine",
+        "up": 11.810857142857143
+      }
+    ],
+    "smoke": [
+      {
+        "along": 0.6123432751036185,
+        "part": "engine",
+        "up": 27.39942857142857
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "engine": {
+        "cycle": 0.845315994175257,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t0": {
+        "cycle": 0.048034785461899876,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t1": {
+        "cycle": 0.04696021764021465,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t0": {
+        "cycle": 0.05056884092199343,
+        "integrated": true,
+        "phases": 8
+      },
+      "tender-t1": {
+        "cycle": 0.05056884092199343,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

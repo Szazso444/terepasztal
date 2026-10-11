@@ -1,0 +1,101 @@
+{
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\AppData\\Local\\Temp\\painted-1yea6iai\\body-t1",
+  "part": {
+    "canvas": 256,
+    "effects": {},
+    "frame_prefix": "loco_sw1_body-t1",
+    "length_tiles": 0.3656738212983155,
+    "max_phase_bounds_drift": 1,
+    "name": "body-t1",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-handbuilt-2026-10-08\\body-t1.blend",
+    "source_sha256": "61f6eb9f336a1e2abbecf89e622b2323a18c4cc109c9bbb18d6a6ffa25451ae8",
+    "wheel": {
+      "count": 4,
+      "mode": "pivots",
+      "prefix": "Wheel pivot",
+      "radius": 0.48,
+      "symmetry": 5
+    }
+  },
+  "phases": [
+    0,
+    3
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.25,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "engine": "BLENDER_EEVEE",
+    "exposure": 0.3,
+    "facings": 96,
+    "id": "c50-lighter-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.86,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 4,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "complete": false,
+  "id": "bm50",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 8,
+      "part": "body",
+      "phase_bounds_drift_px": 0,
+      "scale": 0.823028523956236
+    }
+  ],
+  "profile": "c50-approved-v1",
+  "repeat_pixel_match": false
+}

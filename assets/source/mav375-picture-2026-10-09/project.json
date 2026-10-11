@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "mav375",
+  "recipe": "build.py",
+  "helpers": "c50_primitives.py",
+  "profile": "style.json",
+  "observations": "observations.json",
+  "pictures": [
+    {
+      "id": "view1",
+      "path": "references\\01.png",
+      "sha256": "d57f35c519a75ca656330289410d4d644812c42d508a555fe997913bf39b8c43",
+      "original_name": "drawing1-r15-c5.jpeg",
+      "original_sha256": "4c23cdbe73f344ab7d9fc8ad4b2e60fd36df20000e965011eed9dda22aef32e1"
+    }
+  ],
+  "gauge": "standard",
+  "output": "model"
+}

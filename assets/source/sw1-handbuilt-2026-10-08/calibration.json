@@ -1,0 +1,53 @@
+[
+  {
+    "part": "body",
+    "tiles": [
+      1.5605291698338806,
+      1
+    ],
+    "gear": [],
+    "axles": []
+  },
+  {
+    "part": "body-t0",
+    "tiles": null,
+    "gear": [
+      {
+        "truck": 0,
+        "centre_m": -2.68,
+        "model_off_m": 0
+      }
+    ],
+    "axles": [
+      {
+        "x_m": -0.66,
+        "d_m": 0.96
+      },
+      {
+        "x_m": 0.66,
+        "d_m": 0.96
+      }
+    ]
+  },
+  {
+    "part": "body-t1",
+    "tiles": null,
+    "gear": [
+      {
+        "truck": 1,
+        "centre_m": 2.58,
+        "model_off_m": 0
+      }
+    ],
+    "axles": [
+      {
+        "x_m": -0.66,
+        "d_m": 0.96
+      },
+      {
+        "x_m": 0.66,
+        "d_m": 0.96
+      }
+    ]
+  }
+]

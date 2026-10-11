@@ -1,0 +1,20 @@
+{
+  "bm50": {
+    "lamps": [],
+    "smoke": [
+      {
+        "along": 0.23175380631868223,
+        "part": "body",
+        "up": 9.095428571428572
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "body": {
+        "cycle": 0.05667944301247218,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

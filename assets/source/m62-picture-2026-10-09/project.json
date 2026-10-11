@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "m62",
+  "recipe": "build.py",
+  "helpers": "c50_primitives.py",
+  "profile": "style.json",
+  "observations": "observations.json",
+  "pictures": [
+    {
+      "id": "view1",
+      "path": "references\\01.png",
+      "sha256": "c71d5710100fac910b8582e7734867ee20affb3cac196e931c14b6ea2ed7f84b",
+      "original_name": "drawing1-r30-c5.jpeg",
+      "original_sha256": "2c4052ca91bab9034e2a9a18879b2938cf677c5f33bff4edb58c32be162a1d68"
+    },
+    {
+      "id": "view2",
+      "path": "references\\02.png",
+      "sha256": "800dead4d59431d88e08703c490fc24752ac74d24201c6fb41d29152063ae700",
+      "original_name": "loco-m62-rear.png",
+      "original_sha256": "60236dd23babc3a9f9146d0d886a1b33130a494c538e255d90b08b359ed2f26a"
+    }
+  ],
+  "gauge": "standard",
+  "output": "model"
+}

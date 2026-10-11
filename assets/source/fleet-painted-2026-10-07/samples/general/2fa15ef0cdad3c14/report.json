@@ -1,0 +1,23 @@
+{
+  "complete": false,
+  "id": "general",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 8,
+      "part": "engine",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 8,
+      "part": "engine-t0",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0000000000000002
+    }
+  ],
+  "profile": "c50-approved-v1",
+  "repeat_pixel_match": false
+}

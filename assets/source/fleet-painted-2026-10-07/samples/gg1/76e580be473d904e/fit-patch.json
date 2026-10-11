@@ -1,0 +1,26 @@
+{
+  "gg1": {
+    "lamps": [
+      {
+        "across": -0.02101020666280095,
+        "along": 1.3303791165491134,
+        "part": "body",
+        "up": 21.96857142857143
+      }
+    ],
+    "smoke": [],
+    "spriteFacings": 96,
+    "wheels": {
+      "body-t0": {
+        "cycle": 0.1441845480141836,
+        "integrated": true,
+        "phases": 8
+      },
+      "body-t1": {
+        "cycle": 0.09101749832930946,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}

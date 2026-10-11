@@ -1,0 +1,12 @@
+{
+  "frames": [
+    "loco_big_boy_tender_f0.png",
+    "loco_big_boy_tender_f24.png",
+    "loco_big_boy_tender_f48.png",
+    "loco_big_boy_tender_f72.png"
+  ],
+  "scale": 1.0,
+  "cycle": null,
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef"
+}

@@ -1,0 +1,111 @@
+{
+  "facings": [
+    0,
+    24,
+    48,
+    72
+  ],
+  "heading_count": 96,
+  "output": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\sample\\sw1\\painted-4bq4r8u_\\body-repeat",
+  "part": {
+    "canvas": 512,
+    "effects": {
+      "lamps": [
+        [
+          4.275,
+          0,
+          3.09
+        ]
+      ],
+      "smoke": [
+        [
+          -1.2,
+          0,
+          3.76
+        ]
+      ]
+    },
+    "frame_prefix": "loco_sw1_body",
+    "length_tiles": 1.5605291698338806,
+    "name": "body",
+    "source": "C:\\Users\\Zso\\terepasztal-local\\assets\\source\\sw1-picture-recipe-2026-10-08\\model\\body.blend",
+    "source_sha256": "faeeb9f5fd2138f570706da0a4bb51ccd6c645549b60228a0122ae04d5a3c61b",
+    "window_materials": [
+      "Opaque painted blue glass"
+    ]
+  },
+  "phases": [
+    0,
+    3
+  ],
+  "profile": {
+    "ao_distance": 0.28,
+    "ao_strength": 0.25,
+    "blender_build": "9e2066aef7ef",
+    "blender_version": "5.2.1 LTS",
+    "cast_shadows": false,
+    "engine": "BLENDER_EEVEE",
+    "exposure": 0.3,
+    "facings": 96,
+    "id": "c50-lighter-v2",
+    "light_color": [
+      1,
+      0.91,
+      0.77
+    ],
+    "light_target": [
+      0,
+      0,
+      1.2
+    ],
+    "lights": [
+      {
+        "energy": 1050,
+        "position": [
+          -4,
+          5,
+          6
+        ],
+        "size": 5
+      },
+      {
+        "energy": 228,
+        "position": [
+          4,
+          2,
+          5
+        ],
+        "size": 4
+      },
+      {
+        "energy": 238,
+        "position": [
+          0,
+          6,
+          -4
+        ],
+        "size": 5
+      }
+    ],
+    "look": "AgX - Medium High Contrast",
+    "metallic_cap": 0.18,
+    "paint_low": 0.86,
+    "paint_noise_detail": 2,
+    "paint_noise_roughness": 0.6,
+    "paint_noise_scale": 7,
+    "phases": 8,
+    "resolution": 4,
+    "roughness": 0.78,
+    "schema": 1,
+    "specular": 0.22,
+    "supersample": 2,
+    "tile_m": 6.235064799811727,
+    "tile_px": 64,
+    "view_transform": "AgX",
+    "world_color": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  }
+}

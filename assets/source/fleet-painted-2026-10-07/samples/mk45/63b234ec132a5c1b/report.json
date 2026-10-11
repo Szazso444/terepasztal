@@ -1,0 +1,29 @@
+{
+  "complete": false,
+  "id": "mk45",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 4,
+      "part": "body",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 8,
+      "part": "body-t0",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 8,
+      "part": "body-t1",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    }
+  ],
+  "profile": "c50-approved-v1",
+  "repeat_pixel_match": false
+}

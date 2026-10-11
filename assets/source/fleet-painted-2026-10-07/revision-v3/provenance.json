@@ -1,0 +1,14 @@
+{
+  "source": "locomotive-wheels-bogies-v8.xlsx / Locomotives row6, both front and rear images",
+  "model_changes": {
+    "rocket": "Every wheel mesh phase scaled 0.8 radially at fixed axle x; tyre width/gauge unchanged; body lowered 0.13275 m and smoke anchor lowered equally; same metres-to-pixels scale; cycle x0.8",
+    "general": "All *_tyre materials in engine and leading truck changed to linear RGB 0.055/0.060/0.065. Other paints and geometry unchanged.",
+    "bm50": "Built new from workbook front/rear. Tall red side aprons, low wide rounded bonnet, open padded driving seat, silver rear rail (no rear glazing), portholes/louvres, yellow slatted end buffers, three almost-hidden axles. Resolution4 for small details."
+  },
+  "approved_unchanged": [
+    "ice1",
+    "c50"
+  ],
+  "batch_limit": 5,
+  "current_batch_count": 3
+}

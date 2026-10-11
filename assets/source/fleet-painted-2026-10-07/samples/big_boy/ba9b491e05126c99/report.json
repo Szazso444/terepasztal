@@ -1,0 +1,47 @@
+{
+  "complete": false,
+  "id": "big_boy",
+  "pages": [
+    "rolling-painted-1"
+  ],
+  "parts": [
+    {
+      "frames": 4,
+      "part": "engine",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 8,
+      "part": "engine-t0",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 8,
+      "part": "engine-t1",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 4,
+      "part": "tender",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 8,
+      "part": "tender-t0",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0
+    },
+    {
+      "frames": 8,
+      "part": "tender-t1",
+      "phase_bounds_drift_px": 0,
+      "scale": 1.0000000000000002
+    }
+  ],
+  "profile": "c50-approved-v1",
+  "repeat_pixel_match": false
+}

@@ -1,0 +1,32 @@
+{
+  "general": {
+    "lamps": [
+      {
+        "across": -0.005934180507814008,
+        "along": 0.5350385452450684,
+        "part": "engine",
+        "up": 17.725714285714286
+      }
+    ],
+    "smoke": [
+      {
+        "along": 0.3169173157686616,
+        "part": "engine",
+        "up": 24.92914285714286
+      }
+    ],
+    "spriteFacings": 96,
+    "wheels": {
+      "engine": {
+        "cycle": 0.6383734777095162,
+        "integrated": true,
+        "phases": 8
+      },
+      "engine-t0": {
+        "cycle": 0.03990335433362502,
+        "integrated": true,
+        "phases": 8
+      }
+    }
+  }
+}
