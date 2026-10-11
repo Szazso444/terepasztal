@@ -5,21 +5,19 @@ export interface BiomeDef {
   id: string;
   name: string;
   desc: string;
-  /** production multiplier per station def id */
+  /** production multiplier per station def id, in the order panels list them */
   production: Record<string, number>;
   trackCostMul: number;
   waterUseMul: number;
   speedMul: number;
+  /**
+   * The level where snow starts to show: 4, taiga a level lower, desert a level higher. Every
+   * entry carries one, so the landscape painter and the tile tooltip can read one number.
+   */
+  snowLevel: number;
 }
+/** Indexed by `Biome`: ids are appended and never renumbered. */
 export const BIOME_DEFS: BiomeDef[] = biomeJson as unknown as BiomeDef[];
-export const BIOME_ORDER: Biome[] = [
-  Biome.Plains,
-  Biome.Forest,
-  Biome.Desert,
-  Biome.Taiga,
-  Biome.Swamp,
-  Biome.Ocean,
-];
 export function biomeDef(b: Biome): BiomeDef {
   return BIOME_DEFS[b] ?? BIOME_DEFS[0];
 }
