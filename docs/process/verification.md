@@ -17,6 +17,10 @@ the map of what they cover.
   class (a path never reverses mid-tile; a migration chain reaches the current version from every
   older one). Golden values are for outputs whose exact bits are the contract, such as map
   generation hashes, and a golden failure is a question for the author, not a number to update.
+  The sprite frame table (`src/art/atlasFrames.golden.json`) is the exception: Art re-records it
+  in the pull request that changes a generator on purpose, with
+  `UPDATE_ATLAS_FRAMES=1 npx vitest run src/art/atlasFrames.test.ts`, and QA reviews the table
+  diff. It is not a gate file and not a question for the author.
 - **An oracle where there is one.** A fast algorithm is checked against a slow obvious one on
   small inputs: Dijkstra against exhaustive search on a few tiles, a closed-form length against a
   sampled one.
@@ -43,3 +47,4 @@ where the test is still to be written. Verification keeps this table current.
 | Separation and deadlock | trains never overlap; a stuck pair resolves in bounded ticks                                                                                                                                                                                                                                                                                                                                                         | —                                                        |
 | Economy                 | money and cargo change only through a recorded transaction                                                                                                                                                                                                                                                                                                                                                           | —                                                        |
 | Facings                 | mirroring a drawn facing and its residual rotation reproduce the true heading                                                                                                                                                                                                                                                                                                                                        | —                                                        |
+| Sprite frames           | every generated frame keeps its key, size and anchor (`track` by key only: a stub canvas has no ink); no key in two groups; rolling and wagon families carry exactly the drawn facings; generation never calls `Math.random`                                                                                                                                                                                         | `src/art/atlasFrames.test.ts`                            |
