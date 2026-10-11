@@ -1,0 +1,161 @@
+{
+  "projection": "2:1 orthographic isometric",
+  "tileGamePx": [64, 32],
+  "canvasPx": [1024, 1024],
+  "scale": 8,
+  "levelGamePx": 9.8,
+  "levelCanvasPx": 78.4,
+  "dropLevels": [1, 2, 3, 4],
+  "fullFaceLevels": 4,
+  "levelFractionOfTileSide": 0.25,
+  "fourLevelHeightGamePx": 39.2,
+  "faceMaterialPx": [1024, 1024],
+  "faceLevelMaterialPx": 256,
+  "faceReviewPx": [36, 39],
+  "foamReviewWidthPx": 128,
+  "tileAxes": {
+    "x": "NW to SE",
+    "y": "NE to SW"
+  },
+  "edgeNames": {
+    "NE": "upper-right",
+    "SE": "lower-right",
+    "SW": "lower-left",
+    "NW": "upper-left"
+  },
+  "edges": {
+    "SW": {
+      "facing": "+y",
+      "light": "lit",
+      "visible": true
+    },
+    "SE": {
+      "facing": "+x",
+      "light": "shade",
+      "visible": true
+    },
+    "NE": {
+      "facing": "-y",
+      "visible": false
+    },
+    "NW": {
+      "facing": "-x",
+      "visible": false
+    }
+  },
+  "riverEdge": {
+    "absoluteU": 0.38,
+    "fractions": [0.12, 0.88],
+    "percent": [12, 88],
+    "rockOutside": true
+  },
+  "finalProjection": {
+    "centre": [512, 832],
+    "xVector": [256, 128],
+    "yVector": [-256, 128],
+    "zVector": [0, -8],
+    "formula": "(512 + 256*(x-y), 832 + 128*(x+y) - 8*z)"
+  },
+  "foamProjection": {
+    "centre": [512, 512],
+    "xVector": [256, 128],
+    "yVector": [-256, 128],
+    "formula": "(512 + 256*(x-y), 512 + 128*(x+y))"
+  },
+  "faces": {
+    "sw": {
+      "1": [
+        [256, 753.6],
+        [512, 881.6],
+        [512, 960],
+        [256, 832]
+      ],
+      "2": [
+        [256, 675.2],
+        [512, 803.2],
+        [512, 960],
+        [256, 832]
+      ],
+      "3": [
+        [256, 596.8],
+        [512, 724.8],
+        [512, 960],
+        [256, 832]
+      ],
+      "4": [
+        [256, 518.4],
+        [512, 646.4],
+        [512, 960],
+        [256, 832]
+      ]
+    },
+    "se": {
+      "1": [
+        [768, 753.6],
+        [512, 881.6],
+        [512, 960],
+        [768, 832]
+      ],
+      "2": [
+        [768, 675.2],
+        [512, 803.2],
+        [512, 960],
+        [768, 832]
+      ],
+      "3": [
+        [768, 596.8],
+        [512, 724.8],
+        [512, 960],
+        [768, 832]
+      ],
+      "4": [
+        [768, 518.4],
+        [512, 646.4],
+        [512, 960],
+        [768, 832]
+      ]
+    }
+  },
+  "foam": {
+    "sw": {
+      "axis": "y",
+      "range": [0, 0.25],
+      "along": "x",
+      "alongRange": [-1.5, 1.5],
+      "vertices": [
+        [128, 320],
+        [896, 704],
+        [832, 736],
+        [64, 352]
+      ]
+    },
+    "se": {
+      "axis": "x",
+      "range": [0, 0.25],
+      "along": "y",
+      "alongRange": [-1.5, 1.5],
+      "vertices": [
+        [896, 320],
+        [128, 704],
+        [192, 736],
+        [960, 352]
+      ]
+    }
+  },
+  "animation": {
+    "frames": 4,
+    "scrollFractionPerFrame": 0.25,
+    "secondsPerFrame": 0.28,
+    "brightnessPulse": false
+  },
+  "palette": {
+    "water": ["#487C84", "#548A92", "#3E6E78", "#649EA2"],
+    "rock": ["#BCA98B", "#626B6C", "#9A968C", "#8C887E", "#78746A"],
+    "whiteMaximum": "#E0DDD2",
+    "cursorWhite": "#ECE4D0"
+  },
+  "finishing": {
+    "face": "Stretch whole source onto exact face; repeat cross-fade; scroll water; darken foot.",
+    "foam": "Square returns use w/1024; non-square returns use measured painted edges; geometry sets alpha."
+  }
+}

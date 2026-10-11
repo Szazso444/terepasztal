@@ -1,0 +1,68 @@
+[
+  {
+    "file": "fall-sheet-lit.png",
+    "returned": [1254, 1254],
+    "preview": [36, 39],
+    "sha256": "c7da85b6aa4627dafa61f65095c033d9d84106a19c0c5aad4991384feb7a2046",
+    "minAlpha": 255,
+    "transparentPixels": 0,
+    "partialPixels": 0,
+    "aboveWhiteCap": 108175,
+    "aboveWhiteCapFraction": 0.06879103296882194
+  },
+  {
+    "file": "fall-sheet-shade.png",
+    "returned": [1254, 1254],
+    "preview": [36, 39],
+    "sha256": "1441f9da2f141bd9add9f0282e6f76148b679e0e724985e70750f849cb2cfcc5",
+    "minAlpha": 255,
+    "transparentPixels": 0,
+    "partialPixels": 0,
+    "aboveWhiteCap": 1281,
+    "aboveWhiteCapFraction": 0.0008146181024549194
+  },
+  {
+    "file": "cliff-rock-lit.png",
+    "returned": [1254, 1254],
+    "preview": [36, 39],
+    "sha256": "3710e835086b550065583de793496663862640557ba25ddabdbbf7a8aa3fac4f",
+    "minAlpha": 255,
+    "transparentPixels": 0,
+    "partialPixels": 0,
+    "aboveWhiteCap": 1,
+    "aboveWhiteCapFraction": 6.359235772481807e-7
+  },
+  {
+    "file": "cliff-rock-shade.png",
+    "returned": [1254, 1254],
+    "preview": [36, 39],
+    "sha256": "e22482f8a91b108b9a84abc593b4524fa7e3ba3b98058bb971a2fe57708b4e70",
+    "minAlpha": 255,
+    "transparentPixels": 0,
+    "partialPixels": 0,
+    "aboveWhiteCap": 0,
+    "aboveWhiteCapFraction": 0
+  },
+  {
+    "file": "plunge-foam-sw.png",
+    "returned": [1254, 1254],
+    "preview": [128, 128],
+    "sha256": "c994b331c95b250e9ea058ccff5135ad8e4a4441e28b04562cbd140d9fc596be",
+    "minAlpha": 0,
+    "transparentPixels": 1458336,
+    "partialPixels": 113695,
+    "aboveWhiteCap": 7548,
+    "aboveWhiteCapFraction": 0.0047999511610692675
+  },
+  {
+    "file": "plunge-foam-se.png",
+    "returned": [1254, 1254],
+    "preview": [128, 128],
+    "sha256": "0b567016a860e7ea5c6b0425bb5de105c73388d14d2bf20703980a16823c7e34",
+    "minAlpha": 0,
+    "transparentPixels": 1455778,
+    "partialPixels": 116249,
+    "aboveWhiteCap": 10984,
+    "aboveWhiteCapFraction": 0.006984984572494016
+  }
+]
