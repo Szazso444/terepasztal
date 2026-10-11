@@ -240,6 +240,7 @@ describe('what the tuning presets say', () => {
     t.confirmDeletePreset,
     t.presetSaved,
     t.presetSaveFailed,
+    t.confirmLoadPreset,
     t.presetLoaded,
     t.presetDeleted,
   ];

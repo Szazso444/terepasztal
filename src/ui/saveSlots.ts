@@ -61,7 +61,94 @@ export function liveText(meta: SlotMeta, now: number): SlotText {
   };
 }
 
+/**
+ * What Continue goes back to, null when it has nothing to go back to (and is disabled): over a game
+ * being played (`overGame`, the title screen opened from the pause menu) that game, described by
+ * `live` like a save, whether or not it was ever stored; otherwise the stored game, which is the
+ * game under the title screen at boot.
+ */
+export function continueTargetFor(
+  overGame: boolean,
+  live: () => SlotMeta,
+  stored: () => SlotMeta | null,
+): { meta: SlotMeta; live: boolean } | null {
+  if (overGame) return { meta: live(), live: true };
+  const meta = stored();
+  return meta && { meta, live: false };
+}
+
+/**
+ * What Continue says, from what it goes back to: with `live` the game being played under the title
+ * screen, otherwise the stored game. The stored game is the one the minute autosave and the pause
+ * menu's Save write, so its time line says `last autosave`; a named save's row (`slotText`) says
+ * `saved`. A game never stored, or a file without a save time, has no time to give.
+ */
+export function continueText(target: { meta: SlotMeta; live: boolean }, now: number): SlotText {
+  if (target.live) return liveText(target.meta, now);
+  const { meta } = target;
+  const t = slotText(meta, now);
+  return {
+    ...t,
+    saved: meta.savedAt > 0 ? STR.saves.lastAutosave(STR.saves.ago(now - meta.savedAt)) : null,
+  };
+}
+
 /** The autosave line of the settings screen: on or off, and when the game was last stored. */
 export function autosaveText(on: boolean, savedAt: number | null, now: number): string {
   return STR.saves.autosaveStatus(on, savedAt ? STR.saves.ago(now - savedAt) : null);
+}
+
+/**
+ * What an action that replaces or leaves a game may have to ask about. `overwrite` writes over the
+ * stored game (New game, Play level, loading a named save, the editor's play test); `leave` only
+ * walks away from the game being played (Edit level, New level, Settings' Load last save).
+ */
+export type Replacement = 'overwrite' | 'leave';
+
+/** What `panels.ts` knows when the player picks such an action. */
+export interface ReplaceSituation {
+  mode: 'play' | 'editor';
+  /** the title screen is up */
+  titleShown: boolean;
+  /** the title screen was opened from the pause menu, over the game being played */
+  titleOverGame: boolean;
+  /** the stored game exists and can be read; a damaged file does not count */
+  stored: boolean;
+}
+
+/**
+ * Is a game being played: in play mode, under the pause menu or under a title screen opened over
+ * it. Not at the title screen at boot (the game under it is the stored one or a world not yet
+ * played) and not in the editor.
+ */
+export function gameBeingPlayed(s: ReplaceSituation): boolean {
+  return s.mode === 'play' && (!s.titleShown || s.titleOverGame);
+}
+
+/**
+ * Does the action ask first. An `overwrite` asks when a game is being played or a stored game
+ * exists, and stays quiet only when neither is (first start, nothing played). A `leave` loses only
+ * the game being played, so it asks exactly when one is.
+ */
+export function asksBeforeReplacing(kind: Replacement, s: ReplaceSituation): boolean {
+  return kind === 'overwrite' ? gameBeingPlayed(s) || s.stored : gameBeingPlayed(s);
+}
+
+/**
+ * The question before New game, Play level, Edit level or New level, null when it asks nothing.
+ * Only a stored game is called saved: over a game never stored the question says it is in progress.
+ */
+export function replaceQuestion(kind: Replacement, s: ReplaceSituation): string | null {
+  if (!asksBeforeReplacing(kind, s)) return null;
+  if (kind === 'leave') return STR.menu.confirmLeaveGame;
+  return gameBeingPlayed(s) ? STR.menu.confirmReplaceGame(s.stored) : STR.menu.confirmReplace;
+}
+
+/**
+ * The question before loading the named save `name`, null when it asks nothing. Over a game being
+ * played its unsaved progress is lost; otherwise it is the stored game that is replaced.
+ */
+export function loadQuestion(name: string, s: ReplaceSituation): string | null {
+  if (!asksBeforeReplacing('overwrite', s)) return null;
+  return gameBeingPlayed(s) ? STR.menu.confirmLoad(name) : STR.menu.confirmLoadStored(name);
 }

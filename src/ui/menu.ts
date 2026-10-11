@@ -4,7 +4,7 @@ import type { LevelData } from '../world/level';
 import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import type { SlotMeta } from '../sim/save';
 import type { NamePrompt } from './namePrompt';
-import { liveText, slotText, type SlotText } from './saveSlots';
+import { continueText, slotText, type SlotText } from './saveSlots';
 
 /** Shared by both menus: music and effects volume, so the player can set them from the menu. */
 export interface AudioActions {
@@ -65,7 +65,7 @@ export function slotLines(meta: SlotMeta, now: number, cls = 'sub'): HTMLElement
   return textLines(slotText(meta, now), cls);
 }
 
-/** One `cls` line each of what `slotText` or `liveText` says, the date as the time line's title. */
+/** One `cls` line each of what `slotText` or `continueText` says, the date as the time line's title. */
 function textLines(t: SlotText, cls: string): HTMLElement[] {
   const lines = [el('div', { class: cls, text: t.detail })];
   if (t.saved) lines.push(el('div', { class: cls, text: t.saved, title: t.savedAt ?? '' }));
@@ -198,8 +198,9 @@ export class MainMenu {
     // what Continue goes back to, in the body font under the title-font label
     if (save) {
       const now = Date.now();
-      const t = save.live ? liveText(save.meta, now) : slotText(save.meta, now);
-      cont.append(el('div', { class: 'menu-btn-detail' }, ...textLines(t, 'sub dim')));
+      cont.append(
+        el('div', { class: 'menu-btn-detail' }, ...textLines(continueText(save, now), 'sub dim')),
+      );
     }
     // production chain of the new game: simple (default) or the full supply set
     const supply = el('select', { class: 'text', title: STR.menu.supply }) as HTMLSelectElement;
