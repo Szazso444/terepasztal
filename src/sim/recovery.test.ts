@@ -767,6 +767,252 @@ describe('findRefugePath on generated trees', () => {
   });
 });
 
+/**
+ * Every way `findShuntPath` may turn at the end of, found the slow way: each walk from `start`
+ * that `refugeWays` would walk (no repeated tile, only open, unblocked track the consist may use),
+ * cut where the train, its head at the centre of the walk's last tile and its rear end on the tile
+ * `rear` gives, stands wholly on plain track past a switch that offers a choice coming back, at the
+ * first place past that switch where it does. Any order.
+ */
+function shuntTurns(
+  g: TrackGraph,
+  start: State,
+  blocked: (x: number, y: number) => boolean,
+  access: (p: TrackPiece, entry: Dir) => boolean,
+  rear: (path: readonly PathSegment[]) => number,
+): PathSegment[][] {
+  // plain: one link, and no part of a multi-tile switch (a 2x2 curve is plain)
+  const plain = (s: PathSegment) => {
+    const p = g.get(s.x, s.y);
+    return !!p && p.links.length === 1 && !(p.unit && p.kind !== 'curve');
+  };
+  const clear = (way: readonly PathSegment[]) => {
+    const r = rear(way);
+    return r >= 0 && way.slice(r).every(plain);
+  };
+  // coming back into the tile through the edge the walk left it by, there is more than one way on
+  const choiceBack = (s: PathSegment) => g.exits(s.x, s.y, s.out).length > 1;
+  // clear here, and some switch with a choice back lies behind with nowhere clear since it
+  const turnsHere = (way: readonly PathSegment[]) => {
+    if (!clear(way)) return false;
+    for (let j = way.length - 1; j >= 0; j--) {
+      if (j < way.length - 1 && clear(way.slice(0, j + 1))) return false;
+      if (choiceBack(way[j])) return true;
+    }
+    return false;
+  };
+  const out: PathSegment[][] = [];
+  const walk = (s: State, path: PathSegment[]) => {
+    for (const exit of g.exits(s.x, s.y, s.in)) {
+      const way = [...path, { x: s.x, y: s.y, in: s.in, out: exit }];
+      if (turnsHere(way)) out.push(way);
+      const next = { x: s.x + DIR_DX[exit], y: s.y + DIR_DY[exit], in: opposite(exit) };
+      if (!g.opensTo(next.x, next.y, next.in) || blocked(next.x, next.y)) continue;
+      if (!access(g.get(next.x, next.y)!, next.in)) continue;
+      if (way.some((p) => p.x === next.x && p.y === next.y)) continue;
+      walk(next, way);
+    }
+  };
+  walk(start, []);
+  return out;
+}
+
+/**
+ * `findShuntPath` from `start` against the oracle (`shuntTurns`, `refugeWays`): it turns at the
+ * nearest place to turn from which the train can back into a refuge `takes` accepts, trying only
+ * the SHUNT_TURNS nearest places, and backs into the nearest such refuge; with none, there is no
+ * shunt. Whether it found one, and whether only a place to turn past those it may try had a refuge.
+ */
+function shuntHolds(
+  g: TrackGraph,
+  start: State,
+  length: number,
+  blocked: (x: number, y: number) => boolean,
+  refuge: (x: number, y: number) => boolean,
+  access: (p: TrackPiece, entry: Dir) => boolean,
+  takes: (p: readonly PathSegment[]) => boolean,
+) {
+  const rear = rearAlong(g, length);
+  const turns = shuntTurns(g, start, blocked, access, rear).sort((a, b) => a.length - b.length);
+  // the refuges the train can back into from a place to turn: it sets off from its rear end's tile
+  const backs = (out: readonly PathSegment[]) => {
+    const from = out[rear(out)];
+    const at = { x: from.x, y: from.y, in: from.out };
+    return refugeWays(g, at, length, blocked, refuge, access).filter(takes);
+  };
+  const got = findShuntPath(g, start, length, blocked, refuge, access, rear, takes);
+  const story = `${turns.length} places to turn: ${turns.map((w) => `${showWay(w)} [${backs(w).length} refuges]`).join('; ')}; got ${got && `${showWay(got.out)} | ${showWay(got.back)}`}`;
+  // the places it may try: the SHUNT_TURNS nearest (ties in length may go either way)
+  const tried = (w: readonly PathSegment[]) =>
+    turns.filter((v) => v.length < w.length).length < SHUNT_TURNS;
+  // more places to turn than it may try, and only those past the ones it tries have a refuge
+  const bounded =
+    turns.some((w) => !tried(w) && backs(w).length) &&
+    turns.every((w) => !tried(w) || !backs(w).length);
+  if (!got) {
+    for (const w of turns) if (tried(w)) expect(backs(w).map(showWay), story).toEqual([]);
+    return { shunt: false, bounded };
+  }
+  expect(
+    turns.some((w) => sameWay(w, got.out)),
+    story,
+  ).toBe(true);
+  expect(tried(got.out), `turned past the first ${SHUNT_TURNS} places: ${story}`).toBe(true);
+  // no nearer place to turn had a refuge to back into
+  for (const w of turns)
+    if (w.length < got.out.length) expect(backs(w).map(showWay), story).toEqual([]);
+  const ways = backs(got.out);
+  expect(
+    ways.some((w) => sameWay(w, got.back)),
+    story,
+  ).toBe(true);
+  expect(got.back.length, story).toBe(Math.min(...ways.map((w) => w.length)));
+  // leased as one way, the second leg starts where the first stops leading on
+  expect(turnIndex([...got.out, ...got.back]), story).toBe(got.out.length);
+  expect(turnIndex(got.out), story).toBe(got.out.length);
+  expect(turnIndex(got.back), story).toBe(got.back.length);
+  return { shunt: true, bounded };
+}
+
+/** A refuge case on a larger tree than `refugeCase` lays, with fewer refuges at times. */
+function shuntCase(rng: Rng): RefugeCase {
+  const size = rng.int(8, 16);
+  const lays = tree(rng, size);
+  const s = rng.pick(lays);
+  const some = (p: number) => lays.filter(() => rng.chance(p)).map(({ x, y }) => ({ x, y }));
+  return {
+    size,
+    lays,
+    start: { x: s.x, y: s.y, in: rng.pick(edgesOf(pieceLinks(s.kind, s.rot))) },
+    length: rng.int(3, 30),
+    refuges: some(rng.pick([0.3, 0.9])),
+    blocked: some(0.04),
+    deny: Array.from({ length: rng.int(0, 2) }, () => {
+      const { x, y } = rng.pick(lays);
+      return { x, y, entry: rng.pick(DIRS) };
+    }),
+    cut: rng.int(0, 10) / 10,
+    salt: rng.int(0, 999),
+  };
+}
+
+/**
+ * A comb: the main line along MAIN from x 1 to `end` with many dead-end sidings off it (regular
+ * 2x2 switches, either facing), a train setting off from the east end heading west or from the west
+ * end heading east, refuges in the sidings only, a few blocked tiles, and an accept that takes some
+ * refuges. Many places to turn, so the bound on how many the search tries comes into play.
+ */
+interface CombCase {
+  end: number;
+  sidings: Siding[];
+  west: boolean;
+  /** tenths of a tile */
+  length: number;
+  blocked: Tile[];
+  cut: number;
+  salt: number;
+}
+function combCase(rng: Rng): CombCase {
+  const end = rng.int(30, 46);
+  const west = rng.chance(0.5);
+  // the throat mostly where the train leaves the switch by: a choice coming back, a place to turn.
+  // The first `short` sidings the train passes hold no train: the places to turn it may try are
+  // often all in vain
+  const short = rng.int(2, 8);
+  const sidings: Siding[] = [];
+  for (let x = rng.int(3, 6); x <= end - 3; x += rng.int(4, 8)) {
+    const east = rng.chance(west ? 0.25 : 0.75);
+    sidings.push({ x, north: rng.chance(0.5), east, len: rng.int(1, 6) });
+  }
+  (west ? [...sidings].reverse() : sidings).slice(0, short).forEach((s) => (s.len = 1));
+  const g = layMain({ end, sidings });
+  const laid = [...g.tiles()].map(({ x, y }) => ({ x, y }));
+  return {
+    end,
+    sidings,
+    west,
+    length: rng.int(10, 20),
+    blocked: laid.filter(() => rng.chance(0.01)),
+    cut: rng.int(0, 10) / 10,
+    salt: rng.int(0, 999),
+  };
+}
+/** Cheap cases, few of which only a place to turn past the first SHUNT_TURNS would clear. */
+const COMB_SEEDS = Array.from({ length: 1000 }, (_, i) => i + 1);
+function* shrinkComb(c: CombCase): Iterable<CombCase> {
+  for (const sidings of shrinkArray(c.sidings)) yield { ...c, sidings };
+  for (const blocked of shrinkArray(c.blocked)) yield { ...c, blocked };
+  for (const length of shrinkInt(c.length, 5)) yield { ...c, length };
+}
+
+describe('findShuntPath on generated track', () => {
+  // the oracle: every place to turn and every refuge from there, by exhaustive search. On a tree
+  // (and a comb is one) each tile is reached along one way only, so the search loses none to its
+  // seen set
+  it('on trees, turns at the nearest place past a switch with a refuge to back into and backs into the nearest', () => {
+    let shunts = 0;
+    forAll(
+      shuntCase,
+      (c) => {
+        const g = layOut(c.size, [], c.lays);
+        const set = (ts: readonly Tile[]) => new Set(ts.map((t) => g.key(t.x, t.y)));
+        const refuges = set(c.refuges);
+        const blockedSet = set(c.blocked);
+        const takes = (p: readonly PathSegment[]) => {
+          const last = p[p.length - 1];
+          return hash2(last.x * 4 + last.in, last.y * 4 + last.out, c.salt) < c.cut;
+        };
+        const { shunt } = shuntHolds(
+          g,
+          c.start,
+          c.length / 10,
+          (x, y) => blockedSet.has(g.key(x, y)),
+          (x, y) => refuges.has(g.key(x, y)),
+          accessOf(g, c.deny),
+          takes,
+        );
+        if (shunt) shunts++;
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkRefuge },
+    );
+    expect(shunts, 'trees a shunt was found on').toBeGreaterThan(20);
+  });
+
+  it('on combs of sidings, tries no more than the SHUNT_TURNS nearest places to turn', () => {
+    let shunts = 0;
+    let bounded = 0;
+    forAll(
+      combCase,
+      (c) => {
+        const g = layMain(c);
+        const blockedSet = new Set(c.blocked.map((t) => g.key(t.x, t.y)));
+        const inSiding = new Set(c.sidings.flatMap(sidingTiles).map((t) => g.key(t.x, t.y)));
+        const takes = (p: readonly PathSegment[]) => {
+          const last = p[p.length - 1];
+          return hash2(last.x * 4 + last.in, last.y * 4 + last.out, c.salt) < c.cut;
+        };
+        const start = c.west ? { x: c.end, y: MAIN, in: Dir.E } : { x: 1, y: MAIN, in: Dir.W };
+        const got = shuntHolds(
+          g,
+          start,
+          c.length / 10,
+          (x, y) => blockedSet.has(g.key(x, y)),
+          (x, y) => inSiding.has(g.key(x, y)),
+          () => true,
+          takes,
+        );
+        if (got.shunt) shunts++;
+        if (got.bounded) bounded++;
+      },
+      { seeds: COMB_SEEDS, shrink: shrinkComb },
+    );
+    // the property is not vacuous: shunts are found, and on some combs only a place to turn past
+    // those the search may try has a refuge, so that it must find none
+    expect(shunts, 'combs a shunt was found on').toBeGreaterThan(100);
+    expect(bounded, 'combs only a place past the first SHUNT_TURNS clears').toBeGreaterThan(10);
+  });
+});
+
 // ------------------------------------------------------------ a refuge with a way on
 
 /** Row of the generated main line. */
