@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Building assets · four facings</title
+  ><style>
+    body {
+      background: #182723;
+      color: #eee7d3;
+      font: 16px/1.5 system-ui;
+      margin: 28px;
+    }
+    h1 {
+      margin: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    article {
+      background: #293f34;
+      padding: 14px;
+      border: 1px solid #526d54;
+      border-radius: 8px;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+    }
+    a {
+      color: #e1c98c;
+    }
+    p {
+      max-width: 1000px;
+      color: #c4cbb8;
+    }
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+  <h1>House and station · four illustrated facings</h1>
+  <p>
+    All eight views use the same display scale. The gold outlines show one or two occupied tiles,
+    with the yard underneath. Sources retain the cream sandstone, green joinery and slate roof of
+    the original art. No flat-image mirroring is used.
+  </p>
+  <div class="grid" id="gallery"></div>
+  <p>
+    These are first-pass generated assets. Geometry is guide-driven, but pixel-perfect projection
+    and identical detail placement across views are not certified. Source PNGs and prompts are
+    retained in assets/source/building-poc-v1.
+  </p>
+  <p><a href="index.html">Try placing and rotating these buildings</a></p>
+  <script type="module">
+    import { drawIllustrated } from './illustrated.js';
+    import { dimensions } from '../grid-buildings/footprint.mjs';
+    for (const [name, tiles] of [
+      ['House', 1],
+      ['Station', 2],
+    ])
+      for (let rotation = 0; rotation < 4; rotation++) {
+        const article = document.createElement('article'),
+          title = document.createElement('h3'),
+          canvas = document.createElement('canvas');
+        title.textContent = `${name} · facing ${rotation + 1}`;
+        canvas.width = 360;
+        canvas.height = 320;
+        const ctx = canvas.getContext('2d');
+        const [w, h] = dimensions(tiles, rotation);
+        const p = (x, y, z = 0) => [180 + (x - y) * 90, 230 + (x + y) * 45 - z * 120];
+        for (let y = 0; y < h; y++)
+          for (let x = 0; x < w; x++) {
+            ctx.beginPath();
+            [
+              [x - w / 2, y - h / 2],
+              [x + 1 - w / 2, y - h / 2],
+              [x + 1 - w / 2, y + 1 - h / 2],
+              [x - w / 2, y + 1 - h / 2],
+            ].forEach((a, i) => {
+              const [u, v] = p(...a);
+              i ? ctx.lineTo(u, v) : ctx.moveTo(u, v);
+            });
+            ctx.closePath();
+            ctx.fillStyle = '#8f947b';
+            ctx.fill();
+            ctx.strokeStyle = '#eccb85';
+            ctx.stroke();
+          }
+        drawIllustrated(ctx, tiles, rotation, p, [-w / 2, -h / 2]);
+        article.append(title, canvas);
+        document.getElementById('gallery').append(article);
+      }
+    window.assetGalleryReady = true;
+  </script>
+</html>

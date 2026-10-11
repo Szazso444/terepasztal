@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Illustrated sprites — comparison</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #16241d;
+        color: #eee6d4;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 1500px;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 26px;
+        margin-bottom: 8px;
+      }
+      p {
+        color: #c8c9ba;
+        line-height: 1.6;
+        max-width: 1000px;
+      }
+      a {
+        color: #d9c292;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 24px 0 14px;
+      }
+      button {
+        padding: 10px 16px;
+        border: 1px solid #637360;
+        background: #26372a;
+        color: inherit;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #c6b17a;
+        color: #16241d;
+        border-color: #c6b17a;
+      }
+      figure {
+        margin: 0;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #415442;
+        border-radius: 8px;
+      }
+      figcaption {
+        margin: 10px 0;
+        color: #c8c9ba;
+      }
+      .facts {
+        display: flex;
+        gap: 28px;
+        flex-wrap: wrap;
+        margin: 24px 0;
+      }
+      .facts span {
+        display: block;
+        font-size: 13px;
+        color: #aebca8;
+      }
+      .facts strong {
+        font-size: 22px;
+      }
+      .notice {
+        border-left: 3px solid #c6b17a;
+        padding-left: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Illustrated sprites, in the game</h1>
+    <p>
+      Higher-resolution source artwork, soft edges and world-space sizing. Use the tabs to compare
+      the previous import with the new in-game scene. The original images remain unchanged.
+    </p>
+    <div class="facts">
+      <div><strong>67</strong><span>source studies converted</span></div>
+      <div><strong>207</strong><span>high-resolution frames</span></div>
+      <div><strong>2,839</strong><span>working frame keys retained</span></div>
+      <div><strong>4×</strong><span>texture resolution and maximum zoom</span></div>
+    </div>
+    <nav aria-label="Scene comparison">
+      <button
+        data-src="../shots/scene-hd-after/village.png"
+        data-caption="New illustrated conversion at normal play scale."
+        aria-pressed="true"
+      >
+        New conversion
+      </button>
+      <button
+        data-src="../illustrated/shots/scene/village.png"
+        data-caption="Previous pipeline: low-resolution shrink, binary alpha, painted terrain rims."
+        aria-pressed="false"
+      >
+        Previous pipeline
+      </button>
+      <button
+        data-src="../shots/scene-hd-after/village-detail.png"
+        data-caption="New 4× close view. Directional railcraft and track still use their procedural art."
+        aria-pressed="false"
+      >
+        4× detail
+      </button>
+      <button
+        data-src="../shots/scene-hd-after/village-wide.png"
+        data-caption="New illustrated conversion at wide zoom."
+        aria-pressed="false"
+      >
+        Wide view
+      </button>
+      <button
+        data-src="../shots/scene-hd-after/village-dusk.png"
+        data-caption="Dusk scene, with the working procedural lighting effects retained."
+        aria-pressed="false"
+      >
+        Dusk
+      </button>
+    </nav>
+    <figure>
+      <img
+        id="scene"
+        src="../shots/scene-hd-after/village.png"
+        alt="Built village scene with the new illustrated sprite conversion"
+      />
+      <figcaption id="caption">New illustrated conversion at normal play scale.</figcaption>
+    </figure>
+    <p class="notice">
+      The scenery conversion is playable. Trains need proper multi-view, separately layered art
+      before they can match these illustrations while turning correctly. Their working procedural
+      sprites are retained; copying one picture to every angle is not used.
+    </p>
+    <p>
+      <a href="README.md">Implementation and remaining art work</a> ·
+      <a href="../../public/assets/illustrated-report.json">Source/frame mappings</a> ·
+      <a href="runtime-report.json">Runtime checks</a> ·
+      <a href="../../assets/source/base-v1/RAILCRAFT.md">Railcraft requirements</a>
+    </p>
+    <script>
+      const scene = document.getElementById('scene'),
+        caption = document.getElementById('caption');
+      for (const button of document.querySelectorAll('button'))
+        button.addEventListener('click', () => {
+          for (const other of document.querySelectorAll('button'))
+            other.setAttribute('aria-pressed', String(other === button));
+          scene.src = button.dataset.src;
+          scene.alt = button.dataset.caption;
+          caption.textContent = button.dataset.caption;
+        });
+    </script>
+  </body>
+</html>

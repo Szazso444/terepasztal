@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>One or two tiles · four directions</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #182723;
+      color: #eee7d3;
+      font: 16px/1.5 system-ui;
+    }
+    main {
+      max-width: 1350px;
+      margin: auto;
+      padding: 28px;
+    }
+    h1 {
+      margin: 0;
+    }
+    p {
+      color: #c3ccbb;
+    }
+    nav {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    button {
+      padding: 10px 16px;
+      background: #d5c08d;
+      border: 0;
+      border-radius: 6px;
+      font: inherit;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    article {
+      background: #253b30;
+      border: 1px solid #526d54;
+      border-radius: 10px;
+      padding: 18px;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+    }
+    h2 {
+      font-size: 21px;
+    }
+    .refs {
+      display: flex;
+      gap: 20px;
+    }
+    .refs img {
+      width: 220px;
+      height: 160px;
+      object-fit: contain;
+    }
+    a {
+      color: #e1c98c;
+    }
+    @media (max-width: 900px) {
+      .pair {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <main>
+    <small>PLACEMENT PROTOTYPE · ONE FOOTPRINT FOR BUILDING AND YARD</small>
+    <h1>1×1 or 1×2, rotating together</h1>
+    <p>
+      Small house: one cell. Station: two cells. Both have the same door height. The stone yard
+      stays inside the occupied cells. Rotation turns the architecture, yard and entrance together;
+      two-cell buildings alternate between 2×1 and 1×2.
+    </p>
+    <nav>
+      <button id="rotate">Rotate 90°</button><button id="block">Toggle blocked tile</button
+      ><label><input id="grid" type="checkbox" checked /> Grid</label
+      ><label><input id="yard" type="checkbox" checked /> Yard</label><strong id="facing"></strong>
+    </nav>
+    <div class="pair">
+      <article>
+        <h2>Small house · 1×1</h2>
+        <canvas id="house" width="600" height="430"></canvas>
+        <p id="house-status"></p>
+      </article>
+      <article>
+        <h2>Station · two tiles</h2>
+        <canvas id="station" width="600" height="430"></canvas>
+        <p id="station-status"></p>
+      </article>
+    </div>
+    <p>
+      <strong>This is a geometry model, not replacement sprite art.</strong> It establishes grid
+      contact and rotation without warping a single illustration. Cream masonry, slate roofs, green
+      joinery, canopy and stone paving follow the original references below. Final illustrated
+      sprites still need four matching views.
+    </p>
+    <div class="refs">
+      <img src="/assets/source/base-v1/station.png" alt="Original station" /><img
+        src="/assets/source/base-v1/townhouse-civic.png"
+        alt="Original house"
+      /><img src="/assets/source/base-v1/people-road-stone.png" alt="Original paving" />
+    </div>
+    <p>
+      Amber outlines are the exact occupied cells. The cyan mark is the entrance direction, not a
+      newly chosen platform rule. Red means placement is blocked. Ground geometry stays inside the
+      lot; roof height can cover cells behind it on screen.
+    </p>
+    <p>
+      The coastline preview is preserved in the <a href="../art-world/index.html">world study</a>.
+      This prototype does not change saves or production placement.
+    </p>
+  </main>
+  <script type="module" src="scene.js"></script>
+</html>

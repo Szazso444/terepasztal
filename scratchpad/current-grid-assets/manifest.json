@@ -1,0 +1,541 @@
+{
+  "projection": {
+    "name": "current-game-2:1-dimetric",
+    "azimuthDegrees": 45,
+    "elevationDegrees": 30,
+    "screenGroundSlopes": [
+      0.5,
+      -0.5
+    ],
+    "screenGroundAnglesDegrees": [
+      26.565051177,
+      -26.565051177
+    ],
+    "tilePixels": [
+      64,
+      32
+    ],
+    "verticals": "screen-vertical",
+    "parallelProjection": true
+  },
+  "assets": [
+    {
+      "key": "station",
+      "name": "Passenger station",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/station.png",
+      "existingFacings": [
+        "existing-facings/station-0.png",
+        "existing-facings/station-1.png",
+        "existing-facings/station-2.png",
+        "existing-facings/station-3.png"
+      ],
+      "geometryRole": "Exact camera/footprint guide with representative building proportions; detailed source art remains identity authority."
+    },
+    {
+      "key": "house",
+      "name": "Stone cottage",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/house.png",
+      "existingFacings": [
+        "existing-facings/house-0.png",
+        "existing-facings/house-1.png",
+        "existing-facings/house-2.png",
+        "existing-facings/house-3.png"
+      ],
+      "geometryRole": "Exact camera/footprint guide with representative building proportions; detailed source art remains identity authority."
+    },
+    {
+      "key": "stations-farm",
+      "name": "stations.farm",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-farm.png",
+      "existingFacings": [
+        "existing-facings/stations-farm-0.png",
+        "existing-facings/stations-farm-1.png",
+        "existing-facings/stations-farm-2.png",
+        "existing-facings/stations-farm-3.png"
+      ],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-lumber",
+      "name": "stations.lumber",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-lumber.png",
+      "existingFacings": [
+        "existing-facings/stations-lumber-0.png",
+        "existing-facings/stations-lumber-1.png",
+        "existing-facings/stations-lumber-2.png",
+        "existing-facings/stations-lumber-3.png"
+      ],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-quarry",
+      "name": "stations.quarry",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-quarry.png",
+      "existingFacings": [
+        "existing-facings/stations-quarry-0.png",
+        "existing-facings/stations-quarry-1.png",
+        "existing-facings/stations-quarry-2.png",
+        "existing-facings/stations-quarry-3.png"
+      ],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-pump",
+      "name": "stations.pump",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-pump.png",
+      "existingFacings": [
+        "existing-facings/stations-pump-0.png",
+        "existing-facings/stations-pump-1.png",
+        "existing-facings/stations-pump-2.png",
+        "existing-facings/stations-pump-3.png"
+      ],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-town",
+      "name": "stations.town",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-town.png",
+      "existingFacings": [
+        "existing-facings/stations-town-0.png",
+        "existing-facings/stations-town-1.png",
+        "existing-facings/stations-town-2.png",
+        "existing-facings/stations-town-3.png"
+      ],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-warehouse",
+      "name": "stations.warehouse",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/stations-warehouse.png",
+      "existingFacings": [
+        "existing-facings/stations-warehouse-0.png",
+        "existing-facings/stations-warehouse-1.png",
+        "existing-facings/stations-warehouse-2.png",
+        "existing-facings/stations-warehouse-3.png"
+      ],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-depot",
+      "name": "stations.depot",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/stations-depot.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-full-mine",
+      "name": "stations.full.mine",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-full-mine.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-full-sand_pit",
+      "name": "stations.full.sand_pit",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-full-sand_pit.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "stations-full-copper_mine",
+      "name": "stations.full.copper_mine",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/stations-full-copper_mine.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-windmill",
+      "name": "works.windmill",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/works-windmill.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-kiln",
+      "name": "works.kiln",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/works-kiln.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-grinder",
+      "name": "works.grinder",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/works-grinder.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-refinery",
+      "name": "works.refinery",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/works-refinery.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-power_plant",
+      "name": "works.power_plant",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/works-power_plant.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-substation",
+      "name": "works.substation",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/works-substation.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-hydro_plant",
+      "name": "works.hydro_plant",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/works-hydro_plant.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-full-colliery",
+      "name": "works.full.colliery",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/works-full-colliery.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-full-ironworks",
+      "name": "works.full.ironworks",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/works-full-ironworks.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-full-oil_derrick",
+      "name": "works.full.oil_derrick",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/works-full-oil_derrick.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-full-diesel_refinery",
+      "name": "works.full.diesel_refinery",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/works-full-diesel_refinery.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "works-full-wire_mill",
+      "name": "works.full.wire_mill",
+      "tiles": 2,
+      "footprintReason": "Long station/warehouse/depot or multi-part factory: retain length and human scale.",
+      "original": "originals/works-full-wire_mill.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "decor-water_tower",
+      "name": "decor.water_tower",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/decor-water_tower.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    },
+    {
+      "key": "decor-fuel_stop",
+      "name": "decor.fuel_stop",
+      "tiles": 1,
+      "footprintReason": "Original compact or predominantly vertical design: prefer one tile without shrinking doors or deforming the structure.",
+      "original": "originals/decor-fuel_stop.png",
+      "existingFacings": [],
+      "geometryRole": "Axis and bounding-footprint calibration only; wireframe box is not a new architectural design."
+    }
+  ],
+  "frames": {
+    "station-0": {
+      "w": 142,
+      "h": 93.5,
+      "ax": 71,
+      "ay": 62.3,
+      "tiles": 2,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/station-0.png",
+      "sourceHash": "6b33cbcaa16744e2429fefc1e0ad7bd5b72cd2d230d75559e01598d4729d037e",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "station-1": {
+      "w": 142,
+      "h": 123.5,
+      "ax": 71,
+      "ay": 92.3,
+      "tiles": 2,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/station-1.png",
+      "sourceHash": "e5521d1044ddff23cea1ed31e12dab450610088739a27bf7c7e5f62a0bae4b1a",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "station-2": {
+      "w": 142,
+      "h": 106.75,
+      "ax": 71,
+      "ay": 75.55,
+      "tiles": 2,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/station-2.png",
+      "sourceHash": "b1f528020168dd3cce351d82fd8047ddee514270e8c4dfc1622f5c9080a3b88f",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "station-3": {
+      "w": 142,
+      "h": 115.25,
+      "ax": 71,
+      "ay": 84.05,
+      "tiles": 2,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/station-3.png",
+      "sourceHash": "4e8f8bd9ca30c162fdde1c3fcbd4ef87afdcae05c2dc858fb32232be0063f34c",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "house-0": {
+      "w": 88,
+      "h": 94,
+      "ax": 44,
+      "ay": 73.2,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/house-0.png",
+      "sourceHash": "6719428ed5ada6c74d114c1aa357fcba027286aebdd53627d21aba3f3a752c33",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "house-1": {
+      "w": 88,
+      "h": 84.75,
+      "ax": 44,
+      "ay": 63.95,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/house-1.png",
+      "sourceHash": "5394305bad416f0490ff62d9b9446230793c3b6ae68b9209887db3eba71b0e9b",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "house-2": {
+      "w": 88,
+      "h": 103.75,
+      "ax": 44,
+      "ay": 82.95,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/house-2.png",
+      "sourceHash": "fd897b91eb2fd99c6ce20a8b0f8ac12b8281ecdd97b701e89f39487fe92dadca",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "house-3": {
+      "w": 88,
+      "h": 97,
+      "ax": 44,
+      "ay": 76.2,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/house-3.png",
+      "sourceHash": "3846fc1626fbaccee9c499a603d8598f8bf02a559a660b4321602e35fd65b0db",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-farm-0": {
+      "w": 88,
+      "h": 64.75,
+      "ax": 44,
+      "ay": 43.95,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-farm-0.png",
+      "sourceHash": "fef785e09bf9e80a843d963dee970b243d65ea951e1c046935d45008e0276e67",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-farm-1": {
+      "w": 88,
+      "h": 70.75,
+      "ax": 44,
+      "ay": 49.95,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-farm-1.png",
+      "sourceHash": "52b451746d4fc1c88286a1ca04f415513d7619ac921b725ca99bbe39bc1a9e1a",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-farm-2": {
+      "w": 88,
+      "h": 68.75,
+      "ax": 44,
+      "ay": 47.95,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-farm-2.png",
+      "sourceHash": "6f15b6931399d133ac118850f4a9211eb69c61e61982b53a44579c80e75e0363",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-farm-3": {
+      "w": 88,
+      "h": 70.5,
+      "ax": 44,
+      "ay": 49.7,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-farm-3.png",
+      "sourceHash": "33c23eff0657605faf710b872940b0dedbf5b9f165b10c26357f4765688a9338",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-lumber-0": {
+      "w": 88,
+      "h": 61.5,
+      "ax": 44,
+      "ay": 40.7,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-lumber-0.png",
+      "sourceHash": "6aa85fb67b9ca3562ed9b0ff61d3e0c7ce03826a11ec1d1451cbb66b935d64cf",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-lumber-1": {
+      "w": 88,
+      "h": 67.5,
+      "ax": 44,
+      "ay": 46.7,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-lumber-1.png",
+      "sourceHash": "3e4b0bb1bfdde22765e9216648dd62fa67c5516ba0b1d7165d03f2302d94fd1a",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-lumber-2": {
+      "w": 88,
+      "h": 58.25,
+      "ax": 44,
+      "ay": 37.45,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-lumber-2.png",
+      "sourceHash": "4641f10467b551a23cbebc49961db3520c27d8be8afd66c0eac7a48946755daa",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-lumber-3": {
+      "w": 88,
+      "h": 59.5,
+      "ax": 44,
+      "ay": 38.7,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-lumber-3.png",
+      "sourceHash": "4cec3e65fa1979caa3441ab306bc5d81d0757018fba2a791081834d2fd8fdac6",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-quarry-0": {
+      "w": 88,
+      "h": 95,
+      "ax": 44,
+      "ay": 74.2,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-quarry-0.png",
+      "sourceHash": "59491c1a81691fac7e5aba6b1e5e8d619e88e94a230d1f0ee9a74a34c162cd9c",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-quarry-1": {
+      "w": 88,
+      "h": 97,
+      "ax": 44,
+      "ay": 76.2,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-quarry-1.png",
+      "sourceHash": "de0343718a2f2e71abf45b1f7adab2a862b40adc4e88a721967fe9900fcd91c2",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-quarry-2": {
+      "w": 88,
+      "h": 81.25,
+      "ax": 44,
+      "ay": 60.45,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-quarry-2.png",
+      "sourceHash": "bafb7c5956c74ce2d9d03f70cc35369e5a735af84d53c77a5744c58a36262399",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    },
+    "stations-quarry-3": {
+      "w": 88,
+      "h": 101,
+      "ax": 44,
+      "ay": 80.2,
+      "tiles": 1,
+      "source": "/assets/source/current-grid-regeneration-v2/generated/stations-quarry-3.png",
+      "sourceHash": "21543b4790a8fce58ac625283b9fdabb8865a657f1b16dac8aeede41cf398ce4",
+      "projectionVerified": false,
+      "scaleVerified": false,
+      "alphaPresent": true
+    }
+  },
+  "completed": 20,
+  "total": 104
+}

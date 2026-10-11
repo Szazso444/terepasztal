@@ -1,0 +1,33 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {chromium} from 'file:///C:/Users/Zso/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const root='G:/DEV/Terepasztal/poc/rocket-original-v1';
+const m=JSON.parse(fs.readFileSync(root+'/render-metadata.json'));
+const digest=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+assert.equal(digest(root+'/original.png'),digest('C:/Users/Zso/terepasztal/assets/source/base-v1/loco-rocket.png'));
+assert.equal(Object.keys(m.frames).length,25);
+assert.equal(m.dimensionsTiles[0],1);
+// Verify Blender world (X,-Y) mapped to game (tx,ty) for every required heading.
+let maxError=0;
+for(let f=0;f<48;f++){
+ const a=f*Math.PI/24,x=Math.cos(a),y=Math.sin(a),bx=x,by=-y;
+ const k=64/Math.sqrt(2),blender=[k*(bx+by)/Math.sqrt(2),k*(bx-by)/(2*Math.sqrt(2))];
+ const game=[(x-y)*32,(x+y)*16];
+ maxError=Math.max(maxError,...game.map((v,i)=>Math.abs(v-blender[i])));
+}assert(maxError<1e-10);
+for(const fr of Object.values(m.frames))assert(fs.existsSync(root+'/'+fr.file));
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+const page=await browser.newPage({viewport:{width:1280,height:960}});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto('http://127.0.0.1:5189',{waitUntil:'networkidle'});
+const images=await page.locator('img').evaluateAll(xs=>xs.map(x=>({src:x.getAttribute('src'),loaded:x.complete&&x.naturalWidth>0})));
+assert(images.every(x=>x.loaded));
+for(let f=0;f<48;f++)await page.locator('#angle').evaluate((e,f)=>{e.value=String(f);e.dispatchEvent(new Event('input'));},f);
+assert.equal(await page.locator('#heading').textContent(),'352.5°');
+await page.locator('#angle').evaluate(e=>{e.value='0';e.dispatchEvent(new Event('input'));});
+await page.screenshot({path:'C:/Users/Zso/terepasztal/scratchpad/rocket-poc-review.png',fullPage:true});
+await browser.close();assert.deepEqual(errors,[]);
+const report={sourceHashPreserved:true,renderedFacings:25,headingsChecked:48,projectionMaxErrorPixels:maxError,images,consoleErrors:errors,wheelFit:'NOT accepted; visual contact/gauge failures',humanScale:'relative ruler only; no global metre calibration in repo'};
+fs.writeFileSync('C:/Users/Zso/terepasztal/scratchpad/rocket-poc-verification.json',JSON.stringify(report,null,2));
+console.log(JSON.stringify(report));

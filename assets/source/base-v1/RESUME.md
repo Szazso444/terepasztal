@@ -434,3 +434,19 @@ light, dark and checker backgrounds plus filename search.
 Follow-up (2026-09-27): rock only on stacked banks, wider summit fade, tile elevation in
 `src/world/elevation.ts` with tooltip, straight rails on beds over terraces, grade speed 0.5 up /
 1.2 down. Review: `scratchpad/hill-levels/review.html` (trains at 1/4 vs 1/8, preview looks).
+
+## Age progression art direction board — 2026-10-03
+
+A six-panel static concept board is saved as `age-progression-board-v1.png`. It shows one pastoral river valley across Steam, Diesel, Electric, Nuclear, Magnetic, and Hyper ages, with a moving train and era-specific infrastructure in each panel. Direction follows the supplied references: warm illustrated isometric miniature, shared landscape, growing settlement and rail complexity. This is a mood/concept reference, not production game art. No code or HTML was created.
+
+
+## UI concept exploration — 2026-10-06
+
+Requested three gameplay UI concepts matching the illustrated pastoral railway art.
+Work folder: `assets/source/ui-concepts-v1/`. Exact prompts are in `prompts.json`;
+Hungarian comparison and implementation notes are in `README.md`.
+Built-in image_gen, using `age-progression-board-v1.png` as art-direction reference.
+All three saved and visually reviewed: `01-railway-atlas.png`,
+`02-station-enamel.png`, `03-contemporary-diorama.png`. Generation complete.
+Concept backgrounds and sample numbers are generated, not actual game
+captures. No runtime UI changes. Keep images in the repository, not embedded in chat.

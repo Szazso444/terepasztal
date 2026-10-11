@@ -1,0 +1,132 @@
+[
+  {
+    "bytes": 5726173,
+    "file": "station.zip",
+    "asset": "station"
+  },
+  {
+    "bytes": 4056770,
+    "file": "house.zip",
+    "asset": "house"
+  },
+  {
+    "bytes": 9720924,
+    "file": "stations-farm.zip",
+    "asset": "stations-farm"
+  },
+  {
+    "bytes": 5822960,
+    "file": "stations-lumber.zip",
+    "asset": "stations-lumber"
+  },
+  {
+    "bytes": 6167329,
+    "file": "stations-quarry.zip",
+    "asset": "stations-quarry"
+  },
+  {
+    "bytes": 5525326,
+    "file": "stations-pump.zip",
+    "asset": "stations-pump"
+  },
+  {
+    "bytes": 9540987,
+    "file": "stations-town.zip",
+    "asset": "stations-town"
+  },
+  {
+    "bytes": 6610327,
+    "file": "stations-warehouse.zip",
+    "asset": "stations-warehouse"
+  },
+  {
+    "bytes": 1563790,
+    "file": "stations-depot.zip",
+    "asset": "stations-depot"
+  },
+  {
+    "bytes": 1810991,
+    "file": "stations-full-mine.zip",
+    "asset": "stations-full-mine"
+  },
+  {
+    "bytes": 1208556,
+    "file": "stations-full-sand_pit.zip",
+    "asset": "stations-full-sand_pit"
+  },
+  {
+    "bytes": 1664692,
+    "file": "stations-full-copper_mine.zip",
+    "asset": "stations-full-copper_mine"
+  },
+  {
+    "bytes": 1004027,
+    "file": "works-windmill.zip",
+    "asset": "works-windmill"
+  },
+  {
+    "bytes": 1360682,
+    "file": "works-kiln.zip",
+    "asset": "works-kiln"
+  },
+  {
+    "bytes": 1132070,
+    "file": "works-grinder.zip",
+    "asset": "works-grinder"
+  },
+  {
+    "bytes": 1732414,
+    "file": "works-refinery.zip",
+    "asset": "works-refinery"
+  },
+  {
+    "bytes": 2234933,
+    "file": "works-power_plant.zip",
+    "asset": "works-power_plant"
+  },
+  {
+    "bytes": 774759,
+    "file": "works-substation.zip",
+    "asset": "works-substation"
+  },
+  {
+    "bytes": 2000028,
+    "file": "works-hydro_plant.zip",
+    "asset": "works-hydro_plant"
+  },
+  {
+    "bytes": 1369738,
+    "file": "works-full-colliery.zip",
+    "asset": "works-full-colliery"
+  },
+  {
+    "bytes": 1910863,
+    "file": "works-full-ironworks.zip",
+    "asset": "works-full-ironworks"
+  },
+  {
+    "bytes": 833350,
+    "file": "works-full-oil_derrick.zip",
+    "asset": "works-full-oil_derrick"
+  },
+  {
+    "bytes": 1798814,
+    "file": "works-full-diesel_refinery.zip",
+    "asset": "works-full-diesel_refinery"
+  },
+  {
+    "bytes": 1924857,
+    "file": "works-full-wire_mill.zip",
+    "asset": "works-full-wire_mill"
+  },
+  {
+    "bytes": 1567279,
+    "file": "decor-water_tower.zip",
+    "asset": "decor-water_tower"
+  },
+  {
+    "bytes": 1039416,
+    "file": "decor-fuel_stop.zip",
+    "asset": "decor-fuel_stop"
+  }
+]
