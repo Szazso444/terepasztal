@@ -51,6 +51,58 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe('the two tables', () => {
+  it('list the same keys: every default is tunable and every tunable has a default', async () => {
+    const m = await load();
+    const meta = m.RULE_META.map((x) => x.key as string);
+    const twice = meta.filter((k, i) => meta.indexOf(k) !== i);
+    expect(twice, `listed twice in RULE_META: ${twice.join(', ')}`).toEqual([]);
+    const defaults = Object.keys(m.DEFAULT_RULES);
+    const noMeta = defaults.filter((k) => !meta.includes(k));
+    const noDefault = meta.filter((k) => !defaults.includes(k));
+    expect(noMeta, `in DEFAULT_RULES, not in RULE_META: ${noMeta.join(', ')}`).toEqual([]);
+    expect(noDefault, `in RULE_META, not in DEFAULT_RULES: ${noDefault.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('rules an older build wrote', () => {
+  // `reputationMul` and `tradeCycleDays` were settings no screen showed and nothing read.
+  const old = { reputationMul: 3, tradeCycleDays: 2 };
+  const gone = (r: object) => {
+    for (const k of Object.keys(old)) expect(Object.hasOwn(r, k), k).toBe(false);
+  };
+
+  it('are tolerated by rulesFrom, which drops what it has no setting for', async () => {
+    const m = await load();
+    const r = m.rulesFrom({ ...m.DEFAULT_RULES, ...old } as Partial<Rules>);
+    expect(r).toEqual(m.DEFAULT_RULES);
+    gone(r);
+  });
+
+  it('are dropped from a stored preset on read, and the rest of it reads as before', async () => {
+    store.setItem(
+      PRESETS_KEY,
+      JSON.stringify({
+        format: 1,
+        presets: { older: { savedAt: 5, rules: { payoutMul: 2, mapSize: 224, ...old } } },
+      }),
+    );
+    const m = await load();
+    const r = m.readRulePreset('older')!;
+    gone(r);
+    expect(r).toEqual(m.rulesFrom({ payoutMul: 2, mapSize: 224 }));
+    expect(r.payoutMul).toBe(2);
+    expect(r.mapSize).toBe(224);
+  });
+
+  it('are left out of the live rules when a save puts its rules in force', async () => {
+    const m = await load();
+    m.applyGameRules({ ...m.DEFAULT_RULES, payoutMul: 2, ...old } as Partial<Rules>);
+    gone(m.rules);
+    expect(m.rules.payoutMul).toBe(2);
+  });
+});
+
 describe('rulesFrom', () => {
   it('is the defaults when nothing is saved', async () => {
     const m = await load();
