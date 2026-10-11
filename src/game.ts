@@ -3,6 +3,7 @@ import { AtlasRegistry } from './engine/atlas';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
+import { AutosavePause } from './engine/autosavePause';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { generateMap } from './world/mapgen';
@@ -223,6 +224,8 @@ export class Game implements UiHost {
   private autosaveTimer = 0;
   /** the stored save was just replaced and the page is reloading into it: do not save over it */
   private keepStoredSave = false;
+  /** a loop error stops the game storing itself for the rest of the page's life */
+  private readonly autosavePause = new AutosavePause();
   /** when the stored game was last written, for the settings screen */
   savedAt: number | null = null;
   weather!: Weather;
@@ -340,6 +343,10 @@ export class Game implements UiHost {
   /** The title or the pause menu is up. */
   get menuOpen() {
     return this.ui.menuOpen;
+  }
+  /** A loop error has stopped the game storing itself until the page reloads. */
+  get autosavePaused() {
+    return this.autosavePause.paused;
   }
 
   // ---------------------------------------------------------------- the play UI's parts
@@ -1094,10 +1101,12 @@ export class Game implements UiHost {
 
   /**
    * Store the game; says so unless `silent`; false when storage refused it. Nothing is written
-   * while the page reloads into a save just stored (`reloadIntoStoredSave`).
+   * while the page reloads into a save just stored (`reloadIntoStoredSave`). A silent save is one
+   * the player did not ask for, and none is written after a loop error (`autosavePause`).
    */
   save(silent = false) {
     if (this.keepStoredSave) return false;
+    if (!this.autosavePause.allows(silent ? 'implicit' : 'manual')) return false;
     const snap = this.snapshot();
     const ok = writeSave(snap);
     if (ok) this.savedAt = snap.savedAt;
@@ -1715,10 +1724,13 @@ export class Game implements UiHost {
     this.economy.money -= price;
     this.regions.own(i);
     sfx('tier.up');
-    if (
+    const edge =
       this.spec.kind === 'generated' &&
-      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h)
-    ) {
+      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h);
+    // growing stores the game first, which a loop error forbids: the ring then waits for a save the
+    // player makes and the reload after it (`main.ts` grows such a save as it loads)
+    const held = edge && !this.autosavePause.allows('implicit');
+    if (edge && !held) {
       // the grid needs another ring: persist, grow the world and come back into it
       const snap = expandSave(this.snapshot(), 1);
       if (writeSave(snap)) {
@@ -1731,6 +1743,7 @@ export class Game implements UiHost {
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toasts.push(STR.overview.bought, 'good');
+    if (held) this.toasts.push(STR.overview.growHeld, 'warn');
     return true;
   }
   private trackTilesForOverview() {
@@ -2097,10 +2110,12 @@ export class Game implements UiHost {
   /** messages of loop errors already toasted this session */
   private readonly frameErrors = new Set<string>();
   /**
-   * A loop callback threw and the loop carried on: log it with its stack every time, and toast each
-   * distinct message once, so an error repeating every frame does not flood the screen.
+   * A loop callback threw and the loop carried on: stop the game storing itself, since the throw
+   * may have left it half-applied, log it with its stack every time, and toast each distinct
+   * message once, so an error repeating every frame does not flood the screen.
    */
   private frameError(err: unknown, phase: LoopPhase) {
+    this.autosavePause.trip();
     console.error(`[loop] ${phase} threw; the game keeps running`, err);
     const message = err instanceof Error ? err.message : String(err);
     if (this.frameErrors.has(message)) return;
