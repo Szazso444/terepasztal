@@ -202,24 +202,29 @@ describe('simWorld as Game builds it', () => {
 });
 
 describe('simWorld and the production chain', () => {
-  // mapgen's oil-rich world: the full chain lays oil fields on it, the simple chain none
-  const seed = 7412;
-  const size = 96;
+  // The two worlds #235 measured, both with oil fields in the full chain and none in the simple
+  const WORLDS = [
+    { seed: 20260912, size: 48 },
+    { seed: 7412, size: 96 },
+  ] as const;
   const oilProps = (m: SimWorld['map']) =>
     [...m.props.values()].reduce((n, list) => n + list.filter((p) => p.kind === 'oil').length, 0);
 
-  it('generates the full chain with its oil fields, the props of generateMap(..., full)', () => {
-    const w = simWorld({ seed, size, terrain: 'generated', supply: 'full' });
-    expect(planeDiffs(w.map, generateMap(seed, mapParams(size), 'full'))).toEqual(SAME_PLANES);
-    expect(oilProps(w.map)).toBeGreaterThan(0);
-    // not vacuous: the simple chain's props are another set
-    const simple = generateMap(seed, mapParams(size), 'simple');
-    expect(planeDiffs(w.map, simple)).toEqual({ ...SAME_PLANES, props: false });
-  });
+  it.each(WORLDS)(
+    'seed $seed at $size x $size: generates the full chain with its oil fields, the props of generateMap(..., full)',
+    ({ seed, size }) => {
+      const w = simWorld({ seed, size, terrain: 'generated', supply: 'full' });
+      expect(planeDiffs(w.map, generateMap(seed, mapParams(size), 'full'))).toEqual(SAME_PLANES);
+      expect(oilProps(w.map)).toBeGreaterThan(0);
+      // not vacuous: the simple chain's props are another set
+      const simple = generateMap(seed, mapParams(size), 'simple');
+      expect(planeDiffs(w.map, simple)).toEqual({ ...SAME_PLANES, props: false });
+    },
+  );
 
-  it.each(SUPPLY_MODES)(
-    'generates the simple chain, with no oil, when none is asked for, whatever the switch said before (%s)',
-    (before) => {
+  it.each(WORLDS.flatMap((w) => SUPPLY_MODES.map((before) => ({ ...w, before }))))(
+    'seed $seed at $size x $size: generates the simple chain, with no oil, when none is asked for, whatever the switch said before ($before)',
+    ({ seed, size, before }) => {
       setSupplyMode(before);
       const w = simWorld({ seed, size, terrain: 'generated' });
       expect(supplyMode()).toBe(DEFAULT_SUPPLY);
