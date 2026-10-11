@@ -149,13 +149,50 @@ style), then delete the branch, close the issue and remove its `status:` label. 
 links the issue but does not close it. A red `develop` is the top priority: Core reverts the merge that
 broke it (a revert pull request, never a force push) or lands a fix within the same session.
 
-### 9. Release into `main` (the author)
+### 9. Release into `main` (Core prepares, the author merges)
 
-Core prepares a release pull request `develop` → `main`: version, `CHANGELOG.md` entry, the issues
-it closes and anything the author should play-test. The author reviews, plays and merges. Only the
-author merges into `main`.
+Core prepares a release pull request `develop` → `main`: the version, the `CHANGELOG.md` entry, the
+issues it closes, the tag it names and the result of every check below. Only the author merges
+into `main`. The author's actions are to merge and to decide; no part of a release is handed to
+the author to run.
+
+**Version.** The version is `vMAJOR.MINOR.PATCH` and higher than the newest row of the table in
+`CHANGELOG.md`, which is its last row (v0.8.0 today). While MAJOR is 0, MINOR is for a release that
+adds or changes anything the player sees or raises `SAVE_VERSION`, and PATCH is for a release of
+fixes only. Core proposes the number in the release pull request and the author's merge accepts it.
+`package.json` `version` is a placeholder that nothing reads and is not part of a release.
+
+**Changelog.** The release pull request renames `## Unreleased` in `CHANGELOG.md` to `## vX.Y.Z`
+(the style of `## v0.8.0`) and adds the version's row at the bottom of the table. A release pull
+request without both is not ready.
+
+**Checks.** Each task pull request carries a "For the author" section. Core collects that section's
+items from the release's merged pull requests into one list of checks, and an agent runs each one
+before the release pull request is ready: QA by command or test, Core in the running game
+(`npm run dev`) through the browser tools of its session. The release pull request lists every
+check with its result:
+
+- pass;
+- fail, as a finding that goes to the fix loop (step 6);
+- unverified, with the reason.
+
+Evidence is given by path, never pasted. Nothing is put to the author as a check to run. A check no
+agent can run is not handed over: Core asks only whether to release without it, as one question
+with a recommendation.
+
+**Tag.** The tag `vX.Y.Z` is on the release pull request's merge commit in `main` (its
+`merge_commit_sha`), not on whatever `main`'s tip is by then. Core creates it right after the
+author's merge, through the GitHub API or a tag push, never a push to `main`. The author's only
+action is the merge. The release pull request description names the tag. A tag is never moved or
+reused.
 
 ### 10. Audit (Core)
+
+After each release, Core first checks the tag: `git ls-remote --tags origin vX.Y.Z` returns a ref,
+and `git rev-parse vX.Y.Z^{commit}` (after `git fetch origin tag vX.Y.Z`) is the release pull
+request's merge commit. Core creates a missing tag itself as in step 9 and tells the author only if
+its credentials cannot. A tag that stands on another commit is not moved: Core puts it to the
+author as a decision, with the options and a recommendation.
 
 After each release, and whenever the author asks, Core refreshes `CORE.md`: state of the game, open
 risks, test gaps, the branch and issue inventory, and what the last cycle cost in fix rounds and
