@@ -50,10 +50,12 @@ import {
 // off kept on its escape and only on one it can still run, a yielding train kept waiting as long
 // as it would have, no train asked to back off again before its last back-off has run out, no jam
 // searched again before 4 s have passed since its last search, and a world grown around the save
-// carrying on as the save. At the end: the scenes of src/sim/idleTraffic.test.ts, in which a train
-// with nothing worth hauling idles and makes way for another (issue #151), saved at any tick, saved
+// carrying on as the save. Then the scenes of src/sim/idleTraffic.test.ts, in which a train with
+// nothing worth hauling idles and makes way for another (issue #151), saved at any tick, saved
 // again after a load before a tick, and saved just before an idle train looks for a way aside or a
-// jam is searched, with the time the look or search is due moved past that tick.
+// jam is searched, with the time the look or search is due moved past that tick. At the end: a
+// train stopped under way, out of fuel or water, without power or too heavy, saved and loaded and
+// run on once the cause clears in both runs (issue #218).
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -2507,4 +2509,467 @@ describe('a train idle or making way, saved at any tick of the idle scenes', () 
       expect(counts.decided, 'searches held back that changed what a train did').toBeGreaterThan(0);
     },
   );
+});
+
+// ------------------------------------------------------------- a train stopped under way, loaded
+// A train that stops under way, out of fuel or water, without power or too heavy for its engines,
+// carries on after a load as the uninterrupted train does once the cause clears, in both runs at
+// the same tick (issue #218). Before #151 a train that ran dry on its way to a fuel or water
+// service was saved without its path and loaded without one, and once refilled `dispatch` dropped
+// the service for its scheduled stop.
+
+/** Game seconds both runs go on after the cause of a stop clears before they are compared. */
+const CLEARED = 6;
+/** Most game seconds a stopped train stands before the save, and after it till the cause clears. */
+const STANDS = 4;
+/** Game seconds after a refill within which both runs take the service, or neither does. */
+const TAKE_SPAN = 60;
+
+type ServiceTo = NonNullable<TrainJSON['serviceStop']>;
+/** The service a train heads to, which the save holds, read without writing the whole train. */
+const serviceOf = (t: Train) => (t as unknown as { serviceStop: ServiceTo | null }).serviceStop;
+/** A tank an engine burns from. */
+type Tank = 'coal' | 'water' | 'oil';
+/** The tanks the train's engine draws on: coal and water for steam, oil for a diesel. */
+const tanksOf = (t: Train): Tank[] =>
+  (['coal', 'water', 'oil'] as const).filter(
+    (k) => (k === 'coal' ? t.coalRate : k === 'water' ? t.waterRate : t.oilRate) > 0,
+  );
+/** The tile a train's path ends on; null with no path. */
+function pathEnd(t: Train) {
+  const end = t.pathAhead().at(-1);
+  return end ? { x: end.x, y: end.y } : null;
+}
+
+/** A generated line with a service, where on the way there one of the train's tanks runs dry. */
+interface DrySave {
+  layout: Layout;
+  /** share of the way through the ticks of the train's first run to a service, 0 to under 1 */
+  at: number;
+  /** which of the engine's tanks runs dry, as a share of `tanksOf`, 0 to under 1 */
+  tank: number;
+  /** ticks the train stands dry after the save before both runs put the tank back as it was */
+  stands: number;
+  /** ticks the train stands dry before the save, as a train a player finds stuck is saved */
+  before: number;
+}
+const drySave = (rng: Rng): DrySave => ({
+  // the save follows the tick the train stops dry, not the layout's
+  layout: { ...serviceLayout(rng), tick: 0 },
+  at: rng.next(),
+  tank: rng.next(),
+  stands: rng.int(0, STANDS / GDT),
+  before: rng.int(0, STANDS / GDT),
+});
+/**
+ * Fewer stations, no siding, the diesel, the first tank, earlier, then a shorter stand after the
+ * save, then before it.
+ */
+function* shrinkDrySave(s: DrySave): Iterable<DrySave> {
+  for (const layout of shrinkLayout(s.layout))
+    if (layout.fuel === s.layout.fuel) yield { ...s, layout };
+  if (s.tank > 0) yield { ...s, tank: 0 };
+  for (const at of [0, s.at / 2]) if (at < s.at) yield { ...s, at };
+  for (const stands of shrinkInt(s.stands)) yield { ...s, stands };
+  for (const before of shrinkInt(s.before)) yield { ...s, before };
+}
+
+/** The save of a dry save, made as the train stands dry on its way to a service. */
+interface DryStop {
+  /** the save follows this tick */
+  tick: number;
+  text: string;
+  /** the fleet's memory of when a train last loaded where, which a save does not hold */
+  memory: Map<number, number>;
+  /** the tank that ran dry, and what it held before */
+  tank: Tank;
+  level: number;
+  /** the service the train heads to */
+  service: ServiceTo;
+}
+/** A dry save's save, and a world to run on from it. */
+type Dry = DryStop & { world: World };
+/**
+ * Runs the layout over SERVICE_SPAN to the end of the train's first run to a fuel or water
+ * service, then again to the tick `at` of the way through that run, where the tank runs dry, and
+ * on until the train stops in noFuel still heading for the service, and `before` ticks more as it
+ * stands there: the save then, and the world of that run, uninterrupted. Null when the train never
+ * heads for a service, or reaches it or drops it before it stops.
+ */
+function runDry(s: DrySave): { world: World; stop: DryStop } | null {
+  const first = layoutScene(s.layout);
+  const heading: number[] = [];
+  for (let i = 0; i < SERVICE_SPAN / GDT; i++) {
+    step(first, timeOf(i));
+    const t = first.fleet.trains[0];
+    if (t.state === 'moving' && serviceOf(t)) heading.push(i);
+    else if (heading.length) break;
+  }
+  if (!heading.length) return null;
+  const from = heading[Math.floor(s.at * heading.length)];
+  const world = layoutScene(s.layout);
+  for (let i = 0; i <= from; i++) step(world, timeOf(i));
+  const t = world.fleet.trains[0];
+  const tanks = tanksOf(t);
+  const tank = tanks[Math.floor(s.tank * tanks.length)];
+  const level = t[tank];
+  t[tank] = 0;
+  let tick = from;
+  while (t.state === 'moving' && serviceOf(t) && tick < from + 1 / GDT) step(world, timeOf(++tick));
+  const service = serviceOf(t);
+  if (t.state !== 'noFuel' || !service) return null;
+  // standing dry, it keeps looking every few seconds whether it can go on, and keeps its service
+  const stopped = tick;
+  while (tick < stopped + s.before) step(world, timeOf(++tick));
+  expect({ state: t.state, service: serviceOf(t) }, `${s.before} ticks after it stopped`).toEqual({
+    state: 'noFuel',
+    service,
+  });
+  const memory = new Map(lastServed(world.fleet));
+  return {
+    world,
+    stop: { tick, text: saved(world), memory, tank, level, service: { ...service } },
+  };
+}
+/** The save `drySaveOf` made for each dry save it was given, or null where it made none. */
+const drySaves = new Map<string, DryStop | null>();
+/** `runDry`, its save kept for `drySaved`. */
+function drySaveOf(s: DrySave): Dry | null {
+  const found = runDry(s);
+  drySaves.set(JSON.stringify(s), found && found.stop);
+  return found && { ...found.stop, world: found.world };
+}
+/**
+ * The save of a dry save, as `drySaveOf` makes it (once for each dry save), with the layout's world
+ * laid afresh to load it into: the same map, track and decor, its train not run.
+ */
+function drySaved(s: DrySave): Dry | null {
+  const known = drySaves.get(JSON.stringify(s));
+  if (known === undefined) return drySaveOf(s);
+  return known && { ...known, world: layoutScene(s.layout) };
+}
+/**
+ * The dry-save properties run the seeds of the service saves above, SERVICE_SEEDS, and count what
+ * the cases do, so they are not met by cases that never stop dry or by one kind only. Each count
+ * must reach its least; the seeds give (in brackets): cases that stop dry on the way to a service
+ * (37 of the 40), of them headed for a service that hands out water (25; every service on these
+ * lines hands out fuel) and for one with fuel only (12), with their coal (14), water (7) or oil
+ * (16) run dry, the uninterrupted train still heading for the service CLEARED after the refill
+ * (25), and taking it within TAKE_SPAN of the refill (33).
+ */
+const DRY_LEAST = {
+  stopped: 30,
+  forWater: 18,
+  forFuelOnly: 8,
+  coal: 10,
+  water: 4,
+  oil: 10,
+  heading: 18,
+  took: 25,
+};
+type DryCounts = Record<keyof typeof DRY_LEAST, number>;
+
+/** What a train is doing when it takes the service it heads for, and the tick it does. */
+interface Taking {
+  tick: number;
+  doing: Doing;
+}
+
+describe('a train stopped dry on its way to a fuel or water service when saved', () => {
+  it(
+    'keeps heading for the service, and refilled takes it when the uninterrupted train does',
+    { timeout: 120_000 },
+    () => {
+      // A train that runs dry under way stops in noFuel with its path and the service it heads to;
+      // the save holds both, and refilled at the same tick as the uninterrupted train, the loaded
+      // train runs on to that service, not to its stop, and takes it as the uninterrupted one does.
+      // What it does is compared with the uninterrupted train's: a roaming train may end idle or
+      // without a route. A way measured from another start may move an arrival by a tick.
+      roamingRules();
+      const n = Object.fromEntries(Object.keys(DRY_LEAST).map((k) => [k, 0])) as DryCounts;
+      forAll(
+        drySave,
+        (s) => {
+          const dry = drySaveOf(s);
+          if (!dry) return;
+          const { world: ctl, tick, text, memory, tank, level, service } = dry;
+          n.stopped++;
+          n[service.water ? 'forWater' : 'forFuelOnly']++;
+          n[tank]++;
+          const from = ctl.arrivals.length;
+          const back = loaded(ctl, text);
+          for (const [id, at] of memory) lastServed(back.fleet).set(id, at);
+          const a = ctl.fleet.trains[0];
+          const b = back.fleet.trains[0];
+          // before its first tick it stands dry, heading for the service it was saved heading for
+          expect(b.state, 'loaded').toBe('noFuel');
+          expect(b.toJSON().serviceStop, 'loaded').toEqual(service);
+          const refill = tick + 1 + s.stands;
+          const compare = refill + CLEARED / GDT - 1;
+          let ctlTook: Taking | null = null;
+          let backTook: Taking | null = null;
+          const taking = (t: Train, k: number, arrivals: number[]): Taking => ({
+            tick: k,
+            doing: doingOf(t, arrivals),
+          });
+          // a train that takes one service may head straight on for another (water after coal),
+          // on the same tick: it no longer heads for this one either way
+          const headsFor = (t: Train) => {
+            const to = serviceOf(t);
+            return !!to && to.x === service.x && to.y === service.y;
+          };
+          // on until both take the service, the second no more than a tick after the first, or
+          // neither has within TAKE_SPAN
+          const horizon = refill + TAKE_SPAN / GDT;
+          for (let k = tick + 1; ; k++) {
+            const took = ctlTook ?? backTook;
+            const over = took ? (ctlTook && backTook) || k > took.tick + 1 : k > horizon;
+            if (k > compare && over) break;
+            if (k === refill) {
+              a[tank] = level;
+              b[tank] = level;
+            }
+            step(ctl, timeOf(k));
+            step(back, timeOf(k));
+            if (!ctlTook && !headsFor(a)) ctlTook = taking(a, k, ctl.arrivals.slice(from));
+            if (!backTook && !headsFor(b)) backTook = taking(b, k, back.arrivals);
+            if (k !== compare) continue;
+            const why = `${CLEARED} s after the refill`;
+            expect(apart(a.poses, b.poses), `tiles from the control ${why}`).toBeLessThan(
+              TOLERANCE,
+            );
+            expect(b.state, why).toBe(a.state);
+            expect(b.speed, why).toBeCloseTo(a.speed, 9);
+            expect(serviceOf(b), `the service it heads for ${why}`).toEqual(serviceOf(a));
+            expect(pathEnd(b), `where its path ends ${why}`).toEqual(pathEnd(a));
+            if (!headsFor(a)) continue;
+            n.heading++;
+            expect(pathEnd(b), `where its path ends ${why}, on the service`).toEqual({
+              x: service.x,
+              y: service.y,
+            });
+          }
+          if (!ctlTook) {
+            const why = 'took the service the control had not taken a tick later';
+            expect(backTook, why).toBeNull();
+            return;
+          }
+          n.took++;
+          const why = `taking the service the control took on tick ${ctlTook.tick}`;
+          expect(backTook, why).not.toBeNull();
+          expect(Math.abs(backTook!.tick - ctlTook.tick), `${why}: ticks apart`).toBeLessThan(2);
+          if (!sameDoing(ctlTook.doing, backTook!.doing))
+            expect(backTook!.doing, why).toEqual(ctlTook.doing);
+        },
+        { shrink: shrinkDrySave, shrinkBudget: 20, seeds: SERVICE_SEEDS },
+      );
+      for (const [what, least] of Object.entries(DRY_LEAST))
+        expect(n[what as keyof DryCounts], `dry cases: ${what}`).toBeGreaterThanOrEqual(least);
+    },
+  );
+
+  it(
+    'drops a service it can no longer reach once refilled, as a load with no service does',
+    { timeout: 120_000 },
+    () => {
+      // Loaded with the service it heads for moved to a tile without track, a train standing dry
+      // runs on as a load of the same save with no service does once it is refilled: it plans its
+      // path again, finds no way to the service and drops it for its stop, as `dispatch` drops it.
+      roamingRules();
+      let stopped = 0;
+      let moving = 0;
+      forAll(
+        drySave,
+        (s) => {
+          const dry = drySaved(s);
+          if (!dry) return;
+          stopped++;
+          const { world, tick, text, tank, level, service } = dry;
+          const withService = (serviceStop: ServiceTo | null) => {
+            const j = JSON.parse(text) as { trains: TrainJSON[] };
+            j.trains[0].serviceStop = serviceStop;
+            return loaded(world, JSON.stringify(j));
+          };
+          const off = { ...service, y: ROW - 6 };
+          expect(world.track.has(off.x, off.y), 'track on the moved service tile').toBe(false);
+          const gone = withService(off);
+          const none = withService(null);
+          const a = gone.fleet.trains[0];
+          const b = none.fleet.trains[0];
+          const refill = tick + 1 + s.stands;
+          const end = refill + CLEARED / GDT - 1;
+          let setOff = 0;
+          for (let k = tick + 1; k <= end; k++) {
+            if (k === refill) {
+              a[tank] = level;
+              b[tank] = level;
+            }
+            step(gone, timeOf(k));
+            step(none, timeOf(k));
+            const why = `${k - tick} ticks after the load`;
+            expect({ state: a.state, speed: a.speed }, why).toEqual({
+              state: b.state,
+              speed: b.speed,
+            });
+            if (!setOff && a.state !== 'noFuel') {
+              setOff = k;
+              // bound for its stop, not for the service
+              expect(a.toJSON().serviceStop, `${why}: the service`).toBeNull();
+              if (a.state === 'moving') {
+                moving++;
+                const to = pathEnd(a);
+                const stop = gone.builder.stationById(
+                  a.detour ?? a.route[a.routeIndex % a.route.length],
+                );
+                const onStop =
+                  !!stop &&
+                  gone.builder.platformTiles(stop).some((p) => p.x === to?.x && p.y === to.y);
+                expect(
+                  onStop,
+                  `${why}: a path ending at ${JSON.stringify(to)}, on a platform of its stop`,
+                ).toBe(true);
+              }
+            }
+            if (k === setOff || k === end)
+              expect(JSON.parse(JSON.stringify(a.toJSON())), why).toEqual(
+                JSON.parse(JSON.stringify(b.toJSON())),
+              );
+          }
+          expect(
+            setOff,
+            `set off after the refill after tick ${refill - 1}`,
+          ).toBeGreaterThanOrEqual(refill);
+        },
+        { shrink: shrinkDrySave, shrinkBudget: 20, seeds: SERVICE_SEEDS },
+      );
+      expect(stopped, 'dry cases: stopped').toBeGreaterThanOrEqual(DRY_LEAST.stopped);
+      // and most set off under way (35 of the 37), so where their path ends is checked
+      expect(moving, 'dry cases: set off under way').toBeGreaterThanOrEqual(DRY_LEAST.stopped);
+    },
+  );
+});
+
+/** What stops a train under way, but a dry tank, that can clear. */
+type Cause = 'noPower' | 'overweight';
+/** Game seconds a generated line's train is given to stop. */
+const STOP_SPAN = 120;
+/**
+ * A generated line with the F7 on a schedule and full tanks, the ticks its train stands stopped
+ * before the save, and the ticks after it before the cause clears.
+ */
+interface StoppedSave {
+  layout: Layout;
+  before: number;
+  after: number;
+}
+function stoppedSave(rng: Rng): StoppedSave {
+  const c = layout(rng, ['schedule']);
+  // the train stands clear of the quarry, its first stop: one under the cars cannot be reached
+  const quarry = c.sites[0].x;
+  let trainX = c.trainX;
+  if (Math.abs(trainX - quarry) < 6) trainX += trainX + 12 <= 80 ? 12 : -12;
+  return {
+    layout: { ...c, loco: 'f7', fuel: 1, trainX, tick: 0 },
+    before: rng.int(0, STANDS / GDT),
+    after: rng.int(0, STANDS / GDT),
+  };
+}
+/** Fewer stations, no siding, then a shorter stand before the save, then after it. */
+function* shrinkStoppedSave(s: StoppedSave): Iterable<StoppedSave> {
+  for (const layout of shrinkLayout(s.layout)) yield { ...s, layout };
+  for (const before of shrinkInt(s.before)) yield { ...s, before };
+  for (const after of shrinkInt(s.after)) yield { ...s, after };
+}
+/**
+ * The layout's world run until its train stops for `cause`, as `RECIPES` in src/sim/fleet.test.ts
+ * stops one, and the tick it stopped after: the electric taurus in place of the F7, on a line with
+ * no wire, stops as it sets off; the F7 with 100 stone put in its hopper as it loads at the
+ * quarry, more than it pulls, finds out as it sets off from there.
+ */
+function stoppedRun(cause: Cause, c: Layout): { world: World; tick: number } {
+  const world = layoutScene(c);
+  if (cause === 'noPower') {
+    const was = world.fleet.trains[0];
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('taurus') }], undefined, was.id);
+    t.wagons = was.wagons;
+    expect(t.spawnAt(world.track, c.trainX, ROW, c.east ? Dir.W : Dir.E)).toBe(true);
+    t.schedule = was.schedule;
+    world.fleet.trains = [t];
+  }
+  const t = world.fleet.trains[0];
+  const quarry = world.builder.stations[0];
+  let filled = false;
+  for (let i = 0; i < STOP_SPAN / GDT; i++) {
+    step(world, timeOf(i));
+    if (t.state === cause) return { world, tick: i };
+    if (cause === 'overweight' && !filled && t.state === 'loading' && t.atStation === quarry) {
+      Object.assign(t.wagons[0], { cargo: 'stone', amount: 100, origin: null });
+      expect(t.weight, 'what it pulls, 100 stone aboard').toBeGreaterThan(t.power);
+      filled = true;
+    }
+  }
+  throw new Error(`the train never stopped for ${cause} in ${STOP_SPAN} s`);
+}
+/**
+ * Clears what stopped the train in `w`: the fleet's line wired and fed (a loaded fleet is a fresh
+ * one, so each world's), or the hopper emptied.
+ */
+function clearCause(cause: Cause, w: World) {
+  if (cause === 'noPower') {
+    w.fleet.powered = () => true;
+    w.fleet.supplyAt = () => 'catenary';
+    w.stock.add('power', 1e9);
+  } else Object.assign(w.fleet.trains[0].wagons[0], { cargo: null, amount: 0 });
+}
+/**
+ * Seeds the stopped-train properties run, and how many of them must have run on by CLEARED after
+ * the cause cleared, so the properties are not met by trains that stand still in both runs (all
+ * 20 without power do, and 16 of the 20 too heavy: the other four found no route from the quarry
+ * to a warehouse on a siding, in both runs).
+ */
+const STOPPED_SEEDS = SEEDS.slice(0, 20);
+const STOPPED_RAN = 14;
+
+describe('a train stopped without power or too heavy when saved', () => {
+  for (const cause of ['noPower', 'overweight'] as const)
+    it(
+      `in ${cause}, runs on once the cause clears as the uninterrupted train does`,
+      { timeout: 60_000 },
+      () => {
+        // Neither drifts: a train stopped without power keeps its path and the save holds it, and
+        // one too heavy finds out as it sets off, before it has a path. Loaded into a fresh fleet,
+        // it stands as long as the uninterrupted train does, and runs on as it does.
+        let ran = 0;
+        forAll(
+          stoppedSave,
+          (s) => {
+            const { world: w, tick: stopped } = stoppedRun(cause, s.layout);
+            const t = w.fleet.trains[0];
+            const tick = stopped + s.before;
+            for (let i = stopped + 1; i <= tick; i++) step(w, timeOf(i));
+            expect(t.state, `${s.before} ticks after it stopped`).toBe(cause);
+            const back = loaded(w, saved(w));
+            const b = back.fleet.trains[0];
+            expect(b.state, 'loaded').toBe(cause);
+            const clear = tick + 1 + s.after;
+            const end = clear + CLEARED / GDT - 1;
+            const distance = t.distance;
+            for (let k = tick + 1; k <= end; k++) {
+              if (k === clear) for (const x of [w, back]) clearCause(cause, x);
+              step(w, timeOf(k));
+              step(back, timeOf(k));
+            }
+            const why = `${CLEARED} s after the cause cleared`;
+            expect(apart(t.poses, b.poses), `tiles from the control ${why}`).toBeLessThan(
+              TOLERANCE,
+            );
+            expect(b.state, why).toBe(t.state);
+            expect(b.speed, why).toBeCloseTo(t.speed, 9);
+            if (t.distance > distance) ran++;
+          },
+          { shrink: shrinkStoppedSave, shrinkBudget: 20, seeds: STOPPED_SEEDS },
+        );
+        expect(ran, 'cases run on by then').toBeGreaterThanOrEqual(STOPPED_RAN);
+      },
+    );
 });
