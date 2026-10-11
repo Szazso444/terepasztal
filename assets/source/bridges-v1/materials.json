@@ -1,0 +1,156 @@
+{
+  "note": "Faces of the bridge kit, cut by tools/bridge-kit.mjs. Each swatch is one painted face of a source piece: o is its top-left corner in source pixels, u its top-right corner, v its bottom-left corner (the face is the parallelogram they span, resampled to the rectangle named in src/art/bridgeSwatches.json). mirror takes the face left to right for the +x side of the same wall, side darkens it by sideShade (faces seen from the lower right stand away from the light). solid marks a face without holes: texels the parallelogram takes from beyond the painted face are filled from the nearest painted texel. -shade copies are multiplied by underShade.",
+  "sideShade": 0.86,
+  "underShade": 0.68,
+  "swatches": {
+    "bridgemat/stone-top": {
+      "src": "stone-pad",
+      "o": [768, 270],
+      "u": [1213, 502],
+      "v": [323, 502],
+      "solid": true
+    },
+    "bridgemat/stone-edge-l": {
+      "src": "stone-pad",
+      "o": [314, 506],
+      "u": [768, 746],
+      "v": [314, 582],
+      "solid": true
+    },
+    "bridgemat/stone-edge-r": {
+      "src": "stone-pad",
+      "o": [768, 746],
+      "u": [1222, 506],
+      "v": [768, 828],
+      "solid": true
+    },
+    "bridgemat/stone-parapet-l": {
+      "src": "stone-rail-x",
+      "o": [262, 237],
+      "u": [1158, 733],
+      "v": [262, 407],
+      "solid": true
+    },
+    "bridgemat/stone-parapet-r": {
+      "src": "stone-rail-x",
+      "o": [262, 237],
+      "u": [1158, 733],
+      "v": [262, 407],
+      "mirror": true,
+      "side": true,
+      "solid": true
+    },
+    "bridgemat/stone-parapet-top": {
+      "src": "stone-rail-x",
+      "o": [382, 172],
+      "u": [1270, 668],
+      "v": [262, 233],
+      "solid": true
+    },
+    "bridgemat/stone-hung-l": {
+      "src": "stone-arch-x",
+      "o": [357, 198.6],
+      "u": [1089, 599.6],
+      "v": [357, 538.6]
+    },
+    "bridgemat/stone-hung-r": {
+      "src": "stone-arch-x",
+      "o": [357, 198.6],
+      "u": [1089, 599.6],
+      "v": [357, 538.6],
+      "mirror": true,
+      "side": true
+    },
+    "bridgemat/stone-leg-l": {
+      "src": "stone-pier",
+      "o": [440, 294],
+      "u": [573, 368],
+      "v": [440, 733],
+      "solid": true
+    },
+    "bridgemat/stone-leg-r": {
+      "src": "stone-pier",
+      "o": [575, 369],
+      "u": [704, 295],
+      "v": [575, 808],
+      "solid": true
+    },
+    "bridgemat/wood-top": {
+      "src": "wood-pad",
+      "o": [770, 249],
+      "u": [1176, 485],
+      "v": [359, 482],
+      "solid": true
+    },
+    "bridgemat/wood-edge-l": {
+      "src": "wood-pad",
+      "o": [351, 486],
+      "u": [759, 740],
+      "v": [351, 548],
+      "solid": true
+    },
+    "bridgemat/wood-edge-r": {
+      "src": "wood-pad",
+      "o": [759, 740],
+      "u": [1184, 489],
+      "v": [759, 806],
+      "solid": true
+    },
+    "bridgemat/wood-parapet-l": {
+      "src": "wood-rail-x",
+      "o": [385, 236],
+      "u": [1078, 632],
+      "v": [385, 481]
+    },
+    "bridgemat/wood-parapet-r": {
+      "src": "wood-rail-x",
+      "o": [385, 236],
+      "u": [1078, 632],
+      "v": [385, 481],
+      "mirror": true,
+      "side": true
+    },
+    "bridgemat/wood-hung-l": {
+      "src": "wood-truss-x",
+      "o": [244, 141],
+      "u": [1242, 640],
+      "v": [244, 448]
+    },
+    "bridgemat/wood-hung-r": {
+      "src": "wood-truss-x",
+      "o": [244, 141],
+      "u": [1242, 640],
+      "v": [244, 448],
+      "mirror": true,
+      "side": true
+    },
+    "bridgemat/wood-leg-l": {
+      "src": "wood-post",
+      "o": [530, 160],
+      "u": [594, 195],
+      "v": [530, 760],
+      "solid": true
+    },
+    "bridgemat/wood-leg-r": {
+      "src": "wood-post",
+      "o": [595, 195],
+      "u": [657, 160],
+      "v": [595, 795],
+      "solid": true
+    },
+    "bridgemat/wood-brace-l": {
+      "src": "wood-brace-x",
+      "o": [398, 135],
+      "u": [1124, 360],
+      "v": [398, 720]
+    },
+    "bridgemat/wood-brace-r": {
+      "src": "wood-brace-x",
+      "o": [398, 135],
+      "u": [1124, 360],
+      "v": [398, 720],
+      "mirror": true,
+      "side": true
+    }
+  }
+}

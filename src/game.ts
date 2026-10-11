@@ -29,7 +29,7 @@ import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { levelAt } from './world/elevation';
-import { climbAxes, railProfile } from './world/railProfile';
+import { railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
 import { WorldRenderer } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -118,8 +118,17 @@ import { CraftingScreen } from './ui/craftingScreen';
 import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
 import { showSignalGuide } from './ui/signalGuide';
 import { cityTiles } from './sim/city';
-import { bridgeSpan } from './sim/bridges';
-import { tickBuildings, buildingDef, buildingFrame, type Building } from './sim/buildings';
+import {
+  tickBuildings,
+  buildingDef,
+  buildingFrame,
+  buildingLevel,
+  type Building,
+} from './sim/buildings';
+import { bridgeTile, type BridgeDeck, type BridgeTile } from './render/bridgeGeometry';
+import { bridgePictures } from './render/bridgePicture';
+import { bridgeCapacity } from './sim/bridges';
+import { DEFAULT_RELIEF } from './render/terrainRelief';
 import { PowerGrid } from './sim/power';
 import { TrainScreen } from './ui/trainScreen';
 import { MarketScreen } from './ui/marketScreen';
@@ -435,6 +444,18 @@ export class Game {
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
     const track = level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track);
+    // Bridge platforms stand before their track, as they were built.
+    for (const [x, y, id, deck] of level.buildings ?? [])
+      if (inBounds(this.map, x, y) && buildingDef(id).bridge)
+        this.builder.buildings.set(y * this.map.w + x, {
+          id,
+          x,
+          y,
+          acc: 0,
+          deck: deck ?? undefined,
+          active: false,
+          rate: 0,
+        });
     for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
@@ -457,7 +478,14 @@ export class Game {
     this.houses.finishAll();
     for (const [x, y, id] of level.buildings ?? []) {
       if (!inBounds(this.map, x, y)) continue;
-      const b: Building = { id, x, y, acc: 0, active: false, rate: 0 };
+      const b: Building = this.builder.buildings.get(y * this.map.w + x) ?? {
+        id,
+        x,
+        y,
+        acc: 0,
+        active: false,
+        rate: 0,
+      };
       this.builder.buildings.set(y * this.map.w + x, b);
       this.onBuildingChanged(b, false);
     }
@@ -746,6 +774,8 @@ export class Game {
     canvas.tabIndex = 0;
     this.input = new Input(canvas);
     await this.atlas.load(ATLAS_GROUPS);
+    // Toolbar and build card show a bridge as the world draws it: geometry clothed in swatches.
+    this.atlas.register(bridgePictures(this.atlas, DEFAULT_RELIEF.step));
     buildCompatTable();
 
     this.map =
@@ -903,14 +933,22 @@ export class Game {
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
-    this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    // Lamps and smoke ride the train: on the rail, whatever height it runs at.
+    const railDz = (x: number, y: number) => this.world.railAt(x, y).dz;
+    this.glows = new Glows(
+      this.atlas,
+      this.world.overlay,
+      (x, y) => this.world.surfacePoint(x, y),
+      railDz,
+    );
     this.groundLights = new GroundLights(
       this.atlas,
       this.world.lights,
       (x, y) => this.world.surfacePoint(x, y),
       (x, y) => inBounds(this.map, x, y),
+      (s, x, y) => this.world.placeLight(s, x, y),
     );
-    this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.smoke = new Smoke(this.atlas, this.world.overlay, railDz);
     this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
       this.world.surfacePoint(x, y),
     );
@@ -928,13 +966,25 @@ export class Game {
     );
     // vehicles still inside an engine shed are hidden until they roll out
     this.trainRenderer.hideAt = (x, y) => this.builder.stationAt(x, y)?.def.depot === true;
+    this.trainRenderer.decks = this.world;
+    // Deck rules read the rail profile as it stands, and no deck moves under a train.
+    this.builder.autoDeck = (x, y) => {
+      if (this.railsDirty) this.refreshRails();
+      return this.fleet.railBeds.get(y * this.map.w + x)?.level;
+    };
+    this.builder.busy = (x, y) => this.fleet.occupied(x, y, -1);
     this.peopleRenderer = new PeopleRenderer(this.atlas, this.world.objects, (x, y) =>
       this.world.elevationOf(x, y),
     );
 
-    this.build = new BuildController(this.input, this.builder, this.world, () =>
-      this.tileUnderMouse(),
+    this.build = new BuildController(
+      this.input,
+      this.builder,
+      this.world,
+      () => this.tileUnderMouse(),
+      this.camera,
     );
+    this.build.bridgePreview = (x, y, defId) => this.bridgePreview(x, y, defId);
     this.buildUi();
     this.build.onSelect = (s) => {
       if (s) this.selectFieldTrain(null);
@@ -1014,13 +1064,12 @@ export class Game {
       seasonOffset: getSeasonOffset(),
       towns: this.towns.toJSON(),
       settings: { ...this.settings },
-      buildings: [...this.builder.buildings.values()].map((b) => [
-        b.x,
-        b.y,
-        b.id,
-        b.acc,
-        b.level ?? 1,
-      ]),
+      // The deck height of a bridge platform is written only where the player set one.
+      buildings: [...this.builder.buildings.values()].map((b) =>
+        b.deck === undefined
+          ? [b.x, b.y, b.id, b.acc, b.level ?? 1]
+          : [b.x, b.y, b.id, b.acc, b.level ?? 1, b.deck],
+      ),
       wires: this.catenary.toJSON(),
       houses: this.houses.toJSON(),
     };
@@ -1045,26 +1094,37 @@ export class Game {
         .filter((b) => buildingDef(b[2]).bridge)
         .map((b) => b[1] * this.map.w + b[0]),
     );
-    const fix = (x: number, y: number, bridge = false) => {
+    // What a tile carries decides what it may be: a bridge platform stands on water or on any
+    // land that can be built on (it keeps the land it was built over), an old bridge track piece
+    // only on water, everything else on buildable land.
+    const fix = (x: number, y: number, carries: 'land' | 'platform' | 'span' = 'land') => {
       if (!inBounds(this.map, x, y)) return;
-      const t = terrainAt(this.map, x, y);
-      if (
-        bridge
-          ? t !== Terrain.Water
-          : t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain
-      ) {
-        this.map.terrain[y * this.map.w + x] = bridge ? Terrain.Water : Terrain.Grass;
+      const t = terrainAt(this.map, x, y),
+        stone = t === Terrain.Rock || t === Terrain.Mountain,
+        wrong =
+          carries === 'span'
+            ? t !== Terrain.Water
+            : carries === 'platform'
+              ? stone
+              : stone || t === Terrain.Water;
+      if (wrong) {
+        this.map.terrain[y * this.map.w + x] = carries === 'span' ? Terrain.Water : Terrain.Grass;
         this.map.props.delete(y * this.map.w + x);
         this.world.retile(x, y);
       }
     };
     for (const [x, y, kind, rot, cls] of j.track)
       for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
-        fix(f.x, f.y, kind === 'bridge' || bridges.has(f.y * this.map.w + f.x));
+        fix(
+          f.x,
+          f.y,
+          kind === 'bridge' ? 'span' : bridges.has(f.y * this.map.w + f.x) ? 'platform' : 'land',
+        );
     for (const s of j.stations)
       for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) fix(f.x, f.y);
     for (const [x, y] of j.decor ?? []) fix(x, y);
-    for (const [x, y, id] of j.buildings ?? []) fix(x, y, !!buildingDef(id).bridge);
+    for (const [x, y, id] of j.buildings ?? [])
+      fix(x, y, buildingDef(id).bridge ? 'platform' : 'land');
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
@@ -1087,6 +1147,20 @@ export class Game {
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toolbar.refresh();
+    // Bridge platforms stand before their track, as they were built: rails laid over them find
+    // the deck under them.
+    for (const [x, y, id, acc, level, deck] of j.buildings ?? [])
+      if (buildingDef(id).bridge)
+        this.builder.buildings.set(y * this.map.w + x, {
+          id,
+          x,
+          y,
+          acc: acc ?? 0,
+          level: level ?? 1,
+          deck: deck ?? undefined,
+          active: false,
+          rate: 0,
+        });
     for (const [x, y, kind, rot, cls, cls2] of j.track) {
       for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
         this.onTrackChanged(t.x, t.y);
@@ -1124,7 +1198,15 @@ export class Game {
     }
     this.houses.load(j.houses);
     for (const [x, y, id, acc, level] of j.buildings ?? []) {
-      const b: Building = { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
+      const b: Building = this.builder.buildings.get(y * this.map.w + x) ?? {
+        id,
+        x,
+        y,
+        acc: acc ?? 0,
+        level: level ?? 1,
+        active: false,
+        rate: 0,
+      };
       this.builder.buildings.set(y * this.map.w + x, b);
       this.onBuildingChanged(b, false);
     }
@@ -1165,20 +1247,22 @@ export class Game {
   /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
   private refreshRails() {
     this.railsDirty = false;
-    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
+    const beds = railProfile(this.map, this.track, (x, y) => this.builder.bridgeAt(x, y));
     this.fleet.railBeds = beds;
-    if (this.world.setRailBeds(beds)) this.refreshBridges();
+    this.world.setRailBeds(beds);
+    this.refreshBridges();
   }
   private onTrackChanged(x: number, y: number) {
+    // Bridges are redrawn with the rail profile, on the next frame (refreshRails).
     this.railsDirty = true;
     this.builder.refreshBridgeCapacity(x, y);
-    this.refreshBridges();
     this.depot?.onTrackChanged();
     const p = this.track.get(x, y);
     const t = terrainAt(this.map, x, y);
     if (p) {
       if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
-      if (t === Terrain.Forest || t === Terrain.Grass)
+      // Nature makes room for rails on the ground; a bridge deck has none on it.
+      if ((t === Terrain.Forest || t === Terrain.Grass) && !this.builder.bridgeAt(x, y))
         this.world.displaceProps(x, y, p.unit ? [] : (p.links as [number, number][]));
       this.world.setTrack(x, y, pieceFrame(p));
     } else {
@@ -1232,84 +1316,64 @@ export class Game {
     }
   }
   private restoringWorld = false;
+  /**
+   * Every bridge platform as the renderer draws it: its deck follows the rail profile of the track
+   * on it (without track: the height the player set, else the ground), and what stands on each
+   * edge follows from the platforms around it. Waits for the rail profile when that is about to
+   * change.
+   */
   private refreshBridges() {
-    if (this.restoringWorld) return;
-    for (const b of this.builder.buildings.values())
-      if (buildingDef(b.id).bridge) {
-        const s = bridgeSpan(this.builder, b);
-        const n = Math.min(4, s.length - Math.floor(s.index / 4) * 4);
-        const phase = s.index % 4;
-        const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
-        const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
-        // Over water the deck sits at the waterline and its piers stand in the water. Over land
-        // it carries the rail's level on piers cut to the ground under them: a fenced span under
-        // straight rail, a square pad under a curve or switch.
-        const water = terrainAt(this.map, b.x, b.y) === Terrain.Water,
-          deck = water ? 0 : -this.world.railAt(b.x, b.y).dz,
-          dy = -deck - this.world.elevationOf(b.x, b.y),
-          piece = this.track.get(b.x, b.y),
-          straight = !piece || climbAxes(piece.links).length > 0,
-          land = water
-            ? null
-            : straight
-              ? `structures/landspan_${s.material}_${s.axis}`
-              : `structures/landpad_${s.material}`;
-        const id = 'bridge:' + b.x + ',' + b.y;
-        if (this.world.bridgeKit) {
-          // The illustrated kit: deck or pad, near railing, and the parts under the deck.
-          const dir = s.axis ? 'x' : 'y';
-          this.world.setPlatform(
-            b.x,
-            b.y,
-            `bridgekit/${s.material}-${straight ? `deck-${dir}` : 'pad'}`,
-            0,
-            false,
-            deck,
-          );
-          if (straight)
-            this.world.setStructure(id, b.x, b.y, `bridgekit/${s.material}-rail-${dir}`, 35, dy);
-          else this.world.removeStructure(id);
-          this.world.setBridgeKit(
-            b.x,
-            b.y,
-            s.material,
-            straight ? (s.axis as 0 | 1) : null,
-            deck,
-            water,
-          );
-        } else {
-          this.world.setPlatform(
-            b.x,
-            b.y,
-            land && !straight ? land : (land ?? key) + '_deck',
-            0,
-            water,
-            deck,
-          );
-          if (land && !straight) this.world.removeStructure(id);
-          else this.world.setStructure(id, b.x, b.y, (land ?? key) + '_rail', 35, dy);
-          this.world.setBridgePiers(
-            b.x,
-            b.y,
-            water ? null : s.material,
-            straight ? (s.axis as 0 | 1) : null,
-            deck,
-          );
-        }
-        const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
-        this.world.setPlatform(
-          b.x,
-          b.y,
-          (b.level ?? 1) > 1 ? detail + '_deck' : null,
-          1,
-          false,
-          deck,
-        );
-        const detailId = 'bridge-detail:' + b.x + ',' + b.y;
-        if ((b.level ?? 1) > 1)
-          this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36, dy);
-        else this.world.removeStructure(detailId);
-      }
+    if (this.restoringWorld || this.railsDirty) return;
+    const decks = new Map<number, BridgeDeck>(),
+      step = this.world.levelPx;
+    this.bridgeDecks = decks;
+    for (const b of this.builder.buildings.values()) {
+      const bridge = buildingDef(b.id).bridge;
+      if (!bridge) continue;
+      const k = b.y * this.map.w + b.x,
+        piece = this.track.get(b.x, b.y);
+      decks.set(k, {
+        x: b.x,
+        y: b.y,
+        material: bridge.material,
+        step,
+        deck: this.builder.deckLevel(b),
+        bed: this.fleet.railBeds.get(k),
+        rails: piece ? [...new Set(piece.links.flat())].sort() : undefined,
+        level: buildingLevel(b),
+        water: terrainAt(this.map, b.x, b.y) === Terrain.Water,
+      });
+    }
+    const at = (x: number, y: number) =>
+      inBounds(this.map, x, y) ? decks.get(y * this.map.w + x) : undefined;
+    for (const d of decks.values()) this.world.setBridge(d.x, d.y, bridgeTile(d, at));
+  }
+  /** Every bridge platform as last described to the renderer, by tile. */
+  private bridgeDecks = new Map<number, BridgeDeck>();
+  /**
+   * The platform a bridge tool would place on tile (x, y), as the renderer would draw it beside
+   * the platforms that stand already: what the placement ghost shows.
+   */
+  bridgePreview(x: number, y: number, defId: string): BridgeTile | null {
+    const bridge = buildingDefOf(defId).bridge;
+    if (!bridge || !inBounds(this.map, x, y)) return null;
+    if (this.railsDirty) this.refreshRails();
+    const deck: BridgeDeck = {
+      x,
+      y,
+      material: bridge.material,
+      step: this.world.levelPx,
+      deck: this.builder.placedDeck(x, y) ?? levelAt(this.map, x, y),
+      level: 1,
+      water: terrainAt(this.map, x, y) === Terrain.Water,
+    };
+    return bridgeTile(deck, (nx, ny) =>
+      nx === x && ny === y
+        ? deck
+        : inBounds(this.map, nx, ny)
+          ? this.bridgeDecks.get(ny * this.map.w + nx)
+          : undefined,
+    );
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
@@ -1317,15 +1381,7 @@ export class Game {
       this.railsDirty = true;
       this.builder.refreshBridgeCapacity(b.x, b.y);
       this.track.version++;
-      if (removed) {
-        this.world.setPlatform(b.x, b.y, null);
-        this.world.setPlatform(b.x, b.y, null, 1);
-        this.world.removeStructure('bridge:' + b.x + ',' + b.y);
-        this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
-        this.world.setBridgePiers(b.x, b.y, null);
-        this.world.setBridgeKit(b.x, b.y, null);
-      }
-      this.refreshBridges();
+      if (removed) this.world.setBridge(b.x, b.y, null);
       return;
     }
     this.towns?.refresh();
@@ -2262,7 +2318,8 @@ export class Game {
     for (const t of this.fleet.trains)
       for (const p of t.poses) {
         const w = tileToWorld(p.x, p.y);
-        const wy = w.y + this.world.elevationOf(Math.floor(p.x + 0.5), Math.floor(p.y + 0.5));
+        // Cars stand on the rail, which a bridge or an incline carries above the ground.
+        const wy = w.y + this.world.railAt(p.x, p.y).dz;
         const dx = Math.abs(w.x - m.x);
         const dy = Math.abs(wy - 10 - m.y);
         const d = Math.hypot(dx, dy * 1.6);
@@ -2461,6 +2518,13 @@ export class Game {
     ) {
       const info = this.tileInfo(this.hoverTile.x, this.hoverTile.y);
       this.tooltip.show(this.input.mouseX, this.input.mouseY, info.title, info.lines);
+    } else if (bld && this.build.tool.kind === 'none' && buildingDefOf(bld.id).bridge) {
+      // A bridge platform makes nothing: what it carries and how high its deck stands.
+      const capacity = bridgeCapacity(bld) ?? 0;
+      this.tooltip.show(this.input.mouseX, this.input.mouseY, buildingDefOf(bld.id).name, [
+        `${STR.building.bridgeCapacity}: ${STR.building.bridgeLimit(capacity, Math.round(capacity * 0.8))}`,
+        STR.building.deckHeight(this.builder.deckLevel(bld), bld.deck === undefined),
+      ]);
     } else if (bld && this.build.tool.kind === 'none') {
       const def = buildingDefOf(bld.id);
       const status = BuildingPanel.status(bld, this.stock);
@@ -2776,7 +2840,8 @@ export class Game {
     return this.world.tileAtSurface(w.x, w.y);
   }
   private updateCursor() {
-    const t = this.tileUnderMouse();
+    // A deck that was just raised or lowered stays the pointer's tile while the pointer rests.
+    const t = this.build.deckHeld() ?? this.tileUnderMouse();
     this.hoverTile = t;
     const ok = inBounds(this.map, t.x, t.y) && this.viewTarget === 0 && !this.input.overUi;
     this.cursor.visible = ok;

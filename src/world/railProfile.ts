@@ -24,7 +24,17 @@ export interface RailBed {
   flat: boolean;
   /** A crossing: the profile of the line along the other axis. */
   cross?: RailBed;
+  /** The tile's own level on the line: its terrain, or the deck of the bridge platform under it. */
+  level?: number;
 }
+/**
+ * A bridge platform as the profile sees it. `deck` is the height the player set, in levels;
+ * without one the deck is automatic and takes the level of the higher rail it meets.
+ */
+export interface DeckPlatform {
+  deck?: number;
+}
+export type PlatformAt = (x: number, y: number) => DeckPlatform | undefined;
 
 type Levels = Pick<GameMap, 'w' | 'h' | 'terrain'>;
 
@@ -60,31 +70,38 @@ export function climbAxes(links: readonly (readonly [number, number])[]): ('x' |
 }
 
 /**
- * Deck level of a curve or switch carried by bridge platforms: the level of the rails it meets
- * off the bridge (neighbours across its links that stand on the ground), or its highest tile when
- * every neighbour is on a platform too. Null when the rails it meets disagree, or the deck would
- * sit below the ground under one of its tiles.
+ * Deck level of a curve or switch carried by bridge platforms: the deck the player set under it,
+ * else the level of the rails it meets (neighbours across its links that stand on the ground or
+ * on a deck set by hand; automatic decks adapt to it instead), else its highest tile. Null when
+ * its own decks or the rails it meets disagree, or the deck would sit below the ground under one
+ * of its tiles.
  */
 export function supportedDeck(
   map: Levels,
   members: readonly { x: number; y: number; links: readonly (readonly [number, number])[] }[],
-  bridgeAt: (x: number, y: number) => boolean,
+  platformAt: PlatformAt,
 ): number | null {
   const inside = new Set(members.map((m) => m.y * map.w + m.x)),
-    meets = new Set<number>();
+    meets = new Set<number>(),
+    own = new Set<number>();
   let top = 0;
   for (const m of members) {
     top = Math.max(top, levelAt(map, m.x, m.y));
+    const set = platformAt(m.x, m.y)?.deck;
+    if (set !== undefined) own.add(set);
     for (const link of m.links)
       for (const d of link) {
         const nx = m.x + DIR_DX[d],
           ny = m.y + DIR_DY[d];
-        if (inside.has(ny * map.w + nx) || bridgeAt(nx, ny)) continue;
-        meets.add(levelAt(map, nx, ny));
+        if (inside.has(ny * map.w + nx)) continue;
+        const there = platformAt(nx, ny);
+        if (there && there.deck === undefined) continue;
+        meets.add(Math.max(there?.deck ?? 0, levelAt(map, nx, ny)));
       }
   }
-  if (meets.size > 1) return null;
-  const deck = meets.size ? [...meets][0] : top;
+  if (meets.size > 1 || own.size > 1) return null;
+  const deck = own.size ? [...own][0] : meets.size ? [...meets][0] : top;
+  if (meets.size && !meets.has(deck)) return null;
   return deck < top ? null : deck;
 }
 
@@ -99,7 +116,8 @@ export function bedFor(bed: RailBed, x: number, y: number): RailBed {
 
 /**
  * Height profile of every straight rail line (rules: docs/rail-inclines.md). Each tile of a line
- * has a level: its terrain level, or on a bridge the deck level of the higher abutment. Tiles at
+ * has a level: its terrain level, or on a bridge the deck: the height the player set, else the
+ * level of the higher abutment. Tiles at
  * a level change are transitions (the rail bends a little), a level tile between two transitions
  * of one staircase keeps climbing (incline), and every other tile is level. A run of transitions
  * and inclines climbs from the level before it to the level after it, easing in and out; a crest
@@ -109,7 +127,7 @@ export function bedFor(bed: RailBed, x: number, y: number): RailBed {
 export function railProfile(
   map: Levels,
   track: TrackGraph,
-  bridgeAt: (x: number, y: number) => boolean = () => false,
+  platformAt: PlatformAt = () => undefined,
 ): Map<number, RailBed> {
   const beds = new Map<number, RailBed>(),
     axesAt = (x: number, y: number) => {
@@ -127,26 +145,29 @@ export function railProfile(
       const tiles: [number, number][] = [];
       for (let tx = x, ty = y; axesAt(tx, ty).includes(axis); tx += dx, ty += dy)
         tiles.push([tx, ty]);
-      lineProfile(map, track, tiles, axis, bridgeAt, beds);
+      lineProfile(map, track, tiles, axis, platformAt, beds);
     }
   }
   // Curves and switches carried by bridge platforms sit at the deck (supportedDeck).
   for (const [k, p] of track.pieces) {
     const x = k % map.w,
       y = Math.floor(k / map.w);
-    if (beds.has(k) || !bridgeAt(x, y)) continue;
+    if (beds.has(k) || !platformAt(x, y)) continue;
     const members = (p.unit ? track.unitTiles(p.unit.ax, p.unit.ay) : [{ x, y }]).map((t) => ({
       ...t,
       links: track.get(t.x, t.y)?.links ?? [],
     }));
     const deck =
-      supportedDeck(map, members, bridgeAt) ??
-      Math.max(...members.map((t) => levelAt(map, t.x, t.y)));
+      supportedDeck(map, members, platformAt) ??
+      Math.max(
+        ...members.map((t) => Math.max(levelAt(map, t.x, t.y), platformAt(t.x, t.y)?.deck ?? 0)),
+      );
     beds.set(k, {
       axis: 'x',
       spans: [{ from: x - 2, to: x + 2, a: deck, b: deck }],
       bridge: true,
       flat: true,
+      level: deck,
     });
   }
   return beds;
@@ -157,16 +178,22 @@ function lineProfile(
   track: TrackGraph,
   tiles: [number, number][],
   axis: 'x' | 'y',
-  bridgeAt: (x: number, y: number) => boolean,
+  platformAt: PlatformAt,
   beds: Map<number, RailBed>,
 ) {
   const start = axis === 'x' ? tiles[0][0] : tiles[0][1],
-    bridge = tiles.map(([x, y]) => bridgeAt(x, y)),
+    platforms = tiles.map(([x, y]) => platformAt(x, y)),
+    ground = tiles.map(([x, y]) => levelAt(map, x, y)),
+    // A deck the player set is the tile's level like any terrace (never below the ground under
+    // it); only automatic decks take the level of their abutments.
+    set = platforms.map((p, i) =>
+      p?.deck === undefined ? undefined : Math.max(p.deck, ground[i]),
+    ),
     // A crossing holds both lines level at its centre, so the two rails meet.
     pinned = tiles.map(([x, y]) => (track.get(x, y)?.links.length ?? 0) > 1),
     { spans, levels } = lineSpans(
-      tiles.map(([x, y]) => levelAt(map, x, y)),
-      bridge,
+      ground.map((g, i) => set[i] ?? g),
+      platforms.map((p, i) => !!p && set[i] === undefined),
       start,
       pinned,
     );
@@ -178,8 +205,9 @@ function lineProfile(
       bed: RailBed = {
         axis,
         spans: near,
-        bridge: bridge[i] || undefined,
+        bridge: platforms[i] ? true : undefined,
         flat: close.every((s) => s.a === s.b && s.a === levels[i]),
+        level: levels[i],
       },
       other = beds.get(k);
     if (!other) beds.set(k, bed);

@@ -1,7 +1,17 @@
-import { Container, Sprite, Rectangle, Graphics, Mesh, MeshGeometry } from 'pixi.js';
+import {
+  Container,
+  Sprite,
+  Rectangle,
+  Graphics,
+  Mesh,
+  MeshGeometry,
+  Texture,
+  type TextureSource,
+} from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
 import {
   tileToWorld,
+  worldToTile,
   worldToTileInt,
   depthKey,
   ELEV_PX,
@@ -19,17 +29,24 @@ import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { scatterFor } from './scatter';
-import { levelAt } from '../world/elevation';
+import { levelAt, MAX_LEVEL } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
-import { PAL, type RGB } from '../art/palette';
-import BRIDGE_KIT_JSON from './bridgeKit.json';
+import { bridgeQuads, deckTop, project, type BridgeQuad, type BridgeTile } from './bridgeGeometry';
 
-/** Measured kit geometry in world px (tools/bridge-kit.mjs). */
-const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
-  string,
-  { thickness?: number; height?: number; length?: number; along?: number }
->;
+import { BRIDGE_DEPTH, propDepthKey } from './bridgeDepth';
+
+/** One bridge platform on screen. */
+interface BridgeRecord {
+  /** As the game describes it, and that description as text: unchanged means nothing to redraw. */
+  tile: BridgeTile;
+  spec: string;
+  /** As drawn: without the terrain painter the deck lies on the fallback ground. */
+  shown: BridgeTile;
+  body: Mesh[];
+  near: Mesh[];
+  sunk: Mesh[];
+}
 
 const CHUNK = 8;
 
@@ -41,12 +58,14 @@ export class WorldRenderer {
   readonly root = new Container();
   readonly ground = new Container();
   readonly track = new Container();
-  readonly platforms = new Container();
-  /** Piers of bridges carried over land, standing on the ground under their decks. */
-  private piers = new Container();
-  private pierGraphics = new Map<number, Graphics>();
-  private platformSprites = new Map<number, Sprite>();
-  private platformMasks = new Map<number, Graphics>();
+  /** Bridge platforms, drawn as geometry in the world's own projection (bridgeGeometry.ts). */
+  private bridges = new Map<number, BridgeRecord>();
+  /** Bridge supports below the water plane: under every object, shown over water tiles only. */
+  private sunk = new Container({ sortableChildren: true });
+  private sunkMask = new Graphics();
+  private sunkMaskDirty = false;
+  /** Whole-image textures of the atlas pages bridge swatches live on. */
+  private pages = new Map<TextureSource, Texture>();
   readonly objects = new Container();
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
@@ -110,14 +129,15 @@ export class WorldRenderer {
       this.ground,
       this.waterDetails,
       this.contactGround,
-      this.piers,
-      this.platforms,
+      this.sunkMask,
+      this.sunk,
       this.track,
       this.lights,
       this.objects,
       this.fog,
       this.overlay,
     );
+    this.sunk.mask = this.sunkMask;
     this.buildBorder();
     this.buildGround();
     this.buildProps();
@@ -266,7 +286,8 @@ export class WorldRenderer {
   displaceProps(x: number, y: number, links: [number, number][]) {
     const i = idx(this.map, x, y);
     const list = this.map.props.get(i);
-    if (!list?.length) return;
+    // Nothing grows through a bridge deck; its tile keeps its nature for when the deck goes.
+    if (!list?.length || this.bridges.has(i)) return;
     const ns = links.length === 1 && links[0].includes(0) && links[0].includes(2);
     const ew = links.length === 1 && links[0].includes(1) && links[0].includes(3);
     if (!ns && !ew) {
@@ -297,6 +318,8 @@ export class WorldRenderer {
   /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
   retile(x: number, y: number) {
     if (!this.isBuilt(x, y)) return;
+    // Water came or went: what stands in it under a bridge shows over the water that is there.
+    this.sunkMaskDirty = true;
     this.refreshGround(x, y);
     this.rebuildProps(x, y);
     const t = this.trackSprites.get(idx(this.map, x, y));
@@ -331,7 +354,7 @@ export class WorldRenderer {
       if (this.isBuilt(i % this.map.w, Math.floor(i / this.map.w))) this.buildPropsAt(i, list);
   }
   private buildPropsAt(i: number, list: PropInstance[]) {
-    if (this.propSprites.has(i)) return;
+    if (this.propSprites.has(i) || this.bridges.has(i)) return;
     {
       const x = i % this.map.w;
       const y = Math.floor(i / this.map.w);
@@ -356,7 +379,15 @@ export class WorldRenderer {
     if (isTree(p.kind)) s.scale.set(TREE_SCALE);
     const wp = tileToWorld(x + p.ox, y + p.oy);
     s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x + p.ox, y + p.oy)));
-    s.zIndex = depthKey(x + p.ox, y + p.oy, 10);
+    // Beside a bridge deck a prop sorts wholly behind it or wholly in front of it.
+    s.zIndex = propDepthKey(
+      x,
+      y,
+      p.ox,
+      p.oy,
+      this.hasBridge(x, y + 1) || this.hasBridge(x + 1, y),
+      this.hasBridge(x, y - 1) || this.hasBridge(x - 1, y),
+    );
     s.cullable = true;
     s.tint = this.propTint;
     this.objects.addChild(s);
@@ -470,14 +501,9 @@ export class WorldRenderer {
             );
         });
       }
-      for (const [id, a] of this.structureAnchors) {
-        const s = this.structures.get(id);
-        if (!s) continue;
-        const p = this.surfacePoint(a.x, a.y);
-        s.position.set(p.x + a.dx, p.y + a.dy);
-        this.contactPatches.get(id)?.position.copyFrom(s.position);
-        this.windowLights.get(id)?.position.copyFrom(s.position);
-      }
+      // Bridge supports end on the ground under them: new heights, new feet.
+      for (const r of this.bridges.values()) this.buildBridge(r);
+      for (const id of this.structureAnchors.keys()) this.seatStructure(id);
       for (let i = 0; i < this.groundSprites.length; i++) {
         const s = this.groundSprites[i];
         if (s)
@@ -486,6 +512,7 @@ export class WorldRenderer {
             !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
       }
     }
+    if (this.sunkMaskDirty) this.refreshSunkMask();
     this.landscape.root.visible = this.landscape.active;
     this.ground.visible = !this.landscape.active || !this.landscape.ready;
     if (
@@ -685,266 +712,217 @@ export class WorldRenderer {
     for (const [i, m] of this.trackMeshes) m.tint = this.trackColour(i);
   }
   /**
-   * Piers for a bridge platform over land: each stands on the ground under it and reaches up to
-   * the deck (`deck` world pixels up, 4 px thick), so none is longer than the drop it spans and
-   * none sinks into the terrain. Straight spans (`axis` 0 along y, 1 along x) get a pair of
-   * piers (stone) or a braced trestle (wood); curves and switches (`axis` null) a pier per
-   * corner. `material` null removes them.
+   * Show the bridge platform on a tile as the game describes it, or clear it with null. The deck
+   * and what hangs under it are meshes in the depth-sorted object layer, so scenery behind them
+   * is covered and whatever stands in front covers them, whatever order they were built in. The
+   * tile's track piece moves into that layer too, between the deck and the trains.
    */
-  setBridgePiers(
-    x: number,
-    y: number,
-    material: 'wood' | 'stone' | null,
-    axis: 0 | 1 | null = null,
-    deck = 0,
-  ) {
-    const k = idx(this.map, x, y);
-    let g = this.pierGraphics.get(k);
-    if (!material) {
-      g?.destroy();
-      this.pierGraphics.delete(k);
+  setBridge(x: number, y: number, tile: BridgeTile | null) {
+    const k = idx(this.map, x, y),
+      old = this.bridges.get(k);
+    if (!tile) {
+      if (!old) return;
+      this.dropBridge(old);
+      this.bridges.delete(k);
+      this.bridgeMoved(x, y);
+      this.rebuildProps(x, y);
+      this.sortPropsAround(x, y);
       return;
     }
-    if (!g) {
-      g = new Graphics();
-      this.piers.addChild(g);
-      this.pierGraphics.set(k, g);
-    }
-    g.clear();
-    const stone = material === 'stone',
-      side = stone ? PAL.stone : PAL.timber,
-      hex = (c: RGB, f: number) =>
-        (Math.min(255, Math.round(c[0] * f)) << 16) |
-        (Math.min(255, Math.round(c[1] * f)) << 8) |
-        Math.min(255, Math.round(c[2] * f)),
-      top = deck - 4,
-      // (along, across) in the span's own axes -> tile offsets.
-      at = (l: number, w: number) => (axis === 0 ? { dx: w, dy: l } : { dx: l, dy: w });
-    const posts: { dx: number; dy: number; hx: number; hy: number }[] = [];
-    if (axis === null)
-      for (const cx of [-0.34, 0.34])
-        for (const cy of [-0.34, 0.34])
-          posts.push({ dx: cx, dy: cy, hx: stone ? 0.09 : 0.04, hy: stone ? 0.09 : 0.04 });
-    else if (stone)
-      for (const l of [-0.38, 0.38]) {
-        const o = at(l, 0);
-        posts.push({ ...o, hx: axis ? 0.07 : 0.3, hy: axis ? 0.3 : 0.07 });
-      }
-    else
-      for (const l of [-0.4, 0.4])
-        for (const w of [-0.26, 0.26]) posts.push({ ...at(l, w), hx: 0.035, hy: 0.035 });
-    // Far posts first, so nearer ones cover them.
-    posts.sort((a, b) => a.dx + a.dy - (b.dx + b.dy));
-    const screen = (tx: number, ty: number, z: number) => {
-      const p = tileToWorld(tx, ty);
-      return { x: p.x, y: p.y - z };
+    const spec = JSON.stringify(tile);
+    if (old?.spec === spec) return;
+    const record: BridgeRecord = old ?? {
+      tile,
+      spec,
+      shown: tile,
+      body: [],
+      near: [],
+      sunk: [],
     };
-    const feet: { x: number; y: number; ground: number }[] = [];
-    for (const p of posts) {
-      const fx = x + p.dx,
-        fy = y + p.dy,
-        ground = -this.elevationOf(fx, fy);
-      feet.push({ x: fx, y: fy, ground });
-      if (top - ground < 1) continue;
-      const corner = (sx: number, sy: number, z: number) =>
-          screen(fx + sx * p.hx, fy + sy * p.hy, z),
-        face = (a: [number, number], b: [number, number], c: number) => {
-          const pa = corner(a[0], a[1], ground),
-            pb = corner(b[0], b[1], ground),
-            qb = corner(b[0], b[1], top),
-            qa = corner(a[0], a[1], top);
-          g!.poly([pa.x, pa.y, pb.x, pb.y, qb.x, qb.y, qa.x, qa.y]).fill(c);
-        };
-      // The two faces toward the camera: +y lit from the upper left, +x in shade.
-      face([-1, 1], [1, 1], hex(side[1], 0.9));
-      face([1, 1], [1, -1], hex(side[2], 0.72));
-      // A darker band where the pier meets the ground reads as contact, not as a cut.
-      const a = corner(-1, 1, ground),
-        b = corner(1, 1, ground),
-        c = corner(1, -1, ground);
-      g.moveTo(a.x, a.y)
-        .lineTo(b.x, b.y)
-        .lineTo(c.x, c.y)
-        .stroke({ width: 1.5, color: hex(side[2], 0.45), alpha: 0.6 });
+    record.tile = tile;
+    record.spec = spec;
+    this.bridges.set(k, record);
+    this.buildBridge(record);
+    this.bridgeMoved(x, y);
+    if (!old) {
+      this.removeProps(x, y);
+      this.refreshScatter(x, y, 0);
+      this.sortPropsAround(x, y);
     }
-    // Timber trestles brace their near pair of posts with a cross.
-    if (!stone && axis !== null) {
-      const near = feet.filter((_, i) => {
-        const o = posts[i];
-        return (axis ? o.dy : o.dx) > 0;
+  }
+  private hasBridge(x: number, y: number) {
+    return (
+      x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.bridges.has(idx(this.map, x, y))
+    );
+  }
+  /** A deck appeared on (x, y) or left it: the nature on the four tiles around it sorts anew. */
+  private sortPropsAround(x: number, y: number) {
+    for (const [dx, dy] of [
+      [0, -1],
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+    ]) {
+      const nx = x + dx,
+        ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= this.map.w || ny >= this.map.h || this.hasBridge(nx, ny))
+        continue;
+      this.rebuildProps(nx, ny);
+    }
+  }
+  /** A deck appeared, went or changed height: what stands on its tile follows. */
+  private bridgeMoved(x: number, y: number) {
+    const k = idx(this.map, x, y),
+      s = this.trackSprites.get(k);
+    this.sunkMaskDirty = true;
+    if (s) this.placeTrackSprite(s, x, y);
+    for (const [id, a] of this.structureAnchors) if (a.x === x && a.y === y) this.seatStructure(id);
+  }
+  private dropBridge(r: BridgeRecord) {
+    for (const m of [...r.body, ...r.near, ...r.sunk]) {
+      const geometry = m.geometry;
+      m.destroy();
+      geometry.destroy();
+    }
+    r.body = [];
+    r.near = [];
+    r.sunk = [];
+  }
+  /** Meshes of one platform from its geometry, cut to the ground as it stands now. */
+  private buildBridge(r: BridgeRecord) {
+    this.dropBridge(r);
+    const { x, y } = r.tile,
+      key = depthKey(x, y);
+    // Without the terrain painter rails lie on the fallback ground (railAt); so does the deck.
+    r.shown = this.landscape.failed
+      ? { ...r.tile, bed: undefined, deck: -this.elevationOf(x, y) / r.tile.step }
+      : r.tile;
+    const quads = bridgeQuads(r.shown, (gx, gy) => -this.elevationOf(gx, gy));
+    r.body = this.bridgeMeshes(quads.body, this.objects, key + BRIDGE_DEPTH.body);
+    r.near = this.bridgeMeshes(quads.near, this.objects, key + BRIDGE_DEPTH.near);
+    r.sunk = this.bridgeMeshes(quads.sunk, this.sunk, key);
+  }
+  /** One mesh per atlas page for a list of quads, in the list's order. */
+  private bridgeMeshes(quads: BridgeQuad[], parent: Container, zIndex: number) {
+    const groups = new Map<
+      TextureSource,
+      { positions: number[]; uvs: number[]; indices: number[] }
+    >();
+    for (const q of quads) {
+      if (!this.atlas.has(q.key)) continue;
+      const texture = this.atlas.get(q.key).texture,
+        source = texture.source,
+        frame = texture.frame;
+      let g = groups.get(source);
+      if (!g) groups.set(source, (g = { positions: [], uvs: [], indices: [] }));
+      const base = g.positions.length / 2;
+      for (let i = 0; i < 4; i++) {
+        const [sx, sy] = project(q.p[i * 3], q.p[i * 3 + 1], q.p[i * 3 + 2]);
+        g.positions.push(sx, sy);
+        g.uvs.push(
+          (frame.x + q.uv[i * 2] * frame.width) / source.width,
+          (frame.y + q.uv[i * 2 + 1] * frame.height) / source.height,
+        );
+      }
+      g.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+    const meshes: Mesh[] = [];
+    for (const [source, g] of groups) {
+      let page = this.pages.get(source);
+      if (!page) this.pages.set(source, (page = new Texture({ source })));
+      const mesh = new Mesh({
+        geometry: new MeshGeometry({
+          positions: new Float32Array(g.positions),
+          uvs: new Float32Array(g.uvs),
+          indices: new Uint32Array(g.indices),
+        }),
+        texture: page,
       });
-      if (near.length === 2) {
-        const [p, q] = near,
-          lo = Math.max(p.ground, q.ground),
-          span = top - lo;
-        if (span > 4) {
-          const a = screen(p.x, p.y, lo + 1),
-            b = screen(q.x, q.y, top - 1),
-            c = screen(q.x, q.y, lo + 1),
-            d = screen(p.x, p.y, top - 1);
-          g.moveTo(a.x, a.y)
-            .lineTo(b.x, b.y)
-            .moveTo(c.x, c.y)
-            .lineTo(d.x, d.y)
-            .stroke({
-              width: 1.5,
-              color: hex(side[0], 0.85),
-            });
-        }
-      }
+      mesh.cullable = true;
+      mesh.zIndex = zIndex;
+      parent.addChild(mesh);
+      meshes.push(mesh);
     }
+    return meshes;
   }
-  /** The illustrated bridge kit is packed (tools/bridge-kit.mjs); else the procedural spans. */
-  get bridgeKit() {
-    return this.atlas.has('bridgekit/stone-deck-x');
+  /** What is below the water plane shows over water only: it stands in it, behind the bank. */
+  private refreshSunkMask() {
+    this.sunkMaskDirty = false;
+    const tiles: { x: number; y: number }[] = [];
+    for (const r of this.bridges.values()) if (r.sunk.length) tiles.push(r.tile);
+    this.waterMask(this.sunkMask, tiles);
   }
-  private kitParts = new Map<number, Container>();
-  /**
-   * Everything under a kit bridge deck on one tile, in the pier layer: piers or trestle posts cut
-   * to the ground (or into the water) under each one, timber braces between the posts, and over
-   * water stone arches or timber trusses hung from both deck edges. `axis` 0 runs along y, 1
-   * along x, null is a pad under a curve or switch; `deck` is the rail level in world px.
-   */
-  setBridgeKit(
-    x: number,
-    y: number,
-    material: 'wood' | 'stone' | null,
-    axis: 0 | 1 | null = null,
-    deck = 0,
-    water = false,
-  ) {
-    const k = idx(this.map, x, y);
-    this.kitParts.get(k)?.destroy({ children: true });
-    this.kitParts.delete(k);
-    if (!material) return;
-    const c = new Container(),
-      stone = material === 'stone',
-      dir = axis === 1 ? 'x' : 'y',
-      slab = `${material}-${axis === null ? 'pad' : `deck-${dir}`}`,
-      underside = deck - BRIDGE_KIT[slab].thickness!,
-      at = (l: number, w: number) => (axis === 0 ? { dx: w, dy: l } : { dx: l, dy: w }),
-      screen = (tx: number, ty: number, z: number) => {
-        const p = tileToWorld(tx, ty);
-        return { x: p.x, y: p.y - z };
-      },
-      ground = (tx: number, ty: number) => (water ? -30 : -this.elevationOf(tx, ty));
-    // Walls hung under both long edges, over water: the far one first.
-    if (water && axis !== null) {
-      const key = `${material}-${stone ? 'arch' : 'truss'}-${dir}`,
-        f = this.atlas.get(`bridgekit/${key}`),
-        h = BRIDGE_KIT[key].height!;
-      for (const far of [true, false]) {
-        const s = new Sprite(f.texture),
-          o = far ? (axis === 1 ? { dx: 0, dy: -1 } : { dx: -1, dy: 0 }) : { dx: 0, dy: 0 },
-          // Tucked a few px up behind the deck, so no water shows between them.
-          p = screen(x + o.dx, y + o.dy, underside - h + 4);
-        s.anchor.set(f.anchorX, f.anchorY);
-        s.position.set(p.x, p.y);
-        c.addChild(s);
-      }
-    }
-    // Piers (stone) or posts (wood), far ones first so nearer ones cover them.
-    const shaft = stone ? 'stone-pier' : 'wood-post',
-      f = this.atlas.get(`bridgekit/${shaft}`),
-      half = (stone ? 0.2 : 0.07) * 32,
-      spots: { dx: number; dy: number }[] = [];
-    if (axis === null)
-      for (const a of [-0.36, 0.36]) for (const b of [-0.36, 0.36]) spots.push({ dx: a, dy: b });
-    else if (!water || !stone)
-      for (const l of [-0.4, 0.4]) for (const w of [-0.3, 0.3]) spots.push(at(l, w));
-    spots.sort((a, b) => a.dx + a.dy - (b.dx + b.dy));
-    const feet = new Map<string, number>();
-    for (const o of spots) {
-      const gx = x + o.dx,
-        gy = y + o.dy,
-        g = ground(gx, gy),
-        length = underside - g;
-      feet.set(`${o.dx},${o.dy}`, g);
-      if (length < 1) continue;
-      const cut = this.surfaces.shaft(`bridgekit/${shaft}`, f, length, half, water ? 6 : 0),
-        s = new Sprite(cut.texture),
-        p = screen(gx, gy, underside);
-      s.anchor.set(f.anchorX, cut.anchorY);
-      s.position.set(p.x, p.y);
-      c.addChild(s);
-    }
-    // Timber braces across each pair of posts along the span.
-    if (!stone && axis !== null) {
-      const key = `wood-brace-${dir}`,
-        bf = this.atlas.get(`bridgekit/${key}`),
-        bh = BRIDGE_KIT[key].height!;
-      for (const w of [-0.3, 0.3]) {
-        const a = at(-0.4, w),
-          b = at(0.4, w),
-          lo = Math.max(feet.get(`${a.dx},${a.dy}`) ?? 0, feet.get(`${b.dx},${b.dy}`) ?? 0),
-          span = underside - lo;
-        if (span < 5) continue;
-        // The brace is drawn on the near tile edge; move it onto this post line, 0.8 tile long.
-        const s = new Sprite(bf.texture),
-          edge = at(0, 0.5),
-          line = at(0, w),
-          p = screen(x + line.dx - edge.dx, y + line.dy - edge.dy, lo);
-        s.anchor.set(bf.anchorX, bf.anchorY);
-        s.scale.set(BRIDGE_KIT[key].along ?? 0.8, span / bh);
-        s.position.set(p.x, p.y);
-        c.addChild(s);
-      }
-    }
-    this.piers.addChild(c);
-    this.kitParts.set(k, c);
-  }
-  /** `lift` raises the platform above the ground plane: a bridge deck carried over land. */
-  setPlatform(
-    x: number,
-    y: number,
-    frame: string | null,
-    layer = 0,
-    clipToWater = false,
-    lift = 0,
-  ) {
-    const key = y * this.map.w + x + layer * this.map.w * this.map.h;
-    let s = this.platformSprites.get(key);
-    if (!frame) {
-      this.platformMasks.get(key)?.destroy();
-      this.platformMasks.delete(key);
-      s?.destroy();
-      this.platformSprites.delete(key);
-      return;
-    }
-    if (!s) {
-      s = new Sprite();
-      this.platforms.addChild(s);
-      this.platformSprites.set(key, s);
-    }
-    const f = this.atlas.get(frame);
-    s.texture = f.texture;
-    s.anchor.set(f.anchorX, f.anchorY);
-    const p = tileToWorld(x, y);
-    s.position.set(p.x, p.y - lift);
-    if (clipToWater) {
-      let mask = this.platformMasks.get(key);
-      if (!mask) {
-        mask = new Graphics();
-        this.platforms.addChild(mask);
-        this.platformMasks.set(key, mask);
-      }
-      mask.clear();
-      // Below-deck masonry must disappear behind the bank. Its screen-space height
-      // can otherwise put the foot of a pier over a completely different land tile.
-      for (let ty = Math.max(0, y - 3); ty <= Math.min(this.map.h - 1, y + 3); ty++)
-        for (let tx = Math.max(0, x - 3); tx <= Math.min(this.map.w - 1, x + 3); tx++) {
-          if (this.map.terrain[idx(this.map, tx, ty)] !== Terrain.Water) continue;
+  /** Fill `mask` with the diamonds of the water tiles within two tiles of the given ones. */
+  private waterMask(mask: Graphics, tiles: readonly { x: number; y: number }[]) {
+    mask.clear();
+    const seen = new Set<number>();
+    for (const { x, y } of tiles)
+      for (let ty = Math.max(0, y - 2); ty <= Math.min(this.map.h - 1, y + 2); ty++)
+        for (let tx = Math.max(0, x - 2); tx <= Math.min(this.map.w - 1, x + 2); tx++) {
+          const i = idx(this.map, tx, ty);
+          if (this.map.terrain[i] !== Terrain.Water || seen.has(i)) continue;
+          seen.add(i);
           const q = tileToWorld(tx, ty);
           mask
             .poly([q.x, q.y - HALF_H, q.x + HALF_W, q.y, q.x, q.y + HALF_H, q.x - HALF_W, q.y])
             .fill(0xffffff);
         }
-      s.mask = mask;
-    } else if (this.platformMasks.has(key)) {
-      s.mask = null;
-      this.platformMasks.get(key)!.destroy();
-      this.platformMasks.delete(key);
+  }
+  /** The bridge deck over a tile position, as it is drawn. */
+  private bridgeAt(x: number, y: number) {
+    const tx = Math.round(x),
+      ty = Math.round(y);
+    if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return undefined;
+    return this.bridges.get(idx(this.map, tx, ty))?.shown;
+  }
+  /** A bridge deck lies under the tile position (trains over one sort by bridgeDepth.ts). */
+  onDeck(x: number, y: number) {
+    return !!this.bridgeAt(x, y);
+  }
+  /** Where a ground light on tile (x, y) belongs: on a bridge, on the deck instead of under it. */
+  placeLight(s: Sprite, x: number, y: number) {
+    const onDeck = !!this.bridgeAt(x, y),
+      parent = onDeck ? this.objects : this.lights;
+    if (s.parent !== parent) {
+      parent.addChild(s);
+      // In the object layer the night tints each sprite; the ground layer lies under its veil.
+      s.tint = 0xffffff;
     }
+    if (onDeck) s.zIndex = depthKey(x, y, BRIDGE_DEPTH.light);
+  }
+  private ghostMeshes: Mesh[] = [];
+  private ghostSpec = '';
+  private ghostMask: Graphics | null = null;
+  /**
+   * Preview of a platform that is not built: the same geometry, in the overlay. Over water its
+   * supports show in the water as they will stand, cut off at the bank.
+   */
+  setBridgeGhost(tile: BridgeTile | null, tint = 0xffffff) {
+    const spec = tile ? JSON.stringify(tile) : '';
+    if (spec !== this.ghostSpec) {
+      this.ghostSpec = spec;
+      for (const m of this.ghostMeshes) {
+        const geometry = m.geometry;
+        m.destroy();
+        geometry.destroy();
+      }
+      this.ghostMeshes = [];
+      if (tile) {
+        const quads = bridgeQuads(tile, (gx, gy) => -this.elevationOf(gx, gy)),
+          sunk = this.bridgeMeshes(quads.sunk, this.overlay, 0);
+        if (sunk.length) {
+          if (!this.ghostMask) this.overlay.addChild((this.ghostMask = new Graphics()));
+          this.waterMask(this.ghostMask, [tile]);
+          for (const m of sunk) m.mask = this.ghostMask;
+        }
+        this.ghostMeshes = [
+          ...sunk,
+          ...this.bridgeMeshes([...quads.body, ...quads.near], this.overlay, 0),
+        ];
+        for (const m of this.ghostMeshes) m.alpha = 0.75;
+      }
+    }
+    for (const m of this.ghostMeshes) m.tint = tint;
   }
   setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);
@@ -963,7 +941,6 @@ export class WorldRenderer {
     if (!s) {
       s = new Sprite(f.texture);
       s.cullable = true;
-      this.track.addChild(s);
       this.trackSprites.set(i, s);
     } else s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
@@ -993,7 +970,7 @@ export class WorldRenderer {
     return changed.length;
   }
   /** World pixels one level rises. */
-  private get levelPx() {
+  get levelPx() {
     return this.landscape.failed ? DEFAULT_RELIEF.step : this.landscape.step;
   }
   /**
@@ -1016,15 +993,20 @@ export class WorldRenderer {
   }
   /** Height of a bridge deck above the ground under it, in world pixels (0 off bridges). */
   deckLift(x: number, y: number) {
-    const bed = this.railBeds.get(idx(this.map, x, y));
-    return bed?.bridge ? -this.railAt(x, y).dz + this.elevationOf(x, y) : 0;
+    const bridge = this.bridgeAt(x, y);
+    return bridge ? deckTop(bridge, x, y) + this.elevationOf(x, y) : 0;
   }
   /** Track rests on the rail profile; a bending or climbing piece is a mesh following it. */
   private placeTrackSprite(s: Sprite, x: number, y: number) {
     const i = idx(this.map, x, y),
       p = tileToWorld(x, y),
-      bed = this.railBeds.get(i);
+      bed = this.railBeds.get(i),
+      // On a bridge the piece lies on the deck, which sorts with the scenery around it.
+      layer = this.bridges.has(i) ? this.objects : this.track,
+      zIndex = depthKey(x, y, BRIDGE_DEPTH.track);
     let mesh = this.trackMeshes.get(i);
+    if (s.parent !== layer) layer.addChild(s);
+    s.zIndex = zIndex;
     if (!bed || bed.flat || this.landscape.failed) {
       mesh?.destroy();
       this.trackMeshes.delete(i);
@@ -1033,10 +1015,11 @@ export class WorldRenderer {
       return;
     }
     const geometry = this.trackGeometry(s, x, y, bed);
+    if (mesh && mesh.parent !== layer) layer.addChild(mesh);
     if (!mesh) {
       mesh = new Mesh({ geometry, texture: s.texture });
       mesh.cullable = true;
-      this.track.addChildAt(mesh, this.track.getChildIndex(s));
+      layer.addChildAt(mesh, layer.getChildIndex(s));
       this.trackMeshes.set(i, mesh);
     } else {
       mesh.geometry.destroy();
@@ -1044,6 +1027,7 @@ export class WorldRenderer {
       mesh.texture = s.texture;
     }
     mesh.tint = s.tint;
+    mesh.zIndex = zIndex;
     mesh.position.set(p.x, p.y);
     s.renderable = false;
   }
@@ -1109,8 +1093,8 @@ export class WorldRenderer {
       this.structures.set(id, s);
     } else s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
-    const p = tileToWorld(x, y);
-    s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
+    const p = this.surfacePoint(x, y);
+    s.position.set(p.x + dx, p.y + dy);
     s.zIndex = depthKey(x, y, layer);
     const building = hasScaleReference(frame);
     if (building) {
@@ -1161,6 +1145,16 @@ export class WorldRenderer {
     // Stations reach up to two tiles from their anchor; nature there clears away.
     this.refreshScatter(x, y, 2);
     return s;
+  }
+  /** Put a structure back on the surface under its anchor (the ground moved, or a deck did). */
+  private seatStructure(id: string) {
+    const a = this.structureAnchors.get(id),
+      s = this.structures.get(id);
+    if (!a || !s) return;
+    const p = this.surfacePoint(a.x, a.y);
+    s.position.set(p.x + a.dx, p.y + a.dy);
+    this.contactPatches.get(id)?.position.copyFrom(s.position);
+    this.windowLights.get(id)?.position.copyFrom(s.position);
   }
   setWindowNight(night: number) {
     for (const [id, light] of this.windowLights) {
@@ -1224,13 +1218,34 @@ export class WorldRenderer {
     );
   }
 
-  /** World pixel position of the top surface of a tile centre (for placing sprites). */
+  /**
+   * World pixel position of the top surface of a tile centre (for placing sprites): the ground,
+   * or the deck of a bridge platform standing on the tile.
+   */
   surfacePoint(x: number, y: number) {
-    const p = tileToWorld(x, y);
-    return { x: p.x, y: p.y + this.elevationOf(x, y) };
+    const p = tileToWorld(x, y),
+      bridge = this.bridgeAt(x, y);
+    return { x: p.x, y: p.y + (bridge ? -deckTop(bridge, x, y) : this.elevationOf(x, y)) };
   }
+  /**
+   * The tile under a world pixel: the first surface the camera ray meets, a bridge deck before
+   * the ground under or behind it.
+   */
   tileAtSurface(x: number, y: number) {
-    return this.landscape.failed ? worldToTileInt(x, y) : this.landscape.tileAtWorld(x, y);
+    let ground: { x: number; y: number; z: number };
+    if (this.landscape.failed) {
+      const t = worldToTileInt(x, y);
+      ground = { ...t, z: 0 };
+    } else ground = this.landscape.hitAtWorld(x, y);
+    if (!this.bridges.size) return { x: ground.x, y: ground.y };
+    // Walk the ray down from the highest deck there can be: at height z it is over the ground
+    // point z pixels further down the screen.
+    for (let z = Math.ceil(MAX_LEVEL * this.levelPx); z > ground.z; z--) {
+      const t = worldToTile(x, y + z),
+        bridge = this.bridgeAt(t.x, t.y);
+      if (bridge && deckTop(bridge, t.x, t.y) >= z) return { x: bridge.x, y: bridge.y };
+    }
+    return { x: ground.x, y: ground.y };
   }
 }
 

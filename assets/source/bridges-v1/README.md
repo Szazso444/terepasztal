@@ -49,6 +49,18 @@ normalization, and in-game rail/deck alignment require the cloud integration and
 game renders described in the brief. No runtime atlas or renderer is changed by
 this delivery.
 
+## How the game uses the kit
+
+The game does not place these pieces. It draws every bridge as geometry in its own projection
+(`src/render/bridgeGeometry.ts`) and takes only the painted materials from the kit: each face it
+needs (deck top, slab edge, parapet, arch wall or truss, pier or post, brace) is one parallelogram
+in a source piece, listed in `materials.json` as three points, and `node tools/bridge-kit.mjs`
+resamples it square-on into the `bridges` atlas group (`public/assets/bridges.png` and `.json`).
+The names and sizes of those swatches are `src/art/bridgeSwatches.json`.
+`node tools/bridge-kit.mjs public/assets review.png` also writes a sheet with every swatch tiled
+three times, which shows seams and broken courses. The `-y` pieces, the deck pieces and the
+piece silhouettes are not used: the same face serves both tile axes, mirrored and shaded.
+
 ## Reproduce the review
 
 From the repository root, run:

@@ -19,6 +19,12 @@ export interface Building {
   acc: number;
   /** Player-paid upgrade, 1..4. Older saves default to 1. */
   level?: number;
+  /**
+   * Bridge platforms: the deck height the player set, as an absolute level (0 is the water and
+   * the lowest ground). Absent, the deck is automatic: it takes the level of the rail laid over
+   * it (the higher bank), as every bridge did before decks could be set.
+   */
+  deck?: number;
   /** running in the last tick */
   active: boolean;
   /** batches completed in the last in-game week (rolling estimate) */

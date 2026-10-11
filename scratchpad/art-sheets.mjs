@@ -20,8 +20,8 @@ const GROUPS = {
         k.startsWith('structures/') &&
         !/span_|bridge_detail|semaphore_m[12]|semaphore_m[03]_d[12]/.test(k),
     ),
-  bridges: (all) =>
-    all.filter((k) => /structures\/(span_[a-z]+_1_3_[0-2]_[0-3]_(deck|rail)|bridge_)/.test(k)),
+  // Bridges are geometry clothed in material swatches; the two pictures are composed from them.
+  bridges: (all) => all.filter((k) => /^bridgemat\/|structures\/bridge_/.test(k)),
   icons: (all) => all.filter((k) => /^(icons|people|fx)\//.test(k)),
 };
 

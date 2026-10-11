@@ -594,7 +594,7 @@
       },
       {
         "id": "works.bridge_wood",
-        "sourceDefinition": "src/data/buildings.json#/bridge_wood + src/art/bridges.ts:addBridgeFrames",
+        "sourceDefinition": "src/data/buildings.json#/bridge_wood + src/render/bridgeGeometry.ts (geometry) + src/art/bridges.ts (material swatches)",
         "variants": "wood spans, straight axes and connected lengths",
         "generatedBase": true,
         "variantsPending": true,
@@ -606,7 +606,7 @@
       },
       {
         "id": "works.bridge_stone",
-        "sourceDefinition": "src/data/buildings.json#/bridge_stone + src/art/bridges.ts:addBridgeFrames",
+        "sourceDefinition": "src/data/buildings.json#/bridge_stone + src/render/bridgeGeometry.ts (geometry) + src/art/bridges.ts (material swatches)",
         "variants": "stone spans, straight axes and connected lengths",
         "generatedBase": true,
         "variantsPending": true,

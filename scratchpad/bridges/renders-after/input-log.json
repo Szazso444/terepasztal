@@ -1,0 +1,1218 @@
+{
+ "records": [
+  {
+   "event": "bridge tool picked, pointer on empty grass",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": null,
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "stone": 1000,
+   "wood": 1000,
+   "expected": {
+    "tool": "bridge_stone",
+    "deck": "null",
+    "status": "/^Cost 35 stone/"
+   }
+  },
+  {
+   "event": "left click: platform placed",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "height": "0",
+    "status": "/^Deck height 0 \\(on the ground, automatic/"
+   }
+  },
+  {
+   "event": "left click 1: raised",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 1,
+    "height": 1
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "1",
+    "height": "1",
+    "hover": "44,44",
+    "status": "/^Deck height 1 \\(1 above the ground\\)/"
+   }
+  },
+  {
+   "event": "left click 2: raised",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 2,
+    "height": 2
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "2",
+    "height": "2",
+    "hover": "44,44",
+    "status": "/^Deck height 2 \\(2 above the ground\\)/"
+   }
+  },
+  {
+   "event": "left click 3: raised",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 3,
+    "height": 3
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (3 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "3",
+    "height": "3",
+    "hover": "44,44",
+    "status": "/^Deck height 3 \\(3 above the ground\\)/"
+   }
+  },
+  {
+   "event": "left click 4: raised to the greatest height",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 4,
+    "height": 4
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 4 (4 above the ground)   right-click: lower",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "4",
+    "height": "4",
+    "status": "/^Deck height 4 .*right-click: lower$/"
+   }
+  },
+  {
+   "event": "left click 5: refused, reason shown",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 4,
+    "height": 4
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cannot raise the deck: it stands at the greatest deck height",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "4",
+    "status": "/^Cannot raise the deck: it stands at the greatest deck height/"
+   }
+  },
+  {
+   "event": "right click: lowered to 3",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 3,
+    "height": 3
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (3 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "3",
+    "height": "3",
+    "hover": "44,44"
+   }
+  },
+  {
+   "event": "right click: lowered to 2",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 2,
+    "height": 2
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "2",
+    "height": "2",
+    "hover": "44,44"
+   }
+  },
+  {
+   "event": "right click: lowered to 1",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 1,
+    "height": 1
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "1",
+    "height": "1",
+    "hover": "44,44"
+   }
+  },
+  {
+   "event": "right click: lowered onto the ground",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "height": "0",
+    "hover": "44,44"
+   }
+  },
+  {
+   "event": "right click at the floor: says so, removes nothing",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cannot lower the deck: it rests on the ground (Delete removes the platform)",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "height": "0",
+    "status": "/^Cannot lower the deck: it rests on the ground/"
+   }
+  },
+  {
+   "event": "right click at the floor again: still nothing removed",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cannot lower the deck: it rests on the ground (Delete removes the platform)",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "height": "0"
+   }
+  },
+  {
+   "event": "pointer left and came back",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "stone": 965,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "status": "/right-click: remove$/"
+   }
+  },
+  {
+   "event": "fresh right click at the floor: platform removed",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": null,
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "stone": 982,
+   "wood": 1000,
+   "expected": {
+    "deck": "null",
+    "tool": "bridge_stone"
+   }
+  },
+  {
+   "event": "placed, raised, lowered, floor click",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cannot lower the deck: it rests on the ground (Delete removes the platform)",
+   "selected": null,
+   "stone": 947,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "status": "/^Cannot lower the deck/"
+   }
+  },
+  {
+   "event": "2.6 s later: the reason has gone, right click removes again",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "stone": 947,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "status": "/right-click: remove$/"
+   }
+  },
+  {
+   "event": "right click after the wait: platform removed",
+   "tile": [
+    44,
+    44
+   ],
+   "platform": null,
+   "track": null,
+   "ground": 0,
+   "hover": [
+    44,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "stone": 964,
+   "wood": 1000,
+   "expected": {
+    "deck": "null"
+   }
+  },
+  {
+   "event": "second platform raised to 3",
+   "tile": [
+    47,
+    41
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 3,
+    "height": 3
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    47,
+    41
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (3 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 929,
+   "wood": 1000,
+   "expected": {
+    "deck": "3",
+    "height": "3"
+   }
+  },
+  {
+   "event": "pointer on the visible deck, three heights up",
+   "tile": [
+    47,
+    41
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 3,
+    "height": 3
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    47,
+    41
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 3 (3 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 929,
+   "wood": 1000,
+   "expected": {
+    "hover": "47,41",
+    "status": "/^Deck height 3/"
+   }
+  },
+  {
+   "event": "left click on the visible deck: that platform rose",
+   "tile": [
+    47,
+    41
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 4,
+    "height": 4
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    47,
+    41
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 4 (4 above the ground)   right-click: lower",
+   "selected": null,
+   "stone": 929,
+   "wood": 1000,
+   "expected": {
+    "deck": "4",
+    "height": "4",
+    "hover": "47,41"
+   }
+  },
+  {
+   "event": "two right clicks on it: lowered twice, still held",
+   "tile": [
+    47,
+    41
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 2,
+    "height": 2
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    47,
+    41
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 929,
+   "wood": 1000,
+   "expected": {
+    "deck": "2",
+    "height": "2",
+    "hover": "47,41"
+   }
+  },
+  {
+   "event": "pointer on the empty tile beside the height-2 platform",
+   "tile": [
+    48,
+    41
+   ],
+   "platform": null,
+   "track": null,
+   "ground": 0,
+   "hover": [
+    48,
+    41
+   ],
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "stone": 929,
+   "wood": 1000,
+   "expected": {
+    "deck": "null",
+    "status": "/^Cost 35 stone/"
+   }
+  },
+  {
+   "event": "pointer over the far corner of the span (the tile behind is under it)",
+   "tile": [
+    47,
+    41
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 2,
+    "height": 2
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    47,
+    41
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the ground)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 929,
+   "wood": 1000,
+   "expected": {
+    "hover": "47,41",
+    "deck": "2"
+   }
+  },
+  {
+   "event": "pointer on the grass two tiles behind the lowered span",
+   "tile": [
+    45,
+    39
+   ],
+   "platform": null,
+   "track": null,
+   "ground": 0,
+   "hover": [
+    45,
+    39
+   ],
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "stone": 929,
+   "wood": 1000,
+   "expected": {
+    "hover": "45,39",
+    "deck": "null"
+   }
+  },
+  {
+   "event": "three platforms with rail, pointer on the middle one",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "height": "0",
+    "track": "straight",
+    "status": "/automatic: it follows the rail laid over it/"
+   }
+  },
+  {
+   "event": "left click: the middle span rose",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 1,
+    "height": 1
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   right-click: lower",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "1",
+    "height": "1"
+   }
+  },
+  {
+   "event": "  ... the span beside it stayed (now set at its height)",
+   "tile": [
+    42,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   right-click: lower",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "0",
+    "height": "0"
+   }
+  },
+  {
+   "event": "left click again: too steep, refused with the reason",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 1,
+    "height": 1
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_stone",
+   "status": "Cannot raise the deck: the rail beside it would be too steep: one deck height per tile at most",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "1",
+    "status": "/^Cannot raise the deck: the rail beside it would be too steep/"
+   }
+  },
+  {
+   "event": "2.6 s later: the readout is back",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 1,
+    "height": 1
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the ground)   right-click: lower",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "1",
+    "status": "/^Deck height 1 \\(1 above the ground\\)/"
+   }
+  },
+  {
+   "event": "right click: lowered back",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (on the ground)   click: raise",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "0",
+    "height": "0",
+    "track": "straight"
+   }
+  },
+  {
+   "event": "right click at the floor: rail and platform stay",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_stone",
+   "status": "Cannot lower the deck: it rests on the ground (Delete removes the platform)",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "0",
+    "track": "straight",
+    "status": "/^Cannot lower the deck/"
+   }
+  },
+  {
+   "event": "pointer on a water tile of the pond",
+   "tile": [
+    52,
+    44
+   ],
+   "platform": null,
+   "track": null,
+   "ground": 0,
+   "hover": [
+    52,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cost 35 stone",
+   "selected": null,
+   "stone": 824,
+   "wood": 1000,
+   "expected": {
+    "deck": "null",
+    "status": "/^Cost 35 stone/"
+   }
+  },
+  {
+   "event": "platform placed on the pond",
+   "tile": [
+    52,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    52,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (at the waterline, automatic: it follows the rail laid over it)   click: raise   right-click: remove",
+   "selected": null,
+   "stone": 789,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "height": "0",
+    "status": "/^Deck height 0 \\(at the waterline, automatic/"
+   }
+  },
+  {
+   "event": "two clicks: two heights above the water",
+   "tile": [
+    52,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 2,
+    "height": 2
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    52,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 2 (2 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 789,
+   "wood": 1000,
+   "expected": {
+    "deck": "2",
+    "height": "2",
+    "status": "/^Deck height 2 \\(2 above the water\\)/"
+   }
+  },
+  {
+   "event": "two right clicks: back at the waterline",
+   "tile": [
+    52,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    52,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 0 (at the waterline, automatic: it follows the rail laid over it)   click: raise",
+   "selected": null,
+   "stone": 789,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "height": "0"
+   }
+  },
+  {
+   "event": "right click at the waterline: says so",
+   "tile": [
+    52,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": "automatic",
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    52,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Cannot lower the deck: it lies at the waterline (Delete removes the platform)",
+   "selected": null,
+   "stone": 789,
+   "wood": 1000,
+   "expected": {
+    "deck": "automatic",
+    "status": "/^Cannot lower the deck: it lies at the waterline/"
+   }
+  },
+  {
+   "event": "raised again",
+   "tile": [
+    52,
+    44
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 1,
+    "height": 1
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    52,
+    44
+   ],
+   "tool": "bridge_stone",
+   "status": "Deck height 1 (1 above the water)   click: raise   right-click: lower",
+   "selected": null,
+   "stone": 789,
+   "wood": 1000,
+   "expected": {
+    "deck": "1"
+   }
+  },
+  {
+   "event": "wooden bridge tool on a stone platform: it raises too",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 1,
+    "height": 1
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "bridge_wood",
+   "status": "Deck height 1 (1 above the ground)   right-click: lower",
+   "selected": null,
+   "stone": 789,
+   "wood": 1000,
+   "expected": {
+    "deck": "1",
+    "tool": "bridge_wood"
+   }
+  },
+  {
+   "event": "straight track tool over the platform",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "track",
+   "status": "Replace straight: net 2 wood, 2 stone, 1 iron   R: rotate   drag to lay a line",
+   "selected": null,
+   "stone": 789,
+   "wood": 1000,
+   "expected": {
+    "tool": "track",
+    "deck": "0"
+   }
+  },
+  {
+   "event": "track tool, right click on a railed platform: the rail goes",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "track",
+   "status": "Cost 2 wood, 2 stone, 1 iron   R: rotate   drag to lay a line",
+   "selected": null,
+   "stone": 790,
+   "wood": 1001,
+   "expected": {
+    "track": "null",
+    "deck": "0"
+   }
+  },
+  {
+   "event": "track tool, right click again: the platform goes",
+   "tile": [
+    43,
+    48
+   ],
+   "platform": null,
+   "track": null,
+   "ground": 0,
+   "hover": [
+    43,
+    48
+   ],
+   "tool": "track",
+   "status": "Cost 2 wood, 2 stone, 1 iron   R: rotate   drag to lay a line",
+   "selected": null,
+   "stone": 807,
+   "wood": 1001,
+   "expected": {
+    "deck": "null"
+   }
+  },
+  {
+   "event": "no tool: hover a platform",
+   "tile": [
+    42,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    42,
+    48
+   ],
+   "tool": "none",
+   "status": "",
+   "selected": null,
+   "stone": 807,
+   "wood": 1001,
+   "expected": {
+    "tool": "none",
+    "deck": "0"
+   }
+  },
+  {
+   "event": "no tool, left click: the platform is selected (panel opens)",
+   "tile": [
+    42,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": "straight",
+   "ground": 0,
+   "hover": [
+    42,
+    48
+   ],
+   "tool": "none",
+   "status": "",
+   "selected": [
+    42,
+    48
+   ],
+   "stone": 807,
+   "wood": 1001,
+   "expected": {
+    "selected": "42,48",
+    "deck": "0"
+   }
+  },
+  {
+   "event": "no tool, right click on a railed platform: the rail goes",
+   "tile": [
+    42,
+    48
+   ],
+   "platform": {
+    "id": "bridge_stone",
+    "deck": 0,
+    "height": 0
+   },
+   "track": null,
+   "ground": 0,
+   "hover": [
+    42,
+    48
+   ],
+   "tool": "none",
+   "status": "",
+   "selected": [
+    42,
+    48
+   ],
+   "stone": 808,
+   "wood": 1002,
+   "expected": {
+    "track": "null",
+    "deck": "0"
+   }
+  }
+ ],
+ "failures": [],
+ "errors": []
+}

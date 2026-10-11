@@ -14,6 +14,8 @@ import {
 import type { Stockpile } from '../sim/stockpile';
 import { fmtCost } from '../sim/stockpile';
 import { cargoName } from '../sim/cargo';
+import { levelAt } from '../world/elevation';
+import { Terrain, terrainAt } from '../world/tiles';
 
 /** Side panel for a selected processing building: recipe, state and lifetime output. */
 export class BuildingPanel {
@@ -75,7 +77,7 @@ export class BuildingPanel {
       return;
     }
     const def = buildingDef(b.id);
-    this.title.textContent = `${def.name} · Level ${buildingLevel(b)}`;
+    this.title.textContent = STR.building.titleLevel(def.name, buildingLevel(b));
     const body = this.body;
     body.innerHTML = '';
     const row = (k: string, v: string, cls = '') =>
@@ -87,13 +89,28 @@ export class BuildingPanel {
       );
     const st = BuildingPanel.status(b, this.stock);
     body.append(el('div', { class: 'flavor', text: def.flavor }));
-    if (def.bridge)
+    if (def.bridge) {
+      const capacity = bridgeCapacity(b)!,
+        height = this.builder.deckLevel(b),
+        map = this.builder.map;
       body.append(
         row(
-          'Bridge capacity',
-          `${bridgeCapacity(b)} t · half speed above ${Math.round(bridgeCapacity(b)! * 0.8)} t`,
+          STR.building.bridgeCapacity,
+          STR.building.bridgeLimit(capacity, Math.round(capacity * 0.8)),
+        ),
+        row(
+          STR.building.deckHeightLabel,
+          STR.building.deckHeightValue(
+            height,
+            STR.build.deckAbove(
+              height - levelAt(map, b.x, b.y),
+              terrainAt(map, b.x, b.y) === Terrain.Water,
+            ),
+            b.deck === undefined,
+          ),
         ),
       );
+    }
     if (!def.bridge) {
       body.append(row(STR.building.recipe, BuildingPanel.recipeText(b.id, b)));
       body.append(row(STR.building.rate, STR.station.perWeek(Math.round(b.rate * 10) / 10)));
@@ -108,17 +125,12 @@ export class BuildingPanel {
       for (const k of Object.keys(def.recipe.out))
         body.append(row(STR.building.inStock(cargoName(k)), String(Math.floor(this.stock.get(k)))));
     } else {
-      body.append(
-        el('p', {
-          class: 'dim',
-          text: 'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
-        }),
-      );
+      body.append(el('p', { class: 'dim', text: STR.building.bridgeHelp }));
     }
     const cost = buildingUpgradeCost(b);
     if (cost) {
       const upgrade = btn(
-        `Upgrade · ${fmtCost(cost)}`,
+        STR.building.upgrade(fmtCost(cost)),
         () => {
           this.builder.upgradeBuilding(b);
           this.render();

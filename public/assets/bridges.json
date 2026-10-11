@@ -2,149 +2,253 @@
   "resolution": 4,
   "partial": true,
   "frames": {
-    "bridgekit/stone-deck-x": {
-      "x": 857,
+    "bridgemat/stone-top": {
+      "x": 220,
       "y": 4,
-      "w": 257,
-      "h": 189,
-      "ax": 128.12800000000001,
-      "ay": 105.63200000000002
+      "w": 128,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/stone-deck-y": {
-      "x": 593,
+    "bridgemat/stone-edge-l": {
+      "x": 4,
+      "y": 276,
+      "w": 128,
+      "h": 20,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-edge-r": {
+      "x": 140,
+      "y": 276,
+      "w": 128,
+      "h": 20,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-parapet-l": {
+      "x": 548,
+      "y": 228,
+      "w": 128,
+      "h": 24,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-parapet-r": {
+      "x": 684,
+      "y": 228,
+      "w": 128,
+      "h": 24,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-parapet-top": {
+      "x": 412,
+      "y": 276,
+      "w": 128,
+      "h": 16,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-hung-l": {
+      "x": 124,
+      "y": 140,
+      "w": 128,
+      "h": 60,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-hung-r": {
+      "x": 396,
+      "y": 140,
+      "w": 128,
+      "h": 60,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-hung-l-shade": {
+      "x": 260,
+      "y": 140,
+      "w": 128,
+      "h": 60,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-hung-r-shade": {
+      "x": 532,
+      "y": 140,
+      "w": 128,
+      "h": 60,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/stone-leg-l": {
+      "x": 380,
       "y": 4,
-      "w": 256,
-      "h": 191,
-      "ax": 127.89297658862876,
-      "ay": 106.74247491638796
+      "w": 40,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/stone-pad": {
-      "x": 1386,
+    "bridgemat/stone-leg-r": {
+      "x": 100,
       "y": 4,
-      "w": 256,
-      "h": 160,
-      "ax": 127.8608695652174,
-      "ay": 71.89565217391305
+      "w": 40,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/stone-rail-x": {
-      "x": 2860,
-      "y": 4,
-      "w": 144,
-      "h": 105,
-      "ax": 126.2569156159069,
-      "ay": 40.70424830261883
-    },
-    "bridgekit/stone-rail-y": {
-      "x": 2708,
-      "y": 4,
-      "w": 144,
-      "h": 105,
-      "ax": 16.783967280163598,
-      "ay": 40.368425357873214
-    },
-    "bridgekit/stone-arch-x": {
-      "x": 1819,
-      "y": 4,
-      "w": 146,
-      "h": 147,
-      "ax": 129.29943925233647,
-      "ay": 82.94280373831776
-    },
-    "bridgekit/stone-arch-y": {
-      "x": 2116,
-      "y": 4,
-      "w": 146,
-      "h": 130,
-      "ax": 16.374112734864305,
-      "ay": 66.23131524008353
-    },
-    "bridgekit/stone-pier": {
-      "x": 269,
-      "y": 4,
-      "w": 51,
-      "h": 205,
-      "ax": 25.506227106227108,
-      "ay": 12.8
-    },
-    "bridgekit/wood-deck-x": {
-      "x": 328,
-      "y": 4,
-      "w": 257,
-      "h": 201,
-      "ax": 128.1268582755203,
-      "ay": 116.8404360753221
-    },
-    "bridgekit/wood-deck-y": {
+    "bridgemat/stone-leg-l-shade": {
       "x": 4,
       "y": 4,
-      "w": 257,
-      "h": 206,
-      "ax": 128.12825651302603,
-      "ay": 121.86773547094188
+      "w": 40,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-pad": {
-      "x": 1122,
+    "bridgemat/stone-leg-r-shade": {
+      "x": 52,
       "y": 4,
-      "w": 256,
-      "h": 173,
-      "ax": 127.8483412322275,
-      "ay": 87.41232227488152
+      "w": 40,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-rail-x": {
-      "x": 2416,
+    "bridgemat/wood-top": {
+      "x": 428,
       "y": 4,
-      "w": 138,
-      "h": 118,
-      "ax": 125.27493552168816,
-      "ay": 53.982086752637755
+      "w": 128,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-rail-y": {
-      "x": 2270,
-      "y": 4,
-      "w": 138,
-      "h": 119,
-      "ax": 12.067507274490787,
-      "ay": 54.797904946653745
+    "bridgemat/wood-edge-l": {
+      "x": 820,
+      "y": 228,
+      "w": 128,
+      "h": 20,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-truss-x": {
-      "x": 2562,
-      "y": 4,
-      "w": 138,
-      "h": 107,
-      "ax": 131.3528186714542,
-      "ay": 43.09256732495511
+    "bridgemat/wood-edge-r": {
+      "x": 276,
+      "y": 276,
+      "w": 128,
+      "h": 20,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-truss-y": {
-      "x": 3012,
-      "y": 4,
-      "w": 138,
-      "h": 103,
-      "ax": 13.026677497969132,
-      "ay": 39.090430544272955
+    "bridgemat/wood-parapet-l": {
+      "x": 804,
+      "y": 140,
+      "w": 128,
+      "h": 44,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-brace-x": {
-      "x": 1676,
-      "y": 4,
-      "w": 135,
-      "h": 149,
-      "ax": 121.73781965006731,
-      "ay": 84.69017496635263
+    "bridgemat/wood-parapet-r": {
+      "x": 668,
+      "y": 140,
+      "w": 128,
+      "h": 44,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-brace-y": {
-      "x": 1973,
-      "y": 4,
-      "w": 135,
-      "h": 144,
-      "ax": 9.347859922178989,
-      "ay": 79.94396887159533
+    "bridgemat/wood-hung-l": {
+      "x": 412,
+      "y": 228,
+      "w": 128,
+      "h": 40,
+      "ax": 0,
+      "ay": 0
     },
-    "bridgekit/wood-post": {
-      "x": 1650,
+    "bridgemat/wood-hung-r": {
+      "x": 4,
+      "y": 228,
+      "w": 128,
+      "h": 40,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-hung-l-shade": {
+      "x": 140,
+      "y": 228,
+      "w": 128,
+      "h": 40,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-hung-r-shade": {
+      "x": 276,
+      "y": 228,
+      "w": 128,
+      "h": 40,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-leg-l": {
+      "x": 172,
       "y": 4,
-      "w": 18,
-      "h": 153,
-      "ax": 9.028396946564886,
-      "ay": 4.616793893129771
+      "w": 16,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-leg-r": {
+      "x": 148,
+      "y": 4,
+      "w": 16,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-leg-l-shade": {
+      "x": 196,
+      "y": 4,
+      "w": 16,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-leg-r-shade": {
+      "x": 356,
+      "y": 4,
+      "w": 16,
+      "h": 128,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-brace-l": {
+      "x": 4,
+      "y": 140,
+      "w": 112,
+      "h": 80,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-brace-r": {
+      "x": 804,
+      "y": 4,
+      "w": 112,
+      "h": 80,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-brace-l-shade": {
+      "x": 564,
+      "y": 4,
+      "w": 112,
+      "h": 80,
+      "ax": 0,
+      "ay": 0
+    },
+    "bridgemat/wood-brace-r-shade": {
+      "x": 684,
+      "y": 4,
+      "w": 112,
+      "h": 80,
+      "ax": 0,
+      "ay": 0
     }
   }
 }

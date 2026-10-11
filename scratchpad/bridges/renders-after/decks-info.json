@@ -1,0 +1,8406 @@
+{
+ "kit-x": {
+  "kit": true,
+  "origin": "png+procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "RAMP-stone",
+    "cx": 17,
+    "cy": 12,
+    "n": 15,
+    "facts": [
+     {
+      "x": 13,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 16,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 17,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 18,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 19,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 20,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RAMPB-stone",
+    "cx": 36,
+    "cy": 12,
+    "n": 15,
+    "facts": [
+     {
+      "x": 32,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 34,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 35,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 36,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 37,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 38,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 39,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 40,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R1-stone",
+    "cx": 14,
+    "cy": 30,
+    "n": 9,
+    "facts": [
+     {
+      "x": 13,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 14,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 15,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "R2-stone",
+    "cx": 28,
+    "cy": 30,
+    "n": 11,
+    "facts": [
+     {
+      "x": 26,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 28,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R3-stone",
+    "cx": 44,
+    "cy": 30,
+    "n": 13,
+    "facts": [
+     {
+      "x": 41,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 42,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 43,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 44,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 45,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 46,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "HUMP-stone",
+    "cx": 58,
+    "cy": 30,
+    "n": 7,
+    "facts": [
+     {
+      "x": 58,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "LAKE2-stone",
+    "cx": 15.5,
+    "cy": 48,
+    "n": 12,
+    "facts": [
+     {
+      "x": 13,
+      "y": 48,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 17,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 18,
+      "y": 48,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WUP-stone",
+    "cx": 30,
+    "cy": 48,
+    "n": 9,
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK-stone",
+    "cx": 42,
+    "cy": 48,
+    "n": 7,
+    "facts": [
+     {
+      "x": 42,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK1-stone",
+    "cx": 53,
+    "cy": 48,
+    "n": 7,
+    "facts": [
+     {
+      "x": 53,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER-stone",
+    "cx": 68,
+    "cy": 48,
+    "n": 15,
+    "facts": [
+     {
+      "x": 67,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 69,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER2-stone",
+    "cx": 87,
+    "cy": 48,
+    "n": 15,
+    "facts": [
+     {
+      "x": 86,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     },
+     {
+      "x": 87,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 88,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     }
+    ]
+   },
+   {
+    "id": "RAMP-wood",
+    "cx": 17,
+    "cy": 21,
+    "n": 15,
+    "facts": [
+     {
+      "x": 13,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 16,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 17,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 18,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 19,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 20,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RAMPB-wood",
+    "cx": 36,
+    "cy": 21,
+    "n": 15,
+    "facts": [
+     {
+      "x": 32,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 34,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 35,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 36,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 37,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 38,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 39,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 40,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R1-wood",
+    "cx": 14,
+    "cy": 39,
+    "n": 9,
+    "facts": [
+     {
+      "x": 13,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 14,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 15,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "R2-wood",
+    "cx": 28,
+    "cy": 39,
+    "n": 11,
+    "facts": [
+     {
+      "x": 26,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 28,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R3-wood",
+    "cx": 44,
+    "cy": 39,
+    "n": 13,
+    "facts": [
+     {
+      "x": 41,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 42,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 43,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 44,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 45,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 46,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "HUMP-wood",
+    "cx": 58,
+    "cy": 39,
+    "n": 7,
+    "facts": [
+     {
+      "x": 58,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "LAKE2-wood",
+    "cx": 15.5,
+    "cy": 57,
+    "n": 12,
+    "facts": [
+     {
+      "x": 13,
+      "y": 57,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 17,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 18,
+      "y": 57,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WUP-wood",
+    "cx": 30,
+    "cy": 57,
+    "n": 9,
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK-wood",
+    "cx": 42,
+    "cy": 57,
+    "n": 7,
+    "facts": [
+     {
+      "x": 42,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK1-wood",
+    "cx": 53,
+    "cy": 57,
+    "n": 7,
+    "facts": [
+     {
+      "x": 53,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER-wood",
+    "cx": 68,
+    "cy": 57,
+    "n": 15,
+    "facts": [
+     {
+      "x": 67,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 69,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER2-wood",
+    "cx": 87,
+    "cy": 57,
+    "n": 15,
+    "facts": [
+     {
+      "x": 86,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     },
+     {
+      "x": 87,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 88,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     }
+    ]
+   },
+   {
+    "id": "PAR-EQ",
+    "cx": 15,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 13,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 17,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 13,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 17,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "PAR-HIGH-BEHIND",
+    "cx": 30,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 28,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 29,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 32,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 29,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 31,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 32,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "PAR-HIGH-FRONT",
+    "cx": 45,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 43,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 44,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 47,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 43,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 44,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 45,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 46,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 47,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "PAR-EQ-wood",
+    "cx": 60,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 58,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 59,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 60,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 61,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 62,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 58,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 59,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 60,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 61,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 62,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "STEPS-stone",
+    "cx": 14,
+    "cy": 75,
+    "n": 9,
+    "facts": [
+     {
+      "x": 12,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 13,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 16,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": null,
+      "lift": 39.19
+     },
+     {
+      "x": 12,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 13,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "BLOCK-stone",
+    "cx": 26,
+    "cy": 75,
+    "n": 7,
+    "facts": [
+     {
+      "x": 25,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 26,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 25,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 26,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 27,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 25,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 26,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "STEPS-wood",
+    "cx": 38,
+    "cy": 75,
+    "n": 9,
+    "facts": [
+     {
+      "x": 36,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 37,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 38,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 40,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": null,
+      "lift": 39.19
+     },
+     {
+      "x": 36,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 37,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 38,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 40,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "BLOCK-wood",
+    "cx": 50,
+    "cy": 75,
+    "n": 7,
+    "facts": [
+     {
+      "x": 49,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 50,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 51,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 50,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 51,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 50,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 51,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WBARE",
+    "cx": 61.5,
+    "cy": 75,
+    "n": 8,
+    "facts": [
+     {
+      "x": 60,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 61,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 60,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 61,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "VIA3-stone",
+    "cx": 17,
+    "cy": 84,
+    "n": 15,
+    "facts": [
+     {
+      "x": 13,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 16,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 17,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 18,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 19,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 20,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "G0-stone",
+    "cx": 14,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 13,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 14,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 15,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "G1-stone",
+    "cx": 27,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 26,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 27,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "SIG-stone",
+    "cx": 15,
+    "cy": 102,
+    "n": 11,
+    "facts": [
+     {
+      "x": 13,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 17,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "VIA3-wood",
+    "cx": 39,
+    "cy": 84,
+    "n": 15,
+    "facts": [
+     {
+      "x": 35,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 36,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 37,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 38,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 39,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 40,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 41,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 42,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 43,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "G0-wood",
+    "cx": 54,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 53,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 54,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 55,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "G1-wood",
+    "cx": 67,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 66,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 67,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "SIG-wood",
+    "cx": 31,
+    "cy": 102,
+    "n": 11,
+    "facts": [
+     {
+      "x": 29,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 31,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 32,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 33,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CURVE2-stone",
+    "cx": 17.5,
+    "cy": 112.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CURVE2-wood",
+    "cx": 33.5,
+    "cy": 112.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWITCH2-stone",
+    "cx": 49.5,
+    "cy": 112.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "clicks-WUP-stone": [
+   {
+    "step": "0-as-built",
+    "res": [],
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "step": "1-all-raised",
+    "res": [
+     {
+      "ok": true,
+      "deck": 1
+     },
+     {
+      "ok": true,
+      "deck": 1
+     },
+     {
+      "ok": true,
+      "deck": 1
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "step": "2-middle-raised-again",
+    "res": [
+     {
+      "ok": true,
+      "deck": 2
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1.333,
+      "lift": 13.06
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1.333,
+      "lift": 13.06
+     }
+    ]
+   },
+   {
+    "step": "3-middle-lowered",
+    "res": [
+     {
+      "ok": true,
+      "deck": 1
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "step": "4-all-lowered",
+    "res": [
+     {
+      "ok": true,
+      "deck": 0
+     },
+     {
+      "ok": true,
+      "deck": 0
+     },
+     {
+      "ok": true,
+      "deck": 0
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 0,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 0,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 0,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   }
+  ],
+  "clicks-WUP-wood": [
+   {
+    "step": "0-as-built",
+    "res": [],
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "step": "1-all-raised",
+    "res": [
+     {
+      "ok": true,
+      "deck": 1
+     },
+     {
+      "ok": true,
+      "deck": 1
+     },
+     {
+      "ok": true,
+      "deck": 1
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "step": "2-middle-raised-again",
+    "res": [
+     {
+      "ok": true,
+      "deck": 2
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1.333,
+      "lift": 13.06
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1.333,
+      "lift": 13.06
+     }
+    ]
+   },
+   {
+    "step": "3-middle-lowered",
+    "res": [
+     {
+      "ok": true,
+      "deck": 1
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "step": "4-all-lowered",
+    "res": [
+     {
+      "ok": true,
+      "deck": 0
+     },
+     {
+      "ok": true,
+      "deck": 0
+     },
+     {
+      "ok": true,
+      "deck": 0
+     }
+    ],
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 0,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 0,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 0,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   }
+  ],
+  "hover": {
+   "railDz": -29.39,
+   "onTheTrain": 99108,
+   "onTheGroundUnderIt": null,
+   "id": 99108
+  },
+  "errors": []
+ },
+ "kit-y": {
+  "kit": true,
+  "origin": "png+procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "RAMP-stone",
+    "cx": 12,
+    "cy": 17,
+    "n": 15,
+    "facts": [
+     {
+      "x": 12,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 12,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 12,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 12,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 12,
+      "y": 17,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 12,
+      "y": 18,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 12,
+      "y": 19,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 12,
+      "y": 20,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 12,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RAMPB-stone",
+    "cx": 12,
+    "cy": 36,
+    "n": 15,
+    "facts": [
+     {
+      "x": 12,
+      "y": 32,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 12,
+      "y": 33,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 12,
+      "y": 34,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 12,
+      "y": 35,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 12,
+      "y": 36,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 12,
+      "y": 37,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 12,
+      "y": 38,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 12,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 12,
+      "y": 40,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R1-stone",
+    "cx": 30,
+    "cy": 14,
+    "n": 9,
+    "facts": [
+     {
+      "x": 30,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 30,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "R2-stone",
+    "cx": 30,
+    "cy": 28,
+    "n": 11,
+    "facts": [
+     {
+      "x": 30,
+      "y": 26,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 27,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 28,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 29,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R3-stone",
+    "cx": 30,
+    "cy": 44,
+    "n": 13,
+    "facts": [
+     {
+      "x": 30,
+      "y": 41,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 42,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 43,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 30,
+      "y": 44,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 30,
+      "y": 45,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 30,
+      "y": 46,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 30,
+      "y": 47,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "HUMP-stone",
+    "cx": 30,
+    "cy": 58,
+    "n": 7,
+    "facts": [
+     {
+      "x": 30,
+      "y": 58,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "LAKE2-stone",
+    "cx": 48,
+    "cy": 15.5,
+    "n": 12,
+    "facts": [
+     {
+      "x": 48,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 14,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 48,
+      "y": 15,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 48,
+      "y": 16,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 48,
+      "y": 17,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 48,
+      "y": 18,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WUP-stone",
+    "cx": 48,
+    "cy": 30,
+    "n": 9,
+    "facts": [
+     {
+      "x": 48,
+      "y": 29,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 48,
+      "y": 30,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 48,
+      "y": 31,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK-stone",
+    "cx": 48,
+    "cy": 42,
+    "n": 7,
+    "facts": [
+     {
+      "x": 48,
+      "y": 42,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK1-stone",
+    "cx": 48,
+    "cy": 53,
+    "n": 7,
+    "facts": [
+     {
+      "x": 48,
+      "y": 53,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER-stone",
+    "cx": 48,
+    "cy": 68,
+    "n": 15,
+    "facts": [
+     {
+      "x": 48,
+      "y": 67,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 68,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 48,
+      "y": 69,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER2-stone",
+    "cx": 48,
+    "cy": 87,
+    "n": 15,
+    "facts": [
+     {
+      "x": 48,
+      "y": 86,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     },
+     {
+      "x": 48,
+      "y": 87,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 48,
+      "y": 88,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     }
+    ]
+   },
+   {
+    "id": "RAMP-wood",
+    "cx": 21,
+    "cy": 17,
+    "n": 15,
+    "facts": [
+     {
+      "x": 21,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 21,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 21,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 21,
+      "y": 17,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 21,
+      "y": 18,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 21,
+      "y": 19,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 21,
+      "y": 20,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RAMPB-wood",
+    "cx": 21,
+    "cy": 36,
+    "n": 15,
+    "facts": [
+     {
+      "x": 21,
+      "y": 32,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 21,
+      "y": 33,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 34,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 21,
+      "y": 35,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 21,
+      "y": 36,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 21,
+      "y": 37,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 21,
+      "y": 38,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 21,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 40,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R1-wood",
+    "cx": 39,
+    "cy": 14,
+    "n": 9,
+    "facts": [
+     {
+      "x": 39,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 39,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "R2-wood",
+    "cx": 39,
+    "cy": 28,
+    "n": 11,
+    "facts": [
+     {
+      "x": 39,
+      "y": 26,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 27,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 39,
+      "y": 28,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 29,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 39,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R3-wood",
+    "cx": 39,
+    "cy": 44,
+    "n": 13,
+    "facts": [
+     {
+      "x": 39,
+      "y": 41,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 39,
+      "y": 42,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 43,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 39,
+      "y": 44,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 39,
+      "y": 45,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 39,
+      "y": 46,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 47,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "HUMP-wood",
+    "cx": 39,
+    "cy": 58,
+    "n": 7,
+    "facts": [
+     {
+      "x": 39,
+      "y": 58,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "LAKE2-wood",
+    "cx": 57,
+    "cy": 15.5,
+    "n": 12,
+    "facts": [
+     {
+      "x": 57,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 14,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 57,
+      "y": 15,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 57,
+      "y": 16,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 57,
+      "y": 17,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 57,
+      "y": 18,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WUP-wood",
+    "cx": 57,
+    "cy": 30,
+    "n": 9,
+    "facts": [
+     {
+      "x": 57,
+      "y": 29,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 57,
+      "y": 30,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 57,
+      "y": 31,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK-wood",
+    "cx": 57,
+    "cy": 42,
+    "n": 7,
+    "facts": [
+     {
+      "x": 57,
+      "y": 42,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK1-wood",
+    "cx": 57,
+    "cy": 53,
+    "n": 7,
+    "facts": [
+     {
+      "x": 57,
+      "y": 53,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER-wood",
+    "cx": 57,
+    "cy": 68,
+    "n": 15,
+    "facts": [
+     {
+      "x": 57,
+      "y": 67,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 68,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 57,
+      "y": 69,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER2-wood",
+    "cx": 57,
+    "cy": 87,
+    "n": 15,
+    "facts": [
+     {
+      "x": 57,
+      "y": 86,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     },
+     {
+      "x": 57,
+      "y": 87,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 57,
+      "y": 88,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     }
+    ]
+   },
+   {
+    "id": "PAR-EQ",
+    "cx": 66,
+    "cy": 15,
+    "n": 11,
+    "facts": [
+     {
+      "x": 66,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 66,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 66,
+      "y": 17,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 67,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 67,
+      "y": 17,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "PAR-HIGH-BEHIND",
+    "cx": 66,
+    "cy": 30,
+    "n": 11,
+    "facts": [
+     {
+      "x": 66,
+      "y": 28,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 29,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 66,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 31,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 66,
+      "y": 32,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 28,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 67,
+      "y": 29,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 31,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 32,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "PAR-HIGH-FRONT",
+    "cx": 66,
+    "cy": 45,
+    "n": 11,
+    "facts": [
+     {
+      "x": 66,
+      "y": 43,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 66,
+      "y": 44,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 45,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 46,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 47,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 67,
+      "y": 43,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 44,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 67,
+      "y": 45,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 46,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 67,
+      "y": 47,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "PAR-EQ-wood",
+    "cx": 66,
+    "cy": 60,
+    "n": 11,
+    "facts": [
+     {
+      "x": 66,
+      "y": 58,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 66,
+      "y": 59,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 66,
+      "y": 60,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 66,
+      "y": 61,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 66,
+      "y": 62,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 58,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 67,
+      "y": 59,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 67,
+      "y": 60,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 67,
+      "y": 61,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 67,
+      "y": 62,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "STEPS-stone",
+    "cx": 75,
+    "cy": 14,
+    "n": 9,
+    "facts": [
+     {
+      "x": 75,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 75,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 75,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 75,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 75,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": null,
+      "lift": 39.19
+     },
+     {
+      "x": 76,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 76,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 76,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "BLOCK-stone",
+    "cx": 75,
+    "cy": 26,
+    "n": 7,
+    "facts": [
+     {
+      "x": 74,
+      "y": 25,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 74,
+      "y": 26,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 74,
+      "y": 27,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 75,
+      "y": 25,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 75,
+      "y": 26,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 75,
+      "y": 27,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 25,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 26,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 27,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "STEPS-wood",
+    "cx": 75,
+    "cy": 38,
+    "n": 9,
+    "facts": [
+     {
+      "x": 75,
+      "y": 36,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 75,
+      "y": 37,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 75,
+      "y": 38,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 75,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 75,
+      "y": 40,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": null,
+      "lift": 39.19
+     },
+     {
+      "x": 76,
+      "y": 36,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 37,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 38,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 76,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 76,
+      "y": 40,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "BLOCK-wood",
+    "cx": 75,
+    "cy": 50,
+    "n": 7,
+    "facts": [
+     {
+      "x": 74,
+      "y": 49,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 74,
+      "y": 50,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 74,
+      "y": 51,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 75,
+      "y": 49,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 75,
+      "y": 50,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 75,
+      "y": 51,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 49,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 50,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 51,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WBARE",
+    "cx": 75,
+    "cy": 61.5,
+    "n": 8,
+    "facts": [
+     {
+      "x": 75,
+      "y": 60,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 75,
+      "y": 61,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 75,
+      "y": 62,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 75,
+      "y": 63,
+      "ground": 0,
+      "water": true,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 76,
+      "y": 60,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 76,
+      "y": 61,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 76,
+      "y": 62,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 76,
+      "y": 63,
+      "ground": 0,
+      "water": true,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "VIA3-stone",
+    "cx": 84,
+    "cy": 17,
+    "n": 15,
+    "facts": [
+     {
+      "x": 84,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 84,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 84,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 84,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 84,
+      "y": 17,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 84,
+      "y": 18,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 84,
+      "y": 19,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 84,
+      "y": 20,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 84,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "G0-stone",
+    "cx": 93,
+    "cy": 14,
+    "n": 9,
+    "facts": [
+     {
+      "x": 93,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 93,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 93,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "G1-stone",
+    "cx": 93,
+    "cy": 27,
+    "n": 9,
+    "facts": [
+     {
+      "x": 93,
+      "y": 26,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 93,
+      "y": 27,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 93,
+      "y": 28,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "SIG-stone",
+    "cx": 102,
+    "cy": 15,
+    "n": 11,
+    "facts": [
+     {
+      "x": 102,
+      "y": 13,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 102,
+      "y": 14,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 102,
+      "y": 15,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 102,
+      "y": 16,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 102,
+      "y": 17,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "VIA3-wood",
+    "cx": 84,
+    "cy": 39,
+    "n": 15,
+    "facts": [
+     {
+      "x": 84,
+      "y": 35,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 84,
+      "y": 36,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 84,
+      "y": 37,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 84,
+      "y": 38,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 84,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 84,
+      "y": 40,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 84,
+      "y": 41,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 84,
+      "y": 42,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 84,
+      "y": 43,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "G0-wood",
+    "cx": 93,
+    "cy": 54,
+    "n": 9,
+    "facts": [
+     {
+      "x": 93,
+      "y": 53,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 93,
+      "y": 54,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 93,
+      "y": 55,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "G1-wood",
+    "cx": 93,
+    "cy": 67,
+    "n": 9,
+    "facts": [
+     {
+      "x": 93,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 93,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 93,
+      "y": 68,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "SIG-wood",
+    "cx": 102,
+    "cy": 31,
+    "n": 11,
+    "facts": [
+     {
+      "x": 102,
+      "y": 29,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 102,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 102,
+      "y": 31,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 102,
+      "y": 32,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 102,
+      "y": 33,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CURVE2-stone",
+    "cx": 112.5,
+    "cy": 17.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CURVE2-wood",
+    "cx": 112.5,
+    "cy": 33.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWITCH2-stone",
+    "cx": 112.5,
+    "cy": 49.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ "proc-x": {
+  "kit": false,
+  "origin": "procedural",
+  "problems": [],
+  "sites": [
+   {
+    "id": "RAMP-stone",
+    "cx": 17,
+    "cy": 12,
+    "n": 15,
+    "facts": [
+     {
+      "x": 13,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 16,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 17,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 18,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 19,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 20,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RAMPB-stone",
+    "cx": 36,
+    "cy": 12,
+    "n": 15,
+    "facts": [
+     {
+      "x": 32,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 34,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 35,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 36,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 37,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 38,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 39,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 40,
+      "y": 12,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R1-stone",
+    "cx": 14,
+    "cy": 30,
+    "n": 9,
+    "facts": [
+     {
+      "x": 13,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 14,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 15,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "R2-stone",
+    "cx": 28,
+    "cy": 30,
+    "n": 11,
+    "facts": [
+     {
+      "x": 26,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 28,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R3-stone",
+    "cx": 44,
+    "cy": 30,
+    "n": 13,
+    "facts": [
+     {
+      "x": 41,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 42,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 43,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 44,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 45,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 46,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "HUMP-stone",
+    "cx": 58,
+    "cy": 30,
+    "n": 7,
+    "facts": [
+     {
+      "x": 58,
+      "y": 30,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "LAKE2-stone",
+    "cx": 15.5,
+    "cy": 48,
+    "n": 12,
+    "facts": [
+     {
+      "x": 13,
+      "y": 48,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 17,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 18,
+      "y": 48,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WUP-stone",
+    "cx": 30,
+    "cy": 48,
+    "n": 9,
+    "facts": [
+     {
+      "x": 29,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK-stone",
+    "cx": 42,
+    "cy": 48,
+    "n": 7,
+    "facts": [
+     {
+      "x": 42,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK1-stone",
+    "cx": 53,
+    "cy": 48,
+    "n": 7,
+    "facts": [
+     {
+      "x": 53,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER-stone",
+    "cx": 68,
+    "cy": 48,
+    "n": 15,
+    "facts": [
+     {
+      "x": 67,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 69,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER2-stone",
+    "cx": 87,
+    "cy": 48,
+    "n": 15,
+    "facts": [
+     {
+      "x": 86,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     },
+     {
+      "x": 87,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 88,
+      "y": 48,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     }
+    ]
+   },
+   {
+    "id": "RAMP-wood",
+    "cx": 17,
+    "cy": 21,
+    "n": 15,
+    "facts": [
+     {
+      "x": 13,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 16,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 17,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 18,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 19,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 20,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RAMPB-wood",
+    "cx": 36,
+    "cy": 21,
+    "n": 15,
+    "facts": [
+     {
+      "x": 32,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 33,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 34,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 35,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 36,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 4,
+      "lift": 39.19
+     },
+     {
+      "x": 37,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": 3.875,
+      "lift": 37.97
+     },
+     {
+      "x": 38,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 39,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 40,
+      "y": 21,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R1-wood",
+    "cx": 14,
+    "cy": 39,
+    "n": 9,
+    "facts": [
+     {
+      "x": 13,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 14,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 15,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "R2-wood",
+    "cx": 28,
+    "cy": 39,
+    "n": 11,
+    "facts": [
+     {
+      "x": 26,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 28,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 29,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "R3-wood",
+    "cx": 44,
+    "cy": 39,
+    "n": 13,
+    "facts": [
+     {
+      "x": 41,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 42,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 43,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 44,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 45,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 46,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 47,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "HUMP-wood",
+    "cx": 58,
+    "cy": 39,
+    "n": 7,
+    "facts": [
+     {
+      "x": 58,
+      "y": 39,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "LAKE2-wood",
+    "cx": 15.5,
+    "cy": 57,
+    "n": 12,
+    "facts": [
+     {
+      "x": 13,
+      "y": 57,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 17,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 18,
+      "y": 57,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WUP-wood",
+    "cx": 30,
+    "cy": 57,
+    "n": 9,
+    "facts": [
+     {
+      "x": 29,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 30,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 31,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK-wood",
+    "cx": 42,
+    "cy": 57,
+    "n": 7,
+    "facts": [
+     {
+      "x": 42,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "CREEK1-wood",
+    "cx": 53,
+    "cy": 57,
+    "n": 7,
+    "facts": [
+     {
+      "x": 53,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER-wood",
+    "cx": 68,
+    "cy": 57,
+    "n": 15,
+    "facts": [
+     {
+      "x": 67,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 69,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "RIVER2-wood",
+    "cx": 87,
+    "cy": 57,
+    "n": 15,
+    "facts": [
+     {
+      "x": 86,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     },
+     {
+      "x": 87,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 88,
+      "y": 57,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.778,
+      "lift": 17.42
+     }
+    ]
+   },
+   {
+    "id": "PAR-EQ",
+    "cx": 15,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 13,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 17,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 13,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 17,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "PAR-HIGH-BEHIND",
+    "cx": 30,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 28,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 29,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 30,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 31,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 32,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 29,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 31,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 32,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "PAR-HIGH-FRONT",
+    "cx": 45,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 43,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 44,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 45,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 46,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 47,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 43,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 44,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 45,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 46,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 47,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "PAR-EQ-wood",
+    "cx": 60,
+    "cy": 66,
+    "n": 11,
+    "facts": [
+     {
+      "x": 58,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 59,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 60,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 61,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 62,
+      "y": 66,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 58,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 59,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 60,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 61,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 62,
+      "y": 67,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "STEPS-stone",
+    "cx": 14,
+    "cy": 75,
+    "n": 9,
+    "facts": [
+     {
+      "x": 12,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 13,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 16,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": null,
+      "lift": 39.19
+     },
+     {
+      "x": 12,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 13,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "BLOCK-stone",
+    "cx": 26,
+    "cy": 75,
+    "n": 7,
+    "facts": [
+     {
+      "x": 25,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 26,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 25,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 26,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 27,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 25,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 26,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 27,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "STEPS-wood",
+    "cx": 38,
+    "cy": 75,
+    "n": 9,
+    "facts": [
+     {
+      "x": 36,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 37,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 38,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 40,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 4,
+      "deck": 4,
+      "rail": null,
+      "lift": 39.19
+     },
+     {
+      "x": 36,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 37,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 38,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 39,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 40,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "BLOCK-wood",
+    "cx": 50,
+    "cy": 75,
+    "n": 7,
+    "facts": [
+     {
+      "x": 49,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 50,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 51,
+      "y": 74,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 50,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 51,
+      "y": 75,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 49,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 50,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 51,
+      "y": 76,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "WBARE",
+    "cx": 61.5,
+    "cy": 75,
+    "n": 8,
+    "facts": [
+     {
+      "x": 60,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 61,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 75,
+      "ground": 0,
+      "water": true,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     },
+     {
+      "x": 60,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": null,
+      "deck": 0,
+      "rail": null,
+      "lift": 0
+     },
+     {
+      "x": 61,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": 1,
+      "deck": 1,
+      "rail": null,
+      "lift": 9.8
+     },
+     {
+      "x": 62,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": 2,
+      "deck": 2,
+      "rail": null,
+      "lift": 19.6
+     },
+     {
+      "x": 63,
+      "y": 76,
+      "ground": 0,
+      "water": true,
+      "set": 3,
+      "deck": 3,
+      "rail": null,
+      "lift": 29.39
+     }
+    ]
+   },
+   {
+    "id": "VIA3-stone",
+    "cx": 17,
+    "cy": 84,
+    "n": 15,
+    "facts": [
+     {
+      "x": 13,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 15,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 16,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 17,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 18,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 19,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 20,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 21,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "G0-stone",
+    "cx": 14,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 13,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 14,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 15,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "G1-stone",
+    "cx": 27,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 26,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 27,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 28,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "SIG-stone",
+    "cx": 15,
+    "cy": 102,
+    "n": 11,
+    "facts": [
+     {
+      "x": 13,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 14,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 15,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 16,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 17,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "VIA3-wood",
+    "cx": 39,
+    "cy": 84,
+    "n": 15,
+    "facts": [
+     {
+      "x": 35,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 36,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 37,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 38,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 39,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 40,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 3,
+      "lift": 29.39
+     },
+     {
+      "x": 41,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 3,
+      "deck": 3,
+      "rail": 2.875,
+      "lift": 28.17
+     },
+     {
+      "x": 42,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 43,
+      "y": 84,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   },
+   {
+    "id": "G0-wood",
+    "cx": 54,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 53,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 54,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     },
+     {
+      "x": 55,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": null,
+      "deck": 0,
+      "rail": 0,
+      "lift": 0
+     }
+    ]
+   },
+   {
+    "id": "G1-wood",
+    "cx": 67,
+    "cy": 93,
+    "n": 9,
+    "facts": [
+     {
+      "x": 66,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     },
+     {
+      "x": 67,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 68,
+      "y": 93,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 0.875,
+      "lift": 8.57
+     }
+    ]
+   },
+   {
+    "id": "SIG-wood",
+    "cx": 31,
+    "cy": 102,
+    "n": 11,
+    "facts": [
+     {
+      "x": 29,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     },
+     {
+      "x": 30,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 31,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 2,
+      "lift": 19.6
+     },
+     {
+      "x": 32,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 2,
+      "deck": 2,
+      "rail": 1.875,
+      "lift": 18.37
+     },
+     {
+      "x": 33,
+      "y": 102,
+      "ground": 0,
+      "water": false,
+      "set": 1,
+      "deck": 1,
+      "rail": 1,
+      "lift": 9.8
+     }
+    ]
+   }
+  ],
+  "pads": [
+   {
+    "id": "CURVE2-stone",
+    "cx": 17.5,
+    "cy": 112.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "CURVE2-wood",
+    "cx": 33.5,
+    "cy": 112.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   },
+   {
+    "id": "SWITCH2-stone",
+    "cx": 49.5,
+    "cy": 112.5,
+    "placed": true,
+    "tries": [
+     {
+      "rot": 0,
+      "ok": true
+     }
+    ]
+   }
+  ],
+  "errors": []
+ }
+}

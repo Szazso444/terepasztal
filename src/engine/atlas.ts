@@ -83,7 +83,12 @@ export class AtlasRegistry {
     }
   }
 
-  private register(atlas: AtlasImage) {
+  /**
+   * Add the frames of one image. Frames already known under the same names are replaced, which is
+   * how a packed file overrides its group's generator, and how the game adds pictures it composes
+   * from other frames once the groups are loaded.
+   */
+  register(atlas: AtlasImage) {
     const resolution = atlas.resolution ?? 1;
     const source = new ImageSource({
       resource: atlas.image,

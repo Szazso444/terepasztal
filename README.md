@@ -109,6 +109,7 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 | Zoom     | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview                                                    |
 | Overview | Tab (Esc, scroll in or click a station/train to return)                                                         |
 | Build    | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
+| Bridges  | with a bridge tool held: click a placed platform to raise its deck by one height, right-click to lower it       |
 | Time     | Space pause, `1` `2` `3` speed                                                                                  |
 | Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `M` market, `` ` `` debug                                      |
 
