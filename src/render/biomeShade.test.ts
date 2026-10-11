@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { Rng } from '../engine/rng';
+import { forAll, shrinkInt } from '../testing/property';
 import { biomeShade } from './biomeShade';
 
 /** Terrain ids 0..6 (grass, forest, hill, water, rock, sand, mountain), biome ids 0..5. */
@@ -127,5 +129,213 @@ describe('biomeShade', () => {
   it('tints grass and forest alike', () => {
     for (const biome of BIOMES)
       for (const css of COLORS) expect(biomeShade(css, biome, 0)).toBe(biomeShade(css, biome, 1));
+  });
+});
+
+/**
+ * The tint each biome adds to a colour's red, green and blue, as a table rather than the
+ * function's if-chain. These are the values the move must not change; the biomes missing here
+ * (forest, ocean) add nothing.
+ */
+const TINT: Record<number, readonly [number, number, number]> = {
+  0: [18, 14, 0], // plains: warmer
+  2: [40, 24, 0], // desert: paler
+  3: [-10, 0, 22], // taiga: cooler
+  4: [10, -14, -10], // swamp: muddier
+};
+
+const DIGITS = '0123456789abcdef';
+
+/**
+ * A slow, obvious biomeShade written another way: read the digits one at a time, add the tint
+ * per channel, clamp, and write the digits back from a lookup. No regular expression, no
+ * toString(16).
+ */
+function oracle(css: string, biome: number, terrain: number): string {
+  if (terrain !== 0 && terrain !== 1) return css;
+  if (css.length !== 7 || css[0] !== '#') return css;
+  const digits: number[] = [];
+  for (let i = 1; i < 7; i++) {
+    const d = DIGITS.indexOf(css[i].toLowerCase());
+    if (d < 0) return css;
+    digits.push(d);
+  }
+  const delta = TINT[biome] ?? [0, 0, 0];
+  let out = '#';
+  for (let ch = 0; ch < 3; ch++) {
+    const v = Math.min(255, Math.max(0, digits[2 * ch] * 16 + digits[2 * ch + 1] + delta[ch]));
+    out += DIGITS[Math.floor(v / 16)] + DIGITS[v % 16];
+  }
+  return out;
+}
+
+/** Channel values where a tint starts or stops clamping, for every delta in the table, +-1. */
+const EDGE_CHANNELS: readonly number[] = (() => {
+  const edges = new Set([0, 1, 2, 253, 254, 255]);
+  for (const t of Object.values(TINT))
+    for (const d of t.map(Math.abs).filter((n) => n > 0))
+      for (const k of [-1, 0, 1]) {
+        edges.add(d + k);
+        edges.add(255 - d + k);
+      }
+  return [...edges].filter((v) => v >= 0 && v <= 255).sort((a, b) => a - b);
+})();
+
+/** Seeds 1 to 2000: a case is one colour, terrain and biome, cheap enough to run thousands. */
+const MANY_SEEDS: readonly number[] = Array.from({ length: 2000 }, (_, i) => i + 1);
+
+interface Case {
+  css: string;
+  biome: number;
+  terrain: number;
+}
+
+const rgb = (css: string) => channels(css);
+const fromRgb = (c: readonly number[]) =>
+  '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+
+/** A valid #rrggbb in either case, half its channels drawn from where clamping begins. */
+function genCase(rng: Rng): Case {
+  const channel = () => {
+    const v = rng.chance(0.5) ? rng.pick(EDGE_CHANNELS) : rng.int(0, 255);
+    const hex = v.toString(16).padStart(2, '0');
+    return rng.chance(0.3) ? hex.toUpperCase() : hex;
+  };
+  return {
+    css: `#${channel()}${channel()}${channel()}`,
+    biome: rng.int(0, 5),
+    terrain: rng.int(0, 6),
+  };
+}
+
+/** Simpler terrain and biome first, then each channel toward 0; the colour stays valid. */
+function* shrinkCase(c: Case): Iterable<Case> {
+  for (const terrain of shrinkInt(c.terrain, 0)) yield { ...c, terrain };
+  for (const biome of shrinkInt(c.biome, 0)) yield { ...c, biome };
+  const now = rgb(c.css);
+  for (let i = 0; i < 3; i++)
+    for (const v of shrinkInt(now[i], 0)) {
+      const next = [...now];
+      next[i] = v;
+      yield { ...c, css: fromRgb(next) };
+    }
+}
+
+describe('biomeShade against an oracle', () => {
+  it('gives the oracle answer for any colour, terrain id and biome id', () => {
+    forAll(
+      genCase,
+      ({ css, biome, terrain }) => {
+        expect(biomeShade(css, biome, terrain)).toBe(oracle(css, biome, terrain));
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkCase },
+    );
+  });
+
+  it('adds the tint to one channel and clamps it, for every value of that channel', () => {
+    // The other two channels sit at 0, mid and 255, so a tint on one cannot leak into another.
+    const others = [0, 128, 255];
+    for (const terrain of SHADED_TERRAINS)
+      for (const biome of BIOMES)
+        for (let at = 0; at < 3; at++)
+          for (const other of others)
+            for (let v = 0; v <= 255; v++) {
+              const c = [other, other, other];
+              c[at] = v;
+              const css = fromRgb(c);
+              const want = c.map((x, i) => Math.min(255, Math.max(0, x + (TINT[biome]?.[i] ?? 0))));
+              expect(
+                biomeShade(css, biome, terrain),
+                `${css} biome ${biome} terrain ${terrain}`,
+              ).toBe(fromRgb(want));
+            }
+  });
+
+  it('returns a string that is not #rrggbb unchanged, however it is broken', () => {
+    // Break a valid colour one way at a time: each result is invalid by construction.
+    const breakIt: ((css: string, rng: Rng) => string)[] = [
+      (css) => css.slice(1), // no '#'
+      (css) => css.slice(0, -1), // a digit short
+      (css, rng) => css + rng.pick(['0', 'f', 'F', '#', ' ']), // one too long
+      (css, rng) => rng.pick(['0', ' ', '#']) + css, // one too long, at the front
+      (css) => css + '\n', // `$` must not match before a trailing newline
+      (css) => '\n' + css,
+      (css, rng) => {
+        const at = rng.int(1, 6);
+        return (
+          css.slice(0, at) + rng.pick(['g', 'G', 'z', ' ', '-', '+', '.', 'x']) + css.slice(at + 1)
+        );
+      },
+      (css) => `#${css.slice(1, 4)}`, // the #rgb shorthand
+      (css) => css.replace('#', '0x'),
+      (css) => `rgb(${rgb(css).join(',')})`,
+    ];
+    forAll(
+      (rng) => {
+        const { css, biome, terrain } = genCase(rng);
+        return { css: rng.pick(breakIt)(css, rng), biome, terrain };
+      },
+      ({ css, biome, terrain }) => {
+        expect(biomeShade(css, biome, terrain)).toBe(css);
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkCase },
+    );
+  });
+
+  it('leaves other terrain alone and gives a biome id it does not know the input colour', () => {
+    forAll(
+      (rng) => ({
+        css: genCase(rng).css,
+        biome: rng.int(0, 5),
+        terrain: rng.chance(0.5) ? rng.int(2, 6) : rng.int(-3, 12),
+        stray: rng.pick([-1, 6, 7, 99, 255, 0.5, NaN]),
+      }),
+      ({ css, biome, terrain, stray }) => {
+        const shaded = terrain === 0 || terrain === 1;
+        if (!shaded) expect(biomeShade(css, biome, terrain)).toBe(css);
+        // On grass and forest an untinted biome still rewrites the digits, so an upper-case input
+        // comes back lower-case: the same colour, not the same string.
+        for (const t of SHADED_TERRAINS) expect(biomeShade(css, stray, t)).toBe(css.toLowerCase());
+      },
+      { seeds: MANY_SEEDS },
+    );
+  });
+
+  it('answers lower-case #rrggbb on grass and forest, whatever the case of the input', () => {
+    forAll(
+      genCase,
+      ({ css, biome }) => {
+        for (const terrain of SHADED_TERRAINS)
+          expect(biomeShade(css, biome, terrain)).toMatch(/^#[0-9a-f]{6}$/);
+      },
+      { seeds: MANY_SEEDS, shrink: shrinkCase },
+    );
+  });
+});
+
+describe('biomeShade on the colours the overview and the minimap draw', () => {
+  // Worked out by hand from the tint table above (plains +18 +14 +0, desert +40 +24 +0, taiga
+  // -10 +0 +22, swamp +10 -14 -10), so a change to a tint shows as a changed pixel colour.
+  // [input colour, plains, forest, desert, taiga, swamp, ocean] for terrain grass and forest.
+  const DRAWN: [string, string, string, string, string, string, string][] = [
+    // minimap grass, forest
+    ['#5b7145', '#6d7f45', '#5b7145', '#838945', '#51715b', '#65633b', '#5b7145'],
+    ['#3f5231', '#516031', '#3f5231', '#676a31', '#355247', '#494427', '#3f5231'],
+    // overview grass, forest
+    ['#4e6339', '#607139', '#4e6339', '#767b39', '#44634f', '#58552f', '#4e6339'],
+    ['#38492b', '#4a572b', '#38492b', '#60612b', '#2e4941', '#423b21', '#38492b'],
+  ];
+
+  it.each(DRAWN)('tints %s as before in every biome', (css, ...byBiome) => {
+    for (const terrain of SHADED_TERRAINS)
+      byBiome.forEach((want, biome) => {
+        expect(biomeShade(css, biome, terrain), `biome ${biome} terrain ${terrain}`).toBe(want);
+      });
+  });
+
+  it('leaves the overview colours of the other terrains, written rgb(r,g,b), as they are', () => {
+    for (const css of ['rgb(132,116,80)', 'rgb(62,110,120)', 'rgb(198,180,136)'])
+      for (const terrain of TERRAINS)
+        for (const biome of BIOMES) expect(biomeShade(css, biome, terrain)).toBe(css);
   });
 });
