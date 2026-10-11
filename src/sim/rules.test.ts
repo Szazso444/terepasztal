@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import type { Rules } from './rules';
+import { Rng } from '../engine/rng';
+import { SEEDS, forAll } from '../testing/property';
+import type { RuleMeta, Rules } from './rules';
 
 type RulesModule = typeof import('./rules');
 
@@ -762,4 +764,492 @@ describe('rule presets', () => {
     expect(() => m.applyGameRules({ payoutMul: 2 })).not.toThrow();
     expect(() => m.readRules()).not.toThrow();
   });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Properties over generated inputs. A page load is a fresh import, and `forAll` is synchronous
+// while an import is not, so `eachSeed` runs each seed's case against fresh imports first and
+// then has `forAll` judge what was observed for that one seed: a failure names its seed and case.
+// The oracles and the model below are written from the issue, not from the code under test.
+
+type Json = Record<string, unknown>;
+type Shipped = Pick<RulesModule, 'DEFAULT_RULES' | 'RULE_META'>;
+
+/** Every value an older build remapped on read, by rule. */
+const OLD_BY_KEY = new Map<string, number[]>();
+for (const [k, v] of OLD_VALUES) OLD_BY_KEY.set(k, [...(OLD_BY_KEY.get(k) ?? []), v]);
+
+function freshStorage() {
+  store = new MemoryStorage();
+  session = new MemoryStorage();
+  vi.stubGlobal('localStorage', store);
+  vi.stubGlobal('sessionStorage', session);
+}
+
+/** One case per seed: `run` does the async work on fresh storage, `judge` is the property. */
+async function eachSeed<T, O>(
+  gen: (rng: Rng) => T,
+  run: (c: T) => Promise<O>,
+  judge: (c: T, seen: O) => void,
+  seeds: readonly number[] = SEEDS,
+) {
+  for (const seed of seeds) {
+    freshStorage();
+    const seen = await run(gen(new Rng(seed)));
+    forAll(gen, (c) => judge(c, seen), { seeds: [seed] });
+  }
+}
+
+/** A rule's value from each class a stored tuning can hold, the old remapped values among them. */
+function rawValue(rng: Rng, m: RuleMeta): unknown {
+  const inside = () => (m.key === 'mapSize' ? 32 * rng.int(1, 15) : rng.range(m.min, m.max));
+  switch (rng.int(0, 8)) {
+    case 0:
+      return m.min;
+    case 1:
+      return m.max;
+    case 2:
+    case 3:
+      return inside();
+    case 4:
+      return m.max + 1 + rng.int(0, 1_000_000);
+    case 5:
+      return m.min - 1 - rng.int(0, 1_000_000);
+    case 6:
+    case 7: {
+      const old = OLD_BY_KEY.get(m.key);
+      return old ? rng.pick(old) : inside();
+    }
+    default:
+      return rng.pick(['7', null, true, [], {}, 'NaN', '']);
+  }
+}
+
+/** Like rawValue but always a finite number, which is what a slider hands `setRules`. */
+function numeric(rng: Rng, m: RuleMeta): number {
+  for (;;) {
+    const v = rawValue(rng, m);
+    if (typeof v === 'number') return v;
+  }
+}
+
+/** A stored tuning: a random subset of the rules, maybe all four old values, a rule with no meta. */
+function tuningOf(rng: Rng, meta: readonly RuleMeta[]): Json {
+  const out: Json = {};
+  const density = rng.pick([0.1, 0.3, 0.6, 1]);
+  for (const m of meta) if (rng.chance(density)) out[m.key] = rawValue(rng, m);
+  if (rng.chance(0.3)) for (const [k, vs] of OLD_BY_KEY) out[k] = rng.pick(vs);
+  if (rng.chance(0.2)) out.reputationMul = rng.range(0, 5);
+  if (rng.chance(0.2)) out.notARule = rng.range(0, 5);
+  return out;
+}
+
+/**
+ * What a tuning must read as: each rule's finite number clamped to its range, every other value
+ * (a string, null, absent) the shipped one, mapSize on the 32-tile grid, no value remapped.
+ */
+function clampAll(s: Shipped, raw: Json): Rules {
+  const out: Json = { ...s.DEFAULT_RULES };
+  for (const m of s.RULE_META) {
+    const v = raw[m.key];
+    if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+    out[m.key] = v < m.min ? m.min : v > m.max ? m.max : v;
+  }
+  out.mapSize = Math.max(32, 32 * Math.round((out.mapSize as number) / 32));
+  return out as unknown as Rules;
+}
+
+/** Aside from mapSize's grid, a rule written inside its range comes back exactly as written. */
+function expectAsWritten(s: Shipped, raw: Json, got: Rules, at: string) {
+  for (const m of s.RULE_META) {
+    const v = raw[m.key];
+    if (m.key === 'mapSize' || typeof v !== 'number') continue;
+    if (v >= m.min && v <= m.max) expect(got[m.key], `${at}: ${m.key}`).toBe(v);
+  }
+}
+
+const JUNK = ['{bad', '42', '[]', 'null', '""', 'true', ''];
+const CANON = (n: string) => Array.from(n.trim()).slice(0, 32).join('');
+
+type Op =
+  | { op: 'set'; patch: Record<string, number> }
+  | { op: 'reset' }
+  | { op: 'game'; saved?: Json }
+  | { op: 'save'; name: string; rules?: Json }
+  | { op: 'apply'; name: string }
+  | { op: 'stage'; name: string | null }
+  | { op: 'delete'; name: string }
+  | { op: 'scribble' }
+  | { op: 'reload' };
+
+interface Seq {
+  oldKey?: Json;
+  ops: Op[];
+}
+
+const SAVE_NAMES = ['a', 'b', 'Rich Poor', ' b '];
+const ASK_NAMES = ['a', 'b', 'Rich Poor', 'missing', ' a ', ' Rich Poor'];
+const PROBES = ['a', 'b', 'Rich Poor', 'missing'];
+
+/**
+ * 0 to 16 operations of the nine kinds, then two reloads so a staged tuning is seen taken. Half the
+ * sequences open by staging a saved tuning and loading it, so the rest runs on a load that took one.
+ */
+function sequence(rng: Rng, meta: readonly RuleMeta[]): Seq {
+  const ops: Op[] = [];
+  if (rng.chance(0.5)) {
+    const name = rng.pick(SAVE_NAMES);
+    ops.push({ op: 'save', name, rules: tuningOf(rng, meta) }, { op: 'stage', name });
+    ops.push({ op: 'reload' });
+  }
+  for (let n = rng.int(0, 16); n > 0; n--) {
+    const k = rng.int(0, 19);
+    if (k < 3) {
+      const patch: Record<string, number> = {};
+      for (let j = rng.int(1, 3); j > 0; j--) {
+        const m = rng.pick(meta);
+        patch[m.key] = numeric(rng, m);
+      }
+      ops.push({ op: 'set', patch });
+    } else if (k < 4) ops.push({ op: 'reset' });
+    else if (k < 6)
+      ops.push({ op: 'game', saved: rng.chance(0.2) ? undefined : tuningOf(rng, meta) });
+    else if (k < 9) {
+      const rules = rng.chance(0.4) ? undefined : tuningOf(rng, meta);
+      ops.push({ op: 'save', name: rng.pick(SAVE_NAMES), rules });
+    } else if (k < 11) ops.push({ op: 'apply', name: rng.pick(ASK_NAMES) });
+    else if (k < 14) ops.push({ op: 'stage', name: rng.chance(0.15) ? null : rng.pick(ASK_NAMES) });
+    else if (k < 15) ops.push({ op: 'delete', name: rng.pick(ASK_NAMES) });
+    else if (k < 16) ops.push({ op: 'scribble' });
+    else ops.push({ op: 'reload' });
+  }
+  ops.push({ op: 'reload' }, { op: 'reload' });
+  return { oldKey: rng.chance(0.5) ? tuningOf(rng, meta) : undefined, ops };
+}
+
+/** What the module and both stores showed after the boot (step 0) and after each operation. */
+interface Step {
+  returned: unknown;
+  /** `rules` is still the object this load started with */
+  same: boolean;
+  live: Rules;
+  started: Rules;
+  tuningKey: string | null;
+  staged: unknown;
+  presets: (Rules | null)[];
+  listed: string[];
+  local: [string, string][];
+  tab: [string, string][];
+}
+
+describe('properties over generated inputs', () => {
+  it('uses the storage keys the issue names', async () => {
+    const m = await load();
+    expect(m.RULES_KEY).toBe(RULES_KEY);
+    expect(m.RULE_PRESETS_KEY).toBe(PRESETS_KEY);
+    expect(m.NEW_GAME_TUNING_KEY).toBe(STAGED_KEY);
+  });
+
+  it('a stored tuning of any content never applies, and is deleted rather than converted', async () => {
+    const s = await load();
+    const kept = JSON.stringify({ format: 1, presets: { Keep: { savedAt: 3, rules: {} } } });
+    await eachSeed(
+      (rng) => ({
+        stored: rng.chance(0.15) ? rng.pick(JUNK) : JSON.stringify(tuningOf(rng, s.RULE_META)),
+        hasPreset: rng.chance(0.5),
+      }),
+      async (c) => {
+        store.setItem(RULES_KEY, c.stored);
+        store.setItem('terepasztal.save', 'x');
+        if (c.hasPreset) store.setItem(PRESETS_KEY, kept);
+        const local = writesTo(store);
+        const tab = writesTo(session);
+        const m = await load();
+        return {
+          live: { ...m.rules },
+          read: m.readRules(),
+          key: store.getItem(RULES_KEY),
+          presets: store.getItem(PRESETS_KEY),
+          listed: m.listRulePresets().length,
+          save: store.getItem('terepasztal.save'),
+          local,
+          tab,
+        };
+      },
+      (c, o) => {
+        expect(o.live).toEqual(s.DEFAULT_RULES);
+        expect(o.read).toEqual(s.DEFAULT_RULES);
+        expect(o.key).toBeNull();
+        expect(o.presets).toBe(c.hasPreset ? kept : null);
+        expect(o.listed).toBe(c.hasPreset ? 1 : 0);
+        expect(o.save).toBe('x');
+        expect(o.local).toEqual([['remove', RULES_KEY]]);
+        expect(o.tab).toEqual([]);
+      },
+    );
+  });
+
+  it('a staged value with a __proto__ or an unknown key reaches nothing but the rules', async () => {
+    session.setItem(
+      STAGED_KEY,
+      '{"__proto__":{"payoutMul":99,"polluted":1},"notARule":7,"payoutMul":2}',
+    );
+    const m = await load();
+    expect(m.rules.payoutMul).toBe(2);
+    expect(Object.keys(m.rules).sort()).toEqual(Object.keys(m.DEFAULT_RULES).sort());
+    expect(Object.getPrototypeOf(m.rules)).toBe(Object.prototype);
+    const bare: Json = {};
+    expect(bare.payoutMul).toBeUndefined();
+    expect(bare.polluted).toBeUndefined();
+  });
+
+  it('a staged tuning loads once, clamped and as written, and the load after is the shipped rules', async () => {
+    const s = await load();
+    const chars = ['a', 'B', '7', ' ', '-', 'é', '🚂'];
+    await eachSeed(
+      (rng) => {
+        let name = '';
+        while (!CANON(name)) {
+          name = Array.from({ length: rng.int(1, 48) }, () => rng.pick(chars)).join('');
+        }
+        return {
+          stored: CANON(name),
+          // the name as a player might type it: padded, or longer than a preset name may be
+          asked: ' '.repeat(rng.int(0, 2)) + name + ' '.repeat(rng.int(0, 2)),
+          preset: tuningOf(rng, s.RULE_META),
+          via: rng.pick(['name', 'session']),
+        };
+      },
+      async (c) => {
+        const presets = JSON.stringify({
+          format: 1,
+          presets: {
+            [c.stored]: { savedAt: 1, rules: c.preset },
+            Other: { savedAt: 2, rules: { payoutMul: 4 } },
+          },
+        });
+        store.setItem(PRESETS_KEY, presets);
+        const m = await load();
+        const local = writesTo(store);
+        let ok: boolean | undefined;
+        if (c.via === 'name') ok = m.stageNewGameTuning(c.asked);
+        else session.setItem(STAGED_KEY, JSON.stringify(c.preset));
+        const staged = session.getItem(STAGED_KEY);
+        const stageWrites = [...local];
+        const liveAfterStage = { ...m.rules };
+
+        const first = await load();
+        const afterFirst = session.getItem(STAGED_KEY);
+        const second = await load();
+        return {
+          ok,
+          staged,
+          stageWrites,
+          liveAfterStage,
+          first: { ...first.rules },
+          firstRead: first.readRules(),
+          afterFirst,
+          second: { ...second.rules },
+          secondRead: second.readRules(),
+          afterSecond: session.getItem(STAGED_KEY),
+          presetsBefore: presets,
+          presetsAfter: store.getItem(PRESETS_KEY),
+        };
+      },
+      (c, o) => {
+        const want = clampAll(s, c.preset);
+        if (c.via === 'name') {
+          expect(o.ok).toBe(true);
+          // the rules, already clamped, not the name
+          expect(JSON.parse(o.staged!)).toEqual(want);
+          expect(o.stageWrites).toEqual([]);
+        }
+        // staging is for the next load: nothing in force moves
+        expect(o.liveAfterStage).toEqual(s.DEFAULT_RULES);
+        expect(o.first).toEqual(want);
+        expect(o.firstRead).toEqual(want);
+        expectAsWritten(s, c.preset, o.first, 'the load that took it');
+        expect(o.afterFirst).toBeNull();
+        expect(o.second).toEqual(s.DEFAULT_RULES);
+        expect(o.secondRead).toEqual(s.DEFAULT_RULES);
+        expect(o.afterSecond).toBeNull();
+        expect(o.presetsAfter).toBe(o.presetsBefore);
+      },
+    );
+  });
+
+  it('any sequence of operations and reloads follows the model and stores only what it owns', async () => {
+    const s = await load();
+    at(1000);
+    const run = async (c: Seq): Promise<Step[]> => {
+      if (c.oldKey) store.setItem(RULES_KEY, JSON.stringify(c.oldKey));
+      const local = writesTo(store);
+      const tab = writesTo(session);
+      let m = await load();
+      let first = m.rules;
+      const seen: Step[] = [];
+      const observe = (returned: unknown) => {
+        const raw = session.getItem(STAGED_KEY);
+        seen.push({
+          returned,
+          same: m.rules === first,
+          live: { ...m.rules },
+          started: m.readRules(),
+          tuningKey: store.getItem(RULES_KEY),
+          staged: raw === null ? null : JSON.parse(raw),
+          presets: PROBES.map((n) => m.readRulePreset(n)),
+          listed: m
+            .listRulePresets()
+            .map((p) => p.name)
+            .sort(),
+          local: local.splice(0),
+          tab: tab.splice(0),
+        });
+      };
+      observe(undefined);
+      for (const o of c.ops) {
+        let returned: unknown;
+        if (o.op === 'set') m.setRules(o.patch);
+        else if (o.op === 'reset') m.resetRules();
+        else if (o.op === 'game') m.applyGameRules(o.saved as Partial<Rules> | undefined);
+        else if (o.op === 'save') returned = m.saveRulePreset(o.name, o.rules as unknown as Rules);
+        else if (o.op === 'apply') returned = m.applyRulePreset(o.name);
+        else if (o.op === 'stage') returned = m.stageNewGameTuning(o.name);
+        else if (o.op === 'delete') returned = m.deleteRulePreset(o.name);
+        else if (o.op === 'scribble') {
+          // what readRules hands back is the caller's to change
+          const r = m.readRules();
+          r.startMoney = -1;
+          r.payoutMul = -1;
+        } else {
+          m = await load();
+          first = m.rules;
+        }
+        observe(returned);
+      }
+      return seen;
+    };
+
+    await eachSeed(
+      (rng) => sequence(rng, s.RULE_META),
+      run,
+      (c, seen) => {
+        const D = s.DEFAULT_RULES;
+        let live: Rules = { ...D };
+        let started: Rules = { ...D };
+        let staged: Rules | null = null;
+        const presets = new Map<string, Rules>();
+        expect(seen).toHaveLength(c.ops.length + 1);
+
+        for (let i = 0; i < seen.length; i++) {
+          const op = i === 0 ? undefined : c.ops[i - 1];
+          const kind = op?.op ?? 'boot';
+          const at = `step ${i} (${op ? JSON.stringify(op) : 'boot'})`;
+          let returned: unknown;
+          if (op?.op === 'set') live = clampAll(s, { ...live, ...op.patch });
+          else if (op?.op === 'reset') live = { ...D };
+          else if (op?.op === 'game') live = clampAll(s, op.saved ?? {});
+          else if (op?.op === 'save') {
+            presets.set(CANON(op.name), op.rules ? clampAll(s, op.rules) : { ...live });
+            returned = true;
+          } else if (op?.op === 'apply') {
+            const p = presets.get(CANON(op.name));
+            if (p) live = { ...p };
+            returned = p !== undefined;
+          } else if (op?.op === 'stage') {
+            const p = op.name === null ? undefined : presets.get(CANON(op.name));
+            staged = p ? { ...p } : null;
+            returned = op.name === null || p !== undefined;
+          } else if (op?.op === 'delete') returned = presets.delete(CANON(op.name));
+          else if (op?.op === 'reload') {
+            live = staged ? { ...staged } : { ...D };
+            started = { ...live };
+            staged = null;
+          }
+
+          const step = seen[i];
+          expect(step.returned, at).toBe(returned);
+          expect(step.same, `${at}: rules kept its identity`).toBe(true);
+          expect(step.live, at).toEqual(live);
+          expect(step.started, `${at}: readRules is what this load started with`).toEqual(started);
+          expect(step.tuningKey, `${at}: the old key stays absent`).toBeNull();
+          expect(step.staged, `${at}: the staged tuning`).toEqual(staged);
+          expect(step.presets, `${at}: presets`).toEqual(PROBES.map((n) => presets.get(n) ?? null));
+          expect(step.listed, `${at}: listed presets`).toEqual([...presets.keys()].sort());
+
+          // each operation writes only the storage it owns
+          const sets = (log: [string, string][], key: string) =>
+            log.every(([kind, k]) => kind === 'set' && k === key);
+          const touches = (log: [string, string][], key: string) => log.every(([, k]) => k === key);
+          const wrote = `${at} wrote ${JSON.stringify([step.local, step.tab])}`;
+          if (kind === 'boot' || kind === 'reload') {
+            expect(step.local, `${at}: a load deletes the old key and writes nothing else`).toEqual(
+              [['remove', RULES_KEY]],
+            );
+            expect(
+              step.tab.every(([kind, k]) => kind === 'remove' && k === STAGED_KEY),
+              wrote,
+            ).toBe(true);
+          } else {
+            if (kind === 'save' || kind === 'delete')
+              expect(sets(step.local, PRESETS_KEY), wrote).toBe(true);
+            else expect(step.local, wrote).toEqual([]);
+            if (kind === 'save') expect(step.local.length, wrote).toBeGreaterThan(0);
+            if (kind === 'stage') expect(touches(step.tab, STAGED_KEY), wrote).toBe(true);
+            else expect(step.tab, wrote).toEqual([]);
+          }
+        }
+      },
+    );
+  });
+});
+
+describe('the import-time read over every way storage can fail', () => {
+  type Mode = 'ok' | 'missing' | 'throws' | 'remove throws';
+  const locals: Mode[] = ['ok', 'missing', 'throws'];
+  const sessions: Mode[] = ['ok', 'missing', 'throws', 'remove throws'];
+  const kinds = ['none', 'valid', 'malformed'] as const;
+  const cases = locals.flatMap((l) =>
+    sessions.flatMap((t) => kinds.map((k) => [l, t, k] as const)),
+  );
+  const staged = { payoutMul: 2, startMoney: 25000 };
+
+  it.each(cases)(
+    'localStorage %s, sessionStorage %s, staged tuning %s: never throws, takes the tuning once',
+    async (l, t, kind) => {
+      const disk = new MemoryStorage();
+      disk.setItem(RULES_KEY, JSON.stringify({ trainSpeedMul: 2 }));
+      const tab = new MemoryStorage();
+      if (kind === 'valid') tab.setItem(STAGED_KEY, JSON.stringify(staged));
+      if (kind === 'malformed') tab.setItem(STAGED_KEY, '{bad');
+      const as = (mode: Mode, mem: MemoryStorage) =>
+        mode === 'ok'
+          ? mem
+          : mode === 'missing'
+            ? undefined
+            : mode === 'throws'
+              ? refusing
+              : Object.assign(mem, {
+                  removeItem: () => {
+                    throw new Error('denied');
+                  },
+                });
+      vi.stubGlobal('localStorage', as(l, disk));
+      vi.stubGlobal('sessionStorage', as(t, tab));
+
+      const m = await load();
+      const live = { ...m.rules };
+      const want = clampAll(m, staged);
+      // a tuning that cannot be removed is not taken: it would load again
+      const taken = t === 'ok' && kind === 'valid';
+      if (taken && l === 'ok') expect(live).toEqual(want);
+      // the old key and the staged tuning are separate stores: whether a broken localStorage
+      // still lets a readable sessionStorage hand over its tuning is not pinned
+      else if (taken) expect([m.DEFAULT_RULES, want]).toContainEqual(live);
+      else expect(live).toEqual(m.DEFAULT_RULES);
+      expect(m.readRules()).toEqual(live);
+      if (l === 'ok') expect(disk.getItem(RULES_KEY)).toBeNull();
+      if (t === 'ok' && kind === 'valid') expect(tab.getItem(STAGED_KEY)).toBeNull();
+    },
+  );
 });
