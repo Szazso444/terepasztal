@@ -1,9 +1,26 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { STATION_DEFS, Station, MAX_LEVEL, resetStationIds, type StationJSON } from './stations';
-import { rules, DEFAULT_RULES } from './rules';
+import {
+  STATION_DEFS,
+  Station,
+  MAX_LEVEL,
+  LEVELS,
+  HarvestCells,
+  harvestBreakdown,
+  resetStationIds,
+  stationDef,
+  terrainFactorAt,
+  type HarvestBreakdown,
+  type StationJSON,
+} from './stations';
+import { rules, DEFAULT_RULES, weekSeconds } from './rules';
+import { SEASONS, productionMul, seasonOf, setSeasonOffset, type Season } from './weather';
+import { biomeAt, biomeDef } from './biomes';
+import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
+import { emptyMap, generateMap } from '../world/mapgen';
 import type { LevelStation } from '../world/level';
-import type { Rng } from '../engine/rng';
-import { forAll } from '../testing/property';
+import { Rng } from '../engine/rng';
+import { forAll, shrinkArray } from '../testing/property';
+import { simWorld, mapParams, line, station as placeStation } from '../testing/simWorld';
 
 /** A value as it reads back from JSON. */
 const asStored = (v: unknown): unknown => JSON.parse(JSON.stringify(v));
@@ -141,6 +158,7 @@ function expectLevelNumbersFinite(s: Station, label: string) {
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
   resetStationIds(1);
+  setSeasonOffset(0);
 });
 
 describe('a station read from a save or a level file', () => {
@@ -262,4 +280,343 @@ describe('a station of any other kind read from a save', () => {
         expect(s.toJSON().work, `${label}: written again`).toEqual(work);
       }
   });
+});
+
+/** The ground each harvesting kind counts, as the game has always counted it. */
+const COUNTS: Record<string, readonly Terrain[]> = {
+  farm: [Terrain.Grass],
+  lumber: [Terrain.Forest],
+  quarry: [Terrain.Rock, Terrain.Hill],
+  mine: [Terrain.Rock, Terrain.Hill],
+  copper_mine: [Terrain.Rock, Terrain.Hill],
+  sand_pit: [Terrain.Sand],
+  pump: [Terrain.Water],
+};
+/** Every kind of station that harvests ground, of the plain and the full production chain. */
+const HARVESTERS = STATION_DEFS.filter((d) => d.terrain);
+/** Every terrain a tile can have. */
+const TERRAINS = [
+  Terrain.Grass,
+  Terrain.Forest,
+  Terrain.Hill,
+  Terrain.Water,
+  Terrain.Rock,
+  Terrain.Sand,
+  Terrain.Mountain,
+];
+
+/**
+ * terrainFactorAt as it stood before the harvest breakdown, kept verbatim as the oracle: every
+ * placed station, and every save on load, got its factor from it.
+ */
+function factorBefore(map: GameMap, x: number, y: number, defId: string): number {
+  const want = stationDef(defId).terrain;
+  if (!want) return 1;
+  const match = (t: Terrain) =>
+    want === 'grass'
+      ? t === Terrain.Grass
+      : want === 'forest'
+        ? t === Terrain.Forest
+        : want === 'rock'
+          ? t === Terrain.Rock || t === Terrain.Hill
+          : want === 'sand'
+            ? t === Terrain.Sand
+            : t === Terrain.Water;
+  let sum = 0;
+  for (let dy = -4; dy <= 4; dy++)
+    for (let dx = -4; dx <= 4; dx++) {
+      if (!dx && !dy) continue;
+      if (!inBounds(map, x + dx, y + dy)) continue;
+      if (!match(terrainAt(map, x + dx, y + dy))) continue;
+      const d = Math.max(Math.abs(dx), Math.abs(dy));
+      sum += 1 / (1 + d);
+    }
+  return Math.max(0.15, Math.min(1.6, sum / 12));
+}
+
+/** The tiles a harvest at (x, y) must count, rows north to south, each west to east. */
+function countedTiles(map: GameMap, x: number, y: number, defId: string) {
+  const out: { x: number; y: number; d: number }[] = [];
+  for (let ty = y - 4; ty <= y + 4; ty++)
+    for (let tx = x - 4; tx <= x + 4; tx++) {
+      if ((tx === x && ty === y) || !inBounds(map, tx, ty)) continue;
+      if (!COUNTS[defId].includes(terrainAt(map, tx, ty))) continue;
+      out.push({ x: tx, y: ty, d: Math.max(Math.abs(tx - x), Math.abs(ty - y)) });
+    }
+  return out;
+}
+
+/** Where a breakdown is asked for: the kind, the tile, the level and the season. */
+interface HarvestSite {
+  x: number;
+  y: number;
+  defId: string;
+  level: number;
+  season: Season;
+}
+
+/**
+ * What a station of the kind placed on the tile at the level makes a week in the season, under
+ * the live rules: its own productionPerWeek times the season and biome multiplier Game gives it
+ * on placing (`Game.onStationChanged`).
+ */
+function stationOutput(map: GameMap, at: HarvestSite) {
+  const s = new Station(at.defId, at.x, at.y);
+  s.level = at.level;
+  s.terrainFactor = terrainFactorAt(map, at.x, at.y, at.defId);
+  s.productionMul =
+    productionMul(at.defId, at.season) *
+    (biomeDef(biomeAt(map, at.x, at.y)).production[at.defId] ?? 1);
+  return s.productionPerWeek * s.productionMul;
+}
+
+/** Every row of a breakdown, each read again from the map apart from the code that made it. */
+function expectBreakdown(b: HarvestBreakdown | null, map: GameMap, at: HarvestSite, label: string) {
+  const { x, y, defId, level, season } = at;
+  expect(b, `${label}: a harvesting station has a breakdown`).not.toBeNull();
+  if (!b) return;
+  const want = countedTiles(map, x, y, defId);
+  const got = Array.from({ length: b.cells.count }, (_, i) => ({
+    x: b.cells.x[i],
+    y: b.cells.y[i],
+    d: b.cells.d[i],
+  }));
+  expect(got, `${label}: the tiles counted, in order`).toEqual(want);
+  let sum = 0;
+  for (let i = 0; i < b.cells.count; i++) {
+    expect(b.cells.weight[i], `${label}: weight of tile ${i}`).toBe(1 / (1 + b.cells.d[i]));
+    sum += b.cells.weight[i];
+  }
+  expect(b.sum, `${label}: the sum of the weights, in order`).toBe(sum);
+  expect(
+    b.rings.map((r) => r.d),
+    `${label}: one ring per distance`,
+  ).toEqual([1, 2, 3, 4]);
+  let fromRings = 0;
+  for (const r of b.rings) {
+    expect(r.n, `${label}: tiles at ${r.d}`).toBe(want.filter((c) => c.d === r.d).length);
+    expect(r.contribution, `${label}: ring ${r.d}`).toBe(r.n / (1 + r.d));
+    fromRings += r.contribution;
+  }
+  expect(Math.abs(fromRings - b.sum), `${label}: the rings add up to the sum`).toBeLessThan(1e-12);
+  expect(b.raw, `${label}: raw`).toBe(b.sum / 12);
+  const clamped = b.raw < 0.15 ? 'floor' : b.raw > 1.6 ? 'ceil' : null;
+  expect(b.clamped, `${label}: clamped`).toBe(clamped);
+  expect(b.factor, `${label}: factor`).toBe(
+    clamped === 'floor' ? 0.15 : clamped === 'ceil' ? 1.6 : b.raw,
+  );
+  expect(b.factor, `${label}: the factor stations always got`).toBe(factorBefore(map, x, y, defId));
+  expect(terrainFactorAt(map, x, y, defId), `${label}: terrainFactorAt`).toBe(b.factor);
+  const biome = biomeDef(biomeAt(map, x, y));
+  expect(b.biome, `${label}: biome of its own tile`).toBe(biome.id);
+  expect(b.biomeMul, `${label}: biome multiplier`).toBe(biome.production[defId] ?? 1);
+  expect([b.season, b.seasonMul], `${label}: season`).toEqual([
+    season,
+    productionMul(defId, season),
+  ]);
+  expect(b.rulesMul, `${label}: tuning`).toBe(rules.productionMul);
+  expect([b.level, b.base], `${label}: the level's base`).toEqual([
+    level,
+    LEVELS.production[level - 1],
+  ]);
+  const product = b.base * b.rulesMul * b.factor * b.biomeMul * b.seasonMul;
+  expect(
+    Math.abs(b.perWeek - product),
+    `${label}: per week is the product of the rows`,
+  ).toBeLessThanOrEqual(1e-12 * Math.max(1, product));
+  expect(b.perWeek, `${label}: per week is what the station makes`).toBe(stationOutput(map, at));
+}
+
+/** A map a case is drawn on: a new game's, a patchwork of every terrain and biome, or grass. */
+interface MapSpec {
+  kind: 'generated' | 'patchwork' | 'grass';
+  seed: number;
+  size: number;
+}
+const MAPS = new Map<string, GameMap>();
+function mapOf(m: MapSpec): GameMap {
+  const key = JSON.stringify(m);
+  let map = MAPS.get(key);
+  if (map) return map;
+  if (m.kind === 'generated') map = generateMap(m.seed, mapParams(m.size));
+  else {
+    map = emptyMap(m.seed, m.size, m.size, Terrain.Grass);
+    if (m.kind === 'patchwork') {
+      const rng = new Rng(m.seed);
+      for (let i = 0; i < map.terrain.length; i++) {
+        map.terrain[i] = rng.pick(TERRAINS);
+        map.biome[i] = rng.int(0, 5);
+      }
+    }
+  }
+  MAPS.set(key, map);
+  return map;
+}
+
+/** The limit of a property below that takes most of a second alone (docs/process/verification.md). */
+const SLOW = { timeout: 20_000 };
+
+describe('a harvest breakdown', () => {
+  it('covers every harvesting kind, the full production chain included', () => {
+    expect(HARVESTERS.map((d) => d.id).sort()).toEqual(Object.keys(COUNTS).sort());
+    for (const id of ['mine', 'sand_pit', 'copper_mine'])
+      expect(stationDef(id).supply, `${id} is of the full chain`).toBe('full');
+  });
+
+  // a map per seed and 24 sites read again tile by tile: about three quarters of a second alone
+  it(
+    'counts each tile at its weight, gives the rows the demo shows, and the factor and yield stations always got',
+    SLOW,
+    () => {
+      const seen = { floor: 0, ceil: 0, within: 0 };
+      forAll(
+        (rng) => {
+          const size = rng.pick([12, 24, 40]);
+          const map: MapSpec = {
+            kind: rng.pick(['generated', 'generated', 'patchwork', 'grass'] as const),
+            seed: rng.int(1, 1_000_000),
+            size,
+          };
+          // tiles over the whole map and a band past its edges, where no station stands
+          const tiles = Array.from({ length: 24 }, () => ({
+            x: rng.int(-3, size + 2),
+            y: rng.int(-3, size + 2),
+          }));
+          return {
+            map,
+            defId: rng.pick(HARVESTERS).id,
+            level: rng.int(1, MAX_LEVEL),
+            season: rng.pick(SEASONS),
+            productionMul: rng.pick([1, 0, 0.1, 2.5, 5, Math.round(rng.range(0, 50)) / 10]),
+            tiles,
+          };
+        },
+        (c) => {
+          rules.productionMul = c.productionMul;
+          const map = mapOf(c.map);
+          const cells = new HarvestCells();
+          for (const t of c.tiles) {
+            const at = { ...t, defId: c.defId, level: c.level, season: c.season };
+            const b = harvestBreakdown(map, t.x, t.y, c.defId, c.level, c.season, rules, cells);
+            expectBreakdown(b, map, at, `${c.defId} at ${t.x},${t.y}`);
+            expect(b?.cells, 'the tiles go into the buffer given').toBe(cells);
+            if (b?.clamped === 'floor') seen.floor++;
+            else if (b?.clamped === 'ceil') seen.ceil++;
+            else seen.within++;
+          }
+        },
+        { shrink: (c) => [...shrinkArray(c.tiles)].map((tiles) => ({ ...c, tiles })) },
+      );
+      // not vacuous: sparse, plain and crowded sites all came up
+      expect(seen.floor).toBeGreaterThan(0);
+      expect(seen.ceil).toBeGreaterThan(0);
+      expect(seen.within).toBeGreaterThan(0);
+    },
+  );
+
+  it('gives a farm on plain grass at level 1 its base of 30, its ground held at the ceiling', () => {
+    const map = emptyMap(1, 9, 9, Terrain.Grass);
+    // every tile within the radius is grass: 8/2 + 16/3 + 24/4 + 32/5 = 21.73, raw 1.81
+    const b = harvestBreakdown(map, 4, 4, 'farm', 1, 'spring', { productionMul: 1 });
+    expect(b?.base).toBe(30);
+    expect(b?.rings.map((r) => r.n)).toEqual([8, 16, 24, 32]);
+    expect(b?.clamped).toBe('ceil');
+    expect(b?.factor).toBe(1.6);
+    expect([b?.biome, b?.biomeMul, b?.seasonMul]).toEqual(['plains', 1.25, 1]);
+    expect(b?.perWeek).toBe(30 * 1 * 1.6 * (1 * 1.25));
+  });
+
+  it('is null, with factor 1 and no tiles, for a station that harvests nothing', () => {
+    const map = mapOf({ kind: 'patchwork', seed: 5, size: 16 });
+    const cells = new HarvestCells();
+    for (const def of STATION_DEFS.filter((d) => !d.terrain)) {
+      // an earlier harvest left its tiles in the buffer
+      harvestBreakdown(map, 8, 8, 'farm', 1, 'spring', rules, cells);
+      expect(cells.count).toBeGreaterThan(0);
+      expect(harvestBreakdown(map, 8, 8, def.id, 1, 'summer', rules, cells), def.id).toBeNull();
+      expect(cells.count, `${def.id}: no tiles`).toBe(0);
+      expect(terrainFactorAt(map, 8, 8, def.id), def.id).toBe(1);
+    }
+  });
+
+  it('writes a later call over an earlier one in the same buffer', () => {
+    const map = mapOf({ kind: 'patchwork', seed: 9, size: 20 });
+    const cells = new HarvestCells();
+    const first = harvestBreakdown(map, 2, 2, 'lumber', 1, 'spring', rules, cells);
+    const second = harvestBreakdown(map, 15, 12, 'quarry', 3, 'winter', rules, cells);
+    expect(first?.cells).toBe(cells);
+    expect(second?.cells).toBe(cells);
+    const at: HarvestSite = { x: 15, y: 12, defId: 'quarry', level: 3, season: 'winter' };
+    expectBreakdown(second, map, at, 'second');
+  });
+
+  // a generated world per seed and seven stations placed on it: about half a second alone
+  it(
+    'gives the yield a station makes once placed, at every level, and gave it as a preview where it could not stand yet',
+    SLOW,
+    () => {
+      const placed = new Map<string, number>();
+      forAll(
+        (rng) => ({
+          seed: rng.int(1, 1_000_000),
+          seasonOffset: rng.int(0, 3),
+          productionMul: rng.pick([1, 0.5, 2, Math.round(rng.range(0, 50)) / 10]),
+          // per harvesting kind, where to try it, in order
+          tries: HARVESTERS.map(() =>
+            Array.from({ length: 30 }, () => ({ x: rng.int(1, 46), y: rng.int(1, 45) })),
+          ),
+        }),
+        (c) => {
+          setSeasonOffset(c.seasonOffset);
+          rules.productionMul = c.productionMul;
+          const w = simWorld({ seed: c.seed, size: 48 });
+          const season = seasonOf(w.clock.day);
+          HARVESTERS.forEach((def, k) => {
+            for (const t of c.tries[k]) {
+              const label = `${def.id} at ${t.x},${t.y}`;
+              // the preview where it cannot stand: no track beside it, or the wrong ground
+              if (w.builder.checkStation(t.x, t.y, def.id).ok) continue;
+              const at: HarvestSite = { ...t, defId: def.id, level: 1, season };
+              const before = harvestBreakdown(w.map, t.x, t.y, def.id, 1, season, rules);
+              expectBreakdown(before, w.map, at, `${label}, before`);
+              try {
+                line(w, t.x, t.y + 1, t.x);
+                placeStation(w, def.id, t.x, t.y);
+              } catch {
+                continue;
+              }
+              const s = w.builder.stationAt(t.x, t.y);
+              if (!s) throw new Error(`${label}: placed but not found`);
+              placed.set(def.id, (placed.get(def.id) ?? 0) + 1);
+              expect(before?.perWeek, `${label}: the preview is what it makes`).toBe(
+                s.productionPerWeek * s.productionMul,
+              );
+              rules.capacityMul = 1e6;
+              for (const level of WHOLE_LEVELS) {
+                s.level = level;
+                const b = harvestBreakdown(w.map, s.x, s.y, def.id, level, season, rules);
+                expect(b?.factor, `${label}: factor`).toBe(s.terrainFactor);
+                const perWeek = b?.perWeek ?? NaN;
+                expect(perWeek, `${label} at level ${level}`).toBe(
+                  s.productionPerWeek * s.productionMul,
+                );
+                // a week of its own tick makes that much, with room to spare
+                s.storage.clear();
+                s.tick(weekSeconds());
+                const made = s.totalStored();
+                expect(
+                  Math.abs(made - perWeek),
+                  `${label} at level ${level}: a week's goods ${made}, ${perWeek} shown`,
+                ).toBeLessThanOrEqual(1e-9 * Math.max(1, perWeek));
+              }
+              rules.capacityMul = DEFAULT_RULES.capacityMul;
+              break;
+            }
+          });
+        },
+      );
+      for (const def of HARVESTERS)
+        expect(placed.get(def.id) ?? 0, `${def.id} was placed`).toBeGreaterThan(0);
+    },
+  );
 });
