@@ -887,10 +887,16 @@ export const STR = {
     },
     saved: (ago: string) => `saved ${ago}`,
     /**
+     * Continue's time line at the title screen: it loads the stored game, which the minute
+     * autosave and the pause menu's Save both write. A named save's row says `saved` instead.
+     */
+    lastAutosave: (ago: string) => `last autosave ${ago}`,
+    /**
      * Continue over a game being played goes back to that game, not to a save; `ago` is when it
      * was last stored, null when it has not been.
      */
-    inProgress: (ago: string | null) => (ago ? `in progress · last saved ${ago}` : 'in progress'),
+    inProgress: (ago: string | null) =>
+      ago ? `in progress · last autosave ${ago}` : 'in progress',
     autosaveStatus: (on: boolean, ago: string | null) =>
       !on
         ? 'Autosave off'
@@ -950,9 +956,24 @@ export const STR = {
     noSaves: 'No named saves yet. Use "Save as..." in the pause menu.',
     day: (d: number) => `Day ${d}`,
     confirmLoad: (n: string) => `Load "${n}"? Unsaved progress in the current game is lost.`,
+    /** Loading a named save when no game is being played: it still replaces the stored game. */
+    confirmLoadStored: (n: string) =>
+      `Load "${n}"? It replaces the saved game that Continue goes back to.`,
     backToEditor: 'Back to editor',
     mainMenu: 'Main menu',
+    /** New game, Play level and the editor's play test over a stored game, with none being played. */
     confirmReplace: 'This replaces the current saved game. Continue?',
+    /**
+     * New game and Play level over a game being played: it is replaced, whether or not a stored
+     * game exists (`stored`), and only a stored game may be called saved.
+     */
+    confirmReplaceGame: (stored: boolean) =>
+      stored
+        ? 'This replaces the game in progress and the saved game. Progress since the last save or autosave is lost. Continue?'
+        : 'This replaces the game in progress, which has not been saved or autosaved. Its progress is lost. Continue?',
+    /** Edit level and New level over a game being played: it is left, the stored game is kept. */
+    confirmLeaveGame:
+      'This leaves the game in progress. Progress that is not saved or autosaved is lost. Continue?',
     menuButton: 'Menu',
     supply: 'Production chain',
     supplyModes: { simple: 'Simple', full: 'Full' } as Record<string, string>,
@@ -1013,6 +1034,8 @@ export const STR = {
     confirmDeletePreset: (n: string) => `Delete the preset "${n}"?`,
     presetSaved: (n: string) => `Preset "${n}" saved`,
     presetSaveFailed: (n: string) => `Could not save the preset "${n}" (storage full or blocked)`,
+    confirmLoadPreset: (n: string) =>
+      `Load the preset "${n}"? It replaces the current tuning and becomes the tuning new games start from.`,
     presetLoaded: (n: string) => `Preset "${n}" loaded`,
     presetDeleted: (n: string) => `Preset "${n}" deleted`,
   },

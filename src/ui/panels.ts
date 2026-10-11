@@ -83,6 +83,14 @@ import { BuildInfo } from './buildInfo';
 import { StationPanel } from './stationPanel';
 import { TownPanel } from './townPanel';
 import { showSignalGuide } from './signalGuide';
+import {
+  asksBeforeReplacing,
+  continueTargetFor,
+  loadQuestion,
+  replaceQuestion,
+  type ReplaceSituation,
+  type Replacement,
+} from './saveSlots';
 
 /**
  * The play UI: every panel, screen and menu of a game, built and wired in one place. The game
@@ -270,8 +278,9 @@ export interface PlayUi {
   /** the title or the pause menu is up */
   readonly menuOpen: boolean;
   /**
-   * The title screen at boot, over the stored game or a world not yet played: loading a save from
-   * it asks nothing. The pause menu opens it over the game being played itself.
+   * The title screen at boot, over the stored game or a world not yet played: no game is being
+   * played, so what replaces the stored game asks only when there is one. The pause menu opens it
+   * over the game being played itself, where everything that replaces or leaves it asks.
    */
   openMainMenu(): void;
   /** the pause menu over the paused game (not over the title screen) */
@@ -282,9 +291,18 @@ export interface PlayUi {
   readonly keys: KeyHost;
 }
 
-/** Starting something new replaces the stored game: ask first when there is one. */
+/**
+ * The editor's play test replaces the stored game, and no game is being played in the editor: ask
+ * first when a stored game exists (`asksBeforeReplacing`).
+ */
 export function confirmReplaceSave() {
-  return !readSave() || confirm(STR.menu.confirmReplace);
+  const asks = asksBeforeReplacing('overwrite', {
+    mode: 'editor',
+    titleShown: false,
+    titleOverGame: false,
+    stored: !!readSave(),
+  });
+  return !asks || confirm(STR.menu.confirmReplace);
 }
 
 /** Build every panel, screen and menu of a game, wire them and put them in the UI root. */
@@ -358,7 +376,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
           d.toasts.push(STR.settings.noSave, 'warn');
           return;
         }
-        askBeforeLoad(STR.saves.confirmLoadLast, () => {
+        // it loads the stored game itself and replaces none, so it asks only over a game in play
+        const question = asksBeforeReplacing('leave', replaceSituation())
+          ? STR.saves.confirmLoadLast
+          : null;
+        askBeforeLoad(question, () => {
           if (!host.loadSave()) d.toasts.push(STR.settings.noSave, 'warn');
         });
       },
@@ -557,8 +579,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
    * the stored save, which is the game under the title screen; null when there is none.
    */
   function continueTarget(overGame: boolean): ContinueTarget | null {
-    if (overGame) {
-      const live: SlotMeta = {
+    return continueTargetFor(
+      overGame,
+      (): SlotMeta => ({
         name: '',
         savedAt: host.savedAt ?? 0,
         version: SAVE_VERSION,
@@ -566,11 +589,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
         day: d.clock.day,
         age: d.economy.tier,
         money: d.economy.money,
-      };
-      return { meta: live, live: true };
-    }
-    const stored = continueMeta();
-    return stored && { meta: stored, live: false };
+      }),
+      continueMeta,
+    );
   }
   /** The title screen over the paused game; `overGame` when the pause menu opened it. */
   function showMainMenu(overGame: boolean) {
@@ -600,15 +621,30 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     titleOverGame = false;
     host.resumeGame();
   }
+  /** What decides whether a replacement asks first, read when the player picks the action. */
+  function replaceSituation(): ReplaceSituation {
+    return {
+      mode: host.mode,
+      titleShown: mainMenu.visible,
+      titleOverGame,
+      stored: !!readSave(),
+    };
+  }
   /**
-   * Run `load`; over a game in progress (playing, under the pause menu or a title screen opened
-   * from it, not the title screen at boot) only once the player says yes to `question` in the
-   * game's own dialog, since its unsaved progress is lost.
+   * The browser question before starting something over the game in progress or the stored game
+   * (`replaceQuestion`); false when the player says no, so the caller changes nothing.
    */
-  function askBeforeLoad(question: string, load: () => void) {
-    if (host.mode === 'play' && (!mainMenu.visible || titleOverGame))
-      void d.namePrompt.confirm(STR.saves.loadTitle, question).then((ok) => ok && load());
-    else load();
+  function confirmReplacement(kind: Replacement): boolean {
+    const question = replaceQuestion(kind, replaceSituation());
+    return question === null || confirm(question);
+  }
+  /**
+   * Run `load`; with a `question` only once the player says yes to it in the game's own dialog.
+   * No question (null) loads at once.
+   */
+  function askBeforeLoad(question: string | null, load: () => void) {
+    if (question === null) load();
+    else void d.namePrompt.confirm(STR.saves.loadTitle, question).then((ok) => ok && load());
   }
   /** Named-save actions shared by the menus and the settings screen. */
   function slotActions(): SlotActions {
@@ -619,7 +655,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
           d.toasts.push(STR.settings.noSave, 'warn');
           return;
         }
-        askBeforeLoad(STR.menu.confirmLoad(name), () => {
+        askBeforeLoad(loadQuestion(name, replaceSituation()), () => {
           if (!host.loadSlot(name)) d.toasts.push(STR.settings.noSave, 'warn');
         });
       },
@@ -665,13 +701,17 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ...audioActions(),
       continue: () => closeMenus(),
       newGame: (seed, supply) => {
-        if (confirmReplaceSave()) host.newGame(seed, supply);
+        if (confirmReplacement('overwrite')) host.newGame(seed, supply);
       },
       playLevel: (id) => {
-        if (confirmReplaceSave()) host.playLevel(id);
+        if (confirmReplacement('overwrite')) host.playLevel(id);
       },
-      editLevel: (id) => host.editLevel(id),
-      newLevel: (size, generated, seedText) => host.newLevel(size, generated, seedText),
+      editLevel: (id) => {
+        if (confirmReplacement('leave')) host.editLevel(id);
+      },
+      newLevel: (size, generated, seedText) => {
+        if (confirmReplacement('leave')) host.newLevel(size, generated, seedText);
+      },
       // the title screen is drawn again over the same game it was opened over
       deleteLevel: (id) => {
         host.deleteLevel(id);

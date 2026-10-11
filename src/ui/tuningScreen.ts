@@ -88,6 +88,8 @@ export class TuningScreen implements Screen {
             btn(
               STR.tuning.loadPreset,
               () => {
+                // it replaces the whole live tuning and the one new games start from
+                if (!confirm(STR.tuning.confirmLoadPreset(p.name))) return;
                 const loaded = applyRulePreset(p.name);
                 // the sliders show the new values; a preset gone since the list was drawn drops out
                 this.render();
