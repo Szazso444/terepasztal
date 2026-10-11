@@ -1,0 +1,68 @@
+[
+  {
+    "file": "raw/spring-ne-attempt-1.png",
+    "returned": [1254, 1254],
+    "rgba": true,
+    "alphaPixels": {
+      "transparent": 1332808,
+      "partial": 239362,
+      "opaque": 346
+    },
+    "sha256": "c159a6d0454b60a3940edeaa1d5e0bcc401243715249453748bdab274d8c6d53"
+  },
+  {
+    "file": "spring-ne.png",
+    "returned": [1254, 1254],
+    "rgba": true,
+    "alphaPixels": {
+      "transparent": 1400326,
+      "partial": 171955,
+      "opaque": 235
+    },
+    "sha256": "e3e7f07ea8358795931f3d4f6afab28d16eac01cbedf88b6094842ec97404a97"
+  },
+  {
+    "file": "spring-se.png",
+    "returned": [1254, 1254],
+    "rgba": true,
+    "alphaPixels": {
+      "transparent": 1392562,
+      "partial": 179684,
+      "opaque": 270
+    },
+    "sha256": "522198cd6401a0496ea32fb483f4718540ef5393ab434ee1c5ee7d5479a41f5e"
+  },
+  {
+    "file": "raw/spring-sw-attempt-1.png",
+    "returned": [1254, 1254],
+    "rgba": true,
+    "alphaPixels": {
+      "transparent": 1360400,
+      "partial": 211771,
+      "opaque": 345
+    },
+    "sha256": "51fbe3739ff38391fd8abadff32d71e914d01ba3a4f0a71d7d47238bc308cd2d"
+  },
+  {
+    "file": "spring-nw.png",
+    "returned": [1254, 1254],
+    "rgba": true,
+    "alphaPixels": {
+      "transparent": 1383973,
+      "partial": 188251,
+      "opaque": 292
+    },
+    "sha256": "a015ec40a7547cac481816323a164c83bddb825deeec71c57a5c607b8da2630a"
+  },
+  {
+    "file": "spring-sw.png",
+    "returned": [1254, 1254],
+    "rgba": true,
+    "alphaPixels": {
+      "transparent": 1413584,
+      "partial": 158711,
+      "opaque": 221
+    },
+    "sha256": "42b89e245cd2659113ed5e50461ed90be9f6d447368398d5802ea44cebb7662f"
+  }
+]
