@@ -874,6 +874,10 @@ export const STR = {
       'The map grew: your land now sits in the middle of a larger world. Trains returned to the depot.',
     loaded: 'Save loaded',
     saveFailed: 'Could not save (storage full or blocked)',
+    /** A save the player asked for (Save now, Save as), refused because the game holds a NaN. */
+    saveBroken: 'Could not save: the game holds a broken value. Your last save is kept.',
+    /** An autosave refused for the same reason; shown once until some save has gone through. */
+    autosaveBroken: 'Autosave stopped: the game holds a broken value. Your last save is kept.',
     noSave: 'No save found',
     badSave: 'Save data unreadable',
   },
