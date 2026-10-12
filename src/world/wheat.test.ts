@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { generateMap, decorateProps, DEFAULT_MAP_PARAMS, type MapGenParams } from './mapgen';
+import {
+  generateMap,
+  decorateProps,
+  placeOilFields,
+  ensureStartDeposits,
+  DEFAULT_MAP_PARAMS,
+  type MapGenParams,
+} from './mapgen';
 import {
   CHUNK_TILES,
   buildMap,
@@ -30,6 +37,9 @@ const wheatOf = (m: GameMap) =>
     .filter(([, list]) => isWheat(list))
     .map(([i]) => i)
     .sort((a, b) => a - b);
+/** The oil tiles with their props, in tile order. */
+const oilOf = (m: GameMap) =>
+  [...m.props].filter(([, list]) => list.some((p) => p.kind === 'oil')).sort(([a], [b]) => a - b);
 /** The wheat tiles with their variants, in tile order. */
 const wheatWithVariants = (m: GameMap) => wheatOf(m).map((i) => [i, wheatAt(m, i)]);
 /** Tiles of Grass in the Plains biome, wheat tiles included. */
@@ -486,6 +496,60 @@ describe('wheat fields, more widely', () => {
     // oil lay right beside some fields, where it could have cut them, in a start chunk too
     expect(beside).toBeGreaterThan(0);
     expect(besideStart).toBeGreaterThan(0);
+  }, 20_000);
+
+  // The oil is laid as if the wheat were not there: the oil fields of every centre that reaches
+  // the map, worked out here on the world a ring of chunks wider (placeOilFields on its ground,
+  // its props taken off), then the start seeps on the map (ensureStartDeposits). No field lies on
+  // that oil in either chain, the fields laid by centres beyond the map's edge included.
+  // 24 worlds up to 128 tiles a side, each in both chains and a ring wider: about 1 s alone
+  it('move no oil: the full chain lays the oil fields and start seeps of the world without wheat, and no field lies on them', () => {
+    let outside = 0;
+    let startFields = 0;
+    let beside = 0;
+    forAll(
+      genWorld,
+      (c) => {
+        const simple = worldMap({ ...c, full: false });
+        const full = worldMap({ ...c, full: true });
+        const ring = worldMap({
+          ...c,
+          full: false,
+          w: c.w + 2 * CHUNK_TILES,
+          h: c.h + 2 * CHUNK_TILES,
+          ox: c.ox - CHUNK_TILES,
+          oy: c.oy - CHUNK_TILES,
+        });
+        const world: GameMap = { ...ring, props: new Map() };
+        placeOilFields(world, c.seed, 'full');
+        const want: GameMap = { ...simple, props: new Map() };
+        for (const [j, list] of world.props) {
+          const x = (j % world.w) - CHUNK_TILES;
+          const y = Math.floor(j / world.w) - CHUNK_TILES;
+          if (x >= 0 && y >= 0 && x < want.w && y < want.h) want.props.set(y * want.w + x, list);
+        }
+        // what a pass over the map alone lays, its centres 2 tiles or more inside the edge, to
+        // count the oil of centres nearer the edge or beyond it
+        const own: GameMap = { ...simple, props: new Map() };
+        placeOilFields(own, c.seed, 'full');
+        for (const i of want.props.keys()) {
+          if (!own.props.has(i)) outside++;
+          if (inStartChunk(want, i)) startFields++;
+        }
+        ensureStartDeposits(want, 'full');
+        expect(oilOf(full)).toEqual(oilOf(want));
+        for (const i of wheatOf(simple)) {
+          expect(want.props.has(i), `tile (${i % want.w}, ${Math.floor(i / want.w)})`).toBe(false);
+          if (besideOil(want, i)) beside++;
+        }
+      },
+      { seeds: WORLD_SEEDS, shrink: shrinkWorld },
+    );
+    // centres at or beyond the map's edge laid oil on it, oil fields lay in start chunks before
+    // the seeps were counted, and fields grew right beside the oil, where they could lie on it
+    expect(outside).toBeGreaterThan(0);
+    expect(startFields).toBeGreaterThan(0);
+    expect(beside).toBeGreaterThan(0);
   }, 20_000);
 
   // In these worlds the Water slider at its top leaves the start chunk's ring short of ground, so
