@@ -2,9 +2,17 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
 import { STR } from '../strings';
-import { CONTENT_KEYS, DEFAULT_CONTENT, type ContentBundle } from '../data/content';
+import {
+  CONTENT_KEYS,
+  DEFAULT_CONTENT,
+  changedTables,
+  content,
+  validateContent,
+  type ContentBundle,
+} from '../data/content';
 import type { Rng } from '../engine/rng';
-import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { OWN_LENGTH } from '../sim/body';
+import { SEEDS, forAll, shrinkArray, shrinkInt } from '../testing/property';
 import {
   TAB_FORMS,
   formFields,
@@ -53,6 +61,8 @@ describe('the fields of a content form', () => {
     const f = field(locoForm, 'length');
     expect(f.kind).toBe('number');
     expect(f.unset).toBe(STR.content.unsetLength);
+    // the length says what it falls back to, not only that it has a default
+    expect(f.unset).not.toBe(STR.content.unset);
   });
 
   it('marks optional exactly the fields some shipped entry leaves out or the table declares', () => {
@@ -252,6 +262,9 @@ function membersOf(type: ts.TypeNode | undefined, where: string): readonly ts.Ty
   if (type && ts.isTypeLiteralNode(type)) return type.members;
   if (type && ts.isTypeReferenceNode(type) && ts.isIdentifier(type.typeName)) {
     const decl = TYPES.get(type.typeName.text);
+    // only the interface's own members are read: one that extends another would hide fields
+    if (decl?.heritageClauses?.length)
+      throw new Error(`${where}: ${decl.name.text} extends another type, whose fields go unread`);
     if (decl) return decl.members;
   }
   throw new Error(`${where} is not an interface or object type of content.ts`);
@@ -964,5 +977,145 @@ describe('a content form of any table, not only the shipped ones', () => {
       },
       { shrink: shrinkTable },
     );
+  });
+});
+
+/** Every form of every tab with its fields, as the screen lays them out. */
+const LAYOUT = FORMS.map(([name, spec]) => ({ name, spec, fields: formFields(spec) }));
+
+/**
+ * The forms, every one unless named, saved exactly as shown on the draft the screen edits. It
+ * throws at the first input that refuses its own text, without `expect` per field, which is slow.
+ */
+function saveDraftAsShown(draft: ContentBundle, forms = LAYOUT) {
+  for (const { name, spec, fields } of forms) {
+    const target = spec.pick(draft);
+    for (const row of (spec.list ? target : [target]) as Row[])
+      for (const f of fields) {
+        const kind = kindFor(row, f);
+        if (!readField(row, f, kind, showField(row, f, kind)))
+          throw new Error(`${name} ${String(row.id)} ${f.key}: refused the text it showed`);
+      }
+  }
+}
+
+interface ApplyCase {
+  at: number;
+  text: string;
+  blank: string;
+}
+
+describe('what Apply stores once the forms are saved', () => {
+  it('stores no table when every form of every tab is saved as shown', () => {
+    const draft = clone(content);
+    saveDraftAsShown(draft);
+    expect(changedTables(draft)).toEqual({});
+    expect(draft).toStrictEqual(clone(content));
+  });
+
+  /** Text that changes what an input of `kind` showing `shown` holds. */
+  const otherText = (kind: FieldKind, shown: string) => {
+    switch (kind) {
+      case 'bool':
+        return shown === 'true' ? 'false' : 'true';
+      case 'number':
+        return String(Number(shown || 0) + 1);
+      case 'text':
+        return `${shown}x`;
+      case 'list':
+        return shown ? `${shown}, zz` : 'zz';
+      case 'numList':
+        return shown ? `${shown}, 7` : '7';
+      case 'json':
+        return JSON.stringify([shown ? (JSON.parse(shown) as unknown) : null]);
+    }
+  };
+
+  it.each(LAYOUT.map((l) => [l.name, l] as const))(
+    '%s edits the draft it is handed, and Apply stores that tab alone until the edit is undone',
+    (name, { spec, fields }) => {
+      const tab = name.slice(0, name.indexOf('#'));
+      const live = clone(content);
+      // the first field and the last, which on a table that declares fields is a declared one
+      for (const f of [fields[0], fields[fields.length - 1]]) {
+        const draft = clone(content);
+        const target = spec.pick(draft);
+        const row = (spec.list ? (target as Row[])[0] : target) as Row;
+        const kind = kindFor(row, f);
+        const shown = showField(row, f, kind);
+        const before = clone(row);
+        expect(readField(row, f, kind, otherText(kind, shown)), f.key).toBe(true);
+        expect(row, f.key).not.toStrictEqual(before);
+        expect(Object.keys(changedTables(draft)), f.key).toEqual([tab]);
+        expect(readField(row, f, kind, shown), f.key).toBe(true);
+        expect(changedTables(draft), `${f.key} undone`).toEqual({});
+      }
+      // the live bundle the draft was copied from is never written
+      expect(content).toStrictEqual(live);
+    },
+  );
+
+  it('stores a length typed on one locomotive, validated as the number, and nothing once cleared', () => {
+    const locos = content.locomotives;
+    // the test above saves the other tabs; here the locomotive tab is saved after each edit
+    const locoTab = LAYOUT.filter((l) => l.name.startsWith('locomotives#'));
+    expect(validateContent(content), 'the shipped content is valid').toEqual([]);
+    // how many typed lengths were inside and outside the range content validation allows
+    const seen = { inside: 0, outside: 0 };
+    forAll(
+      (rng): ApplyCase => {
+        const x = rng.chance(0.7) ? rng.int(0, 45) / 10 : num(rng);
+        const text = rng.pick([
+          String(x),
+          x.toFixed(rng.int(0, 3)),
+          x.toExponential(rng.int(0, 3)),
+        ]);
+        return {
+          at: rng.int(0, locos.length - 1),
+          text: ' '.repeat(rng.int(0, 1)) + text + ' '.repeat(rng.int(0, 1)),
+          blank: ' '.repeat(rng.int(0, 2)),
+        };
+      },
+      (c) => {
+        // a shrunk text that no longer spells a number is outside the class
+        if (!c.text.trim() || !Number.isFinite(Number(c.text))) return;
+        const draft = clone(content);
+        // the entry as the screen's locomotive form holds it, and its length field
+        const loco = (locoForm.pick(draft) as Row[])[c.at];
+        const f = field(locoForm, 'length');
+        expect(readField(loco, f, kindFor(loco, f), c.text), 'refused').toBe(true);
+        saveDraftAsShown(draft, locoTab);
+
+        const length = Number(c.text);
+        const want: ContentBundle = { ...content, locomotives: clone(content.locomotives) };
+        want.locomotives[c.at].length = length;
+        const changed = changedTables(draft);
+        expect(Object.keys(changed), 'tables Apply stores').toEqual(['locomotives']);
+        expect(changed.locomotives).toStrictEqual(want.locomotives);
+        // the editor's problem line reads the same as for the number set on the entry directly
+        const inside = length >= OWN_LENGTH.min && length <= OWN_LENGTH.max;
+        seen[inside ? 'inside' : 'outside']++;
+        const problems = validateContent(draft);
+        expect(problems).toEqual(validateContent(want));
+        expect(problems.length > 0, `problems: ${problems.join('; ')}`).toBe(!inside);
+
+        expect(readField(loco, f, kindFor(loco, f), c.blank), 'blank, yet refused').toBe(true);
+        saveDraftAsShown(draft, locoTab);
+        expect(changedTables(draft), 'cleared, yet stored').toEqual({});
+        expect(validateContent(draft)).toEqual([]);
+      },
+      {
+        *shrink(c) {
+          for (const cs of shrinkArray([...c.text])) yield { ...c, text: cs.join('') };
+          for (const at of shrinkInt(c.at)) yield { ...c, at };
+        },
+        format: (c) => JSON.stringify({ ...c, loco: locos[c.at]?.id }),
+        // each case compares whole tables as Apply does; half the seeds still reach both sides
+        // of the range, and the model test above types a length on every locomotive
+        seeds: SEEDS.slice(0, 50),
+      },
+    );
+    expect(seen.inside, 'lengths inside the range').toBeGreaterThanOrEqual(10);
+    expect(seen.outside, 'lengths outside the range').toBeGreaterThanOrEqual(10);
   });
 });
