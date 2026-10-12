@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PAST_SHIPPED } from './pastShipped';
+import { forAll } from '../testing/property';
 import type { ContentBundle, ContentKey, HouseConfig, StationLevels, TrackConfig } from './content';
 
 type ContentModule = typeof import('./content');
@@ -316,6 +317,44 @@ describe('validateContent', () => {
           problems: [`locomotive ${locos[1].id}: length must be between 0.3 and 3.5 tiles, not 4`],
         },
       ]);
+    });
+
+    /** A value as written in a failure: JSON writes NaN and the infinities as null, -0 as 0. */
+    const spell = (v: unknown) =>
+      Object.is(v, -0) ? '-0' : typeof v === 'number' ? String(v) : JSON.stringify(v);
+
+    it('takes exactly the numbers from 0.3 to 3.5 on any entry, and names the entry it refuses', () => {
+      forAll(
+        (rng) => {
+          const table = rng.pick(['locomotives', 'wagons'] as const);
+          const at = rng.int(0, shipped.DEFAULT_CONTENT[table].length - 1);
+          const end = rng.pick([0.3, 3.5]);
+          const value: unknown = rng.pick([
+            () => rng.range(-1, 5),
+            () => rng.range(0.3, 3.5),
+            // either side of an end, by a hair or a step
+            () => end * (1 + rng.pick([-1e-12, 0, 1e-12, -1e-3, 1e-3])),
+            () =>
+              rng.pick([NaN, Infinity, -Infinity, -0, null, '1.5', true, [1.5], { tiles: 1.5 }]),
+          ])();
+          return { table, at, value };
+        },
+        ({ table, at, value }) => {
+          const b = clone(shipped.DEFAULT_CONTENT);
+          (b[table][at] as unknown as Table).length = value;
+          const problems = shipped.validateContent(b);
+          const fits = typeof value === 'number' && value >= 0.3 && value <= 3.5;
+          if (fits) {
+            expect(problems).toEqual([]);
+            return;
+          }
+          const kind = table === 'locomotives' ? 'locomotive' : 'wagon';
+          const named = `${kind} ${shipped.DEFAULT_CONTENT[table][at].id}: length must be between 0.3 and 3.5 tiles`;
+          expect(problems).toHaveLength(1);
+          expect(problems[0].slice(0, named.length)).toBe(named);
+        },
+        { format: (c) => `${c.table}[${c.at}].length = ${spell(c.value)}` },
+      );
     });
   });
 });
