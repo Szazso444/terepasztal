@@ -1,56 +1,78 @@
-# Issue 371 spring repaint: partial
+# Issue 371: centred spring repaint results
 
-No new painting was produced or selected. The first call, spring-ne-attempt-3,
-was refused with usage_limit_reached before image generation. The tool reports
-a reset at 2026-10-12 14:59 America/Toronto (Unix timestamp 1791831558).
-The four main spring PNGs remain byte-identical to the earlier paintings.
-Their existing geometry and blocky-water defects have not been fixed.
+The allowed repaint attempts are complete. Four closest returns are selected as
+the source paintings; none passes every geometry check. This is the brief’s
+fallback after the attempt limit, not an assertion of exact geometry compliance.
 
-Preparation completed:
+NE had a refused call on October 11 (attempt 3) and two painted returns on
+October 12 (attempts 4–5). SE, SW and NW each had three painted returns.
+All eleven new paintings are unmodified 1254×1254 RGBA PNGs from independent
+built-in image edits requested at 1024×1024. Every call and all measurements
+are recorded in prompts.json. All old and new paintings remain in raw/.
 
-- Preserved the four current paintings in the requested raw attempt paths,
-  and redirected their earlier prompt records to those archives.
-- Copied river-strip-y.png and river-bank.png byte-for-byte from origin/art/343-water
-  as reference-river.png and reference-bank.png.
-- Extended make-spring-guides.mjs with the four centred radius-0.5 disc guides.
-  All four legacy guides remain byte-identical; hashes are recorded in
-  review/legacy-guide-hashes.json.
-- Added the complete scale-16 frame and measurement constants under centred
-  in spring-geometry.json.
-- Added check-extent.mjs to record dimensions, bounds, inferred centre,
-  lower/upper diamond spill, and both strict and far-rim-top-adjusted stone ratios
-  under measured for centred attempts. Non-square returns fail the box check.
-  Far-rim stone tops require a foot reachable by vertical descent of at most
-  36 requested-canvas pixels, inside the upstream bank ring.
-- Adapted review-springs.mjs for selected centred attempts: full canvas to 64px,
-  preserving original paintings. Refused calls without a PNG are skipped.
-- Recorded the failed call’s exact prompt, five ordered references, null returned
-  dimensions and generation-limit failure in prompts.json. Its named raw PNG
-  does not exist because the tool returned no painting.
+## Selected results
 
-Remaining work: generate the four independent guide edits, at most three new
-calls per direction, measure each return, retain every produced attempt, select
-the passing or closest painting, inspect full-size water and 64px reviews, and
-record remaining failed criteria. NE attempt 3 is the refused call; continue
-numbering with NE 4, SE 2, SW 3 and NW 2. Do not resize or retouch originals.
+Expected painted box at this returned size: approximately [184,405,1070,849].
+Actual boxes below use [left,top,right,bottom]. Stone ratios include the
+explicit far-rim top allowance; strict ratios are also in the JSON.
 
-Run these from the repository root:
+| Main file     | Selected attempt | Painted box        | Centre error px | Stone ring | Failed tests                         |
+| ------------- | ---------------- | ------------------ | --------------- | ---------- | ------------------------------------ |
+| spring-ne.png | NE 5             | [187,438,1067,860] | 11.35           | 78.40%     | box top, lower diamond, stones       |
+| spring-se.png | SE 2             | [206,429,1047,856] | 7.36            | 62.37%     | box top, lower diamond, stones       |
+| spring-sw.png | SW 4             | [173,400,1081,850] | 1.35            | 89.86%     | lower diamond, upper diamond, stones |
+| spring-nw.png | NW 2             | [195,418,1055,851] | 3.08            | 65.37%     | stones                               |
 
-```sh
-node assets/source/mountain-2026-10-11/make-spring-guides.mjs
-node assets/source/mountain-2026-10-11/review/check-extent-fixtures.mjs
-node assets/source/mountain-2026-10-11/check-extent.mjs
-node assets/source/mountain-2026-10-11/review-springs.mjs
-```
+All selected centres pass. SW and NW boxes pass. NE top lies 26.7 requested
+canvas pixels below the target, and SE top 19.3 below (limit 18). Lower-edge
+spill is 3024 pixels for NE, 90 for SE, 458 for SW and zero for NW. SW also
+has 99 upper-edge pixels beyond the permitted far-rim stone-top allowance.
+Stone threshold is 90%; no selected painting reaches it. The later finishing
+pass must not assume exact spring geometry or compliant stone positions.
 
-Synthetic checker validation passed 15 cases: every direction at 1024 and
-1254, opaque-background exclusion, misplaced stones, lower-edge spill and a
-non-square return, upper-edge spill, enlarged bounds and centre shift. The fixture PNGs are diagnostic masks in ignored review/.tmp,
-not substitute paintings. Native-size visual acceptance is pending generation.
+Selection weighed framing, centre placement, spill and stone placement together.
+NE 5 is much closer than NE 4. SE 2 avoids the large enlargement and spill in
+SE 3–4. SW 4 has nearly 90% stones in the allowed ring and tiny spill compared
+with SW 5, and improves stone placement substantially over SW 3. NW 2 has no
+diamond spill and a better stone ratio than the other correctly framed NW return.
 
-Repository gates: typecheck, lint, build and Art scope passed. Formatting passed
-for all changed source files; the repository-wide check failed on 374 existing
-files. The full test run completed with 1947 passed, 14 failed and 11 skipped
-(8 failing files out of 112). Failures include existing pipeline Python tests.
-No unrelated files were edited to address those failures. Gate logs and build
-outputs are under ignored review/.tmp and review/gate-build in this folder.
+## Visual review and preservation
+
+Full-size selected water has smooth painted contours and broad flowing tone
+clusters, without the old rectangular pixel grid. Flow glints remain angular
+in places, and the pool/ripple spreads wider than its guide in some returns.
+The 64×64 full-canvas reviews distinguish the lighter pool/upwelling and
+upstream stone crescent in all four directions. They are inspection copies only.
+No original has been fitted, cropped, warped, resized, padded or retouched.
+
+Selected main files are byte-identical to their archived raw returns.
+The four prior main paintings match their archived attempts byte-for-byte.
+The old scale-8 guides remain byte-identical. The scale-16 centred guides,
+river/bank references and measurement checker are unchanged from preparation.
+
+Use review/selected-measurements.json for compact selected data and
+review/verification.json for RGBA, alpha counts and SHA-256 of every painting.
+The checker’s 15 synthetic validation cases passed again.
+
+## Highlight ceilings
+
+The source highlights also fail the requested ceilings. Rec.709 measurements
+on painted pixels (alpha above 128) exceed cursor #ECE4D0 on 467 pixels in NE,
+357 in SE, 8 in SW and 128 in NW. Within the nominal radius-0.15 pool, the
+#E0DDD2 ceiling is exceeded by 539 pixels in NE, 355 in SE, zero in SW and
+100 in NW. See review/selected-colours.json and measured.brightness. These
+paintings are not palette-compliant final materials. No pixels were retouched;
+the later finishing pass must cap highlights as the brief specifies.
+
+Run review/check-selected-colours.mjs after check-extent.mjs to add the colour
+measurements, since the geometry checker regenerates the measured object.
+
+## Repository gates
+
+On 2026-10-12, typecheck, lint, production build, Art scope, changed-file
+Prettier, Git whitespace and PNG byte checks passed. The checker passed its
+15 synthetic cases. The full test run completed: 1947 passed, 14 failed and
+11 skipped; 8 failed files and 104 passed. Failures include missing python
+in existing pipeline tests. The repository-wide formatting check failed on
+374 untouched files. No unrelated files were edited to resolve these failures.
+Gate logs and build outputs are ignored under this folder’s review directory.

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "spring-ne-attempt-5",
+    "file": "raw/spring-ne-attempt-5.png",
+    "returned": [1254, 1254],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
+      "paintedBox": [187, 438, 1067, 860],
+      "centre": [627, 638.345703125],
+      "centreError": 11.345703125,
+      "paintedPixels": 292014,
+      "lowerOutside": 3024,
+      "upperOutside": 0,
+      "upperBeyondAllowance": 0,
+      "stonePixels": 8548,
+      "stoneRingPixels": 6669,
+      "stoneTopAllowancePixels": 33,
+      "stoneRingFraction": 0.7801824988301357,
+      "stoneAllowedFraction": 0.7840430510060833,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": true,
+        "stones": false
+      },
+      "failed": ["box", "lowerDiamond", "stones"],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 467,
+        "poolAboveFoamCap": 539,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 252.55719999999997,
+        "maxPoolLuma": 247.68159999999997
+      }
+    }
+  },
+  {
+    "id": "spring-se-attempt-2",
+    "file": "raw/spring-se-attempt-2.png",
+    "returned": [1254, 1254],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
+      "paintedBox": [206, 429, 1047, 856],
+      "centre": [626.5, 634.345703125],
+      "centreError": 7.3627002112427995,
+      "paintedPixels": 281497,
+      "lowerOutside": 90,
+      "upperOutside": 0,
+      "upperBeyondAllowance": 0,
+      "stonePixels": 10141,
+      "stoneRingPixels": 6305,
+      "stoneTopAllowancePixels": 20,
+      "stoneRingFraction": 0.621733556848437,
+      "stoneAllowedFraction": 0.6237057489399468,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": true,
+        "stones": false
+      },
+      "failed": ["box", "lowerDiamond", "stones"],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 357,
+        "poolAboveFoamCap": 355,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 253.91699999999997,
+        "maxPoolLuma": 235.9744
+      }
+    }
+  },
+  {
+    "id": "spring-nw-attempt-2",
+    "file": "raw/spring-nw-attempt-2.png",
+    "returned": [1254, 1254],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
+      "paintedBox": [195, 418, 1055, 851],
+      "centre": [625, 629.345703125],
+      "centreError": 3.0825838432449433,
+      "paintedPixels": 291385,
+      "lowerOutside": 0,
+      "upperOutside": 0,
+      "upperBeyondAllowance": 0,
+      "stonePixels": 9097,
+      "stoneRingPixels": 5947,
+      "stoneTopAllowancePixels": 0,
+      "stoneRingFraction": 0.6537319995602946,
+      "stoneAllowedFraction": 0.6537319995602946,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": true,
+        "centre": true,
+        "lowerDiamond": true,
+        "upperDiamond": true,
+        "stones": false
+      },
+      "failed": ["stones"],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 128,
+        "poolAboveFoamCap": 100,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 244.10959999999997,
+        "maxPoolLuma": 232.40359999999998
+      }
+    }
+  },
+  {
+    "id": "spring-sw-attempt-4",
+    "file": "raw/spring-sw-attempt-4.png",
+    "returned": [1254, 1254],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
+      "paintedBox": [173, 400, 1081, 850],
+      "centre": [627, 628.345703125],
+      "centreError": 1.345703125,
+      "paintedPixels": 318188,
+      "lowerOutside": 458,
+      "upperOutside": 116,
+      "upperBeyondAllowance": 99,
+      "stonePixels": 6984,
+      "stoneRingPixels": 6243,
+      "stoneTopAllowancePixels": 33,
+      "stoneRingFraction": 0.8939003436426117,
+      "stoneAllowedFraction": 0.8986254295532646,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": true,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": ["lowerDiamond", "upperDiamond", "stones"],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 8,
+        "poolAboveFoamCap": 0,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 249.14159999999998,
+        "maxPoolLuma": 217.71879999999996
+      }
+    }
+  }
+]

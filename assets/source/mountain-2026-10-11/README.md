@@ -1,8 +1,8 @@
 # Mountain source paintings
 
-The centred spring repaint is incomplete: image generation was refused by the
-account usage limit. The current springs are unchanged. See [REPAINT-STATUS.md](REPAINT-STATUS.md)
-for the prepared guides, checker, preserved attempts and remaining work.
+The centred spring repaint has reached its attempt limit. Four closest paintings
+are selected, with remaining geometry failures documented in
+[REPAINT-STATUS.md](REPAINT-STATUS.md). Every earlier painting remains in raw/.
 
 Issue #371. This folder holds the source paintings of three prompts: the C11 surface swatches,
 the C12 glacier materials and the C13 headwater springs. C12 was delivered on
@@ -27,12 +27,12 @@ in `raw/`.
   `check-glacier-material.mjs` writes `review/*-game-scale.png`, `review/game-scale-sheet.png`
   and `review/png-checks.json`.
 - **C13 springs.** Paintings `spring-ne.png`, `spring-se.png`, `spring-sw.png`, `spring-nw.png`;
-  rejected `raw/spring-ne-attempt-1.png` and `raw/spring-sw-attempt-1.png`.
+  all original and repaint attempts are preserved in `raw/`.
   `make-spring-guides.mjs` writes `guides/spring-*.png`, `spring-geometry.json` and
   `refs/ref-water.png`. `review-springs.mjs` writes `review/spring-*.png` and
   `review/verification.json`.
 
-`prompts.json` is one list of 20 entries, C11 first, then C12, then C13: one entry per image
+`prompts.json` is one list, C11 first, then C12, then C13 and its repaint calls: one entry per image
 call, rejected attempts included, each with its exact prompt, repository-relative references and
 the returned size. Each review script takes only its own entries (by file name) and writes the
 `returned` sizes back, so run Prettier on `prompts.json` after it. The review scripts leave the
@@ -81,17 +81,22 @@ placement and cave fitting belong to the finishing pass.
 
 ## C13: headwater springs
 
-Four directional springs, each a guide edit with five inputs: the spring guide, the style board,
-two rock props and a water reference. `art/343-water` was not on the remote when C13 was painted,
-so the water reference is the centre crop of `base-v1/terrain-water.png` that
-`make-spring-guides.mjs` writes to `refs/ref-water.png`, used for hue only.
+The four main springs now use centred scale-16 disc guides, with five ordered
+inputs per edit: guide, style board, reference-river.png, reference-bank.png and
+props-boulder.png. The earlier scale-8 springs and guides remain in raw/ and
+guides/ respectively. The river and bank references were copied byte-for-byte
+from origin/art/343-water; the old pixel water crop is not attached to repaint calls.
 
-`review-springs.mjs` writes 128×128 copies of the whole canvas (the nominal tile is 64 px wide)
-and records RGBA, alpha counts and SHA-256 for every painting in `review/verification.json`. The
-pool, the upwelling and the upstream stone crescent stay readable in all four. Extents, pool
-positions, stone scale and edges only approximate the guides: the finishing pass validates them
-against `spring-geometry.json`, replaces the downstream river band, cuts exact alpha and animates
-the upwelling.
+The attempts reached the limit without a fully compliant return. The closest
+NE 5, SE 2, SW 4 and NW 2 are selected; see REPAINT-STATUS.md for every failed
+criterion and review/selected-measurements.json for the numbers. These source
+paintings require the later finishing pass to validate the upstream material,
+replace the downstream river, set exact alpha and animate the upwelling.
+
+review-springs.mjs writes 64×64 full-canvas review copies for selected centred
+springs, where the whole tile is 64px wide. The pools and stone crescents read
+at that scale. review/verification.json records RGBA, alpha counts and SHA-256
+for all earlier and new paintings. Originals are never modified by review.
 
 ## Checks on Codex's machine
 
