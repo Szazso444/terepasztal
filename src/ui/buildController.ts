@@ -12,15 +12,15 @@ import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
-import { stationSpan, stationDef, LEVELS } from '../sim/stations';
+import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';
-import { rules } from '../sim/rules';
 import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
 import { structureFrame } from '../art/frames';
 import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
+import { harvestPreviewPerWeek } from './harvestPreview';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
@@ -57,6 +57,8 @@ export class BuildController {
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
+  /** this frame's Escape closed the tooltip stack (the keymap reads it first): it does nothing here */
+  private escapeSpent = false;
 
   constructor(
     private readonly input: Input,
@@ -81,6 +83,11 @@ export class BuildController {
     this.clearGhost();
     if (t.kind !== 'none') this.select(null);
     this.onToolChanged?.(t);
+  }
+
+  /** This frame's Escape is spent: it closed the tooltips, so the tool and the selection stay. */
+  takeEscape() {
+    this.escapeSpent = true;
   }
 
   select(s: Station | null) {
@@ -112,7 +119,9 @@ export class BuildController {
     const inMap = inBounds(this.builder.map, t.x, t.y);
     this.hoverStation = inMap ? (this.builder.stationAt(t.x, t.y) ?? null) : null;
     this.hoverBuilding = inMap ? (this.builder.buildingAt(t.x, t.y) ?? null) : null;
-    if (inp.wasPressed('Escape')) {
+    const escape = inp.wasPressed('Escape') && !this.escapeSpent;
+    this.escapeSpent = false;
+    if (escape) {
       if (this.tool.kind !== 'none') this.setTool({ kind: 'none' });
       else this.select(null);
     }
@@ -374,7 +383,7 @@ export class BuildController {
     if (this.turns()) parts.push(STR.build.rotate);
     if (def.terrain) {
       const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
-      const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;
+      const perWeek = harvestPreviewPerWeek(f);
       const cargo = def.produces[0]?.cargo;
       parts.push(STR.build.harvest(Math.round(perWeek), cargo ? cargoDef(cargo).name : '', f));
     }

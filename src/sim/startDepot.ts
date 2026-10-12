@@ -1,10 +1,10 @@
-import { Terrain, inBounds, startRegion, terrainAt, type GameMap } from '../world/tiles';
+import { inBounds, startRegion, terrainAt, type GameMap } from '../world/tiles';
 import type { TrackClass, TrackItem, TrackPiece } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Gauge } from '../data/content';
 import { STR } from '../strings';
 import { rules } from './rules';
-import type { Builder } from './build';
+import { unbuildable, type Builder } from './build';
 import { stationDef, stationFootprint, stationGates, type Station } from './stations';
 import { rotationAxis } from './rotation';
 import { gaugeOf, pieceClassFor } from './compat';
@@ -107,9 +107,8 @@ export function depotSiteBlocked(
     for (const g of stationGates(defId, x, y, rot)) {
       const why = unowned(g.x, g.y);
       if (why) return why;
-      const t = terrainAt(map, g.x, g.y);
-      if (t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain)
-        return STR.build.badTerrain;
+      const bad = unbuildable(terrainAt(map, g.x, g.y));
+      if (bad) return bad;
       if (builder.stationAt(g.x, g.y) || builder.decorAt(g.x, g.y) || builder.buildingAt(g.x, g.y))
         return STR.build.occupied;
       const there = track.get(g.x, g.y);

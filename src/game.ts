@@ -4,10 +4,15 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
-import { BrokenNumberWarning, saveOutcome, type SaveOutcome } from './engine/saveRefusal';
+import { applyTileRepairs, repairBuiltTiles } from './engine/loadRepair';
+import {
+  BrokenNumberWarning,
+  StorageRefusalWarning,
+  saveOutcome,
+  type SaveOutcome,
+} from './engine/saveRefusal';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
-import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
@@ -26,13 +31,27 @@ import { decorateProps, placeOilFields } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
-import { levelAt } from './world/elevation';
 import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
 import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
 import { GameClock, SIM_STEP } from './sim/time';
-import { Tooltip } from './ui/tooltip';
+import { Tooltip, type TipBuild } from './ui/tooltip';
+import { tipKey, type TipTarget } from './ui/tooltipStack';
+import { tipBuild } from './ui/tooltipRender';
+import type { TipDoc } from './ui/tooltipDoc';
+import {
+  chunkTip,
+  pickTip,
+  stationTip,
+  trainTip,
+  worksTip,
+  type PickSnapshot,
+  type StationSnapshot,
+  type TrainSnapshot,
+  type WorksSnapshot,
+} from './ui/tooltipContent';
+import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
 import { TrackGraph } from './world/track';
 import { Builder } from './sim/build';
@@ -86,13 +105,13 @@ import {
 } from './sim/save';
 import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, stationFootprint } from './sim/stations';
+import { Station, resetStationIds, weeklyOutput } from './sim/stations';
 import { ensureStartDepot, startDepotKind } from './sim/startDepot';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
-import { footprintOf, pieceFrame } from './world/track';
+import { pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
@@ -105,6 +124,7 @@ import {
   buildingFrame,
   buildingFromJSON,
   buildingFromLevel,
+  buildingRecipe,
   buildingToJSON,
   type Building,
 } from './sim/buildings';
@@ -123,11 +143,12 @@ import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
 import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
-import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
+import { biomeDef, biomeAt } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { HouseRegistry } from './sim/houses';
 import { PeopleSim } from './sim/people';
 import { expandSave, ownsBorderChunk } from './sim/expand';
+import { generatorOf, groundOf } from './sim/ground';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 import { SimStep, startStock, ageSnapshot as ageSnapshotOf } from './sim/step';
@@ -142,6 +163,14 @@ const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
 /** Relaid track pieces that start their shimmer in one frame; a long stroke's others follow. */
 const PIECE_HALOS_PER_FRAME = 12;
+
+/** What the pointer is on, for the tooltip stack: its target, and its content made when asked. */
+interface HoverTip {
+  target: TipTarget;
+  doc: () => TipDoc;
+}
+/** The targets whose tooltips change while they are up: storage, a works' status, a train's trip. */
+const LIVE_TIPS: ReadonlySet<TipTarget['kind']> = new Set(['station', 'works', 'train']);
 
 /**
  * Top-level orchestrator: owns renderer, camera, sim clock and the RTS/overview state machine. The
@@ -231,6 +260,8 @@ export class Game implements UiHost {
   private readonly autosavePause = new AutosavePause();
   /** a stretch of saves refused for a broken number warns once (`saveRefusal.ts`) */
   private readonly brokenNumberWarning = new BrokenNumberWarning();
+  /** and a stretch of saves refused by storage warns once, with its own text */
+  private readonly storageRefusalWarning = new StorageRefusalWarning();
   /** when the stored game was last written, for the settings screen */
   savedAt: number | null = null;
   weather!: Weather;
@@ -248,6 +279,14 @@ export class Game implements UiHost {
   viewTarget: 0 | 1 = 0;
   private cursor!: Sprite;
   private hoverTile = { x: -1, y: -1 };
+  /** the station, works or train the tooltip root stands for, rebuilt while it is up (#361) */
+  private tipLive: { key: string; build: TipBuild } | null = null;
+  /** what was up at the last frame: a tool taken up, a screen or a menu opening closes the tooltips */
+  private tipsSaw: { tool: boolean; screen: object | null; menu: boolean } = {
+    tool: false,
+    screen: null,
+    menu: false,
+  };
   private uiRoot: HTMLElement;
   private depthOverlay = false;
   private overviewSource: OverviewSource = {
@@ -332,6 +371,8 @@ export class Game implements UiHost {
   };
 
   readonly spec: WorldSpec;
+  /** what building a generated world's map from its stored ground did; null for a level */
+  private ground: ReturnType<typeof groundOf> | null = null;
   /** play = normal game; editor = level editor (free building, paused clock) */
   mode: 'play' | 'editor' = 'play';
   editor: Editor | null = null;
@@ -577,6 +618,7 @@ export class Game implements UiHost {
   saveSlot(name: string) {
     const out = this.storeSnapshot(this.snapshot(), (s) => writeSlot(name, s));
     this.brokenNumberWarning.note(out.kind);
+    this.storageRefusalWarning.note(out.kind);
     this.saveToast(out, STR.settings.slotSaved(name));
     return out.kind === 'stored';
   }
@@ -646,6 +688,8 @@ export class Game implements UiHost {
   private reloadIntoStoredSave(seed: number) {
     this.keepStoredSave = true;
     this.loop.stop();
+    // nothing of the game being left stays up, nor opens while the page reloads
+    this.tooltip.stack.closeAll();
     location.hash = `seed=${seed}`;
     location.reload();
   }
@@ -762,21 +806,25 @@ export class Game implements UiHost {
         const v = prompt(STR.settings.seedPlaceholder, String(this.map.seed));
         if (v === null) return;
         const seed = this.parseSeed(v);
-        const fresh = generateMapForEditor(seed, {
-          w: this.map.w,
-          h: this.map.h,
-          waterLevel: rules.waterLevel,
-          hillLevel: rules.hillLevel,
-          rockLevel: rules.rockLevel,
-          forestDensity: rules.forestDensity,
-        });
+        const fresh = generateMapForEditor(
+          seed,
+          {
+            w: this.map.w,
+            h: this.map.h,
+            waterLevel: rules.waterLevel,
+            hillLevel: rules.hillLevel,
+            rockLevel: rules.rockLevel,
+            forestDensity: rules.forestDensity,
+          },
+          this.supply,
+        );
         editor.fillAll(TerrainEnum.Grass);
         this.map.terrain.set(fresh.terrain);
         this.map.variant.set(fresh.variant);
         this.map.biome.set(fresh.biome);
         this.map.seed = seed;
         decorateProps(this.map, seed);
-        placeOilFields(this.map, seed);
+        placeOilFields(this.map, seed, this.supply);
         for (let y = 0; y < this.map.h; y++)
           for (let x = 0; x < this.map.w; x++) this.world.retile(x, y);
         editor.dirty = true;
@@ -809,10 +857,12 @@ export class Game implements UiHost {
     await this.atlas.load(ATLAS_GROUPS);
     buildCompatTable();
 
-    this.map =
-      this.spec.kind === 'level'
-        ? mapFromLevel(this.spec.level)
-        : generateMap(this.spec.seed, this.spec.params);
+    if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
+    else {
+      // a generated world's stored ground, the chunks it lacks generated with its chain and stored
+      this.ground = groundOf(this.spec, generatorOf(this.supply));
+      this.map = this.ground.map;
+    }
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -959,6 +1009,7 @@ export class Game implements UiHost {
         this.builder.buildingAt(x, y) ||
         this.builder.decorAt(x, y)
       );
+    this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
     this.overview.root.visible = false;
@@ -970,7 +1021,7 @@ export class Game implements UiHost {
     this.fog = new Fog(this.atlas);
     this.world.root.addChildAt(
       this.dayNight.overlay,
-      this.world.root.getChildIndex(this.world.objects),
+      this.world.root.getChildIndex(this.world.harvest.layer),
     );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
@@ -1128,8 +1179,8 @@ export class Game implements UiHost {
    * Store the game; says so unless `silent`; false when it was refused: by storage, or because the
    * game holds a broken number (`writeSave`). Nothing is written while the page reloads into a save
    * just stored (`reloadIntoStoredSave`). A silent save is one the player did not ask for, and none
-   * is written after a loop error (`autosavePause`); a silent one refused for a broken number
-   * warns once until some save has gone through, and one refused by storage says nothing.
+   * is written after a loop error (`autosavePause`); a silent one refused warns once for each
+   * reason (a broken number, storage) until some save has gone through.
    */
   save(silent = false) {
     if (this.keepStoredSave) return false;
@@ -1137,42 +1188,23 @@ export class Game implements UiHost {
     const snap = this.snapshot();
     const out = this.storeSnapshot(snap, writeSave);
     if (out.kind === 'stored') this.savedAt = snap.savedAt;
-    const warn = this.brokenNumberWarning.note(out.kind);
+    const broken = this.brokenNumberWarning.note(out.kind);
+    const storage = this.storageRefusalWarning.note(out.kind);
     if (!silent) this.saveToast(out, STR.settings.saved);
-    else if (warn) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    else if (broken) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    else if (storage) this.toasts.push(STR.settings.autosaveFailed, 'warn');
     return out.kind === 'stored';
   }
 
   /**
-   * Terrain is regenerated on load; anything the player built must still stand on buildable
-   * ground (a regenerated stone field or lake under a station would strand it).
+   * Ground generated on load (a save's first load, a stored chunk that could not be read) need not
+   * be what was built on; anything the player built must still stand on ground that allows it. The
+   * repair is `repairBuiltTiles`; it changes the map in memory and never a stored chunk's text.
    */
   private fixBuiltTiles(j: SaveGame) {
-    const bridges = new Set(
-      (j.buildings ?? [])
-        .filter((b) => buildingDef(b[2]).bridge)
-        .map((b) => b[1] * this.map.w + b[0]),
-    );
-    const fix = (x: number, y: number, bridge = false) => {
-      if (!inBounds(this.map, x, y)) return;
-      const t = terrainAt(this.map, x, y);
-      if (
-        bridge
-          ? t !== Terrain.Water
-          : t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain
-      ) {
-        this.map.terrain[y * this.map.w + x] = bridge ? Terrain.Water : Terrain.Grass;
-        this.map.props.delete(y * this.map.w + x);
-        this.world.retile(x, y);
-      }
-    };
-    for (const [x, y, kind, rot, cls] of j.track)
-      for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
-        fix(f.x, f.y, kind === 'bridge' || bridges.has(f.y * this.map.w + f.x));
-    for (const s of j.stations)
-      for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) fix(f.x, f.y);
-    for (const [x, y] of j.decor ?? []) fix(x, y);
-    for (const [x, y, id] of j.buildings ?? []) fix(x, y, !!buildingDef(id).bridge);
+    const repairs = repairBuiltTiles(this.map, j);
+    applyTileRepairs(this.map, repairs);
+    for (const r of repairs) this.world.retile(r.x, r.y);
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
@@ -1261,6 +1293,14 @@ export class Game implements UiHost {
     this.restoringWorld = false;
     this.refreshBridges();
     audio.setAge(ageDef(this.economy.tier).id);
+    // ground generated as the save loaded is stored at once; stored ground unread is reported
+    if (this.ground?.unreadable.length) {
+      const text = STR.saves.groundUnreadable(this.ground.unreadable.length);
+      this.toasts.push(text, 'warn');
+      this.notices.push({ key: 'save:ground', kind: 'warn', text, target: null }, 180);
+    }
+    if (this.ground?.added.length && !this.save(true))
+      this.toasts.push(STR.saves.groundUnsaved, 'warn');
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1766,12 +1806,16 @@ export class Game implements UiHost {
         setIntentAndReload({ action: 'continue', keepSpeed: true });
         return true;
       }
+      this.toasts.push(STR.overview.growRefused, 'warn');
     }
     this.world.rebuildFog();
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toasts.push(STR.overview.bought, 'good');
     if (held) this.toasts.push(STR.overview.growHeld, 'warn');
+    // an inner purchase is stored at once, as the autosave stores: every refusal of it applies
+    // (autosave off, a loop error, a reload into a stored save, storage); a ring was written above
+    if (!edge && this.settings.autosave && this.mode === 'play') this.save(true);
     return true;
   }
   private trackTilesForOverview() {
@@ -1834,36 +1878,6 @@ export class Game implements UiHost {
   /** Traffic control and statistics (`game.traffic.report()` in the console; `verbose` logs episodes). */
   get traffic() {
     return this.fleet.traffic;
-  }
-  /** What a bare tile is and what sits on it, for the hover tooltip. */
-  private tileInfo(x: number, y: number): { title: string; lines: string[] } {
-    const t = terrainAt(this.map, x, y);
-    const T = STR.tile;
-    const title = T.terrain[TERRAIN_NAMES[t]] ?? TERRAIN_NAMES[t];
-    const lines: string[] = [
-      biomeSummary(biomeAt(this.map, x, y)),
-      T.elevation(levelAt(this.map, x, y)),
-    ];
-    if (!this.regions.isTileUnlocked(x, y)) lines.push(T.uncharted);
-    const piece = this.track.get(x, y);
-    if (piece) lines.push(T.track(piece.kind));
-    const dec = this.builder.decorAt(x, y);
-    if (dec) {
-      lines.push(decorDefOf(dec.id).name);
-      lines.push(...DecorPanel.lines(dec, this.builder, this.power, this.houses));
-    }
-    const props = this.map.props.get(y * this.map.w + x);
-    if (props?.length) {
-      const kinds = new Map<string, number>();
-      for (const p of props) kinds.set(p.kind, (kinds.get(p.kind) ?? 0) + 1);
-      lines.push([...kinds].map(([k, n]) => (n > 1 ? `${n}× ${k}` : k)).join(', '));
-    }
-    if (this.power.isPowered(x, y)) lines.push(T.powered);
-    const tm = this.builder.terrainMul(x, y);
-    if (tm === 0) lines.push(T.noTrack);
-    else if (tm !== 1) lines.push(T.trackCost(tm));
-    if (t === Terrain.Water) lines.push(T.water);
-    return { title, lines };
   }
   /** Tile position of a notice's object, or null. */
   private noticePos(n: Notice): { x: number; y: number } | null {
@@ -2131,6 +2145,8 @@ export class Game implements UiHost {
   }
   /** The camera over a world point (the minimap). */
   centerCamera(wx: number, wy: number) {
+    // a pan from the minimap closes the tooltips as the field's own pans do
+    this.tooltip.stack.closeAll();
     this.camera.centerOn(wx, wy);
   }
 
@@ -2162,6 +2178,7 @@ export class Game implements UiHost {
     this.camera.viewW = this.app.screen.width;
     this.camera.viewH = this.app.screen.height;
     this.handleInput(dt);
+    this.closeTipsOnChange();
     this.camera.update(dt);
     this.updateViewBlend(dt);
     if (this.railsDirty) this.refreshRails();
@@ -2216,6 +2233,13 @@ export class Game implements UiHost {
       !this.menuOpen;
     this.updateFieldTrains(fieldActive);
     this.build.update(fieldActive);
+    this.world.harvest.follow(
+      fieldActive ? this.hoverTile : null,
+      this.build,
+      this.season ?? 'spring',
+    );
+    // the hovered tile's outline takes the colour the harvest layer gives it (#335)
+    this.cursor.tint = this.world.harvest.outline;
     this.updateRtsTooltip();
     this.hud.update(this.economy);
     this.resourceBar.update(this.stock, (id) => this.stockCap(id));
@@ -2270,50 +2294,162 @@ export class Game implements UiHost {
     };
   }
 
+  /**
+   * The field's tooltip (#337, #361): what the pointer is on goes to the tooltip stack. With a
+   * tool in hand the stack is the build controller's (#336), so the game leaves it alone.
+   */
   private updateRtsTooltip() {
-    if (this.viewTarget !== 0) return;
-    // over a panel the field's tooltip goes, rather than staying where the pointer left the map
-    if (this.input.overUi) {
-      this.tooltip.hide();
-      return;
-    }
+    if (this.viewTarget !== 0 || this.build.tool.kind !== 'none') return;
+    this.hoverTip(this.fieldTip());
+  }
+
+  /** What the pointer is on in the field and its tooltip: a train, a station, a works, a tile. */
+  private fieldTip(): HoverTip | null {
+    const ht = this.fieldHover;
     const st = this.build.hoverStation;
     const bld = this.build.hoverBuilding;
-    const ht = this.fieldHover;
-    if (ht && this.build.tool.kind === 'none') {
-      const d = this.describePick({ kind: 'train', id: ht.id });
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, d.title, [
-        ...d.lines,
-        STR.train.clickHint,
-      ]);
-    } else if (st && this.build.tool.kind === 'none') {
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, st.name, [
-        STR.station.level(st.level),
-        ...(st.work
-          ? [STR.upgrade.closed, STR.upgrade.running(st.work.to, hoursLeft(st.work))]
-          : []),
-        `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
-        biomeSummary(biomeAt(this.map, st.x, st.y)),
-      ]);
-    } else if (
-      this.build.tool.kind === 'none' &&
-      !st &&
-      !bld &&
-      inBounds(this.map, this.hoverTile.x, this.hoverTile.y)
-    ) {
-      const info = this.tileInfo(this.hoverTile.x, this.hoverTile.y);
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, info.title, info.lines);
-    } else if (bld && this.build.tool.kind === 'none') {
-      const def = buildingDefOf(bld.id);
-      const status = BuildingPanel.status(bld, this.stock);
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, def.name, [
-        BuildingPanel.recipeText(bld.id),
-        // closed while it is upgraded, which the status says
-        status.text,
-        ...(bld.work ? [STR.upgrade.running(bld.work.to, hoursLeft(bld.work))] : []),
-        `${STR.building.rate}: ${STR.station.perWeek(Math.round(bld.rate * 10) / 10)}`,
-      ]);
-    } else this.tooltip.hide();
+    const { x, y } = this.hoverTile;
+    if (ht)
+      return {
+        target: { kind: 'train', id: ht.id },
+        doc: () => trainTip(this.trainSnap(ht), true),
+      };
+    if (st)
+      return {
+        target: { kind: 'station', id: st.id },
+        doc: () => stationTip(this.stationSnap(st)),
+      };
+    if (bld)
+      return {
+        target: { kind: 'works', id: `${bld.x},${bld.y}` },
+        doc: () => worksTip(this.worksSnap(bld)),
+      };
+    if (!inBounds(this.map, x, y)) return null;
+    return {
+      target: { kind: 'tile', x, y, tool: 'none' },
+      doc: () => tileTip(this.tileSnap(x, y)),
+    };
+  }
+
+  /**
+   * Tell the tooltip stack where the pointer is (#361). Over the map it gets the target and a
+   * builder it runs only once the pointer has rested there, so a sweep builds nothing. Over a
+   * panel or out of the window the pointer has left; in the stack itself the stack follows it on
+   * its own. Then the root's live content is rebuilt, wherever the pointer is (`update` keeps that
+   * to 4 times a second).
+   */
+  private hoverTip(tip: HoverTip | null) {
+    const stack = this.tooltip.stack;
+    const inp = this.input;
+    if (inp.overTips) {
+      // in a locked tooltip: the stack has the pointer
+    } else if (inp.overUi || !inp.mouseInside) stack.leave();
+    else {
+      const build: TipBuild = tip ? tipBuild(this.atlas, tip.doc) : () => [];
+      // a locked root goes on standing for its own target while the pointer moves on
+      if (!stack.isLocked(0))
+        this.tipLive =
+          tip && LIVE_TIPS.has(tip.target.kind) ? { key: tipKey(tip.target), build } : null;
+      stack.hover(tip && tipKey(tip.target), inp.mouseX, inp.mouseY, build);
+    }
+    if (this.tipLive) stack.update(this.tipLive.key, this.tipLive.build);
+  }
+
+  /**
+   * Close the tooltip stack on what only the game sees (#361): a click on the map (the stack
+   * closes itself on a click outside it, but only while a tooltip is open), a tool taken up, a
+   * screen or a menu opening. The camera, the view switch and a load close it where they happen.
+   */
+  private closeTipsOnChange() {
+    const was = this.tipsSaw;
+    const now = {
+      tool: this.build.tool.kind !== 'none',
+      screen: this.screens.current,
+      menu: this.menuOpen,
+    };
+    this.tipsSaw = now;
+    if (
+      this.input.buttonPressed.size > 0 ||
+      (now.tool && !was.tool) ||
+      (now.screen && now.screen !== was.screen) ||
+      (now.menu && !was.menu)
+    )
+      this.tooltip.stack.closeAll();
+  }
+
+  // ---------------------------------------------------------------- tooltip snapshots (src/ui)
+  private stationSnap(st: Station): StationSnapshot {
+    return {
+      name: st.name,
+      level: st.level,
+      work: st.work ? { to: st.work.to, hoursLeft: hoursLeft(st.work) } : null,
+      stored: st.totalStored(),
+      capacity: st.capacity,
+      biome: biomeAt(this.map, st.x, st.y),
+      weeklyAtLevel1: weeklyOutput(1, 1),
+    };
+  }
+  private worksSnap(b: Building): WorksSnapshot {
+    const def = buildingDefOf(b.id);
+    return {
+      name: def.name,
+      // the recipe it runs at its level
+      recipe: buildingRecipe(b),
+      altIn: def.altIn,
+      status: BuildingPanel.statusKind(b, this.stock),
+      work: b.work ? { to: b.work.to, hoursLeft: hoursLeft(b.work) } : null,
+      rate: b.rate,
+    };
+  }
+  private trainSnap(t: Train): TrainSnapshot {
+    const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
+    return {
+      name: t.name,
+      state: t.state,
+      blocked: t.blocked,
+      next: next?.name ?? null,
+      cargo: t.totalCargo(),
+      weight: t.weight,
+      power: t.power,
+    };
+  }
+  private tileSnap(x: number, y: number): TileSnapshot {
+    const dec = this.builder.decorAt(x, y);
+    return {
+      map: this.map,
+      x,
+      y,
+      charted: this.regions.isTileUnlocked(x, y),
+      track: this.track.get(x, y)?.kind ?? null,
+      decor: dec
+        ? {
+            name: decorDefOf(dec.id).name,
+            lines: DecorPanel.lines(dec, this.builder, this.power, this.houses),
+          }
+        : null,
+      props: (this.map.props.get(y * this.map.w + x) ?? []).map((p) => p.kind),
+      powered: this.power.isPowered(x, y),
+      trackCostFactor: this.builder.terrainMul(x, y),
+      weeklyAtLevel1: weeklyOutput(1, 1),
+    };
+  }
+  /** What the overview picked, as it is now; a station or a train since gone says so. */
+  private pickSnap(p: { kind: 'station' | 'train'; id: number }): PickSnapshot {
+    if (p.kind === 'station') {
+      const s = this.builder.stationById(p.id);
+      if (s)
+        return {
+          kind: 'station',
+          name: s.name,
+          level: s.level,
+          stored: s.totalStored(),
+          capacity: s.capacity,
+        };
+    } else {
+      const t = this.fleet.byId(p.id);
+      if (t) return { kind: 'train', ...this.trainSnap(t) };
+    }
+    return { kind: 'gone', of: p.kind, id: p.id };
   }
 
   private handleInput(dt: number) {
@@ -2327,7 +2463,11 @@ export class Game implements UiHost {
       const dir = inp.wheelDelta > 0 ? -1 : 1; // wheel down = zoom out
       if (this.viewTarget === 0) {
         if (dir < 0 && this.camera.zoomIndex === 0) this.setView(1);
-        else this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+        else {
+          // a zoom moves the map under the tooltips: they close
+          this.tooltip.stack.closeAll();
+          this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+        }
       } else if (dir > 0) {
         const t = this.overviewTileAt(inp.mouseX, inp.mouseY);
         if (t) this.returnToRts(t.x, t.y);
@@ -2355,13 +2495,17 @@ export class Game implements UiHost {
         if (inp.mouseY < EDGE_MARGIN) dy -= 1;
         if (inp.mouseY > this.camera.viewH - EDGE_MARGIN) dy += 1;
       }
+      // a pan moves the map under the tooltips: they close
       if (dx || dy) {
         const l = Math.hypot(dx, dy);
+        this.tooltip.stack.closeAll();
         this.camera.pan((dx / l) * PAN_SPEED * dt, (dy / l) * PAN_SPEED * dt);
       }
       // middle-drag
-      if (inp.buttons.has(1) && (inp.dragDX || inp.dragDY))
+      if (inp.buttons.has(1) && (inp.dragDX || inp.dragDY)) {
+        this.tooltip.stack.closeAll();
         this.camera.pan(-inp.dragDX, -inp.dragDY);
+      }
     } else if (this.viewBlend > 0.99) {
       this.handleOverviewPointer();
     }
@@ -2376,17 +2520,16 @@ export class Game implements UiHost {
     const hoverChunk = hoverTile ? this.regions.regionIndex(hoverTile.x, hoverTile.y) : -1;
     const buyable =
       hoverChunk >= 0 && !this.regions.unlocked[hoverChunk] && this.regions.isRevealed(hoverChunk);
-    if (pick) {
-      const info = this.describePick(pick);
-      this.tooltip.show(inp.mouseX, inp.mouseY, info.title, info.lines);
-    } else if (buyable)
-      this.tooltip.show(
-        inp.mouseX,
-        inp.mouseY,
-        STR.overview.chunkTitle,
-        STR.overview.chunkLines(fmtMoney(this.regions.price(hoverChunk))),
-      );
-    else this.tooltip.hide();
+    this.hoverTip(
+      pick
+        ? { target: { kind: pick.kind, id: pick.id }, doc: () => pickTip(this.pickSnap(pick)) }
+        : buyable
+          ? {
+              target: { kind: 'chunk', id: hoverChunk },
+              doc: () => chunkTip({ price: this.regions.price(hoverChunk) }),
+            }
+          : null,
+    );
     for (const c of inp.clicks) {
       if (c.button !== 0) continue;
       const p = this.overview.pick(...this.overviewLocalTuple(c.x, c.y));
@@ -2470,35 +2613,6 @@ export class Game implements UiHost {
     else this.overviewBanner.textContent = STR.overview.hint;
   }
 
-  /** Overridable hooks for later milestones. */
-  describePick(p: { kind: 'station' | 'train'; id: number }): { title: string; lines: string[] } {
-    if (p.kind === 'station') {
-      const s = this.builder.stationById(p.id);
-      if (s)
-        return {
-          title: s.name,
-          lines: [
-            STR.station.level(s.level),
-            `${STR.station.storage}: ${Math.floor(s.totalStored())} / ${s.capacity}`,
-          ],
-        };
-    }
-    if (p.kind === 'train') {
-      const t = this.fleet.byId(p.id);
-      if (t) {
-        const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
-        return {
-          title: t.name,
-          lines: [
-            `${t.blocked && t.state === 'moving' ? STR.depot.state.held : STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
-            STR.depot.cargo(Math.round(t.totalCargo())),
-            `${Math.round(t.weight)} / ${Math.round(t.power)} t`,
-          ],
-        };
-      }
-    }
-    return { title: `${p.kind} #${p.id}`, lines: [] };
-  }
   pickPosition(p: { kind: 'station' | 'train'; id: number }): { x: number; y: number } | null {
     const list =
       p.kind === 'station' ? this.overviewSource.stations() : this.overviewSource.trains();
@@ -2513,12 +2627,13 @@ export class Game implements UiHost {
   setView(v: 0 | 1) {
     if (this.viewTarget === v) return;
     this.viewTarget = v;
+    // the map and the overview do not share their tooltips
+    this.tooltip.stack.closeAll();
     this.overviewBanner.classList.toggle('show', v === 1);
     this.toolbar.root.style.display = v === 1 ? 'none' : '';
     this.townPanel.show(v === 1);
     if (v === 1) this.build.setTool({ kind: 'none' });
     if (v === 0) {
-      this.tooltip.hide();
       this.overview.hover = null;
       this.ovSelected = null;
       this.recording = null;

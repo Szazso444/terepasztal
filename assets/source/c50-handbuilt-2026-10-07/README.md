@@ -34,7 +34,7 @@ from the repository root (`tools/asset-pipeline/AGENTS.md` has the setup):
 
 ```sh
 # cloud: the Python with bpy 5.2.1, CPU renders
-~/bpy-env/bin/python tools/asset-pipeline/blender_runner.py assets/source/c50-handbuilt-2026-10-07/build.py
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/blender_runner.py assets/source/c50-handbuilt-2026-10-07/build.py
 # author's PC: Blender 5.2 executable, review renders on the CUDA GPU
 python tools/asset-pipeline/blender_runner.py --blender <blender.exe> assets/source/c50-handbuilt-2026-10-07/build.py --device cuda
 ```

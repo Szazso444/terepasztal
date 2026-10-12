@@ -1,9 +1,67 @@
-import { Terrain, Biome, type GameMap } from '../world/tiles';
+import { Terrain, climateAtIndex, type GameMap } from '../world/tiles';
 
 export type LandscapeMap = Pick<
   GameMap,
-  'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome'
+  'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome' | 'climate'
 >;
+/** The cells of the packed surface sheet, by material index (names in tools/terrain-surfaces.mjs). */
+export const Material = {
+  Grass: 0,
+  Forest: 1,
+  Desert: 2,
+  Taiga: 3,
+  Swamp: 4,
+  Water: 5,
+  Sand: 6,
+  Rock: 7,
+  City: 8,
+  Mountain: 9,
+} as const;
+/**
+ * The material each biome stands for, by biome id. Ids are appended and never renumbered
+ * (src/sim/biomes.ts), so a biome added later needs its entry here: an id with none paints as
+ * plains grass, never as the material that happens to share its number.
+ */
+export const BIOME_MATERIAL: readonly number[] = [
+  Material.Grass, // 0 plains
+  Material.Forest, // 1 forest
+  Material.Desert, // 2 desert
+  Material.Taiga, // 3 taiga
+  Material.Swamp, // 4 swamp
+  Material.Grass, // 5 ocean: the land in it is an island of plains grass
+  Material.Water, // 6 lake
+  Material.Water, // 7 river
+  Material.Sand, // 8 beach
+  Material.Rock, // 9 mountain
+];
+/** The material of a biome id; plains grass for an id the table does not know. */
+export function biomeMaterial(biome: number): number {
+  return BIOME_MATERIAL[biome] ?? Material.Grass;
+}
+/**
+ * The ground a biome lays under grass and hills, and between the stones of rock. Water and rock
+ * are not ground, so a water or mountain biome (grass or hills there come only from the editor)
+ * gives plains grass.
+ */
+export function groundMaterial(biome: number): number {
+  const material = biomeMaterial(biome);
+  return material === Material.Water || material === Material.Rock ? Material.Grass : material;
+}
+/**
+ * The ground between the stones of the rock or mountain tile with index `tile` (`y * w + x`): its
+ * climate's ground, whatever its biome. A map without a climate plane reads its biome, as before.
+ */
+export function stoneGroundAt(map: LandscapeMap, tile: number): number {
+  return groundMaterial(climateAtIndex(map, tile));
+}
+/**
+ * The level where snow starts to show on the tile with index `tile`: the `snowLevel` of its
+ * climate (src/data/biomes.json), read from `snowLevels` indexed by biome id. The painter runs
+ * in a worker that cannot read the content tables, so the table travels with the map.
+ */
+export function snowLineAt(map: LandscapeMap, snowLevels: readonly number[], tile: number): number {
+  return snowLevels[climateAtIndex(map, tile)] ?? snowLevels[0];
+}
 export const MATERIAL_COLORS = [
   [110, 125, 69],
   [88, 106, 60],
@@ -35,12 +93,13 @@ export function landscapeNoise(x: number, y: number, seed: number): number {
 export function materialAt(map: LandscapeMap, x: number, y: number) {
   const k = clamp(Math.round(y), map.h - 1) * map.w + clamp(Math.round(x), map.w - 1);
   const t = map.terrain[k],
-    b = map.biome[k];
-  if (t === Terrain.Water) return 5;
-  if (t === Terrain.Sand) return b === Biome.Desert ? 2 : 6;
-  if (t === Terrain.Rock || t === Terrain.Mountain) return 7;
-  if (t === Terrain.Forest) return b === Biome.Swamp ? 4 : b === Biome.Taiga ? 3 : 1;
-  return b === Biome.Ocean ? 0 : b;
+    own = biomeMaterial(map.biome[k]);
+  if (t === Terrain.Water) return Material.Water;
+  if (t === Terrain.Sand) return own === Material.Desert ? Material.Desert : Material.Sand;
+  if (t === Terrain.Rock || t === Terrain.Mountain) return Material.Rock;
+  if (t === Terrain.Forest)
+    return own === Material.Swamp || own === Material.Taiga ? own : Material.Forest;
+  return groundMaterial(map.biome[k]);
 }
 
 /** Visual relief only: generation, terrain membership, costs and saves stay unchanged. */

@@ -50,3 +50,28 @@ export class BrokenNumberWarning {
     return true;
   }
 }
+
+/**
+ * `BrokenNumberWarning`'s twin for saves refused by storage (full or blocked): a stored game grows
+ * with the ground it keeps, so a world that once fit can be refused every minute, and the player is
+ * told once rather than left believing the game is saved. Its own latch with its own text: it
+ * answers true when a write is refused for storage and none has been warned about since the last
+ * stored save. A refusal for a broken number neither lifts nor sets it, and a stored save lifts it.
+ * A manual save shows its own text for a refusal and feeds the latch all the same.
+ *
+ * Held in memory only: a reload starts clean.
+ */
+export class StorageRefusalWarning {
+  private warned = false;
+
+  /** The outcome of one write; true when the player is to be warned about it now. */
+  note(kind: SaveOutcome['kind']): boolean {
+    if (kind === 'stored') {
+      this.warned = false;
+      return false;
+    }
+    if (kind === 'broken number' || this.warned) return false;
+    this.warned = true;
+    return true;
+  }
+}

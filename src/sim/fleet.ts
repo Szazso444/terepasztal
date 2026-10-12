@@ -306,7 +306,8 @@ export class Fleet {
         if (out2 === undefined) break;
         run += this.track.segLength(cx, cy, cin, out2);
         tiles++;
-        if (run >= need + 0.5) break;
+        // a consist shorter than half a tile still needs the gate's onward tile checked
+        if (run >= need + 0.5 && tiles >= 2) break;
         const nx = cx + DIR_DX[out2];
         const ny = cy + DIR_DY[out2];
         if (!this.track.connected(cx, cy, out2)) break;

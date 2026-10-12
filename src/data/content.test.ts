@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PAST_SHIPPED } from './pastShipped';
+import { forAll } from '../testing/property';
 import type { ContentBundle, ContentKey, HouseConfig, StationLevels, TrackConfig } from './content';
 
 type ContentModule = typeof import('./content');
@@ -114,10 +115,15 @@ function oldBundle(edit: (b: ContentBundle) => void) {
  */
 const PAST = {
   houses: () => clone(PRE_92_HOUSES),
-  stations: () => ({
-    levels: clone(PRE_92_STATION_LEVELS) as unknown as StationLevels,
-    defs: clone(shipped.DEFAULT_CONTENT.stations.defs),
-  }),
+  stations: () => {
+    const defs = clone(shipped.DEFAULT_CONTENT.stations.defs);
+    // the pump before it had ground rules of its own (#320)
+    const pump = defs.find((d) => d.id === 'pump')!;
+    delete pump.standOn;
+    delete pump.needsWater;
+    pump.flavor = 'Pumps water for steam engines and the works. Fills water tanks completely.';
+    return { levels: clone(PRE_92_STATION_LEVELS) as unknown as StationLevels, defs };
+  },
   buildings: () => {
     const list = clone(shipped.DEFAULT_CONTENT.buildings);
     delete list.find((b) => b.id === 'kiln')!.lastTier;
@@ -263,6 +269,97 @@ describe('validateContent', () => {
       brk(b);
       expect(() => shipped.validateContent(b), `break ${i}`).not.toThrow();
       expect(shipped.validateContent(b), `break ${i}`).not.toEqual([]);
+    });
+  });
+
+  describe('a vehicle length of its own (#344)', () => {
+    /** The shipped bundle's problems with `length` set on the first entry of `table`. */
+    function withLength(length: unknown, table: 'locomotives' | 'wagons' = 'locomotives') {
+      const b = clone(shipped.DEFAULT_CONTENT);
+      (b[table][0] as unknown as Table).length = length;
+      return shipped.validateContent(b);
+    }
+    const IN_RANGE = [0.3, 0.82, 1, 1.56, 2.5, 3.5];
+    const OUT = [0.29, 3.51, 0, -1, NaN, Infinity, null, '1', true, [1], { tiles: 1 }];
+
+    it('takes a locomotive length from 0.3 to 3.5 tiles', () => {
+      for (const n of IN_RANGE) expect(withLength(n), String(n)).toEqual([]);
+    });
+
+    it('refuses anything else with one problem naming the locomotive and the field', () => {
+      const id = shipped.DEFAULT_CONTENT.locomotives[0].id;
+      for (const v of OUT) {
+        const problems = withLength(v);
+        expect(problems, JSON.stringify(v)).toHaveLength(1);
+        expect(problems[0], JSON.stringify(v)).toMatch(
+          new RegExp(`^locomotive ${id}: length must be between 0\\.3 and 3\\.5 tiles, not `),
+        );
+      }
+    });
+
+    it('holds a wagon that carries a length to the same range', () => {
+      const id = shipped.DEFAULT_CONTENT.wagons[0].id;
+      for (const n of IN_RANGE) expect(withLength(n, 'wagons'), String(n)).toEqual([]);
+      for (const v of OUT)
+        expect(withLength(v, 'wagons'), JSON.stringify(v)).toEqual([
+          expect.stringMatching(new RegExp(`^wagon ${id}: length must be between`)),
+        ]);
+    });
+
+    it('applies a stored locomotives table with a length, and sets one out of range aside with its problem', async () => {
+      const locos = clone(shipped.DEFAULT_CONTENT.locomotives);
+      locos[1].length = 0.82;
+      let mod = await load(stamped({ locomotives: locos }));
+      expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+      expect(mod.content.locomotives[1].length).toBe(0.82);
+      locos[1].length = 4;
+      mod = await load(stamped({ locomotives: locos }));
+      expect(mod.content.locomotives).toEqual(shipped.content.locomotives);
+      expect(mod.contentOverrideReport().setAside).toEqual([
+        {
+          key: 'locomotives',
+          reason: 'invalid',
+          problems: [`locomotive ${locos[1].id}: length must be between 0.3 and 3.5 tiles, not 4`],
+        },
+      ]);
+    });
+
+    /** A value as written in a failure: JSON writes NaN and the infinities as null, -0 as 0. */
+    const spell = (v: unknown) =>
+      Object.is(v, -0) ? '-0' : typeof v === 'number' ? String(v) : JSON.stringify(v);
+
+    it('takes exactly the numbers from 0.3 to 3.5 on any entry, and names the entry it refuses', () => {
+      forAll(
+        (rng) => {
+          const table = rng.pick(['locomotives', 'wagons'] as const);
+          const at = rng.int(0, shipped.DEFAULT_CONTENT[table].length - 1);
+          const end = rng.pick([0.3, 3.5]);
+          const value: unknown = rng.pick([
+            () => rng.range(-1, 5),
+            () => rng.range(0.3, 3.5),
+            // either side of an end, by a hair or a step
+            () => end * (1 + rng.pick([-1e-12, 0, 1e-12, -1e-3, 1e-3])),
+            () =>
+              rng.pick([NaN, Infinity, -Infinity, -0, null, '1.5', true, [1.5], { tiles: 1.5 }]),
+          ])();
+          return { table, at, value };
+        },
+        ({ table, at, value }) => {
+          const b = clone(shipped.DEFAULT_CONTENT);
+          (b[table][at] as unknown as Table).length = value;
+          const problems = shipped.validateContent(b);
+          const fits = typeof value === 'number' && value >= 0.3 && value <= 3.5;
+          if (fits) {
+            expect(problems).toEqual([]);
+            return;
+          }
+          const kind = table === 'locomotives' ? 'locomotive' : 'wagon';
+          const named = `${kind} ${shipped.DEFAULT_CONTENT[table][at].id}: length must be between 0.3 and 3.5 tiles`;
+          expect(problems).toHaveLength(1);
+          expect(problems[0].slice(0, named.length)).toBe(named);
+        },
+        { format: (c) => `${c.table}[${c.at}].length = ${spell(c.value)}` },
+      );
     });
   });
 });

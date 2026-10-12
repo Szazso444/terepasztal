@@ -209,6 +209,15 @@ Sources: `src/art/industry.ts`, `src/art/civic.ts`, `src/data/buildings.json`,
 | Catenary / HV               | Slender posts, simple wires and insulators; HV structurally differentiated. | Contact height, live-state cues and route overlays remain functional.                            |
 | Power line                  | Timber utility poles and restrained wire spans.                             | Distinguish supply network from railway overhead wires.                                          |
 
+Sleepers keep one spacing across every tile join. Each rail line, whether a one-tile link or the
+whole road of a 2×2 curve or switch, lays a whole number of equal pitches,
+`length / round(length / step)`, with the first and last sleeper half a pitch from its ends
+(`sleeperLayout` in `src/art/trackIllustrated.ts`), so two pieces that meet show one pitch between
+their end sleepers. The class's `step` is the nominal spacing; the pitch strays from it by at most
+half a step over the line. A transition lays one run over its whole length and only changes class
+at the middle. A new piece kind or class takes its sleepers from that function, never from its own
+loop.
+
 The old `bridge` track kind remains in the data/art path for compatibility. Do not reintroduce
 it as the primary build workflow. Preserve any needed legacy frame while redesigning the
 independent platforms. Near bridge rails/parapets must occlude correctly; rear supports stay

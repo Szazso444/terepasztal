@@ -68,9 +68,14 @@ export const STR = {
     /** after a loop error the map cannot grow now, since growing stores the game first */
     growHeld:
       'The map grows past its edge once you save the game and reload it. Until then nothing is saved automatically, because of the earlier error.',
+    /** growing stores the game first, and that save was refused (storage full, a broken value) */
+    growRefused:
+      'The map could not grow past its edge: growing saves the game first, and the save was refused. It grows once a save goes through and the game is loaded again.',
     cannotAfford: (v: string) => `Need ${v} to buy this chunk`,
     chunkTitle: 'Uncharted chunk',
     chunkLines: (v: string) => [`Price ${v}`, 'Click to buy'],
+    /** the tooltip of a station or train that left the map between the pick and the tooltip */
+    gone: (kind: string, id: number) => `${kind} #${id}`,
     recordHint: 'R: record a new route for the selected train',
     recording: (n: string, stops: string) =>
       `Recording route for ${n}: ${stops || '(click stations in order)'} · R / Enter: finish · Esc: cancel`,
@@ -79,22 +84,84 @@ export const STR = {
     hint: 'M / scroll in: return to field view',
   },
   tile: {
-    elevation: (level: number) => `Elevation: level ${level}`,
+    /** a land terrain's name, the title of its tile, by `TERRAIN_NAMES` */
     terrain: {
-      grass: 'Grassland',
+      grass: 'Grass',
       forest: 'Forest',
       hill: 'Hill',
       water: 'Water',
-      rock: 'Stone field',
+      rock: 'Rock',
       sand: 'Sand',
       mountain: 'Mountain',
+    } as Record<string, string>,
+    /** the title of a snow tile: its terrain's name, then this */
+    snow: (terrain: string) => `${terrain}, snow`,
+    /** one dim line under the rows, by `TERRAIN_NAMES`; water has `water` below */
+    about: {
+      grass: 'Open ground. Most buildings and all track can go here.',
+      forest: 'Trees. Lumber yards count it; buildings can stand here; track costs extra clearing.',
+      hill: 'Rising ground. Quarries count it; track keeps to the elevation rules.',
+      rock: 'Bare rock. Quarries count it; no building stands on it.',
+      sand: 'Loose sand. Track and buildings can go here.',
+      mountain: 'The raised heart of a rock field. No building stands on it.',
+    } as Record<string, string>,
+    /** the row of the elevation, and its value (the number is shown bold) */
+    elevationRow: 'Elevation',
+    level: (level: number) => `level ${level}`,
+    /** the row on a snow tile, and its value: snow lies from the level after this one */
+    snowLine: 'Snow line',
+    aboveLevel: (level: number) => `above level ${level}`,
+    /** what stands on the tile, by `PropKind`; a kind not listed shows as its id */
+    prop: {
+      tree: 'tree',
+      pine: 'pine',
+      rock: 'rock',
+      bush: 'bush',
+      birch: 'birch',
+      spruce: 'spruce',
+      oak: 'oak',
+      palm: 'palm',
+      cactus: 'cactus',
+      deadtree: 'dead tree',
+      flowers: 'flowers',
+      reeds: 'reeds',
+      boulder: 'boulder',
+      coal: 'coal seam',
+      oil: 'oil seep',
+      wheat: 'wheat field',
     } as Record<string, string>,
     uncharted: 'Uncharted: buy the chunk in the overview (M)',
     track: (k: string) => `Track: ${k}`,
     powered: 'Powered rails',
     noTrack: 'No track can be laid here',
     trackCost: (m: number) => `Track costs ×${m}`,
-    water: 'Bridges only; pumps draw from it',
+    water: 'Bridges only; pumps draw from it.',
+    /** the row that names the tile's biome; its value is the biome as a term (`STR.biome`) */
+    biome: 'Biome',
+    /**
+     * The ground a harvesting station counts, by `StationDef.terrain`, with the singular for one
+     * tile and the plural for several (never a plural built by adding an s). Station texts use
+     * them, and so does the placing tooltip.
+     */
+    phrase: {
+      grass: { one: 'grass tile', many: 'grass tiles' },
+      forest: { one: 'forest tile', many: 'forest tiles' },
+      rock: { one: 'rock or hill tile', many: 'rock and hill tiles' },
+      sand: { one: 'sand tile', many: 'sand tiles' },
+      water: { one: 'water tile', many: 'water tiles' },
+    } as Record<string, { one: string; many: string }>,
+  },
+  /**
+   * The biome tooltip and the station tooltip it opens. A template's `{name}` is filled by the
+   * tooltip (`fill` in src/ui/tooltipDoc.ts): a resource, a term or a bold number.
+   */
+  biome: {
+    title: (name: string) => `${name} biome`,
+    /** a production row: the resource, and the kind of station that makes it, as a term */
+    production: '{res} from {station}',
+    trackCost: 'Track cost',
+    waterUse: "Steam engines' {res} use",
+    speed: 'Train speed',
   },
   decorInfo: {
     reach: (r: number) => `Reach: ${r} tiles`,
@@ -231,7 +298,27 @@ export const STR = {
     tierLocked: (t: number) => `Requires the ${ageLabel(t)}`,
     supplyLocked: "Not part of this game's production chain",
     needDeposit: (k: string) => `Needs a ${k} deposit on the tile`,
-    badTerrain: 'Cannot build here',
+    /**
+     * Why nothing can be built on a terrain (`unbuildable` in src/sim/build.ts), by
+     * `TERRAIN_NAMES`: one line per terrain, as the article differs.
+     */
+    nothingOn: {
+      water: 'Nothing can be built on water.',
+      rock: 'Nothing can be built on rock.',
+      mountain: 'Nothing can be built on a mountain.',
+    },
+    /**
+     * A station with `standOn` tried on other ground, by `StationDef.id`: one line per station,
+     * as its name and the ground it takes differ. One without a line here says `needGround`.
+     */
+    standOn: { pump: 'A water pump goes only on grass or forest.' } as Record<string, string>,
+    /** a station with `standOn` and no line of its own there, tried on other ground */
+    needGround: (grounds: readonly string[]) => `Must stand on ${grounds.join(' or ')}`,
+    /**
+     * A station that `needsWater` tried with no water on any of its four sides, by
+     * `StationDef.id`. One without a line here says `needWaterside`.
+     */
+    besideWater: { pump: 'A water pump needs water right beside it.' } as Record<string, string>,
     needTrack: 'Must touch track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,
@@ -272,19 +359,22 @@ export const STR = {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
       bridgePlatform: 'On water. Lay track on the platform after building it.',
-      station: 'On a buildable tile with track touching one side; that track becomes the platform.',
+      station:
+        'On grass, forest, sand or a level hill tile with track touching one side; that track becomes the platform.',
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
-      town: 'On a buildable tile with track touching one side, at least 25 tiles from any other Townhouse.',
+      town: 'On grass, forest, sand or a level hill tile with track touching one side, at least 25 tiles from any other Townhouse.',
       onTrack: 'On an existing track tile. R rotates.',
       service: (r: number) => `On a free tile within ${r} tiles of the stations it should serve.`,
       powerLine:
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
-      building: 'On a free buildable tile.',
-      works: 'On a free buildable tile. Runs from the stockpile; no track needed.',
+      building: 'On a free grass, forest, sand or level hill tile.',
+      works:
+        'On a free grass, forest, sand or level hill tile. Runs from the stockpile; no track needed.',
       deposit: (k: string) =>
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
-      plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
+      plant:
+        'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
@@ -345,11 +435,21 @@ export const STR = {
     running: 'Running',
     full: 'Stopped: stockpile full',
     starved: (n: string) => `Waiting for ${n}`,
+    /**
+     * The same status for the works tooltip, which shows the resource as an icon with its name
+     * (`{res}`). Keep the two worded alike; a test holds them together.
+     */
+    waiting: 'Waiting for {res}',
+    /** shown where the input a works waits for cannot be named */
+    unknownInput: '?',
     or: 'or',
     bridgeCapacity: 'Bridge capacity',
     /** "half speed" is `BRIDGE_SLOW_FACTOR` in src/sim/bridges.ts; reword it if that changes. */
     bridgeLimit: (capacity: number, slowAbove: number) =>
       `${capacity} t · half speed above ${slowAbove} t`,
+    /** the works tooltip's recipe line, each side a list of amounts and resources */
+    recipeLine: '{input} → {output}',
+    recipeAlt: '{input} (or {alt}) → {output}',
     bridgeHint:
       'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
   },
@@ -875,6 +975,12 @@ export const STR = {
     saveBroken: 'Could not save: the game holds a broken value. Your last save is kept.',
     /** An autosave refused for the same reason; shown once until some save has gone through. */
     autosaveBroken: 'Autosave stopped: the game holds a broken value. Your last save is kept.',
+    /**
+     * A save the game made on its own (the minute autosave, the ground stored on load) refused by
+     * storage; shown once until some save has gone through.
+     */
+    autosaveFailed:
+      'Autosave failed: storage is full or blocked, so progress since your last save is not kept. Deleting a named save can free space.',
     noSave: 'No save found',
     badSave: 'Save data unreadable',
   },
@@ -924,6 +1030,7 @@ export const STR = {
       notSave: 'That is not a Terepasztal save.',
       damaged: 'That save is damaged and was not loaded. Your game is unchanged.',
       storage: 'Could not store that save (storage full or blocked). Your game is unchanged.',
+      tooLarge: "This save's map is larger than the game can build.",
     },
     /** `refund` is the text of `saves.refund`; with nothing refunded its sentence is left out. */
     pruned: (list: string, refund: string) =>
@@ -934,6 +1041,22 @@ export const STR = {
       if (tickets <= 0) return money;
       return money ? `${money} and ${t}` : t;
     },
+    /**
+     * A loaded save stores the ground of `n` chunks in a form this game cannot read (damaged, or
+     * written by a newer game): that land is generated again for this session, and the stored
+     * ground is kept as it was.
+     */
+    groundUnreadable: (n: number) =>
+      `The stored ground of ${n} chunk${n === 1 ? '' : 's'} of this map could not be read. That land was generated again for this session and may not match what was built on it; the stored ground is kept.`,
+    /** The ground generated as a save loaded (an older save's, land the map grew) was not stored. */
+    groundUnsaved:
+      'Could not store the ground of the land just generated. It is stored with the next save that goes through.',
+    /**
+     * At start-up, `n` saves from before saves kept their ground could not be stored with it
+     * (storage full or blocked); each gets it when it is loaded.
+     */
+    groundRefused: (n: number) =>
+      `Storage is full or blocked: ${n} saved game${n === 1 ? '' : 's'} could not store the ground of ${n === 1 ? 'its' : 'their'} map. ${n === 1 ? 'It gets' : 'Each gets'} it when loaded.`,
   },
   menu: {
     tagline: 'Rails, contracts and the luck of the draw',
@@ -1082,6 +1205,13 @@ export const STR = {
     duplicate: 'Duplicate',
     remove: 'Remove',
     add: 'Add entry',
+    /** an optional field the entry leaves out: the game's own default applies */
+    unset: 'default',
+    /** a locomotive without its own length is as long as its size */
+    unsetLength: 'from size',
+    /** an optional flag set on the entry */
+    flagOn: 'yes',
+    flagOff: 'no',
     export: 'Export JSON',
     import: 'Import JSON',
     jsonHint: 'bundle JSON',
@@ -1121,6 +1251,9 @@ export const STR = {
     prefer: 'Steam fuel:',
     routing: 'Routing',
     clickHint: 'Click to select',
+    /** the train tooltip's state and the station the train heads for */
+    toward: '{state} → {station}',
+    weightPower: (weight: number, power: number) => `${weight} / ${power} t`,
     mode: {
       schedule: 'Schedule',
       transport: 'Transport',
@@ -1348,5 +1481,28 @@ export const STR = {
     market: 'Spot market',
     marketHint: 'Paid for cargo without a contract. Demand recovers over a week.',
     contracts: 'Contracts here',
+    /**
+     * A harvesting station's kind in the plural, by `StationDef.id`: written out, because adding
+     * an s spells "quarrys". Every station with a `terrain` needs one, and so does every station
+     * a biome's `production` names.
+     */
+    plural: {
+      farm: 'farm halts',
+      lumber: 'lumber yards',
+      quarry: 'quarries',
+      pump: 'water pumps',
+      mine: 'iron mines',
+      sand_pit: 'sand pits',
+      copper_mine: 'copper mines',
+    } as Record<string, string>,
+    /**
+     * The station tooltip a biome tooltip opens: what the station makes at level 1 on bare
+     * ground (`{amount}` a week, `{level}` 1), and what makes it more (`{tiles}` the ground it
+     * counts, `{radius}` how far it looks).
+     */
+    makes:
+      'Makes {res}: {amount} a week at level {level}, more with {tiles} within {radius} tiles (nearer ones count more) and in a biome that suits it.',
+    /** the same for a station that counts no ground */
+    makesAnywhere: 'Makes {res}: {amount} a week at level {level}.',
   },
 } as const;

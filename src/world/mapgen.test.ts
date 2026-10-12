@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { generateMap, emptyMap, DEFAULT_MAP_PARAMS, type MapGenParams } from './mapgen';
 import { Terrain, type GameMap, type PropInstance } from './tiles';
 import { Rng, hash2, hashString } from '../engine/rng';
-import { setSupplyMode } from '../sim/supply';
+import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
 
 /** Stable FNV-1a over a tile plane, so a generation change shows up as one number. */
@@ -48,8 +48,8 @@ function overlapDiff(small: GameMap, big: GameMap) {
 }
 const SAME = { terrain: 0, biome: 0, variant: 0, props: 0 };
 /** A generated map of `w` x `w` grown by one ring of 32-tile chunks, as `expandSave` grows it. */
-const grown = (seed: number, w: number) =>
-  generateMap(seed, { w: w + 64, h: w + 64, originX: -32, originY: -32 });
+const grown = (seed: number, w: number, supply: SupplyMode = DEFAULT_SUPPLY) =>
+  generateMap(seed, { w: w + 64, h: w + 64, originX: -32, originY: -32 }, supply);
 
 const SEED = 20260912;
 const SMALL = { w: 48, h: 48 };
@@ -77,7 +77,7 @@ describe('generateMap', () => {
     expect(fnv(m.terrain)).toBe(2330203531);
     expect(fnv(m.biome)).toBe(4076181840);
     expect(fnv(m.variant)).toBe(417171169);
-    expect(m.props.size).toBe(361);
+    expect(m.props.size).toBe(367);
   });
 
   it('fills the plane it was asked for', () => {
@@ -138,27 +138,24 @@ describe('a grown map', () => {
   });
 
   it('keeps every old tile, oil fields and start seeps included, in the full production chain', () => {
-    setSupplyMode('full');
-    try {
-      const seed = 7412;
-      const small = generateMap(seed, { w: 96, h: 96 });
-      expect([...small.props.values()].some((l) => l[0].kind === 'oil')).toBe(true);
-      expect(overlapDiff(small, grown(seed, 96))).toEqual(SAME);
-      expect(overlapDiff(generateMap(seed, { w: 160, h: 160 }), grown(seed, 160))).toEqual(SAME);
-    } finally {
-      setSupplyMode('simple');
-    }
+    const seed = 7412;
+    const small = generateMap(seed, { w: 96, h: 96 }, 'full');
+    expect([...small.props.values()].some((l) => l[0].kind === 'oil')).toBe(true);
+    expect(overlapDiff(small, grown(seed, 96, 'full'))).toEqual(SAME);
+    expect(
+      overlapDiff(generateMap(seed, { w: 160, h: 160 }, 'full'), grown(seed, 160, 'full')),
+    ).toEqual(SAME);
   });
 
   it('generates the worlds these numbers describe', () => {
     // Tripwires like the one above, at the default map size and that map grown by one ring.
     const m = generateMap(SEED, { w: 160, h: 160 });
     expect([fnv(m.terrain), fnv(m.biome), fnv(m.variant), propHash(m)]).toEqual([
-      2688962428, 1335671557, 1813736059, 4170314098,
+      2688962428, 1335671557, 1813736059, 2955223733,
     ]);
     const g = grown(SEED, 160);
     expect([fnv(g.terrain), fnv(g.biome), fnv(g.variant), propHash(g)]).toEqual([
-      814356426, 211014301, 1107381422, 3078554006,
+      814356426, 211014301, 1107381422, 3734908095,
     ]);
   });
 });
@@ -279,26 +276,24 @@ function* shrinkPair(p: Pair): Iterable<Pair> {
 
 /** The pair's two maps, generated in its production chain. */
 function pairMaps(c: Pair) {
-  setSupplyMode(c.full ? 'full' : 'simple');
-  try {
-    const small = generateMap(c.seed, {
-      ...c.params,
-      w: c.x.len,
-      h: c.y.len,
-      originX: c.ox,
-      originY: c.oy,
-    });
-    const big = generateMap(c.seed, {
+  const supply = c.full ? 'full' : 'simple';
+  const small = generateMap(
+    c.seed,
+    { ...c.params, w: c.x.len, h: c.y.len, originX: c.ox, originY: c.oy },
+    supply,
+  );
+  const big = generateMap(
+    c.seed,
+    {
       ...c.params,
       w: c.x.big,
       h: c.y.big,
       originX: c.ox - CHUNK * c.x.before,
       originY: c.oy - CHUNK * c.y.before,
-    });
-    return { small, big };
-  } finally {
-    setSupplyMode('simple');
-  }
+    },
+    supply,
+  );
+  return { small, big };
 }
 
 /** Whether two tiles' props have the same text; field by field first, so text is rarely built. */
@@ -345,9 +340,6 @@ function firstDifference(small: GameMap, big: GameMap): string | null {
 const PAIR_SEEDS = Array.from({ length: 16 }, (_, i) => i + 1);
 
 describe('generation in world space', () => {
-  beforeEach(() => setSupplyMode('simple'));
-  afterEach(() => setSupplyMode('simple'));
-
   it('draws pairs of every kind the property claims', () => {
     // The generator, checked: without this a narrowed generator would pass the property vacuously.
     const cases = PAIR_SEEDS.map((s) => genPair(new Rng(s)));

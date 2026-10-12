@@ -7,10 +7,12 @@ import {
   BUILDING_DEFS,
   buildingLevel,
   buildingUpgradeCost,
+  missingInput,
   tickBuildings,
   type Building,
   type BuildingDef,
 } from '../sim/buildings';
+import { cargoName } from '../sim/cargo';
 import { Stockpile } from '../sim/stockpile';
 import { startWork, upgradeSeconds } from '../sim/upgrade';
 import { TERRAIN_NAMES, type PropKind } from '../world/tiles';
@@ -82,6 +84,55 @@ describe('the status line of a works or a bridge', () => {
           STR.upgrade.closed,
         );
     }
+  });
+});
+
+describe('the status kind the works tooltip is built from', () => {
+  /** The words `status` gives a kind. */
+  const worded = (b: Building, stock: Stockpile) => {
+    const s = BuildingPanel.statusKind(b, stock);
+    switch (s.kind) {
+      case 'closed':
+        return STR.upgrade.closed;
+      case 'full':
+        return STR.building.full;
+      case 'running':
+        return STR.building.running;
+      case 'starved':
+        return STR.building.starved(s.missing ? cargoName(s.missing) : STR.building.unknownInput);
+    }
+  };
+
+  it('is the status the panel words, for every reason, with and without an upgrade', () => {
+    const stock = new Stockpile();
+    for (const def of BUILDING_DEFS)
+      for (const reason of REASONS)
+        for (const busy of [false, true]) {
+          const b = building(def, reason, busy);
+          expect(BuildingPanel.status(b, stock).text, `${def.id} ${reason} ${busy}`).toBe(
+            worded(b, stock),
+          );
+        }
+  });
+
+  it('names the input a starved works is short of, and none once it is stocked', () => {
+    const def = works.find((d) => Object.values(d.recipe.in).some((v) => v > 0))!;
+    const stock = new Stockpile();
+    const b = building(def, 'inputs', false);
+    const short = BuildingPanel.statusKind(b, stock);
+    expect(short.kind).toBe('starved');
+    expect(short.kind === 'starved' ? short.missing : null).toBe(missingInput(def, stock));
+    expect(short.kind === 'starved' ? short.missing : null).not.toBeNull();
+    for (const [k, v] of Object.entries(def.recipe.in)) stock.add(k, v);
+    expect(BuildingPanel.statusKind(b, stock)).toEqual({ kind: 'starved', missing: null });
+  });
+
+  it('keeps a bridge being strengthened as it was, and closes a works being upgraded', () => {
+    const stock = new Stockpile();
+    for (const def of bridges)
+      expect(BuildingPanel.statusKind(building(def, '', true), stock).kind).not.toBe('closed');
+    for (const def of works)
+      expect(BuildingPanel.statusKind(building(def, '', true), stock)).toEqual({ kind: 'closed' });
   });
 });
 

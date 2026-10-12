@@ -434,6 +434,27 @@ function hardcodedText(file: string, source: string): string[] {
   return found;
 }
 
+describe('what the terrains are called', () => {
+  it('names the ground Grass and Rock in every title, row, label and refusal', () => {
+    expect(STR.tile.terrain).toMatchObject({ grass: 'Grass', rock: 'Rock' });
+    const old = /Grassland|Stone field/;
+    for (const s of [...texts(STR), ...texts(RULE_META)]) expect(s).not.toMatch(old);
+    for (const dir of [new URL('./ui/', import.meta.url), new URL('./editor/', import.meta.url)])
+      for (const f of readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts')))
+        expect(readFileSync(new URL(f, dir), 'utf8'), f).not.toMatch(old);
+  });
+
+  it('describes every land terrain the tile tooltip titles', () => {
+    for (const name of Object.keys(STR.tile.terrain).filter((n) => n !== 'water'))
+      expect(STR.tile.about[name], name).toMatch(/\S/);
+  });
+
+  it('ends every dim terrain line, water included, the same way', () => {
+    const lines = [...Object.values(STR.tile.about), STR.tile.water];
+    for (const l of lines) expect(l, l).toMatch(/\.$/);
+  });
+});
+
 describe('text the panels show', () => {
   const dir = new URL('./ui/', import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));

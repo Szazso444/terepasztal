@@ -786,6 +786,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     decorPanel.root,
     d.toasts.root,
     d.tooltip.root,
+    d.tooltip.stackRoot,
   );
 
   // ---------------------------------------------------------------- keys
@@ -827,7 +828,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     get overviewTrain() {
       return host.overviewTrainId !== null;
     },
+    get tooltipsOpen() {
+      return d.tooltip.stack.open;
+    },
     toggleDebug: () => debug.toggle(),
+    closeTooltips: () => {
+      // the build controller reads Escape later in the same frame: this one is spent
+      if (d.tooltip.stack.escape()) d.build.takeEscape();
+    },
     closeScreen: () => d.screens.close(),
     closeMenus,
     openPauseMenu,
