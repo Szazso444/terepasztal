@@ -3,9 +3,18 @@ import { Game } from '../game';
 import { AutosavePause } from './autosavePause';
 import { BrokenNumberWarning, StorageRefusalWarning } from './saveRefusal';
 import { SAVE_KEY, type SaveGame } from '../sim/save';
+import { ownsBorderChunk } from '../sim/expand';
+import { RegionState } from '../world/regions';
+import { emptyMap } from '../world/mapgen';
 import { STR } from '../strings';
 import { forAll, shrinkArray } from '../testing/property';
 import type { Rng } from './rng';
+
+// a purchase plays a sound; the context that plays it is a browser's
+vi.mock('./audio', async (original) => ({
+  ...(await original<typeof import('./audio')>()),
+  sfx: vi.fn(),
+}));
 
 // What `Game.save` and `Game.saveSlot` make of an outcome: the toast, the console, the latch. The
 // rules themselves (`saveOutcome`, `BrokenNumberWarning`, `StorageRefusalWarning`) are pinned in
@@ -302,5 +311,132 @@ describe('Game.save and Game.saveSlot', () => {
     g.host.keepStoredSave = false;
     expect(g.game.save(true)).toBe(false);
     expect(g.toasts).toEqual([{ text: STR.settings.autosaveFailed, kind: 'warn' }]);
+  });
+});
+
+// ------------------------------------------------------------------ Game.buyChunk
+
+describe('Game.buyChunk', () => {
+  const MONEY = 100_000;
+  /**
+   * A game on a 5 x 5 chunk grid that owns its start chunk, in the middle. Every chunk next to it
+   * is an inner one; the ring beyond lies on the grid's edge. The snapshot a save takes holds the
+   * ownership and the money, so a stored save shows what the purchase did.
+   */
+  function buying(
+    over: { autosave?: boolean; mode?: 'play' | 'editor'; kind?: 'generated' | 'level' } = {},
+  ) {
+    const g = standIn();
+    const map = emptyMap(1, 160, 160);
+    const regions = new RegionState(map, 0);
+    const economy = {
+      money: MONEY,
+      canAfford(price: number) {
+        return this.money >= price;
+      },
+    };
+    Object.assign(g.host, {
+      regions,
+      economy,
+      map,
+      spec: { kind: over.kind ?? 'generated' },
+      settings: { autosave: over.autosave ?? true },
+      mode: over.mode ?? 'play',
+      world: { rebuildFog() {} },
+      overview: { rebuildRegions() {} },
+      ui: { minimap: { rebuildBase() {} } },
+      snapshot: () => ({
+        ...base(1),
+        regions: [...regions.unlocked],
+        economy: { money: economy.money },
+      }),
+    });
+    const inner = regions.neighbours(regions.unlocked.indexOf(true));
+    // owning every one of them still leaves the grid's edge alone
+    expect(
+      ownsBorderChunk(
+        regions.unlocked.map((v, i) => v || inner.includes(i)),
+        160,
+        160,
+      ),
+    ).toBe(false);
+    return { ...g, regions, economy, inner };
+  }
+  const storedSave = () => JSON.parse(store.items.get(SAVE_KEY)!) as SaveGame;
+  const bought = { text: STR.overview.bought, kind: 'good' };
+
+  it('stores an inner purchase at once: the chunk is owned and the money spent in the save', () => {
+    for (const kind of ['generated', 'level'] as const) {
+      store.items.clear();
+      const b = buying({ kind });
+      const i = b.inner[0];
+      const price = b.regions.price(i);
+      expect(b.game.buyChunk(i, true)).toBe(true);
+      expect(b.toasts).toEqual([bought]);
+      const save = storedSave();
+      expect((save.regions as boolean[])[i], kind).toBe(true);
+      expect((save.economy as { money: number }).money, kind).toBe(MONEY - price);
+    }
+  });
+
+  it('writes nothing where the autosave writes nothing, and still makes the purchase', () => {
+    const refusals: [
+      string,
+      (b: ReturnType<typeof buying>) => void,
+      Parameters<typeof buying>[0]?,
+    ][] = [
+      ['autosave off', () => {}, { autosave: false }],
+      ['not a game being played', () => {}, { mode: 'editor' }],
+      ['after a loop error', (b) => b.pause.trip()],
+      ['while the page reloads into a stored save', (b) => (b.host.keepStoredSave = true)],
+    ];
+    for (const [why, refuse, options] of refusals) {
+      store.items.clear();
+      const b = buying(options);
+      refuse(b);
+      const i = b.inner[0];
+      expect(b.game.buyChunk(i, true), why).toBe(true);
+      expect(b.regions.unlocked[i], why).toBe(true);
+      expect(b.economy.money, why).toBe(MONEY - b.regions.price(i));
+      expect(store.items.size, why).toBe(0);
+      expect(b.toasts, why).toEqual([bought]);
+      expect(warn, why).not.toHaveBeenCalled();
+    }
+  });
+
+  it('warns once when storage refuses it, as the autosave does, until a save goes through', () => {
+    const b = buying();
+    const refused = [bought, { text: STR.settings.autosaveFailed, kind: 'warn' }];
+    store.refuses = true;
+    expect(b.game.buyChunk(b.inner[0], true)).toBe(true);
+    expect(b.toasts).toEqual(refused);
+    expect(b.regions.unlocked[b.inner[0]]).toBe(true);
+    expect(store.items.size).toBe(0);
+    b.toasts.length = 0;
+    expect(b.game.buyChunk(b.inner[1], true)).toBe(true);
+    expect(b.toasts).toEqual([bought]);
+    // once a save goes through, the next refusal warns again
+    store.refuses = false;
+    b.toasts.length = 0;
+    expect(b.game.buyChunk(b.inner[2], true)).toBe(true);
+    expect(b.toasts).toEqual([bought]);
+    expect((storedSave().regions as boolean[]).filter(Boolean).length).toBe(4);
+    store.refuses = true;
+    b.toasts.length = 0;
+    expect(b.game.buyChunk(b.inner[3], true)).toBe(true);
+    expect(b.toasts).toEqual(refused);
+  });
+
+  it('leaves a chunk on the grid edge to growing the map, which stores the game itself', () => {
+    const b = buying();
+    // own a chunk one ring out, then buy the edge chunk beside it, with growing held by a loop error
+    b.regions.own(b.inner[0]);
+    const edge = b.regions
+      .neighbours(b.inner[0])
+      .find((i) => !b.regions.unlocked[i] && !b.inner.includes(i))!;
+    b.pause.trip();
+    expect(b.game.buyChunk(edge, true)).toBe(true);
+    expect(b.toasts).toEqual([bought, { text: STR.overview.growHeld, kind: 'warn' }]);
+    expect(store.items.size).toBe(0);
   });
 });
