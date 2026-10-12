@@ -1,5 +1,5 @@
 import { Rng, hash2 } from '../engine/rng';
-import { supplyMode } from '../sim/supply';
+import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import {
   Terrain,
   Biome,
@@ -503,7 +503,17 @@ function smoothBiomes(src: Uint8Array, dst: Uint8Array, w: number, h: number, s:
   }
 }
 
-export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMap {
+/**
+ * The world of `seed`. `supply` is the production chain the game will run: the terrain, biome and
+ * variant planes and the decorations are the same for both, and only the full chain adds oil
+ * fields and the start chunk's seeps over the props. It is an argument, not a map parameter, so
+ * it never reaches the saved `MapGenParams`.
+ */
+export function generateMap(
+  seed: number,
+  p: Partial<MapGenParams> = {},
+  supply: SupplyMode = DEFAULT_SUPPLY,
+): GameMap {
   const params = { ...DEFAULT_MAP_PARAMS, ...p };
   const map = emptyMap(seed, params.w, params.h, Terrain.Grass, params.originX, params.originY);
   const { w: mw, h: mh, regionSize: rs } = map;
@@ -596,8 +606,8 @@ export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMa
   decorateProps(map, seed);
   // the deposits read the field around the map; they go over the map's props, the oil fields
   // first, as if all three had been laid on the field (decorations are never oil)
-  oilFields(field, seed, oilCentres);
-  startDeposits(field, start);
+  oilFields(field, seed, oilCentres, supply);
+  startDeposits(field, start, supply);
   for (const [i, list] of field.props) {
     const x = (i % w) - MARGIN;
     const y = Math.floor(i / w) - MARGIN;
@@ -611,12 +621,12 @@ export function generateMap(seed: number, p: Partial<MapGenParams> = {}): GameMa
  * is picked by hash on plain grass, sand or swamp, then a blob of 4–9 tiles around it is covered.
  * Fields never touch the starting chunk's centre.
  */
-export function placeOilFields(map: GameMap, seed: number) {
-  oilFields(map, seed, { x0: 0, y0: 0, x1: map.w, y1: map.h });
+export function placeOilFields(map: GameMap, seed: number, supply: SupplyMode = DEFAULT_SUPPLY) {
+  oilFields(map, seed, { x0: 0, y0: 0, x1: map.w, y1: map.h }, supply);
 }
 /** placeOilFields with the field centres limited to the tiles of `s`. */
-function oilFields(map: GameMap, seed: number, s: Span) {
-  if (supplyMode() !== 'full') return;
+function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
+  if (supply !== 'full') return;
   const { w, h, terrain, biome, originX, originY } = map;
   const ok = (i: number) => {
     const t = terrain[i];
@@ -644,15 +654,17 @@ function oilFields(map: GameMap, seed: number, s: Span) {
 }
 
 /**
- * The starting chunk gets at least three oil seeps (full production chain): grass or sand tiles a
- * little way out from the chunk centre, in a fixed order so an expanded map picks the same tiles
- * again. Skipped when the chunk already has them.
+ * The starting chunk gets three oil seeps (full production chain): every third grass or sand tile
+ * of the ring 6 to 13 tiles out from the chunk centre, nearest first, in a fixed order so an
+ * expanded map picks the same tiles again. That reaches three only where the ring holds seven such
+ * tiles or more; a ring with fewer (a high Water level, a dense forest) gets fewer seeps, none on
+ * a ring of water, and a second call on it lays more. Skipped when the chunk already has three.
  */
-export function ensureStartDeposits(map: GameMap) {
-  startDeposits(map, startSpan(map));
+export function ensureStartDeposits(map: GameMap, supply: SupplyMode = DEFAULT_SUPPLY) {
+  startDeposits(map, startSpan(map), supply);
 }
-function startDeposits(map: GameMap, s: Span) {
-  if (supplyMode() !== 'full') return;
+function startDeposits(map: GameMap, s: Span, supply: SupplyMode) {
+  if (supply !== 'full') return;
   const cx = s.x0 + map.regionSize / 2;
   const cy = s.y0 + map.regionSize / 2;
   const has = (i: number, kind: PropKind) => map.props.get(i)?.some((p) => p.kind === kind);
