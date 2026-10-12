@@ -1106,6 +1106,13 @@ describe('the bound on the map of a generated world', () => {
     for (const world of [level, undefined, null, 'world', 4, []])
       expect(worldWithinBound(world), JSON.stringify(world)).toBe(true);
   });
+
+  it('leaves a level alone, whatever generated-world parameters a file puts beside it', () => {
+    // a level is no generated map: its size is its own and nothing is generated from `params`
+    const stray = { kind: 'level', seed: 1, level: { w: 96, h: 96 }, params: { w: 1e6, h: 1e6 } };
+    expect(worldWithinBound(stray)).toBe(true);
+    expect(worldWithinBound({ ...stray, kind: 'generated' })).toBe(false);
+  });
 });
 
 describe('growth stops at the bound', () => {
