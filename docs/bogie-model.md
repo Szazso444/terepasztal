@@ -28,6 +28,13 @@ to slice or bend a rigid casing.
 6. Existing reversal preserves the physical trail, reverses its point order and reindexes arc
    distance. The renderer's facing correction preserves the vehicle's orientation. Retreats
    preview their reversed trail and reserve a complete route before committing that reversal.
+7. A body is as long as its size class (`SIZE_LEN`: 0.5, 1, 2 or 3 tiles) unless its entry
+   gives a `length` of its own: a locomotive built from a model is as long as the model, 0.3 to
+   3.5 tiles over the buffers. Its pivot spacing, bogie places and the engine units of a tender
+   engine or a Garratt keep their share of that length. Coupling, the consist's length, the
+   room at a depot gate, the stop at a platform, track-class access and the traffic sections all
+   read it through `vehicleSpec`. The size still picks the plan, the default pivots and bogies,
+   the drawn bogies and the craft cost.
 
 ## Verification
 

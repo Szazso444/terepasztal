@@ -28,7 +28,7 @@ import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
 import { PAST_SHIPPED } from './pastShipped';
 import type { SupplyMode } from '../sim/supply';
-import type { PartKind } from '../sim/body';
+import { OWN_LENGTH, type PartKind } from '../sim/body';
 import { MAX_LEVEL } from '../sim/levels';
 export type { SupplyMode };
 
@@ -79,8 +79,16 @@ export interface LocoDef {
    * stays in the table so copies a player already owns keep loading and running.
    */
   retired?: boolean;
-  /** body length class: 1, 2 or 3 tiles (default small) */
+  /**
+   * body class: 0.5, 1, 2 or 3 tiles long (default small). It also sets the plans the body may
+   * take, its default pivots and bogies, and its craft cost.
+   */
   size?: VehicleSize;
+  /**
+   * the engine's own length over the buffers, as its model is built: 0.3 to 3.5 tiles. Without
+   * it the engine is as long as its size.
+   */
+  length?: number;
   /** rigid body, engine + tender, Garratt (engine, cradle, engine) or Meyer (frame on two engine units) */
   plan?: BodyPlan;
   /** pivot spacing as a fraction of body length (default 0.7) */
@@ -630,6 +638,19 @@ function rows<T>(v: unknown, what: string, out: string[]): T[] {
   if (ok.length < v.length) out.push(`${what}: every entry must be an object`);
   return ok as T[];
 }
+/**
+ * A vehicle's own length, which `vehicleSpec` takes over its size's: absent, or a number of tiles
+ * within `OWN_LENGTH`.
+ */
+function checkLength(v: { id: unknown; length?: unknown }, what: string, out: string[]) {
+  const n = v.length;
+  if (n === undefined || (typeof n === 'number' && n >= OWN_LENGTH.min && n <= OWN_LENGTH.max))
+    return;
+  const got = typeof n === 'number' ? String(n) : JSON.stringify(n);
+  out.push(
+    `${what} ${String(v.id)}: length must be between ${OWN_LENGTH.min} and ${OWN_LENGTH.max} tiles, not ${got}`,
+  );
+}
 function checkIds(list: { id: unknown }[], what: string, out: string[]) {
   const seen = new Set<unknown>();
   for (const x of list) {
@@ -679,6 +700,7 @@ const CHECKS: Record<ContentKey, Check> = {
         out.push(`locomotive ${l.id}: needs waterCap and waterPerTile`);
       if (l.type === 'electric' && !l.powerPerTile)
         out.push(`locomotive ${l.id}: needs powerPerTile`);
+      checkLength(l, 'locomotive', out);
     }
     // a retired model is never handed out, so it cannot be the one a new game starts with
     if (!locos.some((l) => l.starter && l.retired !== true)) out.push('no starter locomotive');
@@ -686,8 +708,11 @@ const CHECKS: Record<ContentKey, Check> = {
   wagons(t, _ref, out) {
     const wagons = rows<WagonDef>(t, 'wagons', out);
     checkIds(wagons, 'wagon', out);
-    for (const w of wagons)
+    for (const w of wagons) {
       if (!CARGO_CLASSES.includes(w.carries)) out.push(`wagon ${w.id}: bad class "${w.carries}"`);
+      // the body geometry is shared, so a wagon that carries a length is held to the same range
+      checkLength(w, 'wagon', out);
+    }
     if (!wagons.some((w) => w.starter && w.retired !== true)) out.push('no starter wagon');
   },
   cargo(t, _ref, out) {

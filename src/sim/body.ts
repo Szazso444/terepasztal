@@ -9,7 +9,10 @@ import type { Vec2 } from '../engine/iso';
 
 export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
+/** Body length of each size class, tiles: the length of a vehicle without one of its own. */
 export const SIZE_LEN: Record<VehicleSize, number> = { tiny: 0.5, small: 1, medium: 2, large: 3 };
+/** The lengths a vehicle's own `length` may take, tiles over the buffers (content validates it). */
+export const OWN_LENGTH = { min: 0.3, max: 3.5 } as const;
 /** distance between two coupled bodies along the track */
 export const COUPLER_GAP = 0.2;
 /**
@@ -61,6 +64,12 @@ export interface VehicleSpec {
 /** What a vehicle definition may say about its body. */
 export interface BodyFields {
   size?: VehicleSize;
+  /**
+   * The body's own length over the buffers, tiles (a locomotive built from its model); without
+   * it the body is as long as its size class (`SIZE_LEN`). The size keeps its other jobs: plan
+   * rules, default pivots and bogies, drawn bogies.
+   */
+  length?: number;
   plan?: BodyPlan;
   pivotRatio?: number;
   bogies?: number;
@@ -72,7 +81,10 @@ export interface BodyFields {
 
 export function vehicleSpec(def: BodyFields): VehicleSpec {
   const size = def.size ?? 'small';
-  const L = SIZE_LEN[size];
+  const L = def.length ?? SIZE_LEN[size];
+  // the engine units of a tender engine and a Garratt were sized for their class's length; a
+  // body of its own length keeps their share of it (exactly 1 without one)
+  const scale = L / SIZE_LEN[size];
   let plan: BodyPlan = def.plan ?? 'rigid';
   if (size === 'small' || size === 'tiny') plan = 'rigid';
   if (size === 'medium' && plan !== 'tender') plan = 'rigid';
@@ -87,14 +99,14 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
       segs.push({ part: 'body', L, W: pr * L, nb: nbRigid, bogie, front: 0 });
       break;
     case 'tender': {
-      const le = 1.25;
+      const le = 1.25 * scale;
       const lt = L - le;
       segs.push({ part: 'engine', L: le, W: pr * le, nb: 2, bogie, front: 0 });
       segs.push({ part: 'tender', L: lt, W: 0.66 * lt, nb: 2, bogie: 'bogie', front: le });
       break;
     }
     case 'garratt': {
-      const le = 0.8;
+      const le = 0.8 * scale;
       const lc = L - 2 * le;
       segs.push({ part: 'engine', L: le, W: pr * le, nb: 2, bogie, front: 0 });
       segs.push({
