@@ -252,7 +252,8 @@ interface Case {
 }
 
 function genCase(rng: Rng): Case {
-  const ticks = rng.int(40, 240);
+  // a walk to a platform takes a minute or so at 0.2 tiles a second, so the case runs long enough
+  const ticks = rng.int(100, 600);
   const side = (): -1 | 1 => (rng.chance(0.5) ? -1 : 1);
   const stations: Spot[] = [{ x: rng.int(4, SIZE - 5), side: side(), kind: 'station' }];
   for (let i = rng.int(0, 4); i > 0; i--)
@@ -1204,7 +1205,8 @@ describe('re-homing a walker whose home closed', () => {
           setClosed(station, false);
           const [r] = q.persons;
           expect(r.home, closed ? 'closed' : 'open').toBe(home);
-          return { ...r, home: '', stream: q.toJSON().rng };
+          // the profession goes with the home, so it is left out with it
+          return { ...r, home: '', profession: null, stream: q.toJSON().rng };
         };
         const open = play(false);
         expect(play(true)).toEqual(open);
