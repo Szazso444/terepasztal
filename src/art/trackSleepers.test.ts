@@ -3,8 +3,11 @@
  * a run's length and its class's nominal step; these tests check the rule itself, then the real
  * rail lines of every piece of every class (`tilePaths`, `unitRailPaths`: the lines the atlas
  * generator draws), and the gap across the join of any two pieces that can sit next to each other.
+ * That `draw` paints those sleepers is `trackSleepersDrawn.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
+import type { Vec2 } from '../engine/iso';
+import type { Rng } from '../engine/rng';
 import { forAll } from '../testing/property';
 import {
   CLASS_N,
@@ -170,6 +173,138 @@ describe('sleeperLayout', () => {
         ],
       },
     );
+  });
+});
+
+describe('railSleepers on a line cut into parts', () => {
+  /** The parts of `points` cut after the vertices in `cuts` (sorted, interior), as RailPaths. */
+  const parts = (points: Vec2[], cls: TrackClass, cuts: number[]): RailPath[] => {
+    const whole = polylineLength(points);
+    const pieces: Vec2[][] = [];
+    let from = 0;
+    for (const cut of [...cuts, points.length - 1]) {
+      pieces.push(points.slice(from, cut + 1));
+      from = cut;
+    }
+    let start = 0;
+    return pieces.map((piece) => {
+      const path: RailPath = { points: piece, cls, run: { start, length: whole, cls } };
+      start += polylineLength(piece);
+      return path;
+    });
+  };
+
+  /** Every sleeper of the whole run is drawn on exactly one part, at its own distance there. */
+  const expectOnce = (points: Vec2[], cls: TrackClass, cuts: number[], scale: number) => {
+    const whole = sleeperPositions(polylineLength(points), sleeperStep(cls, scale));
+    const cut = parts(points, cls, cuts);
+    const seen: number[] = [];
+    for (const path of cut) {
+      const own = polylineLength(path.points);
+      for (const d of railSleepers(path, scale)) {
+        expect(d).toBeGreaterThanOrEqual(0);
+        expect(d).toBeLessThanOrEqual(own + EPS);
+        seen.push(d + path.run!.start);
+      }
+    }
+    expect(seen).toHaveLength(whole.length);
+    seen.forEach((d, i) => expect(d).toBeCloseTo(whole[i], 9));
+  };
+
+  interface Cut {
+    points: Vec2[];
+    cls: TrackClass;
+    scale: number;
+    cuts: number[];
+  }
+  /** Smaller cases: a cut dropped, then the last vertex, then the first (cuts that fit stay). */
+  function* shrinkCut(c: Cut): Iterable<Cut> {
+    for (let i = 0; i < c.cuts.length; i++) yield { ...c, cuts: c.cuts.filter((_, k) => k !== i) };
+    if (c.points.length > 2) {
+      yield {
+        ...c,
+        points: c.points.slice(0, -1),
+        cuts: c.cuts.filter((v) => v <= c.points.length - 3),
+      };
+      yield {
+        ...c,
+        points: c.points.slice(1),
+        cuts: c.cuts.filter((v) => v > 1).map((v) => v - 1),
+      };
+    }
+  }
+  const check = (c: Cut) => expectOnce(c.points, c.cls, c.cuts, c.scale);
+  const fmtCut = (c: Cut) =>
+    `${c.cls} at scale ${c.scale}, cut after vertices [${c.cuts}] of ${c.points.length}: ` +
+    c.points.map((p) => `(${p.x.toFixed(3)}, ${p.y.toFixed(3)})`).join(' ');
+
+  /** Up to three distinct interior vertices, ascending. */
+  const someCuts = (rng: Rng, vertices: number) => {
+    const interior = Array.from({ length: Math.max(0, vertices - 2) }, (_, i) => i + 1);
+    return rng
+      .shuffle(interior)
+      .slice(0, rng.int(0, 3))
+      .sort((a, b) => a - b);
+  };
+
+  it('draws every sleeper of a random polyline once, wherever it is cut', () => {
+    forAll<Cut>(
+      (rng) => {
+        const points = Array.from({ length: rng.int(2, 14) }, () => ({
+          x: rng.range(-2, 2),
+          y: rng.range(-2, 2),
+        }));
+        return {
+          points,
+          cls: rng.pick(TRACK_CLASSES),
+          scale: rng.pick([1, 0.75, 0.5]),
+          cuts: someCuts(rng, points.length),
+        };
+      },
+      check,
+      { shrink: shrinkCut, format: fmtCut },
+    );
+  });
+
+  it('draws a sleeper that sits exactly on a cut once, on the part after it', () => {
+    // A straight line of m pitches whose vertices fall on half pitches, so a cut at an odd vertex
+    // lands on a sleeper, for every class's step and a random run of sleepers.
+    forAll<Cut>(
+      (rng) => {
+        const cls = rng.pick(TRACK_CLASSES);
+        const m = rng.int(2, 12);
+        const step = sleeperStep(cls);
+        const points = Array.from({ length: 2 * m + 1 }, (_, k) => ({ x: (k * step) / 2, y: 0 }));
+        const onSleepers = points.map((_, k) => k).filter((k) => k % 2 === 1);
+        return {
+          points,
+          cls,
+          scale: 1,
+          cuts: rng
+            .shuffle(onSleepers)
+            .slice(0, rng.int(1, 3))
+            .sort((a, b) => a - b),
+        };
+      },
+      check,
+      { shrink: shrinkCut, format: fmtCut },
+    );
+  });
+
+  it('keeps a sleeper at exactly the cut of two parts from being drawn twice', () => {
+    // 0.5 tiles is four pitches of 0.125 for every class (all exactly representable), the second
+    // sleeper sits at 0.1875, and the line is cut right there.
+    for (const cls of TRACK_CLASSES) {
+      const line = [
+        { x: 0, y: 0 },
+        { x: 0.1875, y: 0 },
+        { x: 0.5, y: 0 },
+      ];
+      expect(sleeperPositions(0.5, sleeperStep(cls))).toEqual([0.0625, 0.1875, 0.3125, 0.4375]);
+      const [before, after] = parts(line, cls, [1]);
+      expect(railSleepers(before), cls).toEqual([0.0625]);
+      expect(railSleepers(after), cls).toEqual([0, 0.125, 0.25]);
+    }
   });
 });
 
