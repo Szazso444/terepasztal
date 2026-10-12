@@ -14,9 +14,9 @@ Commands from the repository root; on the author's PC add `--blender <blender.ex
 (`tools/asset-pipeline/AGENTS.md` has both setups):
 
 ```sh
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py build  assets/source/sw1-picture-v4-2026-10-08/project.json
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py verify assets/source/sw1-picture-v4-2026-10-08/project.json
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py sample assets/source/sw1-picture-v4-2026-10-08/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py build  assets/source/sw1-picture-v4-2026-10-08/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py verify assets/source/sw1-picture-v4-2026-10-08/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py sample assets/source/sw1-picture-v4-2026-10-08/project.json
 ```
 
 No build receipt is committed, so the first `build` rebuilds `model/` in place

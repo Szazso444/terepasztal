@@ -24,11 +24,19 @@ Every Blender step goes through `blender_runner.py` and needs Blender **5.2.x** 
 - **Author's PC:** install Blender 5.2.1 LTS and a Python 3.11+ with `pip install pillow numpy`; pass
   `--blender "%ProgramFiles%\Blender Foundation\Blender 5.2\blender.exe"` (or wherever it is). Each step is a fresh
   `blender -b --factory-startup --python-exit-code 1` process.
-- **Cloud:** no Blender executable; the `bpy` module from PyPI is Blender 5.2.1 as a Python 3.13 package:
-  `python3.13 -m venv ~/bpy-env && ~/bpy-env/bin/pip install bpy==5.2.1 pillow numpy`, then run every command with
-  `~/bpy-env/bin/python` and no `--blender`. Each step then runs in that Python process after a factory reset.
-  EEVEE renders (`sample`, `production`, `painted/run.py`) also need EGL for Mesa's software OpenGL:
-  `apt-get install -y libegl1 libegl-mesa0`. Cycles (the C-50 review renders) needs nothing more.
+- **Cloud:** no Blender executable; the `bpy` module from PyPI is Blender 5.2.1 as a Python 3.13 package. A fresh
+  session has neither bpy nor the EGL libraries (the session hook installs only the npm dependencies, on purpose), so
+  **run `bash tools/asset-pipeline/setup-cloud.sh` once per cloud session, before any Blender step.** It installs
+  `libegl1` and `libegl-mesa0` when missing (EEVEE renders, `sample`, `production` and `painted/run.py`, need EGL for
+  Mesa's software OpenGL; Cycles, the C-50 review renders, does not), creates a venv with `bpy==5.2.1`, Pillow and
+  numpy outside the repository (`~/.cache/terepasztal/bpy-env`; an argument or `BPY_ENV` picks another path) and prints
+  its Python on stdout (progress goes to stderr). A second run changes and downloads nothing. It exits 1 with the
+  reason when Python 3.13 is missing (bpy 5.2 has wheels for 3.13 only; `BPY_PYTHON=<python3.13>` points it at one),
+  or when the EGL packages or the venv cannot be installed.
+  `blender_runner` does not look for that Python: a step runs in whichever Python you start it with, through
+  `import bpy`, after a factory reset. So start every command with the printed Python and leave `--blender` out:
+  `PY=$(bash tools/asset-pipeline/setup-cloud.sh)`, then `$PY tools/asset-pipeline/blender_runner.py <script>` or
+  `$PY tools/asset-pipeline/handbuilt/run.py <stage> <project.json>`. A Python without bpy stops with "No Blender".
 - **Render device:** EEVEE uses whatever OpenGL the process has. The C-50 build's Cycles review renders take
   `--device cpu` (default) or `cuda`/`optix`/`hip`/`oneapi`/`metal`; a missing GPU stops the build, it never falls
   back silently.
@@ -73,8 +81,9 @@ renderer yet, so they refuse it. The atlas pages carry `rolling/loco_<id>_<part>
   an absolute Windows path outside a README's History section. The same Python tests by hand:
   `python -m unittest discover -s tools/asset-pipeline -p test_blender_runner.py`,
   `... -s tools/asset-pipeline/handbuilt -p 'test_*.py'`, and `cd tools/asset-pipeline/painted && python -m unittest test_pipeline`.
-- Blender checks, by hand: `~/bpy-env/bin/python -m unittest discover -s tools/asset-pipeline -p 'test_blender_*.py' -v`
-  (or `BLENDER=<blender executable> python ...` on the PC). They rebuild the C-50 and SW1 v4 in temporary folders and
+- Blender checks, by hand: `$PY -m unittest discover -s tools/asset-pipeline -p 'test_blender_*.py' -v`, with `$PY` the
+  Python `setup-cloud.sh` printed (or `BLENDER=<blender executable> python ...` on the PC); `-k rebuilds_to` runs the
+  two rebuilds and leaves out the 42-minute sample. They rebuild the C-50 and SW1 v4 in temporary folders and
   compare with the committed `validation.json` / `calibration.json` (numbers within 1e-6, mesh and wheel pivot counts
   equal), replay the SW1 against its committed model, and render the SW1 sample twice. Without Blender 5.2.x each
   check is skipped with the reason.
@@ -105,6 +114,7 @@ renderer yet, so they refuse it. The atlas pages carry `rolling/loco_<id>_<part>
 | `game_rules.py` | the game's facings, sizes, body plans, `DRAWN_WIDTH` and atlas groups; `game_rules.test.mjs` holds it to `src/sim/body.ts` |
 | `export_game.py` | game stage: sprites -> `art-src/<group>/` frames + anchors, then `tools/pack-atlas.mjs` -> `public/assets/<group>.png\|json` |
 | `blender_runner.py` | hand-built method: runs a Blender step on a 5.2.x executable (`--blender`) or the bpy module; `test_blender_runner.py` |
+| `setup-cloud.sh` | hand-built method, cloud only: installs the EGL packages and a venv with `bpy==5.2.1` outside the repository, prints its Python; run once per session before any Blender step |
 | `filehash.py` | hand-built method: line-ending independent SHA-256 for locks, receipts and manifests |
 | `handbuilt/` | hand-built method: `run.py` (init/lock/build/verify/sample/production/all), `build_stage.py`, `verify_construction.py`, `model_report.py`, `c50_primitives.py`, `recipe_template.py`, `install.py`, `test_recipe.py`, `README.md` |
 | `painted/` | hand-built method's renderer: `run.py`, `render.py` (in Blender), `reference.py`, `install.py`, `manifests/`, `profiles/`, `test_pipeline.py`, `README.md` |
