@@ -31,6 +31,16 @@ const WORKERS = Math.max(
 );
 /** Fresh worker pools started after a failure before the landscape turns off for the session. */
 const RESTARTS = 1;
+/**
+ * Milliseconds of running time a paint job may go unanswered before it counts as lost and the pool
+ * is replaced. A chunk paints in a second or two, a close-view copy in a few.
+ */
+export const JOB_TIMEOUT_MS = 30_000;
+/**
+ * The most one frame adds to a job's waiting time, so a pause (a hidden tab, a sleeping machine)
+ * does not count against the job the worker was painting when it began.
+ */
+const FRAME_LIMIT_MS = 1_000;
 /** How the landscape starts its paint workers. The game uses the browser's; tests pass stubs. */
 export type PainterPool = {
   /** Workers in one pool. */
@@ -64,8 +74,29 @@ export function workerErrorText(event: WorkerError): string {
     ? `${what} (${event.filename}:${event.lineno ?? 0}:${event.colno ?? 0})`
     : what;
 }
-type Job = { id: string; scale: number; version: number };
-type Slot = { worker: Worker; loaded: boolean; job: Job | null };
+/** A chunk handed to a worker; `sent` is the landscape's running time when it went out. */
+type Job = { id: string; scale: number; version: number; sent: number };
+/** `resent`: the map version last handed to this worker again after it turned a job away. */
+type Slot = { worker: Worker; loaded: boolean; job: Job | null; resent: number };
+/** What a paint worker sends back (landscape.worker.ts). */
+type PaintReply = {
+  error?: string;
+  stack?: string;
+  loaded?: boolean;
+  /** The job's version is not the worker's map version; nothing was painted. */
+  stale?: boolean;
+  id: string;
+  version: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  scale: number;
+  pixels: Uint8ClampedArray<ArrayBuffer>;
+  grass: Float32Array;
+  tint: number;
+  ms: number;
+};
 type Chunk = {
   x: number;
   y: number;
@@ -106,6 +137,9 @@ export class Landscape {
   private watchers = new Set<(status: LandscapeStatus) => void>();
   /** Worker pools started so far. */
   private starts = 0;
+  /** Milliseconds of running time, advanced by each flush by at most FRAME_LIMIT_MS. */
+  private awake = 0;
+  private lastFlush = performance.now();
   paintCount = 0;
   paintMilliseconds = 0;
   sharpPaintCount = 0;
@@ -164,7 +198,7 @@ export class Landscape {
     this.slots = [];
     try {
       for (let i = 0; i < this.painters.size; i++) {
-        const slot: Slot = { worker: this.painters.spawn(), loaded: false, job: null };
+        const slot: Slot = { worker: this.painters.spawn(), loaded: false, job: null, resent: -1 };
         slot.worker.onerror = (event: WorkerError) =>
           this.crash(slot, workerErrorText(event), event.error);
         slot.worker.onmessage = ({ data }) => this.receive(slot, data);
@@ -183,9 +217,11 @@ export class Landscape {
     this.loaded = false;
   }
   /**
-   * A worker of the current pool failed (`slot` null: the pool did not start). The whole pool is
-   * replaced up to RESTARTS times; the next failure turns the landscape off. A pool's later errors,
-   * such as every worker failing to load the same sheet, are one failure.
+   * A worker of the current pool failed, or a step that needs it did: handing it the map or a job,
+   * showing what it painted, or answering a job in time (`slot` null: the pool as a whole, which
+   * did not start or did not take the map). The whole pool is replaced up to RESTARTS times; the
+   * next failure turns the landscape off. A pool's later errors, such as every worker failing to
+   * load the same sheet, are one failure.
    */
   private crash(slot: Slot | null, reason: string, detail?: unknown) {
     if (this.root.destroyed || this.failed || (slot && !this.slots.includes(slot))) return;
@@ -201,26 +237,11 @@ export class Landscape {
     console.error('Landscape: the paint workers failed again; the per-tile ground stands in');
     this.fail(reason);
   }
-  /** A worker's reply: its surface sheet is loaded, or a chunk paint is done. */
-  private receive(
-    slot: Slot,
-    data: {
-      error?: string;
-      stack?: string;
-      loaded?: boolean;
-      id: string;
-      version: number;
-      left: number;
-      top: number;
-      width: number;
-      height: number;
-      scale: number;
-      pixels: Uint8ClampedArray<ArrayBuffer>;
-      grass: Float32Array;
-      tint: number;
-      ms: number;
-    },
-  ) {
+  /**
+   * A worker's reply: its surface sheet is loaded, a chunk paint is done, or a job was turned away
+   * because the worker does not have that version of the map.
+   */
+  private receive(slot: Slot, data: PaintReply) {
     // A replaced pool's last messages are dropped.
     if (this.root.destroyed || !this.slots.includes(slot)) return;
     if (data.error) {
@@ -233,6 +254,10 @@ export class Landscape {
       return;
     }
     slot.job = null;
+    if (data.stale) {
+      this.turnedAway(slot, data.version, data.scale);
+      return;
+    }
     if (data.version !== this.version) {
       this.pump();
       return;
@@ -242,14 +267,15 @@ export class Landscape {
       this.pump();
       return;
     }
-    const canvas = document.createElement('canvas');
-    canvas.width = data.width;
-    canvas.height = data.height;
-    canvas
-      .getContext('2d')!
-      .putImageData(new ImageData(data.pixels, data.width, data.height), 0, 0);
-    const texture = Texture.from(canvas);
-    texture.source.scaleMode = 'linear';
+    let texture: Texture;
+    try {
+      texture = this.chunkTexture(data);
+    } catch (error) {
+      // Such as a canvas whose 2D context is null once canvas memory runs out. The chunk stays
+      // pending for the next pool.
+      this.crash(slot, `a painted chunk could not be shown: ${String(error)}`, error);
+      return;
+    }
     c.sprite.position.set(data.left, data.top);
     if (data.scale > 1) {
       c.sharp?.destroy(true);
@@ -299,6 +325,41 @@ export class Landscape {
     else this.visibilityVersion++;
     this.pending.delete(data.id);
     this.pump();
+  }
+  /**
+   * A worker turned a job away because it does not have that version of the map; the chunk is
+   * still pending. For an older version nothing more is needed, as the newer map went out after
+   * the job. For the current version the worker missed a hand-off, so it gets the map again ahead
+   * of its next job; turning the same version away twice is a failure, not a loop.
+   */
+  private turnedAway(slot: Slot, version: number, scale: number) {
+    // A close-view copy is asked for again on the next focus.
+    if (scale > 1) this.focusKey = '';
+    if (version === this.version) {
+      if (slot.resent === version) {
+        this.crash(slot, `a paint worker turned away map version ${version} twice`);
+        return;
+      }
+      console.warn(
+        `Landscape: a paint worker missed map version ${version}; handing it over again`,
+      );
+      slot.resent = version;
+      if (!this.handOff([slot])) return;
+    }
+    this.pump();
+  }
+  /** A painted chunk's pixels as a texture. */
+  private chunkTexture(data: PaintReply) {
+    const canvas = document.createElement('canvas');
+    canvas.width = data.width;
+    canvas.height = data.height;
+    const context = canvas.getContext('2d');
+    // The browser's answer once canvas memory runs out.
+    if (!context) throw new Error(`no 2D context for a ${data.width} x ${data.height} canvas`);
+    context.putImageData(new ImageData(data.pixels, data.width, data.height), 0, 0);
+    const texture = Texture.from(canvas);
+    texture.source.scaleMode = 'linear';
+    return texture;
   }
   private fail(reason: string) {
     this.setStatus({ state: 'failed', reason });
@@ -373,8 +434,22 @@ export class Landscape {
   private get busy() {
     return this.slots.some((slot) => slot.job);
   }
-  private sync() {
-    for (const { worker } of this.slots)
+  /**
+   * Hands the map to these workers. If that fails, such as a DataCloneError once memory runs out,
+   * the workers would turn away every job of this version, so the pool is replaced (or the
+   * landscape turned off) instead, and the answer is false.
+   */
+  private handOff(slots: readonly Slot[]) {
+    try {
+      this.sync(slots);
+      return true;
+    } catch (error) {
+      this.crash(null, `the map could not be handed to the paint workers: ${String(error)}`, error);
+      return false;
+    }
+  }
+  private sync(slots: readonly Slot[] = this.slots) {
+    for (const { worker } of slots)
       worker.postMessage({
         map: {
           w: this.map.w,
@@ -429,8 +504,14 @@ export class Landscape {
       const next = this.next();
       if (!next) return;
       const c = this.chunks.get(next.id)!;
-      slot.job = { ...next, version: this.version };
-      slot.worker.postMessage({ ...next, x: c.x, y: c.y, w: c.w, h: c.h, version: this.version });
+      try {
+        slot.worker.postMessage({ ...next, x: c.x, y: c.y, w: c.w, h: c.h, version: this.version });
+      } catch (error) {
+        // With no job out, no answer would come back to hand the chunk out again.
+        this.crash(slot, `a paint job could not be handed out: ${String(error)}`, error);
+        return;
+      }
+      slot.job = { ...next, version: this.version, sent: this.awake };
     }
   }
   /**
@@ -475,16 +556,14 @@ export class Landscape {
       this.heightsDirty = false;
     }
   }
-  /** Returns true when prop/structure anchors need to be refreshed. */
+  /** Returns true when prop/structure anchors need to be refreshed. Called once a frame. */
   flush() {
-    let changed = this.statusChanged;
-    this.statusChanged = false;
-    if (this.failed) return changed;
-    if (this.invalid) {
+    this.watch();
+    let moved = false;
+    if (this.invalid && !this.failed) {
       this.invalid = false;
       this.updateHeights();
       this.version++;
-      this.sync();
       for (const [id, c] of this.chunks)
         if (
           this.allDirty ||
@@ -495,17 +574,35 @@ export class Landscape {
           this.pending.add(id);
           if (this.sharpShown && c.sharp) this.sharpPending.add(id);
         }
-      changed = this.dirtyTiles.length > 0;
+      moved = this.dirtyTiles.length > 0;
       this.dirtyTiles = [];
       this.allDirty = false;
-      this.pump();
+      if (this.handOff(this.slots)) this.pump();
     }
+    let changed = this.statusChanged || moved;
+    this.statusChanged = false;
+    if (this.failed) return changed;
     // Painted chunks show as they arrive; the fallback ground covers only the unpainted ones.
     if (!this.active && this.loaded) {
       this.setStatus({ state: 'active' });
       changed = true;
     }
     return changed;
+  }
+  /**
+   * The watchdog: a job unanswered for JOB_TIMEOUT_MS of running time is lost, and the pool is
+   * replaced. Running time advances with each flush, by at most FRAME_LIMIT_MS.
+   */
+  private watch() {
+    const now = performance.now();
+    this.awake += Math.min(Math.max(0, now - this.lastFlush), FRAME_LIMIT_MS);
+    this.lastFlush = now;
+    const late = this.slots.find(({ job }) => job && this.awake - job.sent > JOB_TIMEOUT_MS);
+    if (late?.job)
+      this.crash(
+        late,
+        `a paint worker gave no answer in ${JOB_TIMEOUT_MS / 1000} s (${late.job.id})`,
+      );
   }
   elevation(x: number, y: number) {
     this.updateHeights();

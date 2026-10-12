@@ -64,6 +64,12 @@ export interface GameMap {
   variant: Uint8Array;
   /** per-tile biome id (see Biome) */
   biome: Uint8Array;
+  /**
+   * per-tile climate, as a biome id: the biome a tile had before any rule relabelled it by its
+   * landform. Missing: every tile's climate is its biome, which is true of every map today, so
+   * nothing fills it yet. Read it through climateAt or climateAtIndex.
+   */
+  climate?: Uint8Array;
   /** per-tile decoration, sparse */
   props: Map<number, PropInstance[]>;
   /** region size in tiles (regions are square blocks) */
@@ -81,6 +87,20 @@ export function inBounds(map: GameMap, x: number, y: number) {
 export function terrainAt(map: GameMap, x: number, y: number): Terrain {
   if (!inBounds(map, x, y)) return Terrain.Rock;
   return map.terrain[idx(map, x, y)] as Terrain;
+}
+/** The planes the climate is read from, so a worker's copy of the map can read it too. */
+export type ClimateMap = Pick<GameMap, 'w' | 'h' | 'biome' | 'climate'>;
+/**
+ * The climate under a tile: its climate plane's value where the map has one, its biome otherwise.
+ * Off the map it is plains, as the biome there is (`biomeAt` in src/sim/biomes.ts).
+ */
+export function climateAt(map: ClimateMap, x: number, y: number): Biome {
+  if (x < 0 || y < 0 || x >= map.w || y >= map.h) return Biome.Plains;
+  return climateAtIndex(map, y * map.w + x);
+}
+/** climateAt for tile index `i` (`y * w + x`), which must be on the map. */
+export function climateAtIndex(map: Pick<ClimateMap, 'biome' | 'climate'>, i: number): Biome {
+  return (map.climate ?? map.biome)[i] as Biome;
 }
 export function regionOf(map: GameMap, x: number, y: number) {
   return Math.floor(y / map.regionSize) * map.regionsX + Math.floor(x / map.regionSize);

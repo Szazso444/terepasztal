@@ -16,7 +16,8 @@ let map: LandscapeMap,
   relief: TerrainRelief,
   samples: Uint8ClampedArray,
   reduced: Uint8ClampedArray;
-let version = 0,
+// No map yet: every job is turned away until the first one arrives.
+let version = -1,
   tint = 0xffffff;
 let city = new Set<number>();
 self.onmessage = async (event: MessageEvent) => {
@@ -44,10 +45,15 @@ self.onmessage = async (event: MessageEvent) => {
       city = new Set<number>(data.city);
       return;
     }
-    if (data.version !== version) return;
+    const { x, y, w, h, id } = data,
+      scale: number = data.scale ?? 1;
+    // A job for a map this worker does not have is answered, never dropped: the landscape waits
+    // for an answer before it hands the chunk out again.
+    if (data.version !== version) {
+      self.postMessage({ stale: true, id, scale, version: data.version });
+      return;
+    }
     const started = performance.now(),
-      { x, y, w, h, id } = data,
-      scale: number = data.scale ?? 1,
       // Chunks drawn at one pixel per world pixel read a half-size copy, so they stay filtered.
       source = scale > 1 ? samples : reduced;
     const left = (x - y - h) * 32 - 4,

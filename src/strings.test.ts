@@ -259,6 +259,53 @@ describe('what the tuning presets say', () => {
     for (const s of [...labels, t.noPresets, t.scope]) expect(s.trim()).not.toBe('');
     expect(new Set(labels).size).toBe(labels.length);
   });
+
+  it('labels the screen, the tag, the note and the reset, each its own', () => {
+    const own = [t.title, t.newGameOnly, t.note, t.reset, t.scope];
+    for (const s of own) expect(s.trim()).not.toBe('');
+    expect(new Set(own).size).toBe(own.length);
+  });
+
+  it('never calls a tuning the start or the default of new games', () => {
+    // a saved tuning only starts a game when it is picked under New game
+    for (const s of texts(t)) expect(s).not.toMatch(/starting point|\bdefaults?\b/i);
+    // the tag covers more than map values, and the note names the tag it explains
+    expect(t.newGameOnly).not.toMatch(/\bmap\b/i);
+    expect(t.note).toContain(t.newGameOnly);
+    // the reset says whose rules it puts back, and to what
+    expect(t.reset).toMatch(/shipped/i);
+  });
+
+  it('says it of no rule either: no label, group or hint calls a value a starting point or a default', () => {
+    // the sliders and their hints are shown on the same screen, under the same promise
+    for (const m of RULE_META)
+      for (const s of [m.label, m.group, m.hint ?? ''])
+        expect(s, m.key).not.toMatch(/starting point|\bdefaults?\b/i);
+  });
+
+  it('points to the New game block of the title screen, where a saved tuning is picked', () => {
+    expect(t.scope).toContain(STR.menu.newGame);
+  });
+});
+
+describe('what the New game tuning choice says', () => {
+  const m = STR.menu;
+
+  it('labels the choice, its hint and its first entry, each its own', () => {
+    const labels = [m.newGameTuning, m.newGameTuningHint, m.shippedRules];
+    for (const s of labels) expect(s.trim()).not.toBe('');
+    expect(new Set(labels).size).toBe(labels.length);
+    // the choice sits beside the production chain, not in place of the button that opens Game tuning
+    expect(m.newGameTuning).not.toBe(m.tuning);
+    expect(m.newGameTuning).not.toBe(m.supply);
+  });
+
+  it('names the pick that could not be used, and is none of the other messages', () => {
+    expect(m.tuningUnusable('Hilly 2')).toContain('Hilly 2');
+    expect(m.tuningUnusable(m.shippedRules)).toContain(m.shippedRules);
+    const others = [m.confirmReplace, m.confirmReplaceGame(true), m.confirmReplaceGame(false)];
+    for (const o of others) expect(m.tuningUnusable('Hilly 2')).not.toBe(o);
+  });
 });
 
 describe('what the route-mode menus say about each mode', () => {
@@ -391,13 +438,14 @@ describe('text the panels show', () => {
   const dir = new URL('./ui/', import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
 
+  // slow because it reads and scans every file of src/ui for hardcoded text: 0.6 s alone
   it('comes from STR in every src/ui file', () => {
     expect(files).toContain('dom.ts');
     const found = files.flatMap((f) =>
       hardcodedText(`src/ui/${f}`, readFileSync(new URL(f, dir), 'utf8')),
     );
     expect(found, 'move these into src/strings.ts').toEqual([]);
-  });
+  }, 30_000);
 
   it('catches a hardcoded label, child, attribute or toast, and leaves classes and keys alone', () => {
     const panel = [

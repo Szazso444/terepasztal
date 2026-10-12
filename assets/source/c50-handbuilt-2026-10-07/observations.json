@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "recorded": "2026-10-11, when the method moved to develop. The C-50 was built on 2026-10-07, before projects carried an observations.json; these entries restate README.md here and ../c50-regenerated-2026-10-07/README.md against the picture, they add no new shape.",
+  "picture": "../c50-regenerated-2026-10-07/c50-reference-v2.png",
+  "observed": [
+    {
+      "picture": "view1",
+      "region": [0.31, 0.19, 0.7, 0.64],
+      "detail": "Near-central tall cab with a gently curved overhanging roof; side door with a framed window and a slim second window, a front window toward the front hood."
+    },
+    {
+      "picture": "view1",
+      "region": [0.08, 0.35, 0.92, 0.7],
+      "detail": "Two low hoods of comparable length and the same nominal width either side of the cab; the front hood carries louvre panels and a slatted radiator, the rear hood plain inspection panels."
+    },
+    {
+      "picture": "view1",
+      "region": [0.73, 0.38, 0.8, 0.46],
+      "detail": "One short exhaust on the front hood only."
+    },
+    {
+      "picture": "view1",
+      "region": [0.08, 0.19, 0.93, 0.56],
+      "detail": "Round lamps at the outer upper hood corners and on the cab roof ends, small red marker lights on the cab."
+    },
+    {
+      "picture": "view1",
+      "region": [0.04, 0.55, 0.97, 0.84],
+      "detail": "Straight rectangular bright red underframe with parallel sides, end skirts, a central step, buffers and couplers; two visible red disc wheels with steel tyres on two axles."
+    },
+    {
+      "picture": "view1",
+      "region": [0.04, 0.19, 0.97, 0.84],
+      "detail": "Charcoal body, vivid red underframe, opaque blue glass with diagonal highlights."
+    }
+  ],
+  "inferred": [
+    {
+      "detail": "Proportions are modelled from the image, not a certified dimensioned prototype drawing: hoods 1.37 wide and 1.35 long, cab 1.72 long, wheel radius .43; deck 1.9008 and cab 1.7064 wide after the owner's +8% widening."
+    },
+    {
+      "detail": "The far side follows the same construction; the generated picture is not taken as proof of hidden-side symmetry, so no far-side fittings are added."
+    }
+  ],
+  "omitted": [
+    "Projected texture patches",
+    "Invented pipes on the far-side cab",
+    "Text, weathering and surroundings of the source photographs"
+  ],
+  "guidelines": "Geometry already explicitly accepted by owner in the 2026-10-07 review. Preserve approved shape. Use lighter painted style; no added cast shadows."
+}
