@@ -1,0 +1,19 @@
+{
+  "id": "river-mouth-se-attempt-3",
+  "file": null,
+  "prompt": "Use case: sketch-to-render. Edit IMAGE 1 IN PLACE as the geometry target, retaining its centred two-tile silhouette, EXACT framing and gray-region boundaries. ONE smooth painted river mouth material, request 1024x1024 real RGBA PNG. Image 2 is the MATCHING STRIP: copy its broad channel width and narrow banks, water and bank material. Image 3 style board only, image 4 river-water material, image 5 river-bank material. Do not mirror or reuse another mouth; upper-left light remains fixed.\nFraming: on a 1024x1024 transparent canvas, the two tiles are centred at the shared-edge midpoint(512,512), and occupy ONLY x128..896,y320..704, exactly 768x384. Transparent margins128px left/right and320px top/bottom. Keep the guide's straight flat 2:1 orthographic diamond edges exactly; NO recentering, enlargement, rotation, tilt or added thickness. Nothing upstream of entry or outside silhouette. Repaint light gray210 as water and mid gray130 as bank, remove dark65 construction lines.\nCross-section is FIXED and decided: water |u|<=0.38, full WATER WIDTH0.76 TILE; each bank only0.12 TILE up to flare, outside edge |u|=.5. The channel must be WIDE as image2, not squeezed between broad banks. Keep both water edges straight, parallel and symmetric about the guide centre line from upstream cut edge to the flare; no bank end cap. Only in last quarter tile before shared edge, BOTH banks flare outward to the shared-edge corners and terminate there; water meets still open-water neighbour along the WHOLE shared edge. No bank around the open-water tile. Very pale suspended silt/slack-current fan fades by0.3 tile into neighbour.\nWater seed#477B82, #487C84,#548A92 lit,#3E6E78 shadow,#649EA2 brightest; clear lively river lighter than lake. Soft longitudinal reversible current lines and a few short glints, no V shapes or directional foam arrows. Smooth painted contours, broad organic colour clusters, three/four shades, no pixel art, square cells or per-pixel noise. Rounded flat limestone#BCA98B and slate#626B6C pebbles in damp brown-grey mud, sparse tiny moss#78804C; clean outer bank edge, soft wet waterline. Glints no brighter than#E0DDD2, below cursor white#ECE4D0/selection amber#E8AA48.\nTransparent alpha0 everywhere outside guide. No shadows, outside ground/grass,reeds,standing rocks,bridges,boats,people,objects,text,borders,glow. MATERIAL picture for later deterministic finishing, not finished runtime piece. Geometry for this edge: Middle centre(384,448), entry NW(256,384), opening SE from(640,448) to(384,576), open neighbour centre(640,576). Outer corners(384,320),(896,576),(640,704),(128,448). Water boundaries(353.3,335.4) to(545.3,431.4) then flare to(640,448), and(158.7,432.6) to(350.7,528.6) then flare to(384,576). Flare line(576,416)-(320,544). Silt fades by(716.8,486.4)-(460.8,614.4).",
+  "references": [
+    "assets/source/water-2026-10-11/guides/river-mouth-se-centred.png",
+    "assets/source/water-2026-10-11/river-strip-x.png",
+    "docs/art-direction/images/03-theme-town-growth.png",
+    "assets/source/water-2026-10-11/river-water.png",
+    "assets/source/water-2026-10-11/river-bank.png"
+  ],
+  "returned": null,
+  "measured": null,
+  "error": {
+    "type": "usage_limit_reached",
+    "resetUtc": "2026-10-12T18:59:18Z",
+    "noPictureReturned": true
+  }
+}

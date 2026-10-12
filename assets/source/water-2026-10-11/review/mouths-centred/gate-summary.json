@@ -1,0 +1,26 @@
+{
+  "status": "partial: waiting for image limit reset",
+  "typecheck": true,
+  "typecheckNode": true,
+  "lint": true,
+  "build": true,
+  "pngIntegrity": true,
+  "originalGuideAndSourceHashes": true,
+  "archiveBlobHashes": true,
+  "knownGuideBox": true,
+  "knownGuideIoU": 1,
+  "tests": {
+    "passed": 1947,
+    "failed": 14,
+    "skipped": 11,
+    "failedFiles": 8,
+    "reason": "unchanged asset-pipeline tests, including spawnSync python ENOENT"
+  },
+  "targetedFormatting": true,
+  "artScope": true,
+  "scheduledResume": {
+    "timezone": "America/Toronto",
+    "local": "2026-10-12 15:05",
+    "automationId": "resume-river-mouth-repaint"
+  }
+}

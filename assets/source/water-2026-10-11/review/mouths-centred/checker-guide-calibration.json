@@ -1,0 +1,64 @@
+{
+  "file": "assets/source/water-2026-10-11/guides/river-mouth-ne-centred.png",
+  "edge": "ne",
+  "returned": [
+    1024,
+    1024
+  ],
+  "scale": 1,
+  "square": true,
+  "mask": "alpha >128",
+  "paintedPixels": 131072,
+  "box": {
+    "actual": [
+      129,
+      320,
+      895,
+      704
+    ],
+    "expected": [
+      128,
+      320,
+      896,
+      704
+    ],
+    "width": 766,
+    "height": 384,
+    "centre": [
+      512,
+      512
+    ],
+    "centreDistance": 0,
+    "widthErrorFraction": 0.0026041666666666665,
+    "heightErrorFraction": 0,
+    "pass": true
+  },
+  "overlap": {
+    "intersection": 131072,
+    "union": 131072,
+    "iou": 1,
+    "minimum": 0.9,
+    "pass": true
+  },
+  "channels": [
+    {
+      "t": -0.25,
+      "waterBounds": null,
+      "waterWidth": 0,
+      "centreOffset": null,
+      "pass": false
+    },
+    {
+      "t": 0,
+      "waterBounds": null,
+      "waterWidth": 0,
+      "centreOffset": null,
+      "pass": false
+    }
+  ],
+  "passed": false,
+  "failures": [
+    "channel at t=-0.25",
+    "channel at t=0"
+  ]
+}

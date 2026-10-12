@@ -1,0 +1,70 @@
+{
+  "file": "assets/source/water-2026-10-11/river-strip-x.png",
+  "edge": "se",
+  "returned": [
+    1254,
+    1254
+  ],
+  "scale": 1.224609375,
+  "square": true,
+  "mask": "alpha >128",
+  "paintedPixels": 300216,
+  "box": {
+    "actual": [
+      6,
+      310,
+      1247,
+      953
+    ],
+    "expected": [
+      156.75,
+      391.875,
+      1097.25,
+      862.125
+    ],
+    "width": 1241,
+    "height": 643,
+    "centre": [
+      626.5,
+      631.5
+    ],
+    "centreDistance": 4.527692569068709,
+    "widthErrorFraction": 0.31951089845826686,
+    "heightErrorFraction": 0.36735778841042,
+    "pass": false
+  },
+  "overlap": {
+    "intersection": 194213,
+    "union": 302573,
+    "iou": 0.6418715483536205,
+    "minimum": 0.9,
+    "pass": false
+  },
+  "channels": [
+    {
+      "t": -0.25,
+      "waterBounds": [
+        -0.364013671875,
+        0.380126953125
+      ],
+      "waterWidth": 0.744140625,
+      "centreOffset": 0.008056640625,
+      "pass": true
+    },
+    {
+      "t": 0,
+      "waterBounds": [
+        -0.349853515625,
+        0.418701171875
+      ],
+      "waterWidth": 0.7685546875,
+      "centreOffset": 0.034423828125,
+      "pass": true
+    }
+  ],
+  "passed": false,
+  "failures": [
+    "box",
+    "IoU"
+  ]
+}

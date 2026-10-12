@@ -1,0 +1,14 @@
+{
+  "guides/river-strip-x.png": "2ee3cc6fad2f0c46ffdcb83f05973999840cadeda9b9604e785a1c6e650bc603",
+  "guides/river-strip-y.png": "aba5d22b1886ce855575fbad9536be560d456931a5091d8420bc79307afe7e9d",
+  "guides/river-pool.png": "7515c81cfa0c33a656c634772bdf29c8f5932734ca50b7a900534e19214e14bb",
+  "guides/river-end.png": "c972e07f85ed7aa4eda1602376c8c94ed5482d0ed1c9739717e9f3723b55f662",
+  "guides/river-mouth-ne.png": "8f365d58547e8e0e170f1d525551206a6bc7c71044109883fc286c41ea89a50c",
+  "guides/river-mouth-se.png": "dd26c9d211d57edabe70a94ce330a3de0ed001c2cc424707bf930f163204dfdd",
+  "guides/river-mouth-sw.png": "80f9ccdbe2d635ba4d1cf08ab1bdfd76f092ea594b2f15ca50ca704e23c77380",
+  "guides/river-mouth-nw.png": "4b940ce8c5693b170af500687f3d339e9ffec61f12ab32a5a4e62d466224ec24",
+  "river-strip-x.png": "01434b716d30fdec2437648ae3e72b5c5171ffb2049eb8c32b7a303303296fae",
+  "river-strip-y.png": "7c9e7a8d55c8d4ee8cef222af718cf8ed56d6ae79a140766894d1439ad36f45d",
+  "river-pool.png": "3b0e72b4725568627d0b7f54110e928fd2111b69ca220a6d65b436da64d4c482",
+  "river-end.png": "3fa440a39d73819b21552cf5eca590088547e4164297c8e0fd8a59017875cd1b"
+}

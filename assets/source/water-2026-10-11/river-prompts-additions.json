@@ -140,7 +140,7 @@
   },
   {
     "id": "river-mouth-ne-attempt-2",
-    "file": "river-mouth-ne.png",
+    "file": "raw/river-mouth-ne-attempt-2.png",
     "prompt": "Edit FIRST IMAGE IN PLACE. Repaint gray guide as one smooth painted river mouth material. Preserve guide position and scale on 1024x1024 transparent canvas: NO ZOOM, NO RECENTERING. Its full outer parallelogram corners are (768,256),(1024,384),(512,640),(256,512). The WHOLE two-tile shape is only 768 pixels wide and 384 high, NOT full canvas width. Keep large blank margins exactly as first image. Repaint light gray teal water and mid gray wet gravel bank. Delete construction lines. River mouth NE: enters from SW midpoint (384,576), opens on NE edge (512,384) to (768,512), neighbour diamond (768,256),(1024,384),(768,512),(512,384). Centre line rises toward top right. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Image2 style only; image3 hue ONLY never copy pixel texture; image4 match smooth river water; image5 match wet gravel/mud bank. Water #477B82 with #548A92 lit,#3E6E78 shade,#649EA2 small glints. Smooth broad clusters with three/four shades. Limestone #BCA98B,slate #626B6C flat small rounded pebbles,damp brown-grey mud,sparse moss #78804C. Upper-left light, independently paint this orientation. No raised blocks, shadows, outside ground or grass,reeds,standing rocks,objects,foam V or arrows,text,borders,glow. Alpha0 outside exact guide. Request 1024x1024 RGBA PNG. Material, not finished runtime piece.",
     "references": [
       "assets/source/water-2026-10-11/guides/river-mouth-ne.png",
@@ -152,7 +152,7 @@
   },
   {
     "id": "river-mouth-se-attempt-2",
-    "file": "river-mouth-se.png",
+    "file": "raw/river-mouth-se-attempt-2.png",
     "prompt": "Edit FIRST IMAGE IN PLACE. Repaint gray guide as one smooth painted river mouth material. Preserve guide position and scale on 1024x1024 transparent canvas: NO ZOOM, NO RECENTERING. Its full outer parallelogram corners are (512,384),(1024,640),(768,768),(256,512). The WHOLE two-tile shape is only 768 pixels wide and 384 high, NOT full canvas width. Keep large blank margins exactly as first image. Repaint light gray teal water and mid gray wet gravel bank. Delete construction lines. River mouth SE: enters from NW midpoint (384,448), opens on SE edge (768,512) to (512,640), neighbour diamond (768,512),(1024,640),(768,768),(512,640). Centre line falls toward bottom right. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Image2 style only; image3 hue ONLY never copy pixel texture; image4 match smooth river water; image5 match wet gravel/mud bank. Water #477B82 with #548A92 lit,#3E6E78 shade,#649EA2 small glints. Smooth broad clusters with three/four shades. Limestone #BCA98B,slate #626B6C flat small rounded pebbles,damp brown-grey mud,sparse moss #78804C. Upper-left light, independently paint this orientation. No raised blocks, shadows, outside ground or grass,reeds,standing rocks,objects,foam V or arrows,text,borders,glow. Alpha0 outside exact guide. Request 1024x1024 RGBA PNG. Material, not finished runtime piece.",
     "references": [
       "assets/source/water-2026-10-11/guides/river-mouth-se.png",
@@ -164,7 +164,7 @@
   },
   {
     "id": "river-mouth-sw-attempt-2",
-    "file": "river-mouth-sw.png",
+    "file": "raw/river-mouth-sw-attempt-2.png",
     "prompt": "Edit FIRST IMAGE IN PLACE. Repaint gray guide as one smooth painted river mouth material. Preserve guide position and scale on 1024x1024 transparent canvas: NO ZOOM, NO RECENTERING. Its full outer parallelogram corners are (512,384),(768,512),(256,768),(0,640). The WHOLE two-tile shape is only 768 pixels wide and 384 high, NOT full canvas width. Keep large blank margins exactly as first image. Repaint light gray teal water and mid gray wet gravel bank. Delete construction lines. River mouth SW: enters from NE midpoint (640,448), opens on SW edge (512,640) to (256,512), neighbour diamond (256,512),(512,640),(256,768),(0,640). Centre line falls toward bottom left. Middle tile diamond (512,384),(768,512),(512,640),(256,512). River water .76 tile wide with .12 tile banks enters middle tile at opposite midpoint; banks exist ONLY on the narrow river in middle tile. Last quarter tile before mouth, banks flare outward to the opening edge's corners and terminate there. Water meets adjoining still open water along ENTIRE shared edge. Neighbour tile is water all the way to all its outer edges, with NO surrounding shoreline or bank. Pale subtle fan of suspended silt and slack current extends .3 tile past mouth into still water and fades. Total shape only middle river band plus entire neighbour tile as guide. Image2 style only; image3 hue ONLY never copy pixel texture; image4 match smooth river water; image5 match wet gravel/mud bank. Water #477B82 with #548A92 lit,#3E6E78 shade,#649EA2 small glints. Smooth broad clusters with three/four shades. Limestone #BCA98B,slate #626B6C flat small rounded pebbles,damp brown-grey mud,sparse moss #78804C. Upper-left light, independently paint this orientation. No raised blocks, shadows, outside ground or grass,reeds,standing rocks,objects,foam V or arrows,text,borders,glow. Alpha0 outside exact guide. Request 1024x1024 RGBA PNG. Material, not finished runtime piece.",
     "references": [
       "assets/source/water-2026-10-11/guides/river-mouth-sw.png",
@@ -188,7 +188,7 @@
   },
   {
     "id": "river-mouth-nw-attempt-3",
-    "file": "river-mouth-nw.png",
+    "file": "raw/river-mouth-nw-attempt-3.png",
     "prompt": "Repaint ONLY the gray parallelogram in image1, IN PLACE without changing its shape, position, scale or 1024x1024 transparent canvas. It is small and offset LEFT: left point(0,384), top point(256,256), right point(768,512), bottom point(512,640). Keep the ENTIRE RIGHT QUARTER of canvas EMPTY TRANSPARENT from x768 to1024! Bottom 384 rows also empty transparent. Do not fill or center the canvas. Keep all original guide margins. Pale gray becomes smooth clear teal river water; medium gray becomes low wet gravel/mud banks; remove thin guide lines. On LEFT half is still open water with no bank at outer edges. On RIGHT half is river with two narrow banks flaring outward toward the left open water; pale fading silt at their termination. Light upper left, teal #477B82 #548A92 #3E6E78 #649EA2, reversible soft current and sparse small glints, no arrows or V foam. Flat small limestone #BCA98B/slate #626B6C rounded pebbles in wet grey-brown mud, sparse moss #78804C. Image2 smooth painted game style, image3 HUE ONLY never pixel-art streaks, image4 match water material,image5 match bank material. Smooth broad colour clusters, three/four shades, no noise. No ground or grass outside bank,no shadows,raised thickness,reeds,rocks standing upright,boats,objects,text,borders,glow. Real RGBA PNG request1024x1024. Preserve small offset guide exactly, nothing beyond its boundaries.",
     "references": [
       "assets/source/water-2026-10-11/guides/river-mouth-nw.png",
@@ -197,5 +197,159 @@
       "assets/source/water-2026-10-11/river-water.png",
       "assets/source/water-2026-10-11/river-bank.png"
     ]
+  },
+  {
+    "id": "river-mouth-ne-attempt-3",
+    "file": "raw/river-mouth-ne-attempt-3.png",
+    "prompt": "Use case: sketch-to-render. Edit IMAGE 1 IN PLACE as the geometry target, retaining its centred two-tile silhouette, EXACT framing and gray-region boundaries. ONE smooth painted river mouth material, request 1024x1024 real RGBA PNG. Image 2 is the MATCHING STRIP: copy its broad channel width and narrow banks, water and bank material. Image 3 style board only, image 4 river-water material, image 5 river-bank material. Do not mirror or reuse another mouth; upper-left light remains fixed.\nFraming: on a 1024x1024 transparent canvas, the two tiles are centred at the shared-edge midpoint(512,512), and occupy ONLY x128..896,y320..704, exactly 768x384. Transparent margins128px left/right and320px top/bottom. Keep the guide's straight flat 2:1 orthographic diamond edges exactly; NO recentering, enlargement, rotation, tilt or added thickness. Nothing upstream of entry or outside silhouette. Repaint light gray210 as water and mid gray130 as bank, remove dark65 construction lines.\nCross-section is FIXED and decided: water |u|<=0.38, full WATER WIDTH0.76 TILE; each bank only0.12 TILE up to flare, outside edge |u|=.5. The channel must be WIDE as image2, not squeezed between broad banks. Keep both water edges straight, parallel and symmetric about the guide centre line from upstream cut edge to the flare; no bank end cap. Only in last quarter tile before shared edge, BOTH banks flare outward to the shared-edge corners and terminate there; water meets still open-water neighbour along the WHOLE shared edge. No bank around the open-water tile. Very pale suspended silt/slack-current fan fades by0.3 tile into neighbour.\nWater seed#477B82, #487C84,#548A92 lit,#3E6E78 shadow,#649EA2 brightest; clear lively river lighter than lake. Soft longitudinal reversible current lines and a few short glints, no V shapes or directional foam arrows. Smooth painted contours, broad organic colour clusters, three/four shades, no pixel art, square cells or per-pixel noise. Rounded flat limestone#BCA98B and slate#626B6C pebbles in damp brown-grey mud, sparse tiny moss#78804C; clean outer bank edge, soft wet waterline. Glints no brighter than#E0DDD2, below cursor white#ECE4D0/selection amber#E8AA48.\nTransparent alpha0 everywhere outside guide. No shadows, outside ground/grass,reeds,standing rocks,bridges,boats,people,objects,text,borders,glow. MATERIAL picture for later deterministic finishing, not finished runtime piece. Geometry for this edge: Middle centre(384,576), entry SW(256,640), opening NE from(384,448) to(640,576), open neighbour centre(640,448). Outer corners(128,576),(640,320),(896,448),(384,704). Water boundaries(158.7,591.4) to(350.7,495.4) then flare to(384,448), and(353.3,688.6) to(545.3,592.6) then flare to(640,576). Flare line(320,480)-(576,608). Silt fades by(460.8,409.6)-(716.8,537.6).",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-ne-centred.png",
+      "assets/source/water-2026-10-11/river-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-ne-attempt-3.png",
+      "edge": "ne",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 245600,
+      "box": {
+        "actual": [100, 411, 1159, 952],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1059,
+        "height": 541,
+        "centre": [629.5, 681.5],
+        "centreDistance": 54.55730931781735,
+        "widthErrorFraction": 0.12599681020733652,
+        "heightErrorFraction": 0.15045188729399256,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 167771,
+        "union": 274399,
+        "iou": 0.6114125780341765,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.131103515625, 0.466064453125],
+          "waterWidth": 0.59716796875,
+          "centreOffset": 0.16748046875,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.130126953125, 0.468017578125],
+          "waterWidth": 0.59814453125,
+          "centreOffset": 0.1689453125,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    }
+  },
+  {
+    "id": "river-mouth-nw-attempt-4",
+    "file": "raw/river-mouth-nw-attempt-4.png",
+    "prompt": "Use case: sketch-to-render. Edit IMAGE 1 IN PLACE as the geometry target, retaining its centred two-tile silhouette, EXACT framing and gray-region boundaries. ONE smooth painted river mouth material, request 1024x1024 real RGBA PNG. Image 2 is the MATCHING STRIP: copy its broad channel width and narrow banks, water and bank material. Image 3 style board only, image 4 river-water material, image 5 river-bank material. Do not mirror or reuse another mouth; upper-left light remains fixed.\nFraming: on a 1024x1024 transparent canvas, the two tiles are centred at the shared-edge midpoint(512,512), and occupy ONLY x128..896,y320..704, exactly 768x384. Transparent margins128px left/right and320px top/bottom. Keep the guide's straight flat 2:1 orthographic diamond edges exactly; NO recentering, enlargement, rotation, tilt or added thickness. Nothing upstream of entry or outside silhouette. Repaint light gray210 as water and mid gray130 as bank, remove dark65 construction lines.\nCross-section is FIXED and decided: water |u|<=0.38, full WATER WIDTH0.76 TILE; each bank only0.12 TILE up to flare, outside edge |u|=.5. The channel must be WIDE as image2, not squeezed between broad banks. Keep both water edges straight, parallel and symmetric about the guide centre line from upstream cut edge to the flare; no bank end cap. Only in last quarter tile before shared edge, BOTH banks flare outward to the shared-edge corners and terminate there; water meets still open-water neighbour along the WHOLE shared edge. No bank around the open-water tile. Very pale suspended silt/slack-current fan fades by0.3 tile into neighbour.\nWater seed#477B82, #487C84,#548A92 lit,#3E6E78 shadow,#649EA2 brightest; clear lively river lighter than lake. Soft longitudinal reversible current lines and a few short glints, no V shapes or directional foam arrows. Smooth painted contours, broad organic colour clusters, three/four shades, no pixel art, square cells or per-pixel noise. Rounded flat limestone#BCA98B and slate#626B6C pebbles in damp brown-grey mud, sparse tiny moss#78804C; clean outer bank edge, soft wet waterline. Glints no brighter than#E0DDD2, below cursor white#ECE4D0/selection amber#E8AA48.\nTransparent alpha0 everywhere outside guide. No shadows, outside ground/grass,reeds,standing rocks,bridges,boats,people,objects,text,borders,glow. MATERIAL picture for later deterministic finishing, not finished runtime piece. Geometry for this edge: Middle centre(640,576), entry SE(768,640), opening NW from(384,576) to(640,448), open neighbour centre(384,448). Outer corners(896,576),(384,320),(128,448),(640,704). Water boundaries(865.3,591.4) to(673.3,495.4) then flare to(640,448), and(670.7,688.6) to(478.7,592.6) then flare to(384,576). Flare line(704,480)-(448,608). Silt fades by(563.2,409.6)-(307.2,537.6).",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-nw-centred.png",
+      "assets/source/water-2026-10-11/river-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-nw-attempt-4.png",
+      "edge": "nw",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 217285,
+      "box": {
+        "actual": [144, 390, 1109, 914],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 965,
+        "height": 524,
+        "centre": [626.5, 652],
+        "centreDistance": 25.004999500099974,
+        "widthErrorFraction": 0.026049973418394472,
+        "heightErrorFraction": 0.11430090377458799,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 181084,
+        "union": 232771,
+        "iou": 0.7779491431492754,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.392822265625, 0.456298828125],
+          "waterWidth": 0.84912109375,
+          "centreOffset": 0.03173828125,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.402587890625, 0.407470703125],
+          "waterWidth": 0.81005859375,
+          "centreOffset": 0.00244140625,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    }
+  },
+  {
+    "id": "river-mouth-se-attempt-3",
+    "file": null,
+    "prompt": "Use case: sketch-to-render. Edit IMAGE 1 IN PLACE as the geometry target, retaining its centred two-tile silhouette, EXACT framing and gray-region boundaries. ONE smooth painted river mouth material, request 1024x1024 real RGBA PNG. Image 2 is the MATCHING STRIP: copy its broad channel width and narrow banks, water and bank material. Image 3 style board only, image 4 river-water material, image 5 river-bank material. Do not mirror or reuse another mouth; upper-left light remains fixed.\nFraming: on a 1024x1024 transparent canvas, the two tiles are centred at the shared-edge midpoint(512,512), and occupy ONLY x128..896,y320..704, exactly 768x384. Transparent margins128px left/right and320px top/bottom. Keep the guide's straight flat 2:1 orthographic diamond edges exactly; NO recentering, enlargement, rotation, tilt or added thickness. Nothing upstream of entry or outside silhouette. Repaint light gray210 as water and mid gray130 as bank, remove dark65 construction lines.\nCross-section is FIXED and decided: water |u|<=0.38, full WATER WIDTH0.76 TILE; each bank only0.12 TILE up to flare, outside edge |u|=.5. The channel must be WIDE as image2, not squeezed between broad banks. Keep both water edges straight, parallel and symmetric about the guide centre line from upstream cut edge to the flare; no bank end cap. Only in last quarter tile before shared edge, BOTH banks flare outward to the shared-edge corners and terminate there; water meets still open-water neighbour along the WHOLE shared edge. No bank around the open-water tile. Very pale suspended silt/slack-current fan fades by0.3 tile into neighbour.\nWater seed#477B82, #487C84,#548A92 lit,#3E6E78 shadow,#649EA2 brightest; clear lively river lighter than lake. Soft longitudinal reversible current lines and a few short glints, no V shapes or directional foam arrows. Smooth painted contours, broad organic colour clusters, three/four shades, no pixel art, square cells or per-pixel noise. Rounded flat limestone#BCA98B and slate#626B6C pebbles in damp brown-grey mud, sparse tiny moss#78804C; clean outer bank edge, soft wet waterline. Glints no brighter than#E0DDD2, below cursor white#ECE4D0/selection amber#E8AA48.\nTransparent alpha0 everywhere outside guide. No shadows, outside ground/grass,reeds,standing rocks,bridges,boats,people,objects,text,borders,glow. MATERIAL picture for later deterministic finishing, not finished runtime piece. Geometry for this edge: Middle centre(384,448), entry NW(256,384), opening SE from(640,448) to(384,576), open neighbour centre(640,576). Outer corners(384,320),(896,576),(640,704),(128,448). Water boundaries(353.3,335.4) to(545.3,431.4) then flare to(640,448), and(158.7,432.6) to(350.7,528.6) then flare to(384,576). Flare line(576,416)-(320,544). Silt fades by(716.8,486.4)-(460.8,614.4).",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-se-centred.png",
+      "assets/source/water-2026-10-11/river-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": null,
+    "measured": null,
+    "error": {
+      "type": "usage_limit_reached",
+      "resetUtc": "2026-10-12T18:59:18Z",
+      "noPictureReturned": true
+    }
+  },
+  {
+    "id": "river-mouth-sw-attempt-3",
+    "file": null,
+    "prompt": "Use case: sketch-to-render. Edit IMAGE 1 IN PLACE as the geometry target, retaining its centred two-tile silhouette, EXACT framing and gray-region boundaries. ONE smooth painted river mouth material, request 1024x1024 real RGBA PNG. Image 2 is the MATCHING STRIP: copy its broad channel width and narrow banks, water and bank material. Image 3 style board only, image 4 river-water material, image 5 river-bank material. Do not mirror or reuse another mouth; upper-left light remains fixed.\nFraming: on a 1024x1024 transparent canvas, the two tiles are centred at the shared-edge midpoint(512,512), and occupy ONLY x128..896,y320..704, exactly 768x384. Transparent margins128px left/right and320px top/bottom. Keep the guide's straight flat 2:1 orthographic diamond edges exactly; NO recentering, enlargement, rotation, tilt or added thickness. Nothing upstream of entry or outside silhouette. Repaint light gray210 as water and mid gray130 as bank, remove dark65 construction lines.\nCross-section is FIXED and decided: water |u|<=0.38, full WATER WIDTH0.76 TILE; each bank only0.12 TILE up to flare, outside edge |u|=.5. The channel must be WIDE as image2, not squeezed between broad banks. Keep both water edges straight, parallel and symmetric about the guide centre line from upstream cut edge to the flare; no bank end cap. Only in last quarter tile before shared edge, BOTH banks flare outward to the shared-edge corners and terminate there; water meets still open-water neighbour along the WHOLE shared edge. No bank around the open-water tile. Very pale suspended silt/slack-current fan fades by0.3 tile into neighbour.\nWater seed#477B82, #487C84,#548A92 lit,#3E6E78 shadow,#649EA2 brightest; clear lively river lighter than lake. Soft longitudinal reversible current lines and a few short glints, no V shapes or directional foam arrows. Smooth painted contours, broad organic colour clusters, three/four shades, no pixel art, square cells or per-pixel noise. Rounded flat limestone#BCA98B and slate#626B6C pebbles in damp brown-grey mud, sparse tiny moss#78804C; clean outer bank edge, soft wet waterline. Glints no brighter than#E0DDD2, below cursor white#ECE4D0/selection amber#E8AA48.\nTransparent alpha0 everywhere outside guide. No shadows, outside ground/grass,reeds,standing rocks,bridges,boats,people,objects,text,borders,glow. MATERIAL picture for later deterministic finishing, not finished runtime piece. Geometry for this edge: Middle centre(640,448), entry NE(768,384), opening SW from(640,576) to(384,448), open neighbour centre(384,576). Outer corners(640,320),(896,448),(384,704),(128,576). Water boundaries(670.7,335.4) to(478.7,431.4) then flare to(384,448), and(865.3,432.6) to(673.3,528.6) then flare to(640,576). Flare line(448,416)-(704,544). Silt fades by(307.2,486.4)-(563.2,614.4).",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-sw-centred.png",
+      "assets/source/water-2026-10-11/river-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": null,
+    "measured": null,
+    "error": {
+      "type": "usage_limit_reached",
+      "resetUtc": "2026-10-12T18:59:18Z",
+      "noPictureReturned": true
+    }
   }
 ]

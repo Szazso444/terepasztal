@@ -1,0 +1,88 @@
+{
+  "id": "river-mouth-ne-attempt-3",
+  "file": "raw/river-mouth-ne-attempt-3.png",
+  "prompt": "Use case: sketch-to-render. Edit IMAGE 1 IN PLACE as the geometry target, retaining its centred two-tile silhouette, EXACT framing and gray-region boundaries. ONE smooth painted river mouth material, request 1024x1024 real RGBA PNG. Image 2 is the MATCHING STRIP: copy its broad channel width and narrow banks, water and bank material. Image 3 style board only, image 4 river-water material, image 5 river-bank material. Do not mirror or reuse another mouth; upper-left light remains fixed.\nFraming: on a 1024x1024 transparent canvas, the two tiles are centred at the shared-edge midpoint(512,512), and occupy ONLY x128..896,y320..704, exactly 768x384. Transparent margins128px left/right and320px top/bottom. Keep the guide's straight flat 2:1 orthographic diamond edges exactly; NO recentering, enlargement, rotation, tilt or added thickness. Nothing upstream of entry or outside silhouette. Repaint light gray210 as water and mid gray130 as bank, remove dark65 construction lines.\nCross-section is FIXED and decided: water |u|<=0.38, full WATER WIDTH0.76 TILE; each bank only0.12 TILE up to flare, outside edge |u|=.5. The channel must be WIDE as image2, not squeezed between broad banks. Keep both water edges straight, parallel and symmetric about the guide centre line from upstream cut edge to the flare; no bank end cap. Only in last quarter tile before shared edge, BOTH banks flare outward to the shared-edge corners and terminate there; water meets still open-water neighbour along the WHOLE shared edge. No bank around the open-water tile. Very pale suspended silt/slack-current fan fades by0.3 tile into neighbour.\nWater seed#477B82, #487C84,#548A92 lit,#3E6E78 shadow,#649EA2 brightest; clear lively river lighter than lake. Soft longitudinal reversible current lines and a few short glints, no V shapes or directional foam arrows. Smooth painted contours, broad organic colour clusters, three/four shades, no pixel art, square cells or per-pixel noise. Rounded flat limestone#BCA98B and slate#626B6C pebbles in damp brown-grey mud, sparse tiny moss#78804C; clean outer bank edge, soft wet waterline. Glints no brighter than#E0DDD2, below cursor white#ECE4D0/selection amber#E8AA48.\nTransparent alpha0 everywhere outside guide. No shadows, outside ground/grass,reeds,standing rocks,bridges,boats,people,objects,text,borders,glow. MATERIAL picture for later deterministic finishing, not finished runtime piece. Geometry for this edge: Middle centre(384,576), entry SW(256,640), opening NE from(384,448) to(640,576), open neighbour centre(640,448). Outer corners(128,576),(640,320),(896,448),(384,704). Water boundaries(158.7,591.4) to(350.7,495.4) then flare to(384,448), and(353.3,688.6) to(545.3,592.6) then flare to(640,576). Flare line(320,480)-(576,608). Silt fades by(460.8,409.6)-(716.8,537.6).",
+  "references": [
+    "assets/source/water-2026-10-11/guides/river-mouth-ne-centred.png",
+    "assets/source/water-2026-10-11/river-strip-y.png",
+    "docs/art-direction/images/03-theme-town-growth.png",
+    "assets/source/water-2026-10-11/river-water.png",
+    "assets/source/water-2026-10-11/river-bank.png"
+  ],
+  "returned": [
+    1254,
+    1254
+  ],
+  "measured": {
+    "file": "assets/source/water-2026-10-11/raw/river-mouth-ne-attempt-3.png",
+    "edge": "ne",
+    "returned": [
+      1254,
+      1254
+    ],
+    "scale": 1.224609375,
+    "square": true,
+    "mask": "alpha >128",
+    "paintedPixels": 245600,
+    "box": {
+      "actual": [
+        100,
+        411,
+        1159,
+        952
+      ],
+      "expected": [
+        156.75,
+        391.875,
+        1097.25,
+        862.125
+      ],
+      "width": 1059,
+      "height": 541,
+      "centre": [
+        629.5,
+        681.5
+      ],
+      "centreDistance": 54.55730931781735,
+      "widthErrorFraction": 0.12599681020733652,
+      "heightErrorFraction": 0.15045188729399256,
+      "pass": false
+    },
+    "overlap": {
+      "intersection": 167771,
+      "union": 274399,
+      "iou": 0.6114125780341765,
+      "minimum": 0.9,
+      "pass": false
+    },
+    "channels": [
+      {
+        "t": -0.25,
+        "waterBounds": [
+          -0.131103515625,
+          0.466064453125
+        ],
+        "waterWidth": 0.59716796875,
+        "centreOffset": 0.16748046875,
+        "pass": false
+      },
+      {
+        "t": 0,
+        "waterBounds": [
+          -0.130126953125,
+          0.468017578125
+        ],
+        "waterWidth": 0.59814453125,
+        "centreOffset": 0.1689453125,
+        "pass": false
+      }
+    ],
+    "passed": false,
+    "failures": [
+      "box",
+      "IoU",
+      "channel at t=-0.25",
+      "channel at t=0"
+    ]
+  }
+}
