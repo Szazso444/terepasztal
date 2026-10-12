@@ -4,7 +4,12 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
-import { BrokenNumberWarning, saveOutcome, type SaveOutcome } from './engine/saveRefusal';
+import {
+  BrokenNumberWarning,
+  StorageRefusalWarning,
+  saveOutcome,
+  type SaveOutcome,
+} from './engine/saveRefusal';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { mapFromLevel, type LevelData } from './world/level';
@@ -231,6 +236,8 @@ export class Game implements UiHost {
   private readonly autosavePause = new AutosavePause();
   /** a stretch of saves refused for a broken number warns once (`saveRefusal.ts`) */
   private readonly brokenNumberWarning = new BrokenNumberWarning();
+  /** and a stretch of saves refused by storage warns once, with its own text */
+  private readonly storageRefusalWarning = new StorageRefusalWarning();
   /** when the stored game was last written, for the settings screen */
   savedAt: number | null = null;
   weather!: Weather;
@@ -579,6 +586,7 @@ export class Game implements UiHost {
   saveSlot(name: string) {
     const out = this.storeSnapshot(this.snapshot(), (s) => writeSlot(name, s));
     this.brokenNumberWarning.note(out.kind);
+    this.storageRefusalWarning.note(out.kind);
     this.saveToast(out, STR.settings.slotSaved(name));
     return out.kind === 'stored';
   }
@@ -1137,8 +1145,8 @@ export class Game implements UiHost {
    * Store the game; says so unless `silent`; false when it was refused: by storage, or because the
    * game holds a broken number (`writeSave`). Nothing is written while the page reloads into a save
    * just stored (`reloadIntoStoredSave`). A silent save is one the player did not ask for, and none
-   * is written after a loop error (`autosavePause`); a silent one refused for a broken number
-   * warns once until some save has gone through, and one refused by storage says nothing.
+   * is written after a loop error (`autosavePause`); a silent one refused warns once for each
+   * reason (a broken number, storage) until some save has gone through.
    */
   save(silent = false) {
     if (this.keepStoredSave) return false;
@@ -1146,9 +1154,11 @@ export class Game implements UiHost {
     const snap = this.snapshot();
     const out = this.storeSnapshot(snap, writeSave);
     if (out.kind === 'stored') this.savedAt = snap.savedAt;
-    const warn = this.brokenNumberWarning.note(out.kind);
+    const broken = this.brokenNumberWarning.note(out.kind);
+    const storage = this.storageRefusalWarning.note(out.kind);
     if (!silent) this.saveToast(out, STR.settings.saved);
-    else if (warn) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    else if (broken) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    else if (storage) this.toasts.push(STR.settings.autosaveFailed, 'warn');
     return out.kind === 'stored';
   }
 

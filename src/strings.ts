@@ -878,6 +878,12 @@ export const STR = {
     saveBroken: 'Could not save: the game holds a broken value. Your last save is kept.',
     /** An autosave refused for the same reason; shown once until some save has gone through. */
     autosaveBroken: 'Autosave stopped: the game holds a broken value. Your last save is kept.',
+    /**
+     * A save the game made on its own (the minute autosave, the ground stored on load) refused by
+     * storage; shown once until some save has gone through.
+     */
+    autosaveFailed:
+      'Autosave failed: storage is full or blocked, so progress since your last save is not kept. Deleting a named save can free space.',
     noSave: 'No save found',
     badSave: 'Save data unreadable',
   },
