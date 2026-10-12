@@ -1,0 +1,23 @@
+{
+  "lowerBodyContactIoU": 0.3982414068745004,
+  "contactOverlay": "checks/pump-hand-back-walk-contact-overlay.png",
+  "passingBoxes": [
+    {
+      "x": 110,
+      "y": 65,
+      "width": 113,
+      "height": 368
+    },
+    {
+      "x": 103,
+      "y": 62,
+      "width": 128,
+      "height": 361
+    }
+  ],
+  "requiresVisualChecks": [
+    "f0/f2 opposite thigh overlap X",
+    "f1/f3 opposite lifted foot",
+    "play 9px four-frame sequence"
+  ]
+}

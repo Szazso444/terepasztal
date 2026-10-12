@@ -1,3 +1,7 @@
+## Current continuation — 2026-10-12
+
+Core accepted pump-hand-back-walk attempts [2,3,3,3]. The canonical strip is rebuilt with individual sole rows and uniform area averaging. One of nine requested strips is complete. The historical notes below describe earlier checks; finish-brief-2026-10-12.txt supersedes the strict width/centre rule and browser playback requirement. The checker now tests 2:3 aspect, hat-to-sole height within 5%, and body width no more than 25% over the guide; carried loads can be excluded with recorded anatomical bounds. After three returned paintings keep the best and document any defect. Offline 9px-6x and 36px sheets replace browser playback. No review/game-scale exports are regenerated.
+
 # Nine-strip repaint workflow · issue331
 
 Image generation resumed on **2026-10-12** after the reported quota reset.

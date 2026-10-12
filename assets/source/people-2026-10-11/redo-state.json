@@ -1,7 +1,7 @@
 {
   "date": "2026-10-11",
   "baseCommit": "3f5a4f7f",
-  "status": "Waiting for author decision: first strip f1/f2/f3 fail5percent box test after3attempts; diagnostic candidate saved, actual playback blocked by browser file: URL policy;0of9production strips replaced.",
+  "status": "1/9 strips complete; first strip accepted by Core, remaining eight ready for painting.",
   "order": [
     "pump-hand-back-walk",
     "pump-hand-front-carry",
@@ -13,7 +13,9 @@
     "farmer-back-walk",
     "farmer-back-carry"
   ],
-  "completed": [],
+  "completed": [
+    "pump-hand-back-walk"
+  ],
   "firstStripGate": "pump-hand-back-walk must be fully checked and committed before painting strip2",
   "originalStripHashes": {
     "pump-hand-back-walk.png": "333043fd5a7a92d2c1edc6eb1e83ee230ff30bc3cf817cea073ea76671fd407e",
@@ -277,7 +279,7 @@
     "stone-mason-front-carry.png": "12745ef7080e6936864be7026f5c13533df4c7fb65933433583f6a236a9d64df",
     "stone-mason-front-walk.png": "e398720adae34feb7eb638fd0a3b89a9dc34b53f638dac263f30298655c2715c"
   },
-  "lastUpdatedAt": "2026-10-12T19:27:36.162Z",
+  "lastUpdatedAt": "2026-10-12T22:41:37.386Z",
   "toolBlockHistory": [
     {
       "type": "usage_limit_reached",
@@ -288,9 +290,14 @@
   "poseProgress": [
     {
       "strip": "pump-hand-back-walk",
-      "acceptedFrames": [0],
+      "acceptedFrames": [
+        0,
+        1,
+        2,
+        3
+      ],
       "returnedPaintings": 11,
-      "cycleReview": null
+      "cycleReview": "passed"
     },
     {
       "strip": "pump-hand-front-carry",
@@ -340,5 +347,17 @@
       "returnedPaintings": 0,
       "cycleReview": null
     }
-  ]
+  ],
+  "authorDecision": {
+    "date": "2026-10-12",
+    "brief": "finish-brief-2026-10-12.txt",
+    "firstStripAcceptedAttempts": [
+      2,
+      3,
+      3,
+      3
+    ],
+    "keepBestAfterThree": true,
+    "offlineChecksReplaceBrowser": true
+  }
 }

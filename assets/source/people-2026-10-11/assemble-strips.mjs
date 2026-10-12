@@ -10,7 +10,7 @@ const prompts = json('prompts.json'),
   paintings = [];
 for (let k = 0; k < 4; k++) {
   const e = calls.findLast((e) => e.strip === strip && e.frame === k && e.accepted);
-  if (!e?.measured?.boxPass)
+  if (!e?.accepted || (!e.measured.boxPass && !e.keptDespiteFailedMeasurements))
     throw Error('Frame ' + k + ' has no box-passing, visually accepted painting');
   const png = read(e.acceptedFile),
     s = png.width / 1024,
@@ -21,7 +21,7 @@ for (let k = 0; k < 4; k++) {
     png,
     s,
     factor,
-    sourceAnchor: [512 * s, 1344 * s],
+    sourceAnchor: [512 * s, e.measured.soleRow],
     box: b,
     leftReach: (512 * s - b.x) * factor,
     rightReach: (b.x + b.width - 512 * s) * factor,
@@ -50,6 +50,7 @@ for (let k = 0; k < 4; k++) {
     uniformScale: p.factor,
     normalizedScale: 360 / 1152,
     sourceAnchor: p.sourceAnchor,
+    soleRow: p.e.measured.soleRow,
     anchor: [columnWidth * k + columnWidth / 2, 480],
     leftReach: p.leftReach,
     rightReach: p.rightReach,
@@ -86,11 +87,24 @@ for (let k = 0; k < 4; k++) {
       (y * canvas.width + k * columnWidth) * 4,
       (y * canvas.width + (k + 1) * columnWidth) * 4,
     );
-  const tiny = resample(frame, 64, 32, 9 / 360, [columnWidth / 2, 480], [32, 25]);
+  const tiny = resample(frame, 64, 32, 9 / 360, [columnWidth / 2, 480], [32, 25], {cleanAlpha:false});
   write('checks/' + strip + '-f' + k + '-9px.png', tiny);
   place(tinySheet, tiny, k * 64, 0);
 }
 write('checks/' + strip + '-9px.png', tinySheet);
+const enlarged=new PNG({width:1536,height:192});
+for(let y=0;y<192;y++)for(let x=0;x<1536;x++){
+ const src=(Math.floor(y/6)*256+Math.floor(x/6))*4,dst=(y*1536+x)*4;
+ tinySheet.data.copy(enlarged.data,dst,src,src+4);
+}
+write('checks/'+strip+'-9px-6x.png',enlarged);
+const medium=new PNG({width:256,height:64});
+for(let k=0;k<4;k++) {
+ const frame=paintings[k];
+ // Portrait alpha is cleaned once; direct area integration preserves tiny-frame antialiasing.
+ place(medium,resample(frame.png,64,64,frame.factor*36/360,frame.sourceAnchor,[32,56]),k*64,0);
+}
+write('checks/'+strip+'-36px.png',medium);
 const html =
   '<!doctype html><html lang="en"><meta charset="utf-8"><title>' +
   strip +

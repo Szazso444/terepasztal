@@ -69,8 +69,8 @@ export function resample(
             p = (sy * source.width + sx) * 4;
           let alpha = source.data[p + 3] / 255;
           if (cleanAlpha) {
-            if (source.data[p + 3] <= 8) alpha = 0;
-            else if (source.data[p + 3] >= 245) alpha = 1;
+            if (source.data[p + 3] < 16) alpha = 0;
+            else if (source.data[p + 3] >= 200) alpha = 1;
           }
           const weight = w * alpha;
           a += weight;
