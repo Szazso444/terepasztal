@@ -4,6 +4,17 @@ import { root, json, saveJson } from './pose-png.mjs';
 const prompts = json('prompts.json');
 const state = json('redo-state.json');
 const calls = prompts['redo-2026-10-11'];
+for (const [strip, record] of Object.entries(prompts.redoStrips ?? {})) {
+  const hatRows = record.frames.map(frame => {
+    const e = calls.findLast(e => e.strip === strip && e.frame === frame.frame && e.accepted);
+    return 480 - (e.measured.soleRow - e.measured.hatTop) * frame.uniformScale;
+  });
+  record.groundedHatRows = hatRows;
+  record.headBobRange = Math.max(...hatRows) - Math.min(...hatRows);
+  record.headBobFraction = record.headBobRange / 360;
+  record.headBobWithinTwoPercent = record.headBobFraction <= 0.02;
+}
+saveJson('prompts.json', prompts);
 const report = {
   updatedAt: new Date().toISOString(),
   branch: 'art/331-people',
@@ -17,6 +28,7 @@ const report = {
     cycleReview: prompts.redoStrips?.[strip]?.visualCycleReview ?? 'not assembled',
     repeatedFrames: prompts.redoStrips?.[strip]?.visualFindings?.repeatedFrames ?? [],
     findings: prompts.redoStrips?.[strip]?.visualFindings?.note ?? null,
+    headBobFraction: prompts.redoStrips?.[strip]?.headBobFraction ?? null,
     measurementsKeptAfterThree: calls.filter(e => e.strip === strip && e.accepted && e.keptDespiteFailedMeasurements).map(e => e.frame),
   })),
 };

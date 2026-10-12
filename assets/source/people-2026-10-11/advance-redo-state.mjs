@@ -24,6 +24,12 @@ s.poseProgress = s.order.map((strip) => ({
 p.redoStatus.completedStripCount = s.completed.length;
 p.redoStatus.status = s.status;
 p.redoStatus.paintingCount = entries.filter((e) => e.file).length;
+if (s.authorDecision?.keepBestAfterThree && p.redoStatus.currentBlock?.startsWith('May the best pose')) {
+  p.redoStatus.resolvedBlockHistory = [...(p.redoStatus.resolvedBlockHistory ?? []),
+    { question: p.redoStatus.currentBlock, resolvedBy: s.authorDecision }];
+  delete p.redoStatus.currentBlock;
+}
+p.redoStatus.authorDecision = s.authorDecision;
 saveJson('redo-state.json', s);
 saveJson('prompts.json', p);
 console.log(s.status);

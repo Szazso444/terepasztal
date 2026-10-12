@@ -1,7 +1,7 @@
 {
   "date": "2026-10-11",
   "baseCommit": "3f5a4f7f",
-  "status": "2/9 strips complete; pump-front-carry retained with repeated f2 after three attempts; continue pump-back-carry.",
+  "status": "3/9 strips complete; pump-back-carry four distinct poses, documented f2 height excess after three attempts.",
   "order": [
     "pump-hand-back-walk",
     "pump-hand-front-carry",
@@ -15,7 +15,8 @@
   ],
   "completed": [
     "pump-hand-back-walk",
-    "pump-hand-front-carry"
+    "pump-hand-front-carry",
+    "pump-hand-back-carry"
   ],
   "firstStripGate": "pump-hand-back-walk must be fully checked and committed before painting strip2",
   "originalStripHashes": {
@@ -332,7 +333,7 @@
     "refs/stone-mason-front-walk.png": "c216ebf704b5c9c321077cdfdd3c248e57cd2ef7d2d9fd99edb521630dcab775",
     "pose-geometry.json": "c4af4a2097c75b9e8998b377032ff6c5f88639048b2613642ff7adb9ff3f182c"
   },
-  "lastUpdatedAt": "2026-10-12T22:51:30.327Z",
+  "lastUpdatedAt": "2026-10-12T23:02:28.838Z",
   "toolBlockHistory": [
     {
       "type": "usage_limit_reached",
@@ -365,9 +366,14 @@
     },
     {
       "strip": "pump-hand-back-carry",
-      "acceptedFrames": [],
-      "returnedPaintings": 0,
-      "cycleReview": null
+      "acceptedFrames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "returnedPaintings": 11,
+      "cycleReview": "passed"
     },
     {
       "strip": "lumberjack-back-walk",

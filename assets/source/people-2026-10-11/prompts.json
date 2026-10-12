@@ -1658,12 +1658,710 @@
       "accepted": true,
       "visualNote": "Best of three: left leg planted, near right boot visibly lifted to screen right, opposite to f1. Height within3.3%; same character and teal-water load. Some grounded head-height drift remains, documented under keep-best instruction.",
       "acceptedFile": "poses/pump-hand-front-carry-f3.png"
+    },
+    {
+      "id": "pump-hand-back-carry-f0-attempt-1",
+      "strip": "pump-hand-back-carry",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f0.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f0-attempt-1.png",
+      "rawSha256": "d755dd577e37304b578cc4fee721094af1ec33d10b3f64a38dcceab08fa8a0bb",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 98,
+          "y": 157,
+          "width": 891,
+          "height": 1276
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 305,
+          "y": 157,
+          "width": 523,
+          "height": 1276
+        },
+        "hatTop": 157,
+        "soleRow": 1432,
+        "soleOffset": 88,
+        "figureHeight": 1276,
+        "heightError": 0.10763888888888884,
+        "totalWidth": 891,
+        "bodyWidthRatio": 0.6973333333333334,
+        "anatomyMethod": "Visual body-only bounds exclude both buckets and shoulder yoke; cap and boots supply alpha>128 hat-to-sole extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 157,
+        "soleRow": 1432,
+        "bodyBox": {
+          "x": 305,
+          "y": 157,
+          "width": 523,
+          "height": 1276
+        },
+        "note": "Visual body-only bounds exclude both buckets and shoulder yoke; cap and boots supply alpha>128 hat-to-sole extrema."
+      }
+    },
+    {
+      "id": "pump-hand-back-carry-f0-attempt-2",
+      "strip": "pump-hand-back-carry",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Previous returned figure1276px tall (10.8% over1152). Paint about10% smaller and match GUIDE1 actual hat-top192 and lowest-sole1344. Keep hipsx512. Do not enlarge to fill canvas. Same older dark brown pump hand from back, slate shirt, gray temples, moss cap, brown boots, yoke/two full muted teal buckets. Follow crossed guide contact legs unchanged. Colour skin deep brown754A32, not orange.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f0.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f0-attempt-2.png",
+      "rawSha256": "c878ba6fb0354298cf670a288fffcd9014694a1de1e1d1e9fbd99360242f090d",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 116,
+          "y": 192,
+          "width": 842,
+          "height": 1189
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 305,
+          "y": 192,
+          "width": 488,
+          "height": 1189
+        },
+        "hatTop": 192,
+        "soleRow": 1380,
+        "soleOffset": 36,
+        "figureHeight": 1189,
+        "heightError": 0.03211805555555558,
+        "totalWidth": 842,
+        "bodyWidthRatio": 0.6506666666666666,
+        "anatomyMethod": "Visual body-only bounds exclude both buckets and shoulder yoke; cap and boots supply alpha>128 hat-to-sole extrema.",
+        "boxPass": true
+      },
+      "anatomy": {
+        "hatTop": 192,
+        "soleRow": 1380,
+        "bodyBox": {
+          "x": 305,
+          "y": 192,
+          "width": 488,
+          "height": 1189
+        },
+        "note": "Visual body-only bounds exclude both buckets and shoulder yoke; cap and boots supply alpha>128 hat-to-sole extrema."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Correct back-right view, no face/front clothing, same grey hair/slate shirt/moss cap/brown boots and teal-water yoke. Guide contact silhouette preserved; height within3.22%. Load-only width is excluded from body test.",
+      "acceptedFile": "poses/pump-hand-back-carry-f0.png"
+    },
+    {
+      "id": "pump-hand-back-carry-f1-attempt-1",
+      "strip": "pump-hand-back-carry",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f1.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f1-attempt-1.png",
+      "rawSha256": "2afc2c7ce54713f8595b25cd0fe7c527332a3899756e66ae65cab1c81413b82c",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 85,
+          "y": 151,
+          "width": 888,
+          "height": 1242
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 306,
+          "y": 151,
+          "width": 518,
+          "height": 1242
+        },
+        "hatTop": 151,
+        "soleRow": 1392,
+        "soleOffset": 48,
+        "figureHeight": 1242,
+        "heightError": 0.078125,
+        "totalWidth": 888,
+        "bodyWidthRatio": 0.6906666666666667,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 151,
+        "soleRow": 1392,
+        "bodyBox": {
+          "x": 306,
+          "y": 151,
+          "width": 518,
+          "height": 1242
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      }
+    },
+    {
+      "id": "pump-hand-back-carry-f2-attempt-1",
+      "strip": "pump-hand-back-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f2.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f2-attempt-1.png",
+      "rawSha256": "457833b13ea52ce236269f23132ef2b5aeed918ffcfbca0d3e76235db977adb7",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 119,
+          "y": 168,
+          "width": 868,
+          "height": 1229
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 304,
+          "y": 168,
+          "width": 517,
+          "height": 1229
+        },
+        "hatTop": 168,
+        "soleRow": 1396,
+        "soleOffset": 52,
+        "figureHeight": 1229,
+        "heightError": 0.06684027777777768,
+        "totalWidth": 868,
+        "bodyWidthRatio": 0.6893333333333334,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 168,
+        "soleRow": 1396,
+        "bodyBox": {
+          "x": 304,
+          "y": 168,
+          "width": 517,
+          "height": 1229
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      },
+      "visualNote": "Best of three, retaining6.68% height excess explicitly: opposite contact thigh overlap and leg silhouette differ from f0; attempt1 has least height excess and clearer legs than attempts2/3. Same identity and teal-water load. No repeated pose; height/bob caveat retained under author decision.",
+      "keptDespiteFailedMeasurements": true,
+      "accepted": true,
+      "acceptedFile": "poses/pump-hand-back-carry-f2.png"
+    },
+    {
+      "id": "pump-hand-back-carry-f3-attempt-1",
+      "strip": "pump-hand-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f3.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f3-attempt-1.png",
+      "rawSha256": "356b79a9dc50f9f26d121f64ba488b30875493353f930af481c17a314026df22",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 106,
+          "y": 166,
+          "width": 859,
+          "height": 1227
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 320,
+          "y": 166,
+          "width": 480,
+          "height": 1227
+        },
+        "hatTop": 166,
+        "soleRow": 1392,
+        "soleOffset": 48,
+        "figureHeight": 1227,
+        "heightError": 0.06510416666666674,
+        "totalWidth": 859,
+        "bodyWidthRatio": 0.64,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 166,
+        "soleRow": 1392,
+        "bodyBox": {
+          "x": 320,
+          "y": 166,
+          "width": 480,
+          "height": 1227
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      }
+    },
+    {
+      "id": "pump-hand-back-carry-f1-attempt-2",
+      "strip": "pump-hand-back-carry",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Correct passing-leg shape previously, but1242px height is7.8% too tall. Keep RIGHT leg vertical planted on screen-right, LEFT boot lifted behind to screen-left showing sole. Paint at guide hat-top192, lowestsole1344, height1152, about7% smaller. Same head/outfit/bucket dimensions as accepted f0, body hips512. Retain the precise GUIDE1 passing limbs; do not copy f0 crossed contact legs.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f1.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f1-attempt-2.png",
+      "rawSha256": "7cecda5cb55e1dc97702f61a0c37ecee3d554c339383a77863f4648b4a8b5e33",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 89,
+          "y": 173,
+          "width": 884,
+          "height": 1212
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 337,
+          "y": 173,
+          "width": 485,
+          "height": 1212
+        },
+        "hatTop": 173,
+        "soleRow": 1384,
+        "soleOffset": 40,
+        "figureHeight": 1212,
+        "heightError": 0.05208333333333326,
+        "totalWidth": 884,
+        "bodyWidthRatio": 0.6466666666666666,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 173,
+        "soleRow": 1384,
+        "bodyBox": {
+          "x": 337,
+          "y": 173,
+          "width": 485,
+          "height": 1212
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      }
+    },
+    {
+      "id": "pump-hand-back-carry-f2-attempt-2",
+      "strip": "pump-hand-back-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Previous opposite contact was correctly different from f0, but1229px height is6.7% too tall. Maintain GUIDE2 near RIGHT leg down SCREEN RIGHT and far LEFT leg trailing SCREEN LEFT, opposite thigh overlap from f0. Paint height1152 cap-top192 bottomsole1344 (about6% smaller). Same accepted f0 body/head/bucket sizes. Free far arm follows guide2; yoke held by near arm as blocked. Deep warm brown skin, slate shirt, brown boots, teal water.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f2.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f2-attempt-2.png",
+      "rawSha256": "e76c8903a7020aebd0f290cc8c4d2d88ed21eb622829f3b01828c5175d67279f",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 110,
+          "y": 155,
+          "width": 841,
+          "height": 1241
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 298,
+          "y": 155,
+          "width": 507,
+          "height": 1241
+        },
+        "hatTop": 155,
+        "soleRow": 1395,
+        "soleOffset": 51,
+        "figureHeight": 1241,
+        "heightError": 0.07725694444444442,
+        "totalWidth": 841,
+        "bodyWidthRatio": 0.676,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 155,
+        "soleRow": 1395,
+        "bodyBox": {
+          "x": 298,
+          "y": 155,
+          "width": 507,
+          "height": 1241
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      },
+      "visualNote": "All three have the opposite contact silhouette, but none passes5% height. Keep attempt1: smallest height excess6.68%, best clear guide-leg separation; no more painting under three-attempt rule."
+    },
+    {
+      "id": "pump-hand-back-carry-f3-attempt-2",
+      "strip": "pump-hand-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Correct opposite passing shape previously, but1227px height is6.5% too tall. Keep FAR LEFT leg planted vertically on screen-left and NEAR RIGHT boot lifted behind to screen-right showing sole. Copy GUIDE3 legs exactly, not f0. Paint height1152 hat-top192 lowestsole1344, about6% smaller. Same head/outfit/load size as accepted f0 and deep brown skin, muted slate shirt, brown boots, teal water.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f3.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f3-attempt-2.png",
+      "rawSha256": "010d42f6f0b24bee6ecb4c618849bdb174aa06f3394bddcc7a85dc8bfd9dcb0a",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 97,
+          "y": 163,
+          "width": 872,
+          "height": 1220
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 298,
+          "y": 163,
+          "width": 509,
+          "height": 1220
+        },
+        "hatTop": 163,
+        "soleRow": 1382,
+        "soleOffset": 38,
+        "figureHeight": 1220,
+        "heightError": 0.05902777777777768,
+        "totalWidth": 872,
+        "bodyWidthRatio": 0.6786666666666666,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 163,
+        "soleRow": 1382,
+        "bodyBox": {
+          "x": 298,
+          "y": 163,
+          "width": 509,
+          "height": 1220
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      }
+    },
+    {
+      "id": "pump-hand-back-carry-f1-attempt-3",
+      "strip": "pump-hand-back-carry",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST SIZE CORRECTION: previous height1212, must be <=1209 and ideally1152. HAT TOP exactly192, planted SOLE exactly1344. Leave 192px transparent above cap and192px below sole, do not fill margins. Keep RIGHT planted leg upright on screen-right, LEFT boot bent and lifted showing sole on screen-left exactly as GUIDE1. Use accepted f0 head/outfit dimensions. Explicit height1152: shrink ALL anatomy and load together by5% compared to oversized1212; hipsx512. Deep brown skin, muted slate, teal water.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f1.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f1-attempt-3.png",
+      "rawSha256": "ca18e54f582554062f05a29ab5838e9881f08c7f8eb1a2d88b090ac5112dd5bf",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 110,
+          "y": 162,
+          "width": 833,
+          "height": 1205
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 320,
+          "y": 162,
+          "width": 489,
+          "height": 1205
+        },
+        "hatTop": 162,
+        "soleRow": 1366,
+        "soleOffset": 22,
+        "figureHeight": 1205,
+        "heightError": 0.04600694444444442,
+        "totalWidth": 833,
+        "bodyWidthRatio": 0.652,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": true
+      },
+      "anatomy": {
+        "hatTop": 162,
+        "soleRow": 1366,
+        "bodyBox": {
+          "x": 320,
+          "y": 162,
+          "width": 489,
+          "height": 1205
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Best after three: clear upright planted near-right leg, far-left foot lifted showing sole. Height now within4.61%, grounded cap5px above f0, within2% bob target. Same identity and full teal-water yoke.",
+      "acceptedFile": "poses/pump-hand-back-carry-f1.png"
+    },
+    {
+      "id": "pump-hand-back-carry-f2-attempt-3",
+      "strip": "pump-hand-back-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST ATTEMPT size: first1229px tall, second1241px tall, both over5%. Required painted hat-to-lowest-sole height1152. Follow the GREY GUIDE extent with cap top192 and bottom1344, preserve full 192px upper and lower transparent margins. Scale all figure parts and load 8% smaller than the identity references imply. Hip centre512. Keep GUIDE2 open opposite contact: near right leg on screen-right reaching bottom, far left leg on screen-left ending higher; no f0 crossed leg silhouette. Back-right, same warm brown man/slate shirt/brown boots/teal water.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f2.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f2-attempt-3.png",
+      "rawSha256": "dee43edfbf7058530a9f372c5858594c268739ba26006a2a2982f5dcee3dc3e2",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 101,
+          "y": 159,
+          "width": 878,
+          "height": 1239
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 308,
+          "y": 159,
+          "width": 511,
+          "height": 1239
+        },
+        "hatTop": 159,
+        "soleRow": 1397,
+        "soleOffset": 53,
+        "figureHeight": 1239,
+        "heightError": 0.07552083333333326,
+        "totalWidth": 878,
+        "bodyWidthRatio": 0.6813333333333333,
+        "anatomyMethod": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema.",
+        "boxPass": false
+      },
+      "anatomy": {
+        "hatTop": 159,
+        "soleRow": 1397,
+        "bodyBox": {
+          "x": 308,
+          "y": 159,
+          "width": 511,
+          "height": 1239
+        },
+        "note": "Visual anatomical cap/body/arms/boots bounds excluding shoulder yoke and both buckets; hat and lowest sole alpha>128 extrema."
+      },
+      "visualNote": "All three have the opposite contact silhouette, but none passes5% height. Keep attempt1: smallest height excess6.68%, best clear guide-leg separation; no more painting under three-attempt rule."
+    },
+    {
+      "id": "pump-hand-back-carry-f3-attempt-3",
+      "strip": "pump-hand-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older man, DEEP warm brown skin (base#754A32,light#96633F,shadow#4D3026), grey hair at temples, moss#78804C flat cap, rolled sleeves on muted dark slate-blue shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, subdued BROWN boots(base#71503B,light#906C50), never orange boots or pale/light-blue shirt. LOAD: a broad WOODEN YOKE ACROSS BOTH SHOULDERS, TWO full wooden buckets, one hanging at EACH end, thick short supports, water muted TEAL#477B82 not cyan; no spills; both buckets and yoke completely visible within guide load boxes.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x150..899,y192..1343,width750,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST ATTEMPT: height1220 is5.9% over1152. Render smaller within GUIDE1 margins: cap-top192, lowestsole1344, actual height1152. Both portrait edges must leave about192px transparent margin. Keep OTHER lifted boot: LEFT leg planted screen-left, RIGHT knee bent and boot lifted screen-right with sole facing camera. Maintain GUIDE3, not f0 legs. Same older warm brown man and yoke/two full teal buckets, no face. Shrink whole figure/load by6% relative to the prior oversized generation; hips512.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/pump-hand-back-carry-f3.png",
+        "poses/pump-hand-front-carry-f0.png",
+        "poses/pump-hand-back-walk-f0.png",
+        "reference-passenger.png",
+        "poses/pump-hand-back-carry-f0.png"
+      ],
+      "file": "raw/poses/pump-hand-back-carry-f3-attempt-3.png",
+      "rawSha256": "fdf456f80996cb21ee11fec447dee4c21d94d8f0b5cb0fbad91c44dd2355ee75",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 139,
+          "y": 180,
+          "width": 811,
+          "height": 1192
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 328,
+          "y": 180,
+          "width": 471,
+          "height": 1192
+        },
+        "hatTop": 180,
+        "soleRow": 1371,
+        "soleOffset": 27,
+        "figureHeight": 1192,
+        "heightError": 0.03472222222222232,
+        "totalWidth": 811,
+        "bodyWidthRatio": 0.628,
+        "anatomyMethod": "Visual body-only cap/torso/arms/boots bounds excluding yoke and both buckets; alpha>128 cap top and lowest sole.",
+        "boxPass": true
+      },
+      "anatomy": {
+        "hatTop": 180,
+        "soleRow": 1371,
+        "bodyBox": {
+          "x": 328,
+          "y": 180,
+          "width": 471,
+          "height": 1192
+        },
+        "note": "Visual body-only cap/torso/arms/boots bounds excluding yoke and both buckets; alpha>128 cap top and lowest sole."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Correct opposite passing: left boot planted, right boot lifted behind showing sole. Height within3.48%; cap almost matches grounded f0. Same identity, muted teal full buckets, no clipping or squeezed load.",
+      "acceptedFile": "poses/pump-hand-back-carry-f3.png"
     }
   ],
   "redoStatus": {
     "requestedStripCount": 9,
-    "completedStripCount": 2,
-    "status": "2/9 strips complete; pump-front-carry retained with repeated f2 after three attempts; continue pump-back-carry.",
+    "completedStripCount": 3,
+    "status": "3/9 strips complete; pump-back-carry four distinct poses, documented f2 height excess after three attempts.",
     "geometry": "pose-geometry.json",
     "workflow": "redo-workflow.md",
     "protection": "redo-state.json",
@@ -1680,9 +2378,37 @@
     ],
     "imageTool": "built-in image_gen",
     "fallbackApiUsed": false,
-    "paintingCount": 22,
+    "paintingCount": 33,
     "diagnosticCandidate": "checks/pump-hand-back-walk-candidate.html",
-    "currentBlock": "May the best pose be retained after3attempts when guide-box measurements fail? No box exception authorized yet."
+    "resolvedBlockHistory": [
+      {
+        "question": "May the best pose be retained after3attempts when guide-box measurements fail? No box exception authorized yet.",
+        "resolvedBy": {
+          "date": "2026-10-12",
+          "brief": "finish-brief-2026-10-12.txt",
+          "firstStripAcceptedAttempts": [
+            2,
+            3,
+            3,
+            3
+          ],
+          "keepBestAfterThree": true,
+          "offlineChecksReplaceBrowser": true
+        }
+      }
+    ],
+    "authorDecision": {
+      "date": "2026-10-12",
+      "brief": "finish-brief-2026-10-12.txt",
+      "firstStripAcceptedAttempts": [
+        2,
+        3,
+        3,
+        3
+      ],
+      "keepBestAfterThree": true,
+      "offlineChecksReplaceBrowser": true
+    }
   },
   "redoStrips": {
     "pump-hand-back-walk": {
@@ -1831,7 +2557,16 @@
         "offline9pxAnd36pxInspected": true,
         "browserPlayback": false,
         "note": "Offline 9px-6x and 36px sheets inspected: contact legs cross in opposite directions, the passing silhouettes lift opposite boots; identity and cap/shirt/boots stay consistent. 9px reads the silhouette; leg separation is clearer at 36px. Core-approved attempts 2,3,3,3."
-      }
+      },
+      "groundedHatRows": [
+        121.5625,
+        112.8125,
+        112.8125,
+        120.3125
+      ],
+      "headBobRange": 8.75,
+      "headBobFraction": 0.024305555555555556,
+      "headBobWithinTwoPercent": false
     },
     "pump-hand-front-carry": {
       "canvas": [
@@ -1982,7 +2717,174 @@
           "f2=f0"
         ],
         "note": "Offline9px-6x and36px sheets inspected. Two buckets read clearly, feet alternate in passing f1/f3, but f2 keeps f0 thigh overlap after three corrections: use Core0,1,0,1 fallback. Accepted2,2,3,3. Grounded hat heights differ by14.06px (3.91% nominal body), beyond2% target, retained best after three. All frames retain warm brown skin/grey hair/slate shirt/teal water; columns320 prevent load clipping."
-      }
+      },
+      "groundedHatRows": [
+        118.4375,
+        107.1875,
+        104.375,
+        108.4375
+      ],
+      "headBobRange": 14.0625,
+      "headBobFraction": 0.0390625,
+      "headBobWithinTwoPercent": false
+    },
+    "pump-hand-back-carry": {
+      "canvas": [
+        1280,
+        512
+      ],
+      "columns": 4,
+      "columnWidth": 320,
+      "anchors": [
+        [
+          160,
+          480
+        ],
+        [
+          480,
+          480
+        ],
+        [
+          800,
+          480
+        ],
+        [
+          1120,
+          480
+        ]
+      ],
+      "uniformScaling": true,
+      "scaleFormula": "360 / (1152 * returnedWidth / 1024)",
+      "resampling": "premultiplied-alpha area averaging",
+      "maxReach": 148.4375,
+      "frames": [
+        {
+          "frame": 0,
+          "pose": "poses/pump-hand-back-carry-f0.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1380
+          ],
+          "soleRow": 1380,
+          "anchor": [
+            160,
+            480
+          ],
+          "leftReach": 123.75,
+          "rightReach": 139.375,
+          "bounds": {
+            "x": 36,
+            "y": 109,
+            "width": 263,
+            "height": 371
+          }
+        },
+        {
+          "frame": 1,
+          "pose": "poses/pump-hand-back-carry-f1.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1366
+          ],
+          "soleRow": 1366,
+          "anchor": [
+            480,
+            480
+          ],
+          "leftReach": 125.625,
+          "rightReach": 134.6875,
+          "bounds": {
+            "x": 34,
+            "y": 104,
+            "width": 261,
+            "height": 376
+          }
+        },
+        {
+          "frame": 2,
+          "pose": "poses/pump-hand-back-carry-f2.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1396
+          ],
+          "soleRow": 1396,
+          "anchor": [
+            800,
+            480
+          ],
+          "leftReach": 122.8125,
+          "rightReach": 148.4375,
+          "bounds": {
+            "x": 37,
+            "y": 96,
+            "width": 272,
+            "height": 384
+          }
+        },
+        {
+          "frame": 3,
+          "pose": "poses/pump-hand-back-carry-f3.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1371
+          ],
+          "soleRow": 1371,
+          "anchor": [
+            1120,
+            480
+          ],
+          "leftReach": 116.5625,
+          "rightReach": 136.875,
+          "bounds": {
+            "x": 44,
+            "y": 108,
+            "width": 253,
+            "height": 372
+          }
+        }
+      ],
+      "visualCycleReview": "passed",
+      "visualFindings": {
+        "contactX": true,
+        "oppositeLiftedFoot": true,
+        "offline9pxAnd36pxInspected": true,
+        "browserPlayback": false,
+        "repeatedFrames": [],
+        "note": "Offline9px-6x and36px inspected: f0/f2 opposite thigh-crossing X, f1 left boot lifted and f3 right boot lifted, both show soles. Identity/yoke/teal water consistent. Accepted2,3,1,3. f2 kept after three with6.68% height excess (other two7.73/7.55%); grounded cap range12.5px=3.47% nominal body, exceeds2% bob target. Best retained under author instruction, no repeated frame."
+      },
+      "groundedHatRows": [
+        108.75,
+        103.75,
+        96.25,
+        107.8125
+      ],
+      "headBobRange": 12.5,
+      "headBobFraction": 0.034722222222222224,
+      "headBobWithinTwoPercent": false
     }
   }
 }
