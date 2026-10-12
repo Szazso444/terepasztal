@@ -1,12 +1,13 @@
 /**
- * The tile tooltip (#337): what a bare tile is and what sits on it. Today's `Game.tileInfo` as a
- * pure function over a snapshot, with the biome named as a term; the tile redesign (#360) replaces
- * the rows of `tileTip` and keeps the snapshot. DOM-free; `renderTip` draws the document.
+ * The tile tooltip (#337, #360): what a bare tile is and what sits on it. The terrain's name for a
+ * title, the biome as a term, the elevation, the snow line on a snow tile, one line about the
+ * terrain, then the game's own lines (what is built on it, what track costs). A pure function over
+ * a snapshot, DOM-free; `renderTip` draws the document.
  */
-import { biomeAt } from '../sim/biomes';
+import { biomeAt, biomeDef } from '../sim/biomes';
 import { STR } from '../strings';
 import { levelAt } from '../world/elevation';
-import { TERRAIN_NAMES, Terrain, terrainAt, type GameMap } from '../world/tiles';
+import { TERRAIN_NAMES, Terrain, climateAt, terrainAt, type GameMap } from '../world/tiles';
 import { biomeTerm } from './biomeTooltip';
 import { line } from './tooltipContent';
 import {
@@ -44,17 +45,35 @@ export interface TileSnapshot {
   weeklyAtLevel1: number;
 }
 
-/** The terrain's name and biome, its level, then everything standing on it. */
+/**
+ * The level where snow starts on a tile: the `snowLevel` of its climate (`climateAt`), which is
+ * not always the biome it reads as (a mountain keeps the climate it rose from).
+ */
+export function snowLevelAt(map: Readonly<GameMap>, x: number, y: number): number {
+  return biomeDef(climateAt(map, x, y)).snowLevel;
+}
+
+/**
+ * The terrain's name (with ", snow" on a snow tile), the Biome row, the Elevation row, the Snow
+ * line row on a snow tile, one dim line about the terrain, then everything standing on it.
+ */
 export function tileTip(s: TileSnapshot): TipDoc {
   const { map, x, y } = s;
   const T = STR.tile;
   const terrain = terrainAt(map, x, y);
   const name = TERRAIN_NAMES[terrain];
+  const level = levelAt(map, x, y);
+  const snowLevel = snowLevelAt(map, x, y);
+  const snow = terrain !== Terrain.Water && level >= snowLevel;
+  const terrainName = T.terrain[name] ?? name;
   const out: Block[] = [
-    title(T.terrain[name] ?? name),
+    title(snow ? T.snow(terrainName) : terrainName),
     row(T.biome, biomeTerm(biomeAt(map, x, y), s.weeklyAtLevel1)),
-    line(T.elevation(levelAt(map, x, y))),
+    row(T.elevationRow, richText(T.level(level))),
   ];
+  if (snow) out.push(row(T.snowLine, richText(T.aboveLevel(snowLevel - 1))));
+  const about = terrain === Terrain.Water ? T.water : T.about[name];
+  if (about) out.push(dim(...richText(about)));
   if (!s.charted) out.push(line(T.uncharted));
   if (s.track) out.push(line(T.track(s.track)));
   if (s.decor) {
@@ -65,11 +84,10 @@ export function tileTip(s: TileSnapshot): TipDoc {
   if (s.powered) out.push(line(T.powered));
   if (s.trackCostFactor === 0) out.push(line(T.noTrack));
   else if (s.trackCostFactor !== 1) out.push(line(T.trackCost(s.trackCostFactor)));
-  if (terrain === Terrain.Water) out.push(dim(...richText(T.water)));
   return out;
 }
 
-/** "2× oak, bush": a count before a kind seen more than once, in the order first seen. */
+/** "2× oak, bush": a count before a kind seen more than once, in the order first seen, by name. */
 function propsText(kinds: readonly string[]): Inline[] {
   const counts = new Map<string, number>();
   for (const k of kinds) counts.set(k, (counts.get(k) ?? 0) + 1);
@@ -77,7 +95,7 @@ function propsText(kinds: readonly string[]): Inline[] {
   for (const [k, n] of counts) {
     if (out.length) out.push(', ');
     if (n > 1) out.push(num(`${n}×`), ' ');
-    out.push(k);
+    out.push(STR.tile.prop[k] ?? k);
   }
   return out;
 }

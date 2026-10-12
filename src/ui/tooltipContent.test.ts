@@ -6,8 +6,10 @@ import { content } from '../data/content';
 import { BIOME_DEFS, biomeDef, biomeSummary } from '../sim/biomes';
 import { HARVEST_RADIUS, STATION_DEFS, weeklyOutput } from '../sim/stations';
 import { cargoName } from '../sim/cargo';
+import { PROP_KINDS } from '../world/chunks';
+import { levelAt } from '../world/elevation';
 import { emptyMap } from '../world/mapgen';
-import { Biome, Terrain, type GameMap } from '../world/tiles';
+import { Biome, TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
 import { biomeTip, stationKindTip } from './biomeTooltip';
 import { fmtMoney } from './numberFormat';
 import {
@@ -352,8 +354,28 @@ describe('the tile tooltip', () => {
     trackCostFactor: 1,
     weeklyAtLevel1: WEEKLY,
   });
-  /** the lines of `Game.tileInfo` after the biome summary, the elevation line first */
-  const after = (doc: TipDoc) => lines(doc).slice(2);
+  /** the lines after the dim line about the terrain: what the game adds */
+  const extras = (doc: TipDoc) => lines(doc.slice(doc.findIndex((b) => b.kind === 'dim') + 1));
+
+  /**
+   * A 15 x 15 map of grass with a block of `terrain` seven tiles across around (cx, cy), whose
+   * middle tile has `biome` over `climate`. Levels follow the terrain (src/world/elevation.ts), so
+   * the middle of a mountain block is at level 4 and a tile two from the map's edge at level 3.
+   */
+  const field = (terrain: Terrain, biome: string, climate = biome, cx = 7, cy = 7): GameMap => {
+    const map = emptyMap(7, 15, 15, Terrain.Grass);
+    for (let y = Math.max(0, cy - 3); y <= cy + 3; y++)
+      for (let x = Math.max(0, cx - 3); x <= cx + 3; x++) map.terrain[y * map.w + x] = terrain;
+    map.biome[cy * map.w + cx] = biomeId(biome);
+    map.climate = Uint8Array.from(map.biome);
+    map.climate[cy * map.w + cx] = biomeId(climate);
+    return map;
+  };
+  const LAND = [Terrain.Grass, Terrain.Forest, Terrain.Hill, Terrain.Rock, Terrain.Sand] as const;
+  const TERRAINS = [...LAND, Terrain.Mountain, Terrain.Water] as const;
+  const labelOf = (b: Block) => (b.kind === 'row' ? plain(b.label) : '');
+  const valueOf = (b: Block): Parts => (b.kind === 'row' ? b.value : []);
+  const snowRow = (doc: TipDoc) => doc.find((b) => labelOf(b) === STR.tile.snowLine);
 
   it('titles the terrain and names the biome in a row of its own, as a term', () => {
     const map = grid();
@@ -368,18 +390,142 @@ describe('the tile tooltip', () => {
     expect(blockText(t.tip()[0])).toBe(STR.biome.title(t.term));
   });
 
+  it('names the terrains Grass and Rock, as the demo does', () => {
+    expect(STR.tile.terrain.grass).toBe('Grass');
+    expect(STR.tile.terrain.rock).toBe('Rock');
+    expect(blockText(tileTip(bare(field(Terrain.Rock, 'plains'), 7, 7))[0])).toBe('Rock');
+  });
+
   it('prints no biome summary', () => {
     const map = grid();
     const text = lines(tileTip(bare(map, 5, 5))).join('\n');
     expect(text).not.toContain(biomeSummary(biomeId('desert')));
   });
 
-  it('then the elevation as Game.tileInfo said it', () => {
-    const map = grid();
-    expect(after(tileTip(bare(map, 5, 5)))).toEqual([STR.tile.elevation(0)]);
+  it('is a title, the Biome and Elevation rows and one dim line about each terrain', () => {
+    // desert snow starts above the highest level, so none of these is snow
+    for (const t of TERRAINS) {
+      const name = TERRAIN_NAMES[t];
+      const doc = tileTip(bare(field(t, 'desert'), 7, 7));
+      expect(
+        doc.map((b) => b.kind),
+        name,
+      ).toEqual(['title', 'row', 'row', 'dim']);
+      expect(blockText(doc[0]), name).toBe(STR.tile.terrain[name]);
+      expect(labelOf(doc[1]), name).toBe(STR.tile.biome);
+      expect(labelOf(doc[2]), name).toBe(STR.tile.elevationRow);
+      expect(blockText(doc[3]), name).toBe(
+        t === Terrain.Water ? STR.tile.water : STR.tile.about[name],
+      );
+    }
   });
 
-  it('says what stands on the tile, in the order tileInfo did', () => {
+  it('says the level in bold on the Elevation row', () => {
+    const map = field(Terrain.Hill, 'plains');
+    const level = levelAt(map, 7, 7);
+    expect(level).toBe(2);
+    const value = valueOf(tileTip(bare(map, 7, 7))[2]);
+    expect(plain(value)).toBe(STR.tile.level(level));
+    expect(value).toContainEqual({ num: String(level) });
+  });
+
+  it('describes each land terrain, the forest holding buildings and the rock no longer barred', () => {
+    for (const name of TERRAIN_NAMES.filter((n) => n !== 'water'))
+      expect(STR.tile.about[name], name).toMatch(/\S/);
+    expect(STR.tile.about.forest).toMatch(/building/i);
+    expect(STR.tile.about.rock).not.toMatch(/nothing is built/i);
+  });
+
+  it('calls a mountain at level 4 under a plains climate "Mountain, snow", biome Mountain', () => {
+    const map = field(Terrain.Mountain, 'mountain', 'plains');
+    expect(levelAt(map, 7, 7)).toBe(4);
+    const doc = tileTip(bare(map, 7, 7));
+    expect(blockText(doc[0])).toBe('Mountain, snow');
+    expect(blockText(doc[0])).toBe(STR.tile.snow(STR.tile.terrain.mountain));
+    // the Biome row reads the biome, not the climate
+    const term = termIn(partsOf(doc[1])).term;
+    expect(term).toBe(biomeDef(biomeId('mountain')).name);
+    expect(term).not.toBe(biomeDef(biomeId('plains')).name);
+    expect(doc.map((b) => b.kind)).toEqual(['title', 'row', 'row', 'row', 'dim']);
+    expect(labelOf(doc[3])).toBe(STR.tile.snowLine);
+    expect(valueOf(doc[3])).toContainEqual({ num: '3' });
+  });
+
+  it('puts the snow line of a Taiga mountain at "above level 2"', () => {
+    const map = field(Terrain.Mountain, 'mountain', 'taiga');
+    expect(levelAt(map, 7, 7)).toBe(4);
+    expect(blockText(snowRow(tileTip(bare(map, 7, 7)))!)).toBe('Snow line: above level 2');
+  });
+
+  it("is snow where the level reaches the snow level of the tile's climate, and not on water", () => {
+    // every terrain under every climate, the biome a mountain's own
+    for (const t of TERRAINS)
+      for (const [c, climate] of BIOME_DEFS.entries()) {
+        const map = field(t, 'mountain', climate.id);
+        const level = levelAt(map, 7, 7);
+        const doc = tileTip(bare(map, 7, 7));
+        const snow = t !== Terrain.Water && level >= climate.snowLevel;
+        const what = `${TERRAIN_NAMES[t]} at level ${level} under ${climate.id} (${c})`;
+        const name = STR.tile.terrain[TERRAIN_NAMES[t]];
+        expect(blockText(doc[0]), what).toBe(snow ? STR.tile.snow(name) : name);
+        const row = snowRow(doc);
+        expect(row !== undefined, what).toBe(snow);
+        if (row) expect(valueOf(row), what).toContainEqual({ num: String(climate.snowLevel - 1) });
+      }
+  });
+
+  it('reads the climate, never the biome, for the snow line', () => {
+    const taiga = biomeDef(biomeId('taiga')).snowLevel;
+    const desert = biomeDef(biomeId('desert')).snowLevel;
+    expect(taiga).toBeLessThan(desert);
+    // a mountain at level 4: a taiga climate under a desert biome is snow, the other way is not
+    const top = (biome: string, climate: string) =>
+      tileTip(bare(field(Terrain.Mountain, biome, climate), 7, 7));
+    expect(snowRow(top('desert', 'taiga'))).toBeDefined();
+    expect(snowRow(top('taiga', 'desert'))).toBeUndefined();
+    // a map with no climate plane reads the biome, which is its climate
+    const map = field(Terrain.Mountain, 'desert', 'taiga');
+    delete map.climate;
+    expect(snowRow(tileTip(bare(map, 7, 7))) !== undefined).toBe(4 >= desert);
+  });
+
+  it('turns to snow exactly at the snow level', () => {
+    // two tiles from the map's edge a mountain is at level 3: Taiga snow starts there, plains not
+    const edge = (climate: string) => field(Terrain.Mountain, 'mountain', climate, 2, 7);
+    expect(levelAt(edge('taiga'), 2, 7)).toBe(3);
+    expect(biomeDef(biomeId('taiga')).snowLevel).toBe(3);
+    expect(blockText(tileTip(bare(edge('taiga'), 2, 7))[0])).toBe('Mountain, snow');
+    expect(blockText(tileTip(bare(edge('plains'), 2, 7))[0])).toBe('Mountain');
+    expect(snowRow(tileTip(bare(edge('plains'), 2, 7)))).toBeUndefined();
+  });
+
+  it('keeps the rows in order on a snow tile, then what the game adds', () => {
+    const doc = tileTip({
+      ...bare(field(Terrain.Mountain, 'mountain', 'plains'), 7, 7),
+      charted: false,
+      track: 'straight',
+      powered: true,
+      trackCostFactor: 1.5,
+    });
+    expect(doc.map((b) => b.kind)).toEqual([
+      'title',
+      'row',
+      'row',
+      'row',
+      'dim',
+      'text',
+      'text',
+      'text',
+      'text',
+    ]);
+    expect(doc.filter((b) => b.kind === 'row').map(labelOf)).toEqual([
+      STR.tile.biome,
+      STR.tile.elevationRow,
+      STR.tile.snowLine,
+    ]);
+  });
+
+  it('says what stands on the tile, after the description', () => {
     const map = grid();
     const doc = tileTip({
       ...bare(map, 5, 5),
@@ -390,23 +536,36 @@ describe('the tile tooltip', () => {
       powered: true,
       trackCostFactor: 1.5,
     });
-    expect(after(doc)).toEqual([
-      STR.tile.elevation(0),
+    expect(extras(doc)).toEqual([
       STR.tile.uncharted,
       STR.tile.track('straight'),
       'Lamp',
       'Reach: 3 tiles',
       'No station in reach',
-      '2× oak, bush',
+      `2× ${STR.tile.prop.oak}, ${STR.tile.prop.bush}`,
       STR.tile.powered,
       STR.tile.trackCost(1.5),
     ]);
   });
 
+  it('names a prop from the strings, never by its kind id, and shows an unknown kind as given', () => {
+    const map = grid();
+    const props = (kinds: string[]) => extras(tileTip({ ...bare(map, 5, 5), props: kinds }));
+    for (const kind of PROP_KINDS) {
+      expect(STR.tile.prop[kind], kind).toMatch(/\S/);
+      expect(props([kind]), kind).toEqual([STR.tile.prop[kind]]);
+    }
+    expect(props(['deadtree', 'coal'])).toEqual([
+      `${STR.tile.prop.deadtree}, ${STR.tile.prop.coal}`,
+    ]);
+    expect(props(['deadtree'])[0]).not.toBe('deadtree');
+    expect(props(['unlisted', 'unlisted'])).toEqual(['2× unlisted']);
+  });
+
   it('says no track can be laid where the cost factor is 0, and nothing at 1', () => {
     const map = grid();
-    expect(after(tileTip({ ...bare(map, 5, 5), trackCostFactor: 0 }))).toContain(STR.tile.noTrack);
-    expect(after(tileTip(bare(map, 5, 5)))).not.toContain(STR.tile.noTrack);
+    expect(extras(tileTip({ ...bare(map, 5, 5), trackCostFactor: 0 }))).toContain(STR.tile.noTrack);
+    expect(extras(tileTip(bare(map, 5, 5)))).toEqual([]);
     expect(lines(tileTip(bare(map, 5, 5))).join('\n')).not.toMatch(/Track costs/);
   });
 
@@ -414,7 +573,7 @@ describe('the tile tooltip', () => {
     const map = grid();
     const doc = tileTip(bare(map, 2, 2));
     expect(blockText(doc[0])).toBe(STR.tile.terrain.water);
-    expect(lines(doc).at(-1)).toBe(STR.tile.water);
+    expect(blockText(doc.find((b) => b.kind === 'dim')!)).toBe(STR.tile.water);
     expect(termIn(partsOf(doc[1])).term).toBe(biomeDef(biomeId('ocean')).name);
   });
 
@@ -431,6 +590,10 @@ describe('the tile tooltip', () => {
     // what is left in plain text, the nested biome tooltip included, has no digit
     for (const s of everyString(doc)) expect(s).not.toMatch(/\d/);
     expect(doc.some((b) => partsOf(b).some((p) => typeof p !== 'string' && 'num' in p))).toBe(true);
+    // the same on a snow tile, whose rows hold two more numbers
+    const snow = tileTip(bare(field(Terrain.Mountain, 'mountain', 'taiga'), 7, 7));
+    for (const s of everyString(snow)) expect(s).not.toMatch(/\d/);
+    expect(valueOf(snowRow(snow)!)).toContainEqual({ num: '2' });
   });
 });
 
