@@ -712,6 +712,30 @@
     "anchorY": 34
   },
   {
+    "key": "props/wheat_0",
+    "group": "props",
+    "width": 53.5,
+    "height": 28.75,
+    "anchorX": 27,
+    "anchorY": 16
+  },
+  {
+    "key": "props/wheat_1",
+    "group": "props",
+    "width": 54,
+    "height": 30,
+    "anchorX": 27,
+    "anchorY": 16
+  },
+  {
+    "key": "props/wheat_2",
+    "group": "props",
+    "width": 53.75,
+    "height": 30.25,
+    "anchorX": 27,
+    "anchorY": 16
+  },
+  {
     "key": "rolling/bogie3_f0",
     "group": "wagons",
     "width": 24,

@@ -1,5 +1,7 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
+import { HALF_W, HALF_H } from '../engine/iso';
 import { hash2 } from '../engine/rng';
+import { field, fieldRow } from './industry';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
 
@@ -601,6 +603,177 @@ function oilSeep(seed: number, v: number): PixelBuf {
   return b;
 }
 
+// --- wheat fields ------------------------------------------------------------------------------
+
+/**
+ * Canvas of a wheat patch. The anchor is the tile centre, not a base row: the patch is one whole
+ * tile of ground cover, the diamond of 64x32 px (rows 0.42 tile from the centre, an irregular
+ * edge to 0.46 at most), and the stalks stand over it, so there is room above the centre for them.
+ */
+const WHEAT_W = 64;
+const WHEAT_H = 48;
+const WHEAT_CX = 32;
+const WHEAT_CY = 30;
+/** Stalks stand 2.6 to 3.5 px over the ground, in slow swells, a little lower at the edge. */
+const STALK_MIN = 2.6;
+const STALK_SWELL = 0.9;
+
+/** Smooth value noise on a lattice `cell` tile units wide, in [0, 1). */
+function swell(tx: number, ty: number, cell: number, seed: number): number {
+  const x = tx / cell;
+  const y = ty / cell;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const fx = x - x0;
+  const fy = y - y0;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const a = hash2(x0, y0, seed);
+  const b = hash2(x0 + 1, y0, seed);
+  const c = hash2(x0, y0 + 1, seed);
+  const d = hash2(x0 + 1, y0 + 1, seed);
+  return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+}
+
+/** Where one variant's patch sits and how far it reaches, in tile units: centre x, y, length x, y. */
+const WHEAT_SHAPES: [number, number, number, number][] = [
+  [0, 0, 0.84, 0.84],
+  [0.015, -0.015, 0.82, 0.82],
+  [-0.01, 0.01, 0.84, 0.82],
+];
+
+/**
+ * A wheat field: a low raised patch of one tile, golden rows standing a little over the ground
+ * with the light from the upper left, and a darker front and side rim where the stalks end.
+ * Footprint and rows are the farm's (`field`, `fieldRow`), so a field and a farm's own plot read
+ * as the same crop. Variant 0 is ripe all over, 1 is still green toward its upper-right end
+ * (the rows' far end), 2 has a few flattened patches laid down in it and a ragged lower-left
+ * corner.
+ */
+function wheatField(seed: number, v: number): PixelBuf {
+  const b = new PixelBuf(WHEAT_W, WHEAT_H);
+  const [sx, sy, lx, ly] = WHEAT_SHAPES[v];
+  const footprint = field(sx, sy, lx, ly, 1, seed);
+  // flattened patches of variant 2: tile x, y and radius
+  const laid: [number, number, number][] =
+    v === 2
+      ? [
+          [0.1, 0.06, 0.14],
+          [-0.2, -0.1, 0.1],
+          [0.2, -0.26, 0.09],
+        ]
+      : [];
+  const n = WHEAT_W * WHEAT_H;
+  const tileX = new Float32Array(n);
+  const tileY = new Float32Array(n);
+  const inside = new Uint8Array(n);
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      const px = (gx + 0.5 - WHEAT_CX) / HALF_W;
+      const py = (gy + 0.5 - WHEAT_CY) / HALF_H;
+      const tx = (px + py) / 2;
+      const ty = (py - px) / 2;
+      const i = gy * WHEAT_W + gx;
+      tileX[i] = tx;
+      tileY[i] = ty;
+      if (!footprint(tx, ty, gx, gy)) continue;
+      // the ragged corner: the left corner of the diamond crumbles away
+      if (v === 2 && ty - tx > 0.62 + 0.12 * hash2(gx >> 1, gy >> 1, seed + 6)) continue;
+      inside[i] = 1;
+    }
+  // The farm's edge is ragged to the pixel; one pass of a majority filter takes the stray pixels
+  // and chips off it, which would stand as thin dark drips, and keeps its irregular outline.
+  const ragged = inside.slice();
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      let k = 0;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const x = gx + dx;
+          const y = gy + dy;
+          if (x >= 0 && y >= 0 && x < WHEAT_W && y < WHEAT_H) k += ragged[y * WHEAT_W + x];
+        }
+      inside[gy * WHEAT_W + gx] = k >= 5 ? 1 : 0;
+    }
+  // How much of the 5x5 around a ground pixel is field. The stalks stand shorter where it is less,
+  // so a stray pixel at the edge is a low ear and the edge a ragged shoulder, not a wall of drips.
+  const cover = new Float32Array(n);
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      let k = 0;
+      for (let dy = -2; dy <= 2; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const x = gx + dx;
+          const y = gy + dy;
+          if (x >= 0 && y >= 0 && x < WHEAT_W && y < WHEAT_H) k += inside[y * WHEAT_W + x];
+        }
+      cover[gy * WHEAT_W + gx] = k / 25;
+    }
+
+  // Back to front, each ground pixel stands a stalk-high column: its head on top, its front
+  // below it. A nearer pixel covers the front of the one behind, so the fronts that stay are the
+  // ones at the field's lower edges, and where the stalks step down.
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      const i = gy * WHEAT_W + gx;
+      if (!inside[i]) continue;
+      const tx = tileX[i];
+      const ty = tileY[i];
+      const flat = laid.some(([lx0, ly0, r]) => Math.hypot(tx - lx0, ty - ly0) < r);
+      const row = fieldRow(gx, gy);
+      const gap = row > 3 && !flat;
+      const shoulder = Math.max(0, Math.min(1, (cover[i] - 0.15) / 0.4));
+      let height =
+        (STALK_MIN + STALK_SWELL * swell(tx, ty, 0.37, seed + 7)) *
+        shoulder *
+        shoulder *
+        (3 - 2 * shoulder);
+      if (flat) height *= 0.4;
+      // the furrows lie lower than the ridges
+      if (gap) height *= 0.6;
+      const rise = Math.max(1, Math.round(height));
+
+      // the crop's shades: ripe gold, green toward the far end of variant 1
+      const greenness =
+        v === 1
+          ? Math.max(0, Math.min(1, (-0.04 - ty) / 0.26 + (swell(tx, ty, 0.2, seed + 8) - 0.5)))
+          : 0;
+      const crop = hash2(gx >> 1, gy >> 1, seed + 9) < greenness ? PAL.wheatGreen : PAL.wheat;
+      // light from the upper left, then clusters of heads a little lighter or darker
+      const light = -((gx - WHEAT_CX) / 32) * 0.28 - ((gy - WHEAT_CY) / 16) * 0.4;
+      const tone = (swell(tx, ty, 0.16, seed + 4) - 0.5) * 0.6 + light * 0.6;
+      // a ridge is lit along its upper edge and shaded along its lower; between two ridges the
+      // furrow shows its earth in the shade of the stalks
+      const level = flat ? tone + 0.5 : tone + (row === 0 ? 1 : row === 3 ? -1 : 0);
+      const head: RGB = gap
+        ? shade(PAL.furrow, tone > 0.15 ? 1.12 : 0.96)
+        : level >= 1.15
+          ? crop[3]
+          : level >= 0.45
+            ? crop[1]
+            : level >= -0.55
+              ? crop[0]
+              : crop[2];
+
+      // the stalks' front, in the shade of their own heads and darker toward the ground; the
+      // lower-left front takes the light, the lower-right one is turned away from it
+      const stalk = gap ? PAL.furrow : crop[0];
+      const turned = gx >= WHEAT_CX;
+      const top = Math.round(gy - rise);
+      for (let y = top; y <= gy; y++) {
+        const d = y - top;
+        if (d === 0) {
+          b.set(gx, y, head);
+          continue;
+        }
+        const f = (turned ? [0.7, 0.58, 0.46] : [0.82, 0.68, 0.56])[Math.min(2, d - 1)];
+        b.set(gx, y, [stalk[0] * f, stalk[1] * f * 0.97, stalk[2] * f * 0.88]);
+      }
+    }
+  b.outline(PAL.outline, 150);
+  return b;
+}
+
 export function generatePropsAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   // anchor: horizontal centre, on the row just above the shadow rows
@@ -625,5 +798,8 @@ export function generatePropsAtlas(): AtlasImage {
     add(`props/reeds_${v}`, reeds(120 + v, v));
   }
   for (let v = 0; v < 4; v++) add(`props/flowers_${v}`, flowers(110 + v, v));
+  // a wheat field is anchored on the tile centre, which the patch is drawn around
+  for (let v = 0; v < 3; v++)
+    ab.add(`props/wheat_${v}`, wheatField(160 + v, v).toImageData(), WHEAT_CX, WHEAT_CY);
   return ab.build(512);
 }

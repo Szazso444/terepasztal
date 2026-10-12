@@ -530,8 +530,19 @@ export function pole(b: PixelBuf, ox: number, oy: number, h = 26) {
   b.set(ox, oy - h - 1, PAL.iron[1]);
 }
 
-/** Field with crop rows, greener at low levels, golden when mature; soft, irregular edge. */
-function field(
+/**
+ * Which of a crop row's six pixels a sprite pixel is: 0 to 3 crop (the ridge), 4 and 5 furrow.
+ * The rows run along tile y and rise to the right, two pixels across for every one down.
+ */
+export function fieldRow(x: number, y: number) {
+  return (x + 2 * y) % 6;
+}
+
+/**
+ * Field with crop rows, greener at low levels, golden when mature; soft, irregular edge. The
+ * wheat prop (`props.ts`) takes its footprint and rows from here.
+ */
+export function field(
   cx: number,
   cy: number,
   lenX: number,
@@ -541,7 +552,7 @@ function field(
 ): GroundFn {
   return (tx, ty, x, y) => {
     if (rectDist(tx, ty, cx, cy, lenX, lenY) > ragged(x, y, seed + 5, 0.08)) return null;
-    const row = (x + 2 * y) % 6;
+    const row = fieldRow(x, y);
     if (row > 3) return [shade(PAL.sand[2], 0.7 + 0.1 * hash2(x, y, seed)), 255];
     const n = hash2(x >> 1, y, seed);
     const c = n < ripe ? WHEATC : CROP;

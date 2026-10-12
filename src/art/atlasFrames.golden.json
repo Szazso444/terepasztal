@@ -98,7 +98,10 @@
     "props/spruce_2": "18x54@9,51",
     "props/tree_0": "24x31@12,27",
     "props/tree_1": "27x35@13,31",
-    "props/tree_2": "30x38@15,34"
+    "props/tree_2": "30x38@15,34",
+    "props/wheat_0": "50x31@26,17",
+    "props/wheat_1": "49x30@24,17",
+    "props/wheat_2": "44x30@22,16"
   },
   "rolling": {
     "rolling/loco_diesel_cab_medium_blue_body_f0": "75x52@38,38",

@@ -64,12 +64,14 @@ Use restrained oxblood, midnight blue, ochre and industrial orange for livery va
 
 The display-block thickness in this concept sheet is illustrative. Do not add raised edges to
 ordinary ground tiles. Snow patches and shoreline blends are proposed treatments; do not infer
-new snow mechanics or terrain types from them. Wheat remains a farm motif, not a decoration
-painted onto every plains tile. The ocean panel's railway is a bridge, not track laid on water.
+new snow mechanics or terrain types from them. Wheat fields are sparse patches on plains grass,
+grown by map generation about as rarely as oil fields, never a decoration painted onto every plains
+tile; each field tile is a low raised prop (section 3), not a raised edge on the ground, and a farm
+keeps its own plot in its picture. The ocean panel's railway is a bridge, not track laid on water.
 
 | Existing biome | Target appearance                                                                  | Readability constraint                                                                     |
 | -------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Plains         | Moss/meadow greens, broad quiet patches, sparse wildflowers.                       | Leave large open grass areas; fields only around farms.                                    |
+| Plains         | Moss/meadow greens, broad quiet patches, sparse wildflowers.                       | Leave large open grass areas; sparse wheat fields on plains grass, never on every tile.    |
 | Forest         | Dark leaf litter, rounded broadleaf clusters, clear trunk openings.                | Ballast must separate tracks from the dark ground; trees stand back from rail corridors.   |
 | Desert         | Oat/ochre sand, warm rock, sparse cactus and occasional oasis palm.                | Keep sand less bright than selection indicators; no continuous high-contrast dune stripes. |
 | Taiga          | Cooler blue-green conifers, subdued lichen ground. Optional cosmetic snow accents. | Distinguish pine and spruce by shape, not just colour.                                     |
@@ -120,8 +122,9 @@ before drawing individual twigs. Bare sprites should not acquire large square so
 | `rock` / `boulder` | Small low stones versus larger angular masses; consistent stone lighting.                |
 | `coal`             | Dark stratified outcrop, distinguishable from ordinary grey rock.                        |
 | `oil`              | Small dark seep with restrained sheen; no bright rainbow pool.                           |
+| `wheat`            | Low raised tile of golden rows, 2.6 to 3.5 px high, darker front, irregular edge.        |
 
-Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil;
+Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil/wheat;
 two for palm/deadtree/reeds; four for flowers. Change silhouette as well as shade. Check
 placement near curves and signals: clearing a prop must remove its entire visual, and trunk
 anchors must remain attached to the correct tile. Seasonal recolours are optional future work.

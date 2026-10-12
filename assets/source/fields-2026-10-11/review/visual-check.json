@@ -1,0 +1,29 @@
+{
+  "tool": "built-in image_gen image edits",
+  "requestedCanvas": [1024, 1024],
+  "referencesPerCall": 5,
+  "originalPaintingsModified": false,
+  "previewCanvas": [128, 128],
+  "nominalTileWidthPx": 64,
+  "visualReview": {
+    "wheat-0.png": "Readable ripe gold diagonal rows, soft uneven perimeter.",
+    "wheat-1.png": "Readable diagonal rows, greener upper-right row ends, soft uneven perimeter.",
+    "wheat-2.png": "Readable diagonal rows, three flattened areas, ragged lower-left corner."
+  },
+  "materialChecks": {
+    "distinctIndependentPaintings": true,
+    "upperLeftLighting": true,
+    "smoothContours": true,
+    "cropBandsWiderThanFurrows": true,
+    "noExtraObjectsOrGuideMarks": true,
+    "rowsReadableAtPreviewScale": true,
+    "edgesSoftAtPreviewScale": true
+  },
+  "framing": "Lower canvas placement preserved, painted footprint wider than guide. Exact inset and ear clipping remain the finishing step's responsibility.",
+  "rejected": [
+    {
+      "file": "raw/wheat-0-attempt-1.png",
+      "reason": "Enlarged footprint and too much upward expansion relative to guide."
+    }
+  ]
+}
