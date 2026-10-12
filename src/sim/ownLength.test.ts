@@ -4,6 +4,7 @@ import {
   COUPLER_GAP,
   DEFAULT_LATERAL_PLAY,
   DEFAULT_PIVOT,
+  FACINGS,
   LARGE_PIVOT,
   OWN_LENGTH,
   Polyline,
@@ -17,9 +18,9 @@ import {
   type VehicleSize,
   type VehicleSpec,
 } from './body';
-import { measure, referencePath, verdictOf } from './compat';
+import { measure, pieceClassFor, referencePath, verdictOf } from './compat';
 import { Train, resetTrainIds } from './trains';
-import { Fleet } from './fleet';
+import { Fleet, type GateInfo } from './fleet';
 import { Traffic } from './traffic';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
@@ -30,6 +31,7 @@ import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { content, type LocoDef, type WagonDef } from '../data/content';
 import { STR } from '../strings';
 import { locoDef, wagonDef } from '../gacha/items';
+import { Crafting, craftPool, craftRarity, craftSize, craftTier } from '../gacha/crafting';
 import { Inventory } from '../gacha/inventory';
 import { emptyMap } from '../world/mapgen';
 import { Terrain, type GameMap } from '../world/tiles';
@@ -37,15 +39,19 @@ import { findPath, type PathSegment } from '../world/pathfinding';
 import { RegionState } from '../world/regions';
 import {
   TRACK_CLASSES,
+  TRACK_ITEMS,
   TrackGraph,
   pieceLinks,
   rotationCount,
+  type SwitchForm,
   type TrackClass,
+  type TrackItem,
 } from '../world/track';
-import { DIR_DX, DIR_DY, Dir, opposite, type Vec2 } from '../engine/iso';
+import { DIR_DX, DIR_DY, DIRS, Dir, opposite, type Vec2 } from '../engine/iso';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { buildTrafficScenario, SCENARIO_GDT } from '../testing/trafficScenario';
-import type { Rng } from '../engine/rng';
+import { Rng, hash2, hashString } from '../engine/rng';
+import { locoFrame, wagonFrame } from '../art/frames';
 
 // A locomotive is as long on the track as its own model (issue #344): an optional `length` on its
 // entry, in tiles over the buffers, wins over its size class's. Here: an entry without one is laid
@@ -55,7 +61,9 @@ import type { Rng } from '../engine/rng';
 // save from before loads with every train where it stood. Then the callers, each at the real
 // length: a consist standing through curves of every class either way round, and what it
 // occupies; a depot gate letting it out; a junction letting it in; a save made before its model
-// had a length, loaded after.
+// had a length, loaded after. Last, what the length leaves alone: every job of the size (plan,
+// pivots and bogies by default, drawn bogies, craft price, sprite frames), and the depot gate's
+// verdict for any consist a tile long or more, whatever piece the gate is.
 
 // the fleet plays sounds
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -953,4 +961,299 @@ describe('a save from before a model had a length', () => {
       },
     );
   });
+});
+
+// ------------------------------------------------- what a length leaves alone
+
+describe('a size', () => {
+  /**
+   * Everything the size of a model decides besides the length of its body, read the way the game
+   * reads it: from the entry itself (the body plan, its parts, bogies and drawn bogies), by the
+   * model's id from the content (the workshop), and by the frame lookup with `has` as the atlas.
+   */
+  function sizeJobs(def: LocoDef | WagonDef, loco: boolean, has: (key: string) => boolean) {
+    const spec = vehicleSpec(def);
+    const workshop = new Crafting(new Rng(1), new Inventory(), new Economy(), new Stockpile());
+    const tier = craftTier(def.id);
+    return {
+      body: {
+        size: spec.size,
+        plan: spec.plan,
+        drawBogies: spec.drawBogies,
+        maxLateralPlay: spec.maxLateralPlay,
+        parts: spec.segments.map((s) => [s.part, s.nb, s.bogie, s.mirror === true]),
+      },
+      craft: {
+        size: craftSize(def.id),
+        tier,
+        rarity: craftRarity(def.id),
+        cost: workshop.instanceCost(def.id),
+        fail: workshop.failChance(def.id),
+        inPool: craftPool(loco ? 'loco' : 'wagon', tier).includes(def.id),
+      },
+      frames: Array.from({ length: FACINGS }, (_, f) =>
+        loco
+          ? spec.segments.map((s) => locoFrame({ has }, def as LocoDef, f, s.part))
+          : [wagonFrame({ has }, def as WagonDef, f)],
+      ),
+    };
+  }
+
+  it('keeps every job it has besides the length, whatever length its model is given', () => {
+    forAll(
+      (rng) => {
+        const table = rng.pick(['locomotives', 'wagons'] as const);
+        return {
+          table,
+          at: rng.int(0, content[table].length - 1),
+          length: genLength(rng),
+          // an atlas holding about half the frame names, so every fallback of the lookup is taken
+          atlas: rng.int(1, 1_000_000),
+        };
+      },
+      ({ table, at, length, atlas }) => {
+        // a wagon's entry takes a length through the body fields it shares with a locomotive
+        const entry: (LocoDef | WagonDef) & BodyFields = content[table][at];
+        const loco = table === 'locomotives';
+        const has = (key: string) => hash2(hashString(key), atlas) < 0.5;
+        const own = entry.length;
+        try {
+          delete entry.length;
+          const before = sizeJobs(entry, loco, has);
+          entry.length = length;
+          const after = sizeJobs(entry, loco, has);
+          expect(vehicleSpec(entry).L).toBe(length);
+          expect(after).toEqual(before);
+        } finally {
+          if (own === undefined) delete entry.length;
+          else entry.length = own;
+        }
+      },
+      { format: (c) => `${c.table}[${c.at}] (${content[c.table][c.at].id}) at ${c.length} tiles` },
+    );
+  });
+});
+
+/**
+ * `Fleet.gateReport` as it stood before a consist shorter than half a tile had to look past the
+ * gate tile: the walk out stopped as soon as it held the consist and half a tile more, on the gate
+ * tile itself too. The oracle for "the fix changes no verdict for a consist of a tile or more".
+ */
+function gateReportBeforeFix(fleet: Fleet, t: Train, depot: Station): GateInfo[] {
+  const out: GateInfo[] = [];
+  const need = t.length;
+  for (const g of depot.gateTiles()) {
+    const piece = fleet.track.get(g.x, g.y);
+    const info: GateInfo = {
+      x: g.x,
+      y: g.y,
+      cls: null,
+      entry: null,
+      run: 0,
+      ok: false,
+      reason: null,
+    };
+    out.push(info);
+    if (!piece) {
+      info.reason = STR.compat.gateNoTrack(g.x, g.y);
+      continue;
+    }
+    const toStation = DIRS.find((d) => depot.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
+    const entry =
+      toStation !== undefined && piece.links.some((l) => l.includes(toStation))
+        ? toStation
+        : piece.links[0]?.[0];
+    if (entry === undefined) {
+      info.reason = STR.compat.gateNoTrack(g.x, g.y);
+      continue;
+    }
+    info.entry = entry;
+    info.cls = pieceClassFor(piece, entry);
+    if (!t.access.classes.has(info.cls)) {
+      const who = t.access.blockedBy[info.cls];
+      info.reason = STR.compat.gateClass(
+        g.x,
+        g.y,
+        STR.toolbar.trackClass[info.cls],
+        who?.name ?? t.name,
+        [...t.access.classes].map((c) => STR.toolbar.trackClass[c]).join(' / ') || '?',
+      );
+      continue;
+    }
+    if (fleet.occupied(g.x, g.y, t.id)) {
+      info.reason = STR.compat.gateBusy(g.x, g.y);
+      continue;
+    }
+    let cx = g.x;
+    let cy = g.y;
+    let cin = entry;
+    let run = 0;
+    let tiles = 0;
+    for (;;) {
+      const exits = fleet.track.exits(cx, cy, cin);
+      const out2 = exits.find((e) => e === (cin + 2) % 4) ?? exits[0];
+      if (out2 === undefined) break;
+      run += fleet.track.segLength(cx, cy, cin, out2);
+      tiles++;
+      if (run >= need + 0.5) break;
+      const nx = cx + DIR_DX[out2];
+      const ny = cy + DIR_DY[out2];
+      if (!fleet.track.connected(cx, cy, out2)) break;
+      const np = fleet.track.get(nx, ny)!;
+      if (!t.access.classes.has(pieceClassFor(np, (out2 + 2) % 4))) break;
+      if (fleet.occupied(nx, ny, t.id)) break;
+      cx = nx;
+      cy = ny;
+      cin = (out2 + 2) % 4;
+    }
+    info.run = run;
+    if (tiles < 2) {
+      info.reason = STR.compat.gateStub(g.x, g.y);
+      continue;
+    }
+    if (run < need) {
+      info.reason = STR.compat.gateRoom(g.x, g.y, run, need);
+      continue;
+    }
+    info.ok = true;
+  }
+  return out;
+}
+
+describe('a depot gate, before and after a short consist had to look past it', () => {
+  /** The gate the pieces are laid on: east of a depot at (10, ROW), which covers two by two. */
+  const GATE = { x: 12, y: ROW };
+
+  interface GateLayout {
+    item: TrackItem;
+    rot: number;
+    form: SwitchForm;
+    /** the member of the piece that lies on the gate tile */
+    member: number;
+    /** every other tile around the gate a crossing of this class, straight on either way; or bare */
+    fill: TrackClass | null;
+  }
+
+  /** The ways a switch may be laid; any other piece is laid the first way. */
+  const FORMS: SwitchForm[] = ['turn', 'parallel'];
+
+  /** The tiles of a piece laid with its anchor at (20, 12), in member order. */
+  const membersOf = ({ item, rot, form }: Pick<GateLayout, 'item' | 'rot' | 'form'>) =>
+    new TrackGraph(40, 24).place(20, 12, item.kind, rot, item.cls, item.cls2, form);
+
+  /** Every piece of every class, turn and form, each of its tiles on the gate, the depot left clear. */
+  function gateLayouts(covers: (x: number, y: number) => boolean): GateLayout[] {
+    const out: GateLayout[] = [];
+    for (const item of TRACK_ITEMS)
+      for (let rot = 0; rot < rotationCount(item.kind); rot++)
+        for (const form of item.kind === 'switch' ? FORMS : FORMS.slice(0, 1)) {
+          const tiles = membersOf({ item, rot, form });
+          tiles.forEach((m, member) => {
+            const at = tiles.map((p) => ({ x: p.x - m.x + GATE.x, y: p.y - m.y + GATE.y }));
+            if (at.some((p) => covers(p.x, p.y))) return;
+            for (const fill of [null, ...new Set([item.cls, item.cls2 ?? item.cls])])
+              out.push({ item, rot, form, member, fill });
+          });
+        }
+    return out;
+  }
+
+  /** Lay `layout` on an emptied track: the crossings first, then the piece over them. */
+  function lay(track: TrackGraph, layout: GateLayout, covers: (x: number, y: number) => boolean) {
+    for (const t of [...track.tiles()]) track.removeAt(t.x, t.y);
+    if (layout.fill)
+      for (let y = GATE.y - 6; y <= GATE.y + 7; y++)
+        for (let x = GATE.x - 4; x <= GATE.x + 8; x++)
+          if (!covers(x, y)) track.place(x, y, 'crossing', 0, layout.fill, layout.fill);
+    const { item, rot, form, member } = layout;
+    const m = membersOf(layout)[member];
+    track.place(20 - m.x + GATE.x, 12 - m.y + GATE.y, item.kind, rot, item.cls, item.cls2, form);
+    expect(track.get(GATE.x, GATE.y)?.kind).toBe(item.kind);
+  }
+
+  // some two hundred layouts of the gate, each for two dozen consists through both walks: up to
+  // 1.2 s alone
+  it(
+    'gives a consist of a tile or more the verdict it gave before, whatever piece the gate is',
+    { timeout: 30_000 },
+    () => {
+      const map = emptyMap(4242, 40, 24, Terrain.Grass);
+      const track = new TrackGraph(40, 24);
+      const stock = new Stockpile();
+      const economy = new Economy();
+      const builder = new Builder(map, new RegionState(map), track, economy, stock);
+      builder.free = true;
+      const depot = new Station('depot', 10, ROW);
+      builder.stations.push(depot);
+      const covers = (x: number, y: number) => depot.covers(x, y);
+      const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+
+      // the shortest shipped model that may use each class of track, as shipped and at lengths of
+      // its own either side of a tile; the shortest regular one also with wagons behind it
+      const lone = (def: LocoDef) => new Train([{ uid: 1, level: 1, def }]);
+      const shortest = (cls: TrackClass) =>
+        [...REGULAR_LOCOS, ...NARROW_LOCOS]
+          .filter((d) => lone(d).access.classes.has(cls))
+          .sort((a, b) => vehicleSpec(a).L - vehicleSpec(b).L)[0];
+      const bases = TRACK_CLASSES.map(shortest);
+      const trains: Train[] = [];
+      for (const base of bases) {
+        trains.push(lone(base));
+        for (const length of [OWN_LENGTH.min, 0.5, 0.7, 0.99, 1, 1.01])
+          trains.push(lone({ ...ownLoco(base.id, length), id: `${base.id}@${length}` }));
+      }
+      const withWagons = lone(bases[0]);
+      withWagons.wagons = REGULAR_WAGONS.slice(0, 2).map((d, i) => ({
+        uid: 100 + i,
+        def: d,
+        level: 1,
+        cargo: null,
+        amount: 0,
+        origin: null,
+      }));
+      trains.push(withWagons);
+      // shortest first, so the first failure is the shortest consist that fails
+      trains.sort((a, b) => a.length - b.length);
+      expect(trains[0].length).toBe(OWN_LENGTH.min);
+
+      const layouts = gateLayouts(covers);
+      const seen = { ok: 0, stub: 0, room: 0, refused: 0, changed: 0 };
+      for (const layout of layouts) {
+        lay(track, layout, covers);
+        for (const t of trains) {
+          const now = fleet.gateReport(t, depot);
+          const before = gateReportBeforeFix(fleet, t, depot);
+          const at =
+            `${layout.item.kind} ${layout.item.cls}/${layout.item.cls2 ?? '-'} turn ${layout.rot} ` +
+            `${layout.form}, member ${layout.member} on the gate, ${layout.fill ?? 'no'} crossings ` +
+            `around it; ${t.name}, ${t.length} tiles`;
+          if (t.length >= 1) {
+            expect(now, at).toEqual(before);
+            const g = now.find((r) => r.x === GATE.x && r.y === GATE.y)!;
+            if (g.ok) seen.ok++;
+            else if (g.reason === STR.compat.gateStub(GATE.x, GATE.y)) seen.stub++;
+            else if (g.run > 0) seen.room++;
+            else seen.refused++;
+            continue;
+          }
+          // shorter than a tile: a gate may answer otherwise only where the walk before stopped on
+          // the gate tile alone, which already held the consist and half a tile more
+          now.forEach((g, i) => {
+            const was = before[i];
+            if (JSON.stringify(g) === JSON.stringify(was)) return;
+            seen.changed++;
+            expect(was.reason, `${at}, gate (${g.x}, ${g.y})`).toBe(STR.compat.gateStub(g.x, g.y));
+            expect(was.run, `${at}, gate (${g.x}, ${g.y})`).toBeGreaterThanOrEqual(t.length + 0.5);
+          });
+        }
+      }
+      // every piece of every class has a way onto the gate, and every answer is seen
+      for (const item of TRACK_ITEMS)
+        expect(
+          layouts.some((l) => l.item === item),
+          `${item.kind} ${item.cls}`,
+        ).toBe(true);
+      for (const [k, n] of Object.entries(seen)) expect(n, k).toBeGreaterThan(10);
+    },
+  );
 });
