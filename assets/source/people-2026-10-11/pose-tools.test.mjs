@@ -6,7 +6,10 @@ test('portrait cleanup removes faint specks and makes nearly opaque paint solid 
   for (const [x, alpha] of [15, 16, 199, 200].entries())
     source.data.set([71, 123, 130, alpha], x * 4);
   const result = resample(source, 4, 1, 1, [0, 0], [0, 0]);
-  assert.deepEqual([3, 7, 11, 15].map(i => result.data[i]), [0, 16, 199, 255]);
+  assert.deepEqual(
+    [3, 7, 11, 15].map((i) => result.data[i]),
+    [0, 16, 199, 255],
+  );
   assert.deepEqual([...result.data.subarray(12, 15)], [71, 123, 130]);
 });
 test('a sole below the guide baseline lands on the frame anchor using its measured row', () => {

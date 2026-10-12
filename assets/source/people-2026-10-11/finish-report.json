@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-12T23:27:08.797Z",
+  "updatedAt": "2026-10-12T23:44:37.582Z",
   "branch": "art/331-people",
   "brief": "finish-brief-2026-10-12.txt",
   "strips": [
@@ -145,18 +145,46 @@
     {
       "strip": "stone-mason-back-walk",
       "acceptedAttempts": [
-        null,
-        null,
-        null,
-        null
+        2,
+        2,
+        3,
+        3
       ],
-      "cycleReview": "not assembled",
+      "cycleReview": "passed",
       "repeatedFrames": [],
-      "findings": null,
-      "headBobFraction": null,
-      "outputPaletteCheck": null,
-      "rawPaletteExceptionsKept": [],
-      "measurementsKeptAfterThree": []
+      "findings": "Offline9px-6x and36px inspected: opposite contact X visible through apron/legs, f1 raised left sole and f3 raised right sole, all four silhouettes differ; no repeated selected frame. Accepted2,2,3,3. f2 only correct opposite contact after three, retained6.77% height excess; grounded cap range9.6875px=2.69%. Raw tiny palette exceptions per calls; final RGBA strip0 white/0 strong amber after area averaging. Same woman/copper apron-back straps/hammer;256px columns prevent tool clipping.",
+      "headBobFraction": 0.026909722222222224,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 404059,
+        "opaquePixels": 110707,
+        "antialiasedPixels": 9522,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 0
+      },
+      "rawPaletteExceptionsKept": [
+        {
+          "frame": 1,
+          "whiteCapViolations": 1,
+          "strongAmberPixels": 3,
+          "reason": "Best of three: same correct passing phase/identity and permitted height, lowest total raw palette exceptions."
+        },
+        {
+          "frame": 2,
+          "whiteCapViolations": 9,
+          "strongAmberPixels": 3,
+          "reason": "Only distinct opposite-contact pose after three; geometry/palette caveats explicitly retained under author decision."
+        },
+        {
+          "frame": 3,
+          "whiteCapViolations": 0,
+          "strongAmberPixels": 4,
+          "reason": "Best of three: only combination of correct other passing legs, passing height and no white pixels; four raw amber pixels retained."
+        }
+      ],
+      "measurementsKeptAfterThree": [
+        2
+      ]
     },
     {
       "strip": "stone-mason-back-carry",

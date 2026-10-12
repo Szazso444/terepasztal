@@ -1,0 +1,24 @@
+{
+  "alignment": "Each portrait body x=512*s and measured sole row aligned to (160,420)",
+  "lowerBodyContactIoU": 0.5230522424496059,
+  "contactOverlay": "checks/stone-mason-back-walk-contact-overlay.png",
+  "passingBoxes": [
+    {
+      "x": 91,
+      "y": 44,
+      "width": 181,
+      "height": 376
+    },
+    {
+      "x": 92,
+      "y": 44,
+      "width": 174,
+      "height": 376
+    }
+  ],
+  "requiresVisualChecks": [
+    "f0/f2 opposite thigh overlap X",
+    "f1/f3 opposite lifted foot",
+    "inspect offline 9px-6x and 36px four-frame sheets"
+  ]
+}

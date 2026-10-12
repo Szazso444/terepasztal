@@ -21,21 +21,33 @@ function measure(e) {
     expected = geometry.strips[e.strip].frames[e.frame].box,
     actual = box(png);
   e.returned = [png.width, png.height];
-  const scaled = Object.fromEntries(Object.entries(expected).map(([k,v])=>[k,v*s]));
+  const scaled = Object.fromEntries(Object.entries(expected).map(([k, v]) => [k, v * s]));
   // Manual anatomical bounds exclude a carried load above the hat or outside the body.
   // Full silhouette is the conservative default; annotate anatomy after visual inspection when needed.
   const body = e.anatomy?.bodyBox ?? actual;
   const hatTop = e.anatomy?.hatTop ?? actual.y;
   const soleRow = e.anatomy?.soleRow ?? actual.y + actual.height - 1;
   const figureHeight = soleRow - hatTop + 1;
-  const heightError = Math.abs(figureHeight / (1152*s) - 1);
+  const heightError = Math.abs(figureHeight / (1152 * s) - 1);
   const bodyWidthRatio = body.width / scaled.width;
-  if(e.measured && !e.measured.contractVersion) e.legacyMeasured = e.measured;
-  e.measured = {contractVersion:'finish-2026-10-12',ratioPass:png.width*3===png.height*2,s,box:actual,
-    guideBox:scaled, bodyBox:body,hatTop,soleRow,soleOffset:soleRow-1344*s,
-    figureHeight,heightError,totalWidth:actual.width,bodyWidthRatio,
-    anatomyMethod:e.anatomy?.note ?? 'Full alpha>128 silhouette; no load excluded',
-    boxPass:png.width*3===png.height*2 && heightError<=0.05 && bodyWidthRatio<=1.25};
+  if (e.measured && !e.measured.contractVersion) e.legacyMeasured = e.measured;
+  e.measured = {
+    contractVersion: 'finish-2026-10-12',
+    ratioPass: png.width * 3 === png.height * 2,
+    s,
+    box: actual,
+    guideBox: scaled,
+    bodyBox: body,
+    hatTop,
+    soleRow,
+    soleOffset: soleRow - 1344 * s,
+    figureHeight,
+    heightError,
+    totalWidth: actual.width,
+    bodyWidthRatio,
+    anatomyMethod: e.anatomy?.note ?? 'Full alpha>128 silhouette; no load excluded',
+    boxPass: png.width * 3 === png.height * 2 && heightError <= 0.05 && bodyWidthRatio <= 1.25,
+  };
   return e.measured;
 }
 if (command === 'record') {
@@ -52,7 +64,10 @@ if (command === 'record') {
   fs.mkdirSync(path.join(root, 'raw', 'poses'), { recursive: true });
   if (fs.existsSync(path.join(root, e.file))) throw Error('Raw painting already exists');
   fs.copyFileSync(source, path.join(root, e.file));
-  e.rawSha256 = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, e.file))).digest('hex');
+  e.rawSha256 = crypto
+    .createHash('sha256')
+    .update(fs.readFileSync(path.join(root, e.file)))
+    .digest('hex');
   calls.push(e);
   measure(e);
   save();
@@ -69,8 +84,12 @@ if (command === 'record') {
   calls.push(e);
   save();
   console.log('Recorded tool rejection; no painting returned.');
- } else if (command === 'anatomy') {
-  const e=entry(); e.anatomy=JSON.parse(args.join(' ')); measure(e); save(); console.log(JSON.stringify(e.measured));
+} else if (command === 'anatomy') {
+  const e = entry();
+  e.anatomy = JSON.parse(args.join(' '));
+  measure(e);
+  save();
+  console.log(JSON.stringify(e.measured));
 } else if (command === 'measure') {
   const e = entry();
   measure(e);
@@ -79,8 +98,10 @@ if (command === 'record') {
 } else if (command === 'accept') {
   const e = entry();
   measure(e);
-  const exhausted=calls.filter(p=>p.strip===e.strip&&p.frame===e.frame&&p.file).length>=3;
-  if (!e.measured.boxPass && !(args.includes('--keep-best') && exhausted)) throw Error('Retry measurements, or keep best after three paintings');
+  const exhausted =
+    calls.filter((p) => p.strip === e.strip && p.frame === e.frame && p.file).length >= 3;
+  if (!e.measured.boxPass && !(args.includes('--keep-best') && exhausted))
+    throw Error('Retry measurements, or keep best after three paintings');
   e.keptDespiteFailedMeasurements = !e.measured.boxPass;
   const noteAt = args.indexOf('--note'),
     note = args[noteAt + 1];
@@ -132,9 +153,10 @@ if (command === 'record') {
   for (let k = 0; k < 4; k++) {
     const p = read('poses/' + id + '-f' + k + '.png'),
       s = p.width / 1024;
-    const accepted = calls.findLast(e => e.strip === id && e.frame === k && e.accepted);
-    normalized.push(resample(p, 320, 480, 320 / p.width,
-      [512 * s, accepted.measured.soleRow], [160, 420]));
+    const accepted = calls.findLast((e) => e.strip === id && e.frame === k && e.accepted);
+    normalized.push(
+      resample(p, 320, 480, 320 / p.width, [512 * s, accepted.measured.soleRow], [160, 420]),
+    );
   }
   const overlay = new PNG({ width: 320, height: 480 });
   let intersect = 0,
@@ -179,8 +201,7 @@ if (command === 'record') {
     const index = args.indexOf('--' + name);
     return index < 0 ? undefined : args[index + 1];
   };
-  if (option('inspected') !== 'yes')
-    throw Error('Inspect the offline 9px and 36px sheets first');
+  if (option('inspected') !== 'yes') throw Error('Inspect the offline 9px and 36px sheets first');
   const contact = option('contact-x'),
     passing = option('passing-alternates'),
     note = option('note');
