@@ -72,7 +72,7 @@
   },
   {
     "id": "wet-sand",
-    "file": "wet-sand.png",
+    "file": "raw/wet-sand-attempt-1.png",
     "prompt": "Paint ONE original ground-material swatch for the isometric railway game, requested canvas 1024x1024 pixels, real PNG fully opaque. References in order: theme-town-growth is STYLE and palette only; rock-surface is approved SCALE, finish and cluster-size reference, not material; ref-water and ref-sand are HUE ONLY crops of blocky tiles: do not copy their diamond silhouette, blocky pixels or streaks. Match smooth painted contours and broad colour clusters, three or four shades, no per-pixel noise or stair-stepped edges. Flat square sample of ground as seen by a 2:1 orthographic isometric game camera 30 degrees down, screen-aligned. No object or tile shape: fill every pixel evenly through all four edges. One upper-left light. Square spans about three tiles: one tile ~330x165 source pixels; tenth-tile pebble ~33 px, twentieth ~17 px. The location at tile offset (x,y) is (512+165*(x-y),512+82.5*(x+y)). Paint material only, no scene, diamond, tile edge, border, horizon, perspective convergence, cast shadow, central motif, identical repeating shapes, long parallel lines, standing plants or rocks, boats, people, lettering or glow. Desired soft edge seamlessness. Quiet painted game illustration, not photorealistic grain. General palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nMATERIAL: Wet sand at waterline, same beach sand (#D6C496 body, #E2D2A6 lit, #C6B488 shadow) darkened about one fifth and cooled slightly toward slate #626B6C. Smooth damp sheen, quiet low detail and broad soft patches; a few SMALL drained shallow pools in water #487C84/#3E6E78/#548A92 shades, subdued #649EA2 highlights. Wet sand dominates; no coastline or large waterbody. Sparse short subtle marks, no rows.",
     "references": [
       "docs/art-direction/images/03-theme-town-growth.png",
@@ -389,5 +389,28 @@
       "assets/source/water-2026-10-11/river-bank.png"
     ],
     "returned": [1254, 1254]
+  },
+  {
+    "id": "wet-sand-attempt-2",
+    "file": "raw/wet-sand-attempt-2.png",
+    "prompt": "Use case: stylized-concept. Generate ONE NEW ground-material swatch, wet-sand-attempt-2, requested 1024x1024 px real PNG, FULLY OPAQUE edge to edge (alpha 255 throughout). This is NOT an image edit. Four images are references ONLY: 1 pastoral railway game's theme board STYLE/palette, 2 rock-surface approved flat swatch SCALE/finish/cluster size only, translate into SMOOTH painted contours not its pixel edges, 3 beach-sand DRY SAND family to darken, 4 lake-water HUE ONLY for tiny drained pools; do not copy its ripples or layout.\nGEOMETRY: flat square ground as the orthographic game camera sees ground at 30 degrees down, SCREEN-ALIGNED, NO diamond or shape. Entire canvas filled with evenly distributed ground including every edge. One tile about 330x165 px at requested 1024; tiny surface marks about 17 px. Three/four broad clean shades per material, low detail, calm smooth damp sand, no per-pixel noise. One upper-left light, no global lighting gradient or cast shadows. Edge seamlessness desirable.\nMATERIAL: the fine beach sand in image 3, wet near waterline: dry shades body #D6C496 lit #E2D2A6 shadow #C6B488 DARKENED about ONE FIFTH and cooled slightly toward slate #626B6C. Smooth damp sheen, quiet broad tonal patches, wet sand dominates at least 98% of canvas. Add only about SIX tiny isolated ROUND drained pools, irregularly scattered independently with NO alignment. Each approximately 25–45 px wide, absolutely UNDER 66px (one fifth tile). Pools are SMALL COMPACT rounded spots, never long lines, streaks or ripples; all separated by wide uninterrupted damp sand. Scattered at asymmetric varying positions: no row, diagonal, chain, touching pools or identical repeated forms. Teal pools in #487C84 #548A92 #3E6E78, no foam. TOTAL teal pool area ideally 0.5–1% and STRICTLY UNDER 3% of entire square. Never enlarge pools to illustrate water, do not let blue-grey sand become teal water. Subtle sparse small flat sand features only, matching image 3 finish, no standing rocks.\nHighlight limits: all painted highlights below cursor white #ECE4D0 and selection amber #E8AA48, no white glints or luminous marks. No diamond, tile edges, border, horizon, perspective convergence, background, cast shadows, large central motif, repeated identical shapes, long parallel lines, standing plants or rocks, shells, boats, people, text or glow. Real fully opaque PNG; no transparent border or margins.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/water-2026-10-11/beach-sand.png",
+      "assets/source/water-2026-10-11/lake-water.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "poolPixels": 8940,
+      "totalPixels": 1572516,
+      "poolShare": 0.005685156780598735,
+      "poolPercent": 0.5685156780598735,
+      "minAlpha": 255,
+      "borderMinAlpha": 255,
+      "sha256": "84627265506098f897e3c818afcbe86e170d1971d038d81594c7657d44348c8a",
+      "alignmentReview": "Passed visual inspection at 199 px: isolated pools, no rows, diagonals or chains."
+    },
+    "selected": true
   }
 ]
