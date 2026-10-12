@@ -16,6 +16,7 @@ import {
   pieceLinks,
   rotationCount,
   type TrackClass,
+  type TrackItem,
 } from '../world/track';
 
 const R = 4,
@@ -23,7 +24,18 @@ const R = 4,
   H = 44,
   OX = 36,
   OY = 20;
-type RailPath = { points: Vec2[]; cls: TrackClass };
+/**
+ * One rail line on a frame. A line the frame holds whole lays its sleepers over its own length.
+ * `run` is for a line that is only part of a longer one drawn in several classes (the transition's
+ * two halves): `start` is the distance along the whole run at which this part begins, `length`
+ * the whole run's length and `cls` the class whose spacing the whole run takes, so the sleepers
+ * keep one pitch across the change of class.
+ */
+export type RailPath = {
+  points: Vec2[];
+  cls: TrackClass;
+  run?: { start: number; length: number; cls: TrackClass };
+};
 /**
  * Per class: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
  * ballast shoulder, sleeper colours and rail line widths. Narrow gauge puts its rails half as far
@@ -75,6 +87,54 @@ const STYLE: Record<
     widths: [0.95, 0.72, 0.32],
   },
 };
+
+/** Length of a polyline, summed segment by segment in order. */
+const pathLength = (points: Vec2[]) => {
+  let sum = 0;
+  for (let i = 1; i < points.length; i++)
+    sum += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+  return sum;
+};
+
+/**
+ * How the sleepers of one run of track of `length` tiles are spaced, given the class's nominal
+ * `step`. The run holds a whole number of pitches, `pitch = length / round(length / step)`, and
+ * the first and last sleeper sit half a pitch in from its ends. Two runs that meet at a tile edge
+ * therefore leave `(pitch + pitch') / 2` between their nearest sleepers, one pitch to within the
+ * difference of the two. The pitch strays from `step` by at most `step / (2 * count)`, and a run
+ * shorter than a step still gets one sleeper.
+ */
+export function sleeperLayout(length: number, step: number) {
+  if (!(length > 0) || !(step > 0)) return { count: 0, pitch: step, first: 0 };
+  const count = Math.max(1, Math.round(length / step));
+  const pitch = length / count;
+  return { count, pitch, first: pitch / 2 };
+}
+
+/** The distance along a run of `length` tiles of each sleeper's centre, in order. */
+export function sleeperPositions(length: number, step: number): number[] {
+  const { count, pitch, first } = sleeperLayout(length, step);
+  return Array.from({ length: count }, (_, i) => first + i * pitch);
+}
+
+/** A class's nominal sleeper spacing in tiles, shrunk a little (not below 3/4) on a small icon. */
+export const sleeperStep = (cls: TrackClass, scale = 1) => STYLE[cls].step * Math.max(scale, 0.75);
+
+/**
+ * Where the sleepers of one rail line fall, as distances along `path.points`. A line that is a
+ * part of a longer run takes the sleepers of the whole run that fall on it; a sleeper exactly on
+ * the seam between two parts belongs to the later one.
+ */
+export function railSleepers(path: RailPath, scale = 1): number[] {
+  const own = pathLength(path.points),
+    start = path.run?.start ?? 0,
+    length = path.run?.length ?? own,
+    last = start + own >= length - 1e-9;
+  return sleeperPositions(length, sleeperStep(path.run?.cls ?? path.cls, scale))
+    .filter((d) => d >= start && (last || d < start + own))
+    .map((d) => d - start);
+}
+
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
 const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.y * d });
 
@@ -115,9 +175,10 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
   c.lineTo(OX - 32.6, OY);
   c.closePath();
   c.clip();
-  const rows = paths.map(({ points, cls }) => ({
+  const rows = paths.map(({ points, cls, run }) => ({
     points,
     cls,
+    run,
     normals: points.map((p, i) => {
       const a = points[Math.max(0, i - 1)],
         b = points[Math.min(points.length - 1, i + 1)];
@@ -174,23 +235,23 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
         c.fill();
       }
   }
-  for (const { points, normals, cls } of rows) {
+  for (const { points, normals, cls, run } of rows) {
     c.globalAlpha = 1;
     const base = STYLE[cls];
     const st = {
       ...base,
       rail: base.rail * scale,
       sleeper: base.sleeper * scale,
-      step: base.step * Math.max(scale, 0.75),
     };
+    const sleepers = railSleepers({ points, cls, run }, scale);
     let distance = 0,
-      next = st.step / 2.5;
+      k = 0;
     for (let i = 1; i < points.length; i++) {
       const a = points[i - 1],
         b = points[i],
         len = Math.hypot(b.x - a.x, b.y - a.y);
-      while (next <= distance + len) {
-        const t = (next - distance) / (len || 1),
+      while (k < sleepers.length && sleepers[k] <= distance + len + 1e-9) {
+        const t = Math.min(1, (sleepers[k] - distance) / (len || 1)),
           p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
         const n = normals[i],
           along = { x: n.y, y: -n.x },
@@ -208,7 +269,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
           c.fillStyle = '#554f43';
           c.fillRect(q.x - 0.45, q.y - 0.35, 0.9, 0.7);
         }
-        next += st.step;
+        k++;
       }
       distance += len;
     }
@@ -225,6 +286,33 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
     }
   }
   return c.getImageData(0, 0, W * R, H * R);
+}
+
+/**
+ * The rail lines of a piece that fits one tile, in tile coordinates (the tile centre is the
+ * origin), as `generateIllustratedTrackAtlas` draws them. A transition is one run of sleepers over
+ * its whole length, drawn as a regular half and a high-speed half.
+ */
+export function tilePaths(it: TrackItem, rotation: number): RailPath[] {
+  const paths: RailPath[] = pieceLinks(it.kind, rotation).map((link, i) => ({
+    points: linkPoints(link[0], link[1], 96),
+    cls: it.kind === 'crossing' && i === 1 ? (it.cls2 ?? it.cls) : it.cls,
+  }));
+  if (it.kind === 'transition') {
+    const points = paths[0].points,
+      mid = Math.floor(points.length / 2),
+      first = points.slice(0, mid + 1),
+      length = pathLength(points);
+    return [
+      { points: first, cls: 'regular', run: { start: 0, length, cls: 'regular' } },
+      {
+        points: points.slice(mid),
+        cls: 'high_speed',
+        run: { start: pathLength(first), length, cls: 'regular' },
+      },
+    ];
+  }
+  return paths;
 }
 
 /** Source-inspired timber/steel materials on the real track polylines, in every orientation. */
@@ -269,20 +357,7 @@ export function generateIllustratedTrackAtlas(): AtlasImage {
           }
         }
       } else {
-        const paths = pieceLinks(it.kind, rotation).map((link, i) => ({
-          points: linkPoints(link[0], link[1], 96),
-          cls: it.kind === 'crossing' && i === 1 ? (it.cls2 ?? it.cls) : it.cls,
-        }));
-        if (it.kind === 'transition') {
-          const points = paths[0].points,
-            mid = Math.floor(points.length / 2);
-          paths.splice(
-            0,
-            1,
-            { points: points.slice(0, mid + 1), cls: 'regular' },
-            { points: points.slice(mid), cls: 'high_speed' },
-          );
-        }
+        const paths = tilePaths(it, rotation);
         ab.add(key, draw(paths, rotation * 13, it.kind === 'bridge'), OX * R, OY * R);
       }
     }
