@@ -288,3 +288,57 @@ describe('what the keys leave to the camera', () => {
     expect(overview.calls).toEqual(['dropOverviewTrain', 'togglePause']);
   });
 });
+
+describe('Escape and the tooltip stack, in every state the keys read', () => {
+  const FLAGS = [
+    'pauseMenuOpen',
+    'overviewSettled',
+    'screenOpen',
+    'building',
+    'categoryOpen',
+    'recording',
+    'overviewTrain',
+  ] as const;
+
+  /** Every host state a context can be in: each flag on and off, in play and in the editor. */
+  function* states(): Generator<Partial<State>> {
+    for (let bits = 0; bits < 1 << FLAGS.length; bits++)
+      for (const mode of ['play', 'editor'] as const) {
+        const s: Partial<State> = { mode };
+        FLAGS.forEach((f, i) => (s[f] = (bits & (1 << i)) !== 0));
+        yield s;
+      }
+  }
+  const codes = [...new Set(KEYMAP.map((b) => b.code))];
+
+  it('closes the tooltips and does nothing else when they are open, whatever else is', () => {
+    for (const context of CONTEXTS)
+      for (const s of states()) {
+        const { host, calls } = fakeHost(context, { ...s, tooltipsOpen: true });
+        const at = `${context} ${JSON.stringify(s)}`;
+        expect(handlePlayKeys(keys(['Escape']), host), at).toBe(true);
+        expect(calls, at).toEqual(['closeTooltips']);
+      }
+  });
+
+  it('leaves every other key, and Escape with no tooltip open, as they were', () => {
+    for (const context of CONTEXTS)
+      for (const s of states())
+        for (const code of codes)
+          for (const shift of SHIFT) {
+            const closed = fakeHost(context, { ...s, tooltipsOpen: false });
+            const ended = handlePlayKeys(keys([code], shift), closed.host);
+            const at = () => `${context} ${shift ? 'Shift+' : ''}${code} ${JSON.stringify(s)}`;
+            if (closed.calls.includes('closeTooltips')) expect(closed.calls, at()).toEqual([]);
+            if (code === 'Escape') continue;
+            const open = fakeHost(context, { ...s, tooltipsOpen: true });
+            const openEnded = handlePlayKeys(keys([code], shift), open.host);
+            // compared by hand: a matcher per case is most of the time this takes
+            if (openEnded !== ended || open.calls.join() !== closed.calls.join())
+              expect({ ended: openEnded, calls: open.calls }, at()).toEqual({
+                ended,
+                calls: closed.calls,
+              });
+          }
+  });
+});

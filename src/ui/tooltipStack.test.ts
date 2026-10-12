@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Rng } from '../engine/rng';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import {
   GRACE_MS,
   HOLD_MS,
@@ -16,6 +18,8 @@ import {
   termAnchor,
   tipKey,
   type Point,
+  type TipClock,
+  type TipTarget,
   type TipView,
 } from './tooltipStack';
 
@@ -573,5 +577,1046 @@ describe('placement and the ring', () => {
     expect(tile(1, 2, 'none')).toBe(tile(1, 2, 'none'));
     expect(new Set([tile(1, 2, 'none'), tile(2, 1, 'none'), tile(1, 2, 'farm')]).size).toBe(3);
     expect(tipKey({ kind: 'station', id: 4 })).not.toBe(tipKey({ kind: 'train', id: 4 }));
+  });
+});
+
+// ---------------------------------------------------------------- properties over pointer traces
+//
+// A driver plays seeded pointer traces against the stack the way the game and src/ui/tooltip.ts
+// call it: every frame `hover` while the pointer is over the field and `leave` anywhere else, and
+// the DOM's enter and leave events as the pointer crosses tooltips and terms. The pointer enters
+// only a locked tooltip (an unlocked one lets it through). When the tooltip under a still pointer
+// closes, the game goes on seeing the pointer over the UI until it moves, as `Input.overUi` does.
+// A refresh replaces a tooltip's terms with new ones, as `TooltipLayer.refresh` does, and no event
+// says the pointer left the old one. The view checks each call the stack makes against the
+// issue's rules as it happens; the timing rules that need the rest of the trace run at its end.
+
+/** A term of a tooltip or of a panel; the stack knows a term by its identity. */
+interface Term {
+  readonly label: string;
+}
+
+/** Where the pointer is, as the DOM and the game see it. */
+type Loc =
+  | { at: 'field'; key: string | null; x: number; y: number }
+  /** over a panel, out of the window, or where a tooltip closed under it */
+  | { at: 'ui' }
+  | { at: 'panelTerm'; term: Term }
+  | { at: 'tip'; inst: Inst }
+  | { at: 'term'; inst: Inst; term: Term };
+
+/** A tooltip on screen, from its open to its close. */
+interface Inst {
+  readonly id: number;
+  readonly level: number;
+  readonly src: 'field' | 'term' | 'panel';
+  /** the field target, or the term's label */
+  readonly key: string;
+  readonly term: Term | null;
+  readonly openedAt: number;
+  builtAt: number;
+  lockedAt: number | null;
+  closedAt: number | null;
+  /** the terms its content shows now; a refresh replaces them */
+  terms: Term[];
+  /** a refresh of the root replaced the term that opened it */
+  termGone: boolean;
+}
+
+/** What a builder made: where it came from and the call or timer it ran in. */
+interface Content {
+  readonly src: 'field' | 'term' | 'panel' | 'update';
+  readonly key: string;
+  readonly term: Term | null;
+  readonly ctx: Ctx;
+}
+
+type CallName =
+  | 'hover'
+  | 'leave'
+  | 'update'
+  | 'closeAll'
+  | 'escape'
+  | 'termEnter'
+  | 'termLeave'
+  | 'tipEnter'
+  | 'tipLeave';
+
+/** A call the driver made; `inst` is the tooltip at `level` when it was made. */
+interface Call {
+  readonly t: number;
+  readonly name: CallName;
+  readonly key?: string | null;
+  readonly level?: number;
+  readonly into?: number | null;
+  readonly inst?: Inst;
+  /** the term of a termEnter or termLeave */
+  readonly term?: Term;
+}
+
+interface Op {
+  readonly t: number;
+  readonly op: 'open' | 'move' | 'refresh' | 'lock' | 'close';
+  readonly level: number;
+  readonly inst: Inst;
+}
+
+type Ctx = { kind: 'step' } | { kind: 'api'; call: Call } | { kind: 'timer'; ops: Op[] };
+
+/**
+ * The first pointer movement away from a locked root since the pointer was last in the stack:
+ * over the field, or out to a panel. It starts the root's `ROOT_LEAVE_MS` close.
+ */
+interface Exit {
+  readonly t: number;
+  /** its hover or leave in `calls` */
+  readonly index: number;
+  readonly root: Inst;
+}
+
+/** How much of the rules the traces reached, so a generator that stops reaching them fails. */
+interface Coverage {
+  maxDepth: number;
+  locksAt3: number;
+  graceCloses: number;
+  awayCloses: number;
+  refreshes: number;
+  escapes: number;
+  rootChecks: number;
+  termChecks: number;
+  panelOpens: number;
+  graceLiveness: number;
+  awayLiveness: number;
+  rogue: number;
+}
+
+type Step =
+  | { k: 'field'; key: number; x: number; y: number }
+  | { k: 'ui' }
+  | { k: 'panelTerm'; term: number }
+  | { k: 'tip'; level: number }
+  | { k: 'term'; level: number; term: number }
+  | { k: 'rogue'; level: number }
+  | { k: 'wait'; ms: number }
+  | { k: 'live'; on: boolean }
+  | { k: 'update'; key: number }
+  | { k: 'closeAll' }
+  | { k: 'escape' };
+
+/** A level above any stack: a step with it acts on the top tooltip. */
+const TOP = 9;
+const FIELD_KEYS: (string | null)[] = [
+  tipKey({ kind: 'tile', x: 1, y: 1, tool: 'none' }),
+  tipKey({ kind: 'tile', x: 2, y: 1, tool: 'none' }),
+  tipKey({ kind: 'tile', x: 1, y: 1, tool: 'farm' }),
+  tipKey({ kind: 'station', id: 7 }),
+  null,
+];
+const NO_TARGET = FIELD_KEYS.length - 1;
+const XS = [100, 101, 160];
+const YS = [100, 130];
+const TERMS_PER_TIP = 3;
+/** Waits on and either side of every constant, where an off-by-one would show. */
+const WAITS = [
+  1,
+  FRAME,
+  SHOW_MS - 1,
+  SHOW_MS,
+  GRACE_MS - 1,
+  GRACE_MS,
+  UPDATE_MS - 1,
+  UPDATE_MS,
+  ROOT_DELAY_MS - 1,
+  ROOT_DELAY_MS,
+  ROOT_LEAVE_MS - 1,
+  ROOT_LEAVE_MS,
+  HOLD_MS - 1,
+  HOLD_MS,
+];
+
+function genSteps(rng: Rng): Step[] {
+  const steps: Step[] = [];
+  const n = rng.int(8, 60);
+  const level = () => (rng.chance(0.6) ? TOP : rng.int(0, 4));
+  const term = () => rng.int(0, TERMS_PER_TIP - 1);
+  const field = (): Step => ({
+    k: 'field',
+    key: rng.chance(0.08) ? NO_TARGET : rng.int(0, NO_TARGET - 1),
+    x: rng.pick(XS),
+    y: rng.pick(YS),
+  });
+  // a level down: rest on a term of the top tooltip until its own tooltip locks, then go in
+  const dive = (): Step[] => [
+    { k: 'term', level: TOP, term: term() },
+    { k: 'wait', ms: SHOW_MS },
+    { k: 'wait', ms: HOLD_MS },
+    { k: 'tip', level: TOP },
+  ];
+  while (steps.length < n) {
+    const r = rng.next();
+    if (r < 0.2) steps.push(field());
+    else if (r < 0.43)
+      steps.push({ k: 'wait', ms: rng.chance(0.3) ? rng.int(1, 2500) : rng.pick(WAITS) });
+    else if (r < 0.5) steps.push({ k: 'tip', level: level() });
+    else if (r < 0.58) steps.push({ k: 'term', level: level(), term: term() });
+    else if (r < 0.68) steps.push(...dive());
+    else if (r < 0.75) steps.push(field(), { k: 'wait', ms: ROOT_DELAY_MS + HOLD_MS });
+    else if (r < 0.78)
+      // a root, then down several levels at once
+      steps.push(
+        field(),
+        { k: 'wait', ms: ROOT_DELAY_MS + HOLD_MS },
+        ...Array.from({ length: rng.int(2, 5) }, dive).flat(),
+      );
+    else if (r < 0.82) steps.push({ k: 'ui' });
+    else if (r < 0.86) steps.push({ k: 'panelTerm', term: rng.int(0, 1) });
+    else if (r < 0.88) steps.push({ k: 'live', on: rng.chance(0.5) });
+    else if (r < 0.9) steps.push({ k: 'update', key: rng.int(0, NO_TARGET) });
+    else if (r < 0.93) steps.push({ k: 'closeAll' });
+    else if (r < 0.96) steps.push({ k: 'escape' });
+    else steps.push({ k: 'rogue', level: level() });
+  }
+  return steps;
+}
+
+function check(ok: boolean, what: () => string): asserts ok {
+  if (!ok) throw new Error(what());
+}
+
+/** Timers on a clock that moves only when told: fired in time order, and in the order set at one time. */
+class StepClock implements TipClock {
+  t = 0;
+  private next = 1;
+  private readonly timers = new Map<number, { at: number; fn: () => void }>();
+  constructor(private readonly fire: (fn: () => void) => void) {}
+  now() {
+    return this.t;
+  }
+  setTimeout(fn: () => void, ms: number) {
+    const id = this.next++;
+    this.timers.set(id, { at: this.t + ms, fn });
+    return id;
+  }
+  clearTimeout(id: unknown) {
+    this.timers.delete(id as number);
+  }
+  runTo(to: number) {
+    for (;;) {
+      let id = 0;
+      let due = Infinity;
+      for (const [i, tm] of this.timers)
+        if (tm.at <= to && tm.at < due) {
+          id = i;
+          due = tm.at;
+        }
+      if (!id) break;
+      const tm = this.timers.get(id)!;
+      this.timers.delete(id);
+      this.t = tm.at;
+      this.fire(tm.fn);
+    }
+    this.t = to;
+  }
+}
+
+/** The driver and the view in one: it moves the pointer, and records and checks what the stack does. */
+class Trace implements TipView<Content> {
+  readonly clock = new StepClock((fn) => this.fire(fn));
+  readonly stack = new TooltipStack<Content>(this, this.clock);
+  readonly ops: Op[] = [];
+  private readonly up: Inst[] = [];
+  private readonly insts: Inst[] = [];
+  private readonly calls: Call[] = [];
+  private readonly exits: Exit[] = [];
+  /** the locked root whose first exit is recorded; the pointer entering the stack clears it */
+  private exited: Inst | null = null;
+  private loc: Loc = { at: 'ui' };
+  private locSince = 0;
+  /** bumped whenever the pointer moves or the stack is closed: an expectation lapses */
+  private serial = 0;
+  private ctx: Ctx = { kind: 'step' };
+  private live = false;
+  private lastFieldKey: string | null = null;
+  /** the pointer at the last `hover`; null after a `leave` */
+  private hoverAt: Point | null = null;
+  /** the target `hover` has been given since `restSince`; undefined while off the field */
+  private restKey: string | null | undefined = undefined;
+  private restSince = 0;
+  /** closeAll or Escape ran and the pointer has not moved since */
+  private hushed = false;
+  /** a root closed on a timer and the pointer has not moved since */
+  private rootClosed = false;
+  private readonly expects: { at: number; serial: number; what: string; ok: () => boolean }[] = [];
+  /** content built and not shown yet */
+  private readonly built: Content[] = [];
+  private nextTerms = 0;
+  private readonly panelTerms: Term[] = [{ label: 'panel term 0' }, { label: 'panel term 1' }];
+
+  constructor(
+    /** whether `rogue` steps run: a term of an unlocked tooltip reports the pointer anyway */
+    private readonly rogue: boolean,
+    private readonly cover: Coverage,
+  ) {}
+
+  run(steps: readonly Step[]) {
+    for (const s of steps) this.step(s);
+    this.finish();
+  }
+
+  // ---------------------------------------------------------------- the pointer
+
+  private step(s: Step) {
+    const t = this.clock.t;
+    if (s.k === 'wait') {
+      this.wait(s.ms);
+      return;
+    }
+    let after: (() => void) | null = null;
+    switch (s.k) {
+      case 'field': {
+        const key = FIELD_KEYS[s.key];
+        const l = this.loc;
+        if (l.at === 'field' && l.key === key && l.x === s.x && l.y === s.y) break;
+        this.moveTo({ at: 'field', key, x: s.x, y: s.y });
+        // with no locked root, a root for the target is up once the pointer has rested on it
+        after = () => {
+          const root = this.up[0];
+          if (key === null || (root && root.lockedAt !== null)) return;
+          this.expectAt(
+            t + ROOT_DELAY_MS,
+            `the root of ${key} is up ROOT_DELAY_MS after the pointer came to it at ${t}`,
+            () => {
+              this.cover.rootChecks++;
+              return this.up[0]?.src === 'field' && this.up[0].key === key;
+            },
+          );
+        };
+        break;
+      }
+      case 'ui':
+        if (this.loc.at !== 'ui') this.moveTo({ at: 'ui' });
+        break;
+      case 'panelTerm': {
+        const term = this.panelTerms[s.term];
+        const l = this.loc;
+        if (l.at === 'panelTerm' && l.term === term) break;
+        this.moveTo({ at: 'panelTerm', term });
+        after = () =>
+          this.expectAt(
+            t + SHOW_MS,
+            `the tooltip of ${term.label} is up SHOW_MS after the pointer came to it at ${t}`,
+            () => {
+              this.cover.termChecks++;
+              return this.up[0]?.src === 'panel' && this.up[0].term === term;
+            },
+          );
+        break;
+      }
+      case 'tip': {
+        const inst = this.up[Math.min(s.level, this.up.length - 1)];
+        if (!inst || inst.lockedAt === null) break;
+        const l = this.loc;
+        if (l.at === 'tip' && l.inst === inst) break;
+        this.moveTo({ at: 'tip', inst });
+        break;
+      }
+      case 'term': {
+        const inst = this.up[Math.min(s.level, this.up.length - 1)];
+        if (!inst || inst.lockedAt === null) break;
+        const term = inst.terms[s.term];
+        const l = this.loc;
+        if (l.at === 'term' && l.term === term) break;
+        this.moveTo({ at: 'term', inst, term });
+        after = () =>
+          this.expectAt(
+            t + SHOW_MS,
+            `the tooltip of ${term.label} is up SHOW_MS after the pointer came to it at ${t}`,
+            () => {
+              this.cover.termChecks++;
+              return this.up[inst.level + 1]?.term === term;
+            },
+          );
+        break;
+      }
+      case 'rogue': {
+        if (!this.rogue) break;
+        const level = Math.min(s.level, this.up.length - 1);
+        if (level >= 0 && this.up[level].lockedAt !== null) break;
+        this.cover.rogue++;
+        const term = { label: 'rogue term' };
+        const build = this.builder('term', term.label, term);
+        this.stack.termEnter(Math.max(0, level), term, () => ({ x: 0, y: 0 }), build);
+        break;
+      }
+      case 'live':
+        this.live = s.on;
+        break;
+      case 'update': {
+        const key = FIELD_KEYS[s.key];
+        if (key !== null) this.update(key);
+        break;
+      }
+      case 'closeAll':
+      case 'escape':
+        this.closeStack(s.k);
+        break;
+    }
+    this.frame();
+    after?.();
+  }
+
+  /** The DOM's events for the pointer going from where it is to `to`: the leaves, then the enters. */
+  private moveTo(to: Loc) {
+    const t = this.clock.t;
+    const from = this.loc;
+    const fromInst = from.at === 'tip' || from.at === 'term' ? from.inst : null;
+    const toInst = to.at === 'tip' || to.at === 'term' ? to.inst : null;
+    if (from.at === 'term') {
+      const level = from.inst.level;
+      const call: Call = { t, name: 'termLeave', level, term: from.term };
+      this.api(call, () => this.stack.termLeave(level));
+    }
+    if (from.at === 'panelTerm') {
+      const call: Call = { t, name: 'termLeave', level: -1, term: from.term };
+      this.api(call, () => this.stack.termLeave(-1));
+    }
+    if (fromInst && fromInst !== toInst) {
+      const into = toInst ? toInst.level : null;
+      const call: Call = { t, name: 'tipLeave', level: fromInst.level, into, inst: fromInst };
+      this.api(call, () => this.stack.tipLeave(fromInst.level, into));
+    }
+    this.loc = to;
+    this.locSince = t;
+    this.serial++;
+    this.hushed = false;
+    this.rootClosed = false;
+    if (toInst && toInst !== fromInst) {
+      this.exited = null;
+      const call: Call = { t, name: 'tipEnter', level: toInst.level, inst: toInst };
+      this.api(call, () => this.stack.tipEnter(toInst.level));
+    }
+    if (to.at === 'term') {
+      const level = to.inst.level;
+      const build = this.builder('term', to.term.label, to.term);
+      this.api({ t, name: 'termEnter', level, term: to.term }, () =>
+        this.stack.termEnter(level, to.term, () => ({ x: 300, y: 200 }), build),
+      );
+    }
+    if (to.at === 'panelTerm') {
+      // back on the term that opened the root: the next movement away is a first one again
+      if (this.exited?.term === to.term) this.exited = null;
+      const build = this.builder('panel', to.term.label, to.term);
+      this.api({ t, name: 'termEnter', level: -1, term: to.term }, () =>
+        this.stack.termEnter(-1, to.term, () => ({ x: 300, y: 40 }), build),
+      );
+    }
+    if (to.at === 'field' && to.key !== null) this.lastFieldKey = to.key;
+  }
+
+  /** What the game does each frame: hover or leave, then the live content's update. */
+  private frame() {
+    const l = this.loc;
+    if (l.at === 'field') this.hover(l.key, l.x, l.y);
+    else this.leave();
+    if (this.live && this.lastFieldKey !== null) this.update(this.lastFieldKey);
+    this.checkTerms();
+  }
+
+  /** Frames over `ms`, stopping at each expectation as it falls due. */
+  private wait(ms: number) {
+    const end = this.clock.t + ms;
+    while (this.clock.t < end) {
+      const next = Math.min(end, this.clock.t + FRAME);
+      for (;;) {
+        const due = this.expects.filter((e) => e.at <= next).sort((a, b) => a.at - b.at)[0];
+        if (!due) break;
+        this.expects.splice(this.expects.indexOf(due), 1);
+        this.clock.runTo(due.at);
+        if (due.serial === this.serial) check(due.ok(), () => due.what);
+      }
+      this.clock.runTo(next);
+      this.frame();
+    }
+  }
+
+  private expectAt(at: number, what: string, ok: () => boolean) {
+    this.expects.push({ at, serial: this.serial, what, ok });
+  }
+
+  // ---------------------------------------------------------------- the calls
+
+  private api<T>(call: Call, fn: () => T): T {
+    this.calls.push(call);
+    const outer = this.ctx;
+    this.ctx = { kind: 'api', call };
+    try {
+      return fn();
+    } finally {
+      this.ctx = outer;
+      this.checkMirror();
+    }
+  }
+
+  private hover(key: string | null, x: number, y: number) {
+    const t = this.clock.t;
+    const moved = !this.hoverAt || this.hoverAt.x !== x || this.hoverAt.y !== y;
+    const root = this.up[0];
+    if (moved) this.exit(root);
+    if (this.restKey !== key) {
+      this.restKey = key;
+      this.restSince = t;
+    }
+    const n = this.ops.length;
+    const build = this.builder('field', String(key));
+    this.api({ t, name: 'hover', key }, () => this.stack.hover(key, x, y, build));
+    this.hoverAt = { x, y };
+    const unlocked = root && root.src === 'field' && root.lockedAt === null ? root : null;
+    if (unlocked && unlocked.key !== key)
+      check(
+        this.up.length === 0,
+        () => `the unlocked root of ${unlocked.key} stayed at ${t} when the pointer went to ${key}`,
+      );
+    const moves = this.ops.slice(n).filter((o) => o.op === 'move').length;
+    const follows = unlocked && unlocked.key === key && moved ? 1 : 0;
+    check(moves === follows, () => `the root moved ${moves} times at ${t}, expected ${follows}`);
+  }
+
+  private leave() {
+    const t = this.clock.t;
+    const root = this.up[0];
+    if (this.loc.at === 'ui') this.exit(root);
+    this.restKey = undefined;
+    this.api({ t, name: 'leave' }, () => this.stack.leave());
+    this.hoverAt = null;
+    if (root && root.src === 'field' && root.lockedAt === null)
+      check(
+        this.up.length === 0,
+        () => `the unlocked root of ${root.key} stayed at ${t} when the pointer left the field`,
+      );
+  }
+
+  private exit(root: Inst | undefined) {
+    if (!root || root.lockedAt === null || this.exited === root) return;
+    this.exited = root;
+    this.exits.push({ t: this.clock.t, index: this.calls.length, root });
+  }
+
+  /** `update` against its oracle: it rebuilds exactly when the root is its target's and UPDATE_MS old. */
+  private update(key: string) {
+    const t = this.clock.t;
+    const root = this.up[0];
+    const due = !!root && root.src === 'field' && root.key === key && t - root.builtAt >= UPDATE_MS;
+    const n = this.ops.length;
+    const locks = this.up.map((i) => i.lockedAt).join();
+    const build = this.builder('update', key);
+    const did = this.api({ t, name: 'update', key }, () => this.stack.update(key, build));
+    const ops = this.ops.slice(n).map((o) => `${o.op} ${o.level}`);
+    check(did === due, () => `update(${key}) at ${t} returned ${did}; due: ${due}`);
+    check(
+      ops.join() === (due ? 'refresh 0' : ''),
+      () => `update(${key}) at ${t} did [${ops.join()}]`,
+    );
+    check(
+      this.up.map((i) => i.lockedAt).join() === locks,
+      () => `update(${key}) at ${t} changed the levels or a lock`,
+    );
+  }
+
+  private closeStack(name: 'closeAll' | 'escape') {
+    const t = this.clock.t;
+    const was = this.up.length > 0;
+    const r = this.api({ t, name }, () =>
+      name === 'escape' ? this.stack.escape() : this.stack.closeAll(),
+    );
+    check(this.up.length === 0, () => `${name} at ${t} left ${this.up.length} open`);
+    if (name === 'escape') {
+      check(
+        r === was,
+        () => `escape() at ${t} returned ${String(r)} with ${was ? 'a' : 'no'} tooltip open`,
+      );
+      if (was) this.cover.escapes++;
+    }
+    this.restKey = undefined;
+    this.hushed = true;
+    this.serial++;
+  }
+
+  private builder(src: Content['src'], key: string, term: Term | null = null): () => Content {
+    return () => {
+      const c: Content = { src, key, term, ctx: this.ctx };
+      this.built.push(c);
+      return c;
+    };
+  }
+
+  /** A timer's callback, recorded as one: one that only closes needs a cause. */
+  private fire(fn: () => void) {
+    const ctx: Ctx = { kind: 'timer', ops: [] };
+    const outer = this.ctx;
+    this.ctx = ctx;
+    try {
+      fn();
+    } finally {
+      this.ctx = outer;
+    }
+    this.explain(ctx.ops);
+    this.checkMirror();
+  }
+
+  // ---------------------------------------------------------------- the view
+
+  open(level: number, content: Content, anchor: Point) {
+    const t = this.clock.t;
+    check(level === this.up.length, () => `level ${level} opened over ${this.up.length} at ${t}`);
+    check(
+      this.built.at(-1) === content && content.ctx === this.ctx,
+      () => `the content of level ${level} at ${t} was not built for it, then`,
+    );
+    this.built.pop();
+    check(this.ctx.kind === 'timer', () => `level ${level} opened at ${t} with no wait`);
+    check(
+      !this.hushed,
+      () => `level ${level} opened at ${t}: after closeAll or Escape the pointer has not moved`,
+    );
+    check(content.src !== 'update', () => `an update opened level ${level} at ${t}`);
+    if (content.src === 'field') {
+      check(level === 0, () => `a target on the field opened level ${level} at ${t}`);
+      check(
+        !this.rootClosed,
+        () => `a root opened at ${t}: a root closed after its wait and the pointer has not moved`,
+      );
+      check(
+        this.restKey === content.key && t - this.restSince >= ROOT_DELAY_MS,
+        () =>
+          `the root of ${content.key} opened at ${t}; the pointer was on ${String(this.restKey)} since ${this.restSince}`,
+      );
+      check(
+        !!this.hoverAt && anchor.x === this.hoverAt.x && anchor.y === this.hoverAt.y,
+        () => `the root opened away from the pointer at ${t}`,
+      );
+    } else {
+      const l = this.loc;
+      const on =
+        content.src === 'panel'
+          ? level === 0 && l.at === 'panelTerm' && l.term === content.term
+          : l.at === 'term' && l.term === content.term && l.inst.level === level - 1;
+      check(
+        on && this.locSince === t - SHOW_MS,
+        () =>
+          `the tooltip of ${content.key} opened at ${t}; the pointer ${on ? `on it since ${this.locSince}` : 'not on it'}`,
+      );
+      if (content.src === 'panel') this.cover.panelOpens++;
+    }
+    const id = this.insts.length;
+    const inst: Inst = {
+      id,
+      level,
+      src: content.src,
+      key: content.key,
+      term: content.term,
+      openedAt: t,
+      builtAt: t,
+      lockedAt: null,
+      closedAt: null,
+      terms: this.makeTerms(id),
+      termGone: false,
+    };
+    this.up.push(inst);
+    this.insts.push(inst);
+    this.cover.maxDepth = Math.max(this.cover.maxDepth, this.up.length);
+    this.record('open', level, inst);
+  }
+
+  move(level: number, anchor: Point) {
+    const t = this.clock.t;
+    const inst = this.up[level];
+    const l = this.loc;
+    check(
+      level === 0 && !!inst && inst.src === 'field' && inst.lockedAt === null,
+      () =>
+        `level ${level} moved at ${t}: only an unlocked root over the field follows the pointer`,
+    );
+    check(
+      this.ctx.kind === 'api' &&
+        this.ctx.call.name === 'hover' &&
+        l.at === 'field' &&
+        anchor.x === l.x &&
+        anchor.y === l.y,
+      () => `the root moved at ${t} other than to the pointer`,
+    );
+    this.record('move', level, inst);
+  }
+
+  refresh(level: number, content: Content) {
+    const t = this.clock.t;
+    const root = this.up[level];
+    check(
+      level === 0 && !!root && this.ctx.kind === 'api' && this.ctx.call.name === 'update',
+      () => `level ${level} refreshed at ${t} outside update`,
+    );
+    check(
+      this.built.at(-1) === content && content.ctx === this.ctx,
+      () => `the refresh at ${t} was not built for it, then`,
+    );
+    this.built.pop();
+    root.builtAt = t;
+    root.terms = this.makeTerms(root.id);
+    if (this.up[1]) this.up[1].termGone = true;
+    // the term under the pointer is gone with no event: the pointer is in the tooltip
+    const l = this.loc;
+    if (l.at === 'term' && l.inst === root) {
+      this.loc = { at: 'tip', inst: root };
+      this.locSince = t;
+      this.serial++;
+    }
+    this.cover.refreshes++;
+    this.record('refresh', level, root);
+  }
+
+  lock(level: number) {
+    const t = this.clock.t;
+    const inst = this.up[level];
+    check(
+      !!inst && inst.lockedAt === null && this.ctx.kind === 'timer',
+      () => `level ${level} locked again or outside a timer at ${t}`,
+    );
+    check(
+      t === inst.openedAt + HOLD_MS,
+      () => `level ${level} locked at ${t}, opened at ${inst.openedAt}`,
+    );
+    inst.lockedAt = t;
+    if (level >= 3) this.cover.locksAt3++;
+    this.record('lock', level, inst);
+  }
+
+  close(level: number) {
+    const t = this.clock.t;
+    check(
+      level === this.up.length - 1,
+      () => `level ${level} closed under ${this.up.length - 1} at ${t}`,
+    );
+    const inst = this.up.pop()!;
+    inst.closedAt = t;
+    const ctx = this.ctx;
+    if (level === 0 && inst.src === 'field' && inst.lockedAt === null) {
+      const c = ctx.kind === 'api' ? ctx.call : null;
+      check(
+        !!c &&
+          (c.name === 'leave' ||
+            c.name === 'closeAll' ||
+            c.name === 'escape' ||
+            (c.name === 'hover' && c.key !== inst.key)),
+        () =>
+          `the unlocked root of ${inst.key} closed at ${t} with the pointer on it (${c?.name ?? ctx.kind})`,
+      );
+    }
+    if (ctx.kind === 'timer')
+      check(
+        level > this.pointerLevel(),
+        () =>
+          `a timer closed level ${level} at ${t} with the pointer in level ${this.pointerLevel()}`,
+      );
+    this.record('close', level, inst);
+    // a still pointer: the game sees it over the UI until it moves
+    const l = this.loc;
+    if ((l.at === 'tip' || l.at === 'term') && l.inst === inst) {
+      this.loc = { at: 'ui' };
+      this.locSince = t;
+      this.serial++;
+    }
+  }
+
+  // ---------------------------------------------------------------- checks
+
+  private record(op: Op['op'], level: number, inst: Inst) {
+    const o: Op = { t: this.clock.t, op, level, inst };
+    this.ops.push(o);
+    if (this.ctx.kind === 'timer') this.ctx.ops.push(o);
+  }
+
+  private makeTerms(id: number): Term[] {
+    const gen = this.nextTerms++;
+    return Array.from({ length: TERMS_PER_TIP }, (_, i) => ({
+      label: `term ${i} of tooltip ${id} (${gen})`,
+    }));
+  }
+
+  private pointerLevel(): number {
+    const l = this.loc;
+    return l.at === 'tip' || l.at === 'term' ? l.inst.level : -1;
+  }
+
+  /** The stack's own account matches what it showed. */
+  private checkMirror() {
+    const t = this.clock.t;
+    check(
+      this.stack.depth === this.up.length,
+      () => `depth ${this.stack.depth} with ${this.up.length} shown at ${t}`,
+    );
+    check(this.stack.open === this.up.length > 0, () => `open is ${this.stack.open} at ${t}`);
+    for (let l = 0; l < this.up.length; l++)
+      check(
+        this.stack.isLocked(l) === (this.up[l].lockedAt !== null),
+        () => `the lock of level ${l} differs from what was shown at ${t}`,
+      );
+  }
+
+  /** A term's tooltip that is not locked is up only while the pointer is on its term. */
+  private checkTerms() {
+    const l = this.loc;
+    for (const inst of this.up) {
+      if (inst.lockedAt !== null || inst.src === 'field' || inst.termGone) continue;
+      const on = (l.at === 'term' || l.at === 'panelTerm') && l.term === inst.term;
+      check(
+        on,
+        () =>
+          `the unlocked tooltip of ${inst.key} is up at ${this.clock.t}, the pointer off its term`,
+      );
+    }
+  }
+
+  /** A timer callback that closes without opening needs a cause: a grace, or a root's close. */
+  private explain(ops: Op[]) {
+    const t = this.clock.t;
+    const closes = ops.filter((o) => o.op === 'close');
+    if (!closes.length) return;
+    const opened = ops.find((o) => o.op === 'open');
+    if (opened) {
+      check(
+        opened.inst.src !== 'field',
+        () => `a root over the field opened over an open stack at ${t}`,
+      );
+      check(
+        closes.every((c) => c.level >= opened.level),
+        () => `opening level ${opened.level} at ${t} closed a level below it`,
+      );
+      return;
+    }
+    const low = Math.min(...closes.map((c) => c.level));
+    const inst = closes.find((c) => c.level === low)!.inst;
+    const enteredAfter = (i: number, min: number) =>
+      this.calls.slice(i + 1).some((c) => c.name === 'tipEnter' && c.level! >= min);
+    const grace = this.calls.some(
+      (c, i) =>
+        c.name === 'tipLeave' &&
+        c.t === t - GRACE_MS &&
+        c.inst === inst &&
+        (c.into === null || c.into! < low) &&
+        !enteredAfter(i, low),
+    );
+    const away =
+      low === 0 &&
+      this.exits.some(
+        (e) => e.t === t - ROOT_LEAVE_MS && e.root === inst && !enteredAfter(e.index, 0),
+      );
+    check(
+      grace || away,
+      () =>
+        `a timer closed level ${low} at ${t}, neither GRACE_MS after the pointer left it nor ROOT_LEAVE_MS after the pointer first moved on from the locked root`,
+    );
+    if (grace) this.cover.graceCloses++;
+    else this.cover.awayCloses++;
+    // the demo opens a root on a mousemove: after a close, the next movement opens one
+    if (low === 0) this.rootClosed = true;
+  }
+
+  /** The timing rules that need the trace to have run on past them. */
+  private finish() {
+    const end = this.clock.t;
+    check(this.built.length === 0, () => 'content was built that never showed');
+    for (const i of this.insts) {
+      const lived = (i.closedAt ?? end + 1) - i.openedAt;
+      check(
+        lived <= HOLD_MS || i.lockedAt !== null,
+        () =>
+          `level ${i.level} (${i.key}), opened at ${i.openedAt}, was up ${lived} ms and never locked`,
+      );
+    }
+    const enteredBefore = (i: number, by: number, min: number) =>
+      this.calls.slice(i + 1).some((c) => c.name === 'tipEnter' && c.t < by && c.level! >= min);
+    // the pointer back on the term that opened a tooltip keeps it, as resting on its term did
+    // before it locked; a locked tooltip stays when the pointer leaves its term (#337, Closing)
+    const onItsTermBefore = (i: number, by: number, inst: Inst) =>
+      inst.term !== null &&
+      this.calls
+        .slice(i + 1)
+        .some((c) => c.name === 'termEnter' && c.t < by && c.term === inst.term);
+    this.calls.forEach((c, i) => {
+      if (c.name !== 'tipLeave' || !c.inst || (c.into != null && c.into > c.level!)) return;
+      const by = c.t + GRACE_MS;
+      if (end < by || enteredBefore(i, by, c.level!) || onItsTermBefore(i, by, c.inst)) return;
+      this.cover.graceLiveness++;
+      const closed = c.inst.closedAt;
+      check(
+        closed !== null && closed <= by,
+        () => `level ${c.level}, left at ${c.t} for ${String(c.into)}, was still up at ${by}`,
+      );
+    });
+    for (const e of this.exits) {
+      const by = e.t + ROOT_LEAVE_MS;
+      if (end < by || enteredBefore(e.index, by, 0) || onItsTermBefore(e.index, by, e.root))
+        continue;
+      this.cover.awayLiveness++;
+      const closed = e.root.closedAt;
+      check(
+        closed !== null && closed <= by,
+        () => `the locked root the pointer moved on from at ${e.t} was still up at ${by}`,
+      );
+    }
+  }
+}
+
+describe('the stack over seeded pointer traces', () => {
+  const fresh = (): Coverage => ({
+    maxDepth: 0,
+    locksAt3: 0,
+    graceCloses: 0,
+    awayCloses: 0,
+    refreshes: 0,
+    escapes: 0,
+    rootChecks: 0,
+    termChecks: 0,
+    panelOpens: 0,
+    graceLiveness: 0,
+    awayLiveness: 0,
+    rogue: 0,
+  });
+  const play = (steps: readonly Step[], cover: Coverage, rogue = true) => {
+    const trace = new Trace(rogue, cover);
+    trace.run(steps);
+    return trace;
+  };
+  // a trace is cheap, and the deep and the rare cases need many of them
+  const options = {
+    seeds: Array.from({ length: 400 }, (_, i) => i + 1),
+    shrink: (steps: Step[]) => shrinkArray(steps),
+  };
+
+  // 400 traces of up to a few hundred frames each: about 0.3 s alone
+  it(
+    'keeps the rules of #337 on every trace: timing, levels, targets, update, closing',
+    { timeout: 10_000 },
+    () => {
+      const cover = fresh();
+      forAll(genSteps, (steps) => void play(steps, cover), options);
+      // the traces reach every rule above, three nested levels deep and more
+      expect(cover.maxDepth).toBeGreaterThanOrEqual(4);
+      expect(cover.locksAt3).toBeGreaterThan(0);
+      for (const k of [
+        'graceCloses',
+        'awayCloses',
+        'refreshes',
+        'escapes',
+        'rootChecks',
+        'termChecks',
+        'panelOpens',
+        'graceLiveness',
+        'awayLiveness',
+      ] as const)
+        expect(cover[k], k).toBeGreaterThan(0);
+    },
+  );
+
+  // each of the 400 traces is played twice: about 0.5 s alone
+  it('does nothing for a term of a tooltip that is not locked', { timeout: 15_000 }, () => {
+    const cover = fresh();
+    const shown = (t: Trace) =>
+      t.ops.map((o) => `${o.t} ${o.op} ${o.level} ${o.inst.id} ${o.inst.key}`).join('\n');
+    forAll(
+      genSteps,
+      (steps) => expect(shown(play(steps, cover, true))).toBe(shown(play(steps, cover, false))),
+      options,
+    );
+    expect(cover.rogue).toBeGreaterThan(0);
+  });
+});
+
+describe('placement and target keys, over seeded cases', () => {
+  /** The slow way: of every whole-pixel corner TIP_MARGIN inside, the one nearest anchor + TIP_OFFSET. */
+  function nearestInside(at: number, len: number, room: number): number {
+    const want = at + TIP_OFFSET;
+    let best: number | null = null;
+    for (let p = TIP_MARGIN; p + len <= room - TIP_MARGIN; p++)
+      if (best === null || Math.abs(p - want) < Math.abs(best - want)) best = p;
+    // none fits: the tooltip keeps its top-left margin
+    return best ?? TIP_MARGIN;
+  }
+
+  interface Placing {
+    anchor: Point;
+    size: { w: number; h: number };
+    view: { w: number; h: number };
+  }
+  const NUMS = ['anchor.x', 'anchor.y', 'size.w', 'size.h', 'view.w', 'view.h'] as const;
+  const get = (c: Placing, k: (typeof NUMS)[number]) =>
+    k === 'anchor.x'
+      ? c.anchor.x
+      : k === 'anchor.y'
+        ? c.anchor.y
+        : k === 'size.w'
+          ? c.size.w
+          : k === 'size.h'
+            ? c.size.h
+            : k === 'view.w'
+              ? c.view.w
+              : c.view.h;
+  const set = (c: Placing, k: (typeof NUMS)[number], v: number): Placing => ({
+    anchor: { x: k === 'anchor.x' ? v : c.anchor.x, y: k === 'anchor.y' ? v : c.anchor.y },
+    size: { w: k === 'size.w' ? v : c.size.w, h: k === 'size.h' ? v : c.size.h },
+    view: { w: k === 'view.w' ? v : c.view.w, h: k === 'view.h' ? v : c.view.h },
+  });
+
+  it('puts a tooltip where an exhaustive search over the window puts it', () => {
+    forAll(
+      (rng): Placing => {
+        const view = { w: rng.int(20, 400), h: rng.int(20, 300) };
+        return {
+          anchor: { x: rng.int(-60, view.w + 60), y: rng.int(-60, view.h + 60) },
+          size: { w: rng.int(1, view.w + 40), h: rng.int(1, view.h + 40) },
+          view,
+        };
+      },
+      (c) =>
+        expect(placeTip(c.anchor, c.size, c.view)).toEqual({
+          x: nearestInside(c.anchor.x, c.size.w, c.view.w),
+          y: nearestInside(c.anchor.y, c.size.h, c.view.h),
+        }),
+      {
+        seeds: Array.from({ length: 500 }, (_, i) => i + 1),
+        // each number toward a small one, the window kept at least 1 px
+        shrink: function* (c) {
+          for (const k of NUMS)
+            for (const v of shrinkInt(get(c, k), k.startsWith('view') ? 1 : 0)) yield set(c, k, v);
+        },
+      },
+    );
+  });
+
+  it("anchors a term's tooltip at its box's right + 8, bottom + 4 before clamping", () => {
+    forAll(
+      (rng) => ({ right: rng.int(-50, 1300), bottom: rng.int(-50, 800) }),
+      (box) => {
+        const at = termAnchor(box);
+        expect({ x: at.x + TIP_OFFSET, y: at.y + TIP_OFFSET }).toEqual({
+          x: box.right + 8,
+          y: box.bottom + 4,
+        });
+      },
+    );
+  });
+
+  it('keys two targets alike exactly when they are the same target', () => {
+    const TOOLS = ['none', 'farm', 'track:regular', 'a:b', '1,2', ''];
+    const target = (rng: Rng): TipTarget =>
+      rng.chance(0.5)
+        ? { kind: 'tile', x: rng.int(-2, 2), y: rng.int(-2, 2), tool: rng.pick(TOOLS) }
+        : rng.chance(0.75)
+          ? { kind: rng.pick(['station', 'works', 'train'] as const), id: rng.int(0, 3) }
+          : { kind: 'chunk', id: rng.pick(['0,0', '1,0', 'tile:1,1:none', '']) };
+    forAll(
+      (rng) => [target(rng), target(rng)] as const,
+      ([a, b]) => expect(tipKey(a) === tipKey(b)).toBe(JSON.stringify(a) === JSON.stringify(b)),
+      { seeds: Array.from({ length: 2000 }, (_, i) => i + 1) },
+    );
   });
 });
