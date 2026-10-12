@@ -7,11 +7,15 @@
       512,
       832
     ],
-    "band": "|offset| <= 0.25 opaque",
-    "verge": "alpha 0 beyond |offset| 0.28",
-    "softEdge": "partial alpha within 2 canvas px (one texel at resolution 4) of an outline",
-    "grooves": "groove centre within 0.004 tile of +-railOffset, contrast >= 60",
-    "joins": "resolution-4 cross-section at each edge midpoint within 6 levels of the reference, same opaque span on opposite edges"
+    "width": "0.32 tile: opaque within 0.12 of the centre line, mean alpha 0.5 within 0.01 of 0.16",
+    "feather": "90% to 10% of the mean alpha over 0.020000000000000004 to 0.08 tile",
+    "tufts": "greener than red (by 3) only past 0.06; nothing past 0.26",
+    "bleed": "outside the diamond only up to 0.0559 tile (2 world px) past a joining edge and within the band; never more opaque than a neighbour under it (4 levels); mean colour difference to it at most 2 levels",
+    "joins": "resolution-4 cross-section at each edge midpoint within 6 levels of the reference; the road there (alpha integrated along the edge, tufts left out) 0.32 +- 0.02 wide and centred within 0.015; across the edge line, every leaving and entering picture's integrated width and centre step no more than 0.002 beyond their drift over the same distance on either side",
+    "deck": "opaque over the band to 0.06 past each rail, nothing beside it, its end within two pixels of there",
+    "slots": "head within 0.004 of the line + -0.0095, dark side within 0.004 of + 0.0245 (regular) or 0.0205 (narrow), head at least 60 luma above the dark side, the dark side at least 40 (not black)",
+    "materials": "the stone deck (regular) at least 15 luma paler than the dirt deck (narrow)",
+    "tone": "the straight roads' gravel within 4 levels of 182,162,133"
   },
   "pictures": [
     {
@@ -21,28 +25,38 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1578,
+        "from90to10": 0.0329,
+        "reach": 0.2295,
+        "tufts": [
+          0.0889,
+          0.2295
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        },
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-straight-y",
@@ -51,28 +65,38 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.16,
+        "from90to10": 0.0319,
+        "reach": 0.2314,
+        "tufts": [
+          0.0967,
+          0.2314
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        },
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-curve-ne-se",
@@ -81,28 +105,38 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        486,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        486,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1596,
+        "from90to10": 0.0314,
+        "reach": 0.2246,
+        "tufts": [
+          0.0823,
+          0.2246
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        },
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-curve-se-sw",
@@ -111,28 +145,38 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        819,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        819,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1582,
+        "from90to10": 0.0338,
+        "reach": 0.2356,
+        "tufts": [
+          0.0881,
+          0.2356
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-curve-sw-nw",
@@ -141,28 +185,38 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        537,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        537,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1576,
+        "from90to10": 0.0318,
+        "reach": 0.2312,
+        "tufts": [
+          0.1085,
+          0.2312
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-curve-nw-ne",
@@ -171,28 +225,38 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        844
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        844
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1587,
+        "from90to10": 0.033,
+        "reach": 0.231,
+        "tufts": [
+          0.0913,
+          0.231
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        },
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-tee-closed-ne",
@@ -201,28 +265,46 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1574,
+        "from90to10": 0.0335,
+        "reach": 0.2295,
+        "tufts": [
+          0.0889,
+          0.2295
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-tee-closed-se",
@@ -231,28 +313,46 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1584,
+        "from90to10": 0.0325,
+        "reach": 0.2236,
+        "tufts": [
+          0.0967,
+          0.2236
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        },
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-tee-closed-sw",
@@ -261,28 +361,46 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1583,
+        "from90to10": 0.0321,
+        "reach": 0.2295,
+        "tufts": [
+          0.0889,
+          0.2295
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        },
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-tee-closed-nw",
@@ -291,28 +409,46 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1587,
+        "from90to10": 0.0325,
+        "reach": 0.2314,
+        "tufts": [
+          0.0889,
+          0.2314
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        },
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-end-ne",
@@ -321,28 +457,30 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        411,
-        732,
-        710,
-        882
-      ],
-      "expectedBbox": [
-        411,
-        732,
-        710,
-        882
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1613,
+        "from90to10": 0.031,
+        "reach": 0.2314,
+        "tufts": [
+          0.0967,
+          0.2314
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-end-se",
@@ -351,28 +489,30 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        411,
-        781,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        411,
-        781,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1597,
+        "from90to10": 0.0323,
+        "reach": 0.2319,
+        "tufts": [
+          0.0889,
+          0.2319
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-end-sw",
@@ -381,28 +521,30 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        781,
-        612,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        781,
-        612,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1598,
+        "from90to10": 0.032,
+        "reach": 0.2319,
+        "tufts": [
+          0.0967,
+          0.2319
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-end-nw",
@@ -411,28 +553,30 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        612,
-        882
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        612,
-        882
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1588,
+        "from90to10": 0.0305,
+        "reach": 0.2301,
+        "tufts": [
+          0.0967,
+          0.2301
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        }
+      }
     },
     {
       "id": "road-cross",
@@ -441,28 +585,54 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
-      "passes": true
+      "edge": {
+        "half": 0.1578,
+        "from90to10": 0.0328,
+        "reach": 0.2295,
+        "tufts": [
+          0.0889,
+          0.2295
+        ]
+      },
+      "passes": true,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
+          "passes": true
+        },
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
+          "passes": true
+        },
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
+          "passes": true
+        }
+      }
     },
     {
       "id": "crossing-regular-r0",
@@ -471,44 +641,84 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
+      "edge": {
+        "half": 0.1546,
+        "from90to10": 0.0293,
+        "reach": 0.2295,
+        "tufts": [
+          0.1045,
+          0.2295
+        ]
+      },
       "passes": true,
-      "grooves": [
-        {
-          "expected": -0.16,
-          "centre": -0.16,
-          "width": 0.038,
-          "contrast": 101,
+      "bleed": {
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
           "passes": true
         },
-        {
-          "expected": 0.16,
-          "centre": 0.16,
-          "width": 0.038,
-          "contrast": 105,
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
           "passes": true
         }
-      ]
+      },
+      "deck": {
+        "holes": 0,
+        "beside": 0,
+        "ends": [
+          0.22,
+          0.22
+        ],
+        "expectedEnd": 0.22,
+        "slots": [
+          {
+            "rail": -0.16,
+            "head": -0.009,
+            "dark": 0.0245,
+            "headLuma": 186,
+            "darkLuma": 65,
+            "darkColour": [
+              66,
+              67,
+              51
+            ],
+            "deckLuma": 163,
+            "passes": true
+          },
+          {
+            "rail": 0.16,
+            "head": -0.0095,
+            "dark": 0.0245,
+            "headLuma": 186,
+            "darkLuma": 65,
+            "darkColour": [
+              66,
+              67,
+              51
+            ],
+            "deckLuma": 164,
+            "passes": true
+          }
+        ],
+        "colour": [
+          172,
+          157,
+          133
+        ],
+        "luma": 159,
+        "passes": true
+      }
     },
     {
       "id": "crossing-regular-r1",
@@ -517,44 +727,84 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
+      "edge": {
+        "half": 0.1583,
+        "from90to10": 0.0348,
+        "reach": 0.2178,
+        "tufts": [
+          0.1045,
+          0.2178
+        ]
+      },
       "passes": true,
-      "grooves": [
-        {
-          "expected": -0.16,
-          "centre": -0.16,
-          "width": 0.04,
-          "contrast": 106,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
           "passes": true
         },
-        {
-          "expected": 0.16,
-          "centre": 0.159,
-          "width": 0.04,
-          "contrast": 107,
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
           "passes": true
         }
-      ]
+      },
+      "deck": {
+        "holes": 0,
+        "beside": 0,
+        "ends": [
+          0.22,
+          0.22
+        ],
+        "expectedEnd": 0.22,
+        "slots": [
+          {
+            "rail": -0.16,
+            "head": -0.009,
+            "dark": 0.0245,
+            "headLuma": 186,
+            "darkLuma": 65,
+            "darkColour": [
+              66,
+              67,
+              51
+            ],
+            "deckLuma": 161,
+            "passes": true
+          },
+          {
+            "rail": 0.16,
+            "head": -0.0095,
+            "dark": 0.0245,
+            "headLuma": 186,
+            "darkLuma": 65,
+            "darkColour": [
+              66,
+              67,
+              51
+            ],
+            "deckLuma": 163,
+            "passes": true
+          }
+        ],
+        "colour": [
+          172,
+          157,
+          133
+        ],
+        "luma": 159,
+        "passes": true
+      }
     },
     {
       "id": "crossing-narrow-r0",
@@ -563,44 +813,84 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
+      "edge": {
+        "half": 0.1548,
+        "from90to10": 0.0302,
+        "reach": 0.2295,
+        "tufts": [
+          0.1006,
+          0.2295
+        ]
+      },
       "passes": true,
-      "grooves": [
-        {
-          "expected": -0.08,
-          "centre": -0.08,
-          "width": 0.04,
-          "contrast": 68,
+      "bleed": {
+        "nw": {
+          "pixels": 1248,
+          "widens": 0,
+          "meanDiff": 0.23,
+          "p99Diff": 4,
+          "maxDiff": 20,
           "passes": true
         },
-        {
-          "expected": 0.08,
-          "centre": 0.08,
-          "width": 0.038,
-          "contrast": 63,
+        "se": {
+          "pixels": 1205,
+          "widens": 0,
+          "meanDiff": 0.25,
+          "p99Diff": 5,
+          "maxDiff": 22,
           "passes": true
         }
-      ]
+      },
+      "deck": {
+        "holes": 0,
+        "beside": 0,
+        "ends": [
+          0.14,
+          0.14
+        ],
+        "expectedEnd": 0.14,
+        "slots": [
+          {
+            "rail": -0.08,
+            "head": -0.009,
+            "dark": 0.0205,
+            "headLuma": 176,
+            "darkLuma": 63,
+            "darkColour": [
+              66,
+              64,
+              53
+            ],
+            "deckLuma": 135,
+            "passes": true
+          },
+          {
+            "rail": 0.08,
+            "head": -0.009,
+            "dark": 0.0205,
+            "headLuma": 176,
+            "darkLuma": 63,
+            "darkColour": [
+              66,
+              64,
+              53
+            ],
+            "deckLuma": 134,
+            "passes": true
+          }
+        ],
+        "colour": [
+          160,
+          131,
+          99
+        ],
+        "luma": 136,
+        "passes": true
+      }
     },
     {
       "id": "crossing-narrow-r1",
@@ -609,52 +899,92 @@
         1024
       ],
       "rgba": true,
+      "coreNotOpaque": 0,
+      "beyondTufts": 0,
+      "tuftsOffEdge": 0,
       "outsideDiamond": 0,
-      "outsideBand": 0,
-      "bandNotOpaque": 0,
-      "softEdgeTooWide": 0,
-      "bbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "expectedBbox": [
-        313,
-        732,
-        710,
-        931
-      ],
-      "anchor": [
-        512,
-        832
-      ],
-      "anchorOffBy": 0,
+      "edge": {
+        "half": 0.1587,
+        "from90to10": 0.0334,
+        "reach": 0.2197,
+        "tufts": [
+          0.0967,
+          0.2197
+        ]
+      },
       "passes": true,
-      "grooves": [
-        {
-          "expected": -0.08,
-          "centre": -0.0815,
-          "width": 0.041,
-          "contrast": 100,
+      "bleed": {
+        "ne": {
+          "pixels": 1217,
+          "widens": 0,
+          "meanDiff": 0.32,
+          "p99Diff": 6,
+          "maxDiff": 25,
           "passes": true
         },
-        {
-          "expected": 0.08,
-          "centre": 0.078,
-          "width": 0.042,
-          "contrast": 97,
+        "sw": {
+          "pixels": 1093,
+          "widens": 0,
+          "meanDiff": 0.35,
+          "p99Diff": 6,
+          "maxDiff": 22,
           "passes": true
         }
-      ]
+      },
+      "deck": {
+        "holes": 0,
+        "beside": 0,
+        "ends": [
+          0.14,
+          0.14
+        ],
+        "expectedEnd": 0.14,
+        "slots": [
+          {
+            "rail": -0.08,
+            "head": -0.009,
+            "dark": 0.0205,
+            "headLuma": 176,
+            "darkLuma": 63,
+            "darkColour": [
+              66,
+              64,
+              53
+            ],
+            "deckLuma": 135,
+            "passes": true
+          },
+          {
+            "rail": 0.08,
+            "head": -0.009,
+            "dark": 0.0205,
+            "headLuma": 176,
+            "darkLuma": 63,
+            "darkColour": [
+              66,
+              64,
+              53
+            ],
+            "deckLuma": 134,
+            "passes": true
+          }
+        ],
+        "colour": [
+          160,
+          131,
+          99
+        ],
+        "luma": 136,
+        "passes": true
+      }
     }
   ],
   "joins": {
     "ne": {
       "reference": "road-straight-y",
       "span": {
-        "from": -0.2731,
-        "to": 0.2737
+        "from": -0.1481,
+        "to": 0.1605
       },
       "pieces": [
         {
@@ -662,26 +992,26 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
           "id": "road-curve-ne-se",
-          "maxDiff": 4.11,
-          "meanDiff": 0.085,
+          "maxDiff": 0.65,
+          "meanDiff": 0.05,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
           "id": "road-curve-nw-ne",
-          "maxDiff": 1.74,
-          "meanDiff": 0.067,
+          "maxDiff": 0.68,
+          "meanDiff": 0.044,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -689,8 +1019,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -698,8 +1028,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -707,8 +1037,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -716,8 +1046,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -725,8 +1055,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -734,8 +1064,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -743,19 +1073,28 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         }
       ],
-      "matchesOpposite": true,
+      "across": {
+        "pairs": 100,
+        "widthStep": -0.0006,
+        "widthStepBeyondDrift": 0.0003,
+        "centreStep": 0.0008,
+        "centreStepBeyondDrift": 0.0003,
+        "passes": true
+      },
+      "width": 0.3111,
+      "centre": 0.0059,
       "passes": true
     },
     "se": {
       "reference": "road-straight-x",
       "span": {
-        "from": -0.2731,
-        "to": 0.2737
+        "from": -0.1481,
+        "to": 0.1566
       },
       "pieces": [
         {
@@ -763,26 +1102,26 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
           "id": "road-curve-ne-se",
-          "maxDiff": 4.05,
-          "meanDiff": 0.085,
+          "maxDiff": 0.42,
+          "meanDiff": 0.032,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
           "id": "road-curve-se-sw",
-          "maxDiff": 1.79,
-          "meanDiff": 0.06,
+          "maxDiff": 0.54,
+          "meanDiff": 0.034,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
@@ -790,8 +1129,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
@@ -799,8 +1138,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
@@ -808,8 +1147,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
@@ -817,8 +1156,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
@@ -826,8 +1165,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
@@ -835,8 +1174,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         },
         {
@@ -844,19 +1183,28 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1566
           }
         }
       ],
-      "matchesOpposite": true,
+      "across": {
+        "pairs": 100,
+        "widthStep": -0.0042,
+        "widthStepBeyondDrift": 0.0009,
+        "centreStep": 0.0054,
+        "centreStepBeyondDrift": 0.0006,
+        "passes": true
+      },
+      "width": 0.3001,
+      "centre": 0.0023,
       "passes": true
     },
     "sw": {
       "reference": "road-straight-y",
       "span": {
-        "from": -0.2731,
-        "to": 0.2737
+        "from": -0.1481,
+        "to": 0.1605
       },
       "pieces": [
         {
@@ -864,26 +1212,26 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
           "id": "road-curve-se-sw",
-          "maxDiff": 1.79,
-          "meanDiff": 0.057,
+          "maxDiff": 0.56,
+          "meanDiff": 0.045,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
           "id": "road-curve-sw-nw",
-          "maxDiff": 4.05,
-          "meanDiff": 0.076,
+          "maxDiff": 0.5,
+          "meanDiff": 0.046,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -891,8 +1239,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -900,8 +1248,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -909,8 +1257,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -918,8 +1266,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -927,8 +1275,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -936,8 +1284,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         },
         {
@@ -945,19 +1293,28 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1481,
+            "to": 0.1605
           }
         }
       ],
-      "matchesOpposite": true,
+      "across": {
+        "pairs": 100,
+        "widthStep": 0.0006,
+        "widthStepBeyondDrift": 0.0003,
+        "centreStep": 0.0008,
+        "centreStepBeyondDrift": 0.0003,
+        "passes": true
+      },
+      "width": 0.3129,
+      "centre": 0.0062,
       "passes": true
     },
     "nw": {
       "reference": "road-straight-x",
       "span": {
-        "from": -0.2731,
-        "to": 0.2737
+        "from": -0.1598,
+        "to": 0.1605
       },
       "pieces": [
         {
@@ -965,26 +1322,26 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
           "id": "road-curve-sw-nw",
-          "maxDiff": 4.11,
-          "meanDiff": 0.083,
+          "maxDiff": 0.46,
+          "meanDiff": 0.041,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1566
           }
         },
         {
           "id": "road-curve-nw-ne",
-          "maxDiff": 1.74,
-          "meanDiff": 0.062,
+          "maxDiff": 0.68,
+          "meanDiff": 0.038,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
@@ -992,8 +1349,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
@@ -1001,8 +1358,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
@@ -1010,8 +1367,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
@@ -1019,8 +1376,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
@@ -1028,8 +1385,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
@@ -1037,8 +1394,8 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         },
         {
@@ -1046,13 +1403,46 @@
           "maxDiff": 0,
           "meanDiff": 0,
           "span": {
-            "from": -0.2731,
-            "to": 0.2737
+            "from": -0.1598,
+            "to": 0.1605
           }
         }
       ],
-      "matchesOpposite": true,
+      "across": {
+        "pairs": 100,
+        "widthStep": 0.0042,
+        "widthStepBeyondDrift": 0.0009,
+        "centreStep": 0.0054,
+        "centreStepBeyondDrift": 0.0006,
+        "passes": true
+      },
+      "width": 0.3096,
+      "centre": 0.0009,
       "passes": true
     }
+  },
+  "materials": {
+    "regular": [
+      159,
+      159
+    ],
+    "narrow": [
+      136,
+      136
+    ],
+    "passes": true
+  },
+  "tone": {
+    "expected": [
+      182,
+      162,
+      133
+    ],
+    "mean": [
+      179.7,
+      160,
+      130.4
+    ],
+    "passes": true
   }
 }

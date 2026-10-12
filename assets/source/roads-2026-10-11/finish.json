@@ -1,0 +1,123 @@
+{
+  "about": "Written by finish-roads.mjs: the options the 19 pictures beside it were made with, and what it measured.",
+  "material": "codex",
+  "width": 0.32,
+  "edge": "blend",
+  "verge": 0,
+  "feather": 0.05,
+  "crossing": "stone",
+  "deckMargin": 0.06,
+  "deckHalfLength": 0.16,
+  "deckScale": 0.8605,
+  "tone": [
+    182,
+    162,
+    133
+  ],
+  "toneScale": [
+    0.8512,
+    0.8608,
+    0.9099
+  ],
+  "gravelMean": [
+    182,
+    162,
+    133
+  ],
+  "ruts": 0.45,
+  "bleedWorldPx": 2,
+  "strips": {
+    "x": {
+      "file": "materials/road-strip-x.png",
+      "paintedAngle": 29.7434,
+      "paintedSides": [
+        29.389,
+        30.0953
+      ],
+      "centrePx": [
+        770.5,
+        523.994
+      ],
+      "reach": 2.1812,
+      "fits": {
+        "alphaL": [
+          -0.2875,
+          -0.0038
+        ],
+        "gravelL": [
+          -0.2642,
+          -0.0036
+        ],
+        "gravelR": [
+          0.2544,
+          0.0053
+        ],
+        "alphaR": [
+          0.2888,
+          0.0052
+        ],
+        "rutL": [
+          -0.1111,
+          -0.0005
+        ],
+        "rutR": [
+          0.1089,
+          0.003
+        ]
+      },
+      "scale": 1.6208,
+      "period": 1,
+      "source": [
+        -0.9104,
+        0.9104
+      ],
+      "fade": 0.2
+    },
+    "y": {
+      "file": "materials/road-strip-y.png",
+      "paintedAngle": -29.296,
+      "paintedSides": [
+        -29.258,
+        -29.3341
+      ],
+      "centrePx": [
+        768.5,
+        541.9101
+      ],
+      "reach": 2.325,
+      "fits": {
+        "alphaL": [
+          -0.2882,
+          -0.001
+        ],
+        "gravelL": [
+          -0.2755,
+          -0.0012
+        ],
+        "gravelR": [
+          0.2737,
+          0.0006
+        ],
+        "alphaR": [
+          0.2856,
+          0.0005
+        ],
+        "rutL": [
+          -0.1038,
+          -0.0005
+        ],
+        "rutR": [
+          0.1196,
+          0
+        ]
+      },
+      "scale": 1.716,
+      "period": 1,
+      "source": [
+        -0.958,
+        0.958
+      ],
+      "fade": 0.2
+    }
+  }
+}

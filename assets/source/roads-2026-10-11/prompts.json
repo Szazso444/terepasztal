@@ -371,7 +371,7 @@
   },
   {
     "id": "material-road-strip-x-alpha-correction",
-    "file": "materials/road-strip-x.png",
+    "file": "raw/materials/road-strip-x-alpha-correction.png",
     "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
     "references": [
       "assets/source/roads-2026-10-11/raw/materials/road-strip-x.png",
@@ -382,7 +382,7 @@
   },
   {
     "id": "material-road-strip-y-alpha-correction",
-    "file": "materials/road-strip-y.png",
+    "file": "raw/materials/road-strip-y-alpha-correction.png",
     "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
     "references": [
       "assets/source/roads-2026-10-11/raw/materials/road-strip-y.png",
@@ -393,7 +393,7 @@
   },
   {
     "id": "material-crossing-material-regular-alpha-correction",
-    "file": "materials/crossing-material-regular.png",
+    "file": "raw/materials/crossing-material-regular-alpha-correction.png",
     "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
     "references": [
       "assets/source/roads-2026-10-11/raw/materials/crossing-material-regular.png",
@@ -405,7 +405,7 @@
   },
   {
     "id": "material-crossing-material-narrow-alpha-correction",
-    "file": "materials/crossing-material-narrow.png",
+    "file": "raw/materials/crossing-material-narrow-alpha-correction.png",
     "prompt": "Use case: background-extraction. Image 1 is the EDIT TARGET. Preserve its painted material, colours, silhouette, length, width, two wheel ruts if present, plank stripes if present, and every opaque interior pixel. Remove ONLY the entire surrounding coloured glow/haze/shadow, and replace all background pixels outside the road or paving plane with genuine alpha ZERO. Opaque material inside, a crisp clean cutout contour. No faint halo or semi-transparent ground outside the object. Do not redesign or shorten the long road, do not change its orientation, do not add rails or any feature. The upper-left lighting on the material itself remains. Other images are the mandatory style references only; ignore their ground bases, halos and pixel edges. This source material will be fitted by a script; exact canvas size is immaterial. Return a clean truly transparent RGBA PNG. The current glow must be entirely GONE, including the large brown/moss haze and the bright patches near the ends. Keep all internal painted details and no cast shadow.",
     "references": [
       "assets/source/roads-2026-10-11/raw/materials/crossing-material-narrow.png",

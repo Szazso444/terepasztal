@@ -1,0 +1,28 @@
+{
+  "about": "Crops of a real game capture, the background of review-on-game.mjs. Captured by Core's road variant tool on 2026-10-11 from origin/develop in headless Chrome: seed 4242, spring, noon, clear, 1440x900 at DPR 1, the files track-z1.png and track-z2.png (ground, nature and track). The crop box is in screenshot pixels; a tile (tx, ty) has its centre at tile00Centre + tx * stepTx + ty * stepTy on the flat area's level (x 84-91, y 72-77). The regular track runs along tile x on row 75, the narrow track along tile y on column 88, and they cross at (88, 75).",
+  "seed": 4242,
+  "season": "spring",
+  "track": {
+    "regular": "row 75, along tile x",
+    "narrow": "column 88, along tile y",
+    "trackCrossing": [88, 75]
+  },
+  "shots": [
+    {
+      "file": "game-capture-z1.png",
+      "zoom": 1,
+      "box": [432, 290, 1008, 578],
+      "tile00Centre": [304, -2142],
+      "stepTx": [32, 16],
+      "stepTy": [-32, 16]
+    },
+    {
+      "file": "game-capture-z2.png",
+      "zoom": 2,
+      "box": [144, 130, 1296, 706],
+      "tile00Centre": [-112, -4734],
+      "stepTx": [64, 32],
+      "stepTy": [-64, 32]
+    }
+  ]
+}

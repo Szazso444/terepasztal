@@ -1,60 +1,182 @@
 #!/usr/bin/env node
 /**
- * Finishing for #319: fits the author's road and crossing paintings to the exact tile geometry.
+ * Finishing for #319: the road and level-crossing pictures at the exact tile geometry, as the
+ * author chose them on 2026-10-11.
  *
- *   node assets/source/roads-2026-10-11/finish-roads.mjs
+ *   node assets/source/roads-2026-10-11/finish-roads.mjs [--option value ...]
  *
- * The paintings are the material and the geometry is the shape. Prompting again does not hit
- * exact widths, so every final picture is resampled from the paintings through a mapping built
- * from geometry.json and crossing-geometry.json; only the rail grooves are drawn.
+ * Writes the 19 pictures (15 roads, 4 level crossings) to this folder's root, 1024x1024 RGBA in
+ * the one-tile convention of tools/building-kit.mjs (FOOTPRINTS.t1, scale 8, anchor (512, 832)),
+ * and finish.json, the parameters used and what was measured. check-final.mjs checks the
+ * pictures. Only pngjs is needed, and every run writes the same bytes.
  *
- * Roads. Two strip textures are unwrapped from the paintings, one per direction so that each
- * keeps its own painted light: raw/road-straight-x.png for legs along tile x and
- * raw/road-straight-y.png for legs along tile y. A strip has an across coordinate u (tile units,
- * band |u| <= 0.25, moss verge to 0.28) and an along coordinate v that repeats seamlessly (the
- * ends are cross-faded) and is 0 at every edge midpoint, so every piece shows the same
- * cross-section where it meets its neighbour. The painted gravel edges, verge and ruts are found
- * per row and fitted with lines, then mapped piecewise-linearly onto the exact band; the along
- * scale matches the across scale so the stones keep their shape. road-straight-x was painted
- * with one central rut, so its strip takes the across profile (two ruts at u = +-0.1) of the
- * y strip while keeping its own stones and light.
+ * The defaults are the author's choices (decision board, 2026-10-11, picked from composites on a
+ * game capture):
+ * - The road is 0.32 tile wide: the whole visible road.
+ * - Edge B: no drawn verge. The gravel's edge fades into the grass over 0.05 tile, with a few
+ *   grass tufts across it in the game's painted grass colours (colours.json).
+ * - Level crossings: dressed stone on regular track and packed dirt on narrow track, after the
+ *   author's base-v1 crossings (assets/source/base-v1/people-crossing-stone.png and
+ *   people-crossing-dirt.png). A deck is as long along the track as the road is wide, flush with
+ *   it, and reaches 0.06 tile past each rail (the sleeper ends). The rails stay thin slots in the
+ *   rail colour, drawn as the game draws its rails on the track: a thin bright head with a thin
+ *   dark side a rail's height below it on screen. Not black grooves.
+ * - The gravel is toned to the colour of the composites, its ruts are softened to 0.45, and each
+ *   joining leg runs on 2 world px past its tile edge.
+ *
+ * Options and their defaults:
+ * --out <dir>          where the pictures and finish.json go [this folder]
+ * --material codex     the road strips. codex: materials/road-strip-{x,y}.png (Codex, 8699ec3a);
+ *                      drafts: raw/road-straight-{x,y}.png (the first paintings, 9dbeb5d)
+ * --width 0.32         gravel width in tiles. The whole cross-section (its edges and the two ruts
+ *                      at 0.4 of the half-width) scales with it, and so do the stones, because the
+ *                      along scale follows the across scale
+ * --edge blend         blend: no verge; the gravel darkens toward worn soil over its outer
+ *                      0.06 tile, its alpha fades over --feather round an edge that wanders gently,
+ *                      and tufts sit astride the edge. Edge wander and tufts are functions of the
+ *                      tile position with period 1, so they match across every join.
+ *                      crisp: the painted moss verge, --verge wide, with a one-pixel outline
+ * --feather 0.05       blend: width of the alpha fade, tiles
+ * --verge 0.03         crisp: width of the moss verge on each side, tiles
+ * --crossing stone     stone: dressed stone on regular gauge, packed dirt on narrow;
+ *                      stone-swapped: the other way round; timber: weathered planks in the game's
+ *                      sleeper colours; painted: the decks rectified from
+ *                      raw/crossing-*-attempt-2.png with dark grooves (the 0.5 finish)
+ * --deck-margin 0.06   deck beyond each rail, tiles (painted: 0.1)
+ * --deck-scale 0.8605  brightness scale of the stone and its pebbles: the one the author saw
+ * --tone 182,162,133   the gravel's mean colour after toning, scaled per channel; or one number,
+ *                      its mean luma, scaled uniformly; 0 keeps the painting's
+ * --ruts 0.45          strength of the across profile (the ruts and the crown), 0 to 1
+ * --bleed 2            world pixels a leg runs on past its tile edge, opaque parts only, so that
+ *                      separately filtered sprites overlap instead of letting the grass through
+ * --check 1            prints the join and bleed checks instead of writing pictures
+ *
+ * The 0.5-tile finish of 1dcd8e3, kept in raw/final-w0.5-moss-verge/, is byte for byte
+ *   --material drafts --width 0.5 --edge crisp --crossing painted --tone 0 --ruts 1 --bleed 0
+ *
+ * How it works. The paintings are the material and the geometry is the shape: prompting again
+ * does not hit exact widths, so every picture is resampled through a mapping built from
+ * geometry.json and crossing-geometry.json; the new crossing decks and the tufts are drawn.
+ *
+ * Roads. Two strip textures are unwrapped, one per direction so that each keeps its own painted
+ * light: one for legs along tile x, one for legs along tile y. A strip has an across coordinate u
+ * (tile units, band |u| <= HALF) and an along coordinate v that repeats seamlessly (its ends are
+ * cross-faded in the middle of the tile) and is 0 at every edge midpoint, so every piece shows
+ * the same cross-section where it meets its neighbour. The painted alpha edges, gravel edges and
+ * ruts are found row by row and fitted with lines, then mapped piecewise-linearly onto the exact
+ * band; the along scale matches the across scale, so the stones keep their shape.
+ *
+ * The Codex strips are 1536x1024 and not on the tile canvas: drawn at 29 degrees instead of 26.6,
+ * wider than the guide's band and several tiles long. Each strip's frame comes from its own
+ * alpha: the two long sides, found column by column and fitted with lines, give the painted
+ * direction and the centre. Rows are then laid along that direction (the angle is rectified) and
+ * sampled across it along the other tile axis, and the row fits take up what is left, such as
+ * the x strip's slight taper. One tile of road takes under two tiles from the middle of the
+ * painting, so the strip repeats once a tile. The drafts are on the 1254 px tile canvas, and
+ * road-straight-x was painted with one central rut, so its strip takes the across profile (two
+ * ruts) of the y strip.
  *
  * Pieces sample the strips along their own centre lines: straight legs run from the tile centre
  * to the edge midpoint, end pieces stop at the centre with a round cap (the ruts turn round in
  * it), curves bend the strips round the quarter circle of radius 0.5 and blend x into y by the
  * tangent's angle, and tees and the cross are the union of their legs: the through road's ruts
- * continue, the branch fades into it, and the gravel-to-verge edge follows the union's outline.
- *
- * Crossings. The road band is |offset along the track| <= 0.25 and crosses at right angles. The
- * deck covers the band between the rails and 0.1 tile outside each rail and is rectified from
- * the crossing paintings (raw/crossing-*-attempt-2.png): their painted deck edges and grooves are
- * found per row, fitted, and mapped onto the exact deck. Each rail is drawn as a thin dark groove
- * exactly at +-railOffset; outside the deck the road is the same gravel strip as the roads.
- *
- * Output: the 19 pictures at this folder's root, 1024x1024 RGBA, anchor (512, 832), opaque
- * inside, alpha 0 outside the band, the verge and the diamond, with a one-pixel antialiased
- * outline. check-final.mjs verifies them.
+ * continue, the branch fades into it, and the edge follows the union's outline.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
+const OPTIONS = [
+  'out',
+  'material',
+  'width',
+  'edge',
+  'feather',
+  'verge',
+  'crossing',
+  'deck-margin',
+  'deck-scale',
+  'tone',
+  'ruts',
+  'bleed',
+  'check',
+];
+const args = {};
+for (let i = 2; i < process.argv.length; i += 2) {
+  const key = process.argv[i].replace(/^--/, '');
+  if (!OPTIONS.includes(key) || process.argv[i + 1] === undefined)
+    throw new Error(`unknown option or missing value: ${process.argv[i]} (see the header)`);
+  args[key] = process.argv[i + 1];
+}
+const OUT = resolve(args.out ?? ROOT);
 const geometry = JSON.parse(readFileSync(`${ROOT}/geometry.json`, 'utf8'));
 const crossingGeometry = JSON.parse(readFileSync(`${ROOT}/crossing-geometry.json`, 'utf8'));
+const colours = JSON.parse(readFileSync(`${ROOT}/colours.json`, 'utf8'));
 
 const SIZE = geometry.footprint.canvas[0];
 const [AX, AY] = geometry.anchor;
-const HALF = geometry.bandWidth / 2; // road band half-width, tile units
-const VERGE = HALF + geometry.vergeMaximum; // outer edge of the moss verge
-const DECK_OUT = crossingGeometry.deckOutsideRail; // deck beyond each rail
-const RUT = 0.1; // rut centre lines
+const MATERIAL = args.material ?? 'codex';
+const HALF = +(args.width ?? 0.32) / 2; // road band half-width, tile units
+const F = HALF / (geometry.bandWidth / 2); // cross-section scale against the guides' 0.5 road
+const VERGE = HALF + +(args.verge ?? geometry.vergeMaximum); // outer edge of the moss verge
+const EDGE = args.edge ?? 'blend';
+const FEATHER = +(args.feather ?? 0.05); // blend: width of the alpha fade round the edge
+const CROSSING = args.crossing ?? 'stone';
+const DECK_OUT = +(
+  args['deck-margin'] ?? (CROSSING === 'painted' ? crossingGeometry.deckOutsideRail : 0.06)
+); // deck beyond each rail
+const DECK_SCALE = +(args['deck-scale'] ?? 0.8605);
+const TONE = String(args.tone ?? '182,162,133')
+  .split(',')
+  .map(Number); // a mean colour, or one mean luma; 0 keeps the painting's
+const RUTS = +(args.ruts ?? 0.45);
+const BLEED_PX = +(args.bleed ?? 2);
+const BLEED = BLEED_PX / Math.hypot(32, 16); // world pixels -> tile units along an axis
+// the new decks reach the road's outer edge: the verge's on crisp, the gravel's on blend
+const DECK_HALF = EDGE === 'crisp' ? VERGE : HALF;
+const RUT = 0.1 * F; // rut centre lines
 const RES = 1200; // strip samples per tile unit
 const U_MAX = 0.3; // strip extent across
 const MARGIN = 0.012; // keep the verge samples clear of the painted alpha fringe
 const GROOVE = 0.02; // half-width of a rail groove: about the 1.25 px rail line in the game
 const DECK_MARGIN = 0.006; // keep deck samples clear of the painted deck edge
+const STRIP_END = 0.3; // a long strip's square-cut ends, left out (source tile units)
+const STRIP_FADE = 0.2; // a long strip's cross-fade (source tile units)
+// blend: beyond this the strip is read mirrored back into the gravel, so the verge's moss never
+// shows and the fading edge keeps the gravel's texture
+const U_CLAMP = EDGE === 'blend' ? HALF - 0.008 * F : null;
+for (const [k, v] of Object.entries({ HALF, VERGE, FEATHER, DECK_OUT, DECK_SCALE, RUTS, BLEED }))
+  if (!Number.isFinite(v)) throw new Error(`bad ${k}`);
+if (![1, 3].includes(TONE.length) || !TONE.every(Number.isFinite)) throw new Error('bad --tone');
+if (!['codex', 'drafts'].includes(MATERIAL)) throw new Error(`--material ${MATERIAL}`);
+if (!['crisp', 'blend'].includes(EDGE)) throw new Error(`--edge ${EDGE}`);
+if (!['painted', 'timber', 'stone', 'stone-swapped'].includes(CROSSING))
+  throw new Error(`--crossing ${CROSSING}`);
 
+// The game's rails, measured on a capture of the game at zoom 2 and DPR 2 (Core's variant tool,
+// 2026-10-11; averaged along 9 regular and 13 narrow tiles): about the nominal rail line
+// (+-0.16 regular, +-0.08 narrow) the bright head peaks at -0.0095 tile (screen-up is -a on both
+// rotations) and is about 0.013 wide; the dark side peaks a rail's height below it on screen, at
+// +0.024 (regular) or +0.020 (narrow), as wide; between them the ground shows. A flush deck keeps
+// exactly that: RAIL lists [centre, half-width, colour] for the head and the dark side, tuned so
+// the composed deck's profile matches the track's beside it. The slabs and planks stop at
+// RAIL_SLOT about the line, so no joint runs through a rail.
+const RAIL = {
+  regular: {
+    head: [-0.0095, 0.0068, [192, 189, 156]],
+    dark: [0.0245, 0.0068, [66, 67, 51]],
+  },
+  narrow: {
+    head: [-0.0095, 0.0068, [184, 178, 148]],
+    dark: [0.0205, 0.0068, [66, 64, 53]],
+  },
+};
+const RAIL_SLOT = [-0.018, 0.033];
+// Ballast half-width, measured the same way (track pixels to +-0.31 regular, fading out by
+// +-0.35; +-0.145 narrow): no grass tufts are rooted on it.
+const BALLAST = { regular: 0.36, narrow: 0.15 };
 // The edge midpoints, which strip family meets them, and their outward normals (tile units).
 const EDGES = {
   ne: { mid: [0, -0.5], axis: 'y', out: [0, -1] },
@@ -132,16 +254,75 @@ function piecewise(x, from, to) {
   return to[i] + ((x - from[i]) * (to[i + 1] - to[i])) / (from[i + 1] - from[i]);
 }
 
+/** A painting on the tile canvas (the drafts: 1254 px for the 1024 canvas). */
 function loadPainting(file) {
   const png = PNG.sync.read(readFileSync(`${ROOT}/${file}`));
-  return { file, w: png.width, h: png.height, k: png.width / SIZE, data: png.data };
+  const k = png.width / SIZE;
+  const toPixel = (x, y) => {
+    const [cx, cy] = screen(x, y);
+    return [cx * k, cy * k];
+  };
+  return { file, w: png.width, h: png.height, data: png.data, toPixel };
+}
+
+/**
+ * A long road strip painted off the tile canvas (materials/road-strip-*.png). Its frame comes
+ * from its own alpha: in every fourth pixel column the longest run with alpha over half is the
+ * road, and the run's ends, fitted with lines over the middle 80% of the columns, are its long
+ * sides. Their mean slope is the painted direction and their middle at the middle column is the
+ * centre. A source tile point (along, across) lies at centre + along A + across C: A follows the
+ * painted direction with the guide's horizontal step (320 px a tile unit), C is the guide's
+ * isometric step along the other tile axis. `reach` is half the painted length in tile units.
+ */
+function loadStrip(file, axis) {
+  const png = PNG.sync.read(readFileSync(`${ROOT}/${file}`));
+  const { width: w, height: h, data } = png;
+  const cols = [],
+    tops = [],
+    bottoms = [];
+  for (let px = 0; px < w; px += 4) {
+    let best = [0, -1],
+      start = -1;
+    for (let py = 0; py <= h; py++) {
+      const on = py < h && data[(py * w + px) * 4 + 3] > 127;
+      if (on && start < 0) start = py;
+      if (!on && start >= 0) {
+        if (py - 1 - start > best[1] - best[0]) best = [start, py - 1];
+        start = -1;
+      }
+    }
+    if (best[1] - best[0] < 20) continue;
+    cols.push(px + 0.5);
+    tops.push(best[0]);
+    bottoms.push(best[1] + 1);
+  }
+  const n = cols.length,
+    middle = (list) => list.slice(Math.floor(0.1 * n), Math.ceil(0.9 * n));
+  const top = fitLine(middle(cols), middle(tops)),
+    bottom = fitLine(middle(cols), middle(bottoms));
+  const slope = (top.b + bottom.b) / 2,
+    cx = (cols[0] + cols[n - 1]) / 2,
+    cy = (top.at(cx) + bottom.at(cx)) / 2;
+  const A = axis === 'x' ? [320, 320 * slope] : [-320, -320 * slope];
+  const C = axis === 'x' ? [-320, 160] : [320, 160];
+  const toPixel = (x, y) => {
+    const [v, u] = axis === 'x' ? [x, y] : [y, x];
+    return [cx + v * A[0] + u * C[0], cy + v * A[1] + u * C[1]];
+  };
+  const frame = {
+    angle: (Math.atan(slope) * 180) / Math.PI,
+    sides: [top.b, bottom.b].map((b) => (Math.atan(b) * 180) / Math.PI),
+    centre: [cx, cy],
+    reach: (cols[n - 1] - cols[0]) / 2 / 320,
+  };
+  return { file, w, h, data, toPixel, frame };
 }
 
 /** Premultiplied bilinear sample of a painting at tile point (x, y): rgb 0..255 times alpha. */
 function sample(img, x, y, out) {
-  const [cx, cy] = screen(x, y);
-  const fx = cx * img.k - 0.5,
-    fy = cy * img.k - 0.5;
+  const [cx, cy] = img.toPixel(x, y);
+  const fx = cx - 0.5,
+    fy = cy - 0.5;
   const x0 = Math.floor(fx),
     y0 = Math.floor(fy),
     tx = fx - x0,
@@ -245,12 +426,16 @@ const range = (from, to, step) => {
   return out;
 };
 
-/** Fits the painted alpha edges, gravel edges and (optionally) ruts of a straight road. */
+/**
+ * Fits the painted alpha edges, gravel edges and (optionally) ruts of a straight road, row by
+ * row: across the one tile of a draft, or a strip's whole length but 0.3 tile at each end.
+ */
 function measureRoad(img, axis, withRuts) {
   const us = range(-0.62, 0.62, 0.002);
   const place = axis === 'x' ? (u, v) => [v, u] : (u, v) => [u, v];
   const rows = { v: [], alphaL: [], gravelL: [], rutL: [], rutR: [], gravelR: [], alphaR: [] };
-  for (const v of range(-0.46, 0.46, 0.01)) {
+  const reach = img.frame ? Math.floor((img.frame.reach - STRIP_END) * 50) / 50 : 0.46;
+  for (const v of range(-reach, reach, 0.01)) {
     const { al, rg, lu } = profile(img, us, v, 0.01, place);
     // The longest fully opaque run is the painted road.
     let best = [0, -1];
@@ -311,6 +496,7 @@ function makeStrip(period) {
 /** Adds w times the strip's colour at (u, v) to out; u is clamped, v wraps. */
 function acc(strip, u, v, w, out) {
   if (w <= 1e-6) return;
+  if (U_CLAMP !== null && Math.abs(u) > U_CLAMP) u = Math.sign(u) * (2 * U_CLAMP - Math.abs(u));
   const fu = Math.min(Math.max((u + U_MAX) * RES, 0), strip.nu - 1.000001);
   let fv = v / strip.period;
   fv = (fv - Math.floor(fv)) * strip.nv;
@@ -329,14 +515,27 @@ function acc(strip, u, v, w, out) {
   }
 }
 
-/** Unwraps a straight road painting into a seamless strip on the exact cross-section. */
+/**
+ * Unwraps a straight road painting into a seamless strip on the exact cross-section. A draft
+ * holds under one tile of road, so its strip may repeat two or three times a tile; a long strip
+ * gives one whole tile from its middle, cross-faded over STRIP_FADE.
+ */
 function buildStrip(img, axis, fits, withRuts) {
   // Source tile units per final tile unit, from the painted gravel width.
   const scale = (fits.gravelR.at(0) - fits.gravelL.at(0)) / (2 * HALF);
-  const repeats = Math.ceil(scale / 0.86);
-  const period = 1 / repeats; // divides one tile, so v = 0 lands on both edge midpoints
-  const length = period * scale;
-  const fade = Math.min(0.12, 0.92 - length);
+  let period, length, fade;
+  if (img.frame) {
+    period = 1;
+    length = scale;
+    fade = STRIP_FADE;
+    if ((length + fade) / 2 > img.frame.reach - STRIP_END)
+      throw new Error(`${img.file} holds less than a tile of road at width ${2 * HALF}`);
+  } else {
+    const repeats = Math.ceil(scale / 0.86);
+    period = 1 / repeats; // divides one tile, so v = 0 lands on both edge midpoints
+    length = period * scale;
+    fade = Math.min(0.12, 0.92 - length);
+  }
   const start = -(length + fade) / 2;
   const strip = makeStrip(period);
   const target = withRuts ? [-VERGE, -HALF, -RUT, RUT, HALF, VERGE] : [-VERGE, -HALF, HALF, VERGE];
@@ -417,7 +616,7 @@ function shareProfile(stripX, stripY) {
     let n = 0;
     for (let iu = 0; iu < stripX.nu; iu++) {
       const u = Math.abs(-U_MAX + iu / RES);
-      if (u < 0.14 || u > 0.2) continue;
+      if (u < 0.14 * F || u > 0.2 * F) continue;
       for (let c = 0; c < 3; c++) out[c] += m[iu * 3 + c];
       n++;
     }
@@ -426,7 +625,7 @@ function shareProfile(stripX, stripY) {
   const gx = plain(mx),
     gy = plain(my);
   for (let iu = 0; iu < stripX.nu; iu++) {
-    const f = 1 - smoothstep(0.2, 0.24, Math.abs(-U_MAX + iu / RES));
+    const f = 1 - smoothstep(0.2 * F, 0.24 * F, Math.abs(-U_MAX + iu / RES));
     if (f <= 0) continue;
     const factor = [0, 1, 2].map(
       (c) => 1 + f * ((my[iu * 3 + c] * gx[c]) / gy[c] / mx[iu * 3 + c] - 1),
@@ -438,13 +637,70 @@ function shareProfile(stripX, stripY) {
   }
 }
 
+/**
+ * --ruts and --tone on both strips. Ruts: inside 0.2 of the painted half-width (ruts and crown)
+ * each column's mean is pulled toward the plain gravel's by 1 - RUTS, so the stones stay and the
+ * stripes soften. Tone: the gravel (|u| < HALF) of both strips together is scaled so its mean
+ * colour is TONE (per channel), or its mean luma is TONE (one scale); the verge beyond keeps its
+ * colour. Returns the scale per channel.
+ */
+function adjustStrips(list) {
+  if (RUTS !== 1)
+    for (const strip of list) {
+      const m = meanProfile(strip);
+      const plain = [0, 0, 0];
+      let n = 0;
+      for (let iu = 0; iu < strip.nu; iu++) {
+        const u = Math.abs(-U_MAX + iu / RES);
+        if (u < 0.14 * F || u > 0.2 * F) continue;
+        for (let c = 0; c < 3; c++) plain[c] += m[iu * 3 + c];
+        n++;
+      }
+      for (let c = 0; c < 3; c++) plain[c] /= n;
+      for (let iu = 0; iu < strip.nu; iu++) {
+        const f = (1 - RUTS) * (1 - smoothstep(0.17 * F, 0.21 * F, Math.abs(-U_MAX + iu / RES)));
+        if (f <= 0) continue;
+        for (let iv = 0; iv < strip.nv; iv++) {
+          const o = (iv * strip.nu + iu) * 3;
+          for (let c = 0; c < 3; c++) strip.rgb[o + c] -= f * (m[iu * 3 + c] - plain[c]);
+        }
+      }
+    }
+  if (TONE.length === 1 && !TONE[0]) return [1, 1, 1];
+  const sum = [0, 0, 0, 0];
+  let n = 0;
+  for (const strip of list)
+    for (let iv = 0; iv < strip.nv; iv++)
+      for (let iu = 0; iu < strip.nu; iu++) {
+        if (Math.abs(-U_MAX + iu / RES) > HALF - 0.01) continue;
+        const o = (iv * strip.nu + iu) * 3,
+          d = strip.rgb;
+        sum[3] += lum(d[o], d[o + 1], d[o + 2]);
+        for (let c = 0; c < 3; c++) sum[c] += d[o + c];
+        n++;
+      }
+  const k = [0, 1, 2].map((c) =>
+    TONE.length === 3 ? TONE[c] / (sum[c] / n) : TONE[0] / (sum[3] / n),
+  );
+  for (const strip of list)
+    for (let iu = 0; iu < strip.nu; iu++) {
+      const w = 1 - smoothstep(HALF, HALF + 0.008, Math.abs(-U_MAX + iu / RES));
+      const f = k.map((kc) => 1 + (kc - 1) * w);
+      for (let iv = 0; iv < strip.nv; iv++) {
+        const o = (iv * strip.nu + iu) * 3;
+        for (let c = 0; c < 3; c++) strip.rgb[o + c] *= f[c];
+      }
+    }
+  return k;
+}
+
 /** Folds u back into the plain gravel between rut and edge, for interior blends. */
 function fold(u) {
   const a = Math.abs(u);
-  if (a <= 0.2) return u;
-  const span = 0.07,
-    e = (a - 0.2) % (2 * span);
-  return Math.sign(u) * (e < span ? 0.2 - e : 0.13 + (e - span));
+  if (a <= 0.2 * F) return u;
+  const span = 0.07 * F,
+    e = (a - 0.2 * F) % (2 * span);
+  return Math.sign(u) * (e < span ? 0.2 * F - e : 0.13 * F + (e - span));
 }
 
 /** A strip family's coordinates and distance at tile point (x, y) for the piece's legs. */
@@ -521,9 +777,10 @@ function roadPixel(piece, strips, x, y, out) {
       n = ACROSS[T.axis];
     side = Math.sign(m[0] * n[0] + m[1] * n[1]) * T.u;
   }
-  const wb = smoothstep(0.09, 0.23, side) * (1 - smoothstep(0.24, 0.3, Math.abs(B.u)));
+  const wb =
+    smoothstep(0.09 * F, 0.23 * F, side) * (1 - smoothstep(0.24 * F, 0.3 * F, Math.abs(B.u)));
   const d = Math.min(T.d, bd),
-    k = smoothstep(0.16, 0.2, d),
+    k = smoothstep(0.16 * F, 0.2 * F, d),
     e = smoothstep(-0.015, 0.015, T.d - bd);
   acc(strips[T.axis], fold(T.u), T.v, (1 - k) * (1 - wb), out);
   acc(strips[B.axis], fold(B.u), B.v, (1 - k) * wb, out);
@@ -620,67 +877,644 @@ function crossingPixel(piece, strips, deck, x, y, out) {
   return alphaRoad * (1 - inside) + alphaDeck * inside;
 }
 
+// ---- Variants: hashing and noise -----------------------------------------------------------
+
+/** A deterministic hash of three integers to [0, 1). */
+function hash(i, j, k) {
+  let h =
+    (Math.imul(i | 0, 374761393) + Math.imul(j | 0, 668265263) + Math.imul(k | 0, 1442695041)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+/** Smooth value noise on the integer lattice; with `period` it wraps every `period` cells. */
+function vn(x, y, seed, period = 0) {
+  const i = Math.floor(x),
+    j = Math.floor(y),
+    tx = x - i,
+    ty = y - j;
+  const sx = tx * tx * (3 - 2 * tx),
+    sy = ty * ty * (3 - 2 * ty);
+  const w = (a, b) => {
+    let p = i + a,
+      q = j + b;
+    if (period) {
+      p = ((p % period) + period) % period;
+      q = ((q % period) + period) % period;
+    }
+    return hash(p, q, seed);
+  };
+  return (w(0, 0) * (1 - sx) + w(1, 0) * sx) * (1 - sy) + (w(0, 1) * (1 - sx) + w(1, 1) * sx) * sy;
+}
+
+const mix = (p, q, t) => [0, 1, 2].map((c) => p[c] + (q[c] - p[c]) * t);
+const GRASS = colours.grass; // dark to light
+const EARTH = mix(colours.grass[1], colours.dirt[1], 0.5); // worn soil at a blended edge
+
+// ---- Variants: the blended edge ----------------------------------------------------------------
+
+/**
+ * How far the band's edge wanders (tile units): gently, about 0.012 at most either way, in long
+ * swells rather than notches. Every term has period 1 in x and y, so the edge is the same on
+ * both sides of every tile join (and the same on every tile, since a piece is one picture).
+ */
+const wander = (x, y) =>
+  (vn(x * 5, y * 5, 11, 5) - 0.5) * 0.02 + (vn(x * 13, y * 13, 12, 13) - 0.5) * 0.006;
+
+const TUFT_CELLS = 20; // jittered tuft sites per tile unit, period 1
+const TUFT_REACH = 2; // cells searched round a pixel: a tuft is up to about 20 canvas pixels tall
+// Tile units from a tuft's root to its visual middle, 35% of the mean blade height (13.5 canvas
+// pixels; the clump at the root weighs more than the thin tips): screen-up is -x -y. Tufts are
+// placed by that middle, so they sit astride the edge on the upper side of a road (root on the
+// gravel, blades over the grass) as on the lower (root in the grass, blades over the gravel),
+// and the road looks equally wide on both sides.
+const TUFT_LIFT = (0.35 * 13.5) / 256;
+
+/**
+ * The distance a tuft is gated by. Near an edge the piece has a leg on (within 0.13 tile,
+ * further than any tuft reaches), it is the point's offset along that edge from its midpoint:
+ * every piece that meets there computes the same number for the same point, whether it is a
+ * straight, a curve or a crossing, so tufts at a join are identical on both sides. Deeper in
+ * the tile it is the piece's own distance from the centre line.
+ */
+function rootDistance(legEdges, dist) {
+  return (x, y) => {
+    let s = Infinity,
+      along = 0;
+    for (const e of legEdges) {
+      const { out } = EDGES[e];
+      const n = Math.abs(x * out[0] + y * out[1] - 0.5);
+      if (n < s) {
+        s = n;
+        along = Math.abs(out[0] !== 0 ? y : x);
+      }
+    }
+    const w = smoothstep(0.13, 0.17, s);
+    if (w <= 0) return along;
+    const d = dist(x, y);
+    return w >= 1 ? d : along + (d - along) * w;
+  };
+}
+
+/** How much a tuft grows by how far its middle lies from the centre line: astride the edge. */
+const tuftGate = (d) =>
+  smoothstep(HALF - 0.032, HALF - 0.016, d) * (1 - smoothstep(HALF + 0.016, HALF + 0.032, d));
+
+/**
+ * The tuft rooted in cell (i, j), in this tile's coordinates; null if the cell has none.
+ * distAt(x, y) is the gating distance (rootDistance); tufts are cached per piece. A tuft grows
+ * whole or not at all (no flat stubs), in the game grass's darker three tones.
+ */
+function tuftAt(i, j, distAt, cache) {
+  const key = i * 4096 + j;
+  if (cache.has(key)) return cache.get(key);
+  const im = ((i % TUFT_CELLS) + TUFT_CELLS) % TUFT_CELLS,
+    jm = ((j % TUFT_CELLS) + TUFT_CELLS) % TUFT_CELLS;
+  const tx = (i + 0.1 + 0.8 * hash(im, jm, 1)) / TUFT_CELLS,
+    ty = (j + 0.1 + 0.8 * hash(im, jm, 2)) / TUFT_CELLS;
+  // patches: some stretches of edge are tufted, others bare
+  const patch = vn(tx * 5, ty * 5, 21, 5);
+  let t = null;
+  if (hash(im, jm, 0) < 0.05 + 0.75 * patch) {
+    const G = tuftGate(distAt(tx - TUFT_LIFT, ty - TUFT_LIFT));
+    if (G > 0.35) {
+      const grow = 0.7 + 0.3 * G;
+      const nb = 3 + Math.floor(hash(im, jm, 3) * 3);
+      const blades = [];
+      for (let b = 0; b < nb; b++) {
+        const hb = hash(im, jm, 10 + b);
+        const bx = (b - (nb - 1) / 2) * 3.2 + (hb - 0.5) * 2;
+        blades.push({
+          bx,
+          lean: bx * 0.55 + (hash(im, jm, 20 + b) - 0.5) * 4,
+          h: (10 + 7 * hb) * grow,
+          w: 2.0 * grow,
+          tone: 2 + ((b + Math.floor(hash(im, jm, 4) * 2)) % 2),
+        });
+      }
+      t = {
+        tx,
+        ty,
+        blades,
+        clump: [nb * 1.8 * grow + 1.5, 2.3 * grow + 0.8],
+        base: hash(im, jm, 5) < 0.4 ? 1 : 2,
+      };
+    }
+  }
+  cache.set(key, t);
+  return t;
+}
+
+/** Coverage and colour of the grass tufts at tile point (x, y). */
+function tuft(x, y, distAt, cache) {
+  const ci = Math.floor(x * TUFT_CELLS),
+    cj = Math.floor(y * TUFT_CELLS);
+  let best = null;
+  for (let di = -TUFT_REACH; di <= TUFT_REACH; di++)
+    for (let dj = -TUFT_REACH; dj <= TUFT_REACH; dj++) {
+      const t = tuftAt(ci + di, cj + dj, distAt, cache);
+      if (!t) continue;
+      // canvas pixels from the root, screen axes (y down)
+      const sx = 256 * (x - t.tx - (y - t.ty)),
+        sy = 128 * (x - t.tx + (y - t.ty));
+      if (sy > 6 || sy < -24 || Math.abs(sx) > 20) continue;
+      // the clump the blades grow from: darker, its lower rim the darkest (contact)
+      const [rx, ry] = t.clump;
+      const e = Math.hypot(sx / rx, (sy - 0.5) / ry);
+      const cc = clamp01((1 - e) * Math.min(rx, ry) + 0.5);
+      if (cc > 0 && (!best || cc > best.cov))
+        best = { cov: cc, rgb: GRASS[sy > 0.6 && e > 0.55 ? t.base - 1 : t.base] };
+      for (const b of t.blades) {
+        // distance to the blade's centre line from (bx, 0) to (bx + lean, -h), tapering to the tip
+        const ax = b.bx,
+          dx = b.lean,
+          dy = -b.h;
+        const L2 = dx * dx + dy * dy;
+        if (L2 < 1) continue;
+        const q = clamp01(((sx - ax) * dx + sy * dy) / L2);
+        const dist = Math.hypot(sx - ax - q * dx, sy - q * dy);
+        const cov = clamp01(b.w * (1 - 0.85 * q) - dist + 0.5);
+        if (cov <= 0 || (best && cov <= best.cov)) continue;
+        const k = q < 0.3 ? t.base : q > 0.7 ? Math.min(3, b.tone + 1) : b.tone;
+        best = { cov, rgb: GRASS[k] };
+      }
+    }
+  return best;
+}
+
+/**
+ * The blended edge: the gravel darkens toward worn soil over its outer 0.06 tile, so the road
+ * never ends on its lightest tone, its alpha fades over FEATHER round a wandering edge (calm
+ * scales the wander, 0 beside a crossing deck), and tufts sit over it (times tuftWeight).
+ * Colour in rgb, returns alpha.
+ */
+function blendEdge(x, y, d, rgb, tuftWeight, distAt, cache, calm = 1) {
+  const e = d - calm * wander(x, y);
+  const k = 0.5 * smoothstep(HALF - 0.06, HALF, e);
+  for (let c = 0; c < 3; c++) rgb[c] += (EARTH[c] - rgb[c]) * k;
+  const ag = 1 - smoothstep(HALF - FEATHER / 2, HALF + FEATHER / 2, e);
+  if (tuftWeight <= 0 || d > HALF + 0.1 || d < HALF - 0.1) return ag;
+  const t = tuft(x, y, distAt, cache);
+  if (!t) return ag;
+  const tc = t.cov * tuftWeight,
+    alpha = tc + ag * (1 - tc);
+  if (alpha > 1e-6)
+    for (let c = 0; c < 3; c++) rgb[c] = (t.rgb[c] * tc + rgb[c] * ag * (1 - tc)) / alpha;
+  return alpha;
+}
+
+// ---- Variants: flush level-crossing decks ------------------------------------------------------
+
+const LIGHT = [-0.949, -0.316]; // the upper-left light as a tile-space direction (x, y)
+
+/** Shade of a rectangle's rim at (a, u): >0 lit, <0 away from the light, 0 inside. */
+function rim(a, u, a0, a1, u0, u1, L, width) {
+  let s = 0;
+  const edges = [
+    [a - a0, -L[0]],
+    [a1 - a, L[0]],
+    [u - u0, -L[1]],
+    [u1 - u, L[1]],
+  ];
+  for (const [dist, lit] of edges) if (dist < width) s += lit * (1 - dist / width);
+  return Math.max(-1, Math.min(1, s));
+}
+
+/** The deck's three fields across the track: outside the left rail, between, outside the right. */
+function deckRegions(g) {
+  const outer = g + DECK_OUT;
+  return [
+    [-outer, -g + RAIL_SLOT[0]],
+    [-g + RAIL_SLOT[1], g + RAIL_SLOT[0]],
+    [g + RAIL_SLOT[1], outer],
+  ];
+}
+
+/**
+ * Weathered planks: the game's sleeper tones greyed toward its ballast's light tones, a step
+ * lighter than the sleepers beside them and a step darker than the gravel, so the deck reads as
+ * timber on the road without merging with the sleepers or reading as a hole.
+ */
+function timber(piece, a, u, L) {
+  const g = piece.railOffset,
+    regions = deckRegions(g);
+  const ri = a < -g ? 0 : a > g ? 2 : 1;
+  const [r0, r1] = regions[ri];
+  const n = Math.max(1, Math.round((r1 - r0) / 0.046));
+  const w = (r1 - r0) / n,
+    k = Math.min(n - 1, Math.max(0, Math.floor((a - r0) / w)));
+  const a0 = r0 + k * w,
+    a1 = a0 + w;
+  const S = piece.gauge === 'regular' ? colours.sleeperRegular : colours.sleeperNarrow;
+  const B = colours.ballast;
+  const light = mix(S[2], B[3], 0.6),
+    dark = mix(S[2], B[2], 0.5);
+  // under the rail, between head and dark side: the planks' shadowed edge
+  if (a < r0 || a > r1) return mix(dark, mix(S[0], B[0], 0.5), 0.35);
+  const id = ri * 16 + k;
+  let col = mix(dark, light, 0.25 + 0.75 * hash(id, 3, 7));
+  // grain: slow along the plank, a little faster across it
+  const grain = vn(u * 16 + id * 3.1, ((a - a0) / w) * 2.5, 31) - 0.5;
+  col = col.map((c) => c * (1 + 0.12 * grain));
+  if (k < n - 1 && a1 - a < 0.005) return mix(S[0], B[0], 0.5); // joint between planks
+  const s = rim(a, u, a0, a1, -DECK_HALF, DECK_HALF, L, 0.009);
+  if (s > 0) col = mix(col, mix(B[3], [255, 248, 220], 0.25), 0.55 * s);
+  else if (s < 0) col = mix(col, mix(S[0], B[0], 0.5), -0.5 * s);
+  return col;
+}
+
+function stone(piece, a, u, L) {
+  const g = piece.railOffset,
+    regions = deckRegions(g);
+  const ri = a < -g ? 0 : a > g ? 2 : 1;
+  const [r0, r1] = regions[ri];
+  const n = Math.max(1, Math.round((r1 - r0) / 0.14));
+  const w = (r1 - r0) / n,
+    k = Math.min(n - 1, Math.max(0, Math.floor((a - r0) / w)));
+  const a0 = r0 + k * w,
+    a1 = a0 + w;
+  const col = ri * 4 + k; // column id, staggers the joints along the road
+  const m = Math.max(1, Math.round((2 * DECK_HALF) / 0.16));
+  const Ls = (2 * DECK_HALF) / m,
+    off = (col % 2) * 0.5 * Ls;
+  const j = Math.floor((u + DECK_HALF - off) / Ls);
+  const u0 = Math.max(-DECK_HALF, -DECK_HALF + off + j * Ls),
+    u1 = Math.min(DECK_HALF, -DECK_HALF + off + (j + 1) * Ls);
+  const T = STONE; // dark (joint) to light (highlight)
+  if (a < r0 || a > r1) return mix(T[1], T[0], 0.35); // under the rail: the slabs' shadowed edge
+  const J = 0.006;
+  if ((k > 0 && a - a0 < J / 2) || (k < n - 1 && a1 - a < J / 2)) return T[0];
+  if ((u0 > -DECK_HALF && u - u0 < J / 2) || (u1 < DECK_HALF && u1 - u < J / 2)) return T[0];
+  // broad mottling in three tones, each slab a little different
+  const h = hash(col, j, 5);
+  const v = vn(a * 34 + h * 9, u * 34, 51) * 0.7 + vn(a * 90, u * 90, 52) * 0.3 + (h - 0.5) * 0.25;
+  let c = v < 0.4 ? T[1] : v < 0.66 ? T[2] : T[3];
+  // sparse chips
+  const ci = Math.floor(a * 60),
+    cj = Math.floor(u * 60);
+  if (hash(ci, cj, 53) < 0.05 && Math.hypot(a * 60 - ci - 0.5, u * 60 - cj - 0.5) < 0.22)
+    c = mix(c, T[0], 0.55);
+  const s = rim(a, u, a0, a1, u0, u1, L, 0.011);
+  if (s > 0) c = mix(c, T[4], 0.75 * s);
+  else if (s < 0) c = mix(c, T[0], -0.45 * s);
+  return c;
+}
+
+function dirt(piece, a, u) {
+  const D = DIRT; // dark to light
+  const v = vn(a * 28, u * 28, 61) * 0.65 + vn(a * 75, u * 75, 62) * 0.35;
+  let c = v < 0.3 ? D[1] : v < 0.62 ? D[2] : D[3];
+  if (vn(a * 18, u * 18, 63) < 0.16) c = mix(c, D[0], 0.6);
+  // pebbles: a pale stone lit from the upper left, darker underneath
+  const P = 0.03,
+    ci = Math.floor(a / P),
+    cj = Math.floor(u / P);
+  for (let di = -1; di <= 1; di++)
+    for (let dj = -1; dj <= 1; dj++) {
+      const i = ci + di,
+        j = cj + dj;
+      if (hash(i, j, 64) > 0.22) continue;
+      const pa = (i + 0.2 + 0.6 * hash(i, j, 65)) * P,
+        pu = (j + 0.2 + 0.6 * hash(i, j, 66)) * P;
+      const r = 0.004 + 0.003 * hash(i, j, 67);
+      const da = a - pa,
+        du = u - pu;
+      if (Math.hypot(da, du) < r) {
+        const lit = -(da * LIGHT[0] + du * LIGHT[1]) / r; // approximate, rotation-free
+        return lit > 0.2 ? PEBBLE : mix(PEBBLE, D[0], 0.45);
+      }
+    }
+  return c;
+}
+
+/** The flush deck at (a across the track, u along it), with the rails as the game draws them. */
+function deckColour(piece, a, u, axis) {
+  const g = piece.railOffset;
+  const L = axis === 'x' ? LIGHT : [LIGHT[1], LIGHT[0]]; // (along a, along u)
+  const regular = piece.gauge === 'regular';
+  const style =
+    CROSSING === 'timber' ? 'timber' : (CROSSING === 'stone') === regular ? 'stone' : 'dirt';
+  let m =
+    style === 'timber'
+      ? timber(piece, a, u, L)
+      : style === 'stone'
+        ? stone(piece, a, u, L)
+        : dirt(piece, a, u);
+  const side = a < 0 ? -1 : 1,
+    t = a - side * g;
+  const px = perPixel(1, 0);
+  const line = (c, hw) => clamp01((t - c + hw) / px + 0.5) * clamp01((c + hw - t) / px + 0.5);
+  const R = RAIL[piece.gauge];
+  // the pale stone and dirt also get a thin dark flangeway just above the head, or the head
+  // would not stand out from them
+  if (style !== 'timber') {
+    const [hc, hw] = R.head;
+    m = mix(m, style === 'stone' ? STONE[0] : DIRT[0], 0.75 * line(hc - hw - 0.004, 0.004));
+  }
+  m = mix(m, R.dark[2], line(R.dark[0], R.dark[1]));
+  return mix(m, R.head[2], line(R.head[0], R.head[1]));
+}
+
+/** A flush crossing: the road strip with the chosen edge, and the deck over the track. */
+function crossingPixelFlush(piece, strips, x, y, out, cache) {
+  const g = piece.railOffset,
+    axis = piece.rotation === 0 ? 'x' : 'y';
+  const u = axis === 'x' ? y : x,
+    v = (axis === 'x' ? x : y) + 0.5;
+  const a = axis === 'x' ? x : y;
+  const px = perPixel(1, 0);
+  const inside = clamp01((g + DECK_OUT - Math.abs(a)) / px + 0.5);
+  const road = [0, 0, 0];
+  acc(strips[axis], u, v, 1, road);
+  let alphaRoad;
+  if (EDGE === 'crisp') alphaRoad = clamp01((VERGE - Math.abs(u)) / px);
+  else {
+    // no tufts on the ballast beside the rails or close to the deck's ends, and the edge runs
+    // straight into the deck's corners
+    const b = Math.max(BALLAST[piece.gauge] + 0.01, g + DECK_OUT + 0.08);
+    const distAt = rootDistance(axis === 'x' ? ['nw', 'se'] : ['ne', 'sw'], (tx, ty) => {
+      const [ra, ru] = axis === 'x' ? [tx, ty] : [ty, tx];
+      return Math.abs(ra) < b ? Infinity : Math.abs(ru);
+    });
+    const calm = smoothstep(g + DECK_OUT, g + DECK_OUT + 0.12, Math.abs(a));
+    alphaRoad = blendEdge(x, y, Math.abs(u), road, 1, distAt, cache, calm);
+  }
+  if (inside <= 0) {
+    out[0] = road[0];
+    out[1] = road[1];
+    out[2] = road[2];
+    return alphaRoad;
+  }
+  // the deck is exactly as long along the track as the road is wide outside
+  const deck = deckColour(piece, a, u, axis);
+  const alphaDeck = clamp01((DECK_HALF - Math.abs(u)) / px + 0.5);
+  const wr = alphaRoad * (1 - inside),
+    wd = alphaDeck * inside,
+    alpha = wr + wd;
+  for (let c = 0; c < 3; c++)
+    out[c] =
+      alpha > 1e-6 ? (road[c] * wr + deck[c] * wd) / alpha : inside > 0.5 ? deck[c] : road[c];
+  return alpha;
+}
+
 /**
  * Renders a picture from `pixel(x, y, rgb) -> alpha`. Pixels count as inside the diamond by
  * their centres, so neighbouring tiles cover the canvas without gaps or double edges; just
  * outside it the colour continues under alpha 0, so filtering never pulls in a dark fringe.
+ * With --bleed, `bleed(x, y, rgb)` gives the alpha outside the diamond instead (see bleedFn).
  */
-function render(pixel) {
+function render(pixel, bleed) {
   const png = new PNG({ width: SIZE, height: SIZE });
   png.data.fill(0);
   const rgb = [0, 0, 0];
-  for (let py = AY - 136; py < AY + 136; py++)
-    for (let px = AX - 264; px < AX + 264; px++) {
+  const M = bleed ? 16 : 0;
+  for (let py = AY - 136 - M; py < AY + 136 + M; py++)
+    for (let px = AX - 264 - M; px < AX + 264 + M; px++) {
       const a = (px + 0.5 - AX) / 256,
         b = (py + 0.5 - AY) / 128;
       const x = (a + b) / 2,
         y = (b - a) / 2;
-      const alpha = pixel(x, y, rgb);
+      let alpha = pixel(x, y, rgb);
       const inDiamond = Math.max(Math.abs(x), Math.abs(y)) <= 0.5;
+      if (!inDiamond) alpha = bleed ? bleed(x, y, rgb) : 0;
       const i = (py * SIZE + px) * 4;
       for (let c = 0; c < 3; c++) png.data[i + c] = Math.round(Math.min(255, Math.max(0, rgb[c])));
-      png.data[i + 3] = inDiamond ? Math.round(255 * alpha) : 0;
+      png.data[i + 3] = Math.round(255 * alpha);
     }
   return png;
 }
 
 const show = (fit) => `${fit.at(-0.25).toFixed(3)}..${fit.at(0.25).toFixed(3)}`;
 
-const paintX = loadPainting('raw/road-straight-x.png'),
-  paintY = loadPainting('raw/road-straight-y.png');
-const fitsX = measureRoad(paintX, 'x', false),
-  fitsY = measureRoad(paintY, 'y', true);
-const builtX = buildStrip(paintX, 'x', fitsX, false),
-  builtY = buildStrip(paintY, 'y', fitsY, true);
-shareProfile(builtX.strip, builtY.strip);
-const strips = { x: builtX.strip, y: builtY.strip };
-for (const [name, fits, built] of [
-  ['x', fitsX, builtX],
-  ['y', fitsY, builtY],
-]) {
-  const knots = Object.entries(fits).map(([k, f]) => `${k} ${show(f)} (${f.kept}/${f.rows})`);
-  console.log(`strip ${name}: ${knots.join(', ')}`);
+// The road strips: Codex's long strips, or the first drafts (whose x road has one rut).
+const SOURCES = {
+  codex: { x: ['materials/road-strip-x.png', true], y: ['materials/road-strip-y.png', true] },
+  drafts: { x: ['raw/road-straight-x.png', false], y: ['raw/road-straight-y.png', true] },
+}[MATERIAL];
+const built = {};
+for (const axis of ['x', 'y']) {
+  const [file, withRuts] = SOURCES[axis];
+  const img = MATERIAL === 'codex' ? loadStrip(file, axis) : loadPainting(file);
+  const fits = measureRoad(img, axis, withRuts);
+  built[axis] = { file, frame: img.frame, fits, ...buildStrip(img, axis, fits, withRuts) };
+}
+if (MATERIAL === 'drafts') shareProfile(built.x.strip, built.y.strip);
+const TONE_K = adjustStrips([built.x.strip, built.y.strip]);
+const strips = { x: built.x.strip, y: built.y.strip };
+for (const [name, b] of Object.entries(built)) {
+  const knots = Object.entries(b.fits).map(([k, f]) => `${k} ${show(f)} (${f.kept}/${f.rows})`);
+  console.log(`strip ${name} (${b.file}): ${knots.join(', ')}`);
+  if (b.frame)
+    console.log(
+      `  painted at ${b.frame.angle.toFixed(2)} deg (sides ${b.frame.sides.map((a) => a.toFixed(2)).join(', ')}), reach ${b.frame.reach.toFixed(3)}`,
+    );
   console.log(
-    `  scale ${built.scale.toFixed(3)}, period ${built.period}, source ${built.start.toFixed(3)}..${(built.start + built.length + built.fade).toFixed(3)}, fade ${built.fade.toFixed(3)}`,
+    `  scale ${b.scale.toFixed(3)}, period ${b.period}, source ${b.start.toFixed(3)}..${(b.start + b.length + b.fade).toFixed(3)}, fade ${b.fade.toFixed(3)}`,
   );
 }
 
+/** The gravel's mean colour (|u| < HALF - 0.01) over both strips. */
+function gravelMean(list) {
+  const sum = [0, 0, 0];
+  let n = 0;
+  for (const strip of list)
+    for (let iv = 0; iv < strip.nv; iv++)
+      for (let iu = 0; iu < strip.nu; iu++) {
+        if (Math.abs(-U_MAX + iu / RES) > HALF - 0.01) continue;
+        for (let c = 0; c < 3; c++) sum[c] += strip.rgb[(iv * strip.nu + iu) * 3 + c];
+        n++;
+      }
+  return sum.map((s) => s / n);
+}
+const GRAVEL = gravelMean([strips.x, strips.y]);
+console.log(
+  `gravel mean ${GRAVEL.map((c) => c.toFixed(0)).join(',')} (luma ${lum(...GRAVEL).toFixed(0)}), tone scale ${TONE_K.map((k) => k.toFixed(3)).join(',')}, ruts ${RUTS}`,
+);
+// The author's stone at the brightness the author saw (--deck-scale). The author's dirt is an
+// orange-brown much more saturated than the gravel: it keeps its own brightness and goes 60% of
+// the way to the gravel's hue, so it reads as packed earth of the same road rather than a stain.
+const STONE = colours.stone.map((c) => c.map((v) => v * DECK_SCALE));
+const gravelHue = GRAVEL.map((c) => c / lum(...GRAVEL));
+const DIRT = colours.dirt.map((c) =>
+  mix(
+    c,
+    gravelHue.map((h) => h * lum(...c)),
+    0.6,
+  ),
+);
+const PEBBLE = colours.pebble.map((v) => v * DECK_SCALE);
+
+// One pixel function per picture: (x, y, rgb) -> alpha, in the picture's tile coordinates.
+const pixelFns = new Map();
 for (const piece of geometry.pieces) {
-  const png = render((x, y, rgb) => {
+  const cache = new Map(),
+    scratch = [0, 0, 0];
+  const distAt = rootDistance(piece.edges, (x, y) => roadPixel(piece, strips, x, y, scratch).d);
+  pixelFns.set(piece.id, (x, y, rgb) => {
     const { d, grad } = roadPixel(piece, strips, x, y, rgb);
-    return clamp01((VERGE - d) / perPixel(grad[0], grad[1]));
+    if (EDGE === 'crisp') return clamp01((VERGE - d) / perPixel(grad[0], grad[1]));
+    return blendEdge(x, y, d, rgb, 1, distAt, cache);
   });
-  writeFileSync(`${ROOT}/${piece.id}.png`, PNG.sync.write(png));
-  console.log(`wrote ${piece.id}.png`);
+}
+for (const piece of crossingGeometry.pieces) {
+  if (CROSSING === 'painted') {
+    const deck = measureDeck(loadPainting(`raw/${piece.id}-attempt-2.png`), piece, DECKS[piece.id]);
+    pixelFns.set(piece.id, (x, y, rgb) => crossingPixel(piece, strips, deck, x, y, rgb));
+  } else {
+    const cache = new Map();
+    pixelFns.set(piece.id, (x, y, rgb) => crossingPixelFlush(piece, strips, x, y, rgb, cache));
+  }
+}
+const legsOf = new Map(geometry.pieces.map((p) => [p.id, p.edges]));
+for (const p of crossingGeometry.pieces)
+  legsOf.set(p.id, p.rotation === 0 ? ['nw', 'se'] : ['ne', 'sw']);
+
+/**
+ * --bleed: beyond a leg's edge, up to BLEED along its normal, a picture carries on as the
+ * straight road of that leg's axis (what a straight neighbour shows there; a curve's first
+ * texels are a straight's too), but only where that is nearly opaque, so the overlap never
+ * thickens the soft edge. Elsewhere outside the diamond alpha stays 0.
+ */
+function bleedFn(id) {
+  if (!BLEED) return null;
+  const legs = legsOf.get(id);
+  return (x, y, rgb) => {
+    for (const e of legs) {
+      const { out, axis } = EDGES[e];
+      const n = x * out[0] + y * out[1],
+        t = -x * out[1] + y * out[0];
+      if (n > 0.5 && n <= 0.5 + BLEED && Math.abs(t) <= 0.5) {
+        const al = pixelFns.get(`road-straight-${axis}`)(x, y, rgb);
+        return al * smoothstep(0.85, 1, al);
+      }
+    }
+    return 0;
+  };
 }
 
-for (const piece of crossingGeometry.pieces) {
-  const deck = measureDeck(loadPainting(`raw/${piece.id}-attempt-2.png`), piece, DECKS[piece.id]);
-  const f = deck.fits;
-  console.log(
-    `${piece.id}: deck ${show(f.eL)} / ${show(f.eR)}, grooves ${show(f.gL)} / ${show(f.gR)}, groove colour ${deck.groove.map(Math.round)}`,
-  );
-  const png = render((x, y, rgb) => crossingPixel(piece, strips, deck, x, y, rgb));
-  writeFileSync(`${ROOT}/${piece.id}.png`, PNG.sync.write(png));
-  console.log(`wrote ${piece.id}.png`);
+/**
+ * Join check: every picture that leaves by an edge against every picture that enters by the
+ * opposite edge, evaluated at the same world points on the shared edge (each in its own tile
+ * coordinates). Reports the largest colour difference (0..255, on pixels with alpha > 0.5) and
+ * alpha difference (0..1) per edge direction. With --bleed it also compares each picture's
+ * bleed with the neighbour's own pixels under it (colour where both are opaque, 0..255).
+ */
+function checkJoins() {
+  const opposite = { ne: 'sw', sw: 'ne', se: 'nw', nw: 'se' };
+  const rows = [];
+  for (const e of ['se', 'sw', 'nw', 'ne']) {
+    const { mid, out } = EDGES[e];
+    const tan = [-out[1], out[0]];
+    let worst = { dc: 0, da: 0 },
+      bleedMax = 0,
+      bleedSum = 0,
+      bleedN = 0,
+      bleedAt = '-';
+    for (const [a, ea] of legsOf)
+      for (const [b, eb] of legsOf) {
+        if (!ea.includes(e) || !eb.includes(opposite[e])) continue;
+        const fa = pixelFns.get(a),
+          fb = pixelFns.get(b),
+          ba = bleedFn(a);
+        const ca = [0, 0, 0],
+          cb = [0, 0, 0];
+        for (let t = -0.45; t <= 0.45; t += 0.0025) {
+          const x = mid[0] + t * tan[0],
+            y = mid[1] + t * tan[1];
+          if (e === 'se' || e === 'sw') {
+            const aa = fa(x, y, ca),
+              ab = fb(x - out[0], y - out[1], cb);
+            const da = Math.abs(aa - ab);
+            const dc =
+              aa > 0.5 && ab > 0.5 ? Math.max(...[0, 1, 2].map((c) => Math.abs(ca[c] - cb[c]))) : 0;
+            if (da > worst.da) worst = { ...worst, da, daAt: `${a} | ${b} t=${t.toFixed(3)}` };
+            if (dc > worst.dc) worst = { ...worst, dc, dcAt: `${a} | ${b} t=${t.toFixed(3)}` };
+          }
+          if (!ba) continue;
+          for (let k = 1; k <= 4; k++) {
+            const dn = (BLEED * k) / 4,
+              px = x + dn * out[0],
+              py = y + dn * out[1];
+            const aa = ba(px, py, ca),
+              ab = fb(px - out[0], py - out[1], cb);
+            if (aa < 0.98 || ab < 0.98) continue;
+            const dc = Math.max(...[0, 1, 2].map((c) => Math.abs(ca[c] - cb[c])));
+            bleedSum += dc;
+            bleedN++;
+            if (dc > bleedMax) {
+              bleedMax = dc;
+              bleedAt = `${a} over ${b} t=${t.toFixed(3)} +${dn.toFixed(3)}`;
+            }
+          }
+        }
+      }
+    if (e === 'se' || e === 'sw')
+      rows.push(
+        `${e}/${opposite[e]}: max colour diff ${worst.dc.toFixed(1)} (${worst.dcAt ?? '-'}), max alpha diff ${worst.da.toFixed(3)} (${worst.daAt ?? '-'})`,
+      );
+    if (BLEED)
+      rows.push(
+        `bleed over ${e}: colour diff under the neighbour mean ${(bleedSum / Math.max(1, bleedN)).toFixed(1)}, max ${bleedMax.toFixed(1)} (${bleedAt})`,
+      );
+  }
+  return rows;
 }
+
+if (args.check) {
+  for (const r of checkJoins()) console.log(r);
+  process.exit(0);
+}
+
+const r4 = (v) => +v.toFixed(4);
+mkdirSync(OUT, { recursive: true });
+writeFileSync(
+  `${OUT}/finish.json`,
+  JSON.stringify(
+    {
+      about:
+        'Written by finish-roads.mjs: the options the 19 pictures beside it were made with, and what it measured.',
+      material: MATERIAL,
+      width: r4(2 * HALF),
+      edge: EDGE,
+      verge: EDGE === 'crisp' ? r4(VERGE - HALF) : 0,
+      feather: EDGE === 'blend' ? FEATHER : 0,
+      crossing: CROSSING,
+      deckMargin: DECK_OUT,
+      deckHalfLength: r4(CROSSING === 'painted' ? HALF : DECK_HALF),
+      deckScale: CROSSING === 'painted' ? 0 : DECK_SCALE,
+      tone: TONE,
+      toneScale: TONE_K.map(r4),
+      gravelMean: GRAVEL.map(r4),
+      ruts: RUTS,
+      bleedWorldPx: BLEED_PX,
+      strips: Object.fromEntries(
+        Object.entries(built).map(([axis, b]) => [
+          axis,
+          {
+            file: b.file,
+            ...(b.frame && {
+              paintedAngle: r4(b.frame.angle),
+              paintedSides: b.frame.sides.map(r4),
+              centrePx: b.frame.centre.map(r4),
+              reach: r4(b.frame.reach),
+            }),
+            // each fit: [value at v = 0, slope per tile unit along], source tile units
+            fits: Object.fromEntries(
+              Object.entries(b.fits).map(([k, f]) => [k, [r4(f.a), r4(f.b)]]),
+            ),
+            scale: r4(b.scale),
+            period: r4(b.period),
+            source: [r4(b.start), r4(b.start + b.length + b.fade)],
+            fade: r4(b.fade),
+          },
+        ]),
+      ),
+    },
+    null,
+    2,
+  ) + '\n',
+);
+for (const [id, fn] of pixelFns)
+  writeFileSync(`${OUT}/${id}.png`, PNG.sync.write(render(fn, bleedFn(id))));
+console.log(`wrote ${pixelFns.size} pictures and finish.json to ${OUT}`);
