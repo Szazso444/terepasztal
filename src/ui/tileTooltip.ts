@@ -40,6 +40,8 @@ export interface TileSnapshot {
   powered: boolean;
   /** what the ground does to the cost of track here (`Builder.terrainMul`): 0 none can be laid */
   trackCostFactor: number;
+  /** the tuned level 1 weekly output the biome's station tooltips print (`StationSnapshot`) */
+  weeklyAtLevel1: number;
 }
 
 /** The terrain's name and biome, its level, then everything standing on it. */
@@ -50,7 +52,7 @@ export function tileTip(s: TileSnapshot): TipDoc {
   const name = TERRAIN_NAMES[terrain];
   const out: Block[] = [
     title(T.terrain[name] ?? name),
-    row(T.biome, biomeTerm(biomeAt(map, x, y))),
+    row(T.biome, biomeTerm(biomeAt(map, x, y), s.weeklyAtLevel1)),
     line(T.elevation(levelAt(map, x, y))),
   ];
   if (!s.charted) out.push(line(T.uncharted));

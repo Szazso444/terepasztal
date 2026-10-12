@@ -42,7 +42,25 @@ export interface StationSnapshot {
   capacity: number;
   /** the biome of the station's own tile */
   biome: Biome;
+  /**
+   * Units a week a station makes at level 1 on plenty of ground under the tuning in force
+   * (`weeklyOutput(1, 1)` in src/sim/stations.ts, worked out where the snapshot is built). The
+   * station tooltips the biome's terms open print it as given.
+   */
+  weeklyAtLevel1: number;
 }
+
+/**
+ * What a works is doing. `BuildingPanel.statusKind` reads it from the building; the tooltip words
+ * it from `STR`, with a starved works's missing input as a resource.
+ */
+export type WorksStatus =
+  | { kind: 'running' | 'full' | 'closed' }
+  | {
+      kind: 'starved';
+      /** the cargo id of the primary input it is short of (`missingInput`), null if none is found */
+      missing: string | null;
+    };
 
 /** A works (a building that makes goods). */
 export interface WorksSnapshot {
@@ -50,8 +68,8 @@ export interface WorksSnapshot {
   /** what it turns into what (`BuildingDef.recipe`), and the inputs it falls back on (`altIn`) */
   recipe: { in: Cost; out: Cost };
   altIn?: Cost;
-  /** the status line (`BuildingPanel.status`) */
-  status: string;
+  /** what it is doing (`BuildingPanel.statusKind`) */
+  status: WorksStatus;
   work: WorkSnapshot | null;
   /** units a week now */
   rate: number;
@@ -97,6 +115,24 @@ const storageLine = (stored: number, capacity: number) =>
 
 const runningLine = (w: WorkSnapshot) => line(STR.upgrade.running(w.to, w.hoursLeft));
 
+/** What a works is doing: a starved one names the input it waits for as a resource. */
+function statusLine(s: WorksStatus): Block {
+  switch (s.kind) {
+    case 'closed':
+      return line(STR.upgrade.closed);
+    case 'full':
+      return line(STR.building.full);
+    case 'running':
+      return line(STR.building.running);
+    case 'starved':
+      return text(
+        ...fill(STR.building.waiting, {
+          res: s.missing ? res(s.missing) : STR.building.unknownInput,
+        }),
+      );
+  }
+}
+
 // ---------------------------------------------------------------- the tooltips
 
 /** A station in the field: its level, an upgrade under way, its storage, then its biome. */
@@ -106,7 +142,7 @@ export function stationTip(s: StationSnapshot): TipDoc {
     line(STR.station.level(s.level)),
     ...(s.work ? [line(STR.upgrade.closed), runningLine(s.work)] : []),
     storageLine(s.stored, s.capacity),
-    row(STR.station.biome, biomeTerm(s.biome)),
+    row(STR.station.biome, biomeTerm(s.biome, s.weeklyAtLevel1)),
   ];
 }
 
@@ -121,7 +157,7 @@ export function worksTip(w: WorksSnapshot): TipDoc {
   return [
     title(w.name),
     text(...fill(altIn ? STR.building.recipeAlt : STR.building.recipeLine, slots)),
-    line(w.status),
+    statusLine(w.status),
     ...(w.work ? [runningLine(w.work)] : []),
     line(`${STR.building.rate}: ${STR.station.perWeek(Math.round(w.rate * 10) / 10)}`),
   ];

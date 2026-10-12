@@ -376,6 +376,13 @@ export const STR = {
     running: 'Running',
     full: 'Stopped: stockpile full',
     starved: (n: string) => `Waiting for ${n}`,
+    /**
+     * The same status for the works tooltip, which shows the resource as an icon with its name
+     * (`{res}`). Keep the two worded alike; a test holds them together.
+     */
+    waiting: 'Waiting for {res}',
+    /** shown where the input a works waits for cannot be named */
+    unknownInput: '?',
     or: 'or',
     bridgeCapacity: 'Bridge capacity',
     /** "half speed" is `BRIDGE_SLOW_FACTOR` in src/sim/bridges.ts; reword it if that changes. */

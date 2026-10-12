@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs';
+import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
 import { STR } from '../strings';
 import { content } from '../data/content';
 import { BIOME_DEFS, biomeDef, biomeSummary } from '../sim/biomes';
-import { HARVEST_RADIUS, LEVELS, STATION_DEFS } from '../sim/stations';
+import { HARVEST_RADIUS, STATION_DEFS, weeklyOutput } from '../sim/stations';
 import { cargoName } from '../sim/cargo';
 import { emptyMap } from '../world/mapgen';
 import { Biome, Terrain, type GameMap } from '../world/tiles';
@@ -17,6 +19,7 @@ import {
   type StationSnapshot,
   type TrainSnapshot,
   type WorksSnapshot,
+  type WorksStatus,
 } from './tooltipContent';
 import {
   blockText,
@@ -39,6 +42,9 @@ const biomeId = (id: string) => {
   expect(i, `a biome ${id}`).toBeGreaterThanOrEqual(0);
   return i as Biome;
 };
+
+/** The tuned level 1 weekly output a snapshot carries: the game's, at the default tuning. */
+const WEEKLY = weeklyOutput(1, 1, { productionMul: 1 });
 
 const lines = (doc: TipDoc) => doc.map(blockText);
 const partsOf = (b: Block): Parts => (b.kind === 'row' ? [...b.label, ...b.value] : b.parts);
@@ -107,6 +113,7 @@ describe('the station tooltip', () => {
     stored: 12.7,
     capacity: 120,
     biome: Biome.Taiga,
+    weeklyAtLevel1: WEEKLY,
   };
   /** the lines `updateRtsTooltip` printed before, minus the biome summary */
   const today = (s: StationSnapshot) => [
@@ -153,7 +160,7 @@ describe('the works tooltip', () => {
     name: def.name,
     recipe: def.recipe,
     altIn: def.altIn,
-    status: STR.building.running,
+    status: { kind: 'running' },
     work: null,
     rate: 12.46,
     ...over,
@@ -191,6 +198,41 @@ describe('the works tooltip', () => {
       ...Object.keys(altBuilding.recipe.out),
     ];
     expect(cargo).toEqual(want);
+  });
+
+  it('words each status from STR, closed and full and running as plain lines', () => {
+    const said = (status: WorksStatus) => lines(worksTip(works(plain1, { status })))[2];
+    expect(said({ kind: 'running' })).toBe(STR.building.running);
+    expect(said({ kind: 'full' })).toBe(STR.building.full);
+    expect(said({ kind: 'closed' })).toBe(STR.upgrade.closed);
+  });
+
+  it('names what a waiting works lacks as a resource: its icon and its underlined name', () => {
+    const cargo = Object.keys(plain1.recipe.in)[0];
+    const doc = worksTip(works(plain1, { status: { kind: 'starved', missing: cargo } }));
+    const status = doc[2];
+    expect(status.kind).toBe('text');
+    const parts = status.kind === 'text' ? status.parts : [];
+    expect(parts.filter((p) => typeof p !== 'string' && 'res' in p)).toEqual([
+      { res: cargo, name: cargoName(cargo) },
+    ]);
+    // it says what the panel says, bar the resource's capital
+    expect(plain(parts)).toBe(STR.building.starved(cargoName(cargo).toLowerCase()));
+    // the resource is no longer inside a finished sentence
+    expect(parts.filter((p) => typeof p === 'string').join('')).not.toContain(cargoName(cargo));
+  });
+
+  it('keeps the wording of the waiting status the panel and the tooltip share', () => {
+    const [before, after] = STR.building.waiting.split('{res}');
+    expect(STR.building.starved('X')).toBe(`${before}X${after}`);
+  });
+
+  it('says a question mark where no input can be named', () => {
+    const doc = worksTip(works(plain1, { status: { kind: 'starved', missing: null } }));
+    expect(lines(doc)[2]).toBe(STR.building.starved(STR.building.unknownInput));
+    expect(
+      doc[2].kind === 'text' && doc[2].parts.some((p) => typeof p !== 'string' && 'res' in p),
+    ).toBe(false);
   });
 
   it('adds the upgrade line while one runs', () => {
@@ -308,6 +350,7 @@ describe('the tile tooltip', () => {
     props: [],
     powered: false,
     trackCostFactor: 1,
+    weeklyAtLevel1: WEEKLY,
   });
   /** the lines of `Game.tileInfo` after the biome summary, the elevation line first */
   const after = (doc: TipDoc) => lines(doc).slice(2);
@@ -396,7 +439,7 @@ describe('the biome tooltip', () => {
 
   it('titles the biome, describes it, and lists a row per production entry in data order', () => {
     for (const [i, def] of BIOME_DEFS.entries()) {
-      const doc = biomeTip(i as Biome);
+      const doc = biomeTip(i as Biome, WEEKLY);
       expect(blockText(doc[0]), def.id).toBe(STR.biome.title(def.name));
       expect(doc[1]).toMatchObject({ kind: 'dim' });
       expect(blockText(doc[1])).toBe(def.desc);
@@ -413,7 +456,7 @@ describe('the biome tooltip', () => {
   it('leaves out track cost, water use and speed at 1, and lists them otherwise', () => {
     for (const [i, def] of BIOME_DEFS.entries()) {
       const extra = [def.trackCostMul, def.waterUseMul, def.speedMul].filter((m) => m !== 1);
-      expect(rows(biomeTip(i as Biome)), def.id).toHaveLength(
+      expect(rows(biomeTip(i as Biome, WEEKLY)), def.id).toHaveLength(
         production(def).length + extra.length,
       );
     }
@@ -421,7 +464,9 @@ describe('the biome tooltip', () => {
 
   it('colours a row green when it is good for the player and red when it is bad', () => {
     for (const [i, def] of BIOME_DEFS.entries()) {
-      const tones = rows(biomeTip(i as Biome)).map((r) => (r.kind === 'row' ? r.tone : undefined));
+      const tones = rows(biomeTip(i as Biome, WEEKLY)).map((r) =>
+        r.kind === 'row' ? r.tone : undefined,
+      );
       const want = [
         ...production(def).map(([, m]) => (m === 1 ? undefined : m > 1 ? 'good' : 'bad')),
         ...(def.trackCostMul !== 1 ? [def.trackCostMul > 1 ? 'bad' : 'good'] : []),
@@ -433,7 +478,7 @@ describe('the biome tooltip', () => {
   });
 
   it('shows Plains as one green row and nothing else', () => {
-    const doc = biomeTip(biomeId('plains'));
+    const doc = biomeTip(biomeId('plains'), WEEKLY);
     expect(doc).toHaveLength(3);
     const r = doc[2];
     expect(r).toMatchObject({ kind: 'row', tone: 'good' });
@@ -442,7 +487,7 @@ describe('the biome tooltip', () => {
   });
 
   it('shows Desert with a red water use row and signed percents of both colours', () => {
-    const doc = biomeTip(biomeId('desert'));
+    const doc = biomeTip(biomeId('desert'), WEEKLY);
     expect(rows(doc).map(blockText)).toEqual([
       'stone from quarries: +30%',
       'water from water pumps: −50%',
@@ -458,7 +503,7 @@ describe('the biome tooltip', () => {
   });
 
   it('shows Mountain with a red track cost and a red train speed', () => {
-    const doc = biomeTip(biomeId('mountain'));
+    const doc = biomeTip(biomeId('mountain'), WEEKLY);
     expect(rows(doc).map(blockText)).toEqual([
       'stone from quarries: +30%',
       'water from water pumps: −40%',
@@ -475,14 +520,16 @@ describe('the biome tooltip', () => {
 
   it('lists Lake, River and Beach from the data like any other biome', () => {
     for (const id of ['lake', 'river', 'beach']) {
-      const doc = biomeTip(biomeId(id));
+      const doc = biomeTip(biomeId(id), WEEKLY);
       expect(blockText(doc[0])).toBe(STR.biome.title(biomeDef(biomeId(id)).name));
       expect(rows(doc).length).toBeGreaterThan(0);
     }
   });
 
   it('draws the water use row with the water icon and its name', () => {
-    const r = rows(biomeTip(biomeId('desert'))).find((x) => blockText(x).includes('Steam'))!;
+    const r = rows(biomeTip(biomeId('desert'), WEEKLY)).find((x) =>
+      blockText(x).includes('Steam'),
+    )!;
     if (r.kind !== 'row') throw new Error('a row');
     expect(r.label.some((p) => typeof p !== 'string' && 'res' in p && p.res === 'water')).toBe(
       true,
@@ -491,7 +538,7 @@ describe('the biome tooltip', () => {
 
   it('gives each production row the resource its station makes', () => {
     for (const [i, def] of BIOME_DEFS.entries())
-      rows(biomeTip(i as Biome))
+      rows(biomeTip(i as Biome, WEEKLY))
         .slice(0, production(def).length)
         .forEach((r, k) => {
           const kind = STATION_DEFS.find((d) => d.id === production(def)[k][0])!;
@@ -502,7 +549,8 @@ describe('the biome tooltip', () => {
 
   it('bolds every number in the tooltip and the ones it opens', () => {
     for (const i of BIOME_DEFS.keys())
-      for (const s of everyString(biomeTip(i as Biome))) expect(s, String(i)).not.toMatch(/\d/);
+      for (const s of everyString(biomeTip(i as Biome, WEEKLY)))
+        expect(s, String(i)).not.toMatch(/\d/);
   });
 });
 
@@ -512,7 +560,7 @@ describe('the station tooltip a biome opens', () => {
   it('is opened from the plural of every station kind a biome names, and titles the station', () => {
     expect(named.length).toBeGreaterThan(0);
     for (const [i, def] of BIOME_DEFS.entries()) {
-      const terms = termsOf(biomeTip(i as Biome));
+      const terms = termsOf(biomeTip(i as Biome, WEEKLY));
       expect(
         terms.map((t) => t.term),
         def.id,
@@ -525,31 +573,85 @@ describe('the station tooltip a biome opens', () => {
     }
   });
 
-  it('reads 30 from the first level of the data and 4 from the harvest radius', () => {
-    const words = (id: string) => {
-      const doc = stationKindTip(id);
-      return doc[1].kind === 'text' ? doc[1].parts : [];
+  /** The bold numbers of a station tooltip's sentence, in the order it says them. */
+  const bold = (id: string, weekly: number) => {
+    const doc = stationKindTip(id, weekly);
+    const parts = doc[1].kind === 'text' ? doc[1].parts : [];
+    return parts.flatMap((p) => (typeof p !== 'string' && 'num' in p ? [p.num] : []));
+  };
+
+  it('prints the weekly figure it is given and the radius from the harvest radius', () => {
+    // 30 at the data's tuning, 45 with the output raised by half: what the game will do
+    const tuned = (productionMul: number) => weeklyOutput(1, 1, { productionMul });
+    expect(tuned(1)).toBe(30);
+    expect(tuned(1.5)).toBe(45);
+    expect(bold('farm', tuned(1))).toEqual(['30', '1', String(HARVEST_RADIUS)]);
+    expect(bold('farm', tuned(1.5))).toEqual(['45', '1', String(HARVEST_RADIUS)]);
+    expect(bold('farm', 37.46)[0]).toBe('37.5');
+  });
+
+  it('prints the figure of the snapshot at the end of a chain of nested tooltips', () => {
+    // field tile -> its biome -> the station kind the biome names; and a station -> the same
+    const map = emptyMap(7, 8, 8, Terrain.Grass);
+    map.biome[0] = biomeId('plains');
+    const tile: TileSnapshot = {
+      map,
+      x: 0,
+      y: 0,
+      charted: true,
+      track: null,
+      decor: null,
+      props: [],
+      powered: false,
+      trackCostFactor: 1,
+      weeklyAtLevel1: 45,
     };
-    const bold = (parts: Parts) =>
-      parts.flatMap((p) => (typeof p !== 'string' && 'num' in p ? [p.num] : []));
-    expect(bold(words('farm'))).toEqual([
-      String(LEVELS.production[0]),
-      '1',
-      String(HARVEST_RADIUS),
-    ]);
-    const was = LEVELS.production[0];
-    try {
-      LEVELS.production[0] = was + 6;
-      expect(bold(words('farm'))[0]).toBe(String(was + 6));
-    } finally {
-      LEVELS.production[0] = was;
+    const station: StationSnapshot = {
+      name: 'Hillside',
+      level: 1,
+      work: null,
+      stored: 0,
+      capacity: 60,
+      biome: biomeId('plains'),
+      weeklyAtLevel1: 45,
+    };
+    for (const doc of [tileTip(tile), stationTip(station)]) {
+      const biome = termIn(partsOf(doc.find((b) => b.kind === 'row' && termsOf([b]).length)!));
+      const kind = termsOf(biome.tip())[0];
+      const sentence = kind.tip()[1];
+      expect(sentence.kind).toBe('text');
+      expect(partsOf(sentence)).toContainEqual({ num: '45' });
+    }
+  });
+
+  it('is built from the figure it is given: no tooltip builder reads the level table', () => {
+    for (const file of [
+      'tooltipContent.ts',
+      'biomeTooltip.ts',
+      'tileTooltip.ts',
+      'tooltipDoc.ts',
+    ]) {
+      const source = ts.createSourceFile(
+        file,
+        readFileSync(new URL(file, import.meta.url), 'utf8'),
+        ts.ScriptTarget.Latest,
+      );
+      const imported = source.statements.flatMap((st) =>
+        ts.isImportDeclaration(st) && st.importClause?.namedBindings
+          ? ts.isNamedImports(st.importClause.namedBindings)
+            ? st.importClause.namedBindings.elements.map((e) => (e.propertyName ?? e.name).text)
+            : []
+          : [],
+      );
+      expect(imported, file).not.toContain('LEVELS');
+      expect(imported, file).not.toContain('weeklyOutput');
     }
   });
 
   it('names the resource, the ground and the radius of each station', () => {
     for (const id of named) {
       const def = STATION_DEFS.find((d) => d.id === id)!;
-      const doc = stationKindTip(id);
+      const doc = stationKindTip(id, WEEKLY);
       const text = blockText(doc[1]);
       expect(text, id).toContain(STR.tile.phrase[def.terrain!].many);
       expect(text, id).toMatch(/^Makes /);
@@ -564,11 +666,11 @@ describe('the station tooltip a biome opens', () => {
   it('makes a station that counts no ground say only what it makes', () => {
     const noGround = STATION_DEFS.find((d) => d.produces.length && !d.terrain);
     if (!noGround) return;
-    expect(blockText(stationKindTip(noGround.id)[1])).not.toMatch(/within/);
+    expect(blockText(stationKindTip(noGround.id, WEEKLY)[1])).not.toMatch(/within/);
   });
 
   it('does not break on a station kind the data lacks', () => {
-    expect(lines(stationKindTip('no_such_station'))).toEqual(['no_such_station']);
+    expect(lines(stationKindTip('no_such_station', WEEKLY))).toEqual(['no_such_station']);
   });
 });
 

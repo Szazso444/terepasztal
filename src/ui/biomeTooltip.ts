@@ -5,7 +5,7 @@
  */
 import { STR } from '../strings';
 import { biomeDef } from '../sim/biomes';
-import { HARVEST_RADIUS, LEVELS, STATION_DEFS } from '../sim/stations';
+import { HARVEST_RADIUS, STATION_DEFS } from '../sim/stations';
 import type { Biome } from '../world/tiles';
 import {
   dim,
@@ -23,12 +23,15 @@ import {
   type TipDoc,
 } from './tooltipDoc';
 
-/** The level `LEVELS.production[0]` is the output of. */
+/** The level the weekly figure of the snapshots is for. */
 const FIRST_LEVEL = 1;
 
-/** The biome as a term: its name, with the biome tooltip as its nested tooltip. */
-export function biomeTerm(b: Biome): TermPart {
-  return term(biomeDef(b).name, () => biomeTip(b));
+/**
+ * The biome as a term: its name, with the biome tooltip as its nested tooltip. `weeklyAtLevel1`
+ * is the figure the station tooltips below it print (`StationSnapshot.weeklyAtLevel1`).
+ */
+export function biomeTerm(b: Biome, weeklyAtLevel1: number): TermPart {
+  return term(biomeDef(b).name, () => biomeTip(b, weeklyAtLevel1));
 }
 
 /**
@@ -36,11 +39,11 @@ export function biomeTerm(b: Biome): TermPart {
  * the track cost, the steam engines' water use and the train speed, each only when it is not 1.
  * Green is good for the player and red bad.
  */
-export function biomeTip(b: Biome): TipDoc {
+export function biomeTip(b: Biome, weeklyAtLevel1: number): TipDoc {
   const def = biomeDef(b);
   const out: Block[] = [title(STR.biome.title(def.name)), dim(...richText(def.desc))];
   for (const [stationId, m] of Object.entries(def.production))
-    out.push(productionRow(stationId, m));
+    out.push(productionRow(stationId, m, weeklyAtLevel1));
   if (def.trackCostMul !== 1)
     out.push(
       row(STR.biome.trackCost, percent(def.trackCostMul), {
@@ -61,22 +64,24 @@ export function biomeTip(b: Biome): TipDoc {
 }
 
 /** `[icon] wheat from farm halts` and its percent; a station id the data does not know stays plain. */
-function productionRow(stationId: string, m: number): Block {
+function productionRow(stationId: string, m: number, weeklyAtLevel1: number): Block {
   const kind = STATION_DEFS.find((d) => d.id === stationId);
   const cargo = kind?.produces[0]?.cargo;
   const plural = STR.station.plural[stationId] ?? stationId;
   const label = fill(STR.biome.production, {
     res: cargo ? res(cargo) : stationId,
-    station: kind ? term(plural, () => stationKindTip(stationId)) : plural,
+    station: kind ? term(plural, () => stationKindTip(stationId, weeklyAtLevel1)) : plural,
   });
   return row(label, percent(m), m === 1 ? {} : { tone: m > 1 ? 'good' : 'bad' });
 }
 
 /**
  * What a kind of harvesting station makes: the station's name, then its output a week at level 1
- * (`LEVELS.production[0]`) and the ground within `HARVEST_RADIUS` tiles that adds to it.
+ * and the ground within `HARVEST_RADIUS` tiles that adds to it. The output is the tuned figure the
+ * game worked out (`weeklyAtLevel1`), printed as given: the data's base is not read here, because
+ * the player's tuning changes what the game will do.
  */
-export function stationKindTip(stationId: string): TipDoc {
+export function stationKindTip(stationId: string, weeklyAtLevel1: number): TipDoc {
   const def = STATION_DEFS.find((d) => d.id === stationId);
   if (!def) return [title(stationId)];
   const cargo = def.produces[0]?.cargo;
@@ -87,7 +92,7 @@ export function stationKindTip(stationId: string): TipDoc {
     text(
       ...fill(ground ? STR.station.makes : STR.station.makesAnywhere, {
         res: res(cargo),
-        amount: num(Math.round(LEVELS.production[0] * 10) / 10),
+        amount: num(Math.round(weeklyAtLevel1 * 10) / 10),
         level: num(FIRST_LEVEL),
         tiles: ground?.many ?? '',
         radius: num(HARVEST_RADIUS),
