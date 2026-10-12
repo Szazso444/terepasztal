@@ -752,6 +752,13 @@ interface Coverage {
   /** refreshes that kept the term under the pointer, and ones that took it */
   termsKept: number;
   termsGone: number;
+  /** refreshes that kept the term the pointer was still waiting on */
+  waitsKept: number;
+  /** refreshes that took the term under the pointer with its unlocked tooltip, or its locked one */
+  childDrops: number;
+  lockedKeptOnGone: number;
+  /** the pointer back on a term whose locked tooltip is up, its parent refreshed since it opened */
+  termReturns: number;
   escapes: number;
   rootChecks: number;
   termChecks: number;
@@ -767,6 +774,8 @@ type Step =
   | { k: 'panelTerm'; term: number }
   | { k: 'tip'; level: number }
   | { k: 'term'; level: number; term: number }
+  /** onto a term of the tooltip below the top one */
+  | { k: 'back'; term: number }
   | { k: 'rogue'; level: number }
   | { k: 'wait'; ms: number }
   | { k: 'live'; on: boolean; newTerms: boolean }
@@ -784,6 +793,8 @@ const FIELD_KEYS: (string | null)[] = [
   null,
 ];
 const NO_TARGET = FIELD_KEYS.length - 1;
+/** An `update` step's key for the target of the root that is up, whatever it is. */
+const OWN = FIELD_KEYS.length;
 const XS = [100, 101, 160];
 const YS = [100, 130];
 const TERMS_PER_TIP = 3;
@@ -817,12 +828,27 @@ function genSteps(rng: Rng): Step[] {
     y: rng.pick(YS),
   });
   // a level down: rest on a term of the top tooltip until its own tooltip locks, then go in
-  const dive = (): Step[] => [
-    { k: 'term', level: TOP, term: term() },
+  const dive = (t = term()): Step[] => [
+    { k: 'term', level: TOP, term: t },
     { k: 'wait', ms: SHOW_MS },
     { k: 'wait', ms: HOLD_MS },
     { k: 'tip', level: TOP },
   ];
+  // the live root refreshed, with its terms kept or new ones
+  const refreshed = (): Step => ({ k: 'update', key: OWN, newTerms: rng.chance(0.5) });
+  // a level down and back onto a term of the parent, its own or another, the parent refreshed
+  // before or after: the finding of #337 that a refresh rebuilt a locked nested tooltip
+  const back = (): Step[] => {
+    const t = term();
+    return [
+      ...dive(t),
+      ...(rng.chance(0.5) ? [refreshed()] : []),
+      { k: 'back', term: rng.chance(0.6) ? t : term() },
+      { k: 'wait', ms: rng.pick([1, SHOW_MS - 1, UPDATE_MS]) },
+      refreshed(),
+    ];
+  };
+  const root = (): Step[] => [field(), { k: 'wait', ms: ROOT_DELAY_MS + HOLD_MS }];
   while (steps.length < n) {
     const r = rng.next();
     if (r < 0.2) steps.push(field());
@@ -830,15 +856,12 @@ function genSteps(rng: Rng): Step[] {
       steps.push({ k: 'wait', ms: rng.chance(0.3) ? rng.int(1, 2500) : rng.pick(WAITS) });
     else if (r < 0.5) steps.push({ k: 'tip', level: level() });
     else if (r < 0.58) steps.push({ k: 'term', level: level(), term: term() });
-    else if (r < 0.68) steps.push(...dive());
-    else if (r < 0.75) steps.push(field(), { k: 'wait', ms: ROOT_DELAY_MS + HOLD_MS });
+    else if (r < 0.64) steps.push(...dive());
+    else if (r < 0.68) steps.push(...(rng.chance(0.5) ? root() : []), ...back());
+    else if (r < 0.75) steps.push(...root());
     else if (r < 0.78)
       // a root, then down several levels at once
-      steps.push(
-        field(),
-        { k: 'wait', ms: ROOT_DELAY_MS + HOLD_MS },
-        ...Array.from({ length: rng.int(2, 5) }, dive).flat(),
-      );
+      steps.push(...root(), ...Array.from({ length: rng.int(2, 5) }, () => dive()).flat());
     else if (r < 0.82) steps.push({ k: 'ui' });
     else if (r < 0.86) steps.push({ k: 'panelTerm', term: rng.int(0, 1) });
     else if (r < 0.88) steps.push({ k: 'live', on: rng.chance(0.5), newTerms: rng.chance(0.5) });
@@ -945,6 +968,10 @@ class Trace implements TipView<Content> {
       this.wait(s.ms);
       return;
     }
+    if (s.k === 'back') {
+      this.step({ k: 'term', level: Math.max(0, this.up.length - 2), term: s.term });
+      return;
+    }
     let after: (() => void) | null = null;
     switch (s.k) {
       case 'field': {
@@ -1027,7 +1054,9 @@ class Trace implements TipView<Content> {
         this.liveNewTerms = s.newTerms;
         break;
       case 'update': {
-        const key = FIELD_KEYS[s.key];
+        const root = this.up[0];
+        const own = root?.src === 'field' ? root.key : this.lastFieldKey;
+        const key = s.key === OWN ? own : FIELD_KEYS[s.key];
         if (key !== null) this.update(key, s.newTerms);
         break;
       }
@@ -1072,6 +1101,9 @@ class Trace implements TipView<Content> {
     }
     if (to.at === 'term') {
       const level = to.inst.level;
+      const own = this.up[level + 1];
+      if (own?.term === to.term && own.lockedAt !== null && to.inst.builtAt > own.openedAt)
+        this.cover.termReturns++;
       const build = this.builder('term', to.term.label, to.term);
       this.api({ t, name: 'termEnter', level, term: to.term }, () =>
         this.stack.termEnter(level, to.term, () => ({ x: 300, y: 200 }), build),
@@ -1186,8 +1218,10 @@ class Trace implements TipView<Content> {
     const due = !!root && root.src === 'field' && root.key === key && t - root.builtAt >= UPDATE_MS;
     const l = this.loc;
     const top = this.up[1];
-    const drops =
-      due && newTerms && l.at === 'term' && l.inst === root && !!top && top.lockedAt === null;
+    const gone = due && newTerms && l.at === 'term' && l.inst === root;
+    const drops = gone && !!top && top.lockedAt === null;
+    if (drops) this.cover.childDrops++;
+    else if (gone && top) this.cover.lockedKeptOnGone++;
     const n = this.ops.length;
     const locks = this.up
       .slice(0, drops ? 1 : undefined)
@@ -1355,6 +1389,8 @@ class Trace implements TipView<Content> {
     const under = l.at === 'term' && l.inst === root;
     if (!content.newTerms) {
       if (under) this.cover.termsKept++;
+      // the pointer still waits on it: the wait goes on (the 'term' step's expectation)
+      if (under && t - this.locSince < SHOW_MS) this.cover.waitsKept++;
       return true;
     }
     root.terms = this.makeTerms(root.id);
@@ -1484,6 +1520,13 @@ class Trace implements TipView<Content> {
         closes.every((c) => c.level >= opened.level),
         () => `opening level ${opened.level} at ${t} closed a level below it`,
       );
+      // resting on a term whose own tooltip is up keeps that one, its ring and its lock
+      const own = closes.find((c) => c.level === opened.level && c.inst.term === opened.inst.term);
+      check(
+        !own,
+        () =>
+          `the tooltip of ${opened.inst.key} was closed and opened again at ${t}, its own term rested on (opened at ${own?.inst.openedAt})`,
+      );
       return;
     }
     const low = Math.min(...closes.map((c) => c.level));
@@ -1569,6 +1612,10 @@ describe('the stack over seeded pointer traces', () => {
     refreshes: 0,
     termsKept: 0,
     termsGone: 0,
+    waitsKept: 0,
+    childDrops: 0,
+    lockedKeptOnGone: 0,
+    termReturns: 0,
     escapes: 0,
     rootChecks: 0,
     termChecks: 0,
@@ -1604,6 +1651,10 @@ describe('the stack over seeded pointer traces', () => {
         'refreshes',
         'termsKept',
         'termsGone',
+        'waitsKept',
+        'childDrops',
+        'lockedKeptOnGone',
+        'termReturns',
         'escapes',
         'rootChecks',
         'termChecks',
@@ -1715,6 +1766,54 @@ describe('placement and target keys, over seeded cases', () => {
       (rng) => [target(rng), target(rng)] as const,
       ([a, b]) => expect(tipKey(a) === tipKey(b)).toBe(JSON.stringify(a) === JSON.stringify(b)),
       { seeds: Array.from({ length: 2000 }, (_, i) => i + 1) },
+    );
+  });
+
+  it('keys a term before and after a refresh alike exactly when its label and its place among equal labels match', () => {
+    // labels that are one another with a digit or the separator added, so a key that runs a label
+    // into its place among equal labels (`a` the 11th of its kind, `a1` the 1st) shows
+    const LABELS = ['a', 'a1', 'a#', 'a#1', '#', '#0', '1', '10', ''];
+    const terms = (rng: Rng): string[] => {
+      const out: string[] = [];
+      // runs of one label, so a label is the 11th of its kind and more
+      for (let runs = rng.int(0, 4); runs > 0; runs--) {
+        const label = rng.pick(LABELS);
+        for (let n = rng.int(1, 12); n > 0; n--) out.push(label);
+      }
+      return rng.shuffle(out);
+    };
+    /** The slow way: how many terms before the i-th have its label. */
+    const place = (labels: readonly string[], i: number) =>
+      labels.slice(0, i).filter((l) => l === labels[i]).length;
+    forAll(
+      (rng) => [terms(rng), terms(rng)] as const,
+      ([before, after]) => {
+        const kb = termKeys(before);
+        const ka = termKeys(after);
+        expect(kb.length).toBe(before.length);
+        expect(ka.length).toBe(after.length);
+        // across the refresh, and within the content after it
+        for (const [x, kx, when] of [
+          [before, kb, 'before'],
+          [after, ka, 'after'],
+        ] as const)
+          for (let i = 0; i < x.length; i++)
+            for (let j = 0; j < after.length; j++) {
+              const same = x[i] === after[j] && place(x, i) === place(after, j);
+              check(
+                (kx[i] === ka[j]) === same,
+                () =>
+                  `term ${i} "${x[i]}" ${when} (key ${kx[i]}) and term ${j} "${after[j]}" after (key ${ka[j]}): ${same ? 'the same term' : 'two terms'}`,
+              );
+            }
+      },
+      {
+        seeds: Array.from({ length: 500 }, (_, i) => i + 1),
+        shrink: function* ([before, after]) {
+          for (const b of shrinkArray(before)) yield [b, after] as const;
+          for (const a of shrinkArray(after)) yield [before, a] as const;
+        },
+      },
     );
   });
 });
