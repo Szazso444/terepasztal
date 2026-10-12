@@ -193,6 +193,38 @@ describe('the ground each kind stands on, against the rule before the helper', (
     expect(gates).toBeGreaterThan(0);
   });
 
+  it('asks every tile of a footprint: one tile of a terrain decides as the whole would', () => {
+    // a station wider than a tile is refused for any one tile of it where nothing can be built,
+    // with that tile's ground named, and one tile of buildable ground changes nothing
+    const wide = STATION_DEFS.filter((d) =>
+      [0, 1].some((rot) => stationFootprint(d.id, X, Y, rot).length > 1),
+    );
+    expect(wide.length).toBeGreaterThan(0);
+    let tried = 0;
+    for (const def of wide)
+      for (const rot of [0, 1, 2, 3]) {
+        const foot = stationFootprint(def.id, X, Y, rot);
+        for (const tile of foot)
+          for (const t of ALL) {
+            const what = `${def.id} turned ${rot}, ${name(t)} at ${tile.x},${tile.y}`;
+            const station = grassWorld();
+            paint(station.map, [tile], t);
+            if (!def.depot) station.builder.track.place(X - 1, Y, 'straight', 1, 'regular');
+            expect(station.builder.checkStation(X, Y, def.id, rot).reason, what).toBe(
+              unbuildable(t) ?? undefined,
+            );
+            if (!def.depot) continue;
+            const start = grassWorld();
+            paint(start.map, [tile], t);
+            expect(depotSiteBlocked(start.builder, def.id, X, Y, rot), `start ${what}`).toBe(
+              unbuildable(t),
+            );
+            tried++;
+          }
+      }
+    expect(tried).toBeGreaterThanOrEqual(4 * ALL.length);
+  });
+
   it('gives one reason for a terrain, whatever is refused on it', () => {
     for (const t of ALL) {
       const { map, builder } = grassWorld();

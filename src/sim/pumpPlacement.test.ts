@@ -6,12 +6,28 @@ import { TrackGraph, type TrackItem } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import { buildRelief, groundAllows } from '../render/terrainRelief';
 import { repairBuiltTiles } from '../engine/loadRepair';
-import { DEFAULT_CONTENT, validateContent, type ContentBundle } from '../data/content';
-import { Builder } from './build';
+import {
+  DEFAULT_CONTENT,
+  content,
+  validateContent,
+  type ContentBundle,
+  type StationDef,
+} from '../data/content';
+import { forAll, shrinkArray } from '../testing/property';
+import type { Rng } from '../engine/rng';
+import { LAST_AGE } from './ages';
+import { Builder, unbuildable } from './build';
 import { BIOME_DEFS } from './biomes';
 import { Economy } from './economy';
 import { Stockpile } from './stockpile';
-import { HARVEST_FLOOR, STATION_DEFS, Station, stationDef, terrainFactorAt } from './stations';
+import {
+  HARVEST_FLOOR,
+  STATION_DEFS,
+  Station,
+  stationDef,
+  stationFootprint,
+  terrainFactorAt,
+} from './stations';
 import { SAVE_MIN_VERSION, SAVE_VERSION, parseSave, type SaveGame } from './save';
 import { pruneUnknownContent } from './saveContent';
 import { DEFAULT_RULES, rules, weekSeconds } from './rules';
@@ -185,6 +201,295 @@ describe('where a water pump stands', () => {
   });
 });
 
+/** The seeds the placement properties run: 1 to 400, one small world each. */
+const SEEDS_400: readonly number[] = Array.from({ length: 400 }, (_, i) => i + 1);
+
+/** A small world around a pump site: every tile's terrain and relief, and what stands on it. */
+interface PumpCase {
+  w: number;
+  h: number;
+  /** `Terrain` of each tile, row by row */
+  terrain: number[];
+  /** whether each tile is level */
+  level: boolean[];
+  /** straights laid directly, as [x, y, rot] */
+  track: [number, number, number][];
+  /** tiles a townhouse stands on */
+  taken: [number, number][];
+  /** a game (prices, chunk lock) rather than the editor */
+  game: boolean;
+  /** the one chunk is owned */
+  owned: boolean;
+  /** the stock can pay for anything */
+  stocked: boolean;
+  x: number;
+  y: number;
+}
+
+/** Terrains drawn for a tile, the ones a pump turns on drawn more often. */
+const DRAWN = [
+  Terrain.Grass,
+  Terrain.Grass,
+  Terrain.Forest,
+  Terrain.Forest,
+  Terrain.Water,
+  Terrain.Water,
+  Terrain.Water,
+  Terrain.Sand,
+  Terrain.Hill,
+  Terrain.Rock,
+  Terrain.Mountain,
+];
+/** Terrains drawn for the site itself besides `DRAWN`: the ground something can be built on. */
+const SITE = [Terrain.Grass, Terrain.Forest, Terrain.Sand, Terrain.Hill];
+/** The four sides of a tile, written out rather than read from `DIRS`. */
+const SIDES = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
+
+function genPumpCase(rng: Rng): PumpCase {
+  const w = rng.int(3, 7),
+    h = rng.int(3, 7);
+  const x = rng.int(0, w - 1),
+    y = rng.int(0, h - 1);
+  const terrain = Array.from({ length: w * h }, () => rng.pick(DRAWN));
+  // the site itself is mostly ground something can be built on, so the pump's rules are reached
+  terrain[y * w + x] = rng.pick([...SITE, ...DRAWN]);
+  const level = Array.from({ length: w * h }, () => rng.chance(0.9));
+  const track: [number, number, number][] = [];
+  // most sites get a rail on a side or two; now and then one lies on the site itself
+  for (const [dx, dy] of SIDES) {
+    const tx = x + dx,
+      ty = y + dy;
+    if (tx >= 0 && ty >= 0 && tx < w && ty < h && rng.chance(0.5)) track.push([tx, ty, dx ? 1 : 0]);
+  }
+  if (rng.chance(0.08)) track.push([x, y, rng.int(0, 1)]);
+  const taken: [number, number][] = rng.chance(0.08) ? [[x, y]] : [];
+  const game = rng.chance(0.5);
+  return {
+    w,
+    h,
+    terrain,
+    level,
+    track,
+    taken,
+    game,
+    owned: !game || rng.chance(0.85),
+    stocked: rng.chance(0.6),
+    x,
+    y,
+  };
+}
+
+function* shrinkPumpCase(c: PumpCase): Iterable<PumpCase> {
+  if (c.game) yield { ...c, game: false, owned: true };
+  if (!c.owned) yield { ...c, owned: true };
+  if (c.taken.length) yield { ...c, taken: [] };
+  for (const track of shrinkArray(c.track)) yield { ...c, track };
+  for (let i = 0; i < c.level.length; i++)
+    if (!c.level[i]) yield { ...c, level: c.level.map((l, j) => l || j === i) };
+  for (let i = 0; i < c.terrain.length; i++)
+    if (c.terrain[i] !== Terrain.Grass)
+      yield { ...c, terrain: c.terrain.map((t, j) => (j === i ? Terrain.Grass : t)) };
+}
+
+/** The case as rows of terrain letters (the site in brackets, a slope lower-case), then the rest. */
+function formatPumpCase(c: PumpCase): string {
+  const rows: string[] = [];
+  for (let y = 0; y < c.h; y++) {
+    let row = '';
+    for (let x = 0; x < c.w; x++) {
+      const i = y * c.w + x;
+      const ch = 'GFHWRSM'[c.terrain[i]];
+      const t = c.level[i] ? ch : ch.toLowerCase();
+      row += x === c.x && y === c.y ? `[${t}]` : ` ${t} `;
+    }
+    rows.push(row);
+  }
+  const { track, taken, game, owned, stocked, x, y } = c;
+  return `\n${rows.join('\n')}\n${JSON.stringify({ x, y, track, taken, game, owned, stocked })}`;
+}
+
+/** The builder of a case: its map, chunk, relief, track, townhouses, mode and stock. */
+function pumpCaseWorld(c: PumpCase) {
+  const map = emptyMap(7, c.w, c.h, Terrain.Grass);
+  c.terrain.forEach((t, i) => (map.terrain[i] = t));
+  const regions = new RegionState(map);
+  regions.unlocked[0] = c.owned;
+  const economy = new Economy();
+  const stock = new Stockpile();
+  const builder = new Builder(map, regions, new TrackGraph(c.w, c.h), economy, stock);
+  builder.free = !c.game;
+  builder.groundCheck = (x, y) => c.level[y * c.w + x];
+  economy.tier = LAST_AGE;
+  if (c.stocked) for (const k of content.cargo) stock.add(k.id, 1e6);
+  for (const [x, y, rot] of c.track) builder.track.place(x, y, 'straight', rot, 'regular');
+  for (const [x, y] of c.taken) builder.decor.set(y * c.w + x, { id: 'townhouse', x, y, rot: 0 });
+  return { map, builder };
+}
+
+describe("the water pump's check, against a plain station's and the ground around it", () => {
+  /**
+   * The station the pump is held against: one tile at every turn, no ground rules of its own, no
+   * gauge, depot or spacing rule, of the pump's age and chain. What refuses it refuses the pump.
+   */
+  const pump = stationDef('pump');
+  const plain = STATION_DEFS.find(
+    (d) =>
+      !d.standOn &&
+      !d.needsWater &&
+      !d.depot &&
+      !d.gauge &&
+      d.id !== 'town' &&
+      d.tier === pump.tier &&
+      d.supply === pump.supply &&
+      [0, 1].every((rot) => stationFootprint(d.id, 0, 0, rot).length === 1),
+  ) as StationDef;
+
+  it('is refused first for what refuses a plain station, then ground, then water, then price', () => {
+    expect(plain, 'a plain one-tile station to hold the pump against').toBeDefined();
+    const seen = { general: 0, ground: 0, water: 0, ok: 0, price: 0 };
+    const priced = (r: string | undefined) => !!r?.startsWith(STR.build.needResources(''));
+    forAll(
+      genPumpCase,
+      (c) => {
+        const { map, builder } = pumpCaseWorld(c);
+        const base = builder.checkStation(c.x, c.y, plain.id);
+        const got = builder.checkStation(c.x, c.y, 'pump');
+        // a refusal every station keeps comes first, whatever the ground around
+        if (base.reason !== undefined && !priced(base.reason)) {
+          seen.general++;
+          expect(got.reason, `as ${plain.id}`).toBe(base.reason);
+          return;
+        }
+        // then the ground the issue names, then water on a side inside the map, then the price
+        const own = TERRAIN_NAMES[map.terrain[c.y * c.w + c.x]];
+        const wet = SIDES.some(([dx, dy]) => {
+          const x = c.x + dx,
+            y = c.y + dy;
+          return x >= 0 && y >= 0 && x < c.w && y < c.h && c.terrain[y * c.w + x] === Terrain.Water;
+        });
+        if (own !== 'grass' && own !== 'forest') {
+          seen.ground++;
+          expect(got).toMatchObject({ ok: false, reason: GROUND });
+        } else if (!wet) {
+          seen.water++;
+          expect(got).toMatchObject({ ok: false, reason: WATER });
+        } else if (!c.game || c.stocked) {
+          seen.ok++;
+          expect(got.ok, got.reason).toBe(true);
+        } else {
+          seen.price++;
+          expect(got.ok).toBe(false);
+          expect(priced(got.reason), got.reason).toBe(true);
+        }
+      },
+      { seeds: SEEDS_400, shrink: shrinkPumpCase, format: formatPumpCase },
+    );
+    // every branch was reached, so the property is not empty
+    for (const [branch, n] of Object.entries(seen)) expect(n, branch).toBeGreaterThan(4);
+  });
+
+  it('holds any station the content gives the fields to, on every tile and on every side', () => {
+    // the content editor may give them to any station: here a two-by-two one with no line of its
+    // own, so the fallback reasons speak
+    const wide: StationDef = {
+      ...stationDef('farm'),
+      id: 'test_wide_pump',
+      size: 2,
+      standOn: ['grass', 'forest'],
+      needsWater: true,
+    };
+    STATION_DEFS.push(wide);
+    const seen = { unbuildable: 0, ground: 0, water: 0, ok: 0 };
+    try {
+      expect(STR.build.standOn[wide.id]).toBeUndefined();
+      forAll(
+        (rng) => {
+          // most footprints are of the ground it takes, and the water around is often missing
+          const groundOnly = rng.chance(0.6);
+          const wet = rng.pick([0, 0.08, 0.3]);
+          const terrain = Array.from({ length: 36 }, (_, i) => {
+            const x = i % 6,
+              y = Math.floor(i / 6);
+            const inFoot = x >= 2 && x <= 3 && y >= 2 && y <= 3;
+            if (inFoot && groundOnly) return rng.pick([Terrain.Grass, Terrain.Forest]);
+            if (inFoot) return rng.pick(DRAWN);
+            return rng.chance(wet) ? Terrain.Water : rng.pick(SITE);
+          });
+          return { terrain, rot: rng.int(0, 3) };
+        },
+        (c) => {
+          const map = emptyMap(7, 6, 6, Terrain.Grass);
+          c.terrain.forEach((t, i) => (map.terrain[i] = t));
+          const regions = new RegionState(map);
+          const builder = new Builder(
+            map,
+            regions,
+            new TrackGraph(6, 6),
+            new Economy(),
+            new Stockpile(),
+          );
+          builder.free = true;
+          builder.track.place(1, 2, 'straight', 1, 'regular');
+          // the footprint is (2, 2) to (3, 3); the ring is the eight tiles beside it, outside it
+          const foot = [
+            [2, 2],
+            [3, 2],
+            [2, 3],
+            [3, 3],
+          ];
+          const ring = [
+            [1, 2],
+            [1, 3],
+            [4, 2],
+            [4, 3],
+            [2, 1],
+            [3, 1],
+            [2, 4],
+            [3, 4],
+          ];
+          const at = ([x, y]: readonly number[]) => c.terrain[y * 6 + x] as Terrain;
+          const got = builder.checkStation(2, 2, wide.id, c.rot).reason;
+          const bad = foot.map((f) => unbuildable(at(f))).filter((r) => r !== null);
+          if (bad.length) {
+            seen.unbuildable++;
+            expect(bad).toContain(got);
+          } else if (foot.some((f) => at(f) !== Terrain.Grass && at(f) !== Terrain.Forest)) {
+            seen.ground++;
+            expect(got).toBe(STR.build.needGround(['grass', 'forest']));
+          } else if (!ring.some((r) => at(r) === Terrain.Water)) {
+            seen.water++;
+            expect(got).toBe(STR.build.needWaterside);
+          } else {
+            seen.ok++;
+            expect(got).toBeUndefined();
+          }
+        },
+        {
+          seeds: SEEDS_400,
+          format: (c) =>
+            `rot ${c.rot}\n` +
+            Array.from({ length: 6 }, (_, y) =>
+              c.terrain
+                .slice(y * 6, y * 6 + 6)
+                .map((t) => 'GFHWRSM'[t])
+                .join(' '),
+            ).join('\n'),
+        },
+      );
+    } finally {
+      STATION_DEFS.splice(STATION_DEFS.indexOf(wide), 1);
+    }
+    expect(STATION_DEFS.some((d) => d.id === wide.id)).toBe(false);
+    // every branch was reached, so the property is not empty
+    for (const [branch, n] of Object.entries(seen)) expect(n, branch).toBeGreaterThan(4);
+  });
+});
+
 describe('the placement fields in the content', () => {
   /** The shipped bundle with the pump's entry changed by `edit`. */
   function withPump(edit: (pump: Record<string, unknown>) => void): ContentBundle {
@@ -319,6 +624,7 @@ function startChunkPumpTile(map: GameMap): { x: number; y: number } | null {
 const NO_PUMP_TILE_YET = [10, 29, 39];
 
 describe('the start chunk of a new game', () => {
+  // slow: fifty maps generated at the default size, about two seconds alone
   it('has a tile where a pump may stand, over 50 seeds at the default size', () => {
     const size = DEFAULT_RULES.mapSize;
     const missing: number[] = [];
