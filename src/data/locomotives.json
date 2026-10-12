@@ -96,6 +96,25 @@
     "gauge": "narrow"
   },
   {
+    "id": "c50",
+    "name": "MÁV C-50",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "1950s Hungarian 760 mm narrow-gauge diesel, built in the hundreds for forest and field railways.",
+    "body": "diesel_switcher",
+    "paint": "red",
+    "speed": 0.7,
+    "power": 45,
+    "weight": 9,
+    "crew": 1,
+    "fuelCap": 70,
+    "fuelPerTile": 0.055,
+    "size": "small",
+    "length": 0.82,
+    "controlClass": "emd",
+    "gauge": "narrow"
+  },
+  {
     "id": "adler",
     "name": "Adler",
     "rarity": "N",
