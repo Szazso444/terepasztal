@@ -194,6 +194,14 @@ export class TooltipStack<C> {
   isLocked(level: number): boolean {
     return this.tips[level]?.locked ?? false;
   }
+  /**
+   * The target (`tipKey`) of the root that is open over the field; null when no root is open or
+   * the root is a term's.
+   */
+  get fieldRoot(): string | null {
+    const root = this.tips[0];
+    return root && !root.fromTerm ? (root.key as string) : null;
+  }
 
   /**
    * The pointer is over the field at `x`, `y` (window pixels) on the target `key` (`tipKey`), or

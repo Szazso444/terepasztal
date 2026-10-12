@@ -175,7 +175,7 @@ export class Toolbar {
         ? STR.toolbar.place.depot
         : d.id === 'town'
           ? STR.toolbar.place.town
-          : STR.toolbar.place.station,
+          : (STR.toolbar.place.stationOn[d.id] ?? STR.toolbar.place.station),
     }));
     const decorItem = (d: (typeof DECOR_DEFS)[number]): ToolItem => ({
       key: `decor:${d.id}`,

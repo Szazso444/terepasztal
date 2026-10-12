@@ -422,6 +422,34 @@ body {
   opacity: 0.55;
 }
 
+/* ---- yield label (src/ui/yieldLabel.ts): its box 16 px above the tile's top corner ---- */
+#yield-label {
+  position: absolute;
+  height: 15px;
+  padding: 0 4px;
+  transform: translate(-50%, -16px);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 15px;
+  color: var(--amber);
+  background: rgba(26, 37, 29, 0.92);
+  white-space: nowrap;
+  pointer-events: none !important;
+}
+
+/* ---- a station panel's ground rows: the placing tooltip's rows in the panel's row look ---- */
+.station-ground .tt-row {
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--stone-light);
+}
+.station-ground .tt-row:not(.tt-good):not(.tt-bad) > span:first-child {
+  color: var(--text-dim);
+}
+.station-ground .tt-total {
+  margin-top: 0;
+}
+
 /* ---- overview banner ---- */
 #overview-banner {
   position: absolute;

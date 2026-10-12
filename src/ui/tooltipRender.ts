@@ -2,6 +2,7 @@ import type { AtlasRegistry } from '../engine/atlas';
 import {
   ttDim,
   ttHint,
+  ttQuiet,
   ttNum,
   ttRes,
   ttRow,
@@ -30,8 +31,11 @@ function renderBlock(b: Block, atlas: AtlasRegistry): HTMLElement {
   switch (b.kind) {
     case 'title':
       return ttTitle(...renderParts(b.parts, atlas));
-    case 'text':
-      return ttText(...renderParts(b.parts, atlas));
+    case 'text': {
+      const line = ttText(...renderParts(b.parts, atlas));
+      if (b.tone) line.classList.add(`tt-${b.tone}`);
+      return line;
+    }
     case 'dim':
       return ttDim(...renderParts(b.parts, atlas));
     case 'hint':
@@ -52,5 +56,6 @@ function renderInline(p: Inline, atlas: AtlasRegistry): Node | string {
   if (typeof p === 'string') return p;
   if ('num' in p) return ttNum(p.num);
   if ('res' in p) return ttRes(atlas, p.res, p.name);
+  if ('dim' in p) return ttQuiet(p.dim);
   return ttTerm(p.term, () => renderTip(p.tip(), atlas));
 }
