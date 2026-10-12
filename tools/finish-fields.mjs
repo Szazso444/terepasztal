@@ -129,8 +129,9 @@ export function capHighlight([r, g, b], cap = HIGHLIGHT_CAP, knee = HIGHLIGHT_KN
  * the shade and yellower in the light. So each colour's hue is pulled `pull` of the way toward
  * `hue` (that is the target at a value of `pivot`; it moves `slope` degrees per whole step of value,
  * yellower the lighter), its saturation `satPull` of the way toward `sat`, and its value spread
- * about `pivot` by `contrast` and scaled by `gain`. The highlight cap runs after it and has the
- * last word.
+ * about `pivot` by `contrast` and scaled by `gain`. Greens are left as they are: the grade fades
+ * out between the hues `greenFrom` and `greenTo`, so wheat-1's greener ends stay green. The
+ * highlight cap runs after it and has the last word.
  */
 export const GRADE = {
   hue: 42,
@@ -141,6 +142,8 @@ export const GRADE = {
   gain: 1.03,
   contrast: 1.35,
   pivot: 0.78,
+  greenFrom: 46,
+  greenTo: 54,
 };
 
 /** Rgb in 0..255 -> [hue in degrees, saturation, value in 0..255]. */
@@ -164,11 +167,13 @@ export function gradeGold(rgb, grade = GRADE) {
   if (s === 0) return rgb;
   const t = v / 255;
   const want = grade.hue + grade.slope * (t - grade.pivot);
-  return fromHsv([
+  const graded = fromHsv([
     h + (want - h) * grade.pull,
     Math.min(1, s + (grade.sat - s) * grade.satPull),
     255 * Math.max(0, grade.pivot + (t - grade.pivot) * grade.contrast) * grade.gain,
   ]);
+  const keep = smooth((h - grade.greenFrom) / (grade.greenTo - grade.greenFrom));
+  return rgb.map((c, i) => c + (graded[i] - c) * (1 - keep));
 }
 
 /** Grades every covered texel of a float image in place. */

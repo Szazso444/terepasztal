@@ -112,7 +112,7 @@ function hsv([r, g, b]) {
 
 describe('colour grade', () => {
   it('pulls a colour toward the straw gold and never past it', () => {
-    for (let h = 28; h <= 50; h += 2)
+    for (let h = 28; h <= GRADE.greenFrom; h += 2)
       for (const s of [0.45, 0.6, 0.75])
         for (const v of [110, 160, 210, 250]) {
           // a colour of this hue, saturation and value
@@ -126,8 +126,38 @@ describe('colour grade', () => {
           expect(s2).toBeLessThanOrEqual(Math.max(s, GRADE.sat) + 1e-6);
         }
   });
-  it('leaves a grey alone and keeps lighter colours lighter', () => {
+  it('leaves a grey alone and a green as it is, and fades between the gold and the green', () => {
     expect(gradeGold([120, 120, 120])).toEqual([120, 120, 120]);
+    const green = [140, 170, 70];
+    expect(hsv(green)[0]).toBeGreaterThan(GRADE.greenTo);
+    expect(gradeGold(green)).toEqual(green);
+    // from the gold's edge to the green's, the hue never jumps back
+    let last = -1;
+    for (let h = GRADE.greenFrom; h <= GRADE.greenTo; h += 0.5) {
+      const k = (n) => (n + h / 60) % 6;
+      const f = (n) => 200 * (1 - 0.6 * Math.max(0, Math.min(1, Math.min(k(n), 4 - k(n)))));
+      const out = hsv(gradeGold([f(5), f(3), f(1)]))[0];
+      expect(out).toBeGreaterThanOrEqual(last - 1e-6);
+      last = out;
+    }
+  });
+  it('keeps wheat-1 the one with greener ends', () => {
+    const greener = shipped.frames.map((f) => {
+      let n = 0;
+      let total = 0;
+      for (let i = 0; i < f.png.data.length; i += 4) {
+        if (f.png.data[i + 3] < 200) continue;
+        total++;
+        if (hsv([f.png.data[i], f.png.data[i + 1], f.png.data[i + 2]])[0] >= GRADE.greenFrom + 4)
+          n++;
+      }
+      return n / total;
+    });
+    expect(greener[1]).toBeGreaterThan(0.005);
+    expect(greener[0]).toBeLessThan(greener[1] / 3);
+    expect(greener[2]).toBeLessThan(greener[1] / 3);
+  });
+  it('keeps lighter colours lighter', () => {
     let last = -1;
     for (let v = 40; v <= 255; v += 5) {
       const out = gradeGold([v, v * 0.78, v * 0.3]);

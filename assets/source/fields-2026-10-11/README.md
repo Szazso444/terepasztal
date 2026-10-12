@@ -37,7 +37,8 @@ touched. Per painting, in order:
    light and the shade. After the summer prop tint the lit pixels (red over 120) average
    187, 149, 66 (hue 41, saturation 0.65) where the demo's wheat averages 183, 146, 70 (hue 41,
    saturation 0.62); before the grade they averaged 184, 137, 56 (hue 38, saturation 0.69). The
-   brightest red is 219 after the tint (225 without it). `--grade 0` keeps the painting's own
+   brightest red is 219 after the tint (225 without it). Greens (above hue 54, fading in from 46)
+   are left as painted, so wheat-1's greener ends stay green. `--grade 0` keeps the painting's own
    colour.
 5. Raise: the field is a low raised patch. Every footprint texel becomes a column of stalks 2.6 to
    3.5 world px high (the demo's heights; the furrows lie lower than the ridges, a ragged edge ends
