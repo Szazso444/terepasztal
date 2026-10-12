@@ -542,9 +542,11 @@ describe('the snow line and stone ground on maps of mixed tiles', () => {
 });
 
 describe('on generated worlds', () => {
-  // Real terrain and biome combinations, as the first chunks of a new game hold them. Every world
-  // today has biome ids 0 to 5 and no climate plane, so each tile must paint as it did before the
-  // table existed; a world with the later ids is held to the rules in the issue instead.
+  // Real terrain, biome and climate combinations, as the first chunks of a new game hold them. A
+  // tile whose biome is a climate (ids 0 to 5) paints as it did before the table existed, with the
+  // climate plane or without it; a tile with a later id is held to the rules in the issue, and its
+  // snow line and stone ground are its climate's. A world as a chunk stored before the landform
+  // ids holds it (its biome its climate, no climate plane) paints every tile as before.
   const WORLD_SEEDS = [20260912, 1, 7, 42, 155, 9001];
   const SIZE = { w: 48, h: 48 };
 
@@ -552,36 +554,49 @@ describe('on generated worlds', () => {
     const seen = new Set<string>();
     for (const seed of WORLD_SEEDS) {
       const world = generateMap(seed, SIZE),
-        painted = { ...world, climate: world.biome.slice() };
+        // As a chunk saved before the climate plane: the biome is all there is.
+        bare = { ...world, climate: undefined },
+        // As a chunk saved before the landform ids: its biome is its climate, and it has no plane.
+        swapped = { ...world, biome: world.climate!, climate: undefined };
       for (let k = 0; k < world.terrain.length; k++) {
         const terrain = world.terrain[k],
           biome = world.biome[k],
+          climate = world.climate![k],
           x = k % world.w,
           y = Math.floor(k / world.w),
-          where = `seed ${seed} tile ${x},${y}: terrain ${terrain} biome ${biome}`;
+          where = `seed ${seed} tile ${x},${y}: terrain ${terrain} biome ${biome} climate ${climate}`;
         expect(materialAt(world, x, y), where).toBe(materialFor(terrain, biome));
-        // The climate plane holding the biome changes nothing, as for a chunk saved with one.
-        expect(materialAt(painted, x, y), where).toBe(materialAt(world, x, y));
-        expect(snowLineAt(painted, SNOW_LEVELS, k), where).toBe(snowLineAt(world, SNOW_LEVELS, k));
-        expect(stoneGroundAt(painted, k), where).toBe(stoneGroundAt(world, k));
+        // The snow line and the stone ground are the climate's, as they were before the table.
+        expect(snowLineAt(world, SNOW_LEVELS, k), where).toBe(snowLineBefore(climate));
+        expect(stoneGroundAt(world, k), where).toBe(stoneGroundBefore(climate));
+        expect(snowLineAt(swapped, SNOW_LEVELS, k), where).toBe(snowLineAt(world, SNOW_LEVELS, k));
+        expect(stoneGroundAt(swapped, k), where).toBe(stoneGroundAt(world, k));
+        expect(materialAt(swapped, x, y), where).toBe(materialBefore(terrain, climate));
         if (biome <= 5) {
+          expect(materialAt(bare, x, y), where).toBe(materialAt(world, x, y));
+          expect(snowLineAt(bare, SNOW_LEVELS, k), where).toBe(snowLineAt(world, SNOW_LEVELS, k));
+          expect(stoneGroundAt(bare, k), where).toBe(stoneGroundAt(world, k));
           expect(materialAt(world, x, y), where).toBe(materialBefore(terrain, biome));
           expect(snowLineAt(world, SNOW_LEVELS, k), where).toBe(snowLineBefore(biome));
           expect(stoneGroundAt(world, k), where).toBe(stoneGroundBefore(biome));
         }
-        seen.add(`${terrain}:${biome}`);
+        seen.add(`${terrain}:${biome}:${climate}`);
       }
     }
-    // The worlds are varied enough to mean something: the tiles the old rules told apart are there.
-    for (const pair of [
-      [Terrain.Forest, 3],
-      [Terrain.Forest, 4],
-      [Terrain.Sand, 2],
-      [Terrain.Sand, 0],
-      [Terrain.Hill, 2],
-      [Terrain.Rock, 3],
-      [Terrain.Mountain, 3],
+    // The worlds are varied enough to mean something: the tiles the old rules told apart are there,
+    // and a mountain over the taiga climate, whose snow starts at taiga's level 3.
+    for (const triple of [
+      [Terrain.Forest, 3, 3],
+      [Terrain.Forest, 4, 4],
+      [Terrain.Sand, 2, 2],
+      [Terrain.Sand, 0, 0],
+      [Terrain.Hill, 2, 2],
+      [Terrain.Rock, 3, 3],
+      [Terrain.Mountain, MOUNTAIN, 3],
     ])
-      expect(seen.has(pair.join(':')), `no tile of terrain:biome ${pair.join(':')}`).toBe(true);
+      expect(
+        seen.has(triple.join(':')),
+        `no tile of terrain:biome:climate ${triple.join(':')}`,
+      ).toBe(true);
   });
 });

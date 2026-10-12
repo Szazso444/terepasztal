@@ -333,6 +333,11 @@ describe('a chunk text', () => {
     map.biome[7] = 16;
     expect(() => encodeChunk(map, 0, 0)).toThrow(/biome/);
     map.biome[7] = 0;
+    // the climate, a plane of its own from version 2, is held to the biome's bound
+    map.climate = new Uint8Array(32 * 32);
+    map.climate[11] = 16;
+    expect(() => encodeChunk(map, 0, 0)).toThrow(/climate/);
+    map.climate[11] = 0;
     map.variant[9] = 4;
     expect(() => encodeChunk(map, 0, 0)).toThrow(/variant/);
     map.variant[9] = 0;
@@ -599,9 +604,9 @@ describe('the production chain of a built map', () => {
 /**
  * A generator nothing like generateMap: every plane hashed from the world tile and `salt`, over all
  * that encoding 2 holds (terrain, biome and climate ids 0 to 15 in 4 x 4 patches so that runs
- * form, the climate its own plane, variants 0 to 3, up to nine props a tile of any kind, variants past the one-byte escape, offsets
- * up to 0.45 of a tile). A function of world tiles, so two frames of one salt agree where they
- * overlap. The params of every call go into `calls`.
+ * form, the climate its own plane, variants 0 to 3, up to nine props a tile of any kind, variants
+ * past the one-byte escape, offsets up to 0.45 of a tile). A function of world tiles, so two
+ * frames of one salt agree where they overlap. The params of every call go into `calls`.
  */
 function hashed(salt: number, calls: Partial<MapGenParams>[] = []): MapGenerator {
   return (seed, p) => {

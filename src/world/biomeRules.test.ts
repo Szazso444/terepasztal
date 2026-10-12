@@ -364,6 +364,282 @@ describe('the biome rules', () => {
   });
 });
 
+/** The four diagonal neighbours: sea there alone is no shore. */
+const DIAGONALS = [
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+] as const;
+
+/**
+ * The N4 fields of Rock and Mountain on `m`: each tile's field (-1 on other ground), and for each
+ * field whether it holds Mountain terrain.
+ */
+function stoneFields(m: GameMap) {
+  const { w, h, terrain } = m;
+  const stone = (i: number) => terrain[i] === Terrain.Rock || terrain[i] === Terrain.Mountain;
+  const field = new Int32Array(w * h).fill(-1);
+  const holdsMountain: boolean[] = [];
+  for (let s = 0; s < w * h; s++) {
+    if (field[s] >= 0 || !stone(s)) continue;
+    const id = holdsMountain.length;
+    let mountain = false;
+    field[s] = id;
+    for (const stack = [s]; stack.length;) {
+      const i = stack.pop()!;
+      if (terrain[i] === Terrain.Mountain) mountain = true;
+      const x = i % w;
+      const y = (i - x) / w;
+      for (const [dx, dy] of SIDES) {
+        if (x + dx < 0 || y + dy < 0 || x + dx >= w || y + dy >= h) continue;
+        const n = (y + dy) * w + x + dx;
+        if (field[n] < 0 && stone(n)) {
+          field[n] = id;
+          stack.push(n);
+        }
+      }
+    }
+    holdsMountain.push(mountain);
+  }
+  return { field, holdsMountain };
+}
+
+/**
+ * Each Rock tile's fewest steps across tile sides, over Rock, from a Mountain tile of `m` (0 on
+ * Mountain, -1 where none reaches): a breadth-first search from every mountain at once.
+ */
+function stepsFromMountains(m: GameMap): Int32Array {
+  const { w, h, terrain } = m;
+  const steps = new Int32Array(w * h).fill(-1);
+  const queue: number[] = [];
+  for (let i = 0; i < w * h; i++)
+    if (terrain[i] === Terrain.Mountain) {
+      steps[i] = 0;
+      queue.push(i);
+    }
+  for (let k = 0; k < queue.length; k++) {
+    const i = queue[k];
+    const x = i % w;
+    const y = (i - x) / w;
+    for (const [dx, dy] of SIDES) {
+      if (x + dx < 0 || y + dy < 0 || x + dx >= w || y + dy >= h) continue;
+      const n = (y + dy) * w + x + dx;
+      if (steps[n] < 0 && terrain[n] === Terrain.Rock) {
+        steps[n] = steps[i] + 1;
+        queue.push(n);
+      }
+    }
+  }
+  return steps;
+}
+
+describe('the biome rules, read again as the issues word them', () => {
+  // A second reading of #340 and #354, written apart from the oracle above: the Mountain biome by
+  // whole N4 fields of Rock and Mountain, and each rule at its edge (the shore's four sides, a
+  // cliff coast, the corners of the beach's window, sand by a lake or a river, lake water beside
+  // the sea, rock one step either side of the reach), each edge met on these worlds and decided as
+  // its rule says. Read on the 20 default worlds of the test above, grown by RING.
+  const SEEDS_20 = Array.from({ length: 20 }, (_, i) => i + 1);
+  const worlds = new Map<number, { small: MapPlanes; big: MapPlanes }>();
+  const defaultWorld = (seed: number) => {
+    let planes = worlds.get(seed);
+    if (!planes) {
+      planes = worldPlanes({
+        seed,
+        full: false,
+        w: 160,
+        h: 160,
+        ox: 0,
+        oy: 0,
+        sliders: DEFAULT_SLIDERS,
+      });
+      worlds.set(seed, planes);
+    }
+    return planes;
+  };
+
+  it('name the beach the reach the issue does, and read rock within the ring', () => {
+    // "Sand within 2 tiles of sea water" (#340): the oracle above reads the constant, so it is
+    // pinned here
+    expect(BEACH_REACH).toBe(2);
+    // a path a step past MOUNTAIN_REACH from the map stays on the grown world the rules are read on
+    expect(RING).toBeGreaterThan(MOUNTAIN_REACH + 1);
+  });
+
+  // 20 worlds of 160 x 160, each generated with a ring around it and its stone fields flooded:
+  // about 3 s alone
+  it('give the Mountain biome to rock of fields holding a mountain, and to no other ground', () => {
+    let onMountain = 0;
+    let kept = 0;
+    let bare = 0;
+    for (const seed of SEEDS_20) {
+      const B = defaultWorld(seed).big.map;
+      const { w, terrain, biome } = B;
+      const climate = B.climate!;
+      const { field, holdsMountain } = stoneFields(B);
+      for (let y = RING; y < RING + 160; y++)
+        for (let x = RING; x < RING + 160; x++) {
+          const i = y * w + x;
+          const t = terrain[i];
+          const b = biome[i];
+          const where = () =>
+            `seed ${seed}, world tile (${x - RING}, ${y - RING}), terrain ${t}, biome ${b}`;
+          if (b === Biome.Mountain && t !== Terrain.Rock && t !== Terrain.Mountain)
+            throw new Error(`no Grass, Forest, Sand, Hill or Water tile is Mountain: ${where()}`);
+          if (t === Terrain.Mountain && b !== Biome.Mountain)
+            throw new Error(`a Mountain tile is not in the Mountain biome: ${where()}`);
+          if (t !== Terrain.Rock) continue;
+          // a field the grown world cuts off holds no mountain within MOUNTAIN_REACH of the map
+          if (!holdsMountain[field[i]]) {
+            if (b !== climate[i])
+              throw new Error(`rock of a field with no mountain is not its climate: ${where()}`);
+            bare++;
+          } else if (b === Biome.Mountain) onMountain++;
+          else if (b === climate[i]) kept++;
+          else
+            throw new Error(
+              `rock of a mountain's field is neither Mountain nor its climate: ${where()}`,
+            );
+        }
+    }
+    expect(onMountain).toBeGreaterThan(0);
+    expect(bare).toBeGreaterThan(0);
+    // The bound (MOUNTAIN_REACH steps, Core 2026-10-12) leaves a field's far rock in its climate:
+    // 54 of 3491 tiles (1.5 %) on these worlds when it was set. At most one in twenty.
+    expect(kept / (kept + onMountain)).toBeLessThanOrEqual(0.05);
+  }, 60_000);
+
+  // the same 20 worlds, generated by the test above when it runs first: up to 3 s alone
+  it('decide each rule at its edge as the rule says, and meet every edge', () => {
+    const met = {
+      cliff: 0,
+      shoredGrass: 0,
+      shoredForest: 0,
+      diagonalOnly: 0,
+      beachAt2: 0,
+      beachAtCorner: 0,
+      sandAt3: 0,
+      sandByInlandWater: 0,
+      lakeBesideSea: 0,
+      riverBesideSea: 0,
+      rockAtReach: 0,
+      rockPastReach: 0,
+    };
+    for (const seed of SEEDS_20) {
+      const { big } = defaultWorld(seed);
+      const B = big.map;
+      const { w, h, terrain, biome } = B;
+      const climate = B.climate!;
+      const { river, shore } = big;
+      const sea = (x: number, y: number) => {
+        if (x < 0 || y < 0 || x >= w || y >= h) return false;
+        const i = y * w + x;
+        return terrain[i] === Terrain.Water && !river[i] && climate[i] === Biome.Ocean;
+      };
+      const steps = stepsFromMountains(B);
+      for (let y = RING; y < RING + 160; y++)
+        for (let x = RING; x < RING + 160; x++) {
+          const i = y * w + x;
+          const t = terrain[i];
+          const b = biome[i];
+          const c = climate[i];
+          const s = shore[i];
+          const fail = (rule: string) => {
+            const where =
+              `seed ${seed}, world tile (${x - RING}, ${y - RING}), ` +
+              `terrain ${t} (${s} before the shore), biome ${b}, climate ${c}`;
+            throw new Error(`${rule}: ${where}`);
+          };
+          const side = SIDES.some(([dx, dy]) => sea(x + dx, y + dy));
+          const diagonal = DIAGONALS.some(([dx, dy]) => sea(x + dx, y + dy));
+          // the nearest sea water up to 3 tiles out, along either axis and in steps
+          let axis = Infinity;
+          let walk = Infinity;
+          for (let dy = -3; dy <= 3; dy++)
+            for (let dx = -3; dx <= 3; dx++)
+              if (sea(x + dx, y + dy)) {
+                axis = Math.min(axis, Math.max(Math.abs(dx), Math.abs(dy)));
+                walk = Math.min(walk, Math.abs(dx) + Math.abs(dy));
+              }
+          // the shore: sea water on one of the 4 sides turns grass, forest and sand to sand
+          if (s === Terrain.Hill || s === Terrain.Rock || s === Terrain.Mountain) {
+            if (t !== s) fail('a cliff coast changed');
+            if (side) met.cliff++;
+          }
+          if (s === Terrain.Grass || s === Terrain.Forest) {
+            if (side) {
+              if (t !== Terrain.Sand) fail('land beside the sea is not sand');
+              if (s === Terrain.Grass) met.shoredGrass++;
+              else met.shoredForest++;
+            } else if (diagonal) {
+              if (t !== s) fail('land with sea only on a diagonal changed');
+              met.diagonalOnly++;
+            }
+          }
+          // the beach: sand within 2 tiles of sea water along either axis, the window's corners too
+          if (t === Terrain.Sand) {
+            if (axis <= 2) {
+              if (b !== Biome.Beach) fail('sand by the sea is no beach');
+              if (axis === 2) met.beachAt2++;
+              if (walk > 2) met.beachAtCorner++;
+            } else {
+              if (b !== c) fail('sand away from the sea is not its climate');
+              if (axis === 3) met.sandAt3++;
+              if (SIDES.some(([dx, dy]) => terrain[(y + dy) * w + x + dx] === Terrain.Water))
+                met.sandByInlandWater++;
+            }
+          }
+          // water: the sea rule reads the tile alone, so lake water beside the sea stays Lake
+          if (t === Terrain.Water && side) {
+            if (river[i]) {
+              if (b !== Biome.River) fail('river water beside the sea is not River');
+              met.riverBesideSea++;
+            } else if (c !== Biome.Ocean) {
+              if (b !== Biome.Lake) fail('lake water beside the sea is not Lake');
+              met.lakeBesideSea++;
+            }
+          }
+          // rock: the Mountain biome reaches exactly MOUNTAIN_REACH steps
+          if (t === Terrain.Rock && steps[i] === MOUNTAIN_REACH) {
+            if (b !== Biome.Mountain) fail('rock at the reach is not Mountain');
+            met.rockAtReach++;
+          }
+          if (t === Terrain.Rock && steps[i] === MOUNTAIN_REACH + 1) {
+            if (b !== c) fail('rock a step past the reach is not its climate');
+            met.rockPastReach++;
+          }
+        }
+    }
+    for (const [edge, n] of Object.entries(met)) expect(n, `no case of ${edge}`).toBeGreaterThan(0);
+  }, 60_000);
+
+  it('keep river water out of the sea where a river crosses the Ocean climate', () => {
+    // The one place the sea rule's river test decides anything: river water in the Ocean climate
+    // (an island the river pass cut), found by search; 6 of 600 random worlds hold one. Sand around
+    // it is a beach only where sea water is near.
+    const c: World = {
+      seed: 441112651,
+      full: false,
+      w: 129,
+      h: 79,
+      ox: -62,
+      oy: -67,
+      sliders: DEFAULT_SLIDERS,
+    };
+    const { small, big } = worldPlanes(c);
+    const m = small.map;
+    let crossing = 0;
+    for (let i = 0; i < m.w * m.h; i++)
+      if (small.river[i] && m.terrain[i] === Terrain.Water && m.climate![i] === Biome.Ocean) {
+        expect(m.biome[i], `tile ${i}`).toBe(Biome.River);
+        crossing++;
+      }
+    expect(crossing).toBeGreaterThan(0);
+    checkRules(small, big, noneSeen());
+  });
+});
+
 /** The props of tile `i` of `m`, as text. */
 const propsAt = (m: GameMap, i: number) => JSON.stringify(m.props.get(i) ?? null);
 
