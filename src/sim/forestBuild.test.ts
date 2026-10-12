@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
-import { Terrain, type GameMap, type PropKind } from '../world/tiles';
+import { TERRAIN_NAMES, Terrain, type GameMap, type PropKind } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { content } from '../data/content';
@@ -212,5 +212,52 @@ describe('the placement hints', () => {
         expect(h, `${k} names ${ground}`).toContain(ground);
       expect(h, k).not.toMatch(/buildable|grassland|stone field/i);
     }
+  });
+
+  it('hold for what they are shown for: level grass, forest, sand or hill, and not off level', () => {
+    // the items each of those hints is shown for, picked as src/ui/toolbar.ts picks them: stations
+    // but depots, works but platforms and deposit works, decor that is no pole, signal or service
+    const items: { kind: 'station' | 'works' | 'decor'; id: string; only?: readonly string[] }[] = [
+      ...STATION_DEFS.filter((d) => !d.depot).map((d) => ({
+        kind: 'station' as const,
+        id: d.id,
+        only: d.standOn as readonly string[] | undefined,
+      })),
+      ...BUILDING_DEFS.filter((d) => !d.bridge && !d.deposit).map((d) => ({
+        kind: 'works' as const,
+        id: d.id,
+        only: d.terrain ? [d.terrain] : undefined,
+      })),
+      ...DECOR_DEFS.filter((d) => !d.power && !d.onTrack && !d.radius).map((d) => ({
+        kind: 'decor' as const,
+        id: d.id,
+        only: undefined,
+      })),
+    ];
+    // the ones whose own ground narrows the hint, which their hints do not say: the pump (#320,
+    // its tool hint is #336's) and the colliery, held to hills
+    expect(items.filter((c) => c.only).map((c) => c.id)).toEqual(['pump', 'colliery']);
+    expect(items.length).toBeGreaterThan(10);
+    const grounds = [Terrain.Grass, Terrain.Forest, Terrain.Sand, Terrain.Hill];
+    for (const ground of grounds)
+      for (const c of items)
+        for (const level of [true, false]) {
+          const { map, builder } = world(ground);
+          meetOtherRules(map, builder, c.kind, c.id);
+          // off level: the tile itself slopes, everything around it is level
+          if (!level) builder.groundCheck = (x, y, need) => need !== 'level' || x !== X || y !== Y;
+          const check =
+            c.kind === 'station'
+              ? builder.checkStation(X, Y, c.id)
+              : c.kind === 'works'
+                ? builder.checkBuilding(X, Y, c.id)
+                : builder.checkDecor(X, Y, c.id);
+          const what = `${c.kind} ${c.id} on ${level ? 'level' : 'sloping'} ${TERRAIN_NAMES[ground]}`;
+          if (!level) expect(check.reason, what).toBe(STR.build.notLevel);
+          else
+            expect(check.ok, `${what}: ${check.reason}`).toBe(
+              !c.only || c.only.includes(TERRAIN_NAMES[ground]),
+            );
+        }
   });
 });
