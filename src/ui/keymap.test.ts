@@ -21,7 +21,8 @@ type StateKey =
   | 'building'
   | 'categoryOpen'
   | 'recording'
-  | 'overviewTrain';
+  | 'overviewTrain'
+  | 'tooltipsOpen';
 type State = { -readonly [K in StateKey]: KeyHost[K] };
 
 const CONTEXTS: KeyContext[] = ['menu', 'play', 'overview'];
@@ -46,11 +47,13 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     categoryOpen: false,
     recording: false,
     overviewTrain: false,
+    tooltipsOpen: false,
     ...over,
   };
   const host: KeyHost = {
     ...state,
     toggleDebug: log('toggleDebug'),
+    closeTooltips: log('closeTooltips'),
     closeScreen: log('closeScreen'),
     closeMenus: log('closeMenus'),
     openPauseMenu: log('openPauseMenu'),
@@ -96,6 +99,8 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
   menuBack: () => [
     { calls: ['closeMenus'] },
     { state: { screenOpen: true }, calls: ['closeScreen'] },
+    // an open tooltip closes first, and that is all
+    { state: { tooltipsOpen: true, screenOpen: true }, calls: ['closeTooltips'] },
     // the title screen stays up
     { state: { pauseMenuOpen: false }, calls: [] },
   ],
@@ -104,12 +109,16 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     { state: { screenOpen: true }, calls: ['closeScreen'] },
     // a tool in hand or a picked station: Escape is the build controller's
     { state: { building: true }, calls: [] },
+    // ...unless a tooltip is open: it closes, and nothing else
+    { state: { tooltipsOpen: true, building: true }, calls: ['closeTooltips'] },
+    { state: { tooltipsOpen: true, screenOpen: true }, calls: ['closeTooltips'] },
   ],
   overviewBack: () => [
     { calls: ['leaveOverview'] },
     { state: { screenOpen: true, recording: true }, calls: ['closeScreen'] },
     { state: { recording: true, overviewTrain: true }, calls: ['cancelRecording'] },
     { state: { overviewTrain: true }, calls: ['dropOverviewTrain'] },
+    { state: { tooltipsOpen: true, recording: true }, calls: ['closeTooltips'] },
   ],
   depot: () => screenCases('depot'),
   contracts: () => screenCases('contracts'),
@@ -260,6 +269,13 @@ describe('what the keys leave to the camera', () => {
     const closed = fakeHost('overview', { screenOpen: true });
     expect(handlePlayKeys(keys(['Escape', 'Space']), closed.host)).toBe(true);
     expect(closed.calls).toEqual(['closeScreen']);
+
+    // closing the tooltips is all Escape does, in every context
+    for (const context of CONTEXTS) {
+      const tips = fakeHost(context, { tooltipsOpen: true, building: true });
+      expect(handlePlayKeys(keys(['Escape', 'Space']), tips.host), context).toBe(true);
+      expect(tips.calls, context).toEqual(['closeTooltips']);
+    }
   });
 
   it('lets the frame go on when Escape belongs to the build controller or steps back in the overview', () => {

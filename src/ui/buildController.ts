@@ -57,6 +57,8 @@ export class BuildController {
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
+  /** this frame's Escape closed the tooltip stack (the keymap reads it first): it does nothing here */
+  private escapeSpent = false;
 
   constructor(
     private readonly input: Input,
@@ -81,6 +83,11 @@ export class BuildController {
     this.clearGhost();
     if (t.kind !== 'none') this.select(null);
     this.onToolChanged?.(t);
+  }
+
+  /** This frame's Escape is spent: it closed the tooltips, so the tool and the selection stay. */
+  takeEscape() {
+    this.escapeSpent = true;
   }
 
   select(s: Station | null) {
@@ -112,7 +119,9 @@ export class BuildController {
     const inMap = inBounds(this.builder.map, t.x, t.y);
     this.hoverStation = inMap ? (this.builder.stationAt(t.x, t.y) ?? null) : null;
     this.hoverBuilding = inMap ? (this.builder.buildingAt(t.x, t.y) ?? null) : null;
-    if (inp.wasPressed('Escape')) {
+    const escape = inp.wasPressed('Escape') && !this.escapeSpent;
+    this.escapeSpent = false;
+    if (escape) {
       if (this.tool.kind !== 'none') this.setTool({ kind: 'none' });
       else this.select(null);
     }
