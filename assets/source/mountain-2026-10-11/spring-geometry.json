@@ -58,5 +58,94 @@
   "waterReferenceCrop": {
     "x": [0.25, 0.75],
     "y": [0.3, 0.7]
+  },
+  "centred": {
+    "canvas": [1024, 1024],
+    "scale": 16,
+    "gameTile": [64, 32],
+    "tileCanvas": [1024, 512],
+    "centre": [512, 512],
+    "anchor": [512, 512],
+    "packedAnchor": [32, 16],
+    "projectionFormula": ["512 + 512*(x-y)", "512 + 256*(x+y)"],
+    "tileOffsetRange": [-0.5, 0.5],
+    "corners": {
+      "top": [512, 256],
+      "right": [1024, 512],
+      "bottom": [512, 768],
+      "left": [0, 512]
+    },
+    "edgeMidpoints": {
+      "ne": [768, 384],
+      "se": [768, 640],
+      "sw": [256, 640],
+      "nw": [256, 384]
+    },
+    "upstreamRimPoints": {
+      "ne": [256, 640],
+      "se": [256, 384],
+      "sw": [768, 384],
+      "nw": [768, 640]
+    },
+    "radiusProjection": {
+      "halfWidthPerTile": 724,
+      "halfHeightPerTile": 362
+    },
+    "disc": {
+      "radius": 0.5,
+      "halfAxes": [362, 181],
+      "box": [150, 331, 874, 693],
+      "size": [724, 362],
+      "widthPercent": 71
+    },
+    "water": {
+      "radius": 0.38,
+      "halfAxes": [275.2, 137.6],
+      "bandAbsHalfWidth": 0.38,
+      "rimCutsBandAfter": 0.325
+    },
+    "bank": {
+      "radialRange": [0.38, 0.5],
+      "bandAbsRange": [0.38, 0.5]
+    },
+    "pool": {
+      "acrossTiles": 0.3,
+      "radius": 0.15,
+      "halfAxes": [108.6, 54.3],
+      "centre": [512, 512]
+    },
+    "stones": {
+      "radialRange": [0.38, 0.5],
+      "largestAcrossTiles": 0.1,
+      "largestCanvasWidth": 72,
+      "maxTopRise": 36,
+      "side": "upstream half only"
+    },
+    "guideGreys": {
+      "outline": 65,
+      "water": 210,
+      "bank": 130,
+      "crescent": 95
+    },
+    "reviewCanvas": [64, 64],
+    "reviewTileWidth": 64,
+    "checks": {
+      "alphaThreshold": 128,
+      "cornerColourDifference": 40,
+      "boxToleranceFraction": 0.05,
+      "edgeTolerance": [36, 36, 18],
+      "topBelowTolerance": 18,
+      "topAboveTolerance": 54,
+      "centreTolerance": 36,
+      "stoneExcludeRadius": 0.2,
+      "stoneBlueAboveRed": 15,
+      "stoneLumaMin": 150,
+      "stoneLumaWeights": [0.2126, 0.7152, 0.0722],
+      "minStoneRingFraction": 0.9,
+      "returnedExample": [1254, 1254],
+      "exampleBox": [184, 405, 1070, 849],
+      "exampleTolerance": [44, 44, 22],
+      "maxNewAttemptsPerSpring": 3
+    }
   }
 }

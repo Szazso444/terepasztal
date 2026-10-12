@@ -11,6 +11,7 @@ const prompts = JSON.parse(fs.readFileSync(path.join(dir, 'prompts.json'), 'utf8
 const springs = prompts.filter((p) => /^(raw\/)?spring-(ne|se|sw|nw)\b/.test(p.file));
 const report = [];
 for (const entry of springs) {
+  if (entry.generationError && !fs.existsSync(path.join(dir, entry.file))) continue;
   const bytes = fs.readFileSync(path.join(dir, entry.file));
   const png = PNG.sync.read(bytes);
   if (bytes[25] !== 6) throw new Error(`${entry.file} is not an RGBA PNG`);
@@ -32,15 +33,19 @@ for (const entry of springs) {
     alphaPixels: { transparent, partial, opaque },
     sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
   });
-  if (entry.file.startsWith('raw/')) continue;
-  const dst = new PNG({ width: 128, height: 128 });
+  if (entry.file.startsWith('raw/') && !entry.selected) continue;
+  const size = entry.centred ? 64 : 128;
+  const outputFile = entry.selected
+    ? entry.id.match(/^spring-(ne|se|sw|nw)/)[0] + '.png'
+    : entry.file;
+  const dst = new PNG({ width: size, height: size });
   // Area-average in premultiplied alpha, preserving the full canvas without cropping.
-  for (let y = 0; y < 128; y++)
-    for (let x = 0; x < 128; x++) {
-      const x0 = (x * png.width) / 128,
-        x1 = ((x + 1) * png.width) / 128;
-      const y0 = (y * png.height) / 128,
-        y1 = ((y + 1) * png.height) / 128;
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) {
+      const x0 = (x * png.width) / size,
+        x1 = ((x + 1) * png.width) / size;
+      const y0 = (y * png.height) / size,
+        y1 = ((y + 1) * png.height) / size;
       let area = 0,
         a = 0,
         r = 0,
@@ -58,7 +63,7 @@ for (const entry of springs) {
           g += wa * png.data[i + 1];
           b += wa * png.data[i + 2];
         }
-      const i = (y * 128 + x) * 4;
+      const i = (y * size + x) * 4;
       dst.data.set(
         [
           a ? Math.round(r / a) : 0,
@@ -69,7 +74,7 @@ for (const entry of springs) {
         i,
       );
     }
-  fs.writeFileSync(path.join(dir, 'review', entry.file), PNG.sync.write(dst));
+  fs.writeFileSync(path.join(dir, 'review', outputFile), PNG.sync.write(dst));
 }
 fs.writeFileSync(path.join(dir, 'prompts.json'), JSON.stringify(prompts, null, 2) + '\n');
 fs.writeFileSync(

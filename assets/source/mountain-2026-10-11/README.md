@@ -1,5 +1,9 @@
 # Mountain source paintings
 
+The centred spring repaint is incomplete: image generation was refused by the
+account usage limit. The current springs are unchanged. See [REPAINT-STATUS.md](REPAINT-STATUS.md)
+for the prepared guides, checker, preserved attempts and remaining work.
+
 Issue #371. This folder holds the source paintings of three prompts: the C11 surface swatches,
 the C12 glacier materials and the C13 headwater springs. C12 was delivered on
 `art/371-mountain`. C11 and C13 went out without an issue number, so C11 arrived on
