@@ -330,7 +330,7 @@ describe('bridges, reversing and refuelling', () => {
     const st = new Station('quarry', 80, 29);
     w.builder.stations.push(st);
     t.route = [st.id];
-    t.mode = 'production';
+    t.mode = 'freight';
     t.coal = t.coalRate * 50;
     t.water = t.waterRate * 35;
     w.builder.placeDecor(23, 29, 'fuel_stop', 0);

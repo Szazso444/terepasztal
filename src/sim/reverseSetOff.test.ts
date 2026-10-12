@@ -34,6 +34,8 @@ beforeEach(() => {
 
 /** How far from a tile edge a point counts as on it (`EDGE_SLACK` in trains.ts). */
 const SLACK = 1e-6;
+/** Each case runs a train to a halt: 1 to 2 s a property alone, much longer on a loaded runner. */
+const SLOW = { timeout: 60_000 };
 
 interface TrailPoint {
   x: number;
@@ -285,9 +287,11 @@ function wrongs(track: TrackGraph, t: Train, path: PathSegment[]): string[] {
 }
 
 describe('a train that ran to where it stands, reversing', () => {
+  // slow because every locomotive runs with each of its consists on every layout, and each run is
+  // checked against the trail: 20 s alone
   it(
     'sets off from the tile its rear end lies on, which onwardTest counts from, for every locomotive with 0-4 wagons on straight and curved track',
-    { timeout: 300_000 },
+    { timeout: 600_000 },
     () => {
       const rows: string[] = [];
       let runs = 0;
@@ -960,6 +964,8 @@ function standWrongs({ w, t, path, from, head }: Ran, spots: number[], onward: b
 }
 
 describe('a train that ran to where it stands, wherever its rear end lies', () => {
+  // slow because each of 300 seeded winding lines is run to a halt, cut short and checked: 10 s
+  // alone
   it(
     'sets off reversing from the tile its rear end lies on, which onwardTest counts from, on lines winding either way through curves of either gauge',
     { timeout: 300_000 },
@@ -999,18 +1005,24 @@ describe('a train that ran to where it stands, wherever its rear end lies', () =
     },
   );
 
-  it('sets off reversing from the same tile once it has turned round twice where it stands, or four times, and turned round once or three times from the tile its head is on', () => {
-    forAll(
-      winding,
-      (c) => {
-        const { ran } = drive(c);
-        const wrongs = turnRoundWrongs(ran);
-        if (wrongs.length)
-          throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
-      },
-      { shrink: smaller, shrinkBudget: 200 },
-    );
-  });
+  // slow because 100 seeded winding lines are each run to a halt and turned round up to four times
+  // (1.6 s alone)
+  it(
+    'sets off reversing from the same tile once it has turned round twice where it stands, or four times, and turned round once or three times from the tile its head is on',
+    SLOW,
+    () => {
+      forAll(
+        winding,
+        (c) => {
+          const { ran } = drive(c);
+          const wrongs = turnRoundWrongs(ran);
+          if (wrongs.length)
+            throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
+        },
+        { shrink: smaller, shrinkBudget: 200 },
+      );
+    },
+  );
 
   it('a Muki with five mine tubs, its rear end on an edge, still sets off from the tile beyond it once it has turned round twice', () => {
     // 4.5 tiles: east along row 30 to the stop on (30, 30), its rear end on the edge between
@@ -1076,18 +1088,23 @@ describe('a train that ran to where it stands, wherever its rear end lies', () =
 });
 
 describe('a train that ran to where it stands, turned round where it stands, saved and loaded', () => {
-  it('sets off reversing from the same tile, its head on the same tile and its cars where they stood, on lines winding either way through curves of either gauge', () => {
-    forAll(
-      winding,
-      (c) => {
-        const { ran } = drive(c);
-        const wrongs = loadWrongs(ran.w, ran.t);
-        if (wrongs.length)
-          throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
-      },
-      { shrink: smaller, shrinkBudget: 200 },
-    );
-  });
+  // slow because 100 seeded winding lines are each run to a halt, saved and loaded (1.3 s alone)
+  it(
+    'sets off reversing from the same tile, its head on the same tile and its cars where they stood, on lines winding either way through curves of either gauge',
+    SLOW,
+    () => {
+      forAll(
+        winding,
+        (c) => {
+          const { ran } = drive(c);
+          const wrongs = loadWrongs(ran.w, ran.t);
+          if (wrongs.length)
+            throw new Error(`${ran.t.length.toFixed(1)} tiles long:\n${wrongs.join('\n')}`);
+        },
+        { shrink: smaller, shrinkBudget: 200 },
+      );
+    },
+  );
 
   it('a Muki with five mine tubs, its rear end on an edge, sets off from the same tile', () => {
     const layout = straight('narrow');

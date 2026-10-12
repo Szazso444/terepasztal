@@ -46,7 +46,7 @@ const ROW = 30;
 const GDT = 0.05;
 /** How long a roaming train keeps away from a stop it found no way to (`Train.depart`). */
 const BAD_FOR = 240;
-const ROAMING: RouteMode[] = ['production', 'collection', 'transport', 'contract'];
+const ROAMING: RouteMode[] = ['freight', 'transport', 'contract'];
 type Kind = 'quarry' | 'warehouse' | 'farm' | 'station' | 'depot';
 const KINDS: Kind[] = ['quarry', 'warehouse', 'farm', 'station', 'depot'];
 
@@ -328,9 +328,11 @@ function closeUnderWay(c: Closing, how: How = 'tick'): boolean {
 }
 
 describe('a roaming train whose contract closes under way', () => {
+  // slow because each seeded case plays a train and the fleet, tick by tick, through a contract
+  // closing on a generated line: 9 s alone
   it(
     'chooses again, and with no way to its stop marks it bad and waits',
-    { timeout: 120_000 },
+    { timeout: 300_000 },
     () => {
       let underWay = 0;
       forAll(closing, (c) => void (underWay += Number(closeUnderWay(c))), {
@@ -340,9 +342,11 @@ describe('a roaming train whose contract closes under way', () => {
       expect(underWay).toBeGreaterThanOrEqual(SEEDS.length * 0.6);
     },
   );
+  // slow because each seeded case plays a train and the fleet, tick by tick, through a contract
+  // closing on a generated line, some with a save and load: 8 s alone
   it(
     'does the same after a reload on either side of the close, and once the rail is back under it',
-    { timeout: 120_000 },
+    { timeout: 300_000 },
     () => {
       const HOW: How[] = ['reloadBefore', 'reloadAfter', 'stranded'];
       type Case = Closing & { how: How };
@@ -688,9 +692,11 @@ function closeUnreachable(c: Unreached) {
 }
 
 describe('a train whose contract closes while it stands with no route to the job', () => {
+  // slow because each seeded case plays a train and the fleet, tick by tick, through a contract
+  // closing on a generated line: 6 s alone
   it(
     'never works the closed job again: it takes up the queued contract or its own program at once',
-    { timeout: 120_000 },
+    { timeout: 300_000 },
     () => {
       const seen = { schedule: 0, roaming: 0, queued: 0, reloaded: 0 };
       forAll(
@@ -1255,15 +1261,19 @@ function reachesPast(c: LineCase) {
 }
 
 describe('a train placed on the track (spawnAt)', () => {
+  // slow because 100 seeded winding lines are each laid and the longest consists spawned on them,
+  // rolled out and loaded: half a second alone
   it('stands whole on a winding narrow line, up to the longest consist a train may have', () => {
     forAll((rng) => lineCase(rng, 'narrow', true), standsWhole, { shrink: shrinkLine });
-  });
+  }, 30_000);
 
+  // slow because 100 seeded lines of every class are each laid and a consist spawned on them,
+  // rolled out and loaded: 0.8 s alone
   it('stands whole on any line: straights, regular and narrow curves, switches', () => {
     forAll((rng) => lineCase(rng, rng.pick(TRACK_CLASSES), rng.chance(0.5)), standsWhole, {
       shrink: shrinkLine,
     });
-  });
+  }, 30_000);
 
   it('stands whole at the end of a staircase of narrow curves', () => {
     const { g, head } = staircase(60);
@@ -1328,6 +1338,8 @@ describe('a train placed on the track (spawnAt)', () => {
     );
   });
 
+  // slow because 200 seeded lines are each laid and a consist spawned on them is rolled out and
+  // loaded: 0.55 s alone
   it('reaches a tile and a half past its rear however the line behind it winds', () => {
     forAll((rng) => lineCase(rng, 'narrow', true), reachesPast, {
       shrink: shrinkLine,
@@ -1337,8 +1349,10 @@ describe('a train placed on the track (spawnAt)', () => {
       shrink: shrinkLine,
       seeds: SEEDS.map((s) => 3000 + s),
     });
-  });
+  }, 30_000);
 
+  // slow because the longest consist is rolled out and loaded from every seventh tile of the curves
+  // and every other tile of the ring, in every gauge: about a second alone
   it('reaches as far with the longest consist of its gauge on curves and round a ring', () => {
     // its head on every seventh tile of a line of nothing but curves, the rails behind it ending
     // anywhere from under its head to past its rear, and on every other tile of a ring
@@ -1354,15 +1368,17 @@ describe('a train placed on the track (spawnAt)', () => {
           expectReach(t, `${what}, rolled out`);
           expectReach(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), `${what}, loaded`);
         }
-  });
+  }, 60_000);
 
+  // slow because 200 seeded lines are each laid and every bogie of a consist spawned on them is
+  // measured along the track: 0.9 s alone
   it('stands on the track behind its head, every bogie at its own distance along it', () => {
     forAll((rng) => lineCase(rng, 'narrow', true), standsOnTrack, { shrink: shrinkLine });
     forAll((rng) => lineCase(rng, rng.pick(TRACK_CLASSES), rng.chance(0.5)), standsOnTrack, {
       shrink: shrinkLine,
       seeds: SEEDS.map((s) => 1000 + s),
     });
-  });
+  }, 30_000);
 
   it('stands on the track with the longest consist of its gauge on a line of nothing but curves', () => {
     for (const cls of TRACK_CLASSES) {
@@ -1383,6 +1399,8 @@ describe('a train placed on the track (spawnAt)', () => {
     }
   });
 
+  // slow because the longest consist of each gauge is spawned with its head on every tile of a
+  // ring, rolled out and loaded: 0.65 s alone
   it('stands on a ring shorter than itself, going round it as often as it takes', () => {
     for (const cls of TRACK_CLASSES) {
       const { g, tiles } = ring(cls);
@@ -1396,7 +1414,7 @@ describe('a train placed on the track (spawnAt)', () => {
         expectOnTrack(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), g, at, `${what}, loaded`);
       }
     }
-  });
+  }, 30_000);
 
   it('rolls out of a depot as it did: the head on the gate, the cars in line behind it', () => {
     const y = 60;

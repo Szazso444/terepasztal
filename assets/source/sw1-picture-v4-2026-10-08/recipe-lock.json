@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "inputs": {
+    "project.json": "9b7cf29a4dc90a805fbf373fba190f130926b05e979c07773579ebfec763cab6",
+    "build.py": "4b909234bfa8380b4a5c2ffd9e2d9e2e03a27e70490d51cc108f81caf0be804a",
+    "c50_primitives.py": "611d34c112db743e5456a5ec9a84db8a25ee4f3157bb6640c0770fa72452fcc1",
+    "style.json": "f04416b25f9ac186a487735c51c3c311ee42e42efc82ec5aa4ec6864379ddb33",
+    "observations.json": "97cf96f88887a934706982d6be89b1b46a5492ed961949f743fbc2526deebcf4",
+    "references/01.png": "68b0924a9f7229f2bf121d8a0e33b510b8d1aa2903861595468255db91abf5a8",
+    "references/02-owner-correction.png": "40c69866493152474ae2fb3fbdc0d61c3d23d633cebc60b277be8bb5a1523a00",
+    "pipeline/run.py": "100fda3cf7491ce8b39d1b615df11f4ab9acf8346470b008e75ceba1d7ba14dc",
+    "pipeline/build_stage.py": "25163bd90a9dde6dd0e1e14b4b91955ad588c7f5a567c7988ba9b6a3df993b89"
+  }
+}
