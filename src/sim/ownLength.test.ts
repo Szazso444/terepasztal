@@ -28,6 +28,7 @@ import { Station, resetStationIds } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { content, type LocoDef, type WagonDef } from '../data/content';
+import { STR } from '../strings';
 import { locoDef, wagonDef } from '../gacha/items';
 import { Inventory } from '../gacha/inventory';
 import { emptyMap } from '../world/mapgen';
@@ -122,6 +123,9 @@ function classSpec(def: BodyFields): VehicleSpec {
   };
 }
 
+/** How long the issue says a body is: its entry's own length, or its size class's without one. */
+const specLength = (def: BodyFields) => def.length ?? SIZE_LEN[def.size ?? 'small'];
+
 /** A body of any size and plan, with or without its own pivots, bogies and axles. */
 function genBody(rng: Rng): BodyFields {
   const body: BodyFields = { size: rng.pick(SIZES), plan: rng.pick(PLANS) };
@@ -140,8 +144,11 @@ function genLength(rng: Rng): number {
 describe('a body without a length of its own', () => {
   it('is laid out exactly as before, for every shipped vehicle', () => {
     for (const d of [...content.locomotives, ...content.wagons]) {
-      expect((d as BodyFields).length, d.id).toBeUndefined();
-      expect(vehicleSpec(d), d.id).toEqual(classSpec(d));
+      // an entry that has been given its model's length is laid out by it, and without it as before
+      const own = (d as BodyFields).length;
+      if (own === undefined) expect(vehicleSpec(d), d.id).toEqual(classSpec(d));
+      else expect(vehicleSpec(d).L, d.id).toBe(own);
+      expect(vehicleSpec({ ...d, length: undefined }), d.id).toEqual(classSpec(d));
     }
   });
 
@@ -260,8 +267,8 @@ describe('a consist of locomotives with lengths of their own', () => {
           origin: null,
         }));
         const lengths = [
-          ...locos.map((l) => l.length ?? SIZE_LEN[locoDef(l.id).size ?? 'small']),
-          ...wagons.map((id) => SIZE_LEN[wagonDef(id).size ?? 'small']),
+          ...locos.map((l) => l.length ?? specLength(locoDef(l.id))),
+          ...wagons.map((id) => specLength(wagonDef(id))),
         ];
         expect(t.carLengths).toEqual(lengths);
         const sum = lengths.reduce((a, b) => a + b, 0);
@@ -398,8 +405,8 @@ describe('a save', () => {
 const NARROW_LOCOS = content.locomotives.filter((d) => d.gauge === 'narrow' && !d.retired);
 const NARROW_WAGONS = content.wagons.filter((d) => d.gauge === 'narrow' && !d.retired);
 
-/** A wagon's length: its size class's, since no wagon has one of its own. */
-const wagonLength = (id: string) => SIZE_LEN[wagonDef(id).size ?? 'small'];
+/** A wagon's length: its own, or its size class's without one. */
+const wagonLength = (id: string) => specLength(wagonDef(id));
 /** Bodies and the gaps between them, summed the slow way. */
 const consistLengthOf = (ls: number[]) =>
   ls.reduce((a, b) => a + b, 0) + (ls.length - 1) * COUPLER_GAP;
@@ -539,7 +546,7 @@ describe('a consist of locomotives with lengths of their own, through curves', (
 
         // the oracle: each body as long as its entry says, or its size class when it says nothing
         const lengths = [
-          ...locos.map((l) => l.length ?? SIZE_LEN[locoDef(l.id).size ?? 'small']),
+          ...locos.map((l) => l.length ?? specLength(locoDef(l.id))),
           ...wagons.map(wagonLength),
         ];
         const total = consistLengthOf(lengths);
@@ -596,6 +603,7 @@ describe('a consist of locomotives with lengths of their own, through curves', (
 });
 
 describe('a depot gate', () => {
+  // measures the track-class access of a new model in every case: about half a second alone
   it('lets out a consist exactly when the stub ahead is as long as its bodies and gaps', () => {
     forAll(
       (rng) => ({
@@ -658,7 +666,150 @@ describe('a depot gate', () => {
         },
       },
     );
-  });
+  }, 20_000);
+
+  /** A depot at (10, ROW), its east gate at (12, ROW), and `stub` straight tiles from the gate on. */
+  function gateStub(stub: number) {
+    const map = emptyMap(4242, 40, 24, Terrain.Grass);
+    const track = new TrackGraph(40, 24);
+    const stock = new Stockpile();
+    const economy = new Economy();
+    const builder = new Builder(map, new RegionState(map), track, economy, stock);
+    builder.free = true;
+    const depot = new Station('depot', 10, ROW);
+    builder.stations.push(depot);
+    for (let x = 12; x < 12 + stub; x++) track.place(x, ROW, 'straight', 1);
+    const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+    return { track, depot, fleet };
+  }
+
+  /** The private member of a fleet the property below drives: what each tile has standing on it. */
+  const seeTrains = (f: Fleet) => (f as unknown as { rebuildOccupancy(): void }).rebuildOccupancy();
+
+  interface GateCase {
+    /** straight tiles from the gate on, away from the shed; the gate is the first */
+    stub: number;
+    /** the tile from the gate on (0 is the gate) where another train stands, its body further on */
+    standing: number | null;
+    locos: { id: string; length: number }[];
+    wagons: string[];
+  }
+
+  // measures the track-class access of a new model in every case: about half a second alone
+  it('wants a free tile beyond the gate and room for the whole consist, however short the consist', () => {
+    const seen = { busy: 0, stub: 0, room: 0, out: 0, shortOut: 0 };
+    forAll(
+      (rng): GateCase => {
+        const stub = rng.int(1, 5);
+        // a lone engine of half a tile or less: its walk out of the gate covers it within the gate
+        // tile, and must still go on to the tile beyond
+        const short = rng.chance(0.4);
+        return {
+          stub,
+          standing: rng.chance(0.4) ? rng.int(0, stub - 1) : null,
+          locos: short
+            ? [{ id: rng.pick(REGULAR_LOCOS).id, length: rng.range(OWN_LENGTH.min, 0.5) }]
+            : Array.from({ length: rng.int(1, 2) }, () => ({
+                id: rng.pick(REGULAR_LOCOS).id,
+                length: genLength(rng),
+              })),
+          wagons: short
+            ? []
+            : Array.from({ length: rng.int(0, 2) }, () => rng.pick(REGULAR_WAGONS).id),
+        };
+      },
+      ({ stub, standing, locos, wagons }) => {
+        const { track, depot, fleet } = gateStub(stub);
+        const t = new Train(
+          locos.map((l, i) => ({
+            uid: i + 1,
+            level: 1,
+            def: { ...ownLoco(l.id, l.length), id: `${l.id}@${l.length}` },
+          })),
+        );
+        t.wagons = wagons.map((id, i) => ({
+          uid: 100 + i,
+          def: wagonDef(id),
+          level: 1,
+          cargo: null,
+          amount: 0,
+          origin: null,
+        }));
+        const need = consistLengthOf([...locos.map((l) => l.length), ...wagons.map(wagonLength)]);
+        expect(t.length).toBeCloseTo(need, 9);
+
+        // the oracle: the tiles from the gate on before the first one another train stands on
+        let usable = stub;
+        if (standing !== null) {
+          const other = new Train([{ uid: 50, level: 1, def: locoDef(REGULAR_LOCOS[0].id) }]);
+          expect(other.spawnAt(track, 12 + standing, ROW, Dir.E)).toBe(true);
+          fleet.trains.push(other);
+          seeTrains(fleet);
+          const under = new Set(other.occupancyKeys(track.w));
+          const taken = Array.from({ length: stub }, (_, i) => under.has(ROW * track.w + 12 + i));
+          usable = taken.includes(true) ? taken.indexOf(true) : stub;
+          expect(usable, 'the other train stands from its tile on').toBe(standing);
+        }
+
+        const gate = fleet.gateReport(t, depot).find((g) => g.x === 12 && g.y === ROW)!;
+        if (!t.access.classes.has('regular')) {
+          // a body too long for the curves of regular track is refused for its class first
+          expect(gate.ok).toBe(false);
+          expect(gate.run).toBe(0);
+          return;
+        }
+        const why = `${need} tiles of train, ${stub} of stub, ${usable} free: ${gate.reason}`;
+        if (usable === 0) {
+          seen.busy++;
+          expect(gate.ok, why).toBe(false);
+          expect(gate.reason, why).toBe(STR.compat.gateBusy(12, ROW));
+          return;
+        }
+        if (usable === 1) {
+          // nothing usable beyond the gate: a stub, for a consist of any length
+          seen.stub++;
+          expect(gate.ok, why).toBe(false);
+          expect(gate.reason, why).toBe(STR.compat.gateStub(12, ROW));
+          return;
+        }
+        // a consist exactly as long as the free track may go either way on rounding
+        if (Math.abs(need - usable) > 1e-9) expect(gate.ok, why).toBe(need <= usable);
+        if (gate.ok) {
+          seen.out++;
+          if (need <= 0.5) seen.shortOut++;
+          expect(gate.reason, why).toBeNull();
+          expect(gate.run, why).toBeGreaterThanOrEqual(need);
+          expect(gate.run, why).toBeLessThanOrEqual(usable + 1e-9);
+        } else {
+          seen.room++;
+          expect(gate.run, why).toBeCloseTo(usable, 9);
+          expect(gate.reason, why).toBe(STR.compat.gateRoom(12, ROW, gate.run, t.length));
+        }
+      },
+      {
+        format: (c) =>
+          `${c.stub}-tile stub, a train on tile ${c.standing ?? '-'}, ` +
+          `locos ${c.locos.map((l) => `${l.id}@${l.length}`).join(' ')}, ` +
+          `wagons ${c.wagons.join(' ') || '-'}`,
+        *shrink(c) {
+          if (c.standing !== null) yield { ...c, standing: null };
+          for (const stub of shrinkInt(c.stub, 1))
+            if (c.standing === null || c.standing < stub) yield { ...c, stub };
+          if (c.standing !== null)
+            for (const standing of shrinkInt(c.standing, 0)) yield { ...c, standing };
+          for (const wagons of shrinkArray(c.wagons)) yield { ...c, wagons };
+          for (const locos of shrinkArray(c.locos)) if (locos.length) yield { ...c, locos };
+          for (let i = 0; i < c.locos.length; i++)
+            if (c.locos[i].length !== OWN_LENGTH.min) {
+              const locos = c.locos.map((l, j) => (j === i ? { ...l, length: OWN_LENGTH.min } : l));
+              yield { ...c, locos };
+            }
+        },
+      },
+    );
+    // every answer a gate gives is seen, a lone engine of half a tile or less let out among them
+    for (const [k, n] of Object.entries(seen)) expect(n, k).toBeGreaterThan(10);
+  }, 20_000);
 });
 
 describe('a junction ahead', () => {
