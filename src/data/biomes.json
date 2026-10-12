@@ -6,7 +6,8 @@
     "production": { "farm": 1.25 },
     "trackCostMul": 1,
     "waterUseMul": 1,
-    "speedMul": 1
+    "speedMul": 1,
+    "snowLevel": 4
   },
   {
     "id": "forest",
@@ -15,7 +16,8 @@
     "production": { "lumber": 1.3 },
     "trackCostMul": 1.2,
     "waterUseMul": 1,
-    "speedMul": 1
+    "speedMul": 1,
+    "snowLevel": 4
   },
   {
     "id": "desert",
@@ -24,7 +26,8 @@
     "production": { "quarry": 1.3, "pump": 0.5, "farm": 0.5 },
     "trackCostMul": 1,
     "waterUseMul": 1.5,
-    "speedMul": 1
+    "speedMul": 1,
+    "snowLevel": 5
   },
   {
     "id": "taiga",
@@ -33,7 +36,8 @@
     "production": { "lumber": 1.15, "pump": 1.1, "farm": 0.7 },
     "trackCostMul": 1.1,
     "waterUseMul": 1,
-    "speedMul": 0.9
+    "speedMul": 0.9,
+    "snowLevel": 3
   },
   {
     "id": "swamp",
@@ -42,7 +46,8 @@
     "production": { "pump": 1.4, "farm": 0.8 },
     "trackCostMul": 2,
     "waterUseMul": 1,
-    "speedMul": 0.8
+    "speedMul": 0.8,
+    "snowLevel": 4
   },
   {
     "id": "ocean",
@@ -51,6 +56,47 @@
     "production": { "pump": 1.3 },
     "trackCostMul": 1,
     "waterUseMul": 1,
-    "speedMul": 1
+    "speedMul": 1,
+    "snowLevel": 4
+  },
+  {
+    "id": "lake",
+    "name": "Lake",
+    "desc": "Still water filling a basin. Pumps draw well; bridges only.",
+    "production": { "pump": 1.3 },
+    "trackCostMul": 1,
+    "waterUseMul": 1,
+    "speedMul": 1,
+    "snowLevel": 4
+  },
+  {
+    "id": "river",
+    "name": "River",
+    "desc": "Running water from the hills to a lake or the sea. Pumps draw well; bridges cross it.",
+    "production": { "pump": 1.2 },
+    "trackCostMul": 1,
+    "waterUseMul": 1,
+    "speedMul": 1,
+    "snowLevel": 4
+  },
+  {
+    "id": "beach",
+    "name": "Beach",
+    "desc": "Sand on the sea shore. Quarries find little; pumps get salt water.",
+    "production": { "quarry": 0.8, "pump": 0.6 },
+    "trackCostMul": 1,
+    "waterUseMul": 1,
+    "speedMul": 1,
+    "snowLevel": 4
+  },
+  {
+    "id": "mountain",
+    "name": "Mountain",
+    "desc": "Bare rock, snow and glacier ice high up. Quarries dig more; track costs more and trains climb slower; pumps find little.",
+    "production": { "quarry": 1.3, "pump": 0.6 },
+    "trackCostMul": 1.5,
+    "waterUseMul": 1,
+    "speedMul": 0.9,
+    "snowLevel": 4
   }
 ]

@@ -528,7 +528,7 @@ describe('v6 to v7', () => {
   });
 
   it('maps route modes to their new names the way a train loads them', () => {
-    const j = migrate({
+    const file = (): SaveGame => ({
       ...oldestSave(),
       version: 6,
       trains: [
@@ -544,11 +544,24 @@ describe('v6 to v7', () => {
         { id: 8, mode: 'transport' },
       ],
     });
-    expect((j.trains as { mode: unknown }[]).map((t) => t.mode)).toEqual([
+    const modes = (j: SaveGame) => (j.trains as { mode: unknown }[]).map((t) => t.mode);
+    // the step names them as they were named when it was written: production and collection...
+    expect(modes(runStep(6, file()))).toEqual([
       'schedule',
       'collection',
       'production',
       'production',
+      'schedule',
+      'schedule',
+      'schedule',
+      'transport',
+    ]);
+    // ...and the steps after it make both freight
+    expect(modes(migrate(file()))).toEqual([
+      'schedule',
+      'freight',
+      'freight',
+      'freight',
       'schedule',
       'schedule',
       'schedule',
@@ -583,7 +596,10 @@ describe('v7 to v8', () => {
     expect([...OLD_MODE_TO_NEW.keys()]).toEqual(['fixed', 'dynamic', 'collect']);
     for (const [old, now] of OLD_MODE_TO_NEW) {
       const file = { ...oldestSave(), version: 7, trains: [withOld(savedTrain(), { mode: old })] };
-      expect((runStep(7, asStored(file) as SaveGame).trains[0] as OldTrain).mode, old).toBe(now);
+      // the step maps it to the name of its day, the later steps to the name it has now
+      expect((runStep(7, asStored(file) as SaveGame).trains[0] as OldTrain).mode, old).toBe(
+        MODE_RENAMED_IN_V7.get(old),
+      );
       const train = migrate(file).trains[0];
       expect(Train.fromJSON(asStored(train) as TrainJSON, track).mode, old).toBe(now);
     }
@@ -1447,10 +1463,13 @@ describe('v16 to v17', () => {
   it('records its note, and leaves a v17 file as it was', () => {
     const step = MIGRATIONS.find((m) => m.from === 16)!;
     const v16 = migrate({ ...oldestSave(), version: 16, trains: [{ id: 1 }] });
-    expect(v16.migrationNotes).toEqual([`v16→v17: ${step.note}`]);
-    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS }]);
+    expect(v16.migrationNotes?.[0]).toBe(`v16→v17: ${step.note}`);
+    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS, ...V18_DEFAULTS }]);
+    // a v17 file is only given what the later steps fill, and keeps the train making way
     const v17 = { ...oldestSave(), version: 17, trains: [{ id: 1 }, { id: 2, aside: true }] };
-    expect(migrate(asStored(v17) as SaveGame).trains).toEqual(v17.trains);
+    expect(migrate(asStored(v17) as SaveGame).trains).toEqual(
+      v17.trains.map((t) => ({ ...t, ...V18_DEFAULTS })),
+    );
   });
 
   it('loads every train as a load before v17 did, and keeps a train making way from now on', () => {
@@ -1480,6 +1499,138 @@ describe('v16 to v17', () => {
           expect(asStored(back.toJSON()), `${label}, making way ${aside}`).toEqual(v17);
         }
       }
+  });
+});
+
+describe('v17 to v18', () => {
+  beforeEach(() => {
+    resetTrainIds(1);
+    resetStationIds(1);
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  /**
+   * A v17 file, as it reads from disk: trains of the shapes old builds wrote, with every mode a
+   * file could hold, some holding the field the step fills already, and now and then an item no
+   * build wrote in the train list.
+   */
+  function genV17(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 17 };
+    const trains = file.trains as unknown[];
+    if (rng.chance(0.2)) trains.splice(rng.int(0, trains.length), 0, rng.pick([null, 3, 'x', []]));
+    return asStored(file) as SaveGame;
+  }
+  /** Smaller v17 files: what `shrinkOldFile` drops, the train list included. */
+  function* shrinkV17(file: SaveGame): Iterable<SaveGame> {
+    for (const smaller of shrinkOldFile(file as unknown as Record<string, unknown>))
+      if (smaller.version === 17) yield smaller as unknown as SaveGame;
+  }
+  /**
+   * The step as stated: a train in production or collection mode is in freight mode, any other
+   * mode (or none) stays as the file has it, and a train has put no goods down at its stop unless
+   * it says it has.
+   */
+  const stepped = (t: unknown) => {
+    if (!isObject(t)) return t;
+    const out: Record<string, unknown> = { ...t };
+    if (RETIRED_MODES.includes(t.mode)) out.mode = 'freight';
+    for (const [key, value] of Object.entries(V18_DEFAULTS)) if (!(key in t)) out[key] = value;
+    return out;
+  };
+
+  it('makes production and collection freight, fills what a load before v18 left, nothing else', () => {
+    forAll(
+      genV17,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(17, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(17, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        const { trains: after, ...restAfter } = once;
+        const { trains: was, ...restBefore } = before;
+        expect(restAfter, 'beside the trains').toEqual(restBefore);
+        expect(after, 'the trains').toEqual(was.map(stepped));
+      },
+      { shrink: shrinkV17 },
+    );
+  });
+
+  it('leaves every other mode as the file has it', () => {
+    // schedule, transport, contract and freight itself stay, and so does a value no build wrote;
+    // a train without a mode is still without one for the load code to read
+    const kept: unknown[] = [
+      'schedule',
+      'transport',
+      'contract',
+      'freight',
+      'fixed',
+      'dynamic',
+      'collect',
+      'bogus',
+      7,
+      null,
+      '',
+    ];
+    const trains = [...kept.map((mode, id) => ({ id, mode })), { id: 99 }];
+    const j = runStep(17, { ...oldestSave(), version: 17, trains: asStored(trains) as unknown[] });
+    expect(j.trains.map((t) => (t as { mode?: unknown }).mode)).toEqual([...kept, undefined]);
+    expect('mode' in (j.trains.at(-1) as object)).toBe(false);
+    const retired = runStep(17, {
+      ...oldestSave(),
+      version: 17,
+      trains: RETIRED_MODES.map((mode, id) => ({ id, mode })),
+    });
+    expect(retired.trains.map((t) => (t as { mode?: unknown }).mode)).toEqual([
+      'freight',
+      'freight',
+    ]);
+  });
+
+  it('records its note, and leaves a v18 file as it was', () => {
+    const step = MIGRATIONS.find((m) => m.from === 17)!;
+    const v17 = migrate({
+      ...oldestSave(),
+      version: 17,
+      trains: [{ id: 1, mode: 'collection' }, { id: 2, mode: 'transport' }, { id: 3 }],
+    });
+    expect(v17.migrationNotes).toEqual([`v17→v18: ${step.note}`]);
+    expect(v17.trains).toEqual([
+      { id: 1, mode: 'freight', ...V18_DEFAULTS },
+      { id: 2, mode: 'transport', ...V18_DEFAULTS },
+      { id: 3, ...V18_DEFAULTS },
+    ]);
+    // a file of the current version is not stepped: it holds what it holds
+    const v18 = { ...oldestSave(), version: SAVE_VERSION, trains: [{ id: 1, mode: 'production' }] };
+    expect(migrate(asStored(v18) as SaveGame).trains).toEqual(v18.trains);
+  });
+
+  it('loads a train saved in production or collection as a roaming freight train', () => {
+    // Train.fromJSON turns a mode it does not know into a schedule, so without the step a train
+    // saved in either mode would stop roaming on the first load.
+    const track = new TrackGraph(8, 8);
+    for (const mode of RETIRED_MODES) {
+      const saved: Record<string, unknown> = { ...savedTrain(), mode };
+      delete saved.dropped;
+      const j = migrate({ ...oldestSave(), version: 17, trains: [asStored(saved)] });
+      const t = Train.fromJSON(asStored(j.trains[0]) as TrainJSON, track);
+      expect(t.mode, String(mode)).toBe('freight');
+      expect(t.dynamic, String(mode)).toBe(true);
+      expect(t.toJSON().dropped, String(mode)).toBe(false);
+    }
+  });
+
+  it('keeps that a freight train has put goods down at its stop, through a save and a load', () => {
+    const track = new TrackGraph(8, 8);
+    const base = savedTrain();
+    expect(base.dropped, 'a train written by this build says whether it has').toBe(false);
+    for (const dropped of [false, true]) {
+      const saved = { ...base, mode: 'freight', dropped };
+      const read = readSaveText(
+        JSON.stringify({ ...oldestSave(), version: SAVE_VERSION, trains: [saved] }),
+      );
+      if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
+      const back = Train.fromJSON(asStored(read.save.trains[0]) as TrainJSON, track);
+      expect(asStored(back.toJSON()), `dropped ${dropped}`).toEqual(saved);
+    }
   });
 });
 
@@ -2539,12 +2690,23 @@ describe('storage, from any state it is in', () => {
 
 /** Every route mode a train has today. */
 const ROUTE_MODES: readonly unknown[] = ['schedule', ...DYNAMIC_MODES];
-/** The names route modes had before the renaming in v7, and the names they have now. */
-const OLD_MODE_TO_NEW: ReadonlyMap<string, RouteMode> = new Map([
+/**
+ * The names route modes had before the renaming in v7, and the names the steps from v6 and v7 gave
+ * them: `production` and `collection`, which the step from v17 made `freight`.
+ */
+const MODE_RENAMED_IN_V7: ReadonlyMap<string, string> = new Map([
   ['fixed', 'schedule'],
   ['dynamic', 'production'],
   ['collect', 'collection'],
 ]);
+/** The names route modes had before the renaming in v7, and the names they have now. */
+const OLD_MODE_TO_NEW: ReadonlyMap<string, RouteMode> = new Map([
+  ['fixed', 'schedule'],
+  ['dynamic', 'freight'],
+  ['collect', 'freight'],
+]);
+/** Modes of v6 to v17 that Freight replaced: the step from v17 makes them `freight`. */
+const RETIRED_MODES: readonly unknown[] = ['production', 'collection'];
 /** The names route modes had before the renaming in v7. */
 const OLD_MODE_NAMES: readonly unknown[] = [...OLD_MODE_TO_NEW.keys()];
 /** Modes no build wrote: the step keeps them, and the load code turns them into a schedule. */
@@ -2555,6 +2717,7 @@ const MODE_VALUES: unknown[] = [
   null,
   '',
   ...OLD_MODE_NAMES,
+  ...RETIRED_MODES,
   ...ROUTE_MODES,
   ...ODD_MODES,
 ];
@@ -2633,10 +2796,18 @@ const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
   asideRetry: [2, 42.3],
   recoveryRetry: [4, 97.15],
 };
+/**
+ * The field the step from v17 gives every train, with what a load before v18 left in it: a train
+ * had put no goods down at the stop it stands at.
+ */
+const V18_DEFAULTS: Readonly<Record<string, unknown>> = { dropped: false };
+/** Values a file may already hold in the field the step from v17 fills, none the default. */
+const V18_HELD: Readonly<Record<string, readonly unknown[]>> = { dropped: [true] };
 /** The fields a step fills on every train, by the version the step upgrades from. */
 const TRAIN_DEFAULTS: readonly [from: number, defaults: Readonly<Record<string, unknown>>][] = [
   [13, RESUME_DEFAULTS],
   [16, V17_DEFAULTS],
+  [17, V18_DEFAULTS],
 ];
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
@@ -2651,7 +2822,7 @@ interface OldTrain {
   mode?: unknown;
   dynamic?: boolean;
   battery?: number;
-  /** some of the fields the steps from v13 and v16 fill, already held (RESUME_HELD, V17_HELD) */
+  /** some of the fields the steps from v13, v16 and v17 fill, already held (RESUME_HELD, ...) */
   held?: Record<string, unknown>;
 }
 function genOldTrain(rng: Rng): OldTrain {
@@ -2662,7 +2833,7 @@ function genOldTrain(rng: Rng): OldTrain {
   if (rng.chance(0.6)) t.battery = rng.pick([0, rng.int(1, 60), rng.range(0, 60), 90]);
   if (rng.chance(0.3)) {
     t.held = {};
-    for (const [key, values] of Object.entries({ ...RESUME_HELD, ...V17_HELD }))
+    for (const [key, values] of Object.entries({ ...RESUME_HELD, ...V17_HELD, ...V18_HELD }))
       if (rng.chance(0.5)) t.held[key] = rng.pick(values);
   }
   return t;
@@ -2808,8 +2979,9 @@ function withoutFilled(from: number, file: unknown): unknown {
   };
   for (const key of top[from] ?? []) delete copy[key];
   if (from === 6) for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
-  // the modes were renamed while saves were v7: the steps from v6 and v7 both map them
-  if (from === 6 || from === 7) for (const t of trains) delete t.mode;
+  // the modes were renamed while saves were v7: the steps from v6 and v7 both map them; the step
+  // from v17 makes production and collection freight
+  if (from === 6 || from === 7 || from === 17) for (const t of trains) delete t.mode;
   if (from === 9) for (const t of trains) if (isObject(t.tanks)) delete t.tanks.battery;
   for (const [step, defaults] of TRAIN_DEFAULTS)
     if (from === step) for (const t of trains) for (const key in defaults) delete t[key];
@@ -2845,27 +3017,32 @@ describe('the defaults the steps fill', () => {
     // the old route modes and filled the battery, Station.fromJSON the turn. Moving the defaults
     // into the steps may not change what loads. Train.fromJSON no longer maps or fills, so what
     // it did is written out here (`loadedBefore`) and every shape a build of a version wrote is
-    // held to it: old mode names and a missing mode up to v7, where the modes were renamed, and a
-    // missing battery up to v9, before the battery came. Station.fromJSON still fills the turn and
-    // is its own oracle. The shapes are few, so every one is tried from every version, each
-    // failure naming the one train or station.
+    // held to it: old mode names and a missing mode up to v7, where the modes were renamed, the
+    // production and collection modes up to v17, where Freight replaced them, and a missing
+    // battery up to v9, before the battery came. Station.fromJSON still fills the turn and is its
+    // own oracle. The shapes are few, so every one is tried from every version, each failure
+    // naming the one train or station.
     const track = new TrackGraph(8, 8);
     const base = savedTrain();
     const cap = Train.fromJSON(asStored(base) as TrainJSON, track).batteryCap;
-    /** The mode and battery the load code gave a stored train before the steps filled them. */
+    /** The mode and battery a stored train loads with once the steps have filled them. */
     const loadedBefore = (t: OldTrain) => {
       const m = t.mode;
       const old = typeof m === 'string' ? OLD_MODE_TO_NEW.get(m) : undefined;
       const mode = m
-        ? (old ?? (ROUTE_MODES.includes(m) ? m : 'schedule'))
+        ? (old ??
+          (RETIRED_MODES.includes(m) ? 'freight' : ROUTE_MODES.includes(m) ? m : 'schedule'))
         : t.dynamic
-          ? 'production'
+          ? 'freight'
           : 'schedule';
       return { mode, battery: Math.min(cap, t.battery ?? 0) };
     };
     /** Could a build of `version` have written the train: modes and battery as it named them. */
     const wrote = (version: number, t: OldTrain) =>
-      (version <= 7 || ROUTE_MODES.includes(t.mode) || ODD_MODES.includes(t.mode)) &&
+      (version <= 7 ||
+        ROUTE_MODES.includes(t.mode) ||
+        (version <= 17 && RETIRED_MODES.includes(t.mode)) ||
+        ODD_MODES.includes(t.mode)) &&
       (version <= 9 || t.battery !== undefined);
     const trains: OldTrain[] = [];
     for (const mode of MODE_VALUES)
@@ -2897,7 +3074,10 @@ describe('the defaults the steps fill', () => {
         expect(now.mode, `${label}: the mode it loads with`).toBe(was.mode);
         expect(now.battery, `${label}: the battery it loads with`).toBe(was.battery);
         const stored = after as { mode?: unknown; tanks: { battery?: unknown } };
-        if (version <= 7 && !ODD_MODES.includes(written[i].mode))
+        if (
+          (version <= 7 && !ODD_MODES.includes(written[i].mode)) ||
+          RETIRED_MODES.includes(written[i].mode)
+        )
           expect(stored.mode, `${label}: the mode the file now holds`).toBe(was.mode);
         if (version <= 9) expect(typeof stored.tanks.battery, label).toBe('number');
       });
@@ -2958,7 +3138,9 @@ describe('the defaults the steps fill', () => {
           const was = trains[i];
           const mode = 'mode' in t ? t.mode : 'absent';
           const wasMode = 'mode' in was ? was.mode : 'absent';
-          if (from > 7 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
+          if (RETIRED_MODES.includes(was.mode) && from <= 17)
+            expect(mode, `train ${i}: mode`).toBe('freight');
+          else if (from > 7 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
             expect(mode, `train ${i}: mode`).toBe(wasMode);
           else expect(ROUTE_MODES, `train ${i}: mode`).toContain(mode);
           for (const [step, defaults] of TRAIN_DEFAULTS)
@@ -2988,7 +3170,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },

@@ -185,6 +185,8 @@ describe('connected illustrated terrain', () => {
       a.forEach((v, i) => expect(v).toBeCloseTo(b[i], 8));
     }
   });
+  // slow because it samples every material over 80 x 80 tiles in steps of 0.4, about 420 000 reads
+  // with an expect each: 2.6 s alone
   it('reads only the opaque painted part of every packed surface', () => {
     // Alpha copied into the colour channels: any sample reaching a transparent tile corner or the
     // packed cell edge comes out below full coverage.
@@ -199,7 +201,7 @@ describe('connected illustrated terrain', () => {
           surfaceColor(alpha, material, x, y, out);
           expect(out[0]).toBeGreaterThan(210);
         }
-  }, 35_000);
+  }, 90_000);
   it('keeps every relief style within its per-edge rise, height budget and picking', () => {
     const m = fixture();
     const styles: ReliefStyle[] = [
