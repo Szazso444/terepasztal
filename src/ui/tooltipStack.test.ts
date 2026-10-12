@@ -5,6 +5,8 @@ import {
   GRACE_MS,
   HOLD_MS,
   RING_C,
+  RING_R,
+  RING_SIZE,
   ROOT_DELAY_MS,
   ROOT_LEAVE_MS,
   SHOW_MS,
@@ -647,6 +649,38 @@ describe('placement and the ring', () => {
   });
 });
 
+describe('the numbers #337 decided', () => {
+  // the tests above take the constants from the module, so they hold for any value: this pins the
+  // ones the issue and the author's comment of 2026-10-12 give; changing one is their decision
+  it('holds the timing, placement and ring constants the issue gives', () => {
+    expect({
+      HOLD_MS,
+      GRACE_MS,
+      ROOT_LEAVE_MS,
+      SHOW_MS,
+      ROOT_DELAY_MS,
+      UPDATE_MS,
+      TIP_OFFSET,
+      TIP_MARGIN,
+      RING_SIZE,
+      RING_R,
+    }).toEqual({
+      HOLD_MS: 2000,
+      GRACE_MS: 350,
+      ROOT_LEAVE_MS: 2 * 350,
+      SHOW_MS: 120,
+      ROOT_DELAY_MS: 400,
+      // at most 4 times a second
+      UPDATE_MS: 1000 / 4,
+      TIP_OFFSET: 14,
+      TIP_MARGIN: 8,
+      RING_SIZE: 14,
+      RING_R: 5,
+    });
+    expect(RING_C).toBeCloseTo(2 * Math.PI * 5, 12);
+  });
+});
+
 // ---------------------------------------------------------------- properties over pointer traces
 //
 // A driver plays seeded pointer traces against the stack the way the game and src/ui/tooltip.ts
@@ -656,8 +690,10 @@ describe('placement and the ring', () => {
 // closes, the game goes on seeing the pointer over the UI until it moves, as `Input.overUi` does.
 // Live content keeps its terms across a refresh or brings new ones; `TooltipLayer.refresh` keeps a
 // term whose label stays (`termKeys`), and says when the one under the pointer went, as no event
-// does. The view checks each call the stack makes against the issue's rules as it happens; the
-// timing rules that need the rest of the trace run at its end.
+// does. A panel can draw again under the pointer, taking the term it was on and that term's leave
+// with it; the stack then learns that the pointer left the term from `hover` alone. The view checks
+// each call the stack makes against the issue's rules as it happens; the timing rules that need the
+// rest of the trace run at its end.
 
 /** A term of a tooltip or of a panel; the stack knows a term by its identity. */
 interface Term {
@@ -760,6 +796,11 @@ interface Coverage {
   /** the pointer back on a term whose locked tooltip is up, its parent refreshed since it opened */
   termReturns: number;
   escapes: number;
+  /** the pointer seen on the field with a panel term's leave lost: its wait going, its tooltip up */
+  lostWaits: number;
+  lostOpen: number;
+  /** tooltips a call other than closeAll or Escape closed at once, each held to its cause */
+  callCloses: number;
   rootChecks: number;
   termChecks: number;
   panelOpens: number;
@@ -769,7 +810,11 @@ interface Coverage {
 }
 
 type Step =
-  | { k: 'field'; key: number; x: number; y: number }
+  /**
+   * `lost`: the panel drew again under the pointer, so the term it was on went, and the leave the
+   * DOM would have sent went with it (`Tooltip.bindTerms` hears a panel term's own enter and leave)
+   */
+  | { k: 'field'; key: number; x: number; y: number; lost?: boolean }
   | { k: 'ui' }
   | { k: 'panelTerm'; term: number }
   | { k: 'tip'; level: number }
@@ -821,12 +866,15 @@ function genSteps(rng: Rng): Step[] {
   const n = rng.int(8, 60);
   const level = () => (rng.chance(0.6) ? TOP : rng.int(0, 4));
   const term = () => rng.int(0, TERMS_PER_TIP - 1);
-  const field = (): Step => ({
-    k: 'field',
-    key: rng.chance(0.08) ? NO_TARGET : rng.int(0, NO_TARGET - 1),
-    x: rng.pick(XS),
-    y: rng.pick(YS),
-  });
+  const field = (lost = false): Step => {
+    const s = {
+      k: 'field' as const,
+      key: rng.chance(0.08) ? NO_TARGET : rng.int(0, NO_TARGET - 1),
+      x: rng.pick(XS),
+      y: rng.pick(YS),
+    };
+    return lost ? { ...s, lost } : s;
+  };
   // a level down: rest on a term of the top tooltip until its own tooltip locks, then go in
   const dive = (t = term()): Step[] => [
     { k: 'term', level: TOP, term: t },
@@ -863,8 +911,11 @@ function genSteps(rng: Rng): Step[] {
       // a root, then down several levels at once
       steps.push(...root(), ...Array.from({ length: rng.int(2, 5) }, () => dive()).flat());
     else if (r < 0.82) steps.push({ k: 'ui' });
-    else if (r < 0.86) steps.push({ k: 'panelTerm', term: rng.int(0, 1) });
-    else if (r < 0.88) steps.push({ k: 'live', on: rng.chance(0.5), newTerms: rng.chance(0.5) });
+    else if (r < 0.86) {
+      steps.push({ k: 'panelTerm', term: rng.int(0, 1) });
+      // the panel draws again under the pointer, which then comes onto the field with no leave
+      if (rng.chance(0.3)) steps.push({ k: 'wait', ms: rng.pick(WAITS) }, field(true));
+    } else if (r < 0.88) steps.push({ k: 'live', on: rng.chance(0.5), newTerms: rng.chance(0.5) });
     else if (r < 0.9)
       steps.push({ k: 'update', key: rng.int(0, NO_TARGET), newTerms: rng.chance(0.5) });
     else if (r < 0.93) steps.push({ k: 'closeAll' });
@@ -978,7 +1029,7 @@ class Trace implements TipView<Content> {
         const key = FIELD_KEYS[s.key];
         const l = this.loc;
         if (l.at === 'field' && l.key === key && l.x === s.x && l.y === s.y) break;
-        this.moveTo({ at: 'field', key, x: s.x, y: s.y });
+        this.moveTo({ at: 'field', key, x: s.x, y: s.y }, s.lost === true);
         // with no locked root, a root for the target is up once the pointer has rested on it
         after = () => {
           const root = this.up[0];
@@ -1069,8 +1120,11 @@ class Trace implements TipView<Content> {
     after?.();
   }
 
-  /** The DOM's events for the pointer going from where it is to `to`: the leaves, then the enters. */
-  private moveTo(to: Loc) {
+  /**
+   * The DOM's events for the pointer going from where it is to `to`: the leaves, then the enters.
+   * With `lost`, a panel term's leave never comes: its element went from under the pointer.
+   */
+  private moveTo(to: Loc, lost = false) {
     const t = this.clock.t;
     const from = this.loc;
     const fromInst = from.at === 'tip' || from.at === 'term' ? from.inst : null;
@@ -1080,7 +1134,11 @@ class Trace implements TipView<Content> {
       const call: Call = { t, name: 'termLeave', level, term: from.term };
       this.api(call, () => this.stack.termLeave(level));
     }
-    if (from.at === 'panelTerm') {
+    if (from.at === 'panelTerm' && lost) {
+      const own = this.up[0];
+      if (t - this.locSince < SHOW_MS) this.cover.lostWaits++;
+      else if (own?.term === from.term && own.lockedAt === null) this.cover.lostOpen++;
+    } else if (from.at === 'panelTerm') {
       const call: Call = { t, name: 'termLeave', level: -1, term: from.term };
       this.api(call, () => this.stack.termLeave(-1));
     }
@@ -1440,6 +1498,29 @@ class Trace implements TipView<Content> {
           `the unlocked root of ${inst.key} closed at ${t} with the pointer on it (${c?.name ?? ctx.kind})`,
       );
     }
+    if (ctx.kind === 'api') {
+      // at once, in a call, only closeAll and Escape close a locked tooltip; a term's unlocked
+      // tooltip goes when the pointer is off its term: the DOM says so, an update took the term,
+      // or (a panel's) the pointer is seen on the field
+      const c = ctx.call;
+      const all = c.name === 'closeAll' || c.name === 'escape';
+      if (!all) this.cover.callCloses++;
+      check(
+        all || inst.lockedAt === null,
+        () => `the locked level ${level} (${inst.key}) closed at ${t} in ${c.name}`,
+      );
+      const left = c.name === 'termLeave' && c.level === level - 1 && c.term === inst.term;
+      const cause =
+        inst.src === 'term'
+          ? left || (c.name === 'update' && level === 1)
+          : inst.src === 'panel'
+            ? left || c.name === 'hover'
+            : true;
+      check(
+        all || cause,
+        () => `the unlocked tooltip of ${inst.key} closed at ${t} in ${c.name}, its term not left`,
+      );
+    }
     if (ctx.kind === 'timer')
       check(
         level > this.pointerLevel(),
@@ -1617,6 +1698,9 @@ describe('the stack over seeded pointer traces', () => {
     lockedKeptOnGone: 0,
     termReturns: 0,
     escapes: 0,
+    lostWaits: 0,
+    lostOpen: 0,
+    callCloses: 0,
     rootChecks: 0,
     termChecks: 0,
     panelOpens: 0,
@@ -1656,6 +1740,9 @@ describe('the stack over seeded pointer traces', () => {
         'lockedKeptOnGone',
         'termReturns',
         'escapes',
+        'lostWaits',
+        'lostOpen',
+        'callCloses',
         'rootChecks',
         'termChecks',
         'panelOpens',
@@ -1677,6 +1764,54 @@ describe('the stack over seeded pointer traces', () => {
       options,
     );
     expect(cover.rogue).toBeGreaterThan(0);
+  });
+});
+
+describe('update, over seeded call times', () => {
+  /** A view that draws nothing: the builders are what is counted. */
+  const blank: TipView<string> = {
+    open() {},
+    move() {},
+    refresh: () => true,
+    lock() {},
+    close() {},
+  };
+  /** Gaps between update calls: on and either side of the limit, a frame, and anything. */
+  const GAPS = [1, FRAME, UPDATE_MS - 1, UPDATE_MS, UPDATE_MS + 1, 333, 500];
+
+  it("builds a root's content at most 4 times in any second, its opening included", () => {
+    forAll(
+      (rng) =>
+        Array.from({ length: rng.int(1, 80) }, () =>
+          rng.chance(0.5) ? rng.pick(GAPS) : rng.int(1, 600),
+        ),
+      (gaps) => {
+        const clock = new StepClock((fn) => fn());
+        const stack = new TooltipStack<string>(blank, clock);
+        const builtAt: number[] = [];
+        const builder = (content: string) => () => {
+          builtAt.push(clock.t);
+          return content;
+        };
+        stack.hover(TILE_A, 100, 100, builder('a'));
+        clock.runTo(ROOT_DELAY_MS);
+        check(stack.depth === 1 && builtAt.length === 1, () => 'the root did not open once');
+        for (const gap of gaps) {
+          clock.runTo(clock.t + gap);
+          stack.update(TILE_A, builder('live'));
+        }
+        // four builds a second at most: of any five, the last is a second or more after the first
+        for (let i = 0; i + 4 < builtAt.length; i++)
+          check(
+            builtAt[i + 4] - builtAt[i] >= 1000,
+            () => `five builds within a second: ${builtAt.slice(i, i + 5).join(', ')}`,
+          );
+      },
+      {
+        seeds: Array.from({ length: 300 }, (_, i) => i + 1),
+        shrink: (gaps) => shrinkArray(gaps, (g) => shrinkInt(g, 1)),
+      },
+    );
   });
 });
 

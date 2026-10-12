@@ -1,7 +1,14 @@
 import { Game, hashSeed } from './game';
 import { STR } from './strings';
 import { el } from './ui/dom';
-import { readSave, clearSave, writeSave, freezeStoredSaves, type WorldSpec } from './sim/save';
+import {
+  readSave,
+  storedRefusal,
+  clearSave,
+  writeSave,
+  freezeStoredSaves,
+  type WorldSpec,
+} from './sim/save';
 import { expandSave, ownsBorderChunk } from './sim/expand';
 import { rules, rulesFrom } from './sim/rules';
 import { takeIntent, setTestingLevel, type Intent } from './intent';
@@ -68,6 +75,8 @@ async function boot() {
   let start: 'menu' | 'play' | 'editor' = 'menu';
   /** production chain of the game about to run (new game choice, level start block or save) */
   let supply: SupplyMode | undefined;
+  /** the stored game is refused for the size of its map: the menu opens without it, and says so */
+  let tooLarge = false;
 
   // A dev-server reload carries the running game over, so an edit lands where you were.
   const resumed = takeDevSession();
@@ -93,6 +102,7 @@ async function boot() {
     start = 'editor';
   } else {
     save = readSave();
+    tooLarge = !save && storedRefusal() === 'tooLarge';
     spec = save?.world ?? {
       kind: 'generated',
       seed: Math.floor(Math.random() * 2 ** 31),
@@ -136,6 +146,7 @@ async function boot() {
     game.clock.setSpeed(0);
   if (start === 'menu') game.openMainMenu();
   if (frozen.refused) game.toasts.push(STR.saves.groundRefused(frozen.refused), 'warn');
+  if (tooLarge) game.toasts.push(STR.saves.refused.tooLarge, 'warn');
   armDevReload(() => (game.mode === 'play' && !game.menuOpen ? game.snapshot() : null));
   if (import.meta.env.DEV)
     reportDevTraffic(() => ({

@@ -3469,7 +3469,12 @@ describe('the ground of a file of any version', () => {
         const lacking = (raw: string) => parseSave(raw)?.world?.kind === 'generated';
         const texts = [...(continued === null ? [] : [continued]), ...Object.values(slots)];
         const frozen = texts.filter(lacking).length;
-        expect(freezeStoredSaves(() => hashedGround(3))).toEqual({ ran: true, frozen, refused: 0 });
+        expect(freezeStoredSaves(() => hashedGround(3))).toEqual({
+          ran: true,
+          frozen,
+          refused: 0,
+          tooLarge: 0,
+        });
         frozenAll += frozen;
         expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
         // each text the pass had ground for holds it now and nothing else new; the rest as they were
@@ -3492,7 +3497,12 @@ describe('the ground of a file of any version', () => {
         }
         // once only: the next start generates nothing and writes nothing
         const writes = store.writes;
-        expect(freezeStoredSaves(() => noGround)).toEqual({ ran: false, frozen: 0, refused: 0 });
+        expect(freezeStoredSaves(() => noGround)).toEqual({
+          ran: false,
+          frozen: 0,
+          refused: 0,
+          tooLarge: 0,
+        });
         expect(store.writes).toBe(writes);
       },
       { seeds: Array.from({ length: 40 }, (_, i) => i + 1) },

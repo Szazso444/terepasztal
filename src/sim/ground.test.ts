@@ -7,21 +7,36 @@ import {
   SLOTS_KEY,
   buildSave,
   continueMeta,
+  deleteSlot,
   freezeStoredSaves,
+  importSave,
   listSlots,
   parseSave,
   readSave,
+  readSaveText,
   readSlot,
+  slotRefusal,
+  storedRefusal,
   withGround,
+  writeSave,
   type SaveGame,
   type SaveParts,
 } from './save';
-import { expandSave } from './expand';
-import { generatorOf, groundOf, lacksGround, storeOf, type GeneratedWorld } from './ground';
+import { expandSave, ownsBorderChunk, ringsWithinBound } from './expand';
+import {
+  MAX_WORLD_CHUNKS,
+  WorldTooLarge,
+  generatorOf,
+  groundOf,
+  lacksGround,
+  storeOf,
+  worldWithinBound,
+  type GeneratedWorld,
+} from './ground';
 import { Builder } from './build';
 import { Economy } from './economy';
 import { Stockpile } from './stockpile';
-import { DEFAULT_RULES, rules } from './rules';
+import { DEFAULT_RULES, rules, rulesFrom } from './rules';
 import { DEFAULT_SUPPLY, setSupplyMode, supplyMode, type SupplyMode } from './supply';
 import {
   CHUNK_TILES,
@@ -43,6 +58,7 @@ import { Dir } from '../engine/iso';
 import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { buildRelief, groundAllows } from '../render/terrainRelief';
+import { STR } from '../strings';
 
 // the build rules play a sound when a piece goes down
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -355,7 +371,7 @@ describe('the saves stored when this version first runs', () => {
     const listed = listSlots();
     const gen = counting(changed);
     const report = freezeStoredSaves(() => gen.gen);
-    expect(report).toEqual({ ran: true, frozen: 4, refused: 0 });
+    expect(report).toEqual({ ran: true, frozen: 4, refused: 0, tooLarge: 0 });
     expect(gen.calls).toHaveLength(4);
     expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
     // Continue's save and the named ones that had no ground hold it now, and only that is new
@@ -390,7 +406,12 @@ describe('the saves stored when this version first runs', () => {
     // once only: the next start finds the pass done, generates nothing and writes nothing
     const writes = store.writes;
     const again = counting(changed);
-    expect(freezeStoredSaves(() => again.gen)).toEqual({ ran: false, frozen: 0, refused: 0 });
+    expect(freezeStoredSaves(() => again.gen)).toEqual({
+      ran: false,
+      frozen: 0,
+      refused: 0,
+      tooLarge: 0,
+    });
     expect(again.calls).toEqual([]);
     expect(store.writes).toBe(writes);
   });
@@ -424,7 +445,7 @@ describe('the saves stored when this version first runs', () => {
     use(Object.assign(new MemoryStorage(size + first + 10), { items: store.items }));
     expect(added(continued, false)).toBeGreaterThan(first + 10);
     const report = freezeStoredSaves();
-    expect(report).toEqual({ ran: true, frozen: 1, refused: 3 });
+    expect(report).toEqual({ ran: true, frozen: 1, refused: 3, tooLarge: 0 });
     // Continue's save would not fit and is as it was; of the named ones, the one that fit has it
     expect(store.items.get(SAVE_KEY)).toBe(continued);
     const after = slotTexts();
@@ -446,7 +467,7 @@ describe('the saves stored when this version first runs', () => {
     expect(parseSave(raw)).not.toBeNull();
     expect(withGround(raw, () => generatorOf('simple'))).toBeNull();
     store.items.set(SAVE_KEY, raw);
-    expect(freezeStoredSaves()).toEqual({ ran: true, frozen: 0, refused: 0 });
+    expect(freezeStoredSaves()).toEqual({ ran: true, frozen: 0, refused: 0, tooLarge: 0 });
     expect(store.items.get(SAVE_KEY)).toBe(raw);
   });
 
@@ -463,7 +484,12 @@ describe('the saves stored when this version first runs', () => {
     // every save has its ground: the second pass generates nothing and only says it ran
     const writes = s.writes;
     const again = counting(changed);
-    expect(freezeStoredSaves(() => again.gen)).toEqual({ ran: true, frozen: 0, refused: 0 });
+    expect(freezeStoredSaves(() => again.gen)).toEqual({
+      ran: true,
+      frozen: 0,
+      refused: 0,
+      tooLarge: 0,
+    });
     expect(again.calls).toEqual([]);
     expect(s.writes).toBe(writes + 1);
     expect(s.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
@@ -483,7 +509,12 @@ describe('the saves stored when this version first runs', () => {
     store.items.set(SLOTS_KEY, JSON.stringify({ bundle: raw }));
     const shown = [continueMeta(), listSlots()];
     const gen = counting(changed);
-    expect(freezeStoredSaves(() => gen.gen)).toEqual({ ran: true, frozen: 2, refused: 0 });
+    expect(freezeStoredSaves(() => gen.gen)).toEqual({
+      ran: true,
+      frozen: 2,
+      refused: 0,
+      tooLarge: 0,
+    });
     expect(gen.calls).toHaveLength(2);
     for (const [where, now] of [
       ['Continue', store.items.get(SAVE_KEY)!],
@@ -516,7 +547,7 @@ describe('the saves stored when this version first runs', () => {
       if (s === 3) throw new Error('generation failed');
       return changed(s, p);
     };
-    expect(freezeStoredSaves(() => gen)).toEqual({ ran: true, frozen: 3, refused: 0 });
+    expect(freezeStoredSaves(() => gen)).toEqual({ ran: true, frozen: 3, refused: 0, tooLarge: 0 });
     const after = slotTexts() as Record<string, unknown>;
     expect(after.old).toBe(slots.old);
     expect(after.odd).toBe(5);
@@ -534,7 +565,12 @@ describe('the saves stored when this version first runs', () => {
       throw new Error('blocked');
     };
     const writes = s.writes;
-    expect(freezeStoredSaves(() => never)).toEqual({ ran: false, frozen: 0, refused: 0 });
+    expect(freezeStoredSaves(() => never)).toEqual({
+      ran: false,
+      frozen: 0,
+      refused: 0,
+      tooLarge: 0,
+    });
     expect(s.writes).toBe(writes);
   });
 
@@ -561,7 +597,12 @@ describe('the saves stored when this version first runs', () => {
         if (c.inSlot) store.items.set(SLOTS_KEY, JSON.stringify({ grown: raw }));
         else store.items.set(SAVE_KEY, raw);
         const gen = counting(hashedGen(2));
-        expect(freezeStoredSaves(() => gen.gen)).toEqual({ ran: true, frozen: 1, refused: 0 });
+        expect(freezeStoredSaves(() => gen.gen)).toEqual({
+          ran: true,
+          frozen: 1,
+          refused: 0,
+          tooLarge: 0,
+        });
         expect(gen.calls).toEqual([grown.params]);
         // every stored text as it was, the chunks it lacked added, and nothing else of the file new
         const now = c.inSlot ? slotTexts().grown : store.items.get(SAVE_KEY)!;
@@ -991,6 +1032,487 @@ describe('the chain a save is given its ground in', () => {
       expect(firstDifference(atStart, atLoad), `supply ${String(held)}`).toBeNull();
       const chain = held === 'full' ? full : simple;
       expect(firstDifference(atStart, chain), `supply ${String(held)}`).toBeNull();
+    }
+  });
+});
+
+describe('the bound on the map of a generated world', () => {
+  /** A generated world on a frame; chunks are 32 tiles, so 1024 tiles is 32 chunks. */
+  const framed = (w: number, h: number, originX = 0, originY = 0) =>
+    worldOf(1, { w, h, originX, originY });
+
+  it('is a square of 32 x 32 chunks, above every world a new game starts with', () => {
+    expect(MAX_WORLD_CHUNKS).toBe(1024);
+    // the largest map size tuning allows, and a few rings of growth on top of it
+    const top = rulesFrom({ mapSize: 1e9 }).mapSize;
+    expect((top / CHUNK_TILES) ** 2).toBeLessThan(MAX_WORLD_CHUNKS);
+    expect(worldWithinBound(framed(top, top))).toBe(true);
+    for (let ring = 1; ring <= 8; ring++) {
+      const side = top + 2 * ring * CHUNK_TILES;
+      const origin = -ring * CHUNK_TILES;
+      expect(worldWithinBound(framed(side, side, origin, origin)), `ring ${ring}`).toBe(true);
+    }
+  });
+
+  it('holds a world of exactly the bound and refuses one ring above it', () => {
+    // 32 x 32 chunks is the bound, 34 x 34 is one ring above it
+    const square = (chunks: number) =>
+      framed(chunks * CHUNK_TILES, chunks * CHUNK_TILES, -CHUNK_TILES, -CHUNK_TILES);
+    expect(mapChunks(square(32).params)).toHaveLength(MAX_WORLD_CHUNKS);
+    expect(worldWithinBound(square(32))).toBe(true);
+    expect(mapChunks(square(34).params).length).toBeGreaterThan(MAX_WORLD_CHUNKS);
+    expect(worldWithinBound(square(34))).toBe(false);
+    // not only squares: a line of 1024 chunks, and one more chunk
+    expect(worldWithinBound(framed(1024 * CHUNK_TILES, CHUNK_TILES))).toBe(true);
+    expect(worldWithinBound(framed(1025 * CHUNK_TILES, CHUNK_TILES))).toBe(false);
+    // an origin off the chunk grid covers one chunk more along the axis
+    expect(worldWithinBound(framed(1024, 1024, -32, -32))).toBe(true);
+    expect(worldWithinBound(framed(1024, 1024, -16, 0))).toBe(false);
+    expect(worldWithinBound(framed(1024, 1024, 16, 0))).toBe(false);
+  });
+
+  it('counts the chunks a map covers as mapChunks walks them', () => {
+    forAll(
+      (rng) => ({
+        w: rng.int(0, 1300) + (rng.chance(0.2) ? 0.5 : 0),
+        h: rng.int(0, 1300) + (rng.chance(0.2) ? 0.5 : 0),
+        originX: rng.int(-700, 700),
+        originY: rng.int(-700, 700),
+      }),
+      (frame) => {
+        const walked = mapChunks({ ...DEFAULT_MAP_PARAMS, ...frame }).length;
+        expect(worldWithinBound(worldOf(1, frame)), JSON.stringify(frame)).toBe(
+          walked <= MAX_WORLD_CHUNKS,
+        );
+      },
+    );
+  });
+
+  it('answers an absurd size at once, whatever it is made of', () => {
+    const within = (params: unknown) => worldWithinBound({ kind: 'generated', seed: 1, params });
+    for (const w of [1e6, 1e9, 2 ** 40, Infinity, -Infinity, 40_000, '1000000', null, {}, [96]])
+      expect(within({ w, h: 96 }), `w ${JSON.stringify(w)}`).toBe(false);
+    // a size too long to allocate is beyond the bound though the other axis covers no chunk
+    expect(within({ w: 1e6, h: 0 })).toBe(false);
+    expect(within({ w: 1e6, h: 1e6 })).toBe(false);
+    // so is an origin no walk over the chunks would advance from
+    for (const o of [1e300, -1e300, 2 ** 31, '0', NaN])
+      expect(within({ originX: o }), `originX ${String(o)}`).toBe(false);
+    // what a world description may leave out or hold in another shape reads as the defaults
+    for (const params of [undefined, null, 'text', 5, [], {}, { w: 96 }, { originX: -64 }])
+      expect(within(params), JSON.stringify(params)).toBe(true);
+    // a level stores its own ground; anything that is no world is not generated
+    const level = { kind: 'level', seed: 1, level: { w: 1e6, h: 1e6 } };
+    for (const world of [level, undefined, null, 'world', 4, []])
+      expect(worldWithinBound(world), JSON.stringify(world)).toBe(true);
+  });
+
+  it('leaves a level alone, whatever generated-world parameters a file puts beside it', () => {
+    // a level is no generated map: its size is its own and nothing is generated from `params`
+    const stray = { kind: 'level', seed: 1, level: { w: 96, h: 96 }, params: { w: 1e6, h: 1e6 } };
+    expect(worldWithinBound(stray)).toBe(true);
+    expect(worldWithinBound({ ...stray, kind: 'generated' })).toBe(false);
+  });
+});
+
+describe('growth stops at the bound', () => {
+  /** A game on a generated world of `cw` x `ch` chunks, its origin on the chunk grid, all owned. */
+  function gameOf(cw: number, ch = cw, grown = 0): SaveGame {
+    const world = worldOf(1, {
+      w: cw * CHUNK_TILES,
+      h: ch * CHUNK_TILES,
+      originX: -grown * CHUNK_TILES,
+      originY: -grown * CHUNK_TILES,
+    });
+    const save = buildSave(partsOf(world));
+    save.regions = new Array<boolean>(cw * ch).fill(true);
+    return save;
+  }
+  const frameOf = (save: SaveGame) => (save.world as GeneratedWorld).params;
+  /** The chunks a side of the world, as the save's own frame covers them. */
+  const sides = (save: SaveGame) => [frameOf(save).w / CHUNK_TILES, frameOf(save).h / CHUNK_TILES];
+  /** The rings a game can be given, counted the plain way. */
+  const ringsFor = (cw: number, ch: number) => {
+    let r = 0;
+    while ((cw + 2 * (r + 1)) * (ch + 2 * (r + 1)) <= MAX_WORLD_CHUNKS) r++;
+    return r;
+  };
+
+  it('grows a world one ring below the bound up to it, and a world at it not at all', () => {
+    const save = gameOf(30);
+    const { w, h } = frameOf(save);
+    // every chunk is owned, those at the edge too: the next purchase would need a ring
+    expect(ownsBorderChunk(save.regions!, w, h)).toBe(true);
+    // a chunk inside the edge was never a reason to grow
+    expect(
+      ownsBorderChunk(
+        save.regions!.map((_, i) => i === 15 * 30 + 15),
+        w,
+        h,
+      ),
+    ).toBe(false);
+    expect(ringsWithinBound(frameOf(save))).toBe(1);
+    expandSave(save);
+    expect(sides(save)).toEqual([32, 32]);
+    expect(mapChunks(frameOf(save))).toHaveLength(MAX_WORLD_CHUNKS);
+    expect(worldWithinBound(save.world)).toBe(true);
+
+    // the edge chunks of this world are bought, and the map has no ring left to grow by
+    save.regions = new Array<boolean>(MAX_WORLD_CHUNKS).fill(true);
+    expect(ownsBorderChunk(save.regions, 32 * CHUNK_TILES, 32 * CHUNK_TILES)).toBe(false);
+    expect(ringsWithinBound(frameOf(save))).toBe(0);
+    const before = structuredClone(save);
+    expect(expandSave(save)).toBe(save);
+    expect(expandSave(save, 3)).toBe(save);
+    expect(save).toEqual(before);
+  });
+
+  it('adds the rings that fit and no ring that does not, whatever the world and the ask', () => {
+    forAll(
+      (rng) => ({
+        cw: rng.int(1, 45),
+        ch: rng.int(1, 45),
+        grown: rng.int(0, 5),
+        ring: rng.int(1, 4),
+      }),
+      (c) => {
+        const save = gameOf(c.cw, c.ch, c.grown);
+        const was = structuredClone(save);
+        const wasChunks = c.cw * c.ch;
+        expandSave(save, c.ring);
+        const [cw, ch] = sides(save);
+        const added = (cw - c.cw) / 2;
+        expect(Number.isInteger(added), 'whole rings').toBe(true);
+        expect(ch - c.ch, 'the same on both axes').toBe(cw - c.cw);
+        // as many rings as were asked for, or as many as fit: one more would be past the bound
+        expect(added).toBe(Math.min(c.ring, ringsFor(c.cw, c.ch)));
+        if (wasChunks <= MAX_WORLD_CHUNKS) expect(cw * ch).toBeLessThanOrEqual(MAX_WORLD_CHUNKS);
+        if (added < c.ring) expect((cw + 2) * (ch + 2)).toBeGreaterThan(MAX_WORLD_CHUNKS);
+        // no ring, no change at all
+        if (added === 0) expect(save).toEqual(was);
+        // the answer the shop asks is the one growth gives
+        const here = frameOf(was);
+        expect(ownsBorderChunk(was.regions!, here.w, here.h)).toBe(ringsFor(c.cw, c.ch) > 0);
+      },
+      {
+        seeds: Array.from({ length: 60 }, (_, i) => i + 1),
+        shrink: function* (c) {
+          for (const cw of shrinkInt(c.cw, 1)) yield { ...c, cw };
+          for (const ch of shrinkInt(c.ch, 1)) yield { ...c, ch };
+        },
+      },
+    );
+  });
+
+  it('takes a world from any start up to the largest the bound allows, a purchase at a time', () => {
+    // 15 x 15 is the largest start tuning allows; 14 x 62 is not square; an odd side ends below
+    for (const [cw, ch] of [
+      [1, 1],
+      [2, 2],
+      [10, 10],
+      [15, 15],
+      [14, 62],
+      [3, 40],
+    ]) {
+      const at = `${cw} x ${ch}`;
+      const save = gameOf(cw, ch);
+      let rings = 0;
+      // as main.ts grows a save and a purchase does: a ring when an edge chunk is owned; the player
+      // then buys the ring's chunks, which are the new edge
+      while (ownsBorderChunk(save.regions!, frameOf(save).w, frameOf(save).h)) {
+        expandSave(save);
+        const [nw, nh] = sides(save);
+        save.regions = new Array<boolean>(nw * nh).fill(true);
+        expect(++rings, at).toBeLessThan(40);
+        // every world on the way is one a load builds
+        expect(worldWithinBound(save.world), `${at}, ring ${rings}`).toBe(true);
+      }
+      expect(rings, at).toBe(ringsFor(cw, ch));
+      expect(sides(save), at).toEqual([cw + 2 * rings, ch + 2 * rings]);
+      expect(readSaveText(JSON.stringify(save)), at).toHaveProperty('save');
+    }
+    // the largest worlds the game reaches from its own starts: 32 x 32 from an even side, 31 x 31
+    // from an odd one
+    expect(ringsFor(10, 10)).toBe(11);
+    expect(ringsFor(15, 15)).toBe(8);
+    expect(ringsFor(15, 15) * 2 + 15).toBe(31);
+  });
+
+  it('grows by the rings that fit when asked for more, the coordinates moving with them', () => {
+    const save = gameOf(28);
+    const [x, y] = save.track[0];
+    expandSave(save, 3);
+    // 28 x 28 to 32 x 32 is two rings; the third would be 34 x 34
+    expect(sides(save)).toEqual([32, 32]);
+    expect(frameOf(save)).toMatchObject({ originX: -2 * CHUNK_TILES, originY: -2 * CHUNK_TILES });
+    expect(save.track[0].slice(0, 2)).toEqual([x + 2 * CHUNK_TILES, y + 2 * CHUNK_TILES]);
+    expect(save.regions).toHaveLength(MAX_WORLD_CHUNKS);
+    expect(save.regions!.filter(Boolean)).toHaveLength(28 * 28);
+  });
+
+  describe('in storage', () => {
+    let store: MemoryStorage;
+    beforeEach(() => {
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('loads, in the start-up pass and as Continue, a save made by growth to the bound', () => {
+      const save = gameOf(30);
+      expandSave(save);
+      expect(sides(save)).toEqual([32, 32]);
+      expect(writeSave(save)).toBe(true);
+      // the start-up pass gives it ground, not the refusal of a world too large
+      const calls: Partial<MapGenParams>[] = [];
+      const gen: MapGenerator = (s, p) => {
+        calls.push(p);
+        return emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+      };
+      expect(freezeStoredSaves(() => gen)).toEqual({
+        ran: true,
+        frozen: 1,
+        refused: 0,
+        tooLarge: 0,
+      });
+      expect(calls).toEqual([frameOf(save)]);
+      expect(storedRefusal()).toBeNull();
+      const loaded = readSave()!;
+      expect(loaded).not.toBeNull();
+      expect(sides(loaded)).toEqual([32, 32]);
+      // every chunk of the map is stored: the load generates nothing, and builds the whole map
+      const world = loaded.world as GeneratedWorld;
+      expect(lacksGround(world)).toBe(false);
+      const built = groundOf(world, never);
+      expect(built.added).toEqual([]);
+      expect([built.map.w, built.map.h]).toEqual([1024, 1024]);
+      expect(Object.keys(world.chunks!)).toHaveLength(MAX_WORLD_CHUNKS);
+    }, 20_000);
+  });
+});
+
+describe('a save with a map beyond the bound', () => {
+  let store: MemoryStorage;
+  beforeEach(() => {
+    store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const huge = (w: number, h = w) => worldOf(3, { w, h });
+  /** Saves of several shapes whose maps must never be built, as stored texts. */
+  const texts = () => {
+    // a file before v5 lacks the list of owned chunks that the step from v4 lays out for the whole
+    // map, 10 million entries at this size: a loader that migrated it first would be slow, not stuck
+    const early = oldFile(huge(1e5), 4);
+    delete early.regions;
+    return {
+      absurd: JSON.stringify(oldFile(huge(1e6), 18)),
+      early: JSON.stringify(early),
+      tall: JSON.stringify(oldFile(huge(64, 1e6), 18)),
+      ring: JSON.stringify(oldFile(huge(34 * CHUNK_TILES), 18)),
+      current: JSON.stringify(buildSave(partsOf(huge(1e6)))),
+      bundle: JSON.stringify({
+        diagnostics: 1,
+        saveVersion: SAVE_VERSION,
+        save: oldFile(huge(1e6), 18),
+      }),
+    };
+  };
+  /** A generator of flat ground that records every map it is asked for. */
+  const flat = () => {
+    const calls: Partial<MapGenParams>[] = [];
+    const gen: MapGenerator = (s, p) => {
+      calls.push(p);
+      return emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+    };
+    return { gen, calls };
+  };
+
+  it('is skipped by the start-up pass, left byte for byte and counted, the others frozen', () => {
+    const bad = texts();
+    const fine = JSON.stringify(oldFile(worldOf(5, { w: 64, h: 64 }), 18));
+    // the largest world the bound allows is given its ground as before
+    const atBound = JSON.stringify(oldFile(worldOf(6, { w: 1024, h: 1024 }), 18));
+    store.items.set(SAVE_KEY, bad.absurd);
+    store.items.set(SLOTS_KEY, JSON.stringify({ ...bad, fine, atBound }));
+    const { gen, calls } = flat();
+    const report = freezeStoredSaves(() => gen);
+    // Continue's and six named saves are too large; two named ones are frozen
+    expect(report).toEqual({ ran: true, frozen: 2, refused: 0, tooLarge: 7 });
+    expect(calls).toHaveLength(2);
+    for (const p of calls) expect(worldWithinBound({ kind: 'generated', params: p })).toBe(true);
+    expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
+    expect(store.items.get(SAVE_KEY)).toBe(bad.absurd);
+    const after = JSON.parse(store.items.get(SLOTS_KEY)!) as Record<string, string>;
+    for (const [name, text] of Object.entries(bad)) expect(after[name], name).toBe(text);
+    expect(after.fine).not.toBe(fine);
+    expect(after.atBound).not.toBe(atBound);
+    // the pass does not run again, and the next start counts nothing
+    expect(freezeStoredSaves(() => gen)).toEqual({
+      ran: false,
+      frozen: 0,
+      refused: 0,
+      tooLarge: 0,
+    });
+  }, 20_000);
+
+  it('is refused by every load, which builds no map', () => {
+    const bad = texts();
+    const writes = store.writes;
+    for (const [name, text] of Object.entries(bad)) {
+      expect(readSaveText(text), name).toEqual({ error: 'tooLarge' });
+      expect(parseSave(text), name).toBeNull();
+      // an import stores nothing, and says so with the string the import screen shows
+      expect(importSave(text), name).toEqual({ ok: false, error: 'tooLarge' });
+    }
+    expect(store.writes).toBe(writes);
+    expect(STR.saves.refused.tooLarge).toBe("This save's map is larger than the game can build.");
+
+    // as the game Continue loads: not offered, and the boot can say why
+    store.items.set(SAVE_KEY, bad.absurd);
+    expect(readSave()).toBeNull();
+    expect(storedRefusal()).toBe('tooLarge');
+    expect(continueMeta()).toBeNull();
+    // as a named save: not loaded, still listed so that it can be deleted
+    store.items.set(SLOTS_KEY, JSON.stringify(bad));
+    expect(
+      listSlots()
+        .map((m) => m.name)
+        .sort(),
+    ).toEqual(Object.keys(bad).sort());
+    for (const name of Object.keys(bad)) {
+      expect(readSlot(name), name).toBeNull();
+      expect(slotRefusal(name), name).toBe('tooLarge');
+    }
+    expect(listSlots().find((m) => m.name === 'absurd')?.seed).toBe(3);
+    expect(deleteSlot('absurd')).toBe(true);
+    expect(listSlots().map((m) => m.name)).not.toContain('absurd');
+    expect(slotRefusal('absurd')).toBeNull();
+    // the ground of such a world is not built, whoever asks
+    const world = huge(1e6);
+    expect(lacksGround(world)).toBe(false);
+    const { gen, calls } = flat();
+    expect(() => groundOf(world, gen)).toThrow(WorldTooLarge);
+    expect(calls).toEqual([]);
+    expect(world.chunks).toBeUndefined();
+  });
+
+  it('is told apart from a save that loads and from one refused for another reason', () => {
+    const fine = JSON.stringify(oldFile(worldOf(5, { w: 64, h: 64 }), 18));
+    expect(storedRefusal()).toBeNull();
+    store.items.set(SAVE_KEY, fine);
+    expect(storedRefusal()).toBeNull();
+    expect(readSave()).not.toBeNull();
+    store.items.set(SAVE_KEY, '{"seed":1,"version":13}');
+    expect(storedRefusal()).toBe('damaged');
+    store.items.set(SAVE_KEY, '{oops');
+    expect(storedRefusal()).toBe('json');
+    store.items.set(SLOTS_KEY, JSON.stringify({ fine }));
+    expect(slotRefusal('fine')).toBeNull();
+    expect(slotRefusal('none')).toBeNull();
+  });
+});
+
+describe('a table of chunks that holds more than chunks', () => {
+  /** A table as a file holds it: JSON, so a "__proto__" key is a key of its own. */
+  const table = (entries: Record<string, unknown>, rest = '') =>
+    JSON.parse(
+      '{' +
+        [
+          ...Object.entries(entries).map(([k, v]) => `${JSON.stringify(k)}:${JSON.stringify(v)}`),
+          rest,
+        ]
+          .filter(Boolean)
+          .join(',') +
+        '}',
+    ) as ChunkStore;
+  const text = groundOf(worldOf(1, { w: 32, h: 32 }), generatorOf('simple')).chunks['0,0'];
+  /** Entries that are no chunk of a 64 x 64 world: a key no chunk has, a chunk outside the map. */
+  const strays = () =>
+    table(
+      {
+        note: 'kept by hand',
+        '9,9': text,
+        '-0,0': 'not a key a chunk has',
+        '7,7': 12,
+        list: [1, { a: null }],
+        tool: { name: 'editor', at: 3 },
+      },
+      '"__proto__":{"kept":true}',
+    );
+
+  it('keeps every entry the build does not read through a load and the next write', () => {
+    const fine = groundOf(worldOf(8, { w: 64, h: 64 }), generatorOf('simple'));
+    // the strays first, between the chunks and last; the chunk of one corner missing
+    const { '1,1': corner, ...stored } = fine.chunks;
+    const world: GeneratedWorld = {
+      ...worldOf(8, { w: 64, h: 64 }),
+      chunks: table({ ...strays(), ...stored }, '"zzz":"last"'),
+    };
+    const before = JSON.stringify(world.chunks);
+    const built = groundOf(world, generatorOf('simple'));
+    // the map is the one a clean table gives, and the chunk added is the one a clean load makes
+    expect(firstDifference(built.map, fine.map)).toBeNull();
+    expect(built.added).toEqual(['1,1']);
+    expect(world.chunks).toBe(built.chunks);
+    expect(world.chunks!['1,1']).toBe(corner);
+    // everything that was there, as it was and where it was; the one chunk added after it
+    const wanted = JSON.parse(before) as Record<string, unknown>;
+    wanted['1,1'] = corner;
+    expect(JSON.stringify(world.chunks)).toBe(JSON.stringify(wanted));
+    expect(Object.keys(world.chunks!)).toEqual([...Object.keys(JSON.parse(before)), '1,1']);
+    expect(Object.getOwnPropertyDescriptor(world.chunks, '__proto__')?.value).toEqual({
+      kept: true,
+    });
+    // saved, read and loaded again: nothing is generated, and the next write is the same text
+    const written = JSON.stringify(buildSave(partsOf(world)));
+    const read = parseSave(written)!.world as GeneratedWorld;
+    expect(JSON.stringify(read.chunks)).toBe(JSON.stringify(world.chunks));
+    expect(groundOf(read, never).added).toEqual([]);
+    expect(JSON.stringify(read.chunks)).toBe(JSON.stringify(world.chunks));
+    expect(JSON.stringify(buildSave(partsOf(read)).world)).toBe(JSON.stringify(world));
+  });
+
+  it('gives way to a chunk where the map needs the key, and is replaced where it is no table', () => {
+    const fine = groundOf(worldOf(8, { w: 64, h: 64 }), generatorOf('simple'));
+    const world = worldOf(8, { w: 64, h: 64 });
+    // a number under the key of a chunk the map covers is no chunk: the chunk is generated there
+    world.chunks = { '0,0': fine.chunks['0,0'], '1,1': 5, '1,0': null, keep: 'me' } as never;
+    const built = groundOf(world, generatorOf('simple'));
+    expect([...built.added].sort()).toEqual(['0,1', '1,0', '1,1']);
+    expect(world.chunks).toEqual({ ...fine.chunks, keep: 'me' });
+    // a table of another shape is no table to carry
+    for (const held of [[text], 'text', 7, null, true]) {
+      const other = worldOf(8, { w: 64, h: 64 });
+      other.chunks = held as never;
+      groundOf(other, generatorOf('simple'));
+      expect(other.chunks).toEqual(fine.chunks);
+    }
+  });
+
+  it('is kept in the stored text of a save the start-up pass gives its ground', () => {
+    const store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+    try {
+      const world = worldOf(9, { w: 64, h: 32 });
+      world.chunks = table({ '0,0': text, ...strays() });
+      const kept = JSON.stringify(world.chunks);
+      const raw = JSON.stringify(oldFile(world, 18));
+      store.items.set(SAVE_KEY, raw);
+      store.items.set(SLOTS_KEY, JSON.stringify({ named: raw }));
+      expect(freezeStoredSaves().frozen).toBe(2);
+      const slots = JSON.parse(store.items.get(SLOTS_KEY)!) as Record<string, string>;
+      for (const after of [store.items.get(SAVE_KEY)!, slots.named]) {
+        const loaded = parseSave(after)!.world as GeneratedWorld;
+        expect(lacksGround(loaded)).toBe(false);
+        // every entry that was there, in its place, and the one chunk the pass added at the end
+        const wanted = JSON.parse(kept) as Record<string, unknown>;
+        wanted['1,0'] = loaded.chunks!['1,0'];
+        expect(JSON.stringify(loaded.chunks)).toBe(JSON.stringify(wanted));
+      }
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 });
