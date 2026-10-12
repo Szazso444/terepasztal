@@ -96,6 +96,20 @@ export function tipKey(t: TipTarget): string {
   return t.kind === 'tile' ? `tile:${t.x},${t.y}:${t.tool}` : `${t.kind}:${t.id}`;
 }
 
+/**
+ * Who the terms of a tooltip are, from their labels in order: the k-th term with a label is the
+ * same term in the content `update` rebuilds as in the content before, so a refresh keeps the
+ * tooltip it opened and the pointer resting on it.
+ */
+export function termKeys(labels: readonly string[]): string[] {
+  const seen = new Map<string, number>();
+  return labels.map((label) => {
+    const k = seen.get(label) ?? 0;
+    seen.set(label, k + 1);
+    return `${label}#${k}`;
+  });
+}
+
 // ---------------------------------------------------------------- the stack
 
 /** What draws the stack. `C` is a tooltip's content, opaque here. */
@@ -104,8 +118,12 @@ export interface TipView<C> {
   open(level: number, content: C, anchor: Point): void;
   /** place it from a new anchor: an unlocked root follows the pointer */
   move(level: number, anchor: Point): void;
-  /** replace its content; its ring, its lock and the tooltips above it stay */
-  refresh(level: number, content: C): void;
+  /**
+   * replace its content; its ring, its lock and the tooltips above it stay. A term still there
+   * (`termKeys`) stays the same term for `termEnter`. False when the term the pointer is on went
+   * with the old content.
+   */
+  refresh(level: number, content: C): boolean;
   /** it locked: it takes the pointer, shows its ring full and its terms are live */
   lock(level: number): void;
   /** take it down; the stack closes the newest first */
@@ -249,7 +267,8 @@ export class TooltipStack<C> {
    * New content for the root of `key`, for what changes while it is up (a station's storage, a
    * works' status and rate, a train's state). Call it as often as you like: it builds and shows
    * the content at most every `UPDATE_MS`, and keeps the ring, the lock and the tooltips above.
-   * Returns whether it did.
+   * A term still there stays the term the pointer rests on; one that went is as if the pointer
+   * left it. Returns whether it did.
    */
   update(key: string, build: () => C): boolean {
     const root = this.tips[0];
@@ -257,9 +276,7 @@ export class TooltipStack<C> {
     const now = this.clock.now();
     if (now - root.builtAt < UPDATE_MS) return false;
     root.builtAt = now;
-    // the terms it showed are replaced: one the pointer waited on opens nothing
-    if (this.termWait?.parent === 0) this.cancelTermWait();
-    this.view.refresh(0, build());
+    if (!this.view.refresh(0, build()) && this.onTerm === 0) this.termLeave(0);
     return true;
   }
 
@@ -282,8 +299,9 @@ export class TooltipStack<C> {
   /**
    * The pointer came onto a term in the tooltip at `parent`, or in a panel (`parent` −1, whose
    * tooltip opens at level 0). After `SHOW_MS` of rest the term's tooltip opens one level up,
-   * replacing what was there, at `anchor()` (`termAnchor` of the term's box, read then). A term
-   * of a tooltip that is not locked does nothing.
+   * replacing what was there, at `anchor()` (`termAnchor` of the term's box, read then). `term`
+   * is who the term is: the view gives a term the same one across `update` while it is still
+   * there. A term of a tooltip that is not locked does nothing.
    */
   termEnter(parent: number, term: object, anchor: () => Point, build: () => C): void {
     if (parent >= 0 && !this.tips[parent]?.locked) return;

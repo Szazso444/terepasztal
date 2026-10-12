@@ -11,6 +11,7 @@ import {
   placeTip,
   ringDashOffset,
   termAnchor,
+  termKeys,
   type Point,
   type TipView,
 } from './tooltipStack';
@@ -39,7 +40,7 @@ export class Tooltip {
    * level 0. A term already wired is left alone, so a panel can call this after every render.
    */
   bindTerms(scope: ParentNode) {
-    this.layer.wireTerms(scope, -1);
+    this.layer.wireTerms(scope);
   }
 
   show(x: number, y: number, title: string, lines: string[] = []) {
@@ -95,6 +96,8 @@ export function ttRes(atlas: AtlasRegistry, cargo: string, name: string): HTMLEl
 /**
  * A term: a word that opens a nested tooltip with `build`'s content once its tooltip is locked
  * and the pointer rests on it. In a panel, `Tooltip.bindTerms` makes it open a level-0 tooltip.
+ * Its label says who it is: after an `update`, the term with the same label (the same one of
+ * several equal labels) is the same term, and the tooltip it opened stays.
  */
 export function ttTerm(label: string | Node, build: TipBuild): HTMLElement {
   const t = el('span', { class: 'tt-term' }, label);
@@ -152,7 +155,23 @@ interface Drawn {
   /** reduced motion: the ring does not fill, it shows full on the lock */
   readonly still: boolean;
   locked: boolean;
+  /** its terms by `termKeys` */
+  terms: Map<string, TermSlot>;
 }
+
+/**
+ * A term of a tooltip as the stack knows it: the same one across `refresh` while its key is still
+ * there, its element and its builder the newest.
+ */
+interface TermSlot {
+  readonly level: number;
+  readonly drawn: Drawn;
+  el: Element;
+  build: TipBuild;
+}
+
+/** The mouse events that say where the pointer is, listened for while a tooltip is open. */
+const MOVES = ['mouseover', 'mouseout', 'mousemove'] as const;
 
 function circle(cls: string): SVGCircleElement {
   const c = document.createElementNS(SVG, 'circle');
@@ -170,6 +189,10 @@ class TooltipLayer implements TipView<TipContent> {
   private stack: TooltipStack<TipContent> | null = null;
   private readonly drawn: Drawn[] = [];
   private readonly wired = new WeakSet<Element>();
+  /** the term a term element of a tooltip stands for */
+  private readonly slotOf = new WeakMap<Element, TermSlot>();
+  /** the term of a tooltip the pointer is on */
+  private over: TermSlot | null = null;
   private raf = 0;
   private listening = false;
 
@@ -199,6 +222,7 @@ class TooltipLayer implements TipView<TipContent> {
       openedAt: performance.now(),
       still: !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
       locked: false,
+      terms: new Map(),
     };
     // a tooltip takes the pointer only once locked (style.css), so these come only then
     box.addEventListener('mouseenter', () => {
@@ -209,7 +233,7 @@ class TooltipLayer implements TipView<TipContent> {
     });
     this.drawn[level] = d;
     this.root.append(box);
-    this.wireTerms(body, level);
+    this.slotTerms(d, level);
     this.place(d);
     this.listen(true);
     if (!d.still) this.animate();
@@ -222,12 +246,17 @@ class TooltipLayer implements TipView<TipContent> {
     this.place(d);
   }
 
-  refresh(level: number, content: TipContent) {
+  refresh(level: number, content: TipContent): boolean {
     const d = this.drawn[level];
-    if (!d) return;
+    if (!d) return true;
     d.body.replaceChildren(...content);
-    this.wireTerms(d.body, level);
+    this.slotTerms(d, level);
     this.place(d);
+    // the term the pointer is on is still there: its slot holds the new element
+    const o = this.over;
+    if (!o || o.drawn !== d || d.body.contains(o.el)) return true;
+    this.over = null;
+    return false;
   }
 
   lock(level: number) {
@@ -241,29 +270,67 @@ class TooltipLayer implements TipView<TipContent> {
   close(level: number) {
     this.drawn[level]?.box.remove();
     this.drawn.length = level;
+    // the stack is done with the terms it closed
+    if (this.over && this.over.level >= level) this.over = null;
     if (level > 0) return;
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
     this.listen(false);
   }
 
-  /** Wire the terms under `scope`, which sit in the tooltip at `level` (−1: in a panel). */
-  wireTerms(scope: ParentNode, level: number) {
+  /** Wire the terms under `scope`, in a panel: their tooltip opens at level 0. */
+  wireTerms(scope: ParentNode) {
     for (const t of scope.querySelectorAll('.tt-term')) {
       const build = TERMS.get(t);
       if (!build || this.wired.has(t)) continue;
       this.wired.add(t);
-      const d = this.drawn[level];
-      // a term of a tooltip that has since closed, or a refreshed one, reports nothing
-      const live = () => level < 0 || this.drawn[level] === d;
-      t.addEventListener('mouseenter', () => {
-        if (live())
-          this.stack?.termEnter(level, t, () => termAnchor(t.getBoundingClientRect()), build);
-      });
-      t.addEventListener('mouseleave', () => {
-        if (live()) this.stack?.termLeave(level);
-      });
+      t.addEventListener('mouseenter', () =>
+        this.stack?.termEnter(-1, t, () => termAnchor(t.getBoundingClientRect()), build),
+      );
+      t.addEventListener('mouseleave', () => this.stack?.termLeave(-1));
     }
+  }
+
+  /** Give the terms in `d` their slots: a term whose key (`termKeys`) was there keeps its slot. */
+  private slotTerms(d: Drawn, level: number) {
+    const found: [Element, TipBuild][] = [];
+    for (const el of d.body.querySelectorAll('.tt-term')) {
+      const build = TERMS.get(el);
+      if (build) found.push([el, build]);
+    }
+    const keys = termKeys(found.map(([el]) => el.textContent ?? ''));
+    const terms = new Map<string, TermSlot>();
+    found.forEach(([el, build], i) => {
+      const slot = d.terms.get(keys[i]) ?? { level, drawn: d, el, build };
+      slot.el = el;
+      slot.build = build;
+      terms.set(keys[i], slot);
+      this.slotOf.set(el, slot);
+    });
+    d.terms = terms;
+  }
+
+  /**
+   * The pointer is over `node`: tell the stack when it comes onto a term of a tooltip or leaves
+   * one. Read from every movement, not from the term's own enter and leave: a term `refresh` puts
+   * under the pointer gets neither until the pointer crosses its edge.
+   */
+  private pointAt(node: EventTarget | null) {
+    const t = node instanceof Element ? node.closest('.tt-term') : null;
+    const slot = t ? this.slotOf.get(t) : undefined;
+    const next = slot && slot.el === t && this.drawn[slot.level] === slot.drawn ? slot : null;
+    if (next === this.over) return;
+    const prev = this.over;
+    this.over = null;
+    if (prev) this.stack?.termLeave(prev.level);
+    if (!next || this.drawn[next.level] !== next.drawn) return;
+    this.over = next;
+    this.stack?.termEnter(
+      next.level,
+      next,
+      () => termAnchor(next.el.getBoundingClientRect()),
+      () => next.build(),
+    );
   }
 
   /** The level of the tooltip `node` is in, or null outside the stack. */
@@ -312,10 +379,19 @@ class TooltipLayer implements TipView<TipContent> {
   private readonly onPointerDown = (e: PointerEvent) => {
     if (this.levelOf(e.target) === null) this.stack?.closeAll();
   };
+  /** where the pointer goes: a mouseout's is its related target (null out of the window) */
+  private readonly onPointerMove = (e: MouseEvent) =>
+    this.pointAt(e.type === 'mouseout' ? e.relatedTarget : e.target);
   private listen(on: boolean) {
     if (on === this.listening) return;
     this.listening = on;
-    if (on) document.addEventListener('pointerdown', this.onPointerDown, true);
-    else document.removeEventListener('pointerdown', this.onPointerDown, true);
+    if (on) {
+      document.addEventListener('pointerdown', this.onPointerDown, true);
+      for (const m of MOVES) document.addEventListener(m, this.onPointerMove, true);
+      return;
+    }
+    document.removeEventListener('pointerdown', this.onPointerDown, true);
+    for (const m of MOVES) document.removeEventListener(m, this.onPointerMove, true);
+    this.over = null;
   }
 }

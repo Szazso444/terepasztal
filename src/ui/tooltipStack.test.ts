@@ -16,6 +16,7 @@ import {
   placeTip,
   ringDashOffset,
   termAnchor,
+  termKeys,
   tipKey,
   type Point,
   type TipClock,
@@ -29,6 +30,8 @@ class FakeView implements TipView<string> {
   shown: string[] = [];
   locked: boolean[] = [];
   at: Point[] = [];
+  /** what `refresh` says: whether the term the pointer is on is still there */
+  keepsTerm = true;
   open(level: number, content: string, anchor: Point) {
     expect(level, 'a tooltip opens right above the top one').toBe(this.shown.length);
     this.log.push(`open ${level} ${content}`);
@@ -43,6 +46,7 @@ class FakeView implements TipView<string> {
   refresh(level: number, content: string) {
     this.log.push(`refresh ${level} ${content}`);
     this.shown[level] = content;
+    return this.keepsTerm;
   }
   lock(level: number) {
     this.log.push(`lock ${level}`);
@@ -480,6 +484,69 @@ describe('update', () => {
     expect(stack.update(TILE_B, build('b'))).toBe(false);
     expect(built('b')).toBe(0);
   });
+
+  it('keeps a locked nested tooltip when the pointer comes onto its term again after it', () => {
+    lockedRoot();
+    enter(0);
+    const term = openTerm(0, 'biome');
+    wait(HOLD_MS);
+    wait(UPDATE_MS);
+    view.take();
+    expect(stack.update(TILE_A, build('live'))).toBe(true);
+    // the refreshed term is the same term: the view says so by giving the stack the same one
+    openTerm(0, 'biome', term);
+    expect(view.take()).toEqual(['refresh 0 live']);
+    expect(stack.isLocked(1)).toBe(true);
+    expect(built('biome')).toBe(1);
+  });
+
+  it('goes on waiting on a term that is still there', () => {
+    lockedRoot();
+    enter(0);
+    stack.termEnter(0, {}, () => ({ x: 1, y: 1 }), build('biome'));
+    wait(SHOW_MS - 1);
+    expect(stack.update(TILE_A, build('live'))).toBe(true);
+    wait(1);
+    expect(view.take()).toEqual(['refresh 0 live', 'open 1 biome']);
+  });
+
+  it('takes a term gone with the old content for the pointer leaving it', () => {
+    view.keepsTerm = false;
+    lockedRoot();
+    enter(0);
+    // waiting on it: nothing opens
+    stack.termEnter(0, {}, () => ({ x: 1, y: 1 }), build('waited'));
+    wait(SHOW_MS - 1);
+    stack.update(TILE_A, build('live 1'));
+    wait(1000);
+    expect(built('waited')).toBe(0);
+    // its unlocked tooltip closes
+    openTerm(0, 'biome');
+    wait(UPDATE_MS);
+    view.take();
+    stack.update(TILE_A, build('live 2'));
+    expect(view.take()).toEqual(['refresh 0 live 2', 'close 1']);
+    // a locked one stays, as it does when the pointer leaves its term
+    openTerm(0, 'biome');
+    wait(HOLD_MS);
+    stack.update(TILE_A, build('live 3'));
+    wait(5000);
+    expect(stack.depth).toBe(2);
+    expect(stack.isLocked(1)).toBe(true);
+  });
+
+  it('knows a term by its label, and equal labels by their order', () => {
+    const before = termKeys(['Plains', 'farm', 'farm']);
+    // new numbers around them, or another term before them, leave who they are
+    expect(termKeys(['Plains', 'farm', 'farm'])).toEqual(before);
+    expect(termKeys(['mine', 'Plains', 'farm', 'farm']).slice(1)).toEqual(before);
+    expect(new Set(before).size).toBe(3);
+    // a label that changed is another term
+    expect(termKeys(['Forest', 'farm', 'farm'])[0]).not.toBe(before[0]);
+    // no label and place can pass for another
+    const odd = termKeys(['a#1', 'a', 'a', '#0', '']);
+    expect(new Set(odd).size).toBe(odd.length);
+  });
 });
 
 describe('closing', () => {
@@ -587,9 +654,10 @@ describe('placement and the ring', () => {
 // the DOM's enter and leave events as the pointer crosses tooltips and terms. The pointer enters
 // only a locked tooltip (an unlocked one lets it through). When the tooltip under a still pointer
 // closes, the game goes on seeing the pointer over the UI until it moves, as `Input.overUi` does.
-// A refresh replaces a tooltip's terms with new ones, as `TooltipLayer.refresh` does, and no event
-// says the pointer left the old one. The view checks each call the stack makes against the
-// issue's rules as it happens; the timing rules that need the rest of the trace run at its end.
+// Live content keeps its terms across a refresh or brings new ones; `TooltipLayer.refresh` keeps a
+// term whose label stays (`termKeys`), and says when the one under the pointer went, as no event
+// does. The view checks each call the stack makes against the issue's rules as it happens; the
+// timing rules that need the rest of the trace run at its end.
 
 /** A term of a tooltip or of a panel; the stack knows a term by its identity. */
 interface Term {
@@ -617,10 +685,8 @@ interface Inst {
   builtAt: number;
   lockedAt: number | null;
   closedAt: number | null;
-  /** the terms its content shows now; a refresh replaces them */
+  /** the terms its content shows now; a refresh keeps them or brings new ones */
   terms: Term[];
-  /** a refresh of the root replaced the term that opened it */
-  termGone: boolean;
 }
 
 /** What a builder made: where it came from and the call or timer it ran in. */
@@ -629,6 +695,8 @@ interface Content {
   readonly key: string;
   readonly term: Term | null;
   readonly ctx: Ctx;
+  /** an update's content brings new terms rather than the ones shown */
+  readonly newTerms: boolean;
 }
 
 type CallName =
@@ -681,6 +749,9 @@ interface Coverage {
   graceCloses: number;
   awayCloses: number;
   refreshes: number;
+  /** refreshes that kept the term under the pointer, and ones that took it */
+  termsKept: number;
+  termsGone: number;
   escapes: number;
   rootChecks: number;
   termChecks: number;
@@ -698,8 +769,8 @@ type Step =
   | { k: 'term'; level: number; term: number }
   | { k: 'rogue'; level: number }
   | { k: 'wait'; ms: number }
-  | { k: 'live'; on: boolean }
-  | { k: 'update'; key: number }
+  | { k: 'live'; on: boolean; newTerms: boolean }
+  | { k: 'update'; key: number; newTerms: boolean }
   | { k: 'closeAll' }
   | { k: 'escape' };
 
@@ -770,8 +841,9 @@ function genSteps(rng: Rng): Step[] {
       );
     else if (r < 0.82) steps.push({ k: 'ui' });
     else if (r < 0.86) steps.push({ k: 'panelTerm', term: rng.int(0, 1) });
-    else if (r < 0.88) steps.push({ k: 'live', on: rng.chance(0.5) });
-    else if (r < 0.9) steps.push({ k: 'update', key: rng.int(0, NO_TARGET) });
+    else if (r < 0.88) steps.push({ k: 'live', on: rng.chance(0.5), newTerms: rng.chance(0.5) });
+    else if (r < 0.9)
+      steps.push({ k: 'update', key: rng.int(0, NO_TARGET), newTerms: rng.chance(0.5) });
     else if (r < 0.93) steps.push({ k: 'closeAll' });
     else if (r < 0.96) steps.push({ k: 'escape' });
     else steps.push({ k: 'rogue', level: level() });
@@ -836,6 +908,8 @@ class Trace implements TipView<Content> {
   private serial = 0;
   private ctx: Ctx = { kind: 'step' };
   private live = false;
+  /** the live content brings new terms with each refresh */
+  private liveNewTerms = false;
   private lastFieldKey: string | null = null;
   /** the pointer at the last `hover`; null after a `leave` */
   private hoverAt: Point | null = null;
@@ -950,10 +1024,11 @@ class Trace implements TipView<Content> {
       }
       case 'live':
         this.live = s.on;
+        this.liveNewTerms = s.newTerms;
         break;
       case 'update': {
         const key = FIELD_KEYS[s.key];
-        if (key !== null) this.update(key);
+        if (key !== null) this.update(key, s.newTerms);
         break;
       }
       case 'closeAll':
@@ -1018,7 +1093,7 @@ class Trace implements TipView<Content> {
     const l = this.loc;
     if (l.at === 'field') this.hover(l.key, l.x, l.y);
     else this.leave();
-    if (this.live && this.lastFieldKey !== null) this.update(this.lastFieldKey);
+    if (this.live && this.lastFieldKey !== null) this.update(this.lastFieldKey, this.liveNewTerms);
     this.checkTerms();
   }
 
@@ -1101,19 +1176,29 @@ class Trace implements TipView<Content> {
     this.exits.push({ t: this.clock.t, index: this.calls.length, root });
   }
 
-  /** `update` against its oracle: it rebuilds exactly when the root is its target's and UPDATE_MS old. */
-  private update(key: string) {
+  /**
+   * `update` against its oracle: it rebuilds exactly when the root is its target's and UPDATE_MS
+   * old, and keeps every level and lock, but for the unlocked tooltip of a term it took away.
+   */
+  private update(key: string, newTerms: boolean) {
     const t = this.clock.t;
     const root = this.up[0];
     const due = !!root && root.src === 'field' && root.key === key && t - root.builtAt >= UPDATE_MS;
+    const l = this.loc;
+    const top = this.up[1];
+    const drops =
+      due && newTerms && l.at === 'term' && l.inst === root && !!top && top.lockedAt === null;
     const n = this.ops.length;
-    const locks = this.up.map((i) => i.lockedAt).join();
-    const build = this.builder('update', key);
+    const locks = this.up
+      .slice(0, drops ? 1 : undefined)
+      .map((i) => i.lockedAt)
+      .join();
+    const build = this.builder('update', key, null, newTerms);
     const did = this.api({ t, name: 'update', key }, () => this.stack.update(key, build));
     const ops = this.ops.slice(n).map((o) => `${o.op} ${o.level}`);
     check(did === due, () => `update(${key}) at ${t} returned ${did}; due: ${due}`);
     check(
-      ops.join() === (due ? 'refresh 0' : ''),
+      ops.join() === (due ? (drops ? 'refresh 0,close 1' : 'refresh 0') : ''),
       () => `update(${key}) at ${t} did [${ops.join()}]`,
     );
     check(
@@ -1141,9 +1226,14 @@ class Trace implements TipView<Content> {
     this.serial++;
   }
 
-  private builder(src: Content['src'], key: string, term: Term | null = null): () => Content {
+  private builder(
+    src: Content['src'],
+    key: string,
+    term: Term | null = null,
+    newTerms = false,
+  ): () => Content {
     return () => {
-      const c: Content = { src, key, term, ctx: this.ctx };
+      const c: Content = { src, key, term, ctx: this.ctx, newTerms };
       this.built.push(c);
       return c;
     };
@@ -1219,7 +1309,6 @@ class Trace implements TipView<Content> {
       lockedAt: null,
       closedAt: null,
       terms: this.makeTerms(id),
-      termGone: false,
     };
     this.up.push(inst);
     this.insts.push(inst);
@@ -1260,17 +1349,22 @@ class Trace implements TipView<Content> {
     );
     this.built.pop();
     root.builtAt = t;
-    root.terms = this.makeTerms(root.id);
-    if (this.up[1]) this.up[1].termGone = true;
-    // the term under the pointer is gone with no event: the pointer is in the tooltip
-    const l = this.loc;
-    if (l.at === 'term' && l.inst === root) {
-      this.loc = { at: 'tip', inst: root };
-      this.locSince = t;
-      this.serial++;
-    }
     this.cover.refreshes++;
     this.record('refresh', level, root);
+    const l = this.loc;
+    const under = l.at === 'term' && l.inst === root;
+    if (!content.newTerms) {
+      if (under) this.cover.termsKept++;
+      return true;
+    }
+    root.terms = this.makeTerms(root.id);
+    if (!under) return true;
+    // the term under the pointer went with the old content: the pointer is in the tooltip
+    this.cover.termsGone++;
+    this.loc = { at: 'tip', inst: root };
+    this.locSince = t;
+    this.serial++;
+    return false;
   }
 
   lock(level: number) {
@@ -1365,7 +1459,7 @@ class Trace implements TipView<Content> {
   private checkTerms() {
     const l = this.loc;
     for (const inst of this.up) {
-      if (inst.lockedAt !== null || inst.src === 'field' || inst.termGone) continue;
+      if (inst.lockedAt !== null || inst.src === 'field') continue;
       const on = (l.at === 'term' || l.at === 'panelTerm') && l.term === inst.term;
       check(
         on,
@@ -1473,6 +1567,8 @@ describe('the stack over seeded pointer traces', () => {
     graceCloses: 0,
     awayCloses: 0,
     refreshes: 0,
+    termsKept: 0,
+    termsGone: 0,
     escapes: 0,
     rootChecks: 0,
     termChecks: 0,
@@ -1506,6 +1602,8 @@ describe('the stack over seeded pointer traces', () => {
         'graceCloses',
         'awayCloses',
         'refreshes',
+        'termsKept',
+        'termsGone',
         'escapes',
         'rootChecks',
         'termChecks',
