@@ -9,7 +9,10 @@
       "assets/source/base-v1/terrain-mountain.png",
       "docs/art-direction/images/01-land-biomes.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "mountain-rock-high",
@@ -21,7 +24,10 @@
       "assets/source/base-v1/terrain-mountain.png",
       "docs/art-direction/images/01-land-biomes.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "alpine-ground",
@@ -33,11 +39,14 @@
       "assets/source/base-v1/terrain-mountain.png",
       "docs/art-direction/images/01-land-biomes.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "glacier-ice",
-    "file": "glacier-ice.png",
+    "file": "raw/glacier-ice-attempt-1.png",
     "prompt": "Use case: stylized-concept. Paint ONE flat ground-material swatch for the isometric railway game Terepasztal, requested canvas 1024x1024 px, real PNG fully opaque. Four attached images are references only: 1 theme town-growth board for palette and quiet painted house style; 2 approved rock-surface for rock family and ground swatch concept; 3 terrain-mountain for rock and snow HUE ONLY, never its blocky pixels or mountain shape; 4 land-biomes Mountain and Taiga snow for MOOD ONLY, never its pixel art or tile shape.\nGeometry: fill the entire square evenly to every edge with flat ground, screen-aligned as an orthographic 2:1 isometric camera sees flat ground from 30 degrees down. There is NO tile shape. Square spans about three tiles across: one tile at source is about 330x165 px; a stone one tenth tile across is about 33 px. Tile offset (x,y) maps to (512+165*(x-y),512+82.5*(x+y)); these numbers explain scale only, draw no guide.\nStyle: smooth painted contours, broad coherent colour clusters, three or four main shades per material, crisp restrained illustration, no stair-stepped pixel edges, no per-pixel noise or photographic grain. One fixed upper-left light. Scenery stays quiet behind rails. No bright cyan (#66CCD6), amber selection (#E8AA48), or cursor white: no colour as bright as #ECE4D0. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nNever diamond, tile edges, borders, horizon, perspective depth, peaks, silhouettes, standing outcrops, cast shadows, central motif, identical repeated shapes, long parallel lines, trees, people, footprints, text or glow. Material only, no finished game piece. Edge seamlessness desirable but no mirrored repetition. Features should read when the square is reduced to about 199 px wide.\nMATERIAL: Matte desaturated blue-grey glacier ICE ONLY: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F slate cooled toward water. Short gently curved crevasses scattered with NO common direction, varied sparse clusters and broad quiet ice gaps, a few faint dirt streaks. Crevasses are small subdued broken marks, not long branching rivers or grid lines. No glassy reflections, no bright blue, no snow drifts, no rocks. Flat material swatch, no ice channel shape.",
     "references": [
       "docs/art-direction/images/03-theme-town-growth.png",
@@ -45,7 +54,10 @@
       "assets/source/base-v1/terrain-mountain.png",
       "docs/art-direction/images/01-land-biomes.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "moraine",
@@ -57,7 +69,10 @@
       "assets/source/base-v1/terrain-mountain.png",
       "docs/art-direction/images/01-land-biomes.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "glacier-strip-x-attempt-1",
@@ -68,7 +83,10 @@
       "docs/art-direction/images/03-theme-town-growth.png",
       "assets/source/base-v1/terrain-mountain.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "glacier-strip-y-attempt-1",
@@ -79,7 +97,10 @@
       "docs/art-direction/images/03-theme-town-growth.png",
       "assets/source/base-v1/terrain-mountain.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "glacier-lobe-attempt-1",
@@ -90,7 +111,10 @@
       "docs/art-direction/images/03-theme-town-growth.png",
       "assets/source/base-v1/terrain-mountain.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "glacier-lobe-attempt-2",
@@ -101,7 +125,10 @@
       "docs/art-direction/images/03-theme-town-growth.png",
       "assets/source/base-v1/terrain-mountain.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "ice-cliff-lit-attempt-1",
@@ -111,7 +138,10 @@
       "docs/art-direction/images/03-theme-town-growth.png",
       "assets/source/base-v1/terrain-mountain.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "ice-cliff-shade-attempt-1",
@@ -122,7 +152,10 @@
       "assets/source/base-v1/terrain-mountain.png",
       "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "ice-portal-lit-attempt-1",
@@ -132,7 +165,10 @@
       "docs/art-direction/images/03-theme-town-growth.png",
       "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "ice-portal-lit-attempt-2",
@@ -142,7 +178,10 @@
       "docs/art-direction/images/03-theme-town-growth.png",
       "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
     ],
-    "returned": [1613, 975]
+    "returned": [
+      1613,
+      975
+    ]
   },
   {
     "id": "ice-portal-shade-attempt-1",
@@ -153,7 +192,10 @@
       "assets/source/mountain-2026-10-11/ice-cliff-shade.png",
       "assets/source/mountain-2026-10-11/ice-portal-lit.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "spring-ne-attempt-1",
@@ -166,7 +208,10 @@
       "assets/source/base-v1/props-boulder.png",
       "assets/source/mountain-2026-10-11/refs/ref-water.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "spring-ne-attempt-2",
@@ -179,7 +224,10 @@
       "assets/source/base-v1/props-boulder.png",
       "assets/source/mountain-2026-10-11/refs/ref-water.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "spring-se-attempt-1",
@@ -192,7 +240,10 @@
       "assets/source/base-v1/props-boulder.png",
       "assets/source/mountain-2026-10-11/refs/ref-water.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "spring-sw-attempt-1",
@@ -205,7 +256,10 @@
       "assets/source/base-v1/props-boulder.png",
       "assets/source/mountain-2026-10-11/refs/ref-water.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "spring-nw-attempt-1",
@@ -218,7 +272,10 @@
       "assets/source/base-v1/props-boulder.png",
       "assets/source/mountain-2026-10-11/refs/ref-water.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "spring-sw-attempt-2",
@@ -231,7 +288,10 @@
       "assets/source/base-v1/props-boulder.png",
       "assets/source/mountain-2026-10-11/refs/ref-water.png"
     ],
-    "returned": [1254, 1254]
+    "returned": [
+      1254,
+      1254
+    ]
   },
   {
     "id": "spring-ne-attempt-3",
@@ -248,7 +308,9 @@
     "returned": null,
     "measured": {
       "pass": false,
-      "failed": ["generation_usage_limit"],
+      "failed": [
+        "generation_usage_limit"
+      ],
       "note": "No image returned; no box or stone measurement possible."
     },
     "generationError": {
@@ -269,13 +331,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [115, 363, 1138, 940],
-      "centre": [626.5, 718.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        115,
+        363,
+        1138,
+        940
+      ],
+      "centre": [
+        626.5,
+        718.345703125
+      ],
       "centreError": 91.34707154255486,
       "paintedPixels": 460079,
       "lowerOutside": 69049,
@@ -295,7 +373,13 @@
         "upperDiamond": false,
         "stones": false
       },
-      "failed": ["box", "centre", "lowerDiamond", "upperDiamond", "stones"],
+      "failed": [
+        "box",
+        "centre",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
       "pass": false
     },
     "selected": false
@@ -312,13 +396,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [187, 438, 1067, 860],
-      "centre": [627, 638.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        187,
+        438,
+        1067,
+        860
+      ],
+      "centre": [
+        627,
+        638.345703125
+      ],
       "centreError": 11.345703125,
       "paintedPixels": 292014,
       "lowerOutside": 3024,
@@ -338,7 +438,11 @@
         "upperDiamond": true,
         "stones": false
       },
-      "failed": ["box", "lowerDiamond", "stones"],
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "stones"
+      ],
       "pass": false,
       "brightness": {
         "aboveCursor": 467,
@@ -363,13 +467,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [206, 429, 1047, 856],
-      "centre": [626.5, 634.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        206,
+        429,
+        1047,
+        856
+      ],
+      "centre": [
+        626.5,
+        634.345703125
+      ],
       "centreError": 7.3627002112427995,
       "paintedPixels": 281497,
       "lowerOutside": 90,
@@ -389,7 +509,11 @@
         "upperDiamond": true,
         "stones": false
       },
-      "failed": ["box", "lowerDiamond", "stones"],
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "stones"
+      ],
       "pass": false,
       "brightness": {
         "aboveCursor": 357,
@@ -414,13 +538,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [224, 421, 1030, 832],
-      "centre": [627, 610.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        224,
+        421,
+        1030,
+        832
+      ],
+      "centre": [
+        627,
+        610.345703125
+      ],
       "centreError": 16.654296875,
       "paintedPixels": 260869,
       "lowerOutside": 0,
@@ -440,7 +580,9 @@
         "upperDiamond": true,
         "stones": false
       },
-      "failed": ["stones"],
+      "failed": [
+        "stones"
+      ],
       "pass": false
     },
     "selected": false
@@ -457,13 +599,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [195, 418, 1055, 851],
-      "centre": [625, 629.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        195,
+        418,
+        1055,
+        851
+      ],
+      "centre": [
+        625,
+        629.345703125
+      ],
       "centreError": 3.0825838432449433,
       "paintedPixels": 291385,
       "lowerOutside": 0,
@@ -483,7 +641,9 @@
         "upperDiamond": true,
         "stones": false
       },
-      "failed": ["stones"],
+      "failed": [
+        "stones"
+      ],
       "pass": false,
       "brightness": {
         "aboveCursor": 128,
@@ -508,13 +668,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [120, 364, 1133, 883],
-      "centre": [626.5, 661.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        120,
+        364,
+        1133,
+        883
+      ],
+      "centre": [
+        626.5,
+        661.345703125
+      ],
       "centreError": 34.34934239764474,
       "paintedPixels": 414293,
       "lowerOutside": 21959,
@@ -534,7 +710,12 @@
         "upperDiamond": false,
         "stones": false
       },
-      "failed": ["box", "lowerDiamond", "upperDiamond", "stones"],
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
       "pass": false
     },
     "selected": false
@@ -551,13 +732,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [173, 400, 1081, 850],
-      "centre": [627, 628.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        173,
+        400,
+        1081,
+        850
+      ],
+      "centre": [
+        627,
+        628.345703125
+      ],
       "centreError": 1.345703125,
       "paintedPixels": 318188,
       "lowerOutside": 458,
@@ -577,7 +774,11 @@
         "upperDiamond": false,
         "stones": false
       },
-      "failed": ["lowerDiamond", "upperDiamond", "stones"],
+      "failed": [
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
       "pass": false,
       "brightness": {
         "aboveCursor": 8,
@@ -602,13 +803,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [187, 399, 1066, 852],
-      "centre": [626.5, 630.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        187,
+        399,
+        1066,
+        852
+      ],
+      "centre": [
+        626.5,
+        630.345703125
+      ],
       "centreError": 3.382858170339804,
       "paintedPixels": 311539,
       "lowerOutside": 0,
@@ -628,7 +845,10 @@
         "upperDiamond": false,
         "stones": false
       },
-      "failed": ["upperDiamond", "stones"],
+      "failed": [
+        "upperDiamond",
+        "stones"
+      ],
       "pass": false
     },
     "selected": false
@@ -645,13 +865,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [139, 387, 1114, 892],
-      "centre": [626.5, 670.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        139,
+        387,
+        1114,
+        892
+      ],
+      "centre": [
+        626.5,
+        670.345703125
+      ],
       "centreError": 43.34858682126367,
       "paintedPixels": 387541,
       "lowerOutside": 24271,
@@ -671,7 +907,12 @@
         "upperDiamond": false,
         "stones": false
       },
-      "failed": ["box", "lowerDiamond", "upperDiamond", "stones"],
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
       "pass": false
     },
     "selected": false
@@ -688,13 +929,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [112, 389, 1141, 884],
-      "centre": [626.5, 662.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        112,
+        389,
+        1141,
+        884
+      ],
+      "centre": [
+        626.5,
+        662.345703125
+      ],
       "centreError": 35.349239445858444,
       "paintedPixels": 395576,
       "lowerOutside": 23996,
@@ -714,7 +971,12 @@
         "upperDiamond": false,
         "stones": false
       },
-      "failed": ["box", "lowerDiamond", "upperDiamond", "stones"],
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
       "pass": false
     },
     "selected": false
@@ -731,13 +993,29 @@
       "assets/source/mountain-2026-10-11/reference-bank.png",
       "assets/source/base-v1/props-boulder.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "measured": {
       "scale": 1.224609375,
       "opaqueBackground": false,
-      "expectedBox": [183.69140625, 405.345703125, 1070.30859375, 848.654296875],
-      "paintedBox": [135, 398, 1117, 888],
-      "centre": [626, 666.345703125],
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        135,
+        398,
+        1117,
+        888
+      ],
+      "centre": [
+        626,
+        666.345703125
+      ],
       "centreError": 39.358408941427435,
       "paintedPixels": 377566,
       "lowerOutside": 23776,
@@ -757,9 +1035,355 @@
         "upperDiamond": false,
         "stones": false
       },
-      "failed": ["box", "lowerDiamond", "upperDiamond", "stones"],
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
       "pass": false
     },
     "selected": false
+  },
+  {
+    "id": "glacier-ice-attempt-2",
+    "file": "raw/glacier-ice-attempt-2.png",
+    "prompt": "Use case: stylized-concept. Generate ONE NEW glacier ice ground-material swatch, NOT an image edit. Four attached images are references only: 1 theme/town-growth style board for smooth painted house style; 2 approved rock-surface for ground-swatch scale, cluster size and finish ONLY, do not paint its rocks, its interlocking plates, its cracks or pixelated edges; 3 glacier-strip-y.png is the ice palette and short narrow curved crack appearance to MATCH, do not copy its channel shape, rubble, snow whiteness or directional composition; 4 snow.png is the neighbouring material, for quieter soft tone changes ONLY, the ice should be darker than that snow.\nRequested 1024x1024 px PNG FULLY OPAQUE every pixel including every edge and corner. Fill the whole square evenly with flat ground-material matte desaturated blue-grey glacier ice as seen from 30 degrees down, screen aligned, NO perspective or tile shape. One tile about 330x165px. Broad smooth softly changing ice tone clusters in only three or four shades: lit top #C8D3D8 is the BRIGHTEST ice colour, body #AEBCC3, shade #8E9EA7, tiny crevasses #66767F. One upper-left light, subtle flat surface lighting, NO reflections or glossy glass. No snow drifts. A few faint dirt streaks only.\nMost important: a continuous smooth ice field with VERY SPARSE ISOLATED SHORT CRACKS. Aim about 18-25 tiny individual gently curved strokes irregularly scattered across the entire square with widely separated endpoints and large open ice areas. Each stroke only 35-75px long at 1024, absolutely none 100px or longer. Each crack is disconnected from EVERY other crack, no branching, crossings, joining, enclosing shapes or closed cells. Scatter in different orientations with no common direction and no parallel rows. At least 70% of the ice stays broad smooth uncracked surface. Do not surround broad colour patches with lines. Small subdued marks, never slab edges. Never paving, flagstones, tiles, polygon plates, shattered ice, crazed glaze or a crack network.\nSmooth painted contours and broad colour clusters, three or four shades per material, no per-pixel noise, grain, pixel-art stair edges or repeated stamp shapes. Match quiet material language of strip-y. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42. No colour brighter than #C8D3D8 ice top, cursor #ECE4D0 or selection amber #E8AA48. No vivid blue/cyan or valid-placement #66CCD6. Edge seamlessness desirable, maintain material even at edges.\nNever: diamond, tile edges, borders, horizon, perspective depth, peaks, rocks, standing walls, cast shadows, central motif, long ribbons or parallel lines, crack network, people, footprints, text or glow. Material ONLY, full-canvas opaque square, no guide.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/mountain-2026-10-11/glacier-strip-y.png",
+      "assets/source/mountain-2026-10-11/snow.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "darkerThanShadeShare": 0.011854887327060583,
+      "darkerThanShadeDefinition": "Rec.709 encoded RGB luma < luma(#8E9EA7)",
+      "shadeLuma": 155.2482,
+      "minAlpha": 255,
+      "minBorderAlpha": 255,
+      "opacityPass": true,
+      "darkComponentsAtLeast8Pixels": 59,
+      "largestDarkComponentDiagonalAt1024": 101.86083136600307,
+      "longestDarkComponents": [
+        {
+          "pixels": 1032,
+          "box": [
+            1106,
+            284,
+            1199,
+            365
+          ],
+          "diagonal": 124.73972903610142
+        },
+        {
+          "pixels": 892,
+          "box": [
+            479,
+            989,
+            575,
+            1058
+          ],
+          "diagonal": 119.6202324023825
+        },
+        {
+          "pixels": 904,
+          "box": [
+            148,
+            675,
+            241,
+            747
+          ],
+          "diagonal": 119.01680553602505
+        },
+        {
+          "pixels": 890,
+          "box": [
+            1022,
+            928,
+            1110,
+            1001
+          ],
+          "diagonal": 115.74541027617468
+        },
+        {
+          "pixels": 753,
+          "box": [
+            49,
+            426,
+            138,
+            486
+          ],
+          "diagonal": 108.72442227944926
+        },
+        {
+          "pixels": 886,
+          "box": [
+            476,
+            838,
+            559,
+            904
+          ],
+          "diagonal": 107.4476616776745
+        },
+        {
+          "pixels": 918,
+          "box": [
+            813,
+            1080,
+            885,
+            1150
+          ],
+          "diagonal": 101.83319694480774
+        },
+        {
+          "pixels": 735,
+          "box": [
+            746,
+            583,
+            829,
+            626
+          ],
+          "diagonal": 94.82615672903758
+        }
+      ],
+      "visualReview": "Disconnected cracks; rejected conservatively because longest full stroke including pale tips is close to the approximately 100px limit."
+    }
+  },
+  {
+    "id": "glacier-ice-attempt-3",
+    "file": "raw/glacier-ice-attempt-3.png",
+    "prompt": "Use case: stylized-concept. Generate ONE NEW glacier ice ground-material swatch, NOT an image edit. Four attached images are references only: 1 theme/town-growth style board for smooth painted house style; 2 approved rock-surface for ground-swatch scale, cluster size and finish ONLY, do not paint its rocks, its interlocking plates, its cracks or pixelated edges; 3 glacier-strip-y.png is the ice palette and short narrow curved crack appearance to MATCH, do not copy its channel shape, rubble, snow whiteness or directional composition; 4 snow.png is the neighbouring material, for quieter soft tone changes ONLY, the ice should be darker than that snow.\nRequested 1024x1024 px PNG FULLY OPAQUE every pixel including every edge and corner. Fill the whole square evenly with flat ground-material matte desaturated blue-grey glacier ice as seen from 30 degrees down, screen aligned, NO perspective or tile shape. One tile about 330x165px. Broad smooth softly changing ice tone clusters in only three or four shades: lit top #C8D3D8 is the BRIGHTEST ice colour, body #AEBCC3, shade #8E9EA7, tiny crevasses #66767F. One upper-left light, subtle flat surface lighting, NO reflections or glossy glass. No snow drifts. A few faint dirt streaks only.\nMost important: a continuous smooth ice field with VERY SPARSE ISOLATED SHORT CRACKS. Aim about 18-25 tiny individual gently curved strokes irregularly scattered across the entire square with widely separated endpoints and large open ice areas. Each stroke only 35-75px long at 1024, absolutely none 100px or longer. Each crack is disconnected from EVERY other crack, no branching, crossings, joining, enclosing shapes or closed cells. Scatter in different orientations with no common direction and no parallel rows. At least 70% of the ice stays broad smooth uncracked surface. Do not surround broad colour patches with lines. Small subdued marks, never slab edges. Never paving, flagstones, tiles, polygon plates, shattered ice, crazed glaze or a crack network.\nSmooth painted contours and broad colour clusters, three or four shades per material, no per-pixel noise, grain, pixel-art stair edges or repeated stamp shapes. Match quiet material language of strip-y. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42. No colour brighter than #C8D3D8 ice top, cursor #ECE4D0 or selection amber #E8AA48. No vivid blue/cyan or valid-placement #66CCD6. Edge seamlessness desirable, maintain material even at edges.\nNever: diamond, tile edges, borders, horizon, perspective depth, peaks, rocks, standing walls, cast shadows, central motif, long ribbons or parallel lines, crack network, people, footprints, text or glow. Material ONLY, full-canvas opaque square, no guide.\nRefinement for this independent new attempt: make the crack marks noticeably SHORTER. Each entire visible stroke including its pale tapered ends must be only 25-50px long at 1024; hard maximum 60px, leaving generous safety below the 100px rejection limit. Around 20 separated tiny strokes, narrow subtle accents against overwhelmingly smooth quiet ice. Broad surface variation should remain soft and low contrast, without any extra line-like brush strokes. Strict highlight ceiling #C8D3D8; keep even light-blue-grey ice material all the way to edges.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/mountain-2026-10-11/glacier-strip-y.png",
+      "assets/source/mountain-2026-10-11/snow.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "darkerThanShadeShare": 0.00784030178389282,
+      "darkerThanShadeDefinition": "Rec.709 encoded RGB luma < luma(#8E9EA7)",
+      "shadeLuma": 155.2482,
+      "minAlpha": 255,
+      "minBorderAlpha": 255,
+      "opacityPass": true,
+      "darkComponentsAtLeast8Pixels": 44,
+      "largestDarkComponentDiagonalAt1024": 72.05425295214901,
+      "longestDarkComponents": [
+        {
+          "pixels": 501,
+          "box": [
+            1083,
+            1157,
+            1151,
+            1211
+          ],
+          "diagonal": 88.23831367382311
+        },
+        {
+          "pixels": 448,
+          "box": [
+            913,
+            1098,
+            989,
+            1135
+          ],
+          "diagonal": 85.86617494683225
+        },
+        {
+          "pixels": 592,
+          "box": [
+            791,
+            198,
+            858,
+            242
+          ],
+          "diagonal": 81.54140052758474
+        },
+        {
+          "pixels": 522,
+          "box": [
+            812,
+            643,
+            882,
+            680
+          ],
+          "diagonal": 80.52949770115296
+        },
+        {
+          "pixels": 416,
+          "box": [
+            630,
+            1122,
+            701,
+            1157
+          ],
+          "diagonal": 80.49844718999243
+        },
+        {
+          "pixels": 474,
+          "box": [
+            218,
+            1142,
+            282,
+            1186
+          ],
+          "diagonal": 79.05694150420948
+        },
+        {
+          "pixels": 517,
+          "box": [
+            383,
+            981,
+            444,
+            1029
+          ],
+          "diagonal": 79.0253124005214
+        },
+        {
+          "pixels": 441,
+          "box": [
+            1102,
+            300,
+            1171,
+            335
+          ],
+          "diagonal": 78.71467461661771
+        }
+      ],
+      "visualReview": {
+        "fullSize": "Pass: short disconnected gently curved strokes with varied orientations; no joining, closed cells or paving network; broad smooth ice occupies most of the surface.",
+        "gameScale": "Pass at 199x199: blue-grey ice remains calm, scattered dark strokes remain distinct, and material agrees with strip-y.",
+        "crackLength": "Entire visible strokes reviewed at native size, approximately under 100px at requested 1024 scale. Dark-component maximum box diagonal is 72.05px; component boxes assist visual review, not a skeleton length measurement."
+      },
+      "paletteReview": "Brightest RGB 223,228,232 exceeds intended ice-top tone; retained while trying darker final attempt.",
+      "highlightReview": {
+        "brightestRgb": [
+          223,
+          228,
+          232
+        ],
+        "maxLuma": 227.2258,
+        "cursorWhiteLuma": 228.2568,
+        "aboveIntendedIceTopShare": 0.04373055663662564,
+        "limitation": "Some highlights exceed intended #C8D3D8 ice tone, while remaining below cursor-white luma; selected as closest after three new attempts because cracks and opacity pass."
+      }
+    },
+    "selected": true
+  },
+  {
+    "id": "glacier-ice-attempt-4",
+    "file": "raw/glacier-ice-attempt-4.png",
+    "prompt": "Generate ONE NEW fully opaque 1024x1024 PNG flat glacier ICE ground-material swatch. Four images are REFERENCES only, no image edit and no guide. 1 house style board, 2 rock-surface for small cluster scale and finish only (do not copy rocks or crack network), 3 strip-y for blue-grey ICE material and short dark crevasses only (do NOT copy white snow highlights or channel), 4 snow for neighbouring material contrast only, do NOT paint snow. Fill every pixel edge to edge with flat screen-aligned ground seen from 30 degrees down, no perspective, no shape, no horizon.\nICE MUST BE MEDIUM DESATURATED BLUE-GREY, not pale white snow. Dominant body #AEBCC3 with subdued #8E9EA7 areas and restrained #C8D3D8 lit areas; #C8D3D8 is an ABSOLUTE ceiling: no painted RGB highlight may exceed R200 G211 B216. Absolutely no white, snow flecks or light rims. Matte surface under gentle upper-left light, no shine or glass reflections. Broad smooth colour clusters and soft low-contrast tone changes, three or four shades total, smooth painted edges, no texture noise or pixel-art stairs. Sparse barely visible dirt flecks only.\nOnly about 15-20 tiny ISOLATED dark #66767F gently curved crack marks across the entire square. Each entire mark is 25-50px long at 1024, NEVER longer than 60px even including its tapered ends. All different orientations, widely separated, no cracks join, intersect, branch or close a cell. More than 75% of surface is broad smooth ice with no cracks. No outlines around tone patches, no paving, plates, tiles or crazed glaze, no repeating shapes. One tile is330x165px, cracks must be a small fraction of it. No long lines, ribbons, shared direction or parallel rows. Edge seamlessness desirable.\nNo cyan, bright blue, diamond, tile edges, border, horizon, perspective, peaks, rocks, landscape, surrounding ground, snow, cast shadows, central motif, people, footprints, text, glow. Fully opaque real PNG including borders and corners. Darker than neighbouring snow, match the BODY tones of strip-y, not its bright snow dust.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/mountain-2026-10-11/glacier-strip-y.png",
+      "assets/source/mountain-2026-10-11/snow.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "darkerThanShadeShare": 0.012758534730330248,
+      "darkerThanShadeDefinition": "Rec.709 encoded RGB luma < luma(#8E9EA7)",
+      "shadeLuma": 155.2482,
+      "minAlpha": 255,
+      "minBorderAlpha": 255,
+      "opacityPass": true,
+      "darkComponentsAtLeast8Pixels": 66,
+      "largestDarkComponentDiagonalAt1024": 126.50773745775018,
+      "longestDarkComponents": [
+        {
+          "pixels": 1118,
+          "box": [
+            564,
+            161,
+            698,
+            236
+          ],
+          "diagonal": 154.92256130079954
+        },
+        {
+          "pixels": 978,
+          "box": [
+            1060,
+            507,
+            1184,
+            584
+          ],
+          "diagonal": 147.33974345029924
+        },
+        {
+          "pixels": 1097,
+          "box": [
+            183,
+            544,
+            312,
+            606
+          ],
+          "diagonal": 144.46106741956464
+        },
+        {
+          "pixels": 806,
+          "box": [
+            85,
+            1104,
+            187,
+            1200
+          ],
+          "diagonal": 141.48498153514387
+        },
+        {
+          "pixels": 1035,
+          "box": [
+            790,
+            1029,
+            901,
+            1101
+          ],
+          "diagonal": 133.68993978605872
+        },
+        {
+          "pixels": 884,
+          "box": [
+            998,
+            851,
+            1117,
+            904
+          ],
+          "diagonal": 131.59027319676787
+        },
+        {
+          "pixels": 920,
+          "box": [
+            379,
+            432,
+            490,
+            499
+          ],
+          "diagonal": 131.0267148332736
+        },
+        {
+          "pixels": 696,
+          "box": [
+            417,
+            649,
+            508,
+            722
+          ],
+          "diagonal": 118.06777714516353
+        }
+      ],
+      "visualReview": "Rejected: several cracks longer than approximately 100px at requested scale; maximum dark component box diagonal 126.51px."
+    }
   }
 ]
