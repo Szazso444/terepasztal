@@ -84,8 +84,6 @@ export const STR = {
     hint: 'M / scroll in: return to field view',
   },
   tile: {
-    /** the line `Game.tileInfo` prints today; the tile tooltip (src/ui/tileTooltip.ts) uses `level` */
-    elevation: (level: number) => `Elevation: level ${level}`,
     /** a land terrain's name, the title of its tile, by `TERRAIN_NAMES` */
     terrain: {
       grass: 'Grass',
