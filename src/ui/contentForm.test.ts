@@ -802,3 +802,167 @@ describe("a locomotive's length typed into its form", () => {
     );
   });
 });
+
+/** A made-up table and what its form declares: entries, declared fields, skipped keys, defaults. */
+interface TableCase {
+  list: boolean;
+  rows: Row[];
+  declared: [string, unknown][];
+  skip: string[];
+  unset: [string, string][];
+}
+
+/** Keys a made-up entry is built from; `f` and `g` are only ever declared. */
+const TABLE_KEYS = ['a', 'b', 'c', 'd', 'e'];
+const KINDS: FieldKind[] = ['bool', 'number', 'text', 'list', 'numList', 'json'];
+
+/** A value at a field of a made-up table: often an empty list, else of any kind or shape. */
+const cell = (rng: Rng): unknown =>
+  rng.chance(0.25) ? [] : rng.chance(0.5) ? valueOfKind(rng, rng.pick(KINDS)) : anyValue(rng);
+
+/**
+ * A table no shipped one is like: one to four entries (one for an object form), each carrying
+ * keys in its own order, with optional fields declared (some of them carried too), keys skipped
+ * and defaults described. A skipped key is never declared.
+ */
+function tableCase(rng: Rng): TableCase {
+  const list = rng.chance(0.75);
+  const rows = Array.from({ length: list ? rng.int(1, 4) : 1 }, () =>
+    Object.fromEntries(
+      rng
+        .shuffle([...TABLE_KEYS])
+        .filter(() => rng.chance(0.6))
+        .map((k) => [k, cell(rng)]),
+    ),
+  );
+  const declared = rng
+    .shuffle(['c', 'd', 'e', 'f', 'g'])
+    .filter(() => rng.chance(0.4))
+    .map((k): [string, unknown] => [k, cell(rng)]);
+  const skip = TABLE_KEYS.filter((k) => !declared.some(([d]) => d === k) && rng.chance(0.15));
+  const unset = [...TABLE_KEYS, 'f', 'g']
+    .filter(() => rng.chance(0.3))
+    .map((k): [string, string] => [k, `no ${k}`]);
+  return { list, rows: clone(rows), declared: clone(declared), skip, unset };
+}
+
+function specOf(c: TableCase): FormSpec {
+  const rows = clone(c.rows);
+  return {
+    pick: () => (c.list ? rows : rows[0]),
+    list: c.list,
+    declared: Object.fromEntries(c.declared),
+    skip: c.skip,
+    unset: Object.fromEntries(c.unset),
+  };
+}
+
+/** The kind of input a value calls for, spelled out. */
+function kindModel(v: unknown): FieldKind {
+  if (typeof v === 'boolean') return 'bool';
+  if (typeof v === 'number') return 'number';
+  if (typeof v === 'string') return 'text';
+  if (!Array.isArray(v)) return 'json';
+  if (v.length && v.every((x) => typeof x === 'number')) return 'numList';
+  return v.every((x) => typeof x === 'string' || typeof x === 'number') ? 'list' : 'json';
+}
+
+/** A field as the model expects it; `kind` is left out where which kind it gets is not settled. */
+type ModelField = Omit<FormField, 'kind'> & { kind?: FieldKind };
+
+/**
+ * The fields a form of the table shows, the long way round: each key in the order the entries
+ * first use it, then each declared key no entry carries; optional when an entry leaves it out or
+ * it is declared; its kind from the first entry that carries it with something in it (an empty
+ * list is nothing), else from the declaration, else from an empty list. A declared key that the
+ * entries carry only as empty lists is open: `declared` is for fields no shipped entry carries,
+ * and whether the declaration or the empty list sets the kind there is not decided.
+ */
+function fieldsModel(c: TableCase): ModelField[] {
+  const declared = new Map(c.declared);
+  const unset = new Map(c.unset);
+  const keys: string[] = [];
+  for (const row of c.rows)
+    for (const k of Object.keys(row)) if (!c.skip.includes(k) && !keys.includes(k)) keys.push(k);
+  for (const [k] of c.declared) if (!keys.includes(k)) keys.push(k);
+  return keys.map((key) => {
+    const held = c.rows.filter((r) => key in r).map((r) => r[key]);
+    const filled = held.filter((v) => !(Array.isArray(v) && !v.length));
+    const f: ModelField = { key };
+    if (filled.length) f.kind = kindModel(filled[0]);
+    else if (!held.length) f.kind = kindModel(declared.get(key));
+    else if (!declared.has(key)) f.kind = kindModel(held[0]);
+    if (declared.has(key) || held.length < c.rows.length)
+      f.unset = unset.get(key) ?? STR.content.unset;
+    return f;
+  });
+}
+
+/** The form's fields, with the kind left out where the model leaves it open. */
+function fieldsAgainst(want: ModelField[], got: FormField[]): ModelField[] {
+  return got.map((f, i) => {
+    if (want[i]?.kind !== undefined || want[i]?.key !== f.key) return f;
+    const { key, unset } = f;
+    return unset === undefined ? { key } : { key, unset };
+  });
+}
+
+function* shrinkTable(c: TableCase): Iterable<TableCase> {
+  const smallerRow = (r: Row) =>
+    [
+      ...shrinkArray(Object.entries(r), ([k, v]): [string, unknown][] =>
+        [...shrinkValue(v)].map((x) => [k, x]),
+      ),
+    ].map((es) => Object.fromEntries(es));
+  for (const rows of shrinkArray(c.rows, smallerRow)) if (rows.length) yield { ...c, rows };
+  for (const declared of shrinkArray(c.declared)) yield { ...c, declared };
+  for (const skip of shrinkArray(c.skip)) yield { ...c, skip };
+  for (const unset of shrinkArray(c.unset)) yield { ...c, unset };
+}
+
+describe('a content form of any table, not only the shipped ones', () => {
+  it('shows every key an entry carries and every declared one, in order, of the right kind', () => {
+    // how often the cases reach what the order and the kind turn on, and how many kinds are held
+    const seen = { emptyFirst: 0, declaredCarried: 0, reordered: 0, settled: 0 };
+    forAll(
+      tableCase,
+      (c) => {
+        const want = fieldsModel(c);
+        expect(fieldsAgainst(want, formFields(specOf(c)))).toStrictEqual(want);
+        const held = (k: string) => c.rows.filter((r) => k in r).map((r) => r[k]);
+        const isEmpty = (v: unknown) => Array.isArray(v) && !v.length;
+        for (const f of want) {
+          const vs = held(f.key);
+          if (vs.length > 1 && isEmpty(vs[0]) && vs.some((v) => !isEmpty(v))) seen.emptyFirst++;
+          if (c.declared.some(([k]) => k === f.key) && vs.some((v) => !isEmpty(v)))
+            seen.declaredCarried++;
+          if (f.kind !== undefined) seen.settled++;
+        }
+        const firsts = c.rows.map((r) => Object.keys(r).filter((k) => !c.skip.includes(k)));
+        if (firsts.some((ks) => ks.join() !== [...ks].sort().join())) seen.reordered++;
+      },
+      { shrink: shrinkTable },
+    );
+    expect(seen.emptyFirst, 'a field first carried as an empty list').toBeGreaterThanOrEqual(5);
+    expect(seen.declaredCarried, 'a declared field an entry carries').toBeGreaterThanOrEqual(5);
+    expect(seen.reordered, 'an entry with its keys out of order').toBeGreaterThanOrEqual(5);
+    expect(seen.settled, 'fields whose kind is held to the model').toBeGreaterThanOrEqual(200);
+  });
+
+  it('gives back every entry saved as shown, and never a field it did not carry', () => {
+    forAll(
+      tableCase,
+      (c) => {
+        const fields = formFields(specOf(c));
+        for (const row of c.rows) {
+          for (const f of fields)
+            if (!(f.key in row)) expect(showField(row, f, kindFor(row, f)), f.key).toBe('');
+          const copy = clone(row);
+          saveAsShown(copy, fields);
+          expect(copy).toStrictEqual(row);
+        }
+      },
+      { shrink: shrinkTable },
+    );
+  });
+});
