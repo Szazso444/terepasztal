@@ -18,6 +18,12 @@ export const TERRAIN_NAMES = [
   'mountain',
 ] as const;
 
+/**
+ * Ids are stored in saves (src/world/chunks.ts), so they are appended and never renumbered. Plains
+ * to Ocean are climates: generation picks one for every tile. Lake, River, Beach and Mountain are
+ * landforms a tile's climate is relabelled to (generateMap's biome rules); the climate stays
+ * readable under them (climateAt).
+ */
 export const enum Biome {
   Plains = 0,
   Forest = 1,
@@ -25,8 +31,29 @@ export const enum Biome {
   Taiga = 3,
   Swamp = 4,
   Ocean = 5,
+  /** water that is neither sea nor river */
+  Lake = 6,
+  /** water the river pass cut through land */
+  River = 7,
+  /** sand on the sea shore */
+  Beach = 8,
+  /** a mountain and the rock of its field */
+  Mountain = 9,
 }
-export const BIOME_NAMES = ['plains', 'forest', 'desert', 'taiga', 'swamp', 'ocean'] as const;
+export const BIOME_NAMES = [
+  'plains',
+  'forest',
+  'desert',
+  'taiga',
+  'swamp',
+  'ocean',
+  'lake',
+  'river',
+  'beach',
+  'mountain',
+] as const;
+/** The climates, ids 0 to CLIMATES - 1: the biomes generation picks before any landform rule. */
+export const CLIMATES = 6;
 
 export type PropKind =
   | 'tree'
@@ -68,8 +95,10 @@ export interface GameMap {
   biome: Uint8Array;
   /**
    * per-tile climate, as a biome id: the biome a tile had before any rule relabelled it by its
-   * landform. Missing: every tile's climate is its biome, which is true of every map today, so
-   * nothing fills it yet. Read it through climateAt or climateAtIndex.
+   * landform (Lake, River, Beach, Mountain). generateMap fills it with climates (ids below
+   * CLIMATES), and a map built from stored chunks has it as stored (a chunk stored before the
+   * plane holds its biome there). A map from a level or the editor's blank map has none, and there
+   * every tile's climate is its biome. Read it through climateAt or climateAtIndex.
    */
   climate?: Uint8Array;
   /** per-tile decoration, sparse */

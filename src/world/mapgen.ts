@@ -3,6 +3,8 @@ import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import {
   Terrain,
   Biome,
+  CLIMATES,
+  climateAtIndex,
   startRegion,
   type GameMap,
   type PropInstance,
@@ -163,10 +165,23 @@ const RIVER_TILES = 64;
 /** How far biome smoothing reads: two passes of a 5x5 majority. */
 const SMOOTH_REACH = 4;
 /**
- * How far the passes after the rivers read: lone-tile cleanup 1, mountains 2, oil and wheat fields
- * 2 (WHEAT_REACH).
+ * How far a rock tile looks for the mountain of its field, in steps: a Rock tile is in the
+ * Mountain biome when a path of at most this many steps across tile sides, over Rock and Mountain
+ * only, reaches a Mountain tile. A field of rock has no bound of its own (at a low Rock level it
+ * runs on and on), so the whole field would make a tile's biome depend on how far the map
+ * reaches; this bound keeps it to the tiles near it. Over 20 worlds of 160 x 160 at the default
+ * sliders, 54 of the 3491 rock tiles of fields that hold a mountain lie further out and keep their
+ * climate. The terrain this reads lies within LATE_REACH of the map, and so the margin.
  */
-const LATE_REACH = 5;
+export const MOUNTAIN_REACH = 12;
+/** How far sand reads as Beach from the sea water it lies by, in tiles along either axis. */
+export const BEACH_REACH = 2;
+/**
+ * How far the passes after the rivers read: lone-tile cleanup 1, then mountains 2 for the
+ * Mountain biome to find them MOUNTAIN_REACH steps out. The sea shore needs less: cleanup 1, the
+ * shore 1, oil and wheat fields 4 (a centre 2 out, 2 more for the field, WHEAT_REACH).
+ */
+const LATE_REACH = 1 + 2 + MOUNTAIN_REACH;
 /**
  * Generation runs on a field this many tiles wider than the map on every side, and the map is
  * cropped out of it, so no pass ever sees the map's own edge: a tile comes out the same whatever
@@ -482,12 +497,15 @@ function startSpan(map: GameMap): Span {
 
 /**
  * Each tile of `s` (clipped to the `w` x `h` plane) gets the majority biome of its 5x5
- * neighbourhood in `src`, cut off at the plane's edge; a tie keeps the tile's own.
+ * neighbourhood in `src`, cut off at the plane's edge; a tie keeps the tile's own. The biomes are
+ * climates, ids 0 to CLIMATES - 1: the biome rules relabel tiles only after smoothing.
  */
 function smoothBiomes(src: Uint8Array, dst: Uint8Array, w: number, h: number, s: Span) {
   const x0 = Math.max(0, s.x0);
   const x1 = Math.min(w, s.x1);
-  const counts = new Int32Array(6);
+  // a local, not the import: an imported binding read in the loop below slows smoothing manifold
+  const kinds = CLIMATES;
+  const counts = new Int32Array(kinds);
   for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++) {
     const ya = Math.max(0, y - 2);
     const yb = Math.min(h - 1, y + 2);
@@ -500,23 +518,45 @@ function smoothBiomes(src: Uint8Array, dst: Uint8Array, w: number, h: number, s:
       if (x >= 3) for (let yy = ya; yy <= yb; yy++) counts[src[yy * w + x - 3]]--;
       const i = y * w + x;
       let best = src[i];
-      for (let k = 0; k < 6; k++) if (counts[k] > counts[best]) best = k;
+      for (let k = 0; k < kinds; k++) if (counts[k] > counts[best]) best = k;
       dst[i] = best;
     }
   }
 }
 
 /**
- * The world of `seed`. `supply` is the production chain the game will run: the terrain, biome and
- * variant planes and the decorations are the same for both, and only the full chain adds oil
- * fields and the start chunk's seeps over the props. It is an argument, not a map parameter, so
- * it never reaches the saved `MapGenParams`.
+ * The world of `seed`. `supply` is the production chain the game will run: the terrain, biome,
+ * climate and variant planes and the decorations are the same for both, and only the full chain
+ * adds oil fields and the start chunk's seeps over the props. It is an argument, not a map
+ * parameter, so it never reaches the saved `MapGenParams`.
  */
 export function generateMap(
   seed: number,
   p: Partial<MapGenParams> = {},
   supply: SupplyMode = DEFAULT_SUPPLY,
 ): GameMap {
+  return generateMapPlanes(seed, p, supply).map;
+}
+
+/** generateMap's map with planes its biome rules read, as tiles of the map, for tests. */
+export interface MapPlanes {
+  map: GameMap;
+  /**
+   * 1 on each tile the river pass turned from land into water, 0 elsewhere. The lone-tile cleanup
+   * moves it along with the terrain it moves; a tile the start chunk's patches paint keeps it, and
+   * is a river tile only where it is still water.
+   */
+  river: Uint8Array;
+  /** the terrain before the sea shore turned to sand (seaShore) */
+  shore: Uint8Array;
+}
+
+/** generateMap, with the planes of MapPlanes. */
+export function generateMapPlanes(
+  seed: number,
+  p: Partial<MapGenParams> = {},
+  supply: SupplyMode = DEFAULT_SUPPLY,
+): MapPlanes {
   const params = { ...DEFAULT_MAP_PARAMS, ...p };
   const map = emptyMap(seed, params.w, params.h, Terrain.Grass, params.originX, params.originY);
   const { w: mw, h: mh, regionSize: rs } = map;
@@ -534,7 +574,7 @@ export function generateMap(
     y1: ss.y1 + MARGIN,
   };
   const rng = new Rng(seed);
-  // the order they are drawn in is part of every seed's world
+  // the order they are drawn in is part of every seed's world; a new seed is drawn after these
   const seeds: FieldSeeds = {
     elev: rng.int(1, 1e6),
     moist: rng.int(1, 1e6),
@@ -548,8 +588,8 @@ export function generateMap(
   const scy = start.y0 + rs / 2;
   const f = new Field(w, h, ox, oy, seeds, params, scx, scy, rs);
   // the passes after the rivers run on the map and the tiles around it they read, each on a band
-  // narrower than the one it reads: the terrain LATE_REACH tiles out, the cleanup a tile less,
-  // the mountains and the oil and wheat field centres 2 tiles out
+  // narrower than the one it reads: the terrain LATE_REACH tiles out, the cleanup a tile less, the
+  // mountains MOUNTAIN_REACH tiles out, the sea shore 4 and the oil and wheat field centres 2
   const inMap: Span = { x0: MARGIN, y0: MARGIN, x1: MARGIN + mw, y1: MARGIN + mh };
   const late = grow(inMap, LATE_REACH);
   f.needSpan(late, GROUND);
@@ -560,16 +600,20 @@ export function generateMap(
     x1: Math.min(w, start.x0 + 2 * rs),
     y1: Math.min(h, start.y0 + 2 * rs),
   };
-  // a river tile can carve the one east of it too
-  const carved = carveRivers(f, seed, scx, scy, near, grow(late, 1));
+  // a river tile can carve the one east of it too; what it carves out of land is the river's
+  const river = carveRivers(f, seed, scx, scy, near, grow(late, 1));
   const terrain = new Uint8Array(w * h);
   for (let y = late.y0; y < late.y1; y++)
     for (let x = late.x0; x < late.x1; x++) {
       const i = y * w + x;
-      terrain[i] = carved[i] ? Terrain.Water : f.ground[i];
+      const g = f.ground[i];
+      if (g === Terrain.Water) river[i] = 0;
+      terrain[i] = river[i] ? Terrain.Water : g;
     }
-  // clean up lone tiles: majority filter for water/rock singletons
+  // clean up lone tiles: majority filter for water/rock singletons; a tile that takes the terrain
+  // below it takes whether that is river water too
   const copy = new Uint8Array(terrain);
+  const riverCopy = new Uint8Array(river);
   const tidy = grow(late, -1);
   for (let y = tidy.y0; y < tidy.y1; y++)
     for (let x = tidy.x0; x < tidy.x1; x++) {
@@ -581,7 +625,10 @@ export function generateMap(
           if (!dx && !dy) continue;
           if (copy[(y + dy) * w + x + dx] === t) same++;
         }
-      if (same <= 1) terrain[i] = copy[(y + 1) * w + x];
+      if (same <= 1) {
+        terrain[i] = copy[(y + 1) * w + x];
+        river[i] = riverCopy[(y + 1) * w + x];
+      }
     }
   const field: GameMap = {
     ...map,
@@ -591,21 +638,30 @@ export function generateMap(
     originY: oy,
     terrain,
     variant: new Uint8Array(w * h),
+    // the climate, until the biome rules relabel the map's tiles
     biome: f.biome,
+    climate: f.biome,
     props: new Map(),
     regionsX: Math.ceil(w / rs),
     regionsY: Math.ceil(h / rs),
   };
   // an oil field reaches 2 tiles from its centre and reads the terrain under it
   const oilCentres = grow(inMap, 2);
-  raiseMountains(field, oilCentres);
+  raiseMountains(field, grow(inMap, MOUNTAIN_REACH));
   startResources(field, start);
+  const shore = cropPlane(terrain, w, mw, mh);
+  // After the start chunk's patches, which it never reaches: the Ocean climate lies at least 5
+  // tiles outside the start chunk (genRaw keeps the sea out of the start zone, and smoothing moves
+  // it 4 tiles at most), so no tile of the chunk or beside it has sea water on a side. The oil and
+  // wheat fields read the terrain 4 tiles out.
+  const shoreSpan = grow(oilCentres, 2);
+  const sea = seaWater(field, river, grow(shoreSpan, 1));
+  seaShore(field, sea, shoreSpan);
+  field.biome = biomeRules(field, river, sea, inMap);
   // crop the map out of the field
-  for (let y = 0; y < mh; y++) {
-    const from = (y + MARGIN) * w + MARGIN;
-    map.terrain.set(terrain.subarray(from, from + mw), y * mw);
-    map.biome.set(f.biome.subarray(from, from + mw), y * mw);
-  }
+  map.terrain = cropPlane(terrain, w, mw, mh);
+  map.biome = cropPlane(field.biome, w, mw, mh);
+  map.climate = cropPlane(f.biome, w, mw, mh);
   decorateProps(map, seed);
   // the fields and deposits read the field around the map; they go over the map's props, the
   // wheat fields, then the oil fields, then the start seeps, as if all four had been laid on the
@@ -622,7 +678,17 @@ export function generateMap(
     const y = Math.floor(i / w) - MARGIN;
     if (x >= 0 && y >= 0 && x < mw && y < mh) map.props.set(y * mw + x, list);
   }
-  return map;
+  return { map, river: cropPlane(river, w, mw, mh), shore };
+}
+
+/** The map's `mw` x `mh` tiles of a plane of the field (`w` tiles wide) around it. */
+function cropPlane(plane: Uint8Array, w: number, mw: number, mh: number): Uint8Array {
+  const out = new Uint8Array(mw * mh);
+  for (let y = 0; y < mh; y++) {
+    const from = (y + MARGIN) * w + MARGIN;
+    out.set(plane.subarray(from, from + mw), y * mw);
+  }
+  return out;
 }
 
 /** The places a world chunk has for a wheat field; each grows one field or none. */
@@ -725,7 +791,8 @@ function wheatFields(
 /**
  * Oil fields (full production chain only): rare clusters of puddles on low ground. A field centre
  * is picked by hash on plain grass, sand or swamp, then a blob of 4–9 tiles around it is covered.
- * Fields never touch the starting chunk's centre.
+ * Fields never touch the starting chunk's centre. Ground in the Ocean climate (an island, its
+ * beach included) takes no oil.
  */
 export function placeOilFields(map: GameMap, seed: number, supply: SupplyMode = DEFAULT_SUPPLY) {
   oilFields(map, seed, { x0: 0, y0: 0, x1: map.w, y1: map.h }, supply);
@@ -733,11 +800,10 @@ export function placeOilFields(map: GameMap, seed: number, supply: SupplyMode = 
 /** placeOilFields with the field centres limited to the tiles of `s`. */
 function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
   if (supply !== 'full') return;
-  const { w, h, terrain, biome, originX, originY } = map;
+  const { w, h, terrain, originX, originY } = map;
   const ok = (i: number) => {
     const t = terrain[i];
-    const b = biome[i];
-    return b !== Biome.Ocean && (t === Terrain.Grass || t === Terrain.Sand);
+    return climateAtIndex(map, i) !== Biome.Ocean && (t === Terrain.Grass || t === Terrain.Sand);
   };
   for (let y = Math.max(2, s.y0); y < Math.min(h - 2, s.y1); y++)
     for (let x = Math.max(2, s.x0); x < Math.min(w - 2, s.x1); x++) {
@@ -1095,6 +1161,125 @@ function raiseMountains(map: GameMap, s: Span) {
 }
 
 /**
+ * The sea water of the tiles of `s`, as 1s on the map's plane: Water in the Ocean climate that the
+ * river pass did not cut (`river`). The Ocean climate is the generator's own sea (a broad noise of
+ * its own, Field.genRaw), and the rule reads the tile alone, so its reach is 0: water outside the
+ * Ocean climate is a lake even where it runs into the sea.
+ */
+function seaWater(map: GameMap, river: Uint8Array, s: Span): Uint8Array {
+  const { w, h, terrain } = map;
+  const climate = map.climate ?? map.biome;
+  const sea = new Uint8Array(w * h);
+  for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
+    for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++)
+      if (terrain[i] === Terrain.Water && !river[i] && climate[i] === Biome.Ocean) sea[i] = 1;
+  return sea;
+}
+
+/**
+ * The sea shore: every Grass, Forest or Sand tile of `s` with sea water (seaWater) on one of its 4
+ * sides becomes Sand, which biomeRules makes Beach. Hill, Rock and Mountain on the coast stay as
+ * they are (a cliff coast), and lakes and rivers get no shore. Reads the tiles 1 around `s`.
+ */
+function seaShore(map: GameMap, sea: Uint8Array, s: Span) {
+  const { w, h, terrain } = map;
+  for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
+    for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++) {
+      const t = terrain[i];
+      if (t !== Terrain.Grass && t !== Terrain.Forest && t !== Terrain.Sand) continue;
+      if (
+        (x > 0 && sea[i - 1]) ||
+        (x < w - 1 && sea[i + 1]) ||
+        (y > 0 && sea[i - w]) ||
+        (y < h - 1 && sea[i + w])
+      )
+        terrain[i] = Terrain.Sand;
+    }
+}
+
+/**
+ * The biomes of the tiles of `s`: the map's climate, with the tiles whose landform has a biome of
+ * its own relabelled to it.
+ *
+ * - River: Water the river pass cut through land (`river`).
+ * - Lake: any other Water but the sea (`sea`, seaWater), which keeps the Ocean climate.
+ * - Beach: Sand within BEACH_REACH tiles of sea water, along either axis.
+ * - Mountain: Mountain terrain, and Rock that reaches it in MOUNTAIN_REACH steps or fewer across
+ *   tile sides over Rock and Mountain alone.
+ *
+ * Every other tile keeps its climate. Returns a new plane, the climate outside `s`. Reads the
+ * terrain up to MOUNTAIN_REACH tiles around `s` and the sea BEACH_REACH tiles around it.
+ */
+function biomeRules(map: GameMap, river: Uint8Array, sea: Uint8Array, s: Span): Uint8Array {
+  const { w, h, terrain } = map;
+  const biome = (map.climate ?? map.biome).slice();
+  const steps = stepsToMountain(map, grow(s, MOUNTAIN_REACH));
+  const r = BEACH_REACH;
+  for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
+    for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++) {
+      const t = terrain[i];
+      if (t === Terrain.Water) {
+        if (river[i]) biome[i] = Biome.River;
+        else if (!sea[i]) biome[i] = Biome.Lake;
+      } else if (t === Terrain.Mountain || t === Terrain.Rock) {
+        if (steps[i] <= MOUNTAIN_REACH) biome[i] = Biome.Mountain;
+      } else if (t === Terrain.Sand) {
+        let shore = false;
+        for (let ny = Math.max(0, y - r); ny <= Math.min(h - 1, y + r) && !shore; ny++)
+          for (let nx = Math.max(0, x - r); nx <= Math.min(w - 1, x + r); nx++)
+            if (sea[ny * w + nx]) {
+              shore = true;
+              break;
+            }
+        if (shore) biome[i] = Biome.Beach;
+      }
+    }
+  return biome;
+}
+
+/**
+ * For each tile of `s`, the fewest steps across tile sides, over Rock alone, to a Mountain tile of
+ * `s`, as a plane of the map; 255 where there are more than MOUNTAIN_REACH or none. Exact on the
+ * tiles MOUNTAIN_REACH or more inside `s`, as a path that long never leaves it.
+ */
+function stepsToMountain(map: GameMap, s: Span): Uint8Array {
+  const { w, h, terrain } = map;
+  const x0 = Math.max(0, s.x0);
+  const y0 = Math.max(0, s.y0);
+  const x1 = Math.min(w, s.x1);
+  const y1 = Math.min(h, s.y1);
+  const FAR = 255;
+  const steps = new Uint8Array(w * h).fill(FAR);
+  const queue = new Int32Array(Math.max(0, (x1 - x0) * (y1 - y0)));
+  let tail = 0;
+  for (let y = y0; y < y1; y++)
+    for (let x = x0, i = y * w + x; x < x1; x++, i++)
+      if (terrain[i] === Terrain.Mountain) {
+        steps[i] = 0;
+        queue[tail++] = i;
+      }
+  // breadth first, so each tile is reached by its fewest steps, and none beyond the reach
+  for (let head = 0; head < tail; head++) {
+    const i = queue[head];
+    const d = steps[i] + 1;
+    if (d > MOUNTAIN_REACH) break;
+    const x = i % w;
+    const y = (i - x) / w;
+    const go = (n: number) => {
+      if (steps[n] === FAR && terrain[n] === Terrain.Rock) {
+        steps[n] = d;
+        queue[tail++] = n;
+      }
+    };
+    if (x > x0) go(i - 1);
+    if (x < x1 - 1) go(i + 1);
+    if (y > y0) go(i - w);
+    if (y < y1 - 1) go(i + w);
+  }
+  return steps;
+}
+
+/**
  * The `k`th prop on world tile (`wx`, `wy`); `a` is the tile's hash2(wx * 3 + k, wy, seed + 7),
  * which also places the prop sideways.
  */
@@ -1116,7 +1301,8 @@ function prop(
 }
 
 /**
- * (Re)generate decorative props from the terrain. With a rectangle only those tiles are redone,
+ * (Re)generate decorative props from the terrain and the climate (climateAt: palms on a beach in
+ * the Ocean climate, cacti on one in the desert). With a rectangle only those tiles are redone,
  * which is what the editor needs after painting. Deterministic per tile and seed.
  */
 export function decorateProps(
@@ -1124,7 +1310,7 @@ export function decorateProps(
   seed: number,
   rect?: { x0: number; y0: number; x1: number; y1: number },
 ) {
-  const { w, h, terrain, biome } = map;
+  const { w, h, terrain } = map;
   const x0 = rect ? Math.max(0, rect.x0) : 0;
   const y0 = rect ? Math.max(0, rect.y0) : 0;
   const x1 = rect ? Math.min(w - 1, rect.x1) : w - 1;
@@ -1139,7 +1325,7 @@ export function decorateProps(
       if (t !== Terrain.Forest && t !== Terrain.Grass && t !== Terrain.Sand) continue;
       const wx = x + map.originX;
       const wy = y + map.originY;
-      const b = biome[i] as Biome;
+      const b = climateAtIndex(map, i);
       if (t === Terrain.Forest) {
         const n = 1 + Math.floor(hash2(wx, wy, seed + 6) * 2.5);
         const list: PropInstance[] = [];

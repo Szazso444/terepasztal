@@ -522,13 +522,15 @@ describe('a map built from stored chunks', () => {
     expect(built.chunks).toEqual(store);
   });
 
-  it('has no climate of its own: a stored chunk has the climate of its biome', () => {
+  it('has the climate the generator gives it, stored and read back', () => {
     const climate: MapGenerator = (s, p) => {
       const m = generateMap(s, p);
       return { ...m, climate: new Uint8Array(m.w * m.h).fill(Biome.Desert) };
     };
     const built = buildMap(1, { w: 64, h: 64 }, {}, climate);
-    expect([...built.map.climate!]).toEqual([...built.map.biome]);
+    expect(new Set(built.map.climate)).toEqual(new Set([Biome.Desert]));
+    const again = buildMap(1, { w: 64, h: 64 }, built.chunks, never);
+    expect(new Set(again.map.climate)).toEqual(new Set([Biome.Desert]));
   });
 
   it('refuses a generator that makes a map of another size', () => {

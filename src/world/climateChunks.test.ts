@@ -1,0 +1,221 @@
+import { describe, it, expect } from 'vitest';
+import {
+  CHUNK_TILES,
+  CHUNK_VERSION,
+  buildMap,
+  chunkKey,
+  chunkOf,
+  decodeChunk,
+  type ChunkStore,
+  type MapGenerator,
+} from './chunks';
+import { generateMap, type MapGenParams } from './mapgen';
+import { Biome, CLIMATES, climateAt, type GameMap } from './tiles';
+
+// The climate plane in stored chunks (#354, with #339's chunk rule): chunks stored before the
+// plane keep their biomes and read their climate as their biome; chunks generated after store the
+// climate under the landform biomes (#340, #354).
+
+/** A generator that must not run. */
+const never: MapGenerator = () => {
+  throw new Error('generated a chunk that is stored');
+};
+
+/** The bytes of a chunk text, and the text of bytes. */
+const bytesOf = (text: string) => Array.from(atob(text), (ch) => ch.charCodeAt(0));
+const textOf = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
+
+/** How many bytes a plane takes as runs, as the encoding in chunks.ts describes them. */
+function runBytes(plane: Uint8Array): number {
+  let n = 0;
+  for (let i = 0; i < plane.length;) {
+    let end = i + 1;
+    while (end < plane.length && plane[end] === plane[i]) end++;
+    n++;
+    // a run of 16 or more carries its length less 16 as a varint
+    if (end - i >= 16)
+      for (let v = end - i - 16; ; v = Math.floor(v / 128)) {
+        n++;
+        if (v < 128) break;
+      }
+    i = end;
+  }
+  return n;
+}
+
+/**
+ * The text `text` would have had in version 1, before the climate plane: the same bytes with the
+ * version byte 1 and without the climate runs, which come right after the biome runs.
+ */
+function asVersion1(text: string): string {
+  const c = decodeChunk(text)!;
+  const bytes = bytesOf(text);
+  const planes = 5 + runBytes(c.terrain) + runBytes(c.biome);
+  return textOf([1, ...bytes.slice(1, planes), ...bytes.slice(planes + runBytes(c.climate))]);
+}
+
+/** The world as map generation made it before the landform biomes: its biome is its climate. */
+const beforeLandforms: MapGenerator = (s, p) => {
+  const m = generateMap(s, p);
+  return { ...m, biome: m.climate!.slice(), climate: undefined };
+};
+
+/** Tiles of `a` where climateAt differs from `b`'s, both read in world tiles, over `a`'s tiles. */
+function climateDiff(a: GameMap, b: GameMap, only?: (wx: number, wy: number) => boolean): number {
+  let n = 0;
+  for (let y = 0; y < a.h; y++)
+    for (let x = 0; x < a.w; x++) {
+      const wx = x + a.originX;
+      const wy = y + a.originY;
+      if (only && !only(wx, wy)) continue;
+      if (climateAt(a, x, y) !== climateAt(b, wx - b.originX, wy - b.originY)) n++;
+    }
+  return n;
+}
+
+describe('a chunk text', () => {
+  it('is version 2, with the climate', () => {
+    expect(CHUNK_VERSION).toBe(2);
+  });
+
+  // A chunk text in a save must mean the same to every later version. Version 1, as chunks.ts
+  // spells it: header 01 00 00 03 02, terrain one run of six grass (05), biome runs 3 3 5 5 0 9
+  // (31 51 00 90), variant 00 00, no props (00).
+  it('of version 1 decodes with its climate its biome', () => {
+    const c = decodeChunk(textOf([1, 0, 0, 3, 2, 0x05, 0x31, 0x51, 0x00, 0x90, 0, 0, 0]));
+    expect(c).not.toBeNull();
+    expect(c!.version).toBe(1);
+    expect([...c!.biome]).toEqual([3, 3, 5, 5, 0, 9]);
+    expect([...c!.climate]).toEqual([3, 3, 5, 5, 0, 9]);
+    // the plane is the chunk's own, not the biome's
+    expect(c!.climate).not.toBe(c!.biome);
+  });
+
+  // Version 2: the same, with the climate runs after the biome's: 3 3 3 3 0 1 (33 00 10).
+  it('of version 2 decodes with the climate it holds', () => {
+    const bytes = [2, 0, 0, 3, 2, 0x05, 0x31, 0x51, 0x00, 0x90, 0x33, 0x00, 0x10, 0, 0, 0];
+    const c = decodeChunk(textOf(bytes));
+    expect(c).not.toBeNull();
+    expect(c!.version).toBe(2);
+    expect([...c!.biome]).toEqual([3, 3, 5, 5, 0, 9]);
+    expect([...c!.climate]).toEqual([3, 3, 3, 3, 0, 1]);
+    // and a version 1 header on those bytes reads the climate runs as the variant: bytes left over
+    expect(decodeChunk(textOf([1, ...bytes.slice(1)]))).toBeNull();
+  });
+
+  it('holds the climate of a generated map, and a map built from it reads it back', () => {
+    for (const seed of [1, 7412, 20260912, 31337])
+      for (const frame of [
+        { w: 96, h: 96 },
+        { w: 160, h: 160, originX: -32, originY: -32 },
+        { w: 50, h: 70, originX: 13, originY: -7 },
+      ]) {
+        const at = `seed ${seed}, ${JSON.stringify(frame)}`;
+        const generated = generateMap(seed, frame);
+        const first = buildMap(seed, frame, {});
+        expect(climateDiff(first.map, generated), at).toBe(0);
+        const again = buildMap(seed, frame, first.chunks, never);
+        expect(climateDiff(again.map, generated), at).toBe(0);
+        expect([...again.map.climate!], at).toEqual([...generated.climate!]);
+      }
+  });
+
+  it('as version 1 wrote it reads back every plane but the climate, which is the biome', () => {
+    // the oracle above, checked: a text turned to version 1 keeps everything else
+    const store = buildMap(7412, { w: 96, h: 96 }, {}).chunks;
+    let differ = 0;
+    for (const text of Object.values(store)) {
+      const now = decodeChunk(text)!;
+      const old = decodeChunk(asVersion1(text))!;
+      expect(old).not.toBeNull();
+      expect({ ...old, version: 2, climate: now.climate }).toEqual(now);
+      expect([...old.climate]).toEqual([...old.biome]);
+      for (let i = 0; i < now.climate.length; i++) if (now.climate[i] !== now.biome[i]) differ++;
+    }
+    expect(differ).toBeGreaterThan(0);
+  });
+});
+
+describe('a world stored before the climate plane', () => {
+  // 4 worlds of 96 x 96 stored, read and grown to 160 x 160: about 1 s alone
+  it('loads with its old biomes, its climate its biome, and grows new chunks with the landform biomes over their climate', () => {
+    let landforms = 0;
+    for (const seed of [1, 7412, 20260912, 31337]) {
+      const params: Partial<MapGenParams> = { w: 96, h: 96 };
+      // the store a save made before the plane: version 1 texts of biomes that are climates
+      const made = buildMap(seed, params, {}, beforeLandforms);
+      const old: ChunkStore = {};
+      for (const [k, text] of Object.entries(made.chunks)) old[k] = asVersion1(text);
+      for (const text of Object.values(old)) expect(decodeChunk(text)!.version).toBe(1);
+      // loaded, it is the world it was: no chunk generated, the old biomes, the climate the biome
+      const loaded = buildMap(seed, params, old, never);
+      expect(loaded.added).toEqual([]);
+      expect(loaded.chunks).toEqual(old);
+      expect([...loaded.map.biome]).toEqual([...made.map.biome]);
+      expect(loaded.map.biome.every((b) => b < CLIMATES)).toBe(true);
+      expect([...loaded.map.climate!]).toEqual([...loaded.map.biome]);
+      // grown by a ring under today's generation: the old chunks as they were, the new ones today's
+      const grown = { w: 160, h: 160, originX: -32, originY: -32 };
+      const built = buildMap(seed, grown, old, generateMap);
+      for (const [k, text] of Object.entries(old)) expect(built.chunks[k], k).toBe(text);
+      const today = generateMap(seed, grown);
+      const stored = (wx: number, wy: number) =>
+        Object.hasOwn(old, chunkKey(chunkOf(wx), chunkOf(wy)));
+      const fresh = (wx: number, wy: number) => !stored(wx, wy);
+      const m = built.map;
+      for (let y = 0; y < m.h; y++)
+        for (let x = 0; x < m.w; x++) {
+          const i = y * m.w + x;
+          const wx = x + m.originX;
+          const wy = y + m.originY;
+          const where = `seed ${seed}, world tile (${wx}, ${wy})`;
+          if (stored(wx, wy)) {
+            const j = (wy - made.map.originY) * made.map.w + wx - made.map.originX;
+            expect(m.biome[i], where).toBe(made.map.biome[j]);
+            expect(climateAt(m, x, y), where).toBe(m.biome[i]);
+          } else {
+            expect(m.biome[i], where).toBe(today.biome[i]);
+            if (m.biome[i] >= CLIMATES) landforms++;
+          }
+        }
+      expect(climateDiff(m, today, fresh), `seed ${seed}`).toBe(0);
+      // and read again from its store alone, the same
+      const reload = buildMap(seed, grown, built.chunks, never);
+      expect([...reload.map.biome]).toEqual([...m.biome]);
+      expect([...reload.map.climate!]).toEqual([...m.climate!]);
+    }
+    // the new chunks did get landform biomes
+    expect(landforms).toBeGreaterThan(0);
+  }, 30_000);
+});
+
+describe('the climate plane in a save', () => {
+  it('takes a small share of the stored text of 9- and 49-chunk worlds', () => {
+    // the climate is the biome but under a landform, so its runs are long; measured for #354 at
+    // about 6 % of the store for 9, 49 and 784 chunks
+    for (const seed of [1, 7412, 20260912])
+      for (const [side, at] of [
+        [96, -32],
+        [224, -96],
+      ]) {
+        const { chunks } = buildMap(seed, { w: side, h: side, originX: at, originY: at }, {});
+        expect(Object.keys(chunks)).toHaveLength((side / CHUNK_TILES) ** 2);
+        let climate = 0;
+        for (const text of Object.values(chunks)) climate += runBytes(decodeChunk(text)!.climate);
+        const share = ((climate * 4) / 3 / JSON.stringify(chunks).length) * 100;
+        expect(share, `seed ${seed}, ${side} tiles`).toBeLessThan(10);
+      }
+  });
+
+  it('holds no landform: every stored climate is a climate', () => {
+    const { chunks } = buildMap(7412, { w: 160, h: 160, originX: -32, originY: -32 }, {});
+    let landforms = 0;
+    for (const text of Object.values(chunks)) {
+      const c = decodeChunk(text)!;
+      expect(c.climate.every((v) => v < CLIMATES)).toBe(true);
+      landforms += c.biome.filter((b) => b >= Biome.Lake).length;
+    }
+    // while the biome plane beside it holds landforms
+    expect(landforms).toBeGreaterThan(0);
+  });
+});
