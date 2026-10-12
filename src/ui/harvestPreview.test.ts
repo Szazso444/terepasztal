@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Sprite } from 'pixi.js';
 import { DEFAULT_RULES, rules } from '../sim/rules';
 import { LEVELS, STATION_DEFS, resetStationIds, weeklyOutput, type Station } from '../sim/stations';
@@ -71,6 +71,39 @@ describe("a harvest station's build preview", () => {
     expect(harvestPreviewPerWeek(1, { productionMul: 2 })).toBe(LEVELS.production[0] * 2);
   });
 
+  it('is put into the status line for any ground the builder reports, under any tuning', () => {
+    const w = simWorld({ seed: 4242, size: 48 });
+    // the factor is the builder's to report, so the whole range from the floor to the ceiling is
+    // reachable without hunting a fixture map for a tile that has it
+    let factor = 1;
+    vi.spyOn(w.builder, 'harvestFactor').mockImplementation(() => factor);
+    forAll(
+      (rng) => ({
+        def: rng.pick(HARVESTERS),
+        factor: rng.pick([0.15, 1.6, 1, 0.5, rng.range(0.15, 1.6), rng.range(0.15, 1.6)]),
+        productionMul: rng.pick([1, 0.1, 2, 2.5, rng.range(0.1, 5), rng.range(0.1, 5)]),
+      }),
+      (c) => {
+        rules.productionMul = c.productionMul;
+        factor = c.factor;
+        const { b, status } = controllerOn(w, { x: 3, y: 3 });
+        b.setTool({ kind: 'station', defId: c.def.id });
+        b.update(true);
+        expect(status).toHaveLength(1);
+        const cargo = c.def.produces[0]?.cargo;
+        const expected = STR.build.harvest(
+          Math.round(LEVELS.production[0] * c.productionMul * c.factor),
+          cargo ? cargoDef(cargo).name : '',
+          c.factor,
+        );
+        expect(status[0]).toContain(expected);
+      },
+      { format: (c) => JSON.stringify({ ...c, def: c.def.id }) },
+    );
+  });
+
+  // slow because it builds 14 worlds and places up to 56 stations through the builder: 0.2 to
+  // 0.55 s alone
   it('shows what a level 1 station placed on that tile makes a week, for every harvester', () => {
     const factors = new Set<number>();
     for (const productionMul of MULS)
@@ -118,5 +151,5 @@ describe("a harvest station's build preview", () => {
       }
     // the fixture has ground that is not plain, so a stray factor in the preview would show
     expect(factors.size, 'distinct ground factors tried').toBeGreaterThan(1);
-  });
+  }, 12_000);
 });
