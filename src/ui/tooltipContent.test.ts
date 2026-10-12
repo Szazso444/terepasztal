@@ -562,6 +562,14 @@ describe('the tile tooltip', () => {
     expect(props(['unlisted', 'unlisted'])).toEqual(['2× unlisted']);
   });
 
+  it('names a wheat field from the strings, so the name stands before the world adds the kind', () => {
+    const map = grid();
+    const props = (kinds: string[]) => extras(tileTip({ ...bare(map, 5, 5), props: kinds }));
+    expect(STR.tile.prop.wheat).toMatch(/\S/);
+    expect(props(['wheat'])).toEqual([STR.tile.prop.wheat]);
+    expect(props(['wheat'])[0]).not.toBe('wheat');
+  });
+
   it('says no track can be laid where the cost factor is 0, and nothing at 1', () => {
     const map = grid();
     expect(extras(tileTip({ ...bare(map, 5, 5), trackCostFactor: 0 }))).toContain(STR.tile.noTrack);
