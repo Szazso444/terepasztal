@@ -26,7 +26,12 @@ const TOP = [222, 222, 222],
   LINE = [40, 40, 40];
 
 /** Tile offset (x, y) at height z (game px) to canvas px. */
-const at = (x, y, z) => [CENTRE.x + SCALE * (x - y) * 32, CENTRE.y + SCALE * ((x + y) * 16 - z)];
+let frameScale = SCALE,
+  frameCentre = CENTRE;
+const at = (x, y, z) => [
+  frameCentre.x + frameScale * (x - y) * 32,
+  frameCentre.y + frameScale * ((x + y) * 16 - z),
+];
 
 function canvas() {
   return new PNG({ width: SIZE, height: SIZE });
@@ -204,5 +209,108 @@ for (const material of ['stone', 'wood'])
     };
     writeFileSync(join(output, 'guides', name + '.png'), PNG.sync.write(png));
   }
+frameScale = 15;
+frameCentre = { x: 512, y: 512 };
+const centred = canvas();
+box(centred, -HALF_LENGTH, HALF_LENGTH, -HALF_WIDTH, HALF_WIDTH, -KIT.deck, 0);
+box(centred, -HALF_LENGTH, HALF_LENGTH, -HALF_WIDTH, -HALF_WIDTH + KIT.wall, 0, KIT.parapet.stone);
+writeFileSync(join(output, 'guides', 'stone-deck-x-narrow-centred.png'), PNG.sync.write(centred));
+geometry.stoneDeckXCentred = {
+  canvas: [1024, 1024],
+  scale: 15,
+  centre: frameCentre,
+  tileGamePx: [64, 32],
+  tileCanvasPx: [960, 480],
+  axis: 'x',
+  axes: { x: 'NW-SE', y: 'NE-SW' },
+  projection: {
+    xPerTile: 480,
+    yPerTile: 240,
+    zPerGamePx: -15,
+    formula: '(512+480*(x-y),512+240*(x+y)-15*z)',
+  },
+  along: [-0.5, 0.5],
+  across: [-HALF_WIDTH, HALF_WIDTH],
+  halfWidth: HALF_WIDTH,
+  widthTiles: 0.6,
+  slabZ: [-5, 0],
+  slabThicknessGamePx: 5,
+  slabThicknessCanvasPx: 75,
+  topCorners: [
+    [416, 320],
+    [896, 560],
+    [608, 704],
+    [128, 464],
+  ],
+  bottomCorners: [
+    [416, 395],
+    [896, 635],
+    [608, 779],
+    [128, 539],
+  ],
+  sideFace: [
+    [128, 464],
+    [608, 704],
+    [608, 779],
+    [128, 539],
+  ],
+  cutEnd: [
+    [896, 560],
+    [608, 704],
+    [608, 779],
+    [896, 635],
+  ],
+  parapetEdgeY: -0.3,
+  parapetAcross: [-0.3, -0.18],
+  parapetWidthTiles: 0.12,
+  parapetZ: [0, 5],
+  parapetHeightGamePx: 5,
+  parapetTopCorners: [
+    [416, 245],
+    [896, 485],
+    [838.4, 513.8],
+    [358.4, 273.8],
+  ],
+  parapetBottomCorners: [
+    [416, 320],
+    [896, 560],
+    [838.4, 588.8],
+    [358.4, 348.8],
+  ],
+  parapetInnerFace: [
+    [358.4, 273.8],
+    [838.4, 513.8],
+    [838.4, 588.8],
+    [358.4, 348.8],
+  ],
+  parapetCutEnd: [
+    [896, 485],
+    [838.4, 513.8],
+    [838.4, 588.8],
+    [896, 560],
+  ],
+  box: {
+    left: 128,
+    right: 896,
+    top: 245,
+    bottom: 779,
+    width: 768,
+    height: 534,
+    centre: [512, 512],
+    canvasWidthFraction: 0.75,
+  },
+  lowestCorner: [608, 779],
+  sideHorizontalSpan: 480,
+  cutEndHorizontalSpan: 288,
+  widthRatio: 0.6,
+  faceGreys: geometry.faceGreys,
+  kitFrameMapping: {
+    scale: 8 / 15,
+    sourceCentre: [512, 512],
+    targetCentre: [512, 360],
+    targetScale: 8,
+    formula: '(512,360)+(8/15)*(p-(512,512))',
+  },
+};
 writeFileSync(join(output, 'geometry.json'), JSON.stringify(geometry, null, 2) + '\n');
-console.log('Wrote four narrow guides and geometry.json');
+console.log('Wrote four original guides, centred stone x guide and geometry.json');

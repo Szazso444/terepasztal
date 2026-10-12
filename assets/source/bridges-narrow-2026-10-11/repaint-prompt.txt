@@ -1,0 +1,21 @@
+Use case: sketch-to-render. Asset type: narrow-gauge isometric bridge kit source painting.
+Image 1 is guides/stone-deck-x-narrow-centred.png, the exact grey block-out to EDIT. Image 2 is docs/art-direction/images/03-theme-town-growth.png, the pastoral railway style board. Image 3 is stone-deck-y-narrow.png: match its flags, coping, courses and shades; do not copy its direction. Image 4 is assets/source/bridges-v1/stone-deck-x.png: copy its stone courses and coping, never its full-tile width. Use image 1 geometry and framing.
+Repaint the attached grey block-out as a finished game sprite in the style of the reference:
+the pastoral railway style, smooth painted contours, broad colour clusters, three or four shades per
+material, upper-left lighting. Keep the block-out's geometry exactly. Every outer edge, every
+face and every angle stays where it is in the block-out, within a few pixels. Do not rotate,
+move, scale, tilt or re-project anything. Edges running across the image keep their exact
+2:1 slope (two pixels across for each pixel down); vertical edges stay vertical. The light
+grey face is lit from above, the mid grey face faces the lower left, the dark grey face faces
+the lower right. Keep that lighting. Same 1024 x 1024 canvas; the deck centred, filling 75% of its width. Only the object:
+REAL RGBA transparent PNG, background alpha zero, solid surfaces opaque. No text, rails,
+sleepers, water, ground, scenery, glow or cast shadow. No outline around the whole object.
+Cut ends: where the block-out ends in a flat vertical cut, the painting ends in the same flat
+cut, with no end cap, end post, end block, border or rounding. The next tile continues right
+there, so any pattern (stone courses, coping stones, planks, rails, diagonals) must run
+straight through the cut at the same height on both ends.
+Exact geometry: 2:1 orthographic isometric; tile 64x32 game px; canvas 1024x1024; scale 15; centre at deck level (512,512). Projection (512+480*(x-y),512+240*(x+y)-15*z). Slab z=-5 to 0 (75 canvas px thick), along-track length 1 tile, across-track width 0.6 tile (half-width 0.30). Far wall 0.12 tile thick occupying across=-0.30 to -0.18. No near railing. No ballast, piers, braces, arches, supports, loose objects, end caps, end posts or scene.
+Palette: forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42. Smooth painted contours, no per-pixel noise, no stair-stepped pixel edges.
+Track runs tile x NW to SE (upper left to lower right). Slab x=-0.5 to 0.5, y=-0.3 to 0.3. Top corners (416,320),(896,560),(608,704),(128,464). Near long side faces lower left. Far wall along y=-0.3. Parapet top corners (416,245),(896,485),(838.4,513.8),(358.4,273.8). Lowest corner (608,779); left edge x=128, right edge x=896: cut end spans 288 px, long side 480 px, ratio exactly 0.60. Bounding box x=128 to 896, y=245 to 779.
+Cream limestone bridge deck: dressed stone flags on slab and limestone parapet with flat coping on far edge, 5 game px high. Match reference stone courses and coping; restrained broad cream stone shades and joints.
+Lightest limestone is oat #E4D5B5. No painted highlight brighter than cursor white #ECE4D0 or selection amber #E8AA48. Request output 1024x1024 px.
