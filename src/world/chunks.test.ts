@@ -207,7 +207,7 @@ describe('a chunk text', () => {
   });
 
   it('stores every prop kind under the index it always had (new kinds are appended)', () => {
-    expect(PROP_KINDS.slice(0, 15)).toEqual([
+    expect(PROP_KINDS.slice(0, 16)).toEqual([
       'tree',
       'pine',
       'rock',
@@ -223,6 +223,7 @@ describe('a chunk text', () => {
       'boulder',
       'coal',
       'oil',
+      'wheat',
     ]);
     // each kind under an index of its own, with none left out between them
     for (const kind of PROP_KINDS) {
@@ -334,7 +335,7 @@ describe('a chunk text', () => {
     map.variant[9] = 4;
     expect(() => encodeChunk(map, 0, 0)).toThrow(/variant/);
     map.variant[9] = 0;
-    map.props.set(3, [{ kind: 'wheat' as PropInstance['kind'], variant: 0, ox: 0, oy: 0 }]);
+    map.props.set(3, [{ kind: 'barley' as PropInstance['kind'], variant: 0, ox: 0, oy: 0 }]);
     expect(() => encodeChunk(map, 0, 0)).toThrow(/kind/);
     map.props.set(3, [{ kind: 'oak', variant: -1, ox: 0, oy: 0 }]);
     expect(() => encodeChunk(map, 0, 0)).toThrow(/variant/);

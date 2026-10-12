@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { generateMap, placeOilFields, ensureStartDeposits, DEFAULT_MAP_PARAMS } from './mapgen';
 import { mapFromLevel, levelFromMap } from './level';
 import { Terrain, startRegion, type GameMap, type PropInstance } from './tiles';
-import { Rng, hashString } from '../engine/rng';
+import { Rng, hash2, hashString } from '../engine/rng';
 import {
   DEFAULT_SUPPLY,
   SUPPLY_MODES,
@@ -65,6 +65,42 @@ function startOil(m: GameMap) {
     const y = Math.floor(i / m.w);
     return Math.floor(x / rs) === rx && Math.floor(y / rs) === ry;
   });
+}
+/** The start chunk's grass and sand tiles, nearest its centre first, ties in reading order. */
+function startGround(m: GameMap) {
+  const { rx, ry } = startRegion(m);
+  const rs = m.regionSize;
+  const cx = rx * rs + rs / 2;
+  const cy = ry * rs + rs / 2;
+  const out: { i: number; d: number }[] = [];
+  for (let y = ry * rs; y < Math.min(m.h, (ry + 1) * rs); y++)
+    for (let x = rx * rs; x < Math.min(m.w, (rx + 1) * rs); x++) {
+      const t = m.terrain[y * m.w + x];
+      if (t === Terrain.Grass || t === Terrain.Sand)
+        out.push({ i: y * m.w + x, d: Math.hypot(x - cx, y - cy) });
+    }
+  return out.sort((a, b) => a.d - b.d || a.i - b.i);
+}
+/** Of those, the ring 6 to 13 tiles out. */
+const startRing = (m: GameMap) => startGround(m).filter((c) => c.d > 6 && c.d < 13);
+/**
+ * The seeps ensureStartDeposits lays on a start chunk with no oil, by #276's rule, each as the
+ * prop it puts on its tile: tiles 0, 3 and 6 of the ring where the ring holds seven or more, else
+ * tiles 0, step and 2 x step of the whole chunk's, with step max(1, min(3, floor((n - 1) / 2))).
+ */
+function ruleSeeps(m: GameMap): Map<number, PropInstance> {
+  const ground = startGround(m);
+  const ring = startRing(m);
+  const short = ring.length < 7;
+  const from = short ? ground : ring;
+  const step = short ? Math.max(1, Math.min(3, Math.floor((ground.length - 1) / 2))) : 3;
+  const out = new Map<number, PropInstance>();
+  for (let k = 0; k < 3 * step && k < from.length; k += step) {
+    const { i } = from[k];
+    const jitter = hash2((i % m.w) + m.originX, Math.floor(i / m.w) + m.originY, m.seed + 15);
+    out.set(i, { kind: 'oil', variant: k % 3, ox: (jitter - 0.5) * 0.3, oy: 0 });
+  }
+  return out;
 }
 /** A copy of the map's props, so a call can be compared with what it started from. */
 const propsOf = (m: GameMap) =>
@@ -313,8 +349,6 @@ describe('the production chain, for any world', () => {
       },
     };
   }
-  /** The same world on the game's default sliders. */
-  const atDefaults = (rng: Rng): WorldCase => ({ ...genWorld(rng), sliders: DEFAULT_SLIDERS });
   /** Toward the default sliders, the smaller size and the default global. */
   function* shrinkWorld(c: WorldCase): Iterable<WorldCase> {
     if (c.global !== DEFAULT_SUPPLY) yield { ...c, global: DEFAULT_SUPPLY };
@@ -334,7 +368,6 @@ describe('the production chain, for any world', () => {
     expect(new Set(cases.map((c) => c.global))).toEqual(new Set(SUPPLY_MODES));
     expect(new Set(cases.map((c) => c.seed)).size).toBe(cases.length);
     expect(new Set(cases.map((c) => c.sliders.waterLevel)).size).toBeGreaterThan(8);
-    for (const s of SEEDS) expect(atDefaults(new Rng(s)).sliders).toBe(DEFAULT_SLIDERS);
   });
 
   it('gives both chains the same world, oil on the full chain only, and the simple chain when none is named', () => {
@@ -381,22 +414,25 @@ describe('the production chain, for any world', () => {
     );
   }, 20_000);
 
-  // The seeps go on every third grass or sand tile of a ring around the start chunk's centre, so
-  // they reach three only where the ring holds seven such tiles or more. A dense forest or a high
-  // Water level can leave fewer (on 32 x 32: forestDensity 0.3, seed 1 gets one seep and a second
-  // call adds another; waterLevel 0.6, seed 4 gets none), so these claims are made on the game's
-  // default sliders.
-  it('holds oil in the full chain, three seeps or more in the start chunk, seeded once, on the default sliders', () => {
+  // The seeps go on every third grass or sand tile of a ring around the start chunk's centre where
+  // the ring holds seven such tiles or more, and on the nearest of the whole chunk where it holds
+  // fewer (a dense forest or a high Water level), so the claims hold on every slider value (#276).
+  // 24 worlds of up to 96 x 96, two maps each: about 0.45 s alone
+  it('holds oil in the full chain, three seeps or more in the start chunk, seeded once, on any sliders', () => {
+    let short = 0;
     forAll(
-      atDefaults,
+      genWorld,
       (c) => {
         setSupplyMode(c.global);
         const full = generateMap(c.seed, paramsOf(c), 'full');
+        // the claim is for a start chunk with three grass or sand tiles, which every one has
+        expect(startGround(full).length).toBeGreaterThanOrEqual(3);
         expect(oilTiles(full).length).toBeGreaterThanOrEqual(3);
         expect(startOil(full).length).toBeGreaterThanOrEqual(3);
         // seeding an oil-free start chunk by hand reaches the same count, and a second call adds none
         const map = generateMap(c.seed, paramsOf(c), 'simple');
         expect(startOil(map)).toEqual([]);
+        if (startRing(map).length < 7) short++;
         ensureStartDeposits(map, 'full');
         expect(startOil(map).length).toBeGreaterThanOrEqual(3);
         const once = propsOf(map);
@@ -405,5 +441,76 @@ describe('the production chain, for any world', () => {
       },
       run,
     );
+    // some world's ring was short, so the fallback ran
+    expect(short).toBeGreaterThan(0);
   }, 20_000);
+
+  // 24 worlds of up to 96 x 96: about 0.4 s alone
+  it('lays the seeps on every third tile of the ring, or on the nearest of the chunk at the step where the ring is short', () => {
+    let short = 0;
+    forAll(
+      genWorld,
+      (c) => {
+        const map = generateMap(c.seed, paramsOf(c), 'simple');
+        const before = propsOf(map);
+        const want = ruleSeeps(map);
+        expect(want.size).toBe(3);
+        if (startRing(map).length < 7) short++;
+        ensureStartDeposits(map, 'full');
+        // the seeps, each on its tile alone, and every other tile as it was
+        for (const [i, list] of map.props)
+          if (!want.has(i)) expect(list, `tile ${i}`).toEqual(before.get(i));
+        for (const [i, prop] of want) expect(map.props.get(i), `tile ${i}`).toEqual([prop]);
+        expect([...map.props.keys()].filter((i) => !before.has(i) && !want.has(i))).toEqual([]);
+      },
+      run,
+    );
+    // both rules ran: the ring's and, where it was short, the chunk's
+    expect(short).toBeGreaterThan(0);
+    expect(short).toBeLessThan(SEEDS.length);
+  }, 20_000);
+});
+
+describe('the start seeps where the ring is short (#276)', () => {
+  // The two worlds #276 reported: one seep and no seeps where the rule's ring was too short.
+  it('a 32 x 32 world at Water level 0.6 (seed 4) gets three seeps in the full chain', () => {
+    const map = generateMap(4, { w: 32, h: 32, waterLevel: 0.6 }, 'full');
+    expect(startRing(withoutOil(map)).length).toBeLessThan(7);
+    expect(startOil(map)).toHaveLength(3);
+  });
+
+  it('a 32 x 32 world at forest density 0.3 (seed 1) gets three seeps, and a second call none', () => {
+    const map = generateMap(1, { w: 32, h: 32, forestDensity: 0.3 }, 'simple');
+    expect(startRing(map).length).toBeLessThan(7);
+    ensureStartDeposits(map, 'full');
+    expect(startOil(map)).toHaveLength(3);
+    const once = propsOf(map);
+    ensureStartDeposits(map, 'full');
+    expect(map.props).toEqual(once);
+  });
+
+  it.each(WORLDS)(
+    'seed $seed at $size x $size, a world #235 measured: a ring of seven or more keeps the seeps it had',
+    ({ seed, size }) => {
+      const map = generateMap(seed, params(size), 'simple');
+      const ring = startRing(map);
+      expect(ring.length).toBeGreaterThanOrEqual(7);
+      ensureStartDeposits(map, 'full');
+      // every third tile of the ring, as before the fallback existed
+      expect(startOil(map)).toEqual([ring[0].i, ring[3].i, ring[6].i].sort((a, b) => a - b));
+    },
+  );
+
+  it('a chunk with fewer than three grass or sand tiles gets one on each, and a second call none', () => {
+    const map = generateMap(1, { w: 32, h: 32 }, 'simple');
+    map.terrain.fill(Terrain.Forest);
+    map.props.clear();
+    map.terrain[5 * 32 + 7] = Terrain.Sand;
+    map.terrain[20 * 32 + 3] = Terrain.Grass;
+    ensureStartDeposits(map, 'full');
+    expect(oilTiles(map)).toEqual([5 * 32 + 7, 20 * 32 + 3]);
+    const once = propsOf(map);
+    ensureStartDeposits(map, 'full');
+    expect(map.props).toEqual(once);
+  });
 });
