@@ -268,14 +268,24 @@ describe('what each terrain description says is true of the rules', () => {
       reason: (): string | undefined => w.builder.checkBuilding(20, 20, d.id).reason,
     }));
     expect(stations.length + works.length).toBeGreaterThan(10);
+    // the builder's refusal for the ground, which names it (`unbuildable` in src/sim/build.ts); a
+    // station's or works' own ground (the colliery's hill, the pump's grass or forest) is a rule of
+    // its own, not the terrain's bar
+    const groundRefusals: readonly string[] = Object.values(STR.build.nothingOn);
     for (const t of LAND) {
       paint(w.map, t);
+      const named = (STR.build.nothingOn as Record<string, string | undefined>)[t];
       for (const p of [...stations, ...works]) {
-        const barred = p.reason() === STR.build.badTerrain;
+        const reason = p.reason();
+        const barred = reason !== undefined && groundRefusals.includes(reason);
         const claim = CLAIMS[t].buildings;
-        // a terrain that says buildings can stand bars none; one that says none bars every one
-        if (claim === true) expect(barred, `${p.what} on ${t}`).toBe(false);
-        if (claim === false) expect(barred, `${p.what} on ${t}`).toBe(true);
+        // a terrain that says buildings can stand bars none; one that says none bars every one,
+        // naming the ground the description is of
+        if (claim === true) expect(barred, `${p.what} on ${t}: ${reason}`).toBe(false);
+        if (claim === false) {
+          expect(named, `a refusal that names ${t}`).toBeDefined();
+          expect(reason, `${p.what} on ${t}`).toBe(named);
+        }
       }
     }
   });

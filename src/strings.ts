@@ -298,7 +298,27 @@ export const STR = {
     tierLocked: (t: number) => `Requires the ${ageLabel(t)}`,
     supplyLocked: "Not part of this game's production chain",
     needDeposit: (k: string) => `Needs a ${k} deposit on the tile`,
-    badTerrain: 'Cannot build here',
+    /**
+     * Why nothing can be built on a terrain (`unbuildable` in src/sim/build.ts), by
+     * `TERRAIN_NAMES`: one line per terrain, as the article differs.
+     */
+    nothingOn: {
+      water: 'Nothing can be built on water.',
+      rock: 'Nothing can be built on rock.',
+      mountain: 'Nothing can be built on a mountain.',
+    },
+    /**
+     * A station with `standOn` tried on other ground, by `StationDef.id`: one line per station,
+     * as its name and the ground it takes differ. One without a line here says `needGround`.
+     */
+    standOn: { pump: 'A water pump goes only on grass or forest.' } as Record<string, string>,
+    /** a station with `standOn` and no line of its own there, tried on other ground */
+    needGround: (grounds: readonly string[]) => `Must stand on ${grounds.join(' or ')}`,
+    /**
+     * A station that `needsWater` tried with no water on any of its four sides, by
+     * `StationDef.id`. One without a line here says `needWaterside`.
+     */
+    besideWater: { pump: 'A water pump needs water right beside it.' } as Record<string, string>,
     needTrack: 'Must touch track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,
@@ -339,19 +359,22 @@ export const STR = {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
       bridgePlatform: 'On water. Lay track on the platform after building it.',
-      station: 'On a buildable tile with track touching one side; that track becomes the platform.',
+      station:
+        'On grass, forest, sand or a level hill tile with track touching one side; that track becomes the platform.',
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
-      town: 'On a buildable tile with track touching one side, at least 25 tiles from any other Townhouse.',
+      town: 'On grass, forest, sand or a level hill tile with track touching one side, at least 25 tiles from any other Townhouse.',
       onTrack: 'On an existing track tile. R rotates.',
       service: (r: number) => `On a free tile within ${r} tiles of the stations it should serve.`,
       powerLine:
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
-      building: 'On a free buildable tile.',
-      works: 'On a free buildable tile. Runs from the stockpile; no track needed.',
+      building: 'On a free grass, forest, sand or level hill tile.',
+      works:
+        'On a free grass, forest, sand or level hill tile. Runs from the stockpile; no track needed.',
       deposit: (k: string) =>
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
-      plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
+      plant:
+        'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',

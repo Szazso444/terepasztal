@@ -154,6 +154,12 @@ export interface CargoDef {
   /** only exists in this production-chain mode (missing: both) */
   supply?: SupplyMode;
 }
+/**
+ * The ground a station may be held to (`StationDef.standOn`): the terrains something can be
+ * built on, by their `TERRAIN_NAMES`.
+ */
+export const STAND_ON = ['grass', 'forest', 'hill', 'sand'] as const;
+export type StandOn = (typeof STAND_ON)[number];
 export interface StationDef {
   id: string;
   name: string;
@@ -171,6 +177,13 @@ export interface StationDef {
   art?: string;
   /** terrain the station harvests; output scales with how much of it lies nearby */
   terrain?: 'grass' | 'forest' | 'rock' | 'water' | 'sand';
+  /**
+   * the only terrains it is placed on (missing: any ground something can be built on); where it
+   * stands, not what it harvests, which is `terrain`
+   */
+  standOn?: StandOn[];
+  /** placed only with water on one of its four sides, of any biome (pumps) */
+  needsWater?: boolean;
   /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
   /** deliveries here enter the player's stockpile (depots) */
@@ -738,6 +751,18 @@ const CHECKS: Record<ContentKey, Check> = {
           if (typeof c !== 'string' || !ref.cargo.has(c))
             out.push(`station ${s.id}: unknown cargo "${String(c)}"`);
         }
+      const ground: unknown = s.standOn;
+      if (
+        ground !== undefined &&
+        !(
+          Array.isArray(ground) &&
+          ground.length &&
+          ground.every((t) => (STAND_ON as readonly unknown[]).includes(t))
+        )
+      )
+        out.push(`station ${s.id}: standOn must list some of ${STAND_ON.join(', ')}`);
+      if (s.needsWater !== undefined && typeof s.needsWater !== 'boolean')
+        out.push(`station ${s.id}: needsWater must be true or false`);
     }
     const lv = t.levels;
     if (!isObj(lv)) {

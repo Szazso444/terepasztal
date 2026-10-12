@@ -47,6 +47,10 @@ export interface PeopleJSON {
   rng: number;
 }
 
+/**
+ * Ground a walker may step on. A list of its own, which today leaves out the terrains where
+ * nothing can be built (`unbuildable` in build.ts); a change to that helper does not reach it.
+ */
 export function walkable(map: GameMap, x: number, y: number) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
   const t = map.terrain[y * map.w + x];

@@ -15,7 +15,7 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
-import { content, type DecorDef, type Cost, type Gauge } from '../data/content';
+import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
 import { rules } from './rules';
 import { Station, terrainFactorAt, stationDef, stationFootprint, MAX_LEVEL } from './stations';
 import { ageOfLevel, levelCap } from './levels';
@@ -74,6 +74,26 @@ export interface PlacementCheck {
   ok: boolean;
   cost: Cost;
   reason?: string;
+}
+
+/**
+ * Why nothing can be built on terrain `t`, naming the ground, or null when it takes buildings.
+ * The one list of where nothing stands: stations, works, decor off the track and a depot's gates
+ * all ask it, and a bridge platform asks it everywhere but on water, which it spans. Track has
+ * rules of its own (`checkTrackTile`), and so do the walkers (`walkable` in people.ts) and the
+ * town paving (`cityTiles` in city.ts).
+ */
+export function unbuildable(t: Terrain): string | null {
+  switch (t) {
+    case Terrain.Water:
+      return STR.build.nothingOn.water;
+    case Terrain.Rock:
+      return STR.build.nothingOn.rock;
+    case Terrain.Mountain:
+      return STR.build.nothingOn.mountain;
+    default:
+      return null;
+  }
 }
 
 /**
@@ -724,9 +744,8 @@ export class Builder {
     for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
       if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
-      const t = terrainAt(this.map, tx, ty);
-      if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-        return { ok: false, cost: {}, reason: STR.build.badTerrain };
+      const bad = unbuildable(terrainAt(this.map, tx, ty));
+      if (bad) return { ok: false, cost: {}, reason: bad };
       if (
         this.track.has(tx, ty) ||
         this.stationAt(tx, ty) ||
@@ -758,11 +777,39 @@ export class Builder {
     }
     if (!def.depot && !this.hasAdjacentTrack(x, y))
       return { ok: false, cost: {}, reason: STR.build.needTrack };
+    const own = this.stationGround(def, stationFootprint(defId, x, y, rot));
+    if (own) return { ok: false, cost: {}, reason: own };
     return this.affordable(
       this.priced(
         def.cost,
         Math.max(1, this.terrainMul(x, y)) * (def.depot ? 1 : this.kindMul(defId)),
       ),
+    );
+  }
+  /**
+   * A station's own ground rules, asked after the rules every station keeps: one with `standOn`
+   * goes only on those terrains, then one that `needsWater` only with water on one of the four
+   * sides of its footprint, water of any biome (a lake, a river, the sea, a swamp's ponds). The
+   * reason it is refused, or null. Asked when placing only, so a station a save holds where these
+   * would refuse it keeps its place.
+   */
+  private stationGround(def: StationDef, tiles: { x: number; y: number }[]): string | null {
+    const ground = def.standOn as readonly string[] | undefined;
+    if (ground && tiles.some((t) => !ground.includes(TERRAIN_NAMES[terrainAt(this.map, t.x, t.y)])))
+      return STR.build.standOn[def.id] ?? STR.build.needGround(ground);
+    if (def.needsWater && !this.waterBeside(tiles))
+      return STR.build.besideWater[def.id] ?? STR.build.needWaterside;
+    return null;
+  }
+  /** Water lies on one of the four sides of a footprint: next to one of its tiles, outside it. */
+  private waterBeside(tiles: { x: number; y: number }[]) {
+    const inside = (x: number, y: number) => tiles.some((t) => t.x === x && t.y === y);
+    return tiles.some((t) =>
+      DIRS.some((d) => {
+        const x = t.x + DDX[d],
+          y = t.y + DDY[d];
+        return !inside(x, y) && terrainAt(this.map, x, y) === Terrain.Water;
+      }),
     );
   }
   /** Output multiplier a harvesting station would get on a tile (1 for others). */
@@ -869,12 +916,11 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
-    const t = terrainAt(this.map, x, y);
     if (def.onTrack && !def.anyTile) {
       if (!this.track.has(x, y)) return STR.build.needTrackHere;
     } else {
-      if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-        return STR.build.badTerrain;
+      const bad = unbuildable(terrainAt(this.map, x, y));
+      if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
@@ -960,8 +1006,8 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     const t = terrainAt(this.map, x, y);
     // Bridge platforms stand on water or carry a rail level across a dip in the land.
-    if (t === Terrain.Rock || t === Terrain.Mountain || (t === Terrain.Water && !def.bridge))
-      return { ok: false, cost: {}, reason: STR.build.badTerrain };
+    const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
+    if (bad) return { ok: false, cost: {}, reason: bad };
     if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
       return { ok: false, cost: {}, reason: STR.build.notLevel };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))

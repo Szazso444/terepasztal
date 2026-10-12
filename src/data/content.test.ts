@@ -115,10 +115,15 @@ function oldBundle(edit: (b: ContentBundle) => void) {
  */
 const PAST = {
   houses: () => clone(PRE_92_HOUSES),
-  stations: () => ({
-    levels: clone(PRE_92_STATION_LEVELS) as unknown as StationLevels,
-    defs: clone(shipped.DEFAULT_CONTENT.stations.defs),
-  }),
+  stations: () => {
+    const defs = clone(shipped.DEFAULT_CONTENT.stations.defs);
+    // the pump before it had ground rules of its own (#320)
+    const pump = defs.find((d) => d.id === 'pump')!;
+    delete pump.standOn;
+    delete pump.needsWater;
+    pump.flavor = 'Pumps water for steam engines and the works. Fills water tanks completely.';
+    return { levels: clone(PRE_92_STATION_LEVELS) as unknown as StationLevels, defs };
+  },
   buildings: () => {
     const list = clone(shipped.DEFAULT_CONTENT.buildings);
     delete list.find((b) => b.id === 'kiln')!.lastTier;

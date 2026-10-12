@@ -592,11 +592,21 @@ function builtOf(b: Builder): BuiltObjects {
 describe('the repair and the builder', () => {
   it('refuse the same ground for each kind of object', () => {
     // the sets this file uses (NO_LAND, NO_PLATFORM) are the builder's: a tile is repaired exactly
-    // where the builder would have refused what stands on it
+    // where the builder would have refused what stands on it. The builder's refusal for the ground
+    // names it, one line per terrain (`unbuildable` in src/sim/build.ts); every other reason is one
+    // the repair has nothing to do with
+    const groundRefusals: readonly string[] = Object.values(STR.build.nothingOn);
     for (const t of ALL) {
       const { builder } = builderOn(t);
-      const reasons = (list: (string | undefined)[]) =>
-        list.every((r) => r === STR.build.badTerrain);
+      const named = (STR.build.nothingOn as Record<string, string | undefined>)[name(t)];
+      // every one refused for the ground, with this ground named, or none of them
+      const reasons = (list: (string | undefined)[]) => {
+        const ground = list.map((r) => r !== undefined && groundRefusals.includes(r));
+        expect(new Set(ground).size, `${name(t)}: ${list.join(' | ')}`).toBe(1);
+        if (ground[0])
+          expect(list, `the ground named on ${name(t)}`).toEqual(list.map(() => named));
+        return ground[0];
+      };
       const land = [
         builder.checkStation(4, 4, 'farm').reason,
         builder.checkBuilding(4, 4, 'windmill').reason,
