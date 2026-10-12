@@ -616,10 +616,10 @@ function startChunkPumpTile(map: GameMap): { x: number; y: number } | null {
 }
 
 /**
- * The seeds of 1 to 50 whose start chunk, at the default size, sliders and chain, has no tile a
+ * The seeds of 1 to 50 whose start chunk, at the default size, sliders and chain, had no tile a
  * pump may stand on when the pump rule came in (#320): their start lakes are ringed by sand. The
- * start guarantee is map generation's (#310), so it is not made here; once it lands this list is
- * emptied, and it never grows.
+ * start guarantee is map generation's, not made here: #402 (world/310-wheat-fields, `startPump`)
+ * gives every start chunk one, and empties this list once it merges. The list never grows.
  */
 const NO_PUMP_TILE_YET = [10, 29, 39];
 
@@ -632,6 +632,8 @@ describe('the start chunk of a new game', () => {
       const map = generateMap(seed, mapParams(size));
       if (!startChunkPumpTile(map)) missing.push(seed);
     }
+    // every seed outside the list has one; a seed in it may or may not (before and after #402),
+    // so nothing is asserted of those
     expect(missing.filter((s) => !NO_PUMP_TILE_YET.includes(s))).toEqual([]);
   }, 120_000);
 });
