@@ -12,7 +12,7 @@
     }
   ],
   "accepted": [],
-  "mark": 1791749519890,
+  "mark": 1791845392935,
   "chat": "01a12c68-070c-7b91-9ff6-217c3f4318b1",
   "counts": {
     "pictures": 548,
@@ -5426,13 +5426,8 @@
       "rot": 0,
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r0.png",
       "status": "generated",
-      "attempts": 3,
-      "note": "kept with its camera off by 2.7° after 3 attempts: an earlier one was the closest",
-      "kept": 2.7,
-      "repaint": {
-        "by": 2.7,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+      "attempts": 1,
+      "note": "Native 1254x1254; spans lower-left 300.3 px, lower-right 312.7 px (4.2% difference), measured corners used, no eye correction. Painted box alpha>128: x242..936 y92..1172. Front spout lower-left; camera within limit."
     },
     {
       "id": "water_tower-a0-r1",
@@ -5441,8 +5436,8 @@
       "rot": 1,
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r1.png",
       "status": "generated",
-      "attempts": 1,
-      "note": ""
+      "attempts": 2,
+      "note": "Native 1254x1254; spans 277.8 / 277.2 px, measured corners used, no eye correction. Painted box alpha>128 x350..905 y144..1157. Front spout fully hidden; same square supports and tank."
     },
     {
       "id": "water_tower-a0-r2",
@@ -5452,7 +5447,7 @@
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r2.png",
       "status": "generated",
       "attempts": 1,
-      "note": ""
+      "note": "Native 1254x1254; spans 284.8 / 284.2 px, measured corners used, no eye correction. Painted box alpha>128 x342..911 y146..1142. Rear view: no spout visible; same square supports and tank."
     },
     {
       "id": "water_tower-a0-r3",
@@ -5462,7 +5457,7 @@
       "file": "assets/source/buildings-v2/water_tower/water_tower-a0-r3.png",
       "status": "generated",
       "attempts": 1,
-      "note": ""
+      "note": "Native 1254x1254; spans 275.2 / 281.8 px (2.4% difference), measured corners used, no eye correction. Painted box alpha>128 x345..970 y149..1150. Spout on lower-right front, same tank/supports, camera within limit."
     },
     {
       "id": "fuel_stop-a0-r0",
@@ -5470,9 +5465,9 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png",
-      "status": "generated",
-      "attempts": 1,
-      "note": ""
+      "status": "pending",
+      "attempts": 0,
+      "note": "New issue #325 art brief: verify plan, front features, camera and raw returns."
     },
     {
       "id": "fuel_stop-a0-r1",
@@ -5480,9 +5475,9 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r1.png",
-      "status": "rejected",
-      "attempts": 3,
-      "note": "Three attempts: first exposed the chute; later attempts hid it but shortened the supports and bunker relative to r0."
+      "status": "pending",
+      "attempts": 0,
+      "note": ""
     },
     {
       "id": "fuel_stop-a0-r2",
@@ -5490,9 +5485,9 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png",
-      "status": "rejected",
-      "attempts": 3,
-      "note": "Three attempts: chute hidden, but stage remains substantially shorter than r0 at the tool-fitted tile scale; support and bunker sizes are inconsistent."
+      "status": "pending",
+      "attempts": 0,
+      "note": ""
     },
     {
       "id": "fuel_stop-a0-r3",
@@ -5500,14 +5495,9 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r3.png",
-      "status": "generated",
-      "attempts": 3,
-      "note": "kept with its camera off by 2.2° after 3 attempts: the closest the tool held",
-      "kept": 2.2,
-      "repaint": {
-        "by": 2.2,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+      "status": "pending",
+      "attempts": 0,
+      "note": "New issue #325 art brief: verify plan, front features, camera and raw returns."
     }
   ]
 }

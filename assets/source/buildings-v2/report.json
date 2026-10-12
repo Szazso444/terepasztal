@@ -5,9 +5,7 @@
     "water_tower-a0-r0": {
       "ok": true,
       "problems": [],
-      "notes": [
-        "camera off by 2.7°: the building is turned 2.7° towards its lower-right wall (the wall feet slope 0.54 and -0.45, the game's 0.50 and -0.50); kept, and corrected by the tools"
-      ],
+      "notes": [],
       "fit": {
         "method": "base",
         "sure": [
@@ -15,47 +13,43 @@
           true
         ],
         "measured": [
-          0.54,
-          -0.447
+          0.492,
+          -0.469
         ],
         "slopes": [
-          0.54,
-          -0.447
+          0.492,
+          -0.469
         ],
         "base": {
           "w": [
-            373,
-            988
+            323,
+            1024.8
           ],
           "s": [
-            629.3,
-            1126.4
+            623.3,
+            1172.5
           ],
           "e": [
-            893,
-            1008.7
+            936,
+            1025.9
           ]
         },
-        "scale": 0.8665,
-        "vertical": 1.0136,
-        "shear": -0.0474,
-        "cx": 633,
-        "cy": 981.9,
+        "scale": 0.735,
+        "vertical": 1.0411,
+        "shear": -0.012,
+        "cx": 629.5,
+        "cy": 1060,
         "box": {
-          "left": 219.1,
-          "top": 97,
-          "right": 738.1,
-          "bottom": 945.2
+          "left": 227.2,
+          "top": 117.6,
+          "right": 737.3,
+          "bottom": 944.3
         },
         "camera": {
-          "elevation": 29.4,
-          "turn": 2.7
+          "elevation": 28.7,
+          "turn": 0.7
         },
-        "area": 402639
-      },
-      "camera": {
-        "by": 2.7,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "area": 532715
       }
     },
     "water_tower-a0-r1": {
@@ -69,43 +63,43 @@
           true
         ],
         "measured": [
-          0.527,
-          -0.513
+          0.5,
+          -0.514
         ],
         "slopes": [
-          0.527,
-          -0.513
+          0.5,
+          -0.514
         ],
         "base": {
           "w": [
-            341,
-            1002.6
+            350,
+            1018.3
           ],
           "s": [
-            625.2,
-            1152.4
+            627.8,
+            1157.2
           ],
           "e": [
-            911,
-            1005.7
+            905,
+            1014.8
           ]
         },
-        "scale": 0.7905,
-        "vertical": 0.9615,
-        "shear": -0.0067,
-        "cx": 626,
-        "cy": 961.2,
+        "scale": 0.8118,
+        "vertical": 0.9863,
+        "shear": 0.0067,
+        "cx": 627.5,
+        "cy": 1006.9,
         "box": {
           "left": 286.7,
-          "top": 156.1,
+          "top": 133.1,
           "right": 737.3,
-          "bottom": 945.1
+          "bottom": 944.5
         },
         "camera": {
-          "elevation": 31.3,
-          "turn": 0.4
+          "elevation": 30.5,
+          "turn": -0.4
         },
-        "area": 437046
+        "area": 423503
       }
     },
     "water_tower-a0-r3": {
@@ -119,43 +113,43 @@
           true
         ],
         "measured": [
-          0.529,
-          -0.515
+          0.558,
+          -0.485
         ],
         "slopes": [
-          0.529,
-          -0.515
+          0.558,
+          -0.485
         ],
         "base": {
           "w": [
-            357,
-            969.5
+            345,
+            996.8
           ],
           "s": [
-            624,
-            1110.7
+            620.2,
+            1150.3
           ],
           "e": [
-            897,
-            970.2
+            902,
+            1013.6
           ]
         },
-        "scale": 0.8344,
-        "vertical": 0.9581,
-        "shear": -0.0067,
-        "cx": 627,
-        "cy": 924.9,
+        "scale": 0.8089,
+        "vertical": 0.9586,
+        "shear": -0.035,
+        "cx": 623.5,
+        "cy": 941.8,
         "box": {
           "left": 286.7,
-          "top": 200.5,
-          "right": 789,
-          "bottom": 944.9
+          "top": 167.3,
+          "right": 792.3,
+          "bottom": 944.4
         },
         "camera": {
-          "elevation": 31.5,
-          "turn": 0.4
+          "elevation": 31.4,
+          "turn": 2
         },
-        "area": 401547
+        "area": 448346
       }
     },
     "water_tower-a0-r2": {
@@ -169,43 +163,43 @@
           true
         ],
         "measured": [
-          0.517,
-          -0.505
+          0.513,
+          -0.498
         ],
         "slopes": [
-          0.517,
-          -0.505
+          0.513,
+          -0.498
         ],
         "base": {
           "w": [
-            344,
-            1012.7
+            342,
+            996.1
           ],
           "s": [
-            626.4,
-            1158.8
+            626.8,
+            1142.2
           ],
           "e": [
-            912,
-            1014.6
+            911,
+            1000.6
           ]
         },
-        "scale": 0.7932,
-        "vertical": 0.9783,
-        "shear": -0.0061,
-        "cx": 628,
-        "cy": 987.8,
+        "scale": 0.7918,
+        "vertical": 0.9891,
+        "shear": -0.0072,
+        "cx": 626.5,
+        "cy": 983,
         "box": {
-          "left": 285.9,
-          "top": 176.4,
+          "left": 286.7,
+          "top": 164.4,
           "right": 737.3,
-          "bottom": 944.8
+          "bottom": 944.5
         },
         "camera": {
-          "elevation": 30.7,
+          "elevation": 30.4,
           "turn": 0.4
         },
-        "area": 414891
+        "area": 421469
       }
     },
     "fuel_stop-a0-r0": {
