@@ -1,89 +1,92 @@
-# Issue #343 — centred mouth repaint checkpoint
+# Issue #343 — measured centred mouth sources
 
-Status: waiting for the built-in ImageGen usage limit to reset. The user chose to resume
-after that reset rather than use the separately billed API fallback. A one-time follow-up
-for this chat is scheduled for Monday, October 12, 2026 at 15:05 America/Toronto;
-the image service reported a reset at 18:59:18 UTC (14:59:18 Toronto).
+The three-call allowance per mouth is exhausted. **No attempt passed every requested
+geometry test.** The four main filenames contain the highest-IoU new attempts, following
+the author's explicit fallback rule. These are failed material-source fallbacks, not
+geometry-approved mouths or finished runtime pieces.
 
-The complete user brief is in
-`C:/Users/Zso/.codex/attachments/5c84d8e4-0a5d-429d-b902-4b0b402091d0/Pasted text.txt`.
-Continue on `art/343-water` after fetching and pulling with `--ff-only`.
-Write only within `assets/source/water-2026-10-11/`. Never push main or develop.
+Built-in ImageGen was used exclusively, editing each centred guide with the matching
+strip, town-growth board, river-water and river-bank references in that order. Every call
+requested 1024×1024; every returned painting was 1254×1254 RGBA. Original PNG bytes were
+retained without fitting, cropping, resizing, padding, warping, mirroring or retouching.
+The October 12 scheduled continuation ran after the image limit reset.
 
-## Preserved sources and guides
+## Selected sources and failed tests
 
-The original main mouths were copied byte for byte to `raw/`: NE, SE and SW attempt 2,
-and NW attempt 3. Their earlier prompt records now point at those immutable raw files.
-The four main mouth files are still the earlier paintings: no new attempt has been selected
-while further retries are pending.
+Widths and offsets are in tiles at t=-0.25 (quarter tile inside entry), then t=0
+(middle tile centre). Box errors compare with the centred guide scaled by width / 1024.
 
-`make-river-guides.mjs` now adds four `guides/river-mouth-<edge>-centred.png` pictures.
-The original eight guides remain byte-identical. `river-geometry.json` retains its old
-geometry and adds `mouthsCentred`, including the per-edge guide offsets and every supplied
-coordinate. Hashes for the eight old guides and unchanged strips, pool and end are recorded
-in `review/mouths-centred/before-hashes.json`.
+| Edge | Selected attempt | IoU      | Channel widths      | Centre offsets        | Box width / height errors | Box centre displacement |
+| ---- | ---------------- | -------- | ------------------- | --------------------- | ------------------------- | ----------------------- |
+| NE   | 3                | 0.611413 | 0.597168 / 0.598145 | 0.167480 / 0.168945   | 12.60% / 15.05%           | 54.56 px                |
+| SE   | 4                | 0.697567 | 0.705078 / 0.719238 | -0.046631 / -0.031738 | 17.60% / 30.99%           | 19.10 px                |
+| SW   | 5                | 0.675312 | 0.602051 / 0.560059 | 0.049316 / 0.060547   | 18.13% / 22.91%           | 32.47 px                |
+| NW   | 4                | 0.777949 | 0.849121 / 0.810059 | 0.031738 / 0.002441   | 2.60% / 11.43%            | 25.00 px                |
 
-## Calls so far in this repaint
+All selected sources fail box, IoU and channel tests. Required IoU is at least 0.90;
+channel width is 0.72–0.80 with absolute offset at most 0.04; box dimension errors are
+at most 5%, and centre displacement at most 46.54 pixels at 1254×1254.
+NE fails both channel widths and offsets. SE fails both widths and its entry-side offset.
+SW fails both widths and offsets. NW channel centring passes, but both widths fail.
+NW box width and centre pass, but height fails; SE/SW centres pass but dimensions fail;
+NE box dimensions and centre all fail.
 
-| Edge | Attempt | Return    | IoU        | Box        | Channel widths at t=-0.25 / 0 | Centre offsets      | Result                |
-| ---- | ------- | --------- | ---------- | ---------- | ----------------------------- | ------------------- | --------------------- |
-| NE   | 3       | 1254×1254 | 0.611413   | fail       | 0.597168 / 0.598145           | 0.167480 / 0.168945 | retain and retry      |
-| SE   | 3       | none      | unmeasured | unmeasured | unmeasured                    | unmeasured          | usage-limit rejection |
-| SW   | 3       | none      | unmeasured | unmeasured | unmeasured                    | unmeasured          | usage-limit rejection |
-| NW   | 4       | 1254×1254 | 0.777949   | fail       | 0.849121 / 0.810059           | 0.031738 / 0.002441 | retain and retry      |
+NW attempt 6 passed both channel samples (0.765625 / 0.727051, offsets 0.002686 /
+-0.034180), but failed box and IoU (0.603516). It was not selected because the rule
+requires highest IoU when no complete attempt passes.
 
-NE's box is 12.60% too wide and 15.05% too tall; its centre is displaced 54.56 returned
-pixels (allowed 46.54). NW's box width passes but its height is 11.43% too tall;
-its centre passes. Neither reaches the required IoU 0.90. Both fail the channel checks.
-All PNGs are unchanged returns, with no fitting, cropping, padding, resizing, warping,
-mirroring or retouching. The two quota rejections returned no painting; their records have
-null file, dimensions and measurements, plus the error, rather than claiming artifacts.
+Separate 128×128 copies are `review/mouths-centred/river-mouth-<edge>.png`. Visual review
+also finds SE attempt 4 still resembles a continuous banked strip and lacks the intended
+bank-free open-water neighbour/two-bank flare. SW's channel remains narrower and its
+banks wider than the strips'. NE is shifted, and NW is too wide. These failures are
+retained explicitly rather than claiming the guide was followed.
 
-Every call is in `prompts.json`, mirrored in `river-prompts-additions.json` and individual
+## Attempts and provenance
+
+| Edge | Calls in this repaint | Returned paintings               |
+| ---- | --------------------- | -------------------------------- |
+| NE   | 3, 4, 5               | all three                        |
+| SE   | 3, 4, 5               | 4 and 5; 3 was a quota rejection |
+| SW   | 3, 4, 5               | 4 and 5; 3 was a quota rejection |
+| NW   | 4, 5, 6               | all three                        |
+
+The quota rejections returned no image; their records have null file, dimensions and
+measurements plus the actual error. They count toward the three-call allowance.
+All ten returned paintings are preserved in `raw/`. Every call is in `prompts.json`,
+mirrored in `river-prompts-additions.json` and individual
 `review/mouths-centred/river-mouth-<edge>-attempt-<k>-record.json` files.
-Full measurements are in the matching `-extent.json` reports.
+All image records point to immutable raw PNGs. Exactly one per edge is `selected: true`.
+Every returned painting has full numbers in its corresponding `-extent.json` report.
 
-## Remaining work
+`review/mouths-centred/selection.json` identifies selected raw/main pictures, reasons
+and measurements. `select-mouth-attempts.mjs` reproduces selection and copies original
+bytes only; it never processes pixels or writes raw paintings. Main files were verified
+byte for byte against their selected raw files.
 
-At most two further calls per edge remain, counting the recorded quota rejections toward
-the user's limit of three new attempts per mouth. Next numbers are NE 4, SE 4, SW 4, NW 5;
-last allowed numbers are NE 5, SE 5, SW 5, NW 6. Never reuse a number or overwrite any raw file.
-Stop retrying an edge if it passes all tests. If no new painting passes within the allowance,
-choose the new painting with highest IoU, copy it unchanged to the main filename, mark its
-raw prompt record `selected: true`, and explicitly report the failed tests. SE/SW still need
-returned paintings. Do not mark an old painting as a newly generated success.
+## Geometry and preservation
 
-Use exactly these five references in order: centred guide as edit target, matching strip
-(Y for NE/SW, X for SE/NW), town-growth style board, river-water, river-bank. Do not attach
-the pixel-art hue reference. Keep a 0.76-tile-wide centred channel with narrow 0.12-tile
-banks until the last-quarter-tile flare, and preserve the centred two-tile silhouette.
+`make-river-guides.mjs` adds the four centred guides; `river-geometry.json` contains
+`mouthsCentred`, every supplied coordinate and each `guideOffset`. The eight original
+guides and strips, pool and end remain byte-identical, verified against
+`review/mouths-centred/before-hashes.json`. All raw paintings existing before continuation
+remain byte-identical, verified against `resume-before-raw-hashes.json`.
+The earlier mouths were preserved as NE/SE/SW attempt 2 and NW attempt 3 before painting;
+those copies matched the original Git blob hashes.
 
-Measure every new return, preserving the original:
+`check-extent.mjs` reads PNGs and writes only the requested report and stdout. It uses
+alpha >128, or colour difference >40 from uniform opaque corner colour. IoU compares
+the painted mask with the scaled centred guide. Water is blue minus red >15, scanned
+transversely at t=-0.25 and t=0. No image registration or fitting occurs. The guide
+calibration has a passing box and IoU 1.00; its gray regions intentionally do not
+classify as water. Strip calibration demonstrates channel classification only, not
+overlap of a three-tile strip with a two-tile mouth.
 
-```sh
-node assets/source/water-2026-10-11/check-extent.mjs assets/source/water-2026-10-11/raw/river-mouth-ne-attempt-4.png ne --report assets/source/water-2026-10-11/review/mouths-centred/river-mouth-ne-attempt-4-extent.json
-```
+## Validation
 
-The checker writes only its requested JSON report and stdout. It uses alpha >128,
-or difference >40 from the corner colour on a uniform opaque background. Non-square
-returns fail the box test. IoU uses the scaled centred guide; channel water is blue-red >15,
-sampled across the full transverse line at t=-0.25 and t=0. No registration or fitting is done.
-The known grayscale guide gives a passing box and IoU exactly 1.00; its colorless channel
-intentionally does not classify as water. The strip calibration report demonstrates water
-classification only, not a strip's overlap with the two-tile mouth guide.
-
-Before the final commit, make separate 128-pixel review copies of the selected mouths,
-check their channel/bank widths visually, verify old guide/source hashes, run the source
-checks and Art scope check, commit with an `Art:` subject and push `art/343-water`.
-This checkpoint is partial and does not claim the four corrected mouths are complete.
-
-## Checkpoint validation
-
-Original guide/source byte checks, RGBA PNG integrity, both TypeScript checks, ESLint and
-the production build passed. The full test run completed with 1,947 passed, 14 failed and
-11 skipped; eight test files failed, in unchanged asset-pipeline files, including missing
-`python` (`spawnSync python ENOENT`). The broader test suite is not green. Targeted formatting
-and the Art scope check are run before pushing this checkpoint. Test/build outputs and
-temporary files are confined to the review directory; its build and temporary directories
-are ignored. The earlier unrelated working changes in this shared checkout are not included
-in the river checkpoint commit.
+RGBA integrity, distinct source hashes, old guide/source/raw hashes, selected-copy
+identity, both TypeScript checks, ESLint, production build, targeted formatting and
+Art scope pass. The resumed full test run completed with 1,947 passed, 14 failed and
+11 skipped; eight unchanged asset-pipeline test files failed, including missing
+`python` (`spawnSync python ENOENT`). The broad suite is not green. No runtime code or
+dependencies changed. Temporary build/test output stays in ignored review directories.
+No more painting calls are authorized under this repaint's attempt allowance.

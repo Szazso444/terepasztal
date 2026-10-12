@@ -1,0 +1,326 @@
+[
+  {
+    "edge": "ne",
+    "id": "river-mouth-ne-attempt-3",
+    "file": "river-mouth-ne.png",
+    "raw": "raw/river-mouth-ne-attempt-3.png",
+    "calls": 3,
+    "returnedPaintings": 3,
+    "reason": "highest IoU after the three-call allowance",
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-ne-attempt-3.png",
+      "edge": "ne",
+      "returned": [
+        1254,
+        1254
+      ],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 245600,
+      "box": {
+        "actual": [
+          100,
+          411,
+          1159,
+          952
+        ],
+        "expected": [
+          156.75,
+          391.875,
+          1097.25,
+          862.125
+        ],
+        "width": 1059,
+        "height": 541,
+        "centre": [
+          629.5,
+          681.5
+        ],
+        "centreDistance": 54.55730931781735,
+        "widthErrorFraction": 0.12599681020733652,
+        "heightErrorFraction": 0.15045188729399256,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 167771,
+        "union": 274399,
+        "iou": 0.6114125780341765,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [
+            -0.131103515625,
+            0.466064453125
+          ],
+          "waterWidth": 0.59716796875,
+          "centreOffset": 0.16748046875,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [
+            -0.130126953125,
+            0.468017578125
+          ],
+          "waterWidth": 0.59814453125,
+          "centreOffset": 0.1689453125,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    }
+  },
+  {
+    "edge": "se",
+    "id": "river-mouth-se-attempt-4",
+    "file": "river-mouth-se.png",
+    "raw": "raw/river-mouth-se-attempt-4.png",
+    "calls": 3,
+    "returnedPaintings": 2,
+    "reason": "highest IoU after the three-call allowance",
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-se-attempt-4.png",
+      "edge": "se",
+      "returned": [
+        1254,
+        1254
+      ],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 274958,
+      "box": {
+        "actual": [
+          88,
+          332,
+          1194,
+          948
+        ],
+        "expected": [
+          156.75,
+          391.875,
+          1097.25,
+          862.125
+        ],
+        "width": 1106,
+        "height": 616,
+        "centre": [
+          641,
+          640
+        ],
+        "centreDistance": 19.1049731745428,
+        "widthErrorFraction": 0.17597022860180755,
+        "heightErrorFraction": 0.30994152046783624,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 193761,
+        "union": 277767,
+        "iou": 0.6975666655866247,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [
+            -0.399169921875,
+            0.305908203125
+          ],
+          "waterWidth": 0.705078125,
+          "centreOffset": -0.046630859375,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [
+            -0.391357421875,
+            0.327880859375
+          ],
+          "waterWidth": 0.71923828125,
+          "centreOffset": -0.03173828125,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    }
+  },
+  {
+    "edge": "sw",
+    "id": "river-mouth-sw-attempt-5",
+    "file": "river-mouth-sw.png",
+    "raw": "raw/river-mouth-sw-attempt-5.png",
+    "calls": 3,
+    "returnedPaintings": 2,
+    "reason": "highest IoU after the three-call allowance",
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-sw-attempt-5.png",
+      "edge": "sw",
+      "returned": [
+        1254,
+        1254
+      ],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 279381,
+      "box": {
+        "actual": [
+          77,
+          370,
+          1188,
+          948
+        ],
+        "expected": [
+          156.75,
+          391.875,
+          1097.25,
+          862.125
+        ],
+        "width": 1111,
+        "height": 578,
+        "centre": [
+          632.5,
+          659
+        ],
+        "centreDistance": 32.46921619010844,
+        "widthErrorFraction": 0.18128654970760233,
+        "heightErrorFraction": 0.22913343965975544,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 191854,
+        "union": 284097,
+        "iou": 0.6753116013192677,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [
+            -0.251708984375,
+            0.350341796875
+          ],
+          "waterWidth": 0.60205078125,
+          "centreOffset": 0.04931640625,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [
+            -0.219482421875,
+            0.340576171875
+          ],
+          "waterWidth": 0.56005859375,
+          "centreOffset": 0.060546875,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    }
+  },
+  {
+    "edge": "nw",
+    "id": "river-mouth-nw-attempt-4",
+    "file": "river-mouth-nw.png",
+    "raw": "raw/river-mouth-nw-attempt-4.png",
+    "calls": 3,
+    "returnedPaintings": 3,
+    "reason": "highest IoU after the three-call allowance",
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-nw-attempt-4.png",
+      "edge": "nw",
+      "returned": [
+        1254,
+        1254
+      ],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 217285,
+      "box": {
+        "actual": [
+          144,
+          390,
+          1109,
+          914
+        ],
+        "expected": [
+          156.75,
+          391.875,
+          1097.25,
+          862.125
+        ],
+        "width": 965,
+        "height": 524,
+        "centre": [
+          626.5,
+          652
+        ],
+        "centreDistance": 25.004999500099974,
+        "widthErrorFraction": 0.026049973418394472,
+        "heightErrorFraction": 0.11430090377458799,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 181084,
+        "union": 232771,
+        "iou": 0.7779491431492754,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [
+            -0.392822265625,
+            0.456298828125
+          ],
+          "waterWidth": 0.84912109375,
+          "centreOffset": 0.03173828125,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [
+            -0.402587890625,
+            0.407470703125
+          ],
+          "waterWidth": 0.81005859375,
+          "centreOffset": 0.00244140625,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    }
+  }
+]

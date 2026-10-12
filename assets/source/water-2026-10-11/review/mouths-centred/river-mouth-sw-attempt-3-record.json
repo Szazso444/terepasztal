@@ -15,5 +15,6 @@
     "type": "usage_limit_reached",
     "resetUtc": "2026-10-12T18:59:18Z",
     "noPictureReturned": true
-  }
+  },
+  "selected": false
 }

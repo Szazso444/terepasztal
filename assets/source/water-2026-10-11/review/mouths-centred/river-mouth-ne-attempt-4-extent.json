@@ -1,0 +1,72 @@
+{
+  "file": "assets/source/water-2026-10-11/raw/river-mouth-ne-attempt-4.png",
+  "edge": "ne",
+  "returned": [
+    1254,
+    1254
+  ],
+  "scale": 1.224609375,
+  "square": true,
+  "mask": "alpha >128",
+  "paintedPixels": 289853,
+  "box": {
+    "actual": [
+      62,
+      390,
+      1200,
+      977
+    ],
+    "expected": [
+      156.75,
+      391.875,
+      1097.25,
+      862.125
+    ],
+    "width": 1138,
+    "height": 587,
+    "centre": [
+      631,
+      683.5
+    ],
+    "centreDistance": 56.641415942753405,
+    "widthErrorFraction": 0.2099946836788942,
+    "heightErrorFraction": 0.2482721956406167,
+    "pass": false
+  },
+  "overlap": {
+    "intersection": 178353,
+    "union": 308070,
+    "iou": 0.5789366053169734,
+    "minimum": 0.9,
+    "pass": false
+  },
+  "channels": [
+    {
+      "t": -0.25,
+      "waterBounds": [
+        -0.206787109375,
+        0.621826171875
+      ],
+      "waterWidth": 0.82861328125,
+      "centreOffset": 0.20751953125,
+      "pass": false
+    },
+    {
+      "t": 0,
+      "waterBounds": [
+        -0.199951171875,
+        0.608642578125
+      ],
+      "waterWidth": 0.80859375,
+      "centreOffset": 0.204345703125,
+      "pass": false
+    }
+  ],
+  "passed": false,
+  "failures": [
+    "box",
+    "IoU",
+    "channel at t=-0.25",
+    "channel at t=0"
+  ]
+}

@@ -196,5 +196,93 @@
     "transparent": 1342829,
     "partial": 229422,
     "sha256": "c643b331b5b0ef3b13db8a7e92c1886fd4e6e886f6e2b017cfe3bfa4eb79dff1"
+  },
+  {
+    "file": "raw/river-mouth-ne-attempt-4.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1270705,
+    "partial": 301595,
+    "sha256": "9ca4145059070ef322ba83d3d89a938e13277473e8a9881909a7b027ab2e9108"
+  },
+  {
+    "file": "raw/river-mouth-ne-attempt-5.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1261952,
+    "partial": 310188,
+    "sha256": "1e3a6be246fa92821b43f6586fa1eba5f4f3986f0d973fbb90f0950ec5722818"
+  },
+  {
+    "file": "raw/river-mouth-nw-attempt-5.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1321477,
+    "partial": 250620,
+    "sha256": "1d9dae63f62b8dc44f08c6ba86201c92ad606cd41254a745213fbc73dd5a5096"
+  },
+  {
+    "file": "raw/river-mouth-se-attempt-4.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1286269,
+    "partial": 285916,
+    "sha256": "32e860b628aec5987cd8960967df4377456567b7d41870a01910c88b1c3cf0d8"
+  },
+  {
+    "file": "raw/river-mouth-se-attempt-5.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1256915,
+    "partial": 315121,
+    "sha256": "6e6c88a4113b7675db353f844a6f5d7008c68751321622d1b6658f7a2fc2bc80"
+  },
+  {
+    "file": "raw/river-mouth-sw-attempt-4.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1223309,
+    "partial": 348755,
+    "sha256": "41eaf1b78cfa54b30f72e944b8137dd113d89d37d34cd4bd9bc59b7ae65b29d9"
+  },
+  {
+    "file": "raw/river-mouth-sw-attempt-5.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1281089,
+    "partial": 291053,
+    "sha256": "420f8cc45c7195940cb8bd22dfa35cc937664fe407ffd9e47b9fc1bb1b29da83"
+  },
+  {
+    "file": "raw/river-mouth-nw-attempt-6.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "rgba": true,
+    "transparent": 1233464,
+    "partial": 338666,
+    "sha256": "c67f9c31f19d44a2566195bf6b26ff27842e66f25e8b4556d63e1ecf8285c1e0"
   }
 ]

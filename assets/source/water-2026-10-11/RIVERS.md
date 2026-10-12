@@ -1,5 +1,10 @@
 # River material sources — 2026-10-11
 
+The four mouths were replaced by measured centred attempts on 2026-10-12.
+See `MOUTHS-CENTRED.md` for the current selected sources and failed geometry/visual checks;
+the mouth visual-review statements below describe the earlier delivery, not approval
+of the current fallback mouths.
+
 Eight independently painted source pictures: `river-strip-x.png`, `river-strip-y.png`,
 `river-pool.png`, `river-end.png`, and `river-mouth-{ne,se,sw,nw}.png`.
 Generated with the built-in ImageGen tool by editing the grayscale geometry guides.

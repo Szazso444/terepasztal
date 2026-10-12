@@ -1,0 +1,89 @@
+{
+  "id": "river-mouth-se-attempt-4",
+  "file": "raw/river-mouth-se-attempt-4.png",
+  "prompt": "EDIT image 1 IN PLACE. Colour its grayscale regions with smooth painted material, preserving the EXACT silhouette, centre, scale and water/bank boundaries. Request 1024x1024 RGBA PNG, truly transparent outside guide. Image 1 is the only geometry target; image 2 shows matching strip MATERIAL AND CHANNEL WIDTH, not framing; image 3 painted game style; image 4 river-water; image 5 river-bank. Do not copy the strip's three-tile silhouette.\nThe guide's whole TWO-TILE parallelogram occupies x128..896,y320..704 on 1024 canvas. Width exactly768, height384, centre(512,512). Preserve 12.5% blank margins left/right and31.25% top/bottom. No enlargement or downward shift. outer corners (384,320),(896,576),(640,704),(128,448); river enters NW at(256,384), goes toward SE into the bottom-right water tile, opening(640,448) to(384,576).\nPaint light gray210 WATER, medium gray130 BANK, erase only dark tile construction lines. The river is WIDE: 76% of its transverse tile width is water, the narrow banks are only12% each, exactly like image2. Water edges must remain centred, parallel and straight until the last quarter of the river tile, where BOTH banks flare outward to the shared-edge corners and terminate. Neighbour tile is still open water, bank-free all around. Faint silt fades0.3 tile past opening. Nothing upstream of entry cut.\nWater#477B82,#487C84,#548A92,#3E6E78,#649EA2. Few short soft glints and reversible current lines, no V marks/arrows. Glints below#E0DDD2. Low flat rounded limestone#BCA98B/slate#626B6C gravel in damp brown-grey mud, sparse moss#78804C, soft wet waterline. Smooth broad organic colour clusters, 3/4 shades, no pixel or square-cell patterns, no noise. Fixed upper-left light, independently paint this orientation. No ground/grass outside bank, raised block thickness, shadows,reeds,standing rocks,objects,boats,people,text,borders,glow. Material source only; exact geometry is enforced later by a finishing script, but KEEP GUIDE FRAMING AND WIDTHS NOW. ",
+  "references": [
+    "assets/source/water-2026-10-11/guides/river-mouth-se-centred.png",
+    "assets/source/water-2026-10-11/river-strip-x.png",
+    "docs/art-direction/images/03-theme-town-growth.png",
+    "assets/source/water-2026-10-11/river-water.png",
+    "assets/source/water-2026-10-11/river-bank.png"
+  ],
+  "returned": [
+    1254,
+    1254
+  ],
+  "measured": {
+    "file": "assets/source/water-2026-10-11/raw/river-mouth-se-attempt-4.png",
+    "edge": "se",
+    "returned": [
+      1254,
+      1254
+    ],
+    "scale": 1.224609375,
+    "square": true,
+    "mask": "alpha >128",
+    "paintedPixels": 274958,
+    "box": {
+      "actual": [
+        88,
+        332,
+        1194,
+        948
+      ],
+      "expected": [
+        156.75,
+        391.875,
+        1097.25,
+        862.125
+      ],
+      "width": 1106,
+      "height": 616,
+      "centre": [
+        641,
+        640
+      ],
+      "centreDistance": 19.1049731745428,
+      "widthErrorFraction": 0.17597022860180755,
+      "heightErrorFraction": 0.30994152046783624,
+      "pass": false
+    },
+    "overlap": {
+      "intersection": 193761,
+      "union": 277767,
+      "iou": 0.6975666655866247,
+      "minimum": 0.9,
+      "pass": false
+    },
+    "channels": [
+      {
+        "t": -0.25,
+        "waterBounds": [
+          -0.399169921875,
+          0.305908203125
+        ],
+        "waterWidth": 0.705078125,
+        "centreOffset": -0.046630859375,
+        "pass": false
+      },
+      {
+        "t": 0,
+        "waterBounds": [
+          -0.391357421875,
+          0.327880859375
+        ],
+        "waterWidth": 0.71923828125,
+        "centreOffset": -0.03173828125,
+        "pass": false
+      }
+    ],
+    "passed": false,
+    "failures": [
+      "box",
+      "IoU",
+      "channel at t=-0.25",
+      "channel at t=0"
+    ]
+  },
+  "selected": true
+}

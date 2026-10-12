@@ -584,7 +584,8 @@
       ],
       "passed": false,
       "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
-    }
+    },
+    "selected": true
   },
   {
     "id": "river-mouth-nw-attempt-4",
@@ -642,7 +643,8 @@
       ],
       "passed": false,
       "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
-    }
+    },
+    "selected": true
   },
   {
     "id": "river-mouth-se-attempt-3",
@@ -661,7 +663,8 @@
       "type": "usage_limit_reached",
       "resetUtc": "2026-10-12T18:59:18Z",
       "noPictureReturned": true
-    }
+    },
+    "selected": false
   },
   {
     "id": "river-mouth-sw-attempt-3",
@@ -680,6 +683,479 @@
       "type": "usage_limit_reached",
       "resetUtc": "2026-10-12T18:59:18Z",
       "noPictureReturned": true
-    }
+    },
+    "selected": false
+  },
+  {
+    "id": "river-mouth-ne-attempt-4",
+    "file": "raw/river-mouth-ne-attempt-4.png",
+    "prompt": "EDIT image 1 IN PLACE. Colour its grayscale regions with smooth painted material, preserving the EXACT silhouette, centre, scale and water/bank boundaries. Request 1024x1024 RGBA PNG, truly transparent outside guide. Image 1 is the only geometry target; image 2 shows matching strip MATERIAL AND CHANNEL WIDTH, not framing; image 3 painted game style; image 4 river-water; image 5 river-bank. Do not copy the strip's three-tile silhouette.\nThe guide's whole TWO-TILE parallelogram occupies x128..896,y320..704 on 1024 canvas. Width exactly768, height384, centre(512,512). Preserve 12.5% blank margins left/right and31.25% top/bottom. No enlargement or downward shift. outer corners (128,576),(640,320),(896,448),(384,704); river enters SW at(256,640), goes toward NE into the top-right water tile, opening(384,448) to(640,576).\nPaint light gray210 WATER, medium gray130 BANK, erase only dark tile construction lines. The river is WIDE: 76% of its transverse tile width is water, the narrow banks are only12% each, exactly like image2. Water edges must remain centred, parallel and straight until the last quarter of the river tile, where BOTH banks flare outward to the shared-edge corners and terminate. Neighbour tile is still open water, bank-free all around. Faint silt fades0.3 tile past opening. Nothing upstream of entry cut.\nWater#477B82,#487C84,#548A92,#3E6E78,#649EA2. Few short soft glints and reversible current lines, no V marks/arrows. Glints below#E0DDD2. Low flat rounded limestone#BCA98B/slate#626B6C gravel in damp brown-grey mud, sparse moss#78804C, soft wet waterline. Smooth broad organic colour clusters, 3/4 shades, no pixel or square-cell patterns, no noise. Fixed upper-left light, independently paint this orientation. No ground/grass outside bank, raised block thickness, shadows,reeds,standing rocks,objects,boats,people,text,borders,glow. Material source only; exact geometry is enforced later by a finishing script, but KEEP GUIDE FRAMING AND WIDTHS NOW. Previous attempt was 12.6% too wide, 15% too tall and shifted downward. Keep overall centre exactly halfway down canvas, keep 75% canvas width and37.5% canvas height. Do not narrow the water or offset its centre line.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-ne-centred.png",
+      "assets/source/water-2026-10-11/river-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-ne-attempt-4.png",
+      "edge": "ne",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 289853,
+      "box": {
+        "actual": [62, 390, 1200, 977],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1138,
+        "height": 587,
+        "centre": [631, 683.5],
+        "centreDistance": 56.641415942753405,
+        "widthErrorFraction": 0.2099946836788942,
+        "heightErrorFraction": 0.2482721956406167,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 178353,
+        "union": 308070,
+        "iou": 0.5789366053169734,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.206787109375, 0.621826171875],
+          "waterWidth": 0.82861328125,
+          "centreOffset": 0.20751953125,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.199951171875, 0.608642578125],
+          "waterWidth": 0.80859375,
+          "centreOffset": 0.204345703125,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    },
+    "selected": false
+  },
+  {
+    "id": "river-mouth-ne-attempt-5",
+    "file": "raw/river-mouth-ne-attempt-5.png",
+    "prompt": "EDIT image 1 IN PLACE. Colour its grayscale regions with smooth painted material, preserving the EXACT silhouette, centre, scale and water/bank boundaries. Request 1024x1024 RGBA PNG, truly transparent outside guide. Image 1 is the only geometry target; image 2 shows matching strip MATERIAL AND CHANNEL WIDTH, not framing; image 3 painted game style; image 4 river-water; image 5 river-bank. Do not copy the strip's three-tile silhouette.\nThe guide's whole TWO-TILE parallelogram occupies x128..896,y320..704 on 1024 canvas. Width exactly768, height384, centre(512,512). Preserve 12.5% blank margins left/right and31.25% top/bottom. No enlargement or downward shift. outer corners (128,576),(640,320),(896,448),(384,704); river enters SW at(256,640), goes toward NE into the top-right water tile, opening(384,448) to(640,576).\nPaint light gray210 WATER, medium gray130 BANK, erase only dark tile construction lines. The river is WIDE: 76% of its transverse tile width is water, the narrow banks are only12% each, exactly like image2. Water edges must remain centred, parallel and straight until the last quarter of the river tile, where BOTH banks flare outward to the shared-edge corners and terminate. Neighbour tile is still open water, bank-free all around. Faint silt fades0.3 tile past opening. Nothing upstream of entry cut.\nWater#477B82,#487C84,#548A92,#3E6E78,#649EA2. Few short soft glints and reversible current lines, no V marks/arrows. Glints below#E0DDD2. Low flat rounded limestone#BCA98B/slate#626B6C gravel in damp brown-grey mud, sparse moss#78804C, soft wet waterline. Smooth broad organic colour clusters, 3/4 shades, no pixel or square-cell patterns, no noise. Fixed upper-left light, independently paint this orientation. No ground/grass outside bank, raised block thickness, shadows,reeds,standing rocks,objects,boats,people,text,borders,glow. Material source only; exact geometry is enforced later by a finishing script, but KEEP GUIDE FRAMING AND WIDTHS NOW. FINAL GEOMETRY PRIORITY: do not infer or redesign the water lane. Fill precisely the guide light-gray region. Water centreline is(256,640) to(448,544) up to flare. At the quarter-inside-entry sample its centre is(320,608), water boundaries(222.7,559.4) and(417.3,656.6). At middle tile centre(384,576), water boundaries(286.7,527.4) and(481.3,624.6). The previous water lane was shifted0.20 tile in the lower-right transverse direction; this time centre it on those exact anchors. Outer whole silhouette box x128..896,y320..704; no extra lower margin painting.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-ne-centred.png",
+      "assets/source/water-2026-10-11/river-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-ne-attempt-5.png",
+      "edge": "ne",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 300061,
+      "box": {
+        "actual": [36, 415, 1219, 1019],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1183,
+        "height": 604,
+        "centre": [627.5, 717],
+        "centreDistance": 90.0013888781723,
+        "widthErrorFraction": 0.2578415736310473,
+        "heightErrorFraction": 0.28442317916002124,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 155699,
+        "union": 340932,
+        "iou": 0.45668637734210926,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.118408203125, 0.673583984375],
+          "waterWidth": 0.7919921875,
+          "centreOffset": 0.277587890625,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.073974609375, 0.659423828125],
+          "waterWidth": 0.7333984375,
+          "centreOffset": 0.292724609375,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    },
+    "selected": false
+  },
+  {
+    "id": "river-mouth-nw-attempt-5",
+    "file": "raw/river-mouth-nw-attempt-5.png",
+    "prompt": "EDIT image 1 IN PLACE. Colour its grayscale regions with smooth painted material, preserving the EXACT silhouette, centre, scale and water/bank boundaries. Request 1024x1024 RGBA PNG, truly transparent outside guide. Image 1 is the only geometry target; image 2 shows matching strip MATERIAL AND CHANNEL WIDTH, not framing; image 3 painted game style; image 4 river-water; image 5 river-bank. Do not copy the strip's three-tile silhouette.\nThe guide's whole TWO-TILE parallelogram occupies x128..896,y320..704 on 1024 canvas. Width exactly768, height384, centre(512,512). Preserve 12.5% blank margins left/right and31.25% top/bottom. No enlargement or downward shift. outer corners (896,576),(384,320),(128,448),(640,704); river enters SE at(768,640), goes toward NW into the top-left water tile, opening(384,576) to(640,448).\nPaint light gray210 WATER, medium gray130 BANK, erase only dark tile construction lines. The river is WIDE: 76% of its transverse tile width is water, the narrow banks are only12% each, exactly like image2. Water edges must remain centred, parallel and straight until the last quarter of the river tile, where BOTH banks flare outward to the shared-edge corners and terminate. Neighbour tile is still open water, bank-free all around. Faint silt fades0.3 tile past opening. Nothing upstream of entry cut.\nWater#477B82,#487C84,#548A92,#3E6E78,#649EA2. Few short soft glints and reversible current lines, no V marks/arrows. Glints below#E0DDD2. Low flat rounded limestone#BCA98B/slate#626B6C gravel in damp brown-grey mud, sparse moss#78804C, soft wet waterline. Smooth broad organic colour clusters, 3/4 shades, no pixel or square-cell patterns, no noise. Fixed upper-left light, independently paint this orientation. No ground/grass outside bank, raised block thickness, shadows,reeds,standing rocks,objects,boats,people,text,borders,glow. Material source only; exact geometry is enforced later by a finishing script, but KEEP GUIDE FRAMING AND WIDTHS NOW. Previous attempt was11.4% too tall; preserve exactly the guide height37.5% of canvas and centre50%/50%, with the channel water0.76 tile wide.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-nw-centred.png",
+      "assets/source/water-2026-10-11/river-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-nw-attempt-5.png",
+      "edge": "nw",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 240353,
+      "box": {
+        "actual": [85, 359, 1176, 948],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1091,
+        "height": 589,
+        "centre": [630.5, 653.5],
+        "centreDistance": 26.73013280924732,
+        "widthErrorFraction": 0.16002126528442318,
+        "heightErrorFraction": 0.25252525252525254,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 172263,
+        "union": 264660,
+        "iou": 0.6508841532532306,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.219482421875, 0.408935546875],
+          "waterWidth": 0.62841796875,
+          "centreOffset": 0.0947265625,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.252685546875, 0.404541015625],
+          "waterWidth": 0.6572265625,
+          "centreOffset": 0.075927734375,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    },
+    "selected": false
+  },
+  {
+    "id": "river-mouth-se-attempt-4",
+    "file": "raw/river-mouth-se-attempt-4.png",
+    "prompt": "EDIT image 1 IN PLACE. Colour its grayscale regions with smooth painted material, preserving the EXACT silhouette, centre, scale and water/bank boundaries. Request 1024x1024 RGBA PNG, truly transparent outside guide. Image 1 is the only geometry target; image 2 shows matching strip MATERIAL AND CHANNEL WIDTH, not framing; image 3 painted game style; image 4 river-water; image 5 river-bank. Do not copy the strip's three-tile silhouette.\nThe guide's whole TWO-TILE parallelogram occupies x128..896,y320..704 on 1024 canvas. Width exactly768, height384, centre(512,512). Preserve 12.5% blank margins left/right and31.25% top/bottom. No enlargement or downward shift. outer corners (384,320),(896,576),(640,704),(128,448); river enters NW at(256,384), goes toward SE into the bottom-right water tile, opening(640,448) to(384,576).\nPaint light gray210 WATER, medium gray130 BANK, erase only dark tile construction lines. The river is WIDE: 76% of its transverse tile width is water, the narrow banks are only12% each, exactly like image2. Water edges must remain centred, parallel and straight until the last quarter of the river tile, where BOTH banks flare outward to the shared-edge corners and terminate. Neighbour tile is still open water, bank-free all around. Faint silt fades0.3 tile past opening. Nothing upstream of entry cut.\nWater#477B82,#487C84,#548A92,#3E6E78,#649EA2. Few short soft glints and reversible current lines, no V marks/arrows. Glints below#E0DDD2. Low flat rounded limestone#BCA98B/slate#626B6C gravel in damp brown-grey mud, sparse moss#78804C, soft wet waterline. Smooth broad organic colour clusters, 3/4 shades, no pixel or square-cell patterns, no noise. Fixed upper-left light, independently paint this orientation. No ground/grass outside bank, raised block thickness, shadows,reeds,standing rocks,objects,boats,people,text,borders,glow. Material source only; exact geometry is enforced later by a finishing script, but KEEP GUIDE FRAMING AND WIDTHS NOW. ",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-se-centred.png",
+      "assets/source/water-2026-10-11/river-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-se-attempt-4.png",
+      "edge": "se",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 274958,
+      "box": {
+        "actual": [88, 332, 1194, 948],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1106,
+        "height": 616,
+        "centre": [641, 640],
+        "centreDistance": 19.1049731745428,
+        "widthErrorFraction": 0.17597022860180755,
+        "heightErrorFraction": 0.30994152046783624,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 193761,
+        "union": 277767,
+        "iou": 0.6975666655866247,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.399169921875, 0.305908203125],
+          "waterWidth": 0.705078125,
+          "centreOffset": -0.046630859375,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.391357421875, 0.327880859375],
+          "waterWidth": 0.71923828125,
+          "centreOffset": -0.03173828125,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    },
+    "selected": true
+  },
+  {
+    "id": "river-mouth-se-attempt-5",
+    "file": "raw/river-mouth-se-attempt-5.png",
+    "prompt": "Repaint IMAGE ONE's gray shapes IN PLACE into ONE river MOUTH, not a straight river strip. Request1024x1024 RGBA PNG, transparent. Preserve image one's exact centered outline x128..896,y320..704:75% canvas width,37.5% height, midpoint512,512. outer corners (384,320),(896,576),(640,704),(128,448); river enters NW at(256,384), goes toward SE into the bottom-right water tile, opening(640,448) to(384,576). CRITICAL: The BOTTOM-RIGHT HALF is an entire BANK-FREE open water diamond. Paint that whole gray area teal all the way to its three exposed edges. Absolutely NO gravel or bank on the open-water half. The opposite half is river: ONLY its two medium-gray side bands are wet mud/gravel. Pale-gray channel width0.76 tile, side banks0.12 each. Both banks flare outward in last quarter tile and END at the canvas-centred shared edge. It MUST show wide river water opening into a bank-free diamond, not reference2's continuous two-bank strip. Image1 is edit target and sole composition. Image2 matches width and material in RIVER HALF ONLY; NEVER copy its whole three-tile shape or banks onto open water. Image3 style;image4 river-water;image5 river-bank. Erase guide lines. Smooth organic colour clusters,3/4 shades,no pixels or square cells. Fixed upper-left light. Water#477B82,#487C84,#548A92,#3E6E78,#649EA2, few soft reversible current glints capped#E0DDD2. Flat small limestone#BCA98B/slate#626B6C pebbles in damp brown-grey mud, tiny moss#78804C, soft wet line. Pale silt fan fades0.3 tile into open water. No V/arrow foam,shadows,thickness,outside ground/grass,reeds,standing rocks,objects,people,text,borders,glow. Nothing outside guide; never enlarge or shift. Previous return was17.6% too wide and31% too tall; preserve the centered grayscale silhouette. It wrongly put gravel along the whole strip; end both banks at shared edge.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-se-centred.png",
+      "assets/source/water-2026-10-11/river-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-se-attempt-5.png",
+      "edge": "se",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 304676,
+      "box": {
+        "actual": [69, 372, 1201, 1003],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1132,
+        "height": 631,
+        "centre": [635, 687.5],
+        "centreDistance": 61.02663352995968,
+        "widthErrorFraction": 0.20361509835194044,
+        "heightErrorFraction": 0.341839447102605,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 182699,
+        "union": 318547,
+        "iou": 0.5735385986997209,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.284423828125, 0.430419921875],
+          "waterWidth": 0.71484375,
+          "centreOffset": 0.072998046875,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.254150390625, 0.456787109375],
+          "waterWidth": 0.7109375,
+          "centreOffset": 0.101318359375,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    },
+    "selected": false
+  },
+  {
+    "id": "river-mouth-sw-attempt-4",
+    "file": "raw/river-mouth-sw-attempt-4.png",
+    "prompt": "EDIT image 1 IN PLACE. Colour its grayscale regions with smooth painted material, preserving the EXACT silhouette, centre, scale and water/bank boundaries. Request 1024x1024 RGBA PNG, truly transparent outside guide. Image 1 is the only geometry target; image 2 shows matching strip MATERIAL AND CHANNEL WIDTH, not framing; image 3 painted game style; image 4 river-water; image 5 river-bank. Do not copy the strip's three-tile silhouette.\nThe guide's whole TWO-TILE parallelogram occupies x128..896,y320..704 on 1024 canvas. Width exactly768, height384, centre(512,512). Preserve 12.5% blank margins left/right and31.25% top/bottom. No enlargement or downward shift. outer corners (640,320),(896,448),(384,704),(128,576); river enters NE at(768,384), goes toward SW into the bottom-left water tile, opening(640,576) to(384,448).\nPaint light gray210 WATER, medium gray130 BANK, erase only dark tile construction lines. The river is WIDE: 76% of its transverse tile width is water, the narrow banks are only12% each, exactly like image2. Water edges must remain centred, parallel and straight until the last quarter of the river tile, where BOTH banks flare outward to the shared-edge corners and terminate. Neighbour tile is still open water, bank-free all around. Faint silt fades0.3 tile past opening. Nothing upstream of entry cut.\nWater#477B82,#487C84,#548A92,#3E6E78,#649EA2. Few short soft glints and reversible current lines, no V marks/arrows. Glints below#E0DDD2. Low flat rounded limestone#BCA98B/slate#626B6C gravel in damp brown-grey mud, sparse moss#78804C, soft wet waterline. Smooth broad organic colour clusters, 3/4 shades, no pixel or square-cell patterns, no noise. Fixed upper-left light, independently paint this orientation. No ground/grass outside bank, raised block thickness, shadows,reeds,standing rocks,objects,boats,people,text,borders,glow. Material source only; exact geometry is enforced later by a finishing script, but KEEP GUIDE FRAMING AND WIDTHS NOW. ",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-sw-centred.png",
+      "assets/source/water-2026-10-11/river-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-sw-attempt-4.png",
+      "edge": "sw",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 340010,
+      "box": {
+        "actual": [20, 361, 1239, 1023],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1219,
+        "height": 662,
+        "centre": [629.5, 692],
+        "centreDistance": 65.04805915628843,
+        "widthErrorFraction": 0.2961190855927698,
+        "heightErrorFraction": 0.4077618288144604,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 181235,
+        "union": 355345,
+        "iou": 0.5100254682069538,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.206787109375, 0.535400390625],
+          "waterWidth": 0.7421875,
+          "centreOffset": 0.164306640625,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.227294921875, 0.581298828125],
+          "waterWidth": 0.80859375,
+          "centreOffset": 0.177001953125,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    },
+    "selected": false
+  },
+  {
+    "id": "river-mouth-sw-attempt-5",
+    "file": "raw/river-mouth-sw-attempt-5.png",
+    "prompt": "Repaint IMAGE ONE's gray shapes IN PLACE into ONE river MOUTH, not a straight river strip. Request1024x1024 RGBA PNG, transparent. Preserve image one's exact centered outline x128..896,y320..704:75% canvas width,37.5% height, midpoint512,512. outer corners (640,320),(896,448),(384,704),(128,576); river enters NE at(768,384), goes toward SW into the bottom-left water tile, opening(640,576) to(384,448). CRITICAL: The BOTTOM-LEFT HALF is an entire BANK-FREE open water diamond. Paint that whole gray area teal all the way to its three exposed edges. Absolutely NO gravel or bank on the open-water half. The opposite half is river: ONLY its two medium-gray side bands are wet mud/gravel. Pale-gray channel width0.76 tile, side banks0.12 each. Both banks flare outward in last quarter tile and END at the canvas-centred shared edge. It MUST show wide river water opening into a bank-free diamond, not reference2's continuous two-bank strip. Image1 is edit target and sole composition. Image2 matches width and material in RIVER HALF ONLY; NEVER copy its whole three-tile shape or banks onto open water. Image3 style;image4 river-water;image5 river-bank. Erase guide lines. Smooth organic colour clusters,3/4 shades,no pixels or square cells. Fixed upper-left light. Water#477B82,#487C84,#548A92,#3E6E78,#649EA2, few soft reversible current glints capped#E0DDD2. Flat small limestone#BCA98B/slate#626B6C pebbles in damp brown-grey mud, tiny moss#78804C, soft wet line. Pale silt fan fades0.3 tile into open water. No V/arrow foam,shadows,thickness,outside ground/grass,reeds,standing rocks,objects,people,text,borders,glow. Nothing outside guide; never enlarge or shift. Previous return was29.6% too wide and40.8% too tall, shifted down. Keep the guide size and centre; the open bottom-left diamond has no banks.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-sw-centred.png",
+      "assets/source/water-2026-10-11/river-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-sw-attempt-5.png",
+      "edge": "sw",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 279381,
+      "box": {
+        "actual": [77, 370, 1188, 948],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1111,
+        "height": 578,
+        "centre": [632.5, 659],
+        "centreDistance": 32.46921619010844,
+        "widthErrorFraction": 0.18128654970760233,
+        "heightErrorFraction": 0.22913343965975544,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 191854,
+        "union": 284097,
+        "iou": 0.6753116013192677,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.251708984375, 0.350341796875],
+          "waterWidth": 0.60205078125,
+          "centreOffset": 0.04931640625,
+          "pass": false
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.219482421875, 0.340576171875],
+          "waterWidth": 0.56005859375,
+          "centreOffset": 0.060546875,
+          "pass": false
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU", "channel at t=-0.25", "channel at t=0"]
+    },
+    "selected": true
+  },
+  {
+    "id": "river-mouth-nw-attempt-6",
+    "file": "raw/river-mouth-nw-attempt-6.png",
+    "prompt": "Repaint IMAGE ONE's gray shapes IN PLACE into ONE river MOUTH, not a straight river strip. Request1024x1024 RGBA PNG, transparent. Preserve image one's exact centered outline x128..896,y320..704:75% canvas width,37.5% height, midpoint512,512. outer corners (896,576),(384,320),(128,448),(640,704); river enters SE at(768,640), goes toward NW into the top-left water tile, opening(384,576) to(640,448). CRITICAL: The TOP-LEFT HALF is an entire BANK-FREE open water diamond. Paint that whole gray area teal all the way to its three exposed edges. Absolutely NO gravel or bank on the open-water half. The opposite half is river: ONLY its two medium-gray side bands are wet mud/gravel. Pale-gray channel width0.76 tile, side banks0.12 each. Both banks flare outward in last quarter tile and END at the canvas-centred shared edge. It MUST show wide river water opening into a bank-free diamond, not reference2's continuous two-bank strip. Image1 is edit target and sole composition. Image2 matches width and material in RIVER HALF ONLY; NEVER copy its whole three-tile shape or banks onto open water. Image3 style;image4 river-water;image5 river-bank. Erase guide lines. Smooth organic colour clusters,3/4 shades,no pixels or square cells. Fixed upper-left light. Water#477B82,#487C84,#548A92,#3E6E78,#649EA2, few soft reversible current glints capped#E0DDD2. Flat small limestone#BCA98B/slate#626B6C pebbles in damp brown-grey mud, tiny moss#78804C, soft wet line. Pale silt fan fades0.3 tile into open water. No V/arrow foam,shadows,thickness,outside ground/grass,reeds,standing rocks,objects,people,text,borders,glow. Nothing outside guide; never enlarge or shift. Previous return narrowed the channel to0.63..0.66 tile. Match the guide wide pale-gray channel0.76 tile and both medium-gray banks, flaring toward the top-left bank-free diamond.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/river-mouth-nw-centred.png",
+      "assets/source/water-2026-10-11/river-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-bank.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/river-mouth-nw-attempt-6.png",
+      "edge": "nw",
+      "returned": [1254, 1254],
+      "scale": 1.224609375,
+      "square": true,
+      "mask": "alpha >128",
+      "paintedPixels": 325708,
+      "box": {
+        "actual": [59, 341, 1206, 958],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1147,
+        "height": 617,
+        "centre": [632.5, 649.5],
+        "centreDistance": 23.16246964380094,
+        "widthErrorFraction": 0.21956406166932482,
+        "heightErrorFraction": 0.31206804891015416,
+        "pass": false
+      },
+      "overlap": {
+        "intersection": 196570,
+        "union": 325708,
+        "iou": 0.6035160327655446,
+        "minimum": 0.9,
+        "pass": false
+      },
+      "channels": [
+        {
+          "t": -0.25,
+          "waterBounds": [-0.380126953125, 0.385498046875],
+          "waterWidth": 0.765625,
+          "centreOffset": 0.002685546875,
+          "pass": true
+        },
+        {
+          "t": 0,
+          "waterBounds": [-0.397705078125, 0.329345703125],
+          "waterWidth": 0.72705078125,
+          "centreOffset": -0.0341796875,
+          "pass": true
+        }
+      ],
+      "passed": false,
+      "failures": ["box", "IoU"]
+    },
+    "selected": false
   }
 ]

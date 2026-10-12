@@ -1,0 +1,70 @@
+{
+  "file": "assets/source/water-2026-10-11/raw/river-mouth-nw-attempt-6.png",
+  "edge": "nw",
+  "returned": [
+    1254,
+    1254
+  ],
+  "scale": 1.224609375,
+  "square": true,
+  "mask": "alpha >128",
+  "paintedPixels": 325708,
+  "box": {
+    "actual": [
+      59,
+      341,
+      1206,
+      958
+    ],
+    "expected": [
+      156.75,
+      391.875,
+      1097.25,
+      862.125
+    ],
+    "width": 1147,
+    "height": 617,
+    "centre": [
+      632.5,
+      649.5
+    ],
+    "centreDistance": 23.16246964380094,
+    "widthErrorFraction": 0.21956406166932482,
+    "heightErrorFraction": 0.31206804891015416,
+    "pass": false
+  },
+  "overlap": {
+    "intersection": 196570,
+    "union": 325708,
+    "iou": 0.6035160327655446,
+    "minimum": 0.9,
+    "pass": false
+  },
+  "channels": [
+    {
+      "t": -0.25,
+      "waterBounds": [
+        -0.380126953125,
+        0.385498046875
+      ],
+      "waterWidth": 0.765625,
+      "centreOffset": 0.002685546875,
+      "pass": true
+    },
+    {
+      "t": 0,
+      "waterBounds": [
+        -0.397705078125,
+        0.329345703125
+      ],
+      "waterWidth": 0.72705078125,
+      "centreOffset": -0.0341796875,
+      "pass": true
+    }
+  ],
+  "passed": false,
+  "failures": [
+    "box",
+    "IoU"
+  ]
+}

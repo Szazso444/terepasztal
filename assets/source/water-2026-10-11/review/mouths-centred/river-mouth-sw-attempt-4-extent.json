@@ -1,0 +1,72 @@
+{
+  "file": "assets/source/water-2026-10-11/raw/river-mouth-sw-attempt-4.png",
+  "edge": "sw",
+  "returned": [
+    1254,
+    1254
+  ],
+  "scale": 1.224609375,
+  "square": true,
+  "mask": "alpha >128",
+  "paintedPixels": 340010,
+  "box": {
+    "actual": [
+      20,
+      361,
+      1239,
+      1023
+    ],
+    "expected": [
+      156.75,
+      391.875,
+      1097.25,
+      862.125
+    ],
+    "width": 1219,
+    "height": 662,
+    "centre": [
+      629.5,
+      692
+    ],
+    "centreDistance": 65.04805915628843,
+    "widthErrorFraction": 0.2961190855927698,
+    "heightErrorFraction": 0.4077618288144604,
+    "pass": false
+  },
+  "overlap": {
+    "intersection": 181235,
+    "union": 355345,
+    "iou": 0.5100254682069538,
+    "minimum": 0.9,
+    "pass": false
+  },
+  "channels": [
+    {
+      "t": -0.25,
+      "waterBounds": [
+        -0.206787109375,
+        0.535400390625
+      ],
+      "waterWidth": 0.7421875,
+      "centreOffset": 0.164306640625,
+      "pass": false
+    },
+    {
+      "t": 0,
+      "waterBounds": [
+        -0.227294921875,
+        0.581298828125
+      ],
+      "waterWidth": 0.80859375,
+      "centreOffset": 0.177001953125,
+      "pass": false
+    }
+  ],
+  "passed": false,
+  "failures": [
+    "box",
+    "IoU",
+    "channel at t=-0.25",
+    "channel at t=0"
+  ]
+}

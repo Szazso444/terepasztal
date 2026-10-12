@@ -1,26 +1,70 @@
 {
-  "status": "partial: waiting for image limit reset",
+  "status": "three-call allowance exhausted; highest-IoU fallbacks selected",
+  "imageGenerationMode": "built-in ImageGen only",
+  "allGeometryTestsPassed": false,
+  "selected": [
+    {
+      "edge": "ne",
+      "id": "river-mouth-ne-attempt-3",
+      "iou": 0.6114125780341765,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    },
+    {
+      "edge": "se",
+      "id": "river-mouth-se-attempt-4",
+      "iou": 0.6975666655866247,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    },
+    {
+      "edge": "sw",
+      "id": "river-mouth-sw-attempt-5",
+      "iou": 0.6753116013192677,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    },
+    {
+      "edge": "nw",
+      "id": "river-mouth-nw-attempt-4",
+      "iou": 0.7779491431492754,
+      "failures": [
+        "box",
+        "IoU",
+        "channel at t=-0.25",
+        "channel at t=0"
+      ]
+    }
+  ],
   "typecheck": true,
   "typecheckNode": true,
   "lint": true,
   "build": true,
   "pngIntegrity": true,
   "originalGuideAndSourceHashes": true,
-  "archiveBlobHashes": true,
-  "knownGuideBox": true,
-  "knownGuideIoU": 1,
+  "immutableRawHashes": true,
+  "selectedCopyIdentity": true,
+  "provenancePreserved": true,
   "tests": {
     "passed": 1947,
     "failed": 14,
     "skipped": 11,
     "failedFiles": 8,
-    "reason": "unchanged asset-pipeline tests, including spawnSync python ENOENT"
+    "reason": "unchanged asset-pipeline tests, including missing python"
   },
   "targetedFormatting": true,
   "artScope": true,
-  "scheduledResume": {
-    "timezone": "America/Toronto",
-    "local": "2026-10-12 15:05",
-    "automationId": "resume-river-mouth-repaint"
-  }
+  "scheduledContinuation": "ran October 12, 2026; no further calls within the allowance"
 }

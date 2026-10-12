@@ -1,0 +1,87 @@
+{
+  "id": "river-mouth-nw-attempt-6",
+  "file": "raw/river-mouth-nw-attempt-6.png",
+  "prompt": "Repaint IMAGE ONE's gray shapes IN PLACE into ONE river MOUTH, not a straight river strip. Request1024x1024 RGBA PNG, transparent. Preserve image one's exact centered outline x128..896,y320..704:75% canvas width,37.5% height, midpoint512,512. outer corners (896,576),(384,320),(128,448),(640,704); river enters SE at(768,640), goes toward NW into the top-left water tile, opening(384,576) to(640,448). CRITICAL: The TOP-LEFT HALF is an entire BANK-FREE open water diamond. Paint that whole gray area teal all the way to its three exposed edges. Absolutely NO gravel or bank on the open-water half. The opposite half is river: ONLY its two medium-gray side bands are wet mud/gravel. Pale-gray channel width0.76 tile, side banks0.12 each. Both banks flare outward in last quarter tile and END at the canvas-centred shared edge. It MUST show wide river water opening into a bank-free diamond, not reference2's continuous two-bank strip. Image1 is edit target and sole composition. Image2 matches width and material in RIVER HALF ONLY; NEVER copy its whole three-tile shape or banks onto open water. Image3 style;image4 river-water;image5 river-bank. Erase guide lines. Smooth organic colour clusters,3/4 shades,no pixels or square cells. Fixed upper-left light. Water#477B82,#487C84,#548A92,#3E6E78,#649EA2, few soft reversible current glints capped#E0DDD2. Flat small limestone#BCA98B/slate#626B6C pebbles in damp brown-grey mud, tiny moss#78804C, soft wet line. Pale silt fan fades0.3 tile into open water. No V/arrow foam,shadows,thickness,outside ground/grass,reeds,standing rocks,objects,people,text,borders,glow. Nothing outside guide; never enlarge or shift. Previous return narrowed the channel to0.63..0.66 tile. Match the guide wide pale-gray channel0.76 tile and both medium-gray banks, flaring toward the top-left bank-free diamond.",
+  "references": [
+    "assets/source/water-2026-10-11/guides/river-mouth-nw-centred.png",
+    "assets/source/water-2026-10-11/river-strip-x.png",
+    "docs/art-direction/images/03-theme-town-growth.png",
+    "assets/source/water-2026-10-11/river-water.png",
+    "assets/source/water-2026-10-11/river-bank.png"
+  ],
+  "returned": [
+    1254,
+    1254
+  ],
+  "measured": {
+    "file": "assets/source/water-2026-10-11/raw/river-mouth-nw-attempt-6.png",
+    "edge": "nw",
+    "returned": [
+      1254,
+      1254
+    ],
+    "scale": 1.224609375,
+    "square": true,
+    "mask": "alpha >128",
+    "paintedPixels": 325708,
+    "box": {
+      "actual": [
+        59,
+        341,
+        1206,
+        958
+      ],
+      "expected": [
+        156.75,
+        391.875,
+        1097.25,
+        862.125
+      ],
+      "width": 1147,
+      "height": 617,
+      "centre": [
+        632.5,
+        649.5
+      ],
+      "centreDistance": 23.16246964380094,
+      "widthErrorFraction": 0.21956406166932482,
+      "heightErrorFraction": 0.31206804891015416,
+      "pass": false
+    },
+    "overlap": {
+      "intersection": 196570,
+      "union": 325708,
+      "iou": 0.6035160327655446,
+      "minimum": 0.9,
+      "pass": false
+    },
+    "channels": [
+      {
+        "t": -0.25,
+        "waterBounds": [
+          -0.380126953125,
+          0.385498046875
+        ],
+        "waterWidth": 0.765625,
+        "centreOffset": 0.002685546875,
+        "pass": true
+      },
+      {
+        "t": 0,
+        "waterBounds": [
+          -0.397705078125,
+          0.329345703125
+        ],
+        "waterWidth": 0.72705078125,
+        "centreOffset": -0.0341796875,
+        "pass": true
+      }
+    ],
+    "passed": false,
+    "failures": [
+      "box",
+      "IoU"
+    ]
+  },
+  "selected": false
+}
