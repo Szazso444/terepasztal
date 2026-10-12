@@ -12,13 +12,14 @@ import {
   isChunkStore,
   mapChunks,
   parseChunkKey,
+  placeChunk,
   type ChunkStore,
   type MapGenerator,
 } from './chunks';
-import { emptyMap, generateMap, type MapGenParams } from './mapgen';
+import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { levelAt, tileLevels } from './elevation';
 import { Biome, Terrain, type GameMap, type PropInstance } from './tiles';
-import type { Rng } from '../engine/rng';
+import { Rng, hash2 } from '../engine/rng';
 import { setSupplyMode } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
 
@@ -512,6 +513,531 @@ describe('a map built from stored chunks', () => {
       expect(JSON.stringify(chunks).length).toBeLessThanOrEqual(150_000);
     }
   });
+
+  it('adds at most about 150 KB for a 49-chunk world in the full production chain too', () => {
+    // the full chain's oil fields and start seeps are props of their own
+    setSupplyMode('full');
+    let oil = 0;
+    for (const seed of [1, 7412, 20260912, 31337, 987654321]) {
+      const { map, chunks } = buildMap(seed, { w: 224, h: 224, originX: -64, originY: -64 }, {});
+      for (const list of map.props.values()) if (list.some((p) => p.kind === 'oil')) oil++;
+      expect(Object.keys(chunks)).toHaveLength(49);
+      expect(JSON.stringify(chunks).length, `seed ${seed}`).toBeLessThanOrEqual(150_000);
+    }
+    expect(oil).toBeGreaterThan(0);
+  });
+});
+
+// Properties over any generator, frame and text. Each is checked against an oracle written apart
+// from chunks.ts: which tiles are stored is read off the frames, never off the store.
+
+/**
+ * A generator nothing like generateMap: every plane hashed from the world tile and `salt`, over all
+ * that encoding 1 holds (terrain and biome ids 0 to 15 in 4 x 4 patches so that runs form,
+ * variants 0 to 3, up to nine props a tile of any kind, variants past the one-byte escape, offsets
+ * up to 0.45 of a tile). A function of world tiles, so two frames of one salt agree where they
+ * overlap. The params of every call go into `calls`.
+ */
+function hashed(salt: number, calls: Partial<MapGenParams>[] = []): MapGenerator {
+  return (seed, p) => {
+    calls.push(p);
+    const m = emptyMap(seed, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+    const at = (wx: number, wy: number, k: number) => hash2(wx, wy, salt * 32 + k);
+    for (let y = 0; y < m.h; y++)
+      for (let x = 0; x < m.w; x++) {
+        const wx = x + m.originX;
+        const wy = y + m.originY;
+        const i = y * m.w + x;
+        m.terrain[i] = Math.floor(at(wx >> 2, wy >> 2, 0) * 16);
+        m.biome[i] = Math.floor(at(wx >> 2, wy >> 2, 1) * 16);
+        m.variant[i] = Math.floor(at(wx, wy, 2) * 4);
+        const r = at(wx, wy, 3);
+        if (r >= 0.35) continue;
+        const n = r < 0.03 ? 4 + Math.floor(at(wx, wy, 4) * 6) : 1 + Math.floor(at(wx, wy, 4) * 3);
+        const list: PropInstance[] = [];
+        for (let k = 0; k < n; k++) {
+          const u = wx * 16 + k;
+          list.push({
+            kind: PROP_KINDS[Math.floor(at(u, wy, 5) * PROP_KINDS.length)],
+            variant:
+              at(u, wy, 6) < 0.1
+                ? 8 + Math.floor(at(u, wy, 7) * 500)
+                : Math.floor(at(u, wy, 7) * 8),
+            ox: (at(u, wy, 8) - 0.5) * 0.9,
+            oy: (at(u, wy, 9) - 0.5) * 0.9,
+          });
+        }
+        m.props.set(i, list);
+      }
+    return m;
+  };
+}
+
+/** Whether world tile (`wx`, `wy`) lies in frame `f`. */
+const covers = (f: Frame, wx: number, wy: number) => {
+  const ox = f.originX ?? 0;
+  const oy = f.originY ?? 0;
+  return wx >= ox && wy >= oy && wx < ox + f.w && wy < oy + f.h;
+};
+
+/** On one axis: the tiles [from, to) of chunk `c`, from its corner, that `n` tiles from `o` cover. */
+const span = (o: number, n: number, c: number) => [
+  Math.max(o, 32 * c) - 32 * c,
+  Math.min(o + n, 32 * c + 32) - 32 * c,
+];
+
+/**
+ * The keys of the chunks `after` covers a tile of that `before` does not cover all of, in rows: the
+ * chunks a map of `after` built on a store of `before` has to generate.
+ */
+function grownChunks(before: Frame, after: Frame): string[] {
+  const out: string[] = [];
+  const [ax, ay] = [after.originX ?? 0, after.originY ?? 0];
+  const [bx, by] = [before.originX ?? 0, before.originY ?? 0];
+  for (let cy = Math.floor(ay / 32); cy <= Math.floor((ay + after.h - 1) / 32); cy++)
+    for (let cx = Math.floor(ax / 32); cx <= Math.floor((ax + after.w - 1) / 32); cx++) {
+      const [nx0, nx1] = span(ax, after.w, cx);
+      const [ny0, ny1] = span(ay, after.h, cy);
+      const [sx0, sx1] = span(bx, before.w, cx);
+      const [sy0, sy1] = span(by, before.h, cy);
+      const held = sx0 < sx1 && sy0 < sy1 && sx0 <= nx0 && sx1 >= nx1 && sy0 <= ny0 && sy1 >= ny1;
+      if (!held) out.push(chunkKey(cx, cy));
+    }
+  return out;
+}
+
+/** A stored world of any frame and the frame it grows to, by any tiles on each side. */
+interface Growth {
+  seed: number;
+  salt: number;
+  w: number;
+  h: number;
+  ox: number;
+  oy: number;
+  /** tiles added before and after the stored frame along x, then along y */
+  grow: number[];
+  /** a slider the generator has to be given along with the frame */
+  waterLevel: number;
+}
+const genGrowth = (rng: Rng): Growth => {
+  const g: Growth = {
+    seed: rng.int(0, 2 ** 31 - 1),
+    salt: rng.int(1, 999_999),
+    w: rng.int(1, 80),
+    h: rng.int(1, 80),
+    ox: rng.int(-80, 80),
+    oy: rng.int(-80, 80),
+    grow: [0, 0, 0, 0],
+    waterLevel: rng.int(10, 60) / 100,
+  };
+  // one case in ten does not grow, so every chunk is stored
+  if (rng.chance(0.9)) g.grow = g.grow.map(() => (rng.chance(0.3) ? 0 : rng.int(1, 70)));
+  return g;
+};
+function* shrinkGrowth(g: Growth): Iterable<Growth> {
+  for (let s = 0; s < 4; s++)
+    for (const v of shrinkInt(g.grow[s]))
+      yield { ...g, grow: g.grow.map((d, k) => (k === s ? v : d)) };
+  for (const w of shrinkInt(g.w, 1)) yield { ...g, w };
+  for (const h of shrinkInt(g.h, 1)) yield { ...g, h };
+  for (const ox of shrinkInt(g.ox)) yield { ...g, ox };
+  for (const oy of shrinkInt(g.oy)) yield { ...g, oy };
+}
+const storedFrame = (g: Growth): Frame => ({ w: g.w, h: g.h, originX: g.ox, originY: g.oy });
+const grownFrame = (g: Growth) => ({
+  w: g.w + g.grow[0] + g.grow[1],
+  h: g.h + g.grow[2] + g.grow[3],
+  originX: g.ox - g.grow[0],
+  originY: g.oy - g.grow[2],
+  waterLevel: g.waterLevel,
+});
+
+/** One axis of a growth that keeps the start chunk on its world tiles (as in mapgen.test.ts). */
+interface Axis {
+  len: number;
+  before: number;
+  big: number;
+}
+const startChunk = (len: number) => Math.floor((Math.ceil(len / 32) - 1) / 2);
+const keepsStart = (a: Axis) =>
+  a.len >= 32 &&
+  a.before >= 0 &&
+  a.big > a.len &&
+  a.big >= 32 * a.before + a.len &&
+  startChunk(a.big) === startChunk(a.len) + a.before;
+function genAxis(rng: Rng): Axis {
+  const len = rng.int(32, 128);
+  for (;;) {
+    const before = rng.int(0, 2);
+    const a = { len, before, big: 32 * before + len + rng.int(0, 64) };
+    if (keepsStart(a)) return a;
+  }
+}
+function* shrinkAxis(a: Axis): Iterable<Axis> {
+  const all = function* () {
+    if (a.before > 0) yield { ...a, before: a.before - 1, big: a.big - 32 };
+    for (const len of shrinkInt(a.len, 32)) yield { ...a, len, big: a.big - (a.len - len) };
+    for (const big of shrinkInt(a.big, 32 * a.before + a.len)) yield { ...a, big };
+  };
+  for (const b of all()) if (keepsStart(b)) yield b;
+}
+
+type Sliders = Pick<MapGenParams, 'waterLevel' | 'hillLevel' | 'rockLevel' | 'forestDensity'>;
+const DEFAULT_SLIDERS: Sliders = {
+  waterLevel: DEFAULT_MAP_PARAMS.waterLevel,
+  hillLevel: DEFAULT_MAP_PARAMS.hillLevel,
+  rockLevel: DEFAULT_MAP_PARAMS.rockLevel,
+  forestDensity: DEFAULT_MAP_PARAMS.forestDensity,
+};
+/** A world grown with generateMap unchanged: any origin, sliders and chain, the start kept. */
+interface RealGrowth {
+  seed: number;
+  full: boolean;
+  sliders: Sliders;
+  ox: number;
+  oy: number;
+  x: Axis;
+  y: Axis;
+}
+const genRealGrowth = (rng: Rng): RealGrowth => ({
+  seed: rng.int(0, 2 ** 31 - 1),
+  full: rng.chance(0.5),
+  sliders: {
+    waterLevel: rng.int(10, 60) / 100,
+    hillLevel: rng.int(45, 90) / 100,
+    rockLevel: rng.int(50, 100) / 100,
+    forestDensity: rng.int(30, 90) / 100,
+  },
+  ox: rng.chance(0.3) ? -32 * rng.int(0, 2) : rng.int(-128, 128),
+  oy: rng.chance(0.3) ? -32 * rng.int(0, 2) : rng.int(-128, 128),
+  x: genAxis(rng),
+  y: genAxis(rng),
+});
+function* shrinkRealGrowth(c: RealGrowth): Iterable<RealGrowth> {
+  if (c.full) yield { ...c, full: false };
+  if (JSON.stringify(c.sliders) !== JSON.stringify(DEFAULT_SLIDERS))
+    yield { ...c, sliders: DEFAULT_SLIDERS };
+  for (const ox of shrinkInt(c.ox)) yield { ...c, ox };
+  for (const oy of shrinkInt(c.oy)) yield { ...c, oy };
+  for (const x of shrinkAxis(c.x)) yield { ...c, x };
+  for (const y of shrinkAxis(c.y)) yield { ...c, y };
+}
+
+/** The ways garble breaks a chunk's text, or makes one of its own. */
+const GARBLES = [
+  'bytes changed',
+  'cut short',
+  'bytes put in',
+  'bytes taken out',
+  'noise',
+  'not base64',
+  'props written by hand',
+] as const;
+
+/**
+ * A text for decodeChunk, as a recipe: the text encodeChunk writes for the rectangle (`x0`, `y0`,
+ * `w`, `h`) of chunk (0, 0) with `hashed(salt)`'s planes, broken as `how` says with the stream of
+ * `Rng(edit)`. Shrinking the rectangle keeps the recipe, so a failure shrinks to a small chunk
+ * broken the same way.
+ */
+interface Garbled {
+  how: (typeof GARBLES)[number];
+  x0: number;
+  y0: number;
+  w: number;
+  h: number;
+  salt: number;
+  edit: number;
+}
+const genGarbled = (rng: Rng): Garbled => {
+  const w = rng.int(1, 32);
+  const h = rng.int(1, 32);
+  return {
+    how: rng.pick(GARBLES),
+    x0: rng.int(0, 32 - w),
+    y0: rng.int(0, 32 - h),
+    w,
+    h,
+    salt: rng.int(1, 999_999),
+    edit: rng.int(0, 2 ** 31 - 1),
+  };
+};
+function* shrinkGarbled(g: Garbled): Iterable<Garbled> {
+  for (const w of shrinkInt(g.w, 1)) yield { ...g, w };
+  for (const h of shrinkInt(g.h, 1)) yield { ...g, h };
+  for (const x0 of shrinkInt(g.x0)) yield { ...g, x0 };
+  for (const y0 of shrinkInt(g.y0)) yield { ...g, y0 };
+}
+/** The text a recipe makes. */
+function garble(g: Garbled): string {
+  const rng = new Rng(g.edit);
+  const map = hashed(g.salt)(0, { w: g.w, h: g.h, originX: g.x0, originY: g.y0 });
+  if (g.how === 'props written by hand') map.props.clear();
+  const bytes = Array.from(atob(encodeChunk(map, 0, 0)), (ch) => ch.charCodeAt(0));
+  const at = () => rng.int(0, bytes.length - 1);
+  const b64 = (b: number[]) => btoa(String.fromCharCode(...b));
+  switch (g.how) {
+    case 'bytes changed':
+      for (let k = rng.int(1, 3); k > 0; k--) bytes[at()] = rng.int(0, 255);
+      return b64(bytes);
+    case 'cut short':
+      return b64(bytes.slice(0, at()));
+    case 'bytes put in':
+      for (let k = rng.int(1, 3); k > 0; k--) bytes.splice(at(), 0, rng.int(0, 255));
+      return b64(bytes);
+    case 'bytes taken out':
+      for (let k = rng.int(1, 3); k > 0; k--) bytes.splice(at(), 1);
+      return b64(bytes);
+    case 'noise': {
+      const noise = Array.from({ length: rng.int(0, 80) }, () => rng.int(0, 255));
+      if (noise.length && rng.chance(0.5)) noise[0] = CHUNK_VERSION;
+      return b64(noise);
+    }
+    case 'not base64': {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/= %!-_';
+      return Array.from({ length: rng.int(0, 40) }, () => rng.pick([...chars])).join('');
+    }
+    case 'props written by hand': {
+      // the planes as written, then a props section of its own: tiles anywhere, the rectangle's
+      // last and those past it included, any count, kind byte, escape and offset
+      bytes.pop(); // the count of tiles with props, 0
+      const varint = (v: number) => {
+        for (; v >= 0x80; v = Math.floor(v / 0x80)) bytes.push((v % 0x80) | 0x80);
+        bytes.push(v);
+      };
+      const n = g.w * g.h;
+      const tiles = rng.int(0, 4);
+      varint(tiles);
+      for (let t = 0; t < tiles; t++) {
+        const more = rng.int(0, 3);
+        const gap = rng.chance(0.3) ? rng.int(n - 1, n + 1) : rng.int(0, Math.ceil(n / tiles));
+        varint(gap * 4 + more);
+        const extra = rng.int(0, 3);
+        if (more === 3) varint(extra);
+        for (let k = more < 3 ? more + 1 : 4 + extra; k > 0; k--) {
+          if (rng.chance(0.15)) {
+            bytes.push(31);
+            varint(rng.int(0, PROP_KINDS.length + 2));
+            varint(rng.int(0, 1000));
+          } else if (rng.chance(0.8))
+            bytes.push(rng.int(0, PROP_KINDS.length - 1) | (rng.int(0, 7) << 5));
+          else bytes.push(rng.int(0, 255));
+          bytes.push(rng.int(0, 255), rng.int(0, 255));
+        }
+      }
+      return b64(bytes);
+    }
+  }
+}
+
+describe('stored chunks, over any generator, frame and text', () => {
+  // 40 worlds up to 220 tiles a side, each built, grown and read back: about 0.7 s alone
+  it('keep every stored tile and take the rest from the generator, whatever it makes', () => {
+    let grown = 0;
+    let still = 0;
+    let overruled = 0;
+    forAll(
+      genGrowth,
+      (g) => {
+        const before = storedFrame(g);
+        const after = grownFrame(g);
+        const old = buildMap(g.seed, before, {}, hashed(g.salt));
+        const store = Object.freeze({ ...old.chunks });
+        const snapshot = JSON.stringify(store);
+        const calls: Partial<MapGenParams>[] = [];
+        const built = buildMap(g.seed, after, store, hashed(g.salt + 1, calls));
+        const expected = grownChunks(before, after);
+        expect(JSON.stringify(store)).toBe(snapshot);
+        expect(built.added).toEqual(expected);
+        expect(built.unreadable).toEqual([]);
+        // the generator runs once, on the whole of the params, and only when a chunk is missing
+        expect(calls).toEqual(expected.length ? [{ ...DEFAULT_MAP_PARAMS, ...after }] : []);
+        if (expected.length) grown++;
+        else still++;
+        // every stored text is kept but those of part-chunks the map grew over, which now hold
+        // all of the chunk the map covers
+        expect(Object.keys(built.chunks).sort()).toEqual(
+          [...new Set([...Object.keys(store), ...expected])].sort(),
+        );
+        for (const [k, text] of Object.entries(store))
+          if (!expected.includes(k)) expect(built.chunks[k], `chunk ${k}`).toBe(text);
+        for (const k of expected) {
+          const { cx, cy } = parseChunkKey(k)!;
+          const c = decodeChunk(built.chunks[k])!;
+          const [x0, x1] = span(after.originX, after.w, cx);
+          const [y0, y1] = span(after.originY, after.h, cy);
+          expect([c.x0, c.y0, c.w, c.h], `chunk ${k}`).toEqual([x0, y0, x1 - x0, y1 - y0]);
+        }
+        // stored tiles exactly as stored; the rest the generator's, as a chunk stores them
+        const kept = firstDifference(built.map, old.map);
+        if (kept) throw new Error(`stored ground changed: ${kept}`);
+        const now = hashed(g.salt + 1)(g.seed, { ...DEFAULT_MAP_PARAMS, ...after });
+        if (firstDifference(old.map, now, { near: true })) overruled++;
+        const fresh = (wx: number, wy: number) => !covers(before, wx, wy);
+        const made = firstDifference(built.map, now, { near: true, only: fresh });
+        if (made) throw new Error(`a new tile is not the generator's: ${made}`);
+        // the store it returns is whole: a reload reads it alone, to the same map and store
+        const again = buildMap(g.seed, after, built.chunks, never);
+        expect(again.added).toEqual([]);
+        expect(again.chunks).toEqual(built.chunks);
+        const reload = firstDifference(again.map, built.map);
+        if (reload) throw new Error(`a reload differs: ${reload}`);
+      },
+      {
+        seeds: Array.from({ length: 40 }, (_, i) => i + 1),
+        shrink: shrinkGrowth,
+        shrinkBudget: 200,
+      },
+    );
+    // both kinds of case ran, and the generator would have made other ground where it is stored
+    expect(grown).toBeGreaterThan(0);
+    expect(still).toBeGreaterThan(0);
+    expect(overruled).toBeGreaterThan(0);
+  }, 30_000);
+
+  it('read any map inside the stored ground from the store alone', () => {
+    forAll(
+      (rng) => {
+        const w = rng.int(1, 100);
+        const h = rng.int(1, 100);
+        const sw = rng.int(1, w);
+        const sh = rng.int(1, h);
+        return {
+          seed: rng.int(0, 2 ** 31 - 1),
+          salt: rng.int(1, 999_999),
+          w,
+          h,
+          ox: rng.int(-80, 80),
+          oy: rng.int(-80, 80),
+          dx: rng.int(0, w - sw),
+          dy: rng.int(0, h - sh),
+          sw,
+          sh,
+        };
+      },
+      (c) => {
+        const frame = { w: c.w, h: c.h, originX: c.ox, originY: c.oy };
+        const base = buildMap(c.seed, frame, {}, hashed(c.salt));
+        const store = Object.freeze({ ...base.chunks });
+        const inner = { w: c.sw, h: c.sh, originX: c.ox + c.dx, originY: c.oy + c.dy };
+        const built = buildMap(c.seed, inner, store, never);
+        expect(built.added).toEqual([]);
+        expect(built.unreadable).toEqual([]);
+        expect(built.chunks).toEqual(store);
+        expect([built.map.w, built.map.h, built.map.originX, built.map.originY]).toEqual([
+          c.sw,
+          c.sh,
+          c.ox + c.dx,
+          c.oy + c.dy,
+        ]);
+        const where = firstDifference(built.map, base.map);
+        if (where) throw new Error(where);
+      },
+      { seeds: Array.from({ length: 30 }, (_, i) => i + 1) },
+    );
+  });
+
+  // 16 worlds up to 256 tiles a side, each generated three times: about 1.2 s alone
+  it('grown under generateMap unchanged are the store of the grown world, text for text', () => {
+    forAll(
+      genRealGrowth,
+      (c) => {
+        setSupplyMode(c.full ? 'full' : 'simple');
+        const before = { ...c.sliders, w: c.x.len, h: c.y.len, originX: c.ox, originY: c.oy };
+        const after = {
+          ...c.sliders,
+          w: c.x.big,
+          h: c.y.big,
+          originX: c.ox - 32 * c.x.before,
+          originY: c.oy - 32 * c.y.before,
+        };
+        const old = buildMap(c.seed, before, {});
+        const built = buildMap(c.seed, after, old.chunks);
+        const g = generateMap(c.seed, after);
+        const fresh = encodeMap(g);
+        expect(Object.keys(built.chunks).sort()).toEqual(Object.keys(fresh).sort());
+        for (const k of Object.keys(fresh))
+          if (built.chunks[k] !== fresh[k]) throw new Error(`chunk ${k} is not the grown world's`);
+        expect(built.added).toEqual(grownChunks(before, after));
+        const where = firstDifference(built.map, g, { near: true });
+        if (where) throw new Error(`against generateMap: ${where}`);
+        const kept = firstDifference(old.map, built.map);
+        if (kept) throw new Error(`stored ground changed: ${kept}`);
+      },
+      {
+        seeds: Array.from({ length: 16 }, (_, i) => i + 1),
+        shrink: shrinkRealGrowth,
+        shrinkBudget: 40,
+      },
+    );
+  }, 60_000);
+
+  // 300 texts, each read and built into a map of its chunk: about 0.7 s alone
+  it('read any text as a chunk or as nothing, never throwing, and write back what they read', () => {
+    const seen = new Set<string>();
+    forAll(
+      genGarbled,
+      (g) => {
+        const text = garble(g);
+        const c = decodeChunk(text);
+        seen.add(`${g.how}: ${c ? 'read' : 'refused'}`);
+        // a load never throws on it: the text is kept and reported, or its planes placed
+        const built = buildMap(1, { w: 32, h: 32 }, { '0,0': text }, hashed(7));
+        if (!c) {
+          expect(built.unreadable).toEqual(['0,0']);
+          expect(built.chunks['0,0']).toBe(text);
+          return;
+        }
+        expect(built.unreadable).toEqual([]);
+        // what it reads is a chunk encodeChunk can write
+        const n = c.w * c.h;
+        expect(c.version >= 1 && c.version <= CHUNK_VERSION).toBe(true);
+        expect(c.w >= 1 && c.h >= 1 && c.x0 + c.w <= 32 && c.y0 + c.h <= 32).toBe(true);
+        expect([c.terrain.length, c.biome.length, c.variant.length]).toEqual([n, n, n]);
+        expect(c.terrain.every((v) => v <= 15) && c.biome.every((v) => v <= 15)).toBe(true);
+        expect(c.variant.every((v) => v <= 3)).toBe(true);
+        for (const [i, list] of c.props) {
+          expect(Number.isInteger(i) && i >= 0 && i < n, `prop tile ${i} of ${n}`).toBe(true);
+          expect(list.length).toBeGreaterThan(0);
+          for (const p of list) {
+            expect(PROP_KINDS).toContain(p.kind);
+            expect(Number.isSafeInteger(p.variant) && p.variant >= 0).toBe(true);
+            for (const o of [p.ox, p.oy])
+              expect(Number.isInteger(o * 256) && o >= -0.5 && o < 0.5, `offset ${o}`).toBe(true);
+          }
+        }
+        // the map has its planes where the text puts them
+        for (let y = 0; y < c.h; y++)
+          for (let x = 0; x < c.w; x++) {
+            const i = (c.y0 + y) * 32 + c.x0 + x;
+            const j = y * c.w + x;
+            const tile = [built.map.terrain[i], built.map.biome[i], built.map.variant[i]];
+            expect(tile, `tile (${x}, ${y})`).toEqual([c.terrain[j], c.biome[j], c.variant[j]]);
+            expect(built.map.props.get(i)).toEqual(c.props.get(j));
+          }
+        // and its planes, put on a map and written again, read the same
+        const m = emptyMap(0, c.w, c.h, Terrain.Grass, c.x0, c.y0);
+        placeChunk(m, 0, 0, c);
+        expect(decodeChunk(encodeChunk(m, 0, 0))).toEqual({ ...c, version: CHUNK_VERSION });
+      },
+      {
+        seeds: Array.from({ length: 300 }, (_, i) => i + 1),
+        shrink: shrinkGarbled,
+        format: (g) => `${JSON.stringify(g)}, text ${garble(g)}`,
+        shrinkBudget: 500,
+      },
+    );
+    // both ways out were taken, a hand-written props section read and refused among them
+    for (const way of [
+      'bytes changed: read',
+      'bytes changed: refused',
+      'props written by hand: read',
+      'props written by hand: refused',
+      'noise: refused',
+      'not base64: refused',
+    ])
+      expect(seen).toContain(way);
+  }, 30_000);
 });
 
 describe('the seam between a stored chunk and a new one', () => {
@@ -568,4 +1094,50 @@ describe('the seam between a stored chunk and a new one', () => {
     }
     if (fill(0) !== Terrain.Water) expect(steep).toBeGreaterThan(0);
   });
+
+  // 40 worlds up to 220 tiles a side, each tile's level read twice: about 0.3 s alone
+  it('keeps levels within one step and never lowers stored ground, for any growth and generator', () => {
+    let steep = 0;
+    forAll(
+      genGrowth,
+      (g) => {
+        const before = storedFrame(g);
+        const after = grownFrame(g);
+        const old = buildMap(g.seed, before, {}, hashed(g.salt));
+        const map = buildMap(g.seed, after, old.chunks, hashed(g.salt + 1)).map;
+        const levels = tileLevels(map);
+        const oldLevels = tileLevels(old.map);
+        const stored = (x: number, y: number) => covers(before, x + map.originX, y + map.originY);
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++) {
+            const k = y * map.w + x;
+            const at = `world tile (${x + map.originX}, ${y + map.originY})`;
+            for (const [nx, ny] of [
+              [x - 1, y],
+              [x, y - 1],
+            ]) {
+              if (nx < 0 || ny < 0) continue;
+              const n = ny * map.w + nx;
+              if (Math.abs(levels[k] - levels[n]) > 1) throw new Error(`a step of two at ${at}`);
+              if (stored(x, y) !== stored(nx, ny))
+                if (Math.abs(peak(map.terrain[k]) - peak(map.terrain[n])) > 1) steep++;
+            }
+            if (levelAt(map, x, y) !== levels[k]) throw new Error(`levelAt disagrees at ${at}`);
+            if (stored(x, y)) {
+              const ox = x + map.originX - old.map.originX;
+              const oy = y + map.originY - old.map.originY;
+              const was = oldLevels[oy * old.map.w + ox];
+              if (levels[k] < was) throw new Error(`stored ground sank from ${was} at ${at}`);
+            }
+          }
+      },
+      {
+        seeds: Array.from({ length: 40 }, (_, i) => i + 1),
+        shrink: shrinkGrowth,
+        shrinkBudget: 200,
+      },
+    );
+    // pairs across the seam whose terrains would stand more than a level apart did occur
+    expect(steep).toBeGreaterThan(0);
+  }, 30_000);
 });
