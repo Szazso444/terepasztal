@@ -136,7 +136,7 @@ export const STR = {
     powered: 'Powered rails',
     noTrack: 'No track can be laid here',
     trackCost: (m: number) => `Track costs ×${m}`,
-    water: 'Bridges only; pumps draw from it',
+    water: 'Bridges only; pumps draw from it.',
     /** the row that names the tile's biome; its value is the biome as a term (`STR.biome`) */
     biome: 'Biome',
     /**

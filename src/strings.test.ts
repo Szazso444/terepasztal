@@ -448,6 +448,11 @@ describe('what the terrains are called', () => {
     for (const name of Object.keys(STR.tile.terrain).filter((n) => n !== 'water'))
       expect(STR.tile.about[name], name).toMatch(/\S/);
   });
+
+  it('ends every dim terrain line, water included, the same way', () => {
+    const lines = [...Object.values(STR.tile.about), STR.tile.water];
+    for (const l of lines) expect(l, l).toMatch(/\.$/);
+  });
 });
 
 describe('text the panels show', () => {
