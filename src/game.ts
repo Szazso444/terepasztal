@@ -4,10 +4,14 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
-import { BrokenNumberWarning, saveOutcome, type SaveOutcome } from './engine/saveRefusal';
+import {
+  BrokenNumberWarning,
+  StorageRefusalWarning,
+  saveOutcome,
+  type SaveOutcome,
+} from './engine/saveRefusal';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
-import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
@@ -128,6 +132,7 @@ import { decorDef as decorDefOf } from './sim/build';
 import { HouseRegistry } from './sim/houses';
 import { PeopleSim } from './sim/people';
 import { expandSave, ownsBorderChunk } from './sim/expand';
+import { generatorOf, groundOf } from './sim/ground';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 import { SimStep, startStock, ageSnapshot as ageSnapshotOf } from './sim/step';
@@ -231,6 +236,8 @@ export class Game implements UiHost {
   private readonly autosavePause = new AutosavePause();
   /** a stretch of saves refused for a broken number warns once (`saveRefusal.ts`) */
   private readonly brokenNumberWarning = new BrokenNumberWarning();
+  /** and a stretch of saves refused by storage warns once, with its own text */
+  private readonly storageRefusalWarning = new StorageRefusalWarning();
   /** when the stored game was last written, for the settings screen */
   savedAt: number | null = null;
   weather!: Weather;
@@ -332,6 +339,8 @@ export class Game implements UiHost {
   };
 
   readonly spec: WorldSpec;
+  /** what building a generated world's map from its stored ground did; null for a level */
+  private ground: ReturnType<typeof groundOf> | null = null;
   /** play = normal game; editor = level editor (free building, paused clock) */
   mode: 'play' | 'editor' = 'play';
   editor: Editor | null = null;
@@ -577,6 +586,7 @@ export class Game implements UiHost {
   saveSlot(name: string) {
     const out = this.storeSnapshot(this.snapshot(), (s) => writeSlot(name, s));
     this.brokenNumberWarning.note(out.kind);
+    this.storageRefusalWarning.note(out.kind);
     this.saveToast(out, STR.settings.slotSaved(name));
     return out.kind === 'stored';
   }
@@ -813,10 +823,12 @@ export class Game implements UiHost {
     await this.atlas.load(ATLAS_GROUPS);
     buildCompatTable();
 
-    this.map =
-      this.spec.kind === 'level'
-        ? mapFromLevel(this.spec.level, this.supply)
-        : generateMap(this.spec.seed, this.spec.params, this.supply);
+    if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
+    else {
+      // a generated world's stored ground, the chunks it lacks generated with its chain and stored
+      this.ground = groundOf(this.spec, generatorOf(this.supply));
+      this.map = this.ground.map;
+    }
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -1133,8 +1145,8 @@ export class Game implements UiHost {
    * Store the game; says so unless `silent`; false when it was refused: by storage, or because the
    * game holds a broken number (`writeSave`). Nothing is written while the page reloads into a save
    * just stored (`reloadIntoStoredSave`). A silent save is one the player did not ask for, and none
-   * is written after a loop error (`autosavePause`); a silent one refused for a broken number
-   * warns once until some save has gone through, and one refused by storage says nothing.
+   * is written after a loop error (`autosavePause`); a silent one refused warns once for each
+   * reason (a broken number, storage) until some save has gone through.
    */
   save(silent = false) {
     if (this.keepStoredSave) return false;
@@ -1142,15 +1154,18 @@ export class Game implements UiHost {
     const snap = this.snapshot();
     const out = this.storeSnapshot(snap, writeSave);
     if (out.kind === 'stored') this.savedAt = snap.savedAt;
-    const warn = this.brokenNumberWarning.note(out.kind);
+    const broken = this.brokenNumberWarning.note(out.kind);
+    const storage = this.storageRefusalWarning.note(out.kind);
     if (!silent) this.saveToast(out, STR.settings.saved);
-    else if (warn) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    else if (broken) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    else if (storage) this.toasts.push(STR.settings.autosaveFailed, 'warn');
     return out.kind === 'stored';
   }
 
   /**
-   * Terrain is regenerated on load; anything the player built must still stand on buildable
-   * ground (a regenerated stone field or lake under a station would strand it).
+   * Ground generated on load (a save's first load, a stored chunk that could not be read) need not
+   * be what was built on; anything the player built must still stand on buildable ground (a
+   * regenerated stone field or lake under a station would strand it).
    */
   private fixBuiltTiles(j: SaveGame) {
     const bridges = new Set(
@@ -1266,6 +1281,14 @@ export class Game implements UiHost {
     this.restoringWorld = false;
     this.refreshBridges();
     audio.setAge(ageDef(this.economy.tier).id);
+    // ground generated as the save loaded is stored at once; stored ground unread is reported
+    if (this.ground?.unreadable.length) {
+      const text = STR.saves.groundUnreadable(this.ground.unreadable.length);
+      this.toasts.push(text, 'warn');
+      this.notices.push({ key: 'save:ground', kind: 'warn', text, target: null }, 180);
+    }
+    if (this.ground?.added.length && !this.save(true))
+      this.toasts.push(STR.saves.groundUnsaved, 'warn');
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1771,6 +1794,7 @@ export class Game implements UiHost {
         setIntentAndReload({ action: 'continue', keepSpeed: true });
         return true;
       }
+      this.toasts.push(STR.overview.growRefused, 'warn');
     }
     this.world.rebuildFog();
     this.overview.rebuildRegions();

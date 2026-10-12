@@ -7,7 +7,10 @@ export const CHUNK_TILES = 32;
 /**
  * Grow a generated world by `ring` chunks on every side: the map parameters get a larger size and
  * a shifted origin, and every saved coordinate moves by the same amount so the start chunk stays
- * in the middle. Terrain is regenerated in world space, so the old tiles come back unchanged.
+ * in the middle. The ground the world stores is kept as it is: its chunks are keyed by world chunk
+ * coordinate, which growth never moves, so the next load reads the old tiles from it and
+ * generates only the new ring (`groundOf`), and with the generator unchanged that ring is what
+ * generation in world space gives the grown parameters.
  */
 export function expandSave(save: SaveGame, ring = 1): SaveGame {
   if (!save.world || save.world.kind !== 'generated') return save;
@@ -20,7 +23,7 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
   p.w += 2 * d;
   p.h += 2 * d;
   const newRX = Math.ceil(p.w / CHUNK_TILES);
-  save.world = { kind: 'generated', seed: save.world.seed, params: p };
+  save.world = { ...save.world, params: p };
   save.track = save.track.map(([x, y, k, r, ...rest]) => [x + d, y + d, k, r, ...rest]);
   for (const s of save.stations) {
     s.x += d;

@@ -10,15 +10,27 @@ import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { BuildingJSON } from './buildings';
+import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { CHUNK_TILES } from './expand';
+import { generatorOf, groundOf, lacksGround } from './ground';
 import { wrapRotation } from './rotation';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
-  | { kind: 'generated'; seed: number; params: MapGenParams }
+  | {
+      kind: 'generated';
+      seed: number;
+      params: MapGenParams;
+      /**
+       * v19: the ground of every chunk generated so far, as it was generated, under its world
+       * chunk key (src/world/chunks.ts). A load reads these and generates only the chunks missing
+       * here; absent or empty, every chunk is generated and stored on load.
+       */
+      chunks?: ChunkStore;
+    }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -80,7 +92,7 @@ export interface SaveParts {
   wires: [number, number, string][];
   /** v2: weather generator state */
   weather: unknown;
-  /** v3: how the map was built */
+  /** v3: how the map was built; v19: a generated world with the ground of its chunks */
   world: WorldSpec;
   /** v3: the rules the game was played with */
   rules: Partial<Rules>;
@@ -556,6 +568,15 @@ export const MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    from: 18,
+    note: 'a generated map whose ground was not stored yet has it generated as before, then stored chunk by chunk and the save written at once (applied on load); from now on a save keeps the ground of every chunk, so a change to map generation reaches only land generated after it',
+    run: (j) => {
+      // a level carries its own ground; a world no build wrote is left as it is
+      const world: unknown = j.world;
+      if (isRecord(world) && world.kind === 'generated') world.chunks = world.chunks ?? {};
+    },
+  },
 ];
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
 const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
@@ -954,4 +975,98 @@ export function deleteSlot(name: string) {
   const slots = readSlots();
   delete slots[name];
   return writeSlots(slots);
+}
+
+// ------------------------------------------------------------------ stored ground
+/**
+ * Set once the saves stored before saves kept their ground (v19) have been given it
+ * (`freezeStoredSaves`); it holds the format version the pass ran under.
+ */
+export const GROUND_KEY = 'terepasztal.ground';
+
+/**
+ * A stored save text with the ground of its map added (`groundOf`, with `generate` for the save),
+ * or null when there is none to add: the text holds no save the game loads, its world is a level
+ * or stores every chunk its map covers already, or the file holds a number JSON cannot write.
+ * Only the ground is added. The file keeps its version, time stamp and everything else as they
+ * were, so it lists, loads and upgrades as before; the step from v18 keeps the store it finds.
+ */
+export function withGround(raw: string, generate: (save: SaveGame) => MapGenerator): string | null {
+  const read = readSaveText(raw);
+  if (!('save' in read)) return null;
+  const { world } = read.save;
+  if (world?.kind !== 'generated' || !lacksGround(world)) return null;
+  groundOf(world, generate(read.save));
+  const parsed = JSON.parse(raw) as unknown;
+  // the save inside a diagnostics bundle, as `openSave` reads it
+  const file =
+    isRecord(parsed) && parsed.diagnostics === 1 && isRecord(parsed.save) ? parsed.save : parsed;
+  if (!isRecord(file)) return null;
+  // a file from before v3 has no world of its own: it gets the one the step from v2 builds for it
+  file.world = isRecord(file.world) ? { ...file.world, chunks: world.chunks } : world;
+  return firstNonFinite(parsed) === null ? JSON.stringify(parsed) : null;
+}
+
+/** What `freezeStoredSaves` did. */
+export interface FreezeReport {
+  /** false when the pass had run before, or storage could not be read */
+  ran: boolean;
+  /** stored saves given their ground, Continue's and the named ones */
+  frozen: number;
+  /** stored saves that lack it still: storage would not keep them with it (full or blocked) */
+  refused: number;
+}
+
+/**
+ * Give every stored save that lacks the ground of its map that ground (`withGround`), as the
+ * generator of this build makes it: the save Continue loads and every named save, each once.
+ * Runs once (`GROUND_KEY`): saves written since keep their ground, and a save that comes in later
+ * without it (an import) gets it when it is loaded. A save storage will not keep with its ground
+ * stays stored as it was, is counted in `refused`, and gets its ground when it is next loaded.
+ * Named saves are written one at a time, so a full storage keeps every one it can.
+ */
+export function freezeStoredSaves(
+  generate: (save: SaveGame) => MapGenerator = (s) => generatorOf(s.supply),
+): FreezeReport {
+  const report: FreezeReport = { ran: false, frozen: 0, refused: 0 };
+  let continued: string | null;
+  try {
+    if (localStorage.getItem(GROUND_KEY) !== null) return report;
+    continued = localStorage.getItem(SAVE_KEY);
+  } catch {
+    return report;
+  }
+  report.ran = true;
+  const tally = (stored: boolean) => (stored ? report.frozen++ : report.refused++);
+  // a save whose map cannot be made is left as it was: its load says what is wrong with it
+  const grounded = (raw: unknown) => {
+    try {
+      return typeof raw === 'string' ? withGround(raw, generate) : null;
+    } catch {
+      return null;
+    }
+  };
+  const text = grounded(continued);
+  if (text !== null)
+    try {
+      localStorage.setItem(SAVE_KEY, text);
+      tally(true);
+    } catch {
+      tally(false);
+    }
+  let slots = readSlots();
+  for (const [name, raw] of Object.entries(slots)) {
+    const next = grounded(raw);
+    if (next === null) continue;
+    const table = { ...slots, [name]: next };
+    const stored = writeSlots(table);
+    if (stored) slots = table;
+    tally(stored);
+  }
+  try {
+    localStorage.setItem(GROUND_KEY, String(SAVE_VERSION));
+  } catch {
+    /* the pass runs again next time, and finds the saves it gave their ground to have it */
+  }
+  return report;
 }

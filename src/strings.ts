@@ -68,6 +68,9 @@ export const STR = {
     /** after a loop error the map cannot grow now, since growing stores the game first */
     growHeld:
       'The map grows past its edge once you save the game and reload it. Until then nothing is saved automatically, because of the earlier error.',
+    /** growing stores the game first, and that save was refused (storage full, a broken value) */
+    growRefused:
+      'The map could not grow past its edge: growing saves the game first, and the save was refused. It grows once a save goes through and the game is loaded again.',
     cannotAfford: (v: string) => `Need ${v} to buy this chunk`,
     chunkTitle: 'Uncharted chunk',
     chunkLines: (v: string) => [`Price ${v}`, 'Click to buy'],
@@ -875,6 +878,12 @@ export const STR = {
     saveBroken: 'Could not save: the game holds a broken value. Your last save is kept.',
     /** An autosave refused for the same reason; shown once until some save has gone through. */
     autosaveBroken: 'Autosave stopped: the game holds a broken value. Your last save is kept.',
+    /**
+     * A save the game made on its own (the minute autosave, the ground stored on load) refused by
+     * storage; shown once until some save has gone through.
+     */
+    autosaveFailed:
+      'Autosave failed: storage is full or blocked, so progress since your last save is not kept. Deleting a named save can free space.',
     noSave: 'No save found',
     badSave: 'Save data unreadable',
   },
@@ -934,6 +943,22 @@ export const STR = {
       if (tickets <= 0) return money;
       return money ? `${money} and ${t}` : t;
     },
+    /**
+     * A loaded save stores the ground of `n` chunks in a form this game cannot read (damaged, or
+     * written by a newer game): that land is generated again for this session, and the stored
+     * ground is kept as it was.
+     */
+    groundUnreadable: (n: number) =>
+      `The stored ground of ${n} chunk${n === 1 ? '' : 's'} of this map could not be read. That land was generated again for this session and may not match what was built on it; the stored ground is kept.`,
+    /** The ground generated as a save loaded (an older save's, land the map grew) was not stored. */
+    groundUnsaved:
+      'Could not store the ground of the land just generated. It is stored with the next save that goes through.',
+    /**
+     * At start-up, `n` saves from before saves kept their ground could not be stored with it
+     * (storage full or blocked); each gets it when it is loaded.
+     */
+    groundRefused: (n: number) =>
+      `Storage is full or blocked: ${n} saved game${n === 1 ? '' : 's'} could not store the ground of ${n === 1 ? 'its' : 'their'} map. ${n === 1 ? 'It gets' : 'Each gets'} it when loaded.`,
   },
   menu: {
     tagline: 'Rails, contracts and the luck of the draw',

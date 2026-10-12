@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Game } from '../game';
 import { AutosavePause } from './autosavePause';
-import { BrokenNumberWarning } from './saveRefusal';
+import { BrokenNumberWarning, StorageRefusalWarning } from './saveRefusal';
 import { SAVE_KEY, type SaveGame } from '../sim/save';
 import { STR } from '../strings';
 import { forAll, shrinkArray } from '../testing/property';
 import type { Rng } from './rng';
 
 // What `Game.save` and `Game.saveSlot` make of an outcome: the toast, the console, the latch. The
-// rules themselves (`saveOutcome`, `BrokenNumberWarning`) are pinned in saveRefusal.test.ts; this
-// file pins that the game calls them and shows what they say. A `Game` cannot be constructed under
+// rules themselves (`saveOutcome`, `BrokenNumberWarning`, `StorageRefusalWarning`) are pinned in
+// saveRefusal.test.ts; this file pins that the game calls them and shows what they say. A `Game` cannot be constructed under
 // Node (its `Toasts` build DOM), but its methods run on a stand-in that has the prototype and
 // only the fields they read, so the real `save`, `saveSlot` and their helpers are what is tested.
 
@@ -43,6 +43,7 @@ function standIn() {
     keepStoredSave: false,
     autosavePause: pause,
     brokenNumberWarning: new BrokenNumberWarning(),
+    storageRefusalWarning: new StorageRefusalWarning(),
     savedAt: null,
     toasts: { push: (text: string, kind: string) => toasts.push({ text, kind }) },
     snapshot: () => current,
@@ -115,8 +116,17 @@ describe('the texts of a refused save', () => {
       STR.settings.saveFailed,
       STR.settings.saveBroken,
       STR.settings.autosaveBroken,
+      STR.settings.autosaveFailed,
     ];
     expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('say storage refused a silent save and progress is not kept, without a word of broken values', () => {
+    const text = STR.settings.autosaveFailed;
+    expect(text).toMatch(/storage/i);
+    expect(text).toMatch(/full or blocked/i);
+    expect(text).toMatch(/not kept/i);
+    expect(text).not.toMatch(/broken/i);
   });
 });
 
@@ -150,6 +160,8 @@ describe('Game.save and Game.saveSlot', () => {
       brokenToast: 0,
       autosaveWarned: 0,
       autosaveSilenced: 0,
+      autosaveStorageWarned: 0,
+      autosaveStorageSilenced: 0,
       pausedSkipped: 0,
       manualAfterPause: 0,
       slotBroken: 0,
@@ -161,9 +173,10 @@ describe('Game.save and Game.saveSlot', () => {
         vi.stubGlobal('localStorage', store);
         warn.mockClear();
         const g = standIn();
-        // The model of the game, read from the steps alone. A manual save or a slot refused for a
-        // broken number counts as the warning shown, so the autosave after it stays silent.
+        // The model of the game, read from the steps alone: a latch for each reason. A manual save
+        // or a slot refused counts as the warning shown, so the autosave after it stays silent.
         let warned = false;
+        let warnedStorage = false;
         steps.forEach((step, i) => {
           const where = `step ${i}: ${step.op}`;
           if (step.op === 'trip') {
@@ -200,11 +213,18 @@ describe('Game.save and Game.saveSlot', () => {
           // the toast
           if (step.op === 'implicit') {
             const warns = out === 'broken' && !warned;
+            const warnsStorage = out === 'storage' && !warnedStorage;
             expect(texts, where).toEqual(
-              warns ? [{ text: STR.settings.autosaveBroken, kind: 'warn' }] : [],
+              warns
+                ? [{ text: STR.settings.autosaveBroken, kind: 'warn' }]
+                : warnsStorage
+                  ? [{ text: STR.settings.autosaveFailed, kind: 'warn' }]
+                  : [],
             );
             if (warns) seen.autosaveWarned++;
             else if (out === 'broken') seen.autosaveSilenced++;
+            if (warnsStorage) seen.autosaveStorageWarned++;
+            else if (out === 'storage') seen.autosaveStorageSilenced++;
           } else {
             const want: Toast =
               out === 'stored'
@@ -245,9 +265,10 @@ describe('Game.save and Game.saveSlot', () => {
           if (step.op !== 'slot')
             expect(g.host.savedAt, where).toBe(out === 'stored' ? snap.savedAt : savedAt);
 
-          // the latch, by the model
-          if (out === 'stored') warned = false;
+          // the latches, by the model
+          if (out === 'stored') warned = warnedStorage = false;
           else if (out === 'broken') warned = true;
+          else warnedStorage = true;
         });
       },
       { shrink: (steps) => shrinkArray(steps) },
@@ -271,5 +292,15 @@ describe('Game.save and Game.saveSlot', () => {
     g.host.keepStoredSave = false;
     expect(g.game.save(true)).toBe(false);
     expect(g.toasts).toEqual([{ text: STR.settings.autosaveBroken, kind: 'warn' }]);
+    // and the same for storage: refusals while reloading feed nothing, the first one after warns
+    g.toasts.length = 0;
+    g.host.keepStoredSave = true;
+    g.take(base(2));
+    store.refuses = true;
+    expect(g.game.save(true)).toBe(false);
+    expect(g.toasts).toEqual([]);
+    g.host.keepStoredSave = false;
+    expect(g.game.save(true)).toBe(false);
+    expect(g.toasts).toEqual([{ text: STR.settings.autosaveFailed, kind: 'warn' }]);
   });
 });

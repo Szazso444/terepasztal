@@ -1,7 +1,7 @@
 import { Game, hashSeed } from './game';
 import { STR } from './strings';
 import { el } from './ui/dom';
-import { readSave, clearSave, writeSave, type WorldSpec } from './sim/save';
+import { readSave, clearSave, writeSave, freezeStoredSaves, type WorldSpec } from './sim/save';
 import { expandSave, ownsBorderChunk } from './sim/expand';
 import { rules, rulesFrom } from './sim/rules';
 import { takeIntent, setTestingLevel, type Intent } from './intent';
@@ -57,6 +57,8 @@ function levelForEdit(i: Extract<Intent, { action: 'edit' }>): LevelData | null 
 async function boot() {
   const loading = el('div', { id: 'loading' }, STR.title, el('small', { text: STR.loading }));
   document.getElementById('ui-root')!.append(loading);
+  // saves stored before saves kept their ground get it once: Continue's and every named one
+  const frozen = freezeStoredSaves();
   const intent = takeIntent() ?? legacyHashIntent();
   if (location.hash) history.replaceState(null, '', location.pathname);
 
@@ -133,6 +135,7 @@ async function boot() {
   if (start !== 'editor' && !resumed && !(intent?.action === 'continue' && intent.keepSpeed))
     game.clock.setSpeed(0);
   if (start === 'menu') game.openMainMenu();
+  if (frozen.refused) game.toasts.push(STR.saves.groundRefused(frozen.refused), 'warn');
   armDevReload(() => (game.mode === 'play' && !game.menuOpen ? game.snapshot() : null));
   if (import.meta.env.DEV)
     reportDevTraffic(() => ({
