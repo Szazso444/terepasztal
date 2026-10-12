@@ -4,6 +4,7 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
+import { applyTileRepairs, repairBuiltTiles } from './engine/loadRepair';
 import {
   BrokenNumberWarning,
   StorageRefusalWarning,
@@ -90,13 +91,13 @@ import {
 } from './sim/save';
 import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, stationFootprint } from './sim/stations';
+import { Station, resetStationIds } from './sim/stations';
 import { ensureStartDepot, startDepotKind } from './sim/startDepot';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
-import { footprintOf, pieceFrame } from './world/track';
+import { pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
@@ -1164,35 +1165,13 @@ export class Game implements UiHost {
 
   /**
    * Ground generated on load (a save's first load, a stored chunk that could not be read) need not
-   * be what was built on; anything the player built must still stand on buildable ground (a
-   * regenerated stone field or lake under a station would strand it).
+   * be what was built on; anything the player built must still stand on ground that allows it. The
+   * repair is `repairBuiltTiles`; it changes the map in memory and never a stored chunk's text.
    */
   private fixBuiltTiles(j: SaveGame) {
-    const bridges = new Set(
-      (j.buildings ?? [])
-        .filter((b) => buildingDef(b[2]).bridge)
-        .map((b) => b[1] * this.map.w + b[0]),
-    );
-    const fix = (x: number, y: number, bridge = false) => {
-      if (!inBounds(this.map, x, y)) return;
-      const t = terrainAt(this.map, x, y);
-      if (
-        bridge
-          ? t !== Terrain.Water
-          : t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain
-      ) {
-        this.map.terrain[y * this.map.w + x] = bridge ? Terrain.Water : Terrain.Grass;
-        this.map.props.delete(y * this.map.w + x);
-        this.world.retile(x, y);
-      }
-    };
-    for (const [x, y, kind, rot, cls] of j.track)
-      for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
-        fix(f.x, f.y, kind === 'bridge' || bridges.has(f.y * this.map.w + f.x));
-    for (const s of j.stations)
-      for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) fix(f.x, f.y);
-    for (const [x, y] of j.decor ?? []) fix(x, y);
-    for (const [x, y, id] of j.buildings ?? []) fix(x, y, !!buildingDef(id).bridge);
+    const repairs = repairBuiltTiles(this.map, j);
+    applyTileRepairs(this.map, repairs);
+    for (const r of repairs) this.world.retile(r.x, r.y);
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
@@ -1801,6 +1780,9 @@ export class Game implements UiHost {
     this.minimap.rebuildBase();
     this.toasts.push(STR.overview.bought, 'good');
     if (held) this.toasts.push(STR.overview.growHeld, 'warn');
+    // an inner purchase is stored at once, as the autosave stores: every refusal of it applies
+    // (autosave off, a loop error, a reload into a stored save, storage); a ring was written above
+    if (!edge && this.settings.autosave && this.mode === 'play') this.save(true);
     return true;
   }
   private trackTilesForOverview() {
