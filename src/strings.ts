@@ -1107,6 +1107,13 @@ export const STR = {
     duplicate: 'Duplicate',
     remove: 'Remove',
     add: 'Add entry',
+    /** an optional field the entry leaves out: the game's own default applies */
+    unset: 'default',
+    /** a locomotive without its own length is as long as its size */
+    unsetLength: 'from size',
+    /** an optional flag set on the entry */
+    flagOn: 'yes',
+    flagOff: 'no',
     export: 'Export JSON',
     import: 'Import JSON',
     jsonHint: 'bundle JSON',

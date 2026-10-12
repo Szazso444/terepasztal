@@ -1507,7 +1507,10 @@ body.editor #train-side {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-textarea.bad {
+/* a value the content form refused stays in its box, framed red, until it is fixed */
+textarea.bad,
+.content-field input.bad,
+.content-field select.bad {
   border-color: var(--red);
 }
 

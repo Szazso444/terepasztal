@@ -3,8 +3,17 @@ import { STR } from '../strings';
 import type { Screen } from './modal';
 import { problemSummary, setAsideLines } from './contentReport';
 import {
+  TAB_FORMS,
+  formFields,
+  kindFor,
+  readField,
+  shippedRows,
+  showField,
+  type FormField,
+  type Row,
+} from './contentForm';
+import {
   content,
-  DEFAULT_CONTENT,
   CONTENT_KEYS,
   validateContent,
   changedTables,
@@ -16,8 +25,6 @@ import {
   type ContentKey,
 } from '../data/content';
 
-type Row = Record<string, unknown>;
-
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
 }
@@ -26,8 +33,8 @@ function clone<T>(v: T): T {
  * In-client content editor. Works on a copy of the live bundle; "Apply" stores the tables that
  * differ from the shipped ones as the override set and reloads so every module reads the new
  * tables. Tabs running on a stored table are marked, and stored tables the load set aside are
- * listed with the reason. Forms are generated from the shape of the shipped entries, so new fields
- * in the JSON show up automatically.
+ * listed with the reason. Forms are generated from the shipped entries and the optional fields
+ * each table declares (`contentForm.ts`), so new fields in the JSON show up automatically.
  */
 export class ContentScreen implements Screen {
   readonly id = 'content';
@@ -81,112 +88,15 @@ export class ContentScreen implements Screen {
     this.renderAside();
     const b = this.body;
     b.innerHTML = '';
-    switch (this.tab) {
-      case 'locomotives':
-      case 'wagons':
-      case 'cargo':
-      case 'decor':
-      case 'buildings':
-        b.append(
-          this.listEditor(
-            this.draft[this.tab] as unknown as Row[],
-            DEFAULT_CONTENT[this.tab][0] as unknown as Row,
-          ),
-        );
-        break;
-      case 'stations':
-        b.append(
-          el('div', { class: 'col-title', text: STR.content.levels }),
-          this.objectForm(
-            this.draft.stations.levels as unknown as Row,
-            DEFAULT_CONTENT.stations.levels as unknown as Row,
-          ),
-        );
-        b.append(
-          el('div', { class: 'col-title', text: STR.content.entries }),
-          this.listEditor(
-            this.draft.stations.defs as unknown as Row[],
-            DEFAULT_CONTENT.stations.defs[0] as unknown as Row,
-          ),
-        );
-        break;
-      case 'contracts': {
-        const { templates: _t, rarities: _r, ...cfg } = this.draft.contracts;
-        const { templates: _d, rarities: _dr, ...dcfg } = DEFAULT_CONTENT.contracts;
-        void _t;
-        void _d;
-        void _r;
-        void _dr;
-        b.append(
-          el('div', { class: 'col-title', text: STR.content.config }),
-          this.objectForm(
-            cfg as unknown as Row,
-            dcfg as unknown as Row,
-            (k, v) => ((this.draft.contracts as unknown as Row)[k] = v),
-          ),
-        );
-        b.append(
-          el('div', { class: 'col-title', text: STR.content.entries }),
-          this.listEditor(
-            this.draft.contracts.templates as unknown as Row[],
-            DEFAULT_CONTENT.contracts.templates[0] as unknown as Row,
-          ),
-        );
-        b.append(
-          el('div', { class: 'col-title', text: STR.settings.contractPolicy }),
-          this.listEditor(
-            this.draft.contracts.rarities as unknown as Row[],
-            DEFAULT_CONTENT.contracts.rarities[0] as unknown as Row,
-          ),
-        );
-        break;
-      }
-      case 'gacha': {
-        const { banners: _b, ...cfg } = this.draft.gacha;
-        const { banners: _db, ...dcfg } = DEFAULT_CONTENT.gacha;
-        void _b;
-        void _db;
-        b.append(
-          el('div', { class: 'col-title', text: STR.content.config }),
-          this.objectForm(
-            cfg as unknown as Row,
-            dcfg as unknown as Row,
-            (k, v) => ((this.draft.gacha as unknown as Row)[k] = v),
-          ),
-        );
-        b.append(
-          el('div', { class: 'col-title', text: STR.content.entries }),
-          this.listEditor(
-            this.draft.gacha.banners as unknown as Row[],
-            DEFAULT_CONTENT.gacha.banners[0] as unknown as Row,
-          ),
-        );
-        break;
-      }
-      case 'track':
-        b.append(
-          this.objectForm(
-            this.draft.track as unknown as Row,
-            DEFAULT_CONTENT.track as unknown as Row,
-          ),
-        );
-        break;
-      case 'crafting':
-        b.append(
-          this.objectForm(
-            this.draft.crafting as unknown as Row,
-            DEFAULT_CONTENT.crafting as unknown as Row,
-          ),
-        );
-        break;
-      case 'houses':
-        b.append(
-          this.objectForm(
-            this.draft.houses as unknown as Row,
-            DEFAULT_CONTENT.houses as unknown as Row,
-          ),
-        );
-        break;
+    for (const spec of TAB_FORMS[this.tab]) {
+      if (spec.title) b.append(el('div', { class: 'col-title', text: spec.title }));
+      const fields = formFields(spec);
+      const target = spec.pick(this.draft);
+      b.append(
+        spec.list
+          ? this.listEditor(target as Row[], fields, shippedRows(spec)[0])
+          : this.objectForm(target as Row, fields),
+      );
     }
     this.renderFoot();
   }
@@ -208,99 +118,76 @@ export class ContentScreen implements Screen {
       );
   }
 
-  /** Editable field for one value; the default entry supplies the type. */
-  private field(
-    row: Row,
-    key: string,
-    sample: unknown,
-    onSet?: (k: string, v: unknown) => void,
-  ): HTMLElement {
-    const set = (v: unknown) => {
-      row[key] = v;
-      onSet?.(key, v);
+  /**
+   * Editable field for one entry's value. A field the entry leaves out shows empty with what the
+   * game uses instead; an optional flag picks between that, yes and no.
+   */
+  private field(row: Row, f: FormField): HTMLElement {
+    const kind = kindFor(row, f);
+    const text = showField(row, f, kind);
+    const placeholder = f.unset ?? '';
+    const set = (input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, v: string) => {
+      input.classList.toggle('bad', !readField(row, f, kind, v));
       this.validate();
     };
-    const cur = row[key] ?? sample;
-    if (typeof sample === 'boolean') {
+    if (kind === 'bool' && f.unset === undefined) {
       const i = el('input', { type: 'checkbox' }) as HTMLInputElement;
-      i.checked = !!cur;
-      i.addEventListener('change', () => set(i.checked));
+      i.checked = text === 'true';
+      i.addEventListener('change', () => set(i, String(i.checked)));
       return i;
     }
-    if (typeof sample === 'number') {
-      const i = el('input', {
+    if (kind === 'bool') {
+      const s = el(
+        'select',
+        { class: 'text', style: 'width:90px' },
+        el('option', { value: '', text: placeholder }),
+        el('option', { value: 'true', text: STR.content.flagOn }),
+        el('option', { value: 'false', text: STR.content.flagOff }),
+      ) as HTMLSelectElement;
+      s.value = text;
+      s.addEventListener('change', () => set(s, s.value));
+      return s;
+    }
+    if (kind === 'json') {
+      const area = el('textarea', {
         class: 'text',
-        type: 'number',
-        step: 'any',
-        value: String(cur),
-        style: 'width:90px',
-      }) as HTMLInputElement;
-      i.addEventListener('change', () => set(Number(i.value)));
-      return i;
+        style: 'width:100%;min-height:36px;font-family:var(--font-mono);font-size:10px',
+        spellcheck: 'false',
+        placeholder,
+      }) as HTMLTextAreaElement;
+      area.value = text;
+      area.addEventListener('change', () => set(area, area.value));
+      return area;
     }
-    if (typeof sample === 'string') {
-      const i = el('input', {
-        class: 'text',
-        type: 'text',
-        value: String(cur),
-        style: 'width:180px',
-      }) as HTMLInputElement;
-      i.addEventListener('change', () => set(i.value));
-      return i;
-    }
-    if (
-      Array.isArray(sample) &&
-      sample.every((x) => typeof x === 'string' || typeof x === 'number')
-    ) {
-      const numeric = sample.length > 0 && typeof sample[0] === 'number';
-      const i = el('input', {
-        class: 'text',
-        type: 'text',
-        value: (cur as unknown[]).join(', '),
-        style: 'width:260px',
-      }) as HTMLInputElement;
-      i.addEventListener('change', () => {
-        const parts = i.value
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-        set(numeric ? parts.map(Number) : parts);
-      });
-      return i;
-    }
-    // nested object / array of objects: JSON
-    const area = el('textarea', {
+    const width = kind === 'number' ? 90 : kind === 'text' ? 180 : 260;
+    const i = el('input', {
       class: 'text',
-      style: 'width:100%;min-height:36px;font-family:var(--font-mono);font-size:10px',
-      spellcheck: 'false',
-    }) as HTMLTextAreaElement;
-    area.value = JSON.stringify(cur);
-    area.addEventListener('change', () => {
-      try {
-        set(JSON.parse(area.value));
-        area.classList.remove('bad');
-      } catch {
-        area.classList.add('bad');
-      }
-    });
-    return area;
+      type: kind === 'number' ? 'number' : 'text',
+      value: text,
+      placeholder,
+      style: `width:${width}px`,
+    }) as HTMLInputElement;
+    if (kind === 'number') i.step = 'any';
+    i.addEventListener('change', () => set(i, i.value));
+    return i;
   }
 
-  private objectForm(obj: Row, sample: Row, onSet?: (k: string, v: unknown) => void): HTMLElement {
+  private objectForm(obj: Row, fields: FormField[]): HTMLElement {
     const box = el('div', { class: 'content-form' });
-    for (const key of Object.keys(sample))
+    for (const f of fields)
       box.append(
         el(
           'label',
           { class: 'content-field' },
-          el('span', { class: 'k', text: key }),
-          this.field(obj, key, sample[key], onSet),
+          el('span', { class: 'k', text: f.key }),
+          this.field(obj, f),
         ),
       );
     return box;
   }
 
-  private listEditor(list: Row[], sample: Row): HTMLElement {
+  /** One form per entry; `template` is what "Add entry" copies into an empty list. */
+  private listEditor(list: Row[], fields: FormField[], template: Row): HTMLElement {
     const box = el('div', { class: 'content-list' });
     list.forEach((row, i) => {
       const head = el(
@@ -326,13 +213,13 @@ export class ContentScreen implements Screen {
           'small',
         ),
       );
-      box.append(el('div', { class: 'content-entry' }, head, this.objectForm(row, sample)));
+      box.append(el('div', { class: 'content-entry' }, head, this.objectForm(row, fields)));
     });
     box.append(
       btn(
         STR.content.add,
         () => {
-          const c = clone(list[list.length - 1] ?? sample);
+          const c = clone(list[list.length - 1] ?? template);
           if (typeof c.id === 'string') c.id = `new_${list.length + 1}`;
           list.push(c);
           this.render();
