@@ -10,6 +10,8 @@ import { BuildController } from './buildController';
 import { harvestPreviewPerWeek } from './harvestPreview';
 
 const HARVESTERS = STATION_DEFS.filter((d) => d.terrain);
+/** Stations that harvest nothing (town, warehouse, depots, passenger station): no preview. */
+const OTHERS = STATION_DEFS.filter((d) => !d.terrain);
 /** The tuning multipliers the preview is held to: the default and one that is not. */
 const MULS = [1, 2];
 /** Tiles of a fixture world a harvester is tried on, per kind and multiplier. */
@@ -97,6 +99,36 @@ describe("a harvest station's build preview", () => {
           c.factor,
         );
         expect(status[0]).toContain(expected);
+      },
+      { format: (c) => JSON.stringify({ ...c, def: c.def.id }) },
+    );
+  });
+
+  it('is not given for a station that harvests nothing, whatever the ground or the tuning', () => {
+    const w = simWorld({ seed: 4242, size: 48 });
+    let factor = 1;
+    vi.spyOn(w.builder, 'harvestFactor').mockImplementation(() => factor);
+    const statusOf = (defId: string, mul: number, f: number) => {
+      rules.productionMul = mul;
+      factor = f;
+      const { b, status } = controllerOn(w, { x: 3, y: 3 });
+      b.setTool({ kind: 'station', defId });
+      b.update(true);
+      expect(status, `${defId}: a status line`).toHaveLength(1);
+      return status[0];
+    };
+    expect(OTHERS.length, 'stations that harvest nothing').toBeGreaterThan(0);
+    forAll(
+      (rng) => ({
+        def: rng.pick(OTHERS),
+        factor: rng.pick([0.15, 1.6, rng.range(0.15, 1.6)]),
+        productionMul: rng.pick([0.1, 2.5, rng.range(0.1, 5)]),
+      }),
+      (c) => {
+        // what the line says for this station on plain ground under the default tuning: a harvest
+        // preview would carry the ground and the tuning into it, and this line does not
+        const plain = statusOf(c.def.id, 1, 1);
+        expect(statusOf(c.def.id, c.productionMul, c.factor)).toBe(plain);
       },
       { format: (c) => JSON.stringify({ ...c, def: c.def.id }) },
     );
