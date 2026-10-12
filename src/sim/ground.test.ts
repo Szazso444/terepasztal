@@ -6,6 +6,7 @@ import {
   SAVE_VERSION,
   SLOTS_KEY,
   buildSave,
+  continueMeta,
   freezeStoredSaves,
   listSlots,
   parseSave,
@@ -467,7 +468,146 @@ describe('the saves stored when this version first runs', () => {
     expect(s.writes).toBe(writes + 1);
     expect(s.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
   });
+
+  it('in a diagnostics bundle get their ground in the save it carries, the bundle otherwise kept', () => {
+    const inner = oldFile(small(7), 18);
+    const bundle = {
+      diagnostics: 1,
+      saveVersion: 18,
+      at: '2026-10-09T12:00:00.000Z',
+      traffic: { sections: [] },
+      save: inner,
+    };
+    const raw = JSON.stringify(bundle);
+    store.items.set(SAVE_KEY, raw);
+    store.items.set(SLOTS_KEY, JSON.stringify({ bundle: raw }));
+    const shown = [continueMeta(), listSlots()];
+    const gen = counting(changed);
+    expect(freezeStoredSaves(() => gen.gen)).toEqual({ ran: true, frozen: 2, refused: 0 });
+    expect(gen.calls).toHaveLength(2);
+    for (const [where, now] of [
+      ['Continue', store.items.get(SAVE_KEY)!],
+      ['named', slotTexts().bundle],
+    ]) {
+      const b = JSON.parse(now) as Record<string, unknown> & { save: { world: GeneratedWorld } };
+      const chunks = b.save.world.chunks!;
+      expect(Object.keys(chunks), where).toEqual(keysOf(small(7).params));
+      // the ground goes into the save the bundle carries; the bundle and the save as they were
+      expect(b, where).toEqual({
+        ...bundle,
+        save: { ...inner, world: { ...(inner.world as GeneratedWorld), chunks } },
+      });
+    }
+    expect([continueMeta(), listSlots()]).toEqual(shown);
+    // each loads from its ground alone, as the generator of that day made it
+    for (const save of [readSave(), readSlot('bundle')]) {
+      const world = save!.world as GeneratedWorld;
+      const built = groundOf(world, never);
+      expect(firstDifference(built.map, changed(7, world.params), { near: true })).toBeNull();
+    }
+  });
+
+  it('leave a save whose map cannot be made as it was, counted neither frozen nor refused', () => {
+    const { continued, slots } = storeSaves();
+    // a named save that is no text at all stays in the table as it was
+    store.items.set(SLOTS_KEY, JSON.stringify({ ...slots, odd: 5 }));
+    // generation fails for one world: the 'old' named save's, seed 3
+    const gen: MapGenerator = (s, p) => {
+      if (s === 3) throw new Error('generation failed');
+      return changed(s, p);
+    };
+    expect(freezeStoredSaves(() => gen)).toEqual({ ran: true, frozen: 3, refused: 0 });
+    const after = slotTexts() as Record<string, unknown>;
+    expect(after.old).toBe(slots.old);
+    expect(after.odd).toBe(5);
+    expect(store.items.get(SAVE_KEY)).not.toBe(continued);
+    expect(Object.keys(slots).filter((n) => after[n] !== slots[n])).toEqual(['full', 'ancient']);
+    expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
+    // it lacks its ground still, and gets it when it is loaded
+    expect(lacksGround(readSlot('old')!.world as GeneratedWorld)).toBe(true);
+  });
+
+  it('are not touched where storage cannot be read', () => {
+    storeSaves();
+    const s = store;
+    s.getItem = () => {
+      throw new Error('blocked');
+    };
+    const writes = s.writes;
+    expect(freezeStoredSaves(() => never)).toEqual({ ran: false, frozen: 0, refused: 0 });
+    expect(s.writes).toBe(writes);
+  });
+
+  // 30 stored games of up to 7 x 7 chunks of hashed ground, each written, read and built from its
+  // store: about 1.6 s alone
+  it('that store part of their ground get only the chunks they lack, every stored text kept', () => {
+    let rings = 0;
+    forAll(
+      genGrownSave,
+      (c) => {
+        store.items.clear();
+        const world = worldOf(c.seed, { w: 32 * c.side, h: 32 * c.side });
+        // a field a later build may add to the description stays with it too
+        Object.assign(world, { later: { kept: [1, 'a'] } });
+        groundOf(world, hashedGen(1));
+        const save = parseSave(JSON.stringify(buildSave(partsOf(world))))!;
+        // main.ts grows a save ring by ring as it reads it and writes it at once, before the game
+        // stores the ground of the new rings
+        for (let r = 0; r < c.rings; r++) expandSave(save);
+        const grown = save.world as GeneratedWorld;
+        const before = { ...grown.chunks! };
+        expect(Object.keys(before)).toEqual(keysOf(world.params));
+        const raw = JSON.stringify(save);
+        if (c.inSlot) store.items.set(SLOTS_KEY, JSON.stringify({ grown: raw }));
+        else store.items.set(SAVE_KEY, raw);
+        const gen = counting(hashedGen(2));
+        expect(freezeStoredSaves(() => gen.gen)).toEqual({ ran: true, frozen: 1, refused: 0 });
+        expect(gen.calls).toEqual([grown.params]);
+        // every stored text as it was, the chunks it lacked added, and nothing else of the file new
+        const now = c.inSlot ? slotTexts().grown : store.items.get(SAVE_KEY)!;
+        const file = JSON.parse(now) as SaveGame;
+        const chunks = (file.world as GeneratedWorld).chunks!;
+        for (const [k, t] of Object.entries(before)) expect(chunks[k], `chunk ${k}`).toBe(t);
+        expect(Object.keys(chunks).sort()).toEqual(keysOf(grown.params).sort());
+        const was = JSON.parse(raw) as SaveGame;
+        expect(file).toEqual({ ...was, world: { ...was.world, chunks } });
+        rings += Object.keys(chunks).length - Object.keys(before).length;
+        // read from the store alone: each chunk the ground of the generator that first covered it
+        const loaded = (c.inSlot ? readSlot('grown') : readSave())!;
+        const map = groundOf(loaded.world as GeneratedWorld, never).map;
+        const p = { ...DEFAULT_MAP_PARAMS, ...grown.params };
+        const old = (wx: number, wy: number) => inStore(before, wx, wy);
+        const where =
+          firstDifference(map, hashedGen(1)(c.seed, p), { only: old }) ??
+          firstDifference(map, hashedGen(2)(c.seed, p), { only: (wx, wy) => !old(wx, wy) });
+        if (where) throw new Error(where);
+      },
+      { seeds: Array.from({ length: 30 }, (_, i) => i + 1), shrink: shrinkGrownSave },
+    );
+    expect(rings).toBeGreaterThan(0);
+  }, 30_000);
 });
+
+/** A stored game grown since its ground was last written whole, kept as Continue or a named save. */
+interface GrownSave {
+  seed: number;
+  /** chunks a side before it grew */
+  side: number;
+  /** rings it grew by */
+  rings: number;
+  inSlot: boolean;
+}
+const genGrownSave = (rng: Rng): GrownSave => ({
+  seed: rng.int(0, 2 ** 31 - 1),
+  side: rng.int(1, 3),
+  rings: rng.int(1, 2),
+  inSlot: rng.chance(0.5),
+});
+function* shrinkGrownSave(c: GrownSave): Iterable<GrownSave> {
+  for (const side of shrinkInt(c.side, 1)) yield { ...c, side };
+  for (const rings of shrinkInt(c.rings, 1)) yield { ...c, rings };
+  if (c.inSlot) yield { ...c, inSlot: false };
+}
 
 describe('a world that grows', () => {
   it('keeps the ground it stores, and the next load generates the new ring alone', () => {
@@ -486,6 +626,43 @@ describe('a world that grows', () => {
       expect(firstDifference(built.map, whole, { near: true })).toBeNull();
     }
   });
+
+  // 20 worlds grown by up to three rings at once, to up to 288 tiles a side: about 0.5 s alone
+  it('changes only the frame of its description, and the next load adds just the new rings', () => {
+    forAll(
+      (rng) => ({ seed: rng.int(0, 2 ** 31 - 1), side: rng.int(1, 3), ring: rng.int(1, 3) }),
+      (c) => {
+        // a field a later build may add to the description travels with it, as the store does
+        const world: GeneratedWorld = { ...worldOf(c.seed, { w: 32 * c.side, h: 32 * c.side }) };
+        Object.assign(world, { later: { kept: [1, 'a'] } });
+        groundOf(world, hashedGen(1));
+        const save = parseSave(JSON.stringify(buildSave(partsOf(world))))!;
+        const was = structuredClone(save.world) as GeneratedWorld;
+        expandSave(save, c.ring);
+        const grown = save.world as GeneratedWorld;
+        const d = CHUNK_TILES * c.ring;
+        const { w, h, originX = 0, originY = 0 } = was.params;
+        const frame = { w: w + 2 * d, h: h + 2 * d, originX: originX - d, originY: originY - d };
+        expect(grown).toEqual({ ...was, params: { ...was.params, ...frame } });
+        // the next load makes the chunks of the new rings and nothing else
+        const gen = counting(hashedGen(2));
+        const built = groundOf(grown, gen.gen);
+        expect(gen.calls).toEqual([grown.params]);
+        expect(built.added).toEqual(
+          keysOf(grown.params).filter((k) => !Object.hasOwn(was.chunks!, k)),
+        );
+        expect(built.added).toHaveLength((c.side + 2 * c.ring) ** 2 - c.side ** 2);
+        for (const [k, t] of Object.entries(was.chunks!)) expect(grown.chunks![k], k).toBe(t);
+      },
+      {
+        seeds: Array.from({ length: 20 }, (_, i) => i + 1),
+        shrink: function* (c) {
+          for (const side of shrinkInt(c.side, 1)) yield { ...c, side };
+          for (const ring of shrinkInt(c.ring, 1)) yield { ...c, ring };
+        },
+      },
+    );
+  }, 10_000);
 
   it('mixes stored and new ground after a generator change, and track crosses the seam', () => {
     for (const seed of [1, 7412, 31337]) {
