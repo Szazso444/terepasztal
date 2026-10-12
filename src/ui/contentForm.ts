@@ -227,6 +227,7 @@ export function readField(row: Row, f: FormField, kind: FieldKind, text: string)
         .map((s) => s.trim())
         .filter(Boolean);
       v = kind === 'numList' ? parts.map(Number) : parts;
+      if (!keepsAsJson(v)) return false;
       break;
     }
     case 'json':
@@ -235,7 +236,17 @@ export function readField(row: Row, f: FormField, kind: FieldKind, text: string)
       } catch {
         return false;
       }
+      // a number too large for a double parses as an infinity, which the store writes as null
+      if (!keepsAsJson(v)) return false;
   }
   row[f.key] = v;
+  return true;
+}
+
+/** Whether the content store, which writes JSON, keeps `v` as it is: no NaN and no infinity. */
+function keepsAsJson(v: unknown): boolean {
+  if (typeof v === 'number') return Number.isFinite(v);
+  if (Array.isArray(v)) return v.every(keepsAsJson);
+  if (v !== null && typeof v === 'object') return Object.values(v).every(keepsAsJson);
   return true;
 }

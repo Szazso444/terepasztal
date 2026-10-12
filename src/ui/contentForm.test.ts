@@ -152,7 +152,19 @@ describe('an entry in a content form', () => {
     expect(readField(loco, field(locoForm, 'length'), 'number', 'long')).toBe(false);
     expect(readField(loco, field(locoForm, 'speed'), 'number', 'fast')).toBe(false);
     expect(readField(loco, field(locoForm, 'bogieStyle'), 'json', '{oops')).toBe(false);
+    // a number too large for a double: the store would write the infinity it parses to as null
+    expect(readField(loco, field(locoForm, 'speed'), 'json', '1e400')).toBe(false);
+    expect(readField(loco, field(locoForm, 'bogieStyle'), 'json', '{"a":[-1e400]}')).toBe(false);
     expect(loco).toStrictEqual(before);
+
+    const levelsForm = TAB_FORMS.stations[0];
+    const levels = clone(shippedRows(levelsForm)[0]);
+    const levelsBefore = clone(levels);
+    const capacity = field(levelsForm, 'capacity');
+    expect(capacity.kind).toBe('numList');
+    expect(readField(levels, capacity, 'numList', '60, x')).toBe(false);
+    expect(readField(levels, capacity, 'numList', '1e400')).toBe(false);
+    expect(levels).toStrictEqual(levelsBefore);
   });
 });
 
