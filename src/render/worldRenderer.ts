@@ -41,6 +41,7 @@ import {
   type BridgeSurfaces,
 } from './bridgeMeshes';
 import { bridgeJoins, bridgePlan, deckSamples, type BridgeSite } from './bridgeLayout';
+import { HarvestHighlight } from './harvestHighlight';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -90,6 +91,11 @@ export class WorldRenderer {
   readonly fog = new Container();
   /** additive ground lights (per-tile lighting), drawn over track and under objects */
   readonly lights = new Container();
+  /**
+   * The tiles a harvest station counts, lit over the ground and its lights and under objects; the
+   * game puts the night overlay under it, so the night does not darken it.
+   */
+  readonly harvest: HarvestHighlight;
   /** out-of-map void ring */
   readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
@@ -133,6 +139,7 @@ export class WorldRenderer {
     readonly regions: RegionState,
   ) {
     this.landscape = new Landscape(map, this.flattened, this.railBeds);
+    this.harvest = new HarvestHighlight(map, (x, y) => this.surfacePoint(x, y));
     this.landscape.root.visible = false;
     this.root.on('destroyed', () => this.surfaces.destroy());
     this.objects.sortableChildren = true;
@@ -153,6 +160,7 @@ export class WorldRenderer {
       this.platforms,
       this.track,
       this.lights,
+      this.harvest.layer,
       this.objects,
       this.fog,
       this.overlay,
@@ -489,6 +497,7 @@ export class WorldRenderer {
   animate(dt: number) {
     if (this.landscape.flush()) {
       this.refreshSummits();
+      this.harvest.refresh();
       for (const [i, s] of this.trackSprites)
         this.placeTrackSprite(s, i % this.map.w, Math.floor(i / this.map.w));
       for (const [i, list] of this.scatterSprites) {

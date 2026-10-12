@@ -31,7 +31,7 @@ pass `--blender <blender.exe>`; in the cloud run with the Python that imports
 `bpy` 5.2.1 and leave `--blender` out (`../AGENTS.md` has both setups):
 
 ```sh
-~/bpy-env/bin/python tools/asset-pipeline/painted/run.py tools/asset-pipeline/painted/manifests/c50.json \
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/painted/run.py tools/asset-pipeline/painted/manifests/c50.json \
   --out assets/source/painted-production --sample --verify-repeat
 ```
 

@@ -762,21 +762,25 @@ export class Game implements UiHost {
         const v = prompt(STR.settings.seedPlaceholder, String(this.map.seed));
         if (v === null) return;
         const seed = this.parseSeed(v);
-        const fresh = generateMapForEditor(seed, {
-          w: this.map.w,
-          h: this.map.h,
-          waterLevel: rules.waterLevel,
-          hillLevel: rules.hillLevel,
-          rockLevel: rules.rockLevel,
-          forestDensity: rules.forestDensity,
-        });
+        const fresh = generateMapForEditor(
+          seed,
+          {
+            w: this.map.w,
+            h: this.map.h,
+            waterLevel: rules.waterLevel,
+            hillLevel: rules.hillLevel,
+            rockLevel: rules.rockLevel,
+            forestDensity: rules.forestDensity,
+          },
+          this.supply,
+        );
         editor.fillAll(TerrainEnum.Grass);
         this.map.terrain.set(fresh.terrain);
         this.map.variant.set(fresh.variant);
         this.map.biome.set(fresh.biome);
         this.map.seed = seed;
         decorateProps(this.map, seed);
-        placeOilFields(this.map, seed);
+        placeOilFields(this.map, seed, this.supply);
         for (let y = 0; y < this.map.h; y++)
           for (let x = 0; x < this.map.w; x++) this.world.retile(x, y);
         editor.dirty = true;
@@ -811,8 +815,8 @@ export class Game implements UiHost {
 
     this.map =
       this.spec.kind === 'level'
-        ? mapFromLevel(this.spec.level)
-        : generateMap(this.spec.seed, this.spec.params);
+        ? mapFromLevel(this.spec.level, this.supply)
+        : generateMap(this.spec.seed, this.spec.params, this.supply);
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -959,6 +963,7 @@ export class Game implements UiHost {
         this.builder.buildingAt(x, y) ||
         this.builder.decorAt(x, y)
       );
+    this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
     this.overview.root.visible = false;
@@ -970,7 +975,7 @@ export class Game implements UiHost {
     this.fog = new Fog(this.atlas);
     this.world.root.addChildAt(
       this.dayNight.overlay,
-      this.world.root.getChildIndex(this.world.objects),
+      this.world.root.getChildIndex(this.world.harvest.layer),
     );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
@@ -2216,6 +2221,11 @@ export class Game implements UiHost {
       !this.menuOpen;
     this.updateFieldTrains(fieldActive);
     this.build.update(fieldActive);
+    this.world.harvest.follow(
+      fieldActive ? this.hoverTile : null,
+      this.build,
+      this.season ?? 'spring',
+    );
     this.updateRtsTooltip();
     this.hud.update(this.economy);
     this.resourceBar.update(this.stock, (id) => this.stockCap(id));
