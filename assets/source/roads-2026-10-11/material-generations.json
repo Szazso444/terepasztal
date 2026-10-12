@@ -1,0 +1,42 @@
+[
+  {
+    "id": "material-road-strip-x-before-alpha-correction",
+    "file": "raw/materials/road-strip-x.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-5293e139-8c27-4edd-a233-f6eb7b0d915e.png"
+  },
+  {
+    "id": "material-road-strip-y-before-alpha-correction",
+    "file": "raw/materials/road-strip-y.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-ac06e791-f377-4fb4-a896-3e96caa80c27.png"
+  },
+  {
+    "id": "material-crossing-material-regular-before-alpha-correction",
+    "file": "raw/materials/crossing-material-regular.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-98f8aaf0-1d59-4f03-8997-5f639617e3b5.png"
+  },
+  {
+    "id": "material-crossing-material-narrow-before-alpha-correction",
+    "file": "raw/materials/crossing-material-narrow.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-0076a713-3080-4419-ac94-184901ef1b42.png"
+  },
+  {
+    "id": "material-road-strip-x-alpha-correction",
+    "file": "raw/materials/road-strip-x-alpha-correction.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-fb99f39d-00b7-469a-83a8-21b283e445ea.png"
+  },
+  {
+    "id": "material-road-strip-y-alpha-correction",
+    "file": "raw/materials/road-strip-y-alpha-correction.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-cca21b25-cde7-498e-80ad-63da6bff8463.png"
+  },
+  {
+    "id": "material-crossing-material-regular-alpha-correction",
+    "file": "raw/materials/crossing-material-regular-alpha-correction.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-599ff454-7479-430b-b8b8-727085196a03.png"
+  },
+  {
+    "id": "material-crossing-material-narrow-alpha-correction",
+    "file": "raw/materials/crossing-material-narrow-alpha-correction.png",
+    "source": "C:\\Users\\Zso\\.codex\\generated_images\\01a12c52-d295-70f3-8845-cf87221121fb\\exec-be8d7c96-9df4-42bf-be6a-505b3902f9e0.png"
+  }
+]

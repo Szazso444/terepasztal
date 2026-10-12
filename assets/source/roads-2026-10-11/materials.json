@@ -1,0 +1,212 @@
+{
+  "purpose": "Four source paintings; downstream script owns final tile shape, position, dimensions and grid joins.",
+  "generationTool": "built-in imagegen",
+  "selectedAttempt": "original; quieter palette than alpha-correction attempts",
+  "fittingScript": null,
+  "fittingStatus": "Path requested from user; script not present in this checkout or origin/develop.",
+  "notes": [
+    "Do not treat these as finished 64x32 road frames.",
+    "Alpha-zero pixels retain RGB; composite using alpha instead of viewing raw RGB.",
+    "Longitudinal samples compare interior gravel colour along each road; they are measurements, not a tile-geometry test."
+  ],
+  "sources": [
+    {
+      "id": "road-strip-x",
+      "file": "materials/road-strip-x.png",
+      "role": "Long x road; two parallel ruts",
+      "width": 1536,
+      "height": 1024,
+      "channels": 4,
+      "alphaZero": 1306798,
+      "alphaOpaque": 0,
+      "alphaPartial": 266066,
+      "longitudinalSections": [
+        {
+          "section": 0,
+          "meanRgb": [
+            206.38,
+            179.88,
+            141.87
+          ],
+          "samples": 400
+        },
+        {
+          "section": 1,
+          "meanRgb": [
+            205.07,
+            178.48,
+            140.69
+          ],
+          "samples": 400
+        },
+        {
+          "section": 2,
+          "meanRgb": [
+            205.29,
+            178.61,
+            141.02
+          ],
+          "samples": 400
+        },
+        {
+          "section": 3,
+          "meanRgb": [
+            205.02,
+            178.33,
+            140.9
+          ],
+          "samples": 400
+        },
+        {
+          "section": 4,
+          "meanRgb": [
+            204.77,
+            178.08,
+            140.77
+          ],
+          "samples": 400
+        },
+        {
+          "section": 5,
+          "meanRgb": [
+            205.83,
+            179.07,
+            141.75
+          ],
+          "samples": 400
+        },
+        {
+          "section": 6,
+          "meanRgb": [
+            206.99,
+            180.25,
+            142.69
+          ],
+          "samples": 400
+        },
+        {
+          "section": 7,
+          "meanRgb": [
+            206,
+            179.1,
+            141.68
+          ],
+          "samples": 400
+        }
+      ],
+      "visualReview": "Smooth continuous material; no conspicuous unique marks. Geometry is assigned by downstream script."
+    },
+    {
+      "id": "road-strip-y",
+      "file": "materials/road-strip-y.png",
+      "role": "Long y road; two parallel ruts",
+      "width": 1536,
+      "height": 1024,
+      "channels": 4,
+      "alphaZero": 1279824,
+      "alphaOpaque": 0,
+      "alphaPartial": 293040,
+      "longitudinalSections": [
+        {
+          "section": 0,
+          "meanRgb": [
+            202.29,
+            177.75,
+            135.82
+          ],
+          "samples": 400
+        },
+        {
+          "section": 1,
+          "meanRgb": [
+            201.91,
+            177.04,
+            134.88
+          ],
+          "samples": 400
+        },
+        {
+          "section": 2,
+          "meanRgb": [
+            202.92,
+            178.07,
+            135.92
+          ],
+          "samples": 400
+        },
+        {
+          "section": 3,
+          "meanRgb": [
+            202.03,
+            177.06,
+            134.95
+          ],
+          "samples": 400
+        },
+        {
+          "section": 4,
+          "meanRgb": [
+            201.65,
+            176.78,
+            135.06
+          ],
+          "samples": 400
+        },
+        {
+          "section": 5,
+          "meanRgb": [
+            201.72,
+            176.8,
+            134.83
+          ],
+          "samples": 400
+        },
+        {
+          "section": 6,
+          "meanRgb": [
+            201.09,
+            176.52,
+            135
+          ],
+          "samples": 398
+        },
+        {
+          "section": 7,
+          "meanRgb": [
+            201.33,
+            176.77,
+            135.13
+          ],
+          "samples": 400
+        }
+      ],
+      "visualReview": "Smooth continuous material; no conspicuous unique marks. Geometry is assigned by downstream script."
+    },
+    {
+      "id": "crossing-material-regular",
+      "file": "materials/crossing-material-regular.png",
+      "role": "Uniform limestone setts with two timber check-plank bands",
+      "width": 1536,
+      "height": 1024,
+      "channels": 4,
+      "alphaZero": 930023,
+      "alphaOpaque": 0,
+      "alphaPartial": 642841,
+      "longitudinalSections": [],
+      "visualReview": "Smooth continuous material; no conspicuous unique marks. Geometry is assigned by downstream script."
+    },
+    {
+      "id": "crossing-material-narrow",
+      "file": "materials/crossing-material-narrow.png",
+      "role": "Uniform timber planking",
+      "width": 1536,
+      "height": 1024,
+      "channels": 4,
+      "alphaZero": 925257,
+      "alphaOpaque": 0,
+      "alphaPartial": 647607,
+      "longitudinalSections": [],
+      "visualReview": "Smooth continuous material; no conspicuous unique marks. Geometry is assigned by downstream script."
+    }
+  ]
+}
