@@ -84,22 +84,59 @@ export const STR = {
     hint: 'M / scroll in: return to field view',
   },
   tile: {
+    /** the line `Game.tileInfo` prints today; the tile tooltip (src/ui/tileTooltip.ts) uses `level` */
     elevation: (level: number) => `Elevation: level ${level}`,
+    /** a land terrain's name, the title of its tile, by `TERRAIN_NAMES` */
     terrain: {
-      grass: 'Grassland',
+      grass: 'Grass',
       forest: 'Forest',
       hill: 'Hill',
       water: 'Water',
-      rock: 'Stone field',
+      rock: 'Rock',
       sand: 'Sand',
       mountain: 'Mountain',
+    } as Record<string, string>,
+    /** the title of a snow tile: its terrain's name, then this */
+    snow: (terrain: string) => `${terrain}, snow`,
+    /** one dim line under the rows, by `TERRAIN_NAMES`; water has `water` below */
+    about: {
+      grass: 'Open ground. Most buildings and all track can go here.',
+      forest: 'Trees. Lumber yards count it; buildings can stand here; track costs extra clearing.',
+      hill: 'Rising ground. Quarries count it; track keeps to the elevation rules.',
+      rock: 'Bare rock. Quarries count it; no building stands on it.',
+      sand: 'Loose sand. Track and buildings can go here.',
+      mountain: 'The raised heart of a rock field. No building stands on it.',
+    } as Record<string, string>,
+    /** the row of the elevation, and its value (the number is shown bold) */
+    elevationRow: 'Elevation',
+    level: (level: number) => `level ${level}`,
+    /** the row on a snow tile, and its value: snow lies from the level after this one */
+    snowLine: 'Snow line',
+    aboveLevel: (level: number) => `above level ${level}`,
+    /** what stands on the tile, by `PropKind`; a kind not listed shows as its id */
+    prop: {
+      tree: 'tree',
+      pine: 'pine',
+      rock: 'rock',
+      bush: 'bush',
+      birch: 'birch',
+      spruce: 'spruce',
+      oak: 'oak',
+      palm: 'palm',
+      cactus: 'cactus',
+      deadtree: 'dead tree',
+      flowers: 'flowers',
+      reeds: 'reeds',
+      boulder: 'boulder',
+      coal: 'coal seam',
+      oil: 'oil seep',
     } as Record<string, string>,
     uncharted: 'Uncharted: buy the chunk in the overview (M)',
     track: (k: string) => `Track: ${k}`,
     powered: 'Powered rails',
     noTrack: 'No track can be laid here',
     trackCost: (m: number) => `Track costs ×${m}`,
-    water: 'Bridges only; pumps draw from it',
+    water: 'Bridges only; pumps draw from it.',
     /** the row that names the tile's biome; its value is the biome as a term (`STR.biome`) */
     biome: 'Biome',
     /**
