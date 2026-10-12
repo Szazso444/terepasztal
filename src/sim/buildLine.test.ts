@@ -6,12 +6,15 @@ import {
   TrackGraph,
   TRACK_ITEMS,
   footprintOf,
+  isUnitKind,
+  itemKey,
   rotationCount,
   transitionRot,
   type TrackClass,
   type TrackItem,
+  type TrackPiece,
 } from '../world/track';
-import { Dir } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { sfx } from '../engine/audio';
 import type { Cost } from '../data/content';
@@ -20,8 +23,9 @@ import { BUILDING_DEFS } from './buildings';
 import { bridgeCapacity } from './bridges';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
+import { resetStationIds } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
-import { forAll, shrinkArray } from '../testing/property';
+import { forAll, shrinkArray, type ForAllOptions } from '../testing/property';
 import { STR } from '../strings';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -392,6 +396,79 @@ describe('a bridge line', () => {
     const w = world();
     expect(() => w.builder.checkLine([platform(4, 4, 'windmill')])).toThrow();
   });
+
+  it('refuses a platform piece off the map, though its tile key is a standing platform', () => {
+    const w = world(24);
+    // a tile's key is y * 24 + x: (-1, 5) shares one with (23, 4), and (24, 4) with (0, 5)
+    expect(w.builder.placeBuilding(23, 4, 'bridge_wood')).not.toBeNull();
+    expect(w.builder.placeBuilding(0, 5, 'bridge_wood')).not.toBeNull();
+    const before = snapshot(w);
+    for (const p of [platform(-1, 5), platform(24, 4)]) {
+      expect(w.builder.checkLine([p]), JSON.stringify(p)).toMatchObject({
+        ok: false,
+        at: 0,
+        reason: STR.build.offMap,
+      });
+      expect(w.builder.placeLine([p])).toBe(false);
+    }
+    expect(snapshot(w)).toEqual(before);
+  });
+
+  it('stands a curve on uneven ground on the platforms the same line lays before it', () => {
+    const w = world();
+    const curve: LinePiece = {
+      kind: 'track',
+      x: 6,
+      y: 6,
+      item: { kind: 'curve', cls: 'regular' },
+      rot: 0,
+    };
+    const tiles = footprintOf(6, 6, 'curve', 0, 'regular'),
+      decks = tiles.map((t) => platform(t.x, t.y));
+    const uneven = new Set(tiles.map((t) => `${t.x},${t.y}`));
+    w.builder.groundCheck = (x, y, need) => need === 'straight' || !uneven.has(`${x},${y}`);
+    const notSmooth = { ok: false, at: 0, reason: STR.build.notSmooth };
+    expect(w.builder.checkLine([curve])).toMatchObject(notSmooth);
+    // the platforms listed after the curve come too late for it
+    expect(w.builder.checkLine([curve, ...decks])).toMatchObject(notSmooth);
+    const c = w.builder.checkLine([...decks, curve]);
+    expect(c.ok, c.reason).toBe(true);
+    const before = w.held();
+    expect(w.builder.placeLine([...decks, curve])).toBe(true);
+    expect(spent(before, w.held())).toEqual(vec(c.cost));
+    for (const t of tiles) {
+      expect(w.track.get(t.x, t.y)?.unit).toMatchObject({ ax: 6, ay: 6 });
+      expect(w.track.get(t.x, t.y)?.bridgeCapacity).toBe(
+        bridgeCapacity(w.builder.buildingAt(t.x, t.y)!),
+      );
+    }
+  });
+});
+
+describe('a line through a depot', () => {
+  it('tells the depot its gates are served, as the single-piece tools do, and no more', () => {
+    const make = () => {
+      resetStationIds(1);
+      const w = world();
+      w.builder.free = true;
+      const depot = w.builder.placeStation(8, 5, 'depot', 0)!;
+      w.builder.free = false;
+      return { w, depot, log: listen(w.builder) };
+    };
+    const { w, depot, log } = make(),
+      twin = make();
+    const gates = depot.gateTiles(),
+      y = gates[0].y;
+    const xs = gates.filter((g) => g.y === y).map((g) => g.x);
+    const line = run(Math.min(...xs) - 1, Math.max(...xs) + 1, y);
+    expect(w.builder.checkLine(line).ok).toBe(true);
+    expect(log).toEqual([]);
+    expect(w.builder.placeLine(line)).toBe(true);
+    for (const p of line) expect(single(twin.w, p)).toBe(true);
+    expect(log).toContain(`orphaned ${depot.id} false`);
+    expect(log).toEqual(twin.log);
+    expect(w.builder.platformTiles(depot).length).toBeGreaterThan(0);
+  });
 });
 
 // ---------------------------------------------------------------------------------- properties
@@ -546,6 +623,441 @@ describe('lines over seeded worlds', () => {
         expect(snapshot(w)).toEqual(snapshot(twin));
       },
       { shrink: shrinkCase },
+    );
+  });
+});
+
+// ---------------------------------------------------------------- properties over scenes
+// A scene adds what a line can meet besides ground, track and platforms: locked tiles, ground
+// that is not level or too steep (`groundCheck`), stations, decor, the editor and narrow gauge
+// still locked. Its line wanders and turns, mixes kinds and classes (wide pieces included) and
+// goes back over its own tiles. The runs `drawCase` draws are scenes too.
+
+interface Scene extends Case {
+  /** tiles outside the player's regions */
+  locked: number[];
+  /** tiles the ground calls not level; null leaves `groundCheck` unset (level everywhere) */
+  unlevel: number[] | null;
+  /** tiles of `unlevel` a straight cannot climb */
+  steep: number[];
+  /** stations put up in the editor after the standing track */
+  stations: { x: number; y: number; id: string; rot: number }[];
+  /** decor put up in the editor after the stations */
+  decor: { x: number; y: number; id: string; rot: number }[];
+  /** the line is laid in the editor */
+  free: boolean;
+  /** narrow gauge is open (`rules.narrowUnlocked`) */
+  narrow: boolean;
+}
+
+const AMPLE = RES.map(() => 1e6);
+const SCENE_GROUND = [
+  ...Array<Terrain>(16).fill(Terrain.Grass),
+  ...Array<Terrain>(3).fill(Terrain.Water),
+  Terrain.Sand,
+  Terrain.Forest,
+  Terrain.Hill,
+  Terrain.Hill,
+  Terrain.Rock,
+];
+const STATIONS = ['depot', 'narrow_depot', 'station', 'warehouse'];
+const DECOR = ['signal', 'power_line', 'water_tower'];
+
+const fromCase = (c: Case): Scene => ({
+  ...c,
+  locked: [],
+  unlevel: null,
+  steep: [],
+  stations: [],
+  decor: [],
+  free: false,
+  narrow: true,
+});
+
+function drawScene(rng: Rng): Scene {
+  // A tidy scene's line lays only rails of its class, on platforms over water, on ground without
+  // rock, so that most can be laid. Now and then a line runs off the map; otherwise it turns back
+  // at the edge.
+  const tidy = rng.chance(0.6),
+    leaves = rng.chance(0.05);
+  const ground = Array.from({ length: W * W }, () => {
+    const t = rng.pick(SCENE_GROUND);
+    return tidy && t === Terrain.Rock ? Terrain.Grass : t;
+  });
+  const onMap = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < W;
+  const cls = rng.pick(CLASSES);
+  const turns = TRACK_ITEMS.filter(
+    (i) => i.cls === cls && (i.kind === 'curve' || i.kind === 'switch'),
+  );
+  const others = TRACK_ITEMS.filter((i) => (i.cls === cls || i.cls2 === cls) && !turns.includes(i));
+  const line: LinePiece[] = [];
+  let x = rng.int(1, W - 2),
+    y = rng.int(1, W - 2),
+    d = rng.int(0, 3);
+  for (let n = rng.int(1, 8); n > 0; n--) {
+    const r = tidy ? rng.next() * 0.65 : rng.next();
+    let step = 1;
+    if (r < 0.35) {
+      const water = onMap(x, y) && ground[y * W + x] === Terrain.Water;
+      if (rng.chance(water ? (tidy ? 1 : 0.8) : 0.1)) line.push(platform(x, y, rng.pick(BRIDGES)));
+      line.push({ kind: 'track', x, y, item: { kind: 'straight', cls }, rot: d % 2 });
+    } else if (r < 0.65) {
+      // a turn or a switch, or another piece of the class
+      const item = rng.pick(r < 0.55 ? turns : others),
+        rot = rng.int(0, rotationCount(item.kind) - 1);
+      if (isUnitKind(item.kind, item.cls)) {
+        // a wide piece covers this tile and the next, and spreads to one side or the other
+        const side = rng.int(0, 1),
+          ax = x - (d === Dir.W ? 1 : d % 2 === 0 ? side : 0),
+          ay = y - (d === Dir.N ? 1 : d % 2 === 1 ? side : 0);
+        // tidy, on a platform over water, and now and then on one under each tile, which lets it
+        // stand on uneven ground
+        const decked = tidy && rng.chance(0.3);
+        for (const t of footprintOf(ax, ay, item.kind, rot, item.cls)) {
+          const water = onMap(t.x, t.y) && ground[t.y * W + t.x] === Terrain.Water;
+          if (decked || (tidy && water)) line.push(platform(t.x, t.y, rng.pick(BRIDGES)));
+        }
+        line.push({ kind: 'track', x: ax, y: ay, item, rot });
+        step = 2;
+      } else {
+        line.push({ kind: 'track', x, y, item, rot });
+        if (rng.chance(0.5)) d = rng.int(0, 3);
+      }
+    } else if (r < 0.72) line.push(platform(x, y, rng.pick(BRIDGES)));
+    else if (r < 0.87 && line.length) {
+      // back over the line's own tiles: the same piece, the same piece a tile over, or another
+      const old = rng.pick(line),
+        how = rng.next();
+      if (how < 0.4) line.push({ ...old });
+      else if (how < 0.7)
+        line.push({ ...old, x: old.x + rng.int(-1, 1), y: old.y + rng.int(-1, 1) });
+      else line.push(anyPiece(rng, old.x, old.y));
+    } else line.push(anyPiece(rng, x, y));
+    const nx = x + step * DIR_DX[d as Dir],
+      ny = y + step * DIR_DY[d as Dir];
+    if (leaves || onMap(nx, ny)) [x, y] = [nx, ny];
+    else d = (d + 2) % 4;
+  }
+  // standing pieces: some of the line's own (some a half turn round, some of other classes), some
+  // a tile over, others
+  const existing: LinePiece[] = [];
+  for (let i = rng.int(0, tidy ? 3 : 6); i > 0; i--) {
+    const how = rng.next(),
+      p = line.length ? rng.pick(line) : undefined;
+    if (p && how < 0.25) existing.push({ ...p });
+    else if (p?.kind === 'track' && how < 0.32)
+      existing.push({ ...p, rot: p.rot + rotationCount(p.item.kind) });
+    else if (p?.kind === 'track' && how < 0.4) {
+      const kin = TRACK_ITEMS.filter(
+        (t) => t.kind === p.item.kind && itemKey(t) !== itemKey(p.item),
+      );
+      if (kin.length) existing.push({ ...p, item: rng.pick(kin) });
+    } else if (p && how < 0.5)
+      existing.push({ ...p, x: p.x + rng.int(-1, 1), y: p.y + rng.int(-1, 1) });
+    else existing.push(anyPiece(rng, rng.int(0, W - 1), rng.int(0, W - 1)));
+  }
+  const unlevel = rng.chance(0.4)
+    ? ground.flatMap((g, i) => (g === Terrain.Hill || rng.chance(0.1) ? [i] : []))
+    : null;
+  // a site beside the line, where its gates may meet it; several, as some will not stand
+  const site = () => {
+    const p = line.length ? rng.pick(line) : { x: rng.int(0, W - 1), y: rng.int(0, W - 1) };
+    return { x: p.x + rng.int(-2, 2), y: p.y + rng.int(-2, 2) };
+  };
+  const tries = (n: number, ids: string[]) =>
+    Array.from({ length: n }, () => ({ ...site(), id: rng.pick(ids), rot: rng.int(0, 3) }));
+  return {
+    ground,
+    stock: rng.chance(tidy ? 0.7 : 0.4) ? AMPLE : RES.map(() => rng.int(0, 150)),
+    existing,
+    line,
+    locked: rng.chance(0.2)
+      ? Array.from({ length: rng.int(1, 6) }, () => rng.int(0, W * W - 1))
+      : [],
+    unlevel,
+    steep: unlevel ? unlevel.filter(() => rng.chance(0.3)) : [],
+    stations: rng.chance(0.3) ? tries(4, STATIONS) : [],
+    decor: rng.chance(0.3) ? tries(3, DECOR) : [],
+    free: rng.chance(0.1),
+    narrow: rng.chance(0.85),
+  };
+}
+
+function* shrinkScene(s: Scene): Iterable<Scene> {
+  for (const line of shrinkArray(s.line)) yield { ...s, line };
+  for (const existing of shrinkArray(s.existing)) yield { ...s, existing };
+  for (const stations of shrinkArray(s.stations)) yield { ...s, stations };
+  for (const decor of shrinkArray(s.decor)) yield { ...s, decor };
+  for (const locked of shrinkArray(s.locked)) yield { ...s, locked };
+  if (s.unlevel) yield { ...s, unlevel: null, steep: [] };
+  if (s.steep.length) yield { ...s, steep: [] };
+  if (s.free) yield { ...s, free: false };
+  if (!s.narrow) yield { ...s, narrow: true };
+  if (s.stock !== AMPLE) yield { ...s, stock: AMPLE };
+  for (let i = 0; i < s.ground.length; i++)
+    if (s.ground[i] !== Terrain.Grass)
+      yield { ...s, ground: s.ground.map((t, j) => (j === i ? Terrain.Grass : t)) };
+}
+/** A scene for a failure message, its ground as the [x, y, terrain] of each tile not grass. */
+const formatScene = (s: Scene) =>
+  JSON.stringify({
+    ...s,
+    ground: s.ground.flatMap((t, i) =>
+      t === Terrain.Grass ? [] : [[i % W, Math.floor(i / W), t]],
+    ),
+  });
+
+/** The scene's world: what stands is put up in the editor, then the line's mode and stock. */
+function stage(s: Scene, stock = s.stock) {
+  Object.assign(rules, DEFAULT_RULES);
+  rules.narrowUnlocked = s.narrow ? 1 : 0;
+  resetStationIds(1);
+  const w = world(W),
+    b = w.builder;
+  s.ground.forEach((t, i) => (w.map.terrain[i] = t));
+  b.free = true;
+  for (const p of s.existing) single(w, p);
+  for (const st of s.stations) b.placeStation(st.x, st.y, st.id, st.rot);
+  for (const d of s.decor) b.placeDecor(d.x, d.y, d.id, d.rot);
+  const locked = new Set(s.locked);
+  b.regions.isTileUnlocked = (x, y) => !locked.has(y * W + x);
+  if (s.unlevel) {
+    const unlevel = new Set(s.unlevel),
+      steep = new Set(s.steep);
+    b.groundCheck = (x, y, need) => !(need === 'level' ? unlevel : steep).has(y * W + x);
+  }
+  b.free = s.free;
+  RES.forEach((k, i) => w.stock.amounts.set(k, stock[i]));
+  return w;
+}
+
+/** Every callback the builder fires from now on, in order, as text. */
+function listen(b: Builder) {
+  const log: string[] = [];
+  b.onTrackChanged = (x, y) => log.push(`track ${x},${y}`);
+  b.onBuildingChanged = (o, gone) => log.push(`building ${o.id} ${o.x},${o.y} ${o.rot} ${gone}`);
+  b.onIndustryPlaced = (x, y) => log.push(`industry ${x},${y}`);
+  b.onStationOrphaned = (st, orphaned) => log.push(`orphaned ${st.id} ${orphaned}`);
+  b.onStationChanged = (st, gone) => log.push(`station ${st.id} ${gone}`);
+  b.onDecorChanged = (d, gone) => log.push(`decor ${d.id} ${d.x},${d.y} ${gone}`);
+  b.onSupplyChanged = (x, y) => log.push(`supply ${x},${y}`);
+  b.onUpgraded = (e) => log.push(`upgraded ${e.x},${e.y}`);
+  b.onReclassed = (tiles) => log.push(`reclassed ${tiles.length}`);
+  return log;
+}
+
+/** The world a line may touch, by value: track, buildings, decor, stations, stock and money. */
+function state(w: World, withStock = true) {
+  return JSON.parse(
+    JSON.stringify({
+      track: [...w.track.pieces.entries()],
+      version: w.track.version,
+      buildings: [...w.builder.buildings.entries()],
+      decor: [...w.builder.decor.entries()],
+      stations: w.builder.stations.map((s) => [s.id, s.x, s.y, s.rot]),
+      stock: withStock ? w.held() : null,
+      money: w.economy.money,
+    }),
+  ) as unknown;
+}
+/** The objects standing, to compare by identity: one replaced by an equal copy shows there. */
+const objects = (w: World): object[] => [
+  ...w.track.pieces.values(),
+  ...w.builder.buildings.values(),
+  ...w.builder.decor.values(),
+  ...w.builder.stations,
+];
+/** The same objects, each the very one it was. */
+const same = (a: object[], b: object[]) => a.length === b.length && a.every((o, i) => o === b[i]);
+/** What a tile's track is, a switch's form aside (the track around it chooses that). */
+const sort = (p: TrackPiece) => [p.kind, p.cls, p.cls2, p.rot, p.unit?.ax, p.unit?.ay];
+const sounds = () => vi.mocked(sfx).mock.calls.length;
+
+/**
+ * Q25 b's matching piece, stated apart from the builder: on a tile of the map, a platform of the
+ * same bridge, or track of the same kind and classes (both axes of a crossing) at the same turn
+ * (modulo the kind's rotations) with its anchor on this tile.
+ */
+function matches(w: World, p: LinePiece) {
+  if (p.x < 0 || p.y < 0 || p.x >= W || p.y >= W) return false;
+  if (p.kind === 'platform') return w.builder.buildingAt(p.x, p.y)?.id === p.defId;
+  const q = w.track.get(p.x, p.y),
+    n = rotationCount(p.item.kind);
+  return (
+    !!q &&
+    q.kind === p.item.kind &&
+    q.cls === p.item.cls &&
+    (q.cls2 ?? q.cls) === (p.item.cls2 ?? p.item.cls) &&
+    (((q.rot - p.rot) % n) + n) % n === 0 &&
+    (isUnitKind(p.item.kind, p.item.cls) ? q.unit?.ax === p.x && q.unit.ay === p.y : !q.unit)
+  );
+}
+/** The single-piece tool's own verdict on a piece. */
+const alone = (w: World, p: LinePiece) =>
+  p.kind === 'track'
+    ? w.builder.checkTrack(p.x, p.y, p.item, p.rot)
+    : w.builder.checkBuilding(p.x, p.y, p.defId, 0);
+
+// Scenes run three hundred seeds: a hundred lay too few wide pieces and station gates.
+const GENERATORS: [string, (rng: Rng) => Scene, ForAllOptions<Scene>][] = [
+  ['runs', (rng) => fromCase(drawCase(rng)), {}],
+  ['scenes', drawScene, { seeds: Array.from({ length: 300 }, (_, i) => i + 1) }],
+];
+
+describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
+  const options: ForAllOptions<Scene> = { shrink: shrinkScene, format: formatScene, ...seeds };
+  it('judges every piece as the single-piece tools would after the passed pieces before it', () => {
+    // The oracle walks the line on a twin world with ample stock and lays, with the single-piece
+    // tools, only the pieces the line passes. Every verdict, refused pieces and those after them
+    // included, is the twin's at that point: skipped exactly when a matching piece stands, passed
+    // at the single tool's price on tiles free of track, refused for the single tool's reason or,
+    // for track in the way, with track on the footprint. The total, the first refusal and the
+    // verdict follow from the steps. An accepted line leaves the twin's world, fires the twin's
+    // callbacks in the twin's order with one sound, and removes nothing.
+    forAll(
+      gen,
+      (s) => {
+        const w = stage(s),
+          twin = stage(s, AMPLE);
+        const log = listen(w.builder),
+          heard = listen(twin.builder);
+        const before = state(w),
+          standing = objects(w),
+          sorts = new Map([...w.track.pieces].map(([k, p]) => [k, sort(p)])),
+          quiet = sounds();
+        const check = w.builder.checkLine(s.line);
+        expect(state(w), 'checkLine changed the world').toEqual(before);
+        expect(same(objects(w), standing), 'checkLine replaced an object').toBe(true);
+        expect(log, 'checkLine fired a callback').toEqual([]);
+        expect(sounds(), 'checkLine played a sound').toBe(quiet);
+        expect(check.steps).toHaveLength(s.line.length);
+
+        const total: Cost = {};
+        let first: number | undefined;
+        let lays = false;
+        s.line.forEach((p, i) => {
+          const step = check.steps[i],
+            at = `step ${i} ${JSON.stringify(p)}`;
+          const matching = matches(twin, p);
+          expect(!!step.skip, `${at}: skipped exactly when a matching piece stands`).toBe(matching);
+          if (matching) return expect(step, at).toEqual({ ok: true, cost: {}, skip: true });
+          const tool = alone(twin, p);
+          const tracked =
+            p.kind === 'track' &&
+            footprintOf(p.x, p.y, p.item.kind, p.rot, p.item.cls).some((t) =>
+              twin.track.has(t.x, t.y),
+            );
+          if (step.ok) {
+            expect(tracked, `${at}: passed over track`).toBe(false);
+            expect(tool, `${at}: the single tool's verdict`).toEqual({ ok: true, cost: step.cost });
+            expect(single(twin, p), at).toBe(true);
+            for (const [k, v] of Object.entries(step.cost)) total[k] = (total[k] ?? 0) + v;
+            lays = true;
+            return;
+          }
+          first ??= i;
+          if (step.reason === STR.build.trackInWay)
+            expect(tracked, `${at}: track in the way`).toBe(true);
+          else
+            expect(tool, `${at}: the single tool's refusal`).toMatchObject({
+              ok: false,
+              reason: step.reason,
+            });
+        });
+        expect(check.at, 'the first refusal').toBe(first);
+        expect(check.cost, 'the total of the passed pieces').toEqual(total);
+        const short = !s.free && !w.stock.canAfford(total);
+        expect(check.ok).toBe(first === undefined && !short);
+        if (first !== undefined) expect(check.reason).toBe(check.steps[first].reason);
+        else if (short) {
+          const missing = Object.entries(w.stock.missing(total))
+            .map(([k, v]) => `${v} ${k}`)
+            .join(', ');
+          expect(check.reason).toBe(STR.build.needResources(missing));
+        }
+
+        const held = w.held(),
+          hush = sounds();
+        expect(w.builder.placeLine(s.line)).toBe(check.ok);
+        if (!check.ok) {
+          expect(state(w), 'a refused line changed the world').toEqual(before);
+          expect(same(objects(w), standing), 'a refused line replaced an object').toBe(true);
+          expect(log, 'a refused line fired a callback').toEqual([]);
+          expect(sounds(), 'a refused line played a sound').toBe(hush);
+          return;
+        }
+        expect(spent(held, w.held()), 'charged the total').toEqual(s.free ? [0, 0, 0] : vec(total));
+        expect(state(w, false), 'the world laid one by one').toEqual(state(twin, false));
+        expect(log, 'the callbacks one by one').toEqual(heard);
+        expect(sounds() - hush, 'one sound when anything was laid').toBe(lays ? 1 : 0);
+        // nothing removed: each tile keeps its track, and each building, decor and station stands
+        for (const [k, was] of sorts) {
+          const q = w.track.pieces.get(k);
+          expect(q && sort(q), `tile ${k} kept its track`).toEqual(was);
+        }
+        const still = new Set(objects(w));
+        for (const o of standing)
+          if (!('links' in o)) expect(still.has(o), 'a building, decor or station kept').toBe(true);
+      },
+      options,
+    );
+  });
+
+  it('lays an accepted line once: laying it again skips every piece, free and silent', () => {
+    forAll(
+      gen,
+      (s) => {
+        const w = stage(s);
+        if (!w.builder.placeLine(s.line)) return;
+        for (const k of RES) w.stock.amounts.set(k, 0);
+        const log = listen(w.builder);
+        const before = state(w),
+          standing = objects(w),
+          quiet = sounds();
+        const again = w.builder.checkLine(s.line);
+        expect(again.ok, again.reason).toBe(true);
+        expect(again.cost).toEqual({});
+        expect(again.steps.every((st) => st.skip)).toBe(true);
+        expect(w.builder.placeLine(s.line)).toBe(true);
+        expect(state(w)).toEqual(before);
+        expect(same(objects(w), standing), 'an object was replaced').toBe(true);
+        expect(log).toEqual([]);
+        expect(sounds()).toBe(quiet);
+      },
+      options,
+    );
+  });
+
+  it('lays a line the stock covers exactly, and nothing when one resource is one short', () => {
+    forAll(
+      gen,
+      (s) => {
+        if (s.free) return;
+        const whole = stage(s, AMPLE).builder.checkLine(s.line);
+        if (whole.at !== undefined) return;
+        const need = vec(whole.cost);
+        need.forEach((v, i) => {
+          if (v === 0) return;
+          const w = stage(
+            s,
+            need.map((u, j) => (j === i ? u - 1 : u)),
+          );
+          const before = state(w);
+          const c = w.builder.checkLine(s.line);
+          expect(c).toMatchObject({
+            ok: false,
+            cost: whole.cost,
+            reason: STR.build.needResources(`1 ${RES[i]}`),
+          });
+          expect(c.at).toBeUndefined();
+          expect(w.builder.placeLine(s.line)).toBe(false);
+          expect(state(w)).toEqual(before);
+        });
+        const w = stage(s, need);
+        expect(w.builder.placeLine(s.line)).toBe(true);
+        expect(w.held()).toEqual([0, 0, 0]);
+      },
+      options,
     );
   });
 });
