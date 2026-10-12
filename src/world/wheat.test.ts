@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateMap, DEFAULT_MAP_PARAMS, type MapGenParams } from './mapgen';
+import { generateMap, decorateProps, DEFAULT_MAP_PARAMS, type MapGenParams } from './mapgen';
 import {
   CHUNK_TILES,
   buildMap,
@@ -12,6 +12,7 @@ import {
 import { Biome, Terrain, startRegion, type GameMap, type PropInstance } from './tiles';
 import { Rng } from '../engine/rng';
 import type { SupplyMode } from '../sim/supply';
+import { RULE_META } from '../sim/rules';
 import { forAll, shrinkInt } from '../testing/property';
 
 // Wheat fields (#310): generateMap grows them on plains grass, about 1 % of it, at most two to a
@@ -19,6 +20,9 @@ import { forAll, shrinkInt } from '../testing/property';
 // a world stored before they existed keeps its chunks without them.
 
 const isWheat = (list: PropInstance[] | undefined) => !!list?.some((p) => p.kind === 'wheat');
+/** The variant of the wheat on map tile `i`, or 'none'. */
+const wheatAt = (m: GameMap, i: number) =>
+  m.props.get(i)?.find((p) => p.kind === 'wheat')?.variant ?? 'none';
 /** Map tile indices of the wheat tiles, in tile order. */
 const wheatOf = (m: GameMap) =>
   [...m.props]
@@ -117,6 +121,23 @@ const worldMap = (c: WorldCase) =>
     chainOf(c.full),
   );
 const WORLD_SEEDS = Array.from({ length: 24 }, (_, i) => i + 1);
+
+const SLIDERS = ['waterLevel', 'hillLevel', 'rockLevel', 'forestDensity'] as const;
+/** Every combination of the Map sliders' ends, as the tuning screen bounds them: 16 of them. */
+function sliderEnds() {
+  const ends = SLIDERS.map((key) => {
+    const meta = RULE_META.find((m) => m.key === key)!;
+    return [meta.min, meta.max];
+  });
+  return Array.from(
+    { length: 2 ** SLIDERS.length },
+    (_, k) =>
+      Object.fromEntries(SLIDERS.map((key, b) => [key, ends[b][(k >> b) & 1]])) as Record<
+        (typeof SLIDERS)[number],
+        number
+      >,
+  );
+}
 
 /** The 20 worlds the acceptance criteria measure: 160 x 160, default sliders, simple chain. */
 const DENSITY_SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -225,11 +246,11 @@ describe('wheat fields', () => {
         const dy = a.originY - b.originY;
         for (let y = 0; y < a.h; y++)
           for (let x = 0; x < a.w; x++) {
-            const here = isWheat(a.props.get(y * a.w + x));
-            const there = isWheat(b.props.get((y + dy) * b.w + x + dx));
+            const here = wheatAt(a, y * a.w + x);
+            const there = wheatAt(b, (y + dy) * b.w + x + dx);
             const at = `world tile (${x + a.originX}, ${y + a.originY})`;
             expect(here, at).toBe(there);
-            if (!here) continue;
+            if (here === 'none') continue;
             wheat++;
             // within a field's reach of the small map's edge
             if (Math.min(x, y, a.w - 1 - x, a.h - 1 - y) < 2) edge++;
@@ -305,4 +326,93 @@ describe('wheat fields and stored chunks', () => {
     // the new chunks did grow fields
     expect(grown).toBeGreaterThan(0);
   }, 25_000);
+});
+
+describe('wheat fields, more widely', () => {
+  // 24 maps up to 128 tiles a side, decorated a second time: about 1.1 s alone
+  it('take the decoration off their own tiles only: every other tile keeps decorateProps’ or oil', () => {
+    let wheat = 0;
+    let replaced = 0;
+    forAll(
+      genWorld,
+      (c) => {
+        const m = worldMap(c);
+        // the decorations alone, as decorateProps lays them on the map's own ground
+        const bare: GameMap = { ...m, props: new Map() };
+        decorateProps(bare, c.seed);
+        for (let i = 0; i < m.w * m.h; i++) {
+          const list = m.props.get(i);
+          if (isWheat(list)) {
+            wheat++;
+            if (bare.props.has(i)) replaced++;
+          } else if (!list?.some((p) => p.kind === 'oil'))
+            expect(list, `tile (${i % m.w}, ${Math.floor(i / m.w)})`).toEqual(bare.props.get(i));
+        }
+      },
+      { seeds: WORLD_SEEDS, shrink: shrinkWorld },
+    );
+    // fields grew, some over a flower patch, a bush or an oak
+    expect(wheat).toBeGreaterThan(0);
+    expect(replaced).toBeGreaterThan(0);
+  }, 25_000);
+
+  // 24 maps up to 128 tiles a side: about 0.2 s alone
+  it('keep out of the start chunk’s centre on any map size, origin, sliders and chain', () => {
+    let near = 0;
+    forAll(
+      genWorld,
+      (c) => {
+        const m = worldMap(c);
+        const { rx, ry } = startRegion(m);
+        const cx = rx * m.regionSize + m.regionSize / 2;
+        const cy = ry * m.regionSize + m.regionSize / 2;
+        for (const i of wheatOf(m)) {
+          const d = Math.hypot((i % m.w) - cx, Math.floor(i / m.w) - cy);
+          expect(d, `tile (${i % m.w}, ${Math.floor(i / m.w)})`).toBeGreaterThanOrEqual(8);
+          if (d < 16) near++;
+        }
+      },
+      { seeds: WORLD_SEEDS, shrink: shrinkWorld },
+    );
+    // fields grew close to the clearance, where a misplaced centre would let them in
+    expect(near).toBeGreaterThan(0);
+  }, 20_000);
+
+  // the 20 maps the density test reads, generated here when this test runs alone: about 0.5 s
+  it('draw all three variants, each on a fifth of the wheat tiles or more', () => {
+    const variants = [0, 0, 0];
+    for (const m of defaultWorlds())
+      for (const i of wheatOf(m)) variants[m.props.get(i)![0].variant]++;
+    const all = variants[0] + variants[1] + variants[2];
+    for (const n of variants) expect(n / all).toBeGreaterThanOrEqual(0.2);
+  }, 15_000);
+
+  // 20 maps of 160 x 160: about 0.4 s alone
+  it('cover 0.5 to 1.5 % of plains grass in the full chain too, where oil lies over some', () => {
+    let wheat = 0;
+    let grass = 0;
+    for (const seed of DENSITY_SEEDS) {
+      const m = generateMap(seed, { w: 160, h: 160 }, 'full');
+      wheat += wheatOf(m).length;
+      grass += plainsGrass(m);
+    }
+    expect(wheat / grass).toBeGreaterThanOrEqual(0.005);
+    expect(wheat / grass).toBeLessThanOrEqual(0.015);
+  }, 15_000);
+
+  // 16 combinations of the Map sliders' ends, two worlds of 96 x 96 each: about 0.25 s alone
+  it('grow on plains grass only, alone on their tiles, at every end of the Map sliders', () => {
+    let wheat = 0;
+    for (const sliders of sliderEnds())
+      for (const seed of [1, 2]) {
+        const m = generateMap(seed, { ...sliders, w: 96, h: 96 }, seed === 1 ? 'simple' : 'full');
+        for (const i of wheatOf(m)) {
+          wheat++;
+          const at = `${JSON.stringify(sliders)}, seed ${seed}, tile ${i}`;
+          expect([m.terrain[i], m.biome[i]], at).toEqual([Terrain.Grass, Biome.Plains]);
+          expect(m.props.get(i), at).toHaveLength(1);
+        }
+      }
+    expect(wheat).toBeGreaterThan(0);
+  }, 15_000);
 });

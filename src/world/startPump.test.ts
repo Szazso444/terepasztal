@@ -3,7 +3,8 @@ import { generateMap, emptyMap, ensureStartResources, DEFAULT_MAP_PARAMS } from 
 import { tileLevels } from './elevation';
 import { Terrain, startRegion, type GameMap } from './tiles';
 import type { Rng } from '../engine/rng';
-import { forAll, shrinkInt } from '../testing/property';
+import { RULE_META } from '../sim/rules';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 // The start chunk holds a tile a Water Pump can stand on (#310's start guarantee, for #320): Grass
 // or Forest, level, with Water on one of its 4 sides. Level is the terraces' level tile
@@ -117,6 +118,68 @@ describe('the start chunk', () => {
       { seeds: Array.from({ length: 30 }, (_, i) => i + 1), shrink: shrinkCase },
     );
   }, 20_000);
+
+  // 16 combinations of the Map sliders' ends, two worlds each, at 32 and 96 tiles: about 0.3 s
+  it('holds one at every end of the Map sliders', () => {
+    const keys = ['waterLevel', 'hillLevel', 'rockLevel', 'forestDensity'] as const;
+    const ends = keys.map((key) => {
+      const meta = RULE_META.find((m) => m.key === key)!;
+      return [meta.min, meta.max];
+    });
+    for (let k = 0; k < 2 ** keys.length; k++) {
+      const sliders = Object.fromEntries(keys.map((key, b) => [key, ends[b][(k >> b) & 1]]));
+      for (const [seed, w] of [
+        [1, 32],
+        [2, 96],
+      ]) {
+        const m = generateMap(seed, { ...sliders, w, h: w }, seed === 1 ? 'full' : 'simple');
+        expect(
+          pumpTiles(m, true).length,
+          `${JSON.stringify(sliders)}, seed ${seed}`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  }, 15_000);
+
+  // The worlds of the 50 above where the guarantee changes the ground: on develop seeds 10, 29 and
+  // 39 had no pump tile, and seed 23 had one only with its water outside the start chunk. Six maps
+  // each, up to 224 tiles a side: about 0.15 s a seed alone.
+  it.each([10, 23, 29, 39])(
+    'seed %i: every map that shares the start chunk has the same ground in it and a tile around',
+    (seed) => {
+      // [size, origin]: world chunk (2, 2) is the start chunk of each, at the map's edge in some
+      const frames = [
+        [32, 64],
+        [64, 64],
+        [96, 32],
+        [128, 32],
+        [160, 0],
+        [224, -32],
+      ] as const;
+      const maps = frames.map(([w, o]) =>
+        generateMap(seed, { w, h: w, originX: o, originY: o }, 'simple'),
+      );
+      const ground = (m: GameMap, wx: number, wy: number) => {
+        const x = wx - m.originX;
+        const y = wy - m.originY;
+        return x >= 0 && y >= 0 && x < m.w && y < m.h ? m.terrain[y * m.w + x] : undefined;
+      };
+      const [ref] = maps.filter((m) => m.w === 160);
+      for (const m of maps) {
+        const at = `${m.w} x ${m.h} at (${m.originX}, ${m.originY})`;
+        const { rx, ry } = startRegion(m);
+        expect([rx * 32 + m.originX, ry * 32 + m.originY], at).toEqual([64, 64]);
+        expect(pumpTiles(m, true).length, at).toBeGreaterThan(0);
+        for (let wy = 63; wy <= 96; wy++)
+          for (let wx = 63; wx <= 96; wx++) {
+            const t = ground(m, wx, wy);
+            if (t !== undefined)
+              expect(t, `${at}, world tile (${wx}, ${wy})`).toBe(ground(ref, wx, wy));
+          }
+      }
+    },
+    10_000,
+  );
 });
 
 describe('ensureStartResources', () => {
@@ -188,5 +251,137 @@ describe('ensureStartResources', () => {
     // (9, 22) is the pool's shore tile nearest the centre, sqrt(85) out
     expect(changed(before, m.terrain)).toEqual([[9, 22, Terrain.Grass]]);
     expect(pumpTiles(m)).toEqual([22 * 32 + 9]);
+  });
+});
+
+// The guarantee on start chunks made by hand, against a search of every tile: ponds shored with
+// sand, hills, mountains, rock, forest or grass, with stray tiles of each around them.
+describe('the start guarantee on any start chunk', () => {
+  interface Patch {
+    t: Terrain;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }
+  /** Patches painted in order over a grass chunk that has a wood and a hill in two corners. */
+  interface PumpCase {
+    patches: Patch[];
+  }
+  const SHORES = [
+    Terrain.Sand,
+    Terrain.Sand,
+    Terrain.Hill,
+    Terrain.Mountain,
+    Terrain.Rock,
+    Terrain.Forest,
+    Terrain.Grass,
+  ];
+  const STRAYS = [Terrain.Hill, Terrain.Mountain, Terrain.Sand, Terrain.Forest, Terrain.Rock];
+  function genPump(rng: Rng): PumpCase {
+    const patches: Patch[] = [];
+    for (let k = rng.int(1, 3); k > 0; k--) {
+      const w = rng.int(k === 1 ? 2 : 1, 4);
+      const h = rng.int(k === 1 ? 2 : 1, 4);
+      const x = rng.int(1, 31 - w);
+      const y = rng.int(1, 31 - h);
+      // a pond, mostly ringed by a shore of one ground
+      if (rng.chance(0.85))
+        patches.push({ t: rng.pick(SHORES), x: x - 1, y: y - 1, w: w + 2, h: h + 2 });
+      patches.push({ t: Terrain.Water, x, y, w, h });
+    }
+    for (let k = rng.int(0, 10); k > 0; k--)
+      patches.push({ t: rng.pick(STRAYS), x: rng.int(0, 31), y: rng.int(0, 31), w: 1, h: 1 });
+    return { patches };
+  }
+  /** The chunk, a 32 x 32 map, with forest and hills enough that startResources paints nothing. */
+  function pumpMap(c: PumpCase) {
+    const m = emptyMap(1, 32, 32, Terrain.Grass);
+    // a wood and a hill in two corners; a patch may still paint over them
+    for (let y = 0; y < 2; y++) for (let x = 0; x < 3; x++) m.terrain[y * 32 + x] = Terrain.Forest;
+    for (let y = 30; y < 32; y++) for (let x = 0; x < 2; x++) m.terrain[y * 32 + x] = Terrain.Hill;
+    for (const p of c.patches)
+      for (let y = Math.max(0, p.y); y < Math.min(32, p.y + p.h); y++)
+        for (let x = Math.max(0, p.x); x < Math.min(32, p.x + p.w); x++)
+          m.terrain[y * 32 + x] = p.t;
+    const n = (pred: (t: number) => boolean) => m.terrain.filter(pred).length;
+    const paints =
+      n((t) => t === Terrain.Water) < 4 ||
+      n((t) => t === Terrain.Forest) < 6 ||
+      n((t) => t === Terrain.Hill || t === Terrain.Rock) < 4 ||
+      n((t) => t === Terrain.Grass) < 20;
+    return { m, paints };
+  }
+  const steep = (t: number) => t === Terrain.Hill || t === Terrain.Mountain;
+  /**
+   * The search: every tile beside the chunk's water, what making it a pump tile changes (itself
+   * to grass unless it is grass or forest, every hill or mountain side to grass), the fewest
+   * changes first, then nearest the centre (16, 16), then in reading order.
+   */
+  function search(m: GameMap) {
+    let best: { i: number; cost: number; d: number; changes: [number, Terrain][] } | null = null;
+    for (let i = 0; i < 32 * 32; i++) {
+      const x = i % 32;
+      const y = Math.floor(i / 32);
+      const t = m.terrain[i];
+      if (t === Terrain.Water) continue;
+      const sides = SIDES.map(([dx, dy]) => [x + dx, y + dy]).filter(
+        ([sx, sy]) => sx >= 0 && sy >= 0 && sx < 32 && sy < 32,
+      );
+      if (!sides.some(([sx, sy]) => m.terrain[sy * 32 + sx] === Terrain.Water)) continue;
+      const changes: [number, Terrain][] = [];
+      if (t !== Terrain.Grass && t !== Terrain.Forest) changes.push([i, Terrain.Grass]);
+      for (const [sx, sy] of sides)
+        if (steep(m.terrain[sy * 32 + sx])) changes.push([sy * 32 + sx, Terrain.Grass]);
+      const d = Math.hypot(x - 16, y - 16);
+      if (!best || changes.length < best.cost || (changes.length === best.cost && d < best.d))
+        best = { i, cost: changes.length, d, changes };
+    }
+    return best;
+  }
+
+  // 100 chunks of 32 x 32: about 0.2 s alone
+  it('changes nothing where a pump tile is, and else the fewest tiles, nearest the centre', () => {
+    const seen = new Set<string>();
+    forAll(
+      genPump,
+      (c) => {
+        const { m, paints } = pumpMap(c);
+        // a chunk short of a resource gets a patch painted first; that is not this claim
+        if (paints) return;
+        const before = m.terrain.slice();
+        const had = pumpTiles(m, true).length > 0;
+        const best = had ? null : search(m);
+        ensureStartResources(m);
+        const want = before.slice();
+        for (const [i, t] of best?.changes ?? []) want[i] = t;
+        // the tiles that differ from the search's answer, as (x, y, got, want)
+        const wrong = [...want.keys()]
+          .filter((i) => m.terrain[i] !== want[i])
+          .map((i) => [i % 32, Math.floor(i / 32), m.terrain[i], want[i]]);
+        expect(wrong).toEqual([]);
+        // and the tile it made is one a pump stands on
+        expect(pumpTiles(m, true).length).toBeGreaterThan(0);
+        if (best) expect(pumpTiles(m, true)).toContain(best.i);
+        seen.add(had ? 'had one' : `${best!.cost} changed`);
+        if (best && before[best.i] === Terrain.Forest) seen.add('forest kept');
+        if (best?.changes.some(([i]) => before[i] === Terrain.Mountain)) seen.add('mountain side');
+      },
+      {
+        shrink: function* (c) {
+          for (const patches of shrinkArray(c.patches)) yield { patches };
+        },
+      },
+    );
+    // every kind of chunk ran: one with a pump tile, and fixes of one to three changes
+    for (const kind of [
+      'had one',
+      '1 changed',
+      '2 changed',
+      '3 changed',
+      'forest kept',
+      'mountain side',
+    ])
+      expect(seen, kind).toContain(kind);
   });
 });

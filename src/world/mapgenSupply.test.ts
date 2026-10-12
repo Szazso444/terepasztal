@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { generateMap, placeOilFields, ensureStartDeposits, DEFAULT_MAP_PARAMS } from './mapgen';
+import {
+  generateMap,
+  emptyMap,
+  placeOilFields,
+  ensureStartDeposits,
+  DEFAULT_MAP_PARAMS,
+} from './mapgen';
 import { mapFromLevel, levelFromMap } from './level';
 import { Terrain, startRegion, type GameMap, type PropInstance } from './tiles';
 import { Rng, hash2, hashString } from '../engine/rng';
@@ -10,7 +16,8 @@ import {
   supplyMode,
   type SupplyMode,
 } from '../sim/supply';
-import { forAll } from '../testing/property';
+import { RULE_META } from '../sim/rules';
+import { forAll, shrinkArray } from '../testing/property';
 
 // The production chain is an argument of map generation, not the game-wide switch: the same call
 // gives the same map whatever the switch says. The switch is module state shared with every other
@@ -513,4 +520,202 @@ describe('the start seeps where the ring is short (#276)', () => {
     ensureStartDeposits(map, 'full');
     expect(map.props).toEqual(once);
   });
+});
+
+// #276 on start chunks made by hand: generated worlds always hold dozens of grass and sand tiles
+// in the start chunk, so the fallback's step is 3 there and a ring at its thresholds is rare. Here
+// a forest chunk gets a chosen number of grass and sand tiles on the ring and off it, and some oil
+// already laid, so every threshold and step of the rule is reached.
+describe('the start seeps on any start chunk (#276)', () => {
+  /** The start chunk's centre, in tiles: a 32 x 32 map is its own start chunk. */
+  const C = 16;
+  const onRing = (x: number, y: number) => {
+    const d = Math.hypot(x - C, y - C);
+    return d > 6 && d < 13;
+  };
+  interface SeepCase {
+    seed: number;
+    /** Grass or sand tiles; the rest of the chunk is forest. */
+    ground: { x: number; y: number; sand: boolean; flowers: boolean }[];
+    /** Tiles that already hold an oil seep, on the ground or not. */
+    oil: { x: number; y: number }[];
+  }
+  function genSeeps(rng: Rng): SeepCase {
+    const ground: SeepCase['ground'] = [];
+    const taken = new Set<number>();
+    const add = (x: number, y: number) => {
+      if (x < 0 || y < 0 || x > 31 || y > 31 || taken.has(y * 32 + x)) return;
+      taken.add(y * 32 + x);
+      ground.push({ x, y, sand: rng.chance(0.3), flowers: rng.chance(0.3) });
+    };
+    // around the ring sizes one, two and three seeps need (1, 4 and 7), some in pairs mirrored
+    // about the centre, which tie on distance
+    const ring = rng.int(0, 9);
+    while (ground.length < ring) {
+      const x = rng.int(0, 31);
+      const y = rng.int(0, 31);
+      if (!onRing(x, y)) continue;
+      add(x, y);
+      if (ground.length < ring && rng.chance(0.3)) {
+        if (rng.chance(0.5)) add(2 * C - x, y);
+        else add(x, 2 * C - y);
+      }
+    }
+    const off = rng.pick([0, 0, 1, 1, 2, 3, 4, 6, 9]);
+    while (ground.length < ring + off) {
+      const x = rng.int(0, 31);
+      const y = rng.int(0, 31);
+      if (!onRing(x, y)) add(x, y);
+    }
+    // seeps already there: often none or one, on a ground tile now and then
+    const oil: SeepCase['oil'] = [];
+    for (let k = rng.pick([0, 0, 0, 1, 1, 1, 2, 2, 3, 4]); k > 0; k--) {
+      if (ground.length && rng.chance(0.3)) {
+        const { x, y } = rng.pick(ground);
+        oil.push({ x, y });
+      } else oil.push({ x: rng.int(0, 31), y: rng.int(0, 31) });
+    }
+    return { seed: rng.int(0, 2 ** 31 - 1), ground, oil };
+  }
+  function* shrinkSeeps(c: SeepCase): Iterable<SeepCase> {
+    for (const oil of shrinkArray(c.oil)) yield { ...c, oil };
+    for (const ground of shrinkArray(c.ground)) yield { ...c, ground };
+  }
+  function seepMap(c: SeepCase): GameMap {
+    const m = emptyMap(c.seed, 32, 32, Terrain.Forest);
+    for (const g of c.ground) {
+      const i = g.y * 32 + g.x;
+      m.terrain[i] = g.sand ? Terrain.Sand : Terrain.Grass;
+      if (g.flowers) m.props.set(i, [{ kind: 'flowers', variant: 1, ox: 0.1, oy: -0.1 }]);
+    }
+    for (const { x, y } of c.oil)
+      m.props.set(y * 32 + x, [{ kind: 'oil', variant: 2, ox: 0, oy: 0 }]);
+    return m;
+  }
+  /** The seep ensureStartDeposits lays at the `k`th place of its list on tile `i`. */
+  const seep = (m: GameMap, i: number, k: number): PropInstance => {
+    const jitter = hash2((i % 32) + m.originX, Math.floor(i / 32) + m.originY, m.seed + 15);
+    return { kind: 'oil', variant: k % 3, ox: (jitter - 0.5) * 0.3, oy: 0 };
+  };
+  /**
+   * #276's rule, read from the issue: the rule before it (every third grass or sand tile of the
+   * ring, nearest first) where that reaches three seeps; else the nearest grass or sand tiles of
+   * the whole chunk at step max(1, min(3, floor((n - 1) / (need - 1)))). Tiles holding oil count
+   * toward the three and take no seep.
+   */
+  function rule(m: GameMap) {
+    const oil = (i: number) => !!m.props.get(i)?.some((p) => p.kind === 'oil');
+    let have = 0;
+    for (let i = 0; i < 32 * 32; i++) if (oil(i)) have++;
+    const need = Math.max(0, 3 - have);
+    const free: { i: number; d: number }[] = [];
+    for (let i = 0; i < 32 * 32; i++) {
+      const t = m.terrain[i];
+      if (!oil(i) && (t === Terrain.Grass || t === Terrain.Sand))
+        free.push({ i, d: Math.hypot((i % 32) - C, Math.floor(i / 32) - C) });
+    }
+    free.sort((a, b) => a.d - b.d || a.i - b.i);
+    const ring = free.filter((t) => t.d > 6 && t.d < 13);
+    const everyThird = ring.filter((_, k) => k % 3 === 0).slice(0, need);
+    const short = everyThird.length < need;
+    const step =
+      need > 1 ? Math.max(1, Math.min(3, Math.floor((free.length - 1) / (need - 1)))) : 1;
+    const from = short ? free : ring;
+    const at = short ? step : 3;
+    const want = new Map<number, PropInstance>();
+    for (let k = 0; want.size < need && k < from.length; k += at)
+      want.set(from[k].i, seep(m, from[k].i, k));
+    return { have, need, free: free.length, ring: ring.length, short, step, want };
+  }
+
+  // 300 chunks of 32 x 32, each seeded twice: about 0.1 s alone. Two seeps to lay on three free
+  // tiles (step 2) is rare in a draw, so the run is longer than forAll's default.
+  const SEEP_SEEDS = Array.from({ length: 300 }, (_, i) => i + 1);
+  it('lay the rule’s seeps, reach three wherever three tiles are free, and a second call lays none', () => {
+    const seen = new Set<string>();
+    forAll(
+      genSeeps,
+      (c) => {
+        const m = seepMap(c);
+        const before = propsOf(m);
+        const r = rule(m);
+        seen.add(r.need === 0 ? 'full' : `need ${r.need}, ${r.short ? `step ${r.step}` : 'ring'}`);
+        // the thresholds, with ground off the ring, where the two rules pick different tiles
+        const off = r.free > r.ring;
+        if (r.need === 3 && r.ring === 7 && off) seen.add('a ring of exactly seven');
+        if (r.need === 3 && r.ring === 6 && off) seen.add('a ring of six');
+        if (r.need === 2 && r.ring === 4 && off) seen.add('two to lay on a ring of four');
+        if (r.need === 2 && r.ring === 3 && off) seen.add('two to lay on a ring of three');
+        ensureStartDeposits(m, 'full');
+        // the seeps on their tiles, alone, and every other tile as it was
+        const wrong: string[] = [];
+        for (let i = 0; i < 32 * 32; i++) {
+          const want = r.want.get(i);
+          const got = JSON.stringify(m.props.get(i));
+          const expected = JSON.stringify(want ? [want] : before.get(i));
+          if (got !== expected)
+            wrong.push(`tile (${i % 32}, ${Math.floor(i / 32)}): ${got}, not ${expected}`);
+        }
+        expect(wrong).toEqual([]);
+        // three wherever the chunk had room for them
+        expect(startOil(m)).toHaveLength(Math.max(r.have, Math.min(3, r.have + r.free)));
+        const once = propsOf(m);
+        ensureStartDeposits(m, 'full');
+        expect(m.props).toEqual(once);
+      },
+      { seeds: SEEP_SEEDS, shrink: shrinkSeeps },
+    );
+    // every branch of the rule ran, at the thresholds the ring keeps the old rule from
+    expect([...seen].sort()).toEqual(
+      [
+        'full',
+        'need 1, ring',
+        'need 1, step 1',
+        'need 2, ring',
+        'need 2, step 1',
+        'need 2, step 2',
+        'need 2, step 3',
+        'need 3, ring',
+        'need 3, step 1',
+        'need 3, step 2',
+        'need 3, step 3',
+        'a ring of exactly seven',
+        'a ring of six',
+        'two to lay on a ring of four',
+        'two to lay on a ring of three',
+      ].sort(),
+    );
+  });
+
+  // 16 combinations of the Map sliders' ends, two worlds each at 32 and 96 tiles, both chains:
+  // about 0.6 s alone
+  it('reach three at every end of the Map sliders, and a second call lays none', () => {
+    const keys = ['waterLevel', 'hillLevel', 'rockLevel', 'forestDensity'] as const;
+    const ends = keys.map((key) => {
+      const meta = RULE_META.find((m) => m.key === key)!;
+      return [meta.min, meta.max];
+    });
+    for (let k = 0; k < 2 ** keys.length; k++) {
+      const sliders = Object.fromEntries(keys.map((key, b) => [key, ends[b][(k >> b) & 1]]));
+      for (const [seed, w] of [
+        [1, 32],
+        [2, 96],
+      ]) {
+        const at = `${JSON.stringify(sliders)}, seed ${seed}`;
+        const full = generateMap(seed, { ...sliders, w, h: w }, 'full');
+        const simple = generateMap(seed, { ...sliders, w, h: w }, 'simple');
+        for (const [map, chain] of [
+          [full, 'generated'],
+          [simple, 'seeded by hand'],
+        ] as const) {
+          if (map === simple) ensureStartDeposits(map, 'full');
+          const want = Math.min(3, startGround(map).length);
+          expect(startOil(map).length, `${at}, ${chain}`).toBeGreaterThanOrEqual(want);
+          const once = propsOf(map);
+          ensureStartDeposits(map, 'full');
+          expect(map.props, `${at}, ${chain}`).toEqual(once);
+        }
+      }
+    }
+  }, 15_000);
 });
