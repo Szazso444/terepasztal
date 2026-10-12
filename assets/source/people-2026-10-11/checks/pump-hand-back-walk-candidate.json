@@ -1,0 +1,115 @@
+{
+  "status": "DIAGNOSTIC ONLY, box tests failed; original production strip unchanged",
+  "strip": "pump-hand-back-walk",
+  "canvas": [768, 512],
+  "columnWidth": 192,
+  "uniformScale": 0.3125,
+  "anchors": [
+    [96, 480],
+    [288, 480],
+    [480, 480],
+    [672, 480]
+  ],
+  "frames": [
+    {
+      "id": "pump-hand-back-walk-f0-attempt-2",
+      "file": "raw/poses/pump-hand-back-walk-f0-attempt-2.png",
+      "measured": {
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 300,
+          "y": 208,
+          "width": 428,
+          "height": 1148
+        },
+        "guideBox": {
+          "x": 301,
+          "y": 192,
+          "width": 422,
+          "height": 1152
+        },
+        "widthError": 0.014218009478673022,
+        "heightError": 0.00347222222222221,
+        "centreDistance": 14.142135623730951,
+        "centreLimit": 21.1,
+        "boxPass": true
+      }
+    },
+    {
+      "id": "pump-hand-back-walk-f1-attempt-3",
+      "file": "raw/poses/pump-hand-back-walk-f1-attempt-3.png",
+      "measured": {
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 350,
+          "y": 209,
+          "width": 364,
+          "height": 1176
+        },
+        "guideBox": {
+          "x": 361,
+          "y": 192,
+          "width": 327,
+          "height": 1152
+        },
+        "widthError": 0.11314984709480114,
+        "heightError": 0.02083333333333326,
+        "centreDistance": 29.95413160150032,
+        "centreLimit": 16.35,
+        "boxPass": false
+      }
+    },
+    {
+      "id": "pump-hand-back-walk-f2-attempt-3",
+      "file": "raw/poses/pump-hand-back-walk-f2-attempt-3.png",
+      "measured": {
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 337,
+          "y": 195,
+          "width": 443,
+          "height": 1176
+        },
+        "guideBox": {
+          "x": 342,
+          "y": 192,
+          "width": 385,
+          "height": 1152
+        },
+        "widthError": 0.1506493506493507,
+        "heightError": 0.02083333333333326,
+        "centreDistance": 28.30194339616981,
+        "centreLimit": 19.25,
+        "boxPass": false
+      }
+    },
+    {
+      "id": "pump-hand-back-walk-f3-attempt-3",
+      "file": "raw/poses/pump-hand-back-walk-f3-attempt-3.png",
+      "measured": {
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 329,
+          "y": 200,
+          "width": 409,
+          "height": 1152
+        },
+        "guideBox": {
+          "x": 355,
+          "y": 192,
+          "width": 362,
+          "height": 1152
+        },
+        "widthError": 0.12983425414364635,
+        "heightError": 0,
+        "centreDistance": 8.381527307120106,
+        "centreLimit": 18.1,
+        "boxPass": false
+      }
+    }
+  ]
+}

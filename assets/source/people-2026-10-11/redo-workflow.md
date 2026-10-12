@@ -1,17 +1,27 @@
 # Nine-strip repaint workflow · issue331
 
-Preparation is committed here; **no new painting has been returned yet**.
-The built-in ImageGen call for pump-hand-back-walk f0 was rejected with
-`429 usage_limit_reached`. The tool reported reset at **2026-10-12 14:59:18
-America/Toronto**. See `redo-state.json` and `prompts.json["redo-2026-10-11"]`.
-No call to a paid API fallback has been made.
+Image generation resumed on **2026-10-12** after the reported quota reset.
+**11 new paintings are preserved;0of9production strips have been replaced.**
+Pump-hand-back-walk f0 passed on attempt2. Its other three phases exhausted three
+attempts each and failed the5% guide box test: selected widths differ by11.3%,15.1%
+and13.0%. The selected contact/passing silhouettes are distinct. No fourth attempt
+has been made. The author decision about keeping the best failed-box paintings is
+pending; do not treat the diagnostic candidate as accepted.
+
+The first-strip candidate and its native9px frames are under `checks/`, with all
+measurements in `checks/pump-hand-back-walk-redo-report.json`. Browser automation
+refused its local `file:` playback page under its URL security policy. Frame and
+contact-overlay inspection is recorded; actual playback is **not verified**.
+No workaround or paid API fallback has been used. All original28strips,
+`review/`, `game-scale/` and `inputs/variations/` remain unchanged.
 
 The full author brief is `redo-brief-2026-10-11.txt`. Its order, reference roles,
 three-attempt limit and per-strip commit instructions are the authority.
 Use built-in ImageGen **edits**, attaching the exact ordered references in the brief.
-The first edit prompt and reference list are in
-`calls/pump-hand-back-walk-f0-attempt-1.json`; a usage-limit rejection returns no
-painting, so attempt1 remains available for the first actual image.
+All exact edit prompts and ordered reference lists are under `calls/`. The first
+quota rejection returned no painting; f0 attempt1 was later retried successfully
+and its returned image was preserved. Do not repeat any painting attempt id that
+already has a raw file.
 
 ## What is ready
 

@@ -1,9 +1,13 @@
 # People cast · issue 331
 
-The nine-strip repair is prepared in [redo-workflow.md](redo-workflow.md).
-Its first image call hit the built-in generator's usage limit; no new pose has
-been painted yet. The original strips and all review/game-scale exports remain
-unchanged. See `redo-state.json` for progress and the protected-file hashes.
+The nine-strip repair is recorded in [redo-workflow.md](redo-workflow.md).
+Image generation resumed on October12:11 pump-hand-back-walk paintings are saved.
+Only f0 passed the guide box test; f1/f2/f3 exhausted three attempts each and still
+exceed the5% requirement. The [diagnostic candidate](checks/pump-hand-back-walk-candidate.html)
+is not an accepted replacement. The original28 strips and all review/game-scale
+exports remain unchanged. The remaining eight strips have not been painted.
+See `redo-state.json` and `checks/pump-hand-back-walk-redo-report.json` for measurements
+and the pending author decision about retaining the best failed-box attempts.
 
 28 painted RGBA strips for 10 people: the original passenger, five workers and
 four additional passengers. Each person has front/back walk strips; lumberjack,

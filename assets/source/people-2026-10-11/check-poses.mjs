@@ -20,6 +20,16 @@ function measure(e) {
     s = png.width / 1024,
     expected = geometry.strips[e.strip].frames[e.frame].box,
     actual = box(png);
+  e.returned = [png.width, png.height];
+  if (png.width * 3 !== png.height * 2) {
+    e.measured = {
+      ratioPass: false,
+      box: actual,
+      boxPass: false,
+      reason: 'Returned canvas is not2:3; no comparison against the scaled guide.',
+    };
+    return e.measured;
+  }
   const scaled = Object.fromEntries(Object.entries(expected).map(([k, v]) => [k, v * s]));
   const widthError = Math.abs(actual.width / scaled.width - 1),
     heightError = Math.abs(actual.height / scaled.height - 1);

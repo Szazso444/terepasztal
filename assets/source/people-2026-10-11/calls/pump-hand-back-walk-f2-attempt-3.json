@@ -1,0 +1,13 @@
+{
+  "id": "pump-hand-back-walk-f2-attempt-3",
+  "strip": "pump-hand-back-walk",
+  "frame": 2,
+  "prompt": "EDIT image1 ONLY: paint INSIDE the grey mannequin's silhouette as an exact mask. Its TRANSPARENT margins, 1024x1536 canvas, hipsx512 and limb joints are LOCKED. Do not expand, reposition or enlarge it. ONE person. Image2 gives person/outfit; image3 back clothing ONLY, ignore its limbs; image4 painted STYLE only; image5 SAME f0 identity/head/clothing colour ONLY, NEVER its limbs or overall silhouette.\nOpposite contact: LOWER planted RIGHT boot on SCREEN RIGHT (tip701,1344), HIGHER LEFT boot on SCREEN LEFT (tip454,1142). Near/right thigh goes RIGHT from hip, far/left thigh goes LEFT: OPEN invertedV, never f0 crossed leg. RIGHT elbow bent and hand UP at(698,480), left hand down at(371,778). Exact painted box x342..726,y192..1343,width385,height1152. Last painting was19percent too wide. Left hand NEVER left ofx342; right lowest boot NEVER right ofx727 or belowy1344. Copy the SMALL guide boot length, not the big boot from other images.\nSame older man with deep warm brown skin(base#754A32,light#96633F), grey temples, moss flat cap, dark subdued slate-blue rolled-sleeve shirt(base#626B6C,shadow#414D53,light#7B858A), charcoal trousers, muted brown boots#71503B. Empty hands. Keep HEAD AND TORSO SIZE as f0; narrow pose by pulling arms to guide locations, not squashing body. Orthographic2:1isometric30degrees down BACK-RIGHT3/4, away upperright, hiddenface, realistic adult7to7.5heads. Head topy192, feetbaseliney1344. Broad smooth painted3to4shades/material, upperleftlight, selective dark lower/side rims only; no outline on lit upper-left edges. Keep all light shades below#ECE4D0 and warm colours subdued below#E8AA48. RealRGBA: opaque person, alpha0 outside silhouette. NO ground,floor,shadow,glow,haze,text,labels,borders,extraobjects or extra people. Exact target1024x1536.",
+  "references": [
+    "guides/pump-hand-back-walk-f2.png",
+    "refs/pump-hand-front-walk.png",
+    "refs/pump-hand-back-walk-back.png",
+    "reference-passenger.png",
+    "poses/pump-hand-back-walk-f0.png"
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "date": "2026-10-11",
   "baseCommit": "3f5a4f7f",
-  "status": "Preparation complete; first painting call rejected by image-generation usage limit.0of9strips repainted.",
+  "status": "Waiting for author decision: first strip f1/f2/f3 fail5percent box test after3attempts; diagnostic candidate saved, actual playback blocked by browser file: URL policy;0of9production strips replaced.",
   "order": [
     "pump-hand-back-walk",
     "pump-hand-front-carry",
@@ -15,11 +15,6 @@
   ],
   "completed": [],
   "firstStripGate": "pump-hand-back-walk must be fully checked and committed before painting strip2",
-  "toolBlock": {
-    "type": "usage_limit_reached",
-    "resetsAtUnix": 1791831558,
-    "resetsAtToronto": "2026-10-12T14:59:18-04:00"
-  },
   "originalStripHashes": {
     "pump-hand-back-walk.png": "333043fd5a7a92d2c1edc6eb1e83ee230ff30bc3cf817cea073ea76671fd407e",
     "pump-hand-front-carry.png": "b6261fcb6726ac9a16e3e16188252c43ff1375075329538d035556c1fc6c1a4d",
@@ -281,5 +276,69 @@
     "railway-worker-front-walk.png": "5efaaf5f87981bb752c3728f61dba7edbd0ffb883f96e3e5e8824399ec104191",
     "stone-mason-front-carry.png": "12745ef7080e6936864be7026f5c13533df4c7fb65933433583f6a236a9d64df",
     "stone-mason-front-walk.png": "e398720adae34feb7eb638fd0a3b89a9dc34b53f638dac263f30298655c2715c"
-  }
+  },
+  "lastUpdatedAt": "2026-10-12T19:27:36.162Z",
+  "toolBlockHistory": [
+    {
+      "type": "usage_limit_reached",
+      "resetsAtUnix": 1791831558,
+      "resetsAtToronto": "2026-10-12T14:59:18-04:00"
+    }
+  ],
+  "poseProgress": [
+    {
+      "strip": "pump-hand-back-walk",
+      "acceptedFrames": [0],
+      "returnedPaintings": 11,
+      "cycleReview": null
+    },
+    {
+      "strip": "pump-hand-front-carry",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    },
+    {
+      "strip": "pump-hand-back-carry",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    },
+    {
+      "strip": "lumberjack-back-walk",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    },
+    {
+      "strip": "lumberjack-back-carry",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    },
+    {
+      "strip": "stone-mason-back-walk",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    },
+    {
+      "strip": "stone-mason-back-carry",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    },
+    {
+      "strip": "farmer-back-walk",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    },
+    {
+      "strip": "farmer-back-carry",
+      "acceptedFrames": [],
+      "returnedPaintings": 0,
+      "cycleReview": null
+    }
+  ]
 }
