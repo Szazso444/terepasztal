@@ -608,11 +608,15 @@ export function generateMap(
   }
   decorateProps(map, seed);
   // the fields and deposits read the field around the map; they go over the map's props, the
-  // wheat fields first, then the oil fields, then the start seeps, as if all four had been laid on
-  // the field (decorations are never wheat or oil)
-  wheatFields(field, seed, oilCentres, scx, scy);
-  oilFields(field, seed, oilCentres, supply);
-  startDeposits(field, start, supply);
+  // wheat fields, then the oil fields, then the start seeps, as if all four had been laid on the
+  // field (decorations are never wheat or oil). The oil is worked out first, as the full chain
+  // lays it, for the wheat to keep off in either chain: oil never cuts a field, and both chains
+  // grow the same wheat.
+  const oil: GameMap = { ...field, props: new Map() };
+  oilFields(oil, seed, oilCentres, 'full');
+  startDeposits(oil, start, 'full');
+  wheatFields(field, seed, oilCentres, scx, scy, oil.props);
+  if (supply === 'full') for (const [i, list] of oil.props) field.props.set(i, list);
   for (const [i, list] of field.props) {
     const x = (i % w) - MARGIN;
     const y = Math.floor(i / w) - MARGIN;
@@ -652,14 +656,25 @@ const SIDES = [
  * tiles of the start chunk's centre (`scx`, `scy`). Only slots on the tiles of `s` grow a field.
  *
  * A field tile carries the wheat alone: it replaces the tile's decoration (a flower patch, a bush
- * or an oak), and an oil field or start seep laid after it replaces the wheat.
+ * or an oak). No field takes a tile oil could lie on, in either production chain: a tile an oil
+ * field could cover (oilCouldCover) or a tile of `oil`, the full chain's oil with its start seeps.
+ * So oil never cuts a field into pieces, and both chains grow the same fields; a field grows
+ * around the oil, or with fewer than WHEAT_MIN tiles left to it, not at all.
  */
-function wheatFields(map: GameMap, seed: number, s: Span, scx: number, scy: number) {
+function wheatFields(
+  map: GameMap,
+  seed: number,
+  s: Span,
+  scx: number,
+  scy: number,
+  oil: GameMap['props'],
+) {
   const { w, h, terrain, biome, originX, originY, regionSize: rs } = map;
   const ok = (x: number, y: number) => {
     if (x < 0 || y < 0 || x >= w || y >= h) return false;
     const i = y * w + x;
     if (terrain[i] !== Terrain.Grass || biome[i] !== Biome.Plains) return false;
+    if (oil.has(i) || oilCouldCover(x + originX, y + originY, seed)) return false;
     const dx = x - scx;
     const dy = y - scy;
     return dx * dx + dy * dy >= WHEAT_CLEAR * WHEAT_CLEAR;
@@ -728,8 +743,8 @@ function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
     for (let x = Math.max(2, s.x0); x < Math.min(w - 2, s.x1); x++) {
       const i = y * w + x;
       if (!ok(i)) continue;
-      if (hash2(x + originX, y + originY, seed + 12) < 0.9975) continue;
-      const rad = 1 + Math.floor(hash2(x + originX, y + originY, seed + 13) * 2);
+      const rad = oilRadius(x + originX, y + originY, seed);
+      if (!rad) continue;
       for (let dy = -rad; dy <= rad; dy++)
         for (let dx = -rad; dx <= rad; dx++) {
           const nx = x + dx;
@@ -737,11 +752,41 @@ function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
           if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
           const ni = ny * w + nx;
           if (!ok(ni)) continue;
-          if (dx * dx + dy * dy > rad * rad + 0.5) continue;
-          if (hash2(nx + originX, ny + originY, seed + 14) < 0.25) continue;
+          if (!oilCovers(nx + originX, ny + originY, dx, dy, rad, seed)) continue;
           map.props.set(ni, [{ kind: 'oil', variant: (dx + dy + 6) % 3, ox: 0, oy: 0 }]);
         }
     }
+}
+
+/** The farthest an oil field reaches from its centre, in tiles along either axis. */
+const OIL_REACH = 2;
+/**
+ * The radius, 1 to OIL_REACH, of the oil field centred on world tile (`wx`, `wy`), or 0 where its
+ * hash makes it no centre. The field grows only where the tile's ground takes one (grass or sand
+ * off the ocean).
+ */
+function oilRadius(wx: number, wy: number, seed: number) {
+  if (hash2(wx, wy, seed + 12) < 0.9975) return 0;
+  return 1 + Math.floor(hash2(wx, wy, seed + 13) * OIL_REACH);
+}
+/**
+ * Whether an oil field of radius `rad` covers world tile (`wx`, `wy`), `dx`, `dy` from its centre,
+ * where the tile's ground takes oil: inside the radius, and not one of the quarter it leaves bare.
+ */
+const oilCovers = (wx: number, wy: number, dx: number, dy: number, rad: number, seed: number) =>
+  dx * dx + dy * dy <= rad * rad + 0.5 && hash2(wx, wy, seed + 14) >= 0.25;
+/**
+ * Whether an oil field could cover world tile (`wx`, `wy`): one centred within OIL_REACH tiles
+ * would, wherever its centre's ground takes one. The hashes alone answer it, never the ground, so
+ * it is the same on every map that holds the tile; every tile an oil field covers is one.
+ */
+function oilCouldCover(wx: number, wy: number, seed: number) {
+  for (let dy = -OIL_REACH; dy <= OIL_REACH; dy++)
+    for (let dx = -OIL_REACH; dx <= OIL_REACH; dx++) {
+      const rad = oilRadius(wx - dx, wy - dy, seed);
+      if (rad && oilCovers(wx, wy, dx, dy, rad, seed)) return true;
+    }
+  return false;
 }
 
 /** The oil seeps a full-chain start chunk holds. */

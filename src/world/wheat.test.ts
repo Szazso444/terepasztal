@@ -16,8 +16,9 @@ import { RULE_META } from '../sim/rules';
 import { forAll, shrinkInt } from '../testing/property';
 
 // Wheat fields (#310): generateMap grows them on plains grass, about 1 % of it, at most two to a
-// world chunk and never across a chunk's edge, out of the start chunk's centre, in world space;
-// a world stored before they existed keeps its chunks without them.
+// world chunk and never across a chunk's edge, out of the start chunk's centre and out from under
+// the full chain's oil, in world space; a world stored before they existed keeps its chunks
+// without them.
 
 const isWheat = (list: PropInstance[] | undefined) => !!list?.some((p) => p.kind === 'wheat');
 /** The variant of the wheat on map tile `i`, or 'none'. */
@@ -29,6 +30,8 @@ const wheatOf = (m: GameMap) =>
     .filter(([, list]) => isWheat(list))
     .map(([i]) => i)
     .sort((a, b) => a - b);
+/** The wheat tiles with their variants, in tile order. */
+const wheatWithVariants = (m: GameMap) => wheatOf(m).map((i) => [i, wheatAt(m, i)]);
 /** Tiles of Grass in the Plains biome, wheat tiles included. */
 function plainsGrass(m: GameMap) {
   let n = 0;
@@ -70,6 +73,48 @@ function wheatPieces(m: GameMap): number[][] {
 /** The world chunk of map tile `i`, as its key. */
 const chunkOfTile = (m: GameMap, i: number) =>
   chunkKey(chunkOf(m.originX + (i % m.w)), chunkOf(m.originY + Math.floor(i / m.w)));
+/**
+ * The fields of `m` as a player sees them, the 4-connected pieces of wheat: each in one chunk, of
+ * 4 to 9 tiles (or two such fields that touch), and at most two to a chunk.
+ */
+function expectFields(m: GameMap, at: string) {
+  const fields = new Map<string, number>();
+  for (const piece of wheatPieces(m)) {
+    const chunks = new Set(piece.map((i) => chunkOfTile(m, i)));
+    const where = `${at}, a field at tile ${piece[0]}`;
+    // a field never crosses a chunk's edge
+    expect(chunks.size, where).toBe(1);
+    // 4 to 9 tiles, or two such fields that touch
+    expect(piece.length, where).toBeGreaterThanOrEqual(4);
+    expect(piece.length, where).toBeLessThanOrEqual(18);
+    const [chunk] = chunks;
+    fields.set(chunk, (fields.get(chunk) ?? 0) + 1);
+  }
+  for (const [chunk, n] of fields) expect(n, `${at}, chunk ${chunk}`).toBeLessThanOrEqual(2);
+}
+/** Whether map tile `i` lies in the start chunk, where the seeps go. */
+function inStartChunk(m: GameMap, i: number) {
+  const { rx, ry } = startRegion(m);
+  return Math.floor((i % m.w) / m.regionSize) === rx && Math.floor(i / m.w / m.regionSize) === ry;
+}
+/** Whether map tile `i` has oil on one of its 4 sides. */
+const besideOil = (m: GameMap, i: number) =>
+  [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ].some(([dx, dy]) => {
+    const x = (i % m.w) + dx;
+    const y = Math.floor(i / m.w) + dy;
+    return (
+      x >= 0 &&
+      y >= 0 &&
+      x < m.w &&
+      y < m.h &&
+      !!m.props.get(y * m.w + x)?.some((p) => p.kind === 'oil')
+    );
+  });
 
 /** A map's frame, sliders and chain: any size from a chunk up, any origin, either chain. */
 interface WorldCase {
@@ -179,23 +224,9 @@ describe('wheat fields', () => {
     let wheat = 0;
     let grass = 0;
     for (const [k, m] of defaultWorlds().entries()) {
-      const seed = DENSITY_SEEDS[k];
       wheat += wheatOf(m).length;
       grass += plainsGrass(m);
-      const fields = new Map<string, number>();
-      for (const piece of wheatPieces(m)) {
-        const chunks = new Set(piece.map((i) => chunkOfTile(m, i)));
-        const at = `seed ${seed}, a field at tile ${piece[0]}`;
-        // a field never crosses a chunk's edge
-        expect(chunks.size, at).toBe(1);
-        // 4 to 9 tiles, or two such fields that touch
-        expect(piece.length, at).toBeGreaterThanOrEqual(4);
-        expect(piece.length, at).toBeLessThanOrEqual(18);
-        const [chunk] = chunks;
-        fields.set(chunk, (fields.get(chunk) ?? 0) + 1);
-      }
-      for (const [chunk, n] of fields)
-        expect(n, `seed ${seed}, chunk ${chunk}`).toBeLessThanOrEqual(2);
+      expectFields(m, `seed ${DENSITY_SEEDS[k]}`);
     }
     expect(wheat / grass).toBeGreaterThanOrEqual(0.005);
     expect(wheat / grass).toBeLessThanOrEqual(0.015);
@@ -268,6 +299,34 @@ describe('wheat fields', () => {
     expect(wheat).toBeGreaterThan(0);
     expect(edge).toBeGreaterThan(0);
   }, 30_000);
+
+  // In these worlds a field reaches in across the small map's edge beside where an oil field
+  // could lie, out beyond the tiles the small map generates oil on: the field must keep off it in
+  // both maps. They are the pairs a search of random frames found where fields kept off only the
+  // oil a map generates. 3 pairs of maps: about 0.2 s alone.
+  it.each([
+    { seed: 1111732493, w: 35, h: 38, ox: -87, oy: 90 },
+    { seed: 1383765659, w: 78, h: 58, ox: 8, oy: -97 },
+    { seed: 50341479, w: 67, h: 60, ox: 24, oy: 42 },
+  ])(
+    'are the same wherever the map ends, by oil just outside it (seed $seed, $w x $h at $ox, $oy)',
+    ({ seed, w, h, ox, oy }) => {
+      const small = { seed, full: false, w, h, ox, oy, sliders: DEFAULT_SLIDERS };
+      const a = worldMap(small);
+      const b = worldMap({ ...small, w: w + 64, h: h + 64, ox: ox - 32, oy: oy - 32 });
+      let edge = 0;
+      for (let y = 0; y < h; y++)
+        for (let x = 0; x < w; x++) {
+          const here = wheatAt(a, y * w + x);
+          expect(here, `world tile (${x + ox}, ${y + oy})`).toBe(
+            wheatAt(b, (y + 32) * b.w + x + 32),
+          );
+          if (here !== 'none' && Math.min(x, y, w - 1 - x, h - 1 - y) < 2) edge++;
+        }
+      // a field lies within a field's reach of the small map's edge
+      expect(edge).toBeGreaterThan(0);
+    },
+  );
 });
 
 describe('wheat fields and stored chunks', () => {
@@ -388,17 +447,66 @@ describe('wheat fields, more widely', () => {
   }, 15_000);
 
   // 20 maps of 160 x 160: about 0.4 s alone
-  it('cover 0.5 to 1.5 % of plains grass in the full chain too, where oil lies over some', () => {
+  it('cover 0.5 to 1.5 % of plains grass in the full chain too, at most two whole fields a chunk', () => {
     let wheat = 0;
     let grass = 0;
+    let beside = 0;
     for (const seed of DENSITY_SEEDS) {
       const m = generateMap(seed, { w: 160, h: 160 }, 'full');
       wheat += wheatOf(m).length;
       grass += plainsGrass(m);
+      // the fields the player sees, oil around them: none cut into pieces, none under 4 tiles
+      expectFields(m, `seed ${seed}, full chain`);
+      beside += wheatOf(m).filter((i) => besideOil(m, i)).length;
     }
     expect(wheat / grass).toBeGreaterThanOrEqual(0.005);
     expect(wheat / grass).toBeLessThanOrEqual(0.015);
+    // oil lay right beside some fields, where it could have cut them
+    expect(beside).toBeGreaterThan(0);
   }, 15_000);
+
+  // 24 worlds up to 128 tiles a side, each in both chains: about 0.5 s alone
+  it('never lie under oil: the full chain grows the simple chain’s fields, around its oil fields and start seeps', () => {
+    let beside = 0;
+    let besideStart = 0;
+    forAll(
+      genWorld,
+      (c) => {
+        const simple = worldMap({ ...c, full: false });
+        const full = worldMap({ ...c, full: true });
+        expect(wheatWithVariants(full)).toEqual(wheatWithVariants(simple));
+        for (const i of wheatOf(full))
+          if (besideOil(full, i)) {
+            beside++;
+            if (inStartChunk(full, i)) besideStart++;
+          }
+      },
+      { seeds: WORLD_SEEDS, shrink: shrinkWorld },
+    );
+    // oil lay right beside some fields, where it could have cut them, in a start chunk too
+    expect(beside).toBeGreaterThan(0);
+    expect(besideStart).toBeGreaterThan(0);
+  }, 20_000);
+
+  // In these worlds the Water slider at its top leaves the start chunk's ring short of ground, so
+  // the seeps reach out past it (#276) to where a field grows. 3 pairs of maps: about 0.1 s alone
+  it.each([
+    { seed: 14, size: 96 },
+    { seed: 214, size: 96 },
+    { seed: 209, size: 160 },
+  ])(
+    'never lie under a start seep that reaches past the ring (seed $seed at $size x $size, Water at its top)',
+    ({ seed, size }) => {
+      const water = RULE_META.find((m) => m.key === 'waterLevel')!.max;
+      const params = { w: size, h: size, waterLevel: water };
+      const simple = generateMap(seed, params, 'simple');
+      const full = generateMap(seed, params, 'full');
+      expect(wheatWithVariants(full)).toEqual(wheatWithVariants(simple));
+      expectFields(full, `seed ${seed}, full chain`);
+      // oil lies right beside a field of the start chunk, where a seep would have cut the field
+      expect(wheatOf(full).some((i) => inStartChunk(full, i) && besideOil(full, i))).toBe(true);
+    },
+  );
 
   // 16 combinations of the Map sliders' ends, two worlds of 96 x 96 each: about 0.25 s alone
   it('grow on plains grass only, alone on their tiles, at every end of the Map sliders', () => {
