@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-12T23:18:13.533Z",
+  "updatedAt": "2026-10-12T23:27:08.797Z",
   "branch": "art/331-people",
   "brief": "finish-brief-2026-10-12.txt",
   "strips": [
@@ -122,16 +122,23 @@
     {
       "strip": "lumberjack-back-carry",
       "acceptedAttempts": [
-        null,
-        null,
-        null,
-        null
+        1,
+        2,
+        1,
+        2
       ],
-      "cycleReview": "not assembled",
+      "cycleReview": "passed",
       "repeatedFrames": [],
-      "findings": null,
-      "headBobFraction": null,
-      "outputPaletteCheck": null,
+      "findings": "Offline9px-6x and36px inspected: f0/f2 opposite contact X and open opposite stance; f1 left sole raised and f3 right sole raised. f1 lift shallower than guide but remains above grounded right boot; distinct at36px, silhouettes alternate at9px. Accepted1,2,1,2. Heights within3.48-4.08%, grounded cap range2.1875px=0.61%, final palette0 white/0 strong amber. Same log on same shoulder; uniform256px columns, no clipping or squashing; no repeated phase.",
+      "headBobFraction": 0.006076388888888889,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 387865,
+        "opaquePixels": 128074,
+        "antialiasedPixels": 8349,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 0
+      },
       "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     },

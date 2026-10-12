@@ -3154,12 +3154,447 @@
       "keptDespiteFailedMeasurements": true,
       "accepted": true,
       "acceptedFile": "poses/lumberjack-back-walk-f3.png"
+    },
+    {
+      "id": "lumberjack-back-carry-f0-attempt-1",
+      "strip": "lumberjack-back-carry",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers and brown boots; SAME identity as front reference. LOAD: ONE thick short bark-covered log on the SAME shoulder as front-carry reference, pale end grain, one hand bracing it, NO axe.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x165..709,y192..1343,width545,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: No cursor-white or amber glints on log end, wood or skin; dull limestone end-grain and warm peach skin. Keep guide margins, torso/leg size, cap192, body1152; avoid enlarging the portrait.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/lumberjack-back-carry-f0.png",
+        "refs/lumberjack-front-carry.png",
+        "refs/lumberjack-back-carry-back.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/lumberjack-back-carry-f0-attempt-1.png",
+      "rawSha256": "ee3ab801cb074880b3b89772f89dde6fa9655cf8cc6f2bae23af3147795b400d",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 184,
+          "y": 189,
+          "width": 568,
+          "height": 1197
+        },
+        "guideBox": {
+          "x": 165,
+          "y": 192,
+          "width": 545,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 294,
+          "y": 189,
+          "width": 458,
+          "height": 1197
+        },
+        "hatTop": 189,
+        "soleRow": 1385,
+        "soleOffset": 41,
+        "figureHeight": 1197,
+        "heightError": 0.0390625,
+        "totalWidth": 568,
+        "bodyWidthRatio": 0.8403669724770643,
+        "anatomyMethod": "Visual body-only cap, torso, arms and boots bounds excluding shoulder log; log lies below cap top. Alpha>128 cap/sole extrema.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/lumberjack-back-carry-f0-attempt-1-look.png",
+        "foreground": 318104,
+        "nearOpaqueFraction": 0.9882522696979604,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 331219
+      },
+      "anatomy": {
+        "hatTop": 189,
+        "soleRow": 1385,
+        "bodyBox": {
+          "x": 294,
+          "y": 189,
+          "width": 458,
+          "height": 1197
+        },
+        "note": "Visual body-only cap, torso, arms and boots bounds excluding shoulder log; log lies below cap top. Alpha>128 cap/sole extrema."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Correct same stocky fair/auburn man and broad copper/moss shirt, forest hat, one bark log on same shoulder. Crossed contact legs follow guide. Height within3.91%, body width permitted; no white/strong amber pixels; entire load visible.",
+      "acceptedFile": "poses/lumberjack-back-carry-f0.png"
+    },
+    {
+      "id": "lumberjack-back-carry-f1-attempt-1",
+      "strip": "lumberjack-back-carry",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers and brown boots; SAME identity as front reference. LOAD: ONE thick short bark-covered log on the SAME shoulder as front-carry reference, pale end grain, one hand bracing it, NO axe.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x165..709,y192..1343,width545,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Replace waist-down with GUIDE1 PASSING, not f0 contact: near RIGHT leg longest and VERTICAL on SCREEN RIGHT, sole1344; far LEFT knee bent/tucked on SCREEN LEFT, lifted boot showing sole must END ABOVE y1230. No crossed thighs. Keep same head/outfit/log size as accepted f0, body1152 within guide margins, dull wood/skin highlights below white/amber caps.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/lumberjack-back-carry-f1.png",
+        "refs/lumberjack-front-carry.png",
+        "refs/lumberjack-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/lumberjack-back-carry-f0.png"
+      ],
+      "file": "raw/poses/lumberjack-back-carry-f1-attempt-1.png",
+      "rawSha256": "0237b6da6140d83b041832989beee65a81b1a25964cff94150779f9428b46716",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 198,
+          "y": 164,
+          "width": 604,
+          "height": 1215
+        },
+        "guideBox": {
+          "x": 165,
+          "y": 192,
+          "width": 545,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 303,
+          "y": 164,
+          "width": 499,
+          "height": 1215
+        },
+        "hatTop": 164,
+        "soleRow": 1378,
+        "soleOffset": 34,
+        "figureHeight": 1215,
+        "heightError": 0.0546875,
+        "totalWidth": 604,
+        "bodyWidthRatio": 0.9155963302752294,
+        "anatomyMethod": "Visual cap, torso, arms and boots bounds exclude shoulder log; alpha>128 cap and lowest sole extrema.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/lumberjack-back-carry-f1-attempt-1-look.png",
+        "foreground": 356518,
+        "nearOpaqueFraction": 0.9891365933837842,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 1,
+        "nonzeroAlphaPixels": 369445
+      },
+      "anatomy": {
+        "hatTop": 164,
+        "soleRow": 1378,
+        "bodyBox": {
+          "x": 303,
+          "y": 164,
+          "width": 499,
+          "height": 1215
+        },
+        "note": "Visual cap, torso, arms and boots bounds exclude shoulder log; alpha>128 cap and lowest sole extrema."
+      }
+    },
+    {
+      "id": "lumberjack-back-carry-f2-attempt-1",
+      "strip": "lumberjack-back-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers and brown boots; SAME identity as front reference. LOAD: ONE thick short bark-covered log on the SAME shoulder as front-carry reference, pale end grain, one hand bracing it, NO axe.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x165..726,y192..1343,width562,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Replace waist-down with GUIDE2 OPPOSITE CONTACT: OPEN A/V stance, near RIGHT leg stays SCREEN RIGHT down to sole1344, far LEFT leg stays SCREEN LEFT ends aroundy1130. No diagonal near leg crossing over to grounded screen-left boot from f0. Free left arm bends inward per guide. Keep same head/outfit/log size as accepted f0, body1152 within guide margins, dull wood/skin highlights below white/amber caps.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/lumberjack-back-carry-f2.png",
+        "refs/lumberjack-front-carry.png",
+        "refs/lumberjack-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/lumberjack-back-carry-f0.png"
+      ],
+      "file": "raw/poses/lumberjack-back-carry-f2-attempt-1.png",
+      "rawSha256": "f56aac30a1f9dad5afdc41012ad9eeabe01aed1c791c041a2ca5062f6c879a61",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 184,
+          "y": 168,
+          "width": 628,
+          "height": 1199
+        },
+        "guideBox": {
+          "x": 165,
+          "y": 192,
+          "width": 562,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 284,
+          "y": 168,
+          "width": 528,
+          "height": 1199
+        },
+        "hatTop": 168,
+        "soleRow": 1366,
+        "soleOffset": 22,
+        "figureHeight": 1199,
+        "heightError": 0.04079861111111116,
+        "totalWidth": 628,
+        "bodyWidthRatio": 0.9395017793594306,
+        "anatomyMethod": "Visual figure-only cap, torso, arms and boots bounds excluding shoulder log; alpha>128 cap/lowest boot extrema, no load above cap.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/lumberjack-back-carry-f2-attempt-1-look.png",
+        "foreground": 341699,
+        "nearOpaqueFraction": 0.9884986493961059,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 355216
+      },
+      "anatomy": {
+        "hatTop": 168,
+        "soleRow": 1366,
+        "bodyBox": {
+          "x": 284,
+          "y": 168,
+          "width": 528,
+          "height": 1199
+        },
+        "note": "Visual figure-only cap, torso, arms and boots bounds excluding shoulder log; alpha>128 cap/lowest boot extrema, no load above cap."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Clear opposite contact/open leg silhouette versus f0, same stocky adult/checked shirt/forest hat/log on shoulder. Height within4.08% and grounded cap0.625px above f0; zero white/amber pixels, whole load visible.",
+      "acceptedFile": "poses/lumberjack-back-carry-f2.png"
+    },
+    {
+      "id": "lumberjack-back-carry-f3-attempt-1",
+      "strip": "lumberjack-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers and brown boots; SAME identity as front reference. LOAD: ONE thick short bark-covered log on the SAME shoulder as front-carry reference, pale end grain, one hand bracing it, NO axe.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x165..716,y192..1343,width552,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Replace waist-down with GUIDE3 OTHER PASSING: FAR LEFT leg VERTICAL on SCREEN LEFT to plantedsole1344, NEAR RIGHT boot lifted on SCREEN RIGHT showing sole, must end ABOVE y1280. No crossed contact thighs, not f0. Keep same head/outfit/log size as accepted f0, body1152 within guide margins, dull wood/skin highlights below white/amber caps.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/lumberjack-back-carry-f3.png",
+        "refs/lumberjack-front-carry.png",
+        "refs/lumberjack-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/lumberjack-back-carry-f0.png"
+      ],
+      "file": "raw/poses/lumberjack-back-carry-f3-attempt-1.png",
+      "rawSha256": "94f29acb56b17b36f2728d669f10627d4b89235799a703a3a53570964e32e8a0",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 184,
+          "y": 170,
+          "width": 598,
+          "height": 1236
+        },
+        "guideBox": {
+          "x": 165,
+          "y": 192,
+          "width": 552,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 292,
+          "y": 170,
+          "width": 490,
+          "height": 1236
+        },
+        "hatTop": 170,
+        "soleRow": 1405,
+        "soleOffset": 61,
+        "figureHeight": 1236,
+        "heightError": 0.07291666666666674,
+        "totalWidth": 598,
+        "bodyWidthRatio": 0.8876811594202898,
+        "anatomyMethod": "Visual cap, torso, arms and boots bounds exclude shoulder log; alpha>128 cap and lowest sole extrema.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/lumberjack-back-carry-f3-attempt-1-look.png",
+        "foreground": 351129,
+        "nearOpaqueFraction": 0.9889613219073332,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 5,
+        "nonzeroAlphaPixels": 364199
+      },
+      "anatomy": {
+        "hatTop": 170,
+        "soleRow": 1405,
+        "bodyBox": {
+          "x": 292,
+          "y": 170,
+          "width": 490,
+          "height": 1236
+        },
+        "note": "Visual cap, torso, arms and boots bounds exclude shoulder log; alpha>128 cap and lowest sole extrema."
+      }
+    },
+    {
+      "id": "lumberjack-back-carry-f1-attempt-2",
+      "strip": "lumberjack-back-carry",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers and brown boots; SAME identity as front reference. LOAD: ONE thick short bark-covered log on the SAME shoulder as front-carry reference, pale end grain, one hand bracing it, NO axe.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x165..709,y192..1343,width545,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Previous passing legs were correct, keep GUIDE1: RIGHT longest vertical planted SCREEN RIGHT, LEFT bent lifted SCREEN LEFT above1230 with sole facing viewer. But painted height1215 is5.47% above1152: slightly reduce overall figure/log, cap-top192 lowestsole1344, target1152 and match accepted f0 body/head/log sizes. Do not copy f0 contact legs. Muted warm skin/log highlights below selectionamberE8AA48 (previous one amber pixel), no white.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/lumberjack-back-carry-f1.png",
+        "refs/lumberjack-front-carry.png",
+        "refs/lumberjack-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/lumberjack-back-carry-f0.png"
+      ],
+      "file": "raw/poses/lumberjack-back-carry-f1-attempt-2.png",
+      "rawSha256": "4b7d77edd293040f1d087af5fcd4ee1576c4b04df6f0d1385b2b98b41b2a1cda",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 183,
+          "y": 180,
+          "width": 609,
+          "height": 1192
+        },
+        "guideBox": {
+          "x": 165,
+          "y": 192,
+          "width": 545,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 282,
+          "y": 180,
+          "width": 510,
+          "height": 1192
+        },
+        "hatTop": 180,
+        "soleRow": 1371,
+        "soleOffset": 27,
+        "figureHeight": 1192,
+        "heightError": 0.03472222222222232,
+        "totalWidth": 609,
+        "bodyWidthRatio": 0.9357798165137615,
+        "anatomyMethod": "Visual cap, torso, arms and boots bounds exclude shoulder log; alpha>128 cap and lowest sole extrema.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/lumberjack-back-carry-f1-attempt-2-look.png",
+        "foreground": 355843,
+        "nearOpaqueFraction": 0.9891862422472832,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 370987
+      },
+      "anatomy": {
+        "hatTop": 180,
+        "soleRow": 1371,
+        "bodyBox": {
+          "x": 282,
+          "y": 180,
+          "width": 510,
+          "height": 1192
+        },
+        "note": "Visual cap, torso, arms and boots bounds exclude shoulder log; alpha>128 cap and lowest sole extrema."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Right boot planted lower than left lifted boot, bent left leg shows sole; passing silhouette differs from contacts. Lift is shallower than guide but remains above planted sole. Same adult/log outfit, height within3.48%, cap1.56px below grounded f0; zero white/amber.",
+      "acceptedFile": "poses/lumberjack-back-carry-f1.png"
+    },
+    {
+      "id": "lumberjack-back-carry-f3-attempt-2",
+      "strip": "lumberjack-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: stocky adult man, fair warm skin, short auburn beard and brown hair, broad copper-and-moss checked shirt, forest-green felt hat, charcoal trousers and brown boots; SAME identity as front reference. LOAD: ONE thick short bark-covered log on the SAME shoulder as front-carry reference, pale end grain, one hand bracing it, NO axe.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x165..716,y192..1343,width552,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Correct OTHER raised boot in previous painting, retain it: LEFT planted screen-left, RIGHT lifted screen-right sole facing camera, raised boot fully above1280. But previous1236px body was7.29% too tall. Slightly shrink all anatomy/log to same size as accepted f0, height1152 within5%, cap-top192 lowestsole1344, preserve transparent margins. Copy GUIDE3 leg shape, never f0. Subdued log end grain and peach skin, no strong amberE8AA48 highlights (previous5 amber pixels), no white.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/lumberjack-back-carry-f3.png",
+        "refs/lumberjack-front-carry.png",
+        "refs/lumberjack-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/lumberjack-back-carry-f0.png"
+      ],
+      "file": "raw/poses/lumberjack-back-carry-f3-attempt-2.png",
+      "rawSha256": "988d667f0536a7489baad7cf716d1e4b8c892f58e12ad125d5f3493f66c97f98",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 170,
+          "y": 189,
+          "width": 593,
+          "height": 1199
+        },
+        "guideBox": {
+          "x": 165,
+          "y": 192,
+          "width": 552,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 292,
+          "y": 189,
+          "width": 471,
+          "height": 1199
+        },
+        "hatTop": 189,
+        "soleRow": 1387,
+        "soleOffset": 43,
+        "figureHeight": 1199,
+        "heightError": 0.04079861111111116,
+        "totalWidth": 593,
+        "bodyWidthRatio": 0.8532608695652174,
+        "anatomyMethod": "Visual cap/body/arms/boots bounds excluding shoulder log; planted left boot is lowest, right lifted sole higher. Alpha>128 hat/sole extrema.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/lumberjack-back-carry-f3-attempt-2-look.png",
+        "foreground": 336499,
+        "nearOpaqueFraction": 0.9880088796697761,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 350291
+      },
+      "anatomy": {
+        "hatTop": 189,
+        "soleRow": 1387,
+        "bodyBox": {
+          "x": 292,
+          "y": 189,
+          "width": 471,
+          "height": 1199
+        },
+        "note": "Visual cap/body/arms/boots bounds excluding shoulder log; planted left boot is lowest, right lifted sole higher. Alpha>128 hat/sole extrema."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Correct other passing phase: left boot grounded, right lifted showing sole, opposite to f1. Height within4.08%, same grounded cap as f2 and0.625px above f0; same identity/log size, no white/amber pixels.",
+      "acceptedFile": "poses/lumberjack-back-carry-f3.png"
     }
   ],
   "redoStatus": {
     "requestedStripCount": 9,
-    "completedStripCount": 4,
-    "status": "4/9 strips complete; lumberjack-back-walk four distinct phases with documented retained f3 size/palette caveats.",
+    "completedStripCount": 5,
+    "status": "5/9 strips complete; lumberjack-back-carry checked with four distinct phases, all geometry/palette gates passing.",
     "geometry": "pose-geometry.json",
     "workflow": "redo-workflow.md",
     "protection": "redo-state.json",
@@ -3176,7 +3611,7 @@
     ],
     "imageTool": "built-in image_gen",
     "fallbackApiUsed": false,
-    "paintingCount": 44,
+    "paintingCount": 50,
     "diagnosticCandidate": "checks/pump-hand-back-walk-candidate.html",
     "resolvedBlockHistory": [
       {
@@ -3873,6 +4308,172 @@
       "headBobRange": 8.75,
       "headBobFraction": 0.024305555555555556,
       "headBobWithinTwoPercent": false
+    },
+    "lumberjack-back-carry": {
+      "canvas": [
+        1024,
+        512
+      ],
+      "columns": 4,
+      "columnWidth": 256,
+      "anchors": [
+        [
+          128,
+          480
+        ],
+        [
+          384,
+          480
+        ],
+        [
+          640,
+          480
+        ],
+        [
+          896,
+          480
+        ]
+      ],
+      "uniformScaling": true,
+      "scaleFormula": "360 / (1152 * returnedWidth / 1024)",
+      "resampling": "premultiplied-alpha area averaging",
+      "maxReach": 106.875,
+      "frames": [
+        {
+          "frame": 0,
+          "pose": "poses/lumberjack-back-carry-f0.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1385
+          ],
+          "soleRow": 1385,
+          "anchor": [
+            128,
+            480
+          ],
+          "leftReach": 102.5,
+          "rightReach": 75,
+          "bounds": {
+            "x": 26,
+            "y": 106,
+            "width": 177,
+            "height": 374
+          }
+        },
+        {
+          "frame": 1,
+          "pose": "poses/lumberjack-back-carry-f1.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1371
+          ],
+          "soleRow": 1371,
+          "anchor": [
+            384,
+            480
+          ],
+          "leftReach": 102.8125,
+          "rightReach": 87.5,
+          "bounds": {
+            "x": 25,
+            "y": 108,
+            "width": 191,
+            "height": 372
+          }
+        },
+        {
+          "frame": 2,
+          "pose": "poses/lumberjack-back-carry-f2.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1366
+          ],
+          "soleRow": 1366,
+          "anchor": [
+            640,
+            480
+          ],
+          "leftReach": 102.5,
+          "rightReach": 93.75,
+          "bounds": {
+            "x": 25,
+            "y": 106,
+            "width": 197,
+            "height": 374
+          }
+        },
+        {
+          "frame": 3,
+          "pose": "poses/lumberjack-back-carry-f3.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1387
+          ],
+          "soleRow": 1387,
+          "anchor": [
+            896,
+            480
+          ],
+          "leftReach": 106.875,
+          "rightReach": 78.4375,
+          "bounds": {
+            "x": 21,
+            "y": 106,
+            "width": 185,
+            "height": 374
+          }
+        }
+      ],
+      "visualCycleReview": "passed",
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 387865,
+        "opaquePixels": 128074,
+        "antialiasedPixels": 8349,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 0
+      },
+      "visualFindings": {
+        "contactX": true,
+        "oppositeLiftedFoot": true,
+        "offline9pxAnd36pxInspected": true,
+        "browserPlayback": false,
+        "repeatedFrames": [],
+        "note": "Offline9px-6x and36px inspected: f0/f2 opposite contact X and open opposite stance; f1 left sole raised and f3 right sole raised. f1 lift shallower than guide but remains above grounded right boot; distinct at36px, silhouettes alternate at9px. Accepted1,2,1,2. Heights within3.48-4.08%, grounded cap range2.1875px=0.61%, final palette0 white/0 strong amber. Same log on same shoulder; uniform256px columns, no clipping or squashing; no repeated phase."
+      },
+      "groundedHatRows": [
+        106.25,
+        107.8125,
+        105.625,
+        105.625
+      ],
+      "headBobRange": 2.1875,
+      "headBobFraction": 0.006076388888888889,
+      "headBobWithinTwoPercent": true
     }
   }
 }
