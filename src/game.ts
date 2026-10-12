@@ -963,6 +963,7 @@ export class Game implements UiHost {
         this.builder.buildingAt(x, y) ||
         this.builder.decorAt(x, y)
       );
+    this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
     this.overview.root.visible = false;
@@ -974,7 +975,7 @@ export class Game implements UiHost {
     this.fog = new Fog(this.atlas);
     this.world.root.addChildAt(
       this.dayNight.overlay,
-      this.world.root.getChildIndex(this.world.objects),
+      this.world.root.getChildIndex(this.world.harvest.layer),
     );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
@@ -2220,6 +2221,11 @@ export class Game implements UiHost {
       !this.menuOpen;
     this.updateFieldTrains(fieldActive);
     this.build.update(fieldActive);
+    this.world.harvest.follow(
+      fieldActive ? this.hoverTile : null,
+      this.build,
+      this.season ?? 'spring',
+    );
     this.updateRtsTooltip();
     this.hud.update(this.economy);
     this.resourceBar.update(this.stock, (id) => this.stockCap(id));
