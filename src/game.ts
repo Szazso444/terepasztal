@@ -7,7 +7,6 @@ import { AutosavePause } from './engine/autosavePause';
 import { BrokenNumberWarning, saveOutcome, type SaveOutcome } from './engine/saveRefusal';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
-import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
@@ -128,6 +127,7 @@ import { decorDef as decorDefOf } from './sim/build';
 import { HouseRegistry } from './sim/houses';
 import { PeopleSim } from './sim/people';
 import { expandSave, ownsBorderChunk } from './sim/expand';
+import { generatorOf, groundOf } from './sim/ground';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 import { SimStep, startStock, ageSnapshot as ageSnapshotOf } from './sim/step';
@@ -332,6 +332,8 @@ export class Game implements UiHost {
   };
 
   readonly spec: WorldSpec;
+  /** what building a generated world's map from its stored ground did; null for a level */
+  private ground: ReturnType<typeof groundOf> | null = null;
   /** play = normal game; editor = level editor (free building, paused clock) */
   mode: 'play' | 'editor' = 'play';
   editor: Editor | null = null;
@@ -813,10 +815,12 @@ export class Game implements UiHost {
     await this.atlas.load(ATLAS_GROUPS);
     buildCompatTable();
 
-    this.map =
-      this.spec.kind === 'level'
-        ? mapFromLevel(this.spec.level, this.supply)
-        : generateMap(this.spec.seed, this.spec.params, this.supply);
+    if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
+    else {
+      // a generated world's stored ground, the chunks it lacks generated with its chain and stored
+      this.ground = groundOf(this.spec, generatorOf(this.supply));
+      this.map = this.ground.map;
+    }
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -1149,8 +1153,9 @@ export class Game implements UiHost {
   }
 
   /**
-   * Terrain is regenerated on load; anything the player built must still stand on buildable
-   * ground (a regenerated stone field or lake under a station would strand it).
+   * Ground generated on load (a save's first load, a stored chunk that could not be read) need not
+   * be what was built on; anything the player built must still stand on buildable ground (a
+   * regenerated stone field or lake under a station would strand it).
    */
   private fixBuiltTiles(j: SaveGame) {
     const bridges = new Set(
@@ -1266,6 +1271,14 @@ export class Game implements UiHost {
     this.restoringWorld = false;
     this.refreshBridges();
     audio.setAge(ageDef(this.economy.tier).id);
+    // ground generated as the save loaded is stored at once; stored ground unread is reported
+    if (this.ground?.unreadable.length) {
+      const text = STR.saves.groundUnreadable(this.ground.unreadable.length);
+      this.toasts.push(text, 'warn');
+      this.notices.push({ key: 'save:ground', kind: 'warn', text, target: null }, 180);
+    }
+    if (this.ground?.added.length && !this.save(true))
+      this.toasts.push(STR.saves.groundUnsaved, 'warn');
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1771,6 +1784,7 @@ export class Game implements UiHost {
         setIntentAndReload({ action: 'continue', keepSpeed: true });
         return true;
       }
+      this.toasts.push(STR.overview.growRefused, 'warn');
     }
     this.world.rebuildFog();
     this.overview.rebuildRegions();

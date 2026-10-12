@@ -141,11 +141,13 @@ describe('the migration registry', () => {
     // offer values the step from v10 rewrites (1.5 days, three offers) and the ones the step from
     // v11 rewrites (six days, two offers), a train with nothing but its id for the steps that
     // fill a train's fields, a station with no turn and no work for the steps that fill a
-    // station's, and past the step that starts the works list, a works with no level, no work
-    // and no rotation for the steps that fill a works'.
+    // station's, past the step that starts the works list, a works with no level, no work and no
+    // rotation for the steps that fill a works', and past the step that builds the world
+    // description, a generated world with no ground stored for the step that starts its store.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
+        ...(m.from > 2 ? { world: generatedWorldOf(96, 96) } : {}),
         version: m.from,
         rules:
           m.from === 11
@@ -313,7 +315,12 @@ describe('migrate', () => {
     // Nothing may be left undone by the steps that promise a default.
     expect(j.decor).toEqual([]);
     expect(j.buildings).toEqual([]);
-    expect(j.world).toEqual({ kind: 'generated', seed: 12345, params: expect.any(Object) });
+    expect(j.world).toEqual({
+      kind: 'generated',
+      seed: 12345,
+      params: expect.any(Object),
+      chunks: {},
+    });
     expect(j.regions).toEqual(expect.any(Array));
     expect(j.regions!.filter((owned) => owned === true)).toHaveLength(1);
     expect(j.seasonOffset).toBe(0);
@@ -1592,7 +1599,7 @@ describe('v17 to v18', () => {
       version: 17,
       trains: [{ id: 1, mode: 'collection' }, { id: 2, mode: 'transport' }, { id: 3 }],
     });
-    expect(v17.migrationNotes).toEqual([`v17→v18: ${step.note}`]);
+    expect(v17.migrationNotes?.[0]).toBe(`v17→v18: ${step.note}`);
     expect(v17.trains).toEqual([
       { id: 1, mode: 'freight', ...V18_DEFAULTS },
       { id: 2, mode: 'transport', ...V18_DEFAULTS },
@@ -2992,6 +2999,8 @@ function withoutFilled(from: number, file: unknown): unknown {
     const list = isObject(copy.houses) ? copy.houses.list : undefined;
     if (Array.isArray(list)) for (const h of list.filter(isObject)) delete h.work;
   }
+  // the step from v18 starts a generated world's store of ground
+  if (from === 18 && isObject(copy.world)) delete copy.world.chunks;
   if (from === 15)
     for (const b of Array.isArray(copy.buildings) ? copy.buildings : []) {
       if (!Array.isArray(b) || b.length < 4) continue;
@@ -3170,7 +3179,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17, 18]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },
