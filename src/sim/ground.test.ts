@@ -21,12 +21,14 @@ import { Builder } from './build';
 import { Economy } from './economy';
 import { Stockpile } from './stockpile';
 import { DEFAULT_RULES, rules } from './rules';
-import type { SupplyMode } from './supply';
+import { DEFAULT_SUPPLY, setSupplyMode, supplyMode, type SupplyMode } from './supply';
 import {
   CHUNK_TILES,
+  PROP_KINDS,
   chunkKey,
   chunkOf,
   mapChunks,
+  parseChunkKey,
   type ChunkStore,
   type MapGenerator,
 } from '../world/chunks';
@@ -37,6 +39,8 @@ import { TrackGraph, pieceCost } from '../world/track';
 import { findPath } from '../world/pathfinding';
 import { levelFromMap } from '../world/level';
 import { Dir } from '../engine/iso';
+import { hash2, type Rng } from '../engine/rng';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { buildRelief, groundAllows } from '../render/terrainRelief';
 
 // the build rules play a sound when a piece goes down
@@ -549,6 +553,267 @@ describe('a world that grows', () => {
         expect(path, `seed ${seed}: a way across the ${axis} seam`).not.toBeNull();
       }
       expect(laid).toBe(12);
+    }
+  });
+});
+
+/**
+ * A generator unlike generateMap and unlike every other salt: each plane is hashed from the world
+ * tile, so a salt makes the same ground wherever the frame lies, and another salt other ground.
+ * Prop offsets are whole 256ths of a tile, so a chunk stores them exactly.
+ */
+function hashedGen(salt: number): MapGenerator {
+  return (seed, params) => {
+    const p = { ...DEFAULT_MAP_PARAMS, ...params };
+    const m = emptyMap(seed, p.w, p.h, Terrain.Grass, p.originX ?? 0, p.originY ?? 0);
+    for (let y = 0; y < m.h; y++)
+      for (let x = 0; x < m.w; x++) {
+        const at = (k: number) => hash2(x + m.originX, y + m.originY, salt * 8 + k);
+        const i = y * m.w + x;
+        m.terrain[i] = Math.floor(at(0) * 16);
+        m.biome[i] = Math.floor(at(1) * 16);
+        m.variant[i] = Math.floor(at(2) * 4);
+        if (at(3) < 0.25)
+          m.props.set(i, [
+            {
+              kind: PROP_KINDS[Math.floor(at(4) * PROP_KINDS.length)],
+              variant: Math.floor(at(5) * 8),
+              ox: Math.floor(at(6) * 200 - 100) / 256,
+              oy: Math.floor(at(7) * 200 - 100) / 256,
+            },
+          ]);
+      }
+    return m;
+  };
+}
+
+/**
+ * A world's life: its seed, the chunks a side it starts with, then the rings it grows by before
+ * each later load.
+ */
+interface Life {
+  seed: number;
+  side: number;
+  grows: number[];
+}
+const genLife = (rng: Rng): Life => ({
+  seed: rng.int(0, 2 ** 31 - 1),
+  side: rng.int(1, 3),
+  grows: Array.from({ length: rng.int(1, 3) }, () => rng.pick([0, 1, 1, 2])),
+});
+function* shrinkLife(l: Life): Iterable<Life> {
+  for (const side of shrinkInt(l.side, 1)) yield { ...l, side };
+  for (const grows of shrinkArray(l.grows, (g) => shrinkInt(g)))
+    if (grows.length) yield { ...l, grows };
+}
+
+describe('a world grown again and again, under another generator at every load', () => {
+  // 30 lives of up to four loads on maps up to 480 tiles a side, every plane compared at each
+  // load: about 2 s alone
+  it('keeps every chunk as the load that first covered it made it, text and planes', () => {
+    let mixed = 0;
+    let idle = 0;
+    let overruled = 0;
+    forAll(
+      genLife,
+      (life) => {
+        const { seed } = life;
+        let text = JSON.stringify(
+          buildSave(partsOf(worldOf(seed, { w: 32 * life.side, h: 32 * life.side }))),
+        );
+        /** the text each chunk was first stored with, and the load that made it */
+        const first = new Map<string, string>();
+        const madeAt = new Map<string, number>();
+        /** the load that made the chunk of world tile (`wx`, `wy`), by chunk row and column */
+        const epochOf = new Map<number, number>();
+        const epochAt = (wx: number, wy: number) =>
+          epochOf.get((chunkOf(wx) + 64) * 128 + chunkOf(wy) + 64);
+        /** the map each load's generator made, on that load's frame; none where it made none */
+        const made: (GameMap | null)[] = [];
+        for (let load = 0; load <= life.grows.length; load++) {
+          const save = parseSave(text)!;
+          // main.ts grows a save ring by ring as it reads it, and writes it before the game starts
+          for (let r = 0; r < (load ? life.grows[load - 1] : 0); r++) expandSave(save);
+          const world = parseSave(JSON.stringify(save))!.world as GeneratedWorld;
+          const params = { ...DEFAULT_MAP_PARAMS, ...world.params };
+          const before = storeOf(world.chunks);
+          const fresh = keysOf(params).filter((k) => !Object.hasOwn(before, k));
+          const gen = counting(hashedGen(load));
+          const built = groundOf(world, gen.gen);
+          // the generator runs once when the map covers a chunk the store lacks, else not at all
+          expect(gen.calls, `load ${load}`).toEqual(fresh.length ? [params] : []);
+          if (!fresh.length) idle++;
+          expect(built.added, `load ${load}`).toEqual(fresh);
+          expect(built.unreadable).toEqual([]);
+          // every chunk stored at an earlier load is the very text it was first stored with
+          for (const [k, t] of first) expect(world.chunks![k], `chunk ${k}, load ${load}`).toBe(t);
+          expect(Object.keys(world.chunks!).sort()).toEqual(keysOf(params).sort());
+          for (const k of fresh) {
+            first.set(k, world.chunks![k]);
+            madeAt.set(k, load);
+            const { cx, cy } = parseChunkKey(k)!;
+            epochOf.set((cx + 64) * 128 + cy + 64, load);
+          }
+          made.push(fresh.length ? hashedGen(load)(seed, params) : null);
+          // each tile is the ground of the load that first covered its chunk
+          const epochs = new Set(madeAt.values());
+          if (epochs.size > 1) mixed++;
+          for (const e of epochs) {
+            const where = firstDifference(built.map, made[e]!, {
+              only: (wx, wy) => epochAt(wx, wy) === e,
+            });
+            if (where) throw new Error(`load ${load}: ground first made at load ${e}: ${where}`);
+          }
+          // and this load's generator would have made other ground where a chunk was stored
+          if (overruled < 5 && Object.keys(before).length) {
+            const now = hashedGen(load)(seed, params);
+            const kept = (wx: number, wy: number) => inStore(before, wx, wy);
+            if (firstDifference(built.map, now, { only: kept })) overruled++;
+          }
+          // the game writes the save as soon as it loads
+          text = JSON.stringify(buildSave(partsOf(world)));
+        }
+      },
+      { seeds: Array.from({ length: 30 }, (_, i) => i + 1), shrink: shrinkLife, shrinkBudget: 100 },
+    );
+    // worlds that mixed ground of several loads ran, loads that grew nothing, and generators that
+    // would have changed stored ground
+    expect(mixed).toBeGreaterThan(0);
+    expect(idle).toBeGreaterThan(0);
+    expect(overruled).toBeGreaterThan(0);
+  }, 40_000);
+
+  // three maps of real ground up to 224 tiles a side, for each seed: about 0.6 s alone
+  it('keeps each ring of real ground as the generator of its day made it, over two growths', () => {
+    const changedAgain: MapGenerator = (s, p) => ({ ...generateMap(s + 2, p), seed: s });
+    for (const seed of [1, 7412]) {
+      const gens = [generatorOf('simple'), changed, changedAgain];
+      const world = worldOf(seed, { w: 96, h: 96 });
+      const maps: GameMap[] = [];
+      const firstTexts: ChunkStore = {};
+      let save = parseSave(JSON.stringify(buildSave(partsOf(world))))!;
+      gens.forEach((gen, load) => {
+        if (load) expandSave(save);
+        const w = save.world as GeneratedWorld;
+        const built = groundOf(w, gen);
+        for (const [k, t] of Object.entries(firstTexts))
+          expect(w.chunks![k], `seed ${seed}, chunk ${k}, load ${load}`).toBe(t);
+        for (const k of built.added) firstTexts[k] = w.chunks![k];
+        maps.push(gen(seed, w.params));
+        save = parseSave(JSON.stringify(buildSave(partsOf(w))))!;
+      });
+      const last = groundOf(save.world as GeneratedWorld, never).map;
+      // ring by ring, the ground of the generator of the load that first covered it
+      const ringOf = (wx: number, wy: number) =>
+        Math.max(0, -chunkOf(wx), -chunkOf(wy), chunkOf(wx) - 2, chunkOf(wy) - 2);
+      maps.forEach((m, ring) => {
+        const where = firstDifference(last, m, {
+          near: true,
+          only: (wx, wy) => ringOf(wx, wy) === ring,
+        });
+        expect(where, `seed ${seed}, ring ${ring}`).toBeNull();
+      });
+      // the generators differ where the rings meet them
+      expect(firstDifference(maps[1], maps[2], { near: true })).not.toBeNull();
+    }
+  }, 10_000);
+});
+
+describe('the seams of a world grown under a changed generator', () => {
+  // four worlds of 160 tiles a side, each seam row checked against the build rules: about 0.2 s
+  it('take track on every row of ordinary ground across each of the four seams', () => {
+    const straight = { kind: 'straight', cls: 'regular' } as const;
+    for (const seed of [1, 7412, 31337, 20260912]) {
+      const world = worldOf(seed, { w: 96, h: 96 });
+      groundOf(world, generatorOf('simple'));
+      const save = parseSave(JSON.stringify(buildSave(partsOf(world))))!;
+      expandSave(save);
+      const map = groundOf(save.world as GeneratedWorld, changed).map;
+      const regions = new RegionState(map);
+      regions.load(new Array<boolean>(regions.unlocked.length).fill(true));
+      const track = new TrackGraph(map.w, map.h);
+      const stock = new Stockpile();
+      for (const [k, v] of Object.entries(pieceCost('straight'))) stock.add(k, v * 1000);
+      const builder = new Builder(map, regions, track, new Economy(), stock);
+      const relief = buildRelief(map, new Set());
+      builder.groundCheck = (x, y, need) => groundAllows(map, relief, x, y, need);
+      const ordinary = (t: { x: number; y: number }) => {
+        const k = map.terrain[t.y * map.w + t.x];
+        return (
+          (k === Terrain.Grass || k === Terrain.Forest || k === Terrain.Sand) &&
+          groundAllows(map, relief, t.x, t.y, 'level')
+        );
+      };
+      // the stored chunks fill map tiles 32 to 127 on either axis; the ring lies outside them
+      const seams = [
+        { name: 'west', axis: 'x', at: 32 },
+        { name: 'east', axis: 'x', at: 128 },
+        { name: 'north', axis: 'y', at: 32 },
+        { name: 'south', axis: 'y', at: 128 },
+      ] as const;
+      const rowsOf = (s: (typeof seams)[number]) => {
+        const rows: { x: number; y: number }[][] = [];
+        for (let along = 32; along < 128; along++) {
+          const tiles = [-3, -2, -1, 0, 1, 2].map((d) =>
+            s.axis === 'x' ? { x: s.at + d, y: along } : { x: along, y: s.at + d },
+          );
+          if (tiles.every(ordinary)) rows.push(tiles);
+        }
+        return rows;
+      };
+      for (const s of seams) {
+        const rows = rowsOf(s);
+        expect(
+          rows.length,
+          `seed ${seed}: ordinary ground across the ${s.name} seam`,
+        ).toBeGreaterThan(0);
+        // the rows straddle the seam: one side stored, the other the changed generator's
+        const rot = s.axis === 'x' ? 1 : 0;
+        for (const row of rows)
+          for (const t of row) {
+            const check = builder.checkTrack(t.x, t.y, straight, rot);
+            if (!check.ok)
+              throw new Error(
+                `seed ${seed}, ${s.name} seam: a straight at (${t.x}, ${t.y}) refused: ${check.reason}`,
+              );
+          }
+      }
+      // one row a seam laid, and a train finds its way across each
+      for (const s of seams) {
+        const row = rowsOf(s)[0];
+        const rot = s.axis === 'x' ? 1 : 0;
+        for (const t of row) expect(builder.placeTrack(t.x, t.y, straight, rot)).toBe(true);
+        const [from, to] = [row[0], row[row.length - 1]];
+        const path = findPath(
+          track,
+          { ...from, in: s.axis === 'x' ? Dir.W : Dir.N },
+          (x, y) => x === to.x && y === to.y,
+        );
+        expect(path, `seed ${seed}: a way across the ${s.name} seam`).not.toBeNull();
+      }
+    }
+  });
+});
+
+describe('the chain a save is given its ground in', () => {
+  beforeEach(() => setSupplyMode(DEFAULT_SUPPLY));
+  afterEach(() => setSupplyMode(DEFAULT_SUPPLY));
+
+  // the start-up pass gives a stored save `generatorOf(save.supply)`; a load gives
+  // `generatorOf(supplyMode())` once the game has taken the save's chain (`setSupplyMode`), so a
+  // save gets the same ground whichever of the two generates it
+  it('is the one a load runs the game in, for anything a file holds as its chain', () => {
+    const p = { w: 64, h: 64 };
+    const full = generateMap(2, p, 'full');
+    const simple = generateMap(2, p, 'simple');
+    expect(firstDifference(full, simple), 'the chains make other ground').not.toBeNull();
+    for (const held of ['full', 'simple', undefined, null, 'FULL', 'medium', 1] as unknown[]) {
+      setSupplyMode(held as SupplyMode);
+      const atLoad = generatorOf(supplyMode())(2, p);
+      const atStart = generatorOf(held as SupplyMode)(2, p);
+      expect(firstDifference(atStart, atLoad), `supply ${String(held)}`).toBeNull();
+      const chain = held === 'full' ? full : simple;
+      expect(firstDifference(atStart, chain), `supply ${String(held)}`).toBeNull();
     }
   });
 });

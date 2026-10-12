@@ -28,6 +28,9 @@ import {
   CONTRACT_POLICY_VERSION,
   convertOneTileRegular,
   CONTRACT_RARITIES,
+  GROUND_KEY,
+  freezeStoredSaves,
+  withGround,
   type SaveGame,
   type SaveParts,
   type SaveRefusal,
@@ -55,9 +58,11 @@ import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
 import { levelFromMap, mapFromLevel } from '../world/level';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
-import type { GameMap } from '../world/tiles';
-import type { Rng } from '../engine/rng';
+import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
+import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { groundOf, type GeneratedWorld } from './ground';
+import { PROP_KINDS, chunkKey, mapChunks, type MapGenerator } from '../world/chunks';
 
 // trains.ts plays sounds; the load-code oracles below build trains under Node
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -3257,4 +3262,241 @@ describe('the defaults the steps fill', () => {
       },
     );
   });
+});
+
+// ------------------------------------------------------------------ the ground a save stores
+/**
+ * A generator unlike generateMap and unlike every other salt: each plane is hashed from the world
+ * tile, terrain and biome in patches of 8 tiles a side. Prop offsets are whole 256ths of a tile,
+ * so a chunk stores them exactly.
+ */
+function hashedGround(salt: number): MapGenerator {
+  return (seed, params) => {
+    const p = { ...DEFAULT_MAP_PARAMS, ...params };
+    const m = emptyMap(seed, p.w, p.h, Terrain.Grass, p.originX ?? 0, p.originY ?? 0);
+    for (let y = 0; y < m.h; y++)
+      for (let x = 0; x < m.w; x++) {
+        const wx = x + m.originX;
+        const wy = y + m.originY;
+        const at = (k: number) => hash2(wx, wy, salt * 8 + k);
+        const i = y * m.w + x;
+        m.terrain[i] = Math.floor(hash2(wx >> 3, wy >> 3, salt * 8) * 16);
+        m.biome[i] = Math.floor(hash2(wx >> 3, wy >> 3, salt * 8 + 1) * 16);
+        m.variant[i] = Math.floor(at(2) * 4);
+        if (at(3) < 0.05)
+          m.props.set(i, [
+            {
+              kind: PROP_KINDS[Math.floor(at(4) * PROP_KINDS.length)],
+              variant: Math.floor(at(5) * 8),
+              ox: Math.floor(at(6) * 200 - 100) / 256,
+              oy: Math.floor(at(7) * 200 - 100) / 256,
+            },
+          ]);
+      }
+    return m;
+  };
+}
+/** A generator that must not run: every chunk the map covers is stored. */
+const noGround: MapGenerator = () => {
+  throw new Error('generated a chunk that is stored');
+};
+/** The keys of every chunk a generated world's map covers, in rows. */
+const groundKeys = (w: GeneratedWorld) =>
+  mapChunks({ ...DEFAULT_MAP_PARAMS, ...w.params }).map(({ cx, cy }) => chunkKey(cx, cy));
+/** Where two maps of one frame first differ, every plane exactly; null when they do not. */
+function firstPlaneDifference(a: GameMap, b: GameMap): string | null {
+  const frame = (m: GameMap) => [m.w, m.h, m.originX, m.originY].join(' ');
+  if (frame(a) !== frame(b)) return `frame ${frame(a)} against ${frame(b)}`;
+  const same = (p: PropInstance, q: PropInstance) =>
+    p.kind === q.kind && p.variant === q.variant && p.ox === q.ox && p.oy === q.oy;
+  for (let i = 0; i < a.w * a.h; i++) {
+    const where = () => `tile (${i % a.w}, ${Math.floor(i / a.w)})`;
+    if (a.terrain[i] !== b.terrain[i]) return `terrain at ${where()}`;
+    if (a.biome[i] !== b.biome[i]) return `biome at ${where()}`;
+    if (a.variant[i] !== b.variant[i]) return `variant at ${where()}`;
+    const pa = a.props.get(i) ?? [];
+    const pb = b.props.get(i) ?? [];
+    if (pa.length !== pb.length || pa.some((p, k) => !same(p, pb[k])))
+      return `props at ${where()}: ${JSON.stringify(pa)} against ${JSON.stringify(pb)}`;
+  }
+  return null;
+}
+/** The save text the game writes from a loaded save: its parts at this version, no load notes. */
+function writtenBack(save: SaveGame): string {
+  const parts: Partial<SaveGame> = { ...save };
+  delete parts.loadedFrom;
+  delete parts.migrationNotes;
+  return JSON.stringify(buildSave(parts as SaveParts, {}, 0));
+}
+/** A value as stored, with a generated world's ground taken out. */
+function withoutGround(v: unknown): unknown {
+  const copy = asStored(v) as Record<string, unknown>;
+  if (isObject(copy.world)) delete copy.world.chunks;
+  return copy;
+}
+/**
+ * What the start-up pass may make of a stored text: the file as it was, its ground added; a file
+ * from before world descriptions given the world its load builds.
+ */
+function fileWithWorld(raw: string): unknown {
+  const was = JSON.parse(raw) as Record<string, unknown>;
+  return { ...was, world: isObject(was.world) ? was.world : parseSave(raw)!.world };
+}
+
+describe('the ground of a file of any version', () => {
+  let store: MemoryStorage;
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+    store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  // 100 files of every version, maps up to 416 tiles a side built twice: about 1.1 s alone
+  it('is generated once on its first load, and read from the store alone once the save is written', () => {
+    let generated = 0;
+    forAll(
+      genOldFile,
+      (file) => {
+        const from = fromVersion(file.version);
+        const save = parseSave(JSON.stringify(file))!;
+        const world = save.world;
+        if (world?.kind !== 'generated') {
+          expect(world && 'chunks' in world, 'a level stores no chunks').toBeFalsy();
+          return;
+        }
+        // the step from v18 starts the store empty; a file of this version without one has none
+        if (from < SAVE_VERSION) expect(world.chunks, `from v${from}`).toEqual({});
+        const calls: unknown[] = [];
+        const first = groundOf(world, (s, p) => {
+          calls.push(p);
+          return hashedGround(1)(s, p);
+        });
+        expect(calls).toHaveLength(1);
+        expect(first.added).toEqual(groundKeys(world));
+        expect(first.unreadable).toEqual([]);
+        generated++;
+        // the game writes the save at once; its next load reads the same texts and nothing else
+        const again = parseSave(writtenBack(save))!;
+        expect(again.loadedFrom).toBeUndefined();
+        const stored = again.world as GeneratedWorld;
+        expect(JSON.stringify(stored.chunks)).toBe(JSON.stringify(world.chunks));
+        const second = groundOf(stored, noGround);
+        expect(second.added).toEqual([]);
+        expect(second.unreadable).toEqual([]);
+        const where = firstPlaneDifference(second.map, first.map);
+        if (where) throw new Error(`the second load differs: ${where}`);
+      },
+      { shrink: shrinkOldFile, shrinkBudget: 300 },
+    );
+    expect(generated).toBeGreaterThan(0);
+  }, 25_000);
+
+  // 100 files of every version, maps up to 416 tiles a side given their ground and read back:
+  // about 1.2 s alone
+  it('is added by the start-up pass to a stored file of any version, and nothing else of it changes', () => {
+    let grounded = 0;
+    forAll(
+      genOldFile,
+      (file) => {
+        const raw = JSON.stringify(file);
+        const save = parseSave(raw)!;
+        const chains: unknown[] = [];
+        const out = withGround(raw, (s) => {
+          chains.push(s.supply);
+          return hashedGround(2);
+        });
+        const world = save.world;
+        if (world?.kind !== 'generated') {
+          expect(out).toBeNull();
+          expect(chains).toEqual([]);
+          return;
+        }
+        expect(out, 'a generated world with no ground stored is given it').not.toBeNull();
+        grounded++;
+        // the generator is the one of the save's own chain
+        expect(chains).toEqual([save.supply]);
+        // only the ground is new: the version, the time stamp and every other field stay
+        const now = JSON.parse(out!) as { world?: GeneratedWorld };
+        expect(withoutGround(now)).toEqual(withoutGround(fileWithWorld(raw)));
+        expect(isObject(now.world?.chunks), 'the file holds its ground').toBe(true);
+        const ground = now.world!.chunks!;
+        expect(Object.keys(ground)).toEqual(groundKeys(world));
+        // run again, the pass finds nothing to add and generates nothing
+        expect(withGround(out!, () => noGround)).toBeNull();
+        // the file loads as it did, from the same version with the same notes, now with its ground
+        const loaded = parseSave(out!)!;
+        expect(withoutGround(loaded)).toEqual(withoutGround(save));
+        expect((loaded.world as GeneratedWorld).chunks).toEqual(ground);
+        // read from the store alone, as the generator the pass was given made it
+        const built = groundOf(loaded.world as GeneratedWorld, noGround);
+        expect(built.added).toEqual([]);
+        const made = hashedGround(2)(world.seed, { ...DEFAULT_MAP_PARAMS, ...world.params });
+        const where = firstPlaneDifference(built.map, made);
+        if (where) throw new Error(`the stored ground differs: ${where}`);
+        // and the lists of saves show it as they showed the file before
+        const listed = () => [continueMeta(), listSlots()];
+        store.items.set(SAVE_KEY, raw);
+        store.items.set(SLOTS_KEY, JSON.stringify({ a: raw }));
+        const shown = listed();
+        store.items.set(SAVE_KEY, out!);
+        store.items.set(SLOTS_KEY, JSON.stringify({ a: out }));
+        expect(listed()).toEqual(shown);
+      },
+      { shrink: shrinkOldFile, shrinkBudget: 300 },
+    );
+    expect(grounded).toBeGreaterThan(0);
+  }, 25_000);
+
+  // 40 storages of up to four saves of every version: about 0.6 s alone
+  it('is given at start-up to Continue and every named save that lacks it, each once', () => {
+    let frozenAll = 0;
+    forAll(
+      (rng) => ({
+        continued: rng.chance(0.7) ? genOldFile(rng) : null,
+        slots: Array.from({ length: rng.int(0, 3) }, () => genOldFile(rng)),
+        junk: rng.chance(0.3),
+      }),
+      (c) => {
+        store.items.clear();
+        const slots: Record<string, string> = {};
+        c.slots.forEach((f, i) => (slots[`save ${i + 1}`] = JSON.stringify(f)));
+        if (c.junk) slots.junk = '{oops';
+        store.items.set(SLOTS_KEY, JSON.stringify(slots));
+        const continued = c.continued ? JSON.stringify(c.continued) : null;
+        if (continued !== null) store.items.set(SAVE_KEY, continued);
+        /** whether the pass has ground to add to a stored text: a whole save of a generated world */
+        const lacking = (raw: string) => parseSave(raw)?.world?.kind === 'generated';
+        const texts = [...(continued === null ? [] : [continued]), ...Object.values(slots)];
+        const frozen = texts.filter(lacking).length;
+        expect(freezeStoredSaves(() => hashedGround(3))).toEqual({ ran: true, frozen, refused: 0 });
+        frozenAll += frozen;
+        expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
+        // each text the pass had ground for holds it now and nothing else new; the rest as they were
+        const after = JSON.parse(store.items.get(SLOTS_KEY)!) as Record<string, string>;
+        expect(Object.keys(after)).toEqual(Object.keys(slots));
+        const pairs: [string, string, string][] = Object.entries(slots).map(([n, raw]) => [
+          n,
+          raw,
+          after[n],
+        ]);
+        if (continued !== null) pairs.push(['Continue', continued, store.items.get(SAVE_KEY)!]);
+        for (const [name, raw, now] of pairs) {
+          if (!lacking(raw)) {
+            expect(now, name).toBe(raw);
+            continue;
+          }
+          expect(withoutGround(JSON.parse(now)), name).toEqual(withoutGround(fileWithWorld(raw)));
+          const world = parseSave(now)!.world as GeneratedWorld;
+          expect(Object.keys(world.chunks!), name).toEqual(groundKeys(world));
+        }
+        // once only: the next start generates nothing and writes nothing
+        const writes = store.writes;
+        expect(freezeStoredSaves(() => noGround)).toEqual({ ran: false, frozen: 0, refused: 0 });
+        expect(store.writes).toBe(writes);
+      },
+      { seeds: Array.from({ length: 40 }, (_, i) => i + 1) },
+    );
+    expect(frozenAll).toBeGreaterThan(0);
+  }, 15_000);
 });
