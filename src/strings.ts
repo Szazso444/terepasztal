@@ -933,6 +933,7 @@ export const STR = {
       notSave: 'That is not a Terepasztal save.',
       damaged: 'That save is damaged and was not loaded. Your game is unchanged.',
       storage: 'Could not store that save (storage full or blocked). Your game is unchanged.',
+      tooLarge: "This save's map is larger than the game can build.",
     },
     /** `refund` is the text of `saves.refund`; with nothing refunded its sentence is left out. */
     pruned: (list: string, refund: string) =>

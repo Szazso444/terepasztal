@@ -12,7 +12,7 @@ import type { PeopleJSON } from './people';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { CHUNK_TILES } from './expand';
-import { generatorOf, groundOf, lacksGround } from './ground';
+import { generatorOf, groundOf, lacksGround, worldWithinBound } from './ground';
 import { wrapRotation } from './rotation';
 
 /** What the map was built from; a level save carries the whole level. */
@@ -647,10 +647,10 @@ export function buildSave(
 /**
  * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
  * or it is a save without something every version since v1 holds, or one that would load holding
- * a number no save can store (`settle`); or, for an import, storage refused to keep it (full or
- * blocked).
+ * a number no save can store (`settle`); or it describes a generated map larger than the game
+ * builds (`worldWithinBound`); or, for an import, storage refused to keep it (full or blocked).
  */
-export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'storage';
+export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'tooLarge' | 'storage';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -744,7 +744,8 @@ function repairStationTurns(j: SaveGame) {
  * loads can be stored again.
  */
 function settle(file: Record<string, unknown>): SaveGame | null {
-  if (!holdsCore(file)) return null;
+  // before any step runs: the step from v4 lays out a list with an entry for every chunk of the map
+  if (!worldWithinBound(file.world) || !holdsCore(file)) return null;
   const j = file as SaveGame;
   // no version, or none the chain can count up from, is the oldest
   if (!Number.isInteger(j.version) || j.version < SAVE_MIN_VERSION) j.version = SAVE_MIN_VERSION;
@@ -763,11 +764,14 @@ function settle(file: Record<string, unknown>): SaveGame | null {
  * Read a save text: an exported save, a stored one or a diagnostics bundle. Never refuses on
  * version: older saves are upgraded step by step, newer ones are loaded as they are with a
  * warning. Station turns are repaired (`repairStationTurns`). Text that is not a whole save, or
- * whose save could not be stored again, is refused, with the reason.
+ * whose save could not be stored again, or whose generated map is larger than the game builds
+ * (`worldWithinBound`; refused before anything is migrated or generated), is refused, with the
+ * reason.
  */
 export function readSaveText(raw: string): { save: SaveGame } | { error: SaveRefusal } {
   const opened = openSave(raw);
   if ('error' in opened) return opened;
+  if (!worldWithinBound(opened.file.world)) return { error: 'tooLarge' };
   const save = settle(opened.file);
   return save ? { save } : { error: 'damaged' };
 }
@@ -782,6 +786,20 @@ export function readSave(): SaveGame | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     return parseSave(raw);
+  } catch {
+    return null;
+  }
+}
+/**
+ * Why the stored game Continue loads is refused (`readSaveText`); null when there is none or it
+ * loads. A refused save stays stored.
+ */
+export function storedRefusal(): SaveRefusal | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const read = readSaveText(raw);
+    return 'error' in read ? read.error : null;
   } catch {
     return null;
   }
@@ -971,6 +989,13 @@ export function readSlot(name: string): SaveGame | null {
   const raw: unknown = readSlots()[name];
   return typeof raw === 'string' ? parseSave(raw) : null;
 }
+/** Why a named save is refused (`readSaveText`); null when there is none by that name or it loads. */
+export function slotRefusal(name: string): SaveRefusal | null {
+  const raw: unknown = readSlots()[name];
+  if (typeof raw !== 'string') return null;
+  const read = readSaveText(raw);
+  return 'error' in read ? read.error : null;
+}
 export function deleteSlot(name: string) {
   const slots = readSlots();
   delete slots[name];
@@ -990,10 +1015,21 @@ export const GROUND_KEY = 'terepasztal.ground';
  * or stores every chunk its map covers already, or the file holds a number JSON cannot write.
  * Only the ground is added. The file keeps its version, time stamp and everything else as they
  * were, so it lists, loads and upgrades as before; the step from v18 keeps the store it finds.
+ * A save whose map is larger than the game builds (`worldWithinBound`) gets none: it is left as it
+ * is, and a load refuses it.
  */
 export function withGround(raw: string, generate: (save: SaveGame) => MapGenerator): string | null {
+  const grounded = grounding(raw, generate);
+  return grounded !== null && 'text' in grounded ? grounded.text : null;
+}
+
+/** `withGround`, telling a save left as it is for the size of its map from the other reasons. */
+function grounding(
+  raw: string,
+  generate: (save: SaveGame) => MapGenerator,
+): { text: string } | { tooLarge: true } | null {
   const read = readSaveText(raw);
-  if (!('save' in read)) return null;
+  if (!('save' in read)) return read.error === 'tooLarge' ? { tooLarge: true } : null;
   const { world } = read.save;
   if (world?.kind !== 'generated' || !lacksGround(world)) return null;
   groundOf(world, generate(read.save));
@@ -1004,7 +1040,7 @@ export function withGround(raw: string, generate: (save: SaveGame) => MapGenerat
   if (!isRecord(file)) return null;
   // a file from before v3 has no world of its own: it gets the one the step from v2 builds for it
   file.world = isRecord(file.world) ? { ...file.world, chunks: world.chunks } : world;
-  return firstNonFinite(parsed) === null ? JSON.stringify(parsed) : null;
+  return firstNonFinite(parsed) === null ? { text: JSON.stringify(parsed) } : null;
 }
 
 /** What `freezeStoredSaves` did. */
@@ -1015,6 +1051,11 @@ export interface FreezeReport {
   frozen: number;
   /** stored saves that lack it still: storage would not keep them with it (full or blocked) */
   refused: number;
+  /**
+   * stored saves whose map is larger than the game builds (`worldWithinBound`): left byte for
+   * byte, and refused when loaded
+   */
+  tooLarge: number;
 }
 
 /**
@@ -1023,12 +1064,14 @@ export interface FreezeReport {
  * Runs once (`GROUND_KEY`): saves written since keep their ground, and a save that comes in later
  * without it (an import) gets it when it is loaded. A save storage will not keep with its ground
  * stays stored as it was, is counted in `refused`, and gets its ground when it is next loaded.
- * Named saves are written one at a time, so a full storage keeps every one it can.
+ * A save whose map is larger than the game builds (`worldWithinBound`) stays stored as it was
+ * without a map made for it, is counted in `tooLarge`, and is refused when loaded. Named saves are
+ * written one at a time, so a full storage keeps every one it can.
  */
 export function freezeStoredSaves(
   generate: (save: SaveGame) => MapGenerator = (s) => generatorOf(s.supply),
 ): FreezeReport {
-  const report: FreezeReport = { ran: false, frozen: 0, refused: 0 };
+  const report: FreezeReport = { ran: false, frozen: 0, refused: 0, tooLarge: 0 };
   let continued: string | null;
   try {
     if (localStorage.getItem(GROUND_KEY) !== null) return report;
@@ -1038,10 +1081,13 @@ export function freezeStoredSaves(
   }
   report.ran = true;
   const tally = (stored: boolean) => (stored ? report.frozen++ : report.refused++);
-  // a save whose map cannot be made is left as it was: its load says what is wrong with it
+  // a save whose map cannot be made is left as it was: its load says what is wrong with it. One
+  // whose map is too large is counted, and nothing of it is generated
   const grounded = (raw: unknown) => {
     try {
-      return typeof raw === 'string' ? withGround(raw, generate) : null;
+      const done = typeof raw === 'string' ? grounding(raw, generate) : null;
+      if (done !== null && 'tooLarge' in done) report.tooLarge++;
+      return done !== null && 'text' in done ? done.text : null;
     } catch {
       return null;
     }
