@@ -22,8 +22,10 @@ table of what each stage reads and writes.
 
 - **Author's PC:** a Python 3.11+ with Pillow and numpy, and `--blender <blender.exe>`
   on every command that builds or renders.
-- **Cloud:** `~/bpy-env/bin/python` (Python 3.13 with `bpy==5.2.1`, Pillow, numpy)
-  and no `--blender`; each step runs in that Python through `import bpy`.
+- **Cloud:** `bash tools/asset-pipeline/setup-cloud.sh` once per session sets up
+  `~/.cache/terepasztal/bpy-env/bin/python` (Python 3.13 with `bpy==5.2.1`, Pillow, numpy) and
+  prints it; run every command with that Python and no `--blender`: each step runs in it through
+  `import bpy`.
 
 The commands below are written for the cloud. On the PC use your Python and add
 `--blender "%ProgramFiles%\Blender Foundation\Blender 5.2\blender.exe"` (or the
@@ -34,7 +36,7 @@ Blender you have) to `build`, `verify`, `sample`, `production`, `all` and `insta
 From the repository root:
 
 ```sh
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py init --id new_loco \
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py init --id new_loco \
   --images <front.png> <side.png> --out assets/source/new-loco-reference
 ```
 
@@ -64,15 +66,15 @@ No old locomotive geometry is copied. `init` (Pillow) and `lock` need no Blender
    it again. A lock means reproducible inputs, not owner approval.
 
 ```sh
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py lock assets/source/new-loco-reference/project.json
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py sample assets/source/new-loco-reference/project.json
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py production assets/source/new-loco-reference/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py lock assets/source/new-loco-reference/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py sample assets/source/new-loco-reference/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py production assets/source/new-loco-reference/project.json
 ```
 
 For an already authored/reviewed recipe, **one-command replay**:
 
 ```sh
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py all assets/source/sw1-picture-v4-2026-10-08/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py all assets/source/sw1-picture-v4-2026-10-08/project.json
 ```
 
 `all` builds, performs a two-run pixel-identical sample check, then renders
@@ -119,7 +121,7 @@ renderer independently locks its source and verifies output receipts.
 Construction can be replayed into a separate diagnostic directory:
 
 ```sh
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py verify assets/source/sw1-picture-v4-2026-10-08/project.json
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/run.py verify assets/source/sw1-picture-v4-2026-10-08/project.json
 ```
 
 This compares evaluated geometry, transforms, parenting, materials and calibration
@@ -133,7 +135,7 @@ Installation is deliberately separate from construction. The shared installer
 applies a verified production bundle and its reference-authored calibration:
 
 ```sh
-~/bpy-env/bin/python tools/asset-pipeline/handbuilt/install.py assets/source/sw1-picture-v4-2026-10-08/project.json --game <playtest checkout>
+~/.cache/terepasztal/bpy-env/bin/python tools/asset-pipeline/handbuilt/install.py assets/source/sw1-picture-v4-2026-10-08/project.json --game <playtest checkout>
 ```
 
 It needs a checkout with the playtest runtime (`src/data/gear.json`,
@@ -150,7 +152,7 @@ Boundary checks:
 ```sh
 python -m unittest discover -s tools/asset-pipeline/handbuilt -p 'test_*.py'
 npm test
-~/bpy-env/bin/python -m unittest discover -s tools/asset-pipeline -p 'test_blender_*.py' -v
+~/.cache/terepasztal/bpy-env/bin/python -m unittest discover -s tools/asset-pipeline -p 'test_blender_*.py' -v
 ```
 
 The last one is the Blender check (see `../AGENTS.md`); without Blender 5.2.x it
