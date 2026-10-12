@@ -1,9 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Container, Rectangle, Sprite, Texture, TextureSource } from 'pixi.js';
-import type { FrameInfo } from '../engine/atlas';
+import {
+  Container,
+  Graphics,
+  Rectangle,
+  Sprite,
+  Texture,
+  TextureSource,
+  type FillInstruction,
+} from 'pixi.js';
+import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
+import { ELEV_PX, tileToWorld } from '../engine/iso';
+import { harvestBreakdown } from '../sim/stations';
+import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
-import { Terrain } from '../world/tiles';
+import { RegionState } from '../world/regions';
+import { Terrain, type GameMap } from '../world/tiles';
 import { structureScale, TREE_SCALE } from './assetScale';
+import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
 import { buildRelief, groundAllows } from './terrainRelief';
 import { WorldRenderer } from './worldRenderer';
@@ -232,5 +245,132 @@ describe('the building rules on slopes', () => {
     // open ground first, then the hill's foot is a bank and its top is level again
     expect(grow(ok.world, ok.landscape, a)).toEqual([true, false, true]);
     expect(grow(lost.world, lost.landscape, b)).toEqual([true, false, true]);
+  });
+});
+
+/** An atlas with every frame, all one tile in size: enough for a whole world renderer to build. */
+const ANY_FRAME = frame(64, 32);
+const EVERY_FRAME = { has: () => true, get: () => ANY_FRAME } as unknown as AtlasRegistry;
+
+/**
+ * A whole world renderer over `map`, built as the game builds it. Its paint workers cannot start
+ * under Node, so its landscape is off and the per-tile ground and its elevations stand in.
+ */
+function wholeWorld(map: GameMap) {
+  return new WorldRenderer(EVERY_FRAME, map, new RegionState(map));
+}
+
+const selecting = (x: number, y: number, id: string) => ({
+  tool: { kind: 'none' },
+  rot: 0,
+  selected: { x, y, def: { id } },
+});
+
+/** The centre of each shape the harvest layer holds, as `x,y`, sorted. */
+function centres(layer: Graphics): string[] {
+  const out: string[] = [];
+  for (const ins of layer.context.instructions)
+    for (const { shape } of (ins as FillInstruction).data.path.shapePath.shapePrimitives) {
+      const pts = (shape as { points?: number[] }).points ?? [];
+      let x = 0;
+      let y = 0;
+      for (let i = 0; i < pts.length; i += 2) {
+        x += pts[i];
+        y += pts[i + 1];
+      }
+      out.push(point(x / (pts.length / 2), y / (pts.length / 2)));
+    }
+  return out.sort();
+}
+
+/** A point as text, to a millionth of a pixel: a relief's heights need not be whole. */
+const point = (x: number, y: number) => `${x.toFixed(6)},${y.toFixed(6)}`;
+
+/** Where the world puts the top face of each tile a `defId` on (x, y) counts, as `centres` reads. */
+function grounds(world: WorldRenderer, x: number, y: number, defId: string): string[] {
+  return litTiles(harvestBreakdown(world.map, x, y, defId, 1, 'spring'))
+    .map((t) => world.surfacePoint(t.x, t.y))
+    .map((p) => point(p.x, p.y))
+    .sort();
+}
+
+describe('the harvest highlight in a whole world', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('lies over the ground, the track and the ground lights, and right under the objects', () => {
+    const world = wholeWorld(emptyMap(1, 6, 6));
+    const at = (c: Container) => world.root.getChildIndex(c);
+    const layer = at(world.harvest.layer);
+    const under = [world.border, world.landscape.root, world.ground, world.platforms, world.track];
+    for (const c of [...under, world.lights]) expect(at(c)).toBeLessThan(layer);
+    expect(at(world.objects)).toBe(layer + 1);
+    for (const c of [world.fog, world.overlay]) expect(at(c)).toBeGreaterThan(layer);
+    // one Graphics, with nothing hung under it
+    expect(world.harvest.layer).toBeInstanceOf(Graphics);
+    expect(world.harvest.layer.children).toHaveLength(0);
+  });
+
+  it("draws each lit tile on the world's own top face, raised ground and water included", () => {
+    // hills around a quarry, and a pond around a pump
+    const map = hills();
+    for (let y = 0; y < 3; y++)
+      for (let x = 0; x < 3; x++) map.terrain[y * map.w + x] = Terrain.Water;
+    const sites = [
+      [5, 5, 'quarry'],
+      [1, 1, 'pump'],
+      [27, 4, 'quarry'],
+    ] as const;
+    for (const painting of [false, true]) {
+      const world = wholeWorld(map);
+      // a landscape that paints puts the ground on its relief rather than on per-tile steps
+      if (painting) Object.assign(world, { landscape: working(map).landscape });
+      let raised = 0;
+      for (const [x, y, id] of sites) {
+        const at = `${id} at ${x},${y}, ${painting ? 'painting' : 'off'}`;
+        world.harvest.follow(null, selecting(x, y, id), 'spring');
+        const want = grounds(world, x, y, id);
+        expect(want.length, at).toBeGreaterThan(0);
+        expect(centres(world.harvest.layer), at).toEqual(want);
+        for (const t of litTiles(harvestBreakdown(map, x, y, id, 1, 'spring')))
+          if (world.surfacePoint(t.x, t.y).y !== tileToWorld(t.x, t.y).y) raised++;
+      }
+      expect(raised, painting ? 'painting' : 'off').toBeGreaterThan(0);
+    }
+  });
+
+  it('follows the relief on the frames its landscape says it moved, and on no others', () => {
+    forAll(
+      (rng) => Array.from({ length: rng.int(1, 40) }, () => rng.chance(0.25)),
+      (moves) => {
+        const world = wholeWorld(emptyMap(1, 9, 9));
+        world.animate(0); // the landscape says once that it is off
+        let step = 0;
+        vi.spyOn(world, 'elevationOf').mockImplementation(
+          (x, y) => -((x + 2 * y + step) % 3) * ELEV_PX,
+        );
+        const flush = vi.spyOn(world.landscape, 'flush');
+        const clears = vi.spyOn(world.harvest.layer, 'clear');
+        // nothing lit: a moving relief draws nothing
+        flush.mockReturnValue(true);
+        world.animate(1 / 60);
+        expect(clears).not.toHaveBeenCalled();
+        world.harvest.follow(null, selecting(4, 4, 'farm'), 'spring');
+        let draws = 1;
+        moves.forEach((moved, f) => {
+          if (moved) step++;
+          flush.mockReturnValue(moved);
+          world.animate(1 / 60);
+          if (moved) draws++;
+          expect(clears.mock.calls.length, `frame ${f}`).toBe(draws);
+          expect(centres(world.harvest.layer), `frame ${f}`).toEqual(grounds(world, 4, 4, 'farm'));
+        });
+      },
+      // a whole world per case: twelve seeds, some 240 frames, keep it well inside the default limit
+      { seeds: SEEDS.slice(0, 12), shrink: (moves) => shrinkArray(moves) },
+    );
   });
 });
