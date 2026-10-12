@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   CHUNK_TILES,
   CHUNK_VERSION,
@@ -20,7 +20,13 @@ import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './
 import { levelAt, tileLevels } from './elevation';
 import { Biome, Terrain, type GameMap, type PropInstance } from './tiles';
 import { Rng, hash2 } from '../engine/rng';
-import type { SupplyMode } from '../sim/supply';
+import {
+  DEFAULT_SUPPLY,
+  SUPPLY_MODES,
+  setSupplyMode,
+  supplyMode,
+  type SupplyMode,
+} from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
 
 /** A frame of a map: its size and where its tile (0, 0) lies in the world. */
@@ -551,6 +557,36 @@ describe('a map built from stored chunks', () => {
     }
     expect(oil).toBeGreaterThan(0);
   });
+});
+
+describe('the production chain of a built map', () => {
+  // The chain is an argument of generation (#280), not the game-wide switch. The switch is module
+  // state shared with every other test in the worker, so each case starts and ends with the default.
+  beforeEach(() => setSupplyMode(DEFAULT_SUPPLY));
+  afterEach(() => setSupplyMode(DEFAULT_SUPPLY));
+
+  // 18 worlds 96 tiles a side generated, 6 more read back: about 0.5 s alone
+  it('is the default one unless the generator brings another, whatever the game-wide switch says', () => {
+    const params: Frame = { w: 96, h: 96, originX: -32, originY: -32 };
+    for (const seed of [1, 7412, 31337]) {
+      const simple = buildMap(seed, params, {}, generateChain(DEFAULT_SUPPLY)).chunks;
+      const full = buildMap(seed, params, {}, generateChain('full')).chunks;
+      // the full chain's oil is in its store: a load of the store alone has it
+      const loadsOil = (store: ChunkStore) => hasOil(buildMap(seed, params, store, never).map);
+      expect(loadsOil(full), `seed ${seed}: full`).toBe(true);
+      expect(loadsOil(simple), `seed ${seed}: default`).toBe(false);
+      for (const global of SUPPLY_MODES) {
+        setSupplyMode(global);
+        const at = `seed ${seed}, switch ${global}`;
+        // no generator given: the default chain, never the switch
+        expect(buildMap(seed, params, {}).chunks, at).toEqual(simple);
+        // a generator with the full chain: its chain, whatever the switch
+        expect(buildMap(seed, params, {}, generateChain('full')).chunks, at).toEqual(full);
+        // and the switch is left as it was
+        expect(supplyMode(), at).toBe(global);
+      }
+    }
+  }, 10_000);
 });
 
 // Properties over any generator, frame and text. Each is checked against an oracle written apart
