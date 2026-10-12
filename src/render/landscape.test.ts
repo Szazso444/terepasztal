@@ -4,6 +4,7 @@ import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
+import { BIOME_DEFS } from '../sim/biomes';
 import { buildRelief } from './terrainRelief';
 import {
   Landscape,
@@ -171,6 +172,62 @@ describe('landscape status', () => {
     spawned[0].crash({ message: 'late' });
     expect(spawned).toHaveLength(2);
     expect(states()).toEqual(['loading']);
+  });
+});
+
+describe('what the landscape hands the paint workers with the map', () => {
+  /** The last map message a worker was sent. */
+  const lastMap = (worker: StubWorker) => {
+    const maps = worker.sent.filter((m) => 'map' in m);
+    return maps[maps.length - 1] as { map: { climate?: Uint8Array }; snowLevels: number[] };
+  };
+
+  it('carries the snow level of every biome, indexed by biome id', () => {
+    const { spawned } = setup();
+    const levels = BIOME_DEFS.map((def) => def.snowLevel);
+    for (const worker of spawned) expect(lastMap(worker).snowLevels).toEqual(levels);
+  });
+
+  it('carries no climate plane for a map that has none, so a worker reads the biome', () => {
+    const { map, spawned } = setup();
+    expect(map.climate).toBeUndefined();
+    for (const worker of spawned) expect(lastMap(worker).map.climate).toBeUndefined();
+  });
+
+  it('carries the climate plane of a map that has one, again after a change', () => {
+    const { landscape, map, spawned } = setup();
+    map.climate = new Uint8Array(map.w * map.h).fill(3);
+    landscape.invalidate(0, 0);
+    landscape.flush();
+    for (const worker of spawned) {
+      expect(lastMap(worker).map.climate).toBe(map.climate);
+      expect(lastMap(worker).snowLevels).toEqual(BIOME_DEFS.map((def) => def.snowLevel));
+    }
+  });
+
+  it('gives a restarted pool the climate plane and the snow levels as well', () => {
+    const { map, spawned } = setup();
+    map.climate = new Uint8Array(map.w * map.h).fill(2);
+    spawned[0].crash({ message: 'out of memory' });
+    const fresh = pool(spawned, 1);
+    expect(fresh).toHaveLength(2);
+    for (const worker of fresh) {
+      expect(lastMap(worker).map.climate).toBe(map.climate);
+      expect(lastMap(worker).snowLevels).toEqual(BIOME_DEFS.map((def) => def.snowLevel));
+    }
+  });
+
+  it('sends a map message that survives the copy to a worker, with a level for every biome', () => {
+    const { map, spawned } = setup();
+    map.climate = new Uint8Array(map.w * map.h).fill(3);
+    spawned[0].crash({ message: 'out of memory' });
+    for (const worker of pool(spawned, 1)) {
+      const sent = lastMap(worker);
+      const copy = structuredClone({ map: sent.map, snowLevels: sent.snowLevels });
+      expect(copy.snowLevels).toHaveLength(BIOME_DEFS.length);
+      for (const level of copy.snowLevels) expect(Number.isFinite(level)).toBe(true);
+      expect(copy.map.climate).toEqual(map.climate);
+    }
   });
 });
 

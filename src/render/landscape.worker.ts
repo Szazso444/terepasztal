@@ -1,4 +1,4 @@
-import { type LandscapeMap } from './landscapeModel';
+import { snowLineAt, stoneGroundAt, type LandscapeMap } from './landscapeModel';
 import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
@@ -10,7 +10,7 @@ import {
   surfaceMaterial,
 } from './terrainMaterials';
 import { hash2 } from '../engine/rng';
-import { Biome, Terrain } from '../world/tiles';
+import { Terrain } from '../world/tiles';
 
 let map: LandscapeMap,
   relief: TerrainRelief,
@@ -20,6 +20,8 @@ let map: LandscapeMap,
 let version = -1,
   tint = 0xffffff;
 let city = new Set<number>();
+// Where snow starts, by biome id: sent by the landscape, as this worker cannot read the content.
+let snowLevels: readonly number[] = [];
 self.onmessage = async (event: MessageEvent) => {
   const data = event.data;
   try {
@@ -43,6 +45,7 @@ self.onmessage = async (event: MessageEvent) => {
       version = data.version;
       tint = data.tint;
       city = new Set<number>(data.city);
+      snowLevels = data.snowLevels;
       return;
     }
     const { x, y, w, h, id } = data,
@@ -89,6 +92,8 @@ self.onmessage = async (event: MessageEvent) => {
         surfaceBlend(map, tx, ty, blend);
         const tileIndex = Math.round(ty) * map.w + Math.round(tx),
           terrain = map.terrain[tileIndex];
+        // Pilot: the climate's own ground between the stones (desert sand, taiga moss...).
+        const stoneGround = relief.style.biomeTops ? stoneGroundAt(map, tileIndex) : 0;
         color[0] = color[1] = color[2] = 0;
         let waterWeight = 0;
         // Tile-face style: rock shows where the slope is steep, not in random islands.
@@ -129,10 +134,7 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             part,
             EXPOSED[material] ? steep : undefined,
-            // Pilot: the biome's own ground between the stones (desert sand, taiga moss...).
-            relief.style.biomeTops && map.biome[tileIndex] !== Biome.Ocean
-              ? map.biome[tileIndex]
-              : 0,
+            stoneGround,
           );
           if (material === 5 || material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
@@ -156,7 +158,16 @@ self.onmessage = async (event: MessageEvent) => {
               tone = BANK_TONES[bankGrass.tone];
             for (let c = 0; c < 3; c++) color[c] *= 1 + (tone[c] - 1) * k;
           }
-          shade *= previewLooks(tx, ty, z, wx, wy, map.biome[tileIndex], steep ?? 0, color);
+          shade *= previewLooks(
+            tx,
+            ty,
+            z,
+            wx,
+            wy,
+            snowLineAt(map, snowLevels, tileIndex),
+            steep ?? 0,
+            color,
+          );
         }
         for (let c = 0; c < 3; c++)
           color[c] *=
@@ -345,14 +356,10 @@ const BANK_TONES = {
   dark: [0.88, 0.92, 0.95],
   lush: [0.9, 1.02, 0.86],
 };
-/** The level where snow starts to show, by biome: taiga a level lower, desert a level higher. */
-function snowLine(biome: number) {
-  return biome === Biome.Taiga ? 3 : biome === Biome.Desert ? 5 : 4;
-}
 const SNOW = [234, 239, 246];
 /**
  * Preview looks from the relief style (all off in the shipped style): higher levels paint lighter
- * (ground level unchanged), snow patches from the biome's snow line and full snow a level above,
+ * (ground level unchanged), snow patches from the tile's snow line and full snow a level above,
  * and a cast shadow darkens ground that a higher tile hides from the upper-left light. Returns
  * the shading factor.
  */
@@ -362,7 +369,7 @@ function previewLooks(
   z: number,
   wx: number,
   wy: number,
-  biome: number,
+  snowLine: number,
   steep: number,
   color: number[],
 ) {
@@ -371,7 +378,7 @@ function previewLooks(
   let factor = 1;
   if (style.heightLight) factor *= 1 + style.heightLight * level;
   if (style.snow) {
-    const above = level - snowLine(biome),
+    const above = level - snowLine,
       // Half cover (patches) on the snow line's level, full cover from the level above.
       cover = 0.5 * unit((above + 0.25) / 0.25) + 0.5 * unit((above - 0.75) / 0.25);
     if (cover > 0) {
