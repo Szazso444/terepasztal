@@ -35,9 +35,9 @@ export interface ReliefStyle {
   bankGrass?: { tone: 'dry' | 'dark' | 'lush'; amount: number };
   /** Each level above ground paints this much lighter; ground level is unchanged (shipped 6%). */
   heightLight?: number;
-  /** Snow patches on the tile biome's snow line level, full snow from the level above. */
+  /** Snow patches on the snow line level of the tile's climate, full snow from the level above. */
   snow?: boolean;
-  /** Mountain and rock ground between stones is the biome's own ground, not grass (shipped). */
+  /** Mountain and rock ground between stones is the climate's own ground, not grass (shipped). */
   biomeTops?: boolean;
   /** Summit sprites recoloured toward the terrain's rock and snow, 0..1 (shipped: 1). */
   summitMatch?: number;

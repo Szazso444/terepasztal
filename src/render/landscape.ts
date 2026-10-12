@@ -12,6 +12,7 @@ import {
 } from './terrainRelief';
 import { hash2 } from '../engine/rng';
 import { Terrain } from '../world/tiles';
+import { BIOME_DEFS } from '../sim/biomes';
 import type { RailBed } from '../world/railProfile';
 
 /** Raster pixels per world pixel of the close-view chunk copies. */
@@ -41,6 +42,8 @@ export const JOB_TIMEOUT_MS = 30_000;
  * does not count against the job the worker was painting when it began.
  */
 const FRAME_LIMIT_MS = 1_000;
+/** The level where snow starts, by biome id (`snowLevel`, src/data/biomes.json). */
+const SNOW_LEVELS: readonly number[] = BIOME_DEFS.map((def) => def.snowLevel);
 /** How the landscape starts its paint workers. The game uses the browser's; tests pass stubs. */
 export type PainterPool = {
   /** Workers in one pool. */
@@ -459,11 +462,13 @@ export class Landscape {
           originY: this.map.originY,
           terrain: this.map.terrain,
           biome: this.map.biome,
+          climate: this.map.climate,
         },
         relief: this.relief,
         version: this.version,
         tint: this.tint,
         city: [...this.city],
+        snowLevels: SNOW_LEVELS,
       });
   }
   add(x: number, y: number, w: number, h: number) {
