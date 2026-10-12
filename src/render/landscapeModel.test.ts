@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import type { Rng } from '../engine/rng';
+import { forAll, shrinkInt } from '../testing/property';
 import {
   BIOME_MATERIAL,
   Material,
@@ -254,5 +257,282 @@ describe('the snow line and the ground between stones', () => {
   it('start from the snow levels the content had when this was written', () => {
     expect(SNOW_LEVELS.slice(0, 6)).toEqual([4, 4, 5, 3, 4, 4]);
     expect(SNOW_LEVELS.slice(6)).toEqual([4, 4, 4, 4]);
+  });
+});
+
+describe('the material table against the surface sheet', () => {
+  it('names the cells the packed sheet holds, in the order it holds them', () => {
+    // The sheet's own manifest, written by tools/terrain-surfaces.mjs next to the pixels.
+    const sheet = JSON.parse(readFileSync('public/assets/terrain-surfaces.json', 'utf8')) as {
+      materials: string[];
+    };
+    expect(Object.keys(Material)).toHaveLength(sheet.materials.length);
+    for (const [name, cell] of Object.entries(Material))
+      expect(sheet.materials[cell], `Material.${name}`).toBe(name.toLowerCase());
+  });
+  it('never gives a biome the city or mountain cell, which the painter sets from the map', () => {
+    for (let id = 0; id < 256; id++) {
+      expect(biomeMaterial(id), `biome ${id}`).not.toBe(Material.City);
+      expect(biomeMaterial(id), `biome ${id}`).not.toBe(Material.Mountain);
+      expect(groundMaterial(id), `biome ${id}`).not.toBe(Material.City);
+      expect(groundMaterial(id), `biome ${id}`).not.toBe(Material.Mountain);
+    }
+  });
+  it('keeps the first five biomes on their own cell and ocean on plains grass', () => {
+    expect(BIOME_MATERIAL.slice(0, 6)).toEqual([0, 1, 2, 3, 4, 0]);
+    expect(BIOME_MATERIAL.slice(6)).toEqual([5, 5, 6, 7]);
+  });
+});
+
+/** A small map as plain arrays, so that a failing case prints and shrinks. */
+interface Mixed {
+  w: number;
+  h: number;
+  terrain: number[];
+  biome: number[];
+  climate?: number[];
+}
+/** A map to look at at `x`, `y` (tile units, fractional, on the map or beyond its edge). */
+interface Look {
+  map: Mixed;
+  x: number;
+  y: number;
+}
+const build = (m: Mixed): LandscapeMap => ({
+  w: m.w,
+  h: m.h,
+  seed: 9,
+  originX: 0,
+  originY: 0,
+  terrain: Uint8Array.from(m.terrain),
+  biome: Uint8Array.from(m.biome),
+  ...(m.climate ? { climate: Uint8Array.from(m.climate) } : {}),
+});
+/** Seeds 1 to 400: a case is a handful of tiles, cheap enough to run hundreds. */
+const MIXED_SEEDS = Array.from({ length: 400 }, (_, i) => i + 1);
+/** Biome ids the content does not define, which a map from a later version could still hold. */
+const STRAY_IDS = [10, 11, 99, 255];
+
+/** Tiles of random terrain and biome (a stray id now and then), and a climate plane half the time. */
+function genMixed(rng: Rng, strays: boolean): Mixed {
+  const w = rng.int(1, 5),
+    h = rng.int(1, 5),
+    n = w * h,
+    id = () => (strays && rng.chance(0.1) ? rng.pick(STRAY_IDS) : rng.int(0, 9));
+  const terrain = Array.from({ length: n }, () => rng.int(0, 6)),
+    biome = Array.from({ length: n }, id);
+  return rng.chance(0.5)
+    ? { w, h, terrain, biome, climate: Array.from({ length: n }, id) }
+    : { w, h, terrain, biome };
+}
+/** A point near tile centres, up to two tiles beyond the edge, never on the line between tiles. */
+function genLook(rng: Rng): Look {
+  const map = genMixed(rng, true);
+  return {
+    map,
+    x: rng.int(-2, map.w + 1) + rng.range(-0.49, 0.49),
+    y: rng.int(-2, map.h + 1) + rng.range(-0.49, 0.49),
+  };
+}
+/** The tile whose centre is nearest `x`, `y`, by trying every tile: the edge tile beyond the edge. */
+function nearestTile(m: Mixed, x: number, y: number) {
+  let best = 0,
+    nearest = Infinity;
+  for (let ty = 0; ty < m.h; ty++)
+    for (let tx = 0; tx < m.w; tx++) {
+      const d = (tx - x) ** 2 + (ty - y) ** 2;
+      if (d < nearest) [best, nearest] = [ty * m.w + tx, d];
+    }
+  return best;
+}
+/** The material of a tile, as a case list of the rules in the issue rather than as the table. */
+function materialFor(terrain: number, biome: number): number {
+  switch (terrain) {
+    case Terrain.Water:
+      return 5;
+    case Terrain.Sand:
+      return biome === 2 ? 2 : 6;
+    case Terrain.Rock:
+    case Terrain.Mountain:
+      return 7;
+    case Terrain.Forest:
+      return biome === 4 ? 4 : biome === 3 ? 3 : 1;
+    default:
+      // Grass and hill: the biome's ground. Lake, river, mountain and ocean have none of their own.
+      switch (biome) {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+          return biome;
+        case 8:
+          return 6;
+        default:
+          return 0;
+      }
+  }
+}
+/** The ground between the stones for a climate id, as a case list. */
+function stoneFor(climate: number): number {
+  switch (climate) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      return climate;
+    case 8:
+      return 6;
+    default:
+      return 0;
+  }
+}
+const planeOf = (m: Mixed) => m.climate ?? m.biome;
+
+/** Fewer tiles first: blank every tile but the one looked at, then simpler ids on that tile. */
+function* shrinkLook(c: Look): Iterable<Look> {
+  const k = nearestTile(c.map, c.x, c.y),
+    m = c.map;
+  const only = (a: number[]) => a.map((v, i) => (i === k ? v : 0));
+  const blank: Mixed = {
+    ...m,
+    terrain: only(m.terrain),
+    biome: only(m.biome),
+    ...(m.climate ? { climate: only(m.climate) } : {}),
+  };
+  if (JSON.stringify(blank) !== JSON.stringify(m)) yield { ...c, map: blank };
+  if (m.climate) yield { ...c, map: { w: m.w, h: m.h, terrain: m.terrain, biome: m.biome } };
+  const set = (key: 'terrain' | 'biome' | 'climate', v: number): Look => {
+    const plane = [...(m[key] as number[])];
+    plane[k] = v;
+    return { ...c, map: { ...m, [key]: plane } };
+  };
+  for (const v of shrinkInt(m.terrain[k], 0)) yield set('terrain', v);
+  for (const v of shrinkInt(m.biome[k], 0)) yield set('biome', v);
+  if (m.climate) for (const v of shrinkInt(m.climate[k], 0)) yield set('climate', v);
+}
+
+describe('materialAt on maps of mixed tiles', () => {
+  it('reads the nearest tile and gives its terrain and biome the material the rules name', () => {
+    forAll(
+      genLook,
+      ({ map, x, y }) => {
+        const k = nearestTile(map, x, y),
+          got = materialAt(build(map), x, y),
+          want = materialFor(map.terrain[k], map.biome[k]);
+        expect(got, `tile ${k}: terrain ${map.terrain[k]} biome ${map.biome[k]}`).toBe(want);
+        // The colour table has a cell for it, and a biome that existed before cannot have moved.
+        expect(got).toBeLessThan(MATERIAL_COLORS.length);
+        if (map.biome[k] <= 5) expect(got).toBe(materialBefore(map.terrain[k], map.biome[k]));
+      },
+      { seeds: MIXED_SEEDS, shrink: shrinkLook },
+    );
+  });
+  it('does not look at the climate plane, whatever it holds', () => {
+    forAll(
+      genLook,
+      ({ map, x, y }) => {
+        const bare = build({ ...map, climate: undefined }),
+          shifted = build({ ...map, climate: map.biome.map((b) => (b + 3) % 10) });
+        expect(materialAt(shifted, x, y)).toBe(materialAt(bare, x, y));
+      },
+      { seeds: MIXED_SEEDS, shrink: shrinkLook },
+    );
+  });
+  it('lets landscapeColor give a finite colour wherever it looks', () => {
+    forAll(
+      genLook,
+      ({ map, x, y }) => {
+        for (const channel of landscapeColor(build(map), x, y))
+          expect(Number.isFinite(channel)).toBe(true);
+      },
+      { seeds: MIXED_SEEDS, shrink: shrinkLook },
+    );
+  });
+});
+
+describe('the snow line and stone ground on maps of mixed tiles', () => {
+  /** A tile of a map with no stray id, so the fallback for an id beyond the table is not repeated. */
+  const genCovered = (rng: Rng): Look => {
+    const map = genMixed(rng, false);
+    return { map, x: rng.int(0, map.w - 1), y: rng.int(0, map.h - 1) };
+  };
+  const tileOf = ({ map, x, y }: Look) => nearestTile(map, x, y);
+
+  it('read the climate where the map has the plane and the biome where it has not', () => {
+    forAll(
+      genCovered,
+      (look) => {
+        const k = tileOf(look),
+          id = planeOf(look.map)[k],
+          map = build(look.map);
+        expect(snowLineAt(map, SNOW_LEVELS, k), `tile ${k}, climate ${id}`).toBe(SNOW_LEVELS[id]);
+        expect(stoneGroundAt(map, k), `tile ${k}, climate ${id}`).toBe(stoneFor(id));
+        // Unchanged for the biomes that existed before the climate did.
+        if (id <= 5) {
+          expect(snowLineAt(map, SNOW_LEVELS, k)).toBe(snowLineBefore(id));
+          expect(stoneGroundAt(map, k)).toBe(stoneGroundBefore(id));
+        }
+      },
+      { seeds: MIXED_SEEDS, shrink: shrinkLook },
+    );
+  });
+  it('make a tile look as one would that had its climate for a biome and no plane', () => {
+    forAll(
+      genCovered,
+      (look) => {
+        const k = tileOf(look),
+          m = look.map,
+          swapped = build({ ...m, biome: planeOf(m), climate: undefined });
+        expect(snowLineAt(build(m), SNOW_LEVELS, k)).toBe(snowLineAt(swapped, SNOW_LEVELS, k));
+        expect(stoneGroundAt(build(m), k)).toBe(stoneGroundAt(swapped, k));
+      },
+      { seeds: MIXED_SEEDS, shrink: shrinkLook },
+    );
+  });
+  it('take the level from the table they are given, by the climate id', () => {
+    forAll(
+      (rng) => ({ look: genCovered(rng), levels: Array.from({ length: 10 }, () => rng.int(1, 9)) }),
+      ({ look, levels }) => {
+        const k = tileOf(look);
+        expect(snowLineAt(build(look.map), levels, k)).toBe(levels[planeOf(look.map)[k]]);
+      },
+      { seeds: MIXED_SEEDS },
+    );
+  });
+  it('give plains snow and plains grass for a climate beyond the table, never undefined', () => {
+    forAll(
+      (rng) => genMixed(rng, true),
+      (m) => {
+        const map = build(m);
+        planeOf(m).forEach((id, k) => {
+          const level = snowLineAt(map, SNOW_LEVELS, k),
+            ground = stoneGroundAt(map, k);
+          expect(Number.isInteger(level), `tile ${k}, climate ${id}`).toBe(true);
+          expect(Number.isInteger(ground), `tile ${k}, climate ${id}`).toBe(true);
+          if (id >= BIOME_DEFS.length) {
+            expect(level, `tile ${k}, climate ${id}`).toBe(SNOW_LEVELS[0]);
+            expect(ground, `tile ${k}, climate ${id}`).toBe(Material.Grass);
+          }
+        });
+      },
+      { seeds: MIXED_SEEDS },
+    );
+  });
+  it('give a taiga mountain tile snow from level 3 and a desert one from level 5', () => {
+    // The issue's fixture: biome 9 over a climate, side by side with other climates.
+    const m: Mixed = {
+      w: 3,
+      h: 1,
+      terrain: [Terrain.Mountain, Terrain.Mountain, Terrain.Mountain],
+      biome: [MOUNTAIN, MOUNTAIN, MOUNTAIN],
+      climate: [3, 2, 0],
+    };
+    const map = build(m);
+    expect([0, 1, 2].map((k) => snowLineAt(map, SNOW_LEVELS, k))).toEqual([3, 5, 4]);
+    expect([0, 1, 2].map((k) => stoneGroundAt(map, k))).toEqual([
+      Material.Taiga,
+      Material.Desert,
+      Material.Grass,
+    ]);
   });
 });

@@ -204,6 +204,31 @@ describe('what the landscape hands the paint workers with the map', () => {
       expect(lastMap(worker).snowLevels).toEqual(BIOME_DEFS.map((def) => def.snowLevel));
     }
   });
+
+  it('gives a restarted pool the climate plane and the snow levels as well', () => {
+    const { map, spawned } = setup();
+    map.climate = new Uint8Array(map.w * map.h).fill(2);
+    spawned[0].crash({ message: 'out of memory' });
+    const fresh = pool(spawned, 1);
+    expect(fresh).toHaveLength(2);
+    for (const worker of fresh) {
+      expect(lastMap(worker).map.climate).toBe(map.climate);
+      expect(lastMap(worker).snowLevels).toEqual(BIOME_DEFS.map((def) => def.snowLevel));
+    }
+  });
+
+  it('sends a map message that survives the copy to a worker, with a level for every biome', () => {
+    const { map, spawned } = setup();
+    map.climate = new Uint8Array(map.w * map.h).fill(3);
+    spawned[0].crash({ message: 'out of memory' });
+    for (const worker of pool(spawned, 1)) {
+      const sent = lastMap(worker);
+      const copy = structuredClone({ map: sent.map, snowLevels: sent.snowLevels });
+      expect(copy.snowLevels).toHaveLength(BIOME_DEFS.length);
+      for (const level of copy.snowLevels) expect(Number.isFinite(level)).toBe(true);
+      expect(copy.map.climate).toEqual(map.climate);
+    }
+  });
 });
 
 /** A landscape whose restarted pool failed too: off for the rest of the session. */
