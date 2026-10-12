@@ -136,7 +136,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   const map =
     terrain === 'grass'
       ? emptyMap(seed, size, size, Terrain.Grass)
-      : generateMap(seed, mapParams(size));
+      : generateMap(seed, mapParams(size), supply);
   const regions = new RegionState(map, 0);
   const track = new TrackGraph(map.w, map.h);
   const builder = new Builder(map, regions, track, economy, stock);
