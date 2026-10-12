@@ -17,6 +17,7 @@ import {
   type LandscapeMap,
 } from './landscapeModel';
 import { BIOME_DEFS } from '../sim/biomes';
+import { generateMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 
 function map(): LandscapeMap {
@@ -183,6 +184,9 @@ describe('materialAt', () => {
   it('paints sand for grass or hill on a beach, as the table says', () => {
     for (const terrain of [Terrain.Grass, Terrain.Hill]) expect(materialOf(terrain, BEACH)).toBe(6);
   });
+  // Not in the issue's criteria: its forest and sand rules read the biome, and only the snow line and
+  // the ground between stones read the climate. #354 may decide otherwise for a mountain biome tile
+  // of forest or sand terrain; then this and the mixed-map test below change with that decision.
   it('follows the tile biome, not its climate', () => {
     for (const terrain of TERRAINS)
       for (const biome of ALL_BIOMES)
@@ -534,5 +538,50 @@ describe('the snow line and stone ground on maps of mixed tiles', () => {
       Material.Desert,
       Material.Grass,
     ]);
+  });
+});
+
+describe('on generated worlds', () => {
+  // Real terrain and biome combinations, as the first chunks of a new game hold them. Every world
+  // today has biome ids 0 to 5 and no climate plane, so each tile must paint as it did before the
+  // table existed; a world with the later ids is held to the rules in the issue instead.
+  const WORLD_SEEDS = [20260912, 1, 7, 42, 155, 9001];
+  const SIZE = { w: 48, h: 48 };
+
+  it('paint every tile as they did before the table, and as the rules name for the later ids', () => {
+    const seen = new Set<string>();
+    for (const seed of WORLD_SEEDS) {
+      const world = generateMap(seed, SIZE),
+        painted = { ...world, climate: world.biome.slice() };
+      for (let k = 0; k < world.terrain.length; k++) {
+        const terrain = world.terrain[k],
+          biome = world.biome[k],
+          x = k % world.w,
+          y = Math.floor(k / world.w),
+          where = `seed ${seed} tile ${x},${y}: terrain ${terrain} biome ${biome}`;
+        expect(materialAt(world, x, y), where).toBe(materialFor(terrain, biome));
+        // The climate plane holding the biome changes nothing, as for a chunk saved with one.
+        expect(materialAt(painted, x, y), where).toBe(materialAt(world, x, y));
+        expect(snowLineAt(painted, SNOW_LEVELS, k), where).toBe(snowLineAt(world, SNOW_LEVELS, k));
+        expect(stoneGroundAt(painted, k), where).toBe(stoneGroundAt(world, k));
+        if (biome <= 5) {
+          expect(materialAt(world, x, y), where).toBe(materialBefore(terrain, biome));
+          expect(snowLineAt(world, SNOW_LEVELS, k), where).toBe(snowLineBefore(biome));
+          expect(stoneGroundAt(world, k), where).toBe(stoneGroundBefore(biome));
+        }
+        seen.add(`${terrain}:${biome}`);
+      }
+    }
+    // The worlds are varied enough to mean something: the tiles the old rules told apart are there.
+    for (const pair of [
+      [Terrain.Forest, 3],
+      [Terrain.Forest, 4],
+      [Terrain.Sand, 2],
+      [Terrain.Sand, 0],
+      [Terrain.Hill, 2],
+      [Terrain.Rock, 3],
+      [Terrain.Mountain, 3],
+    ])
+      expect(seen.has(pair.join(':')), `no tile of terrain:biome ${pair.join(':')}`).toBe(true);
   });
 });
