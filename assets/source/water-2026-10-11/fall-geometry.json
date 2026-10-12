@@ -142,6 +142,46 @@
       ]
     }
   },
+  "plungeFoamSwCentred": {
+    "projection": {
+      "origin": [544, 496],
+      "xVector": [256, 128],
+      "yVector": [-256, 128],
+      "formula": "(544 + 256*(x-y), 496 + 128*(x+y))"
+    },
+    "along": "x",
+    "alongRange": [-1.375, 1.375],
+    "axis": "y",
+    "range": [0, 0.25],
+    "denseRange": [0, 0.1],
+    "breakupRange": [0.1, 0.25],
+    "foot": [
+      [192, 320],
+      [896, 672]
+    ],
+    "denseEdge": [
+      [166.4, 332.8],
+      [870.4, 684.8]
+    ],
+    "outerEdge": [
+      [128, 352],
+      [832, 704]
+    ],
+    "vertices": [
+      [192, 320],
+      [896, 672],
+      [832, 704],
+      [128, 352]
+    ],
+    "box": [128, 320, 896, 704],
+    "centre": [512, 512],
+    "size": [768, 384],
+    "greys": {
+      "dense": 230,
+      "breakup": 170,
+      "foot": 65
+    }
+  },
   "animation": {
     "frames": 4,
     "scrollFractionPerFrame": 0.25,

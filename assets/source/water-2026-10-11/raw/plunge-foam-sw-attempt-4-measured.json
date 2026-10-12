@@ -1,0 +1,60 @@
+{
+  "file": "assets/source/water-2026-10-11/raw/plunge-foam-sw-attempt-4.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "square": true,
+  "scale": 1.224609375,
+  "mask": "alpha >128",
+  "paintedPixels": 87199,
+  "box": {
+    "actual": [
+      139,
+      438,
+      1117,
+      947
+    ],
+    "expected": [
+      156.75,
+      391.875,
+      1097.25,
+      862.125
+    ],
+    "width": 978,
+    "height": 509,
+    "centre": [
+      628,
+      692.5
+    ],
+    "centreDistance": 65.50763314301624,
+    "widthErrorFraction": 0.03987240829346093,
+    "heightErrorFraction": 0.08240297713981924,
+    "pass": false
+  },
+  "iou": 0.1661896743111299,
+  "paintedOutsideBand": 65191,
+  "foam": {
+    "definition": "painted; luma >=185; abs(red-blue) <40",
+    "pixels": 35279,
+    "zoneShares": [
+      0,
+      0.5825561949034836
+    ],
+    "zoneRanges": [
+      [
+        0,
+        0.1
+      ],
+      [
+        0.1,
+        0.25
+      ]
+    ],
+    "outsideShare": 0.41744380509651635
+  },
+  "passed": false,
+  "failures": [
+    "box"
+  ]
+}

@@ -42,6 +42,42 @@ const foam = {
   },
 };
 const faces = { sw: {}, se: {} };
+const plungeFoamSwCentred = {
+  projection: {
+    origin: [544, 496],
+    xVector: [256, 128],
+    yVector: [-256, 128],
+    formula: '(544 + 256*(x-y), 496 + 128*(x+y))',
+  },
+  along: 'x',
+  alongRange: [-1.375, 1.375],
+  axis: 'y',
+  range: [0, 0.25],
+  denseRange: [0, 0.1],
+  breakupRange: [0.1, 0.25],
+  foot: [
+    [192, 320],
+    [896, 672],
+  ],
+  denseEdge: [
+    [166.4, 332.8],
+    [870.4, 684.8],
+  ],
+  outerEdge: [
+    [128, 352],
+    [832, 704],
+  ],
+  vertices: [
+    [192, 320],
+    [896, 672],
+    [832, 704],
+    [128, 352],
+  ],
+  box: [128, 320, 896, 704],
+  centre: [512, 512],
+  size: [768, 384],
+  greys: { dense: 230, breakup: 170, foot: 65 },
+};
 for (let d = 1; d <= 4; d++) {
   faces.sw[d] = [
     [256, 832 - step * d],
@@ -90,6 +126,7 @@ const geometry = {
   },
   faces,
   foam,
+  plungeFoamSwCentred,
   animation: {
     frames: 4,
     scrollFractionPerFrame: 0.25,
@@ -185,7 +222,16 @@ for (const edge of ['sw', 'se']) {
   }
 }
 // Sanity-check the supplied coordinate convention rather than deriving from a different iso basis.
+const centred = canvas();
+polygon(centred, plungeFoamSwCentred.vertices, [170, 170, 170, 255]);
+polygon(
+  centred,
+  [...plungeFoamSwCentred.foot, plungeFoamSwCentred.denseEdge[1], plungeFoamSwCentred.denseEdge[0]],
+  [230, 230, 230, 255],
+);
+line(centred, ...plungeFoamSwCentred.foot, [65, 65, 65, 255]);
+save('plunge-foam-sw-centred.png', centred);
 if (JSON.stringify(project(-1.5, 0)) !== JSON.stringify(foam.sw.vertices[0]))
   throw new Error('Projection mismatch');
 writeFileSync(join(root, 'fall-geometry.json'), `${JSON.stringify(geometry, null, 2)}\n`);
-console.log('Wrote 11 guides and fall-geometry.json.');
+console.log('Wrote 12 guides and fall-geometry.json.');

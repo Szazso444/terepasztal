@@ -187,7 +187,7 @@
   },
   {
     "id": "plunge-foam-sw-2",
-    "file": "plunge-foam-sw.png",
+    "file": "raw/plunge-foam-sw-attempt-2.png",
     "prompt": "Use case: sketch-to-render. IMAGE EDIT: edit image 1 (plunge-foam-sw grey band geometry guide) into ONE painted flat-water foam band. DO NOT start a new composition. Request exactly 1024x1024 px real RGBA PNG. Request exactly 1024x1024 px, one real PNG, one material picture. Smooth painted contours, broad clean colour clusters, only three or four shades per material, no per-pixel noise or stair-stepped pixel edges. Match the pastoral railway game's reference board, using the rock reference only for material family, never its pixel edges or moss. One light from upper left. No ground, grass, trees, spray, mist, rainbow, fish, people, bridges, text, borders, glow, cast shadows, horizon or perspective. White water warm off-white maximum #E0DDD2, never cursor white #ECE4D0 or brighter. Material only, no finished waterfall. Image 1 is EDIT TARGET, preserve its exact band location, orientation, size, and transparent empty margins; remove the grey guide fill by painting churning water foam in it. Image 2 style board only; image 3 river-water hue and smooth contour reference; image 4 river-strip-x water family reference, do not copy its banks. Flat 2:1 orthographic isometric water surface at scale 8, tile 64x32 game px, middle centre (512,512), point (x,y)=(512+256*(x-y),512+128*(x+y)). SW cliff foot is y=0 along tile x from -1.5 to 1.5: dense warm off-white churning foam ALONG line (128,320) to (896,704). Foam is wholly on y>=0 side, fading into clear teal water across y=0 to y=0.25: outer edge (64,352) to (832,736). Band polygon [(128,320),(896,704),(832,736),(64,352)]. Stay confined to this VERY NARROW diagonal parallelogram, slope +0.5. Thick connected foam clusters just at foot, breaking into broad irregular patches toward the lower-left edge, fading completely by outer edge. Largest bright foam marks a few broad smooth swirls, no tiny noisy bubbles. Teal gaps in #487C84 #548A92 #3E6E78 #649EA2; foam muted warm off-white MAXIMUM #E0DDD2. One upper-left light, no shadows. Fully transparent alpha=0 outside this band, including y<0 cliff side, nothing else. No vertical waterfall, no cliff, NO airborne spray or mist. Paint lies flat at foot only, 128px-wide review must retain readable dense-to-sparse foam.\nFRAMING CORRECTION: The earlier attempt expanded the strip to the canvas edges and changed its slope. This EDIT must preserve image 1's existing grey polygon EXACTLY IN PLACE. The strip's four corners on the requested 1024 square are (128,320),(896,704),(832,736),(64,352). Keep spacious margins, including at left and right. The grey region is only 32px high vertically at any fixed x: DO NOT widen it. Top foot line slope EXACTLY +0.5. Fill that existing grey band, do not zoom to fill the image, do not move or enlarge it. Use STYLE and WATER COLOUR from the other inputs only, NEVER copy the river strip's layout. Keep foam flat and no raised crest, spray, or marks outside the existing polygon.",
     "references": [
       "assets/source/water-2026-10-11/guides/plunge-foam-sw.png",
@@ -412,5 +412,120 @@
       "alignmentReview": "Passed visual inspection at 199 px: isolated pools, no rows, diagonals or chains."
     },
     "selected": true
+  },
+  {
+    "id": "plunge-foam-sw-3",
+    "file": "raw/plunge-foam-sw-attempt-3.png",
+    "prompt": "Use case: sketch-to-render. IMAGE EDIT of image 1, the centred grey geometry guide: repaint ONLY its existing narrow parallelogram IN PLACE as dense churning white water at the foot of a SW waterfall, flat on the lower river water. Request 1024x1024 px real RGBA PNG, fully transparent alpha 0 outside the band. Image 2 plunge-foam-se is density, warm off-white colour and breakup reference ONLY: match its dense foam along the ENTIRE foot, but do NOT copy its opposite direction or location. Image 3 style board, image 4 river-water colour/contours, image 5 river-strip-x water family only, no banks. Preserve image 1 exact size, position, slope +0.5 and margins: no zoom, moving, recentering or widening. Its band corners at (192,320),(896,672),(832,704),(128,352), bounding box x128..896,y320..704 centred (512,512), only 75% canvas width. 2:1 orthographic isometric, tile64x32 game px, scale8. Projection (544+256*(x-y),496+128*(x+y)). Cliff foot y=0 runs tile x -1.375..1.375 from (192,320) to (896,672). Replace grey230 with equally DENSE CONNECTED CHURNING warm off-white foam across whole first zone y0..0.1, ending along (166.4,332.8)..(870.4,684.8). Replace grey170 with broad broken foam patches and lace with increasing teal gaps over y0.1..0.25, fading to clear water at (128,352)..(832,704). Dense foam at BOTH ends and every place along foot, never fade along length. Remove dark grey65 foot construction line. No thin line with scattered flecks: substantial connected foam clusters as thick and dense as image2. Smooth painted contours, broad colour clusters, three/four shades per material, no per-pixel noise, no stair-stepped pixel edges. Warm off-white brightest #E0DDD2, subdued foam shadows; teal #487C84 #548A92 #3E6E78 #649EA2. Upper-left light. Flat foam, no vertical water, no crest raised above surface, no cliff or rocks. Nothing y<0 cliff side or outside polygon. Partial alpha accepted. No ground,grass,rocks,spray,mist,rainbow,fish,people,text,borders,glow,cast shadows. Material only for later finishing; shapes imply movement, never brightness pulsing. Keep exact narrow guide silhouette and dense-to-sparse material readable at 128px wide.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/plunge-foam-sw-centred.png",
+      "assets/source/water-2026-10-11/plunge-foam-se.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-strip-x.png"
+    ],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/plunge-foam-sw-attempt-3.png",
+      "returned": [1254, 1254],
+      "square": true,
+      "scale": 1.224609375,
+      "mask": "alpha >128",
+      "paintedPixels": 90704,
+      "box": {
+        "actual": [149, 433, 1157, 980],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 1008,
+        "height": 547,
+        "centre": [653, 706.5],
+        "centreDistance": 83.6435891147672,
+        "widthErrorFraction": 0.07177033492822966,
+        "heightErrorFraction": 0.16321105794790006,
+        "pass": false
+      },
+      "iou": 0.1717138745047999,
+      "paintedOutsideBand": 67558,
+      "foam": {
+        "definition": "painted; luma >=185; abs(red-blue) <40",
+        "pixels": 36183,
+        "zoneShares": [0, 0.5277340187380815],
+        "zoneRanges": [
+          [0, 0.1],
+          [0.1, 0.25]
+        ],
+        "outsideShare": 0.4722659812619186
+      },
+      "passed": false,
+      "failures": ["box"]
+    },
+    "returned": [1254, 1254]
+  },
+  {
+    "id": "plunge-foam-sw-4",
+    "file": "raw/plunge-foam-sw-attempt-4.png",
+    "prompt": "IMAGE EDIT. Repaint image1's SMALL grey strip EXACTLY IN PLACE on its 1024x1024 transparent canvas. KEEP ITS ORIGINAL OUTLINE, MARGINS AND LOCATION. No zoom. Do not enlarge it or move it lower. Canvas centre512,512; painted bounding box x128..896,y320..704 (width768,height384). Four corners(192,320),(896,672),(832,704),(128,352). The entire bottom320 rows MUST REMAIN EMPTY, and entire top320 rows empty. This strip occupies75% canvas width. It is only32px thick vertically at each x, very narrow. Preserve the +0.5 slope and exact framing of image1. This is a flat lower-water material at foot of SW waterfall, NOT a perspective scene. Replace light grey230 first40% of narrow width with DENSE continuous warm off-white churning foam along ENTIRE foot from192,320 to896,672. Replace grey170 remaining60% with broken broad foam patches and lace over teal, becoming clear teal at lower-left edge128,352 to832,704. Remove dark foot line. Match image2 foam DENSITY, COLOUR and smooth broad shapes ONLY. Do not copy image2 position or direction. Image3 smooth painted style; image4 river hue/contours; image5 hue only, no banks. Warm off-white cap#E0DDD2; water#487C84 #548A92 #3E6E78 #649EA2. Dense broad connected foam throughout length, no thin streak with flecks. One upper-left light,three/four shades,no noise or pixel stairs. No ground,rocks,grass,cliff,falling water,spray,mist,rainbow,fish,people,text,border,glow,cast shadows. NOTHING outside original image1 strip. Fully transparent alpha0 outside. Request1024x1024 real RGBA PNG. Keep guide small and centred. EXACT geometry projection(544+256*(x-y),496+128*(x+y)),x -1.375..1.375,y0..0.25; dense y0..0.1,broken y0.1..0.25,none y<0. Material only, readable dense at128px wide.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/plunge-foam-sw-centred.png",
+      "assets/source/water-2026-10-11/plunge-foam-se.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-strip-x.png"
+    ],
+    "measured": {
+      "file": "assets/source/water-2026-10-11/raw/plunge-foam-sw-attempt-4.png",
+      "returned": [1254, 1254],
+      "square": true,
+      "scale": 1.224609375,
+      "mask": "alpha >128",
+      "paintedPixels": 87199,
+      "box": {
+        "actual": [139, 438, 1117, 947],
+        "expected": [156.75, 391.875, 1097.25, 862.125],
+        "width": 978,
+        "height": 509,
+        "centre": [628, 692.5],
+        "centreDistance": 65.50763314301624,
+        "widthErrorFraction": 0.03987240829346093,
+        "heightErrorFraction": 0.08240297713981924,
+        "pass": false
+      },
+      "iou": 0.1661896743111299,
+      "paintedOutsideBand": 65191,
+      "foam": {
+        "definition": "painted; luma >=185; abs(red-blue) <40",
+        "pixels": 35279,
+        "zoneShares": [0, 0.5825561949034836],
+        "zoneRanges": [
+          [0, 0.1],
+          [0.1, 0.25]
+        ],
+        "outsideShare": 0.41744380509651635
+      },
+      "passed": false,
+      "failures": ["box"]
+    },
+    "returned": [1254, 1254],
+    "selected": true,
+    "selectionReason": "Closest available return: width error 3.99%, height error 8.24%, centre distance 65.51 px. Both paintings failed the box test. Third new call was rejected by imagegen usage_limit_reached. Kept unmodified under the requested fallback rule; outside-band paint remains for later finishing.",
+    "preview": {
+      "file": "review/plunge-foam-sw-128.png",
+      "width": 128,
+      "verdict": "Dense connected foam reads along the entire foot at 128 px canvas width; teal breakup remains visible. Geometry still fails; some raised flecks remain."
+    }
+  },
+  {
+    "id": "plunge-foam-sw-5",
+    "file": null,
+    "prompt": "Edit IMAGE 1 IN PLACE: colour its grey pixels as smooth painted whitewater, keep every transparent pixel transparent. The exact silhouette and canvas layout of IMAGE 1 are the strongest constraints. DO NOT substitute the silhouettes of images2-5. Output1024x1024 RGBA transparent PNG. Keep the SAME canvas and small centred guide. Foot line begins192,320 ends896,672, outer edge128,352 to832,704. Exact painted bounding box128,320 to896,704, centre512,512. Whitewater MUST begin at y320, and end by y704, never below704. Preserve the horizontal and vertical EMPTY margins of IMAGE1. Do not frame or zoom onto the artwork. Do not copy the lower position, enlarged shape or width of image2. Repaint grey230 into substantial dense warm off-white churning foam continuously along the entire upper/right long edge, in broad connected rounded patches with small teal holes. Repaint grey170 into patchy white foam and lace over teal, clearing toward lower/left long edge. Delete grey65 construction line; it is not a crest. Foam is FLAT and INSIDE guide edge, no rising rim, white protrusions, spray or droplets. Image2 ONLY shows desired density and colour, its direction and place are forbidden. Image3 game smooth painted style only, image4 water material palette, image5 river water family only no banks. Three/four broad colour clusters,no pixel noise,no pixel stairs. Water#487C84 #548A92 #3E6E78 #649EA2, warm foam brightest#E0DDD2,upper-left light. Flat2:1 orthographic isometric lower water,NOT perspective. Entire strip only32px vertical thickness at each x, occupying75% canvas width. Projection544+256*(x-y),496+128*(x+y),x-1.375..1.375,y0..0.25; dense foam first40% transverse width y0..0.1,breakup remainder to0.25. Never fade along length. Transparent alpha0 outside guide,especially cliff side y<0. No cliff,falling water,ground,grass,rocks,spray,mist,rainbow,fish,people,text,borders,glow,shadows. Foam should read densely at128px review width. Material only. Preserve IMAGE1 geometry without any repositioning.",
+    "references": [
+      "assets/source/water-2026-10-11/guides/plunge-foam-sw-centred.png",
+      "assets/source/water-2026-10-11/plunge-foam-se.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/water-2026-10-11/river-water.png",
+      "assets/source/water-2026-10-11/river-strip-x.png"
+    ],
+    "returned": null,
+    "measured": null,
+    "status": "generation-failed",
+    "reason": "Built-in imagegen rejected the third new call: HTTP 429 usage_limit_reached. No painting returned."
   }
 ]
