@@ -265,6 +265,59 @@ describe('validateContent', () => {
       expect(shipped.validateContent(b), `break ${i}`).not.toEqual([]);
     });
   });
+
+  describe('a vehicle length of its own (#344)', () => {
+    /** The shipped bundle's problems with `length` set on the first entry of `table`. */
+    function withLength(length: unknown, table: 'locomotives' | 'wagons' = 'locomotives') {
+      const b = clone(shipped.DEFAULT_CONTENT);
+      (b[table][0] as unknown as Table).length = length;
+      return shipped.validateContent(b);
+    }
+    const IN_RANGE = [0.3, 0.82, 1, 1.56, 2.5, 3.5];
+    const OUT = [0.29, 3.51, 0, -1, NaN, Infinity, null, '1', true, [1], { tiles: 1 }];
+
+    it('takes a locomotive length from 0.3 to 3.5 tiles', () => {
+      for (const n of IN_RANGE) expect(withLength(n), String(n)).toEqual([]);
+    });
+
+    it('refuses anything else with one problem naming the locomotive and the field', () => {
+      const id = shipped.DEFAULT_CONTENT.locomotives[0].id;
+      for (const v of OUT) {
+        const problems = withLength(v);
+        expect(problems, JSON.stringify(v)).toHaveLength(1);
+        expect(problems[0], JSON.stringify(v)).toMatch(
+          new RegExp(`^locomotive ${id}: length must be between 0\\.3 and 3\\.5 tiles, not `),
+        );
+      }
+    });
+
+    it('holds a wagon that carries a length to the same range', () => {
+      const id = shipped.DEFAULT_CONTENT.wagons[0].id;
+      for (const n of IN_RANGE) expect(withLength(n, 'wagons'), String(n)).toEqual([]);
+      for (const v of OUT)
+        expect(withLength(v, 'wagons'), JSON.stringify(v)).toEqual([
+          expect.stringMatching(new RegExp(`^wagon ${id}: length must be between`)),
+        ]);
+    });
+
+    it('applies a stored locomotives table with a length, and sets one out of range aside with its problem', async () => {
+      const locos = clone(shipped.DEFAULT_CONTENT.locomotives);
+      locos[1].length = 0.82;
+      let mod = await load(stamped({ locomotives: locos }));
+      expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+      expect(mod.content.locomotives[1].length).toBe(0.82);
+      locos[1].length = 4;
+      mod = await load(stamped({ locomotives: locos }));
+      expect(mod.content.locomotives).toEqual(shipped.content.locomotives);
+      expect(mod.contentOverrideReport().setAside).toEqual([
+        {
+          key: 'locomotives',
+          reason: 'invalid',
+          problems: [`locomotive ${locos[1].id}: length must be between 0.3 and 3.5 tiles, not 4`],
+        },
+      ]);
+    });
+  });
 });
 
 describe('stamps', () => {
