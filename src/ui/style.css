@@ -20,6 +20,10 @@
   --green: #7a9a52;
   --copper: #a36b42;
   --limestone: #bca98b;
+  /* tooltip text: bold numbers, and good and bad rows, brighter than the panel greens and reds */
+  --text-bright: #fff1d0;
+  --text-good: #9cc06a;
+  --text-bad: #e0675b;
   --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
   --font-body: Verdana, Tahoma, 'DejaVu Sans', sans-serif;
   --font-mono: 'Lucida Console', Monaco, 'DejaVu Sans Mono', monospace;
@@ -310,6 +314,112 @@ body {
   font-family: var(--font-title);
   color: var(--amber);
   font-size: 13px;
+}
+
+/* ---- tooltip stack (src/ui/tooltipStack.ts) ---- */
+/* the layer is a child of #ui-root that never takes the pointer; a locked tooltip in it does */
+#tooltip-stack {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none !important;
+}
+.tt {
+  position: fixed;
+  z-index: 50;
+  max-width: 300px;
+  padding: 5px 9px 7px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  pointer-events: none;
+}
+.tt.tt-locked {
+  pointer-events: auto;
+  outline: 1px solid var(--amber);
+}
+.tt-body {
+  display: grid;
+  gap: 2px;
+}
+.tt .tt-title {
+  font-family: var(--font-title);
+  color: var(--amber);
+  font-size: 13px;
+  /* room for the ring */
+  padding-right: 22px;
+}
+.tt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.tt-num {
+  font-weight: bold;
+  color: var(--text-bright);
+}
+.tt-good,
+.tt-good .tt-num {
+  color: var(--text-good);
+}
+.tt-bad,
+.tt-bad .tt-num {
+  color: var(--text-bad);
+}
+.tt-total {
+  border-top: 1px solid var(--border-dark);
+  padding-top: 3px;
+  margin-top: 2px;
+}
+.tt-dim {
+  color: var(--text-dim);
+}
+.tt-hint {
+  color: var(--text-dim);
+  font-style: italic;
+}
+.tt-term {
+  color: var(--cyan);
+  border-bottom: 1px dotted var(--cyan);
+  cursor: help;
+}
+.tt-res {
+  white-space: nowrap;
+}
+.tt-res u {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.tt-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin-right: 3px;
+  image-rendering: pixelated;
+}
+.tt-ring {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+}
+.tt-ring circle {
+  fill: none;
+  stroke-width: 2.4;
+}
+.tt-ring-track {
+  stroke: var(--stone-light);
+}
+.tt-ring-arc {
+  stroke: var(--amber);
+  stroke-linecap: round;
+}
+.tt-locked .tt-ring {
+  opacity: 0.55;
 }
 
 /* ---- overview banner ---- */
