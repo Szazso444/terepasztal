@@ -940,6 +940,8 @@ describe('walkers and a station closed for its upgrade', () => {
           const { map, builder } = flat(c.mapSeed, 48, 48, 20);
           for (let y = 24; y < 28; y++)
             for (let x = 10; x < 19; x++) map.terrain[y * 48 + x] = GATHER_GROUND[c.kind];
+          // a pump stands only with water right beside it
+          if (c.kind === 'pump') map.terrain[22 * 48 + 14] = Terrain.Water;
           const site = builder.placeStation(14, 21, c.kind)!;
           const mill = builder.placeBuilding(24, 24, 'windmill')!;
           const town = builder.placeStation(30, 21, 'station')!;

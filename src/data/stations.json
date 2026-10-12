@@ -69,7 +69,7 @@
     {
       "id": "pump",
       "name": "Water Pump",
-      "flavor": "Pumps water for steam engines and the works. Fills water tanks completely.",
+      "flavor": "Pumps water for steam engines and the works. Fills water tanks completely. Stands on grass or forest with water right beside it.",
       "cost": {
         "wood": 25,
         "stone": 20
@@ -84,7 +84,9 @@
       "accepts": [],
       "art": "pump",
       "water": true,
-      "terrain": "water"
+      "terrain": "water",
+      "standOn": ["grass", "forest"],
+      "needsWater": true
     },
     {
       "id": "town",

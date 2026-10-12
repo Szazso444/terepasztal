@@ -308,6 +308,18 @@ export const STR = {
       rock: 'Nothing can be built on rock.',
       mountain: 'Nothing can be built on a mountain.',
     },
+    /**
+     * A station with `standOn` tried on other ground, by `StationDef.id`: one line per station,
+     * as its name and the ground it takes differ. One without a line here says `needGround`.
+     */
+    standOn: { pump: 'A water pump goes only on grass or forest.' } as Record<string, string>,
+    /** a station with `standOn` and no line of its own there, tried on other ground */
+    needGround: (grounds: readonly string[]) => `Must stand on ${grounds.join(' or ')}`,
+    /**
+     * A station that `needsWater` tried with no water on any of its four sides, by
+     * `StationDef.id`. One without a line here says `needWaterside`.
+     */
+    besideWater: { pump: 'A water pump needs water right beside it.' } as Record<string, string>,
     needTrack: 'Must touch track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,

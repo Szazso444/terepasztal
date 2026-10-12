@@ -15,7 +15,7 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
-import { content, type DecorDef, type Cost, type Gauge } from '../data/content';
+import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
 import { rules } from './rules';
 import { Station, terrainFactorAt, stationDef, stationFootprint, MAX_LEVEL } from './stations';
 import { ageOfLevel, levelCap } from './levels';
@@ -777,11 +777,39 @@ export class Builder {
     }
     if (!def.depot && !this.hasAdjacentTrack(x, y))
       return { ok: false, cost: {}, reason: STR.build.needTrack };
+    const own = this.stationGround(def, stationFootprint(defId, x, y, rot));
+    if (own) return { ok: false, cost: {}, reason: own };
     return this.affordable(
       this.priced(
         def.cost,
         Math.max(1, this.terrainMul(x, y)) * (def.depot ? 1 : this.kindMul(defId)),
       ),
+    );
+  }
+  /**
+   * A station's own ground rules, asked after the rules every station keeps: one with `standOn`
+   * goes only on those terrains, then one that `needsWater` only with water on one of the four
+   * sides of its footprint, water of any biome (a lake, a river, the sea, a swamp's ponds). The
+   * reason it is refused, or null. Asked when placing only, so a station a save holds where these
+   * would refuse it keeps its place.
+   */
+  private stationGround(def: StationDef, tiles: { x: number; y: number }[]): string | null {
+    const ground = def.standOn as readonly string[] | undefined;
+    if (ground && tiles.some((t) => !ground.includes(TERRAIN_NAMES[terrainAt(this.map, t.x, t.y)])))
+      return STR.build.standOn[def.id] ?? STR.build.needGround(ground);
+    if (def.needsWater && !this.waterBeside(tiles))
+      return STR.build.besideWater[def.id] ?? STR.build.needWaterside;
+    return null;
+  }
+  /** Water lies on one of the four sides of a footprint: next to one of its tiles, outside it. */
+  private waterBeside(tiles: { x: number; y: number }[]) {
+    const inside = (x: number, y: number) => tiles.some((t) => t.x === x && t.y === y);
+    return tiles.some((t) =>
+      DIRS.some((d) => {
+        const x = t.x + DDX[d],
+          y = t.y + DDY[d];
+        return !inside(x, y) && terrainAt(this.map, x, y) === Terrain.Water;
+      }),
     );
   }
   /** Output multiplier a harvesting station would get on a tile (1 for others). */

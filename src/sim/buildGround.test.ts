@@ -86,15 +86,25 @@ describe('unbuildable', () => {
 
 describe('the ground each kind stands on, against the rule before the helper', () => {
   it('stations: refused where they were, with the ground named, and accepted elsewhere', () => {
+    // The pump alone has ground rules of its own (#320): beside water, it is refused where every
+    // station was and, of the rest, takes only the ground it lists. pumpPlacement.test.ts has more.
+    expect(STATION_DEFS.filter((d) => d.standOn || d.needsWater).map((d) => d.id)).toEqual([
+      'pump',
+    ]);
     let tried = 0;
     for (const def of STATION_DEFS.filter((d) => !d.depot))
       for (const t of ALL) {
         const { map, builder } = grassWorld();
         paint(map, stationFootprint(def.id, X, Y, 0), t);
-        // the platform track on grass beside the station
+        // the platform track on grass beside the station, and water on the far side
         builder.track.place(X - 1, Y, 'straight', 1, 'regular');
+        if (def.needsWater) paint(map, [{ x: X + 1, y: Y }], Terrain.Water);
+        const own =
+          def.standOn && !(def.standOn as string[]).includes(name(t))
+            ? STR.build.standOn[def.id]
+            : undefined;
         const c = builder.checkStation(X, Y, def.id, 0);
-        expect(c.reason, `${def.id} on ${name(t)}`).toBe(expected('station', t, undefined));
+        expect(c.reason, `${def.id} on ${name(t)}`).toBe(expected('station', t, own));
         expect(c.ok, `${def.id} on ${name(t)}`).toBe(c.reason === undefined);
         tried++;
       }
