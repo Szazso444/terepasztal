@@ -7,6 +7,7 @@ import { CHUNK_TILES, ownsBorderChunk } from '../sim/expand';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
 import { RegionState } from '../world/regions';
 import { emptyMap } from '../world/mapgen';
+import { Terrain } from '../world/tiles';
 import { STR } from '../strings';
 import { forAll, shrinkArray } from '../testing/property';
 import type { Rng } from './rng';
@@ -435,6 +436,22 @@ describe('Game.buyChunk', () => {
     expect(b.toasts).toEqual(refused);
   });
 
+  it('is refused for a broken number as the autosave is, and still makes the purchase', () => {
+    const b = buying();
+    b.host.snapshot = () => ({ ...base(1), economy: { money: Number.NaN } });
+    expect(b.game.buyChunk(b.inner[0], true)).toBe(true);
+    expect(b.regions.unlocked[b.inner[0]]).toBe(true);
+    expect(b.toasts).toEqual([bought, { text: STR.settings.autosaveBroken, kind: 'warn' }]);
+    expect(store.items.size).toBe(0);
+    // the console names the first broken number, once
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('economy.money');
+    // and the warning is not repeated until some save has gone through
+    b.toasts.length = 0;
+    expect(b.game.buyChunk(b.inner[1], true)).toBe(true);
+    expect(b.toasts).toEqual([bought]);
+  });
+
   it('leaves a chunk on the grid edge to growing the map, which stores the game itself', () => {
     const b = buying();
     // own a chunk one ring out, then buy the edge chunk beside it, with growing held by a loop error
@@ -466,5 +483,47 @@ describe('Game.buyChunk', () => {
     const save = storedSave();
     expect((save.regions as boolean[])[i]).toBe(true);
     expect((save.economy as { money: number }).money).toBe(money - price);
+  });
+});
+
+// ------------------------------------------------------------------ Game.fixBuiltTiles
+
+describe('Game.fixBuiltTiles', () => {
+  it('gives the map what the repair answers, and redraws those tiles and no others', () => {
+    const g = standIn();
+    const map = emptyMap(1, 16, 16, Terrain.Grass);
+    const idx = (x: number, y: number) => y * map.w + x;
+    map.terrain[idx(3, 5)] = Terrain.Rock; // under a platform: grass, a platform may not stand on rock
+    map.terrain[idx(6, 2)] = Terrain.Water; // under a farm: grass
+    map.terrain[idx(9, 10)] = Terrain.Water; // under a platform: the water it stands on
+    map.terrain[idx(11, 3)] = Terrain.Hill; // under a platform across a dip: the land stays
+    map.terrain[idx(12, 12)] = Terrain.Rock; // nothing built on it
+    // the terrain a redraw finds when it reads the map: the repair is in the map before the redraw
+    const drawn: string[] = [];
+    Object.assign(g.host, {
+      map,
+      world: {
+        retile: (x: number, y: number) => drawn.push(`${x},${y}:${map.terrain[idx(x, y)]}`),
+      },
+    });
+    const works = (x: number, y: number, id: string) => [x, y, id, 0, 1, null, 0];
+    const save = {
+      track: [],
+      stations: [{ defId: 'farm', x: 6, y: 2, rot: 0 }],
+      buildings: [
+        works(3, 5, 'bridge_wood'),
+        works(9, 10, 'bridge_stone'),
+        works(11, 3, 'bridge_wood'),
+      ],
+    } as unknown as SaveGame;
+    (g.game as unknown as { fixBuiltTiles(j: SaveGame): void }).fixBuiltTiles(save);
+    expect(drawn.sort()).toEqual([`3,5:${Terrain.Grass}`, `6,2:${Terrain.Grass}`]);
+    expect(map.terrain[idx(3, 5)]).toBe(Terrain.Grass);
+    expect(map.terrain[idx(6, 2)]).toBe(Terrain.Grass);
+    expect(map.terrain[idx(9, 10)]).toBe(Terrain.Water);
+    expect(map.terrain[idx(11, 3)]).toBe(Terrain.Hill);
+    expect(map.terrain[idx(12, 12)]).toBe(Terrain.Rock);
+    // the rest of the map is as it was
+    expect(map.terrain.filter((t) => t === Terrain.Grass).length).toBe(16 * 16 - 3);
   });
 });

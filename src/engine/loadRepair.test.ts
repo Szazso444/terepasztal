@@ -1,14 +1,31 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { applyTileRepairs, repairBuiltTiles, type BuiltObjects } from './loadRepair';
 import type { Rng } from './rng';
-import { Terrain, inBounds, type GameMap } from '../world/tiles';
+import { Terrain, inBounds, type GameMap, type PropInstance } from '../world/tiles';
 import { DEFAULT_MAP_PARAMS, emptyMap } from '../world/mapgen';
 import type { MapGenerator } from '../world/chunks';
-import { footprintOf } from '../world/track';
+import { RegionState } from '../world/regions';
+import {
+  CLASS_N,
+  TRACK_CLASSES,
+  TrackGraph,
+  footprintOf,
+  rotationCount,
+  type TrackClass,
+  type TrackKind,
+} from '../world/track';
 import { stationFootprint } from '../sim/stations';
+import { buildingDef, buildingToJSON } from '../sim/buildings';
+import { Builder } from '../sim/build';
+import { Economy } from '../sim/economy';
+import { Stockpile } from '../sim/stockpile';
+import { STR } from '../strings';
 import { generatorOf, groundOf, type GeneratedWorld } from '../sim/ground';
 import type { SaveGame } from '../sim/save';
 import { forAll, shrinkArray } from '../testing/property';
+
+// the builder plays a sound when it lays something; the context that plays it is a browser's
+vi.mock('./audio', () => ({ sfx: vi.fn() }));
 
 const ALL = [
   Terrain.Grass,
@@ -183,6 +200,58 @@ describe('the ground under everything else a load repairs', () => {
     for (const f of tiles) expect(at(m, f.x, f.y)).toBe(Terrain.Grass);
   });
 
+  // AGENTS.md: curve and switch footprint is n x n, with n 2 for regular and high speed, 1 for narrow
+  it.each(TRACK_CLASSES)(
+    'covers the n x n footprint of a %s curve and switch in every turn, and no tile more',
+    (cls) => {
+      for (const kind of ['curve', 'switch'] as const)
+        for (let rot = 0; rot < rotationCount(kind); rot++) {
+          const m = flat(Terrain.Rock);
+          const repairs = repaired(m, only({ track: [[3, 3, kind, rot, cls, cls]] }));
+          const tiles = footprintOf(3, 3, kind, rot, cls);
+          const where = `${kind} turn ${rot}`;
+          expect(tiles.length, where).toBe(CLASS_N[cls] ** 2);
+          expect(repairs.map((r) => `${r.x},${r.y}`).sort(), where).toEqual(
+            tiles.map((t) => `${t.x},${t.y}`).sort(),
+          );
+        }
+    },
+  );
+
+  it('answers nothing for a tile the objects turn to water and then to grass again', () => {
+    // the retired bridge track kind lays water; a station met after it gives the tile grass back
+    const m = flat(Terrain.Grass);
+    const repairs = repaired(
+      m,
+      only({ track: [straight(4, 4, 'bridge')], stations: [station('farm', 4, 4)] }),
+    );
+    expect(repairs).toEqual([]);
+    expect(at(m, 4, 4)).toBe(Terrain.Grass);
+  });
+
+  it('takes the props off the tiles it repairs and off no others', () => {
+    const m = flat(Terrain.Rock);
+    const prop = (): PropInstance[] => [{ kind: 'rock', variant: 0, ox: 0, oy: 0 }];
+    // a prop under the repaired station, one beside it, and one on a platform that keeps its grass
+    set(m, 6, 6, Terrain.Grass);
+    for (const [x, y] of [
+      [4, 4],
+      [5, 4],
+      [6, 6],
+    ])
+      m.props.set(y * m.w + x, prop());
+    repaired(
+      m,
+      only({
+        stations: [station('farm', 4, 4)],
+        buildings: [works(6, 6, 'bridge_wood')],
+      }),
+    );
+    expect(m.props.has(4 * m.w + 4), 'under the station').toBe(false);
+    expect(m.props.has(4 * m.w + 5), 'beside it').toBe(true);
+    expect(m.props.has(6 * m.w + 6), 'on the platform that kept its grass').toBe(true);
+  });
+
   it('skips what lies off the map', () => {
     const m = flat(Terrain.Water, 4, 4);
     const repairs = repaired(
@@ -318,6 +387,339 @@ describe('the repair', () => {
     );
     // the seeds reach the repair
     expect(repairedSome).toBeGreaterThan(20);
+  });
+});
+
+// ---------------------------------------------------------------- against the sequential repair
+
+/**
+ * The repair done the obvious way, as `Game.fixBuiltTiles` did before it was pulled out of the
+ * game: object by object, tile by tile, on the map itself, a tile changing the moment an object
+ * needs it (track, then stations, decor, works). That body forced every tile under a bridge
+ * platform, and under the retired bridge track kind, to water; `platform` is the one rule that
+ * differs by decision, the ground a tile under a bridge platform ends up with.
+ */
+function sequential(m: GameMap, built: BuiltObjects, platform: (t: Terrain) => Terrain) {
+  const platforms = new Set<number>();
+  for (const [x, y, id] of built.buildings ?? [])
+    if (buildingDef(id).bridge) platforms.add(y * m.w + x);
+  const stats = { platformRepaired: 0, platformKept: 0 };
+  const fix = (x: number, y: number, standing: 'land' | 'platform' | 'water') => {
+    if (x < 0 || y < 0 || x >= m.w || y >= m.h) return;
+    const i = y * m.w + x;
+    const t = m.terrain[i] as Terrain;
+    const to =
+      standing === 'water'
+        ? Terrain.Water
+        : standing === 'platform'
+          ? platform(t)
+          : NO_LAND.includes(t)
+            ? Terrain.Grass
+            : t;
+    if (standing === 'platform') stats[to === t ? 'platformKept' : 'platformRepaired']++;
+    m.terrain[i] = to;
+  };
+  for (const [x, y, kind, rot, cls] of built.track)
+    for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+      fix(
+        f.x,
+        f.y,
+        kind === 'bridge' ? 'water' : platforms.has(f.y * m.w + f.x) ? 'platform' : 'land',
+      );
+  for (const s of built.stations)
+    for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) fix(f.x, f.y, 'land');
+  for (const [x, y] of built.decor ?? []) fix(x, y, 'land');
+  for (const [x, y, id] of built.buildings ?? [])
+    fix(x, y, buildingDef(id).bridge ? 'platform' : 'land');
+  return stats;
+}
+/** What the decision gives a tile under a platform: land stays land, a tile no platform may use grass. */
+const platformGround = (t: Terrain) => (NO_PLATFORM.includes(t) ? Terrain.Grass : t);
+
+/** A case with every track class, the retired bridge kind, props on the ground, and a small map. */
+interface WideCase {
+  terrain: number[];
+  /** the tiles that carry a prop */
+  props: number[];
+  built: BuiltObjects;
+}
+const WIDE = 8;
+function genWide(rng: Rng): WideCase {
+  const terrain = Array.from({ length: WIDE * WIDE }, () => rng.pick(ALL));
+  const props = Array.from({ length: WIDE * WIDE }, (_, i) => i).filter(() => rng.chance(0.3));
+  // the map's edge row and column, and one beyond them, so objects overlap and spill off the map
+  const at2 = () => [rng.int(-1, WIDE), rng.int(-1, WIDE)] as const;
+  const list = <T>(make: () => T) => Array.from({ length: rng.int(0, 5) }, make);
+  const built: BuiltObjects = {
+    track: list(() => {
+      const [x, y] = at2();
+      const kind = rng.pick(['straight', 'curve', 'switch', 'crossing', 'bridge'] as const);
+      const cls = rng.pick(TRACK_CLASSES);
+      return [x, y, kind, rng.int(0, rotationCount(kind) - 1), cls, cls] as Track;
+    }),
+    stations: list(() => {
+      const [x, y] = at2();
+      return station(rng.pick(['farm', 'depot', 'narrow_depot', 'station']), x, y, rng.int(0, 3));
+    }),
+    decor: list(() => {
+      const [x, y] = at2();
+      return [x, y, 'signal', 0] as [number, number, string, number];
+    }),
+    buildings: list(() => {
+      const [x, y] = at2();
+      return works(x, y, rng.pick(['windmill', 'bridge_wood', 'bridge_stone', 'bridge_wood']));
+    }),
+  };
+  return { terrain, props, built };
+}
+function mapOfWide(c: WideCase): GameMap {
+  const m = flat(Terrain.Grass, WIDE, WIDE);
+  m.terrain.set(c.terrain);
+  for (const i of c.props) m.props.set(i, [{ kind: 'rock', variant: 0, ox: 0, oy: 0 }]);
+  return m;
+}
+function* shrinkWide(c: WideCase): Iterable<WideCase> {
+  for (const k of ['track', 'stations', 'decor', 'buildings'] as const)
+    for (const xs of shrinkArray((c.built[k] ?? []) as unknown[]))
+      yield { ...c, built: { ...c.built, [k]: xs } };
+  for (const props of shrinkArray(c.props)) yield { ...c, props };
+  for (let i = 0; i < c.terrain.length; i++)
+    if (c.terrain[i] !== Terrain.Grass) {
+      const terrain = [...c.terrain];
+      terrain[i] = Terrain.Grass;
+      yield { ...c, terrain };
+    }
+}
+/** The first tile where two terrain planes differ, named; 'same' when none. */
+function firstDifference(got: ArrayLike<number>, want: ArrayLike<number>, w: number) {
+  for (let i = 0; i < got.length; i++)
+    if (got[i] !== want[i])
+      return `tile ${i % w},${Math.floor(i / w)}: got ${name(got[i])}, want ${name(want[i])}`;
+  return 'same';
+}
+
+describe('the repair against the sequential repair', () => {
+  it('gives every tile the terrain the objects met in order leave it, and takes props off the changed ones', () => {
+    const reached = { platformRepaired: 0, platformKept: 0, tilesRepaired: 0 };
+    forAll(
+      genWide,
+      (c) => {
+        const initial = Uint8Array.from(c.terrain);
+        const want = mapOfWide(c);
+        const stats = sequential(want, c.built, platformGround);
+        for (const k of ['platformRepaired', 'platformKept'] as const) reached[k] += stats[k];
+        const m = mapOfWide(c);
+        const repairs = repairBuiltTiles(m, c.built);
+        applyTileRepairs(m, repairs);
+        expect(firstDifference(m.terrain, want.terrain, WIDE), 'terrain').toBe('same');
+        // the answer: the tiles whose terrain ended up different, each once, with that terrain
+        const differ: number[] = [];
+        for (let i = 0; i < initial.length; i++) if (initial[i] !== want.terrain[i]) differ.push(i);
+        expect(repairs.map((r) => r.y * WIDE + r.x).sort((a, b) => a - b)).toEqual(differ);
+        for (const r of repairs) expect(r.terrain).toBe(want.terrain[r.y * WIDE + r.x]);
+        reached.tilesRepaired += repairs.length;
+        // the props: gone from the tiles that were repaired and from no others
+        const had = new Set(c.props);
+        for (let i = 0; i < initial.length; i++)
+          expect(m.props.has(i), `prop at tile ${i % WIDE},${Math.floor(i / WIDE)}`).toBe(
+            had.has(i) && initial[i] === want.terrain[i],
+          );
+        // and a load that repaired has nothing left to repair
+        expect(repairBuiltTiles(m, c.built)).toEqual([]);
+      },
+      { shrink: shrinkWide },
+    );
+    // the seeds reach a platform kept on land, one given grass, and track of every class
+    expect(reached.platformKept).toBeGreaterThan(20);
+    expect(reached.platformRepaired).toBeGreaterThan(10);
+    expect(reached.tilesRepaired).toBeGreaterThan(100);
+  });
+
+  it('is what the game did before, wherever no bridge platform stands', () => {
+    // the only change of the pull-out is the ground under a platform: with none on the map, the old
+    // rule (water) and the new one (grass for rock and mountain) are never asked
+    forAll(
+      genWide,
+      (c) => {
+        const noPlatforms: WideCase = {
+          ...c,
+          built: {
+            ...c.built,
+            buildings: (c.built.buildings ?? []).filter(([, , id]) => !buildingDef(id).bridge),
+          },
+        };
+        const old = mapOfWide(noPlatforms);
+        sequential(old, noPlatforms.built, () => Terrain.Water);
+        const now = mapOfWide(noPlatforms);
+        applyTileRepairs(now, repairBuiltTiles(now, noPlatforms.built));
+        expect(firstDifference(now.terrain, old.terrain, WIDE), 'terrain').toBe('same');
+      },
+      { shrink: shrinkWide },
+    );
+  });
+});
+
+// ---------------------------------------------------------------- against the builder
+
+/** A builder in editor mode (no cost, no lock) on a `size` x `size` map of one terrain. */
+function builderOn(t: Terrain, size = 9) {
+  const map = flat(t, size, size);
+  const regions = new RegionState(map);
+  for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+  const builder = new Builder(
+    map,
+    regions,
+    new TrackGraph(size, size),
+    new Economy(),
+    new Stockpile(),
+  );
+  builder.free = true;
+  return { map, builder };
+}
+/** What a builder holds, as a save holds it. */
+function builtOf(b: Builder): BuiltObjects {
+  const track: BuiltObjects['track'] = [];
+  for (const a of b.track.anchors())
+    track.push([a.x, a.y, a.piece.kind, a.piece.rot, a.piece.cls, a.piece.cls2]);
+  return {
+    track,
+    stations: b.stations.map((s) => s.toJSON()) as unknown as SaveGame['stations'],
+    decor: [...b.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
+    buildings: [...b.buildings.values()].map(buildingToJSON),
+  };
+}
+
+describe('the repair and the builder', () => {
+  it('refuse the same ground for each kind of object', () => {
+    // the sets this file uses (NO_LAND, NO_PLATFORM) are the builder's: a tile is repaired exactly
+    // where the builder would have refused what stands on it
+    for (const t of ALL) {
+      const { builder } = builderOn(t);
+      const reasons = (list: (string | undefined)[]) =>
+        list.every((r) => r === STR.build.badTerrain);
+      const land = [
+        builder.checkStation(4, 4, 'farm').reason,
+        builder.checkBuilding(4, 4, 'windmill').reason,
+        builder.checkDecor(4, 4, 'townhouse').reason,
+      ];
+      expect(reasons(land), `land on ${name(t)}`).toBe(NO_LAND.includes(t));
+      const platforms = ['bridge_wood', 'bridge_stone'].map((id) =>
+        builder.checkBuilding(4, 4, id),
+      );
+      expect(reasons(platforms.map((c) => c.reason)), `platform on ${name(t)}`).toBe(
+        NO_PLATFORM.includes(t),
+      );
+      // track: rock and mountain are in its way, and water until a platform carries it
+      const rail = builder.checkTrack(4, 4, { kind: 'straight', cls: 'regular' }, 0);
+      expect(
+        rail.reason === STR.build.rock || rail.reason === STR.build.needBridge,
+        `track on ${name(t)}`,
+      ).toBe(NO_LAND.includes(t));
+    }
+  });
+
+  /** One thing the player does with the builder, in the order the case lists them. */
+  type Move =
+    | { do: 'track'; x: number; y: number; kind: TrackKind; rot: number; cls: TrackClass }
+    | { do: 'works'; x: number; y: number; id: string }
+    | { do: 'station'; x: number; y: number; id: string; rot: number }
+    | { do: 'decor'; x: number; y: number; id: string; rot: number }
+    | { do: 'bridge'; x: number; y: number; id: string };
+  interface Scene {
+    terrain: number[];
+    moves: Move[];
+  }
+  const SPAN = 12;
+  const TRACK_KINDS = ['straight', 'curve', 'switch', 'crossing', 'transition'] as const;
+  function genScene(rng: Rng): Scene {
+    const terrain = Array.from({ length: SPAN * SPAN }, () => rng.pick(ALL));
+    const moves = Array.from({ length: rng.int(10, 60) }, (): Move => {
+      const x = rng.int(0, SPAN - 1);
+      const y = rng.int(0, SPAN - 1);
+      switch (
+        rng.pick(['track', 'track', 'works', 'station', 'decor', 'bridge', 'bridge'] as const)
+      ) {
+        case 'track': {
+          const kind = rng.pick(TRACK_KINDS);
+          const rot = rng.int(0, rotationCount(kind) - 1);
+          return { do: 'track', x, y, kind, rot, cls: rng.pick(TRACK_CLASSES) };
+        }
+        case 'works':
+          return { do: 'works', x, y, id: rng.pick(['windmill', 'bridge_wood', 'bridge_stone']) };
+        case 'station':
+          return {
+            do: 'station',
+            x,
+            y,
+            id: rng.pick(['farm', 'depot', 'narrow_depot', 'station']),
+            rot: rng.int(0, 3),
+          };
+        case 'decor':
+          return {
+            do: 'decor',
+            x,
+            y,
+            id: rng.pick(['signal', 'power_line', 'water_tower', 'townhouse']),
+            rot: rng.int(0, 3),
+          };
+        case 'bridge':
+          return { do: 'bridge', x, y, id: rng.pick(['bridge_wood', 'bridge_stone']) };
+      }
+    });
+    return { terrain, moves };
+  }
+  function* shrinkScene(c: Scene): Iterable<Scene> {
+    for (const moves of shrinkArray(c.moves)) yield { ...c, moves };
+    for (let i = 0; i < c.terrain.length; i++)
+      if (c.terrain[i] !== Terrain.Grass) {
+        const terrain = [...c.terrain];
+        terrain[i] = Terrain.Grass;
+        yield { ...c, terrain };
+      }
+  }
+  /** Do the moves; the builder refuses what it refuses, and the scene is what it let through. */
+  function play(c: Scene) {
+    const { map, builder } = builderOn(Terrain.Grass, SPAN);
+    map.terrain.set(c.terrain);
+    for (const m of c.moves) {
+      if (m.do === 'track') builder.placeTrack(m.x, m.y, { kind: m.kind, cls: m.cls }, m.rot);
+      else if (m.do === 'works') builder.placeBuilding(m.x, m.y, m.id);
+      else if (m.do === 'station') builder.placeStation(m.x, m.y, m.id, m.rot);
+      else if (m.do === 'decor') builder.placeDecor(m.x, m.y, m.id, m.rot);
+      // a bridge: the platform, then the rail on it
+      else if (builder.placeBuilding(m.x, m.y, m.id))
+        builder.placeTrack(m.x, m.y, { kind: 'straight', cls: 'regular' }, 1);
+    }
+    return { map, builder };
+  }
+
+  it('leaves everything the builder let the player place exactly where it stands', () => {
+    // a repair that changes ground the builder allowed would break what the player built: this is
+    // the failure #288 found (a platform on land, forced to water), for every object and terrain
+    const seen = { onWater: 0, onLand: 0, railedOnWater: 0, railedOnLand: 0, other: 0 };
+    forAll(
+      genScene,
+      (c) => {
+        const { map, builder } = play(c);
+        const built = builtOf(builder);
+        const repairs = repairBuiltTiles(map, built);
+        expect(repairs.map((r) => `${r.x},${r.y}=${name(r.terrain)}`)).toEqual([]);
+        for (const [x, y, id] of built.buildings ?? []) {
+          if (!buildingDef(id).bridge) {
+            seen.other++;
+            continue;
+          }
+          const water = at(map, x, y) === Terrain.Water;
+          const railed = builder.track.has(x, y);
+          if (water) seen[railed ? 'railedOnWater' : 'onWater']++;
+          else seen[railed ? 'railedOnLand' : 'onLand']++;
+        }
+      },
+      { shrink: shrinkScene },
+    );
+    // the seeds reach platforms across a dip in the land and over water, with and without a rail,
+    // and the other things a builder places
+    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(20);
   });
 });
 
