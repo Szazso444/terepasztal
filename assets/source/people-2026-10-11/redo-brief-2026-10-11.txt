@@ -1,0 +1,182 @@
+Repaint nine walk strips of the small figures of the isometric railway game in this repository,
+for issue #331. Work on branch art/331-people, which exists: git fetch origin, git switch
+art/331-people, git pull --ff-only (head 3f5a4f7f or later). Touch nothing outside
+assets/source/people-2026-10-11/. Commit there and push the branch. Never push to main or develop.
+Commit subjects read "Art: <outcome>".
+
+WHY. Eight strips repeat one pose: seven back strips and pump-hand-back-carry. A figure would slide
+along the ground instead of walking. The two pump-hand carry strips show a different person in a
+different style: lighter skin, a light-blue shirt, orange boots, cyan water and a full outline. The
+export also squeezed the carry figures to 83-97% of their width, to fit 192 px columns (the
+Math.min(176, ...) width cap in export-variations.cjs). The passenger's back strip was made one pose
+per edit over a grey single-pose guide, and it is the one back strip that animates. Every strip here
+is made that way. The strips not named below stay as they are: the other front strips,
+passenger-back-walk, railway-worker-back-walk and the passenger variants. Do not regenerate
+game-scale/ or review/.
+
+READ FIRST, on origin/develop: docs/art-direction/README.md (sections 1 and 8),
+docs/art-direction/cozy-v3.md ("Scale contract") and docs/art-direction/building-production.md.
+In this folder: README.md, variation-specs.json, passenger-back-passing-guide.png and
+passenger-back-walk.png.
+
+THE STRIPS, in this order. Paint the first and check it before you go on.
+1. pump-hand-back-walk
+2. pump-hand-front-carry
+3. pump-hand-back-carry
+4. lumberjack-back-walk
+5. lumberjack-back-carry
+6. stone-mason-back-walk
+7. stone-mason-back-carry
+8. farmer-back-walk
+9. farmer-back-carry
+Commit after each strip ("Art: <strip> repainted as a four-pose cycle").
+
+THE PEOPLE (variation-specs.json; the same person in every strip of a profession):
+pump hand: an older man with deep warm brown skin and grey hair at the temples, a moss flat cap,
+  rolled sleeves on a muted slate-blue shirt, charcoal trousers, brown boots. Walk: empty hands
+  swinging. Carry: a broad wooden yoke across both shoulders with a full wooden bucket hanging at
+  each end, the water in the game's teal #477B82 (not cyan), no spills.
+lumberjack: a stocky man with fair warm skin, a short auburn beard and brown hair, a broad
+  copper-and-moss checked shirt, a forest-green felt hat, charcoal trousers, brown boots. Walk: a
+  stout axe across the same shoulder as in lumberjack-front-walk.png, its broad slate head above
+  that shoulder. Carry: one thick short bark-covered log on that shoulder, pale end grain, one
+  hand bracing it, no axe.
+stone mason: a woman with warm medium-brown skin and short dark hair, a slate flat cap, an ivory
+  rolled-sleeve shirt, a broad copper-brown leather apron (from behind: its straps and ties), moss
+  trousers, brown boots. Walk: a broad heavy masonry hammer in the same hand as in
+  stone-mason-front-walk.png. Carry: one pale dressed limestone block held in both arms, wider
+  than her back, so its two ends show either side of her body from behind. The delivered back
+  carry hid it.
+farmer: an older woman with warm olive skin and grey-brown hair under a broad straw hat, a muted
+  teal work smock, charcoal trousers, brown boots. Walk: a short, chunky three-tine pitchfork in
+  one hand, its head no higher than the top of her hat. No thin stick: the long fork made her
+  front figure 8% shorter. Carry: one broad tied golden wheat sheaf on the same shoulder as in
+  farmer-front-carry.png.
+
+SIZE AND CAMERA. In the game a person is about 9 px tall on a 64x32 px tile. At that size a
+profession reads by the hat, the clothes and the load; tools read at zoom 2 to 4. That is
+accepted. The camera is orthographic 2:1 isometric, 30 degrees down; proportions are adult and
+realistic, 7 to 7.5 heads (not chibi). Two views:
+- FRONT: walking toward the lower right of the screen (tile +x). We see the face and the
+  front-right side in 3/4.
+- BACK: walking toward the upper right of the screen (tile -y). We see the back and the right side
+  in 3/4; the face and front clothing are hidden.
+In both views the right leg is the near one.
+
+FOUR DISTINCT POSES, in place:
+- f0 right foot forward: the near (right) leg reaches forward, heel down; the far leg trails, toe
+  on the ground; the left arm swings forward.
+- f1 passing: the right foot is planted under the hips; the left knee is bent, its foot lifted
+  beside the right shin.
+- f2 left foot forward: the far (left) leg reaches forward and the near leg trails, so the thighs
+  cross the other way from f0; the right arm swings forward.
+- f3 passing: the left foot is planted and the right foot lifted.
+"Forward" is toward the upper right in the back view and toward the lower right in the front view.
+The head bobs at most 2% of the height. Same person, clothes, load and size in every frame.
+
+GEOMETRY OF A POSE (exact). Each pose is one picture: canvas 1024x1536 (portrait), transparent, one
+figure.
+- The guide's figure stands centred: the soles' line at y = 1344, the top of the hat at y = 192
+  (1152 px, 75% of the height), the hips at x = 512.
+- A load on one shoulder may reach further to that side; the body stays centred.
+First write make-pose-guides.mjs in the folder (Node, pngjs from the repository's devDependencies;
+run npm ci if node_modules is missing; add no dependency). Draw one guide per strip and frame,
+guides/<strip>-f<k>.png:
+- A flat grey mannequin as in passenger-back-passing-guide.png: head ellipse, hat shape, torso
+  polygon, thick limbs with rounded joints, boots.
+- The near limbs a darker grey than the far ones, so the leg overlap reads.
+- Alpha 0 elsewhere.
+- The joint positions per phase traced from the four frames of passenger-back-walk.png (back) and
+  of pump-hand-front-walk.png (front). Those figures are 360 px tall and stand on y = 480, but
+  their frames are not centred on the hips: a variation strip centres the whole silhouette
+  (README.md: "Variation packing centres the complete silhouette"), and the passenger strip its
+  upper body. So scale them 3.2 times, then move each pose so its hips sit at x = 512 and its
+  soles on y = 1344.
+- The load blocked in light grey where the person's front strip carries it, as that strip's view
+  shows it (from behind for a back strip), scaled and moved the same way.
+Write pose-geometry.json with every joint, the load boxes and the numbers in this block.
+
+REFERENCE CROPS (write them with the same script, one figure each, from the committed strips or
+inputs/variations/ as named):
+- refs/<profession>-front-walk.png: the first 192 px column of that front walk strip.
+- refs/<profession>-front-carry.png: the first 192 px column of
+  inputs/variations/<profession>-front-carry.png (unsquashed). The committed carry strips were
+  squeezed to 90-97% of their width.
+- The pump hand needs only refs/pump-hand-front-walk.png: his delivered front carry shows another
+  person.
+- refs/<strip>-back.png: the first column of the delivered back strip; for a carry strip, the first
+  192 px column of inputs/variations/<strip>.png (unsquashed). It shows the back of the clothes
+  only; its legs are wrong.
+
+KEEP EVERY EARLIER PICTURE. Before you repaint a strip, copy <strip>.png to
+raw/<strip>-attempt-1.png byte for byte. inputs/variations/ stays as it is: it holds the only
+unsquashed copies of the delivered carries. Save every pose painting the image tool returns as
+raw/poses/<strip>-f<k>-attempt-<a>.png, and copy the accepted one to poses/<strip>-f<k>.png. Never
+delete a painting.
+
+REFERENCES. At most five images per call, the guide included. Start an image edit, not a new image.
+Attach in this order:
+1. guides/<strip>-f<k>.png: the pose authority. Follow its legs and arms, never a reference's;
+2. the identity:
+   - for pump-hand-back-walk and pump-hand-front-carry, refs/pump-hand-front-walk.png;
+   - for pump-hand-back-carry, poses/pump-hand-front-carry-f0.png from this round;
+   - for the other back strips, refs/<profession>-front-<walk|carry>.png, of the same kind as the
+     strip;
+3. the back of the clothes, for the back strips:
+   - refs/<strip>-back.png;
+   - for pump-hand-back-carry, poses/pump-hand-back-walk-f0.png from this round;
+   - pump-hand-front-carry has none;
+4. reference-passenger.png: the style authority, not the person;
+5. for f1, f2 and f3, the strip's accepted poses/<strip>-f0.png: the same figure, size and load.
+
+THE STRIP. When a strip's four poses are accepted, build <strip>.png from them with
+assemble-strips.mjs (Node, pngjs only; write it). Do not use export-*.cjs: they need sharp, and
+they squeezed the carries and centred each silhouette instead of the body.
+- Scale every pose of the strip by one factor, the same in x and y: 360 / (1152 * returned
+  width / 1024). The figure is then 360 px tall, as in the other strips. Use an area-averaging
+  downscale.
+- Place each pose so that its guide point (512,1344), times returned width / 1024, lands on the
+  frame's anchor.
+- Walk strips: 768x512, four 192 px columns, anchors (96,480), (288,480), (480,480), (672,480),
+  as in README.md.
+- Carry strips: 1024x512, four 256 px columns, anchors (128,480), (384,480), (640,480),
+  (896,480).
+- The poses are anchored at the hips, so a load on one side reaches further than half the
+  frame's width. Measure from the anchor: if any walk frame reaches more than 88 px to either
+  side of its anchor, build that strip with 256 px columns too. If any frame in 256 px columns
+  (a carry strip, or a walk strip so widened) reaches more than 120 px to either side, use 320 px
+  columns (1280x512, anchors 160 + 320k).
+- Never scale x and y separately. Never clip a load.
+Record the canvas, the columns, the anchors and the scale in prompts.json.
+
+CANVAS SIZE. Ask for 1024x1536 px for every pose. Keep each picture exactly as returned, and record
+its real size as "returned": [w, h].
+
+MEASURE BEFORE COMMITTING. Write check-poses.mjs in this folder (Node, pngjs only). Let
+s = returned width / 1024.
+- If the return is not 2:3, do not measure it against the scaled guide: record it as an attempt
+  that failed the box test and paint again.
+- For each pose, compare the painted box (the pixels with alpha above 128) with the guide's box,
+  scaled by s. Retry when its width or height is more than 5% off, or when its centre is further
+  from the guide box's centre than 5% of the guide box's width.
+- Then lay f0 over f2 at 50% opacity. The legs must cross the other way, forming an X, not lie on
+  top of each other. In f1 and f3 the lifted foot must be the other one.
+- Retry a pose that repeats another.
+Make at most three new attempts per pose. If a pose still repeats another after three, keep the
+best, record it, and say so in your message: Core can fall back to a 0, 1, 0, 1 cycle. Check the
+first strip (pump-hand-back-walk) fully before you go on. Before committing a strip, scale it down
+so the figure is 9 px tall and play its four frames in order. It must walk.
+
+STYLE AND OUTPUT RULES. Smooth painted contours, broad colour clusters, three or four shades per
+material, selective dark contours on lower and side rims only: never a full outline round the
+figure. One light from the upper left. Subdued clothing from the game palette: forest #294638, moss
+#78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42, navy
+permitted. Skin and hair are warm and natural, and the same person's skin is the same in every
+strip.
+Highlight cap: nothing at or above the game's cursor white #ECE4D0, and no yellow or orange as
+strong as its selection amber #E8AA48 (the wheat sheaf stays a soft gold).
+A real RGBA PNG: alpha 0 background, opaque figure. Never: ground, floor, cast or ground shadow,
+text, labels, borders, frame numbers, glow, extra objects, extra people.
+
+Record every call in prompts.json under a new list "redo-2026-10-11" as
+{id: "<strip>-f<k>-attempt-<a>", strip, frame, file, prompt, references, returned, measured}.

@@ -1,0 +1,12 @@
+{
+  "id": "pump-hand-back-walk-f0-attempt-1",
+  "strip": "pump-hand-back-walk",
+  "frame": 0,
+  "prompt": "Use case: sketch-to-render. EDIT image1 grey pose guide, not a new composition. Paint ONE adult pump hand over its EXACT silhouette/joints, same1024x1536 portrait canvas and exact placement. Image1 is POSE/BOX authority, image2 character/outfit identity, image3 BACK clothing only (IGNORE its incorrect legs), image4 PAINTED STYLE only, not its person. Older man DEEP warm brown skin as image2, grey temples, moss#78804C flat cap, muted SLATE-blue rolled-sleeve shirt, charcoal trousers, muted BROWN boots (not orange). Empty swinging hands. Orthographic2:1 isometric30degrees down, BACK-RIGHT3/4 walking AWAY upper right, face/frontshirt hidden. Follow image1 near DARK GREY right leg and far lighter left leg and their EXACT crossing and boot positions; no standing pose copied from reference3. Frame0 RIGHT foot forward contact; far left leg trails; left arm forward. Preserve guide cap topy192, solesy1344, hipsx512, bodyheight1152; figure must occupy SAME bounding box as guide within5%, do not enlarge/recentre. Smooth painted broad colour clusters,3or4 shades/material, one upper-leftlight, selective dark lower/side rims ONLY, no full dark outline. Restrained palette belowcursorwhite#ECE4D0 and selectionamber#E8AA48, muted natural skin/hair. RGBA alpha0 blank surroundings, opaquefigure. NO ground,floor,shadow,glow,halo,labels,text,border,extraobjects,extraperson. KEEP the generous transparent margins from guide. Return exactly1024x1536.",
+  "references": [
+    "guides/pump-hand-back-walk-f0.png",
+    "refs/pump-hand-front-walk.png",
+    "refs/pump-hand-back-walk-back.png",
+    "reference-passenger.png"
+  ]
+}

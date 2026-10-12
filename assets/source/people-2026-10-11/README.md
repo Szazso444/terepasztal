@@ -1,5 +1,10 @@
 # People cast · issue 331
 
+The nine-strip repair is prepared in [redo-workflow.md](redo-workflow.md).
+Its first image call hit the built-in generator's usage limit; no new pose has
+been painted yet. The original strips and all review/game-scale exports remain
+unchanged. See `redo-state.json` for progress and the protected-file hashes.
+
 28 painted RGBA strips for 10 people: the original passenger, five workers and
 four additional passengers. Each person has front/back walk strips; lumberjack,
 stone mason, farmer and pump hand also have front/back carry strips.
@@ -24,10 +29,10 @@ transparent PNG assets, not enlarged 9 px previews. There are 28 strips per size
 `game-scale/manifest.json` records canvas dimensions, columns, baseline and anchors.
 
 | Figure height | Four-column canvas | Frame cell | Baseline | First anchor |
-| --- | --- | --- | --- | --- |
-| 9 px | 64 × 16 | 16 × 16 | 14 | (8,14) |
-| 18 px | 128 × 32 | 32 × 32 | 28 | (16,28) |
-| 36 px | 256 × 64 | 64 × 64 | 56 | (32,56) |
+| ------------- | ------------------ | ---------- | -------- | ------------ |
+| 9 px          | 64 × 16            | 16 × 16    | 14       | (8,14)       |
+| 18 px         | 128 × 32           | 32 × 32    | 28       | (16,28)      |
+| 36 px         | 256 × 64           | 64 × 64    | 56       | (32,56)      |
 
 The 768 × 512 painted strips remain the source assets. Higher raster resolution
 retains more painted detail but does not fix the animation draft issues below.

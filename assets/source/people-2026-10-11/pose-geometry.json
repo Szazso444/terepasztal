@@ -1,0 +1,2778 @@
+{
+  "contract": {
+    "canvas": [1024, 1536],
+    "hatTop": 192,
+    "soleLine": 1344,
+    "hipsX": 512,
+    "figureHeight": 1152,
+    "sourceFigureHeight": 360,
+    "traceScale": 3.2,
+    "headBobMax": 23.04,
+    "stripHeight": 512,
+    "stripFigureHeight": 360,
+    "stripBaseline": 480,
+    "walkColumnWidth": 192,
+    "carryColumnWidth": 256,
+    "walkReachLimit": 88,
+    "wideReachLimit": 120
+  },
+  "traces": {
+    "back": {
+      "file": "passenger-back-walk.png",
+      "method": "manual visual tracing of joint centres, frame-local pixels",
+      "frames": [
+        {
+          "hips": [100, 304],
+          "neck": [99, 183],
+          "head": [102, 158],
+          "shoulderFar": [70, 207],
+          "shoulderNear": [119, 209],
+          "elbowFar": [48, 263],
+          "handFar": [43, 310],
+          "elbowNear": [143, 263],
+          "handNear": [157, 278],
+          "hipFar": [89, 306],
+          "kneeFar": [112, 369],
+          "ankleFar": [133, 399],
+          "toeFar": [144, 414],
+          "hipNear": [108, 306],
+          "kneeNear": [83, 384],
+          "ankleNear": [54, 453],
+          "toeNear": [72, 480]
+        },
+        {
+          "hips": [97, 304],
+          "neck": [97, 183],
+          "head": [100, 158],
+          "shoulderFar": [70, 207],
+          "shoulderNear": [117, 208],
+          "elbowFar": [62, 266],
+          "handFar": [59, 311],
+          "elbowNear": [136, 264],
+          "handNear": [143, 297],
+          "hipFar": [88, 307],
+          "kneeFar": [85, 377],
+          "ankleFar": [64, 430],
+          "toeFar": [69, 446],
+          "hipNear": [105, 306],
+          "kneeNear": [111, 382],
+          "ankleNear": [110, 453],
+          "toeNear": [135, 480]
+        },
+        {
+          "hips": [98, 305],
+          "neck": [98, 183],
+          "head": [101, 158],
+          "shoulderFar": [72, 207],
+          "shoulderNear": [118, 208],
+          "elbowFar": [56, 256],
+          "handFar": [54, 303],
+          "elbowNear": [136, 230],
+          "handNear": [156, 210],
+          "hipFar": [89, 307],
+          "kneeFar": [72, 365],
+          "ankleFar": [59, 399],
+          "toeFar": [80, 417],
+          "hipNear": [107, 306],
+          "kneeNear": [118, 383],
+          "ankleNear": [137, 454],
+          "toeNear": [157, 480]
+        },
+        {
+          "hips": [99, 305],
+          "neck": [99, 183],
+          "head": [102, 158],
+          "shoulderFar": [70, 207],
+          "shoulderNear": [120, 208],
+          "elbowFar": [61, 263],
+          "handFar": [59, 309],
+          "elbowNear": [141, 266],
+          "handNear": [153, 293],
+          "hipFar": [90, 306],
+          "kneeFar": [80, 385],
+          "ankleFar": [77, 451],
+          "toeFar": [99, 480],
+          "hipNear": [108, 306],
+          "kneeNear": [127, 364],
+          "ankleNear": [151, 421],
+          "toeNear": [150, 442]
+        }
+      ]
+    },
+    "front": {
+      "file": "pump-hand-front-walk.png",
+      "method": "manual visual tracing of joint centres, frame-local pixels",
+      "frames": [
+        {
+          "hips": [100, 310],
+          "neck": [99, 182],
+          "head": [104, 159],
+          "shoulderFar": [124, 210],
+          "shoulderNear": [73, 206],
+          "elbowFar": [142, 276],
+          "handFar": [155, 309],
+          "elbowNear": [52, 264],
+          "handNear": [43, 321],
+          "hipFar": [109, 312],
+          "kneeFar": [67, 386],
+          "ankleFar": [54, 430],
+          "toeFar": [75, 449],
+          "hipNear": [88, 311],
+          "kneeNear": [107, 392],
+          "ankleNear": [132, 456],
+          "toeNear": [159, 480]
+        },
+        {
+          "hips": [101, 310],
+          "neck": [100, 182],
+          "head": [105, 159],
+          "shoulderFar": [125, 210],
+          "shoulderNear": [74, 206],
+          "elbowFar": [137, 276],
+          "handFar": [143, 311],
+          "elbowNear": [62, 264],
+          "handNear": [56, 317],
+          "hipFar": [110, 312],
+          "kneeFar": [76, 384],
+          "ankleFar": [67, 419],
+          "toeFar": [88, 434],
+          "hipNear": [89, 311],
+          "kneeNear": [109, 390],
+          "ankleNear": [115, 457],
+          "toeNear": [144, 480]
+        },
+        {
+          "hips": [100, 310],
+          "neck": [99, 182],
+          "head": [104, 159],
+          "shoulderFar": [124, 210],
+          "shoulderNear": [72, 206],
+          "elbowFar": [145, 267],
+          "handFar": [150, 317],
+          "elbowNear": [71, 267],
+          "handNear": [96, 304],
+          "hipFar": [111, 312],
+          "kneeFar": [129, 386],
+          "ankleFar": [141, 457],
+          "toeFar": [167, 480],
+          "hipNear": [90, 311],
+          "kneeNear": [71, 386],
+          "ankleNear": [58, 432],
+          "toeNear": [79, 450]
+        },
+        {
+          "hips": [100, 310],
+          "neck": [99, 182],
+          "head": [104, 159],
+          "shoulderFar": [124, 210],
+          "shoulderNear": [73, 206],
+          "elbowFar": [137, 272],
+          "handFar": [143, 309],
+          "elbowNear": [61, 263],
+          "handNear": [55, 316],
+          "hipFar": [108, 312],
+          "kneeFar": [104, 392],
+          "ankleFar": [107, 457],
+          "toeFar": [135, 480],
+          "hipNear": [89, 311],
+          "kneeNear": [117, 374],
+          "ankleNear": [135, 419],
+          "toeNear": [157, 438]
+        }
+      ]
+    }
+  },
+  "strips": {
+    "pump-hand-back-walk": {
+      "profession": "pump-hand",
+      "view": "back",
+      "carry": false,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [345.6, 649.5999999999999],
+            "handFar": [329.6, 800],
+            "elbowNear": [649.6, 649.5999999999999],
+            "handNear": [694.4, 697.5999999999999],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [],
+          "box": {
+            "x": 301,
+            "y": 192,
+            "width": 422,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-walk-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [400, 659.1999999999999],
+            "handFar": [390.4, 803.1999999999999],
+            "elbowNear": [636.8, 652.8],
+            "handNear": [659.2, 758.4],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [],
+          "box": {
+            "x": 361,
+            "y": 192,
+            "width": 327,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-walk-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [377.6, 627.1999999999999],
+            "handFar": [371.2, 777.6],
+            "elbowNear": [633.6, 544],
+            "handNear": [697.6, 480],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [],
+          "box": {
+            "x": 342,
+            "y": 192,
+            "width": 385,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-walk-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [390.4, 649.5999999999999],
+            "handFar": [384, 796.8],
+            "elbowNear": [646.4, 659.1999999999999],
+            "handNear": [684.8, 745.6],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [],
+          "box": {
+            "x": 355,
+            "y": 192,
+            "width": 362,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-walk-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "pump-hand-front-carry": {
+      "profession": "pump-hand",
+      "view": "front",
+      "carry": true,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 310],
+            "neck": [99, 182],
+            "head": [104, 159],
+            "shoulderFar": [124, 210],
+            "shoulderNear": [73, 206],
+            "elbowFar": [142, 276],
+            "handFar": [155, 309],
+            "elbowNear": [52, 264],
+            "handNear": [43, 321],
+            "hipFar": [109, 312],
+            "kneeFar": [67, 386],
+            "ankleFar": [54, 430],
+            "toeFar": [75, 449],
+            "hipNear": [88, 311],
+            "kneeNear": [107, 392],
+            "ankleNear": [132, 456],
+            "toeNear": [159, 480]
+          },
+          "joints": {
+            "hips": [512, 800],
+            "neck": [508.8, 390.4],
+            "head": [524.8, 316.79999999999995],
+            "shoulderFar": [588.8, 480],
+            "shoulderNear": [425.6, 467.19999999999993],
+            "elbowFar": [675, 570],
+            "handFar": [735, 443],
+            "elbowNear": [358.4, 652.8],
+            "handNear": [329.6, 835.2],
+            "hipFar": [540.8, 806.4],
+            "kneeFar": [406.4, 1043.2],
+            "ankleFar": [364.79999999999995, 1184],
+            "toeFar": [432, 1244.8],
+            "hipNear": [473.6, 803.1999999999999],
+            "kneeNear": [534.4, 1062.4],
+            "ankleNear": [614.4, 1267.2],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-front-carry-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [101, 310],
+            "neck": [100, 182],
+            "head": [105, 159],
+            "shoulderFar": [125, 210],
+            "shoulderNear": [74, 206],
+            "elbowFar": [137, 276],
+            "handFar": [143, 311],
+            "elbowNear": [62, 264],
+            "handNear": [56, 317],
+            "hipFar": [110, 312],
+            "kneeFar": [76, 384],
+            "ankleFar": [67, 419],
+            "toeFar": [88, 434],
+            "hipNear": [89, 311],
+            "kneeNear": [109, 390],
+            "ankleNear": [115, 457],
+            "toeNear": [144, 480]
+          },
+          "joints": {
+            "hips": [512, 800],
+            "neck": [508.8, 390.4],
+            "head": [524.8, 316.79999999999995],
+            "shoulderFar": [588.8, 480],
+            "shoulderNear": [425.6, 467.19999999999993],
+            "elbowFar": [675, 570],
+            "handFar": [735, 443],
+            "elbowNear": [387.2, 652.8],
+            "handNear": [368, 822.4],
+            "hipFar": [540.8, 806.4],
+            "kneeFar": [432, 1036.8],
+            "ankleFar": [403.2, 1148.8],
+            "toeFar": [470.4, 1196.8],
+            "hipNear": [473.6, 803.1999999999999],
+            "kneeNear": [537.6, 1056],
+            "ankleNear": [556.8, 1270.4],
+            "toeNear": [649.6, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-front-carry-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [100, 310],
+            "neck": [99, 182],
+            "head": [104, 159],
+            "shoulderFar": [124, 210],
+            "shoulderNear": [72, 206],
+            "elbowFar": [145, 267],
+            "handFar": [150, 317],
+            "elbowNear": [71, 267],
+            "handNear": [96, 304],
+            "hipFar": [111, 312],
+            "kneeFar": [129, 386],
+            "ankleFar": [141, 457],
+            "toeFar": [167, 480],
+            "hipNear": [90, 311],
+            "kneeNear": [71, 386],
+            "ankleNear": [58, 432],
+            "toeNear": [79, 450]
+          },
+          "joints": {
+            "hips": [512, 800],
+            "neck": [508.8, 390.4],
+            "head": [524.8, 316.79999999999995],
+            "shoulderFar": [588.8, 480],
+            "shoulderNear": [422.4, 467.19999999999993],
+            "elbowFar": [675, 570],
+            "handFar": [735, 443],
+            "elbowNear": [419.2, 662.4],
+            "handNear": [499.2, 780.8],
+            "hipFar": [547.2, 806.4],
+            "kneeFar": [604.8, 1043.2],
+            "ankleFar": [643.2, 1270.4],
+            "toeFar": [726.4, 1344],
+            "hipNear": [480, 803.1999999999999],
+            "kneeNear": [419.2, 1043.2],
+            "ankleNear": [377.6, 1190.4],
+            "toeNear": [444.8, 1248]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-front-carry-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [100, 310],
+            "neck": [99, 182],
+            "head": [104, 159],
+            "shoulderFar": [124, 210],
+            "shoulderNear": [73, 206],
+            "elbowFar": [137, 272],
+            "handFar": [143, 309],
+            "elbowNear": [61, 263],
+            "handNear": [55, 316],
+            "hipFar": [108, 312],
+            "kneeFar": [104, 392],
+            "ankleFar": [107, 457],
+            "toeFar": [135, 480],
+            "hipNear": [89, 311],
+            "kneeNear": [117, 374],
+            "ankleNear": [135, 419],
+            "toeNear": [157, 438]
+          },
+          "joints": {
+            "hips": [512, 800],
+            "neck": [508.8, 390.4],
+            "head": [524.8, 316.79999999999995],
+            "shoulderFar": [588.8, 480],
+            "shoulderNear": [425.6, 467.19999999999993],
+            "elbowFar": [675, 570],
+            "handFar": [735, 443],
+            "elbowNear": [387.2, 649.5999999999999],
+            "handNear": [368, 819.1999999999999],
+            "hipFar": [537.6, 806.4],
+            "kneeFar": [524.8, 1062.4],
+            "ankleFar": [534.4, 1270.4],
+            "toeFar": [624, 1344],
+            "hipNear": [476.8, 803.1999999999999],
+            "kneeNear": [566.4, 1004.8],
+            "ankleNear": [624, 1148.8],
+            "toeNear": [694.4, 1209.6]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-front-carry-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "pump-hand-back-carry": {
+      "profession": "pump-hand",
+      "view": "back",
+      "carry": true,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [345.6, 649.5999999999999],
+            "handFar": [329.6, 800],
+            "elbowNear": [675, 570],
+            "handNear": [735, 443],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-carry-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [400, 659.1999999999999],
+            "handFar": [390.4, 803.1999999999999],
+            "elbowNear": [675, 570],
+            "handNear": [735, 443],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-carry-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [377.6, 627.1999999999999],
+            "handFar": [371.2, 777.6],
+            "elbowNear": [675, 570],
+            "handNear": [735, 443],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-carry-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [390.4, 649.5999999999999],
+            "handFar": [384, 796.8],
+            "elbowNear": [675, 570],
+            "handNear": [735, 443],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [
+            {
+              "name": "left bucket",
+              "x": 150,
+              "y": 650,
+              "width": 190,
+              "height": 220
+            },
+            {
+              "name": "right bucket",
+              "x": 715,
+              "y": 605,
+              "width": 185,
+              "height": 220
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "yoke",
+              "points": [
+                [215, 475],
+                [795, 425],
+                [804, 477],
+                [223, 527]
+              ]
+            }
+          ],
+          "box": {
+            "x": 150,
+            "y": 192,
+            "width": 750,
+            "height": 1152
+          },
+          "guide": "guides/pump-hand-back-carry-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "lumberjack-back-walk": {
+      "profession": "lumberjack",
+      "view": "back",
+      "carry": false,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [345.6, 649.5999999999999],
+            "handFar": [329.6, 800],
+            "elbowNear": [674, 696],
+            "handNear": [664, 561],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "axe head",
+              "x": 247,
+              "y": 317,
+              "width": 154,
+              "height": 154
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "axe handle",
+              "points": [
+                [325, 392],
+                [682, 579],
+                [667, 608],
+                [310, 421]
+              ]
+            }
+          ],
+          "box": {
+            "x": 247,
+            "y": 192,
+            "width": 463,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-walk-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [400, 659.1999999999999],
+            "handFar": [390.4, 803.1999999999999],
+            "elbowNear": [674, 696],
+            "handNear": [664, 561],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "axe head",
+              "x": 247,
+              "y": 317,
+              "width": 154,
+              "height": 154
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "axe handle",
+              "points": [
+                [325, 392],
+                [682, 579],
+                [667, 608],
+                [310, 421]
+              ]
+            }
+          ],
+          "box": {
+            "x": 247,
+            "y": 192,
+            "width": 463,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-walk-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [377.6, 627.1999999999999],
+            "handFar": [371.2, 777.6],
+            "elbowNear": [674, 696],
+            "handNear": [664, 561],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "axe head",
+              "x": 247,
+              "y": 317,
+              "width": 154,
+              "height": 154
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "axe handle",
+              "points": [
+                [325, 392],
+                [682, 579],
+                [667, 608],
+                [310, 421]
+              ]
+            }
+          ],
+          "box": {
+            "x": 247,
+            "y": 192,
+            "width": 480,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-walk-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [390.4, 649.5999999999999],
+            "handFar": [384, 796.8],
+            "elbowNear": [674, 696],
+            "handNear": [664, 561],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [
+            {
+              "name": "axe head",
+              "x": 247,
+              "y": 317,
+              "width": 154,
+              "height": 154
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "axe handle",
+              "points": [
+                [325, 392],
+                [682, 579],
+                [667, 608],
+                [310, 421]
+              ]
+            }
+          ],
+          "box": {
+            "x": 247,
+            "y": 192,
+            "width": 470,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-walk-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "lumberjack-back-carry": {
+      "profession": "lumberjack",
+      "view": "back",
+      "carry": true,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [345.6, 649.5999999999999],
+            "handFar": [329.6, 800],
+            "elbowNear": [674, 664],
+            "handNear": [640, 540],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "log end",
+              "x": 555,
+              "y": 433,
+              "width": 122,
+              "height": 137
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "log",
+              "points": [
+                [165, 315],
+                [620, 455],
+                [625, 565],
+                [175, 435]
+              ]
+            }
+          ],
+          "box": {
+            "x": 165,
+            "y": 192,
+            "width": 545,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-carry-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [400, 659.1999999999999],
+            "handFar": [390.4, 803.1999999999999],
+            "elbowNear": [674, 664],
+            "handNear": [640, 540],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "log end",
+              "x": 555,
+              "y": 433,
+              "width": 122,
+              "height": 137
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "log",
+              "points": [
+                [165, 315],
+                [620, 455],
+                [625, 565],
+                [175, 435]
+              ]
+            }
+          ],
+          "box": {
+            "x": 165,
+            "y": 192,
+            "width": 545,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-carry-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [377.6, 627.1999999999999],
+            "handFar": [371.2, 777.6],
+            "elbowNear": [674, 664],
+            "handNear": [640, 540],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "log end",
+              "x": 555,
+              "y": 433,
+              "width": 122,
+              "height": 137
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "log",
+              "points": [
+                [165, 315],
+                [620, 455],
+                [625, 565],
+                [175, 435]
+              ]
+            }
+          ],
+          "box": {
+            "x": 165,
+            "y": 192,
+            "width": 562,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-carry-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [390.4, 649.5999999999999],
+            "handFar": [384, 796.8],
+            "elbowNear": [674, 664],
+            "handNear": [640, 540],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [
+            {
+              "name": "log end",
+              "x": 555,
+              "y": 433,
+              "width": 122,
+              "height": 137
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "log",
+              "points": [
+                [165, 315],
+                [620, 455],
+                [625, 565],
+                [175, 435]
+              ]
+            }
+          ],
+          "box": {
+            "x": 165,
+            "y": 192,
+            "width": 552,
+            "height": 1152
+          },
+          "guide": "guides/lumberjack-back-carry-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "stone-mason-back-walk": {
+      "profession": "stone-mason",
+      "view": "back",
+      "carry": false,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [345.6, 649.5999999999999],
+            "handFar": [329.6, 800],
+            "elbowNear": [685, 699],
+            "handNear": [715, 841],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "hammer head",
+              "x": 727,
+              "y": 806,
+              "width": 132,
+              "height": 120
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "hammer handle",
+              "points": [
+                [700, 835],
+                [803, 851],
+                [798, 889],
+                [695, 872]
+              ]
+            }
+          ],
+          "box": {
+            "x": 301,
+            "y": 192,
+            "width": 558,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-walk-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [400, 659.1999999999999],
+            "handFar": [390.4, 803.1999999999999],
+            "elbowNear": [685, 699],
+            "handNear": [715, 841],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "hammer head",
+              "x": 727,
+              "y": 806,
+              "width": 132,
+              "height": 120
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "hammer handle",
+              "points": [
+                [700, 835],
+                [803, 851],
+                [798, 889],
+                [695, 872]
+              ]
+            }
+          ],
+          "box": {
+            "x": 361,
+            "y": 192,
+            "width": 498,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-walk-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [377.6, 627.1999999999999],
+            "handFar": [371.2, 777.6],
+            "elbowNear": [685, 699],
+            "handNear": [715, 841],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "hammer head",
+              "x": 727,
+              "y": 806,
+              "width": 132,
+              "height": 120
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "hammer handle",
+              "points": [
+                [700, 835],
+                [803, 851],
+                [798, 889],
+                [695, 872]
+              ]
+            }
+          ],
+          "box": {
+            "x": 342,
+            "y": 192,
+            "width": 517,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-walk-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [390.4, 649.5999999999999],
+            "handFar": [384, 796.8],
+            "elbowNear": [685, 699],
+            "handNear": [715, 841],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [
+            {
+              "name": "hammer head",
+              "x": 727,
+              "y": 806,
+              "width": 132,
+              "height": 120
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "hammer handle",
+              "points": [
+                [700, 835],
+                [803, 851],
+                [798, 889],
+                [695, 872]
+              ]
+            }
+          ],
+          "box": {
+            "x": 355,
+            "y": 192,
+            "width": 504,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-walk-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "stone-mason-back-carry": {
+      "profession": "stone-mason",
+      "view": "back",
+      "carry": true,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [335, 755],
+            "handFar": [245, 692],
+            "elbowNear": [695, 755],
+            "handNear": [772, 672],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "stone block showing both ends",
+              "x": 195,
+              "y": 500,
+              "width": 630,
+              "height": 232
+            }
+          ],
+          "loadPolygons": [],
+          "box": {
+            "x": 195,
+            "y": 192,
+            "width": 630,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-carry-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [335, 755],
+            "handFar": [245, 692],
+            "elbowNear": [695, 755],
+            "handNear": [772, 672],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "stone block showing both ends",
+              "x": 195,
+              "y": 500,
+              "width": 630,
+              "height": 232
+            }
+          ],
+          "loadPolygons": [],
+          "box": {
+            "x": 195,
+            "y": 192,
+            "width": 630,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-carry-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [335, 755],
+            "handFar": [245, 692],
+            "elbowNear": [695, 755],
+            "handNear": [772, 672],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "stone block showing both ends",
+              "x": 195,
+              "y": 500,
+              "width": 630,
+              "height": 232
+            }
+          ],
+          "loadPolygons": [],
+          "box": {
+            "x": 195,
+            "y": 192,
+            "width": 630,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-carry-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [335, 755],
+            "handFar": [245, 692],
+            "elbowNear": [695, 755],
+            "handNear": [772, 672],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [
+            {
+              "name": "stone block showing both ends",
+              "x": 195,
+              "y": 500,
+              "width": 630,
+              "height": 232
+            }
+          ],
+          "loadPolygons": [],
+          "box": {
+            "x": 195,
+            "y": 192,
+            "width": 630,
+            "height": 1152
+          },
+          "guide": "guides/stone-mason-back-carry-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "farmer-back-walk": {
+      "profession": "farmer",
+      "view": "back",
+      "carry": false,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [345.6, 649.5999999999999],
+            "handFar": [329.6, 800],
+            "elbowNear": [689, 641],
+            "handNear": [714, 730],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "fork tine 0",
+              "x": 648,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 1",
+              "x": 684,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 2",
+              "x": 720,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "fork handle",
+              "points": [
+                [670, 278],
+                [696, 278],
+                [730, 817],
+                [702, 817]
+              ]
+            },
+            {
+              "kind": "fork bridge",
+              "points": [
+                [648, 306],
+                [744, 302],
+                [744, 330],
+                [648, 334]
+              ]
+            }
+          ],
+          "box": {
+            "x": 301,
+            "y": 192,
+            "width": 443,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-walk-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [400, 659.1999999999999],
+            "handFar": [390.4, 803.1999999999999],
+            "elbowNear": [689, 641],
+            "handNear": [714, 730],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "fork tine 0",
+              "x": 648,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 1",
+              "x": 684,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 2",
+              "x": 720,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "fork handle",
+              "points": [
+                [670, 278],
+                [696, 278],
+                [730, 817],
+                [702, 817]
+              ]
+            },
+            {
+              "kind": "fork bridge",
+              "points": [
+                [648, 306],
+                [744, 302],
+                [744, 330],
+                [648, 334]
+              ]
+            }
+          ],
+          "box": {
+            "x": 361,
+            "y": 192,
+            "width": 383,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-walk-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [377.6, 627.1999999999999],
+            "handFar": [371.2, 777.6],
+            "elbowNear": [689, 641],
+            "handNear": [714, 730],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [
+            {
+              "name": "fork tine 0",
+              "x": 648,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 1",
+              "x": 684,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 2",
+              "x": 720,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "fork handle",
+              "points": [
+                [670, 278],
+                [696, 278],
+                [730, 817],
+                [702, 817]
+              ]
+            },
+            {
+              "kind": "fork bridge",
+              "points": [
+                [648, 306],
+                [744, 302],
+                [744, 330],
+                [648, 334]
+              ]
+            }
+          ],
+          "box": {
+            "x": 342,
+            "y": 192,
+            "width": 402,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-walk-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [390.4, 649.5999999999999],
+            "handFar": [384, 796.8],
+            "elbowNear": [689, 641],
+            "handNear": [714, 730],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [
+            {
+              "name": "fork tine 0",
+              "x": 648,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 1",
+              "x": 684,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            },
+            {
+              "name": "fork tine 2",
+              "x": 720,
+              "y": 192,
+              "width": 24,
+              "height": 130
+            }
+          ],
+          "loadPolygons": [
+            {
+              "kind": "fork handle",
+              "points": [
+                [670, 278],
+                [696, 278],
+                [730, 817],
+                [702, 817]
+              ]
+            },
+            {
+              "kind": "fork bridge",
+              "points": [
+                [648, 306],
+                [744, 302],
+                [744, 330],
+                [648, 334]
+              ]
+            }
+          ],
+          "box": {
+            "x": 355,
+            "y": 192,
+            "width": 389,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-walk-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    },
+    "farmer-back-carry": {
+      "profession": "farmer",
+      "view": "back",
+      "carry": true,
+      "frames": [
+        {
+          "frame": 0,
+          "phase": "right forward",
+          "sourceTrace": {
+            "hips": [100, 304],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [119, 209],
+            "elbowFar": [48, 263],
+            "handFar": [43, 310],
+            "elbowNear": [143, 263],
+            "handNear": [157, 278],
+            "hipFar": [89, 306],
+            "kneeFar": [112, 369],
+            "ankleFar": [133, 399],
+            "toeFar": [144, 414],
+            "hipNear": [108, 306],
+            "kneeNear": [83, 384],
+            "ankleNear": [54, 453],
+            "toeNear": [72, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [508.8, 393.5999999999999],
+            "head": [518.4, 313.5999999999999],
+            "shoulderFar": [416, 470.4],
+            "shoulderNear": [572.8, 476.79999999999995],
+            "elbowFar": [345.6, 649.5999999999999],
+            "handFar": [329.6, 800],
+            "elbowNear": [675, 710],
+            "handNear": [563, 578],
+            "hipFar": [476.8, 787.1999999999999],
+            "kneeFar": [550.4, 988.8],
+            "ankleFar": [617.6, 1084.8],
+            "toeFar": [652.8, 1132.8],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [457.6, 1036.8],
+            "ankleNear": [364.79999999999995, 1257.6],
+            "toeNear": [422.4, 1344]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [
+            {
+              "kind": "wheat",
+              "points": [
+                [160, 270],
+                [350, 244],
+                [566, 504],
+                [462, 590],
+                [232, 428]
+              ]
+            }
+          ],
+          "box": {
+            "x": 160,
+            "y": 192,
+            "width": 547,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-carry-f0.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 1,
+          "phase": "right support / left lifted",
+          "sourceTrace": {
+            "hips": [97, 304],
+            "neck": [97, 183],
+            "head": [100, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [117, 208],
+            "elbowFar": [62, 266],
+            "handFar": [59, 311],
+            "elbowNear": [136, 264],
+            "handNear": [143, 297],
+            "hipFar": [88, 307],
+            "kneeFar": [85, 377],
+            "ankleFar": [64, 430],
+            "toeFar": [69, 446],
+            "hipNear": [105, 306],
+            "kneeNear": [111, 382],
+            "ankleNear": [110, 453],
+            "toeNear": [135, 480]
+          },
+          "joints": {
+            "hips": [512, 780.8],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [425.6, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [400, 659.1999999999999],
+            "handFar": [390.4, 803.1999999999999],
+            "elbowNear": [675, 710],
+            "handNear": [563, 578],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [473.6, 1014.4],
+            "ankleFar": [406.4, 1184],
+            "toeFar": [422.4, 1235.2],
+            "hipNear": [537.6, 787.1999999999999],
+            "kneeNear": [556.8, 1030.4],
+            "ankleNear": [553.6, 1257.6],
+            "toeNear": [633.6, 1344]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [
+            {
+              "kind": "wheat",
+              "points": [
+                [160, 270],
+                [350, 244],
+                [566, 504],
+                [462, 590],
+                [232, 428]
+              ]
+            }
+          ],
+          "box": {
+            "x": 160,
+            "y": 192,
+            "width": 547,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-carry-f1.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 2,
+          "phase": "left forward",
+          "sourceTrace": {
+            "hips": [98, 305],
+            "neck": [98, 183],
+            "head": [101, 158],
+            "shoulderFar": [72, 207],
+            "shoulderNear": [118, 208],
+            "elbowFar": [56, 256],
+            "handFar": [54, 303],
+            "elbowNear": [136, 230],
+            "handNear": [156, 210],
+            "hipFar": [89, 307],
+            "kneeFar": [72, 365],
+            "ankleFar": [59, 399],
+            "toeFar": [80, 417],
+            "hipNear": [107, 306],
+            "kneeNear": [118, 383],
+            "ankleNear": [137, 454],
+            "toeNear": [157, 480]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [428.8, 470.4],
+            "shoulderNear": [576, 473.5999999999999],
+            "elbowFar": [377.6, 627.1999999999999],
+            "handFar": [371.2, 777.6],
+            "elbowNear": [675, 710],
+            "handNear": [563, 578],
+            "hipFar": [483.2, 790.4],
+            "kneeFar": [428.8, 976],
+            "ankleFar": [387.2, 1084.8],
+            "toeFar": [454.4, 1142.4],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [576, 1033.6],
+            "ankleNear": [636.8, 1260.8],
+            "toeNear": [700.8, 1344]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [
+            {
+              "kind": "wheat",
+              "points": [
+                [160, 270],
+                [350, 244],
+                [566, 504],
+                [462, 590],
+                [232, 428]
+              ]
+            }
+          ],
+          "box": {
+            "x": 160,
+            "y": 192,
+            "width": 567,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-carry-f2.png",
+          "bodyAnchor": [512, 1344]
+        },
+        {
+          "frame": 3,
+          "phase": "left support / right lifted",
+          "sourceTrace": {
+            "hips": [99, 305],
+            "neck": [99, 183],
+            "head": [102, 158],
+            "shoulderFar": [70, 207],
+            "shoulderNear": [120, 208],
+            "elbowFar": [61, 263],
+            "handFar": [59, 309],
+            "elbowNear": [141, 266],
+            "handNear": [153, 293],
+            "hipFar": [90, 306],
+            "kneeFar": [80, 385],
+            "ankleFar": [77, 451],
+            "toeFar": [99, 480],
+            "hipNear": [108, 306],
+            "kneeNear": [127, 364],
+            "ankleNear": [151, 421],
+            "toeNear": [150, 442]
+          },
+          "joints": {
+            "hips": [512, 784],
+            "neck": [512, 393.5999999999999],
+            "head": [521.6, 313.5999999999999],
+            "shoulderFar": [419.2, 470.4],
+            "shoulderNear": [579.2, 473.5999999999999],
+            "elbowFar": [390.4, 649.5999999999999],
+            "handFar": [384, 796.8],
+            "elbowNear": [675, 710],
+            "handNear": [563, 578],
+            "hipFar": [483.2, 787.1999999999999],
+            "kneeFar": [451.2, 1040],
+            "ankleFar": [441.6, 1251.2],
+            "toeFar": [512, 1344],
+            "hipNear": [540.8, 787.1999999999999],
+            "kneeNear": [601.6, 972.8],
+            "ankleNear": [678.4, 1155.2],
+            "toeNear": [675.2, 1222.4]
+          },
+          "loadBoxes": [],
+          "loadPolygons": [
+            {
+              "kind": "wheat",
+              "points": [
+                [160, 270],
+                [350, 244],
+                [566, 504],
+                [462, 590],
+                [232, 428]
+              ]
+            }
+          ],
+          "box": {
+            "x": 160,
+            "y": 192,
+            "width": 557,
+            "height": 1152
+          },
+          "guide": "guides/farmer-back-carry-f3.png",
+          "bodyAnchor": [512, 1344]
+        }
+      ]
+    }
+  }
+}
