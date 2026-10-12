@@ -21,15 +21,6 @@ function measure(e) {
     expected = geometry.strips[e.strip].frames[e.frame].box,
     actual = box(png);
   e.returned = [png.width, png.height];
-  if (png.width * 3 !== png.height * 2) {
-    e.measured = {
-      ratioPass: false,
-      box: actual,
-      boxPass: false,
-      reason: 'Returned canvas is not2:3; no comparison against the scaled guide.',
-    };
-    return e.measured;
-  }
   const scaled = Object.fromEntries(Object.entries(expected).map(([k,v])=>[k,v*s]));
   // Manual anatomical bounds exclude a carried load above the hat or outside the body.
   // Full silhouette is the conservative default; annotate anatomy after visual inspection when needed.
@@ -40,11 +31,11 @@ function measure(e) {
   const heightError = Math.abs(figureHeight / (1152*s) - 1);
   const bodyWidthRatio = body.width / scaled.width;
   if(e.measured && !e.measured.contractVersion) e.legacyMeasured = e.measured;
-  e.measured = {contractVersion:'finish-2026-10-12',ratioPass:true,s,box:actual,
+  e.measured = {contractVersion:'finish-2026-10-12',ratioPass:png.width*3===png.height*2,s,box:actual,
     guideBox:scaled, bodyBox:body,hatTop,soleRow,soleOffset:soleRow-1344*s,
     figureHeight,heightError,totalWidth:actual.width,bodyWidthRatio,
     anatomyMethod:e.anatomy?.note ?? 'Full alpha>128 silhouette; no load excluded',
-    boxPass:heightError<=0.05 && bodyWidthRatio<=1.25};
+    boxPass:png.width*3===png.height*2 && heightError<=0.05 && bodyWidthRatio<=1.25};
   return e.measured;
 }
 if (command === 'record') {

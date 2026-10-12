@@ -1,6 +1,7 @@
-import { root, json, read, write, PNG } from './pose-png.mjs';
+import { root, json, read, write, saveJson, PNG } from './pose-png.mjs';
 const id = process.argv[2],
-  e = json('prompts.json')['redo-2026-10-11'].findLast((e) => e.id === id && e.file);
+  prompts = json('prompts.json'),
+  e = prompts['redo-2026-10-11'].findLast((e) => e.id === id && e.file);
 if (!e) throw Error('Recorded painting not found');
 const source = read(e.file),
   look = new PNG({ width: source.width, height: source.height });
@@ -24,6 +25,15 @@ for (let p = 0; p < source.data.length; p += 4) {
   }
 }
 write('checks/' + id + '-look.png', look);
+e.rawStyleCheck = {
+  look: 'checks/' + id + '-look.png',
+  foreground,
+  nearOpaqueFraction: opaque / foreground,
+  whiteCapViolations: white,
+  strongAmberPixels: amber,
+  nonzeroAlphaPixels: nonzero,
+};
+saveJson('prompts.json', prompts);
 console.log(
   JSON.stringify({
     file: 'checks/' + id + '-look.png',

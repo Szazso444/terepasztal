@@ -29,6 +29,8 @@ const report = {
     repeatedFrames: prompts.redoStrips?.[strip]?.visualFindings?.repeatedFrames ?? [],
     findings: prompts.redoStrips?.[strip]?.visualFindings?.note ?? null,
     headBobFraction: prompts.redoStrips?.[strip]?.headBobFraction ?? null,
+    outputPaletteCheck: prompts.redoStrips?.[strip]?.outputPaletteCheck ?? null,
+    rawPaletteExceptionsKept: calls.filter(e => e.strip === strip && e.accepted && e.keptStyleViolations).map(e => ({frame:e.frame,...e.keptStyleViolations})),
     measurementsKeptAfterThree: calls.filter(e => e.strip === strip && e.accepted && e.keptDespiteFailedMeasurements).map(e => e.frame),
   })),
 };

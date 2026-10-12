@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-12T23:02:28.914Z",
+  "updatedAt": "2026-10-12T23:18:13.533Z",
   "branch": "art/331-people",
   "brief": "finish-brief-2026-10-12.txt",
   "strips": [
@@ -15,6 +15,15 @@
       "repeatedFrames": [],
       "findings": "Offline 9px-6x and 36px sheets inspected: contact legs cross in opposite directions, the passing silhouettes lift opposite boots; identity and cap/shirt/boots stay consistent. 9px reads the silhouette; leg separation is clearer at 36px. Core-approved attempts 2,3,3,3.",
       "headBobFraction": 0.024305555555555556,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 298147,
+        "opaquePixels": 87587,
+        "antialiasedPixels": 7482,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 0
+      },
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     },
     {
@@ -31,6 +40,15 @@
       ],
       "findings": "Offline9px-6x and36px sheets inspected. Two buckets read clearly, feet alternate in passing f1/f3, but f2 keeps f0 thigh overlap after three corrections: use Core0,1,0,1 fallback. Accepted2,2,3,3. Grounded hat heights differ by14.06px (3.91% nominal body), beyond2% target, retained best after three. All frames retain warm brown skin/grey hair/slate shirt/teal water; columns320 prevent load clipping.",
       "headBobFraction": 0.0390625,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 480851,
+        "opaquePixels": 161470,
+        "antialiasedPixels": 13039,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 0
+      },
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     },
     {
@@ -45,6 +63,15 @@
       "repeatedFrames": [],
       "findings": "Offline9px-6x and36px inspected: f0/f2 opposite thigh-crossing X, f1 left boot lifted and f3 right boot lifted, both show soles. Identity/yoke/teal water consistent. Accepted2,3,1,3. f2 kept after three with6.68% height excess (other two7.73/7.55%); grounded cap range12.5px=3.47% nominal body, exceeds2% bob target. Best retained under author instruction, no repeated frame.",
       "headBobFraction": 0.034722222222222224,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 486324,
+        "opaquePixels": 155873,
+        "antialiasedPixels": 13163,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 0
+      },
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": [
         2
       ]
@@ -52,16 +79,45 @@
     {
       "strip": "lumberjack-back-walk",
       "acceptedAttempts": [
-        null,
-        null,
-        null,
-        null
+        3,
+        3,
+        2,
+        3
       ],
-      "cycleReview": "not assembled",
+      "cycleReview": "passed",
       "repeatedFrames": [],
-      "findings": null,
-      "headBobFraction": null,
-      "measurementsKeptAfterThree": []
+      "findings": "Offline9px-6x and36px sheets inspected: opposite contact legs form X overlay, f1 lifts left sole and f3 lifts right sole; no repeated phase. Accepted3,3,2,3. f3 smallest height excess5.73% kept after three (earlier9.72/8.51%); grounded hat range8.75px=2.43%. Final RGBA strip has0 cursor-white and45 strong amber pixels; raw palette exceptions per call retained after three. Axe stays same shoulder, identity consistent,256px columns prevent clipping.",
+      "headBobFraction": 0.024305555555555556,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 392584,
+        "opaquePixels": 123719,
+        "antialiasedPixels": 7985,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 45
+      },
+      "rawPaletteExceptionsKept": [
+        {
+          "frame": 0,
+          "strongAmberPixels": 2,
+          "reason": "Best of three: far fewer than84 in attempt2 and no cursor-white pixels, retained under keep-best instruction."
+        },
+        {
+          "frame": 1,
+          "whiteCapViolations": 1,
+          "strongAmberPixels": 1,
+          "reason": "Best of three: correct passing legs and passing height, tiny raw palette exceptions documented."
+        },
+        {
+          "frame": 3,
+          "whiteCapViolations": 1,
+          "strongAmberPixels": 535,
+          "reason": "Best of three by leg pose and body size: source-height/bob consistency prioritized over tiny warm-highlight pixels; explicitly retained without claiming cap compliance."
+        }
+      ],
+      "measurementsKeptAfterThree": [
+        3
+      ]
     },
     {
       "strip": "lumberjack-back-carry",
@@ -75,6 +131,8 @@
       "repeatedFrames": [],
       "findings": null,
       "headBobFraction": null,
+      "outputPaletteCheck": null,
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     },
     {
@@ -89,6 +147,8 @@
       "repeatedFrames": [],
       "findings": null,
       "headBobFraction": null,
+      "outputPaletteCheck": null,
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     },
     {
@@ -103,6 +163,8 @@
       "repeatedFrames": [],
       "findings": null,
       "headBobFraction": null,
+      "outputPaletteCheck": null,
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     },
     {
@@ -117,6 +179,8 @@
       "repeatedFrames": [],
       "findings": null,
       "headBobFraction": null,
+      "outputPaletteCheck": null,
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     },
     {
@@ -131,6 +195,8 @@
       "repeatedFrames": [],
       "findings": null,
       "headBobFraction": null,
+      "outputPaletteCheck": null,
+      "rawPaletteExceptionsKept": [],
       "measurementsKeptAfterThree": []
     }
   ]
