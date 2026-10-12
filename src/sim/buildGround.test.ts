@@ -10,6 +10,7 @@ import { Stockpile } from './stockpile';
 import { STATION_DEFS, stationFootprint, stationGates } from './stations';
 import { depotSiteBlocked } from './startDepot';
 import { DEFAULT_RULES, rules } from './rules';
+import { STAND_ON } from '../data/content';
 import { STR } from '../strings';
 
 // the build rules play a sound when a piece goes down
@@ -81,6 +82,14 @@ describe('unbuildable', () => {
   it('refuses exactly the terrains every kind refused before', () => {
     for (const t of ALL)
       expect(unbuildable(t) !== null, name(t)).toBe(REFUSED_BEFORE.station.includes(t));
+  });
+
+  it('leaves open exactly the ground a station may be held to', () => {
+    // `standOn` takes its terrains from STAND_ON, which is meant to be the ground something can be
+    // built on: a terrain in it that the helper refuses would make a station held to it unplaceable,
+    // and a terrain the helper opens that it lacks could never be listed
+    const open = ALL.filter((t) => unbuildable(t) === null).map(name);
+    expect([...STAND_ON].sort()).toEqual(open.sort());
   });
 });
 
