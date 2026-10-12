@@ -18,10 +18,11 @@ import {
   slotRefusal,
   storedRefusal,
   withGround,
+  writeSave,
   type SaveGame,
   type SaveParts,
 } from './save';
-import { expandSave } from './expand';
+import { expandSave, ownsBorderChunk, ringsWithinBound } from './expand';
 import {
   MAX_WORLD_CHUNKS,
   WorldTooLarge,
@@ -1054,16 +1055,13 @@ describe('the bound on the map of a generated world', () => {
   });
 
   it('holds a world of exactly the bound and refuses one ring above it', () => {
-    // 30 x 30 chunks, grown by the game's own growth: 32 x 32 is the bound, 34 x 34 is above it
-    const save = buildSave(partsOf(framed(30 * CHUNK_TILES, 30 * CHUNK_TILES)));
-    const frame = () => (save.world as GeneratedWorld).params;
-    expect(worldWithinBound(save.world)).toBe(true);
-    expandSave(save);
-    expect(mapChunks(frame())).toHaveLength(MAX_WORLD_CHUNKS);
-    expect(worldWithinBound(save.world)).toBe(true);
-    expandSave(save);
-    expect(mapChunks(frame()).length).toBeGreaterThan(MAX_WORLD_CHUNKS);
-    expect(worldWithinBound(save.world)).toBe(false);
+    // 32 x 32 chunks is the bound, 34 x 34 is one ring above it
+    const square = (chunks: number) =>
+      framed(chunks * CHUNK_TILES, chunks * CHUNK_TILES, -CHUNK_TILES, -CHUNK_TILES);
+    expect(mapChunks(square(32).params)).toHaveLength(MAX_WORLD_CHUNKS);
+    expect(worldWithinBound(square(32))).toBe(true);
+    expect(mapChunks(square(34).params).length).toBeGreaterThan(MAX_WORLD_CHUNKS);
+    expect(worldWithinBound(square(34))).toBe(false);
     // not only squares: a line of 1024 chunks, and one more chunk
     expect(worldWithinBound(framed(1024 * CHUNK_TILES, CHUNK_TILES))).toBe(true);
     expect(worldWithinBound(framed(1025 * CHUNK_TILES, CHUNK_TILES))).toBe(false);
@@ -1107,6 +1105,182 @@ describe('the bound on the map of a generated world', () => {
     const level = { kind: 'level', seed: 1, level: { w: 1e6, h: 1e6 } };
     for (const world of [level, undefined, null, 'world', 4, []])
       expect(worldWithinBound(world), JSON.stringify(world)).toBe(true);
+  });
+});
+
+describe('growth stops at the bound', () => {
+  /** A game on a generated world of `cw` x `ch` chunks, its origin on the chunk grid, all owned. */
+  function gameOf(cw: number, ch = cw, grown = 0): SaveGame {
+    const world = worldOf(1, {
+      w: cw * CHUNK_TILES,
+      h: ch * CHUNK_TILES,
+      originX: -grown * CHUNK_TILES,
+      originY: -grown * CHUNK_TILES,
+    });
+    const save = buildSave(partsOf(world));
+    save.regions = new Array<boolean>(cw * ch).fill(true);
+    return save;
+  }
+  const frameOf = (save: SaveGame) => (save.world as GeneratedWorld).params;
+  /** The chunks a side of the world, as the save's own frame covers them. */
+  const sides = (save: SaveGame) => [frameOf(save).w / CHUNK_TILES, frameOf(save).h / CHUNK_TILES];
+  /** The rings a game can be given, counted the plain way. */
+  const ringsFor = (cw: number, ch: number) => {
+    let r = 0;
+    while ((cw + 2 * (r + 1)) * (ch + 2 * (r + 1)) <= MAX_WORLD_CHUNKS) r++;
+    return r;
+  };
+
+  it('grows a world one ring below the bound up to it, and a world at it not at all', () => {
+    const save = gameOf(30);
+    const { w, h } = frameOf(save);
+    // every chunk is owned, those at the edge too: the next purchase would need a ring
+    expect(ownsBorderChunk(save.regions!, w, h)).toBe(true);
+    // a chunk inside the edge was never a reason to grow
+    expect(
+      ownsBorderChunk(
+        save.regions!.map((_, i) => i === 15 * 30 + 15),
+        w,
+        h,
+      ),
+    ).toBe(false);
+    expect(ringsWithinBound(frameOf(save))).toBe(1);
+    expandSave(save);
+    expect(sides(save)).toEqual([32, 32]);
+    expect(mapChunks(frameOf(save))).toHaveLength(MAX_WORLD_CHUNKS);
+    expect(worldWithinBound(save.world)).toBe(true);
+
+    // the edge chunks of this world are bought, and the map has no ring left to grow by
+    save.regions = new Array<boolean>(MAX_WORLD_CHUNKS).fill(true);
+    expect(ownsBorderChunk(save.regions, 32 * CHUNK_TILES, 32 * CHUNK_TILES)).toBe(false);
+    expect(ringsWithinBound(frameOf(save))).toBe(0);
+    const before = structuredClone(save);
+    expect(expandSave(save)).toBe(save);
+    expect(expandSave(save, 3)).toBe(save);
+    expect(save).toEqual(before);
+  });
+
+  it('adds the rings that fit and no ring that does not, whatever the world and the ask', () => {
+    forAll(
+      (rng) => ({
+        cw: rng.int(1, 45),
+        ch: rng.int(1, 45),
+        grown: rng.int(0, 5),
+        ring: rng.int(1, 4),
+      }),
+      (c) => {
+        const save = gameOf(c.cw, c.ch, c.grown);
+        const was = structuredClone(save);
+        const wasChunks = c.cw * c.ch;
+        expandSave(save, c.ring);
+        const [cw, ch] = sides(save);
+        const added = (cw - c.cw) / 2;
+        expect(Number.isInteger(added), 'whole rings').toBe(true);
+        expect(ch - c.ch, 'the same on both axes').toBe(cw - c.cw);
+        // as many rings as were asked for, or as many as fit: one more would be past the bound
+        expect(added).toBe(Math.min(c.ring, ringsFor(c.cw, c.ch)));
+        if (wasChunks <= MAX_WORLD_CHUNKS) expect(cw * ch).toBeLessThanOrEqual(MAX_WORLD_CHUNKS);
+        if (added < c.ring) expect((cw + 2) * (ch + 2)).toBeGreaterThan(MAX_WORLD_CHUNKS);
+        // no ring, no change at all
+        if (added === 0) expect(save).toEqual(was);
+        // the answer the shop asks is the one growth gives
+        const here = frameOf(was);
+        expect(ownsBorderChunk(was.regions!, here.w, here.h)).toBe(ringsFor(c.cw, c.ch) > 0);
+      },
+      {
+        seeds: Array.from({ length: 60 }, (_, i) => i + 1),
+        shrink: function* (c) {
+          for (const cw of shrinkInt(c.cw, 1)) yield { ...c, cw };
+          for (const ch of shrinkInt(c.ch, 1)) yield { ...c, ch };
+        },
+      },
+    );
+  });
+
+  it('takes a world from any start up to the largest the bound allows, a purchase at a time', () => {
+    // 15 x 15 is the largest start tuning allows; 14 x 62 is not square; an odd side ends below
+    for (const [cw, ch] of [
+      [1, 1],
+      [2, 2],
+      [10, 10],
+      [15, 15],
+      [14, 62],
+      [3, 40],
+    ]) {
+      const at = `${cw} x ${ch}`;
+      const save = gameOf(cw, ch);
+      let rings = 0;
+      // as main.ts grows a save and a purchase does: a ring when an edge chunk is owned; the player
+      // then buys the ring's chunks, which are the new edge
+      while (ownsBorderChunk(save.regions!, frameOf(save).w, frameOf(save).h)) {
+        expandSave(save);
+        const [nw, nh] = sides(save);
+        save.regions = new Array<boolean>(nw * nh).fill(true);
+        expect(++rings, at).toBeLessThan(40);
+        // every world on the way is one a load builds
+        expect(worldWithinBound(save.world), `${at}, ring ${rings}`).toBe(true);
+      }
+      expect(rings, at).toBe(ringsFor(cw, ch));
+      expect(sides(save), at).toEqual([cw + 2 * rings, ch + 2 * rings]);
+      expect(readSaveText(JSON.stringify(save)), at).toHaveProperty('save');
+    }
+    // the largest worlds the game reaches from its own starts: 32 x 32 from an even side, 31 x 31
+    // from an odd one
+    expect(ringsFor(10, 10)).toBe(11);
+    expect(ringsFor(15, 15)).toBe(8);
+    expect(ringsFor(15, 15) * 2 + 15).toBe(31);
+  });
+
+  it('grows by the rings that fit when asked for more, the coordinates moving with them', () => {
+    const save = gameOf(28);
+    const [x, y] = save.track[0];
+    expandSave(save, 3);
+    // 28 x 28 to 32 x 32 is two rings; the third would be 34 x 34
+    expect(sides(save)).toEqual([32, 32]);
+    expect(frameOf(save)).toMatchObject({ originX: -2 * CHUNK_TILES, originY: -2 * CHUNK_TILES });
+    expect(save.track[0].slice(0, 2)).toEqual([x + 2 * CHUNK_TILES, y + 2 * CHUNK_TILES]);
+    expect(save.regions).toHaveLength(MAX_WORLD_CHUNKS);
+    expect(save.regions!.filter(Boolean)).toHaveLength(28 * 28);
+  });
+
+  describe('in storage', () => {
+    let store: MemoryStorage;
+    beforeEach(() => {
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('loads, in the start-up pass and as Continue, a save made by growth to the bound', () => {
+      const save = gameOf(30);
+      expandSave(save);
+      expect(sides(save)).toEqual([32, 32]);
+      expect(writeSave(save)).toBe(true);
+      // the start-up pass gives it ground, not the refusal of a world too large
+      const calls: Partial<MapGenParams>[] = [];
+      const gen: MapGenerator = (s, p) => {
+        calls.push(p);
+        return emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+      };
+      expect(freezeStoredSaves(() => gen)).toEqual({
+        ran: true,
+        frozen: 1,
+        refused: 0,
+        tooLarge: 0,
+      });
+      expect(calls).toEqual([frameOf(save)]);
+      expect(storedRefusal()).toBeNull();
+      const loaded = readSave()!;
+      expect(loaded).not.toBeNull();
+      expect(sides(loaded)).toEqual([32, 32]);
+      // every chunk of the map is stored: the load generates nothing, and builds the whole map
+      const world = loaded.world as GeneratedWorld;
+      expect(lacksGround(world)).toBe(false);
+      const built = groundOf(world, never);
+      expect(built.added).toEqual([]);
+      expect([built.map.w, built.map.h]).toEqual([1024, 1024]);
+      expect(Object.keys(world.chunks!)).toHaveLength(MAX_WORLD_CHUNKS);
+    }, 20_000);
   });
 });
 

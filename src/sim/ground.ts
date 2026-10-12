@@ -23,14 +23,15 @@ import type { SupplyMode } from './supply';
 export type GeneratedWorld = Extract<WorldSpec, { kind: 'generated' }>;
 
 /**
- * The most chunks the map of a generated world may cover: 1024, a square of 32 x 32 chunks. A
- * safety bound, not a rule of play. The code that sells growth has no upper limit (`ownsBorderChunk`
- * asks `expandSave` for another ring whenever an owned chunk touches the map's edge), so there is
- * no largest world to read off it. A new game starts with at most 15 x 15 chunks (the top of
- * `rules.mapSize`, 480 tiles), and the bound is well above that: it only keeps a save whose
- * description names an absurd map (a hand edit, an import) from being generated in full, which
- * hangs the game before its menu. It does not stop growth: a world grown past it is refused by
- * the load that follows.
+ * The most chunks the map of a generated world may cover: 1024, a square of 32 x 32 chunks. The
+ * code that sells growth has no upper limit of its own (`ownsBorderChunk` asks `expandSave` for
+ * another ring whenever an owned chunk touches the map's edge), so growth stops here: a ring that
+ * would take the map past it is not added (`ringsWithinBound`), and the purchase stands without
+ * it. So this is the largest world the game reaches, and no world a player makes is refused. A
+ * new game starts with at most 15 x 15 chunks (the top of `rules.mapSize`, 480 tiles), well below
+ * it. It also keeps a save whose description names an absurd map (a hand edit, an import) from
+ * being generated in full, which hangs the game before its menu. One constant, so it can be
+ * raised; a save made at a higher bound is refused by a build with a lower one.
  */
 export const MAX_WORLD_CHUNKS = 1024;
 /** No map reaches further than this many tiles from the origin of tile coordinates. */
