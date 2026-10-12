@@ -575,6 +575,185 @@ describe('text typed into a content form', () => {
   );
 });
 
+/** A number as a player may type it; a third of them overflow a double, unless the digit is 0. */
+const numLiteral = (rng: Rng) =>
+  rng.chance(1 / 3)
+    ? `${rng.int(-9, 9)}e${rng.pick(['', '+'])}${rng.int(309, 999)}`
+    : rng.chance(0.5)
+      ? String(num(rng))
+      : `${rng.int(-9, 9)}e${rng.int(-400, 300)}`;
+
+/** JSON text with its numbers written as typed: overflowing ones at the top or nested deep. */
+function jsonText(rng: Rng, depth = 0): string {
+  const items = () => Array.from({ length: rng.int(1, 3) }, () => jsonText(rng, depth + 1));
+  // a list or object most often at the top, a number most often inside one
+  if (depth < 2 && rng.chance(depth ? 0.25 : 0.6))
+    return rng.chance(0.5)
+      ? `[${items().join(', ')}]`
+      : `{${items()
+          .map((v, i) => `"${'abc'[i]}": ${v}`)
+          .join(', ')}}`;
+  switch (rng.int(0, 3)) {
+    case 0:
+      return rng.pick(['true', 'false', 'null']);
+    case 1:
+      return JSON.stringify(word(rng, 3));
+    default:
+      return numLiteral(rng);
+  }
+}
+
+/** A comma list as typed: numbers in any notation, words, and parts left empty. */
+const listText = (rng: Rng) =>
+  Array.from({ length: rng.int(1, 4) }, () => {
+    const part = rng.pick([numLiteral, numLiteral, (r: Rng) => word(r, 3), () => ''])(rng);
+    return ' '.repeat(rng.int(0, 1)) + part + ' '.repeat(rng.int(0, 1));
+  }).join(',');
+
+/** What a flag's choice gives, and text near it. */
+const flagText = (rng: Rng) => rng.pick(['true', 'false', '', ' true', 'false ', 'True', '1', '0']);
+
+/** Deep equality with `===` at the leaves: NaN is never equal, and -0 is 0. */
+function same(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a))
+    return Array.isArray(b) && a.length === b.length && a.every((x, i) => same(x, b[i]));
+  if (a === null || typeof a !== 'object') return a === b;
+  if (b === null || typeof b !== 'object' || Array.isArray(b)) return false;
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  return (
+    ka.length === kb.length && ka.every((k) => kb.includes(k) && same((a as Row)[k], (b as Row)[k]))
+  );
+}
+
+/** Whether the content store, writing `v` as JSON and reading it back, gets `v` again. */
+const storeKeeps = (v: unknown) => same(v, JSON.parse(JSON.stringify(v)) as unknown);
+
+type Outcome =
+  | { is: 'refused' }
+  | { is: 'removed' }
+  | { is: 'stored'; value: unknown }
+  // blank text in a required number input: whether it may store 0 is the author's to say
+  | { is: 'open' };
+
+/**
+ * What an input of `kind` makes of typed text, the long way round: the value the text spells, kept
+ * when the store gives it back as it is and refused otherwise; blank text removes an optional key.
+ */
+function outcome(f: FormField, kind: FieldKind, text: string): Outcome {
+  const blank = text.trim() === '';
+  if (blank && f.unset !== undefined) return { is: 'removed' };
+  const keep = (value: unknown): Outcome =>
+    storeKeeps(value) ? { is: 'stored', value } : { is: 'refused' };
+  const parts = () =>
+    text
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s !== '');
+  switch (kind) {
+    case 'bool':
+      return text === 'true' || text === 'false' ? keep(text === 'true') : { is: 'refused' };
+    case 'number':
+      return blank ? { is: 'open' } : keep(Number(text));
+    case 'text':
+      return keep(text);
+    case 'list':
+      return keep(parts());
+    case 'numList':
+      return keep(parts().map(Number));
+    case 'json': {
+      let value: unknown;
+      try {
+        value = JSON.parse(text);
+      } catch {
+        return { is: 'refused' };
+      }
+      return keep(value);
+    }
+  }
+}
+
+/** A list of numbers, or a JSON array or object, holding a number the store cannot keep. */
+function cannotKeepInside(kind: FieldKind, text: string): boolean {
+  if (kind === 'numList') return text.split(',').some((s) => s.trim() && !storeKeeps(Number(s)));
+  if (kind !== 'json') return false;
+  try {
+    const v: unknown = JSON.parse(text);
+    return v !== null && typeof v === 'object' && !storeKeeps(v);
+  } catch {
+    return false;
+  }
+}
+
+describe('text typed into a content form, against what the content store keeps', () => {
+  const kinds = [...new Set(INPUTS.map((i) => i.kind))];
+
+  it.each(kinds)(
+    'a %s input stores the value the text spells, and refuses only what the store cannot keep',
+    (kind) => {
+      const inputs = INPUTS.filter((i) => i.kind === kind);
+      const rowOf = (c: TypedCase) => {
+        const rows = shippedRows(inputs[c.input].spec);
+        return rows[c.at % rows.length];
+      };
+      // how often each outcome came up, and how often a refusal was for a number the store
+      // cannot keep inside a list or JSON value rather than at its top
+      const seen = { refused: 0, removed: 0, stored: 0, open: 0, inside: 0 };
+      forAll(
+        (rng): TypedCase => ({
+          input: rng.int(0, inputs.length - 1),
+          at: rng.int(0, 999),
+          text: rng.pick([typed, jsonText, jsonText, listText, flagText])(rng),
+        }),
+        (c) => {
+          const { f } = inputs[c.input];
+          const row = clone(rowOf(c));
+          const before = clone(row);
+          const stored = readField(row, f, kind, c.text);
+          const want = outcome(f, kind, c.text);
+          seen[want.is]++;
+          if (want.is === 'refused' && cannotKeepInside(kind, c.text)) seen.inside++;
+          expect(without(row, f.key), 'another key changed').toStrictEqual(without(before, f.key));
+          switch (want.is) {
+            case 'refused':
+              expect(stored, `accepted, storing ${spell(row[f.key])}`).toBe(false);
+              expect(row, 'refused, yet changed').toStrictEqual(before);
+              break;
+            case 'removed':
+              expect(stored, 'blank, yet refused').toBe(true);
+              expect(f.key in row, 'blank, yet kept').toBe(false);
+              break;
+            case 'stored':
+              expect(stored, `refused ${spell(want.value)}, which the store keeps`).toBe(true);
+              expect(row[f.key]).toStrictEqual(want.value);
+              break;
+          }
+        },
+        {
+          *shrink(c) {
+            for (const cs of shrinkArray([...c.text])) yield { ...c, text: cs.join('') };
+            for (const at of shrinkInt(c.at)) yield { ...c, at };
+            for (const input of shrinkInt(c.input)) yield { ...c, input };
+          },
+          format: (c) =>
+            JSON.stringify({
+              form: inputs[c.input].name,
+              field: inputs[c.input].f.key,
+              entry: rowOf(c).id ?? 0,
+              text: c.text,
+            }),
+        },
+      );
+      // the cases reach both sides of the line, and the numbers the fix is about
+      expect(seen.stored, 'cases stored').toBeGreaterThanOrEqual(5);
+      if (kind !== 'text' && kind !== 'list')
+        expect(seen.refused, 'cases refused').toBeGreaterThanOrEqual(5);
+      if (kind === 'json' || kind === 'numList')
+        expect(seen.inside, 'cases refused for a number inside').toBeGreaterThanOrEqual(5);
+    },
+  );
+});
+
 describe("a locomotive's length typed into its form", () => {
   interface LengthCase {
     at: number;
