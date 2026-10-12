@@ -8,6 +8,7 @@ import {
   isUnitKind,
   portClass,
   classesJoin,
+  rotationCount,
   type TrackItem,
   type TrackKind,
   type TrackPiece,
@@ -73,6 +74,32 @@ export interface PlacementCheck {
   ok: boolean;
   cost: Cost;
   reason?: string;
+}
+
+/**
+ * One piece of a line, in the order the line lays it: a track piece by its anchor tile, item and
+ * rotation, as `checkTrack` and `placeTrack` take them, or a bridge platform (`defId` names a
+ * building with `bridge`; a platform stands at rotation 0). Each piece is judged as if the pieces
+ * before it stood already, so a bridge lists each tile's platform before the rail on it.
+ */
+export type LinePiece =
+  | { kind: 'track'; x: number; y: number; item: TrackItem; rot: number }
+  | { kind: 'platform'; x: number; y: number; defId: string };
+
+/** A piece's verdict within a line: its own price or refusal; `skip` when it stands already. */
+export interface LineStep extends PlacementCheck {
+  skip?: boolean;
+}
+
+/**
+ * A line's verdict. `cost` is the total of every piece that would be laid; `reason` is the first
+ * refusal: the first refused piece's own, or else the stock falling short of the total.
+ */
+export interface LineCheck extends PlacementCheck {
+  /** index of the first refused piece; absent when no piece is refused */
+  at?: number;
+  /** each piece's verdict, in the line's order */
+  steps: LineStep[];
 }
 
 /**
@@ -381,7 +408,13 @@ export class Builder {
     });
   }
   // ------------------------------------------------------------------ track
-  private checkTrackTile(x: number, y: number, kind: TrackKind, anchor: boolean): string | null {
+  private checkTrackTile(
+    x: number,
+    y: number,
+    kind: TrackKind,
+    anchor: boolean,
+    replace: boolean,
+  ): string | null {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     const t = terrainAt(this.map, x, y);
@@ -397,8 +430,8 @@ export class Builder {
     if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
     // a wide piece needs its whole footprint free of track; a one-tile piece may replace another
-    // one-tile piece but never a member of a wide one
-    if (existing && (!anchor || existing.unit)) return STR.build.trackInWay;
+    // one-tile piece (outside a line) but never a member of a wide one
+    if (existing && (!anchor || existing.unit || !replace)) return STR.build.trackInWay;
     return null;
   }
   /**
@@ -406,13 +439,27 @@ export class Builder {
    * open edge meeting existing track joins a compatible class (a transition piece joins any).
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
+    const c = this.trackRules(x, y, item, rot, true);
+    return c.ok ? this.affordable(c.cost) : c;
+  }
+  /**
+   * `checkTrack`'s rules and price, without asking whether the stock can pay. `replace` lets a
+   * one-tile piece go over another one-tile piece; without it any track in the way refuses.
+   */
+  private trackRules(
+    x: number,
+    y: number,
+    item: TrackItem,
+    rot: number,
+    replace: boolean,
+  ): PlacementCheck {
     const kind = item.kind;
     if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
       return { ok: false, cost: {}, reason: STR.build.narrowLocked };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
     for (const t of tiles) {
-      const why = this.checkTrackTile(t.x, t.y, kind, !wide);
+      const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace);
       if (why) return { ok: false, cost: {}, reason: why };
     }
     // class compatibility with the neighbours the new piece would open onto
@@ -454,7 +501,7 @@ export class Builder {
     }
     let mul = 0;
     for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
-    return this.affordable(this.priced(pieceCost(kind, item.cls, item.cls2), mul));
+    return { ok: true, cost: this.priced(pieceCost(kind, item.cls, item.cls2), mul) };
   }
   refundFor(p: TrackPiece): Cost {
     return this.free
@@ -475,6 +522,12 @@ export class Builder {
       return false;
     if (!this.pay(c.cost)) return false;
     if (existing) this.refund(pieceCost(existing.kind, existing.cls, existing.cls2));
+    this.layTrack(x, y, item, rot);
+    sfx('build.place');
+    return true;
+  }
+  /** Lay a piece its check let through, with everything that follows from it: no price, no sound. */
+  private layTrack(x: number, y: number, item: TrackItem, rot: number) {
     const tiles = this.track.place(x, y, item.kind, rot, item.cls, item.cls2);
     for (const t of tiles) {
       this.refreshBridgeCapacity(t.x, t.y);
@@ -483,9 +536,26 @@ export class Builder {
     // a switch beside a parallel track bends its branch into an S (and back)
     for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
     for (const t of tiles) this.checkOrphans(t.x, t.y);
-    sfx('build.place');
-    return true;
   }
+  /**
+   * The piece with its anchor at (x,y) stands already: the same kind, class and turn (a switch's
+   * form aside, which the track around it chooses). A line skips it.
+   */
+  private standing(x: number, y: number, item: TrackItem, rot: number) {
+    const [t] = footprintOf(x, y, item.kind, rot, item.cls);
+    const p = this.track.get(t.x, t.y);
+    if (!p) return false;
+    const n = rotationCount(item.kind);
+    const anchor = isUnitKind(item.kind, item.cls) ? p.unit?.ax === x && p.unit.ay === y : !p.unit;
+    return (
+      anchor &&
+      p.kind === item.kind &&
+      p.cls === item.cls &&
+      (item.kind !== 'crossing' || (p.cls2 ?? p.cls) === (item.cls2 ?? item.cls)) &&
+      (((p.rot - rot) % n) + n) % n === 0
+    );
+  }
+
   /**
    * What converting the pieces on `tiles` to `target` would change and cost. An upgrade to high
    * speed charges, piece by piece, what the new piece costs above the old one; a downgrade is free
@@ -572,6 +642,76 @@ export class Builder {
       if (!s.gateTiles().some((g) => g.x === x && g.y === y)) continue;
       this.onStationOrphaned?.(s, this.platformTiles(s).length === 0);
     }
+  }
+
+  // ------------------------------------------------------------------ lines
+  /**
+   * Price and judge a line (a dragged run of track, a bridge with its rail) as a whole. Each piece
+   * is judged as if the pieces before it stood already. A track piece that stands already is
+   * skipped at no cost; any other track in the way refuses the line, which never replaces or
+   * removes anything. A platform that stands already is skipped too; any other follows the rule
+   * `checkBuilding` gives it. The line is refused for its first refused piece, or for a total the
+   * stock cannot pay.
+   */
+  checkLine(pieces: readonly LinePiece[]): LineCheck {
+    const probe = this.probe();
+    const steps: LineStep[] = [];
+    const cost: Cost = {};
+    let at: number | undefined;
+    for (const p of pieces) {
+      const step = probe.judge(p);
+      steps.push(step);
+      if (!step.ok) at ??= steps.length - 1;
+      if (!step.ok || step.skip) continue;
+      for (const [k, v] of Object.entries(step.cost)) cost[k] = (cost[k] ?? 0) + v;
+      probe.lay(p);
+    }
+    if (at !== undefined) return { ok: false, cost, reason: steps[at].reason, at, steps };
+    return { ...this.affordable(cost), steps };
+  }
+  /** Lay every piece of a line and pay its total, or, when `checkLine` refuses it, nothing. */
+  placeLine(pieces: readonly LinePiece[]): boolean {
+    const c = this.checkLine(pieces);
+    if (!c.ok || !this.pay(c.cost)) return false;
+    let laid = false;
+    pieces.forEach((p, i) => {
+      if (c.steps[i].skip) return;
+      this.lay(p);
+      laid = true;
+    });
+    if (laid) sfx('build.place');
+    return true;
+  }
+  /** One piece of a line against this builder's world as it stands, without the stock. */
+  private judge(p: LinePiece): LineStep {
+    if (p.kind === 'track') {
+      if (this.standing(p.x, p.y, p.item, p.rot)) return { ok: true, cost: {}, skip: true };
+      return this.trackRules(p.x, p.y, p.item, p.rot, false);
+    }
+    if (!buildingDef(p.defId).bridge) throw new Error(`not a bridge platform: ${p.defId}`);
+    if (inBounds(this.map, p.x, p.y) && this.buildingAt(p.x, p.y)?.id === p.defId)
+      return { ok: true, cost: {}, skip: true };
+    return this.buildingRules(p.x, p.y, p.defId);
+  }
+  private lay(p: LinePiece) {
+    if (p.kind === 'track') this.layTrack(p.x, p.y, p.item, p.rot);
+    else this.layBuilding(p.x, p.y, p.defId, 0);
+  }
+  /**
+   * A builder to judge a line on: the same map, regions, economy, stock and rules, with copies of
+   * the track, stations, decor and buildings and no callbacks. Laying on it changes none of this
+   * builder's state, and it lays exactly as this builder would.
+   */
+  private probe(): Builder {
+    const track = new TrackGraph(this.track.w, this.track.h);
+    for (const [k, p] of this.track.pieces) track.pieces.set(k, p);
+    const b = new Builder(this.map, this.regions, track, this.economy, this.stock);
+    b.free = this.free;
+    b.groundCheck = this.groundCheck;
+    b.stations.push(...this.stations);
+    for (const [k, d] of this.decor) b.decor.set(k, d);
+    for (const [k, w] of this.buildings) b.buildings.set(k, w);
+    return b;
   }
 
   // ------------------------------------------------------------------ stations
@@ -806,6 +946,11 @@ export class Builder {
    * its rotation, so the rotation changes nothing here; it is taken as `checkStation` takes it.
    */
   checkBuilding(x: number, y: number, defId: string, _rot = 0): PlacementCheck {
+    const c = this.buildingRules(x, y, defId);
+    return c.ok ? this.affordable(c.cost) : c;
+  }
+  /** `checkBuilding`'s rules and price, without asking whether the stock can pay. */
+  private buildingRules(x: number, y: number, defId: string): PlacementCheck {
     const def = buildingDef(defId);
     if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
     if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
@@ -830,7 +975,7 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.needTerrain(def.terrain) };
     if (def.deposit && !this.hasDeposit(x, y, def.deposit))
       return { ok: false, cost: {}, reason: STR.build.needDeposit(def.deposit) };
-    return this.affordable(this.priced(def.cost, def.bridge ? 1 : this.kindMul(defId)));
+    return { ok: true, cost: this.priced(def.cost, def.bridge ? 1 : this.kindMul(defId)) };
   }
   /** A deposit prop (coal seam, oil seep) lies on the tile. */
   hasDeposit(x: number, y: number, kind: string) {
@@ -873,11 +1018,16 @@ export class Builder {
     const turn = wrapRotation(rot);
     const c = this.checkBuilding(x, y, defId, turn);
     if (!c.ok || !this.pay(c.cost)) return null;
-    const b: Building = { id: defId, x, y, acc: 0, rot: turn, active: false, rate: 0 };
+    const b = this.layBuilding(x, y, defId, turn);
+    sfx('build.place');
+    return b;
+  }
+  /** Raise a works or a platform its check let through: no price, no sound. */
+  private layBuilding(x: number, y: number, defId: string, rot: number): Building {
+    const b: Building = { id: defId, x, y, acc: 0, rot, active: false, rate: 0 };
     this.buildings.set(this.key(x, y), b);
     this.onBuildingChanged?.(b, false);
     this.onIndustryPlaced?.(x, y);
-    sfx('build.place');
     return b;
   }
   buildingRefund(b: Building): Cost {
