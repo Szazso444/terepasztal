@@ -360,19 +360,22 @@ export const STR = {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
       bridgePlatform: 'On water. Lay track on the platform after building it.',
-      station: 'On a buildable tile with track touching one side; that track becomes the platform.',
+      station:
+        'On grass, forest, sand or a level hill tile with track touching one side; that track becomes the platform.',
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
-      town: 'On a buildable tile with track touching one side, at least 25 tiles from any other Townhouse.',
+      town: 'On grass, forest, sand or a level hill tile with track touching one side, at least 25 tiles from any other Townhouse.',
       onTrack: 'On an existing track tile. R rotates.',
       service: (r: number) => `On a free tile within ${r} tiles of the stations it should serve.`,
       powerLine:
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
-      building: 'On a free buildable tile.',
-      works: 'On a free buildable tile. Runs from the stockpile; no track needed.',
+      building: 'On a free grass, forest, sand or level hill tile.',
+      works:
+        'On a free grass, forest, sand or level hill tile. Runs from the stockpile; no track needed.',
       deposit: (k: string) =>
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
-      plant: 'On a free buildable tile. Chain Power Line poles from it to reach the rails.',
+      plant:
+        'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
