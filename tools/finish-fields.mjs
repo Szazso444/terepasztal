@@ -5,7 +5,8 @@
  *
  *   node tools/finish-fields.mjs            # writes finished/wheat_N.png and the props atlas
  *   node tools/finish-fields.mjs --check    # builds in memory, exits 1 if the shipped atlas differs
- *   node tools/finish-fields.mjs --paintings DIR --raise 0   # other paintings, already raised
+ *   node tools/finish-fields.mjs --paintings DIR --raise 0 --grade 0   # other paintings, already
+ *                                           # raised and in the colour they should keep
  *
  * pngjs only. The paintings (`wheat-0..2.png`, 1254 px square) are not touched. Per painting:
  *
@@ -19,7 +20,14 @@
  *      bounds (`patch.absoluteTileBounds`, plus `edgeWanderTile` on the SE and SW sides only). A
  *      painting left flat may also stand `earsMaxHeightGamePx` ears over the ground; one that is
  *      raised is its own ground footprint, and the stalks that lift it are the ears.
- *   4. Raise. The field is a low raised patch: each ground texel carries a column of stalks
+ *   4. Grade. The paintings are an orange-brown that the season tint turns to rust; the colours
+ *      are pulled to the straw gold of the approved demo's wheat (`GRADE`): hue toward 42 degrees,
+ *      yellower the lighter, saturation toward 0.58, more spread between light and shade. It is
+ *      judged after the summer prop tint (0xf8f2dc), where its lit pixels average about
+ *      187, 149, 66.
+ *      `--grade 0` keeps the painting's own colour; `--grade '{"gain":1.1}'` overrides single
+ *      terms of `GRADE`.
+ *   5. Raise. The field is a low raised patch: each ground texel carries a column of stalks
  *      STALK_MIN to STALK_MIN + STALK_SWELL world px high (the same heights the generator frames
  *      have), shorter toward a ragged edge, and the furrows between the rows (found from the
  *      painting's own luminance) lie FURROW_DROP lower than the ridges. The painting is the heads
@@ -27,7 +35,7 @@
  *      toward the ground, the lower-left front lit and the lower-right one turned from the light.
  *      The ground footprint does not move, only the heads lift. `--raise 0` leaves the painting
  *      flat, for a painting that already stands up on its own (PROMPT.md asks for one).
- *   5. Highlights. No pixel may reach the selection amber (#E8AA48) or the cursor white
+ *   6. Highlights. No pixel may reach the selection amber (#E8AA48) or the cursor white
  *      (#ECE4D0) in all three channels; red is held under HIGHLIGHT_CAP with a soft knee, the
  *      hue kept, so a field never reads as selected.
  *
@@ -111,6 +119,67 @@ export function capHighlight([r, g, b], cap = HIGHLIGHT_CAP, knee = HIGHLIGHT_KN
   const eased = start + knee * (1 - Math.exp(-(r - start) / knee));
   const f = Math.min(eased, cap - 1) / r;
   return [r * f, g * f, b * f];
+}
+
+/**
+ * The colour grade. The paintings come out a deep orange-brown (hue 37 degrees, saturation 0.67, its
+ * highlights a pale cream), and the season tint, which multiplies a prop's blue down (summer
+ * 0xf8f2dc, autumn 0xf0c088), pushes that on to rust. The wheat of the approved art demo is a
+ * golden straw: over the lit heads a mean of about 181, 145, 69 (hue 41, saturation 0.62), warmer in
+ * the shade and yellower in the light. So each colour's hue is pulled `pull` of the way toward
+ * `hue` (that is the target at a value of `pivot`; it moves `slope` degrees per whole step of value,
+ * yellower the lighter), its saturation `satPull` of the way toward `sat`, and its value spread
+ * about `pivot` by `contrast` and scaled by `gain`. The highlight cap runs after it and has the
+ * last word.
+ */
+export const GRADE = {
+  hue: 42,
+  slope: 24,
+  pull: 0.75,
+  sat: 0.58,
+  satPull: 0.8,
+  gain: 1.03,
+  contrast: 1.35,
+  pivot: 0.78,
+};
+
+/** Rgb in 0..255 -> [hue in degrees, saturation, value in 0..255]. */
+function toHsv([r, g, b]) {
+  const mx = Math.max(r, g, b);
+  const d = mx - Math.min(r, g, b);
+  if (d === 0) return [0, 0, mx];
+  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, d / mx, mx];
+}
+
+function fromHsv([h, s, v]) {
+  const k = (n) => (n + h / 60) % 6;
+  const f = (n) => v * (1 - s * Math.max(0, Math.min(1, Math.min(k(n), 4 - k(n)))));
+  return [f(5), f(3), f(1)];
+}
+
+/** One colour toward the straw gold, as `GRADE` describes; a colour with no hue is left alone. */
+export function gradeGold(rgb, grade = GRADE) {
+  const [h, s, v] = toHsv(rgb);
+  if (s === 0) return rgb;
+  const t = v / 255;
+  const want = grade.hue + grade.slope * (t - grade.pivot);
+  return fromHsv([
+    h + (want - h) * grade.pull,
+    Math.min(1, s + (grade.sat - s) * grade.satPull),
+    255 * Math.max(0, grade.pivot + (t - grade.pivot) * grade.contrast) * grade.gain,
+  ]);
+}
+
+/** Grades every covered texel of a float image in place. */
+export function gradeImage(img, grade = GRADE) {
+  for (let o = 0; o < img.w * img.h; o++) {
+    if (img.a[o] <= 0) continue;
+    const out = gradeGold([img.rgb[o * 3], img.rgb[o * 3 + 1], img.rgb[o * 3 + 2]], grade);
+    img.rgb[o * 3] = out[0];
+    img.rgb[o * 3 + 1] = out[1];
+    img.rgb[o * 3 + 2] = out[2];
+  }
 }
 
 /** The numbers `geometry.json` fixes, with the canvas the painting actually came in. */
@@ -286,15 +355,16 @@ export function ridgeMap(img) {
  * ground footprint; every footprint texel becomes a column that many texels tall, drawn front to
  * back so a nearer texel hides the front of the one behind it. Returns the same layout, straight
  * colour and alpha. `raise` scales the heights (1 is the demo's 2.6 to 3.5 world px, 0 flat).
+ * `ridge` is the ridge map to lower the furrows by (the painting's own, from its colour as it was
+ * painted, so that grading the colour never moves a row).
  */
-export function raiseField(img, seed, raise = 1, canvas = CANVAS) {
+export function raiseField(img, seed, raise = 1, canvas = CANVAS, ridge = ridgeMap(img)) {
   if (raise <= 0) return img;
   const { w, h } = img;
   const out = { w, h, rgb: new Float32Array(w * h * 3), a: new Float32Array(w * h) };
   // a ragged edge ends in low ears, not a cut wall: the stalks stand shorter where less of the
   // neighbourhood is field (a 2 world px radius)
   const cover = boxCover(img.a, w, h, 2 * DENSITY);
-  const ridge = ridgeMap(img);
   for (let u = 0; u < w; u++) {
     for (let gy = h - 1; gy >= 0; gy--) {
       const i = gy * w + u;
@@ -395,7 +465,13 @@ export function toFrame(img, canvas = CANVAS) {
  * `raise` is the stalk height factor (1, or 0 for paintings that stand up on their own); `ears`
  * overrides the ears the geometry clip allows (none when raising, the geometry's when flat).
  */
-export function finishAll({ dir = DEFAULT_SRC, paintings = dir, raise = 1, ears } = {}) {
+export function finishAll({
+  dir = DEFAULT_SRC,
+  paintings = dir,
+  raise = 1,
+  ears,
+  grade = GRADE,
+} = {}) {
   const geometry = JSON.parse(readFileSync(join(dir, 'geometry.json'), 'utf8'));
   const placed = VARIANTS.map((variant) => {
     const painting = PNG.sync.read(readFileSync(join(paintings, variant.file)));
@@ -418,7 +494,9 @@ export function finishAll({ dir = DEFAULT_SRC, paintings = dir, raise = 1, ears 
       img = placePainting(p.painting, p.f.anchor, p.k, shift[0], shift[1]);
     }
     clipToGeometry(img, p.f, CANVAS, ears ?? (raise > 0 ? 0 : p.f.ears));
-    const finished = raiseField(img, p.variant.seed, raise);
+    const ridge = ridgeMap(img);
+    if (grade) gradeImage(img, grade);
+    const finished = raiseField(img, p.variant.seed, raise, CANVAS, ridge);
     const frame = toFrame(finished);
     return {
       key: p.variant.key,
@@ -474,8 +552,9 @@ export function run({
   assets = DEFAULT_ASSETS,
   check = false,
   raise = 1,
+  grade = GRADE,
 } = {}) {
-  const frames = finishAll({ dir, paintings, raise });
+  const frames = finishAll({ dir, paintings, raise, grade });
   const sheet = PNG.sync.read(readFileSync(join(assets, 'props.png')));
   const json = JSON.parse(readFileSync(join(assets, 'props.json'), 'utf8'));
   const merged = mergeFrames(sheet, json, frames);
@@ -503,11 +582,20 @@ if (isMain(import.meta.url)) {
   const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
   const raise = Number(opt('--raise', '1'));
   if (!Number.isFinite(raise) || raise < 0) throw new Error('--raise is a factor of 0 or more');
+  // --grade 0 leaves the colour as painted; --grade '{"gain":1.1}' overrides single GRADE terms
+  const gradeArg = opt('--grade');
+  const grade =
+    gradeArg === undefined
+      ? GRADE
+      : gradeArg === '0'
+        ? null
+        : { ...GRADE, ...JSON.parse(gradeArg) };
   const { same, frames } = run({
     dir: resolve(opt('--src', DEFAULT_SRC)),
     paintings: opt('--paintings') ? resolve(opt('--paintings')) : undefined,
     check: args.includes('--check'),
     raise,
+    grade,
   });
   for (const f of frames)
     console.log(f.key, `${f.png.width}x${f.png.height}@${f.ax},${f.ay}`, JSON.stringify(f.report));

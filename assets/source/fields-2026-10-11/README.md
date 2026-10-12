@@ -30,13 +30,22 @@ touched. Per painting, in order:
    two's centre of mass.
 3. Alpha from `geometry.json`: nothing outside the patch's bounds (0.42 tile, plus the 0.04 wander
    on the SE and SW sides).
-4. Raise: the field is a low raised patch. Every footprint texel becomes a column of stalks 2.6 to
+4. Grade: the colour of the paintings is an orange-brown that the game's season tint (a multiply
+   that cuts blue; autumn's 0xf0c088 more than summer's 0xf8f2dc) turns to rust. The colours are
+   pulled to the straw gold of the approved art demo's wheat (`GRADE` in the script): hue toward
+   42 degrees and yellower the lighter, saturation toward 0.58, a little more spread between the
+   light and the shade. After the summer prop tint the lit pixels (red over 120) average
+   187, 149, 66 (hue 41, saturation 0.65) where the demo's wheat averages 183, 146, 70 (hue 41,
+   saturation 0.62); before the grade they averaged 184, 137, 56 (hue 38, saturation 0.69). The
+   brightest red is 219 after the tint (225 without it). `--grade 0` keeps the painting's own
+   colour.
+5. Raise: the field is a low raised patch. Every footprint texel becomes a column of stalks 2.6 to
    3.5 world px high (the demo's heights; the furrows lie lower than the ridges, a ragged edge ends
    in lower stalks), the painting is the heads, the front shows under them darker toward the
    ground, lit on the lower left and turned from the light on the lower right. The ground
    footprint and the anchor do not move. `--raise 0` skips this for a painting that already
    stands up (`PROMPT.md` asks for those).
-5. Highlight cap: no pixel reaches the selection amber `#E8AA48` or the cursor white `#ECE4D0` in
+6. Highlight cap: no pixel reaches the selection amber `#E8AA48` or the cursor white `#ECE4D0` in
    all three channels; red is held under 226 with a soft knee, the hue kept.
 
 The frames are packed in a row of their own under the frames `props.png` already has, which stay

@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
+import { SEASON_FX } from '../src/sim/weather';
 import {
   CANVAS,
   DENSITY,
+  GRADE,
   HIGHLIGHT_CAP,
   STALK_MIN,
   STALK_SWELL,
@@ -11,6 +13,7 @@ import {
   capHighlight,
   clipToGeometry,
   finishAll,
+  gradeGold,
   mergeFrames,
   placePainting,
   raiseField,
@@ -93,6 +96,79 @@ describe('highlight cap', () => {
       expect(out).toBeGreaterThanOrEqual(last);
       last = out;
     }
+  });
+});
+
+const shipped = run({ check: true });
+
+/** Hue in degrees, saturation and value (0 to 255) of a colour. */
+function hsv([r, g, b]) {
+  const mx = Math.max(r, g, b);
+  const d = mx - Math.min(r, g, b);
+  if (d === 0) return [0, 0, mx];
+  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, d / mx, mx];
+}
+
+describe('colour grade', () => {
+  it('pulls a colour toward the straw gold and never past it', () => {
+    for (let h = 28; h <= 50; h += 2)
+      for (const s of [0.45, 0.6, 0.75])
+        for (const v of [110, 160, 210, 250]) {
+          // a colour of this hue, saturation and value
+          const k = (n) => (n + h / 60) % 6;
+          const f = (n) => v * (1 - s * Math.max(0, Math.min(1, Math.min(k(n), 4 - k(n)))));
+          const [h2, s2] = hsv(gradeGold([f(5), f(3), f(1)]));
+          const want = GRADE.hue + GRADE.slope * (v / 255 - GRADE.pivot);
+          expect(h2, `hue ${h} s ${s} v ${v}`).toBeGreaterThanOrEqual(Math.min(h, want) - 1e-6);
+          expect(h2, `hue ${h} s ${s} v ${v}`).toBeLessThanOrEqual(Math.max(h, want) + 1e-6);
+          expect(s2).toBeGreaterThanOrEqual(Math.min(s, GRADE.sat) - 1e-6);
+          expect(s2).toBeLessThanOrEqual(Math.max(s, GRADE.sat) + 1e-6);
+        }
+  });
+  it('leaves a grey alone and keeps lighter colours lighter', () => {
+    expect(gradeGold([120, 120, 120])).toEqual([120, 120, 120]);
+    let last = -1;
+    for (let v = 40; v <= 255; v += 5) {
+      const out = gradeGold([v, v * 0.78, v * 0.3]);
+      expect(Math.max(...out)).toBeGreaterThanOrEqual(last);
+      last = Math.max(...out);
+    }
+  });
+  it('changes colour only: the frames come out the same size, anchor and alpha without it', () => {
+    const plain = finishAll({ grade: null });
+    const graded = finishAll();
+    graded.forEach((g, i) => {
+      const p = plain[i];
+      expect([g.png.width, g.png.height, g.ax, g.ay]).toEqual([
+        p.png.width,
+        p.png.height,
+        p.ax,
+        p.ay,
+      ]);
+      for (let o = 3; o < g.png.data.length; o += 4) expect(g.png.data[o]).toBe(p.png.data[o]);
+    });
+  });
+  it('reads as straw gold after the summer prop tint, not orange-rust', () => {
+    // the game multiplies a prop by the season's tint (SEASON_FX), so the colour is judged after it
+    const tint = [16, 8, 0].map((sh) => ((SEASON_FX.summer.props >> sh) & 255) / 255);
+    const mean = [0, 0, 0];
+    let n = 0;
+    for (const f of shipped.frames)
+      for (let i = 0; i < f.png.data.length; i += 4) {
+        if (f.png.data[i + 3] < 128) continue;
+        for (let c = 0; c < 3; c++) mean[c] += f.png.data[i + c] * tint[c];
+        n++;
+      }
+    const [r, g, b] = mean.map((m) => m / n);
+    const [hue, sat] = hsv([r, g, b]);
+    // the approved demo's wheat: hue 41, saturation 0.62, green about 0.8 of red
+    expect(hue).toBeGreaterThanOrEqual(39);
+    expect(hue).toBeLessThanOrEqual(44);
+    expect(sat).toBeGreaterThanOrEqual(0.55);
+    expect(sat).toBeLessThanOrEqual(0.7);
+    expect(g / r).toBeGreaterThanOrEqual(0.76);
+    expect(g / r).toBeLessThanOrEqual(0.86);
   });
 });
 
@@ -260,7 +336,6 @@ describe('merging into the atlas', () => {
 });
 
 describe('the shipped wheat frames', () => {
-  const shipped = run({ check: true });
   const json = JSON.parse(
     readFileSync(new URL('../public/assets/props.json', import.meta.url), 'utf8'),
   );

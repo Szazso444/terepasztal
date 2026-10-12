@@ -122,12 +122,17 @@ before drawing individual twigs. Bare sprites should not acquire large square so
 | `rock` / `boulder` | Small low stones versus larger angular masses; consistent stone lighting.                |
 | `coal`             | Dark stratified outcrop, distinguishable from ordinary grey rock.                        |
 | `oil`              | Small dark seep with restrained sheen; no bright rainbow pool.                           |
-| `wheat`            | Low raised tile of golden rows, 2.6 to 3.5 px high, darker front, irregular edge.        |
+| `wheat`            | Low raised tile of straw-gold rows, 2.6 to 3.5 px high, darker front, irregular edge.    |
 
 Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil/wheat;
 two for palm/deadtree/reeds; four for flowers. Change silhouette as well as shade. Check
 placement near curves and signals: clearing a prop must remove its entire visual, and trunk
 anchors must remain attached to the correct tile. Seasonal recolours are optional future work.
+
+The game multiplies every prop by the season tint (`SEASON_FX` in `src/sim/weather.ts`), so judge a
+prop's colour after it. Wheat in summer averages a straw gold, hue about 41 degrees and saturation
+about 0.6 (its lit pixels near 187, 149, 66), the wheat of the approved art demo: yellow-gold,
+never orange-rust. Its brightest red stays under the selection amber's 232 and the cursor white's 236.
 
 [Current props sheet](images/current-props.png) · Source: `src/art/props.ts`.
 
