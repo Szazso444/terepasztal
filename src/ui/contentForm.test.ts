@@ -56,8 +56,8 @@ describe('the fields of a content form', () => {
     expect(keys.length).toBe(expected.size);
   });
 
-  it("shows a locomotive's own length though no shipped locomotive has one", () => {
-    expect(DEFAULT_CONTENT.locomotives.some((l) => 'length' in l)).toBe(false);
+  it("shows a locomotive's own length as an optional number that says what it falls back to", () => {
+    // whether a shipped locomotive carries one or the table only declares it
     const f = field(locoForm, 'length');
     expect(f.kind).toBe('number');
     expect(f.unset).toBe(STR.content.unsetLength);
@@ -112,18 +112,26 @@ describe('an entry in a content form', () => {
     }
   });
 
-  it('does not give a locomotive a length it did not have', () => {
+  it("keeps a locomotive's own length as it was, and gives none to one without", () => {
     const fields = formFields(locoForm);
-    for (const loco of DEFAULT_CONTENT.locomotives) {
+    const [first] = DEFAULT_CONTENT.locomotives;
+    // one with a length and one without, whatever the shipped locomotives carry
+    const own = { ...clone(first), id: 'synthetic_own', length: 0.82 };
+    const bare = { ...clone(first), id: 'synthetic_bare' };
+    delete bare.length;
+    for (const loco of [...DEFAULT_CONTENT.locomotives, own, bare]) {
       const copy = clone(loco) as unknown as Row;
       saveAsShown(copy, fields);
-      expect('length' in copy, loco.id).toBe(false);
+      expect('length' in copy, loco.id).toBe('length' in loco);
+      expect(copy.length, loco.id).toBe(loco.length);
     }
   });
 
   it('stores a typed length as a number and drops the key when it is cleared', () => {
     const f = field(locoForm, 'length');
     const loco = clone(DEFAULT_CONTENT.locomotives[0]) as unknown as Row;
+    // the first shipped locomotive may or may not have a length of its own; start without one
+    delete loco.length;
     const before = clone(loco);
     expect(readField(loco, f, kindFor(loco, f), '1.4')).toBe(true);
     expect(loco.length).toBe(1.4);
@@ -1089,9 +1097,13 @@ describe('what Apply stores once the forms are saved', () => {
         const length = Number(c.text);
         const want: ContentBundle = { ...content, locomotives: clone(content.locomotives) };
         want.locomotives[c.at].length = length;
+        // a locomotive's own length typed over the very value it shipped with is no change
         const changed = changedTables(draft);
-        expect(Object.keys(changed), 'tables Apply stores').toEqual(['locomotives']);
-        expect(changed.locomotives).toStrictEqual(want.locomotives);
+        expect(Object.keys(changed), 'tables Apply stores').toEqual(
+          length === locos[c.at].length ? [] : ['locomotives'],
+        );
+        if (length !== locos[c.at].length)
+          expect(changed.locomotives).toStrictEqual(want.locomotives);
         // the editor's problem line reads the same as for the number set on the entry directly
         const inside = length >= OWN_LENGTH.min && length <= OWN_LENGTH.max;
         seen[inside ? 'inside' : 'outside']++;
@@ -1101,7 +1113,16 @@ describe('what Apply stores once the forms are saved', () => {
 
         expect(readField(loco, f, kindFor(loco, f), c.blank), 'blank, yet refused').toBe(true);
         saveDraftAsShown(draft, locoTab);
-        expect(changedTables(draft), 'cleared, yet stored').toEqual({});
+        // the entry is back to its shipped state unless it shipped with a length of its own, which
+        // clearing removes: then the table is stored without it, and nothing else of it changed
+        const cleared = changedTables(draft);
+        if (locos[c.at].length === undefined) expect(cleared, 'cleared, yet stored').toEqual({});
+        else {
+          want.locomotives[c.at] = clone(locos[c.at]);
+          delete want.locomotives[c.at].length;
+          expect(Object.keys(cleared), 'tables Apply stores once cleared').toEqual(['locomotives']);
+          expect(cleared.locomotives, 'cleared, yet more changed').toStrictEqual(want.locomotives);
+        }
         expect(validateContent(draft)).toEqual([]);
       },
       {
