@@ -61,6 +61,7 @@ if (command === 'record') {
   fs.mkdirSync(path.join(root, 'raw', 'poses'), { recursive: true });
   if (fs.existsSync(path.join(root, e.file))) throw Error('Raw painting already exists');
   fs.copyFileSync(source, path.join(root, e.file));
+  e.rawSha256 = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, e.file))).digest('hex');
   calls.push(e);
   measure(e);
   save();
@@ -140,7 +141,9 @@ if (command === 'record') {
   for (let k = 0; k < 4; k++) {
     const p = read('poses/' + id + '-f' + k + '.png'),
       s = p.width / 1024;
-    normalized.push(resample(p, 320, 480, 320 / p.width, [0, 0], [0, 0]));
+    const accepted = calls.findLast(e => e.strip === id && e.frame === k && e.accepted);
+    normalized.push(resample(p, 320, 480, 320 / p.width,
+      [512 * s, accepted.measured.soleRow], [160, 420]));
   }
   const overlay = new PNG({ width: 320, height: 480 });
   let intersect = 0,
@@ -166,13 +169,14 @@ if (command === 'record') {
   write('checks/' + id + '-contact-overlay.png', overlay);
   const [left, right] = [1, 3].map((k) => box(normalized[k]));
   const report = {
+    alignment: 'Each portrait body x=512*s and measured sole row aligned to (160,420)',
     lowerBodyContactIoU: intersect / union,
     contactOverlay: 'checks/' + id + '-contact-overlay.png',
     passingBoxes: [left, right],
     requiresVisualChecks: [
       'f0/f2 opposite thigh overlap X',
       'f1/f3 opposite lifted foot',
-      'play 9px four-frame sequence',
+      'inspect offline 9px-6x and 36px four-frame sheets',
     ],
   };
   saveJson('checks/' + id + '-pose-report.json', report);
@@ -211,6 +215,7 @@ if (command === 'record') {
     oppositeLiftedFoot: passing === 'yes',
     offline9pxAnd36pxInspected: true,
     browserPlayback: false,
+    repeatedFrames: (option('repeated-frames') ?? '').split(',').filter(Boolean),
     note,
   };
   save();

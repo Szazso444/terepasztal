@@ -1,6 +1,8 @@
 ## Current continuation — 2026-10-12
 
-Core accepted pump-hand-back-walk attempts [2,3,3,3]. The canonical strip is rebuilt with individual sole rows and uniform area averaging. One of nine requested strips is complete. The historical notes below describe earlier checks; finish-brief-2026-10-12.txt supersedes the strict width/centre rule and browser playback requirement. The checker now tests 2:3 aspect, hat-to-sole height within 5%, and body width no more than 25% over the guide; carried loads can be excluded with recorded anatomical bounds. After three returned paintings keep the best and document any defect. Offline 9px-6x and 36px sheets replace browser playback. No review/game-scale exports are regenerated.
+2/9 requested strips checked. See finish-report.json for accepted attempts and observations, redo-state.json for progress, and finish-brief-2026-10-12.txt for the current authority. Canonical strips use uniform area averaging and individual measured sole rows. Offline checks are under checks/: <strip>-9px-6x.png and <strip>-36px.png. Carry columns are at least256px; walks expand only when needed. Original inputs, guides, refs, review and game-scale exports are preserved. Historical notes below record earlier rejected attempts and superseded rules.
+
+## Historical notes before Core acceptance
 
 # People cast · issue 331
 

@@ -1,0 +1,126 @@
+{
+  "updatedAt": "2026-10-12T22:51:30.402Z",
+  "branch": "art/331-people",
+  "brief": "finish-brief-2026-10-12.txt",
+  "strips": [
+    {
+      "strip": "pump-hand-back-walk",
+      "acceptedAttempts": [
+        2,
+        3,
+        3,
+        3
+      ],
+      "cycleReview": "passed",
+      "repeatedFrames": [],
+      "findings": "Offline 9px-6x and 36px sheets inspected: contact legs cross in opposite directions, the passing silhouettes lift opposite boots; identity and cap/shirt/boots stay consistent. 9px reads the silhouette; leg separation is clearer at 36px. Core-approved attempts 2,3,3,3.",
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "pump-hand-front-carry",
+      "acceptedAttempts": [
+        2,
+        2,
+        3,
+        3
+      ],
+      "cycleReview": "kept with two-phase fallback",
+      "repeatedFrames": [
+        "f2=f0"
+      ],
+      "findings": "Offline9px-6x and36px sheets inspected. Two buckets read clearly, feet alternate in passing f1/f3, but f2 keeps f0 thigh overlap after three corrections: use Core0,1,0,1 fallback. Accepted2,2,3,3. Grounded hat heights differ by14.06px (3.91% nominal body), beyond2% target, retained best after three. All frames retain warm brown skin/grey hair/slate shirt/teal water; columns320 prevent load clipping.",
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "pump-hand-back-carry",
+      "acceptedAttempts": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cycleReview": "not assembled",
+      "repeatedFrames": [],
+      "findings": null,
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "lumberjack-back-walk",
+      "acceptedAttempts": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cycleReview": "not assembled",
+      "repeatedFrames": [],
+      "findings": null,
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "lumberjack-back-carry",
+      "acceptedAttempts": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cycleReview": "not assembled",
+      "repeatedFrames": [],
+      "findings": null,
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "stone-mason-back-walk",
+      "acceptedAttempts": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cycleReview": "not assembled",
+      "repeatedFrames": [],
+      "findings": null,
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "stone-mason-back-carry",
+      "acceptedAttempts": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cycleReview": "not assembled",
+      "repeatedFrames": [],
+      "findings": null,
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "farmer-back-walk",
+      "acceptedAttempts": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cycleReview": "not assembled",
+      "repeatedFrames": [],
+      "findings": null,
+      "measurementsKeptAfterThree": []
+    },
+    {
+      "strip": "farmer-back-carry",
+      "acceptedAttempts": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cycleReview": "not assembled",
+      "repeatedFrames": [],
+      "findings": null,
+      "measurementsKeptAfterThree": []
+    }
+  ]
+}

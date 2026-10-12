@@ -124,6 +124,11 @@ const prompt =
   b.height +
   '. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.' +
   (correction.length ? '\nCORRECTION: ' + correction.join(' ') : '');
-const entry = { id, strip, frame, prompt, references: refs };
+const j = spec.frames[frame].joints;
+const jointInstruction = '\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip' + JSON.stringify(j.hipNear) +
+  ' -> knee' + JSON.stringify(j.kneeNear) + ' -> ankle' + JSON.stringify(j.ankleNear) + ' -> toe' + JSON.stringify(j.toeNear) +
+  '; far LEFT hip' + JSON.stringify(j.hipFar) + ' -> knee' + JSON.stringify(j.kneeFar) + ' -> ankle' + JSON.stringify(j.ankleFar) + ' -> toe' + JSON.stringify(j.toeFar) +
+  '. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.';
+const entry = { id, strip, frame, prompt: prompt + jointInstruction, references: refs };
 saveJson(callFile, entry);
 console.log(JSON.stringify(entry));

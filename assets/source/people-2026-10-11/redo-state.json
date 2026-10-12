@@ -1,7 +1,7 @@
 {
   "date": "2026-10-11",
   "baseCommit": "3f5a4f7f",
-  "status": "1/9 strips complete; first strip accepted by Core, remaining eight ready for painting.",
+  "status": "2/9 strips complete; pump-front-carry retained with repeated f2 after three attempts; continue pump-back-carry.",
   "order": [
     "pump-hand-back-walk",
     "pump-hand-front-carry",
@@ -14,7 +14,8 @@
     "farmer-back-carry"
   ],
   "completed": [
-    "pump-hand-back-walk"
+    "pump-hand-back-walk",
+    "pump-hand-front-carry"
   ],
   "firstStripGate": "pump-hand-back-walk must be fully checked and committed before painting strip2",
   "originalStripHashes": {
@@ -277,9 +278,61 @@
     "railway-worker-back-walk.png": "98aa2d0dbc3b47b93e101e9646db1c131a0f57edfdb0ae3effd47caedcb8f952",
     "railway-worker-front-walk.png": "5efaaf5f87981bb752c3728f61dba7edbd0ffb883f96e3e5e8824399ec104191",
     "stone-mason-front-carry.png": "12745ef7080e6936864be7026f5c13533df4c7fb65933433583f6a236a9d64df",
-    "stone-mason-front-walk.png": "e398720adae34feb7eb638fd0a3b89a9dc34b53f638dac263f30298655c2715c"
+    "stone-mason-front-walk.png": "e398720adae34feb7eb638fd0a3b89a9dc34b53f638dac263f30298655c2715c",
+    "guides/farmer-back-carry-f0.png": "e57ea6734acb870572a7b9d9b93028b108d40f5763ffdb70ebee92051314157e",
+    "guides/farmer-back-carry-f1.png": "01131c925ee08e110382d2862f34eafcd29b5201bb1bd2b3ba376fef0949c1d4",
+    "guides/farmer-back-carry-f2.png": "cf38ab898dc9948314d587586a089d7c12aab40c4bcd974316c6ef86874d128c",
+    "guides/farmer-back-carry-f3.png": "46ed2b90dcc68a79a25e6b5ac6bd05bb149501e1567c6a65e06f61ea2b6be6a2",
+    "guides/farmer-back-walk-f0.png": "ed7fd532c22c02d20a4f907b4ce904b51e1368c3840f774946c2dc3af88f8c07",
+    "guides/farmer-back-walk-f1.png": "64b5a5b38c5667dec681d7513b24ac9fc0aa65f8be6ba01aed4759b344ccac43",
+    "guides/farmer-back-walk-f2.png": "31e4526ac3e0bc30c358f3b8aeedb00d486b5f6aaa5a927898795bbb0c5bd5f5",
+    "guides/farmer-back-walk-f3.png": "c427fd903453af0ad93ac7376bbc6b357582fcb1e33e66650ad41103030f6e52",
+    "guides/lumberjack-back-carry-f0.png": "ceae0ab36717698dd8c237973c60cb668d0a62edee644cc650de5034d39ad691",
+    "guides/lumberjack-back-carry-f1.png": "d22739d95e157de9157075bca2edbd7432998492102b2081005ae5887d48cf76",
+    "guides/lumberjack-back-carry-f2.png": "16681e835537e83e3b3224dce2a0ef52b8d1cba3b0beb5209f1968d26433d623",
+    "guides/lumberjack-back-carry-f3.png": "592dbf8722695cf0fbef3db07b483a99ff15eb09b24b86b837453aed30b30282",
+    "guides/lumberjack-back-walk-f0.png": "10baf2b537290e3c893b0cd98d5b9a25ad5db711fa7fa75388005d6d2ad4f0ba",
+    "guides/lumberjack-back-walk-f1.png": "1234b6222d95589ec11772322a24af60d7c3b3a2ba693f875dd224fae6fc89f0",
+    "guides/lumberjack-back-walk-f2.png": "64e18977474a882784eb27998d6ba2cf202e3d99aaf05039a519cd76e121bdae",
+    "guides/lumberjack-back-walk-f3.png": "5f6e2d887b159363475fb64e9fafb35e72564ee86a68df9abc220f93e7614a07",
+    "guides/pump-hand-back-carry-f0.png": "3223b944131fac029d2c6e56ca81c0370cf5a776269e59df545923afeac4eed0",
+    "guides/pump-hand-back-carry-f1.png": "a7f3415dd1ba94dfb579eb3130ddee3f585eaa8ee37065259248070f01636093",
+    "guides/pump-hand-back-carry-f2.png": "f7108e2dc5682950d02d900b3a6a536e34debfb4fe0a36d7a2a1260c568ef22a",
+    "guides/pump-hand-back-carry-f3.png": "84bdf544f81d7f56aaa19ca403fdd51b8bccbae66a0e810c88d6960a604a6d54",
+    "guides/pump-hand-back-walk-f0.png": "362d4f6bd4609498cad6560bb0d789df8744d1525df5757aa6be2ea6ab6788cf",
+    "guides/pump-hand-back-walk-f1.png": "bca09b54603b6c634a785fc7ca1e2a6a51db3641f1b8988f3462de7b9503148b",
+    "guides/pump-hand-back-walk-f2.png": "17ab1a4e6b628e505c22ebbe9f6461f477c6eba9922dc2d981c08d2d6275948d",
+    "guides/pump-hand-back-walk-f3.png": "208aa246bcd06c08bed755cbc093e93eee203cd4c6946d276b19bc2f691615f1",
+    "guides/pump-hand-front-carry-f0.png": "5aca07db2711d00916206d6184a60dc91e95c6d27f59f4174acf03ab6aeea33b",
+    "guides/pump-hand-front-carry-f1.png": "e0971a40f9e58843932a2ee4a35ebcdb9acc55d6a8298dd44ad9be6283eab332",
+    "guides/pump-hand-front-carry-f2.png": "f8b0ef1e04c7b87c7e3ca47c29dc9bfeef8612754b8aef94ecd692fa96094aea",
+    "guides/pump-hand-front-carry-f3.png": "917be3462412c94a4dcf75f540b71ce43db9a74fb4ff371afb5bb8a6829d22ff",
+    "guides/stone-mason-back-carry-f0.png": "aa10d18b7de00f595044529f76380b17246cc4955088eea201847454ca9be497",
+    "guides/stone-mason-back-carry-f1.png": "b951b26bc8940e89253c0d3d147daf80585a805a749dc0b79fa085b7755455fd",
+    "guides/stone-mason-back-carry-f2.png": "2bbd83e21bff85151353b89f5686bc667f288aa8789bcbe37cb12c55ce8d712d",
+    "guides/stone-mason-back-carry-f3.png": "4b067c9fea2a3ba39b89f289d7a4eee96da57a85f414daf54fde5cd46fefb32b",
+    "guides/stone-mason-back-walk-f0.png": "4fec88dd0108e8386014bb0180605cf24d6209c23b917973d35a272c856686d7",
+    "guides/stone-mason-back-walk-f1.png": "89f39a315ab9b5e04c5f0b77a908c4fbcf64cde2c4d8d9ce30b19ade32b995eb",
+    "guides/stone-mason-back-walk-f2.png": "5a00cb07e073e6def69c764cf8d00a9a99918f08ce88722f52de2e5a7e6ce0f5",
+    "guides/stone-mason-back-walk-f3.png": "2151f6546fe58ff8812f5bc990854c916be7532a3c98358cde0e4386158b4817",
+    "refs/farmer-back-carry-back.png": "9c265c1e14ddaa98eb7e9ef442d0f91a578cddb497da05377f8d2312a6df9dbb",
+    "refs/farmer-back-walk-back.png": "23a44f0dd3aca18eeccf48c802db5ed0f1726bc83e0fa47611d452de8083867a",
+    "refs/farmer-front-carry.png": "3fd25ed558c165085acf1bf2cd583e36e47dbba142baf16cdae6d04680bf80a2",
+    "refs/farmer-front-walk.png": "015ec24e9ad8876ef40f4215e7abc02fbccf6810bc82b3969f309f8acea23b17",
+    "refs/lumberjack-back-carry-back.png": "3739e982ad937888c6db01909fe3fa3d035ef6442ff1b17847fd9485accc997b",
+    "refs/lumberjack-back-walk-back.png": "5a754434a0e82084f9cfd7134a5311c4b6e666e8b98c0d88508ca5b1f58f653e",
+    "refs/lumberjack-front-carry.png": "3f20e3db57e178281535afb45346aa5fb9df459b737adc02f5ba20904ddae938",
+    "refs/lumberjack-front-walk.png": "8dc0ee9f32dcdf7c1e005554a529d338faa0cd2423d5a53b8774b48680d6ca3b",
+    "refs/pump-hand-back-carry-back.png": "3de0b7a785bf347fdb3e04240c240f0787b39c27f242d4dadf9744f9505baac7",
+    "refs/pump-hand-back-walk-back.png": "fb1d97589dc7ccd9f048a2f052f89d4b41b4cf8981dd4888c27251d7c5f3ba10",
+    "refs/pump-hand-front-walk.png": "dabd7ae3affd505def7bb25ee0760d3e9fa372ac9dcee43e4241e08b442ead5c",
+    "refs/stone-mason-back-carry-back.png": "17611a88f03364466bec0b136b3c5b2f65a31b162c7202197ac24c16e953ff07",
+    "refs/stone-mason-back-walk-back.png": "eb96abf31b4e69560ace89cf938b74bb9867bfac59fd849c755d9a024d0a9b00",
+    "refs/stone-mason-front-carry.png": "4a9810e1428a3c2b45ccd045a231b627e4e5449accb795172445f4f7397307de",
+    "refs/stone-mason-front-walk.png": "c216ebf704b5c9c321077cdfdd3c248e57cd2ef7d2d9fd99edb521630dcab775",
+    "pose-geometry.json": "c4af4a2097c75b9e8998b377032ff6c5f88639048b2613642ff7adb9ff3f182c"
   },
-  "lastUpdatedAt": "2026-10-12T22:41:37.386Z",
+  "lastUpdatedAt": "2026-10-12T22:51:30.327Z",
   "toolBlockHistory": [
     {
       "type": "usage_limit_reached",
@@ -301,9 +354,14 @@
     },
     {
       "strip": "pump-hand-front-carry",
-      "acceptedFrames": [],
-      "returnedPaintings": 0,
-      "cycleReview": null
+      "acceptedFrames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "returnedPaintings": 11,
+      "cycleReview": "kept with two-phase fallback"
     },
     {
       "strip": "pump-hand-back-carry",

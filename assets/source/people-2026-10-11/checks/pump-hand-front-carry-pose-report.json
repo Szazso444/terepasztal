@@ -1,0 +1,24 @@
+{
+  "alignment": "Each portrait body x=512*s and measured sole row aligned to (160,420)",
+  "lowerBodyContactIoU": 0.6677941531770959,
+  "contactOverlay": "checks/pump-hand-front-carry-contact-overlay.png",
+  "passingBoxes": [
+    {
+      "x": 30,
+      "y": 47,
+      "width": 274,
+      "height": 373
+    },
+    {
+      "x": 36,
+      "y": 48,
+      "width": 266,
+      "height": 372
+    }
+  ],
+  "requiresVisualChecks": [
+    "f0/f2 opposite thigh overlap X",
+    "f1/f3 opposite lifted foot",
+    "inspect offline 9px-6x and 36px four-frame sheets"
+  ]
+}
