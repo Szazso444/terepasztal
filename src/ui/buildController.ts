@@ -12,15 +12,15 @@ import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
-import { stationSpan, stationDef, LEVELS } from '../sim/stations';
+import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';
-import { rules } from '../sim/rules';
 import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
 import { structureFrame } from '../art/frames';
 import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
+import { harvestPreviewPerWeek } from './harvestPreview';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
@@ -383,7 +383,7 @@ export class BuildController {
     if (this.turns()) parts.push(STR.build.rotate);
     if (def.terrain) {
       const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
-      const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;
+      const perWeek = harvestPreviewPerWeek(f);
       const cargo = def.produces[0]?.cargo;
       parts.push(STR.build.harvest(Math.round(perWeek), cargo ? cargoDef(cargo).name : '', f));
     }
