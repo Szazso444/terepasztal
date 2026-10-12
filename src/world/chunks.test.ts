@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   CHUNK_TILES,
   CHUNK_VERSION,
@@ -20,11 +20,8 @@ import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './
 import { levelAt, tileLevels } from './elevation';
 import { Biome, Terrain, type GameMap, type PropInstance } from './tiles';
 import { Rng, hash2 } from '../engine/rng';
-import { setSupplyMode } from '../sim/supply';
+import type { SupplyMode } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
-
-beforeEach(() => setSupplyMode('simple'));
-afterEach(() => setSupplyMode('simple'));
 
 /** A frame of a map: its size and where its tile (0, 0) lies in the world. */
 type Frame = Pick<MapGenParams, 'w' | 'h' | 'originX' | 'originY'>;
@@ -36,6 +33,17 @@ const grow = (p: Frame, ring = 1): Frame => ({
   originX: (p.originX ?? 0) - CHUNK_TILES * ring,
   originY: (p.originY ?? 0) - CHUNK_TILES * ring,
 });
+
+/** A production chain by whether it is the full one. */
+const chainOf = (full: boolean): SupplyMode => (full ? 'full' : 'simple');
+/** generateMap of one production chain: the generator a game gives buildMap with its save's chain. */
+const generateChain =
+  (chain: SupplyMode): MapGenerator =>
+  (s, p) =>
+    generateMap(s, p, chain);
+/** Whether any tile of `m` holds an oil prop, which only the full chain lays. */
+const hasOil = (m: GameMap) =>
+  [...m.props.values()].some((list) => list.some((p) => p.kind === 'oil'));
 
 /** A generator that must not run. */
 const never: MapGenerator = () => {
@@ -108,10 +116,8 @@ function* shrinkCase(c: Case): Iterable<Case> {
   for (const ox of shrinkInt(c.ox)) yield { ...c, ox };
   for (const oy of shrinkInt(c.oy)) yield { ...c, oy };
 }
-const caseMap = (c: Case) => {
-  setSupplyMode(c.full ? 'full' : 'simple');
-  return generateMap(c.seed, { w: c.w, h: c.h, originX: c.ox, originY: c.oy });
-};
+const caseMap = (c: Case) =>
+  generateMap(c.seed, { w: c.w, h: c.h, originX: c.ox, originY: c.oy }, chainOf(c.full));
 
 describe('chunk keys', () => {
   it('are chunks of 32 world tiles, the region size', () => {
@@ -222,10 +228,16 @@ describe('a chunk text', () => {
 
   // 24 generated maps up to 128 tiles a side, each read back and stored again: about 0.8 s alone
   it('comes back byte for byte, its planes as the map has them, over seeds and sizes', () => {
+    let oil = 0;
     forAll(
       genCase,
       (c) => {
         const map = caseMap(c);
+        // the case's chain reached generation: oil only in the full chain
+        if (hasOil(map)) {
+          expect(c.full, 'oil in the simple chain').toBe(true);
+          oil++;
+        }
         const store = encodeMap(map);
         expect(Object.keys(store)).toEqual(mapChunks(map).map((k) => chunkKey(k.cx, k.cy)));
         // through the save's text, read back from the store alone and stored again: the same text
@@ -247,6 +259,8 @@ describe('a chunk text', () => {
       },
       { seeds: Array.from({ length: 24 }, (_, i) => i + 1), shrink: shrinkCase, shrinkBudget: 80 },
     );
+    // full-chain cases with their oil ran
+    expect(oil).toBeGreaterThan(0);
   }, 30_000);
 
   it('holds any value it allows, in tiles as odd as it allows', () => {
@@ -364,6 +378,7 @@ describe('a map built from stored chunks', () => {
 
   // Generates a few maps up to 288 tiles a side per seed: about 2 s alone
   it('of a grown world is generateMap of the grown parameters, tile for tile', () => {
+    let oil = 0;
     forAll(
       (rng) => ({
         seed: rng.int(0, 2 ** 31 - 1),
@@ -373,30 +388,38 @@ describe('a map built from stored chunks', () => {
         rings: rng.int(1, 2),
       }),
       ({ seed, full, size, earlier, rings }) => {
-        setSupplyMode(full ? 'full' : 'simple');
+        const chain = chainOf(full);
+        const gen = generateChain(chain);
         const at = -CHUNK_TILES * earlier;
         let params: Frame = { w: size, h: size, originX: at, originY: at };
-        let store = buildMap(seed, params, {}).chunks;
+        let store = buildMap(seed, params, {}, gen).chunks;
         for (let r = 0; r < rings; r++) {
           const before = store;
           params = grow(params);
-          const built = buildMap(seed, params, store);
+          const built = buildMap(seed, params, store, gen);
+          // oil only in the full chain
+          if (hasOil(built.map)) {
+            expect(full, 'oil in the simple chain').toBe(true);
+            oil++;
+          }
           // only the new ring is generated, and every stored text is kept as it was
           const ring = mapChunks(params)
             .map((c) => chunkKey(c.cx, c.cy))
             .filter((k) => !Object.hasOwn(before, k));
           expect(built.added).toEqual(ring);
           for (const k of Object.keys(before)) expect(built.chunks[k]).toBe(before[k]);
-          const fresh = buildMap(seed, params, {});
+          const fresh = buildMap(seed, params, {}, gen);
           const exact = firstDifference(built.map, fresh.map);
           if (exact) throw new Error(`against the grown world stored at once: ${exact}`);
-          const gen = firstDifference(built.map, generateMap(seed, params), { near: true });
-          if (gen) throw new Error(`against generateMap: ${gen}`);
+          const diff = firstDifference(built.map, generateMap(seed, params, chain), { near: true });
+          if (diff) throw new Error(`against generateMap: ${diff}`);
           store = built.chunks;
         }
       },
       { seeds: Array.from({ length: 10 }, (_, i) => i + 1) },
     );
+    // full-chain worlds with their oil ran
+    expect(oil).toBeGreaterThan(0);
   }, 60_000);
 
   it('keeps a part of a chunk it stored when the map grows over the rest of it', () => {
@@ -441,9 +464,10 @@ describe('a map built from stored chunks', () => {
     for (const seed of [1, 31337])
       for (const [name, gen] of generators)
         for (const full of [false, true]) {
-          setSupplyMode(full ? 'full' : 'simple');
           const params: Frame = { w: 64, h: 64 };
-          const old = buildMap(seed, params, {});
+          const old = buildMap(seed, params, {}, generateChain(chainOf(full)));
+          // the stored world is of its chain: the full one's oil, the simple one's none
+          expect(hasOil(old.map), `${name}: oil in the stored world`).toBe(full);
           const grownParams = grow(params, 2);
           const built = buildMap(seed, grownParams, old.chunks, gen);
           const now = gen(seed, grownParams);
@@ -516,10 +540,11 @@ describe('a map built from stored chunks', () => {
 
   it('adds at most about 150 KB for a 49-chunk world in the full production chain too', () => {
     // the full chain's oil fields and start seeps are props of their own
-    setSupplyMode('full');
     let oil = 0;
     for (const seed of [1, 7412, 20260912, 31337, 987654321]) {
-      const { map, chunks } = buildMap(seed, { w: 224, h: 224, originX: -64, originY: -64 }, {});
+      const params = { w: 224, h: 224, originX: -64, originY: -64 };
+      const { map, chunks } = buildMap(seed, params, {}, generateChain('full'));
+      expect(hasOil(map), `seed ${seed}: oil`).toBe(true);
       for (const list of map.props.values()) if (list.some((p) => p.kind === 'oil')) oil++;
       expect(Object.keys(chunks)).toHaveLength(49);
       expect(JSON.stringify(chunks).length, `seed ${seed}`).toBeLessThanOrEqual(150_000);
@@ -939,10 +964,12 @@ describe('stored chunks, over any generator, frame and text', () => {
 
   // 16 worlds up to 256 tiles a side, each generated three times: about 1.2 s alone
   it('grown under generateMap unchanged are the store of the grown world, text for text', () => {
+    let oil = 0;
     forAll(
       genRealGrowth,
       (c) => {
-        setSupplyMode(c.full ? 'full' : 'simple');
+        const chain = chainOf(c.full);
+        const gen = generateChain(chain);
         const before = { ...c.sliders, w: c.x.len, h: c.y.len, originX: c.ox, originY: c.oy };
         const after = {
           ...c.sliders,
@@ -951,9 +978,14 @@ describe('stored chunks, over any generator, frame and text', () => {
           originX: c.ox - 32 * c.x.before,
           originY: c.oy - 32 * c.y.before,
         };
-        const old = buildMap(c.seed, before, {});
-        const built = buildMap(c.seed, after, old.chunks);
-        const g = generateMap(c.seed, after);
+        const old = buildMap(c.seed, before, {}, gen);
+        const built = buildMap(c.seed, after, old.chunks, gen);
+        const g = generateMap(c.seed, after, chain);
+        // oil only in the full chain
+        if (hasOil(g)) {
+          expect(c.full, 'oil in the simple chain').toBe(true);
+          oil++;
+        }
         const fresh = encodeMap(g);
         expect(Object.keys(built.chunks).sort()).toEqual(Object.keys(fresh).sort());
         for (const k of Object.keys(fresh))
@@ -970,6 +1002,8 @@ describe('stored chunks, over any generator, frame and text', () => {
         shrinkBudget: 40,
       },
     );
+    // full-chain worlds with their oil ran
+    expect(oil).toBeGreaterThan(0);
   }, 60_000);
 
   // 300 texts, each read and built into a map of its chunk: about 0.7 s alone

@@ -69,7 +69,10 @@ export const PROP_KINDS: readonly PropKind[] = (Object.keys(KIND_INDEX) as PropK
 /** The stored chunks of one world: each chunk's text under its chunkKey. Plain JSON. */
 export type ChunkStore = Record<string, string>;
 
-/** A map generator: generateMap, or a stand-in for it in a test. */
+/**
+ * A map generator: generateMap with a world's production chain, `(s, p) => generateMap(s, p,
+ * chain)`, or a stand-in for it in a test.
+ */
 export type MapGenerator = (seed: number, params: Partial<MapGenParams>) => GameMap;
 
 /** The planes of a chunk's text. */
@@ -438,7 +441,9 @@ export function encodeMap(map: GameMap): ChunkStore {
  * The map of a generated world, from its stored chunks. Each chunk the map covers comes from its
  * text in `chunks`. A chunk with no text is generated with `generate`, and its text added to the
  * store, so the next call reads it instead. `generate` runs at most once, on the whole of `params`
- * (where the start chunk lies shapes generation), and not at all when every chunk is stored.
+ * (where the start chunk lies shapes generation), and not at all when every chunk is stored. The
+ * default is generateMap of the default production chain; a game passes a generator with its
+ * save's chain.
  *
  * A stored chunk that holds less of itself than the map now covers (a map whose edge was off the
  * chunk grid, grown since) keeps its tiles and has the rest generated, and its text is replaced by
