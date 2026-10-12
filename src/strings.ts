@@ -74,6 +74,8 @@ export const STR = {
     cannotAfford: (v: string) => `Need ${v} to buy this chunk`,
     chunkTitle: 'Uncharted chunk',
     chunkLines: (v: string) => [`Price ${v}`, 'Click to buy'],
+    /** the tooltip of a station or train that left the map between the pick and the tooltip */
+    gone: (kind: string, id: number) => `${kind} #${id}`,
     recordHint: 'R: record a new route for the selected train',
     recording: (n: string, stops: string) =>
       `Recording route for ${n}: ${stops || '(click stations in order)'} · R / Enter: finish · Esc: cancel`,
@@ -98,6 +100,32 @@ export const STR = {
     noTrack: 'No track can be laid here',
     trackCost: (m: number) => `Track costs ×${m}`,
     water: 'Bridges only; pumps draw from it',
+    /** the row that names the tile's biome; its value is the biome as a term (`STR.biome`) */
+    biome: 'Biome',
+    /**
+     * The ground a harvesting station counts, by `StationDef.terrain`, with the singular for one
+     * tile and the plural for several (never a plural built by adding an s). Station texts use
+     * them, and so does the placing tooltip.
+     */
+    phrase: {
+      grass: { one: 'grass tile', many: 'grass tiles' },
+      forest: { one: 'forest tile', many: 'forest tiles' },
+      rock: { one: 'rock or hill tile', many: 'rock and hill tiles' },
+      sand: { one: 'sand tile', many: 'sand tiles' },
+      water: { one: 'water tile', many: 'water tiles' },
+    } as Record<string, { one: string; many: string }>,
+  },
+  /**
+   * The biome tooltip and the station tooltip it opens. A template's `{name}` is filled by the
+   * tooltip (`fill` in src/ui/tooltipDoc.ts): a resource, a term or a bold number.
+   */
+  biome: {
+    title: (name: string) => `${name} biome`,
+    /** a production row: the resource, and the kind of station that makes it, as a term */
+    production: '{res} from {station}',
+    trackCost: 'Track cost',
+    waterUse: "Steam engines' {res} use",
+    speed: 'Train speed',
   },
   decorInfo: {
     reach: (r: number) => `Reach: ${r} tiles`,
@@ -348,11 +376,21 @@ export const STR = {
     running: 'Running',
     full: 'Stopped: stockpile full',
     starved: (n: string) => `Waiting for ${n}`,
+    /**
+     * The same status for the works tooltip, which shows the resource as an icon with its name
+     * (`{res}`). Keep the two worded alike; a test holds them together.
+     */
+    waiting: 'Waiting for {res}',
+    /** shown where the input a works waits for cannot be named */
+    unknownInput: '?',
     or: 'or',
     bridgeCapacity: 'Bridge capacity',
     /** "half speed" is `BRIDGE_SLOW_FACTOR` in src/sim/bridges.ts; reword it if that changes. */
     bridgeLimit: (capacity: number, slowAbove: number) =>
       `${capacity} t · half speed above ${slowAbove} t`,
+    /** the works tooltip's recipe line, each side a list of amounts and resources */
+    recipeLine: '{input} → {output}',
+    recipeAlt: '{input} (or {alt}) → {output}',
     bridgeHint:
       'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
   },
@@ -1153,6 +1191,9 @@ export const STR = {
     prefer: 'Steam fuel:',
     routing: 'Routing',
     clickHint: 'Click to select',
+    /** the train tooltip's state and the station the train heads for */
+    toward: '{state} → {station}',
+    weightPower: (weight: number, power: number) => `${weight} / ${power} t`,
     mode: {
       schedule: 'Schedule',
       transport: 'Transport',
@@ -1380,5 +1421,28 @@ export const STR = {
     market: 'Spot market',
     marketHint: 'Paid for cargo without a contract. Demand recovers over a week.',
     contracts: 'Contracts here',
+    /**
+     * A harvesting station's kind in the plural, by `StationDef.id`: written out, because adding
+     * an s spells "quarrys". Every station with a `terrain` needs one, and so does every station
+     * a biome's `production` names.
+     */
+    plural: {
+      farm: 'farm halts',
+      lumber: 'lumber yards',
+      quarry: 'quarries',
+      pump: 'water pumps',
+      mine: 'iron mines',
+      sand_pit: 'sand pits',
+      copper_mine: 'copper mines',
+    } as Record<string, string>,
+    /**
+     * The station tooltip a biome tooltip opens: what the station makes at level 1 on bare
+     * ground (`{amount}` a week, `{level}` 1), and what makes it more (`{tiles}` the ground it
+     * counts, `{radius}` how far it looks).
+     */
+    makes:
+      'Makes {res}: {amount} a week at level {level}, more with {tiles} within {radius} tiles (nearer ones count more) and in a biome that suits it.',
+    /** the same for a station that counts no ground */
+    makesAnywhere: 'Makes {res}: {amount} a week at level {level}.',
   },
 } as const;

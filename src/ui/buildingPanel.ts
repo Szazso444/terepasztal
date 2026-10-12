@@ -15,6 +15,7 @@ import { fmtCost } from '../sim/stockpile';
 import { cargoName } from '../sim/cargo';
 import { upgradeView } from './upgradeView';
 import { upgradeRow } from './upgradeRow';
+import type { WorksStatus } from './tooltipContent';
 
 /** Side panel for a selected processing building: recipe, state and lifetime output. */
 export class BuildingPanel {
@@ -53,18 +54,33 @@ export class BuildingPanel {
   }
 
   /**
-   * One-line status used by the panel and the hover tooltip. A works is closed while it is
-   * upgraded; a bridge being strengthened still carries trains, so it reads as it does without one.
+   * What a works is doing. A works is closed while it is upgraded; a bridge being strengthened
+   * still carries trains, so it reads as it does without one. The panel words it in `status`; the
+   * hover tooltip words it from this (`WorksSnapshot.status`), so the two cannot disagree.
    */
-  static status(b: Building, stock: Stockpile): { text: string; cls: string } {
+  static statusKind(b: Building, stock: Stockpile): WorksStatus {
     const def = buildingDef(b.id);
-    if (b.work && !def.bridge) return { text: STR.upgrade.closed, cls: 'amber' };
-    if (b.reason === 'full') return { text: STR.building.full, cls: 'amber' };
-    if (b.reason === 'inputs') {
-      const m = missingInput(def, stock);
-      return { text: STR.building.starved(m ? cargoName(m) : '?'), cls: 'red' };
+    if (b.work && !def.bridge) return { kind: 'closed' };
+    if (b.reason === 'full') return { kind: 'full' };
+    if (b.reason === 'inputs') return { kind: 'starved', missing: missingInput(def, stock) };
+    return { kind: 'running' };
+  }
+  /** One-line status of the panel, with the colour class it is shown in. */
+  static status(b: Building, stock: Stockpile): { text: string; cls: string } {
+    const s = BuildingPanel.statusKind(b, stock);
+    switch (s.kind) {
+      case 'closed':
+        return { text: STR.upgrade.closed, cls: 'amber' };
+      case 'full':
+        return { text: STR.building.full, cls: 'amber' };
+      case 'starved':
+        return {
+          text: STR.building.starved(s.missing ? cargoName(s.missing) : STR.building.unknownInput),
+          cls: 'red',
+        };
+      case 'running':
+        return { text: STR.building.running, cls: 'good' };
     }
-    return { text: STR.building.running, cls: 'good' };
   }
   /** The crew the panel shows: none while the works is closed for its upgrade (`crewTotal`). */
   static crew(b: Building): number {
