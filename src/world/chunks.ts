@@ -60,6 +60,7 @@ const KIND_INDEX = {
   boulder: 12,
   coal: 13,
   oil: 14,
+  wheat: 15,
 } satisfies Record<PropKind, number>;
 /** Every prop kind, at the index a chunk stores it under. */
 export const PROP_KINDS: readonly PropKind[] = (Object.keys(KIND_INDEX) as PropKind[]).sort(

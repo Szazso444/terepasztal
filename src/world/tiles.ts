@@ -44,7 +44,9 @@ export type PropKind =
   | 'boulder'
   /** deposits: a coal seam on a hill, an oil seep on low ground (full production chain) */
   | 'coal'
-  | 'oil';
+  | 'oil'
+  /** a tile of a wheat field on plains grass (generateMap's wheat pass) */
+  | 'wheat';
 export interface PropInstance {
   kind: PropKind;
   variant: number;

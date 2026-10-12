@@ -162,7 +162,10 @@ const grow = (s: Span, d: number): Span => ({
 const RIVER_TILES = 64;
 /** How far biome smoothing reads: two passes of a 5x5 majority. */
 const SMOOTH_REACH = 4;
-/** How far the passes after the rivers read: lone-tile cleanup 1, mountains 2, oil fields 2. */
+/**
+ * How far the passes after the rivers read: lone-tile cleanup 1, mountains 2, oil and wheat fields
+ * 2 (WHEAT_REACH).
+ */
 const LATE_REACH = 5;
 /**
  * Generation runs on a field this many tiles wider than the map on every side, and the map is
@@ -546,7 +549,7 @@ export function generateMap(
   const f = new Field(w, h, ox, oy, seeds, params, scx, scy, rs);
   // the passes after the rivers run on the map and the tiles around it they read, each on a band
   // narrower than the one it reads: the terrain LATE_REACH tiles out, the cleanup a tile less,
-  // the mountains and the oil field centres 2 tiles out
+  // the mountains and the oil and wheat field centres 2 tiles out
   const inMap: Span = { x0: MARGIN, y0: MARGIN, x1: MARGIN + mw, y1: MARGIN + mh };
   const late = grow(inMap, LATE_REACH);
   f.needSpan(late, GROUND);
@@ -604,16 +607,119 @@ export function generateMap(
     map.biome.set(f.biome.subarray(from, from + mw), y * mw);
   }
   decorateProps(map, seed);
-  // the deposits read the field around the map; they go over the map's props, the oil fields
-  // first, as if all three had been laid on the field (decorations are never oil)
-  oilFields(field, seed, oilCentres, supply);
-  startDeposits(field, start, supply);
+  // the fields and deposits read the field around the map; they go over the map's props, the
+  // wheat fields, then the oil fields, then the start seeps, as if all four had been laid on the
+  // field (decorations are never wheat or oil). The oil is worked out first, as the full chain
+  // lays it, for the wheat to keep off in either chain: oil never cuts a field, and both chains
+  // grow the same wheat.
+  const oil: GameMap = { ...field, props: new Map() };
+  oilFields(oil, seed, oilCentres, 'full');
+  startDeposits(oil, start, 'full');
+  wheatFields(field, seed, oilCentres, scx, scy, oil.props);
+  if (supply === 'full') for (const [i, list] of oil.props) field.props.set(i, list);
   for (const [i, list] of field.props) {
     const x = (i % w) - MARGIN;
     const y = Math.floor(i / w) - MARGIN;
     if (x >= 0 && y >= 0 && x < mw && y < mh) map.props.set(y * mw + x, list);
   }
   return map;
+}
+
+/** The places a world chunk has for a wheat field; each grows one field or none. */
+const WHEAT_SLOTS = 2;
+/** The share of slots that grow a field where their tile is plains grass. */
+const WHEAT_CHANCE = 0.9;
+/** A wheat field's fewest and most tiles. */
+const WHEAT_MIN = 4;
+const WHEAT_MAX = 9;
+/** How far a wheat field reaches from its slot, in tiles along either axis. */
+const WHEAT_REACH = 2;
+/** No wheat nearer than this to the start chunk's centre, in tiles: the first buildings go there. */
+const WHEAT_CLEAR = 8;
+/** The four sides of a tile. */
+const SIDES = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
+
+/**
+ * Wheat fields: patches of WHEAT_MIN to WHEAT_MAX tiles of wheat on Grass in the Plains biome, in
+ * both production chains, about as rare as oil fields (wheat covers about 1 % of plains grass).
+ * Every world chunk has WHEAT_SLOTS slots, each a tile fixed by the chunk's world coordinates and
+ * a hash of its own, at least WHEAT_REACH tiles inside the chunk, so a field never crosses a
+ * chunk's edge and a chunk holds at most WHEAT_SLOTS fields. A slot whose hash says so and whose
+ * tile is plains grass grows a field from that tile over the plains grass within WHEAT_REACH tiles,
+ * nearest first with a jitter that makes the edge ragged, each new tile beside one it already has;
+ * a slot with room for fewer than WHEAT_MIN tiles grows none. No wheat comes within WHEAT_CLEAR
+ * tiles of the start chunk's centre (`scx`, `scy`). Only slots on the tiles of `s` grow a field.
+ *
+ * A field tile carries the wheat alone: it replaces the tile's decoration (a flower patch, a bush
+ * or an oak). No field takes a tile oil could lie on, in either production chain: a tile an oil
+ * field could cover (oilCouldCover) or a tile of `oil`, the full chain's oil with its start seeps.
+ * So oil never cuts a field into pieces, and both chains grow the same fields; a field grows
+ * around the oil, or with fewer than WHEAT_MIN tiles left to it, not at all.
+ */
+function wheatFields(
+  map: GameMap,
+  seed: number,
+  s: Span,
+  scx: number,
+  scy: number,
+  oil: GameMap['props'],
+) {
+  const { w, h, terrain, biome, originX, originY, regionSize: rs } = map;
+  const ok = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return false;
+    const i = y * w + x;
+    if (terrain[i] !== Terrain.Grass || biome[i] !== Biome.Plains) return false;
+    if (oil.has(i) || oilCouldCover(x + originX, y + originY, seed)) return false;
+    const dx = x - scx;
+    const dy = y - scy;
+    return dx * dx + dy * dy >= WHEAT_CLEAR * WHEAT_CLEAR;
+  };
+  // the places along each axis a slot can take, WHEAT_REACH tiles or more inside its chunk
+  const span = rs - 2 * WHEAT_REACH;
+  const cx0 = Math.floor((originX + s.x0) / rs);
+  const cy0 = Math.floor((originY + s.y0) / rs);
+  const cx1 = Math.floor((originX + s.x1 - 1) / rs);
+  const cy1 = Math.floor((originY + s.y1 - 1) / rs);
+  for (let cy = cy0; cy <= cy1; cy++)
+    for (let cx = cx0; cx <= cx1; cx++)
+      for (let k = 0; k < WHEAT_SLOTS; k++) {
+        const slot = cx * WHEAT_SLOTS + k;
+        const grows = hash2(slot, cy, seed + 16);
+        if (grows >= WHEAT_CHANCE) continue;
+        const x = cx * rs + WHEAT_REACH + Math.floor(hash2(slot, cy, seed + 17) * span) - originX;
+        const y = cy * rs + WHEAT_REACH + Math.floor(hash2(slot, cy, seed + 18) * span) - originY;
+        if (x < s.x0 || y < s.y0 || x >= s.x1 || y >= s.y1 || !ok(x, y)) continue;
+        // the same hash, below WHEAT_CHANCE, picks the size evenly
+        const size = WHEAT_MIN + Math.floor((grows / WHEAT_CHANCE) * (WHEAT_MAX - WHEAT_MIN + 1));
+        // the tiles it may take, soonest first (pushed in reading order, which breaks a tie)
+        const near: { x: number; y: number; by: number }[] = [];
+        for (let dy = -WHEAT_REACH; dy <= WHEAT_REACH; dy++)
+          for (let dx = -WHEAT_REACH; dx <= WHEAT_REACH; dx++) {
+            if ((dx || dy) && ok(x + dx, y + dy)) {
+              const jitter = hash2(x + dx + originX, y + dy + originY, seed + 19);
+              near.push({ x: x + dx, y: y + dy, by: dx * dx + dy * dy + 2 * jitter });
+            }
+          }
+        near.sort((a, b) => a.by - b.by);
+        const field = [{ x, y }];
+        const beside = (t: { x: number; y: number }) =>
+          field.some((f) => Math.abs(f.x - t.x) + Math.abs(f.y - t.y) === 1);
+        while (field.length < size) {
+          const next = near.find((t) => !field.includes(t) && beside(t));
+          if (!next) break;
+          field.push(next);
+        }
+        if (field.length < WHEAT_MIN) continue;
+        for (const t of field) {
+          const variant = Math.floor(hash2(t.x + originX, t.y + originY, seed + 20) * 3);
+          map.props.set(t.y * w + t.x, [{ kind: 'wheat', variant, ox: 0, oy: 0 }]);
+        }
+      }
 }
 
 /**
@@ -637,8 +743,8 @@ function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
     for (let x = Math.max(2, s.x0); x < Math.min(w - 2, s.x1); x++) {
       const i = y * w + x;
       if (!ok(i)) continue;
-      if (hash2(x + originX, y + originY, seed + 12) < 0.9975) continue;
-      const rad = 1 + Math.floor(hash2(x + originX, y + originY, seed + 13) * 2);
+      const rad = oilRadius(x + originX, y + originY, seed);
+      if (!rad) continue;
       for (let dy = -rad; dy <= rad; dy++)
         for (let dx = -rad; dx <= rad; dx++) {
           const nx = x + dx;
@@ -646,19 +752,55 @@ function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
           if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
           const ni = ny * w + nx;
           if (!ok(ni)) continue;
-          if (dx * dx + dy * dy > rad * rad + 0.5) continue;
-          if (hash2(nx + originX, ny + originY, seed + 14) < 0.25) continue;
+          if (!oilCovers(nx + originX, ny + originY, dx, dy, rad, seed)) continue;
           map.props.set(ni, [{ kind: 'oil', variant: (dx + dy + 6) % 3, ox: 0, oy: 0 }]);
         }
     }
 }
 
+/** The farthest an oil field reaches from its centre, in tiles along either axis. */
+const OIL_REACH = 2;
 /**
- * The starting chunk gets three oil seeps (full production chain): every third grass or sand tile
- * of the ring 6 to 13 tiles out from the chunk centre, nearest first, in a fixed order so an
- * expanded map picks the same tiles again. That reaches three only where the ring holds seven such
- * tiles or more; a ring with fewer (a high Water level, a dense forest) gets fewer seeps, none on
- * a ring of water, and a second call on it lays more. Skipped when the chunk already has three.
+ * The radius, 1 to OIL_REACH, of the oil field centred on world tile (`wx`, `wy`), or 0 where its
+ * hash makes it no centre. The field grows only where the tile's ground takes one (grass or sand
+ * off the ocean).
+ */
+function oilRadius(wx: number, wy: number, seed: number) {
+  if (hash2(wx, wy, seed + 12) < 0.9975) return 0;
+  return 1 + Math.floor(hash2(wx, wy, seed + 13) * OIL_REACH);
+}
+/**
+ * Whether an oil field of radius `rad` covers world tile (`wx`, `wy`), `dx`, `dy` from its centre,
+ * where the tile's ground takes oil: inside the radius, and not one of the quarter it leaves bare.
+ */
+const oilCovers = (wx: number, wy: number, dx: number, dy: number, rad: number, seed: number) =>
+  dx * dx + dy * dy <= rad * rad + 0.5 && hash2(wx, wy, seed + 14) >= 0.25;
+/**
+ * Whether an oil field could cover world tile (`wx`, `wy`): one centred within OIL_REACH tiles
+ * would, wherever its centre's ground takes one. The hashes alone answer it, never the ground, so
+ * it is the same on every map that holds the tile; every tile an oil field covers is one.
+ */
+function oilCouldCover(wx: number, wy: number, seed: number) {
+  for (let dy = -OIL_REACH; dy <= OIL_REACH; dy++)
+    for (let dx = -OIL_REACH; dx <= OIL_REACH; dx++) {
+      const rad = oilRadius(wx - dx, wy - dy, seed);
+      if (rad && oilCovers(wx, wy, dx, dy, rad, seed)) return true;
+    }
+  return false;
+}
+
+/** The oil seeps a full-chain start chunk holds. */
+const START_SEEPS = 3;
+
+/**
+ * The starting chunk gets three oil seeps (full production chain), counting the oil already in it,
+ * on its grass or sand tiles without oil, nearest the chunk centre first, ties in reading order, a
+ * fixed order so an expanded map picks the same tiles again. They go on every third tile of the
+ * ring 6 to 13 tiles out, where the ring holds enough such tiles (seven for three seeps). Where it
+ * is short (a high Water level, a dense forest), they go on the nearest such tiles of the whole
+ * chunk instead, at a step of `max(1, min(3, floor((n - 1) / (need - 1))))` for `n` tiles and
+ * `need` seeps, so a chunk with three grass or sand tiles always gets three. A second call changes
+ * nothing.
  */
 export function ensureStartDeposits(map: GameMap, supply: SupplyMode = DEFAULT_SUPPLY) {
   startDeposits(map, startSpan(map), supply);
@@ -667,35 +809,43 @@ function startDeposits(map: GameMap, s: Span, supply: SupplyMode) {
   if (supply !== 'full') return;
   const cx = s.x0 + map.regionSize / 2;
   const cy = s.y0 + map.regionSize / 2;
-  const has = (i: number, kind: PropKind) => map.props.get(i)?.some((p) => p.kind === kind);
-  const place = (kind: PropKind, want: number, ok: (t: Terrain, d: number) => boolean) => {
-    const cands: { x: number; y: number; d: number }[] = [];
-    let have = 0;
-    for (let y = s.y0; y < s.y1; y++)
-      for (let x = s.x0; x < s.x1; x++) {
-        const i = y * map.w + x;
-        if (has(i, kind)) {
-          have++;
-          continue;
-        }
-        const d = Math.hypot(x - cx, y - cy);
-        if (ok(map.terrain[i] as Terrain, d)) cands.push({ x, y, d });
+  const free: { x: number; y: number; d: number }[] = [];
+  let have = 0;
+  for (let y = s.y0; y < s.y1; y++)
+    for (let x = s.x0; x < s.x1; x++) {
+      const i = y * map.w + x;
+      if (map.props.get(i)?.some((p) => p.kind === 'oil')) {
+        have++;
+        continue;
       }
-    // nearest first; ties in reading order, which a wider map keeps
-    cands.sort((a, b) => a.d - b.d || a.y - b.y || a.x - b.x);
-    for (let k = 0; have < want && k < cands.length; k += 3, have++) {
-      const { x, y } = cands[k];
-      const jitter = hash2(x + map.originX, y + map.originY, map.seed + 15);
-      map.props.set(y * map.w + x, [{ kind, variant: k % 3, ox: (jitter - 0.5) * 0.3, oy: 0 }]);
+      const t = map.terrain[i];
+      if (t === Terrain.Grass || t === Terrain.Sand)
+        free.push({ x, y, d: Math.hypot(x - cx, y - cy) });
     }
-  };
-  place('oil', 3, (t, d) => (t === Terrain.Grass || t === Terrain.Sand) && d > 6 && d < 13);
+  const need = START_SEEPS - have;
+  if (need <= 0) return;
+  // nearest first; ties in reading order, which a wider map keeps
+  free.sort((a, b) => a.d - b.d || a.y - b.y || a.x - b.x);
+  let from = free.filter((c) => c.d > 6 && c.d < 13);
+  let step = 3;
+  if (from.length < step * (need - 1) + 1) {
+    from = free;
+    step = need > 1 ? Math.max(1, Math.min(3, Math.floor((free.length - 1) / (need - 1)))) : 1;
+  }
+  for (let k = 0, laid = 0; laid < need && k < from.length; k += step, laid++) {
+    const { x, y } = from[k];
+    const jitter = hash2(x + map.originX, y + map.originY, map.seed + 15);
+    map.props.set(y * map.w + x, [
+      { kind: 'oil', variant: k % 3, ox: (jitter - 0.5) * 0.3, oy: 0 },
+    ]);
+  }
 }
 
 /**
  * The starting chunk must offer every basic resource: water (pumps), forest (lumber), hill or
  * rock (quarries) and grass (farms). Missing ones are painted as small patches near the chunk's
- * corners, away from the central basin.
+ * corners, away from the central basin. Then it must hold a tile a Water Pump can stand on (see
+ * startPump).
  */
 export function ensureStartResources(map: GameMap) {
   startResources(map, startSpan(map));
@@ -729,6 +879,54 @@ function startResources(map: GameMap, s: Span) {
   if (count((t) => t === Terrain.Forest) < 6) paint(Terrain.Forest, 2);
   if (count((t) => t === Terrain.Hill || t === Terrain.Rock) < 4) paint(Terrain.Hill, 1);
   if (count((t) => t === Terrain.Grass) < 20) paint(Terrain.Grass, 3);
+  startPump(map, s);
+}
+
+/**
+ * The starting chunk `s` must hold a tile a Water Pump can stand on: Grass or Forest with Water on
+ * one of its 4 sides inside the chunk, and level: no Hill or Mountain on any of its 4 sides (the
+ * terraces' level tile; a hill or mountain always stands a level above the ground beside it).
+ * Where no tile is one, the tile beside the chunk's water that needs the fewest tiles changed
+ * becomes one, nearest the chunk's centre on a tie, then in reading order: it turns Grass unless
+ * it is Grass or Forest, and every Hill or Mountain on its sides turns Grass. Mostly that is a
+ * sand tile of a lake's shore turned grass. The chunk always has water and other ground here (the
+ * patches above), so some tile is beside its water.
+ */
+function startPump(map: GameMap, s: Span) {
+  const { w, terrain } = map;
+  const cx = s.x0 + map.regionSize / 2;
+  const cy = s.y0 + map.regionSize / 2;
+  const steep = (t: number) => t === Terrain.Hill || t === Terrain.Mountain;
+  const inChunk = (x: number, y: number) => x >= s.x0 && y >= s.y0 && x < s.x1 && y < s.y1;
+  let best: { x: number; y: number; cost: number; d: number } | null = null;
+  for (let y = s.y0; y < s.y1; y++)
+    for (let x = s.x0; x < s.x1; x++) {
+      const t = terrain[y * w + x];
+      if (t === Terrain.Water) continue;
+      let water = false;
+      let cost = t === Terrain.Grass || t === Terrain.Forest ? 0 : 1;
+      for (const [dx, dy] of SIDES) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= map.h) continue;
+        const n = terrain[ny * w + nx];
+        if (n === Terrain.Water) water ||= inChunk(nx, ny);
+        else if (steep(n)) cost++;
+      }
+      if (!water) continue;
+      if (cost === 0) return;
+      const d = Math.hypot(x - cx, y - cy);
+      if (!best || cost < best.cost || (cost === best.cost && d < best.d)) best = { x, y, cost, d };
+    }
+  if (!best) return;
+  const { x, y } = best;
+  if (terrain[y * w + x] !== Terrain.Forest) terrain[y * w + x] = Terrain.Grass;
+  for (const [dx, dy] of SIDES) {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= w || ny >= map.h) continue;
+    if (steep(terrain[ny * w + nx])) terrain[ny * w + nx] = Terrain.Grass;
+  }
 }
 
 /**
