@@ -94,9 +94,10 @@ describe('a bridge platform', () => {
       const m = flat(t);
       m.props.set(4 * m.w + 4, [{ kind: 'rock', variant: 0, ox: 0, oy: 0 }]);
       const repairs = repaired(m, only({ buildings: [works(4, 4, 'bridge_wood')] }));
-      expect(repairs).toEqual([{ x: 4, y: 4, terrain: Terrain.Water }]);
-      // standing on water, which any platform may, with the props of the old ground gone
-      expect(at(m, 4, 4)).toBe(Terrain.Water);
+      // land stays land: the tile becomes grass, which a platform may stand on, never water
+      expect(repairs).toEqual([{ x: 4, y: 4, terrain: Terrain.Grass }]);
+      // with the props of the old ground gone
+      expect(at(m, 4, 4)).toBe(Terrain.Grass);
       expect(m.props.has(4 * m.w + 4)).toBe(false);
       // and the tiles around it were not touched
       expect(at(m, 3, 4)).toBe(t);
@@ -107,7 +108,7 @@ describe('a bridge platform', () => {
   it('is repaired under rail as it is alone', () => {
     const m = flat(Terrain.Rock);
     repaired(m, only({ track: [straight(2, 2)], buildings: [works(2, 2, 'bridge_wood')] }));
-    expect(at(m, 2, 2)).toBe(Terrain.Water);
+    expect(at(m, 2, 2)).toBe(Terrain.Grass);
   });
 });
 
@@ -291,6 +292,9 @@ describe('the repair', () => {
           expect(seen.has(i), 'once').toBe(false);
           seen.add(i);
           expect(r.terrain, 'changes').not.toBe(before[i]);
+          // the cases hold no retired bridge track, the one kind that lays water: the repair
+          // never creates water where the player had none, under a platform or anything else
+          expect(r.terrain, 'no new water').not.toBe(Terrain.Water);
         }
         applyTileRepairs(m, repairs);
         const { platforms, land, any } = stood(c.built, m.w);
@@ -302,8 +306,10 @@ describe('the repair', () => {
         // only tiles something stands on change, and a platform alone changes only off its range
         for (const r of repairs) expect(any.has(r.y * m.w + r.x), 'under an object').toBe(true);
         for (const i of platforms)
-          if (!land.has(i) && !NO_PLATFORM.includes(before[i]))
-            expect(m.terrain[i], 'platform tile kept').toBe(before[i]);
+          if (!land.has(i))
+            expect(m.terrain[i], 'platform tile').toBe(
+              NO_PLATFORM.includes(before[i]) ? Terrain.Grass : before[i],
+            );
         // settled: nothing left to repair
         expect(repairBuiltTiles(m, c.built)).toEqual([]);
         if (repairs.length) repairedSome++;
@@ -362,7 +368,7 @@ describe('a load with repairs', () => {
     // the repair was done: the platform on grass kept its grass, the others were given ground
     expect(repairs.length).toBe(2);
     expect(at(m, grass[0], grass[1])).toBe(Terrain.Grass);
-    expect(at(m, rock[0], rock[1])).toBe(Terrain.Water);
+    expect(at(m, rock[0], rock[1])).toBe(Terrain.Grass);
     expect(at(m, water[0], water[1])).toBe(Terrain.Grass);
     expect([...m.terrain]).not.toEqual([...generated]);
 

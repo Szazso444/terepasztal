@@ -28,7 +28,8 @@ export interface TileRepair {
  * What an object needs of the ground under one tile:
  * - `land`: buildable ground, so not water, rock or mountain (stations, works, decor, track);
  * - `platform`: a bridge platform stands on water or carries a rail across a dip in the land
- *   (`checkBuilding` in `src/sim/build.ts`), so anything but rock and mountain;
+ *   (`checkBuilding` in `src/sim/build.ts`), so anything but rock and mountain; a platform on land
+ *   keeps its land, and one whose tile came back rock or mountain gets grass, not water;
  * - `water`: a track piece of the retired `bridge` kind, which `checkTrackTile` lays on water only.
  */
 type Standing = 'land' | 'platform' | 'water';
@@ -41,9 +42,9 @@ function groundFor(standing: Standing, t: Terrain): Terrain {
         ? Terrain.Grass
         : t;
     case 'platform':
-      // grass stays grass and water stays water; a tile no platform may stand on becomes the
-      // water one always may, so the platform is not stranded
-      return t === Terrain.Rock || t === Terrain.Mountain ? Terrain.Water : t;
+      // any other ground stays as it is; a tile no platform may stand on becomes grass, the land
+      // a platform may stand on, never water: the repair makes no water where the player had none
+      return t === Terrain.Rock || t === Terrain.Mountain ? Terrain.Grass : t;
     case 'water':
       return Terrain.Water;
   }

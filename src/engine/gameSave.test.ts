@@ -3,7 +3,8 @@ import { Game } from '../game';
 import { AutosavePause } from './autosavePause';
 import { BrokenNumberWarning, StorageRefusalWarning } from './saveRefusal';
 import { SAVE_KEY, type SaveGame } from '../sim/save';
-import { ownsBorderChunk } from '../sim/expand';
+import { CHUNK_TILES, ownsBorderChunk } from '../sim/expand';
+import { MAX_WORLD_CHUNKS } from '../sim/ground';
 import { RegionState } from '../world/regions';
 import { emptyMap } from '../world/mapgen';
 import { STR } from '../strings';
@@ -324,10 +325,16 @@ describe('Game.buyChunk', () => {
    * ownership and the money, so a stored save shows what the purchase did.
    */
   function buying(
-    over: { autosave?: boolean; mode?: 'play' | 'editor'; kind?: 'generated' | 'level' } = {},
+    over: {
+      autosave?: boolean;
+      mode?: 'play' | 'editor';
+      kind?: 'generated' | 'level';
+      size?: number;
+    } = {},
   ) {
     const g = standIn();
-    const map = emptyMap(1, 160, 160);
+    const size = over.size ?? 160;
+    const map = emptyMap(1, size, size);
     const regions = new RegionState(map, 0);
     const economy = {
       money: MONEY,
@@ -353,14 +360,15 @@ describe('Game.buyChunk', () => {
     });
     const inner = regions.neighbours(regions.unlocked.indexOf(true));
     // owning every one of them still leaves the grid's edge alone
-    expect(
-      ownsBorderChunk(
-        regions.unlocked.map((v, i) => v || inner.includes(i)),
-        160,
-        160,
-      ),
-    ).toBe(false);
-    return { ...g, regions, economy, inner };
+    if (size === 160)
+      expect(
+        ownsBorderChunk(
+          regions.unlocked.map((v, i) => v || inner.includes(i)),
+          size,
+          size,
+        ),
+      ).toBe(false);
+    return { ...g, regions, economy, inner, map };
   }
   const storedSave = () => JSON.parse(store.items.get(SAVE_KEY)!) as SaveGame;
   const bought = { text: STR.overview.bought, kind: 'good' };
@@ -438,5 +446,25 @@ describe('Game.buyChunk', () => {
     expect(b.game.buyChunk(edge, true)).toBe(true);
     expect(b.toasts).toEqual([bought, { text: STR.overview.growHeld, kind: 'warn' }]);
     expect(store.items.size).toBe(0);
+  });
+
+  it('stores a purchase on the grid edge at once when the world cannot grow any more', () => {
+    // a world of MAX_WORLD_CHUNKS chunks (32 x 32): no ring fits, so owning its edge asks for none
+    const b = buying({ size: 32 * CHUNK_TILES });
+    // the corner lies sixteen rings out, which costs more than the start of a game affords
+    const money = (b.economy.money = MONEY * 1000);
+    const side = b.map.regionsX;
+    expect(side * side).toBe(MAX_WORLD_CHUNKS);
+    // the corner chunk is on the edge; owning it and buying its neighbour leaves the map as it is
+    b.regions.own(0);
+    expect(ownsBorderChunk(b.regions.unlocked, b.map.w, b.map.h)).toBe(false);
+    const i = 1;
+    expect(b.regions.isRevealed(i)).toBe(true);
+    const price = b.regions.price(i);
+    expect(b.game.buyChunk(i, true)).toBe(true);
+    expect(b.toasts).toEqual([bought]);
+    const save = storedSave();
+    expect((save.regions as boolean[])[i]).toBe(true);
+    expect((save.economy as { money: number }).money).toBe(money - price);
   });
 });
