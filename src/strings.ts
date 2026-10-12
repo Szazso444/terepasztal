@@ -299,7 +299,15 @@ export const STR = {
     tierLocked: (t: number) => `Requires the ${ageLabel(t)}`,
     supplyLocked: "Not part of this game's production chain",
     needDeposit: (k: string) => `Needs a ${k} deposit on the tile`,
-    badTerrain: 'Cannot build here',
+    /**
+     * Why nothing can be built on a terrain (`unbuildable` in src/sim/build.ts), by
+     * `TERRAIN_NAMES`: one line per terrain, as the article differs.
+     */
+    nothingOn: {
+      water: 'Nothing can be built on water.',
+      rock: 'Nothing can be built on rock.',
+      mountain: 'Nothing can be built on a mountain.',
+    },
     needTrack: 'Must touch track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,

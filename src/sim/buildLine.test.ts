@@ -368,7 +368,7 @@ describe('a bridge line', () => {
       expect(w.builder.placeBuilding(11, 8, 'bridge_stone')).not.toBeNull();
     const none = () => {};
     const cases: [string, (w: World) => void, LinePiece[], number, string][] = [
-      ['rock under a platform', rock, bridge(10, 15, 8), 4, STR.build.badTerrain],
+      ['rock under a platform', rock, bridge(10, 15, 8), 4, STR.build.nothingOn.rock],
       ['a works on the span', works, bridge(10, 15, 8), 6, STR.build.occupied],
       ['the other material standing', stone, bridge(10, 15, 8), 2, STR.build.occupied],
       [

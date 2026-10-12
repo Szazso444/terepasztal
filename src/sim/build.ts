@@ -77,6 +77,26 @@ export interface PlacementCheck {
 }
 
 /**
+ * Why nothing can be built on terrain `t`, naming the ground, or null when it takes buildings.
+ * The one list of where nothing stands: stations, works, decor off the track and a depot's gates
+ * all ask it, and a bridge platform asks it everywhere but on water, which it spans. Track has
+ * rules of its own (`checkTrackTile`), and so do the walkers (`walkable` in people.ts) and the
+ * town paving (`cityTiles` in city.ts).
+ */
+export function unbuildable(t: Terrain): string | null {
+  switch (t) {
+    case Terrain.Water:
+      return STR.build.nothingOn.water;
+    case Terrain.Rock:
+      return STR.build.nothingOn.rock;
+    case Terrain.Mountain:
+      return STR.build.nothingOn.mountain;
+    default:
+      return null;
+  }
+}
+
+/**
  * One piece of a line, in the order the line lays it: a track piece by its anchor tile, item and
  * rotation, as `checkTrack` and `placeTrack` take them, or a bridge platform (`defId` names a
  * building with `bridge`; a platform stands at rotation 0). Each piece is judged as if the pieces
@@ -724,9 +744,8 @@ export class Builder {
     for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
       if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
-      const t = terrainAt(this.map, tx, ty);
-      if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-        return { ok: false, cost: {}, reason: STR.build.badTerrain };
+      const bad = unbuildable(terrainAt(this.map, tx, ty));
+      if (bad) return { ok: false, cost: {}, reason: bad };
       if (
         this.track.has(tx, ty) ||
         this.stationAt(tx, ty) ||
@@ -869,12 +888,11 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
-    const t = terrainAt(this.map, x, y);
     if (def.onTrack && !def.anyTile) {
       if (!this.track.has(x, y)) return STR.build.needTrackHere;
     } else {
-      if (t === Terrain.Rock || t === Terrain.Water || t === Terrain.Mountain)
-        return STR.build.badTerrain;
+      const bad = unbuildable(terrainAt(this.map, x, y));
+      if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
@@ -960,8 +978,8 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     const t = terrainAt(this.map, x, y);
     // Bridge platforms stand on water or carry a rail level across a dip in the land.
-    if (t === Terrain.Rock || t === Terrain.Mountain || (t === Terrain.Water && !def.bridge))
-      return { ok: false, cost: {}, reason: STR.build.badTerrain };
+    const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
+    if (bad) return { ok: false, cost: {}, reason: bad };
     if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
       return { ok: false, cost: {}, reason: STR.build.notLevel };
     if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
