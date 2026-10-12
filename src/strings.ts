@@ -128,6 +128,7 @@ export const STR = {
       boulder: 'boulder',
       coal: 'coal seam',
       oil: 'oil seep',
+      wheat: 'wheat field',
     } as Record<string, string>,
     uncharted: 'Uncharted: buy the chunk in the overview (M)',
     track: (k: string) => `Track: ${k}`,
