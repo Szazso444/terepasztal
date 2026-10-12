@@ -1,0 +1,23 @@
+{
+  "issue": 325,
+  "branch": "art/325-buildings-v2",
+  "scope": "Only assets/source/buildings-v2/ changed by the art work; origin/develop was merged as PROMPT.md requests.",
+  "art": {
+    "recorded": 8,
+    "rejected": 0,
+    "attempts": 17,
+    "water_tower": "All four views pass the repository check and the five-percent square-plan test. Front spout appears only in r0 and r3.",
+    "fuel_stop": "All four views are recorded. R0 passes directly. R1, r2 and r3 were retained under the three-attempt rule with camera errors of 3.7, 2.8 and 9.9 degrees respectively. Their selected plan ratios pass the fifteen-percent turn test. Rear stage heights still vary from r0; the coaling stage remains a draft set.",
+    "corners": "Measured corners were used for all selected pictures. No eye correction was claimed.",
+    "cameraNote": "The queue tool replaces the supplied measurement note with its automatic kept-camera note when retaining a refused picture. Full selected and rejected-attempt measurements remain in raw/returns.json.",
+    "nativeFiles": "All 17 generated PNGs are preserved byte-for-byte at returned size 1254x1254. No painting was cropped, resized, recoloured or deleted. Only the repository tools fitted references and review pictures."
+  },
+  "checks": {
+    "typecheck": "Passed app and tooling through a read-only host resolving the existing dependency directory; no config or dependency files changed.",
+    "lint": "Passed.",
+    "build": "Passed original Vite config with output and cache confined to .qa/.",
+    "format": "Passed the repository formatting check with --end-of-line auto for the Windows checkout, and scoped formatting of the raw records.",
+    "scope": "Passed the art role scope check; every authored change remains within assets/source/buildings-v2/.",
+    "tests": "Full run: 2752 passed, 2 failed, 2 skipped; 135 suites passed and 4 failed. The import-boundaries suite initially could not resolve eslint in this isolated checkout, and passed all 66 tests on rerun with the dependency alias. Combined: 2818 passed, 2 failed, 2 skipped. Remaining failures in unchanged origin/develop code: src/sim/ownLength.test.ts detects SIZE_LEN reads outside vehicleSpec; tools/asset-pipeline/handbuilt/run.test.mjs seed 19 loses a trailing-space path on Windows. tools/agents/ownership.test.mjs still fails to load with SyntaxError: Invalid or unexpected token. No out-of-scope fixes were made."
+  }
+}

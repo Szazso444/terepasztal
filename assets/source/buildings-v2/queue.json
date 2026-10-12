@@ -12,7 +12,7 @@
     }
   ],
   "accepted": [],
-  "mark": 1791845392935,
+  "mark": 1791847317761,
   "chat": "01a12c68-070c-7b91-9ff6-217c3f4318b1",
   "counts": {
     "pictures": 548,
@@ -5465,9 +5465,13 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "New issue #325 art brief: verify plan, front features, camera and raw returns."
+      "status": "generated",
+      "attempts": 3,
+      "note": "Native 1254x1254; spans 269.0 / 367.0 px, lower-right long side; L/R 0.7329. Measured corners used, no eye correction. Painted box alpha>128 x319..961 y154..1130. Six piers, front chute lower-left.",
+      "repaint": {
+        "by": 2.5,
+        "was": "It was painted from too low a camera, so too little of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "fuel_stop-a0-r1",
@@ -5475,9 +5479,14 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 3.7° after 3 attempts: the closest the tool held",
+      "kept": 3.7,
+      "repaint": {
+        "by": 3.7,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     },
     {
       "id": "fuel_stop-a0-r2",
@@ -5485,9 +5494,14 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 2.8° after 3 attempts",
+      "repaint": {
+        "by": 3.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      },
+      "kept": 2.8
     },
     {
       "id": "fuel_stop-a0-r3",
@@ -5495,9 +5509,14 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": "New issue #325 art brief: verify plan, front features, camera and raw returns."
+      "status": "generated",
+      "attempts": 3,
+      "note": "kept with its camera off by 9.9° after 3 attempts",
+      "kept": 9.9,
+      "repaint": {
+        "by": 13,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
     }
   ]
 }
