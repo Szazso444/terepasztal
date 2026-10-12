@@ -3,11 +3,15 @@ import {
   BEACH_REACH,
   DEFAULT_MAP_PARAMS,
   MOUNTAIN_REACH,
+  decorateProps,
+  emptyMap,
+  generateMap,
   generateMapPlanes,
+  placeOilFields,
   type MapGenParams,
   type MapPlanes,
 } from './mapgen';
-import { Biome, BIOME_NAMES, CLIMATES, Terrain, startRegion } from './tiles';
+import { Biome, BIOME_NAMES, CLIMATES, Terrain, startRegion, type GameMap } from './tiles';
 import { Rng } from '../engine/rng';
 import type { SupplyMode } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
@@ -357,5 +361,90 @@ describe('the biome rules', () => {
     expect(a.map.terrain).toEqual(b.map.terrain);
     expect(a.river).toEqual(b.river);
     expect(a.shore).toEqual(b.shore);
+  });
+});
+
+/** The props of tile `i` of `m`, as text. */
+const propsAt = (m: GameMap, i: number) => JSON.stringify(m.props.get(i) ?? null);
+
+/**
+ * The first tile, in tile order, whose props differ between `a` and `b` (two planes of one map),
+ * with both its props; null when none does. `skip` leaves tiles out.
+ */
+function propsDiff(a: GameMap, b: GameMap, skip: (i: number) => boolean = () => false) {
+  const tiles = [...new Set([...a.props.keys(), ...b.props.keys()])].sort((x, y) => x - y);
+  for (const i of tiles)
+    if (!skip(i) && propsAt(a, i) !== propsAt(b, i))
+      return `tile ${i}: ${propsAt(a, i)} against ${propsAt(b, i)}`;
+  return null;
+}
+
+/** `m` with no landform left to read: its biome is its climate, and it has no props. */
+const climateOnly = (m: GameMap): GameMap => ({
+  ...m,
+  biome: m.climate!.slice(),
+  climate: undefined,
+  props: new Map(),
+});
+
+describe('the decorations and oil fields of a generated map', () => {
+  // A landform biome names the ground's shape, not its climate: decorations and oil fields read the
+  // climate under it (climateAt), so a beach on an island grows palms and takes no oil, as island
+  // sand did before the landforms, and one on a desert coast grows cacti. Each map is checked
+  // against itself with its biome set to its climate, which leaves only the climate to read.
+  const DECO_SEEDS = [1, 2, 3, 4, 5, 7412, 20260912, 31337];
+
+  it('are the decorations its climate gives, on every tile', () => {
+    // decorated tiles under each landform biome, so the check cannot pass on maps without one
+    const under = new Map<number, number>();
+    for (const seed of DECO_SEEDS) {
+      const m = generateMap(seed, { w: 160, h: 160 }, 'simple');
+      const bare = climateOnly(m);
+      decorateProps(bare, seed);
+      // a wheat field replaces the decoration of its tiles (src/world/wheat.test.ts)
+      const wheat = (i: number) => !!m.props.get(i)?.some((p) => p.kind === 'wheat');
+      expect(propsDiff(m, bare, wheat), `seed ${seed}`).toBeNull();
+      for (const [i, list] of m.props)
+        if (m.biome[i] >= CLIMATES && !wheat(i) && list.length)
+          under.set(m.biome[i], (under.get(m.biome[i]) ?? 0) + 1);
+    }
+    expect(under.get(Biome.Beach) ?? 0).toBeGreaterThan(0);
+  });
+
+  it('lay oil where the climate takes it, never on ground in the Ocean climate', () => {
+    let oil = 0;
+    for (const seed of DECO_SEEDS) {
+      const m = generateMap(seed, { w: 160, h: 160 }, 'full');
+      for (const [i, list] of m.props)
+        if (list.some((p) => p.kind === 'oil')) {
+          oil++;
+          expect(m.climate![i], `seed ${seed}, oil on tile ${i}`).not.toBe(Biome.Ocean);
+        }
+      const own = { ...m, props: new Map() };
+      placeOilFields(own, seed, 'full');
+      const bare = climateOnly(m);
+      placeOilFields(bare, seed, 'full');
+      expect(propsDiff(own, bare), `seed ${seed}`).toBeNull();
+    }
+    expect(oil).toBeGreaterThan(0);
+  });
+
+  it('read the climate under a beach: palms on an island, cacti in the desert, oil off the sea', () => {
+    /** The decoration kinds and the oil tiles of a field of beach sand over `climate`. */
+    const beachOf = (climate: Biome) => {
+      const m = emptyMap(7412, 64, 64, Terrain.Sand);
+      m.biome.fill(Biome.Beach);
+      m.climate = new Uint8Array(m.w * m.h).fill(climate);
+      decorateProps(m, 7412);
+      const kinds = new Set([...m.props.values()].flat().map((p) => p.kind));
+      const oil = { ...m, props: new Map() };
+      placeOilFields(oil, 7412, 'full');
+      return { kinds: [...kinds].sort(), oil: oil.props.size };
+    };
+    expect(beachOf(Biome.Ocean)).toEqual({ kinds: ['palm'], oil: 0 });
+    const desert = beachOf(Biome.Desert);
+    expect(desert.kinds).toEqual(['cactus', 'deadtree']);
+    expect(desert.oil).toBeGreaterThan(0);
+    expect(beachOf(Biome.Plains).kinds).toEqual([]);
   });
 });

@@ -103,6 +103,40 @@ describe('a chunk text', () => {
     expect(decodeChunk(textOf([1, ...bytes.slice(1)]))).toBeNull();
   });
 
+  // Version 1 holding part of its chunk (a map whose edge was off the chunk grid): header
+  // 01 02 01 03 02, the 3 x 2 tiles from (2, 1); terrain six grass (05), biome runs 3 3 5 5 1 4
+  // (31 51 10 40), variant 00 00, no props (00).
+  it('of version 1 holding part of its chunk keeps its climate its biome when the rest is generated', () => {
+    const text = textOf([1, 2, 1, 3, 2, 0x05, 0x31, 0x51, 0x10, 0x40, 0, 0, 0]);
+    const old = [3, 3, 5, 5, 1, 4];
+    const stored = (x: number, y: number) => x >= 2 && x < 5 && y >= 1 && y < 3;
+    // the rest of the chunk generated with a biome and a climate unlike any stored tile's
+    const other: MapGenerator = (s, p) => {
+      const m = generateMap(s, p);
+      const n = m.w * m.h;
+      return {
+        ...m,
+        biome: new Uint8Array(n).fill(Biome.Lake),
+        climate: new Uint8Array(n).fill(Biome.Desert),
+      };
+    };
+    const built = buildMap(1, { w: 32, h: 32 }, { '0,0': text }, other);
+    expect(built.added).toEqual(['0,0']);
+    const m = built.map;
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const was = stored(x, y) ? old[(y - 1) * 3 + x - 2] : null;
+        const where = `tile (${x}, ${y})`;
+        expect(m.biome[y * 32 + x], where).toBe(was ?? Biome.Lake);
+        expect(climateAt(m, x, y), where).toBe(was ?? Biome.Desert);
+      }
+    // written again whole at today's version, and read from the store alone, the same
+    expect(decodeChunk(built.chunks['0,0'])!.version).toBe(CHUNK_VERSION);
+    const again = buildMap(1, { w: 32, h: 32 }, built.chunks, never);
+    expect([...again.map.biome]).toEqual([...m.biome]);
+    expect([...again.map.climate!]).toEqual([...m.climate!]);
+  });
+
   it('holds the climate of a generated map, and a map built from it reads it back', () => {
     for (const seed of [1, 7412, 20260912, 31337])
       for (const frame of [
