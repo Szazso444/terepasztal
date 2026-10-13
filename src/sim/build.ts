@@ -39,6 +39,7 @@ import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
 import { planReclass, type PieceChange, type WideClass } from '../world/reclass';
+import { continuesLine, onRails, stone } from './mountainTrack';
 
 const trackData = content.track;
 
@@ -94,14 +95,6 @@ export function unbuildable(t: Terrain): string | null {
     default:
       return null;
   }
-}
-
-/**
- * Rock and mountain: no building stands on them (`unbuildable`), and track only continues a line
- * onto them (`Builder.trackRules`).
- */
-function stone(t: Terrain) {
-  return t === Terrain.Rock || t === Terrain.Mountain;
 }
 
 /**
@@ -498,7 +491,7 @@ export class Builder {
     // is asked next, as anywhere.
     if (
       tiles.some((t) => stone(terrainAt(this.map, t.x, t.y))) &&
-      !this.continuesLine(probe, tiles)
+      !continuesLine(this.track, probe, tiles)
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
     // Straights, crossings and class transitions may climb. Curves and switches (regular and
@@ -538,23 +531,6 @@ export class Builder {
     let mul = 0;
     for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
     return { ok: true, cost: this.priced(pieceCost(kind, item.cls, item.cls2), mul) };
-  }
-  /**
-   * The piece `probe` holds on `tiles` joins a line: one of its ports leads off the footprint onto
-   * a tile whose track opens back toward it. Track beside the piece that runs past it (a
-   * perpendicular straight) does not join it.
-   */
-  private continuesLine(probe: TrackGraph, tiles: readonly { x: number; y: number }[]) {
-    return tiles.some((t) =>
-      (probe.get(t.x, t.y)?.links ?? []).some((link) =>
-        link.some((d) => {
-          const nx = t.x + DDX[d],
-            ny = t.y + DDY[d];
-          if (tiles.some((q) => q.x === nx && q.y === ny)) return false;
-          return this.track.opensTo(nx, ny, opposite(d));
-        }),
-      ),
-    );
   }
   refundFor(p: TrackPiece): Cost {
     return this.free
@@ -949,7 +925,7 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
-    if (def.onTrack && !def.anyTile) {
+    if (onRails(defId)) {
       if (!this.track.has(x, y)) return STR.build.needTrackHere;
     } else {
       const bad = unbuildable(terrainAt(this.map, x, y));

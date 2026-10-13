@@ -147,7 +147,9 @@ Track can be laid on **Rock** and **Mountain**, but only as the continuation of 
 piece there needs one of its ends joined to the end of a line already standing. Draw a line up
 from the foot of the mountain, or on from track already on it; drawn from the far end, it is
 refused with "Mountain track must continue an existing line". Track beside the tile that runs
-past it does not count. The editor keeps the same rule.
+past it does not count. The editor keeps the same rule. The rule is for drawing: a piece stays
+where it stands when the track around it is removed, and a saved game comes back with the rock
+and mountain under its track, signals included.
 
 The slope rules are those of any hill. Straights, crossings and transitions climb at most a level
 per tile; curves and switches need a level tile, which on a mountain means its flat top. Bridge

@@ -12,7 +12,7 @@ import {
   type TrackClass,
   type TrackItem,
 } from '../world/track';
-import { levelAt } from '../world/elevation';
+import { levelAt, tileLevels } from '../world/elevation';
 import { groundAllowsOn } from '../world/slope';
 import { lineSpans, railProfile, CLIMB_SPEED } from '../world/railProfile';
 import { Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
@@ -33,6 +33,8 @@ import { setSupplyMode } from './supply';
 import { Inventory } from '../gacha/inventory';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
+import { applyTileRepairs, repairBuiltTiles, type BuiltObjects } from '../engine/loadRepair';
+import { onRails } from './mountainTrack';
 
 // Track on rock and mountain (#322): a piece goes there only as the continuation of a line, the
 // slope rule of the ground decides the rest as anywhere, and it is priced at the terrain's price
@@ -409,6 +411,58 @@ describe('what stays off rock and mountain', () => {
       expect(w.builder.checkSupply(at.x, at.y, 'catenary'), name(t)).toMatchObject({ ok: true });
       expect(w.builder.placeSupply(at.x, at.y, 'catenary'), name(t)).toBe(true);
     }
+  });
+});
+
+describe('a load', () => {
+  /** What the builder holds, as a save holds it. */
+  const builtOf = (w: Field): BuiltObjects => ({
+    track: [...w.track.anchors()].map(({ x, y, piece: p }) => [x, y, p.kind, p.rot, p.cls, p.cls2]),
+    stations: [],
+    decor: [...w.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
+    buildings: [],
+  });
+  /** Repair the field as a load does: the answer, then the terrain and the levels after it. */
+  const load = (w: Field) => {
+    const repairs = repairBuiltTiles(w.map, builtOf(w));
+    applyTileRepairs(w.map, repairs);
+    return { repairs, terrain: [...w.map.terrain], levels: [...tileLevels(w.map)] };
+  };
+
+  it('keeps the rock and mountain under a line the builder laid, and a signal on it', () => {
+    const w = field(true);
+    expect(w.builder.placeLine(run(4, 16, 20))).toBe(true);
+    // a signal on the rock at the mountain's foot and one on the plateau
+    for (const x of [FOOT.x, 15])
+      expect(w.builder.placeDecor(x, 20, 'signal', 1), `signal at ${x}`).not.toBeNull();
+    const terrain = [...w.map.terrain],
+      levels = [...tileLevels(w.map)];
+    expect(load(w)).toEqual({ repairs: [], terrain, levels });
+    for (let x = 8; x <= 16; x++) expect(STONE).toContain(w.map.terrain[20 * SIZE + x]);
+  });
+
+  it('keeps it under a piece left alone when the track around it goes', () => {
+    const w = field(true);
+    expect(w.builder.placeLine(run(4, 16, 20))).toBe(true);
+    // the bank's piece, with its neighbours gone: one the builder would not lay there again
+    expect(w.builder.removeTrack(BANK.x - 1, BANK.y)).toBe(true);
+    expect(w.builder.removeTrack(BANK.x + 1, BANK.y)).toBe(true);
+    expect(w.track.get(BANK.x, BANK.y)?.kind).toBe('straight');
+    expect(
+      w.builder.checkTrack(BANK.x, BANK.y, { kind: 'straight', cls: 'regular' }, 1).reason,
+    ).toBe(STR.build.mountainLine);
+    const terrain = [...w.map.terrain],
+      levels = [...tileLevels(w.map)];
+    expect(load(w)).toEqual({ repairs: [], terrain, levels });
+    expect(w.map.terrain[BANK.y * SIZE + BANK.x]).toBe(Terrain.Mountain);
+  });
+});
+
+describe('decor on the rails', () => {
+  it('is the decor that needs track under it and asks nothing of the ground', () => {
+    for (const d of DECOR_DEFS) expect(onRails(d.id), d.id).toBe(d.onTrack && !d.anyTile);
+    expect(onRails('signal')).toBe(true);
+    expect(onRails('no such decor')).toBe(false);
   });
 });
 
