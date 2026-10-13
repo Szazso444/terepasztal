@@ -182,6 +182,31 @@ describe('a piece on rock or a mountain', () => {
         }
   });
 
+  it('is a wide piece with any of its tiles on stone, wherever its anchor stands', () => {
+    let met = 0;
+    for (const { item, rot } of PIECES) {
+      const tilesAt = (x: number) => footprintOf(x, ROCK.y, item.kind, rot, item.cls);
+      // the anchor on the grass west of the rock field, the rest of the piece reaching onto it
+      const ax = [4, 5, 6, 7].find((x) => tilesAt(x).some((t) => t.x >= ROCK.x));
+      if (ax === undefined || tilesAt(ax).length === 1) continue;
+      const where = `${what(item, rot)} at ${ax},${ROCK.y}`;
+      const w = field(true);
+      expect(w.map.terrain[ROCK.y * SIZE + ax], where).toBe(Terrain.Grass);
+      expect(tilesAt(ax).some((t) => w.map.terrain[t.y * SIZE + t.x] === Terrain.Rock)).toBe(true);
+      expect(w.builder.checkTrack(ax, ROCK.y, item, rot), where).toMatchObject({
+        ok: false,
+        reason: STR.build.mountainLine,
+      });
+      // continuing a line, it is laid
+      joinEveryEnd(w, ax, ROCK.y, item, rot);
+      const c = w.builder.checkTrack(ax, ROCK.y, item, rot);
+      expect(c.ok, `${where}: ${c.reason}`).toBe(true);
+      met++;
+    }
+    // the regular and high speed curves and switches, in their turns
+    expect(met).toBeGreaterThan(8);
+  });
+
   it('is refused beside track that runs past it: a neighbour must open back toward it', () => {
     for (const t of STONE)
       for (const cls of ['regular', 'high_speed', 'narrow'] as const) {
