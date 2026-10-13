@@ -1005,8 +1005,8 @@ describe('the drainage', () => {
 // nothing clever in them: the flood scans every tile it has reached for the lowest (ties to the
 // lower tile index) instead of keeping a heap, the clearance reads the whole 5 x 5 square instead
 // of a sliding count, the main inflow is searched over every tile, the rivers run on down the
-// flood until nothing changes, and the levels are the greatest every rule allows, pulled from
-// upstream instead of pushed down. On small planes drawn from a seed, drain gives the same water
+// flood until nothing changes, the way a removed side stream ran on goes until nothing changes,
+// and the levels are the greatest every rule allows, pulled from upstream instead of pushed down. On small planes drawn from a seed, drain gives the same water
 // tile for tile.
 
 /** Rain grows from this many level steps above the sea, RAIN_PER_STEP a step (the demo's 0.55). */
@@ -1152,10 +1152,9 @@ function slowDrain(p: DrainInput): Slow {
   // 4. rivers where enough rain gathered on land, more from level step 2 up, and every river runs
   // on down the flood until it meets water or the core's edge
   const isLand = (i: number) => kind[i] === WaterKind.Land || kind[i] === WaterKind.Dry;
-  for (const i of tiles) {
-    if (!isLand(i) || mark[i] & KEEP_OUT) continue;
-    if (acc[i] >= (steps(elev[i]) >= 2 ? HIGH_RIVER_FLOW : RIVER_FLOW)) kind[i] = WaterKind.River;
-  }
+  const rises = (i: number) =>
+    !(mark[i] & KEEP_OUT) && acc[i] >= (steps(elev[i]) >= 2 ? HIGH_RIVER_FLOW : RIVER_FLOW);
+  for (const i of tiles) if (isLand(i) && rises(i)) kind[i] = WaterKind.River;
   const runDown = (from: number) => {
     for (let i = from; i >= 0 && isLand(i); i = down[i]) kind[i] = WaterKind.River;
   };
@@ -1184,6 +1183,21 @@ function slowDrain(p: DrainInput): Slow {
       pruned[c] = 1;
       kind[c] = ground[c] === Terrain.Water ? WaterKind.Dry : WaterKind.Land;
     }
+  }
+  // and the way a removed river ran on below it: a river tile that gathered too little to rise
+  // and has no river running into it is land again, until there is none
+  for (let gone = true; gone;) {
+    gone = false;
+    for (const i of tiles)
+      if (
+        kind[i] === WaterKind.River &&
+        !rises(i) &&
+        !sides(i).some((j) => down[j] === i && kind[j] === WaterKind.River)
+      ) {
+        pruned[i] = 1;
+        kind[i] = ground[i] === Terrain.Water ? WaterKind.Dry : WaterKind.Land;
+        gone = true;
+      }
   }
   const channel = kind.map((k) => (k === WaterKind.River ? 1 : 0));
   // 6. outlets: each lake overflows from its fullest tile that drains out of it, and the way from
