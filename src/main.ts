@@ -7,6 +7,7 @@ import {
   clearSave,
   writeSave,
   freezeStoredSaves,
+  type SaveRefusal,
   type WorldSpec,
 } from './sim/save';
 import { expandSave, ownsBorderChunk } from './sim/expand';
@@ -17,6 +18,7 @@ import { generateMap, emptyMap, type MapGenParams } from './world/mapgen';
 import { Terrain } from './world/tiles';
 import type { SupplyMode } from './sim/supply';
 import { armDevReload, takeDevSession, reportDevTraffic } from './engine/devsession';
+import { groundPassPending, startupToasts } from './engine/saveMessages';
 
 declare global {
   interface Window {
@@ -61,10 +63,17 @@ function levelForEdit(i: Extract<Intent, { action: 'edit' }>): LevelData | null 
   return level;
 }
 
+/** Resolves once the browser has painted: a frame's callback runs before its paint, a task after. */
+function afterPaint() {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
+}
+
 async function boot() {
   const loading = el('div', { id: 'loading' }, STR.title, el('small', { text: STR.loading }));
   document.getElementById('ui-root')!.append(loading);
-  // saves stored before saves kept their ground get it once: Continue's and every named one
+  // saves stored before saves kept their ground get it once: Continue's and every named one. That
+  // takes a while, so the loading text is painted first
+  if (groundPassPending()) await afterPaint();
   const frozen = freezeStoredSaves();
   const intent = takeIntent() ?? legacyHashIntent();
   if (location.hash) history.replaceState(null, '', location.pathname);
@@ -75,8 +84,8 @@ async function boot() {
   let start: 'menu' | 'play' | 'editor' = 'menu';
   /** production chain of the game about to run (new game choice, level start block or save) */
   let supply: SupplyMode | undefined;
-  /** the stored game is refused for the size of its map: the menu opens without it, and says so */
-  let tooLarge = false;
+  /** why the stored game Continue loads was refused, when the menu opens without it */
+  let refused: SaveRefusal | null = null;
 
   // A dev-server reload carries the running game over, so an edit lands where you were.
   const resumed = takeDevSession();
@@ -102,7 +111,7 @@ async function boot() {
     start = 'editor';
   } else {
     save = readSave();
-    tooLarge = !save && storedRefusal() === 'tooLarge';
+    if (!save) refused = storedRefusal();
     spec = save?.world ?? {
       kind: 'generated',
       seed: Math.floor(Math.random() * 2 ** 31),
@@ -145,8 +154,7 @@ async function boot() {
   if (start !== 'editor' && !resumed && !(intent?.action === 'continue' && intent.keepSpeed))
     game.clock.setSpeed(0);
   if (start === 'menu') game.openMainMenu();
-  if (frozen.refused) game.toasts.push(STR.saves.groundRefused(frozen.refused), 'warn');
-  if (tooLarge) game.toasts.push(STR.saves.refused.tooLarge, 'warn');
+  for (const t of startupToasts(frozen, refused)) game.toasts.push(t.text, t.kind);
   armDevReload(() => (game.mode === 'play' && !game.menuOpen ? game.snapshot() : null));
   if (import.meta.env.DEV)
     reportDevTraffic(() => ({
