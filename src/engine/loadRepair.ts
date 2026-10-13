@@ -65,9 +65,10 @@ function groundFor(standing: Standing, t: Terrain): Terrain {
  * it and asking again answers nothing. Tiles off the map are skipped.
  */
 export function repairBuiltTiles(map: GameMap, built: BuiltObjects): TileRepair[] {
+  // a platform off the map stands on no tile, even where its index `y * w + x` lands on one
   const platforms = new Set<number>();
   for (const [x, y, id] of built.buildings ?? [])
-    if (buildingDef(id).bridge) platforms.add(y * map.w + x);
+    if (buildingDef(id).bridge && inBounds(map, x, y)) platforms.add(y * map.w + x);
   // the terrain each repaired tile has after the objects met so far
   const after = new Map<number, Terrain>();
   const stand = (x: number, y: number, standing: Standing) => {
