@@ -11,6 +11,10 @@ import { MusicSelection, type MusicPlaylist } from './musicPlaylist';
  * age's set fails, the default Pastoral Pulse set plays; if those fail too, the synthesized loop
  * takes over. Volumes come from settings. The Web Audio context and the music element are both
  * unlocked on the first user gesture.
+ *
+ * Music can be held back: `hold()` keeps a gesture from starting it (sound effects still unlock),
+ * `preload()` fetches the first track ahead so it can start at once, and `startMusic()` lets the
+ * hold go. The title screen holds it, so nothing plays there until the player starts.
  */
 export const SOUND_EVENTS = [
   'ui.click',
@@ -65,6 +69,8 @@ class AudioBus {
    * `applyMusic` starts nothing until the fade has paused the old track and ended the wait.
    */
   private handingOver = false;
+  /** `hold()` is in force: no music starts, whatever gesture unlocks the bus. */
+  private held = false;
   /** Which set plays and which file; a null track means none is left and the synth loop plays. */
   private readonly musicSets = new MusicSelection();
   /** The playlist of the set playing now. */
@@ -126,6 +132,42 @@ class AudioBus {
     this.musicEl = null;
     this.musicSets.next(failed);
     this.applyMusic();
+    this.preload(); // a bus that cannot play yet still fetches the file that comes next
+  }
+
+  /**
+   * Keep the music from starting until `startMusic()`: a gesture still unlocks the sound effects
+   * but starts no track and no synth loop, and `applyMusic` changes nothing. For the title screen,
+   * before any music has started; music already playing is not stopped.
+   */
+  hold() {
+    this.listen();
+    this.held = true;
+  }
+
+  /**
+   * Fetch the first track of the playlist now, without playing it, so it starts at once when the
+   * music does. It needs no gesture. A track that fails is skipped and the next one is fetched in
+   * its place. Does nothing outside a browser, with the music element already there, or once every
+   * file has failed.
+   */
+  preload() {
+    this.listen();
+    if (typeof Audio === 'undefined') return;
+    const src = this.musicSets.track;
+    if (src !== null) this.musicTrack(src);
+  }
+
+  /**
+   * Let the music begin: end the `hold()`. It plays the first track at once when a gesture has
+   * unlocked the bus, and on the first gesture otherwise (browsers refuse audio before one). With
+   * no hold it changes nothing, so a second call neither restarts nor doubles the track.
+   */
+  startMusic() {
+    this.listen();
+    if (!this.held) return;
+    this.held = false;
+    this.applyMusic();
   }
 
   /**
@@ -141,7 +183,9 @@ class AudioBus {
     if (this.handingOver) return;
     const old = this.musicEl;
     this.musicEl = null; // the old track's own events no longer move the music on
-    if (!old) {
+    if (!old || old.paused) {
+      // nothing audible to fade out: a file fetched ahead is let go for the new set's first track
+      if (old) this.preload();
       this.applyMusic();
       return;
     }
@@ -174,11 +218,12 @@ class AudioBus {
 
   /**
    * Start, stop or re-level the music for the current master and music volumes. It does nothing
-   * while an age change waits for the old track to fade out: the handover ends with its own call.
+   * before the first gesture, while the music is held, or while an age change waits for the old
+   * track to fade out: the handover ends with its own call.
    */
   applyMusic() {
     this.listen();
-    if (!this.unlocked || this.handingOver) return;
+    if (!this.unlocked || this.held || this.handingOver) return;
     const v = Math.min(1, this.master * this.music);
     const src = this.musicSets.track;
     if (src !== null) {

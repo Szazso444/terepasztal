@@ -74,6 +74,10 @@ class FakeAudio {
   preload = '';
   volume = 1;
   playing = false;
+  /** An element is paused until its `play()` and again after its next `pause()`. */
+  get paused() {
+    return !this.playing;
+  }
   addEventListener = vi.fn();
   load = vi.fn();
   pause = vi.fn(() => {
@@ -115,6 +119,17 @@ describe('audio outside a browser', () => {
     expect(() => audio.applyMusic()).not.toThrow();
     expect(() => audio.updateAmbience(0, 0)).not.toThrow();
     expect(() => audio.updateAmbience(1, 1)).not.toThrow();
+  });
+
+  it('holds, preloads and starts the music without a window or Audio', async () => {
+    vi.resetModules();
+    const fresh = await import('./audio');
+    expect(() => {
+      fresh.audio.hold();
+      fresh.audio.preload();
+      fresh.audio.startMusic();
+      fresh.audio.applyMusic();
+    }).not.toThrow();
   });
 
   it('runs the ambience beds against a context with no document', () => {
@@ -167,9 +182,10 @@ describe('audio in a browser', () => {
   async function musicBus(sets: Record<string, string[]>) {
     const win = target();
     const { ctx } = fakeContext();
+    const setInterval = vi.fn(() => 1); // the synth loop's scheduler, when every file has failed
     vi.stubGlobal('window', {
       addEventListener: win.addEventListener,
-      setInterval: () => 1, // the synth loop's scheduler, when every file has failed
+      setInterval,
       AudioContext: function () {
         return ctx;
       },
@@ -182,10 +198,15 @@ describe('audio in a browser', () => {
     Object.assign(playlist.AGE_MUSIC, sets);
     return {
       win,
+      ctx,
+      setInterval,
       playlist,
       bus: fresh.audio,
+      sfx: fresh.sfx,
       srcs: () => FakeAudio.made.map((el) => el.src),
       playing: () => FakeAudio.made.filter((el) => el.playing),
+      /** The music elements, which the sound-effect probes made through `Audio` are not. */
+      music: () => FakeAudio.made.filter((el) => el.src.includes('/music/')),
     };
   }
 
@@ -430,6 +451,175 @@ describe('audio in a browser', () => {
       // every electric file fails: the default set takes over at its first track
       fire(FakeAudio.made[1], 'error');
       expect(srcs()).toEqual([steam[0], electric[0], playlist.MUSIC_TRACKS[0]]);
+      expect(FakeAudio.overlaps).toBe(0);
+    });
+  });
+
+  describe('held, preloaded and started music', () => {
+    const first = MUSIC_TRACKS[0];
+    const last = <T>(list: T[]) => list[list.length - 1];
+
+    it('stays silent on a gesture while held, whatever the settings do, and leaves the effects alone', async () => {
+      const { bus, win, ctx, music, srcs, sfx, setInterval } = await musicBus({});
+      bus.hold();
+      bus.applyMusic(); // what boot does
+      for (const gesture of ['pointerdown', 'keydown']) win.fire(gesture);
+      bus.music = 0.9; // a slider on the title screen
+      bus.applyMusic();
+      expect(srcs()).toEqual([]);
+      expect(setInterval).not.toHaveBeenCalled();
+      // the gesture unlocked the effects all the same
+      const voices = vi.spyOn(ctx, 'createOscillator');
+      sfx('ui.click');
+      expect(voices).toHaveBeenCalled();
+      expect(music()).toHaveLength(0);
+    });
+
+    it('fetches the first track without playing it, once, before any gesture', async () => {
+      const { bus, music } = await musicBus({});
+      bus.preload();
+      bus.preload();
+      expect(music().map((el) => el.src)).toEqual([first]);
+      expect(music()[0].load).toHaveBeenCalledTimes(1);
+      expect(music()[0].play).not.toHaveBeenCalled();
+    });
+
+    it('starts Pastoral Pulse first, from the file fetched ahead, exactly once', async () => {
+      const { bus, win, music, playing } = await musicBus({});
+      bus.hold();
+      bus.preload();
+      win.fire('pointerdown'); // the player clicks on the title screen
+      expect(music()[0].play).not.toHaveBeenCalled();
+      bus.startMusic();
+      bus.startMusic();
+      expect(music().map((el) => el.src)).toEqual([first]);
+      expect(music()[0].load).toHaveBeenCalledTimes(1);
+      expect(music()[0].play).toHaveBeenCalledTimes(1);
+      expect(playing()).toEqual([music()[0]]);
+      expect(FakeAudio.overlaps).toBe(0);
+    });
+
+    it('starts Pastoral Pulse first when nothing was fetched ahead', async () => {
+      const { bus, win, music, playing } = await musicBus({});
+      bus.hold();
+      win.fire('pointerdown');
+      expect(music()).toHaveLength(0);
+      bus.startMusic();
+      expect(music().map((el) => el.src)).toEqual([first]);
+      expect(playing()).toEqual([music()[0]]);
+    });
+
+    it.each(['pointerdown', 'keydown'])(
+      'called before any gesture, plays on the first %s and not before',
+      async (gesture) => {
+        const { bus, win, music, playing } = await musicBus({});
+        bus.hold();
+        bus.preload();
+        bus.startMusic();
+        expect(music()[0].play).not.toHaveBeenCalled();
+        expect(playing()).toEqual([]);
+        win.fire(gesture);
+        expect(music().map((el) => el.src)).toEqual([first]);
+        expect(music()[0].play).toHaveBeenCalledTimes(1);
+        expect(playing()).toEqual([music()[0]]);
+      },
+    );
+
+    it('called without a hold, changes nothing: the first gesture starts the music as before', async () => {
+      const { bus, win, music, playing } = await musicBus({});
+      bus.startMusic();
+      expect(music()).toHaveLength(0);
+      expect(win.types()).toEqual(['pointerdown', 'keydown']);
+      win.fire('pointerdown');
+      expect(music().map((el) => el.src)).toEqual([first]);
+      expect(playing()).toEqual([music()[0]]);
+    });
+
+    it('keeps the volumes: the track follows master and music, and music 0 pauses it', async () => {
+      const { bus, win, music, playing } = await musicBus({});
+      bus.hold();
+      bus.preload();
+      win.fire('pointerdown');
+      bus.startMusic();
+      expect(music()[0].volume).toBe(bus.master * bus.music);
+      bus.music = 0.2;
+      bus.applyMusic();
+      expect(music()[0].volume).toBe(bus.master * 0.2);
+      bus.music = 0;
+      bus.applyMusic();
+      expect(playing()).toEqual([]);
+      bus.music = 0.5;
+      bus.applyMusic();
+      expect(playing()).toEqual([music()[0]]);
+    });
+
+    it('skips a track that fails, whether it fails while fetched ahead or while playing', async () => {
+      const { bus, win, music, playing } = await musicBus({});
+      bus.hold();
+      bus.preload();
+      fire(music()[0], 'error'); // the first file is missing: the next one is fetched in its place
+      expect(music()).toHaveLength(2);
+      expect(music()[1].src).not.toBe(first);
+      win.fire('pointerdown');
+      bus.startMusic();
+      expect(music()[0].play).not.toHaveBeenCalled();
+      expect(playing()).toEqual([music()[1]]);
+      // a track that fails while playing is skipped too, and neither failure comes back
+      fire(music()[1], 'error');
+      for (let i = 0; i < 12; i++) fire(last(music()), 'ended');
+      const srcs = music().map((el) => el.src);
+      expect(srcs.slice(1)).not.toContain(first);
+      expect(srcs.slice(2)).not.toContain(srcs[1]);
+      expect(playing()).toEqual([last(music())]);
+      expect(FakeAudio.overlaps).toBe(0);
+    });
+
+    it('lets the synth loop take over only when every file has failed', async () => {
+      const { bus, win, music, playing, setInterval } = await musicBus({});
+      bus.hold();
+      bus.preload();
+      win.fire('pointerdown');
+      bus.startMusic();
+      // all but the last file fail, one after the other: a file is always left to play
+      for (let i = 0; i < MUSIC_TRACKS.length - 1; i++) {
+        expect(playing()).toEqual([last(music())]);
+        fire(last(music()), 'error');
+        expect(setInterval).not.toHaveBeenCalled();
+      }
+      expect(music()).toHaveLength(MUSIC_TRACKS.length);
+      expect(playing()).toEqual([last(music())]);
+      expect(new Set(music().map((el) => el.src)).size).toBe(MUSIC_TRACKS.length);
+      // the last one fails: now, and only now, the synth plays, and no file is tried again
+      fire(last(music()), 'error');
+      expect(setInterval).toHaveBeenCalledTimes(1);
+      expect(playing()).toEqual([]);
+      expect(music()).toHaveLength(MUSIC_TRACKS.length);
+    });
+
+    it('keeps the synth loop back while held, even when every file has failed', async () => {
+      const { bus, win, music, playing, setInterval } = await musicBus({});
+      bus.hold();
+      bus.preload();
+      win.fire('pointerdown');
+      for (let i = 0; i < MUSIC_TRACKS.length; i++) fire(last(music()), 'error');
+      expect(music()).toHaveLength(MUSIC_TRACKS.length);
+      expect(setInterval).not.toHaveBeenCalled();
+      bus.startMusic();
+      expect(setInterval).toHaveBeenCalledTimes(1);
+      expect(playing()).toEqual([]);
+    });
+
+    it('lets go of a file fetched ahead, without a fade, when the age brings another set', async () => {
+      const { bus, win, music, playing } = await musicBus({ diesel });
+      bus.hold();
+      bus.preload(); // boot, before the save says which age it is
+      bus.setAge('diesel'); // what applySave does
+      // nothing was audible, so there is no fade to wait for: the new set's first track is fetched
+      expect(music().map((el) => el.src)).toEqual([first, diesel[0]]);
+      win.fire('pointerdown');
+      bus.startMusic();
+      expect(music()[0].play).not.toHaveBeenCalled();
+      expect(playing()).toEqual([music()[1]]);
       expect(FakeAudio.overlaps).toBe(0);
     });
   });
