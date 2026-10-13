@@ -240,7 +240,7 @@ describe('a chunk text', () => {
     }
   });
 
-  // 24 generated maps up to 128 tiles a side, each read back and stored again: about 0.8 s alone
+  // 24 generated maps up to 128 tiles a side, each read back and stored again: about 4.5 s alone
   it('comes back byte for byte, its planes as the map has them, over seeds and sizes', () => {
     let oil = 0;
     forAll(
@@ -275,7 +275,7 @@ describe('a chunk text', () => {
     );
     // full-chain cases with their oil ran
     expect(oil).toBeGreaterThan(0);
-  }, 30_000);
+  }, 90_000);
 
   it('holds any value it allows, in tiles as odd as it allows', () => {
     // every terrain and biome id 0 to 15, every variant, long and single runs, props by the
@@ -441,6 +441,7 @@ describe('a map built from stored chunks', () => {
     expect(oil).toBeGreaterThan(0);
   }, 60_000);
 
+  // three worlds of 48 tiles grown to 96, each built four times: about 0.7 s alone
   it('keeps a part of a chunk it stored when the map grows over the rest of it', () => {
     // 48 tiles hold chunk 1 in part; grown by a chunk before it the start chunk stays chunk 0
     for (const seed of [1, 7412, 20260912]) {
@@ -464,7 +465,7 @@ describe('a map built from stored chunks', () => {
         firstDifference(buildMap(seed, big, first.chunks).map, buildMap(seed, big, {}).map),
       ).toBeNull();
     }
-  });
+  }, 15_000);
 
   // Eight worlds grown from 64 to 192 tiles a side, each generated twice: about 0.7 s alone
   it('never changes a stored chunk, whatever the generator makes now', () => {
@@ -555,14 +556,16 @@ describe('a map built from stored chunks', () => {
     ).toThrow(/generator/);
   });
 
+  // five worlds of 49 chunks: about 0.6 s alone
   it('adds at most about 150 KB to the save for a 49-chunk world', () => {
     for (const seed of [1, 7412, 20260912, 31337, 987654321]) {
       const { chunks } = buildMap(seed, { w: 224, h: 224, originX: -64, originY: -64 }, {});
       expect(Object.keys(chunks)).toHaveLength(49);
       expect(JSON.stringify(chunks).length).toBeLessThanOrEqual(150_000);
     }
-  });
+  }, 15_000);
 
+  // five worlds of 49 chunks in the full chain: about 0.8 s alone
   it('adds at most about 150 KB for a 49-chunk world in the full production chain too', () => {
     // the full chain's oil fields and start seeps are props of their own
     let oil = 0;
@@ -575,7 +578,7 @@ describe('a map built from stored chunks', () => {
       expect(JSON.stringify(chunks).length, `seed ${seed}`).toBeLessThanOrEqual(150_000);
     }
     expect(oil).toBeGreaterThan(0);
-  });
+  }, 15_000);
 });
 
 describe('the production chain of a built map', () => {

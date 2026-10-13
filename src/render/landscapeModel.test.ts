@@ -546,10 +546,13 @@ describe('on generated worlds', () => {
   // tile whose biome is a climate (ids 0 to 5) paints as it did before the table existed, with the
   // climate plane or without it; a tile with a later id is held to the rules in the issue, and its
   // snow line and stone ground are its climate's. A world as a chunk stored before the landform
-  // ids holds it (its biome its climate, no climate plane) paints every tile as before.
-  const WORLD_SEEDS = [20260912, 1, 7, 42, 155, 9001];
+  // ids holds it (its biome its climate, no climate plane) paints every tile as before. Three
+  // worlds, which between them hold every tile the check below asks for: each new world plans the
+  // rivers of the chunks around its start (#341), most of a tenth of a second.
+  const WORLD_SEEDS = [20260912, 1, 7];
   const SIZE = { w: 48, h: 48 };
 
+  // three generated worlds, every tile painted five ways: about 1.2 s alone
   it('paint every tile as they did before the table, and as the rules name for the later ids', () => {
     const seen = new Set<string>();
     for (const seed of WORLD_SEEDS) {
@@ -598,5 +601,5 @@ describe('on generated worlds', () => {
         seen.has(triple.join(':')),
         `no tile of terrain:biome:climate ${triple.join(':')}`,
       ).toBe(true);
-  });
+  }, 20_000);
 });

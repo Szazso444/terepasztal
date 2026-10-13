@@ -4,12 +4,13 @@ import { levelAt, levelTarget, tileLevels, MAX_LEVEL } from './elevation';
 import { Terrain } from './tiles';
 
 describe('tile elevation', () => {
+  // a generated map, each tile's level read on its own: about 0.5 s alone
   it('computes each level locally exactly as the whole-map pass does', () => {
     const map = generateMap(7412, { w: 96, h: 96 }),
       levels = tileLevels(map);
     for (let y = 0; y < map.h; y++)
       for (let x = 0; x < map.w; x++) expect(levelAt(map, x, y)).toBe(levels[y * map.w + x]);
-  });
+  }, 10_000);
   it('keeps ordinary ground at sea level and neighbours within one level', () => {
     const map = generateMap(7412, { w: 96, h: 96 }),
       levels = tileLevels(map);

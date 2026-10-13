@@ -74,10 +74,10 @@ describe('generateMap', () => {
     // A tripwire, not a specification: any deliberate change to map generation invalidates
     // every existing seed, so re-bless these numbers on purpose or not at all.
     const m = generateMap(SEED, SMALL);
-    expect(fnv(m.terrain)).toBe(606584481);
-    expect(fnv(m.biome)).toBe(461608290);
+    expect(fnv(m.terrain)).toBe(2819169333);
+    expect(fnv(m.biome)).toBe(1415484685);
     expect(fnv(m.variant)).toBe(417171169);
-    expect(m.props.size).toBe(326);
+    expect(m.props.size).toBe(344);
   });
 
   it('fills the plane it was asked for', () => {
@@ -151,11 +151,11 @@ describe('a grown map', () => {
     // Tripwires like the one above, at the default map size and that map grown by one ring.
     const m = generateMap(SEED, { w: 160, h: 160 });
     expect([fnv(m.terrain), fnv(m.biome), fnv(m.variant), propHash(m)]).toEqual([
-      3811751049, 210120439, 1813736059, 3927675234,
+      1815774099, 3612118115, 1813736059, 1080511039,
     ]);
     const g = grown(SEED, 160);
     expect([fnv(g.terrain), fnv(g.biome), fnv(g.variant), propHash(g)]).toEqual([
-      823130223, 2859181263, 1107381422, 3439018315,
+      2993987856, 2425567965, 1107381422, 904992078,
     ]);
   });
 });

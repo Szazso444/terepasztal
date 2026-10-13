@@ -459,6 +459,11 @@ function expectBreakdown(b: HarvestBreakdown | null, map: GameMap, at: HarvestSi
   expect(b.perWeek, `${label}: per week is what the station makes`).toBe(stationOutput(map, at));
 }
 
+/**
+ * The seeds of the generated worlds cases are drawn on: a few, each generated once and kept, since
+ * a new world plans the rivers of the chunks around its start (#341), most of a tenth of a second.
+ */
+const WORLD_SEEDS = [1, 7412, 20260912, 31337];
 /** A map a case is drawn on: a new game's, a patchwork of every terrain and biome, or grass. */
 interface MapSpec {
   kind: 'generated' | 'patchwork' | 'grass';
@@ -495,7 +500,8 @@ describe('a harvest breakdown', () => {
       expect(stationDef(id).supply, `${id} is of the full chain`).toBe('full');
   });
 
-  // a map per seed and 24 sites read again tile by tile: about three quarters of a second alone
+  // a map per seed (the generated ones of a few worlds) and 24 sites read again tile by tile:
+  // about two seconds alone
   it(
     'counts each tile at its weight, gives the rows the demo shows, and the factor and yield stations always got',
     SLOW,
@@ -504,11 +510,9 @@ describe('a harvest breakdown', () => {
       forAll(
         (rng) => {
           const size = rng.pick([12, 24, 40]);
-          const map: MapSpec = {
-            kind: rng.pick(['generated', 'generated', 'patchwork', 'grass'] as const),
-            seed: rng.int(1, 1_000_000),
-            size,
-          };
+          const kind = rng.pick(['generated', 'generated', 'patchwork', 'grass'] as const);
+          const seed = kind === 'generated' ? rng.pick(WORLD_SEEDS) : rng.int(1, 1_000_000);
+          const map: MapSpec = { kind, seed, size };
           // tiles over the whole map and a band past its edges, where no station stands
           const tiles = Array.from({ length: 24 }, () => ({
             x: rng.int(-3, size + 2),
@@ -620,21 +624,21 @@ describe('a harvest breakdown', () => {
 
   it('reads the tuning it is given and not the live rules, and the live rules when given none', () => {
     forAll(
-      (rng) => ({
-        map: {
-          kind: rng.pick(['generated', 'patchwork'] as const),
-          seed: rng.int(1, 1_000_000),
-          size: 24,
-        },
-        defId: rng.pick(HARVESTERS).id,
-        level: rng.pick(WHOLE_LEVELS),
-        season: rng.pick(SEASONS),
-        x: rng.int(0, 23),
-        y: rng.int(0, 23),
-        // the two never agree, so reading the wrong one shows in rulesMul and perWeek
-        live: rng.pick([1, 0.5, 3]),
-        given: rng.pick([0.25, 2, 4.2, rng.range(0.1, 0.4)]),
-      }),
+      (rng) => {
+        const kind = rng.pick(['generated', 'patchwork'] as const);
+        const seed = kind === 'generated' ? rng.pick(WORLD_SEEDS) : rng.int(1, 1_000_000);
+        return {
+          map: { kind, seed, size: 24 },
+          defId: rng.pick(HARVESTERS).id,
+          level: rng.pick(WHOLE_LEVELS),
+          season: rng.pick(SEASONS),
+          x: rng.int(0, 23),
+          y: rng.int(0, 23),
+          // the two never agree, so reading the wrong one shows in rulesMul and perWeek
+          live: rng.pick([1, 0.5, 3]),
+          given: rng.pick([0.25, 2, 4.2, rng.range(0.1, 0.4)]),
+        };
+      },
       (c) => {
         const map = mapOf(c.map);
         const at = [map, c.x, c.y, c.defId, c.level, c.season] as const;
@@ -687,7 +691,8 @@ describe('a harvest breakdown', () => {
     );
   });
 
-  // a generated world per seed and seven stations placed on it: about half a second alone
+  // a generated world per seed, one of a few, and seven stations placed on it: about two seconds
+  // alone
   it(
     'gives the yield a station makes once placed, at every level, and gave it as a preview where it could not stand yet',
     SLOW,
@@ -695,7 +700,7 @@ describe('a harvest breakdown', () => {
       const placed = new Map<string, number>();
       forAll(
         (rng) => ({
-          seed: rng.int(1, 1_000_000),
+          seed: rng.pick(WORLD_SEEDS),
           seasonOffset: rng.int(0, 3),
           productionMul: rng.pick([1, 0.5, 2, Math.round(rng.range(0, 50)) / 10]),
           // per harvesting kind, where to try it, in order

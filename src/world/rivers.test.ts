@@ -388,11 +388,24 @@ describe('the water planes in stored chunks', () => {
   });
 
   it('end a new river that runs into a stored chunk in a pond on the new side', () => {
-    // the chunks around the start of a 160-tile world, the start's east neighbour stored as an old
-    // generator left it: all grass. Every new river that ran into it ends in a pond at the seam.
+    // a 160-tile world with one chunk stored as an old generator left it: all grass. The chunk is
+    // the first in reading order that a river of the fresh world runs into from another chunk.
+    // Every new river that ran into it ends in a pond at the seam.
     for (const seed of [1, 2, 3, 4]) {
       const params = { w: 160, h: 160 };
       const fresh = buildMap(seed, params, {});
+      const chunkOf = (i: number) =>
+        Math.floor(i / 160 / CHUNK_TILES) * 5 + Math.floor((i % 160) / CHUNK_TILES);
+      let target = -1;
+      for (let i = 0; i < 160 * 160; i++) {
+        if (!fresh.map.flowDir![i]) continue;
+        const n = downstream(fresh.map, i);
+        if (n < 0 || chunkOf(n) === chunkOf(i) || fresh.map.terrain[n] !== Terrain.Water) continue;
+        if (target < 0 || chunkOf(n) < target) target = chunkOf(n);
+      }
+      expect(target, `seed ${seed}: no river runs from chunk to chunk`).toBeGreaterThanOrEqual(0);
+      const cx = target % 5;
+      const cy = Math.floor(target / 5);
       // the stored chunk: a stub of plain grass, no water in it
       const stub = generateMap(seed, params);
       stub.terrain.fill(Terrain.Grass);
@@ -402,9 +415,10 @@ describe('the water planes in stored chunks', () => {
       stub.flow!.fill(0);
       stub.flowDir!.fill(0);
       stub.props.clear();
-      const store: ChunkStore = { [chunkKey(3, 2)]: encodeChunk(stub, 3, 2) };
+      const store: ChunkStore = { [chunkKey(cx, cy)]: encodeChunk(stub, cx, cy) };
       const built = buildMap(seed, params, store).map;
-      const stored = (x: number, y: number) => x >= 96 && x < 128 && y >= 64 && y < 96;
+      const stored = (x: number, y: number) =>
+        Math.floor(x / CHUNK_TILES) === cx && Math.floor(y / CHUNK_TILES) === cy;
       let ponds = 0;
       for (let y = 0; y < 160; y++)
         for (let x = 0; x < 160; x++) {
@@ -546,9 +560,11 @@ describe('the drainage', () => {
   });
 
   it('needs more rain for a river on high ground than below it', () => {
-    // a plane sloping down along x, the same in every row, below the hills and then above them
-    const low = drain(planes(40, (x) => 0.5 - 0.001 * x));
-    const high = drain(planes(40, (x) => 0.7 - 0.001 * x));
+    // a plane sloping down along x, the same in every row, below the hills and then above them;
+    // each row gathers more than HIGH_RIVER_FLOW tiles of rain by the core's far edge
+    const size = HIGH_RIVER_FLOW + 40;
+    const low = drain(planes(size, (x) => 0.5 - 0.0005 * x));
+    const high = drain(planes(size, (x) => 0.7 - 0.0005 * x));
     const count = (d: ReturnType<typeof drain>) =>
       d.kind.filter((k) => k === WaterKind.River).length;
     expect(RIVER_FLOW).toBeLessThan(HIGH_RIVER_FLOW);
@@ -566,8 +582,8 @@ describe('the drainage', () => {
   });
 
   it('ends a river in the sea, its last tile a plain river tile', () => {
-    // land sloping down to a sea along the bottom rows
-    const p = planes(30, (x, y) => 0.6 - 0.006 * y + 0.0004 * Math.abs(x - 15));
+    // land sloping down to a sea along the bottom rows, in a valley that gathers it into one river
+    const p = planes(30, (x, y) => 0.6 - 0.002 * y + 0.006 * Math.abs(x - 15));
     for (let y = 24; y < 30; y++) for (let x = 0; x < 30; x++) p.sea[y * 30 + x] = 1;
     const d = drain(p);
     let mouths = 0;

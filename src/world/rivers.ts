@@ -11,8 +11,8 @@ import { Terrain } from './tiles';
  * tile depends on the whole core, so mapgen.ts runs it once over a fixed square around the start
  * (its river region), never over a map, and a tile's water is the same whatever map holds it.
  *
- * The thresholds are the demo's, in its own level steps (sea 0.24, a step 0.11), set on the
- * game's elevation by `levelSteps`.
+ * The height thresholds are the demo's, in its own level steps (sea 0.24, a step 0.11), set on the
+ * game's elevation by `levelSteps`; the rain a river needs is four times the demo's (RIVER_FLOW).
  */
 
 /** What the river pass makes of a tile. */
@@ -28,11 +28,15 @@ export const enum WaterKind {
   Dry = 4,
 }
 
-/** Rain a river needs, in tiles of rain, below level step 2 and from it up (thinner on slopes). */
-export const RIVER_FLOW = 15;
-export const HIGH_RIVER_FLOW = 33;
+/**
+ * Rain a river needs, in tiles of rain, below level step 2 and from it up (thinner on slopes).
+ * These and SIDE_STREAM_FLOW are four times the demo's 15, 33 and 27: at the demo's numbers a
+ * 160-tile map was a tenth river and rarely had room for a large dry site (card `river-density`).
+ */
+export const RIVER_FLOW = 60;
+export const HIGH_RIVER_FLOW = 132;
 /** A side stream that is not the main inflow of the river it joins needs this much of its own. */
-export const SIDE_STREAM_FLOW = 27;
+export const SIDE_STREAM_FLOW = 108;
 /** A river this full runs two tiles wide, where both tiles are below the hills (level 0 or 1). */
 export const WIDE_FLOW = 200;
 /** The most rain a tile's flow records; a river gathering more records this. */
@@ -128,7 +132,10 @@ export interface Drainage {
   kind: Uint8Array;
   /** each river and lake tile's water level, 0 to 2; 0 elsewhere */
   surface: Uint8Array;
-  /** each river tile's flow: tiles of rain gathered, at most FLOW_CAP; 0 elsewhere */
+  /**
+   * each river tile's flow: tiles of rain gathered, at least 1 (the start pond's outlet may run
+   * over ground no rain falls on) and at most FLOW_CAP; 0 elsewhere
+   */
   flow: Uint16Array;
   /** each river tile's downstream side as Dir + 1 (1 N, 2 E, 3 S, 4 W); 0 elsewhere */
   dir: Uint8Array;
@@ -527,7 +534,7 @@ export function drain(p: DrainInput): Drainage {
   // flow and direction
   const flow = new Uint16Array(n);
   const dir = new Uint8Array(n);
-  const rain = (i: number) => Math.min(FLOW_CAP, Math.round(acc[i]));
+  const rain = (i: number) => Math.min(FLOW_CAP, Math.max(1, Math.round(acc[i])));
   /** Dir + 1 across the core's edge from edge tile `i` (an x edge first at a corner). */
   const outward = (i: number) => {
     const x = i % w;

@@ -79,6 +79,7 @@ describe('climateAt on a generated map', () => {
         expect(climateOfGenerated(map).wrong).toBe(0);
       });
 
+  // the maps above generated again, each world planning its rivers: about 1 s alone
   it('differs from the biome under some landform on those maps', () => {
     // without this the cases above could pass on maps whose climate is their biome throughout
     let relabelled = 0;
@@ -86,7 +87,7 @@ describe('climateAt on a generated map', () => {
       for (const size of SIZES)
         relabelled += climateOfGenerated(generateMap(seed, size)).relabelled;
     expect(relabelled).toBeGreaterThan(0);
-  });
+  }, 20_000);
 
   it('is the climate plane on a map grown around its start', () => {
     const map = generateMap(SEEDS[0], { w: 96, h: 96, originX: -32, originY: -32 });

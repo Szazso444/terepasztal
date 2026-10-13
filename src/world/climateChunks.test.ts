@@ -260,6 +260,7 @@ describe('a world stored before the climate plane', () => {
 });
 
 describe('the climate plane in a save', () => {
+  // six worlds of 9 and 49 chunks: about 0.6 s alone
   it('takes a small share of the stored text of 9- and 49-chunk worlds', () => {
     // the climate is the biome but under a landform, so its runs are long; measured for #354 at
     // about 6 % of the store for 9, 49 and 784 chunks
@@ -275,7 +276,7 @@ describe('the climate plane in a save', () => {
         const share = ((climate * 4) / 3 / JSON.stringify(chunks).length) * 100;
         expect(share, `seed ${seed}, ${side} tiles`).toBeLessThan(10);
       }
-  });
+  }, 15_000);
 
   it('holds no landform: every stored climate is a climate', () => {
     const { chunks } = buildMap(7412, { w: 160, h: 160, originX: -32, originY: -32 }, {});

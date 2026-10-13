@@ -108,7 +108,10 @@ export interface GameMap {
    * level 0, as has a tile whose terrain is not Water.
    */
   waterSurface?: Uint8Array;
-  /** per-tile flow of each river tile: the tiles of rain it gathers (at most FLOW_CAP), 0 elsewhere */
+  /**
+   * per-tile flow of each river tile: the tiles of rain it gathers, 1 to FLOW_CAP (0 in a chunk
+   * stored before the plane), 0 elsewhere
+   */
   flow?: Uint16Array;
   /**
    * per-tile downstream side of each river tile, as Dir + 1 (1 N, 2 E, 3 S, 4 W): the tile its
