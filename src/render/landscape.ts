@@ -16,13 +16,21 @@ import {
   reliefTileAtWorld,
   groundAllows,
   surfaceSlope,
-  RELIEF_MAX,
   type TerrainRelief,
 } from './terrainRelief';
 import { hash2 } from '../engine/rng';
 import { Terrain } from '../world/tiles';
 import { BIOME_DEFS } from '../sim/biomes';
 import type { RailBed } from '../world/railProfile';
+import {
+  chunkBox,
+  countView,
+  viewOutcome,
+  boxInView,
+  type ChunkPaint,
+  type ViewPaint,
+  type ViewProgress,
+} from './viewPainted';
 
 /** Raster pixels per world pixel of the close-view chunk copies. */
 const SHARP_SCALE = 2;
@@ -161,6 +169,12 @@ type Chunk = {
   sharpVersion: number;
 };
 type View = { x: number; y: number; w: number; h: number };
+/** A caller of `whenViewPainted`, waiting for the answer; `timer` is null once it has gone off. */
+type Waiter = {
+  resolve: (outcome: ViewPaint) => void;
+  timer: ReturnType<typeof setTimeout> | null;
+  timedOut: boolean;
+};
 
 /**
  * Worker-painted illustrated chunks. Panning and simulation ticks never repaint the base cache;
@@ -188,6 +202,7 @@ export class Landscape {
   private statusChanged = false;
   private current: LandscapeStatus = { state: 'loading' };
   private watchers = new Set<(status: LandscapeStatus) => void>();
+  private waiters = new Set<Waiter>();
   /** Worker pools started so far. */
   private starts = 0;
   /** Milliseconds of running time, advanced by each flush by at most FRAME_LIMIT_MS. */
@@ -219,6 +234,8 @@ export class Landscape {
       this.stop();
       this.detach();
       this.watchers.clear();
+      // Nothing will be painted for anyone still waiting.
+      this.settleWaiters();
       for (const c of this.chunks.values()) {
         if (c.base !== Texture.EMPTY) c.base.destroy(true);
         c.sharp?.destroy(true);
@@ -457,6 +474,7 @@ export class Landscape {
     if (old !== Texture.EMPTY) old.destroy(true);
     else this.visibilityVersion++;
     this.pending.delete(data.id);
+    this.settleWaiters();
     this.pump();
   }
   /**
@@ -494,6 +512,7 @@ export class Landscape {
     this.statusChanged = true;
     this.pending.clear();
     this.sharpPending.clear();
+    this.settleWaiters();
   }
   private show(c: Chunk) {
     const sharp = this.sharpShown && c.sharp;
@@ -538,18 +557,13 @@ export class Landscape {
   private rank(c: Chunk) {
     const view = this.view;
     if (!view) return 0;
-    const left = (c.x - c.y - c.h) * 32 - 4,
-      top = (c.x + c.y - 1) * 16 - RELIEF_MAX - 5,
-      width = (c.w + c.h) * 32 + 8,
-      height = (c.w + c.h) * 16 + RELIEF_MAX + 12;
-    const outside =
-      left > view.x + view.w ||
-      top > view.y + view.h ||
-      left + width < view.x ||
-      top + height < view.y;
+    const box = chunkBox(c);
     return (
-      (outside ? 1e9 : 0) +
-      Math.hypot(left + width / 2 - view.x - view.w / 2, top + height / 2 - view.y - view.h / 2)
+      (boxInView(box, view) ? 0 : 1e9) +
+      Math.hypot(
+        box.left + box.width / 2 - view.x - view.w / 2,
+        box.top + box.height / 2 - view.y - view.h / 2,
+      )
     );
   }
   /** Is a worker already painting this chunk at this scale for the current version? */
@@ -694,12 +708,7 @@ export class Landscape {
       this.updateHeights();
       this.version++;
       for (const [id, c] of this.chunks)
-        if (
-          this.allDirty ||
-          this.dirtyTiles.some(
-            (p) => p.x >= c.x - 6 && p.x < c.x + c.w + 6 && p.y >= c.y - 6 && p.y < c.y + c.h + 6,
-          )
-        ) {
+        if (this.touchedByEdit(c)) {
           this.pending.add(id);
           if (this.sharpShown && c.sharp) this.sharpPending.add(id);
         }
@@ -716,7 +725,17 @@ export class Landscape {
       this.setStatus({ state: 'active' });
       changed = true;
     }
+    this.settleWaiters();
     return changed;
+  }
+  /** Does an edit or a tint change not yet taken by a flush reach this chunk's picture? */
+  private touchedByEdit(c: Chunk) {
+    return (
+      this.allDirty ||
+      this.dirtyTiles.some(
+        (p) => p.x >= c.x - 6 && p.x < c.x + c.w + 6 && p.y >= c.y - 6 && p.y < c.y + c.h + 6,
+      )
+    );
   }
   /**
    * The watchdog: a job unanswered for JOB_TIMEOUT_MS of running time is lost, and the pool is
@@ -789,6 +808,67 @@ export class Landscape {
     this.tint = tint;
     this.invalid = true;
     this.allDirty = true;
+  }
+  /**
+   * How many of the chunks in the camera's view are painted for the current map, out of all of the
+   * view's chunks (every chunk until the first `focus`). A chunk counts once its base picture is
+   * on the ground and no edit waits to repaint it, so an edit takes a chunk back out until it is
+   * painted again; close-view copies are a refinement and do not count. A landscape that has
+   * failed shows no painted chunk, and a context loss takes them all. A view with no chunk in it
+   * is `0 of 0`.
+   */
+  viewProgress(): ViewProgress {
+    return countView(this.paintStates(), this.view);
+  }
+  private *paintStates(): Iterable<ChunkPaint> {
+    for (const [id, c] of this.chunks)
+      yield {
+        x: c.x,
+        y: c.y,
+        w: c.w,
+        h: c.h,
+        painted:
+          !this.failed &&
+          c.base !== Texture.EMPTY &&
+          !this.pending.has(id) &&
+          !(this.invalid && this.touchedByEdit(c)),
+      };
+  }
+  /**
+   * Resolves when the ground in the camera's view is painted (`viewProgress` is complete), with
+   * `'painted'`; with `'failed'` at once if the landscape has failed for the session, as the
+   * per-tile ground covers everything then, and if it is destroyed; and with `'timeout'` once
+   * `timeoutMs` of real time have passed with the view still unpainted. A view that is painted
+   * already resolves `'painted'` at once, and so does a timeout of 0 or less that is not. An
+   * infinite timeout waits for the paint or the failure. The camera moving to unpainted ground
+   * keeps the wait going. The caller places the camera over the map first: a view with no chunk
+   * in it is `0 of 0`, which counts as painted.
+   */
+  whenViewPainted(timeoutMs: number): Promise<ViewPaint> {
+    return new Promise((resolve) => {
+      const waiter: Waiter = { resolve, timer: null, timedOut: !(timeoutMs > 0) };
+      if (!waiter.timedOut && Number.isFinite(timeoutMs))
+        waiter.timer = setTimeout(() => {
+          waiter.timer = null;
+          waiter.timedOut = true;
+          this.settleWaiters();
+        }, timeoutMs);
+      this.waiters.add(waiter);
+      this.settleWaiters();
+    });
+  }
+  /** Ends the waits whose time has come: painted, failed (or destroyed) or timed out. */
+  private settleWaiters() {
+    if (!this.waiters.size) return;
+    const gone = this.failed || this.root.destroyed;
+    const progress = this.viewProgress();
+    for (const waiter of [...this.waiters]) {
+      const outcome = viewOutcome(progress, gone, waiter.timedOut);
+      if (!outcome) continue;
+      this.waiters.delete(waiter);
+      if (waiter.timer !== null) clearTimeout(waiter.timer);
+      waiter.resolve(outcome);
+    }
   }
   get ready() {
     return this.loaded && !this.failed && !this.contextLost && !this.pending.size && !this.invalid;
