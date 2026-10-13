@@ -19,6 +19,25 @@ function ageLabel(t: number) {
 export const STR = {
   title: 'Terepasztal',
   loading: 'Laying the first sleepers...',
+  /** the loading screen (`src/ui/loadingScreen.ts`): one tip is shown, picked at random */
+  loadingScreen: {
+    /** names the progress bar for a screen reader */
+    progress: 'Loading',
+    /** the prompt that ends the loading: the click starts the fade, the reveal and the music */
+    begin: 'Click to begin',
+    tips: [
+      'Only cargo unloaded at a Depot reaches your stockpile.',
+      'Crews eat wheat every day. Run out and production halves and trains slow.',
+      'Space pauses the game, and 1, 2 and 3 set the speed.',
+      'M switches between the field view and the overview map.',
+      'R rotates what you are placing, and Esc cancels it.',
+      'WASD, the arrow keys or a middle-button drag move the camera, and the wheel zooms.',
+      'Name a town when you place its station. You can rename it any time.',
+      'Hover Age in the top bar to see what the next age asks for.',
+      'A train never starts a leg it could not finish and still reach fuel from.',
+      'Single track is handed out in whole sections, so trains never meet head-on inside one.',
+    ],
+  },
   hud: {
     money: 'Funds',
     weather: (season: string, weather: string) => `${season} · ${weather}`,

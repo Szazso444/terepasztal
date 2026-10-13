@@ -349,6 +349,25 @@ describe('what the route-mode menus say about each mode', () => {
   });
 });
 
+describe('what the loading screen says', () => {
+  const L = STR.loadingScreen;
+
+  it('has tips to pick from, each a sentence of its own', () => {
+    expect(L.tips.length).toBeGreaterThan(1);
+    for (const t of L.tips) expect(t.trim(), t).not.toBe('');
+    expect(new Set(L.tips).size).toBe(L.tips.length);
+    for (const t of L.tips) expect(t, t).toMatch(/[.!]$/);
+  });
+
+  it('ends in a prompt and names the bar, none of them one of the tips', () => {
+    for (const s of [L.begin, L.progress]) {
+      expect(s.trim()).not.toBe('');
+      expect(L.tips).not.toContain(s);
+    }
+    expect(L.begin).not.toBe(L.progress);
+  });
+});
+
 /** Attributes and properties whose value the player reads. */
 const SHOWN = new Set(['text', 'title', 'placeholder', 'aria-label', 'textContent']);
 /** A literal that reads as English: a capital letter, then a lowercase one. */
