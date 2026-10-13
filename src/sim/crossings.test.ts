@@ -324,6 +324,7 @@ describe('CrossingWatch with plain trains', () => {
 
   it('counts on the hardest pull its units could give once they may, whatever pulls now', () => {
     const modes: readonly LocoMode[] = ['leading', 'multiple', 'doubleHeaded', 'standby'];
+    const tanks = content.wagons.filter((w) => w.body === 'tank');
     forAll(
       (rng) => ({
         locos: Array.from({ length: rng.int(1, 4) }, (_, i) => ({
@@ -333,10 +334,12 @@ describe('CrossingWatch with plain trains', () => {
           engaged: rng.chance(0.5),
         })),
         wagons: Array.from({ length: rng.int(0, 6) }, () => ({
-          def: rng.pick(content.wagons),
+          def: rng.chance(0.5) ? rng.pick(tanks) : rng.pick(content.wagons),
           level: rng.int(0, 3),
           cargo: rng.pick([null, 'stone', 'water']),
           amount: rng.range(0, 40),
+          // the share of what it carries a run leaves in it, if a run may draw on it
+          left: rng.range(0, 1),
         })),
       }),
       (c) => {
@@ -344,9 +347,19 @@ describe('CrossingWatch with plain trains', () => {
         const pull = crossingPull({ ...plain({ acceleration: now }), ...c });
         expect(pull).toBeGreaterThanOrEqual(now);
         expect(pull).toBeLessThanOrEqual(content.track.physics.maxAccel);
-        // every way fuel, water and the wire may leave its units able to pull, and the standby
-        // rule of Train.refreshModes with them: the units not on standby that can pull do, and
-        // when none of them can, the first standby unit that can steps in
+        // every way a run may lighten it: with a steam unit aboard, pulling or not, the water of
+        // a tank wagon may go into the boiler, part of it or all (Train.drawTankerWater)
+        const steam = c.locos.some((l) => l.def.type === 'steam');
+        const drawable = (w: (typeof c.wagons)[number]) =>
+          steam && w.def.body === 'tank' && w.cargo === 'water';
+        const loads = [
+          c.wagons,
+          c.wagons.map((w) => (drawable(w) ? { ...w, amount: w.amount * w.left } : w)),
+          c.wagons.map((w) => (drawable(w) ? { ...w, cargo: null, amount: 0 } : w)),
+        ];
+        // and every way fuel, water and the wire may leave its units able to pull, and the
+        // standby rule of Train.refreshModes with them: the units not on standby that can pull
+        // do, and when none of them can, the first standby unit that can steps in
         for (let usable = 0; usable < 1 << c.locos.length; usable++) {
           const can = (i: number) => ((usable >> i) & 1) === 1;
           const working = c.locos.some((l, i) => l.mode !== 'standby' && can(i));
@@ -355,10 +368,32 @@ describe('CrossingWatch with plain trains', () => {
             ...l,
             engaged: l.mode !== 'standby' ? can(i) : !working && i === stepIn,
           }));
-          expect(consistPhysics(on, c.wagons).acceleration).toBeLessThanOrEqual(pull + 1e-12);
+          for (const wagons of loads)
+            expect(consistPhysics(on, wagons).acceleration).toBeLessThanOrEqual(pull + 1e-12);
         }
       },
     );
+    // a steam engine with three tank wagons of water: what its boiler draws from them as it runs
+    // leaves a consist that gains speed more than twice as hard as it does carrying it
+    const mav375 = content.locomotives.find((l) => l.id === 'mav375')!;
+    const riveted = content.wagons.find((w) => w.id === 'riveted_tank')!;
+    const carrying = {
+      ...plain({ state: 'moving' }),
+      locos: [{ def: mav375, level: 0, mode: 'leading' as const, engaged: true }],
+      wagons: Array.from({ length: 3 }, () => ({
+        def: riveted,
+        level: 0,
+        cargo: 'water' as string | null,
+        amount: riveted.capacity,
+      })),
+    };
+    const loaded = consistPhysics(carrying.locos, carrying.wagons).acceleration;
+    const drawn = consistPhysics(
+      carrying.locos,
+      carrying.wagons.map((w) => ({ ...w, cargo: null, amount: 0 })),
+    ).acceleration;
+    expect(drawn).toBeGreaterThan(2 * loaded);
+    expect(crossingPull(carrying)).toBeGreaterThanOrEqual(drawn);
     // the train of the ten-minute step test, stopped for fuel 5 tiles short of a crossing: nothing
     // pulls while it waits, yet it sets off with its engine pulling once it has fuel
     const f7 = content.locomotives.find((l) => l.id === 'f7')!;
@@ -1334,7 +1369,10 @@ describe('walkers and a train over a level crossing, ten game minutes in the ste
  * A train of the fleet runs: its units (the first leads), its wagons, the units set to standby, how
  * it picks its stops (the quarry and warehouse shuttle of crossingWorld unless it roams), and, if
  * given, the game second of the run, under DRY_EVERY, its dry spells start from: it runs with empty
- * tanks for DRY_FOR of every DRY_EVERY game seconds from then.
+ * tanks for DRY_FOR of every DRY_EVERY game seconds from then. A train given `water` as well carries
+ * water in its tank wagons, filled in its dry spells, in which its boiler stands just under half
+ * rather than empty; outside them its boiler is left to it, so it sets off from each spell topping
+ * the boiler up from its tank wagons (`Train.drawTankerWater`), the lighter for it.
  */
 interface Consist {
   locos: readonly string[];
@@ -1342,6 +1380,7 @@ interface Consist {
   standby?: readonly number[];
   mode?: RouteMode;
   dry?: number;
+  water?: boolean;
 }
 /** Game seconds of every DRY_EVERY that a train given `dry` runs with empty tanks. */
 const DRY_FOR = 15;
@@ -1352,6 +1391,8 @@ interface Seen {
   state: TrainState;
   speed: number;
   distance: number;
+  /** tonnes */
+  mass: number;
   /** crossingReach over the horizon for a train with its way set; null for any other */
   reach: number | null;
   /** crossingPull for a train with its way set; null for any other */
@@ -1362,7 +1403,8 @@ interface Seen {
  * crossingWorld with no train of its own and `consists` rolled out of its depot in order, each as
  * soon as the gate is clear, then ten game minutes of steps in play mode. Before each step every
  * train is read as the watch reads it; after it, a train given `dry` has its tanks emptied in its
- * dry spell and filled outside it, and every other train has them filled. Fails on the first step
+ * dry spell and filled outside it (its boiler as `water` says), and every other train has them
+ * filled. Fails on the first step
  * a crossing is open that a car stood on or a train with its way set could reach as the step
  * began, on the first a walker stands on a level crossing a car is on, and on the first a walker
  * has stood on one for longer than its slowest walk over one (CROSSING_WALK), give or take the step
@@ -1411,6 +1453,7 @@ function fleetRun(seed: number, consists: readonly Consist[]) {
         state: t.state,
         speed: t.speed,
         distance: t.distance,
+        mass: t.mass,
         reach: ROUTED_STATES.has(t.state) ? crossingReach(t, CROSSING_HORIZON) : null,
         pull: ROUTED_STATES.has(t.state) ? crossingPull(t) : null,
       }),
@@ -1438,11 +1481,18 @@ function fleetRun(seed: number, consists: readonly Consist[]) {
       if (why === 'standing') heldDue++;
     }
     trains.forEach((t, k) => {
-      const dry = consists[k].dry;
+      const { dry, water } = consists[k];
       const empty = dry !== undefined && (i * SIM_STEP + DRY_EVERY - dry) % DRY_EVERY < DRY_FOR;
       t.coal = empty ? 0 : t.coalCap;
-      t.water = empty ? 0 : t.waterCap;
       t.oil = empty ? 0 : t.oilCap;
+      if (!water) t.water = empty ? 0 : t.waterCap;
+      else if (empty) {
+        t.water = t.waterCap * 0.49;
+        for (const wg of t.wagons) {
+          wg.cargo = 'water';
+          wg.amount = wg.def.capacity;
+        }
+      }
     });
     const cars = new Set(trains.flatMap((t) => t.occupancyKeys(SIDE)));
     for (const p of w.people.persons) {
@@ -1477,7 +1527,8 @@ const gapRun = (k: number) => (HARDEST_PULL * SIM_STEP ** 2 * k * (k + 1)) / 2;
 describe('real trains in the step, through every way they stand', () => {
   // The bounds the watch and the gap rest on, checked on the trains of trains.ts rather than plain
   // ones: held behind each other, roaming with nothing to haul, out of fuel, an electric engine off
-  // the wire with a diesel on standby that steps in, loading, pulling aside.
+  // the wire with a diesel on standby that steps in, a steam engine lightened by the water its
+  // boiler draws from its tank wagons, loading, pulling aside.
   // slow: 12 000 steps of a whole world with up to three trains and some forty walkers
   it.each([
     [
@@ -1489,20 +1540,42 @@ describe('real trains in the step, through every way they stand', () => {
         { locos: ['sw1'], wagons: ['wood_hopper'], mode: 'freight' },
       ],
       ['idle', 'loading', 'moving', 'noFuel', 'yielding'],
+      0,
     ],
     [
       'an electric engine off the wire with a diesel of twice its pull on standby, running dry',
       7,
       [{ locos: ['kando_v40', 'dda40x'], wagons: ['wood_hopper'], standby: [1], dry: 0 }],
       ['loading', 'moving', 'noPower'],
+      0,
+    ],
+    [
+      'a steam engine out of coal with its boiler under half, topping it up from three tank wagons of water as it sets off',
+      4242,
+      [
+        {
+          locos: ['mav375'],
+          wagons: ['riveted_tank', 'riveted_tank', 'riveted_tank'],
+          dry: 30,
+          water: true,
+        },
+      ],
+      ['loading', 'moving', 'noFuel'],
+      100,
     ],
   ] as const)(
     '%s: one with its way set runs no further and gains speed no faster than the watch counts on, one with none runs no further than the gap train',
-    (_, seed, consists, states) => {
+    (_, seed, consists, states, lightened) => {
       const { trains, seen, crossed, heldDue } = fleetRun(seed, consists);
       expect(trains).toHaveLength(consists.length);
       const ahead = Math.floor(CROSSING_HORIZON / SIM_STEP);
-      const out = { states: new Set<TrainState>(), heldOff: 0, stalledOff: 0, departed: 0 };
+      const out = {
+        states: new Set<TrainState>(),
+        heldOff: 0,
+        stalledOff: 0,
+        departed: 0,
+        lightened: 0,
+      };
       seen.forEach((runs, k) => {
         for (let i = 0; i < runs.length; i++) {
           const s = runs[i];
@@ -1528,6 +1601,8 @@ describe('real trains in the step, through every way they stand', () => {
               out.heldOff++;
               if (s.state !== 'moving') out.stalledOff++;
             }
+            // it got lighter within the horizon
+            if (runs[far].mass < s.mass - 1e-9) out.lightened++;
             continue;
           }
           for (let j = 1; j <= far - i; j++) {
@@ -1542,9 +1617,10 @@ describe('real trains in the step, through every way they stand', () => {
       });
       // not vacuous: the trains went through every state named, trains stood with their way set,
       // out of fuel or power among them, and set off within the horizon; trains with no way set
-      // set off within it too; walkers crossed; and the crossing closed for a train standing with
-      // its way set alone
+      // set off within it too; walkers crossed; the crossing closed for a train standing with its
+      // way set alone; and a train with its way set got lighter within the horizon as often as named
       expect([...out.states].sort()).toEqual(expect.arrayContaining([...states]));
+      expect(out.lightened).toBeGreaterThanOrEqual(lightened);
       expect(out.heldOff).toBeGreaterThanOrEqual(100);
       expect(out.stalledOff).toBeGreaterThanOrEqual(50);
       expect(out.departed).toBeGreaterThanOrEqual(50);

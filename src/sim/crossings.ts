@@ -70,7 +70,8 @@ export interface CrossingTrain {
   readonly maxSpeed?: number;
   /**
    * its units and wagons (`Train.locos`, `Train.wagons`): with them the watch counts on the most
-   * any of its units could pull (`crossingPull`), not only on what pulls now
+   * any of its units could pull, as light as a run may leave the consist (`crossingPull`), not
+   * only on what pulls now
    */
   readonly locos?: Parameters<typeof consistPhysics>[0];
   readonly wagons?: Parameters<typeof consistPhysics>[1];
@@ -79,18 +80,37 @@ export interface CrossingTrain {
 /**
  * The hardest a train could gain speed in the horizon, tiles/s²: what pulls now (`acceleration`),
  * or, given its units and wagons, the most `consistPhysics` gives them with any of its units
- * pulling, as fuel, water, the wire and the standby rule may leave them (`Train.refreshModes`).
- * A train stopped for fuel or power has no unit pulling while it waits, and sets off with them.
+ * pulling, as fuel, water, the wire and the standby rule may leave them (`Train.refreshModes`),
+ * and as light as its run may leave them (`drained`). A train stopped for fuel or power has no
+ * unit pulling while it waits, and sets off with them.
  */
 export function crossingPull(train: CrossingTrain): number {
   let best = Math.max(0, train.acceleration ?? 0);
-  const { locos, wagons } = train;
-  if (!locos?.length || !wagons) return best;
+  const { locos } = train;
+  if (!locos?.length || !train.wagons) return best;
+  const wagons = drained(locos, train.wagons);
   for (let set = 1; set < 1 << locos.length; set++) {
     const on = locos.map((l, i) => ({ ...l, engaged: ((set >> i) & 1) === 1 }));
     best = Math.max(best, consistPhysics(on, wagons).acceleration);
   }
   return best;
+}
+
+/**
+ * The wagons as light as a run may leave them. A steam train tops its boiler up from its tank
+ * wagons of water as it runs (`Train.drawTankerWater`), and the boiler's water weighs nothing in
+ * `consistPhysics`, so with a steam unit aboard, pulling or not, any water a tank wagon carries
+ * may be gone, and the consist the lighter for it. Nothing else a train carries leaves it under
+ * way: it unloads only at a stop.
+ */
+function drained(
+  locos: NonNullable<CrossingTrain['locos']>,
+  wagons: NonNullable<CrossingTrain['wagons']>,
+): NonNullable<CrossingTrain['wagons']> {
+  if (!locos.some((l) => l.def.type === 'steam')) return wagons;
+  return wagons.map((w) =>
+    w.def.body === 'tank' && w.cargo === 'water' ? { ...w, cargo: null, amount: 0 } : w,
+  );
 }
 
 /**
