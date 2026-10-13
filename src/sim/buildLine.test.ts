@@ -138,7 +138,8 @@ describe('a line of track', () => {
 
   it('places nothing when one piece is blocked, and leaves money and stock as they were', () => {
     for (const [block, at, reason] of [
-      [(w: World) => w.ground(7, 5, Terrain.Rock), 3, STR.build.rock],
+      // rock takes track only as the continuation of a line: the line starts on it, joining none
+      [(w: World) => w.ground(4, 5, Terrain.Rock), 0, STR.build.mountainLine],
       [(w: World) => w.ground(8, 5, Terrain.Water), 4, STR.build.needBridge],
       [(w: World) => w.builder.placeBuilding(5, 5, 'windmill'), 1, STR.build.occupied],
     ] as const) {

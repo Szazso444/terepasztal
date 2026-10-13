@@ -141,6 +141,23 @@ crossing at the old limit while it runs. Upgrade every platform in the crossing 
 traffic: its weakest platform remains the limiting one. Remove track before demolishing its
 platform. The removal tool removes the rails first on an occupied deck.
 
+## Mountain track
+
+Track can be laid on **Rock** and **Mountain**, but only as the continuation of a line: every
+piece there needs one of its ends joined to the end of a line already standing. Draw a line up
+from the foot of the mountain, or on from track already on it; drawn from the far end, it is
+refused with "Mountain track must continue an existing line". Track beside the tile that runs
+past it does not count. The editor keeps the same rule.
+
+The slope rules are those of any hill. Straights, crossings and transitions climb at most a level
+per tile; curves and switches need a level tile, which on a mountain means its flat top. Bridge
+platforms, stations, works, decor and power poles do not stand on rock or mountain, but signals
+and electrification on mountain track work as on any track.
+
+Track costs 1.35× on rock and 1.65× on a mountain, times the biome's track cost: in the Mountain
+biome (×1.5), about 2.0× and 2.5×. A train whose head is in the Mountain biome runs at 0.9 of its
+speed, and climbing halves that, to 0.45.
+
 ## Crafting and old saves
 
 The Craft screen filters steam, diesel, electric and wagon cargo types and searches by model.

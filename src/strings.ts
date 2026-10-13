@@ -297,6 +297,8 @@ export const STR = {
     offMap: 'Outside the map',
     locked: 'Uncharted region',
     rock: 'Cannot lay track on rock',
+    /** track tried on rock or a mountain where none of its ends joins a line already there */
+    mountainLine: 'Mountain track must continue an existing line',
     needBridge: 'Water needs a bridge',
     tooSteep: 'Too steep for rails: straight track climbs one level per tile at most',
     notLevel: 'Needs level ground: only straight track can climb a slope',

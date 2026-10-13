@@ -80,8 +80,8 @@ export interface PlacementCheck {
  * Why nothing can be built on terrain `t`, naming the ground, or null when it takes buildings.
  * The one list of where nothing stands: stations, works, decor off the track and a depot's gates
  * all ask it, and a bridge platform asks it everywhere but on water, which it spans. Track has
- * rules of its own (`checkTrackTile`), and so do the walkers (`walkable` in people.ts) and the
- * town paving (`cityTiles` in city.ts).
+ * rules of its own (`checkTrackTile`, and `trackRules` for rock and mountain), and so do the
+ * walkers (`walkable` in people.ts) and the town paving (`cityTiles` in city.ts).
  */
 export function unbuildable(t: Terrain): string | null {
   switch (t) {
@@ -94,6 +94,14 @@ export function unbuildable(t: Terrain): string | null {
     default:
       return null;
   }
+}
+
+/**
+ * Rock and mountain: no building stands on them (`unbuildable`), and track only continues a line
+ * onto them (`Builder.trackRules`).
+ */
+function stone(t: Terrain) {
+  return t === Terrain.Rock || t === Terrain.Mountain;
 }
 
 /**
@@ -438,7 +446,6 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     const t = terrainAt(this.map, x, y);
-    if (t === Terrain.Rock || t === Terrain.Mountain) return STR.build.rock;
     if (t === Terrain.Water && kind !== 'bridge' && !this.bridgeAt(x, y))
       return STR.build.needBridge;
     if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
@@ -455,8 +462,9 @@ export class Builder {
     return null;
   }
   /**
-   * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, then that each
-   * open edge meeting existing track joins a compatible class (a transition piece joins any).
+   * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that a piece on rock
+   * or a mountain continues a line, the ground under it, then that each open edge meeting existing
+   * track joins a compatible class (a transition piece joins any).
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const c = this.trackRules(x, y, item, rot, true);
@@ -485,6 +493,14 @@ export class Builder {
     // class compatibility with the neighbours the new piece would open onto
     const probe = new TrackGraph(this.map.w, this.map.h);
     probe.place(x, y, kind, rot, item.cls, item.cls2);
+    // Rock and mountain take track only as the continuation of a line, so a mountain line is
+    // always drawn up from its foot or from track already on the mountain. The ground under it
+    // is asked next, as anywhere.
+    if (
+      tiles.some((t) => stone(terrainAt(this.map, t.x, t.y))) &&
+      !this.continuesLine(probe, tiles)
+    )
+      return { ok: false, cost: {}, reason: STR.build.mountainLine };
     // Straights, crossings and class transitions may climb. Curves and switches (regular and
     // high speed) need smooth ground on every tile, or a bridge platform under every tile: then
     // they sit at the deck, the level of the rails they meet off the bridge.
@@ -522,6 +538,23 @@ export class Builder {
     let mul = 0;
     for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
     return { ok: true, cost: this.priced(pieceCost(kind, item.cls, item.cls2), mul) };
+  }
+  /**
+   * The piece `probe` holds on `tiles` joins a line: one of its ports leads off the footprint onto
+   * a tile whose track opens back toward it. Track beside the piece that runs past it (a
+   * perpendicular straight) does not join it.
+   */
+  private continuesLine(probe: TrackGraph, tiles: readonly { x: number; y: number }[]) {
+    return tiles.some((t) =>
+      (probe.get(t.x, t.y)?.links ?? []).some((link) =>
+        link.some((d) => {
+          const nx = t.x + DDX[d],
+            ny = t.y + DDY[d];
+          if (tiles.some((q) => q.x === nx && q.y === ny)) return false;
+          return this.track.opensTo(nx, ny, opposite(d));
+        }),
+      ),
+    );
   }
   refundFor(p: TrackPiece): Cost {
     return this.free
