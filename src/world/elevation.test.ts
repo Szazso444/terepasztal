@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { generateMap } from './mapgen';
 import { levelAt, levelTarget, tileLevels, MAX_LEVEL } from './elevation';
 import { Terrain } from './tiles';
+import { forAll } from '../testing/property';
 
 describe('tile elevation', () => {
   // a generated map, each tile's level read on its own: about 0.5 s alone
@@ -47,5 +48,61 @@ describe('tile elevation', () => {
     const bare = { w: map.w, h: map.h, terrain: map.terrain };
     expect(levelTarget(bare, pool)).toBe(0);
     expect(levelAt(bare, 12, 12)).toBe(0);
+  });
+
+  // Against the closed form: a tile stands at the least of every tile's levelTarget plus the steps
+  // to it, and of one plus the steps to the map's border. Maps up to 20 x 20 of any terrain, water
+  // at any level up to MAX_LEVEL, with and without the plane.
+  it('reads every level, raised water included, as the least target plus distance', () => {
+    const palette = [
+      Terrain.Grass,
+      Terrain.Forest,
+      Terrain.Sand,
+      Terrain.Rock,
+      Terrain.Hill,
+      Terrain.Mountain,
+      Terrain.Water,
+    ];
+    let raised = 0;
+    forAll(
+      (rng) => {
+        const w = rng.int(1, 20);
+        const h = rng.int(1, 20);
+        const terrain = new Uint8Array(w * h);
+        const lumps = rng.chance(0.5);
+        for (let i = 0; i < w * h; i++)
+          terrain[i] = lumps && i > 0 && rng.chance(0.7) ? terrain[i - 1] : rng.pick(palette);
+        const plane = rng.chance(0.8);
+        const waterSurface = plane ? new Uint8Array(w * h) : undefined;
+        if (waterSurface)
+          for (let i = 0; i < w * h; i++)
+            if (terrain[i] === Terrain.Water) waterSurface[i] = rng.int(0, MAX_LEVEL);
+        return { w, h, terrain, waterSurface };
+      },
+      (m) => {
+        const levels = tileLevels(m);
+        for (let y = 0; y < m.h; y++)
+          for (let x = 0; x < m.w; x++) {
+            let want = 1 + Math.min(x, y, m.w - 1 - x, m.h - 1 - y);
+            for (let j = 0; j < m.w * m.h; j++) {
+              const d = Math.abs((j % m.w) - x) + Math.abs(Math.floor(j / m.w) - y);
+              want = Math.min(want, levelTarget(m, j) + d);
+            }
+            const i = y * m.w + x;
+            if (levels[i] !== want)
+              throw new Error(`tileLevels ${levels[i]}, ${want} at (${x}, ${y})`);
+            if (levelAt(m, x, y) !== want)
+              throw new Error(`levelAt ${levelAt(m, x, y)}, ${want} at (${x}, ${y})`);
+            if (m.terrain[i] === Terrain.Water && levels[i] > 1) raised++;
+          }
+      },
+      {
+        format: (m) =>
+          `${m.w} x ${m.h}: terrain ${m.terrain.join('')}, ` +
+          `water levels ${m.waterSurface ? m.waterSurface.join('') : 'none'}`,
+      },
+    );
+    // water above level 1 stood at its own level somewhere
+    expect(raised).toBeGreaterThan(0);
   });
 });

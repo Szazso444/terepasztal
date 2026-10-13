@@ -18,16 +18,24 @@ import {
   type ChunkStore,
 } from './chunks';
 import {
+  DRY,
   FLOW_CAP,
   HIGH_RIVER_FLOW,
   KEEP_OUT,
+  LAKE_CLEARANCE,
+  LAKE_TILES,
+  LOW,
   RIVER_FLOW,
+  SIDE_STREAM_FLOW,
+  WIDE_FLOW,
   WaterKind,
   drain,
   levelSteps,
   type DrainInput,
 } from './rivers';
-import { DIR_DX, DIR_DY } from '../engine/iso';
+import { DIR_DX, DIR_DY, Dir } from '../engine/iso';
+import { Rng, hash2 } from '../engine/rng';
+import { forAll, shrinkInt } from '../testing/property';
 
 // Rivers and lakes (#341): the drainage of the river region around the start, read off the maps
 // generateMap makes. Every property is checked on a map grown by a ring of chunks around the one
@@ -47,15 +55,18 @@ const LOW_LAND: Sliders = { waterLevel: 0.3, hillLevel: 0.58, rockLevel: 0.7, fo
 /** The ring the checks read around a map. */
 const RING = CHUNK_TILES;
 
-/** A map of `size` tiles a side at origin 0, and the same world grown by RING on every side. */
-function world(seed: number, size: number, sliders: Sliders) {
-  const small = generateMapPlanes(seed, { ...sliders, w: size, h: size });
+/**
+ * A map of `size` tiles a side at (`ox`, `oy`), and the same world grown by RING on every side,
+ * which keeps its start chunk.
+ */
+function world(seed: number, size: number, sliders: Sliders, ox = 0, oy = 0) {
+  const small = generateMapPlanes(seed, { ...sliders, w: size, h: size, originX: ox, originY: oy });
   const big = generateMapPlanes(seed, {
     ...sliders,
     w: size + 2 * RING,
     h: size + 2 * RING,
-    originX: -RING,
-    originY: -RING,
+    originX: ox - RING,
+    originY: oy - RING,
   });
   return { small, big };
 }
@@ -70,6 +81,8 @@ interface Seen {
   intoSea: number;
   lake: number;
   outlet: number;
+  /** a river running out of a lake beside it */
+  lakeOutlet: number;
 }
 const noneSeen = (): Seen => ({
   river: 0,
@@ -80,6 +93,7 @@ const noneSeen = (): Seen => ({
   intoSea: 0,
   lake: 0,
   outlet: 0,
+  lakeOutlet: 0,
 });
 
 /** The tile river tile `i` of `m` runs into, or -1 off the map. */
@@ -132,6 +146,18 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
         throw new Error(`water at level ${levels[i]}, its own ${surface[i]}, at ${at(i)}`);
       if (terrain[i] !== Terrain.Water && surface[i])
         throw new Error(`a water level on land at ${at(i)}`);
+      // River and Lake as #340 assigns them, read off the pass's own flow planes rather than the
+      // river plane biomeRules is given: River where the pass laid a river (a side to run to),
+      // Lake on any other water but the sea (Water in the Ocean climate the pass made no lake)
+      const laid = m.flowDir![i] !== 0;
+      if (laid !== (biome[i] === Biome.River))
+        throw new Error(`River not where a river runs at ${at(i)}`);
+      if (laid !== flow[i] > 0)
+        throw new Error(`flow ${flow[i]} and side ${m.flowDir![i]} at ${at(i)}`);
+      const still =
+        terrain[i] === Terrain.Water && !laid && (lake[i] === 1 || m.climate![i] !== Biome.Ocean);
+      if (still !== (biome[i] === Biome.Lake))
+        throw new Error(`Lake not on still water at ${at(i)}`);
       if (surface[i]) seen.raised++;
       if (river[i]) {
         seen.river++;
@@ -193,9 +219,15 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
             members.push(n);
           }
         } else if (river[n]) {
-          // a river beside the lake that does not run into it runs out of it
+          // a river beside the lake that does not run into it runs out of it, and stands no higher
+          // than the lake: water never rises downstream
           const into = downstream(m, n);
-          if (into < 0 || group[into] !== s) outlet = true;
+          if (into < 0 || group[into] !== s) {
+            outlet = true;
+            if (mine) seen.lakeOutlet++;
+            if (surface[n] > surface[i])
+              throw new Error(`a river at level ${surface[n]} runs out of a lake at ${at(n)}`);
+          }
         } else if (terrain[n] === Terrain.Water) outlet = true;
       }
     }
@@ -208,91 +240,119 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
 }
 
 /**
- * The start chunk stays buildable and gets a river nearby: no river within 13 tiles of its centre
- * (the ground's own water there may run out of it), and a river in the 3 x 3 chunks around it.
+ * The start chunk of `small` stays buildable and gets a river nearby, read on `big` (which holds
+ * it RING tiles in): no river within 13 tiles of the chunk's centre but one that runs out of a
+ * lake (the ground's own water there is a lake that overflows outwards), and a river in the 3 x 3
+ * chunks around it.
  */
-function checkStart(small: MapPlanes) {
-  const m = small.map;
-  const { rx, ry } = startRegion(m);
-  const cx = rx * CHUNK_TILES + CHUNK_TILES / 2;
-  const cy = ry * CHUNK_TILES + CHUNK_TILES / 2;
+function checkStart(small: MapPlanes, big: MapPlanes) {
+  const m = big.map;
+  const { rx, ry } = startRegion(small.map);
+  const cx = rx * CHUNK_TILES + CHUNK_TILES / 2 + RING;
+  const cy = ry * CHUNK_TILES + CHUNK_TILES / 2 + RING;
   let near = 0;
   for (let y = Math.max(0, cy - 48); y < Math.min(m.h, cy + 48); y++)
     for (let x = Math.max(0, cx - 48); x < Math.min(m.w, cx + 48); x++) {
       const i = y * m.w + x;
-      if (!small.river[i]) continue;
+      if (!big.river[i]) continue;
       near++;
       const d = Math.hypot(x - cx, y - cy);
-      // a river out of the ground's own water at the start may cross it
-      if (d < 13 && small.shore[i] !== Terrain.Water && !nearWater(small, x, y))
-        throw new Error(`a river ${d.toFixed(1)} tiles from the start at (${x}, ${y})`);
+      if (d < 13 && !fromLake(big, i))
+        throw new Error(
+          `a river ${d.toFixed(1)} tiles from the start at map tile (${x - RING}, ${y - RING})`,
+        );
     }
   if (!near) throw new Error('no river in the 3 x 3 chunks around the start');
 }
-/** Whether the ground's own water (before the shore, so a lake) lies within 13 tiles. */
-function nearWater(p: MapPlanes, x: number, y: number) {
+/**
+ * Whether river tile `i` runs out of a lake: it, or a river tile upstream of it, lies beside a lake
+ * tile it does not run into.
+ */
+function fromLake(p: MapPlanes, i: number) {
   const m = p.map;
-  for (let dy = -13; dy <= 13; dy++)
-    for (let dx = -13; dx <= 13; dx++) {
-      const xx = x + dx;
-      const yy = y + dy;
-      if (xx < 0 || yy < 0 || xx >= m.w || yy >= m.h) continue;
-      const i = yy * m.w + xx;
-      if (p.lake[i] && Math.hypot(dx, dy) < 13) return true;
+  const upstream = [i];
+  const met = new Set(upstream);
+  for (let k = 0; k < upstream.length; k++) {
+    const t = upstream[k];
+    const x = t % m.w;
+    const y = Math.floor(t / m.w);
+    for (let d = 0; d < 4; d++) {
+      const nx = x + DIR_DX[d];
+      const ny = y + DIR_DY[d];
+      if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h) continue;
+      const n = ny * m.w + nx;
+      if (p.lake[n] && downstream(m, t) !== n) return true;
+      if (p.river[n] && !met.has(n) && downstream(m, n) === t) {
+        met.add(n);
+        upstream.push(n);
+      }
     }
+  }
   return false;
 }
 
+/** A world for the checks: its seed, its map's size and origin, and which sliders it has. */
+interface WorldCase {
+  seed: number;
+  size: number;
+  ox: number;
+  oy: number;
+}
+/** Several sizes, the default 160 the most often, on the chunk grid and off it, at any origin. */
+const genWorldCase = (rng: Rng): WorldCase => ({
+  seed: rng.int(1, 2 ** 31 - 1),
+  size: rng.chance(0.3) ? 160 : rng.chance(0.5) ? rng.pick([96, 128, 192, 224]) : rng.int(64, 224),
+  ox: rng.chance(0.5) ? 0 : rng.int(-100, 100),
+  oy: rng.chance(0.5) ? 0 : rng.int(-100, 100),
+});
+/** Smaller maps first, then the origin toward 0. */
+function* shrinkWorldCase(c: WorldCase): Iterable<WorldCase> {
+  for (const size of shrinkInt(c.size, 64)) yield { ...c, size };
+  for (const ox of shrinkInt(c.ox)) yield { ...c, ox };
+  for (const oy of shrinkInt(c.oy)) yield { ...c, oy };
+}
+const WORLD_SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
+
 describe('rivers and lakes of a generated map', () => {
-  // 20 worlds of 160 x 160 at the default sliders, each with a ring around it: one river plan a
-  // world, about 6 s alone
-  it('hold on 20 worlds at the default size and sliders', () => {
+  it('are checked on worlds of several sizes and origins', () => {
+    // The generator, checked: without this a narrowed generator would pass the property vacuously.
+    const cases = WORLD_SEEDS.map((s) => genWorldCase(new Rng(s)));
+    expect(cases.filter((c) => c.size === 160).length).toBeGreaterThanOrEqual(3);
+    expect(cases.some((c) => c.size < 128)).toBe(true);
+    expect(cases.some((c) => c.size > 160)).toBe(true);
+    expect(cases.some((c) => c.size % 32 !== 0)).toBe(true);
+    expect(cases.some((c) => c.ox !== 0 && c.oy !== 0)).toBe(true);
+  });
+
+  // 20 worlds up to 224 tiles a side at the default sliders, each with a ring around it: one
+  // river plan a world, about 5 s alone, and a failure shrinks through up to 30 more
+  it('hold on 20 worlds of several sizes at the default sliders', () => {
     const seen = noneSeen();
-    for (let seed = 1; seed <= 20; seed++) {
-      const { small, big } = world(seed, 160, DEFAULTS);
-      try {
+    forAll(
+      genWorldCase,
+      (c) => {
+        const { small, big } = world(c.seed, c.size, DEFAULTS, c.ox, c.oy);
         checkWater(small, big, seen);
-        checkStart(small);
-      } catch (e) {
-        throw new Error(`seed ${seed}: ${(e as Error).message}`, { cause: e });
-      }
-    }
+        checkStart(small, big);
+      },
+      { seeds: WORLD_SEEDS, shrink: shrinkWorldCase, shrinkBudget: 30 },
+    );
     for (const [k, v] of Object.entries(seen)) expect(v, k).toBeGreaterThan(0);
   }, 120_000);
 
-  // 2 x 8 worlds of 96 and 224 tiles a side: about 5 s alone
-  it.each([96, 224])(
-    'hold on worlds of %i tiles a side',
-    (size) => {
-      const seen = noneSeen();
-      for (let seed = 101; seed <= 108; seed++) {
-        const { small, big } = world(seed, size, DEFAULTS);
-        try {
-          checkWater(small, big, seen);
-          checkStart(small);
-        } catch (e) {
-          throw new Error(`seed ${seed}: ${(e as Error).message}`, { cause: e });
-        }
-      }
-      expect(seen.river).toBeGreaterThan(0);
-      expect(seen.lake).toBeGreaterThan(0);
-    },
-    120_000,
-  );
-
-  // 10 worlds of 160 x 160 at other sliders: about 3 s alone
+  // 10 worlds at other sliders: about 1.5 s alone
   it('hold at another setting of the Map sliders', () => {
     const seen = noneSeen();
-    for (let seed = 201; seed <= 210; seed++) {
-      const { small, big } = world(seed, 160, LOW_LAND);
-      try {
+    forAll(
+      genWorldCase,
+      (c) => {
+        const { small, big } = world(c.seed, c.size, LOW_LAND, c.ox, c.oy);
         checkWater(small, big, seen);
-        checkStart(small);
-      } catch (e) {
-        throw new Error(`seed ${seed}: ${(e as Error).message}`, { cause: e });
-      }
-    }
-    for (const k of ['river', 'raised', 'drop', 'lake', 'outlet'] as const)
+        checkStart(small, big);
+      },
+      { seeds: WORLD_SEEDS.slice(0, 10), shrink: shrinkWorldCase, shrinkBudget: 30 },
+    );
+    for (const k of ['river', 'raised', 'drop', 'lake', 'outlet', 'lakeOutlet'] as const)
       expect(seen[k], k).toBeGreaterThan(0);
   }, 120_000);
 });
@@ -342,7 +402,170 @@ describe('the river region', () => {
       }
     expect(streams).toBeGreaterThan(0);
   }, 60_000);
+
+  it('draws pairs of maps of every kind the world-space property claims', () => {
+    const cases = PAIR_SEEDS.map((s) => genStripPair(new Rng(s)));
+    // past the region on either side, and wholly in it; cut off the chunk grid; grown by 1 and 2
+    expect(cases.some((c) => c.along.chunks > 2 * REGION + 1)).toBe(true);
+    expect(cases.some((c) => c.along.chunks <= 2 * REGION + 1)).toBe(true);
+    expect(cases.some((c) => c.along.cut > 0 && c.across.cut > 0)).toBe(true);
+    expect(cases.some((c) => c.along.grow === 2 || c.across.grow === 2)).toBe(true);
+    expect(cases.some((c) => c.alongX) && cases.some((c) => !c.alongX)).toBe(true);
+    expect(cases.some((c) => c.low) && cases.some((c) => !c.low)).toBe(true);
+  });
+
+  // A tile's water is a function of its world tile, the seed, the sliders and the start chunk,
+  // whatever map holds it: in the region and beyond it, where streams run. Strips through the
+  // start chunk up to 15 chunks long against the same world grown around them. And on the big
+  // map no river ends on land, a stream past the region included.
+  // 12 pairs, one river plan each: about 3 s alone, and a failure shrinks through up to 30 more
+  it('gives two maps of one world the same water where they overlap, past the region too', () => {
+    let beyond = 0;
+    forAll(
+      genStripPair,
+      (c) => {
+        const { small, big } = stripMaps(c);
+        const dx = small.originX - big.originX;
+        const dy = small.originY - big.originY;
+        for (let y = 0; y < small.h; y++)
+          for (let x = 0; x < small.w; x++) {
+            const i = y * small.w + x;
+            const j = (y + dy) * big.w + x + dx;
+            const wx = x + small.originX;
+            const wy = y + small.originY;
+            const out = (v: number, s: number) => v < s - REGION * 32 || v >= s + (REGION + 1) * 32;
+            if (small.flowDir![i] && (out(wx, c.startX) || out(wy, c.startY))) beyond++;
+            for (const [name, a, b] of [
+              ['terrain', small.terrain, big.terrain],
+              ['biome', small.biome, big.biome],
+              ['water level', small.waterSurface!, big.waterSurface!],
+              ['flow', small.flow!, big.flow!],
+              ['side', small.flowDir!, big.flowDir!],
+            ] as const)
+              if (a[i] !== b[j])
+                throw new Error(
+                  `${name} ${a[i]} on the small map, ${b[j]} on the big one, at (${wx}, ${wy})`,
+                );
+          }
+        for (let i = 0; i < big.w * big.h; i++) {
+          const n = big.flowDir![i] ? downstream(big, i) : -1;
+          const wx = (i % big.w) + big.originX;
+          const wy = Math.floor(i / big.w) + big.originY;
+          if (n >= 0 && big.terrain[n] !== Terrain.Water)
+            throw new Error(`a river ends on land at (${wx}, ${wy})`);
+        }
+      },
+      { seeds: PAIR_SEEDS, shrink: shrinkStripPair, shrinkBudget: 30 },
+    );
+    // rivers past the region were compared
+    expect(beyond).toBeGreaterThan(0);
+  }, 90_000);
+
+  // A world's plan is kept for its next maps (PLAN_CACHE), with the ground it generated while it
+  // is the latest; a map must not depend on whether either was there. The map is wide enough for
+  // the ground it generates to reach past the plan's. 2 worlds, 6 maps of 240 x 40 tiles and 12
+  // more river plans: about 1.5 s alone
+  it('gives a world the same map whatever was generated before it', () => {
+    const frame = { w: 240, h: 40, originX: 13, originY: -21 };
+    const planes = (m: GameMap) =>
+      [m.terrain, m.biome, m.variant, m.climate!, m.waterSurface!, m.flow!, m.flowDir!].map((a) =>
+        Array.from(a),
+      );
+    const props = (m: GameMap) => JSON.stringify([...m.props]);
+    for (const seed of [3, 7412]) {
+      // five other worlds first: no plan of this one is kept
+      for (let k = 1; k <= 5; k++) generateMap(seed + 1000 * k, { w: 32, h: 32 });
+      const cold = generateMap(seed, frame);
+      // its plan and the ground it generated
+      const warm = generateMap(seed, frame);
+      // its plan, the ground dropped for another world's
+      generateMap(seed + 7, { w: 32, h: 32 });
+      const kept = generateMap(seed, frame);
+      for (const m of [warm, kept]) {
+        expect(planes(m), `seed ${seed}`).toEqual(planes(cold));
+        expect(props(m), `seed ${seed}`).toBe(props(cold));
+      }
+    }
+  }, 40_000);
 });
+
+/** The river region's reach from the start chunk, in chunks along either axis (mapgen.ts). */
+const REGION = 5;
+const PAIR_SEEDS = Array.from({ length: 12 }, (_, i) => i + 1);
+
+/**
+ * One axis of a pair: the small map is `chunks` chunks long less `cut` tiles at its far end, and
+ * the big one `grow` chunks longer at both ends; both have their start chunk where the axis says.
+ */
+interface StripAxis {
+  chunks: number;
+  cut: number;
+  grow: number;
+}
+/** Two maps of one world: a strip through its start chunk, long along an axis, and a bigger one. */
+interface StripPair {
+  seed: number;
+  low: boolean;
+  alongX: boolean;
+  along: StripAxis;
+  across: StripAxis;
+  /** world tile of the start chunk's corner */
+  startX: number;
+  startY: number;
+}
+
+/** An axis of `chunks` chunks; one chunk wide, a map keeps it whole (no game clips its start). */
+const genAxis = (rng: Rng, chunks: number): StripAxis => ({
+  chunks,
+  cut: chunks === 1 || rng.chance(0.5) ? 0 : rng.int(1, 31),
+  grow: rng.int(1, 2),
+});
+const genStripPair = (rng: Rng): StripPair => ({
+  seed: rng.int(1, 2 ** 31 - 1),
+  low: rng.chance(0.3),
+  alongX: rng.chance(0.5),
+  along: genAxis(
+    rng,
+    rng.chance(0.75) ? rng.int(2 * REGION + 2, 2 * REGION + 5) : rng.int(3, 2 * REGION + 1),
+  ),
+  across: genAxis(rng, rng.int(1, 3)),
+  startX: 32 * rng.int(-3, 3),
+  startY: 32 * rng.int(-3, 3),
+});
+
+function* shrinkStripPair(c: StripPair): Iterable<StripPair> {
+  if (c.low) yield { ...c, low: false };
+  for (const k of ['along', 'across'] as const) {
+    const a = c[k];
+    if (a.grow > 1) yield { ...c, [k]: { ...a, grow: 1 } };
+    if (a.cut) yield { ...c, [k]: { ...a, cut: 0 } };
+    for (const chunks of shrinkInt(a.chunks, 1))
+      if (chunks > 1 || !a.cut) yield { ...c, [k]: { ...a, chunks } };
+  }
+}
+
+/** The pair's maps: their start chunk at (startX, startY), the big one around the small one. */
+function stripMaps(c: StripPair) {
+  const frame = (a: StripAxis, start: number, ring: number) => {
+    const n = a.chunks + 2 * ring;
+    // the start chunk is the middle chunk, the nearer one when even (startRegion)
+    return { len: 32 * n - (ring ? 0 : a.cut), origin: start - 32 * Math.floor((n - 1) / 2) };
+  };
+  const [ax, ay] = c.alongX ? [c.along, c.across] : [c.across, c.along];
+  const sliders = c.low ? LOW_LAND : DEFAULTS;
+  const map = (gx: number, gy: number) => {
+    const x = frame(ax, c.startX, gx);
+    const y = frame(ay, c.startY, gy);
+    return generateMap(c.seed, {
+      ...sliders,
+      w: x.len,
+      h: y.len,
+      originX: x.origin,
+      originY: y.origin,
+    });
+  };
+  return { small: map(0, 0), big: map(ax.grow, ay.grow) };
+}
 
 describe('the water planes in stored chunks', () => {
   it('round-trip in a chunk text of this version', () => {
@@ -443,7 +666,185 @@ describe('the water planes in stored chunks', () => {
       expect(ponds, `seed ${seed}`).toBeGreaterThan(0);
     }
   }, 60_000);
+
+  it('draws seams of every kind the seam property claims', () => {
+    const cases = SEAM_SEEDS.map((s) => genSeam(new Rng(s)));
+    for (const ground of STUB_GROUNDS)
+      expect(
+        cases.some((c) => c.ground === ground),
+        ground,
+      ).toBe(true);
+    for (const near of ['any', 'river', 'raised'] as const)
+      expect(
+        cases.some((c) => c.near === near),
+        near,
+      ).toBe(true);
+  });
+
+  // #339's seam rule, for any stored chunk of a 160-tile world: whatever ground an older
+  // generator left in it, no new river ends on its land, new water stands at most a level above
+  // it and never rises downstream, and the new side is the generator's but at the seam.
+  // 16 worlds, each generated twice: about 4 s alone, and a failure shrinks through up to 20 more
+  it('fits the new side to a stored chunk of any ground, and changes it only at the seam', () => {
+    const seen = { ponds: 0, lowered: 0, intoStored: 0 };
+    forAll(
+      genSeam,
+      (c) => {
+        const params = { w: 160, h: 160 };
+        const fresh = buildMap(c.seed, params, {}).map;
+        let { cx, cy } = c;
+        if (c.near !== 'any') {
+          // the first chunk in reading order that a river of the fresh world runs into, or that
+          // raised water stands beside
+          const chunk = (i: number) =>
+            Math.floor(i / 160 / CHUNK_TILES) * 5 + Math.floor((i % 160) / CHUNK_TILES);
+          let first = -1;
+          for (let i = 0; i < 160 * 160; i++) {
+            const into = fresh.flowDir![i] ? [downstream(fresh, i)] : [];
+            const beside = fresh.waterSurface![i] >= 2 ? [i - 160, i + 160, i - 1, i + 1] : [];
+            for (const n of c.near === 'river' ? into : beside) {
+              if (n < 0 || n >= 160 * 160 || Math.abs((n % 160) - (i % 160)) > 1) continue;
+              if (chunk(n) !== chunk(i) && (first < 0 || chunk(n) < first)) first = chunk(n);
+            }
+          }
+          if (first >= 0) [cx, cy] = [first % 5, Math.floor(first / 5)];
+        }
+        const store: ChunkStore = { [chunkKey(cx, cy)]: encodeChunk(stubChunk(c, fresh), cx, cy) };
+        const m = buildMap(c.seed, params, store).map;
+        const levels = tileLevels(m);
+        const stored = (i: number) =>
+          Math.floor((i % 160) / CHUNK_TILES) === cx && Math.floor(i / 160 / CHUNK_TILES) === cy;
+        const sides = (i: number) =>
+          [-160, 1, 160, -1]
+            .map((d) => i + d)
+            .filter(
+              (n, k) =>
+                n >= 0 &&
+                n < 160 * 160 &&
+                (k % 2 === 0 || Math.floor(n / 160) === Math.floor(i / 160)),
+            );
+        const at = (i: number) => `(${i % 160}, ${Math.floor(i / 160)})`;
+        for (let i = 0; i < 160 * 160; i++) {
+          if (stored(i)) continue;
+          const water = m.terrain[i] === Terrain.Water;
+          if (m.flowDir![i]) {
+            const n = downstream(m, i);
+            if (n >= 0 && m.terrain[n] !== Terrain.Water)
+              throw new Error(`a new river ends on land at ${at(i)}`);
+            if (n >= 0 && stored(n)) seen.intoStored++;
+            if (n >= 0 && !stored(n) && m.waterSurface![n] > m.waterSurface![i])
+              throw new Error(`water rises downstream at ${at(i)}`);
+          }
+          if (water)
+            for (const n of sides(i))
+              if (stored(n) && m.waterSurface![i] > levelTarget(m, n) + 1)
+                throw new Error(
+                  `new water ${m.waterSurface![i]} beside stored ${levelTarget(m, n)} at ${at(i)}`,
+                );
+          // water at its own level, away from the map's border
+          const x = i % 160;
+          const y = Math.floor(i / 160);
+          if (water && x && y && x < 159 && y < 159 && levels[i] !== m.waterSurface![i])
+            throw new Error(
+              `water at level ${levels[i]}, its own ${m.waterSurface![i]}, at ${at(i)}`,
+            );
+          // the generator's, but a pond where a river ran on into stored land, and water levels
+          // lowered
+          const ranInto = fresh.flowDir![i] ? downstream(fresh, i) : -1;
+          if (ranInto >= 0 && stored(ranInto) && m.terrain[ranInto] !== Terrain.Water) {
+            if (m.biome[i] !== Biome.Lake || !water || m.flowDir![i] || m.flow![i])
+              throw new Error(`no pond at ${at(i)}`);
+            seen.ponds++;
+          } else
+            for (const [name, a, b] of [
+              ['terrain', m.terrain, fresh.terrain],
+              ['biome', m.biome, fresh.biome],
+              ['flow', m.flow!, fresh.flow!],
+              ['side', m.flowDir!, fresh.flowDir!],
+            ] as const)
+              if (a[i] !== b[i]) throw new Error(`${name} ${a[i]}, generated ${b[i]}, at ${at(i)}`);
+          if (m.waterSurface![i] > fresh.waterSurface![i])
+            throw new Error(`water raised at ${at(i)}`);
+          if (m.waterSurface![i] < fresh.waterSurface![i]) seen.lowered++;
+        }
+      },
+      { seeds: SEAM_SEEDS, shrink: shrinkSeam, shrinkBudget: 20 },
+    );
+    for (const [k, v] of Object.entries(seen)) expect(v, k).toBeGreaterThan(0);
+  }, 90_000);
 });
+
+const SEAM_SEEDS = Array.from({ length: 16 }, (_, i) => i + 1);
+/** What an older generator may have left in a stored chunk. */
+const STUB_GROUNDS = ['grass', 'water', 'raised', 'hill', 'mountain', 'mixed'] as const;
+interface Seam {
+  seed: number;
+  /**
+   * the stored chunk; unless `near` is 'any', the first a fresh river runs into or the first
+   * beside raised water instead, where the world has one
+   */
+  cx: number;
+  cy: number;
+  near: 'any' | 'river' | 'raised';
+  ground: (typeof STUB_GROUNDS)[number];
+}
+/**
+ * Worlds whose 160-tile map has water at level 2 beside another chunk, so a stored chunk there
+ * lowers it: found by scanning seeds 1 to 100. Should generation change and leave none, the seam
+ * property fails on `lowered` and these want picking again.
+ */
+const RAISED_WORLDS = [9, 36, 38, 61, 72, 90, 100];
+const genSeam = (rng: Rng): Seam => {
+  const near = rng.pick(['any', 'river', 'raised'] as const);
+  const raised = near === 'raised';
+  return {
+    seed: raised ? rng.pick(RAISED_WORLDS) : rng.int(1, 2 ** 31 - 1),
+    cx: rng.int(0, 4),
+    cy: rng.int(0, 4),
+    near,
+    // beside raised water, ground that holds it lower: grass, level-0 water or a mix
+    ground: raised ? rng.pick(['grass', 'water', 'mixed'] as const) : rng.pick(STUB_GROUNDS),
+  };
+};
+function* shrinkSeam(c: Seam): Iterable<Seam> {
+  if (c.ground !== 'grass') yield { ...c, ground: 'grass' };
+  if (c.near !== 'any') yield { ...c, near: 'any' };
+  for (const cx of shrinkInt(c.cx)) yield { ...c, cx };
+  for (const cy of shrinkInt(c.cy)) yield { ...c, cy };
+}
+/** The world's map as an older generator might have left it, to store a chunk of. */
+function stubChunk(c: Seam, like: GameMap): GameMap {
+  const m = generateMap(c.seed, { w: like.w, h: like.h });
+  m.props.clear();
+  m.flow!.fill(0);
+  m.flowDir!.fill(0);
+  const rng = new Rng(c.seed);
+  for (let i = 0; i < m.w * m.h; i++) {
+    const t =
+      c.ground === 'mixed'
+        ? rng.pick([Terrain.Grass, Terrain.Hill, Terrain.Water, Terrain.Rock, Terrain.Mountain])
+        : {
+            grass: Terrain.Grass,
+            water: Terrain.Water,
+            raised: Terrain.Water,
+            hill: Terrain.Hill,
+            mountain: Terrain.Mountain,
+          }[c.ground];
+    m.terrain[i] = t;
+    m.biome[i] =
+      t === Terrain.Water ? Biome.Lake : t === Terrain.Mountain ? Biome.Mountain : Biome.Plains;
+    m.climate![i] = Biome.Plains;
+    m.waterSurface![i] =
+      t !== Terrain.Water
+        ? 0
+        : c.ground === 'raised'
+          ? 2
+          : c.ground === 'mixed'
+            ? rng.int(0, 2)
+            : 0;
+  }
+  return m;
+}
 
 /** How many bytes varint `v` takes. */
 const varintBytes = (v: number) => {
@@ -598,4 +999,822 @@ describe('the drainage', () => {
     }
     expect(mouths).toBeGreaterThan(0);
   });
+});
+
+// The drainage against a slow, obvious one. slowDrain follows drain's documented steps with
+// nothing clever in them: the flood scans every tile it has reached for the lowest (ties to the
+// lower tile index) instead of keeping a heap, the clearance reads the whole 5 x 5 square instead
+// of a sliding count, the main inflow is searched over every tile, the rivers run on down the
+// flood until nothing changes, and the levels are the greatest every rule allows, pulled from
+// upstream instead of pushed down. On small planes drawn from a seed, drain gives the same water
+// tile for tile.
+
+/** Rain grows from this many level steps above the sea, RAIN_PER_STEP a step (the demo's 0.55). */
+const RAIN_FROM = (0.55 - 0.24) / 0.11;
+const RAIN_PER_STEP = 2 * 0.11;
+/** A basin's water stands more than this many level steps over its ground (the demo's 0.015). */
+const LAKE_DEPTH = 0.015 / 0.11;
+
+/** drain's output as slowDrain makes it, and the flood it read it from. */
+interface Slow {
+  kind: Uint8Array;
+  surface: Uint8Array;
+  flow: Uint16Array;
+  dir: Uint8Array;
+  exits: { tile: number; dir: number; flow: number }[];
+  /** the tile each core tile drains into; -1 where the flood starts (the sea, the core's edge) */
+  down: Int32Array;
+  /** the highest ground on each core tile's way out */
+  spill: Float32Array;
+  acc: Float32Array;
+  /** river tiles the one-channel rule took away (some may be river again, run on from above) */
+  pruned: Uint8Array;
+  /** the rivers the one-channel rule left, before any ran on (step 6) */
+  channel: Uint8Array;
+  /** each lake's tiles, and the tile its outlet starts on (-1: none, or across the core's edge) */
+  lakes: { tiles: number[]; outlet: number }[];
+  /** the river tile each widened tile was laid beside; -1 elsewhere */
+  wide: Int32Array;
+}
+
+function slowDrain(p: DrainInput): Slow {
+  const { w, core, elev, ground, land, sea, mark } = p;
+  const n = w * p.h;
+  const steps = (e: number) => levelSteps(p, e);
+  const inCore = (x: number, y: number) =>
+    x >= core.x0 && y >= core.y0 && x < core.x1 && y < core.y1;
+  const xy = (i: number): [number, number] => [i % w, Math.floor(i / w)];
+  const sides = (i: number) => {
+    const [x, y] = xy(i);
+    const out: number[] = [];
+    for (let d = 0; d < 4; d++)
+      if (inCore(x + DIR_DX[d], y + DIR_DY[d])) out.push((y + DIR_DY[d]) * w + x + DIR_DX[d]);
+    return out;
+  };
+  const tiles: number[] = [];
+  for (let y = core.y0; y < core.y1; y++)
+    for (let x = core.x0; x < core.x1; x++) tiles.push(y * w + x);
+  const onEdge = (i: number) => {
+    const [x, y] = xy(i);
+    return x === core.x0 || y === core.y0 || x === core.x1 - 1 || y === core.y1 - 1;
+  };
+
+  // 1. the flood: the sea first, in reading order, then always the lowest tile reached, ties to
+  // the lower index; ground kept out counts 1000 higher, so it drains last
+  const key = (i: number) => (mark[i] & KEEP_OUT ? elev[i] + 1e3 : elev[i]);
+  const down = new Int32Array(n).fill(-2);
+  const spill = new Float32Array(n);
+  const order: number[] = [];
+  const reached = new Set<number>();
+  for (const i of tiles)
+    if (sea[i]) {
+      down[i] = -1;
+      spill[i] = p.waterLevel;
+    } else if (onEdge(i)) {
+      down[i] = -1;
+      spill[i] = elev[i];
+      reached.add(i);
+    }
+  const visit = (i: number) => {
+    order.push(i);
+    for (const j of sides(i))
+      if (down[j] === -2) {
+        down[j] = i;
+        spill[j] = Math.max(elev[j], spill[i]);
+        reached.add(j);
+      }
+  };
+  for (const i of tiles) if (sea[i]) visit(i);
+  while (reached.size) {
+    let next = -1;
+    for (const t of reached)
+      if (next < 0 || key(t) < key(next) || (key(t) === key(next) && t < next)) next = t;
+    reached.delete(next);
+    visit(next);
+  }
+
+  // 2. lakes: low basins and the ground's own water, with nothing high within LAKE_CLEARANCE
+  const high = (i: number) =>
+    ground[i] === Terrain.Hill || ground[i] === Terrain.Rock || steps(elev[i]) >= 2;
+  const clear = (i: number) => {
+    const [x, y] = xy(i);
+    for (let dy = -LAKE_CLEARANCE; dy <= LAKE_CLEARANCE; dy++)
+      for (let dx = -LAKE_CLEARANCE; dx <= LAKE_CLEARANCE; dx++)
+        if (high((y + dy) * w + x + dx)) return false;
+    return true;
+  };
+  const kind = new Uint8Array(n);
+  const candidate = new Uint8Array(n);
+  for (const i of tiles) {
+    if (sea[i]) {
+      kind[i] = WaterKind.Sea;
+      continue;
+    }
+    const wet = ground[i] === Terrain.Water;
+    if (wet) kind[i] = WaterKind.Dry;
+    if (mark[i] & DRY) continue;
+    const basin =
+      !(mark[i] & KEEP_OUT) &&
+      spill[i] > elev[i] &&
+      steps(spill[i]) - steps(elev[i]) > LAKE_DEPTH &&
+      Math.floor(steps(spill[i])) <= 0;
+    if ((wet || basin) && clear(i)) candidate[i] = 1;
+  }
+  const lakeOf = new Int32Array(n).fill(-1);
+  const lakes: Slow['lakes'] = [];
+  for (const s of tiles) {
+    if (!candidate[s] || lakeOf[s] !== -1) continue;
+    const group = [s];
+    lakeOf[s] = -2;
+    for (let k = 0; k < group.length; k++)
+      for (const j of sides(group[k]))
+        if (candidate[j] && lakeOf[j] === -1) {
+          lakeOf[j] = -2;
+          group.push(j);
+        }
+    if (group.length < LAKE_TILES) continue;
+    for (const i of group) {
+      kind[i] = WaterKind.Lake;
+      lakeOf[i] = lakes.length;
+    }
+    lakes.push({ tiles: group.sort((a, b) => a - b), outlet: -1 });
+  }
+
+  // 3. rain, gathered down the flood from its last tile to its first
+  const acc = new Float32Array(n);
+  for (const i of tiles)
+    acc[i] = mark[i] & KEEP_OUT ? 0 : 1 + RAIN_PER_STEP * Math.max(0, steps(elev[i]) - RAIN_FROM);
+  for (let k = order.length - 1; k >= 0; k--) {
+    const i = order[k];
+    if (down[i] >= 0) acc[down[i]] += acc[i];
+  }
+
+  // 4. rivers where enough rain gathered on land, more from level step 2 up
+  const isLand = (i: number) => kind[i] === WaterKind.Land || kind[i] === WaterKind.Dry;
+  for (const i of tiles) {
+    if (!isLand(i) || mark[i] & KEEP_OUT) continue;
+    if (acc[i] >= (steps(elev[i]) >= 2 ? HIGH_RIVER_FLOW : RIVER_FLOW)) kind[i] = WaterKind.River;
+  }
+  // 5. one channel: a river that is not the fullest inflow of the river it joins and gathers less
+  // than SIDE_STREAM_FLOW is land again, and so is the river above it, downstream first
+  const fullest = (into: number) => {
+    let m = -1;
+    for (const i of tiles)
+      if (down[i] === into && (m < 0 || acc[i] > acc[m] || (acc[i] === acc[m] && i < m))) m = i;
+    return m;
+  };
+  const pruned = new Uint8Array(n);
+  for (const c of order) {
+    const d = down[c];
+    if (kind[c] !== WaterKind.River || d < 0) continue;
+    const side = kind[d] === WaterKind.River && fullest(d) !== c && acc[c] < SIDE_STREAM_FLOW;
+    if (pruned[d] || side) {
+      pruned[c] = 1;
+      kind[c] = ground[c] === Terrain.Water ? WaterKind.Dry : WaterKind.Land;
+    }
+  }
+  const channel = kind.map((k) => (k === WaterKind.River ? 1 : 0));
+  // 6. outlets: each lake overflows from its fullest tile that drains out of it, and every river
+  // runs on down the flood until it meets water or the core's edge
+  const lakeExits: number[] = [];
+  const runDown = (from: number) => {
+    for (let i = from; i >= 0 && isLand(i); i = down[i]) kind[i] = WaterKind.River;
+  };
+  lakes.forEach((lake, l) => {
+    let best = -1;
+    for (const t of lake.tiles) {
+      if (down[t] >= 0 && lakeOf[down[t]] === l) continue;
+      if (best < 0 || acc[t] > acc[best] || (acc[t] === acc[best] && t < best)) best = t;
+    }
+    if (best < 0) return;
+    if (down[best] < 0) lakeExits.push(best);
+    else {
+      lake.outlet = down[best];
+      runDown(down[best]);
+    }
+  });
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const i of tiles)
+      if (kind[i] === WaterKind.River && down[i] >= 0 && isLand(down[i])) {
+        runDown(down[i]);
+        grew = true;
+      }
+  }
+
+  // 7. width: a full river below the hills takes the tile across its way, south of a river along
+  // x and east of one along y
+  const raised = (i: number) => land[i] === Terrain.Hill && !(mark[i] & LOW);
+  const wide = new Int32Array(n).fill(-1);
+  for (const i of tiles) {
+    if (kind[i] !== WaterKind.River || acc[i] < WIDE_FLOW || raised(i)) continue;
+    const [x, y] = xy(i);
+    const d = down[i];
+    const alongX = d >= 0 ? Math.abs(d - i) === 1 : x === core.x0 || x === core.x1 - 1;
+    const [sx, sy] = alongX ? [x, y + 1] : [x + 1, y];
+    const s = sy * w + sx;
+    if (!inCore(sx, sy) || !isLand(s) || raised(s) || mark[s] & KEEP_OUT) continue;
+    kind[s] = WaterKind.River;
+    wide[s] = i;
+  }
+
+  // 8. levels: the greatest every rule allows. A river on hill ground at most 2, any other water 0;
+  // at most one over each side (0 beside the core's edge), 1 in a 2 x 2 block of river, and never
+  // above the river it receives from.
+  const wet = (i: number) => !isLand(i);
+  const rivers = tiles.filter((i) => kind[i] === WaterKind.River);
+  const into = new Int32Array(n).fill(-1);
+  for (const i of rivers) {
+    const m = wide[i];
+    if (m < 0) into[i] = down[i];
+    else {
+      const next = down[m] >= 0 ? down[m] + (i - m) : -1;
+      into[i] = next >= 0 && inCore(...xy(next)) && wet(next) ? next : m;
+    }
+  }
+  const river = (x: number, y: number) => inCore(x, y) && kind[y * w + x] === WaterKind.River;
+  const inBlock = (i: number) => {
+    const [x, y] = xy(i);
+    return [-1, 1].some((dx) =>
+      [-1, 1].some((dy) => river(x + dx, y) && river(x, y + dy) && river(x + dx, y + dy)),
+    );
+  };
+  const surface = new Uint8Array(n);
+  for (const i of rivers) if (raised(i)) surface[i] = 2;
+  const target = (i: number) =>
+    wet(i) ? surface[i] : land[i] === Terrain.Hill ? 2 : land[i] === Terrain.Mountain ? 4 : 0;
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const i of rivers) {
+      const [x, y] = xy(i);
+      let v = surface[i];
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DIR_DX[d];
+        const ny = y + DIR_DY[d];
+        v = inCore(nx, ny) ? Math.min(v, target(ny * w + nx) + 1) : 0;
+      }
+      if (inBlock(i)) v = Math.min(v, 1);
+      for (const j of rivers) if (into[j] === i) v = Math.min(v, surface[j]);
+      if (v !== surface[i]) {
+        surface[i] = v;
+        changed = true;
+      }
+    }
+  }
+
+  // flow, side and where water leaves the core
+  const rain = (i: number) => Math.min(FLOW_CAP, Math.max(1, Math.round(acc[i])));
+  const outward = (i: number) => {
+    const [x, y] = xy(i);
+    return (x === core.x0 ? Dir.W : x === core.x1 - 1 ? Dir.E : y === core.y0 ? Dir.N : Dir.S) + 1;
+  };
+  const flow = new Uint16Array(n);
+  const dir = new Uint8Array(n);
+  const exits = lakeExits.map((i) => ({ tile: i, dir: outward(i), flow: rain(i) }));
+  for (const i of rivers) {
+    flow[i] = rain(wide[i] >= 0 ? wide[i] : i);
+    const j = into[i];
+    if (j < 0) {
+      dir[i] = outward(i);
+      exits.push({ tile: i, dir: dir[i], flow: flow[i] });
+    } else dir[i] = (j === i - w ? Dir.N : j === i + 1 ? Dir.E : j === i + w ? Dir.S : Dir.W) + 1;
+  }
+  exits.sort((a, b) => a.tile - b.tile);
+  return { kind, surface, flow, dir, exits, down, spill, acc, pruned, channel, lakes, wide };
+}
+
+/**
+ * A plane for drain, by the numbers that shape it, so a failing one can shrink: a tilted bowl with
+ * position-fixed noise, its ground read off its height by the sliders, then ponds and hills laid
+ * anywhere, and the marks mapgen gives the start.
+ */
+interface PlaneCase {
+  /** the seed of its per-tile noise and scatter */
+  seed: number;
+  /** core tiles a side; the plane holds LAKE_CLEARANCE more on every side */
+  size: number;
+  /**
+   * where the plane lies on the ground the numbers describe, and the middle of that ground (the
+   * bowl's centre, the valley's line, the mirror), so a smaller plane is a part of a larger one
+   */
+  ox: number;
+  oy: number;
+  centre: number;
+  /** the LOW_LAND sliders instead of the defaults */
+  low: boolean;
+  base: number;
+  tiltX: number;
+  tiltY: number;
+  bowl: number;
+  /** a valley's slope up from its floor, a line through the middle along x or y */
+  valley: number;
+  valleyAlongX: boolean;
+  noise: number;
+  /** elevation rounded to steps of this, so the flood meets ties; 0 for none */
+  quant: number;
+  /** the plane mirrored across its middle column, so inflows from either side tie */
+  mirror: boolean;
+  /** water below the water line is the sea, not the ground's own */
+  seaSide: boolean;
+  /** share of tiles that are a pond of the ground's own water, and that are Hill (1: all) */
+  ponds: number;
+  hills: number;
+  /** a disc of KEEP_OUT | LOW, its centre and radius in core tiles; radius 0 for none */
+  keep: [number, number, number];
+  /** share of tiles marked DRY, and LOW */
+  dry: number;
+  lowMarks: number;
+}
+
+const DEFAULT_SCALE = { waterLevel: 0.36, hillLevel: 0.64, rockLevel: 0.76 };
+const LOW_SCALE = { waterLevel: 0.3, hillLevel: 0.58, rockLevel: 0.7 };
+
+const genPlane = (rng: Rng): PlaneCase => {
+  const size = rng.int(3, 20);
+  return {
+    seed: rng.int(0, 2 ** 31 - 1),
+    size,
+    ox: 0,
+    oy: 0,
+    centre: (size - 1) / 2 + LAKE_CLEARANCE,
+    low: rng.chance(0.5),
+    base: rng.range(0.25, 0.85),
+    tiltX: rng.chance(0.3) ? 0 : rng.range(-0.02, 0.02),
+    tiltY: rng.chance(0.3) ? 0 : rng.range(-0.02, 0.02),
+    bowl: rng.chance(0.3) ? 0 : rng.range(-0.002, 0.004),
+    valley: rng.chance(0.5) ? 0 : rng.range(0, 0.03),
+    valleyAlongX: rng.chance(0.5),
+    noise: rng.chance(0.2) ? 0 : rng.range(0, 0.06),
+    quant: rng.chance(0.4) ? rng.pick([0.005, 0.01, 0.02]) : 0,
+    mirror: rng.chance(0.25),
+    seaSide: rng.chance(0.4),
+    ponds: rng.chance(0.3) ? rng.range(0, 0.2) : 0,
+    hills: rng.chance(0.3) ? (rng.chance(0.4) ? 1 : rng.range(0, 0.3)) : 0,
+    keep: rng.chance(0.3) ? [rng.int(0, 19), rng.int(0, 19), rng.int(1, 6)] : [0, 0, 0],
+    dry: rng.chance(0.2) ? rng.range(0, 0.3) : 0,
+    lowMarks: rng.chance(0.2) ? rng.range(0, 0.5) : 0,
+  };
+};
+
+/** Simpler planes first: smaller, then without each feature. */
+function* shrinkPlane(c: PlaneCase): Iterable<PlaneCase> {
+  // a part of the plane: cut from its far sides, its near sides or both
+  for (const size of shrinkInt(c.size, 3)) {
+    const k = c.size - size;
+    yield { ...c, size };
+    yield { ...c, size, ox: c.ox + k };
+    yield { ...c, size, oy: c.oy + k };
+    yield { ...c, size, ox: c.ox + k, oy: c.oy + k };
+  }
+  for (const k of [
+    'noise',
+    'ponds',
+    'hills',
+    'dry',
+    'lowMarks',
+    'quant',
+    'bowl',
+    'valley',
+  ] as const)
+    if (c[k]) yield { ...c, [k]: 0 };
+  if (c.tiltX) yield { ...c, tiltX: 0 };
+  if (c.tiltY) yield { ...c, tiltY: 0 };
+  if (c.keep[2]) yield { ...c, keep: [0, 0, 0] };
+  if (c.seaSide) yield { ...c, seaSide: false };
+  if (c.mirror) yield { ...c, mirror: false };
+  if (c.low) yield { ...c, low: false };
+}
+
+function planeInput(c: PlaneCase): DrainInput {
+  const r = LAKE_CLEARANCE;
+  const W = c.size + 2 * r;
+  const n = W * W;
+  const scale = c.low ? LOW_SCALE : DEFAULT_SCALE;
+  const p: DrainInput = {
+    ...scale,
+    w: W,
+    h: W,
+    core: { x0: r, y0: r, x1: r + c.size, y1: r + c.size },
+    elev: new Float32Array(n),
+    ground: new Uint8Array(n),
+    land: new Uint8Array(n),
+    sea: new Uint8Array(n),
+    mark: new Uint8Array(n),
+  };
+  const cx = c.centre;
+  // per-tile draws by position (mirrored across the middle column if the case says)
+  const draw = (x: number, y: number, k: number) =>
+    hash2(c.mirror ? cx - Math.abs(x - cx) : x, y, c.seed + k);
+  for (let py = 0; py < W; py++)
+    for (let px = 0; px < W; px++) {
+      const i = py * W + px;
+      // the plane's tile on the ground the numbers describe
+      const x = px + c.ox;
+      const y = py + c.oy;
+      let e =
+        c.base +
+        c.tiltX * (c.mirror ? Math.abs(x - cx) : x) +
+        c.tiltY * y +
+        c.bowl * ((x - cx) ** 2 + (y - cx) ** 2) +
+        c.valley * Math.abs((c.valleyAlongX ? y : x) - cx) +
+        c.noise * (2 * draw(x, y, 1) - 1);
+      if (c.quant) e = Math.round(e / c.quant) * c.quant;
+      p.elev[i] = Math.max(0, Math.min(1, e));
+      const t =
+        e < scale.waterLevel
+          ? Terrain.Water
+          : e > scale.rockLevel
+            ? Terrain.Rock
+            : e > scale.hillLevel
+              ? Terrain.Hill
+              : draw(x, y, 2) < 0.3
+                ? Terrain.Forest
+                : Terrain.Grass;
+      p.ground[i] = t;
+      if (t === Terrain.Water && c.seaSide) p.sea[i] = 1;
+      else if (draw(x, y, 3) < c.ponds) p.ground[i] = Terrain.Water;
+      else if (draw(x, y, 4) < c.hills) p.ground[i] = Terrain.Hill;
+      // what a tile of water would be dry: sand at its shore, or the hill it lies in
+      p.land[i] =
+        p.ground[i] !== Terrain.Water
+          ? p.ground[i]
+          : draw(x, y, 5) < 0.3
+            ? Terrain.Hill
+            : Terrain.Sand;
+      const [kx, ky, kr] = c.keep;
+      if ((x - r - kx) ** 2 + (y - r - ky) ** 2 < kr * kr) p.mark[i] |= KEEP_OUT | LOW;
+      if (draw(x, y, 6) < c.dry) p.mark[i] |= DRY;
+      if (draw(x, y, 7) < c.lowMarks) p.mark[i] |= LOW;
+    }
+  return p;
+}
+
+/** Throws at the first tile where `a` and `b` differ, naming it on the plane `w` tiles wide. */
+function samePlane(name: string, a: ArrayLike<number>, b: ArrayLike<number>, w: number) {
+  for (let i = 0; i < a.length; i++)
+    if (a[i] !== b[i])
+      throw new Error(
+        `${name} ${a[i]} from drain, ${b[i]} slow, at (${i % w}, ${Math.floor(i / w)})`,
+      );
+}
+
+/**
+ * The highest ground on the lowest way from each core tile out of the core (to the sea, at the
+ * water line, or off an edge tile), by relaxing every tile until none changes: no flood order.
+ */
+function lowestRim(p: DrainInput): Float64Array {
+  const { w, core, elev, sea } = p;
+  const rim = new Float64Array(w * p.h).fill(Infinity);
+  for (let y = core.y0; y < core.y1; y++)
+    for (let x = core.x0; x < core.x1; x++) {
+      const i = y * w + x;
+      if (sea[i]) rim[i] = Math.fround(p.waterLevel);
+      else if (x === core.x0 || y === core.y0 || x === core.x1 - 1 || y === core.y1 - 1)
+        rim[i] = elev[i];
+    }
+  for (let changed = true; changed;) {
+    changed = false;
+    for (let y = core.y0; y < core.y1; y++)
+      for (let x = core.x0; x < core.x1; x++) {
+        const i = y * w + x;
+        let best = rim[i];
+        for (let d = 0; d < 4; d++) {
+          const nx = x + DIR_DX[d];
+          const ny = y + DIR_DY[d];
+          if (nx < core.x0 || ny < core.y0 || nx >= core.x1 || ny >= core.y1) continue;
+          best = Math.min(best, Math.max(elev[i], rim[ny * w + nx]));
+        }
+        if (best < rim[i]) {
+          rim[i] = best;
+          changed = true;
+        }
+      }
+  }
+  return rim;
+}
+
+describe('the drainage, against a slow one', () => {
+  const PLANE_SEEDS = Array.from({ length: 200 }, (_, i) => i + 1);
+
+  it('draws planes of every kind the property claims', () => {
+    // The generator, checked: without this a narrowed generator would pass the property vacuously.
+    const cases = PLANE_SEEDS.map((s) => genPlane(new Rng(s)));
+    expect(cases.some((c) => c.size <= 4)).toBe(true);
+    expect(cases.some((c) => c.size >= 16)).toBe(true);
+    for (const k of ['low', 'seaSide'] as const) {
+      expect(cases.some((c) => c[k])).toBe(true);
+      expect(cases.some((c) => !c[k])).toBe(true);
+    }
+    for (const k of [
+      'quant',
+      'ponds',
+      'hills',
+      'dry',
+      'lowMarks',
+      'noise',
+      'bowl',
+      'valley',
+    ] as const)
+      expect(cases.some((c) => c[k] !== 0)).toBe(true);
+    expect(cases.some((c) => c.keep[2] > 0)).toBe(true);
+    expect(cases.some((c) => c.mirror)).toBe(true);
+    expect(cases.some((c) => c.hills === 1)).toBe(true);
+  });
+
+  // 200 planes up to 24 tiles a side, each drained twice, the slow way quadratic: under 1 s alone
+  it('gives the water of a slow drainage, tile for tile, on any small plane', () => {
+    const seen = {
+      river: 0,
+      lake: 0,
+      dry: 0,
+      sea: 0,
+      pruned: 0,
+      outlet: 0,
+      lakeExit: 0,
+      wide: 0,
+      raised: 0,
+      drop: 0,
+      exit: 0,
+      kept: 0,
+      tie: 0,
+      /** raised river tiles in a 2 x 2 block of river */
+      block: 0,
+    };
+    forAll(
+      genPlane,
+      (c) => {
+        const p = planeInput(c);
+        const d = drain(p);
+        const s = slowDrain(p);
+        samePlane('kind', d.kind, s.kind, p.w);
+        samePlane('water level', d.surface, s.surface, p.w);
+        samePlane('flow', d.flow, s.flow, p.w);
+        samePlane('side', d.dir, s.dir, p.w);
+        expect(d.exits).toEqual(s.exits);
+        expect(d.pond).toBe(false);
+        // what the case met
+        const count = (k: WaterKind) => d.kind.filter((v) => v === k).length;
+        seen.river += count(WaterKind.River);
+        seen.lake += count(WaterKind.Lake);
+        seen.dry += count(WaterKind.Dry);
+        seen.sea += count(WaterKind.Sea);
+        seen.pruned += s.pruned.filter((v, i) => v && d.kind[i] !== WaterKind.River).length;
+        seen.outlet += s.lakes.filter((l) => l.outlet >= 0).length;
+        seen.lakeExit += d.exits.filter((e) => d.kind[e.tile] === WaterKind.Lake).length;
+        seen.wide += s.wide.filter((m) => m >= 0).length;
+        seen.raised += d.surface.filter((v) => v === 2).length;
+        seen.exit += d.exits.length;
+        seen.kept +=
+          p.mark.some((m) => m & KEEP_OUT) && d.kind.some((k) => k === WaterKind.River) ? 1 : 0;
+        if (c.quant) seen.tie++;
+        for (let i = 0; i < d.kind.length; i++) {
+          if (d.kind[i] !== WaterKind.River || p.land[i] !== Terrain.Hill || p.mark[i] & LOW)
+            continue;
+          const x = i % p.w;
+          const y = Math.floor(i / p.w);
+          const at = (dx: number, dy: number) =>
+            d.kind[(y + dy) * p.w + x + dx] === WaterKind.River;
+          if ([-1, 1].some((dx) => [-1, 1].some((dy) => at(dx, 0) && at(0, dy) && at(dx, dy))))
+            seen.block++;
+        }
+        for (let i = 0; i < d.kind.length; i++) {
+          if (d.kind[i] !== WaterKind.River || s.wide[i] >= 0 || s.down[i] < 0) continue;
+          if (d.kind[s.down[i]] === WaterKind.River && d.surface[s.down[i]] < d.surface[i])
+            seen.drop++;
+        }
+      },
+      {
+        seeds: PLANE_SEEDS,
+        shrink: shrinkPlane,
+        shrinkBudget: 2000,
+      },
+    );
+    for (const [k, v] of Object.entries(seen)) expect(v, k).toBeGreaterThan(0);
+  }, 30_000);
+
+  // the same 200 planes, drained quickly and slowly and relaxed to their lowest rims: about 0.5 s
+  it('runs every river over the lowest rim out of the land it drains', () => {
+    // "A river follows the slope": along a river the highest ground still to cross on the lowest
+    // way out never rises. Ground kept out drains last on purpose, so those planes are left out.
+    let rivers = 0;
+    let over = 0;
+    forAll(
+      genPlane,
+      (c) => {
+        const p = planeInput(c);
+        if (p.mark.some((m) => m & KEEP_OUT)) return;
+        const d = drain(p);
+        const rim = lowestRim(p);
+        const s = slowDrain(p);
+        // the slow flood finds the lowest rim of every tile
+        for (let i = 0; i < rim.length; i++)
+          if (rim[i] !== Infinity && rim[i] !== s.spill[i])
+            throw new Error(`rim ${rim[i]}, flood ${s.spill[i]}, at tile ${i}`);
+        for (let i = 0; i < d.kind.length; i++) {
+          if (d.kind[i] !== WaterKind.River || s.wide[i] >= 0) continue;
+          const x = (i % p.w) + DIR_DX[d.dir[i] - 1];
+          const y = Math.floor(i / p.w) + DIR_DY[d.dir[i] - 1];
+          const { core } = p;
+          if (x < core.x0 || y < core.y0 || x >= core.x1 || y >= core.y1) continue;
+          const j = y * p.w + x;
+          rivers++;
+          if (rim[j] > rim[i])
+            throw new Error(`a river runs from rim ${rim[i]} up to ${rim[j]} at tile ${i}`);
+          // over the rim: the river climbs ground on its way out of a basin
+          if (p.elev[j] > p.elev[i]) over++;
+        }
+      },
+      { seeds: PLANE_SEEDS, shrink: shrinkPlane, shrinkBudget: 2000 },
+    );
+    expect(rivers).toBeGreaterThan(0);
+    expect(over).toBeGreaterThan(0);
+  }, 30_000);
+
+  /**
+   * A core of `cw` x `ch` tiles (in a plane LAKE_CLEARANCE wider on every side) on `land`, whose
+   * height is `e` of core tiles; the core's edge stands 0.1 higher, but its middle tile on top,
+   * where the land drains out. `keep` marks tiles of the core KEEP_OUT.
+   */
+  function corePlane(
+    cw: number,
+    ch: number,
+    e: (x: number, y: number) => number,
+    land = Terrain.Grass,
+    keep: (x: number, y: number) => boolean = () => false,
+  ) {
+    const r = LAKE_CLEARANCE;
+    const w = cw + 2 * r;
+    const h = ch + 2 * r;
+    const p: DrainInput = {
+      ...DEFAULT_SCALE,
+      w,
+      h,
+      core: { x0: r, y0: r, x1: r + cw, y1: r + ch },
+      elev: new Float32Array(w * h).fill(0.6),
+      ground: new Uint8Array(w * h).fill(land),
+      land: new Uint8Array(w * h).fill(land),
+      sea: new Uint8Array(w * h),
+      mark: new Uint8Array(w * h),
+    };
+    const mid = Math.floor(cw / 2);
+    for (let y = 0; y < ch; y++)
+      for (let x = 0; x < cw; x++) {
+        const i = (y + r) * w + x + r;
+        const edge = x === 0 || y === 0 || x === cw - 1 || y === ch - 1;
+        p.elev[i] = e(x, y) + (edge && !(x === mid && y === 0) ? 0.1 : 0);
+        if (keep(x, y)) p.mark[i] = KEEP_OUT;
+      }
+    const at = (x: number, y: number) => (y + r) * w + x + r;
+    return { p, at, mid };
+  }
+
+  it('breaks a tie between two inflows toward the lower tile index', () => {
+    // two halves mirrored across a kept-out middle column, each gathering 70 tiles of rain into a
+    // stream that joins the other at the middle tile of row 1: the same rain, so the west stream,
+    // the lower index, is the main inflow and the east one, below SIDE_STREAM_FLOW, goes
+    const { p, at, mid } = corePlane(
+      13,
+      16,
+      (x, y) => 0.4 + 0.002 * Math.abs(x - 6) + 0.001 * y,
+      Terrain.Grass,
+      (x, y) => x === 6 && y >= 2,
+    );
+    const d = drain(p);
+    const s = slowDrain(p);
+    expect(s.acc[at(mid - 1, 1)]).toBe(70);
+    expect(s.acc[at(mid + 1, 1)]).toBe(70);
+    for (let y = 1; y <= 3; y++) {
+      expect(d.kind[at(mid - 1, y)], `west, row ${y}`).toBe(WaterKind.River);
+      expect(d.kind[at(mid + 1, y)], `east, row ${y}`).toBe(WaterKind.Land);
+    }
+    expect(d.kind[at(mid, 1)]).toBe(WaterKind.River);
+    expect(d.dir[at(mid - 1, 1)]).toBe(Dir.E + 1);
+  });
+
+  it('stands a river in a 2 x 2 block at level 1 on hill ground, and alone at level 2', () => {
+    // two halves draining into the two middle columns, each gathering more than SIDE_STREAM_FLOW,
+    // run up side by side to row 1: a channel two tiles wide on hill ground, a block at every row
+    const ridge = (x: number) => (x <= 6 ? 6 - x : x - 7);
+    const { p, at } = corePlane(14, 22, (x, y) => 0.4 + 0.002 * ridge(x) + 0.001 * y, Terrain.Hill);
+    const d = drain(p);
+    let blocks = 0;
+    for (let y = 2; y <= 9; y++)
+      for (const x of [6, 7]) {
+        expect(d.kind[at(x, y)], `(${x}, ${y})`).toBe(WaterKind.River);
+        expect(d.surface[at(x, y)], `(${x}, ${y})`).toBe(1);
+        blocks++;
+      }
+    expect(blocks).toBeGreaterThan(0);
+    // the same ground with one half kept out: one channel, at level 2 away from its ends
+    const one = corePlane(
+      14,
+      22,
+      (x, y) => 0.4 + 0.002 * ridge(x) + 0.001 * y,
+      Terrain.Hill,
+      (x) => x >= 7,
+    );
+    const single = drain(one.p);
+    for (let y = 3; y <= 9; y++) {
+      expect(single.kind[one.at(6, y)]).toBe(WaterKind.River);
+      expect(single.surface[one.at(6, y)], `(6, ${y})`).toBe(2);
+    }
+  });
+
+  it('removes a side stream below SIDE_STREAM_FLOW that crosses a rim on high ground', () => {
+    // Two streams meet at the middle tile of row 1, either side of a kept-out ridge: the east one
+    // gathers 84 tiles of rain, the west one 77 (its bottom row is kept out too), so the west one
+    // is the side stream and, below SIDE_STREAM_FLOW, goes with every river tile above it. Its
+    // last tile is a rim at level step 2.1, where a river needs HIGH_RIVER_FLOW; above the rim,
+    // below step 2, RIVER_FLOW is enough.
+    const edge = (x: number, y: number) => x === 0 || y === 0 || x === 16 || y === 13;
+    const plane = (rim: number) =>
+      corePlane(
+        17,
+        14,
+        (x, y) =>
+          x === 8 && y === 0
+            ? 0.39
+            : edge(x, y)
+              ? 0.6
+              : x === 8
+                ? y === 1
+                  ? 0.4
+                  : 0.6
+                : x === 7 && y === 1
+                  ? rim
+                  : 0.4 + 0.002 * Math.abs(x - 8) + 0.001 * y,
+        Terrain.Grass,
+        (x, y) => (x === 8 && y >= 2) || (x < 8 && y === 12),
+      );
+    // with the rim as low as the land around it the west stream goes, as the rule says
+    const low = plane(0.402);
+    const without = drain(low.p);
+    expect(without.kind[low.at(7, 1)]).toBe(WaterKind.Land);
+    expect(without.kind[low.at(7, 2)]).toBe(WaterKind.Land);
+    expect(without.kind[low.at(9, 1)]).toBe(WaterKind.River);
+    const { p, at, mid } = plane(0.56);
+    const s = slowDrain(p);
+    expect(levelSteps(p, p.elev[at(mid - 1, 1)])).toBeGreaterThan(2);
+    expect(levelSteps(p, p.elev[at(mid - 1, 2)])).toBeLessThan(2);
+    for (const [x, y, into, rain] of [
+      [mid + 1, 1, at(mid, 1), 84],
+      [mid - 1, 1, at(mid, 1), 77],
+      [mid - 1, 2, at(mid - 1, 1), 70],
+    ]) {
+      expect(s.down[at(x, y)], `(${x}, ${y})`).toBe(into);
+      expect(s.acc[at(x, y)], `(${x}, ${y})`).toBe(rain);
+    }
+    const d = drain(p);
+    expect(d.kind[at(mid + 1, 1)]).toBe(WaterKind.River);
+    expect(d.kind[at(mid, 1)]).toBe(WaterKind.River);
+    // the west stream is no river, at the rim or above it
+    expect(d.kind[at(mid - 1, 1)], 'the rim').toBe(WaterKind.Land);
+    expect(d.kind[at(mid - 1, 2)], 'above the rim').toBe(WaterKind.Land);
+  });
+
+  // 2000 planes, each drained once and slowly: about 2 s alone
+  it('joins no side stream below SIDE_STREAM_FLOW to a river, but a lake outlet', () => {
+    // "One channel, not a braid": a river that is not the fullest inflow of the river it joins
+    // and gathers less than SIDE_STREAM_FLOW is removed, and with it the river above it. Only a
+    // lake's outlet runs on whatever it gathers.
+    let joins = 0;
+    forAll(
+      genPlane,
+      (c) => {
+        const p = planeInput(c);
+        const d = drain(p);
+        const s = slowDrain(p);
+        const n = d.kind.length;
+        // a lake's outlet runs down the flood until it meets a river or other water
+        const outlet = new Uint8Array(n);
+        for (const l of s.lakes)
+          for (let i = l.outlet; i >= 0 && d.kind[i] === WaterKind.River && !s.channel[i];) {
+            outlet[i] = 1;
+            i = s.down[i];
+          }
+        for (let i = 0; i < n; i++) {
+          const j = s.down[i];
+          if (d.kind[i] !== WaterKind.River || s.wide[i] >= 0 || j < 0) continue;
+          if (d.kind[j] !== WaterKind.River) continue;
+          let main = -1;
+          for (let k = 0; k < n; k++)
+            if (s.down[k] === j && (main < 0 || s.acc[k] > s.acc[main])) main = k;
+          if (main === i) continue;
+          joins++;
+          if (s.acc[i] < SIDE_STREAM_FLOW && !outlet[i])
+            throw new Error(
+              `a side stream of ${s.acc[i].toFixed(1)} at (${i % p.w}, ${Math.floor(i / p.w)}) ` +
+                `joins the river at (${j % p.w}, ${Math.floor(j / p.w)}), ` +
+                `whose fullest inflow gathers ${s.acc[main].toFixed(1)}`,
+            );
+        }
+      },
+      {
+        seeds: Array.from({ length: 2000 }, (_, i) => i + 1),
+        shrink: shrinkPlane,
+        shrinkBudget: 2000,
+      },
+    );
+    expect(joins).toBeGreaterThan(0);
+  }, 40_000);
 });

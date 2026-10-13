@@ -14,6 +14,7 @@ import { TrackGraph, pieceLinks } from './track';
 import { emptyMap } from './mapgen';
 import { Terrain } from './tiles';
 import { Dir } from '../engine/iso';
+import { forAll } from '../testing/property';
 
 const bed = (spans: RailBed['spans']): RailBed => ({ axis: 'x', spans, flat: false });
 /** The worked example from the incline rules: a climb, a bridged dip and a descent. */
@@ -139,6 +140,52 @@ describe('rail inclines', () => {
     expect(
       railLevel(railProfile(m, track, (x, y) => x === 8 && y === 8).get(8 * 16 + 8)!, 8),
     ).toBeCloseTo(0);
+  });
+
+  it('raises a deck to the water under it and changes nothing else, on any line', () => {
+    // Lines up to 16 tiles, levels a step apart at most, any bridge runs, any water levels under
+    // them. Water at level 0 everywhere is the line with no water given; a tile off a bridge keeps
+    // its level; a deck is level across its run and stands at the higher of what it stood at
+    // without the water and the highest water under it.
+    let raised = 0;
+    forAll(
+      (rng) => {
+        const n = rng.int(1, 16);
+        const terrain = [rng.int(0, 4)];
+        for (let i = 1; i < n; i++)
+          terrain.push(Math.max(0, Math.min(4, terrain[i - 1] + rng.int(-1, 1))));
+        const bridge = terrain.map(() => rng.chance(0.5));
+        const under = terrain.map(() => (rng.chance(0.5) ? 0 : rng.int(0, 4)));
+        return { terrain, bridge, under, start: rng.int(-3, 3) };
+      },
+      ({ terrain, bridge, under, start }) => {
+        const dry = lineSpans(terrain, bridge, start);
+        expect(
+          lineSpans(
+            terrain,
+            bridge,
+            start,
+            [],
+            terrain.map(() => 0),
+          ),
+        ).toEqual(dry);
+        const { levels } = lineSpans(terrain, bridge, start, [], under);
+        for (let i = 0; i < terrain.length;) {
+          if (!bridge[i]) {
+            expect(levels[i], `tile ${i}`).toBe(terrain[i]);
+            i++;
+            continue;
+          }
+          let j = i;
+          while (j + 1 < terrain.length && bridge[j + 1]) j++;
+          const deck = Math.max(dry.levels[i], ...under.slice(i, j + 1));
+          if (deck > dry.levels[i]) raised++;
+          for (let k = i; k <= j; k++) expect(levels[k], `deck tile ${k}`).toBe(deck);
+          i = j + 1;
+        }
+      },
+    );
+    expect(raised).toBeGreaterThan(0);
   });
 
   it('seats a supported curve at the level of the rails it meets, or refuses it', () => {

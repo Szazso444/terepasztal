@@ -28,6 +28,7 @@ import {
   type SupplyMode,
 } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
+import { FLOW_CAP } from './rivers';
 
 /** A frame of a map: its size and where its tile (0, 0) lies in the world. */
 type Frame = Pick<MapGenParams, 'w' | 'h' | 'originX' | 'originY'>;
@@ -352,6 +353,92 @@ describe('a chunk text', () => {
     map.props.set(3, [{ kind: 'oak', variant: -1, ox: 0, oy: 0 }]);
     expect(() => encodeChunk(map, 0, 0)).toThrow(/variant/);
     expect(() => encodeChunk(map, 1, 0)).toThrow(/cover/);
+  });
+
+  it('holds any water level, flow and side it allows, and reads them back as they were', () => {
+    // the water planes of version 3 (#341): levels 0 to 15 in runs, and a flow up to FLOW_CAP with
+    // a side 1 to 4 on any tile, flow 0 included, on parts of chunks off the grid
+    let rivers = 0;
+    forAll(
+      (rng) => {
+        const w = rng.int(1, 40);
+        const h = rng.int(1, 40);
+        const map = emptyMap(
+          rng.int(0, 1000),
+          w,
+          h,
+          Terrain.Grass,
+          rng.int(-50, 50),
+          rng.int(-50, 50),
+        );
+        map.waterSurface = new Uint8Array(w * h);
+        map.flow = new Uint16Array(w * h);
+        map.flowDir = new Uint8Array(w * h);
+        const runs = rng.chance(0.5);
+        const share = rng.pick([0, 0.02, 0.3, 1]);
+        for (let i = 0; i < w * h; i++) {
+          map.waterSurface[i] =
+            runs && i > 0 && rng.chance(0.9) ? map.waterSurface[i - 1] : rng.int(0, 15);
+          if (!rng.chance(share)) continue;
+          map.flowDir[i] = rng.int(1, 4);
+          map.flow[i] = rng.pick([0, 1, FLOW_CAP, rng.int(1, FLOW_CAP)]);
+        }
+        return map;
+      },
+      (map) => {
+        const frame = { w: map.w, h: map.h, originX: map.originX, originY: map.originY };
+        for (const { cx, cy } of mapChunks(map)) {
+          const c = decodeChunk(encodeChunk(map, cx, cy))!;
+          expect(c).not.toBeNull();
+          rivers += c.flowDir.filter((d) => d).length;
+        }
+        const back = buildMap(map.seed, frame, encodeMap(map), never).map;
+        for (const [name, a, b] of [
+          ['water level', back.waterSurface!, map.waterSurface!],
+          ['flow', back.flow!, map.flow!],
+          ['side', back.flowDir!, map.flowDir!],
+        ] as const)
+          for (let i = 0; i < a.length; i++)
+            if (a[i] !== b[i])
+              throw new Error(`${name} ${a[i]} read back, ${b[i]} stored, at tile ${i}`);
+      },
+      { format: (m) => `${m.w} x ${m.h} at (${m.originX}, ${m.originY}), seed ${m.seed}` },
+    );
+    expect(rivers).toBeGreaterThan(0);
+  });
+
+  it('refuses a water level, flow or side it cannot hold', () => {
+    const map = () => {
+      const m = emptyMap(1, 32, 32);
+      m.waterSurface = new Uint8Array(32 * 32);
+      m.flow = new Uint16Array(32 * 32);
+      m.flowDir = new Uint8Array(32 * 32);
+      return m;
+    };
+    const level = map();
+    level.waterSurface![4] = 16;
+    expect(() => encodeChunk(level, 0, 0)).toThrow(/water level/);
+    const side = map();
+    side.flowDir![4] = 5;
+    expect(() => encodeChunk(side, 0, 0)).toThrow(/sides/);
+    const flow = map();
+    flow.flowDir![4] = 1;
+    flow.flow![4] = FLOW_CAP + 1;
+    expect(() => encodeChunk(flow, 0, 0)).toThrow(/flow/);
+    const loose = map();
+    loose.flow![4] = 7;
+    expect(() => encodeChunk(loose, 0, 0)).toThrow(/river tile/);
+    // and the most it holds, at the last tile
+    const most = map();
+    most.flowDir![32 * 32 - 1] = 4;
+    most.flow![32 * 32 - 1] = FLOW_CAP;
+    most.waterSurface![32 * 32 - 1] = 15;
+    const c = decodeChunk(encodeChunk(most, 0, 0))!;
+    expect([c.flow[32 * 32 - 1], c.flowDir[32 * 32 - 1], c.waterSurface[32 * 32 - 1]]).toEqual([
+      FLOW_CAP,
+      4,
+      15,
+    ]);
   });
 
   it('that is not one encodeChunk writes reads as nothing', () => {
