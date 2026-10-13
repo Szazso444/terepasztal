@@ -2,12 +2,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
-import { TRACK_ITEMS, TrackGraph, footprintOf, type TrackItem } from '../world/track';
+import {
+  TRACK_ITEMS,
+  TrackGraph,
+  footprintOf,
+  type TrackItem,
+  type TrackPiece,
+} from '../world/track';
 import { Rng } from '../engine/rng';
 import { DIR_DX, DIR_DY } from '../engine/iso';
 import { STR } from '../strings';
 import { content } from '../data/content';
-import { Builder, decorDef } from './build';
+import { Builder, decorDef, type LinePiece } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds, stationFootprint } from './stations';
@@ -29,7 +35,7 @@ import {
   type Person,
 } from './people';
 import { SAVE_VERSION, migrate, readSaveText, type SaveGame } from './save';
-import { forAll, shrinkArray } from '../testing/property';
+import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, line, station } from '../testing/simWorld';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -462,43 +468,48 @@ describe('a level crossing', () => {
     expect(w.roads.isCrossing(14, 10)).toBe(true);
   });
 
-  it('lets trains run over it as they do over the same line without one', () => {
-    /** A quarry and a warehouse on a line with a train between them; roads across it or none. */
-    const play = (crossings: boolean) => {
-      const w = simWorld({ terrain: 'grass', size: 48 });
-      for (const [id, n] of Object.entries(startStock())) w.stock.add(id, n);
-      station(w, 'depot', 4, 20);
-      line(w, 6, 20, 40);
-      const quarry = station(w, 'quarry', 10, 19);
-      const warehouse = station(w, 'warehouse', 34, 19);
-      quarry.store('stone', 40);
-      w.builder.free = true;
-      if (crossings)
-        for (const x of [16, 21, 26, 30]) for (const y of [19, 20, 21]) w.builder.placeRoad(x, y);
-      w.builder.free = false;
-      const loco = w.inventory.add('adler', 0);
-      const hopper = w.inventory.add('wood_hopper', 0);
-      const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
-      if (typeof train === 'string') throw new Error(`fleet.create: ${train}`);
-      const step = new SimStep(w);
-      const ctx = { mode: 'play', weather: false, stockCap: () => 1e9 } as const;
-      const trace: string[] = [];
-      const heads = new Set<string>();
-      for (let i = 0; i < 3000; i++) {
-        w.clock.run((gdt) => step.run(gdt, ctx));
-        trace.push(JSON.stringify(w.fleet.trains.map((t) => t.toJSON())));
-        const h = train.headTile;
-        if (h) heads.add(`${h.x},${h.y}`);
-      }
-      return { w, trace, heads };
-    };
-    const plain = play(false);
-    const crossed = play(true);
-    expect(crossed.w.builder.roads.crossingKeys().size).toBe(4);
-    // the train did go over the crossings
-    for (const x of [16, 21, 26, 30]) expect(crossed.heads.has(`${x},20`), `${x},20`).toBe(true);
-    expect(crossed.trace).toEqual(plain.trace);
-  });
+  // slow: two 3000-tick runs of the whole sim step, about 1.4 s alone
+  it(
+    'lets trains run over it as they do over the same line without one',
+    { timeout: 30_000 },
+    () => {
+      /** A quarry and a warehouse on a line with a train between them; roads across it or none. */
+      const play = (crossings: boolean) => {
+        const w = simWorld({ terrain: 'grass', size: 48 });
+        for (const [id, n] of Object.entries(startStock())) w.stock.add(id, n);
+        station(w, 'depot', 4, 20);
+        line(w, 6, 20, 40);
+        const quarry = station(w, 'quarry', 10, 19);
+        const warehouse = station(w, 'warehouse', 34, 19);
+        quarry.store('stone', 40);
+        w.builder.free = true;
+        if (crossings)
+          for (const x of [16, 21, 26, 30]) for (const y of [19, 20, 21]) w.builder.placeRoad(x, y);
+        w.builder.free = false;
+        const loco = w.inventory.add('adler', 0);
+        const hopper = w.inventory.add('wood_hopper', 0);
+        const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
+        if (typeof train === 'string') throw new Error(`fleet.create: ${train}`);
+        const step = new SimStep(w);
+        const ctx = { mode: 'play', weather: false, stockCap: () => 1e9 } as const;
+        const trace: string[] = [];
+        const heads = new Set<string>();
+        for (let i = 0; i < 3000; i++) {
+          w.clock.run((gdt) => step.run(gdt, ctx));
+          trace.push(JSON.stringify(w.fleet.trains.map((t) => t.toJSON())));
+          const h = train.headTile;
+          if (h) heads.add(`${h.x},${h.y}`);
+        }
+        return { w, trace, heads };
+      };
+      const plain = play(false);
+      const crossed = play(true);
+      expect(crossed.w.builder.roads.crossingKeys().size).toBe(4);
+      // the train did go over the crossings
+      for (const x of [16, 21, 26, 30]) expect(crossed.heads.has(`${x},20`), `${x},20`).toBe(true);
+      expect(crossed.trace).toEqual(plain.trace);
+    },
+  );
 });
 
 // ------------------------------------------------------------------ the crossing keys
@@ -513,6 +524,51 @@ describe('the crossing keys', () => {
     const d: StepDomains = w;
     expect([...d.builder.roads.crossingKeys()]).toEqual([w.track.key(8, 10)]);
     expect(d.builder.roads.has(8, 11)).toBe(true);
+  });
+
+  it('are the road tiles on a plain straight of regular or narrow track, whatever a save put where', () => {
+    // A save is loaded without the build rules (`Roads.load`, the track as it was stored), so the
+    // keys are read off the tiles, not off how they came to be: a road a rule would refuse, on a
+    // curve, a switch or high-speed track, is no level crossing.
+    forAll(
+      (rng) => ({
+        pieces: Array.from({ length: rng.int(0, 30) }, () => ({
+          x: rng.int(0, 11),
+          y: rng.int(0, 11),
+          item: rng.pick(ITEMS),
+          rot: rng.int(0, 7),
+        })),
+        roads: Array.from({ length: rng.int(0, 60) }, () => [rng.int(0, 11), rng.int(0, 11)]),
+      }),
+      (c) => {
+        const track = new TrackGraph(12, 12);
+        for (const p of c.pieces)
+          if (
+            footprintOf(p.x, p.y, p.item.kind, p.rot, p.item.cls).every((t) => !track.has(t.x, t.y))
+          )
+            track.place(p.x, p.y, p.item.kind, p.rot, p.item.cls, p.item.cls2);
+        const roads = new Roads(track);
+        roads.load(c.roads);
+        const want = new Set<number>();
+        for (let y = 0; y < 12; y++)
+          for (let x = 0; x < 12; x++) {
+            const p = track.get(x, y);
+            if (p) expect(crossable(p), `${p.kind} ${p.cls} at ${x},${y}`).toBe(takesARoad(p));
+            const crossing = roads.has(x, y) && !!p && takesARoad(p);
+            expect(roads.isCrossing(x, y), `${x},${y}`).toBe(crossing);
+            if (crossing) want.add(track.key(x, y));
+          }
+        expect([...roads.crossingKeys()].sort((a, b) => a - b)).toEqual(
+          [...want].sort((a, b) => a - b),
+        );
+      },
+      {
+        shrink: function* (c) {
+          for (const roads of shrinkArray(c.roads)) yield { ...c, roads };
+          for (const pieces of shrinkArray(c.pieces)) yield { ...c, pieces };
+        },
+      },
+    );
   });
 
   it('lose a crossing whose track is taken up, the road staying', () => {
@@ -533,7 +589,9 @@ describe('the crossing keys', () => {
 type Op =
   | { op: 'road' | 'unroad' | 'untrack'; x: number; y: number }
   | { op: 'track'; x: number; y: number; item: TrackItem; rot: number }
-  | { op: 'reclass'; x: number; y: number; n: number; hs: boolean }
+  | { op: 'reclass'; x: number; y: number; n: number; rot: number; hs: boolean }
+  | { op: 'line'; x: number; y: number; n: number; rot: number; cls: TrackItem['cls'] }
+  | { op: 'decor'; x: number; y: number; id: string }
   | { op: 'station' | 'works' | 'house' | 'signal'; x: number; y: number };
 const ITEMS: TrackItem[] = [
   ...TRACK_ITEMS,
@@ -546,18 +604,70 @@ const SIDE = 14;
 function genOps(rng: Rng): { ground: number[]; ops: Op[] } {
   const at = () => ({ x: rng.int(1, SIDE - 2), y: rng.int(1, SIDE - 2) });
   const ground = Array.from({ length: rng.int(0, 6) }, () => rng.int(0, SIDE * SIDE - 1));
-  const ops: Op[] = Array.from({ length: rng.int(10, 80) }, () => {
+  const lines: Extract<Op, { op: 'line' }>[] = [];
+  const ops: Op[] = Array.from({ length: rng.int(10, 80) }, (): Op => {
     const r = rng.next();
     const p = at();
-    if (r < 0.35) return { op: 'road', ...p };
-    if (r < 0.65) return { op: 'track', ...p, item: rng.pick(ITEMS), rot: rng.int(0, 7) };
-    if (r < 0.72) return { op: 'unroad', ...p };
-    if (r < 0.79) return { op: 'untrack', ...p };
-    if (r < 0.86) return { op: 'reclass', ...p, n: rng.int(1, 4), hs: rng.chance(0.7) };
-    return { op: rng.pick(['station', 'works', 'house', 'signal'] as const), ...p };
+    if (r < 0.3) {
+      if (!lines.length || rng.chance(0.6)) return { op: 'road', ...p };
+      // on a tile of a line dragged earlier, to cross it or run along it
+      const l = rng.pick(lines);
+      const i = rng.int(0, l.n - 1);
+      return { op: 'road', ...(l.rot === EW ? { x: l.x + i, y: l.y } : { x: l.x, y: l.y + i }) };
+    }
+    if (r < 0.55) return { op: 'track', ...p, item: rng.pick(ITEMS), rot: rng.int(0, 7) };
+    if (r < 0.62) return { op: 'unroad', ...p };
+    if (r < 0.69) return { op: 'untrack', ...p };
+    if (r < 0.76) {
+      const hs = rng.chance(0.7);
+      // mostly a stroke along a line dragged earlier, where there is track to convert
+      if (!lines.length || rng.chance(0.2))
+        return { op: 'reclass', ...p, n: rng.int(1, 6), rot: rng.int(0, 1), hs };
+      const l = rng.pick(lines);
+      const from = rng.int(0, l.n - 1);
+      const n = rng.int(1, l.n - from);
+      const start = l.rot === EW ? { x: l.x + from, y: l.y } : { x: l.x, y: l.y + from };
+      return { op: 'reclass', ...start, n, rot: l.rot, hs };
+    }
+    if (r < 0.84) {
+      const cls = rng.pick(['regular', 'regular', 'narrow', 'high_speed'] as const);
+      const rot = rng.int(0, 1);
+      // as long as the map leaves room for, from 2 to 10 tiles
+      const n = Math.min(rng.int(2, 10), SIDE - (rot === EW ? p.x : p.y));
+      const l = { op: 'line' as const, ...p, n, rot, cls };
+      lines.push(l);
+      return l;
+    }
+    if (r < 0.88) return { op: 'decor', ...p, id: rng.pick(content.decor).id };
+    const op = rng.pick(['station', 'works', 'house', 'signal'] as const);
+    if (!lines.length || rng.chance(0.5)) return { op, ...p };
+    // beside a line dragged earlier, where a station finds its track and a crossing road runs on
+    const l = rng.pick(lines);
+    const i = rng.int(0, l.n - 1);
+    const side = rng.pick([-1, 1]);
+    return {
+      op,
+      ...(l.rot === EW ? { x: l.x + i, y: l.y + side } : { x: l.x + side, y: l.y + i }),
+    };
   });
   return { ground, ops };
 }
+/** A dragged run of `n` straights from (x, y), down the map (turn 0) or across it (turn 1). */
+function lineOf(o: Extract<Op, { op: 'line' }>): LinePiece[] {
+  const out: LinePiece[] = [];
+  for (let i = 0; i < o.n; i++) {
+    const x = o.rot === EW ? o.x + i : o.x;
+    const y = o.rot === EW ? o.y : o.y + i;
+    out.push({ kind: 'track', x, y, item: { kind: 'straight', cls: o.cls }, rot: o.rot });
+  }
+  return out;
+}
+/**
+ * A piece a road may cross, as the issue words it, kept apart from `crossable` so the test does
+ * not take the rule from the code it checks: a one-tile straight of regular or narrow track.
+ */
+const takesARoad = (p: TrackPiece) =>
+  p.kind === 'straight' && !p.unit && (p.cls === 'regular' || p.cls === 'narrow');
 /** A small map to play the ops on, `ground` tiles of it water, rock or a mountain by turns. */
 function site(c: { ground: number[]; ops: Op[] }) {
   const map = emptyMap(3, SIDE, SIDE, Terrain.Grass);
@@ -582,10 +692,19 @@ function perform(w: ReturnType<typeof site>, o: Op) {
     case 'untrack':
       return b.removeTrack(o.x, o.y);
     case 'reclass':
+      // a stroke along the map's rows (turn 1) or down its columns (turn 0)
       return b.reclassTrack(
-        Array.from({ length: o.n }, (_, i) => ({ x: Math.min(SIDE - 1, o.x + i), y: o.y })),
+        Array.from({ length: o.n }, (_, i) =>
+          o.rot === EW
+            ? { x: Math.min(SIDE - 1, o.x + i), y: o.y }
+            : { x: o.x, y: Math.min(SIDE - 1, o.y + i) },
+        ),
         o.hs ? 'high_speed' : 'regular',
       );
+    case 'line':
+      return b.placeLine(lineOf(o));
+    case 'decor':
+      return !!b.placeDecor(o.x, o.y, o.id, 0);
     case 'station':
       return !!b.placeStation(o.x, o.y, 'farm');
     case 'works':
@@ -610,7 +729,7 @@ function broken(w: ReturnType<typeof site>): string {
     if (d && !decorDef(d.id).onTrack) return `${at} on a ${d.id}`;
     const p = track.get(x, y);
     if (!p) continue;
-    if (!crossable(p)) return `${at} on a ${p.kind} ${p.cls}`;
+    if (!takesARoad(p)) return `${at} on a ${p.kind} ${p.cls}`;
     for (const d of p.links[0])
       if (roads.has(x + DIR_DX[d], y + DIR_DY[d])) return `${at} along its track`;
   }
@@ -636,6 +755,40 @@ describe('roads, whatever is built in whatever order', () => {
         expect([...w.roads.crossingKeys()].sort((a, b) => a - b)).toEqual(
           [...keys].sort((a, b) => a - b),
         );
+      },
+      { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
+    );
+  });
+
+  it('change only by a road laid or taken up, which moves the version on and tells the game once', () => {
+    // A renderer keeps what it drew until `version` moves (#309, #329) and redraws the tile
+    // `onRoadChanged` names: a change that moved neither would leave a stale picture, and one
+    // made by anything but laying or taking up a road would be a road the player never touched.
+    forAll(
+      genOps,
+      (c) => {
+        const w = site(c);
+        const told: string[] = [];
+        w.builder.onRoadChanged = (x, y) => told.push(`${x},${y}`);
+        c.ops.forEach((o, i) => {
+          const was = JSON.stringify(w.roads.toJSON());
+          const version = w.roads.version;
+          told.length = 0;
+          const done = perform(w, o);
+          const now = JSON.stringify(w.roads.toJSON());
+          const at = `op ${i} ${JSON.stringify(o)}`;
+          if (o.op === 'road' || o.op === 'unroad') {
+            expect(now !== was, `${at}: changed as it said`).toBe(done);
+            if (done) expect(w.roads.has(o.x, o.y), at).toBe(o.op === 'road');
+          } else expect(now, `${at}: the roads`).toBe(was);
+          if (now === was) {
+            expect(w.roads.version, `${at}: the version`).toBe(version);
+            expect(told, `${at}: the game told`).toEqual([]);
+          } else {
+            expect(w.roads.version, `${at}: the version`).toBeGreaterThan(version);
+            expect(told, `${at}: the game told`).toEqual([`${o.x},${o.y}`]);
+          }
+        });
       },
       { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
     );
@@ -1032,6 +1185,155 @@ describe('a walk with roads', () => {
     expect(Math.hypot(p.x - 24, p.y - 19)).toBeCloseTo(WALK_SPEED * ROAD_SPEED_MUL * 0.05, 9);
     expect(people.toJSON().rng).toBe(stream);
   });
+});
+
+/** Side of the town the walkers below live in. */
+const TOWN = 48;
+/** Seeded houses and service posts on either side of the town's line, and runs of road. */
+function townCase(rng: Rng) {
+  return {
+    houses: Array.from({ length: rng.int(2, 8) }, () => ({
+      x: rng.int(4, 43),
+      y: rng.chance(0.5) ? rng.int(8, 20) : rng.int(28, 40),
+      id: rng.pick(['townhouse', 'townhouse', 'water_tower', 'fuel_stop']),
+    })),
+    roads: Array.from({ length: rng.int(3, 12) }, () => ({
+      across: rng.chance(0.5),
+      at: rng.int(6, 42),
+      a: rng.int(4, 43),
+      b: rng.int(4, 43),
+    })),
+    stream: rng.int(0, 0xffffffff),
+  };
+}
+type TownCase = ReturnType<typeof townCase>;
+/**
+ * A grass town with a line along row 24, a passenger station either side of it, a lumber yard with
+ * a wood six tiles north and a quarry with a hill five tiles south, so walkers set out on walks
+ * long enough for a road to change: to a station, to gather, home again. The case's houses and
+ * roads go where the rules let them, in the editor's way.
+ */
+function townOf(c: TownCase) {
+  const map = emptyMap(1, TOWN, TOWN, Terrain.Grass);
+  for (let y = 15; y <= 17; y++)
+    for (let x = 22; x <= 27; x++) map.terrain[y * TOWN + x] = Terrain.Forest;
+  for (let y = 30; y <= 31; y++)
+    for (let x = 14; x <= 18; x++) map.terrain[y * TOWN + x] = Terrain.Hill;
+  const track = new TrackGraph(TOWN, TOWN);
+  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  builder.free = true;
+  for (let x = 4; x < 44; x++) track.place(x, 24, 'straight', EW);
+  const stations = (
+    [
+      ['station', 12, 23],
+      ['station', 34, 25],
+      ['lumber', 24, 23],
+      ['quarry', 16, 25],
+    ] as const
+  ).map(([id, x, y]) => {
+    const st = builder.placeStation(x, y, id);
+    if (!st) throw new Error(`${id} at ${x},${y}: ${builder.checkStation(x, y, id).reason}`);
+    return st;
+  });
+  for (const h of c.houses) builder.placeDecor(h.x, h.y, h.id, 0);
+  for (const r of c.roads)
+    for (let i = Math.min(r.a, r.b); i <= Math.max(r.a, r.b); i++)
+      if (r.across) builder.placeRoad(i, r.at);
+      else builder.placeRoad(r.at, i);
+  return { map, builder, stations };
+}
+/** The search a walk of this kind comes from in PeopleSim. */
+const SEARCH: Record<string, string> = {
+  gather: 'startWalk',
+  toStation: 'startWalk',
+  'return from waiting': 'startWalk',
+  'return from gather': 'turnHome',
+  'return from toStation': 'turnHome',
+  'return from return': 'the way to a new home',
+  boarding: 'spawnTransient',
+};
+
+describe('every walk a walker sets out on', () => {
+  // slow: 25 towns of 2400 ticks with forty walkers, each walk searched twice more; about 1.5 s alone
+  it(
+    'is the walk the roads give between its ends, whichever search set it out',
+    { timeout: 30_000 },
+    () => {
+      /** walks seen and walks a road changed, by the search they came from */
+      const walks = new Map<string, number>();
+      const changed = new Map<string, number>();
+      forAll(
+        townCase,
+        (c) => {
+          const w = townOf(c);
+          const roads = w.builder.roads;
+          const people = new PeopleSim(w.map, w.builder, new Rng(c.stream));
+          const seen = new Map<Person, { path: Person['path']; state: string }>();
+          let gone: { x: number; y: number; id: string; at: number } | null = null;
+          for (let t = 0; t < 2400; t++) {
+            // a train calls at a passenger station now and then: figures board or alight
+            if (t % 97 === 0) {
+              const st = w.stations[(t / 97) % 2];
+              if (t % 2) people.board(st, 3);
+              else people.alight(st, 3);
+            }
+            // a house a walker is on its way back to goes, and stands again two ticks later
+            if (t % 151 === 0 && !gone) {
+              const p = people.persons.find((q) => q.state === 'return' && q.home.startsWith('d'));
+              const d =
+                p &&
+                w.builder.decorAt(...(p.home.slice(1).split(',').map(Number) as [number, number]));
+              if (d && w.builder.removeDecor(d.x, d.y)) gone = { ...d, at: t + 2 };
+            }
+            if (gone?.at === t) {
+              w.builder.placeDecor(gone.x, gone.y, gone.id, 0);
+              gone = null;
+            }
+            people.tick(1, 40, (t % 600) / 600);
+            for (const p of people.persons) {
+              const was = seen.get(p);
+              seen.set(p, { path: p.path, state: p.state });
+              if (!p.path.length || p.path === was?.path) continue;
+              const kind = p.transient
+                ? 'boarding'
+                : p.state === 'return'
+                  ? `return from ${was?.state}`
+                  : p.state;
+              const search = SEARCH[kind];
+              expect(search, `a walk of kind ${kind} at tick ${t}`).toBeDefined();
+              const from = p.path[0];
+              const to = p.path.at(-1)!;
+              const found = findWalk(w.map, from, to, roads);
+              // a boarding figure with no walk found goes straight from one end to the other
+              expect(p.path, `${search}: ${kind} at tick ${t}`).toEqual(found ?? [from, to]);
+              walks.set(search, (walks.get(search) ?? 0) + 1);
+              if (JSON.stringify(findWalk(w.map, from, to)) !== JSON.stringify(found))
+                changed.set(search, (changed.get(search) ?? 0) + 1);
+            }
+          }
+        },
+        {
+          seeds: SEEDS.slice(0, 25),
+          // each call is a whole run: shrink a little, not for long
+          shrinkBudget: 60,
+          shrink: function* (c) {
+            for (const roads of shrinkArray(c.roads)) yield { ...c, roads };
+            for (const houses of shrinkArray(c.houses)) yield { ...c, houses };
+          },
+        },
+      );
+      // Each search ran, and on walks a road changed: one that walked without the roads would have
+      // failed above. A boarding figure's walk is one step from its station to the platform beside
+      // it, which no road changes, so that search is only seen to run.
+      for (const search of new Set(Object.values(SEARCH))) {
+        expect(walks.get(search) ?? 0, `walks from ${search}`).toBeGreaterThan(0);
+        if (search !== 'spawnTransient')
+          expect(changed.get(search) ?? 0, `walks a road changed, from ${search}`).toBeGreaterThan(
+            0,
+          );
+      }
+    },
+  );
 });
 
 describe('the pace on a road', () => {
