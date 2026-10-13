@@ -161,6 +161,27 @@ export function clearAhead(
 }
 
 /**
+ * Where a walker set down at `p` rather than walking there stands instead when `p` is on a level
+ * crossing (`isCrossing`): on that crossing's edge, where the way from `p` straight towards
+ * `toward` leaves it. Null when `p` is on no crossing, or `toward` is on the same one.
+ */
+export function offCrossing(
+  p: { x: number; y: number },
+  toward: { x: number; y: number },
+  isCrossing: (x: number, y: number) => boolean,
+): { x: number; y: number } | null {
+  const x = Math.round(p.x);
+  const y = Math.round(p.y);
+  if (!standsOn(p, x, y) || standsOn(toward, x, y) || !isCrossing(x, y)) return null;
+  const len = Math.hypot(toward.x - p.x, toward.y - p.y);
+  const ux = (toward.x - p.x) / len;
+  const uy = (toward.y - p.y) / len;
+  // `p` is inside the tile on both axes, so the way leaves it where it first leaves either
+  const leave = Math.min(len, slab(p.x, ux, x)![1], slab(p.y, uy, y)![1]);
+  return { x: p.x + ux * leave, y: p.y + uy * leave };
+}
+
+/**
  * Where the line `p + t * u` lies less than half a tile from `c`, on one axis: the range of t, or
  * null when it never does.
  */
@@ -336,7 +357,8 @@ function nearestPlace(places: readonly Place[], x: number, y: number): Place | n
  * nearby resource tile to gather, or goes to the closest station to catch a train with a coach.
  * Each has the profession of the place it lives at. Nobody sets out at night, and one caught on
  * the way to a station turns home. A walker waits in front of a level crossing while it is closed
- * (src/sim/crossings.ts). Nothing here changes the map.
+ * (src/sim/crossings.ts), and none is set down on one (`offCrossing`). Nothing here changes the
+ * map.
  */
 export class PeopleSim {
   persons: Person[] = [];
@@ -359,6 +381,8 @@ export class PeopleSim {
   private rnd() {
     return this.rng.next();
   }
+  /** The tile is a level crossing (`Roads.isCrossing`). */
+  private readonly isCrossing = (x: number, y: number) => this.builder.roads.isCrossing(x, y);
 
   toJSON(): PeopleJSON {
     return { rng: this.rng.state };
@@ -437,14 +461,23 @@ export class PeopleSim {
     const count = Math.min(3, Math.max(1, Math.round(n)));
     for (let k = 0; k < count; k++) this.spawnTransient(st, plat, false);
   }
+  /**
+   * A figure stepping off a train onto the platform, or out of the station to board one. One set
+   * down on a level crossing (a platform a road crosses) stands on its edge, on its way off it.
+   */
   private spawnTransient(st: Station, plat: { x: number; y: number }, boarding: boolean) {
     const from = boarding ? st : plat;
     const to = boarding ? plat : st;
     const path = findWalk(this.map, from, to, this.builder.roads) ?? [from, to];
-    this.persons.push({
-      id: this.nextId++,
+    const at = {
       x: from.x + (this.rnd() - 0.5) * 0.4,
       y: from.y + (this.rnd() - 0.5) * 0.4,
+    };
+    const off = offCrossing(at, path[1] ?? to, this.isCrossing);
+    this.persons.push({
+      id: this.nextId++,
+      x: off?.x ?? at.x,
+      y: off?.y ?? at.y,
       home: '',
       outfit: Math.floor(this.rnd() * 4),
       profession: 'passenger',
@@ -575,8 +608,12 @@ export class PeopleSim {
           // step outside: mostly idling, sometimes gathering, rarely a train trip
           const r = this.rnd();
           if (r < 0.65) {
+            // in front of the door, at most a fifth of a tile out from its own tile, but never on
+            // a level crossing there: then short of its own tile's edge, the same draw spread over
+            // that
+            const reach = this.isCrossing(home.x, home.y + 1) ? 0.2 : 0.4;
             p.x = home.x + (this.rnd() - 0.5) * 0.8;
-            p.y = home.y + 0.3 + this.rnd() * 0.4;
+            p.y = home.y + 0.3 + this.rnd() * reach;
             p.state = 'idle';
             p.timer = 6 + this.rnd() * 14;
           } else if (r < 0.92 && home.gathers !== null) {
@@ -600,13 +637,21 @@ export class PeopleSim {
           }
           break;
         }
-        case 'idle':
+        case 'idle': {
+          // a level crossing laid where it idles, or the tile it gathered on with no way home:
+          // it stands at the crossing's edge, on the side of its home
+          const off = offCrossing(p, home, this.isCrossing);
+          if (off) {
+            p.x = off.x;
+            p.y = off.y;
+          }
           p.timer -= gdt;
           if (p.timer <= 0 || !daytime) {
             p.state = 'inside';
             p.timer = 20 + this.rnd() * 60;
           }
           break;
+        }
         case 'gather':
         case 'toStation':
         case 'return':

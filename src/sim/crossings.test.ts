@@ -19,6 +19,7 @@ import {
   ROAD_SPEED_MUL,
   WAKE,
   WALK_SPEED,
+  offCrossing,
   walkSpeed,
   type Person,
   type PersonState,
@@ -1087,5 +1088,230 @@ describe('the crossings the step watches', () => {
     expect(w.builder.roads.version).toBe(roads);
     once();
     expect(step.crossings!.closed(x, y), 'the track under the road taken up').toBe(false);
+  });
+});
+
+// ------------------------------------------------------------------ walkers set down by a crossing
+
+/** A second level crossing of the line, with a house right north of it: its door faces it. */
+const DOOR_X = 46;
+const DOOR_KEY = ROW * SIDE + DOOR_X;
+const DOOR_HOME = `d${DOOR_X},${ROW - 1}`;
+
+/**
+ * crossingWorld with a road over the line on DOOR_X (ROW and ROW + 1), which makes a second level
+ * crossing, and a townhouse of six residents on the tile north of it, so the walkers idling by its
+ * door stand towards the crossing.
+ */
+function doorWorld(loco: string | null, seed: number) {
+  const { w, train } = crossingWorld(loco, seed);
+  w.builder.free = true;
+  for (const y of [ROW, ROW + 1]) expect(w.builder.placeRoad(DOOR_X, y)).toBe(true);
+  expect(w.builder.placeDecor(DOOR_X, ROW - 1, 'townhouse', 0)).not.toBeNull();
+  Object.assign(w.houses.at(DOOR_X, ROW - 1)!, { progress: 1, residents: 6 });
+  w.builder.free = false;
+  expect([...w.builder.roads.crossingKeys()].sort((a, b) => a - b)).toEqual([CROSS_KEY, DOOR_KEY]);
+  return { w, train };
+}
+
+describe('a walker set down by a level crossing', () => {
+  // slow: 12 000 steps of a whole world with a train and some forty walkers
+  it.each([4242, 7])(
+    'seed %i: no walker stands on a crossing while a car is on it, those of the house by the line idling at its door',
+    (seed) => {
+      const { w } = doorWorld('adler', seed);
+      const step = new SimStep(w);
+      const ctx = playContext(w);
+      const crossings = [...w.builder.roads.crossingKeys()];
+      let byDoor = 0;
+      for (let i = 0; i < Math.round(600 / SIM_STEP); i++) {
+        w.clock.run((gdt) => step.run(gdt, ctx));
+        for (const t of w.fleet.trains) {
+          t.coal = t.coalCap;
+          t.water = t.waterCap;
+          t.oil = t.oilCap;
+        }
+        const cars = new Set(w.fleet.trains.flatMap((t) => t.occupancyKeys(SIDE)));
+        for (const p of w.people.persons) {
+          for (const k of crossings) {
+            const [x, y] = [k % SIDE, Math.floor(k / SIDE)];
+            if (cars.has(k) && onTile(p, x, y))
+              expect.fail(
+                `walker ${p.id} (${p.state}) at ${p.x}, ${p.y} on the crossing ${x},${y} with a car, at ${w.clock.time}`,
+              );
+          }
+          if (p.state === 'idle' && p.home === DOOR_HOME && cars.has(DOOR_KEY)) {
+            // by the door, in front of the house
+            expect(onTile(p, DOOR_X, ROW - 1), `walker ${p.id} at ${p.x}, ${p.y}`).toBe(true);
+            expect(p.y).toBeGreaterThanOrEqual(ROW - 1 + 0.3);
+            byDoor++;
+          }
+        }
+      }
+      // not vacuous: walkers of the house idled at its door while a car was on the crossing
+      expect(byDoor).toBeGreaterThanOrEqual(20);
+    },
+    120_000,
+  );
+
+  it('stands at the edge of the crossing it was set down on, where its way off leaves it', () => {
+    forAll(
+      (rng) => {
+        const crossings: [number, number][] = [[5, 5]];
+        // two crossings side by side, as on a double line
+        if (rng.chance(0.4))
+          crossings.push(
+            rng.pick([
+              [6, 5],
+              [4, 5],
+              [5, 6],
+              [5, 4],
+            ] as [number, number][]),
+          );
+        // on a lattice of sixteenths, so edges and corners come up
+        const at = { x: rng.int(48, 112) / 16, y: rng.int(48, 112) / 16 };
+        const toward = rng.chance(0.5)
+          ? { x: rng.int(2, 8), y: rng.int(2, 8) }
+          : { x: rng.range(2, 8), y: rng.range(2, 8) };
+        return { crossings, at, toward };
+      },
+      (c) => {
+        const isCrossing = (x: number, y: number) =>
+          c.crossings.some(([a, b]) => a === x && b === y);
+        const off = offCrossing(c.at, c.toward, isCrossing);
+        const on = c.crossings.find(([x, y]) => onTile(c.at, x, y));
+        if (!on || onTile(c.toward, on[0], on[1])) {
+          expect(off).toBeNull();
+          return;
+        }
+        expect(off).not.toBeNull();
+        // on no crossing, on the edge of the one it was on
+        for (const [x, y] of c.crossings) expect(onTile(off!, x, y)).toBe(false);
+        expect(Math.abs(cheb(off!, on[0], on[1]) - 0.5)).toBeLessThan(1e-9);
+        // straight on from where it was set down towards `toward`, no further than that, and
+        // every point of the way before it is on the crossing: it is where the way leaves
+        const len = Math.hypot(c.toward.x - c.at.x, c.toward.y - c.at.y);
+        const ux = (c.toward.x - c.at.x) / len;
+        const uy = (c.toward.y - c.at.y) / len;
+        const went = (off!.x - c.at.x) * ux + (off!.y - c.at.y) * uy;
+        expect(went).toBeGreaterThan(0);
+        expect(went).toBeLessThanOrEqual(len + 1e-9);
+        expect(Math.hypot(c.at.x + ux * went - off!.x, c.at.y + uy * went - off!.y)).toBeLessThan(
+          1e-9,
+        );
+        for (let i = 0; i < 64; i++) {
+          const s = (went * i) / 64;
+          expect(cheb({ x: c.at.x + ux * s, y: c.at.y + uy * s }, on[0], on[1])).toBeLessThan(
+            0.5 + 1e-9,
+          );
+        }
+      },
+      {
+        shrink: function* (c) {
+          if (c.crossings.length > 1) yield { ...c, crossings: [c.crossings[0]] };
+        },
+      },
+    );
+  });
+
+  it('keeps one idling by its door off a level crossing in front of it, with the draws it had', () => {
+    // the same house by the line twice, with the crossing in front of its door and with none
+    const sims = [true, false].map((road) => {
+      const w = simWorld({ terrain: 'grass', size: SIDE, seed: 4242 });
+      line(w, 6, ROW, 60);
+      w.builder.free = true;
+      if (road) expect(w.builder.placeRoad(DOOR_X, ROW)).toBe(true);
+      expect(w.builder.placeDecor(DOOR_X, ROW - 1, 'townhouse', 0)).not.toBeNull();
+      w.builder.free = false;
+      expect(w.builder.roads.isCrossing(DOOR_X, ROW)).toBe(road);
+      // no station and nothing to gather: its walkers only ever idle by the door
+      return new PeopleSim(w.map, w.builder, new Rng(3));
+    });
+    const [crossing, bare] = sims;
+    let idle = 0;
+    let beyond = 0;
+    for (let i = 0; i < 6000; i++) {
+      for (const people of sims) people.tick(SIM_STEP, 6, MIDDAY);
+      expect(crossing.toJSON()).toEqual(bare.toJSON());
+      expect(crossing.persons).toHaveLength(bare.persons.length);
+      crossing.persons.forEach((p, k) => {
+        const b = bare.persons[k];
+        // the same walker doing the same, at the same x; only how far out it stands differs
+        expect({ ...p, y: 0 }).toEqual({ ...b, y: 0 });
+        expect(onTile(p, DOOR_X, ROW), `walker ${p.id} at ${p.x}, ${p.y}`).toBe(false);
+        if (p.state !== 'idle') return;
+        idle++;
+        expect(onTile(p, DOOR_X, ROW - 1)).toBe(true);
+        expect(p.y).toBeGreaterThanOrEqual(ROW - 1 + 0.3);
+        if (onTile(b, DOOR_X, ROW)) beyond++;
+      });
+    }
+    // not vacuous: with no crossing there, walkers stood out on that tile now and then
+    expect(idle).toBeGreaterThanOrEqual(1000);
+    expect(beyond).toBeGreaterThanOrEqual(200);
+  });
+
+  it('steps off a level crossing laid where it idles, to its edge on the side of its home', () => {
+    const w = simWorld({ terrain: 'grass', size: SIDE, seed: 4242 });
+    line(w, 6, ROW, 60);
+    w.builder.free = true;
+    expect(w.builder.placeDecor(DOOR_X, ROW - 1, 'townhouse', 0)).not.toBeNull();
+    const people = new PeopleSim(w.map, w.builder, new Rng(3));
+    const out = () => people.persons.find((p) => p.state === 'idle' && onTile(p, DOOR_X, ROW));
+    for (let i = 0; i < 6000 && !out(); i++) people.tick(SIM_STEP, 6, MIDDAY);
+    const p = out()!;
+    expect(p).toBeDefined();
+    const rng = people.toJSON().rng;
+    const timer = p.timer;
+    const at = { x: p.x, y: p.y };
+    expect(w.builder.placeRoad(DOOR_X, ROW)).toBe(true);
+    people.tick(SIM_STEP, 6, MIDDAY);
+    // still idling, at the crossing's edge, straight towards the house from where it stood
+    expect(p.state).toBe('idle');
+    expect(p.timer).toBeCloseTo(timer - SIM_STEP, 9);
+    expect(people.toJSON().rng).toBe(rng);
+    expect(p.y).toBeCloseTo(ROW - 0.5, 9);
+    expect(onTile(p, DOOR_X, ROW)).toBe(false);
+    const toward = { x: DOOR_X - at.x, y: ROW - 1 - at.y };
+    expect((p.x - at.x) * toward.y - (p.y - at.y) * toward.x).toBeCloseTo(0, 9);
+  });
+
+  it('sets a figure alighting on a platform a road crosses down at its edge, on its way, with the draws it had', () => {
+    const [px, py] = [CROSS_X + 1, ROW];
+    // a platform with a road over it, and the same platform with none
+    const sims = [true, false].map((road) => {
+      const w = simWorld({ terrain: 'grass', size: SIDE, seed: 4242 });
+      line(w, 6, ROW, 60);
+      const st = station(w, 'station', px, ROW + 1);
+      expect(w.builder.platformTiles(st)).toEqual([{ x: px, y: py }]);
+      w.builder.free = true;
+      if (road) expect(w.builder.placeRoad(px, py)).toBe(true);
+      w.builder.free = false;
+      expect(w.builder.roads.isCrossing(px, py)).toBe(road);
+      const people = new PeopleSim(w.map, w.builder, new Rng(9));
+      for (let k = 0; k < 20; k++) people.alight(st, 3);
+      return people;
+    });
+    const [crossing, bare] = sims;
+    expect(crossing.toJSON()).toEqual(bare.toJSON());
+    expect(crossing.persons).toHaveLength(60);
+    crossing.persons.forEach((p, k) => {
+      const b = bare.persons[k];
+      expect({ ...p, x: 0, y: 0 }).toEqual({ ...b, x: 0, y: 0 });
+      // set down on the platform with no road there; with one, at its edge, straight on from
+      // there towards the figure's first step
+      expect(onTile(b, px, py)).toBe(true);
+      expect(Math.abs(cheb(p, px, py) - 0.5)).toBeLessThan(1e-9);
+      const to = p.path[1];
+      expect((p.x - b.x) * (to.y - b.y) - (p.y - b.y) * (to.x - b.x)).toBeCloseTo(0, 9);
+      expect((p.x - b.x) * (to.x - b.x) + (p.y - b.y) * (to.y - b.y)).toBeGreaterThan(0);
+    });
+    // and off they go to the station with a train on the crossing, never setting foot on it
+    const closed = (x: number, y: number) => x === px && y === py;
+    for (let i = 0; i < 400 && crossing.persons.length; i++) {
+      crossing.tick(SIM_STEP, 0, MIDDAY, closed);
+      for (const p of crossing.persons) expect(onTile(p, px, py)).toBe(false);
+    }
+    expect(crossing.persons).toHaveLength(0);
   });
 });
