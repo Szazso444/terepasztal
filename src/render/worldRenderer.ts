@@ -1368,6 +1368,8 @@ export class WorldRenderer {
     // only a building has window lights and a ground fit; drop those of a building shown before
     if (!building) this.dropBuildingDressing(id);
     else {
+      // a copy of its atlas frame, texel for texel, sampled without mipmaps (surfaceAssets.ts)
+      s.texture = this.surfaces.picture(frame, f);
       this.fitToGround(id, s, frame, f, building.scale, x, y);
       let light = this.windowLights.get(id);
       if (!light) {
@@ -1388,8 +1390,8 @@ export class WorldRenderer {
   /**
    * Fit building `id`, picture `s` showing `frame` at `scale` on tile (x, y), to the ground: the
    * soft shadow it casts, the shade over its foot and the weeds and pebbles over its base. They
-   * are layers of their own; the picture stays the atlas frame. A picture with its ground shadow
-   * baked in (a generated works or station) casts none, so the shadow is not doubled.
+   * are layers of their own; the picture stays its atlas frame's texels. A picture with its
+   * ground shadow baked in (a generated works or station) casts none, so it is not doubled.
    */
   private fitToGround(
     id: string,

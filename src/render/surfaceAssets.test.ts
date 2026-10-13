@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Rectangle, Texture, TextureSource } from 'pixi.js';
 import type { FrameInfo } from '../engine/atlas';
-import type { Rng } from '../engine/rng';
+import { Rng } from '../engine/rng';
 import { forAll, shrinkInt } from '../testing/property';
 import {
   contactShadow,
@@ -39,22 +39,25 @@ interface Mark {
   given: { x: number; y: number };
 }
 /**
- * Node has no canvas: a stand-in whose context hands out the pixels of the image drawn into it,
- * keeps what is put into it and records where paths and ellipses are drawn.
+ * Node has no canvas: a stand-in whose context copies the texels of an image drawn onto it one to
+ * one, hands them out again, keeps what is put into it and records where paths and ellipses are
+ * drawn.
  */
 interface FakeCanvas {
   width: number;
   height: number;
+  /** Its texels as drawImage left them, RGBA rows; null until an image is drawn onto it. */
+  pixels: Uint8ClampedArray | null;
   put: FakeImageData | null;
   marks: Mark[];
   getContext: () => unknown;
 }
 function fakeCanvas(): FakeCanvas {
-  let image: FakeImageData | null = null,
-    m = [1, 0, 0, 1, 0, 0];
+  let m = [1, 0, 0, 1, 0, 0];
   const canvas: FakeCanvas = {
       width: 0,
       height: 0,
+      pixels: null,
       put: null,
       marks: [],
       getContext: () => ctx,
@@ -72,9 +75,29 @@ function fakeCanvas(): FakeCanvas {
       lineCap: 'butt',
       strokeStyle: '',
       fillStyle: '',
-      drawImage: (img: FakeImageData) => (image = img),
-      getImageData: (_x: number, _y: number, w: number, h: number) =>
-        new FakeImageData(Uint8ClampedArray.from(image!.data), w, h),
+      imageSmoothingEnabled: true,
+      // the image's rectangle (sx, sy, sw, sh) onto (dx, dy), one texel to one texel only
+      drawImage: (img: FakeImageData, ...r: number[]) => {
+        const [sx, sy, sw, sh, dx, dy, dw, dh] = r;
+        if (r.length !== 8 || sw !== dw || sh !== dh) throw new Error('not a one to one copy');
+        const to = (canvas.pixels ??= new Uint8ClampedArray(canvas.width * canvas.height * 4));
+        for (let j = 0; j < sh; j++)
+          for (let i = 0; i < sw; i++) {
+            const x = dx + i,
+              y = dy + j,
+              k = ((sy + j) * img.width + sx + i) * 4;
+            if (x >= 0 && y >= 0 && x < canvas.width && y < canvas.height)
+              to.set(img.data.subarray(k, k + 4), (y * canvas.width + x) * 4);
+          }
+      },
+      getImageData: (x: number, y: number, w: number, h: number) => {
+        const out = new FakeImageData(w, h);
+        for (let j = 0; j < h; j++) {
+          const k = ((y + j) * canvas.width + x) * 4;
+          out.data.set(canvas.pixels!.subarray(k, k + w * 4), j * w * 4);
+        }
+        return out;
+      },
       putImageData: (img: FakeImageData) => (canvas.put = img),
       setTransform: (...t: number[]) => (m = t),
       beginPath: () => {},
@@ -181,6 +204,150 @@ function pictureAt(f: FrameInfo, scale: number, x: number, y: number) {
     inside = px >= 0 && py >= 0 && px < w && py < h;
   return { px, py, alpha: inside ? pixelsOf(f).data[(py * w + px) * 4 + 3] : 0 };
 }
+
+/**
+ * An atlas image with one frame `w` x `h` world px at `density` texels per px in it, at texel
+ * (`x`, `y`) with `right` and `below` texels of other frames past it; every texel is painted, from
+ * `seed`, clear, translucent and opaque alike.
+ */
+interface Sheet {
+  density: number;
+  w: number;
+  h: number;
+  x: number;
+  y: number;
+  right: number;
+  below: number;
+  seed: number;
+}
+function atlasOf(s: Sheet) {
+  const fw = s.w * s.density,
+    fh = s.h * s.density,
+    W = s.x + fw + s.right,
+    H = s.y + fh + s.below,
+    rng = new Rng(s.seed),
+    data = new Uint8ClampedArray(W * H * 4);
+  for (let k = 0; k < data.length; k++)
+    data[k] = rng.pick([0, 1, 169, 170, 254, 255, rng.int(0, 255)]);
+  const image = new FakeImageData(data, W, H),
+    f: FrameInfo = {
+      image: image as never,
+      texture: new Texture({
+        source: SOURCE,
+        frame: new Rectangle(s.x, s.y, fw, fh),
+        orig: new Rectangle(0, 0, s.w, s.h),
+      }),
+      anchorX: 0.5,
+      anchorY: 0.9,
+      w: s.w,
+      h: s.h,
+    };
+  return { image, f };
+}
+
+describe('the picture a building is drawn from', () => {
+  beforeEach(() => {
+    vi.stubGlobal('ImageData', FakeImageData);
+    vi.stubGlobal('document', { createElement: fakeCanvas });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("holds its atlas frame's own texels, every one and nothing else, at the frame's size", () => {
+    forAll(
+      (rng): Sheet => ({
+        density: rng.pick([1, 2, 4]),
+        w: rng.int(1, 12),
+        h: rng.int(1, 12),
+        x: rng.int(0, 9),
+        y: rng.int(0, 9),
+        right: rng.int(0, 9),
+        below: rng.int(0, 9),
+        seed: rng.int(1, 1_000_000),
+      }),
+      (s) => {
+        const { image, f } = atlasOf(s),
+          atlas = Uint8ClampedArray.from(image.data),
+          t = new SurfaceAssets().picture('structures/test', f),
+          copy = canvasOf(t),
+          wrong: string[] = [];
+        expect([copy.width, copy.height]).toEqual([f.texture.frame.width, f.texture.frame.height]);
+        expect(copy.put, 'nothing put over the copy').toBeNull();
+        for (let j = 0; j < copy.height; j++)
+          for (let i = 0; i < copy.width; i++) {
+            const k = ((s.y + j) * image.width + s.x + i) * 4,
+              texel = [
+                ...copy.pixels!.subarray((j * copy.width + i) * 4, (j * copy.width + i + 1) * 4),
+              ],
+              own = [...atlas.subarray(k, k + 4)];
+            if (texel.join() !== own.join()) wrong.push(`${i},${j} is ${texel}, not ${own}`);
+          }
+        expect(wrong.slice(0, 5), `${wrong.length} in all`).toEqual([]);
+        // drawn whole, at the world size the atlas frame is drawn at
+        expect([t.frame.x, t.frame.y, t.frame.width, t.frame.height]).toEqual([
+          0,
+          0,
+          copy.width,
+          copy.height,
+        ]);
+        expect([t.orig.width, t.orig.height]).toEqual([
+          f.texture.orig.width,
+          f.texture.orig.height,
+        ]);
+        expect(image.data, 'the atlas itself').toEqual(atlas);
+      },
+    );
+  });
+
+  it('is sampled linearly with no mipmaps at any density, and the shade over its foot alike', () => {
+    for (const density of [1, 2, 4]) {
+      const f = frameOf({
+          density,
+          left: 6,
+          right: 8,
+          height: 10,
+          margin: 2,
+          anchorUp: 3,
+          scale: 1,
+        }),
+        surfaces = new SurfaceAssets(),
+        { foot } = surfaces.groundFit('structures/test', f, 1),
+        at = `at density ${density}`;
+      for (const [name, t] of [
+        ['picture', surfaces.picture('structures/test', f)],
+        ['foot shade', foot!.texture],
+      ] as const)
+        expect(
+          [t.source.magFilter, t.source.minFilter, t.source.autoGenerateMipmaps],
+          `${name} ${at}`,
+        ).toEqual(['linear', 'linear', false]);
+      // The shade ends on a clear row under the lowest foot, where the picture goes on below: the
+      // filter fades it at that edge as it fades the picture, rather than stretching its foot row.
+      const { width: w, height: h, data } = pixelsOf(f),
+        lowest = Math.max(...footContour({ data, width: w, height: h, density })),
+        band = canvasOf(foot!.texture).put!,
+        last = Math.round(f.anchorY * h - foot!.anchorY * band.height) + band.height - 1;
+      expect(lowest + 1, at).toBeLessThan(h);
+      expect(last, at).toBe(lowest + 1);
+      expect(
+        band.data.subarray((band.height - 1) * band.width * 4).every((v) => v === 0),
+        at,
+      ).toBe(true);
+    }
+  });
+
+  it("is copied once per frame and freed with the surfaces, the atlas frame's texture left alone", () => {
+    const { f } = atlasOf({ density: 2, w: 5, h: 4, x: 3, y: 2, right: 4, below: 1, seed: 7 }),
+      { f: other } = atlasOf({ density: 1, w: 3, h: 6, x: 0, y: 0, right: 0, below: 0, seed: 8 }),
+      surfaces = new SurfaceAssets(),
+      t = surfaces.picture('structures/a', f),
+      u = surfaces.picture('structures/b', other);
+    expect(surfaces.picture('structures/a', f)).toBe(t);
+    expect(u).not.toBe(t);
+    surfaces.destroy();
+    expect([t.destroyed, u.destroyed]).toEqual([true, true]);
+    expect([f.texture.destroyed, other.texture.destroyed]).toEqual([false, false]);
+  });
+});
 
 describe('the ground fit drawn with a building', () => {
   beforeEach(() => {

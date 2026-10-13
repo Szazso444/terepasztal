@@ -55,24 +55,28 @@ const WINDOW_REGIONS: Record<string, number[][]> = {
   windmill: [[0.4, 0.57, 0.055, 0.11]],
 };
 
+/** Frame `f`'s size in world px over `canvas`, filtered linearly with no mipmaps. */
 function texture(canvas: HTMLCanvasElement, f: FrameInfo) {
-  return new Texture({
-    source: new ImageSource({ resource: canvas, scaleMode: 'linear' }),
-    orig: new Rectangle(0, 0, f.w, f.h),
-  });
+  return canvasTexture(canvas, f.w, f.h, false);
 }
-function read(f: FrameInfo) {
+/** Frame `f`'s texels copied one to one onto a canvas of their own. */
+function copy(f: FrameInfo) {
   const rect = f.texture.frame,
     canvas = document.createElement('canvas');
   canvas.width = rect.width;
   canvas.height = rect.height;
   const ctx = canvas.getContext('2d')!;
+  ctx.imageSmoothingEnabled = false;
   ctx.drawImage(f.image, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
+  return { canvas, ctx };
+}
+function read(f: FrameInfo) {
+  const { canvas, ctx } = copy(f);
   return { canvas, ctx, pixels: ctx.getImageData(0, 0, canvas.width, canvas.height) };
 }
 /**
- * A texture of RGBA texels `w` x `h`, drawn `ow` x `oh` world px. `smooth` filters it linearly
- * with mipmaps, as an illustrated atlas is; else nearest, as a generated one is.
+ * A texture of RGBA texels `w` x `h`, drawn `ow` x `oh` world px and filtered linearly, through
+ * mipmaps when `mipmaps` is set.
  */
 function layer(
   data: Uint8ClampedArray,
@@ -80,24 +84,24 @@ function layer(
   h: number,
   ow: number,
   oh: number,
-  smooth: boolean,
+  mipmaps: boolean,
 ) {
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(data), w, h), 0, 0);
-  return canvasTexture(canvas, ow, oh, smooth);
+  return canvasTexture(canvas, ow, oh, mipmaps);
 }
 /** Weeds and pebbles are drawn at this many texels per world px. */
 const WEED_RES = 3;
 /** A colour `0xRRGGBB` at alpha `a`, for a canvas. */
 const css = (c: number, a = 1) => `rgba(${c >> 16},${(c >> 8) & 255},${c & 255},${a})`;
-function canvasTexture(canvas: HTMLCanvasElement, ow: number, oh: number, smooth: boolean) {
+function canvasTexture(canvas: HTMLCanvasElement, ow: number, oh: number, mipmaps: boolean) {
   return new Texture({
     source: new ImageSource({
       resource: canvas,
-      scaleMode: smooth ? 'linear' : 'nearest',
-      autoGenerateMipmaps: smooth,
+      scaleMode: 'linear',
+      autoGenerateMipmaps: mipmaps,
     }),
     orig: new Rectangle(0, 0, ow, oh),
   });
@@ -132,9 +136,24 @@ const TERRAIN_SNOW = [234, 239, 246];
 const unit = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
 export class SurfaceAssets {
+  private pictures = new Map<string, Texture>();
   private windows = new Map<string, Texture>();
   private groundFits = new Map<string, GroundFitArt>();
   private summits = new Map<string, Texture>();
+  /**
+   * Building `key`'s picture as it is drawn: a copy of its atlas frame, texel for texel, filtered
+   * linearly with no mipmaps. The atlas draws an illustrated frame through its mipmaps, which
+   * softens a building at the scales the view shows it at, and a generated one nearest; the copy
+   * keeps each as crisp as it has always been drawn. Nothing is ever written over it.
+   */
+  picture(key: string, f: FrameInfo) {
+    let result = this.pictures.get(key);
+    if (!result) {
+      result = texture(copy(f).canvas, f);
+      this.pictures.set(key, result);
+    }
+    return result;
+  }
   /**
    * `match` (0..1) recolours the illustration toward the terrain's own rock and snow, `light`
    * multiplies it like the painter's height light, so the summit reads as the same stone as the
@@ -228,7 +247,7 @@ export class SurfaceAssets {
   }
   /**
    * The ground fit of picture `key` drawn at `scale`: read from its pixels once, never written
-   * back to them; the picture stays the atlas frame.
+   * back to them; the picture stays its atlas frame's texels (`picture`).
    */
   groundFit(key: string, f: FrameInfo, scale: number): GroundFitArt {
     const id = `${key}|${scale}`,
@@ -237,19 +256,27 @@ export class SurfaceAssets {
     const { pixels } = read(f),
       { width: w, height: h } = pixels,
       density = w / f.w,
-      smooth = density > 1,
       picture = { data: pixels.data, width: w, height: h, density },
       foot = footContour(picture),
       at = { anchorX: f.anchorX * w, anchorY: f.anchorY * h, scale },
       band = footShade(picture, foot),
       // a generated works or station has its own ground shadow: a second one would double it
       cast = bakedShadow(picture) ? null : contactShadow(picture, foot, at);
-    const result: GroundFitArt = {
-      foot: band && {
-        texture: layer(band.data, w, band.rows, f.w, band.rows / density, smooth),
+    let shade: AnchoredTexture | null = null;
+    if (band) {
+      // Sampled as the picture is (no mipmaps), with a clear row under the band where the picture
+      // goes on below it, so the filter fades the shade at its lower edge as it fades the picture.
+      const rows = Math.min(band.rows + 1, h - band.top),
+        data = new Uint8ClampedArray(w * rows * 4);
+      data.set(band.data);
+      shade = {
+        texture: layer(data, w, rows, f.w, rows / density, false),
         anchorX: f.anchorX,
-        anchorY: (f.anchorY * h - band.top) / band.rows,
-      },
+        anchorY: (f.anchorY * h - band.top) / rows,
+      };
+    }
+    const result: GroundFitArt = {
+      foot: shade,
       shadow: cast && {
         texture: layer(
           cast.data,
@@ -374,6 +401,7 @@ export class SurfaceAssets {
   }
   destroy() {
     for (const t of [
+      ...this.pictures.values(),
       ...this.windows.values(),
       ...[...this.groundFits.values()].flatMap((g) =>
         [g.foot, g.shadow].flatMap((l) => (l ? [l.texture] : [])),
@@ -382,6 +410,7 @@ export class SurfaceAssets {
       ...[...this.shafts.values()].map((v) => v.texture),
     ])
       t.destroy(true);
+    this.pictures.clear();
     this.windows.clear();
     this.groundFits.clear();
     this.summits.clear();

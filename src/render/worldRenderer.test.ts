@@ -83,9 +83,28 @@ function fitTextures(key: string, scale: number) {
 }
 
 /**
+ * The copies of their atlas frames that buildings are drawn from, one per frame as surfaces cache
+ * them, with the frame each was copied from. surfaceAssets.test.ts pins that a copy holds its
+ * frame's own texels.
+ */
+const PICTURES = new Map<string, { texture: Texture; from: FrameInfo }>();
+function pictureOf(key: string, f: FrameInfo) {
+  if (!PICTURES.has(key))
+    PICTURES.set(key, {
+      texture: new Texture({
+        source: SOURCE,
+        frame: new Rectangle(0, 0, f.texture.frame.width, f.texture.frame.height),
+        orig: new Rectangle(0, 0, f.w, f.h),
+      }),
+      from: f,
+    });
+  return PICTURES.get(key)!.texture;
+}
+
+/**
  * A world renderer with only what placing a structure touches: the atlas above, a one-tile map,
  * its two layers, and surfaces that hand back textures without reading pixels (Node has no
- * canvas). `families` records the window-light family each building was lit with; `fits` the
+ * canvas), the pictures from `PICTURES`. `families` records the window-light family each building was lit with; `fits` the
  * picture and scale each ground fit was asked for.
  */
 function renderer() {
@@ -107,6 +126,7 @@ function renderer() {
     windowLights: new Map(),
     groundFits: new Map(),
     surfaces: {
+      picture: pictureOf,
       window: (_key: string, _f: FrameInfo, _procedural: boolean, family: string) => {
         families.push(family);
         return Texture.EMPTY;
@@ -196,11 +216,22 @@ describe('a building fitted to the ground', () => {
     'structures/townhouse_s1_r3',
   ];
 
-  it("shows the atlas frame's own texture, whatever it showed before", () => {
+  it("shows its own atlas frame's copy at the frame's size, whatever it showed before", () => {
     const { world } = renderer();
     for (const frame of [...BUILDINGS, 'structures/power_line', ...[...BUILDINGS].reverse()]) {
-      const s = world.setStructure('station:1', 0, 0, frame);
-      expect(s.texture, frame).toBe(FRAMES[frame].texture);
+      const s = world.setStructure('station:1', 0, 0, frame),
+        f = FRAMES[frame];
+      if (frame === 'structures/power_line') {
+        // no building: the atlas frame itself, as any other sprite
+        expect(s.texture, frame).toBe(f.texture);
+        continue;
+      }
+      expect(s.texture, frame).toBe(PICTURES.get(frame)?.texture);
+      expect(PICTURES.get(frame)!.from, frame).toBe(f);
+      // the copy changes no size: the sprite is the frame's world size at the building's scale
+      expect(s.width, frame).toBeCloseTo(f.w * s.scale.x, 9);
+      expect(s.height, frame).toBeCloseTo(f.h * s.scale.y, 9);
+      expect([s.anchor.x, s.anchor.y], frame).toEqual([f.anchorX, f.anchorY]);
     }
   });
 
