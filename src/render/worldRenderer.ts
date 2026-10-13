@@ -6,7 +6,7 @@ import {
   Graphics,
   Mesh,
   MeshGeometry,
-  type Texture,
+  Texture,
 } from 'pixi.js';
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import {
@@ -31,6 +31,7 @@ import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, materialAt } from './landscapeModel';
 import { scaleReference, TREE_SCALE, isTree, type ScaleReference } from './assetScale';
 import { SurfaceAssets, windowSprite } from './surfaceAssets';
+import { footGround, footScatter, type Foot } from './groundFit';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
@@ -84,6 +85,45 @@ const CUT_BY_TRACK: ReadonlySet<PropKind> = new Set<PropKind>(['wheat']);
 /** An illustrated picture: more texels than world pixels (an atlas `resolution` above 1). */
 function illustrated(f: FrameInfo) {
   return f.texture.frame.width / f.w > 1;
+}
+
+/** What fits one building to the ground, beside its picture (`setStructure`). */
+interface GroundFitSprites {
+  /** The soft shadow it casts, in the contact ground layer. */
+  shadow: Sprite;
+  /** The shade over its picture's foot, drawn right after the picture. */
+  foot: Sprite;
+  /** Weeds and pebbles over the front of its base, in its depth. */
+  weeds: Sprite;
+  /** The texture they are drawn on, the building's own; null when nothing grows. */
+  weedsTexture: Texture | null;
+  /** The picture's feet and the tile it stands on, which the weeds grow from. */
+  feet: readonly Foot[];
+  x: number;
+  y: number;
+  /** What the weeds were last drawn for: the feet, and the tile with its ground. */
+  drawn: { feet: readonly Foot[]; on: string } | null;
+}
+
+/**
+ * Show `texture` as a building's weeds and free the one shown before: each building has its own
+ * (the shadow's and the foot's are shared by every building with the same picture).
+ */
+function showWeeds(fit: GroundFitSprites, texture: Texture | null) {
+  const old = fit.weedsTexture;
+  fit.weedsTexture = texture;
+  if (!fit.weeds.destroyed) fit.weeds.texture = texture ?? Texture.EMPTY;
+  old?.destroy(true);
+}
+
+/** Put a building's ground fit where its picture `s` stands, at its scale and depth. */
+function placeGroundFit(fit: GroundFitSprites, s: Sprite) {
+  fit.shadow.position.copyFrom(s.position);
+  fit.foot.position.copyFrom(s.position);
+  fit.foot.scale.copyFrom(s.scale);
+  fit.foot.zIndex = s.zIndex + 0.005;
+  fit.weeds.position.copyFrom(s.position);
+  fit.weeds.zIndex = s.zIndex + 0.02;
 }
 
 /**
@@ -142,7 +182,9 @@ export class WorldRenderer {
   private structureAnchors = new Map<string, { x: number; y: number; dx: number; dy: number }>();
   private surfaces = new SurfaceAssets();
   private windowLights = new Map<string, Sprite>();
-  private contactPatches = new Map<string, Graphics>();
+  /** Each building's fit to the ground (groundFit.ts), keyed like its structure. */
+  private groundFits = new Map<string, GroundFitSprites>();
+  /** The buildings' cast shadows: on the ground, under the track and everything that stands. */
   private contactGround = new Container({ cullableChildren: true });
   private waterDetails = new Graphics();
   private waterClock = 0;
@@ -157,7 +199,10 @@ export class WorldRenderer {
     this.landscape = new Landscape(map, this.flattened, this.railBeds);
     this.harvest = new HarvestHighlight(map, (x, y) => this.surfacePoint(x, y));
     this.landscape.root.visible = false;
-    this.root.on('destroyed', () => this.surfaces.destroy());
+    this.root.on('destroyed', () => {
+      this.surfaces.destroy();
+      for (const fit of this.groundFits.values()) showWeeds(fit, null);
+    });
     this.objects.sortableChildren = true;
     this.piers.sortableChildren = true;
     this.objects.cullableChildren = true;
@@ -198,6 +243,8 @@ export class WorldRenderer {
         this.refreshGround(k % this.map.w, Math.floor(k / this.map.w));
         this.refreshScatter(k % this.map.w, Math.floor(k / this.map.w), 0);
       }
+    // nothing grows at a building's foot on paving
+    for (const fit of this.groundFits.values()) this.growWeeds(fit);
   }
   private groundFrame(x: number, y: number): string {
     if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
@@ -562,7 +609,8 @@ export class WorldRenderer {
         if (!s) continue;
         const p = this.surfacePoint(a.x, a.y);
         s.position.set(p.x + a.dx, p.y + a.dy);
-        this.contactPatches.get(id)?.position.copyFrom(s.position);
+        const fit = this.groundFits.get(id);
+        if (fit) placeGroundFit(fit, s);
         this.windowLights.get(id)?.position.copyFrom(s.position);
       }
       for (let i = 0; i < this.groundSprites.length; i++) {
@@ -726,6 +774,7 @@ export class WorldRenderer {
       s.tint = this.city.has(i) ? 0xffffff : ground;
     }
     for (const list of this.propSprites.values()) for (const s of list) s.tint = props;
+    for (const fit of this.groundFits.values()) fit.weeds.tint = props;
   }
   /** Apply the current season tint to a freshly built region. */
   private applyTintTo(x0: number, y0: number, x1: number, y1: number) {
@@ -1316,10 +1365,10 @@ export class WorldRenderer {
     const p = tileToWorld(x, y);
     s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
     s.zIndex = depthKey(x, y, layer);
-    // only a building has window lights and contact patches; drop those of a building shown before
+    // only a building has window lights and a ground fit; drop those of a building shown before
     if (!building) this.dropBuildingDressing(id);
     else {
-      s.texture = this.surfaces.contact(frame, f, MATERIAL_COLORS[materialAt(this.map, x, y)]);
+      this.fitToGround(id, s, frame, f, building.scale, x, y);
       let light = this.windowLights.get(id);
       if (!light) {
         light = windowSprite();
@@ -1331,40 +1380,73 @@ export class WorldRenderer {
       light.position.copyFrom(s.position);
       light.scale.copyFrom(s.scale);
       light.zIndex = s.zIndex + 0.01;
-      let patches = this.contactPatches.get(id);
-      if (!patches) {
-        patches = new Graphics({ cullable: true });
-        this.contactGround.addChild(patches);
-        this.contactPatches.set(id, patches);
-      }
-      patches.clear();
-      patches.position.copyFrom(s.position);
-      const contour = this.surfaces.groundContour(frame, f);
-      for (let j = 0; j < contour.length; j++) {
-        const q = contour[j],
-          px = q.x * s.scale.x,
-          py = q.y * s.scale.y;
-        const seed = hash2(x + this.map.originX + j, y + this.map.originY, 91);
-        // Thin broken soil/grass strip follows the actual foundation silhouette.
-        if (seed < 0.2) continue;
-        patches
-          .ellipse(px, py + 0.65, 1.6 + seed * 1.6, 0.65 + seed * 0.75)
-          .fill({ color: 0x8c7950, alpha: 0.17 + seed * 0.11 });
-        if (seed > 0.6) {
-          patches
-            .moveTo(px - 0.7, py + 1.7)
-            .lineTo(px - 0.85, py + 0.25)
-            .moveTo(px + 0.35, py + 1.7)
-            .lineTo(px + 0.7, py + 0.1)
-            .stroke({ color: 0x82964c, width: 0.6, alpha: 0.52 });
-        }
-        if (seed > 0.91)
-          patches.ellipse(px + 1.1, py + 1.6, 0.85, 0.45).fill({ color: 0xa6a28a, alpha: 0.5 });
-      }
     }
     // Stations reach up to two tiles from their anchor; nature there clears away.
     this.refreshScatter(x, y, 2);
     return s;
+  }
+  /**
+   * Fit building `id`, picture `s` showing `frame` at `scale` on tile (x, y), to the ground: the
+   * soft shadow it casts, the shade over its foot and the weeds and pebbles over its base. They
+   * are layers of their own; the picture stays the atlas frame. A picture with its ground shadow
+   * baked in (a generated works or station) casts none, so the shadow is not doubled.
+   */
+  private fitToGround(
+    id: string,
+    s: Sprite,
+    frame: string,
+    f: FrameInfo,
+    scale: number,
+    x: number,
+    y: number,
+  ) {
+    const art = this.surfaces.groundFit(frame, f, scale);
+    let fit = this.groundFits.get(id);
+    if (!fit) {
+      fit = {
+        shadow: new Sprite({ cullable: true }),
+        foot: new Sprite({ cullable: true }),
+        weeds: new Sprite({ cullable: true }),
+        weedsTexture: null,
+        feet: [],
+        x: 0,
+        y: 0,
+        drawn: null,
+      };
+      this.contactGround.addChild(fit.shadow);
+      this.objects.addChild(fit.foot, fit.weeds);
+      this.groundFits.set(id, fit);
+    }
+    for (const [sprite, layer] of [
+      [fit.shadow, art.shadow],
+      [fit.foot, art.foot],
+    ] as const) {
+      sprite.visible = !!layer;
+      if (!layer) continue;
+      sprite.texture = layer.texture;
+      sprite.anchor.set(layer.anchorX, layer.anchorY);
+    }
+    fit.feet = art.feet;
+    fit.x = Math.round(x);
+    fit.y = Math.round(y);
+    this.growWeeds(fit);
+    fit.weeds.tint = this.propTint;
+    placeGroundFit(fit, s);
+  }
+  /** Draw a building's weeds and pebbles for the ground its tile has now (none on paving). */
+  private growWeeds(fit: GroundFitSprites) {
+    const { x, y, feet } = fit,
+      ground = footGround(materialAt(this.map, x, y), this.city.has(idx(this.map, x, y))),
+      on = `${x},${y}|${ground}`;
+    if (fit.drawn?.feet === feet && fit.drawn.on === on) return;
+    fit.drawn = { feet, on };
+    const art = this.surfaces.weeds(
+      footScatter(feet, x + this.map.originX, y + this.map.originY, ground),
+      ground,
+    );
+    showWeeds(fit, art?.texture ?? null);
+    fit.weeds.visible = !!art;
+    if (art) fit.weeds.anchor.set(art.anchorX, art.anchorY);
   }
   setWindowNight(night: number) {
     for (const [id, light] of this.windowLights) {
@@ -1390,10 +1472,14 @@ export class WorldRenderer {
       this.atmosphereTints.set(object, { base, applied });
     }
   }
-  /** A structure's window lights and contact patches, which only a building has. */
+  /** A structure's window lights and ground fit, which only a building has. */
   private dropBuildingDressing(id: string) {
-    this.contactPatches.get(id)?.destroy();
-    this.contactPatches.delete(id);
+    const fit = this.groundFits.get(id);
+    if (fit) {
+      showWeeds(fit, null);
+      for (const part of [fit.shadow, fit.foot, fit.weeds]) part.destroy();
+    }
+    this.groundFits.delete(id);
     this.windowLights.get(id)?.destroy();
     this.windowLights.delete(id);
   }

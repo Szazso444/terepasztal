@@ -94,8 +94,8 @@ export interface ScaleReference {
 }
 /**
  * The scale reference of a frame as the renderer draws it, or null when it has none: it then
- * draws at its own size, with no contact patches and no window lights. A turned frame is
- * measured by its unturned frame's family, so it keeps that frame's size, patches and lights.
+ * draws at its own size, with no ground fit (groundFit.ts) and no window lights. A turned frame
+ * is measured by its unturned frame's family, so it keeps that frame's size and lights.
  * `illustratedHeight` is the drawn picture's own height when it is illustrated (resolution above
  * 1): a door fraction is measured on the picture that is drawn.
  */

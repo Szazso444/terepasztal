@@ -2,6 +2,19 @@ import { ImageSource, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { FrameInfo } from '../engine/atlas';
 import { PAL } from '../art/palette';
 import { structureFamily } from './assetScale';
+import {
+  bakedShadow,
+  contactShadow,
+  feetOf,
+  footContour,
+  footShade,
+  PEBBLE_COLOURS,
+  TUFT_COLOURS,
+  type Foot,
+  type FootGround,
+  type Pebble,
+  type Tuft,
+} from './groundFit';
 
 // Reviewed regions on the packed, rectified source frames: x/y/width/height.
 // The colour selector is deliberately restricted to these windows, so blue roof
@@ -57,7 +70,56 @@ function read(f: FrameInfo) {
   ctx.drawImage(f.image, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
   return { canvas, ctx, pixels: ctx.getImageData(0, 0, canvas.width, canvas.height) };
 }
-/** Bottom-contour integration; leaves walls, roof edges, doors and rail geometry intact. */
+/**
+ * A texture of RGBA texels `w` x `h`, drawn `ow` x `oh` world px. `smooth` filters it linearly
+ * with mipmaps, as an illustrated atlas is; else nearest, as a generated one is.
+ */
+function layer(
+  data: Uint8ClampedArray,
+  w: number,
+  h: number,
+  ow: number,
+  oh: number,
+  smooth: boolean,
+) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(data), w, h), 0, 0);
+  return canvasTexture(canvas, ow, oh, smooth);
+}
+/** Weeds and pebbles are drawn at this many texels per world px. */
+const WEED_RES = 3;
+/** A colour `0xRRGGBB` at alpha `a`, for a canvas. */
+const css = (c: number, a = 1) => `rgba(${c >> 16},${(c >> 8) & 255},${c & 255},${a})`;
+function canvasTexture(canvas: HTMLCanvasElement, ow: number, oh: number, smooth: boolean) {
+  return new Texture({
+    source: new ImageSource({
+      resource: canvas,
+      scaleMode: smooth ? 'linear' : 'nearest',
+      autoGenerateMipmaps: smooth,
+    }),
+    orig: new Rectangle(0, 0, ow, oh),
+  });
+}
+/** A layer drawn with a building, placed by its anchor (0..1 of its size). */
+export interface AnchoredTexture {
+  texture: Texture;
+  anchorX: number;
+  anchorY: number;
+}
+/** What fits a building to the ground (groundFit.ts), for one picture at one scale. */
+export interface GroundFitArt {
+  /** The darkening over the picture's foot, drawn over it at its place and scale. */
+  foot: AnchoredTexture | null;
+  /**
+   * The soft shadow it casts on the ground, at scale 1; null when nothing stands on the ground or
+   * the picture has its own ground shadow baked in.
+   */
+  shadow: AnchoredTexture | null;
+  /** Its feet about one world px apart, in world px from its anchor at that scale. */
+  feet: Foot[];
+}
 /**
  * Colour statistics measured from the atlases (terrain/mountain_* frames, and the rock material
  * of assets/terrain-surfaces.png); re-measure if either is regenerated.
@@ -70,9 +132,8 @@ const TERRAIN_SNOW = [234, 239, 246];
 const unit = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
 export class SurfaceAssets {
-  private contacts = new Map<string, Texture>();
   private windows = new Map<string, Texture>();
-  private contours = new Map<string, { x: number; y: number }[]>();
+  private groundFits = new Map<string, GroundFitArt>();
   private summits = new Map<string, Texture>();
   /**
    * `match` (0..1) recolours the illustration toward the terrain's own rock and snow, `light`
@@ -165,48 +226,115 @@ export class SurfaceAssets {
     this.shafts.set(id, result);
     return result;
   }
-  /** Bottom opaque contour in owner-local logical pixels, not its tile footprint. */
-  groundContour(key: string, f: FrameInfo) {
-    const cached = this.contours.get(key);
+  /**
+   * The ground fit of picture `key` drawn at `scale`: read from its pixels once, never written
+   * back to them; the picture stays the atlas frame.
+   */
+  groundFit(key: string, f: FrameInfo, scale: number): GroundFitArt {
+    const id = `${key}|${scale}`,
+      cached = this.groundFits.get(id);
     if (cached) return cached;
     const { pixels } = read(f),
-      { width: w, height: h, data: p } = pixels,
-      density = w / f.w;
-    const floor = key.includes('windmill') ? h * 0.82 : h * 0.58;
-    const points: { x: number; y: number }[] = [];
-    for (let x = 0; x < w; x += Math.max(1, Math.round(density * 1.5))) {
-      let y = h - 1;
-      while (y > floor && p[(y * w + x) * 4 + 3] < 170) y--;
-      if (y > floor)
-        points.push({ x: x / density - f.anchorX * f.w, y: y / density - f.anchorY * f.h });
-    }
-    this.contours.set(key, points);
-    return points;
+      { width: w, height: h } = pixels,
+      density = w / f.w,
+      smooth = density > 1,
+      picture = { data: pixels.data, width: w, height: h, density },
+      foot = footContour(picture),
+      at = { anchorX: f.anchorX * w, anchorY: f.anchorY * h, scale },
+      band = footShade(picture, foot),
+      // a generated works or station has its own ground shadow: a second one would double it
+      cast = bakedShadow(picture) ? null : contactShadow(picture, foot, at);
+    const result: GroundFitArt = {
+      foot: band && {
+        texture: layer(band.data, w, band.rows, f.w, band.rows / density, smooth),
+        anchorX: f.anchorX,
+        anchorY: (f.anchorY * h - band.top) / band.rows,
+      },
+      shadow: cast && {
+        texture: layer(
+          cast.data,
+          cast.width,
+          cast.height,
+          cast.width / cast.resolution,
+          cast.height / cast.resolution,
+          true,
+        ),
+        anchorX: (-cast.x * cast.resolution) / cast.width,
+        anchorY: (-cast.y * cast.resolution) / cast.height,
+      },
+      feet: feetOf(picture, foot, at),
+    };
+    this.groundFits.set(id, result);
+    return result;
   }
-  contact(key: string, f: FrameInfo, ground: readonly number[]) {
-    const cacheKey = key + ':' + ground.join(',');
-    const cached = this.contacts.get(cacheKey);
-    if (cached) return cached;
-    const { canvas, ctx, pixels } = read(f),
-      { width: w, height: h, data: p } = pixels;
-    const density = w / f.w;
-    const lowestGround = key.includes('windmill') ? h * 0.82 : h * 0.68;
-    for (let x = 0; x < w; x++) {
-      let bottom = h - 1;
-      while (bottom > lowestGround && p[(bottom * w + x) * 4 + 3] < 170) bottom--;
-      if (bottom <= lowestGround) continue;
-      const band = Math.max(2, Math.ceil(density * 1.25));
-      for (let d = 0; d < band; d++) {
-        const i = ((bottom - d) * w + x) * 4,
-          t = (1 - d / band) * 0.45;
-        for (let c = 0; c < 3; c++) p[i + c] = p[i + c] * (1 - t) + ground[c] * t;
-        p[i + 3] *= 0.4 + 0.6 * Math.min(1, (d + 0.35) / band);
+  /**
+   * Weeds and pebbles (groundFit.ts `footScatter`, world px from a building's anchor) drawn once
+   * into a texture of their own, so they are one sprite in the building's depth rather than a
+   * shape drawn every frame. Each building has its own: the caller owns and destroys it. Null when
+   * nothing grows.
+   */
+  weeds(items: readonly (Tuft | Pebble)[], ground: FootGround): AnchoredTexture | null {
+    if (!items.length || ground === 'none') return null;
+    let x0 = Infinity,
+      x1 = -Infinity,
+      y0 = Infinity,
+      y1 = -Infinity;
+    for (const it of items) {
+      x0 = Math.min(x0, it.x - 3);
+      x1 = Math.max(x1, it.x + 3);
+      y0 = Math.min(y0, it.y - (it.kind === 'tuft' ? it.h : it.s) - 1);
+      y1 = Math.max(y1, it.y + 2.5);
+    }
+    const R = WEED_RES,
+      canvas = document.createElement('canvas');
+    canvas.width = Math.ceil((x1 - x0) * R);
+    canvas.height = Math.ceil((y1 - y0) * R);
+    const ctx = canvas.getContext('2d')!,
+      { blade, highlight } = TUFT_COLOURS[ground];
+    ctx.setTransform(R, 0, 0, R, -x0 * R, -y0 * R);
+    ctx.lineCap = 'round';
+    for (const it of items) {
+      if (it.kind === 'tuft') {
+        const tone = it.dark ? 0 : 1;
+        ctx.lineWidth = 0.65;
+        ctx.strokeStyle = css(blade[tone], 0.95);
+        ctx.beginPath();
+        for (let q = 0; q < 4; q++) {
+          const o = (q - 1.5) * 0.5;
+          ctx.moveTo(it.x + o, it.y);
+          ctx.lineTo(it.x + o * 1.8 + it.lean[q], it.y - it.h * (q === 1 || q === 2 ? 1 : 0.7));
+        }
+        ctx.stroke();
+        ctx.lineWidth = 0.4;
+        ctx.strokeStyle = css(highlight[tone], 0.85);
+        ctx.beginPath();
+        ctx.moveTo(it.x - 0.2, it.y - it.h * 0.4);
+        ctx.lineTo(it.x - 0.4, it.y - it.h * 0.95);
+        ctx.stroke();
+      } else {
+        const s = it.s,
+          dot = (x: number, y: number, rx: number, ry: number, fill: string) => {
+            ctx.fillStyle = fill;
+            ctx.beginPath();
+            ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+            ctx.fill();
+          };
+        dot(
+          it.x + 0.35 * s,
+          it.y + 0.3 * s,
+          1.1 * s,
+          0.5 * s,
+          css(PEBBLE_COLOURS.shadow, PEBBLE_COLOURS.alpha),
+        );
+        dot(it.x, it.y - 0.2 * s, s, 0.62 * s, css(PEBBLE_COLOURS.body));
+        dot(it.x - 0.25 * s, it.y - 0.42 * s, 0.45 * s, 0.28 * s, css(PEBBLE_COLOURS.top));
       }
     }
-    ctx.putImageData(pixels, 0, 0);
-    const result = texture(canvas, f);
-    this.contacts.set(cacheKey, result);
-    return result;
+    return {
+      texture: canvasTexture(canvas, canvas.width / R, canvas.height / R, true),
+      anchorX: (-x0 * R) / canvas.width,
+      anchorY: (-y0 * R) / canvas.height,
+    };
   }
   /**
    * Existing glass pixels become emissive; masks inherit the owner's depth/pose. `family` picks
@@ -246,15 +374,16 @@ export class SurfaceAssets {
   }
   destroy() {
     for (const t of [
-      ...this.contacts.values(),
       ...this.windows.values(),
+      ...[...this.groundFits.values()].flatMap((g) =>
+        [g.foot, g.shadow].flatMap((l) => (l ? [l.texture] : [])),
+      ),
       ...this.summits.values(),
       ...[...this.shafts.values()].map((v) => v.texture),
     ])
       t.destroy(true);
-    this.contacts.clear();
     this.windows.clear();
-    this.contours.clear();
+    this.groundFits.clear();
     this.summits.clear();
     this.shafts.clear();
   }
