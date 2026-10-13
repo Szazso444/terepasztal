@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
-import { Terrain } from '../world/tiles';
+import { Terrain, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
@@ -170,7 +170,9 @@ describe('walking speed', () => {
   it("never outpaces a train: the fastest walker is at most half the slowest engine's top speed", () => {
     // read as 'at most' because 0.2 x 1.5 is exactly half of the slowest engine's 0.6. When roads
     // (#318) give a walker a faster pace, either that pace joins `fastest` here or the invariant is
-    // read again: until then walkSpeed() is the whole of a walker's pace.
+    // read again: until then walkSpeed() is the whole of a walker's pace. It is read at the tuning
+    // the game ships with (beforeEach restores it): the Game tuning slider 'Train speed x' runs down
+    // to 0.2 and would take every engine below a walker, which the player chose.
     const fastest = Math.max(walkSpeed({ transient: false }), walkSpeed({ transient: true }));
     expect(content.locomotives.length).toBeGreaterThan(0);
     expect(fastest).toBeLessThanOrEqual(halfSlowestEngine() + 1e-9);
@@ -267,69 +269,74 @@ describe('walking speed', () => {
     );
   });
 
-  it('gets along a path in its length over the pace, a tick a corner more at most, never faster', () => {
-    forAll(
-      (rng) => ({
-        shape: rng.int(0, 0xffffffff),
-        moves: rng.int(1, 40),
-        gdt: rng.pick([0.05, 0.1, 0.5, 1, 2.5]),
-        boarding: rng.chance(0.5),
-        state: rng.pick(WALKING),
-        carrying: rng.chance(0.5),
-        home: rng.int(0, 7),
-        stream: rng.int(0, 0xffffffff),
-      }),
-      (c) => {
-        const { map, builder, keys } = town();
-        const people = new PeopleSim(map, builder, new Rng(c.stream));
-        const path = wander(c.shape, c.moves);
-        let p: Person;
-        if (c.boarding) {
-          // a figure the sim itself sends from the platform to the station door
-          people.alight(builder.stations.at(-1)!, 1);
-          p = people.persons[0];
-          expect(p.transient).toBe(true);
-        } else {
-          people.tick(DT, 1, MIDDAY);
-          p = people.persons[0];
-          p.home = Object.values(keys)[c.home];
-          p.state = c.state;
-        }
-        const door = builder.stations.at(-1)!;
-        Object.assign(p, {
-          carrying: c.carrying,
-          stationId: door.id,
-          path,
-          step: 0,
-          x: path[0].x,
-          y: path[0].y,
-          timer: 0,
-        });
-        const pace = walkSpeed(p);
-        // a walker is done on the tick after it reaches the end, when it takes up the next state,
-        // or is gone if it was boarding
-        const done = () => (c.boarding ? !people.persons.includes(p) : p.state !== c.state);
-        let ticks = 0;
-        const stream = people.toJSON().rng;
-        while (!done() && ticks < 100_000) {
-          const was = { x: p.x, y: p.y };
-          people.tick(c.gdt, c.boarding ? 0 : 1, MIDDAY);
-          ticks++;
-          if (done()) break;
-          expect(Math.hypot(p.x - was.x, p.y - was.y), `tick ${ticks}`).toBeLessThanOrEqual(
-            pace * c.gdt + 1e-9,
-          );
-          // a step is the walker's state and the time: it takes no draw (a crossing can hook in)
-          expect(people.toJSON().rng, `tick ${ticks}`).toBe(stream);
-        }
-        expect(done(), 'it got to the end of the path').toBe(true);
-        const walking = (ticks - 1) * c.gdt;
-        expect(walking).toBeGreaterThanOrEqual(lengthOf(path) / pace - 1e-9);
-        expect(walking).toBeLessThanOrEqual(lengthOf(path) / pace + c.moves * c.gdt + 1e-9);
-      },
-      { shrink: (c) => shrinkCounts(c, { moves: 1 }) },
-    );
-  });
+  // walks whole paths tick by tick, 0.7 s alone; the margin keeps a loaded CI runner green
+  it(
+    'gets along a path in its length over the pace, a tick a corner more at most, never faster',
+    { timeout: 30_000 },
+    () => {
+      forAll(
+        (rng) => ({
+          shape: rng.int(0, 0xffffffff),
+          moves: rng.int(1, 40),
+          gdt: rng.pick([0.05, 0.1, 0.5, 1, 2.5]),
+          boarding: rng.chance(0.5),
+          state: rng.pick(WALKING),
+          carrying: rng.chance(0.5),
+          home: rng.int(0, 7),
+          stream: rng.int(0, 0xffffffff),
+        }),
+        (c) => {
+          const { map, builder, keys } = town();
+          const people = new PeopleSim(map, builder, new Rng(c.stream));
+          const path = wander(c.shape, c.moves);
+          let p: Person;
+          if (c.boarding) {
+            // a figure the sim itself sends from the platform to the station door
+            people.alight(builder.stations.at(-1)!, 1);
+            p = people.persons[0];
+            expect(p.transient).toBe(true);
+          } else {
+            people.tick(DT, 1, MIDDAY);
+            p = people.persons[0];
+            p.home = Object.values(keys)[c.home];
+            p.state = c.state;
+          }
+          const door = builder.stations.at(-1)!;
+          Object.assign(p, {
+            carrying: c.carrying,
+            stationId: door.id,
+            path,
+            step: 0,
+            x: path[0].x,
+            y: path[0].y,
+            timer: 0,
+          });
+          const pace = walkSpeed(p);
+          // a walker is done on the tick after it reaches the end, when it takes up the next state,
+          // or is gone if it was boarding
+          const done = () => (c.boarding ? !people.persons.includes(p) : p.state !== c.state);
+          let ticks = 0;
+          const stream = people.toJSON().rng;
+          while (!done() && ticks < 100_000) {
+            const was = { x: p.x, y: p.y };
+            people.tick(c.gdt, c.boarding ? 0 : 1, MIDDAY);
+            ticks++;
+            if (done()) break;
+            expect(Math.hypot(p.x - was.x, p.y - was.y), `tick ${ticks}`).toBeLessThanOrEqual(
+              pace * c.gdt + 1e-9,
+            );
+            // a step is the walker's state and the time: it takes no draw (a crossing can hook in)
+            expect(people.toJSON().rng, `tick ${ticks}`).toBe(stream);
+          }
+          expect(done(), 'it got to the end of the path').toBe(true);
+          const walking = (ticks - 1) * c.gdt;
+          expect(walking).toBeGreaterThanOrEqual(lengthOf(path) / pace - 1e-9);
+          expect(walking).toBeLessThanOrEqual(lengthOf(path) / pace + c.moves * c.gdt + 1e-9);
+        },
+        { shrink: (c) => shrinkCounts(c, { moves: 1 }) },
+      );
+    },
+  );
 });
 
 // ------------------------------------------------------------------ professions
@@ -713,8 +720,29 @@ function trip(seed: number, dx: number, dy: number) {
 const daytime = (day: number) => day > WAKE && day < SLEEP;
 
 describe('a walker bound for a station', () => {
-  // the longest a walker may be out: to the farthest station and back, and the wait there
-  const STRANDED = (2 * STATION_REACH * Math.SQRT2) / WALK_SPEED + 150 + 30;
+  // a traveller waits at a platform 60 to 150 s for a train (people.ts) before it walks home
+  const LONGEST_WAIT = 150;
+  /**
+   * The longest a walker of this layout may be out: the way to the station, the longest wait, the
+   * way back, and a tick for every corner of either way (a tick that ends a leg wastes the rest of
+   * its step). An idle by the door, 20 s at most, is a good way under it.
+   */
+  function stranded(
+    map: GameMap,
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    gdt: number,
+  ) {
+    const out = findWalk(map, from, to)!;
+    const back = findWalk(map, to, from)!;
+    expect(out, 'a way to the station').not.toBeNull();
+    expect(back, 'a way back').not.toBeNull();
+    return (
+      (lengthOf(out) + lengthOf(back)) / WALK_SPEED +
+      (out.length + back.length + 2) * gdt +
+      LONGEST_WAIT
+    );
+  }
 
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
   it(
@@ -740,6 +768,7 @@ describe('a walker bound for a station', () => {
           rules.daySeconds = c.daySeconds;
           const { map, builder, station, mill } = trip(c.mapSeed, c.dx, c.dy);
           const people = new PeopleSim(map, builder, new Rng(c.stream));
+          const longest = stranded(map, mill, station, c.gdt);
           const days = 3;
           const ticks = Math.ceil((days * daySeconds()) / c.gdt);
           // when each walker who is outside stepped out
@@ -777,9 +806,9 @@ describe('a walker bound for a station', () => {
             }
             // nobody is out for longer than the longest trip there is
             for (const [p, from] of since)
-              if (now - from > STRANDED)
+              if (now - from > longest)
                 throw new Error(
-                  `t=${now}: walker ${p.id} out since ${from}, now ${p.state} at ${p.x},${p.y}`,
+                  `t=${now}: walker ${p.id} out since ${from} (longest trip ${longest}), now ${p.state} at ${p.x},${p.y}`,
                 );
           }
         },
@@ -847,6 +876,74 @@ describe('a walker bound for a station', () => {
         expect(t).toBeLessThanOrEqual((lengthOf(back) + 1) / WALK_SPEED + back.length + 1);
       },
       { shrink: (c) => shrinkCounts(c, { dx: 0, dy: 3 }) },
+    );
+  });
+
+  it('waits out its timer on the platform by day, and walks home the moment night falls', () => {
+    forAll(
+      (rng) => ({
+        mapSeed: rng.int(0, 0x7fffffff),
+        stream: rng.int(0, 0xffffffff),
+        dx: rng.int(-6, 6),
+        dy: rng.int(3, 8),
+        // whole seconds left to wait, so the timer counts down exactly
+        left: rng.int(2, 150),
+        night: rng.pick([0.1, 0.5 * (1 + SLEEP), 0.9, 0.99]),
+      }),
+      (c) => {
+        const waiter = () => {
+          const f = trip(c.mapSeed, c.dx, c.dy);
+          const people = new PeopleSim(f.map, f.builder, new Rng(c.stream));
+          people.tick(DT, 1, MIDDAY);
+          const [p] = people.persons;
+          Object.assign(p, {
+            home: f.home,
+            state: 'waiting',
+            stationId: f.station.id,
+            path: [],
+            step: 0,
+            x: f.station.x,
+            y: f.station.y,
+            timer: c.left,
+          });
+          return { ...f, people, p };
+        };
+
+        // by day it keeps waiting for a train until the timer is out, and then walks home
+        const day = waiter();
+        for (let t = 1; t < c.left; t++) {
+          day.people.tick(DT, 1, MIDDAY);
+          expect(day.p.state, `tick ${t} of ${c.left}`).toBe('waiting');
+          expect(day.people.waitingAt(day.station.id)).toEqual([day.p]);
+        }
+        day.people.tick(DT, 1, MIDDAY);
+        expect(day.p.state, `tick ${c.left}`).toBe('return');
+
+        // at night it does not wait on: it turns for home at once, and draws nothing to do it
+        const dusk = waiter();
+        const stream = dusk.people.toJSON().rng;
+        dusk.people.tick(DT, 1, c.night);
+        expect(daytime(c.night)).toBe(false);
+        expect(dusk.p.state).toBe('return');
+        expect(dusk.people.toJSON().rng).toBe(stream);
+        for (const w of [day, dusk]) {
+          const { p, station, mill } = w;
+          expect(p.path[0]).toEqual({ x: station.x, y: station.y });
+          expect(p.path.at(-1)).toEqual({ x: mill.x, y: mill.y });
+          expect(p.carrying).toBe(false);
+        }
+        // and gets there at the pace
+        const way = dusk.p.path;
+        let t = 0;
+        while (dusk.p.state !== 'inside' && t < 2000) {
+          dusk.people.tick(DT, 1, c.night);
+          t++;
+        }
+        expect(dusk.p.state).toBe('inside');
+        expect(t).toBeGreaterThanOrEqual((lengthOf(way) - 1) / WALK_SPEED);
+        expect(t).toBeLessThanOrEqual((lengthOf(way) + 1) / WALK_SPEED + way.length + 1);
+      },
+      { shrink: (c) => shrinkCounts(c, { dx: 0, dy: 3, left: 2 }) },
     );
   });
 
