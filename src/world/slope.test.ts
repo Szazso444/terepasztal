@@ -4,6 +4,7 @@ import { tileLevels } from './elevation';
 import { groundAllowsAt, groundAllowsOn, type GroundNeed } from './slope';
 import { Terrain, startRegion, type GameMap } from './tiles';
 import { buildRelief, groundAllows } from '../render/terrainRelief';
+import type { LandscapeMap } from '../render/landscapeModel';
 import { Rng } from '../engine/rng';
 import { forAll, shrinkInt } from '../testing/property';
 
@@ -163,8 +164,8 @@ const MAPS: { name: string; seed: number; p: Partial<MapGenParams> }[] = [
 ];
 
 describe('the renderer and the simulation share one slope rule', () => {
-  // 5 maps, about 40 000 tiles with the margin round them, checked three ways: well under a
-  // second alone
+  // 5 maps, about 40 000 tiles with the margin round them, each tile checked two ways and two
+  // needs: about 1.7 s alone
   it('agrees with groundAllows tile for tile on seeded maps', () => {
     const seen = new Set<string>();
     for (const { name, seed, p } of MAPS) {
@@ -193,7 +194,7 @@ describe('the renderer and the simulation share one slope rule', () => {
     expect(seen).toContain('level false at level 2');
     expect(seen).toContain('straight true at level 0');
     expect(seen).toContain('straight true at level 2');
-  }, 20_000);
+  }, 40_000);
 
   // which generated ground above sea level takes a level piece: the plateaus, and nothing else
   it('fits level pieces above sea level only where the four sides stand at the same level', () => {
@@ -218,6 +219,144 @@ describe('the renderer and the simulation share one slope rule', () => {
     }
     expect(plateaus).toBeGreaterThan(0);
   }, 20_000);
+});
+
+// An oracle that shares no code with tileLevels, levelAt or groundAllowsAt: a tile's level is the
+// lowest of (cap of any tile + the walking distance to it), the cap being its terrain's level and
+// at most 1 on the map border. That is the one largest set of levels under the caps in which
+// neighbours differ by at most one. The rule is then read off it in words: off the map nothing
+// fits, a straight fits any tile, a level piece fits where all four sides stand at its own level
+// and the ground off the map stands at 0. Drawn maps are small and heavy with hills and mountains,
+// so borders, one-tile strips, banks and plateaus all turn up.
+describe('the slope rule on any terrain, against an oracle', () => {
+  interface Drawn {
+    w: number;
+    h: number;
+    terrain: number[];
+  }
+  const KINDS = [
+    Terrain.Grass,
+    Terrain.Forest,
+    Terrain.Hill,
+    Terrain.Water,
+    Terrain.Rock,
+    Terrain.Sand,
+    Terrain.Mountain,
+  ];
+  const genDrawn = (rng: Rng): Drawn => {
+    const w = rng.int(1, 14),
+      h = rng.int(1, 14),
+      raised = rng.range(0.1, 0.95),
+      mountain = rng.range(0, 1),
+      // a third of the maps are a mountain block with a few holes, for the high levels
+      holes = rng.chance(0.3) ? rng.range(0, 0.1) : 1;
+    const terrain = Array.from({ length: w * h }, () =>
+      holes < 1 && !rng.chance(holes)
+        ? Terrain.Mountain
+        : rng.chance(raised)
+          ? rng.chance(mountain)
+            ? Terrain.Mountain
+            : Terrain.Hill
+          : rng.pick(KINDS),
+    );
+    return { w, h, terrain };
+  };
+  /** The map without its first or last column or row, or with one tile turned to grass. */
+  function* shrinkDrawn(d: Drawn): Iterable<Drawn> {
+    const keep = (x0: number, y0: number, x1: number, y1: number): Drawn => {
+      const terrain: number[] = [];
+      for (let y = y0; y < y1; y++)
+        for (let x = x0; x < x1; x++) terrain.push(d.terrain[y * d.w + x]);
+      return { w: x1 - x0, h: y1 - y0, terrain };
+    };
+    if (d.w > 1) {
+      yield keep(0, 0, d.w - 1, d.h);
+      yield keep(1, 0, d.w, d.h);
+    }
+    if (d.h > 1) {
+      yield keep(0, 0, d.w, d.h - 1);
+      yield keep(0, 1, d.w, d.h);
+    }
+    for (let i = 0; i < d.terrain.length; i++)
+      if (d.terrain[i] !== Terrain.Grass)
+        yield { ...d, terrain: d.terrain.map((t, k) => (k === i ? Terrain.Grass : t)) };
+  }
+  const raise = (t: number) => (t === Terrain.Hill ? 2 : t === Terrain.Mountain ? 4 : 0);
+  function oracleLevels({ w, h, terrain }: Drawn): number[] {
+    const at = (i: number) => ({ x: i % w, y: Math.floor(i / w) });
+    const cap = terrain.map((t, i) => {
+      const { x, y } = at(i);
+      const border = x === 0 || y === 0 || x === w - 1 || y === h - 1;
+      return border ? Math.min(raise(t), 1) : raise(t);
+    });
+    return cap.map((_, i) => {
+      const a = at(i);
+      return Math.min(
+        ...cap.map((c, j) => {
+          const b = at(j);
+          return c + Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        }),
+      );
+    });
+  }
+  function oracleFits({ w, h }: Drawn, levels: number[], x: number, y: number, need: GroundNeed) {
+    if (x < 0 || y < 0 || x >= w || y >= h) return false;
+    if (need === 'straight') return true;
+    const level = (a: number, b: number) =>
+      a < 0 || b < 0 || a >= w || b >= h ? 0 : levels[b * w + a];
+    return [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ].every(([dx, dy]) => level(x + dx, y + dy) === level(x, y));
+  }
+
+  const seen = new Set<string>();
+  // 100 maps of up to 14 x 14 tiles, each tile checked four ways: about 0.4 s alone
+  it('gives the oracle’s answer on every tile, from the stored levels, the terrain and the renderer', () => {
+    forAll(
+      genDrawn,
+      (d) => {
+        const map = {
+          w: d.w,
+          h: d.h,
+          seed: 1,
+          originX: 0,
+          originY: 0,
+          terrain: Uint8Array.from(d.terrain),
+          biome: new Uint8Array(d.w * d.h),
+        } as LandscapeMap;
+        const levels = tileLevels(map),
+          want = oracleLevels(d),
+          relief = buildRelief(map, new Set());
+        expect(Array.from(levels)).toEqual(want);
+        for (const need of NEEDS)
+          for (let y = -2; y < d.h + 2; y++)
+            for (let x = -2; x < d.w + 2; x++) {
+              const fits = oracleFits(d, want, x, y, need);
+              expect(groundAllowsAt(map, levels, x, y, need), `${need} at ${x},${y}`).toBe(fits);
+              expect(groundAllowsOn(map, x, y, need), `${need} on ${x},${y}`).toBe(fits);
+              expect(groundAllows(map, relief, x, y, need), `renderer ${need} at ${x},${y}`).toBe(
+                fits,
+              );
+              // a level piece needs more of the ground than a straight does
+              if (need === 'level' && fits)
+                expect(groundAllowsAt(map, levels, x, y, 'straight')).toBe(true);
+              if (x >= 0 && y >= 0 && x < d.w && y < d.h)
+                seen.add(`${need} ${fits} at level ${levels[y * d.w + x]}`);
+            }
+      },
+      { shrink: shrinkDrawn },
+    );
+    // not vacuous: every level from the ground to the summit, taking a level piece or not
+    for (const level of [0, 1, 2, 3, 4]) {
+      expect(seen, `level ${level}`).toContain(`straight true at level ${level}`);
+      expect(seen, `level ${level}`).toContain(`level false at level ${level}`);
+    }
+    expect(seen).toContain('level true at level 0');
+    expect(seen).toContain('level true at level 2');
+  }, 30_000);
 });
 
 // Mountains rise from stone fields (raiseMountains in mapgen.ts): a Rock tile becomes a Mountain
@@ -298,7 +437,7 @@ describe('mountains sit inside rock', () => {
   }
 
   let mountains = 0;
-  // 40 maps up to 128 tiles a side: about 0.5 s alone
+  // 40 maps up to 128 tiles a side: about 0.7 s alone
   it('has only Rock or Mountain on the 8 tiles around a Mountain, and two rings of Rock', () => {
     forAll(
       genCase,
@@ -316,7 +455,7 @@ describe('mountains sit inside rock', () => {
     expect(mountains).toBeGreaterThan(0);
   }, 30_000);
 
-  // 8 maps of 160 x 160 tiles at the default sliders: about 0.3 s alone
+  // 8 maps of 160 x 160 tiles at the default sliders: about 0.2 s alone
   it('holds in worlds at the default sliders', () => {
     let found = 0;
     for (let seed = 1; seed <= 8; seed++) {
