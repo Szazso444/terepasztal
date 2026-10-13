@@ -137,6 +137,46 @@ describe('a bridge platform', () => {
     repaired(m, only({ track: [straight(2, 2)], buildings: [works(2, 2, 'bridge_wood')] }));
     expect(at(m, 2, 2)).toBe(Terrain.Grass);
   });
+
+  it('stands on no tile when it lies off the map, even where its index lands on one', () => {
+    // the finding (#322): on a 12 x 12 map, (-1, 9) has the index of the tile (11, 8), which a
+    // curve covers; the repair took the platform to stand there, giving the mountain under the
+    // rails grass and leaving water under them
+    const curve: Track = [11, 7, 'curve', 1, 'regular', 'regular'];
+    expect(footprintOf(11, 7, 'curve', 1, 'regular')).toContainEqual({ x: 11, y: 8 });
+    const finding = (t: Terrain) => {
+      const m = flat(Terrain.Grass, 12, 12);
+      set(m, 11, 8, t);
+      return repairBuiltTiles(
+        m,
+        only({ track: [curve], buildings: [works(-1, 9, 'bridge_wood')] }),
+      );
+    };
+    expect(finding(Terrain.Mountain)).toEqual([]);
+    expect(finding(Terrain.Water)).toEqual([{ x: 11, y: 8, terrain: Terrain.Grass }]);
+    // and from every place off a 4 x 4 map, two rings out, whose index lands on a tile of it, over
+    // every ground, with a straight and a signal on that tile: the answer is the one with no
+    // platform at all
+    let aliased = 0;
+    for (let y = -2; y < 6; y++)
+      for (let x = -2; x < 6; x++) {
+        const i = y * 4 + x;
+        if ((x >= 0 && y >= 0 && x < 4 && y < 4) || i < 0 || i >= 16) continue;
+        aliased++;
+        const tx = i % 4,
+          ty = Math.floor(i / 4);
+        const built = only({ track: [straight(tx, ty)], decor: [[tx, ty, 'signal', 0]] });
+        for (const id of ['bridge_wood', 'bridge_stone'])
+          for (const t of ALL) {
+            const m = flat(t, 4, 4);
+            const where = `${id} at ${x},${y} over ${name(t)} at ${tx},${ty}`;
+            expect(repairBuiltTiles(m, { ...built, buildings: [works(x, y, id)] }), where).toEqual(
+              repairBuiltTiles(m, built),
+            );
+          }
+      }
+    expect(aliased).toBeGreaterThan(15);
+  });
 });
 
 describe('the ground under everything else a load repairs', () => {
@@ -393,15 +433,13 @@ function genCase(rng: Rng): Case {
       return station(rng.pick(['farm', 'depot', 'narrow_depot', 'station']), x, y, rng.int(0, 3));
     }),
     decor: [],
-    buildings: withoutAliasedPlatforms(
-      list(() => {
-        const [x, y] = at2();
-        return works(x, y, rng.pick(['windmill', 'bridge_wood', 'bridge_stone', 'bridge_wood']));
-      }),
-      SIZE,
-    ),
+    buildings: list(() => {
+      const [x, y] = at2();
+      return works(x, y, rng.pick(['windmill', 'bridge_wood', 'bridge_stone', 'bridge_wood']));
+    }),
   };
   built.decor = decorOf(rng, built.track, at2);
+  addOffMapPlatformOverRails(rng, built, SIZE);
   return { terrain, built };
 }
 /** Signals, power poles and houses, most of them on a tile of a track piece where there is one. */
@@ -421,18 +459,37 @@ function decorOf(
   });
 }
 /**
- * Is a building at (x, y) off a `w` x `h` map one whose index `y * w + x` lands on it? The repair
- * reads a bridge platform there as standing on that tile, so the track there is given a platform's
- * ground: a mountain turns to grass, and water stays under the rails. That is a finding of its own,
- * for Engine; until `repairBuiltTiles` skips such a platform, the cases leave it out.
+ * The tiles of a `w` x `w` map whose index `y * w + x` a bridge platform off the map has. The old
+ * repair read such a platform as standing there; the cases count the rails it meets, so the seeds
+ * are seen to reach it.
  */
-const offMapOnTile = (x: number, y: number, w: number, h: number) =>
-  (x < 0 || y < 0 || x >= w || y >= h) && y * w + x >= 0 && y * w + x < w * h;
-const withoutAliasedPlatforms = (
-  buildings: NonNullable<BuiltObjects['buildings']>,
-  w: number,
-): NonNullable<BuiltObjects['buildings']> =>
-  buildings.filter(([x, y, id]) => !(buildingDef(id).bridge && offMapOnTile(x, y, w, w)));
+function aliasedPlatforms(built: BuiltObjects, w: number): Set<number> {
+  const out = new Set<number>();
+  for (const [x, y, id] of built.buildings ?? []) {
+    const i = y * w + x;
+    if (buildingDef(id).bridge && (x < 0 || y < 0 || x >= w || y >= w) && i >= 0 && i < w * w)
+      out.add(i);
+  }
+  return out;
+}
+/**
+ * Now and then, add to `built` a bridge platform off the `w` x `w` map whose index lands on a tile
+ * of plain track on it: a row up and a map's width right of the tile, or a row down and a map's
+ * width left. The edge ring of the cases reaches this only rarely.
+ */
+function addOffMapPlatformOverRails(rng: Rng, built: BuiltObjects, w: number) {
+  const tiles = built.track
+    .filter(([, , kind]) => kind !== 'bridge')
+    .flatMap(([x, y, kind, rot, cls]) => footprintOf(x, y, kind, rot, cls ?? 'regular'))
+    .filter((f) => f.x >= 0 && f.y >= 0 && f.x < w && f.y < w);
+  if (!tiles.length || !rng.chance(0.3)) return;
+  const { x, y } = rng.pick(tiles);
+  const [px, py] = y > 0 ? [x + w, y - 1] : [x - w, y + 1];
+  built.buildings = [
+    ...(built.buildings ?? []),
+    works(px, py, rng.pick(['bridge_wood', 'bridge_stone'])),
+  ];
+}
 const mapOfCase = (c: Case): GameMap => {
   const m = flat(Terrain.Grass, SIZE, SIZE);
   m.terrain.set(c.terrain);
@@ -482,8 +539,14 @@ function stood(built: BuiltObjects, w: number) {
 describe('the repair', () => {
   it('leaves every object on ground that allows it, touches nothing else and settles in one pass', () => {
     let repairedSome = 0;
-    // the seeds reach rails kept on rock and mountain, with a signal on them, and rails on water
-    const reached = { railsKeptOnStone: 0, signalKeptOnStone: 0, railsOffWater: 0 };
+    // the seeds reach rails kept on rock and mountain, with a signal on them, rails on water, and
+    // rails on a tile whose index a platform off the map has
+    const reached = {
+      railsKeptOnStone: 0,
+      signalKeptOnStone: 0,
+      railsOffWater: 0,
+      railsUnderOffMapPlatform: 0,
+    };
     forAll(
       genCase,
       (c) => {
@@ -521,6 +584,7 @@ describe('the repair', () => {
             expect(m.terrain[i], `platform ${tile(i)}`).toBe(
               NO_PLATFORM.includes(before[i]) ? Terrain.Grass : before[i],
             );
+        const aliased = aliasedPlatforms(c.built, m.w);
         for (const i of rails) {
           if (land.has(i) || platforms.has(i)) continue;
           expect(m.terrain[i], `rails ${tile(i)}`).toBe(
@@ -528,6 +592,7 @@ describe('the repair', () => {
           );
           if (STONE.includes(before[i])) reached.railsKeptOnStone++;
           if (before[i] === Terrain.Water) reached.railsOffWater++;
+          if (aliased.has(i) && NO_LAND.includes(before[i])) reached.railsUnderOffMapPlatform++;
         }
         for (const [x, y, id] of c.built.decor ?? []) {
           if (!inBounds(m, x, y)) continue;
@@ -546,6 +611,7 @@ describe('the repair', () => {
     expect(reached.railsKeptOnStone).toBeGreaterThan(60);
     expect(reached.railsOffWater).toBeGreaterThan(30);
     expect(reached.signalKeptOnStone).toBeGreaterThan(10);
+    expect(reached.railsUnderOffMapPlatform).toBeGreaterThan(6);
   });
 });
 
@@ -559,6 +625,11 @@ interface Decisions {
   rails: (t: Terrain) => Terrain;
   /** does a signal on such track stand as the track does, or on land */
   signalOnRails: boolean;
+  /**
+   * does a platform off the map stand on the tile its index `y * w + x` lands on (the old body
+   * keyed platforms so), or on none
+   */
+  offMapPlatformOnTile: boolean;
 }
 /**
  * The repair done the obvious way, as `Game.fixBuiltTiles` did before it was pulled out of the
@@ -566,13 +637,14 @@ interface Decisions {
  * needs it (track, then stations, decor, works). That body forced every tile under a bridge
  * platform, and under the retired bridge track kind, to water, and gave every tile under plain
  * track, and under a signal, grass in place of water, rock and mountain. What differs by decision
- * is in `decide`: the ground under a platform (#288), and under plain track and a signal on it
- * (#322).
+ * is in `decide`: the ground under a platform (#288), under plain track and a signal on it (#322),
+ * and whether a platform off the map stands on the tile its index lands on (#322 too).
  */
 function sequential(m: GameMap, built: BuiltObjects, decide: Decisions) {
   const platforms = new Set<number>();
   for (const [x, y, id] of built.buildings ?? [])
-    if (buildingDef(id).bridge) platforms.add(y * m.w + x);
+    if (buildingDef(id).bridge && (decide.offMapPlatformOnTile || inBounds(m, x, y)))
+      platforms.add(y * m.w + x);
   const rails = new Set<number>();
   const stats = {
     platformRepaired: 0,
@@ -617,20 +689,26 @@ function sequential(m: GameMap, built: BuiltObjects, decide: Decisions) {
     fix(x, y, buildingDef(id).bridge ? 'platform' : 'land');
   return stats;
 }
-/** The rules before #288 and #322: water under a platform, and track and signals on land. */
+/**
+ * The rules before #288 and #322: water under a platform, track and signals on land, and a platform
+ * off the map standing on the tile its index lands on.
+ */
 const BEFORE: Decisions = {
   platform: () => Terrain.Water,
   rails: (t) => (NO_LAND.includes(t) ? Terrain.Grass : t),
   signalOnRails: false,
+  offMapPlatformOnTile: true,
 };
 /**
  * The rules now: under a platform land stays land and a tile no platform may use gets grass;
- * plain track, and a signal on it, keep any ground but water, which gets grass.
+ * plain track, and a signal on it, keep any ground but water, which gets grass; a platform off the
+ * map stands on no tile, as nothing else off it does.
  */
 const NOW: Decisions = {
   platform: (t) => (NO_PLATFORM.includes(t) ? Terrain.Grass : t),
   rails: (t) => (NO_RAILS.includes(t) ? Terrain.Grass : t),
   signalOnRails: true,
+  offMapPlatformOnTile: false,
 };
 
 /** A case with every track class, the retired bridge kind, props on the ground, and a small map. */
@@ -659,15 +737,13 @@ function genWide(rng: Rng): WideCase {
       return station(rng.pick(['farm', 'depot', 'narrow_depot', 'station']), x, y, rng.int(0, 3));
     }),
     decor: [],
-    buildings: withoutAliasedPlatforms(
-      list(() => {
-        const [x, y] = at2();
-        return works(x, y, rng.pick(['windmill', 'bridge_wood', 'bridge_stone', 'bridge_wood']));
-      }),
-      WIDE,
-    ),
+    buildings: list(() => {
+      const [x, y] = at2();
+      return works(x, y, rng.pick(['windmill', 'bridge_wood', 'bridge_stone', 'bridge_wood']));
+    }),
   };
   built.decor = decorOf(rng, built.track, at2);
+  addOffMapPlatformOverRails(rng, built, WIDE);
   return { terrain, props, built };
 }
 function mapOfWide(c: WideCase): GameMap {
@@ -704,6 +780,7 @@ describe('the repair against the sequential repair', () => {
       railsKeptOnStone: 0,
       signalKeptOnStone: 0,
       tilesRepaired: 0,
+      railsUnderOffMapPlatform: 0,
     };
     forAll(
       genWide,
@@ -712,6 +789,14 @@ describe('the repair against the sequential repair', () => {
         const want = mapOfWide(c);
         const stats = sequential(want, c.built, NOW);
         for (const [k, n] of Object.entries(stats)) reached[k as keyof typeof stats] += n;
+        // track on water, rock or a mountain whose index a platform off the map has: the tiles the
+        // old body gave a platform's ground
+        const aliased = aliasedPlatforms(c.built, WIDE);
+        for (const [x, y, kind, rot, cls] of c.built.track)
+          if (kind !== 'bridge')
+            for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+              if (inBounds(want, f.x, f.y) && aliased.has(f.y * WIDE + f.x))
+                if (NO_LAND.includes(initial[f.y * WIDE + f.x])) reached.railsUnderOffMapPlatform++;
         const m = mapOfWide(c);
         const repairs = repairBuiltTiles(m, c.built);
         applyTileRepairs(m, repairs);
@@ -734,12 +819,14 @@ describe('the repair against the sequential repair', () => {
       { shrink: shrinkWide },
     );
     // the seeds reach a platform kept on land, one given grass, rock and mountain kept under track
-    // and under a signal on it, and track of every class
+    // and under a signal on it, track on a tile whose index a platform off the map has, and track
+    // of every class
     expect(reached.platformKept).toBeGreaterThan(20);
     expect(reached.platformRepaired).toBeGreaterThan(10);
     expect(reached.railsKeptOnStone).toBeGreaterThan(40);
     expect(reached.signalKeptOnStone).toBeGreaterThan(7);
     expect(reached.tilesRepaired).toBeGreaterThan(100);
+    expect(reached.railsUnderOffMapPlatform).toBeGreaterThan(3);
   });
 
   it('is what the game did before, wherever no bridge platform stands and no track on rock or mountain', () => {
@@ -774,7 +861,7 @@ describe('the repair against the sequential repair', () => {
     );
   });
 
-  it('differs from what the game did before only under a platform and under track on stone', () => {
+  it('differs from what the game did before only under a platform, under track on stone, and under track where a platform off the map has its index', () => {
     // and on such a tile, the old rules gave it water or grass
     forAll(
       genWide,
@@ -787,16 +874,23 @@ describe('the repair against the sequential repair', () => {
         for (const [x, y, id] of c.built.buildings ?? [])
           if (buildingDef(id).bridge && x >= 0 && y >= 0 && x < WIDE && y < WIDE)
             platforms.add(y * WIDE + x);
-        const stoneRails = new Set<number>();
+        // track on stone, and track on a tile whose index a platform off the map has, which the
+        // old body took for a platform's tile
+        const aliased = aliasedPlatforms(c.built, WIDE);
+        const stoneRails = new Set<number>(),
+          aliasedRails = new Set<number>();
         for (const [x, y, kind, rot, cls] of c.built.track)
           if (kind !== 'bridge')
             for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
-              if (f.x >= 0 && f.y >= 0 && f.x < WIDE && f.y < WIDE)
-                if (STONE.includes(c.terrain[f.y * WIDE + f.x])) stoneRails.add(f.y * WIDE + f.x);
+              if (f.x >= 0 && f.y >= 0 && f.x < WIDE && f.y < WIDE) {
+                const i = f.y * WIDE + f.x;
+                if (STONE.includes(c.terrain[i])) stoneRails.add(i);
+                if (aliased.has(i)) aliasedRails.add(i);
+              }
         for (let i = 0; i < WIDE * WIDE; i++) {
           if (now.terrain[i] === old.terrain[i]) continue;
           const where = `tile ${i % WIDE},${Math.floor(i / WIDE)}`;
-          expect(platforms.has(i) || stoneRails.has(i), where).toBe(true);
+          expect(platforms.has(i) || stoneRails.has(i) || aliasedRails.has(i), where).toBe(true);
           expect([Terrain.Water, Terrain.Grass], where).toContain(old.terrain[i]);
         }
       },
