@@ -128,7 +128,9 @@ describe('walking speed', () => {
   });
 
   it("never outpaces a train: the fastest walker is at most half the slowest engine's top speed", () => {
-    // read as 'at most' because 0.2 x 1.5 is exactly half of the slowest engine's 0.6
+    // read as 'at most' because 0.2 x 1.5 is exactly half of the slowest engine's 0.6. When roads
+    // (#318) give a walker a faster pace, either that pace joins `fastest` here or the invariant is
+    // read again: until then walkSpeed() is the whole of a walker's pace.
     const fastest = Math.max(walkSpeed({ transient: false }), walkSpeed({ transient: true }));
     expect(content.locomotives.length).toBeGreaterThan(0);
     expect(fastest).toBeLessThanOrEqual(halfSlowestEngine() + 1e-9);
@@ -260,6 +262,10 @@ describe('professions', () => {
     expect(defs.map((d) => d.id)).toEqual(expect.arrayContaining(Object.keys(want)));
     for (const def of defs)
       expect(stationProfession(def), def.id).toBe(want[def.id] ?? 'railway_worker');
+    // the civic town station is no house and takes no passengers: its walkers are railway workers
+    const civic = defs.find((d) => d.id === 'town')!;
+    expect(civic.accepts).not.toContain('passengers');
+    expect(stationProfession(civic)).toBe('railway_worker');
   });
 
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
