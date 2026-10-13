@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Game } from '../game';
 import { AutosavePause } from './autosavePause';
 import { BrokenNumberWarning, StorageRefusalWarning } from './saveRefusal';
+import { UNREADABLE_NOTICE_TTL } from './saveMessages';
 import { SAVE_KEY, type SaveGame } from '../sim/save';
 import { CHUNK_TILES, ownsBorderChunk } from '../sim/expand';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
@@ -20,9 +21,11 @@ vi.mock('./audio', async (original) => ({
 
 // What `Game.save` and `Game.saveSlot` make of an outcome: the toast, the console, the latch. The
 // rules themselves (`saveOutcome`, `BrokenNumberWarning`, `StorageRefusalWarning`) are pinned in
-// saveRefusal.test.ts; this file pins that the game calls them and shows what they say. A `Game` cannot be constructed under
-// Node (its `Toasts` build DOM), but its methods run on a stand-in that has the prototype and
-// only the fields they read, so the real `save`, `saveSlot` and their helpers are what is tested.
+// saveRefusal.test.ts, and what the end of a load and a purchase say in saveMessages.test.ts;
+// this file pins that the game calls them and shows what they say. A `Game` cannot be constructed
+// under Node (its `Toasts` build DOM), but its methods run on a stand-in that has the prototype
+// and only the fields they read, so the real `save`, `saveSlot` and their helpers are what is
+// tested.
 
 class MemoryStorage {
   items = new Map<string, string>();
@@ -44,9 +47,19 @@ interface Toast {
   kind: string;
 }
 
+/** A notice the game pushed, with the lifetime it was given. */
+interface PushedNotice {
+  key: string;
+  kind: string;
+  text: string;
+  target: unknown;
+  ttl: number;
+}
+
 /** A Game with the prototype's methods and the fields save and saveSlot read, and no DOM. */
 function standIn() {
   const toasts: Toast[] = [];
+  const notices: PushedNotice[] = [];
   const pause = new AutosavePause();
   const host: Record<string, unknown> = Object.create(Game.prototype);
   let current: SaveGame = base(0);
@@ -57,12 +70,16 @@ function standIn() {
     storageRefusalWarning: new StorageRefusalWarning(),
     savedAt: null,
     toasts: { push: (text: string, kind: string) => toasts.push({ text, kind }) },
+    notices: {
+      push: (n: Omit<PushedNotice, 'ttl'>, ttl: number) => notices.push({ ...n, ttl }),
+    },
     snapshot: () => current,
   });
   return {
     game: host as unknown as Game,
     host,
     toasts,
+    notices,
     pause,
     /** The snapshot the game takes next. */
     take(snap: SaveGame) {
@@ -454,7 +471,7 @@ describe('Game.buyChunk', () => {
 
   it('leaves a chunk on the grid edge to growing the map, which stores the game itself', () => {
     const b = buying();
-    // own a chunk one ring out, then buy the edge chunk beside it, with growing held by a loop error
+    // own a chunk one ring out, then buy the edge chunk beside it; a loop error holds growing
     b.regions.own(b.inner[0]);
     const edge = b.regions
       .neighbours(b.inner[0])
@@ -463,6 +480,32 @@ describe('Game.buyChunk', () => {
     expect(b.game.buyChunk(edge, true)).toBe(true);
     expect(b.toasts).toEqual([bought, { text: STR.overview.growHeld, kind: 'warn' }]);
     expect(store.items.size).toBe(0);
+  });
+
+  it('says a refused growth write did not grow the map, and writes nothing more for it', () => {
+    const refusals: [string, (b: ReturnType<typeof buying>) => void][] = [
+      ['storage', () => (store.refuses = true)],
+      [
+        'a broken number',
+        (b) => (b.host.snapshot = () => ({ ...base(1), economy: { money: Number.NaN } })),
+      ],
+    ];
+    for (const [why, refuse] of refusals) {
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+      const b = buying();
+      b.regions.own(b.inner[0]);
+      const edge = b.regions
+        .neighbours(b.inner[0])
+        .find((i) => !b.regions.unlocked[i] && !b.inner.includes(i))!;
+      refuse(b);
+      expect(b.game.buyChunk(edge, true), why).toBe(true);
+      expect(b.regions.unlocked[edge], why).toBe(true);
+      // one warning for the one refusal: no autosave follows the growth write to repeat it
+      expect(b.toasts, why).toEqual([{ text: STR.overview.growRefused, kind: 'warn' }, bought]);
+      expect(store.items.size, why).toBe(0);
+      expect(b.host.savedAt, why).toBe(null);
+    }
   });
 
   it('stores a purchase on the grid edge at once when the world cannot grow any more', () => {
@@ -486,6 +529,106 @@ describe('Game.buyChunk', () => {
   });
 });
 
+// ------------------------------------------------------------------ the end of Game.applySave
+
+describe('the end of a load (Game.storeLoadedGround)', () => {
+  const settle = (g: ReturnType<typeof standIn>) =>
+    (g.game as unknown as { storeLoadedGround(): void }).storeLoadedGround();
+  /** What building the map did: `added` chunks generated, `unreadable` chunks unread. */
+  const ground = (added: number, unreadable: number) => ({
+    added: Array.from({ length: added }, (_, i) => `${i},0`),
+    unreadable: Array.from({ length: unreadable }, (_, i) => `${i},1`),
+  });
+  const unsaved = { text: STR.saves.groundUnsaved, kind: 'warn' };
+
+  it('stores the ground the load generated at once, and says nothing when it is stored', () => {
+    const g = standIn();
+    g.host.ground = ground(3, 0);
+    const snap = base(4);
+    g.take(snap);
+    settle(g);
+    expect(store.items.get(SAVE_KEY)).toBe(JSON.stringify(snap));
+    expect(g.host.savedAt).toBe(snap.savedAt);
+    expect(g.toasts).toEqual([]);
+    expect(g.notices).toEqual([]);
+  });
+
+  it('writes and says nothing for a level, or a load that generated no ground', () => {
+    for (const built of [null, ground(0, 0)]) {
+      const g = standIn();
+      g.host.ground = built;
+      settle(g);
+      expect(store.items.size).toBe(0);
+      expect(g.toasts).toEqual([]);
+      expect(g.notices).toEqual([]);
+    }
+  });
+
+  it('gives a write storage refuses one warning, worded for the ground', () => {
+    const g = standIn();
+    g.host.ground = ground(2, 0);
+    store.refuses = true;
+    settle(g);
+    expect(g.toasts).toEqual([unsaved]);
+    expect(store.items.size).toBe(0);
+    expect(g.host.savedAt).toBe(null);
+    // the ground's warning does not say progress is lost: the first autosave refused says so, once
+    expect(g.game.save(true)).toBe(false);
+    expect(g.game.save(true)).toBe(false);
+    expect(g.toasts).toEqual([unsaved, { text: STR.settings.autosaveFailed, kind: 'warn' }]);
+  });
+
+  it('gives a write refused for a broken number one warning, worded for the ground', () => {
+    const g = standIn();
+    g.host.ground = ground(1, 0);
+    g.host.snapshot = () => ({ ...base(1), economy: { money: Number.NaN } });
+    settle(g);
+    expect(g.toasts).toEqual([unsaved]);
+    expect(store.items.size).toBe(0);
+    // the console names the broken number, the toast does not
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('economy.money');
+    // and the first autosave refused after it tells of the broken value, once
+    expect(g.game.save(true)).toBe(false);
+    expect(g.game.save(true)).toBe(false);
+    expect(g.toasts).toEqual([unsaved, { text: STR.settings.autosaveBroken, kind: 'warn' }]);
+  });
+
+  it('gives a write held (a loop error, a reload into a stored save) the same one warning', () => {
+    const holds: [string, (g: ReturnType<typeof standIn>) => void][] = [
+      ['a loop error', (g) => g.pause.trip()],
+      ['a reload into a stored save', (g) => (g.host.keepStoredSave = true)],
+    ];
+    for (const [why, hold] of holds) {
+      const g = standIn();
+      g.host.ground = ground(2, 0);
+      hold(g);
+      settle(g);
+      expect(g.toasts, why).toEqual([unsaved]);
+      expect(store.items.size, why).toBe(0);
+    }
+  });
+
+  it('gives stored ground it could not read one toast and one notice, and no write', () => {
+    const g = standIn();
+    g.host.ground = ground(0, 2);
+    settle(g);
+    const text = STR.saves.groundUnreadable(2);
+    expect(g.toasts).toEqual([{ text, kind: 'warn' }]);
+    expect(g.notices).toEqual([
+      { key: 'save:ground', kind: 'warn', text, target: null, ttl: UNREADABLE_NOTICE_TTL },
+    ]);
+    expect(store.items.size).toBe(0);
+    // with ground generated as well, the write is made and its refusal follows the notice's toast
+    const h = standIn();
+    h.host.ground = ground(1, 2);
+    store.refuses = true;
+    settle(h);
+    expect(h.toasts).toEqual([{ text, kind: 'warn' }, unsaved]);
+    expect(h.notices).toHaveLength(1);
+  });
+});
+
 // ------------------------------------------------------------------ Game.fixBuiltTiles
 
 describe('Game.fixBuiltTiles', () => {
@@ -493,7 +636,8 @@ describe('Game.fixBuiltTiles', () => {
     const g = standIn();
     const map = emptyMap(1, 16, 16, Terrain.Grass);
     const idx = (x: number, y: number) => y * map.w + x;
-    map.terrain[idx(3, 5)] = Terrain.Rock; // under a platform: grass, a platform may not stand on rock
+    // under a platform: grass, a platform may not stand on rock
+    map.terrain[idx(3, 5)] = Terrain.Rock;
     map.terrain[idx(6, 2)] = Terrain.Water; // under a farm: grass
     map.terrain[idx(9, 10)] = Terrain.Water; // under a platform: the water it stands on
     map.terrain[idx(11, 3)] = Terrain.Hill; // under a platform across a dip: the land stays

@@ -11,6 +11,13 @@ import {
   saveOutcome,
   type SaveOutcome,
 } from './engine/saveRefusal';
+import {
+  afterPurchase,
+  groundAfterLoad,
+  loadStoresGround,
+  purchaseGrows,
+  type Said,
+} from './engine/saveMessages';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { mapFromLevel, type LevelData } from './world/level';
@@ -1183,17 +1190,33 @@ export class Game implements UiHost {
    * reason (a broken number, storage) until some save has gone through.
    */
   save(silent = false) {
-    if (this.keepStoredSave) return false;
-    if (!this.autosavePause.allows(silent ? 'implicit' : 'manual')) return false;
-    const snap = this.snapshot();
-    const out = this.storeSnapshot(snap, writeSave);
-    if (out.kind === 'stored') this.savedAt = snap.savedAt;
+    const out = this.writeGame(silent);
+    if (!out) return false;
     const broken = this.brokenNumberWarning.note(out.kind);
     const storage = this.storageRefusalWarning.note(out.kind);
     if (!silent) this.saveToast(out, STR.settings.saved);
     else if (broken) this.toasts.push(STR.settings.autosaveBroken, 'warn');
     else if (storage) this.toasts.push(STR.settings.autosaveFailed, 'warn');
     return out.kind === 'stored';
+  }
+  /**
+   * Write the game as Continue loads it, saying nothing and feeding no latch: what became of the
+   * write, or null when nothing is written now (a reload into a stored save; a write the player
+   * did not ask for after a loop error).
+   */
+  private writeGame(implicit: boolean): SaveOutcome | null {
+    if (this.keepStoredSave) return null;
+    if (!this.autosavePause.allows(implicit ? 'implicit' : 'manual')) return null;
+    const snap = this.snapshot();
+    const out = this.storeSnapshot(snap, writeSave);
+    if (out.kind === 'stored') this.savedAt = snap.savedAt;
+    return out;
+  }
+  /** Show what a decision about a write says (`src/engine/saveMessages.ts`). */
+  private say(said: Said) {
+    for (const t of said.toasts) this.toasts.push(t.text, t.kind);
+    for (const n of said.notices)
+      this.notices.push({ key: n.key, kind: 'warn', text: n.text, target: null }, n.ttl);
   }
 
   /**
@@ -1293,14 +1316,16 @@ export class Game implements UiHost {
     this.restoringWorld = false;
     this.refreshBridges();
     audio.setAge(ageDef(this.economy.tier).id);
-    // ground generated as the save loaded is stored at once; stored ground unread is reported
-    if (this.ground?.unreadable.length) {
-      const text = STR.saves.groundUnreadable(this.ground.unreadable.length);
-      this.toasts.push(text, 'warn');
-      this.notices.push({ key: 'save:ground', kind: 'warn', text, target: null }, 180);
-    }
-    if (this.ground?.added.length && !this.save(true))
-      this.toasts.push(STR.saves.groundUnsaved, 'warn');
+    this.storeLoadedGround();
+  }
+  /**
+   * The end of a load: ground it generated is stored at once (`loadStoresGround`), and what became
+   * of the ground is said (`groundAfterLoad`). A refused write gets one warning, worded for the
+   * ground, and feeds no autosave latch.
+   */
+  private storeLoadedGround() {
+    const write = loadStoresGround(this.ground) ? (this.writeGame(true)?.kind ?? 'held') : null;
+    this.say(groundAfterLoad(this.ground, write));
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1792,30 +1817,29 @@ export class Game implements UiHost {
     this.economy.money -= price;
     this.regions.own(i);
     sfx('tier.up');
-    const edge =
-      this.spec.kind === 'generated' &&
-      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h);
-    // growing stores the game first, which a loop error forbids: the ring then waits for a save the
-    // player makes and the reload after it (`main.ts` grows such a save as it loads)
-    const held = edge && !this.autosavePause.allows('implicit');
-    if (edge && !held) {
-      // the grid needs another ring: persist, grow the world and come back into it
-      const snap = expandSave(this.snapshot(), 1);
-      if (writeSave(snap)) {
-        this.toasts.push(STR.overview.growing, 'info');
-        setIntentAndReload({ action: 'continue', keepSpeed: true });
-        return true;
-      }
-      this.toasts.push(STR.overview.growRefused, 'warn');
+    const facts = {
+      edge:
+        this.spec.kind === 'generated' &&
+        ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h),
+      implicitWrites: this.autosavePause.allows('implicit'),
+      autosaves: this.settings.autosave && this.mode === 'play',
+    };
+    // the grid needs another ring: persist, grow the world and come back into it. A loop error
+    // holds it until the player saves and reloads (`main.ts` grows such a save as it loads)
+    const grown = purchaseGrows(facts) ? writeSave(expandSave(this.snapshot(), 1)) : null;
+    const after = afterPurchase(facts, grown);
+    if (after.reload) {
+      this.say(after.said);
+      setIntentAndReload({ action: 'continue', keepSpeed: true });
+      return true;
     }
     this.world.rebuildFog();
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
-    this.toasts.push(STR.overview.bought, 'good');
-    if (held) this.toasts.push(STR.overview.growHeld, 'warn');
-    // an inner purchase is stored at once, as the autosave stores: every refusal of it applies
-    // (autosave off, a loop error, a reload into a stored save, storage); a ring was written above
-    if (!edge && this.settings.autosave && this.mode === 'play') this.save(true);
+    this.say(after.said);
+    // as the autosave stores: every refusal of it applies (autosave off, a loop error, a reload
+    // into a stored save, storage, a broken number) and warns as it does
+    if (after.store) this.save(true);
     return true;
   }
   private trackTilesForOverview() {
