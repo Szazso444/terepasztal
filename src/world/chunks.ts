@@ -19,6 +19,9 @@ import { Terrain, type GameMap, type PropInstance, type PropKind } from './tiles
  *   high four bits and the run's length less one in the low four, where 15 means 16 or more and a
  *   varint after it holds the length less 16;
  * - biome ids, as runs the same way;
+ * - from version 2, climate ids (GameMap.climate), as runs the same way. The climate is the biome
+ *   but where a landform relabels it (a lake, a river, a beach, a mountain), so its runs are long;
+ *   a map with no climate plane stores its biome there;
  * - variant, two bits a tile (0 to 3), four tiles a byte from the low bits up;
  * - props: a varint count of the tiles that have any; for each of those tiles a varint of the
  *   tiles skipped since the one before, times four, plus its prop count less one (3: four or
@@ -31,14 +34,15 @@ import { Terrain, type GameMap, type PropInstance, type PropKind } from './tiles
  * prop sits at most a 512th of a tile from where generation put it; buildMap gives every chunk,
  * new or loaded, as its text decodes, so a world looks the same before and after a load.
  *
- * A later plane joins under a bump of CHUNK_VERSION, appended after these, and a chunk of an older
- * version decodes with that plane empty.
+ * A later plane joins under a bump of CHUNK_VERSION, at a place in the bytes its version names,
+ * and a chunk of an older version decodes with that plane empty: version 1 holds no climate, and
+ * its climate is its biome.
  */
 
 /** Chunk edge in world tiles: emptyMap's region size. */
 export const CHUNK_TILES = 32;
 /** The encoding encodeChunk writes; decodeChunk reads it and every one before it. */
-export const CHUNK_VERSION = 1;
+export const CHUNK_VERSION = 2;
 
 /**
  * The index a chunk stores each prop kind under. Only ever add to it: an index written into a save
@@ -88,6 +92,8 @@ export interface ChunkPlanes {
   /** a value per tile of the rectangle, in rows */
   terrain: Uint8Array;
   biome: Uint8Array;
+  /** the climate; a chunk of version 1 stores none, and its climate is its biome */
+  climate: Uint8Array;
   variant: Uint8Array;
   /** props by tile of the rectangle (`y * w + x`) */
   props: Map<number, PropInstance[]>;
@@ -305,9 +311,9 @@ function fromBase64(text: string): Uint8Array | null {
 /**
  * The text of chunk (`cx`, `cy`): the part of it `map` covers, as the map has it. Call it on a map
  * as generated, before anything is built on it or repaired under it. Throws when the map does not
- * cover the chunk, and when it holds what this encoding cannot (a terrain or biome id over 15, a
- * variant over 3, a prop kind PROP_KINDS lacks), so a generator that makes one has to come with a
- * new CHUNK_VERSION.
+ * cover the chunk, and when it holds what this encoding cannot (a terrain, biome or climate id over
+ * 15, a variant over 3, a prop kind PROP_KINDS lacks), so a generator that makes one has to come
+ * with a new CHUNK_VERSION.
  */
 export function encodeChunk(map: GameMap, cx: number, cy: number): string {
   const c = coverage(map, cx, cy);
@@ -315,6 +321,7 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
   const n = c.w * c.h;
   const terrain = new Uint8Array(n);
   const biome = new Uint8Array(n);
+  const climate = new Uint8Array(n);
   const variant = new Uint8Array(n);
   // the map tile of the rectangle's first tile
   const mx = cx * CHUNK_TILES + c.x0 - map.originX;
@@ -323,12 +330,14 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
     const from = (my + y) * map.w + mx;
     terrain.set(map.terrain.subarray(from, from + c.w), y * c.w);
     biome.set(map.biome.subarray(from, from + c.w), y * c.w);
+    climate.set((map.climate ?? map.biome).subarray(from, from + c.w), y * c.w);
     variant.set(map.variant.subarray(from, from + c.w), y * c.w);
   }
   const out = new Writer();
   for (const b of [CHUNK_VERSION, c.x0, c.y0, c.w, c.h]) out.byte(b);
   writeRuns(out, terrain, 'terrain');
   writeRuns(out, biome, 'biome');
+  writeRuns(out, climate, 'climate');
   for (let i = 0; i < n; i += 4) {
     let b = 0;
     for (let k = 0; k < 4 && i + k < n; k++) {
@@ -372,6 +381,7 @@ export function decodeChunk(text: string): ChunkPlanes | null {
     const n = w * h;
     const terrain = readRuns(r, n);
     const biome = readRuns(r, n);
+    const climate = version >= 2 ? readRuns(r, n) : biome.slice();
     const variant = new Uint8Array(n);
     for (let i = 0; i < n; i += 4) {
       const b = r.byte();
@@ -393,7 +403,7 @@ export function decodeChunk(text: string): ChunkPlanes | null {
     }
     // bytes left over are not something encodeChunk writes
     if (r.i !== bytes.length) return null;
-    return { version, x0, y0, w, h, terrain, biome, variant, props };
+    return { version, x0, y0, w, h, terrain, biome, climate, variant, props };
   } catch (e) {
     if (e instanceof Corrupt) return null;
     throw e;
@@ -402,9 +412,10 @@ export function decodeChunk(text: string): ChunkPlanes | null {
 
 /**
  * Writes chunk (`cx`, `cy`)'s planes into `map` wherever the map covers them: terrain, biome,
- * variant, and the props of those tiles, which replace the map's own (the map takes the chunk's
- * prop lists themselves, so decode a chunk again for another map). A plane the chunk's version
- * does not hold is empty there; for the climate that means it is the biome.
+ * climate, variant, and the props of those tiles, which replace the map's own (the map takes the
+ * chunk's prop lists themselves, so decode a chunk again for another map). A map with no climate
+ * plane is given one, its climate its biome until a chunk says otherwise. A plane the chunk's
+ * version does not hold is empty there; for the climate that means it is the biome.
  */
 export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes) {
   // the world tile of the rectangle's first tile
@@ -414,6 +425,7 @@ export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes)
   const y0 = Math.max(wy, map.originY);
   const x1 = Math.min(wx + c.w, map.originX + map.w);
   const y1 = Math.min(wy + c.h, map.originY + map.h);
+  const climate = (map.climate ??= map.biome.slice());
   for (let y = y0; y < y1; y++)
     for (let x = x0; x < x1; x++) {
       const i = (y - map.originY) * map.w + x - map.originX;
@@ -421,7 +433,7 @@ export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes)
       map.terrain[i] = c.terrain[j];
       map.biome[i] = c.biome[j];
       map.variant[i] = c.variant[j];
-      if (map.climate) map.climate[i] = c.biome[j];
+      climate[i] = c.climate[j];
       const list = c.props.get(j);
       if (list) map.props.set(i, list);
       else map.props.delete(i);
@@ -451,8 +463,9 @@ export function encodeMap(map: GameMap): ChunkStore {
  * one of all the map covers. A text that cannot be read is reported and kept (see BuiltMap).
  *
  * The map has every chunk as its text decodes, generated ones too: props where the store puts
- * them (see the encoding above), and the climate the biome. Whatever is later built on the map or
- * repaired under it, the store keeps the ground as generated.
+ * them (see the encoding above), and a climate plane, which is the biome in a chunk stored before
+ * the plane. Whatever is later built on the map or repaired under it, the store keeps the ground as
+ * generated.
  */
 export function buildMap(
   seed: number,

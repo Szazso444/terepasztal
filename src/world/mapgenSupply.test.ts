@@ -53,10 +53,12 @@ function planeDiffs(a: GameMap, b: GameMap) {
   return {
     terrain: firstDiff(a.terrain, b.terrain),
     biome: firstDiff(a.biome, b.biome),
+    // a map with no climate plane (a level's) has its biome for its climate
+    climate: firstDiff(a.climate ?? a.biome, b.climate ?? b.biome),
     variant: firstDiff(a.variant, b.variant),
   };
 }
-const SAME_PLANES = { terrain: -1, biome: -1, variant: -1 };
+const SAME_PLANES = { terrain: -1, biome: -1, climate: -1, variant: -1 };
 /** Tiles holding an oil prop; the indices, in tile order. */
 const oilTiles = (m: GameMap) =>
   [...m.props]

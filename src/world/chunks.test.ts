@@ -18,7 +18,7 @@ import {
 } from './chunks';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { levelAt, tileLevels } from './elevation';
-import { Biome, Terrain, type GameMap, type PropInstance } from './tiles';
+import { Biome, Terrain, climateAtIndex, type GameMap, type PropInstance } from './tiles';
 import { Rng, hash2 } from '../engine/rng';
 import {
   DEFAULT_SUPPLY,
@@ -87,6 +87,7 @@ function firstDifference(
       const where = `world tile (${x + a.originX}, ${y + a.originY})`;
       if (a.terrain[i] !== b.terrain[j]) return `terrain at ${where}`;
       if (a.biome[i] !== b.biome[j]) return `biome at ${where}`;
+      if (climateAtIndex(a, i) !== climateAtIndex(b, j)) return `climate at ${where}`;
       if (a.variant[i] !== b.variant[j]) return `variant at ${where}`;
       if (pa.length !== pb.length || pa.some((p, k) => !sameProp(p, pb[k])))
         return `props at ${where}: ${JSON.stringify(pa)} against ${JSON.stringify(pb)}`;
@@ -332,6 +333,11 @@ describe('a chunk text', () => {
     map.biome[7] = 16;
     expect(() => encodeChunk(map, 0, 0)).toThrow(/biome/);
     map.biome[7] = 0;
+    // the climate, a plane of its own from version 2, is held to the biome's bound
+    map.climate = new Uint8Array(32 * 32);
+    map.climate[11] = 16;
+    expect(() => encodeChunk(map, 0, 0)).toThrow(/climate/);
+    map.climate[11] = 0;
     map.variant[9] = 4;
     expect(() => encodeChunk(map, 0, 0)).toThrow(/variant/);
     map.variant[9] = 0;
@@ -522,13 +528,15 @@ describe('a map built from stored chunks', () => {
     expect(built.chunks).toEqual(store);
   });
 
-  it('has no climate of its own: a stored chunk has the climate of its biome', () => {
+  it('has the climate the generator gives it, stored and read back', () => {
     const climate: MapGenerator = (s, p) => {
       const m = generateMap(s, p);
       return { ...m, climate: new Uint8Array(m.w * m.h).fill(Biome.Desert) };
     };
     const built = buildMap(1, { w: 64, h: 64 }, {}, climate);
-    expect([...built.map.climate!]).toEqual([...built.map.biome]);
+    expect(new Set(built.map.climate)).toEqual(new Set([Biome.Desert]));
+    const again = buildMap(1, { w: 64, h: 64 }, built.chunks, never);
+    expect(new Set(again.map.climate)).toEqual(new Set([Biome.Desert]));
   });
 
   it('refuses a generator that makes a map of another size', () => {
@@ -595,15 +603,16 @@ describe('the production chain of a built map', () => {
 
 /**
  * A generator nothing like generateMap: every plane hashed from the world tile and `salt`, over all
- * that encoding 1 holds (terrain and biome ids 0 to 15 in 4 x 4 patches so that runs form,
- * variants 0 to 3, up to nine props a tile of any kind, variants past the one-byte escape, offsets
- * up to 0.45 of a tile). A function of world tiles, so two frames of one salt agree where they
- * overlap. The params of every call go into `calls`.
+ * that encoding 2 holds (terrain, biome and climate ids 0 to 15 in 4 x 4 patches so that runs
+ * form, the climate its own plane, variants 0 to 3, up to nine props a tile of any kind, variants
+ * past the one-byte escape, offsets up to 0.45 of a tile). A function of world tiles, so two
+ * frames of one salt agree where they overlap. The params of every call go into `calls`.
  */
 function hashed(salt: number, calls: Partial<MapGenParams>[] = []): MapGenerator {
   return (seed, p) => {
     calls.push(p);
     const m = emptyMap(seed, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+    const climate = (m.climate = new Uint8Array(m.w * m.h));
     const at = (wx: number, wy: number, k: number) => hash2(wx, wy, salt * 32 + k);
     for (let y = 0; y < m.h; y++)
       for (let x = 0; x < m.w; x++) {
@@ -612,6 +621,7 @@ function hashed(salt: number, calls: Partial<MapGenParams>[] = []): MapGenerator
         const i = y * m.w + x;
         m.terrain[i] = Math.floor(at(wx >> 2, wy >> 2, 0) * 16);
         m.biome[i] = Math.floor(at(wx >> 2, wy >> 2, 1) * 16);
+        climate[i] = Math.floor(at(wx >> 2, wy >> 2, 10) * 16);
         m.variant[i] = Math.floor(at(wx, wy, 2) * 4);
         const r = at(wx, wy, 3);
         if (r >= 0.35) continue;
@@ -1064,8 +1074,16 @@ describe('stored chunks, over any generator, frame and text', () => {
         const n = c.w * c.h;
         expect(c.version >= 1 && c.version <= CHUNK_VERSION).toBe(true);
         expect(c.w >= 1 && c.h >= 1 && c.x0 + c.w <= 32 && c.y0 + c.h <= 32).toBe(true);
-        expect([c.terrain.length, c.biome.length, c.variant.length]).toEqual([n, n, n]);
+        expect([c.terrain.length, c.biome.length, c.climate.length, c.variant.length]).toEqual([
+          n,
+          n,
+          n,
+          n,
+        ]);
         expect(c.terrain.every((v) => v <= 15) && c.biome.every((v) => v <= 15)).toBe(true);
+        expect(c.climate.every((v) => v <= 15)).toBe(true);
+        // a chunk stored before the climate plane has its biome for its climate
+        if (c.version < 2) expect([...c.climate]).toEqual([...c.biome]);
         expect(c.variant.every((v) => v <= 3)).toBe(true);
         for (const [i, list] of c.props) {
           expect(Number.isInteger(i) && i >= 0 && i < n, `prop tile ${i} of ${n}`).toBe(true);
@@ -1082,8 +1100,18 @@ describe('stored chunks, over any generator, frame and text', () => {
           for (let x = 0; x < c.w; x++) {
             const i = (c.y0 + y) * 32 + c.x0 + x;
             const j = y * c.w + x;
-            const tile = [built.map.terrain[i], built.map.biome[i], built.map.variant[i]];
-            expect(tile, `tile (${x}, ${y})`).toEqual([c.terrain[j], c.biome[j], c.variant[j]]);
+            const tile = [
+              built.map.terrain[i],
+              built.map.biome[i],
+              built.map.climate![i],
+              built.map.variant[i],
+            ];
+            expect(tile, `tile (${x}, ${y})`).toEqual([
+              c.terrain[j],
+              c.biome[j],
+              c.climate[j],
+              c.variant[j],
+            ]);
             expect(built.map.props.get(i)).toEqual(c.props.get(j));
           }
         // and its planes, put on a map and written again, read the same
