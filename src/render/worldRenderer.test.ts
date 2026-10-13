@@ -361,6 +361,69 @@ describe('a building fitted to the ground', () => {
     // the next tile grows its own
     expect(grown(0, 0, 4, 4)).not.toEqual(here);
   });
+
+  it('follows its building when the ground under it is repainted to another height', () => {
+    const { world } = renderer();
+    let lift = 0;
+    // what animate touches besides the buildings: a landscape that has just been repainted
+    Object.assign(world, {
+      elevationOf: () => -lift,
+      landscape: {
+        flush: () => true,
+        active: false,
+        ready: true,
+        root: { visible: false },
+        isPainted: () => false,
+      },
+      refreshSummits: () => {},
+      harvest: { refresh: () => {} },
+      trackSprites: new Map(),
+      scatterSprites: new Map(),
+      propSprites: new Map(),
+      ground: { visible: true },
+      view: null,
+      waterClock: 0,
+      rippleRefresh: 0,
+      waterPhase: 0,
+      waterSprites: [],
+    });
+    const s = world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1', 20, 3, 5),
+      fit = fitsOf(world).get('decor:0,0')!,
+      p = tileToWorld(0, 0);
+    for (lift of [13, -7, 0, 20]) {
+      world.animate(0);
+      expect([s.x, s.y], `lifted ${lift}`).toEqual([p.x + 5, p.y - lift + 3]);
+      for (const part of [fit.shadow, fit.foot, fit.weeds])
+        expect([part.x, part.y], `lifted ${lift}`).toEqual([s.x, s.y]);
+      expect([fit.foot.scale.x, fit.foot.scale.y]).toEqual([s.scale.x, s.scale.y]);
+      expect(fit.foot.zIndex).toBeGreaterThan(s.zIndex);
+      expect(fit.weeds.zIndex).toBeGreaterThan(fit.foot.zIndex);
+    }
+  });
+
+  it('leaves the shadow, shade and weeds of another building with the same picture whole when one goes', () => {
+    const { world } = renderer();
+    world.setStructure('decor:a', 0, 0, 'structures/townhouse_s1');
+    world.setStructure('decor:b', 0, 0, 'structures/townhouse_s1');
+    const a = fitsOf(world).get('decor:a')!,
+      b = fitsOf(world).get('decor:b')!,
+      shown = (fit: FitParts) => [fit.shadow.texture, fit.foot.texture, fit.weeds.texture],
+      aWeeds = a.weeds.texture,
+      bShows = shown(b);
+    // the shadow and shade are the picture's, shared; the weeds are each building's own
+    expect([a.shadow.texture, a.foot.texture]).toEqual(bShows.slice(0, 2));
+    expect(aWeeds).not.toBe(bShows[2]);
+    world.removeStructure('decor:a');
+    expect(aWeeds.destroyed, "the gone building's own weeds").toBe(true);
+    expect(shown(b)).toEqual(bShows);
+    expect(bShows.map((t) => t.destroyed)).toEqual([false, false, false]);
+    // and when the other turns into a frame that is no building, the picture's layers still stand
+    world.setStructure('decor:a', 0, 0, 'structures/townhouse_s1');
+    const again = shown(fitsOf(world).get('decor:a')!);
+    world.setStructure('decor:b', 0, 0, 'structures/power_line', 14);
+    expect(bShows[2].destroyed).toBe(true);
+    expect(again.map((t) => t.destroyed)).toEqual([false, false, false]);
+  });
 });
 
 describe('a ghost sprite switching frames', () => {

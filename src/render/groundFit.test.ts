@@ -5,19 +5,21 @@ import { generateStructuresAtlas } from '../art/structures';
 import type { FrameDef } from '../engine/atlas';
 import { HALF_H, HALF_W } from '../engine/iso';
 import type { Rng } from '../engine/rng';
-import { forAll, shrinkInt } from '../testing/property';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { scaleReference } from './assetScale';
 import {
   bakedShadow,
   contactShadow,
   feetOf,
   FOOT_RUN,
+  FOOT_TOLERANCE,
   footContour,
   footGround,
   footprint,
   footScatter,
   footShade,
   frontCorner,
+  ISO_SLOPE,
   LIGHT,
   SCATTER,
   SHADE_ALPHA,
@@ -884,4 +886,162 @@ describe('the building pictures the game draws', () => {
     }
     expect(wrong.slice(0, 5), `${wrong.length} in all`).toEqual([]);
   }, 10_000);
+});
+
+/**
+ * A picture as its columns, each from the bottom up as runs of texels of one kind: opaque (`O`,
+ * `SOLID` and over), translucent (`T`) or clear (`E`), `n` texels of `alpha`. Nothing is painted
+ * above a column's runs.
+ */
+type Run = { kind: 'O' | 'T' | 'E'; n: number; alpha: number };
+interface Columns {
+  density: number;
+  columns: Run[][];
+}
+function columnsOf(rng: Rng): Columns {
+  const density = rng.pick([1, 2, 4]),
+    m = FOOT_RUN * density,
+    run = (): Run => {
+      const kind = rng.pick(['O', 'O', 'T', 'E'] as const);
+      if (kind === 'E') return { kind, n: rng.int(1, 3 * density), alpha: 0 };
+      if (kind === 'T')
+        return {
+          kind,
+          n: rng.int(1, 3 * density),
+          alpha: rng.pick([1, SOLID - 1, rng.int(1, SOLID - 1)]),
+        };
+      // a rim or a sail thinner than a wall, or a wall
+      const n = rng.chance(0.5) ? rng.int(1, m - 1) : rng.int(m, m + 6);
+      return { kind, n, alpha: rng.pick([SOLID, 255, rng.int(SOLID, 255)]) };
+    };
+  return {
+    density,
+    columns: Array.from({ length: rng.int(1, 9) }, () =>
+      Array.from({ length: rng.int(0, 6) }, run),
+    ),
+  };
+}
+/** Lower density, fewer columns, fewer and shorter runs. */
+function* shrinkColumns(c: Columns): Iterable<Columns> {
+  if (c.density !== 1) yield { ...c, density: 1 };
+  const shrinkRun = function* (r: Run): Iterable<Run> {
+    for (const n of shrinkInt(r.n, 1)) yield { ...r, n };
+  };
+  for (const columns of shrinkArray(c.columns, (runs) => shrinkArray(runs, shrinkRun)))
+    yield { ...c, columns };
+}
+const formatColumns = (c: Columns) =>
+  `density ${c.density}, columns bottom up: ` +
+  c.columns
+    .map((runs) => runs.map((r) => `${r.kind}${r.alpha}x${r.n}`).join(' ') || '-')
+    .join(' | ');
+function pictureOfColumns({ density, columns }: Columns): Picture {
+  const w = columns.length,
+    h = Math.max(1, ...columns.map((runs) => runs.reduce((s, r) => s + r.n, 0))),
+    data = new Uint8ClampedArray(w * h * 4);
+  columns.forEach((runs, x) => {
+    let y = h - 1;
+    for (const r of runs)
+      for (let i = 0; i < r.n; i++, y--) data.set([120, 110, 90, r.alpha], (y * w + x) * 4);
+  });
+  return { data, width: w, height: h, density };
+}
+/**
+ * footContour's rule read slowly, as its comment states it. Each column from the bottom up is a
+ * word of O, T and E. It stands on the ground where, past the clear and translucent texels under
+ * its paint, each of its thin opaque runs has translucent paint over it, up to a run `FOOT_RUN`
+ * world px tall whose lowest texel is the foot. Of those feet only the ones on or below the ground
+ * lines through the front corner, within `FOOT_TOLERANCE`, are kept.
+ */
+function slowFootContour({ data, width: w, height: h, density: d }: Picture): Int32Array {
+  const m = FOOT_RUN * d,
+    standing = new RegExp(`^[TE]*(?:O{1,${m - 1}}T+)*(?=O{${m}})`),
+    raw = Int32Array.from({ length: w }, (_, x) => {
+      let word = '';
+      for (let y = h - 1; y >= 0; y--) {
+        const a = data[(y * w + x) * 4 + 3];
+        word += a >= SOLID ? 'O' : a > 0 ? 'T' : 'E';
+      }
+      const under = standing.exec(word);
+      return under ? h - 1 - under[0].length : -1;
+    }),
+    low = Math.max(-1, ...raw);
+  if (low < 0) return raw;
+  const lowest = [...raw.keys()].filter((x) => raw[x] === low),
+    apex = Math.floor((lowest[0] + lowest[lowest.length - 1]) / 2);
+  return raw.map((f, x) =>
+    f >= 0 && f >= low - ISO_SLOPE * Math.abs(x - apex) - FOOT_TOLERANCE * d ? f : -1,
+  );
+}
+
+describe('the feet of any picture, against the rule read slowly', () => {
+  // five hundred small pictures of rims, paint, gaps, sails and walls
+  it('are the feet footContour finds', () => {
+    forAll(
+      columnsOf,
+      (c) => {
+        const p = pictureOfColumns(c);
+        expect([...footContour(p)]).toEqual([...slowFootContour(p)]);
+      },
+      {
+        seeds: Array.from({ length: 500 }, (_, i) => i + 1),
+        shrink: shrinkColumns,
+        format: formatColumns,
+      },
+    );
+  });
+
+  it('give a thin run with a clear texel or the picture edge over it no foot, paint or not', () => {
+    for (const d of [1, 2, 4]) {
+      const m = FOOT_RUN * d,
+        O = (n: number): Run => ({ kind: 'O', n, alpha: 255 }),
+        T = (n: number): Run => ({ kind: 'T', n, alpha: 100 }),
+        E = (n: number): Run => ({ kind: 'E', n, alpha: 0 }),
+        foot = (...runs: Run[]) =>
+          footContour(pictureOfColumns({ density: d, columns: [runs] }))[0];
+      // a sail; a sail over paint; a rim and its paint under a gap; a rim at the picture's top
+      expect(foot(O(m - 1), E(1), O(m)), `density ${d}`).toBe(-1);
+      expect(foot(T(2), O(m - 1), E(1), O(m)), `density ${d}`).toBe(-1);
+      expect(foot(O(1), T(3), E(1), O(m)), `density ${d}`).toBe(-1);
+      expect(foot(O(1), T(3), O(m - 1)), `density ${d}`).toBe(-1);
+      // the rim of a yard, its paint and the wall behind: the wall's lowest texel
+      expect(foot(O(1), T(3), O(m)), `density ${d}`).toBe(m - 1);
+      expect(foot(E(2), O(2), T(1), O(1), T(2), O(m + 3)), `density ${d}`).toBe(m + 2);
+    }
+  });
+});
+
+describe('the feet the weeds grow from', () => {
+  it('stand on the contour about one world px apart, the front corner among them', () => {
+    forAll(
+      building,
+      (b) => {
+        const p = pictureOf(b),
+          at = placementOf(b),
+          foot = footContour(p),
+          feet = feetOf(p, foot, at),
+          k = at.scale / p.density,
+          front = frontCorner(foot),
+          wrong: string[] = [];
+        // each is a column's foot: the bottom edge of its foot texel, in world px from the anchor
+        const cols = feet.map((f) => Math.round(f.x / k + at.anchorX - 0.5));
+        feet.forEach((f, n) => {
+          const c = cols[n];
+          if (foot[c] < 0) wrong.push(`foot ${n} on footless column ${c}`);
+          if (Math.abs(f.x - (c + 0.5 - at.anchorX) * k) > 1e-9) wrong.push(`foot ${n} x`);
+          if (Math.abs(f.y - (foot[c] + 1 - at.anchorY) * k) > 1e-9) wrong.push(`foot ${n} y`);
+          if (f.right !== c > front) wrong.push(`foot ${n} right ${f.right}`);
+          if (n > 0 && (cols[n] - cols[n - 1]) * k < 0.5 - 1e-9)
+            wrong.push(`feet ${n - 1} and ${n} under half a world px apart`);
+        });
+        if (!cols.includes(front)) wrong.push(`front corner ${front} not among them`);
+        // and never a world px and a half of the ground without one
+        for (let c = 0; c < foot.length; c++)
+          if (foot[c] >= 0 && !cols.some((q) => Math.abs(q - c) * k < 1.5))
+            wrong.push(`column ${c} far from every foot`);
+        expect(wrong.slice(0, 5)).toEqual([]);
+      },
+      { shrink: shrinkBuilding },
+    );
+  });
 });
