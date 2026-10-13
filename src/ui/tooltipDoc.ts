@@ -22,15 +22,24 @@ export interface TermPart {
   readonly term: string;
   readonly tip: () => TipDoc;
 }
-/** A piece of a line: plain text, or one of the three above. */
-export type Inline = string | NumPart | ResPart | TermPart;
+/** A few words in the dim colour, inside a line or a row whatever its tone. */
+export interface DimPart {
+  readonly dim: string;
+}
+/** A piece of a line: plain text, or one of the four above. */
+export type Inline = string | NumPart | ResPart | TermPart | DimPart;
 export type Parts = readonly Inline[];
 
 export type Tone = 'good' | 'bad';
 
 export type Block =
   | { readonly kind: 'title'; readonly parts: Parts }
-  | { readonly kind: 'text' | 'dim' | 'hint'; readonly parts: Parts }
+  | {
+      readonly kind: 'text' | 'dim' | 'hint';
+      readonly parts: Parts;
+      /** a line of text green (good) or red (bad) */
+      readonly tone?: Tone;
+    }
   | {
       readonly kind: 'row';
       readonly label: Parts;
@@ -56,6 +65,10 @@ export function res(cargo: string): ResPart {
 export function term(label: string, tip: () => TipDoc): TermPart {
   return { term: label, tip };
 }
+/** Words in the dim colour. */
+export function quiet(words: string): DimPart {
+  return { dim: words };
+}
 /** A multiplier as a signed percent in bold; exactly 1 is a plain dash. */
 export function percent(m: number): Inline {
   return m === 1 ? NO_CHANGE : num(signedPercent(m));
@@ -66,6 +79,10 @@ export function title(...parts: Inline[]): Block {
 }
 export function text(...parts: Inline[]): Block {
   return { kind: 'text', parts };
+}
+/** A line of text in red: why something cannot be done. */
+export function bad(...parts: Inline[]): Block {
+  return { kind: 'text', parts, tone: 'bad' };
 }
 export function dim(...parts: Inline[]): Block {
   return { kind: 'dim', parts };
@@ -131,7 +148,15 @@ export function fill(template: string, slots: Record<string, Inline | Parts>): I
 export function plain(parts: Parts): string {
   return parts
     .map((p) =>
-      typeof p === 'string' ? p : 'num' in p ? p.num : 'res' in p ? p.name.toLowerCase() : p.term,
+      typeof p === 'string'
+        ? p
+        : 'num' in p
+          ? p.num
+          : 'res' in p
+            ? p.name.toLowerCase()
+            : 'dim' in p
+              ? p.dim
+              : p.term,
     )
     .join('');
 }

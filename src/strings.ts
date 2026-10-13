@@ -163,6 +163,35 @@ export const STR = {
     waterUse: "Steam engines' {res} use",
     speed: 'Train speed',
   },
+  /**
+   * The placing tooltip, the root of the tooltip stack while a harvest station's tool is in hand,
+   * and the rows a harvest station's panel shares with it (#336). A template's `{name}` is filled
+   * by the tooltip (`fill` in src/ui/tooltipDoc.ts): a bold number, or the ground a station counts
+   * (`STR.tile.phrase`).
+   */
+  placing: {
+    title: (station: string) => `${station} here`,
+    /** one row per distance with matching ground: how many tiles, of what, how far */
+    ring: '{n} {tiles} at {d}',
+    placement: 'Placement',
+    /** before a Placement held at its ceiling, or at its floor */
+    atMost: 'at most',
+    atLeast: 'at least',
+    /** the Season row, named after the season, shown only when the season changes the yield */
+    season: {
+      spring: 'Spring',
+      summer: 'Summer',
+      autumn: 'Autumn',
+      winter: 'Winter',
+    } as Record<string, string>,
+    /** the row of the tuning's production multiplier, shown only when it is not 1 */
+    tuning: 'Game tuning',
+    /** the total row's value */
+    perWeek: '{amount} a week',
+    click: 'Click to place.',
+    /** the yield label floating over the tile, in whole units a week */
+    label: (n: number) => `${n}/wk`,
+  },
   decorInfo: {
     reach: (r: number) => `Reach: ${r} tiles`,
     serves: (n: string) => `Serves: ${n}`,
@@ -328,8 +357,6 @@ export const STR = {
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
     upgradingNow: 'Already being upgraded',
     cost: (v: string) => `Cost ${v}`,
-    harvest: (n: number, cargo: string, f: number) =>
-      `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
     refund: (v: string) => `Refund ${v}`,
     free: 'free',
     rotate: 'R: rotate',
@@ -361,6 +388,13 @@ export const STR = {
       bridgePlatform: 'On water. Lay track on the platform after building it.',
       station:
         'On grass, forest, sand or a level hill tile with track touching one side; that track becomes the platform.',
+      /**
+       * A station held to its own ground (`standOn`, `needsWater`), by `StationDef.id`; one
+       * without a line here says `station`.
+       */
+      stationOn: {
+        pump: 'On grass or forest with water right beside it, and track touching one side; that track becomes the platform.',
+      } as Record<string, string>,
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
       town: 'On grass, forest, sand or a level hill tile with track touching one side, at least 25 tiles from any other Townhouse.',
@@ -1462,7 +1496,6 @@ export const STR = {
     town: 'Town',
     level: (l: number) => `Level ${l}`,
     biome: 'Biome',
-    ground: 'Nearby resource',
     produces: 'Produces',
     accepts: 'Accepts',
     storage: 'Storage',

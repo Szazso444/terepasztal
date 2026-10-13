@@ -115,6 +115,11 @@ export function ttDim(...parts: (Node | string)[]): HTMLElement {
   return el('div', { class: 'tt-dim' }, ...parts);
 }
 
+/** A few dim words inside a line or a row, whatever the row's tone. */
+export function ttQuiet(words: string): HTMLElement {
+  return el('span', { class: 'tt-dim', text: words });
+}
+
 /** A dim, italic hint. */
 export function ttHint(...parts: (Node | string)[]): HTMLElement {
   return el('div', { class: 'tt-hint' }, ...parts);
@@ -284,9 +289,16 @@ class TooltipLayer implements TipView<TipContent> {
       const build = TERMS.get(t);
       if (!build || this.wired.has(t)) continue;
       this.wired.add(t);
-      t.addEventListener('mouseenter', () =>
-        this.stack?.termEnter(-1, t, () => termAnchor(t.getBoundingClientRect()), build),
-      );
+      t.addEventListener('mouseenter', () => {
+        // a panel drawn again before the tooltip opens takes the term out: anchor where it was
+        const was = t.getBoundingClientRect();
+        this.stack?.termEnter(
+          -1,
+          t,
+          () => termAnchor(t.isConnected ? t.getBoundingClientRect() : was),
+          build,
+        );
+      });
       t.addEventListener('mouseleave', () => this.stack?.termLeave(-1));
     }
   }

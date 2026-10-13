@@ -14,17 +14,39 @@ import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
 import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';
-import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
 import { structureFrame } from '../art/frames';
+import { HALF_H } from '../engine/iso';
+import { rules } from '../sim/rules';
+import { HarvestCells, harvestBreakdown, weeklyOutput } from '../sim/stations';
+import type { Season } from '../sim/weather';
 import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
-import { harvestPreviewPerWeek } from './harvestPreview';
+import { placingTip, yieldLabel } from './placingTooltip';
+import type { TipDoc } from './tooltipDoc';
+import { tipKey, type Point, type TooltipStack } from './tooltipStack';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
 const REPLACE_TINT = 0xffc860;
+
+type Tile = { x: number; y: number };
+
+/**
+ * Where a harvest station's tool shows what it would make (#336): the placing tooltip as the root
+ * of the tooltip stack, and the yield label over the tile. createPlayUi sets it; without it the
+ * tool shows neither. `C` is what the stack draws, opaque here.
+ */
+export interface PlacingOut<C = unknown> {
+  readonly stack: TooltipStack<C>;
+  /** what the stack shows for a tooltip document */
+  content(doc: TipDoc): C;
+  /** the label's text over the screen point of a tile's top corner; null hides it */
+  label(text: string | null, corner: Point | null): void;
+  /** the season the yield is worked out for: the one production runs in */
+  season(): Season;
+}
 
 /** Interactive placement: ghost previews, rotation, drag-laying, removal, selection. */
 export class BuildController {
@@ -59,6 +81,14 @@ export class BuildController {
   private lastPaint = '';
   /** this frame's Escape closed the tooltip stack (the keymap reads it first): it does nothing here */
   private escapeSpent = false;
+  /** the placing tooltip and the yield label's way out, set by createPlayUi */
+  placing: PlacingOut | null = null;
+  /** the tile the placing root stands for, as of the last frame it was not locked */
+  private placingRoot: (Tile & { key: string }) | null = null;
+  /** the tile of a locked placing root: its label and lit tiles stay there */
+  private placingHeld: Tile | null = null;
+  /** the counted tiles of the label's breakdown, kept from frame to frame */
+  private readonly placingCells = new HarvestCells();
 
   constructor(
     private readonly input: Input,
@@ -81,8 +111,17 @@ export class BuildController {
     this.stroke.stop();
     this.dragStart = null;
     this.clearGhost();
+    this.dropPlacing();
     if (t.kind !== 'none') this.select(null);
     this.onToolChanged?.(t);
+  }
+
+  /**
+   * The tile the tool in hand places on, for the harvest layer (`HarvestHighlight.follow`'s
+   * `placing`): a locked placing tooltip's tile, else `hover`.
+   */
+  placingAt(hover: Tile | null): Tile | null {
+    return this.placingHeld ?? hover;
   }
 
   /** This frame's Escape is spent: it closed the tooltips, so the tool and the selection stay. */
@@ -128,6 +167,7 @@ export class BuildController {
     // track, decor, stations and works turn; anything else keeps its rotation
     if (inp.wasPressed('KeyR') && this.turns()) this.rot = nextToolRotation(this.tool, this.rot);
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
+    this.updatePlacing(active, t, inMap);
     if (!active) {
       // over a panel or outside the field: a stroke does not carry on to where the cursor returns
       this.stroke.stop();
@@ -379,14 +419,9 @@ export class BuildController {
     this.ghostDiamond.tint = 0xffffff;
     // the tile diamond shows under a one-tile station only; a wider one's picture covers its tiles
     this.ghostDiamond.visible = span.w === 1 && span.h === 1;
+    // what a harvest station would make is the placing tooltip's (updatePlacing), not the line's
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
     if (this.turns()) parts.push(STR.build.rotate);
-    if (def.terrain) {
-      const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
-      const perWeek = harvestPreviewPerWeek(f);
-      const cargo = def.produces[0]?.cargo;
-      parts.push(STR.build.harvest(Math.round(perWeek), cargo ? cargoDef(cargo).name : '', f));
-    }
     this.status(parts.join('   '));
     for (const c of this.input.clicks) {
       if (c.button === 0) {
@@ -686,5 +721,103 @@ export class BuildController {
 
   private status(s: string) {
     this.onStatus?.(s);
+  }
+
+  // ---------------------------------------------------------------- the placing tooltip (#336)
+
+  /** The station kind of a harvest station's tool in hand (one with a `terrain`), else null. */
+  private harvestTool(): string | null {
+    const t = this.tool;
+    return t.kind === 'station' && stationDef(t.defId).terrain ? t.defId : null;
+  }
+
+  /**
+   * With a harvest station's tool in hand, the placing tooltip is the tooltip stack's root: for
+   * the hovered tile, or for the tile it locked on, which keeps it while the pointer moves on. The
+   * yield label floats over that tile where the station can stand. Over a panel or out of the
+   * window the pointer has left the field: an open root closes and its label goes, a locked one
+   * after its time. The game leaves the stack
+   * alone while a tool is in hand (`Game.updateRtsTooltip`), and any other tool shows no root.
+   */
+  private updatePlacing(active: boolean, t: Tile, inMap: boolean) {
+    const out = this.placing;
+    const defId = this.harvestTool();
+    this.placingHeld = null;
+    if (!out || defId === null) {
+      out?.label(null, null);
+      return;
+    }
+    const inp = this.input;
+    // as Game.hoverTip tells the stack where the pointer is: out of the window it has left the
+    // field like over a panel, though the field stays active and its last place is still a tile
+    const onField = active && inp.mouseInside;
+    const here =
+      onField && inMap
+        ? {
+            x: t.x,
+            y: t.y,
+            key: tipKey({ kind: 'tile', x: t.x, y: t.y, tool: `station:${defId}` }),
+          }
+        : null;
+    const season = out.season();
+    const build = (at: Tile) => () => out.content(this.placingDoc(at.x, at.y, defId, season));
+    if (onField)
+      out.stack.hover(
+        here?.key ?? null,
+        inp.mouseX,
+        inp.mouseY,
+        here ? build(here) : () => out.content([]),
+      );
+    else if (!inp.overTips) out.stack.leave();
+    const root = out.stack.fieldRoot;
+    const kept = this.placingRoot;
+    if (kept && root === kept.key && out.stack.isLocked(0)) this.placingHeld = kept;
+    else this.placingRoot = here;
+    const at = this.placingHeld ? kept : here;
+    if (!at) {
+      out.label(null, null);
+      return;
+    }
+    // what it says follows the funds, the season and the tuning, a few times a second
+    out.stack.update(at.key, build(at));
+    const b = this.placingYield(at.x, at.y, defId, season);
+    out.label(b === null ? null : yieldLabel(b), b === null ? null : this.cornerOnScreen(at));
+  }
+
+  /** The placing tooltip of a `defId` on (x, y) in `season`. */
+  private placingDoc(x: number, y: number, defId: string, season: Season): TipDoc {
+    const def = stationDef(defId);
+    const check = this.builder.checkStation(x, y, defId, this.rot);
+    return placingTip({
+      name: def.name,
+      refusal: check.ok ? null : (check.reason ?? ''),
+      breakdown: check.ok
+        ? harvestBreakdown(this.builder.map, x, y, defId, 1, season, rules)
+        : null,
+      cargo: def.produces.filter((p) => p.level <= 1).map((p) => p.cargo),
+      weeklyAtLevel1: weeklyOutput(1, 1),
+    });
+  }
+
+  /** Units a week a level 1 `defId` would make on (x, y), null where it cannot stand. */
+  private placingYield(x: number, y: number, defId: string, season: Season): number | null {
+    if (!this.builder.checkStation(x, y, defId, this.rot).ok) return null;
+    const b = harvestBreakdown(this.builder.map, x, y, defId, 1, season, rules, this.placingCells);
+    return b?.perWeek ?? null;
+  }
+
+  /** Where a tile's top corner is on the screen, in the canvas's pixels. */
+  private cornerOnScreen(t: Tile): Point {
+    const p = this.world.surfacePoint(t.x, t.y);
+    const r = this.world.root;
+    return { x: r.x + p.x * r.scale.x, y: r.y + (p.y - HALF_H) * r.scale.y };
+  }
+
+  /** A tool put down: the placing tooltip goes with it, and so does the label. */
+  private dropPlacing() {
+    if (this.placingRoot || this.placingHeld) this.placing?.stack.closeAll();
+    this.placingRoot = null;
+    this.placingHeld = null;
+    this.placing?.label(null, null);
   }
 }
