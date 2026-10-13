@@ -4395,12 +4395,740 @@
       "keptDespiteFailedMeasurements": false,
       "accepted": true,
       "acceptedFile": "poses/stone-mason-back-walk-f3.png"
+    },
+    {
+      "id": "stone-mason-back-carry-f0-attempt-1",
+      "strip": "stone-mason-back-carry",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: The ONE stone block is WIDE: visible pale limestone END beyond BOTH LEFT and RIGHT sides of back, matching IMAGE1 large light-grey side blocks. Do not hide whole block behind woman; both arms wrap/grip both ends in front, no hammer. Same medium-brown woman/slate cap/short dark hair/ivory shirt/copper apron back straps/moss trousers. Ivory brightest oatE4D5B5, stone highlights dull limestoneBCA98B, rivet matte copper not gold, no white/amber glints. Keep adult guide height1152/margins192.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f0.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f0-attempt-1.png",
+      "rawSha256": "bbc3f60bc371e1abae6a005d7e9f248785fe0ad486b4ec4c467ab46d8408dca8",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 193,
+          "y": 186,
+          "width": 660,
+          "height": 1203
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 273,
+          "y": 186,
+          "width": 571,
+          "height": 1203
+        },
+        "hatTop": 186,
+        "soleRow": 1388,
+        "soleOffset": 44,
+        "figureHeight": 1203,
+        "heightError": 0.04427083333333326,
+        "totalWidth": 660,
+        "bodyWidthRatio": 0.9063492063492063,
+        "anatomyMethod": "Visual figure-only bounds include cap/body/both forearms and gripping hands/boots, omit stone. Both exposed stone ends below cap, so hat/sole extrema alpha>128 from full silhouette.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f0-attempt-1-look.png",
+        "foreground": 339570,
+        "nearOpaqueFraction": 0.9870100421120829,
+        "whiteCapViolations": 21,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 358181
+      },
+      "anatomy": {
+        "hatTop": 186,
+        "soleRow": 1388,
+        "bodyBox": {
+          "x": 273,
+          "y": 186,
+          "width": 571,
+          "height": 1203
+        },
+        "note": "Visual figure-only bounds include cap/body/both forearms and gripping hands/boots, omit stone. Both exposed stone ends below cap, so hat/sole extrema alpha>128 from full silhouette."
+      }
+    },
+    {
+      "id": "stone-mason-back-carry-f0-attempt-2",
+      "strip": "stone-mason-back-carry",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Previous BOTH stone ends, arms and contact pose were correct, height1203 within5%; preserve those guide shapes and body/load sizes. Fix21 cursor-white pixels: NO white or cream edge glints on shirt or stone. Shirt three matte shades with brightest EXACT oatE4D5B5; stone three matte limestone shades brightestBCA98B or subduedD2C2A2, no shiny bevel. Rivet copperA36B42 not gold, medium-brown skin. Same short-haired slate-cap woman, apron back cross straps/ties, moss trousers/brown boots. One block WIDER THAN BACK, left AND right exposed ends remain visible; no hammer. Nominalbody1152, cap192/soles1344.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.\nThe bright pixels specifically were on the NECK COLLAR around x527..613,y414..464. Repaint the collar as MATTE OAT like the shirt, no light-cream or white point sparkle on its rim. Retain its shape.",
+      "references": [
+        "guides/stone-mason-back-carry-f0.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f0-attempt-2.png",
+      "rawSha256": "bd86337cf105e527b85b046926d517d45926d69e7553d64d306351984aac2565",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 196,
+          "y": 190,
+          "width": 639,
+          "height": 1181
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 220,
+          "y": 190,
+          "width": 615,
+          "height": 1181
+        },
+        "hatTop": 190,
+        "soleRow": 1370,
+        "soleOffset": 26,
+        "figureHeight": 1181,
+        "heightError": 0.02517361111111116,
+        "totalWidth": 639,
+        "bodyWidthRatio": 0.9761904761904762,
+        "anatomyMethod": "Visual figure-only bounds include cap/body/both forearms and gripping hands/boots, omit stone. Both exposed stone ends below cap, so hat/sole extrema alpha>128 from full silhouette.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f0-attempt-2-look.png",
+        "foreground": 318779,
+        "nearOpaqueFraction": 0.9867808105301792,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 333962
+      },
+      "anatomy": {
+        "hatTop": 190,
+        "soleRow": 1370,
+        "bodyBox": {
+          "x": 220,
+          "y": 190,
+          "width": 615,
+          "height": 1181
+        },
+        "note": "Visual figure-only bounds include cap/body/both forearms and gripping hands/boots, omit stone. Both exposed stone ends below cap, so hat/sole extrema alpha>128 from full silhouette."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Same medium-brown short-dark-haired slate-cap woman/back apron straps, one broad dressed limestone block with BOTH left and right exposed ends gripped in arms. Guide crossed contact legs, height within2.52%. Collar matte oat now0 white/0 amber, load unclipped.",
+      "acceptedFile": "poses/stone-mason-back-carry-f0.png"
+    },
+    {
+      "id": "stone-mason-back-carry-f1-attempt-1",
+      "strip": "stone-mason-back-carry",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: PASSING waist-down: near RIGHT longest VERTICAL leg on SCREEN RIGHT ending1344; far LEFT bent/tucked leg SCREEN LEFT with sole facing viewer and entire raised boot ABOVE1230. No contact X, never copy f0 pants/boots. Same body/head/outfit/stone size as accepted f0, BOTH left and right stone ends visible beyond body, held in both arms. All cloth including NECK COLLAR is matte OAT E4D5B5 at brightest, stone dull limestoneBCA98B/D2C2A2, rivet copper not gold, no white/amber glints. Body1152/cap192/sole1344 within margins.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f1.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f1-attempt-1.png",
+      "rawSha256": "f8320bd4c3fbe4a026c43c9893b91e9464c6f94794fb20b4dc77bc416acdc3af",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 194,
+          "y": 175,
+          "width": 661,
+          "height": 1216
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 219,
+          "y": 175,
+          "width": 636,
+          "height": 1216
+        },
+        "hatTop": 175,
+        "soleRow": 1390,
+        "soleOffset": 46,
+        "figureHeight": 1216,
+        "heightError": 0.05555555555555558,
+        "totalWidth": 661,
+        "bodyWidthRatio": 1.0095238095238095,
+        "anatomyMethod": "Visual figure-only bounds include cap/torso/arms/gripping hands/boots, omit both exposed stone ends; hat/lowest sole alpha>128 from full silhouette as stone below cap.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f1-attempt-1-look.png",
+        "foreground": 350073,
+        "nearOpaqueFraction": 0.9882967266827205,
+        "whiteCapViolations": 42,
+        "strongAmberPixels": 197,
+        "nonzeroAlphaPixels": 364915
+      },
+      "anatomy": {
+        "hatTop": 175,
+        "soleRow": 1390,
+        "bodyBox": {
+          "x": 219,
+          "y": 175,
+          "width": 636,
+          "height": 1216
+        },
+        "note": "Visual figure-only bounds include cap/torso/arms/gripping hands/boots, omit both exposed stone ends; hat/lowest sole alpha>128 from full silhouette as stone below cap."
+      }
+    },
+    {
+      "id": "stone-mason-back-carry-f2-attempt-1",
+      "strip": "stone-mason-back-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: OPPOSITE CONTACT waist-down: literal OPEN V guide silhouette, bottommost BOOT ON SCREEN RIGHT at~700,1344, other boot SCREEN LEFT around410,1130. No f0 diagonal thigh crossing to grounded screen-left boot. Trace guide lower half, not identity references. Same body/head/outfit/stone size as accepted f0, BOTH left and right stone ends visible beyond body, held in both arms. All cloth including NECK COLLAR is matte OAT E4D5B5 at brightest, stone dull limestoneBCA98B/D2C2A2, rivet copper not gold, no white/amber glints. Body1152/cap192/sole1344 within margins.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f2.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f2-attempt-1.png",
+      "rawSha256": "c7dd05dd5e4b0597979617ce8e7babf0a4abe702560c56df93ebdbc2ab9d1627",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 193,
+          "y": 179,
+          "width": 671,
+          "height": 1213
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 226,
+          "y": 179,
+          "width": 638,
+          "height": 1213
+        },
+        "hatTop": 179,
+        "soleRow": 1391,
+        "soleOffset": 47,
+        "figureHeight": 1213,
+        "heightError": 0.05295138888888884,
+        "totalWidth": 671,
+        "bodyWidthRatio": 1.0126984126984127,
+        "anatomyMethod": "Visual cap/body/both gripping forearms/hands/boots bounds omit stone; load below cap, alpha>128 hat/sole extrema from whole silhouette.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f2-attempt-1-look.png",
+        "foreground": 353939,
+        "nearOpaqueFraction": 0.9873933078863872,
+        "whiteCapViolations": 16,
+        "strongAmberPixels": 14,
+        "nonzeroAlphaPixels": 371017
+      },
+      "anatomy": {
+        "hatTop": 179,
+        "soleRow": 1391,
+        "bodyBox": {
+          "x": 226,
+          "y": 179,
+          "width": 638,
+          "height": 1213
+        },
+        "note": "Visual cap/body/both gripping forearms/hands/boots bounds omit stone; load below cap, alpha>128 hat/sole extrema from whole silhouette."
+      },
+      "visualNote": "Best of three: correct opposite contact, same normal ankle boots/moss cuffs and stone both ends. Retain5.30% height excess and16 white/14 amber raw pixels;2 changed to tall shin boots/3411 amber,3 oversized15.45%. No repeated pose; choose least geometry/identity error under author decision.",
+      "keptStyleViolations": {
+        "whiteCapViolations": 16,
+        "strongAmberPixels": 14,
+        "reason": "Best of three in size and correct ankle-boot identity/leg pose; later2 changed boots/palette,3 oversized15.45%."
+      },
+      "keptDespiteFailedMeasurements": true,
+      "accepted": true,
+      "acceptedFile": "poses/stone-mason-back-carry-f2.png"
+    },
+    {
+      "id": "stone-mason-back-carry-f3-attempt-1",
+      "strip": "stone-mason-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: OTHER PASSING waist-down: LEFT VERTICAL planted leg SCREEN LEFT ends1344, RIGHT bent raised boot SCREEN RIGHT showing sole entirely above1280. No contact X, ignore f0 legs. Same body/head/outfit/stone size as accepted f0, BOTH left and right stone ends visible beyond body, held in both arms. All cloth including NECK COLLAR is matte OAT E4D5B5 at brightest, stone dull limestoneBCA98B/D2C2A2, rivet copper not gold, no white/amber glints. Body1152/cap192/sole1344 within margins.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f3.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f3-attempt-1.png",
+      "rawSha256": "fd69dffcba092c75d247c9add72eed86c194a0d5188ee417afa2510a701314e1",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 191,
+          "y": 186,
+          "width": 656,
+          "height": 1207
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 220,
+          "y": 186,
+          "width": 627,
+          "height": 1207
+        },
+        "hatTop": 186,
+        "soleRow": 1392,
+        "soleOffset": 48,
+        "figureHeight": 1207,
+        "heightError": 0.04774305555555558,
+        "totalWidth": 656,
+        "bodyWidthRatio": 0.9952380952380953,
+        "anatomyMethod": "Visual figure bounds include cap/body/gripping forearms/hands/boots, exclude stone; load below cap, alpha>128 hat and lowest planted sole.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f3-attempt-1-look.png",
+        "foreground": 338529,
+        "nearOpaqueFraction": 0.9879035474065737,
+        "whiteCapViolations": 4,
+        "strongAmberPixels": 74,
+        "nonzeroAlphaPixels": 351949
+      },
+      "anatomy": {
+        "hatTop": 186,
+        "soleRow": 1392,
+        "bodyBox": {
+          "x": 220,
+          "y": 186,
+          "width": 627,
+          "height": 1207
+        },
+        "note": "Visual figure bounds include cap/body/gripping forearms/hands/boots, exclude stone; load below cap, alpha>128 hat and lowest planted sole."
+      },
+      "visualNote": "Best of three: left planted, right lifted with sole to viewer, opposite f1, both stone ends visible. Height within4.78%; retain raw4 white/74 amber pixels after three as least size/palette error. Grounded head a little higher than f0, recorded cycle caveat; no repeated pose.",
+      "keptStyleViolations": {
+        "whiteCapViolations": 4,
+        "strongAmberPixels": 74,
+        "reason": "Best after three: only passing-height variant and correct other raised boot, lowest combined palette violations; later two enlarged figure."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "acceptedFile": "poses/stone-mason-back-carry-f3.png"
+    },
+    {
+      "id": "stone-mason-back-carry-f1-attempt-2",
+      "strip": "stone-mason-back-carry",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Correct guide PASSING with RIGHT planted screen-right and LEFT raised screen-left showing sole, preserve BOTH exposed stone ends and held arms. Previous height1216 is5.56% too tall: reduce to1152, cap192 lowestsole1344; same f0 body/head/stone sizes. Fix42 white/197 amber pixels: especially NECK COLLAR rim must be matteOATE4D5B5, no white highlight. Rivet matte copper/brown like straps, NO GOLD. Medium-brown skin with mutedCD8C5A highlights, no orange sparkle; stone matteBCA98B/D2C2A2 with no bright bevel. All upper-left contour material-coloured, no full drawn border.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f1.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f1-attempt-2.png",
+      "rawSha256": "35684ca83005ea079491e07ab0e0bea90a221aa5c4aef9c5ae4aa7de7023cdbb",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 191,
+          "y": 166,
+          "width": 704,
+          "height": 1198
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 217,
+          "y": 166,
+          "width": 678,
+          "height": 1198
+        },
+        "hatTop": 166,
+        "soleRow": 1363,
+        "soleOffset": 19,
+        "figureHeight": 1198,
+        "heightError": 0.03993055555555558,
+        "totalWidth": 704,
+        "bodyWidthRatio": 1.0761904761904761,
+        "anatomyMethod": "Visual figure-only bounds include cap/torso/arms/gripping hands/boots, omit both exposed stone ends; hat/lowest sole alpha>128 from full silhouette as stone below cap.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f1-attempt-2-look.png",
+        "foreground": 373032,
+        "nearOpaqueFraction": 0.9888883527418559,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 388482
+      },
+      "anatomy": {
+        "hatTop": 166,
+        "soleRow": 1363,
+        "bodyBox": {
+          "x": 217,
+          "y": 166,
+          "width": 678,
+          "height": 1198
+        },
+        "note": "Visual figure-only bounds include cap/torso/arms/gripping hands/boots, omit both exposed stone ends; hat/lowest sole alpha>128 from full silhouette as stone below cap."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Correct passing, right boot grounded below raised left sole; lift shallow but visible and distinct from contacts. Same woman/short dark hair/slate cap/apron and single stone with both ends visible. Height within3.99%, grounded cap5.31px above f0 (within2%); palette white/amber0. Width including gripping hands recorded separately from stone.",
+      "acceptedFile": "poses/stone-mason-back-carry-f1.png"
+    },
+    {
+      "id": "stone-mason-back-carry-f2-attempt-2",
+      "strip": "stone-mason-back-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Correct OPPOSITE contact from GUIDE2 (bottommost boot screen-right, other boot screen-left higher) and BOTH exposed stone ends, preserve them. Previous height1213 is5.3% over1152: slightly reduce whole figure/load, same f0 body/head/stone size, cap192 lowestsole1344. Fix16 white/14 amber pixels: NECK COLLAR rim matteOATE4D5B5, no white/cream glint; copper rivetA36B42 NO GOLD, medium-brown skin mutedCD8C5A highlights, stone dullBCA98B/D2C2A2 no bright bevel. One block, both gripping hands, no hammer or shadow.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f2.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f2-attempt-2.png",
+      "rawSha256": "54dd5e873e33b1291afb104e8736f32bdb5aaa9898f9851c939a039e0b79556d",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 205,
+          "y": 174,
+          "width": 695,
+          "height": 1221
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 224,
+          "y": 174,
+          "width": 676,
+          "height": 1221
+        },
+        "hatTop": 174,
+        "soleRow": 1394,
+        "soleOffset": 50,
+        "figureHeight": 1221,
+        "heightError": 0.05989583333333326,
+        "totalWidth": 695,
+        "bodyWidthRatio": 1.073015873015873,
+        "anatomyMethod": "Visual cap/body/both gripping forearms/hands/boots bounds omit stone; load below cap, alpha>128 hat/sole extrema from whole silhouette.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f2-attempt-2-look.png",
+        "foreground": 363179,
+        "nearOpaqueFraction": 0.9885263189776942,
+        "whiteCapViolations": 50,
+        "strongAmberPixels": 3411,
+        "nonzeroAlphaPixels": 378158
+      },
+      "anatomy": {
+        "hatTop": 174,
+        "soleRow": 1394,
+        "bodyBox": {
+          "x": 224,
+          "y": 174,
+          "width": 676,
+          "height": 1221
+        },
+        "note": "Visual cap/body/both gripping forearms/hands/boots bounds omit stone; load below cap, alpha>128 hat/sole extrema from whole silhouette."
+      },
+      "visualNote": "Three compared:1 correct opposite stance,5.30% height excess,16 white/14 amber;2 tall shin boots unlike identity,5.99% excess and3411 amber;3 corrected cuffs but15.45% oversized. Keep1, best size/identity/pose after three."
+    },
+    {
+      "id": "stone-mason-back-carry-f3-attempt-2",
+      "strip": "stone-mason-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Correct OTHER PASSING and both stone ends: keep LEFT planted SCREEN LEFT, RIGHT raised SCREEN RIGHT showing sole above ground. Match f0 head/body/block size, cap192 nominalheight1152. Fix4 white/74 amber pixels: NECK COLLAR must be flat matteOATE4D5B5 even at its brightest rim, no light-cream glint. Rivet should be matte COPPER/BROWN like the apron, not gold/yellow. All skin medium-brown mutedCD8C5A highlights, no orange sparkle. Stone dullBCA98B/D2C2A2 broad planes with no white bevel. Preserve one wide stone held in both arms, exposed left/right ends; no hammer, shadow or outline perimeter.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f3.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f3-attempt-2.png",
+      "rawSha256": "1f30053a831f9c63dca3f69129cf37b67d8fd2489493a3b146a9376dd2699a31",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 163,
+          "y": 184,
+          "width": 701,
+          "height": 1220
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 198,
+          "y": 184,
+          "width": 666,
+          "height": 1220
+        },
+        "hatTop": 184,
+        "soleRow": 1403,
+        "soleOffset": 59,
+        "figureHeight": 1220,
+        "heightError": 0.05902777777777768,
+        "totalWidth": 701,
+        "bodyWidthRatio": 1.0571428571428572,
+        "anatomyMethod": "Visual figure bounds include cap/body/gripping forearms/hands/boots, exclude stone; load below cap, alpha>128 hat and lowest planted sole.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f3-attempt-2-look.png",
+        "foreground": 363517,
+        "nearOpaqueFraction": 0.9886002580346999,
+        "whiteCapViolations": 84,
+        "strongAmberPixels": 10,
+        "nonzeroAlphaPixels": 377034
+      },
+      "anatomy": {
+        "hatTop": 184,
+        "soleRow": 1403,
+        "bodyBox": {
+          "x": 198,
+          "y": 184,
+          "width": 666,
+          "height": 1220
+        },
+        "note": "Visual figure bounds include cap/body/gripping forearms/hands/boots, exclude stone; load below cap, alpha>128 hat and lowest planted sole."
+      },
+      "visualNote": "Three compared:1 correct other lifted sole and height4.77% excess,4 white/74 amber;2 height5.90%/84 white/10 amber;3 height8.51%/8 white/97 amber. Keep1 for correct pose and best size/palette total."
+    },
+    {
+      "id": "stone-mason-back-carry-f2-attempt-3",
+      "strip": "stone-mason-back-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST ATTEMPT. Keep correct OPEN V opposite contact and both stone ends, but match CLOTHES EXACTLY: moss trouser cuffs extend down to ANKLES on BOTH legs, brown boots are short ANKLE BOOTS like accepted f0, never tall brown shin boots as last image. Previous height1221 is6% over1152: cap192 lowestsole1344, same adult/head/stone size as f0. Palette last50 white/3411 amber pixels: medium-brown SKIN baseA36B42/highlightC38B62, NO saturated orange forearm shine. Neck collar flat matteE4D5B5, no white glint on rim; rivet copper/brown not gold; stoneBCA98B/D2C2A2 no white edges. Trace GUIDE2 legs and preserve load; no hammer, ground or full outline.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f2.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f2-attempt-3.png",
+      "rawSha256": "b279d9c19025aa7b6e5a3bd7275da36c139c5833dd4ea8abfe14eadf0b3b264a",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 164,
+          "y": 98,
+          "width": 736,
+          "height": 1330
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 188,
+          "y": 98,
+          "width": 712,
+          "height": 1330
+        },
+        "hatTop": 98,
+        "soleRow": 1427,
+        "soleOffset": 83,
+        "figureHeight": 1330,
+        "heightError": 0.15451388888888884,
+        "totalWidth": 736,
+        "bodyWidthRatio": 1.1301587301587301,
+        "anatomyMethod": "Visual cap/body/both gripping forearms/hands/boots bounds omit stone; load below cap, alpha>128 hat/sole extrema from whole silhouette.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f2-attempt-3-look.png",
+        "foreground": 414477,
+        "nearOpaqueFraction": 0.9886121545948268,
+        "whiteCapViolations": 7,
+        "strongAmberPixels": 5,
+        "nonzeroAlphaPixels": 431340
+      },
+      "anatomy": {
+        "hatTop": 98,
+        "soleRow": 1427,
+        "bodyBox": {
+          "x": 188,
+          "y": 98,
+          "width": 712,
+          "height": 1330
+        },
+        "note": "Visual cap/body/both gripping forearms/hands/boots bounds omit stone; load below cap, alpha>128 hat/sole extrema from whole silhouette."
+      },
+      "visualNote": "Three compared:1 correct opposite stance,5.30% height excess,16 white/14 amber;2 tall shin boots unlike identity,5.99% excess and3411 amber;3 corrected cuffs but15.45% oversized. Keep1, best size/identity/pose after three."
+    },
+    {
+      "id": "stone-mason-back-carry-f3-attempt-3",
+      "strip": "stone-mason-back-carry",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: adult woman with warm medium-brown skin and short dark hair, slate flat cap, ivory rolled-sleeve shirt, broad copper-brown leather apron with its back straps and ties, moss trousers and brown boots. LOAD: ONE dressed pale limestone block held in BOTH arms, WIDER THAN HER BACK, so LEFT AND RIGHT stone ends SHOW BEYOND both sides of her body in BACK view; guide light-grey side blocks MUST remain visible, no hammer.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x195..824,y192..1343,width630,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST ATTEMPT: keep correct OTHER lifted sole (LEFT planted screen-left, RIGHT bent lifted screen-right) and both stone ends. Previous1220px height5.9% too tall: cap192 lowestsole1344, nominal1152, SAME f0 head/body/block sizes. MATTE lighting: all shading DARKENS from brightest material swatch, NEVER add white glint. Brightest shirt and especially NECK COLLAR EXACT E4D5B5; use BCA98B shadows. Skin baseA36B42/highlightC38B62/shadow7D5036, no orange shine. Rivet flat matte copperA36B42 like strap, no gold. Stone brightestD2C2A2/baseBCA98B, no white bevel. Last84 white/10 amber pixels must disappear. Same short dark-haired woman, apron back straps/ties, moss cuffs to ankles and short brown boots; no hammer or shadows.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/stone-mason-back-carry-f3.png",
+        "refs/stone-mason-front-carry.png",
+        "refs/stone-mason-back-carry-back.png",
+        "reference-passenger.png",
+        "poses/stone-mason-back-carry-f0.png"
+      ],
+      "file": "raw/poses/stone-mason-back-carry-f3-attempt-3.png",
+      "rawSha256": "ae18a30a1ede18a1af9cd0c4b4dc8a8cd54214a2083ac27670f95fefd1f9b300",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 159,
+          "y": 157,
+          "width": 714,
+          "height": 1250
+        },
+        "guideBox": {
+          "x": 195,
+          "y": 192,
+          "width": 630,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 191,
+          "y": 157,
+          "width": 681,
+          "height": 1250
+        },
+        "hatTop": 157,
+        "soleRow": 1406,
+        "soleOffset": 62,
+        "figureHeight": 1250,
+        "heightError": 0.08506944444444442,
+        "totalWidth": 714,
+        "bodyWidthRatio": 1.0809523809523809,
+        "anatomyMethod": "Visual figure bounds include cap/body/gripping forearms/hands/boots, exclude stone; load below cap, alpha>128 hat and lowest planted sole.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/stone-mason-back-carry-f3-attempt-3-look.png",
+        "foreground": 369705,
+        "nearOpaqueFraction": 0.9879877199388701,
+        "whiteCapViolations": 8,
+        "strongAmberPixels": 97,
+        "nonzeroAlphaPixels": 386361
+      },
+      "anatomy": {
+        "hatTop": 157,
+        "soleRow": 1406,
+        "bodyBox": {
+          "x": 191,
+          "y": 157,
+          "width": 681,
+          "height": 1250
+        },
+        "note": "Visual figure bounds include cap/body/gripping forearms/hands/boots, exclude stone; load below cap, alpha>128 hat and lowest planted sole."
+      },
+      "visualNote": "Three compared:1 correct other lifted sole and height4.77% excess,4 white/74 amber;2 height5.90%/84 white/10 amber;3 height8.51%/8 white/97 amber. Keep1 for correct pose and best size/palette total."
     }
   ],
   "redoStatus": {
     "requestedStripCount": 9,
-    "completedStripCount": 6,
-    "status": "6/9 strips complete; stone-mason-back-walk four distinct phases, retained f2 size/bob caveat, final palette passing.",
+    "completedStripCount": 7,
+    "status": "7/9 strips complete; stone-mason-back-carry four distinct phases with both stone ends, retained small size/bob/palette caveats.",
     "geometry": "pose-geometry.json",
     "workflow": "redo-workflow.md",
     "protection": "redo-state.json",
@@ -4417,7 +5145,7 @@
     ],
     "imageTool": "built-in image_gen",
     "fallbackApiUsed": false,
-    "paintingCount": 61,
+    "paintingCount": 71,
     "diagnosticCandidate": "checks/pump-hand-back-walk-candidate.html",
     "resolvedBlockHistory": [
       {
@@ -5445,6 +6173,172 @@
       ],
       "headBobRange": 9.6875,
       "headBobFraction": 0.026909722222222224,
+      "headBobWithinTwoPercent": false
+    },
+    "stone-mason-back-carry": {
+      "canvas": [
+        1024,
+        512
+      ],
+      "columns": 4,
+      "columnWidth": 256,
+      "anchors": [
+        [
+          128,
+          480
+        ],
+        [
+          384,
+          480
+        ],
+        [
+          640,
+          480
+        ],
+        [
+          896,
+          480
+        ]
+      ],
+      "uniformScaling": true,
+      "scaleFormula": "360 / (1152 * returnedWidth / 1024)",
+      "resampling": "premultiplied-alpha area averaging",
+      "maxReach": 119.6875,
+      "frames": [
+        {
+          "frame": 0,
+          "pose": "poses/stone-mason-back-carry-f0.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1370
+          ],
+          "soleRow": 1370,
+          "anchor": [
+            128,
+            480
+          ],
+          "leftReach": 98.75,
+          "rightReach": 100.9375,
+          "bounds": {
+            "x": 29,
+            "y": 111,
+            "width": 200,
+            "height": 369
+          }
+        },
+        {
+          "frame": 1,
+          "pose": "poses/stone-mason-back-carry-f1.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1363
+          ],
+          "soleRow": 1363,
+          "anchor": [
+            384,
+            480
+          ],
+          "leftReach": 100.3125,
+          "rightReach": 119.6875,
+          "bounds": {
+            "x": 28,
+            "y": 106,
+            "width": 220,
+            "height": 374
+          }
+        },
+        {
+          "frame": 2,
+          "pose": "poses/stone-mason-back-carry-f2.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1391
+          ],
+          "soleRow": 1391,
+          "anchor": [
+            640,
+            480
+          ],
+          "leftReach": 99.6875,
+          "rightReach": 110,
+          "bounds": {
+            "x": 28,
+            "y": 101,
+            "width": 210,
+            "height": 379
+          }
+        },
+        {
+          "frame": 3,
+          "pose": "poses/stone-mason-back-carry-f3.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1392
+          ],
+          "soleRow": 1392,
+          "anchor": [
+            896,
+            480
+          ],
+          "leftReach": 100.3125,
+          "rightReach": 104.6875,
+          "bounds": {
+            "x": 28,
+            "y": 103,
+            "width": 205,
+            "height": 377
+          }
+        }
+      ],
+      "visualCycleReview": "passed",
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 384746,
+        "opaquePixels": 131287,
+        "antialiasedPixels": 8255,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 10
+      },
+      "visualFindings": {
+        "contactX": true,
+        "oppositeLiftedFoot": true,
+        "offline9pxAnd36pxInspected": true,
+        "browserPlayback": false,
+        "repeatedFrames": [],
+        "note": "Offline9px-6x and36px inspected: opposite contact X in f0/f2, f1 left raised sole and f3 right raised sole; all selected phases distinct, same woman/stone with BOTH ends visible. Accepted2,2,1,1. f2 smallest height excess5.30% kept after three (later boot change/5.99%, huge15.45%); f3 best first with passing height4.77%. Grounded cap range10px=2.78%; retained after capped retries. Raw palette exceptions per calls; final PNG0 white/10 amber pixels. Uniform256px columns with maxreach119.69px, no load clipping/squashing."
+      },
+      "groundedHatRows": [
+        111.25,
+        105.9375,
+        101.25,
+        103.125
+      ],
+      "headBobRange": 10,
+      "headBobFraction": 0.027777777777777776,
       "headBobWithinTwoPercent": false
     }
   }

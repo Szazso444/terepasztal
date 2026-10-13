@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-12T23:44:37.582Z",
+  "updatedAt": "2026-10-13T00:04:45.607Z",
   "branch": "art/331-people",
   "brief": "finish-brief-2026-10-12.txt",
   "strips": [
@@ -189,18 +189,40 @@
     {
       "strip": "stone-mason-back-carry",
       "acceptedAttempts": [
-        null,
-        null,
-        null,
-        null
+        2,
+        2,
+        1,
+        1
       ],
-      "cycleReview": "not assembled",
+      "cycleReview": "passed",
       "repeatedFrames": [],
-      "findings": null,
-      "headBobFraction": null,
-      "outputPaletteCheck": null,
-      "rawPaletteExceptionsKept": [],
-      "measurementsKeptAfterThree": []
+      "findings": "Offline9px-6x and36px inspected: opposite contact X in f0/f2, f1 left raised sole and f3 right raised sole; all selected phases distinct, same woman/stone with BOTH ends visible. Accepted2,2,1,1. f2 smallest height excess5.30% kept after three (later boot change/5.99%, huge15.45%); f3 best first with passing height4.77%. Grounded cap range10px=2.78%; retained after capped retries. Raw palette exceptions per calls; final PNG0 white/10 amber pixels. Uniform256px columns with maxreach119.69px, no load clipping/squashing.",
+      "headBobFraction": 0.027777777777777776,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 384746,
+        "opaquePixels": 131287,
+        "antialiasedPixels": 8255,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 10
+      },
+      "rawPaletteExceptionsKept": [
+        {
+          "frame": 2,
+          "whiteCapViolations": 16,
+          "strongAmberPixels": 14,
+          "reason": "Best of three in size and correct ankle-boot identity/leg pose; later2 changed boots/palette,3 oversized15.45%."
+        },
+        {
+          "frame": 3,
+          "whiteCapViolations": 4,
+          "strongAmberPixels": 74,
+          "reason": "Best after three: only passing-height variant and correct other raised boot, lowest combined palette violations; later two enlarged figure."
+        }
+      ],
+      "measurementsKeptAfterThree": [
+        2
+      ]
     },
     {
       "strip": "farmer-back-walk",
