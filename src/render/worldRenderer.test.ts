@@ -280,6 +280,87 @@ describe('a building fitted to the ground', () => {
     expect([last.shadow, last.foot, last.weeds].every((p) => p.destroyed)).toBe(true);
     expect([contactGround.children.length, objects.children.length]).toEqual([0, 0]);
   });
+
+  it("draws its shadow and weeds at the size they were made for, its foot at the picture's, each on its own anchor", () => {
+    const { world } = renderer();
+    for (const frame of BUILDINGS) {
+      const s = world.setStructure('decor:0,0', 0, 0, frame),
+        fit = fitsOf(world).get('decor:0,0')!;
+      // the shadow and weeds are world px at the building's scale already; the foot is the picture's
+      expect([fit.shadow.scale.x, fit.shadow.scale.y], frame).toEqual([1, 1]);
+      expect([fit.weeds.scale.x, fit.weeds.scale.y], frame).toEqual([1, 1]);
+      expect([fit.foot.scale.x, fit.foot.scale.y], frame).toEqual([s.scale.x, s.scale.y]);
+      // the anchors the surfaces mock hands out for the shadow, the foot and the weeds
+      expect([fit.shadow.anchor.x, fit.shadow.anchor.y], frame).toEqual([0.3, 0.2]);
+      expect([fit.foot.anchor.x, fit.foot.anchor.y], frame).toEqual([0.5, 0.8]);
+      expect([fit.weeds.anchor.x, fit.weeds.anchor.y], frame).toEqual([0.5, 0.5]);
+    }
+    // the scales differ between these frames, so the checks above are not all at scale 1
+    const scales = new Set(BUILDINGS.map((f) => world.setStructure('decor:0,0', 0, 0, f).scale.x));
+    expect(scales.size).toBeGreaterThan(1);
+  });
+
+  it('shows no cast shadow for a picture with its own baked in, and no foot or weeds where it has no foot', () => {
+    const { world } = renderer(),
+      surfaces = (world as unknown as { surfaces: { groundFit: (...a: never[]) => unknown } })
+        .surfaces,
+      fitted = surfaces.groundFit;
+    // as surfaces answer: station_1_r1 has its shadow baked in, water_tower_r2 stands on no foot
+    surfaces.groundFit = ((key: string, f: FrameInfo, scale: number) => {
+      const art = (fitted as (k: string, f: FrameInfo, s: number) => Record<string, unknown>)(
+        key,
+        f,
+        scale,
+      );
+      if (key === 'structures/station_1_r1') return { ...art, shadow: null };
+      if (key === 'structures/water_tower_r2') return { foot: null, shadow: null, feet: [] };
+      return art;
+    }) as never;
+    const shown = () => {
+      const fit = fitsOf(world).get('decor:0,0')!;
+      return [fit.shadow.visible, fit.foot.visible, fit.weeds.visible];
+    };
+    world.setStructure('decor:0,0', 0, 0, 'structures/station_1');
+    expect(shown()).toEqual([true, true, true]);
+    world.setStructure('decor:0,0', 0, 0, 'structures/station_1_r1');
+    expect(shown()).toEqual([false, true, true]);
+    world.setStructure('decor:0,0', 0, 0, 'structures/water_tower_r2');
+    expect(shown()).toEqual([false, false, false]);
+    // turned back, all of it shows again
+    world.setStructure('decor:0,0', 0, 0, 'structures/station_1');
+    expect(shown()).toEqual([true, true, true]);
+  });
+
+  it("grows the same weeds on the same world tile, wherever the map's origin lies", () => {
+    /** The weeds and pebbles a building on local tile (x, y) grows, with the map's origin. */
+    const grown = (originX: number, originY: number, x: number, y: number) => {
+      const { world } = renderer(),
+        surfaces = (
+          world as unknown as {
+            surfaces: { weeds: (items: readonly unknown[], ground: string) => unknown };
+          }
+        ).surfaces,
+        draw = surfaces.weeds,
+        items: unknown[][] = [];
+      surfaces.weeds = (it, ground) => {
+        items.push([...it]);
+        return draw(it, ground);
+      };
+      Object.assign(world, {
+        map: { w: 8, h: 8, originX, originY, terrain: Array(64).fill(0), biome: Array(64).fill(0) },
+      });
+      world.setStructure('decor:b', x, y, 'structures/townhouse_s1');
+      return items;
+    };
+    const here = grown(0, 0, 3, 4);
+    expect(here.length).toBe(1);
+    expect(here[0].length).toBeGreaterThan(0);
+    // world tile (3, 4) again, on a map that has grown so its origin is elsewhere
+    expect(grown(-2, 1, 5, 3)).toEqual(here);
+    expect(grown(3, 4, 0, 0)).toEqual(here);
+    // the next tile grows its own
+    expect(grown(0, 0, 4, 4)).not.toEqual(here);
+  });
 });
 
 describe('a ghost sprite switching frames', () => {
