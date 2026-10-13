@@ -841,7 +841,8 @@ export class Landscape {
    * `timeoutMs` of real time have passed with the view still unpainted. A view that is painted
    * already resolves `'painted'` at once, and so does a timeout of 0 or less that is not. An
    * infinite timeout waits for the paint or the failure. The camera moving to unpainted ground
-   * keeps the wait going.
+   * keeps the wait going. The caller places the camera over the map first: a view with no chunk
+   * in it is `0 of 0`, which counts as painted.
    */
   whenViewPainted(timeoutMs: number): Promise<ViewPaint> {
     return new Promise((resolve) => {
