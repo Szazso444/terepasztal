@@ -1,5 +1,6 @@
 import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
+import type { BootProgressHook } from './engine/boot';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
@@ -389,6 +390,12 @@ export class Game implements UiHost {
   private namePrompt = new NamePrompt();
   private paused = false;
   private menuPausedSpeed = 0;
+  /**
+   * Set by the boot while the title screen it opened is up (`main.ts`): leaving that title for the
+   * game under it (its Continue) runs this once in place of starting the music, as the boot
+   * reveals the game first and starts the music with the reveal.
+   */
+  onTitleContinue: (() => void) | null = null;
   /** The panels, screens, menus and hotkeys of the game (src/ui/panels.ts), built in `init`. */
   ui!: PlayUi;
   /** What the panels change trains, stations, signals, trade and pulls through; one per game. */
@@ -585,7 +592,11 @@ export class Game implements UiHost {
   }
   /** The clock runs again at the speed it had (in a game; the editor stays stopped). */
   resumeGame() {
-    audio.startMusic(); // the title screen holds the music back; closing a menu lets it start
+    const begin = this.onTitleContinue;
+    this.onTitleContinue = null;
+    // the title screen holds the music back; closing a menu lets it start, or the boot's reveal
+    if (begin) begin();
+    else audio.startMusic();
     if (!this.paused) return;
     this.paused = false;
     if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed);
@@ -661,7 +672,7 @@ export class Game implements UiHost {
       this.toasts.push(STR.saves.refused.storage, 'warn');
       return true;
     }
-    this.reloadIntoStoredSave(j.seed);
+    this.reloadIntoStoredSave();
     return true;
   }
   deleteSlot(name: string) {
@@ -671,7 +682,7 @@ export class Game implements UiHost {
   loadSave() {
     const j = readSave();
     if (!j) return false;
-    this.reloadIntoStoredSave(j.seed);
+    this.reloadIntoStoredSave();
     return true;
   }
   /** The game as save text. */
@@ -685,21 +696,20 @@ export class Game implements UiHost {
   importSave(json: string): { ok: true } | { ok: false; error: SaveRefusal } {
     const read = importSaveText(json);
     if (!read.ok) return read;
-    this.reloadIntoStoredSave(read.save.seed);
+    this.reloadIntoStoredSave();
     return { ok: true };
   }
   /**
-   * The stored save was just replaced: reload into it. The running game must not save over it on
-   * its way out, neither in the unload handler nor in a frame of the minute autosave that runs
-   * while the page reloads.
+   * The stored save was just replaced: reload straight into it, as Continue does. The running game
+   * must not save over it on its way out, neither in the unload handler nor in a frame of the
+   * minute autosave that runs while the page reloads.
    */
-  private reloadIntoStoredSave(seed: number) {
+  private reloadIntoStoredSave() {
     this.keepStoredSave = true;
     this.loop.stop();
     // nothing of the game being left stays up, nor opens while the page reloads
     this.tooltip.stack.closeAll();
-    location.hash = `seed=${seed}`;
-    location.reload();
+    setIntentAndReload({ action: 'continue' });
   }
   /** Clear the stored game and play a level. */
   playLevel(id: string) {
@@ -842,7 +852,12 @@ export class Game implements UiHost {
     this.toasts.push(STR.editor.hint, 'info');
   }
 
-  async init() {
+  /**
+   * Build the game: the renderer, the pictures, the map and everything on it. `onProgress` hears
+   * how far each boot stage has got (`src/engine/boot.ts`) and is awaited at each stage's end, so
+   * a loading screen can paint its bar before the next stage holds the thread.
+   */
+  async init(onProgress?: BootProgressHook) {
     extensions.add(CullerPlugin);
     const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
     this.app = new Application();
@@ -862,8 +877,12 @@ export class Game implements UiHost {
       void import('@pixi/devtools').then((d) => d.initDevtools({ app: this.app }));
     canvas.tabIndex = 0;
     this.input = new Input(canvas);
-    await this.atlas.load(ATLAS_GROUPS);
+    await this.atlas.load(
+      ATLAS_GROUPS,
+      (settled, total) => void onProgress?.('pictures', settled / total),
+    );
     buildCompatTable();
+    await onProgress?.('pictures', 1);
 
     if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
     else {
@@ -871,6 +890,7 @@ export class Game implements UiHost {
       this.ground = groundOf(this.spec, generatorOf(this.supply));
       this.map = this.ground.map;
     }
+    await onProgress?.('map', 1);
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -1128,6 +1148,7 @@ export class Game implements UiHost {
     window.addEventListener('beforeunload', () => {
       if (this.settings.autosave && this.mode === 'play') this.save(true);
     });
+    await onProgress?.('renderer', 1);
   }
 
   // ---------------------------------------------------------------- settings / save

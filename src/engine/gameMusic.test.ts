@@ -136,6 +136,25 @@ describe('Game.resumeGame and the held music', () => {
     expect(playing()).toEqual([MUSIC_TRACKS[0]]);
   });
 
+  it("hands the title's Continue at boot to the boot once, which starts the music with its reveal", async () => {
+    const { Game, audio, gesture, playing } = await rig();
+    audio.hold();
+    audio.preload();
+    gesture();
+    const { game, setSpeed } = standIn(Game, true);
+    const begin = vi.fn();
+    Object.assign(game, { onTitleContinue: begin });
+    game.resumeGame(); // Continue on the title the boot opened
+    // the boot's reveal starts the music, not the click on Continue; the clock resumes as ever
+    expect(begin).toHaveBeenCalledTimes(1);
+    expect(playing()).toEqual([]);
+    expect(setSpeed.mock.calls).toEqual([[3]]);
+    // the hand-off is spent: a menu closed later lets the music start as before
+    game.resumeGame();
+    expect(begin).toHaveBeenCalledTimes(1);
+    expect(playing()).toEqual([MUSIC_TRACKS[0]]);
+  });
+
   it('changes nothing for a bus nobody held: the first gesture starts the music, as before', async () => {
     const { Game, gesture, playing } = await rig();
     standIn(Game, true).game.resumeGame();

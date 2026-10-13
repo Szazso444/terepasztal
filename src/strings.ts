@@ -18,7 +18,6 @@ function ageLabel(t: number) {
 /** All user-facing strings. Keep flat so a Hungarian table can mirror this file later. */
 export const STR = {
   title: 'Terepasztal',
-  loading: 'Laying the first sleepers...',
   /** the loading screen (`src/ui/loadingScreen.ts`): one tip is shown, picked at random */
   loadingScreen: {
     /** names the progress bar for a screen reader */

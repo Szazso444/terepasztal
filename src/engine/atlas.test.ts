@@ -204,4 +204,25 @@ describe('AtlasRegistry', () => {
       '/assets/terrain.png',
     ]);
   });
+
+  it('reports each group as it settles, file or generator, counting up to all of them', async () => {
+    // every way a file can come back: some settle at once, a png a tick later
+    const names = (Object.keys(WAYS) as Way[]).map((way) => {
+      served.set(`g-${way}`, way);
+      return `g-${way}`;
+    });
+    const atlas = new AtlasRegistry(new Set(names));
+    const heard: { settled: number; total: number; loaded: number }[] = [];
+    await atlas.load(
+      names.map((n) => ({ name: n, generate: generator(n) })),
+      (settled, total) => heard.push({ settled, total, loaded: atlas.groupOrigin.size }),
+    );
+    // once per group, counting up to all of them
+    expect(heard.map((h) => [h.settled, h.total])).toEqual(
+      names.map((_, i) => [i + 1, names.length]),
+    );
+    // a group is counted once it is in the registry, and as it settles rather than all at the end
+    for (const h of heard) expect(h.loaded).toBeGreaterThanOrEqual(h.settled);
+    expect(heard[0].loaded).toBeLessThan(names.length);
+  });
 });
