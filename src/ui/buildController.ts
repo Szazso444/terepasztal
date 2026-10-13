@@ -734,7 +734,9 @@ export class BuildController {
   /**
    * With a harvest station's tool in hand, the placing tooltip is the tooltip stack's root: for
    * the hovered tile, or for the tile it locked on, which keeps it while the pointer moves on. The
-   * yield label floats over that tile where the station can stand. The game leaves the stack
+   * yield label floats over that tile where the station can stand. Over a panel or out of the
+   * window the pointer has left the field: an open root closes and its label goes, a locked one
+   * after its time. The game leaves the stack
    * alone while a tool is in hand (`Game.updateRtsTooltip`), and any other tool shows no root.
    */
   private updatePlacing(active: boolean, t: Tile, inMap: boolean) {
@@ -746,8 +748,11 @@ export class BuildController {
       return;
     }
     const inp = this.input;
+    // as Game.hoverTip tells the stack where the pointer is: out of the window it has left the
+    // field like over a panel, though the field stays active and its last place is still a tile
+    const onField = active && inp.mouseInside;
     const here =
-      active && inMap
+      onField && inMap
         ? {
             x: t.x,
             y: t.y,
@@ -756,8 +761,7 @@ export class BuildController {
         : null;
     const season = out.season();
     const build = (at: Tile) => () => out.content(this.placingDoc(at.x, at.y, defId, season));
-    // as Game.hoverTip tells the stack where the pointer is
-    if (active)
+    if (onField)
       out.stack.hover(
         here?.key ?? null,
         inp.mouseX,

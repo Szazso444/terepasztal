@@ -243,6 +243,37 @@ describe("a harvest station's tool", () => {
     expect(h.label).toEqual({ text: labelFor(w, b, 'farm'), corner: h.corner(b) });
   });
 
+  it('lets its tooltip and its label go when the pointer leaves the window, a locked one after its time', () => {
+    const w = simWorld({ seed: 4242, size: 48 });
+    const h = harness(w);
+    h.b.setTool({ kind: 'station', defId: 'farm' });
+    const [a, b] = sites(w, 'farm', 2);
+    expect(b, 'two farm sites').toBeDefined();
+    // out of the window the field stays active and the pointer's last place stays on the tile
+    h.frames(a, ROOT_DELAY_MS + FRAME);
+    expect(h.stack.depth).toBe(1);
+    expect(h.label.text).toBe(labelFor(w, a, 'farm'));
+    h.input.mouseInside = false;
+    h.frames(a, FRAME);
+    expect(h.stack.depth, 'an open root goes at once').toBe(0);
+    expect(h.label).toEqual({ text: null, corner: null });
+    h.frames(a, ROOT_DELAY_MS + HOLD_MS);
+    expect(h.stack.depth, 'nothing opens while it is out').toBe(0);
+    expect(h.label.text).toBeNull();
+    // back in, a root locks on another tile, and out again: it keeps its label for its time
+    h.input.mouseInside = true;
+    h.frames(b, ROOT_DELAY_MS + HOLD_MS + FRAME);
+    expect(h.stack.isLocked(0)).toBe(true);
+    h.input.mouseInside = false;
+    h.frames(b, FRAME);
+    expect(h.stack.depth).toBe(1);
+    expect(h.label).toEqual({ text: labelFor(w, b, 'farm'), corner: h.corner(b) });
+    h.frames(b, ROOT_LEAVE_MS + FRAME);
+    expect(h.stack.depth, 'the locked root closes').toBe(0);
+    expect(h.label).toEqual({ text: null, corner: null });
+    expect(h.b.placingAt(null)).toBeNull();
+  });
+
   it('says what the tuning makes of it while it is up', () => {
     const w = simWorld({ seed: 4242, size: 48 });
     const h = harness(w);
