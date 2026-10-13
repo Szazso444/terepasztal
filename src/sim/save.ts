@@ -9,6 +9,7 @@ import type { HousesJSON } from './houses';
 import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
+import type { RoadJSON } from './roads';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { CHUNK_TILES } from './expand';
@@ -30,7 +31,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -125,6 +126,8 @@ export interface SaveParts {
    * the map. The persons themselves are not saved and start over on load.
    */
   people: PeopleJSON;
+  /** v20: road tiles [x, y], level crossings included (`Roads.toJSON`) */
+  roads: RoadJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =
@@ -577,6 +580,11 @@ export const MIGRATIONS: Migration[] = [
       if (isRecord(world) && world.kind === 'generated') world.chunks = world.chunks ?? {};
     },
   },
+  {
+    from: 19,
+    note: 'no road had been built: the road list started empty',
+    run: (j) => (j.roads = j.roads ?? []),
+  },
 ];
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
 const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
@@ -606,6 +614,7 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   houses: true,
   supply: true,
   people: true,
+  roads: true,
 };
 /** The names a type declares, without the `string` and `number` of an index signature. */
 type DeclaredKey<T> = keyof {

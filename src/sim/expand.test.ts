@@ -58,6 +58,7 @@ function partsOf(world: SaveParts['world']): SaveParts {
     houses: { list: [], arrivals: [], visited: [] },
     supply: 'simple',
     people: { rng: 7 },
+    roads: [],
   };
 }
 
@@ -300,6 +301,7 @@ describe('the shop asks for a ring and the game grows by the rings that fit', ()
       decor: [[...at(), 'townhouse', 0]],
       buildings: [[...at(), 'bridge_stone', 0.5, 3]],
       wires: [[...at(), 'catenary']],
+      roads: [at(), at()],
       houses: {
         list: [{ ...pt(), level: 3, residents: 100, progress: 1 }],
         arrivals: [],
@@ -333,6 +335,7 @@ describe('the shop asks for a ring and the game grows by the rings that fit', ()
     for (const [x, y] of save.decor ?? []) out.push([x, y]);
     for (const [x, y] of save.buildings ?? []) out.push([x, y]);
     for (const [x, y] of save.wires ?? []) out.push([x, y]);
+    for (const [x, y] of save.roads ?? []) out.push([x, y]);
     for (const h of save.houses?.list ?? []) add(h);
     for (const t of save.trains as unknown as {
       head?: At;

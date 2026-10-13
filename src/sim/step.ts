@@ -79,6 +79,7 @@ export interface StepDomains {
   readonly clock: GameClock;
   readonly stock: Stockpile;
   readonly houses: HouseRegistry;
+  /** what is built, the roads and their level crossings among it (`builder.roads`) */
   readonly builder: Builder;
   readonly fleet: Fleet;
   readonly people: PeopleSim;

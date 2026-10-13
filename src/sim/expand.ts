@@ -71,6 +71,7 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
     ...rest,
   ]);
   save.wires = (save.wires ?? []).map(([x, y, k]) => [x + d, y + d, k]);
+  save.roads = (save.roads ?? []).map(([x, y]) => [x + d, y + d]);
   for (const h of save.houses?.list ?? []) {
     h.x += d;
     h.y += d;

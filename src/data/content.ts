@@ -354,6 +354,8 @@ export interface GachaConfig {
 export interface TrackConfig {
   pieces: Record<string, { name: string; cost: Cost; rotations: number }>;
   terrainCost: Record<string, number>;
+  /** a road tile the player lays (src/sim/roads.ts), before the build cost tuning */
+  road: { cost: Cost };
   refund: number;
   curveSpeed: number;
   switchSpeed: number;
@@ -856,6 +858,8 @@ const CHECKS: Record<ContentKey, Check> = {
       if (!isObj(p) || !isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
     for (const k of Object.keys(trackJson.pieces))
       if (!pieces[k]) out.push(`track: missing piece "${k}"`);
+    const road = isObj(t) ? t.road : undefined;
+    if (!isObj(road) || !isCost(road.cost)) out.push('track: road cost must be a resource map');
   },
   crafting(t, ref, out) {
     if (!isObj(t)) {

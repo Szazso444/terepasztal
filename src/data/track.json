@@ -63,6 +63,11 @@
     "rock": 1.35,
     "mountain": 1.65
   },
+  "road": {
+    "cost": {
+      "stone": 1
+    }
+  },
   "refund": 0.5,
   "curveSpeed": 0.55,
   "switchSpeed": 0.7,

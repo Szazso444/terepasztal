@@ -167,15 +167,22 @@ describe('walking speed', () => {
     expect(walkSpeed({ transient: true })).toBe(WALK_SPEED * BOARDING_SPEED_MUL);
   });
 
-  it("never outpaces a train: the fastest walker is at most half the slowest engine's top speed", () => {
-    // read as 'at most' because 0.2 x 1.5 is exactly half of the slowest engine's 0.6. When roads
-    // (#318) give a walker a faster pace, either that pace joins `fastest` here or the invariant is
-    // read again: until then walkSpeed() is the whole of a walker's pace. It is read at the tuning
-    // the game ships with (beforeEach restores it): the Game tuning slider 'Train speed x' runs down
-    // to 0.2 and would take every engine below a walker, which the player chose.
-    const fastest = Math.max(walkSpeed({ transient: false }), walkSpeed({ transient: true }));
+  it('never outpaces a train: the fastest walker, on a road, is slower than the slowest engine', () => {
+    // Roads (#318) give every walker twice its pace along them, a boarding figure no more than
+    // any other, so the bound of #297 (at most half the slowest engine) holds off a road only. On
+    // one the fastest walker is still slower than any engine. walkSpeed() with the road is the
+    // whole of a walker's pace. It is read at the tuning the game ships with (beforeEach restores
+    // it): the Game tuning slider 'Train speed x' runs down to 0.2 and would take every engine
+    // below a walker, which the player chose.
+    const pace = (transient: boolean, onRoad: boolean) => walkSpeed({ transient }, onRoad);
+    const fastest = Math.max(pace(false, true), pace(true, true));
     expect(content.locomotives.length).toBeGreaterThan(0);
-    expect(fastest).toBeLessThanOrEqual(halfSlowestEngine() + 1e-9);
+    expect(fastest).toBeLessThan(2 * halfSlowestEngine());
+    // off a road: at most half, read as 'at most' because 0.2 x 1.5 is exactly half of the slowest
+    // engine's 0.6
+    expect(Math.max(pace(false, false), pace(true, false))).toBeLessThanOrEqual(
+      halfSlowestEngine() + 1e-9,
+    );
     // the plain walker is a good way under it
     expect(WALK_SPEED).toBeLessThan(halfSlowestEngine());
   });
