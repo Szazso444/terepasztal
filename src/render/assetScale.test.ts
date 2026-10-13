@@ -4,9 +4,10 @@ import { structureFrame } from '../art/frames';
 import { generateStructuresAtlas } from '../art/structures';
 import {
   DOOR_FRACTION,
-  HUMAN_HEIGHT_PX,
-  HUMAN_HEIGHT_M,
-  DOOR_HEIGHT_M,
+  DOOR_PX,
+  DOOR_REFERENCE_PX,
+  EQUIPMENT_SCALE,
+  PERSON_PX,
   structureFamily,
   structureScale,
   hasScaleReference,
@@ -15,17 +16,94 @@ import {
   type FrameNames,
 } from './assetScale';
 
-it('keeps a common human-relative door height across packed building levels', () => {
+it('pins the two heights: a standard door is 13.2 px and a person 9 px', () => {
+  expect(DOOR_PX).toBe(13.2);
+  expect(PERSON_PX).toBe(9);
+});
+
+it('keeps a common door height across packed building levels', () => {
   let checked = 0;
   for (const [key, frame] of Object.entries(atlas.frames) as [string, { h: number }][]) {
     const family = structureFamily(key);
     if (!DOOR_FRACTION[family]) continue;
     const height = frame.h / atlas.resolution;
     const door = height * DOOR_FRACTION[family] * structureScale(key, height);
-    expect(door / HUMAN_HEIGHT_PX).toBeCloseTo(DOOR_HEIGHT_M / HUMAN_HEIGHT_M, 5);
+    expect(door, key).toBeCloseTo(DOOR_PX, 5);
     checked++;
   }
   expect(checked).toBeGreaterThan(20);
+});
+
+describe('building scale', () => {
+  /**
+   * How a building was sized when the person and the door were one number: the door, 2.1 m beside
+   * a 1.75 m person drawn 11 px, over the frame's own door. Written out here so a change to either
+   * height cannot move it with them.
+   */
+  const before = (frame: string, illustratedHeight?: number) => {
+    const family = structureFamily(frame);
+    const door =
+      illustratedHeight && DOOR_FRACTION[family]
+        ? illustratedHeight * DOOR_FRACTION[family]
+        : DOOR_REFERENCE_PX[family];
+    return door ? ((2.1 / 1.75) * 11) / door : (EQUIPMENT_SCALE[family] ?? 1);
+  };
+
+  it('is unchanged for every packed illustrated frame', () => {
+    const frames = Object.entries(atlas.frames) as [string, { h: number }][];
+    for (const [key, frame] of frames) {
+      const height = frame.h / atlas.resolution;
+      expect(structureScale(key, height), key).toBe(before(key, height));
+      expect(structureScale(key), key).toBe(before(key));
+    }
+    expect(frames.length).toBeGreaterThan(50);
+  });
+
+  it('is unchanged for every family with a door or a declared estimate', () => {
+    const families = new Set([
+      ...Object.keys(DOOR_FRACTION),
+      ...Object.keys(DOOR_REFERENCE_PX),
+      ...Object.keys(EQUIPMENT_SCALE),
+    ]);
+    for (const family of families)
+      for (const frame of [`structures/${family}`, `structures/${family}_lv2`]) {
+        expect(structureScale(frame), frame).toBe(before(frame));
+        expect(structureScale(frame, 100), frame).toBe(before(frame, 100));
+      }
+    expect(families.size).toBeGreaterThan(20);
+  });
+
+  it("is a door's height over the door in the picture, whoever stands beside it", () => {
+    expect(structureScale('structures/townhouse_s1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.townhouse);
+    expect(structureScale('structures/station_1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.station);
+    // a measured door: 36 of the station's 169 px
+    expect(structureScale('structures/station_1', 169)).toBeCloseTo(DOOR_PX / 36, 9);
+  });
+});
+
+describe('the Fuel Pump', () => {
+  const frames: FrameNames = {
+    has: (key) => ['structures/fuel_pump', 'structures/fuel_pump_lv2'].includes(key),
+  };
+
+  it('has a declared scale, in line with the equipment it stands beside', () => {
+    expect(EQUIPMENT_SCALE.fuel_pump).toBeGreaterThanOrEqual(EQUIPMENT_SCALE.fuel_stop);
+    expect(EQUIPMENT_SCALE.fuel_pump).toBeLessThanOrEqual(EQUIPMENT_SCALE.water_tower);
+  });
+
+  it('is drawn at that scale at every level and turn, before its art arrives', () => {
+    const own = { family: 'fuel_pump', scale: EQUIPMENT_SCALE.fuel_pump };
+    for (const frame of [
+      'structures/fuel_pump',
+      'structures/fuel_pump_lv2',
+      'structures/fuel_pump_lv2_r1',
+      'structures/fuel_pump_r3',
+    ]) {
+      expect(scaleReference(frames, frame), frame).toEqual(own);
+    }
+    expect(structureScale('structures/fuel_pump_lv2')).toBe(own.scale);
+    expect(hasScaleReference('structures/fuel_pump_lv3')).toBe(true);
+  });
 });
 
 it('requires an explicit calibration or declared estimate for every illustrated structure', () => {

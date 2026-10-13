@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Container, Rectangle, Texture, TextureSource, type Sprite } from 'pixi.js';
+import golden from '../art/atlasFrames.golden.json';
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import { depthKey } from '../engine/iso';
 import type { Rng } from '../engine/rng';
@@ -8,6 +9,7 @@ import { forAll } from '../testing/property';
 import { PROP_KINDS } from '../world/chunks';
 import { emptyMap } from '../world/mapgen';
 import { Terrain, type GameMap, type PropInstance, type PropKind } from '../world/tiles';
+import { PERSON_PX } from './assetScale';
 import { PeopleRenderer } from './peopleRenderer';
 import { GROUND_COVER } from './walkerGround';
 import { WorldRenderer } from './worldRenderer';
@@ -170,5 +172,59 @@ describe('PeopleRenderer', () => {
       },
       { format: ({ from, angle }) => JSON.stringify({ from, angle }) },
     );
+  });
+});
+
+describe('the size of a walker', () => {
+  /** A renderer whose atlas gives every walker key the frame `f`, and the one sprite it draws. */
+  function drawn(f: FrameInfo, state: Person['state'] = 'walk') {
+    const layer = new Container(),
+      map = emptyMap(1, W, H),
+      atlas = { has: () => true, get: () => f } as unknown as AtlasRegistry;
+    new PeopleRenderer(atlas, layer, () => 0).update(people(map, [walker(5.3, 6.7, state)]), 0);
+    return layer.children[0] as Sprite;
+  }
+
+  it('is PERSON_PX tall whatever the frame measures in world pixels', () => {
+    forAll(
+      (rng) => ({
+        w: rng.int(3, 40),
+        h: rng.int(6, 40),
+        state: rng.pick<Person['state']>(['walk', 'idle', 'gather', 'waiting', 'return']),
+      }),
+      ({ w, h, state }) => {
+        const s = drawn(frame(w, h, (h - 1) / h), state);
+        expect(s.height).toBeCloseTo(PERSON_PX, 9);
+        // the picture keeps its proportions
+        expect(s.width / s.height).toBeCloseTo(w / h, 9);
+      },
+    );
+  });
+
+  it('keeps the feet where they were as the frame changes size', () => {
+    forAll(
+      (rng) => ({ h: rng.int(6, 40), other: rng.int(6, 40) }),
+      ({ h, other }) => {
+        const a = drawn(frame(6, h, (h - 1) / h)),
+          b = drawn(frame(6, other, (other - 1) / other));
+        expect(b.position.x).toBe(a.position.x);
+        expect(b.position.y).toBe(a.position.y);
+        // the sprite is anchored at its feet, so the scale grows or shrinks it from there
+        expect(a.anchor.y).toBeCloseTo((h - 1) / h, 9);
+      },
+    );
+  });
+
+  it("draws today's generated figures 9 px tall", () => {
+    const sizes = golden.people as Record<string, string>;
+    const walkers = Object.entries(sizes).filter(([key]) => key.startsWith('people/walker_'));
+    // four outfits, two frames each
+    expect(walkers).toHaveLength(8);
+    for (const [key, spec] of walkers) {
+      const [, w, h, , ay] = /^(\d+)x(\d+)@(\d+),(\d+)$/.exec(spec)!.map(Number);
+      const s = drawn(frame(w, h, ay / h));
+      expect(s.height, key).toBeCloseTo(9, 9);
+      expect(s.scale.y, key).toBeCloseTo(9 / h, 9);
+    }
   });
 });
