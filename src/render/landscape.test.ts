@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import { Texture } from 'pixi.js';
+import { RendererType, Texture, type Renderer, type TextureSource } from 'pixi.js';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import type { Rng } from '../engine/rng';
@@ -10,6 +10,7 @@ import {
   Landscape,
   JOB_TIMEOUT_MS,
   workerErrorText,
+  type LandscapeGpu,
   type LandscapeStatus,
   type PainterPool,
 } from './landscape';
@@ -401,11 +402,55 @@ class PaintWorker extends StubWorker {
   }
 }
 
+/** A canvas that counts the listeners on it. */
+class ListenedCanvas extends EventTarget {
+  listeners = 0;
+  addEventListener(...args: Parameters<EventTarget['addEventListener']>) {
+    this.listeners++;
+    super.addEventListener(...args);
+  }
+  removeEventListener(...args: Parameters<EventTarget['removeEventListener']>) {
+    this.listeners--;
+    super.removeEventListener(...args);
+  }
+}
+/**
+ * A renderer as the landscape sees it: each upload is recorded with the pixels the texture source
+ * held at that moment, and its canvas fires the WebGL context events.
+ */
+function stubGpu(type: number = RendererType.WEBGL) {
+  const canvas = new ListenedCanvas();
+  const uploads: { source: TextureSource; resource: unknown }[] = [];
+  const gpu: LandscapeGpu = {
+    type,
+    canvas,
+    texture: { initSource: (source) => void uploads.push({ source, resource: source.resource }) },
+  };
+  return {
+    gpu,
+    uploads,
+    canvas,
+    lose: () => canvas.dispatchEvent(new Event('webglcontextlost')),
+    restore: () => canvas.dispatchEvent(new Event('webglcontextrestored')),
+  };
+}
+/** Does `value`, or what it holds a few levels down, hold these pixels or their buffer? */
+function holds(value: unknown, pixels: Uint8ClampedArray, depth = 3): boolean {
+  if (value === pixels || value === pixels.buffer) return true;
+  if (ArrayBuffer.isView(value)) return value.buffer === pixels.buffer;
+  if (!value || typeof value !== 'object' || depth === 0) return false;
+  return Object.values(value).some((v) => holds(v, pixels, depth - 1));
+}
+
 /** The clock the landscape reads, and its chunk textures, which need a DOM to build. */
 const time = { now: 0 };
 const build = { failing: 0, built: 0 };
 /** What each stand-in texture shows: the chunk, and the map version and scale it was painted at. */
 const shows = new WeakMap<Texture, JobMessage>();
+/** WebGL context losses so far, and whether the context is lost now. */
+const gl = { losses: 0, lost: false };
+/** Context losses before each stand-in texture was built; -1 for one built while it was lost. */
+const bornAfter = new WeakMap<Texture, number>();
 type ChunkInside = {
   base: Texture;
   sharp: Texture | null;
@@ -417,24 +462,41 @@ type Inside = {
   pending: Set<string>;
   sharpPending: Set<string>;
   loaded: boolean;
+  contextLost: boolean;
   chunks: Map<string, ChunkInside>;
 };
 const inside = (landscape: Landscape) => landscape as unknown as Inside;
 
-/** A landscape on stub workers that answer like real ones, with the clock in the test's hands. */
-function paintWorld() {
+/**
+ * A landscape on stub workers that answer like real ones, shown by a stub renderer of this type
+ * (null: none yet) whose context the test can lose and restore, with the clock in the test's hands.
+ */
+function paintWorld(type: number | null = RendererType.WEBGL) {
   time.now = 0;
   build.failing = build.built = 0;
+  gl.losses = 0;
+  gl.lost = false;
   const s = setup(() => new PaintWorker());
   const workers = s.spawned as PaintWorker[];
+  const renderer = stubGpu(type ?? RendererType.WEBGL);
+  if (type !== null) s.landscape.attach(renderer.gpu);
   /** Tiles edited since the last frame. */
   const edits: { x: number; y: number }[] = [];
   /** Per chunk, the map version of the last edit inside it: its picture may be no older. */
   const due = new Map<string, number>();
+  /** Where in the status history each context loss put its status, had it changed it. */
+  const lostAt: number[] = [];
+  /** Job messages each worker had been sent when the context was lost. */
+  const jobsAtLoss = new Map<PaintWorker, number>();
+  /** Has a tile been edited since the context was last restored? */
+  const edited = { sinceRestore: true };
   return {
     ...s,
     workers,
     due,
+    renderer,
+    lostAt,
+    edited,
     /** The pool in use: the last two workers started. */
     current: () => workers.slice(-2),
     /** Turns a tile from grass to hill or back and reports it, as the editor's brush does. */
@@ -443,6 +505,28 @@ function paintWorld() {
       s.map.terrain[i] = s.map.terrain[i] === Terrain.Hill ? Terrain.Grass : Terrain.Hill;
       s.landscape.invalidate(x, y);
       edits.push({ x, y });
+      edited.sinceRestore = true;
+    },
+    /** The browser loses the WebGL context. */
+    lose: () => {
+      if (!gl.lost) for (const worker of workers) jobsAtLoss.set(worker, jobsOf(worker).length);
+      lostAt.push(s.seen.length);
+      gl.losses++;
+      gl.lost = true;
+      renderer.lose();
+    },
+    /** The browser restores it. */
+    restore: () => {
+      // An edit still waiting for its frame raises the map version after the restore.
+      if (gl.lost && !edits.length) edited.sinceRestore = false;
+      gl.lost = false;
+      renderer.restore();
+    },
+    /** Why a job went out while the context is lost, or null. */
+    jobWhileLost: () => {
+      if (!gl.lost) return null;
+      const worker = workers.find((w) => jobsOf(w).length > (jobsAtLoss.get(w) ?? 0));
+      return worker ? `job ${String(jobsOf(worker).at(-1)?.id)} went out while lost` : null;
     },
     /** One frame, `ms` after the last. */
     frame: (ms = 16) => {
@@ -483,6 +567,7 @@ function paintedWorld() {
  *   may still be on a job of the older version, and its answer is what hands out the next one;
  * - no loaded worker sits idle while a chunk waits that no worker is painting for the current map,
  *   or while a close-view copy waits to be handed out.
+ * While the WebGL context is lost only the first holds: no job goes out until it is back.
  */
 function stall(landscape: Landscape) {
   const l = inside(landscape);
@@ -494,6 +579,7 @@ function stall(landscape: Landscape) {
     if (!worker.sent.slice(worker.read).some(same) && !worker.lost.some(same))
       return `job ${job!.id}@${job!.version} is out, but its worker will never answer it`;
   }
+  if (l.contextLost) return null;
   const current = out.some(({ job }) => job!.version === l.version);
   const allOnOlder = l.slots.every((slot) => !slot.loaded || slot.job);
   if (l.pending.size && !current && !allOnOlder)
@@ -575,6 +661,7 @@ describe('landscape painter', () => {
       build.built++;
       const texture = new Texture();
       shows.set(texture, { id: data.id, version: data.version, scale: data.scale });
+      bornAfter.set(texture, gl.lost ? -1 : gl.losses);
       return texture;
     });
   });
@@ -909,8 +996,224 @@ describe('landscape painter', () => {
       },
     );
   });
+
+  it('hands out no job while the WebGL context is lost, and paints the chunk in view first after', () => {
+    const w = paintedWorld();
+    settleSharp(w);
+    w.landscape.focus(ONE_CHUNK, 1);
+    w.lose();
+    expect(w.landscape.status).toEqual({ state: 'loading' });
+    expect(w.landscape.ready).toBe(false);
+    for (const [x, y] of CHUNKS) expect(w.landscape.isPainted(x, y), `chunk ${x},${y}`).toBe(false);
+    for (const c of inside(w.landscape).chunks.values())
+      expect(c.sprite.texture).toBe(Texture.EMPTY);
+    // The world renderer hears of it at the next frame, and shows the per-tile ground.
+    expect(w.frame()).toBe(true);
+    // Edits and frames go on, and no job goes out.
+    w.edit(3, 3);
+    for (let i = 0; i < 5; i++) {
+      for (const worker of w.current()) worker.drain();
+      w.frame(1000);
+      expect(w.jobWhileLost()).toBeNull();
+    }
+    expect(w.landscape.status.state).toBe('loading');
+    const sent = w.workers.map((worker) => jobsOf(worker).length);
+    w.restore();
+    // The first job to go out is the chunk in view.
+    const fresh = w.workers.flatMap((worker, i) => jobsOf(worker).slice(sent[i]));
+    expect(fresh.length).toBeGreaterThan(0);
+    expect(jobsOf(w.workers[0]).slice(sent[0])[0]).toMatchObject({ id: '8,8', scale: 1 });
+    expect(w.frame()).toBe(true);
+    expect(w.landscape.status).toEqual({ state: 'active' });
+    settle(w);
+    expect(w.landscape.ready).toBe(true);
+    const l = inside(w.landscape);
+    for (const [id, c] of l.chunks) {
+      expect(bornAfter.get(c.base), `chunk ${id} painted after the loss`).toBe(1);
+      expect(shows.get(c.base), `chunk ${id}`).toEqual({ id, version: l.version, scale: 1 });
+      expect(c.sharp, `close view of ${id} went with the context`).toBeNull();
+    }
+    // Close views are painted again when asked for.
+    settleSharp(w);
+    expectSharp(w);
+    for (const c of l.chunks.values()) expect(bornAfter.get(c.sharp!)).toBe(1);
+    expect(lifecycle(w)).toBeNull();
+    expect(w.states()).toEqual(['loading', 'active', 'loading', 'active']);
+  });
+
+  it('keeps no paint that comes back while the context is lost, and paints that chunk after', () => {
+    const w = paintWorld();
+    w.landscape.add(0, 0, 8, 8);
+    const [first] = w.current();
+    first.step(); // the sheet loads, and the job goes out
+    w.frame();
+    expect(inside(w.landscape).slots[0].job?.id).toBe('0,0');
+    w.lose();
+    first.drain();
+    expect(build.built).toBe(0);
+    expect(w.renderer.uploads).toHaveLength(0);
+    expect(w.landscape.isPainted(0, 0)).toBe(false);
+    expect(inside(w.landscape).pending.has('0,0')).toBe(true);
+    w.restore();
+    settle(w);
+    expect(w.landscape.ready).toBe(true);
+    expect(w.landscape.isPainted(0, 0)).toBe(true);
+    expect(w.workers).toHaveLength(2);
+  });
+
+  it('turns the landscape off when the paints after a restore cannot be shown, after one restart', () => {
+    const w = paintedWorld();
+    w.lose();
+    w.restore();
+    build.failing = Infinity;
+    settle(w);
+    expect(w.landscape.status.state).toBe('failed');
+    expect(w.workers).toHaveLength(4);
+    expect(w.seen.filter((s) => s.state === 'failed')).toHaveLength(1);
+    expect(lifecycle(w)).toBeNull();
+    // A later loss and restore change nothing.
+    w.lose();
+    w.restore();
+    expect(w.landscape.status.state).toBe('failed');
+    expect(w.workers).toHaveLength(4);
+  });
+
+  it('stops listening to the context once destroyed', () => {
+    const w = paintedWorld();
+    expect(w.renderer.canvas.listeners).toBe(2);
+    w.landscape.root.destroy();
+    // The canvas outlives the world, and must not keep it.
+    expect(w.renderer.canvas.listeners).toBe(0);
+    w.lose();
+    w.restore();
+    expect(w.states()).toEqual(['loading', 'active']);
+  });
+
+  it('ends with every chunk painted for the current map after a lost context, whatever was painted', () => {
+    forAll(
+      generateLosses,
+      (steps) => {
+        const w = paintWorld();
+        for (const step of steps) {
+          act(w, step);
+          const why = stall(w.landscape) ?? lifecycle(w) ?? w.jobWhileLost();
+          if (why) throw new Error(`after ${JSON.stringify(step)}: ${why}`);
+        }
+        w.restore();
+        settle(w);
+        // With nothing left to paint, the status turns active at the next frame.
+        w.frame();
+        expect(lifecycle(w)).toBeNull();
+        expect(w.landscape.ready || w.landscape.failed, 'neither painted nor failed').toBe(true);
+        if (w.landscape.failed) return;
+        expect(w.landscape.status.state).toBe('active');
+        const l = inside(w.landscape);
+        for (const [id, c] of l.chunks) {
+          const [x, y] = id.split(',').map(Number);
+          expect(w.landscape.isPainted(x, y), `chunk ${id}`).toBe(true);
+          // Painted again after the last loss, and never while the context was lost.
+          expect(bornAfter.get(c.base), `chunk ${id} after loss ${gl.losses}`).toBe(gl.losses);
+          if (!w.edited.sinceRestore) expect(shows.get(c.base)?.version, id).toBe(l.version);
+        }
+        expectFresh(w);
+        settleSharp(w);
+        if (w.landscape.failed) return;
+        expectSharp(w);
+        for (const [id, c] of l.chunks)
+          expect(bornAfter.get(c.sharp!), `close view of ${id} after loss ${gl.losses}`).toBe(
+            gl.losses,
+          );
+      },
+      { shrink: (steps) => shrinkArray(steps) },
+    );
+  });
 });
 
+describe('chunk textures', () => {
+  beforeEach(() => void vi.spyOn(performance, 'now').mockImplementation(() => time.now));
+  /** The pixels of every chunk the stub workers painted. */
+  const paintedPixels = () =>
+    vi
+      .mocked(StubWorker.prototype.reply)
+      .mock.calls.map(([data]) => (data as { pixels?: Uint8ClampedArray }).pixels)
+      .filter((pixels) => pixels !== undefined);
+  beforeEach(() => void vi.spyOn(StubWorker.prototype, 'reply'));
+
+  it('puts each painted chunk on the GPU at once and keeps no pixel array of it on the CPU', () => {
+    // There is no DOM under Node: a canvas or a 2D context could not even be made.
+    expect(typeof document).toBe('undefined');
+    const w = paintWorld();
+    for (const [x, y] of CHUNKS) w.landscape.add(x, y, 8, 8);
+    settle(w);
+    settleSharp(w);
+    const { uploads } = w.renderer;
+    expect(uploads).toHaveLength(w.landscape.paintCount + w.landscape.sharpPaintCount);
+    expect(w.landscape.sharpPaintCount).toBe(CHUNKS.length);
+    for (const { source, resource } of uploads) {
+      // Uploaded with the pixels a worker painted, in RGBA order, and never collected by Pixi...
+      expect(paintedPixels()).toContain(resource);
+      expect(source.format).toBe('rgba8unorm');
+      expect(source.autoGarbageCollect).toBe(false);
+      // ...then let go of.
+      expect(holds(source, resource as Uint8ClampedArray)).toBe(false);
+    }
+    for (const c of inside(w.landscape).chunks.values())
+      for (const texture of [c.base, c.sharp]) {
+        expect(uploads.some(({ source }) => source === texture?.source)).toBe(true);
+        for (const pixels of paintedPixels()) expect(holds(texture, pixels)).toBe(false);
+      }
+  });
+
+  it('keeps the pixels until the first frame brings the renderer, then lets them go', () => {
+    const w = paintWorld(null);
+    for (const [x, y] of CHUNKS) w.landscape.add(x, y, 8, 8);
+    settle(w);
+    const chunks = [...inside(w.landscape).chunks.values()];
+    expect(chunks.every((c) => paintedPixels().some((pixels) => holds(c.base, pixels)))).toBe(true);
+    w.landscape.root.onRender!(w.renderer.gpu as unknown as Renderer);
+    expect(w.renderer.uploads).toHaveLength(CHUNKS.length);
+    for (const c of chunks)
+      for (const pixels of paintedPixels()) expect(holds(c.base, pixels)).toBe(false);
+    // The first renderer stays: a later one is neither uploaded to nor listened to.
+    const other = stubGpu();
+    w.landscape.root.onRender!(other.gpu as unknown as Renderer);
+    other.lose();
+    expect(other.uploads).toHaveLength(0);
+    expect(w.landscape.status.state).toBe('active');
+    // The first one's context is.
+    w.renderer.lose();
+    expect(w.landscape.status.state).toBe('loading');
+  });
+
+  it('keeps the pixels with the canvas renderer, which draws from them', () => {
+    const w = paintWorld(RendererType.CANVAS);
+    for (const [x, y] of CHUNKS) w.landscape.add(x, y, 8, 8);
+    settle(w);
+    expect(w.renderer.uploads).toHaveLength(0);
+    for (const c of inside(w.landscape).chunks.values())
+      expect(paintedPixels().some((pixels) => holds(c.base, pixels))).toBe(true);
+  });
+
+  it('restarts the pool once when an upload throws, and paints the chunk then', () => {
+    const w = paintWorld();
+    const upload = w.renderer.gpu.texture.initSource;
+    let throws = 1;
+    vi.spyOn(w.renderer.gpu.texture, 'initSource').mockImplementation((source) => {
+      if (throws-- > 0) throw new Error('out of GPU memory');
+      return upload(source);
+    });
+    for (const [x, y] of CHUNKS) w.landscape.add(x, y, 8, 8);
+    settle(w);
+    expect(w.workers).toHaveLength(4);
+    expect(w.landscape.ready).toBe(true);
+    expect(errors.mock.calls.some((call) => String(call[0]).includes('out of GPU memory'))).toBe(
+      true,
+    );
+  });
+});
+
+/** The camera's world rectangle over the middle of chunk 8,8 only. */
+const ONE_CHUNK = { x: -5, y: 380, w: 10, h: 10 };
 /** The most one frame adds to a job's waiting time: FRAME_LIMIT_MS in landscape.ts. */
 const FRAME_CAP_MS = 1000;
 /** Frame gaps: the same millisecond, ordinary frames, either side of the cap, and long pauses. */
@@ -918,14 +1221,17 @@ const GAPS = [0, 16, 500, 999, 1000, 1001, 4000, 600_000];
 const ORDER = ['loading', 'active', 'failed'];
 /**
  * Why the status or the pools broke their contract, or null: the status only moves forward from
- * loading to active to failed (a restart changes nothing), at most one fresh pool is started, and
- * a failed landscape holds no worker.
+ * loading to active to failed (a restart changes nothing) except back from active to loading where
+ * the WebGL context was lost, at most one fresh pool is started, and a failed landscape holds no
+ * worker.
  */
 function lifecycle(w: World) {
   const states = w.states();
+  const back = (i: number) =>
+    w.lostAt.includes(i) && states[i - 1] === 'active' && states[i] === 'loading';
   if (
     states[0] !== 'loading' ||
-    states.some((s, i) => i && ORDER.indexOf(s) <= ORDER.indexOf(states[i - 1]))
+    states.some((s, i) => i && ORDER.indexOf(s) <= ORDER.indexOf(states[i - 1]) && !back(i))
   )
     return `status went ${states.join(' -> ')}`;
   if (w.workers.length > 4) return `${w.workers.length / 2} pools started`;
@@ -942,9 +1248,11 @@ type Step =
   | { do: 'frame'; ms: number }
   | { do: 'focus'; close: boolean }
   | { do: 'textureThrows' }
-  | { do: 'mapThrows' | 'jobThrows' | 'dropMap' | 'lose' | 'crash'; worker: number };
+  | { do: 'mapThrows' | 'jobThrows' | 'dropMap' | 'lose' | 'crash'; worker: number }
+  | { do: 'loseContext' | 'restoreContext' };
 const EVENTS = ['answer', 'answer', 'answer', 'answer', 'add', 'edit', 'frame', 'focus'] as const;
 const FAULTS = ['textureThrows', 'mapThrows', 'jobThrows', 'dropMap', 'lose', 'crash'] as const;
+const CONTEXT = ['loseContext', 'restoreContext'] as const;
 /** Mostly ordinary events, with a fault one step in sixteen, so cases end painted as well as failed. */
 function generateSteps(rng: Rng): Step[] {
   return Array.from({ length: rng.int(5, 80) }, () =>
@@ -960,8 +1268,30 @@ function generateQuiet(rng: Rng): Step[] {
   if (rng.chance(3 / 4)) steps.splice(rng.int(0, steps.length), 0, stepOf(rng, rng.pick(FAULTS)));
   return steps;
 }
-function stepOf(rng: Rng, kind: (typeof EVENTS)[number] | (typeof FAULTS)[number]): Step {
+/**
+ * Ordinary events with the WebGL context lost and restored one step in six, at least one loss
+ * among them, and a fault one step in sixteen.
+ */
+function generateLosses(rng: Rng): Step[] {
+  const steps = Array.from({ length: rng.int(5, 60) }, () =>
+    stepOf(
+      rng,
+      rng.chance(1 / 6)
+        ? rng.pick(CONTEXT)
+        : rng.chance(1 / 16)
+          ? rng.pick(FAULTS)
+          : rng.pick(EVENTS),
+    ),
+  );
+  steps.splice(rng.int(0, steps.length), 0, { do: 'loseContext' });
+  return steps;
+}
+type Kind = (typeof EVENTS)[number] | (typeof FAULTS)[number] | (typeof CONTEXT)[number];
+function stepOf(rng: Rng, kind: Kind): Step {
   switch (kind) {
+    case 'loseContext':
+    case 'restoreContext':
+      return { do: kind };
     case 'answer':
       return { do: kind, worker: rng.int(0, 1), count: rng.int(1, 4) };
     case 'add':
@@ -1016,6 +1346,12 @@ function act(w: World, step: Step) {
       return;
     case 'crash':
       w.current()[step.worker].crash({ message: 'boom' });
+      return;
+    case 'loseContext':
+      w.lose();
+      return;
+    case 'restoreContext':
+      w.restore();
       return;
   }
 }
