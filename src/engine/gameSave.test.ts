@@ -4,11 +4,12 @@ import { AutosavePause } from './autosavePause';
 import { BrokenNumberWarning, StorageRefusalWarning } from './saveRefusal';
 import { UNREADABLE_NOTICE_TTL } from './saveMessages';
 import { SAVE_KEY, type SaveGame } from '../sim/save';
-import { CHUNK_TILES, ownsBorderChunk } from '../sim/expand';
+import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
+import { INTENT_KEY } from '../intent';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
 import { RegionState } from '../world/regions';
 import { emptyMap } from '../world/mapgen';
-import { Terrain } from '../world/tiles';
+import { Terrain, type GameMap } from '../world/tiles';
 import { STR } from '../strings';
 import { forAll, shrinkArray } from '../testing/property';
 import type { Rng } from './rng';
@@ -30,11 +31,13 @@ vi.mock('./audio', async (original) => ({
 class MemoryStorage {
   items = new Map<string, string>();
   refuses = false;
+  /** the longest text it keeps: room for some saves and not for larger ones */
+  limit = Number.POSITIVE_INFINITY;
   getItem(k: string) {
     return this.items.has(k) ? this.items.get(k)! : null;
   }
   setItem(k: string, v: string) {
-    if (this.refuses) throw new Error('QuotaExceededError');
+    if (this.refuses || String(v).length > this.limit) throw new Error('QuotaExceededError');
     this.items.set(k, String(v));
   }
   removeItem(k: string) {
@@ -348,11 +351,13 @@ describe('Game.buyChunk', () => {
       mode?: 'play' | 'editor';
       kind?: 'generated' | 'level';
       size?: number;
+      /** a map of that size to share: a purchase reads its frame and never changes it */
+      map?: GameMap;
     } = {},
   ) {
     const g = standIn();
     const size = over.size ?? 160;
-    const map = emptyMap(1, size, size);
+    const map = over.map ?? emptyMap(1, size, size);
     const regions = new RegionState(map, 0);
     const economy = {
       money: MONEY,
@@ -527,6 +532,192 @@ describe('Game.buyChunk', () => {
     expect((save.regions as boolean[])[i]).toBe(true);
     expect((save.economy as { money: number }).money).toBe(money - price);
   });
+
+  // The oracle: what buyChunk did and said before its toasts moved into saveMessages.ts (#391),
+  // written out step by step from the code it replaced. The move was to change no purchase's
+  // outcome, #288's inner purchase stored at once and #390's last ring included.
+
+  /** One purchase: where the chunk lies, what the game is, and how a write of it ends. */
+  interface Purchase {
+    /** an inner chunk; a chunk on the grid's edge; the edge of a world with no ring left to add */
+    where: 'inner' | 'edge' | 'last ring';
+    kind: 'generated' | 'level';
+    autosave: boolean;
+    mode: 'play' | 'editor';
+    loopError: boolean;
+    /** the page reloads into a stored save (`keepStoredSave`) */
+    reloading: boolean;
+    /** how a write ends; `room for the game only`: storage keeps the game, not it grown a ring */
+    write: 'ok' | 'storage' | 'broken number' | 'room for the game only';
+  }
+  interface PurchaseEffects {
+    toasts: Toast[];
+    /** what the store holds after: nothing, the game as it stands, or that game grown by a ring */
+    stored: 'nothing' | 'game' | 'grown';
+    reload: boolean;
+    /** console lines naming a broken number */
+    logged: number;
+  }
+  const growing = { text: STR.overview.growing, kind: 'info' };
+  const growRefused = { text: STR.overview.growRefused, kind: 'warn' };
+  const growHeld = { text: STR.overview.growHeld, kind: 'warn' };
+  const autosaveFailed = { text: STR.settings.autosaveFailed, kind: 'warn' };
+  const autosaveBroken = { text: STR.settings.autosaveBroken, kind: 'warn' };
+
+  /** buyChunk before #391, on a game whose autosave latches are clear. */
+  function before391(c: Purchase): PurchaseEffects {
+    const edge = c.kind === 'generated' && c.where === 'edge';
+    const held = edge && c.loopError;
+    const toasts: Toast[] = [];
+    if (edge && !held) {
+      // writeSave(expandSave(snapshot)), then the reload into it; no latch, no console
+      if (c.write === 'ok') return { toasts: [growing], stored: 'grown', reload: true, logged: 0 };
+      // and nothing else is written for the purchase, even where the game ungrown would fit
+      toasts.push(growRefused);
+    }
+    toasts.push(bought);
+    if (held) toasts.push(growHeld);
+    let stored: PurchaseEffects['stored'] = 'nothing';
+    let logged = 0;
+    // `if (!edge && autosave && mode === 'play') this.save(true)`, and save(true) itself
+    if (!edge && c.autosave && c.mode === 'play' && !c.reloading && !c.loopError) {
+      if (c.write === 'ok' || c.write === 'room for the game only') stored = 'game';
+      else if (c.write === 'storage') toasts.push(autosaveFailed);
+      else {
+        toasts.push(autosaveBroken);
+        logged = 1;
+      }
+    }
+    return { toasts, stored, reload: false, logged };
+  }
+
+  it('does and says what it did before its decisions moved, for every purchase', () => {
+    const cases: Purchase[] = [];
+    for (const where of ['inner', 'edge', 'last ring'] as const)
+      for (const kind of ['generated', 'level'] as const)
+        for (const autosave of [true, false])
+          for (const mode of ['play', 'editor'] as const)
+            for (const loopError of [false, true])
+              for (const reloading of [false, true])
+                for (const write of [
+                  'ok',
+                  'storage',
+                  'broken number',
+                  'room for the game only',
+                ] as const)
+                  cases.push({ where, kind, autosave, mode, loopError, reloading, write });
+    // one map of each size for every case: the largest takes a while to build
+    const maps = {
+      160: emptyMap(1, 160, 160),
+      last: emptyMap(1, 32 * CHUNK_TILES, 32 * CHUNK_TILES),
+    };
+    const seen = new Set<string>();
+    for (const c of cases) {
+      const why = JSON.stringify(c);
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+      const session = new MemoryStorage();
+      vi.stubGlobal('sessionStorage', session);
+      const reload = vi.fn();
+      vi.stubGlobal('location', { hash: '#from-before', reload });
+      warn.mockClear();
+
+      const last = c.where === 'last ring';
+      const b = buying({
+        kind: c.kind,
+        autosave: c.autosave,
+        mode: c.mode,
+        size: last ? 32 * CHUNK_TILES : undefined,
+        map: last ? maps.last : maps[160],
+      });
+      if (last) b.economy.money = MONEY * 1000;
+      const money = b.economy.money;
+      let i = b.inner[0];
+      if (c.where === 'edge') {
+        b.regions.own(b.inner[0]);
+        i = b.regions
+          .neighbours(b.inner[0])
+          .find((j) => !b.regions.unlocked[j] && !b.inner.includes(j))!;
+      } else if (last) {
+        b.regions.own(0);
+        i = 1;
+      }
+      const price = b.regions.price(i);
+      // the snapshot a write takes: the world, so growing has a frame to grow, and the purchase
+      const snap = () =>
+        ({
+          ...base(1),
+          stations: [],
+          trains: [],
+          track: [],
+          camera: { x: 0, y: 0, zoomIndex: 2 },
+          world:
+            c.kind === 'generated'
+              ? { kind: 'generated', seed: 1, params: { w: b.map.w, h: b.map.h } }
+              : { kind: 'level', seed: 1 },
+          regions: [...b.regions.unlocked],
+          economy: { money: c.write === 'broken number' ? Number.NaN : b.economy.money },
+        }) as unknown as SaveGame;
+      const rebuilt = { fog: 0, regions: 0, minimap: 0 };
+      Object.assign(b.host, {
+        snapshot: snap,
+        world: { rebuildFog: () => rebuilt.fog++ },
+        overview: { rebuildRegions: () => rebuilt.regions++ },
+        ui: { minimap: { rebuildBase: () => rebuilt.minimap++ } },
+      });
+      if (c.loopError) b.pause.trip();
+      if (c.reloading) b.host.keepStoredSave = true;
+      store.refuses = c.write === 'storage';
+      // the game grown a ring is longer by the ring's chunks: there is room for the game alone
+      if (c.write === 'room for the game only') store.limit = JSON.stringify(snap()).length + 16;
+
+      expect(b.game.buyChunk(i, true), why).toBe(true);
+
+      // what the case says of the grid holds: only the edge purchase leaves an edge chunk owned
+      expect(ownsBorderChunk(b.regions.unlocked, b.map.w, b.map.h), why).toBe(c.where === 'edge');
+      const want = before391(c);
+      // the purchase is made, whatever became of the writes
+      expect(b.regions.unlocked[i], why).toBe(true);
+      expect(b.economy.money, why).toBe(money - price);
+      expect(b.toasts, why).toEqual(want.toasts);
+      const text = store.items.get(SAVE_KEY);
+      const stored =
+        text === undefined
+          ? 'nothing'
+          : text === JSON.stringify(snap())
+            ? 'game'
+            : text === JSON.stringify(expandSave(snap(), 1))
+              ? 'grown'
+              : `something else: ${text.slice(0, 80)}`;
+      expect(stored, why).toBe(want.stored);
+      expect(
+        [...store.items.keys()].filter((k) => k !== SAVE_KEY),
+        why,
+      ).toEqual([]);
+      // the settings screen's "saved at" moves with the game's own save, not the grown one
+      expect(b.host.savedAt, why).toBe(want.stored === 'game' ? 1001 : null);
+      expect(warn.mock.calls.length, why).toBe(want.logged);
+      // a reload lands in the grown game, at the speed it ran; the map is not redrawn first
+      expect(reload.mock.calls.length, why).toBe(want.reload ? 1 : 0);
+      expect(session.items.get(INTENT_KEY), why).toBe(
+        want.reload ? JSON.stringify({ action: 'continue', keepSpeed: true }) : undefined,
+      );
+      const redrawn = want.reload ? 0 : 1;
+      expect(rebuilt, why).toEqual({ fog: redrawn, regions: redrawn, minimap: redrawn });
+      seen.add(want.reload ? 'reload' : `${want.stored} ${want.toasts.map((t) => t.text)}`);
+    }
+    // every outcome of a purchase is among the cases
+    for (const outcome of [
+      'reload',
+      `nothing ${[growRefused.text, bought.text]}`,
+      `nothing ${[bought.text, growHeld.text]}`,
+      `game ${[bought.text]}`,
+      `nothing ${[bought.text]}`,
+      `nothing ${[bought.text, autosaveFailed.text]}`,
+      `nothing ${[bought.text, autosaveBroken.text]}`,
+    ])
+      expect(seen, outcome).toContain(outcome);
+  });
 });
 
 // ------------------------------------------------------------------ the end of Game.applySave
@@ -626,6 +817,143 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
     settle(h);
     expect(h.toasts).toEqual([{ text, kind: 'warn' }, unsaved]);
     expect(h.notices).toHaveLength(1);
+  });
+
+  /** What building the map did, as a case: chunks generated and chunks unread, or a level. */
+  type Built = { added: number; unreadable: number } | null;
+  type Hold = 'none' | 'a loop error' | 'a reload into a stored save';
+  type LoadWrite = 'ok' | 'storage' | 'broken number';
+  const BUILT: Built[] = [null];
+  for (const added of [0, 3]) for (const unreadable of [0, 2]) BUILT.push({ added, unreadable });
+  const HOLDS: Hold[] = ['none', 'a loop error', 'a reload into a stored save'];
+  const LOAD_WRITES: LoadWrite[] = ['ok', 'storage', 'broken number'];
+
+  /** A stand-in at the end of a load: its ground, what holds a write, and how a write ends. */
+  function loaded(built: Built, hold: Hold, write: LoadWrite, storage: MemoryStorage) {
+    const g = standIn();
+    g.host.ground = built && ground(built.added, built.unreadable);
+    if (hold === 'a loop error') g.pause.trip();
+    if (hold === 'a reload into a stored save') g.host.keepStoredSave = true;
+    const snap = base(0);
+    if (write === 'broken number') SPOTS[1].set(snap, Number.NaN);
+    g.take(snap);
+    storage.refuses = write === 'storage';
+    return g;
+  }
+
+  /**
+   * The oracle: the end of `applySave` before #391 (`groundUnreadable` as a toast and a notice of
+   * 180 s, then `if (added && !this.save(true)) groundUnsaved`) on a game whose latches are clear,
+   * with the one change #391 asks for: `save(true)`'s own warning about the same refusal
+   * (`autosaveFailed`, `autosaveBroken`) is gone.
+   */
+  function loadBefore391(built: Built, hold: Hold, write: LoadWrite) {
+    const toasts: Toast[] = [];
+    const notices: PushedNotice[] = [];
+    const unreadable = built?.unreadable ?? 0;
+    if (unreadable > 0) {
+      const text = STR.saves.groundUnreadable(unreadable);
+      toasts.push({ text, kind: 'warn' });
+      notices.push({ key: 'save:ground', kind: 'warn', text, target: null, ttl: 180 });
+    }
+    const added = (built?.added ?? 0) > 0;
+    const writes = added && hold === 'none';
+    const stored = writes && write === 'ok';
+    if (added && !stored) toasts.push(unsaved);
+    return { toasts, notices, stored, logged: writes && write === 'broken number' ? 1 : 0 };
+  }
+
+  it('does and says what it did before, less the second warning, for every load', () => {
+    let refusedOnce = 0;
+    for (const built of BUILT)
+      for (const hold of HOLDS)
+        for (const write of LOAD_WRITES) {
+          const why = JSON.stringify({ built, hold, write });
+          store = new MemoryStorage();
+          vi.stubGlobal('localStorage', store);
+          warn.mockClear();
+          const g = loaded(built, hold, write, store);
+          settle(g);
+          const want = loadBefore391(built, hold, write);
+          expect(g.toasts, why).toEqual(want.toasts);
+          expect(g.notices, why).toEqual(want.notices);
+          expect([...store.items], why).toEqual(
+            want.stored ? [[SAVE_KEY, JSON.stringify(base(0))]] : [],
+          );
+          expect(g.host.savedAt, why).toBe(want.stored ? base(0).savedAt : null);
+          expect(warn.mock.calls.length, why).toBe(want.logged);
+          // one refusal, one warning: never the autosave's as well
+          const unread = STR.saves.groundUnreadable(built?.unreadable ?? 0);
+          const warnings = g.toasts.filter((t) => t.text !== unread);
+          expect(warnings.length, why).toBeLessThanOrEqual(1);
+          if (warnings.length) refusedOnce++;
+        }
+    expect(refusedOnce).toBeGreaterThan(0);
+  });
+
+  /** Run `steps` on `g` as the Game.save property above does: what each step returned and said. */
+  function transcript(g: ReturnType<typeof standIn>, steps: Step[], storage: MemoryStorage) {
+    return steps.map((step, i) => {
+      if (step.op === 'trip') {
+        g.pause.trip();
+        return 'trip';
+      }
+      const snap = base(i + 1);
+      if (step.spot !== null) SPOTS[step.spot].set(snap, step.to);
+      g.take(snap);
+      storage.refuses = step.full;
+      const shown = g.toasts.length;
+      const logged = warn.mock.calls.length;
+      const result =
+        step.op === 'slot' ? g.game.saveSlot('a name') : g.game.save(step.op === 'implicit');
+      return {
+        result,
+        toasts: g.toasts.slice(shown),
+        logged: warn.mock.calls.slice(logged).map((call: unknown[]) => String(call[0])),
+      };
+    });
+  }
+
+  it('leaves every later save saying what it says on a game whose load wrote nothing', () => {
+    const seen = { refusedThenWarned: 0, storedThenWarned: 0 };
+    forAll(
+      (rng: Rng) => ({
+        built: rng.pick(BUILT),
+        hold: rng.pick(HOLDS),
+        write: rng.pick(LOAD_WRITES),
+        steps: genSteps(rng),
+      }),
+      (c) => {
+        // the game after a load whose end ran, then the run of saves
+        const a = new MemoryStorage();
+        vi.stubGlobal('localStorage', a);
+        const g = loaded(c.built, c.hold, c.write, a);
+        settle(g);
+        const after = transcript(g, c.steps, a);
+        // the same game whose load made no write and said nothing: the same run of saves
+        const b = new MemoryStorage();
+        vi.stubGlobal('localStorage', b);
+        const plain = transcript(loaded(null, c.hold, c.write, b), c.steps, b);
+        expect(after, 'the saves after the load against the same saves without it').toEqual(plain);
+        const warned = after.some(
+          (s) =>
+            s !== 'trip' &&
+            s.toasts.some(
+              (t) =>
+                t.text === STR.settings.autosaveFailed || t.text === STR.settings.autosaveBroken,
+            ),
+        );
+        const want = loadBefore391(c.built, c.hold, c.write);
+        const refusedLoad = (c.built?.added ?? 0) > 0 && !want.stored;
+        if (warned && want.stored) seen.storedThenWarned++;
+        if (warned && refusedLoad) seen.refusedThenWarned++;
+      },
+      {
+        shrink: (c) => Array.from(shrinkArray(c.steps), (steps) => ({ ...c, steps })),
+      },
+    );
+    // the seeds reach a refused load write followed by a refused autosave, and a stored one too
+    for (const [branch, n] of Object.entries(seen)) expect(n, branch).toBeGreaterThan(0);
   });
 });
 
