@@ -15,6 +15,7 @@ import {
   defaultStop,
   resetTrainIds,
   type LocoMode,
+  type RouteMode,
   type StopPlan,
   type Train,
   type TrainState,
@@ -1100,31 +1101,36 @@ describe('the gap: a train given its way while a walker is already on the crossi
   // A train loading at a platform, waiting for one or idle closes only the tiles under its cars, so
   // a walker may set foot on a crossing in front of it; given its way out in that step, the train
   // can reach the crossing before the walker is off it. This pins how far off that can be.
-  it('meets the walker within 2.87 tiles on the road and 22.84 corner to corner, never when its way was set first', () => {
-    // each walk, the seconds it is on the crossing tile, and how wide the gap is in tiles
-    for (const [walk, onFor, width] of [
-      ['road', 1 / walkSpeed({ transient: false }, true), 2.87],
-      ['corner', CROSSING_WALK, 22.84],
-    ] as const) {
-      const gap = gapWidth(walk);
-      // exactly what a train set off at the hardest pull runs over the steps the walker ends on the
-      // crossing, the step it sets foot on among them: its time on the tile, and a step more
-      const k = wayUnderWalker(walk, 40, false).onSteps;
-      expect(k, walk).toBeLessThanOrEqual(Math.ceil(onFor / SIM_STEP) + 1);
-      expect(gap, walk).toBeCloseTo((HARDEST_PULL * SIM_STEP ** 2 * k * (k + 1)) / 2, 3);
-      // pinned: a change that widens it, or narrows it, fails here
-      expect(gap, walk).toBeCloseTo(width, 2);
-      // the same train standing with its way set before the walker comes, from any gap: the
-      // walker waits for it or is over before it can come, and walkers waited
-      let waits = 0;
-      for (let at = 0.05; at < 40; at += 0.25) {
-        const r = wayUnderWalker(walk, at, true);
-        expect(r.met, `${walk} walk, ${at} tiles`).toBe(false);
-        if (r.waited) waits++;
+  // slow: some 360 runs of a walker and a train over the crossing, up to 4000 steps each
+  it(
+    'meets the walker within 2.87 tiles on the road and 22.84 corner to corner, never when its way was set first',
+    { timeout: 60_000 },
+    () => {
+      // each walk, the seconds it is on the crossing tile, and how wide the gap is in tiles
+      for (const [walk, onFor, width] of [
+        ['road', 1 / walkSpeed({ transient: false }, true), 2.87],
+        ['corner', CROSSING_WALK, 22.84],
+      ] as const) {
+        const gap = gapWidth(walk);
+        // exactly what a train set off at the hardest pull runs over the steps the walker ends on the
+        // crossing, the step it sets foot on among them: its time on the tile, and a step more
+        const k = wayUnderWalker(walk, 40, false).onSteps;
+        expect(k, walk).toBeLessThanOrEqual(Math.ceil(onFor / SIM_STEP) + 1);
+        expect(gap, walk).toBeCloseTo((HARDEST_PULL * SIM_STEP ** 2 * k * (k + 1)) / 2, 3);
+        // pinned: a change that widens it, or narrows it, fails here
+        expect(gap, walk).toBeCloseTo(width, 2);
+        // the same train standing with its way set before the walker comes, from any gap: the
+        // walker waits for it or is over before it can come, and walkers waited
+        let waits = 0;
+        for (let at = 0.05; at < 40; at += 0.25) {
+          const r = wayUnderWalker(walk, at, true);
+          expect(r.met, `${walk} walk, ${at} tiles`).toBe(false);
+          if (r.waited) waits++;
+        }
+        expect(waits, walk).toBeGreaterThanOrEqual(40);
       }
-      expect(waits, walk).toBeGreaterThanOrEqual(40);
-    }
-  });
+    },
+  );
 });
 
 // ------------------------------------------------------------------ in the game's step
@@ -1322,6 +1328,233 @@ describe('walkers and a train over a level crossing, ten game minutes in the ste
   );
 });
 
+// ------------------------------------------------------------------ real trains, every way they stand
+
+/**
+ * A train of the fleet runs: its units (the first leads), its wagons, the units set to standby, how
+ * it picks its stops (the quarry and warehouse shuttle of crossingWorld unless it roams), and, if
+ * given, the game second of the run, under DRY_EVERY, its dry spells start from: it runs with empty
+ * tanks for DRY_FOR of every DRY_EVERY game seconds from then.
+ */
+interface Consist {
+  locos: readonly string[];
+  wagons: readonly string[];
+  standby?: readonly number[];
+  mode?: RouteMode;
+  dry?: number;
+}
+/** Game seconds of every DRY_EVERY that a train given `dry` runs with empty tanks. */
+const DRY_FOR = 15;
+const DRY_EVERY = 120;
+
+/** A train as the watch read it before a step: what it was doing and how far it had run. */
+interface Seen {
+  state: TrainState;
+  speed: number;
+  distance: number;
+  /** crossingReach over the horizon for a train with its way set; null for any other */
+  reach: number | null;
+  /** crossingPull for a train with its way set; null for any other */
+  pull: number | null;
+}
+
+/**
+ * crossingWorld with no train of its own and `consists` rolled out of its depot in order, each as
+ * soon as the gate is clear, then ten game minutes of steps in play mode. Before each step every
+ * train is read as the watch reads it; after it, a train given `dry` has its tanks emptied in its
+ * dry spell and filled outside it, and every other train has them filled. Fails on the first step
+ * a crossing is open that a car stood on or a train with its way set could reach as the step
+ * began, on the first a walker stands on a level crossing a car is on, and on the first a walker
+ * has stood on one for longer than its slowest walk over one (CROSSING_WALK), give or take the step
+ * that first found it there. Returns what each train was seen as before every step from its first,
+ * how many walkers crossed, and in how many steps a crossing was due to close for a train standing
+ * with its way set alone.
+ */
+function fleetRun(seed: number, consists: readonly Consist[]) {
+  const { w } = crossingWorld(null, seed);
+  const stationOf = (id: string) => w.builder.stations.find((s) => s.def.id === id)!.id;
+  const stop = (id: number): StopPlan => ({
+    ...defaultStop(id),
+    load: 'none',
+    unload: 'none',
+    waitFull: false,
+    maxDwell: 3,
+  });
+  const stops = [stop(stationOf('quarry')), stop(stationOf('warehouse'))];
+  const units = consists.map((c) => ({
+    locos: c.locos.map((id) => w.inventory.add(id, 0).uid),
+    wagons: c.wagons.map((id) => w.inventory.add(id, 0).uid),
+  }));
+  const step = new SimStep(w);
+  const ctx = playContext(w);
+  const crossings = [...w.builder.roads.crossingKeys()];
+  const trains: Train[] = [];
+  const seen: Seen[][] = [];
+  // each walker on a crossing, by id, and the game time it was first found on it
+  const onIt = new Map<number, number>();
+  let crossed = 0;
+  // steps a crossing no car was on was due to close for a train standing with its way set alone
+  let heldDue = 0;
+  for (let i = 0; i < Math.round(600 / SIM_STEP); i++) {
+    const next = consists[trains.length];
+    if (next) {
+      const u = units[trains.length];
+      const t = w.fleet.create(u.locos, u.wagons, stops, undefined, next.mode ?? 'schedule');
+      if (typeof t !== 'string') {
+        for (const k of next.standby ?? []) t.setStandby(k, true);
+        trains.push(t);
+        seen.push([]);
+      }
+    }
+    trains.forEach((t, k) =>
+      seen[k].push({
+        state: t.state,
+        speed: t.speed,
+        distance: t.distance,
+        reach: ROUTED_STATES.has(t.state) ? crossingReach(t, CROSSING_HORIZON) : null,
+        pull: ROUTED_STATES.has(t.state) ? crossingPull(t) : null,
+      }),
+    );
+    // the crossings due to close in the step, from the trains as they stand before it: those a car
+    // is on, and those along the way of a train with its way set within its reach
+    const under = new Set(trains.flatMap((t) => t.occupancyKeys(SIDE)));
+    const due = new Map<number, 'car' | 'running' | 'standing'>();
+    for (const k of crossings) if (under.has(k)) due.set(k, 'car');
+    for (const t of trains) {
+      if (!ROUTED_STATES.has(t.state)) continue;
+      const far = crossingReach(t, CROSSING_HORIZON) + CROSSING_LEAD;
+      for (const s of t.pathAhead()) {
+        if (s.arc - t.pathProgress > far) break;
+        const k = s.y * SIDE + s.x;
+        if (!crossings.includes(k) || due.get(k) === 'car' || due.get(k) === 'running') continue;
+        due.set(k, t.speed > 0 ? 'running' : 'standing');
+      }
+    }
+    w.clock.run((gdt) => step.run(gdt, ctx));
+    const time = w.clock.time;
+    for (const [k, why] of due) {
+      const [x, y] = [k % SIDE, Math.floor(k / SIDE)];
+      expect(step.crossings!.closed(x, y), `crossing ${x},${y} (${why}) at ${time}`).toBe(true);
+      if (why === 'standing') heldDue++;
+    }
+    trains.forEach((t, k) => {
+      const dry = consists[k].dry;
+      const empty = dry !== undefined && (i * SIM_STEP + DRY_EVERY - dry) % DRY_EVERY < DRY_FOR;
+      t.coal = empty ? 0 : t.coalCap;
+      t.water = empty ? 0 : t.waterCap;
+      t.oil = empty ? 0 : t.oilCap;
+    });
+    const cars = new Set(trains.flatMap((t) => t.occupancyKeys(SIDE)));
+    for (const p of w.people.persons) {
+      let on = false;
+      for (const k of crossings) {
+        const [x, y] = [k % SIDE, Math.floor(k / SIDE)];
+        if (!onTile(p, x, y)) continue;
+        on = true;
+        if (cars.has(k))
+          expect.fail(`walker ${p.id} on the crossing ${x},${y} with a car, at ${time}`);
+      }
+      if (!on) {
+        if (onIt.delete(p.id)) crossed++;
+        continue;
+      }
+      const since = onIt.get(p.id) ?? time;
+      onIt.set(p.id, since);
+      if (time - since > CROSSING_WALK + SIM_STEP + 1e-9)
+        expect.fail(`walker ${p.id} (${p.state}) on a crossing from ${since} to ${time}`);
+    }
+  }
+  return { trains, seen, crossed, heldDue };
+}
+
+/**
+ * The furthest the train of the gap test runs in `k` steps from a standstill, given its way in the
+ * first of them: the hardest pull of any consist, no top speed, gaining speed before it moves in
+ * each step as trains.ts does.
+ */
+const gapRun = (k: number) => (HARDEST_PULL * SIM_STEP ** 2 * k * (k + 1)) / 2;
+
+describe('real trains in the step, through every way they stand', () => {
+  // The bounds the watch and the gap rest on, checked on the trains of trains.ts rather than plain
+  // ones: held behind each other, roaming with nothing to haul, out of fuel, an electric engine off
+  // the wire with a diesel on standby that steps in, loading, pulling aside.
+  // slow: 12 000 steps of a whole world with up to three trains and some forty walkers
+  it.each([
+    [
+      'two shuttles meeting on one line, the second running dry, and a roaming train',
+      4242,
+      [
+        { locos: ['adler'], wagons: ['wood_hopper'] },
+        { locos: ['f7'], wagons: ['wood_hopper'], dry: 60 },
+        { locos: ['sw1'], wagons: ['wood_hopper'], mode: 'freight' },
+      ],
+      ['idle', 'loading', 'moving', 'noFuel', 'yielding'],
+    ],
+    [
+      'an electric engine off the wire with a diesel of twice its pull on standby, running dry',
+      7,
+      [{ locos: ['kando_v40', 'dda40x'], wagons: ['wood_hopper'], standby: [1], dry: 0 }],
+      ['loading', 'moving', 'noPower'],
+    ],
+  ] as const)(
+    '%s: one with its way set runs no further and gains speed no faster than the watch counts on, one with none runs no further than the gap train',
+    (_, seed, consists, states) => {
+      const { trains, seen, crossed, heldDue } = fleetRun(seed, consists);
+      expect(trains).toHaveLength(consists.length);
+      const ahead = Math.floor(CROSSING_HORIZON / SIM_STEP);
+      const out = { states: new Set<TrainState>(), heldOff: 0, stalledOff: 0, departed: 0 };
+      seen.forEach((runs, k) => {
+        for (let i = 0; i < runs.length; i++) {
+          const s = runs[i];
+          out.states.add(s.state);
+          const far = Math.min(i + ahead, runs.length - 1);
+          const ran = runs[far].distance - s.distance;
+          if (s.reach !== null) {
+            // within the eighth of a tile between the arc the watch reads and the crossing's edge
+            if (far === i + ahead && ran > s.reach + CROSSING_LEAD - 1 / 8)
+              expect.fail(
+                `train ${k + 1} (${s.state}) ran ${ran} tiles from step ${i}, the watch counted on ${s.reach}`,
+              );
+            // and never gained speed faster than the pull it counted on, top speed or not
+            for (let j = i; j < far; j++) {
+              const gain = runs[j + 1].speed - runs[j].speed;
+              if (gain > s.pull! * SIM_STEP + 1e-9)
+                expect.fail(
+                  `train ${k + 1} (${s.state} at step ${i}) gained ${gain / SIM_STEP} tiles/s² in step ${j}, the watch counted on ${s.pull}`,
+                );
+            }
+            // standing with its way set, it set off within the horizon
+            if (s.speed === 0 && ran > 0) {
+              out.heldOff++;
+              if (s.state !== 'moving') out.stalledOff++;
+            }
+            continue;
+          }
+          for (let j = 1; j <= far - i; j++) {
+            const run = runs[i + j].distance - s.distance;
+            if (run > gapRun(j) + 1e-9)
+              expect.fail(
+                `train ${k + 1} (${s.state}) ran ${run} tiles in ${j} steps from step ${i}, the gap train ${gapRun(j)}`,
+              );
+          }
+          if (ran > 0) out.departed++;
+        }
+      });
+      // not vacuous: the trains went through every state named, trains stood with their way set,
+      // out of fuel or power among them, and set off within the horizon; trains with no way set
+      // set off within it too; walkers crossed; and the crossing closed for a train standing with
+      // its way set alone
+      expect([...out.states].sort()).toEqual(expect.arrayContaining([...states]));
+      expect(out.heldOff).toBeGreaterThanOrEqual(100);
+      expect(out.stalledOff).toBeGreaterThanOrEqual(50);
+      expect(out.departed).toBeGreaterThanOrEqual(50);
+      expect(crossed).toBeGreaterThanOrEqual(20);
+      expect(heldDue).toBeGreaterThanOrEqual(100);
+    },
+    180_000,
+  );
+});
+
 describe('the crossings the step watches', () => {
   it('are read again when a road is laid or taken up, or the track under one', () => {
     const { w, train } = crossingWorld('adler', 4242);
@@ -1473,42 +1706,47 @@ describe('a walker set down by a level crossing', () => {
     );
   });
 
-  it('keeps one idling by its door off a level crossing in front of it, with the draws it had', () => {
-    // the same house by the line twice, with the crossing in front of its door and with none
-    const sims = [true, false].map((road) => {
-      const w = simWorld({ terrain: 'grass', size: SIDE, seed: 4242 });
-      line(w, 6, ROW, 60);
-      w.builder.free = true;
-      if (road) expect(w.builder.placeRoad(DOOR_X, ROW)).toBe(true);
-      expect(w.builder.placeDecor(DOOR_X, ROW - 1, 'townhouse', 0)).not.toBeNull();
-      w.builder.free = false;
-      expect(w.builder.roads.isCrossing(DOOR_X, ROW)).toBe(road);
-      // no station and nothing to gather: its walkers only ever idle by the door
-      return new PeopleSim(w.map, w.builder, new Rng(3));
-    });
-    const [crossing, bare] = sims;
-    let idle = 0;
-    let beyond = 0;
-    for (let i = 0; i < 6000; i++) {
-      for (const people of sims) people.tick(SIM_STEP, 6, MIDDAY);
-      expect(crossing.toJSON()).toEqual(bare.toJSON());
-      expect(crossing.persons).toHaveLength(bare.persons.length);
-      crossing.persons.forEach((p, k) => {
-        const b = bare.persons[k];
-        // the same walker doing the same, at the same x; only how far out it stands differs
-        expect({ ...p, y: 0 }).toEqual({ ...b, y: 0 });
-        expect(onTile(p, DOOR_X, ROW), `walker ${p.id} at ${p.x}, ${p.y}`).toBe(false);
-        if (p.state !== 'idle') return;
-        idle++;
-        expect(onTile(p, DOOR_X, ROW - 1)).toBe(true);
-        expect(p.y).toBeGreaterThanOrEqual(ROW - 1 + 0.3);
-        if (onTile(b, DOOR_X, ROW)) beyond++;
+  // slow: 6000 steps of two walker sims side by side, compared each step
+  it(
+    'keeps one idling by its door off a level crossing in front of it, with the draws it had',
+    { timeout: 60_000 },
+    () => {
+      // the same house by the line twice, with the crossing in front of its door and with none
+      const sims = [true, false].map((road) => {
+        const w = simWorld({ terrain: 'grass', size: SIDE, seed: 4242 });
+        line(w, 6, ROW, 60);
+        w.builder.free = true;
+        if (road) expect(w.builder.placeRoad(DOOR_X, ROW)).toBe(true);
+        expect(w.builder.placeDecor(DOOR_X, ROW - 1, 'townhouse', 0)).not.toBeNull();
+        w.builder.free = false;
+        expect(w.builder.roads.isCrossing(DOOR_X, ROW)).toBe(road);
+        // no station and nothing to gather: its walkers only ever idle by the door
+        return new PeopleSim(w.map, w.builder, new Rng(3));
       });
-    }
-    // not vacuous: with no crossing there, walkers stood out on that tile now and then
-    expect(idle).toBeGreaterThanOrEqual(1000);
-    expect(beyond).toBeGreaterThanOrEqual(200);
-  });
+      const [crossing, bare] = sims;
+      let idle = 0;
+      let beyond = 0;
+      for (let i = 0; i < 6000; i++) {
+        for (const people of sims) people.tick(SIM_STEP, 6, MIDDAY);
+        expect(crossing.toJSON()).toEqual(bare.toJSON());
+        expect(crossing.persons).toHaveLength(bare.persons.length);
+        crossing.persons.forEach((p, k) => {
+          const b = bare.persons[k];
+          // the same walker doing the same, at the same x; only how far out it stands differs
+          expect({ ...p, y: 0 }).toEqual({ ...b, y: 0 });
+          expect(onTile(p, DOOR_X, ROW), `walker ${p.id} at ${p.x}, ${p.y}`).toBe(false);
+          if (p.state !== 'idle') return;
+          idle++;
+          expect(onTile(p, DOOR_X, ROW - 1)).toBe(true);
+          expect(p.y).toBeGreaterThanOrEqual(ROW - 1 + 0.3);
+          if (onTile(b, DOOR_X, ROW)) beyond++;
+        });
+      }
+      // not vacuous: with no crossing there, walkers stood out on that tile now and then
+      expect(idle).toBeGreaterThanOrEqual(1000);
+      expect(beyond).toBeGreaterThanOrEqual(200);
+    },
+  );
 
   it('steps off a level crossing laid where it idles, to its edge on the side of its home', () => {
     const w = simWorld({ terrain: 'grass', size: SIDE, seed: 4242 });
