@@ -1,12 +1,15 @@
 import { DESCENT_SPEED } from '../world/railProfile';
 import { walkSpeed } from './people';
+import { consistPhysics, type TrainState } from './trains';
 
 /**
  * Level crossings walkers wait at (#404). A crossing is closed while a car of any train stands on
- * it, while a moving train could reach it within CROSSING_HORIZON game seconds, and for
- * CROSSING_HOLD game seconds after the watch first sees it clear of both. A train standing still
- * closes only the tiles under its cars. Walkers stop at the edge of a closed crossing (`clearAhead`
- * in people.ts); trains never wait for walkers, and nothing here changes a train.
+ * it, while a train with its way set could reach it along that way within CROSSING_HORIZON game
+ * seconds, running or standing on it and setting off at once, and for CROSSING_HOLD game seconds
+ * after the watch first sees it clear of both. A train with no way set (loading or waiting at a
+ * platform, idle, with no route) closes only the tiles under its cars. Walkers stop at the edge of
+ * a closed crossing (`clearAhead` in people.ts); trains never wait for walkers, and nothing here
+ * changes a train.
  */
 
 /** Game seconds a crossing stays closed once no car is on it and no train is coming. */
@@ -21,9 +24,9 @@ export const CROSSING_MARGIN = 2;
  */
 export const CROSSING_WALK = Math.SQRT2 / walkSpeed({ transient: false }, false);
 /**
- * How far ahead in game seconds a moving train closes a crossing: CROSSING_WALK and
+ * How far ahead in game seconds a train with its way set closes a crossing: CROSSING_WALK and
  * CROSSING_MARGIN, 9.07 s at 0.2 tiles a second. A walker that set foot on a crossing while it was
- * open is off it before any train that was then moving can reach it.
+ * open is off it before any train that then had its way set can reach it, running or setting off.
  */
 export const CROSSING_HORIZON = CROSSING_WALK + CROSSING_MARGIN;
 /**
@@ -32,11 +35,27 @@ export const CROSSING_HORIZON = CROSSING_WALK + CROSSING_MARGIN;
  * a plain straight, which a crossing is), so a train is counted a little early, never late.
  */
 export const CROSSING_LEAD = 0.5;
+/**
+ * The states in which a train has its way set and runs along it as soon as it may: `moving`, which
+ * covers a train under way and one standing on its way (held at a signal or behind another train,
+ * or just given a way out of a station or round traffic, as `setPath` leaves it at a standstill),
+ * and the stops for fuel, power or pull (`noFuel`, `noPower`, `overweight`), from which a train
+ * goes on along the way it kept. A train in any other state stands still with no way it will run:
+ * loading or waiting at a platform, idle, yielding on a siding, with no route, stranded.
+ */
+export const ROUTED_STATES: ReadonlySet<TrainState> = new Set<TrainState>([
+  'moving',
+  'noFuel',
+  'noPower',
+  'overweight',
+]);
 /** Seconds of hold within which a crossing counts as open, against rounding in the sums. */
 const HOLD_EPS = 1e-9;
 
 /** What the watch reads of a train (`Train` in trains.ts), so a test can pass a plain object. */
 export interface CrossingTrain {
+  /** what it is doing: only a train in ROUTED_STATES runs along its path */
+  readonly state: TrainState;
   /** tiles a second now */
   readonly speed: number;
   /** arc of the head along its path */
@@ -45,20 +64,44 @@ export interface CrossingTrain {
   occupancyKeys(w: number): readonly number[];
   /** the tiles of its path from the head on, in order, with the arc each starts at */
   pathAhead(): readonly { x: number; y: number; arc: number }[];
-  /** tiles/s² it gains speed at; without it the train is taken to keep its speed */
+  /** tiles/s² it gains speed at now; without it the train is taken to keep its speed */
   readonly acceleration?: number;
   /** its top speed on level track in tiles a second; without it, its speed now */
   readonly maxSpeed?: number;
+  /**
+   * its units and wagons (`Train.locos`, `Train.wagons`): with them the watch counts on the most
+   * any of its units could pull (`crossingPull`), not only on what pulls now
+   */
+  readonly locos?: Parameters<typeof consistPhysics>[0];
+  readonly wagons?: Parameters<typeof consistPhysics>[1];
 }
 
 /**
- * The furthest a moving train could run in `t` game seconds: gaining speed at its acceleration up
- * to the most a line lets it run (its top speed downhill, DESCENT_SPEED), or its speed now if that
- * is more. A train given neither keeps its speed. A train that brakes runs less, never more.
+ * The hardest a train could gain speed in the horizon, tiles/s²: what pulls now (`acceleration`),
+ * or, given its units and wagons, the most `consistPhysics` gives them with any of its units
+ * pulling, as fuel, water, the wire and the standby rule may leave them (`Train.refreshModes`).
+ * A train stopped for fuel or power has no unit pulling while it waits, and sets off with them.
+ */
+export function crossingPull(train: CrossingTrain): number {
+  let best = Math.max(0, train.acceleration ?? 0);
+  const { locos, wagons } = train;
+  if (!locos?.length || !wagons) return best;
+  for (let set = 1; set < 1 << locos.length; set++) {
+    const on = locos.map((l, i) => ({ ...l, engaged: ((set >> i) & 1) === 1 }));
+    best = Math.max(best, consistPhysics(on, wagons).acceleration);
+  }
+  return best;
+}
+
+/**
+ * The furthest a train could run in `t` game seconds from its speed now, 0 for one standing: gaining
+ * speed at the hardest it could (`crossingPull`) up to the most a line lets it run (its top speed
+ * downhill, DESCENT_SPEED), or its speed now if that is more. A train given neither keeps its
+ * speed. A train that brakes runs less, never more.
  */
 export function crossingReach(train: CrossingTrain, t: number): number {
   const v = Math.max(0, train.speed);
-  const a = Math.max(0, train.acceleration ?? 0);
+  const a = crossingPull(train);
   const top = Math.max(v, (train.maxSpeed ?? 0) * DESCENT_SPEED);
   if (!(a > 0) || top <= v) return v * t;
   const rising = Math.min(t, (top - v) / a);
@@ -82,10 +125,10 @@ export class CrossingWatch {
 
   /**
    * One step of `gdt` game seconds, the trains where they stand now and `crossingKeys` the level
-   * crossings of the map (`Roads.crossingKeys`). A crossing a car stands on, or that a moving
-   * train could reach within CROSSING_HORIZON, closes; one closed that is neither stays closed
-   * until CROSSING_HOLD game seconds after the step that first saw it so, and a tile that is no
-   * longer a crossing opens.
+   * crossings of the map (`Roads.crossingKeys`). A crossing a car stands on, or that a train with
+   * its way set could reach within CROSSING_HORIZON, closes; one closed that is neither stays
+   * closed until CROSSING_HOLD game seconds after the step that first saw it so, and a tile that is
+   * no longer a crossing opens.
    */
   update(trains: Iterable<CrossingTrain>, crossingKeys: ReadonlySet<number>, gdt: number): void {
     const busy = this.busy(trains, crossingKeys);
@@ -107,13 +150,17 @@ export class CrossingWatch {
     return this.clear.size;
   }
 
-  /** The crossings a car stands on or a moving train could reach within CROSSING_HORIZON. */
+  /**
+   * The crossings a car stands on, or that a train with its way set (ROUTED_STATES) could reach
+   * along it within CROSSING_HORIZON, running on from its speed now or setting off from a
+   * standstill. Any other train runs nowhere, whatever speed it was left with.
+   */
   private busy(trains: Iterable<CrossingTrain>, crossingKeys: ReadonlySet<number>): Set<number> {
     const out = new Set<number>();
     if (!crossingKeys.size) return out;
     for (const t of trains) {
       for (const k of t.occupancyKeys(this.w)) if (crossingKeys.has(k)) out.add(k);
-      if (!(t.speed > 0)) continue;
+      if (!ROUTED_STATES.has(t.state)) continue;
       const far = crossingReach(t, CROSSING_HORIZON) + CROSSING_LEAD;
       for (const s of t.pathAhead()) {
         if (s.arc - t.pathProgress > far) break;

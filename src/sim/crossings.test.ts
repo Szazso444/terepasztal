@@ -5,11 +5,20 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { DESCENT_SPEED } from '../world/railProfile';
 import { Rng } from '../engine/rng';
+import { content } from '../data/content';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
-import { defaultStop, resetTrainIds, type StopPlan, type Train } from './trains';
+import {
+  consistPhysics,
+  defaultStop,
+  resetTrainIds,
+  type LocoMode,
+  type StopPlan,
+  type Train,
+  type TrainState,
+} from './trains';
 import { rules, DEFAULT_RULES, daySeconds } from './rules';
 import { SimStep, startStock, type StepContext } from './step';
 import { SIM_STEP } from './time';
@@ -31,6 +40,8 @@ import {
   CROSSING_MARGIN,
   CROSSING_WALK,
   CrossingWatch,
+  ROUTED_STATES,
+  crossingPull,
   crossingReach,
   type CrossingTrain,
 } from './crossings';
@@ -83,8 +94,29 @@ describe('the crossing constants', () => {
 const W = 64;
 const keyOf = (x: number, y: number) => y * W + x;
 
-/** What a plain train is made of. */
+/**
+ * Every state a train can be in, and whether it has its way set and runs along it as soon as it
+ * may: under way or held on its way (`moving`), or stopped on it for fuel, power or pull. A state
+ * added to TrainState fails the typecheck here until it is told one way or the other.
+ */
+const ROUTED: Record<TrainState, boolean> = {
+  moving: true,
+  noFuel: true,
+  noPower: true,
+  overweight: true,
+  loading: false,
+  waiting: false,
+  idle: false,
+  yielding: false,
+  noRoute: false,
+  stranded: false,
+};
+const STATES = Object.keys(ROUTED) as TrainState[];
+const ROUTED_LIST = STATES.filter((s) => ROUTED[s]);
+
+/** What a plain train is made of; with no state, it is under way (`moving`). */
 interface Plain {
+  state?: TrainState;
   speed?: number;
   progress?: number;
   cars?: number[];
@@ -95,6 +127,7 @@ interface Plain {
 /** A train as the watch reads it, from plain data. */
 function plain(o: Plain): CrossingTrain {
   return {
+    state: o.state ?? 'moving',
     speed: o.speed ?? 0,
     pathProgress: o.progress ?? 0,
     occupancyKeys: (w) => {
@@ -134,6 +167,7 @@ describe('CrossingWatch with plain trains', () => {
           keyOf(rng.int(0, 15), rng.int(0, 7)),
         ),
         trains: Array.from({ length: rng.int(0, 3) }, () => ({
+          state: rng.pick(STATES),
           speed: rng.pick([0, 0, 0.4, 1.5]),
           cars: Array.from({ length: rng.int(0, 5) }, () => keyOf(rng.int(0, 15), rng.int(0, 7))),
         })),
@@ -160,12 +194,14 @@ describe('CrossingWatch with plain trains', () => {
     );
   });
 
-  it('closes a crossing a moving train could reach within the horizon, and none further on', () => {
+  it('closes a crossing a train with its way set could reach within the horizon, and none further on', () => {
+    // running or standing on its way, in any state that has one
     forAll(
       (rng) => {
         const progress = rng.range(0, 40);
         return {
-          speed: rng.pick([1e-3, 0.3, 0.9, 1.6, 2.4]),
+          state: rng.pick(ROUTED_LIST),
+          speed: rng.pick([0, 1e-3, 0.3, 0.9, 1.6, 2.4]),
           progress,
           head: rng.int(1, 4),
           acceleration: rng.pick([undefined, 0, 0.05, 0.4, 0.9]),
@@ -205,16 +241,56 @@ describe('CrossingWatch with plain trains', () => {
     }
   });
 
-  it('closes only the tiles under the cars of a train standing still, the way ahead open', () => {
-    for (const acceleration of [undefined, 0.9])
-      for (const maxSpeed of [undefined, 2.3]) {
+  it('names the states in which a train has its way set', () => {
+    expect([...ROUTED_STATES].sort()).toEqual([...ROUTED_LIST].sort());
+  });
+
+  it('closes for a stopped train with no route no crossing off its tiles, and for one held with its route set those within its reach', () => {
+    // the train of #404's finding: held 3 tiles short of a crossing, at a signal or loading
+    const way = eastward(5, 4, 12, 20);
+    const keys = new Set([keyOf(5, 4), keyOf(8, 4), keyOf(20, 4)]);
+    const cars = [keyOf(5, 4), keyOf(4, 4)];
+    const held = { speed: 0, progress: 12, cars, ahead: way, acceleration: 0.4, maxSpeed: 1 };
+    // from a standstill it could run 9.09 tiles in the horizon: to the crossing 3 tiles on, not 15
+    expect(crossingReach(plain(held), CROSSING_HORIZON)).toBeCloseTo(9.085, 3);
+    for (const state of STATES) {
+      const watch = new CrossingWatch(W);
+      watch.update([plain({ ...held, state })], keys, SIM_STEP);
+      expect(closedKeys(watch), state).toEqual(
+        ROUTED[state] ? [keyOf(5, 4), keyOf(8, 4)] : [keyOf(5, 4)],
+      );
+    }
+    // any way and speed it was left with: with no route, only the tiles under its cars; held with
+    // its route set, the crossings it could reach from a standstill, and none further on
+    forAll(
+      (rng) => ({
+        state: rng.pick(STATES),
+        speed: rng.pick([0, 0, 0.4, 1.5]),
+        progress: rng.range(0, 40),
+        head: rng.int(1, 4),
+        acceleration: rng.pick([undefined, 0, 0.05, 0.4, 0.9]),
+        maxSpeed: rng.pick([undefined, 0.5, 1, 2.3]),
+        crossings: Array.from({ length: rng.int(1, 5) }, () => rng.int(0, 58)),
+      }),
+      (c) => {
+        const speed = ROUTED[c.state] ? 0 : c.speed;
+        const way = eastward(c.head, 9, c.progress, 60 - c.head);
+        const cars = [keyOf(c.head, 9), keyOf(c.head - 1, 9)];
+        const t = plain({ ...c, speed, cars, ahead: way });
         const watch = new CrossingWatch(W);
-        const way = eastward(5, 4, 12, 20);
-        const keys = new Set([keyOf(5, 4), keyOf(6, 4), keyOf(9, 4)]);
-        const t = plain({ speed: 0, progress: 12, cars: [keyOf(5, 4), keyOf(4, 4)], ahead: way });
-        watch.update([{ ...t, acceleration, maxSpeed }], keys, SIM_STEP);
-        expect(closedKeys(watch)).toEqual([keyOf(5, 4)]);
-      }
+        const keys = new Set(c.crossings.map((x) => keyOf(x, 9)));
+        watch.update([t], keys, SIM_STEP);
+        const far = crossingReach(t, CROSSING_HORIZON) + CROSSING_LEAD;
+        for (let x = 0; x < W; x++) {
+          const k = keyOf(x, 9);
+          const ahead = way.find((s) => s.x === x);
+          const reached = ROUTED[c.state] && !!ahead && ahead.arc - c.progress <= far;
+          expect(watch.closed(x, 9), `${c.state}: tile ${x}`).toBe(
+            keys.has(k) && (cars.includes(k) || reached),
+          );
+        }
+      },
+    );
   });
 
   it('reaches as far as full acceleration to the top speed downhill takes a train', () => {
@@ -243,6 +319,67 @@ describe('CrossingWatch with plain trains', () => {
         expect(crossingReach(t, c.t)).toBeGreaterThanOrEqual(c.speed * c.t - 1e-9);
       },
     );
+  });
+
+  it('counts on the hardest pull its units could give once they may, whatever pulls now', () => {
+    const modes: readonly LocoMode[] = ['leading', 'multiple', 'doubleHeaded', 'standby'];
+    forAll(
+      (rng) => ({
+        locos: Array.from({ length: rng.int(1, 4) }, (_, i) => ({
+          def: rng.pick(content.locomotives),
+          level: rng.int(0, 3),
+          mode: i === 0 ? ('leading' as const) : rng.pick(modes.slice(1)),
+          engaged: rng.chance(0.5),
+        })),
+        wagons: Array.from({ length: rng.int(0, 6) }, () => ({
+          def: rng.pick(content.wagons),
+          level: rng.int(0, 3),
+          cargo: rng.pick([null, 'stone', 'water']),
+          amount: rng.range(0, 40),
+        })),
+      }),
+      (c) => {
+        const now = consistPhysics(c.locos, c.wagons).acceleration;
+        const pull = crossingPull({ ...plain({ acceleration: now }), ...c });
+        expect(pull).toBeGreaterThanOrEqual(now);
+        expect(pull).toBeLessThanOrEqual(content.track.physics.maxAccel);
+        // every way fuel, water and the wire may leave its units able to pull, and the standby
+        // rule of Train.refreshModes with them: the units not on standby that can pull do, and
+        // when none of them can, the first standby unit that can steps in
+        for (let usable = 0; usable < 1 << c.locos.length; usable++) {
+          const can = (i: number) => ((usable >> i) & 1) === 1;
+          const working = c.locos.some((l, i) => l.mode !== 'standby' && can(i));
+          const stepIn = c.locos.findIndex((l, i) => l.mode === 'standby' && can(i));
+          const on = c.locos.map((l, i) => ({
+            ...l,
+            engaged: l.mode !== 'standby' ? can(i) : !working && i === stepIn,
+          }));
+          expect(consistPhysics(on, c.wagons).acceleration).toBeLessThanOrEqual(pull + 1e-12);
+        }
+      },
+    );
+    // the train of the ten-minute step test, stopped for fuel 5 tiles short of a crossing: nothing
+    // pulls while it waits, yet it sets off with its engine pulling once it has fuel
+    const f7 = content.locomotives.find((l) => l.id === 'f7')!;
+    const hopper = content.wagons.find((w) => w.id === 'wood_hopper')!;
+    const stalled = {
+      ...plain({ state: 'noFuel', progress: 3, ahead: eastward(2, 6, 3, 30), acceleration: 0 }),
+      maxSpeed: f7.speed,
+      locos: [{ def: f7, level: 0, mode: 'leading' as const, engaged: false }],
+      wagons: [{ def: hopper, level: 0, cargo: null, amount: 0 }],
+    };
+    const fuelled = consistPhysics([{ ...stalled.locos[0], engaged: true }], stalled.wagons);
+    expect(fuelled.acceleration).toBeGreaterThan(0.5);
+    expect(crossingPull(stalled)).toBe(fuelled.acceleration);
+    for (const [t, closed] of [
+      [stalled, true],
+      // counting only on what pulls now, it would not close
+      [{ ...stalled, locos: undefined }, false],
+    ] as const) {
+      const watch = new CrossingWatch(W);
+      watch.update([t], new Set([keyOf(7, 6)]), SIM_STEP);
+      expect(watch.closed(7, 6)).toBe(closed);
+    }
   });
 
   it('stays closed exactly CROSSING_HOLD from the first step it is clear, then opens', () => {
@@ -590,7 +727,7 @@ describe('a walker at a level crossing', () => {
   });
 });
 
-// ------------------------------------------------------------------ any run of a moving train
+// ------------------------------------------------------------------ any run of a train with its way set
 
 /** Tiles/s² a plain train brakes at. Any will do: the horizon bounds how soon a train can come. */
 const BRAKE = 1.65;
@@ -606,7 +743,7 @@ const DIRS8: readonly (readonly [number, number])[] = [
   [1, -1],
 ];
 
-/** What a plain running train is made of. */
+/** What a plain train with its way set is made of. */
 interface RunnerSpec {
   /** +1 runs east along row CY, -1 west */
   dir: 1 | -1;
@@ -618,7 +755,10 @@ interface RunnerSpec {
   maxSpeed: number;
   /** share of its top speed downhill it starts at */
   share: number;
-  /** the least it slows to: above 0, as a train standing still closes only the tiles under it */
+  /**
+   * the least it slows to: 0 lets it stop and stand on its way, held as at a signal, until its
+   * driving lets it go again
+   */
   floor: number;
 }
 
@@ -628,9 +768,11 @@ interface RunnerSpec {
  * past its top speed downhill, and then it runs that speed's distance. `push` picks the speed in
  * what the step allows, 0 braking hardest and 1 gaining fastest. Its cars cover the tiles from
  * the tail's to the head's, and pathAhead puts each tile's arc an eighth of a tile past the edge
- * the train enters it by, as on a plain straight.
+ * the train enters it by, as on a plain straight. It has its way east or west along the row set
+ * (`moving`) unless a test says otherwise.
  */
 class Runner implements CrossingTrain {
+  state: TrainState = 'moving';
   speed: number;
   pathProgress = 0;
   readonly acceleration: number;
@@ -807,11 +949,12 @@ function crossingRun(c: RunCase) {
 }
 
 describe('the horizon, against any run a train can make', () => {
-  // The trains here keep moving, if only slowly: by the issue's rule a train standing still closes
-  // only the tiles under its cars, so one that sets off near a crossing is not covered.
+  // The trains here have their way set throughout: running, or stopped on it and setting off again
+  // (floor 0), as a train held at a signal or behind another does. A train given its way while a
+  // walker is already on the crossing is the gap below.
   // slow: up to 6000 steps of the watch, a walker and two trains for each of the 100 seeds
   it(
-    'keeps every walker off the crossing while a car is on it, whatever the walk and the driving of a moving train',
+    'keeps every walker off the crossing while a car is on it, whatever the walk and the driving of a train with its way set',
     { timeout: 120_000 },
     () => {
       const seen = { waited: 0, ahead: 0, closest: Infinity, done: 0 };
@@ -825,7 +968,7 @@ describe('the horizon, against any run a train can make', () => {
               acceleration: rng.pick([0.02, 0.1, 0.3, 0.6, 1.2]),
               maxSpeed: rng.pick([0.3, 0.8, 1.4, 2.2, 3.5]),
               share: rng.chance(0.4) ? 0 : rng.next(),
-              floor: rng.pick([0.05, 0.2, 0.5]),
+              floor: rng.pick([0, 0, 0.05, 0.2, 0.5]),
             };
             // from well inside to well outside what the watch looks ahead for this train
             const far = crossingReach(new Runner(spec), CROSSING_HORIZON) + CROSSING_LEAD;
@@ -867,6 +1010,121 @@ describe('the horizon, against any run a train can make', () => {
       expect(seen.done).toBeGreaterThanOrEqual(90);
     },
   );
+});
+
+// ------------------------------------------------------------------ the gap: a way set under a walker
+
+/** The hardest pull of any consist, tiles/s²: `consistPhysics` clamps acceleration to it. */
+const HARDEST_PULL = content.track.physics.maxAccel;
+
+/**
+ * A walk over the crossing by a walker with a home: north to south along a road (`road`), one
+ * tile at the road pace, the way walkers mostly take over a crossing; or corner to corner off any
+ * road (`corner`), √2 tiles at the slowest pace, the longest a walker is on a crossing
+ * (CROSSING_WALK).
+ */
+type GapWalk = 'road' | 'corner';
+
+/**
+ * The walker on `walk` and a train on row CY with its head `gap` tiles short of the crossing's west
+ * edge, moved in SimStep's order: the watch, the walker, the train. Unless `routed`, the train
+ * stands with no way set (loading at a platform) until the step the walker first stands on the
+ * crossing; in that step it is given its way east over it and sets off at once, as early as a way
+ * can be given under a walker. If `routed`, it stands held on that way from the first step and
+ * sets off in the step the walker first stands on the crossing or at its edge. Either way it sets
+ * off at the hardest pull of any consist and keeps gaining, with no top speed to stop it. Whether
+ * a car was ever on the crossing while the walker was, whether the walker waited, and how many
+ * steps it ended on the crossing.
+ */
+function wayUnderWalker(walk: GapWalk, gap: number, routed: boolean) {
+  const { map, builder } = field();
+  expect(builder.spawnDecor(HOME.x, HOME.y, 'townhouse', 0)).not.toBeNull();
+  const path =
+    walk === 'road' ? walkOf(CX, CY - 3, CX, CY + 3) : walkOf(CX - 3, CY - 3, CX + 3, CY + 3);
+  if (walk === 'road') for (const t of path) expect(builder.placeRoad(t.x, t.y)).toBe(true);
+  const people = new PeopleSim(map, builder, new Rng(1));
+  const p: Person = { ...figure(path), transient: false, home: `d${HOME.x},${HOME.y}` };
+  people.persons.push(p);
+  const train = new Runner({
+    dir: 1,
+    gap,
+    length: 2.5,
+    acceleration: HARDEST_PULL,
+    maxSpeed: 1e6,
+    share: 0,
+    floor: 0,
+  });
+  if (!routed) train.state = 'loading';
+  const watch = new CrossingWatch(map.w);
+  const keys = new Set([CY * map.w + CX]);
+  const out = { met: false, waited: false, onSteps: 0 };
+  let going = false;
+  for (let i = 0; i < 4000 && (p.state === 'walk' || !train.past); i++) {
+    watch.update([train], keys, SIM_STEP);
+    const was = { ...p };
+    people.tick(SIM_STEP, 1, MIDDAY, watch.size ? watch.closed : null);
+    if (was.state === 'walk' && p.x === was.x && p.y === was.y) out.waited = true;
+    if (!going && p.state === 'walk' && cheb(p, CX, CY) < 0.5 + (routed ? 1e-6 : -1e-6)) {
+      going = true;
+      train.state = 'moving';
+    }
+    if (going) train.move(SIM_STEP, 1);
+    if (p.state === 'walk' && onTile(p, CX, CY)) {
+      out.onSteps++;
+      if (train.onCrossing) out.met = true;
+    }
+  }
+  expect(p.state, 'the walk is over').not.toBe('walk');
+  expect(train.past, 'the train is past the crossing').toBe(true);
+  return out;
+}
+
+/**
+ * The furthest a train given its way under a walker on `walk` can stand from the crossing's edge
+ * and still meet it, in tiles, to within 1e-4, found by halving.
+ */
+function gapWidth(walk: GapWalk) {
+  let lo = 1e-3;
+  let hi = 40;
+  expect(wayUnderWalker(walk, lo, false).met).toBe(true);
+  expect(wayUnderWalker(walk, hi, false).met).toBe(false);
+  while (hi - lo > 1e-4) {
+    const mid = (lo + hi) / 2;
+    if (wayUnderWalker(walk, mid, false).met) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
+describe('the gap: a train given its way while a walker is already on the crossing', () => {
+  // A train loading at a platform, waiting for one or idle closes only the tiles under its cars, so
+  // a walker may set foot on a crossing in front of it; given its way out in that step, the train
+  // can reach the crossing before the walker is off it. This pins how far off that can be.
+  it('meets the walker within 2.87 tiles on the road and 22.84 corner to corner, never when its way was set first', () => {
+    // each walk, the seconds it is on the crossing tile, and how wide the gap is in tiles
+    for (const [walk, onFor, width] of [
+      ['road', 1 / walkSpeed({ transient: false }, true), 2.87],
+      ['corner', CROSSING_WALK, 22.84],
+    ] as const) {
+      const gap = gapWidth(walk);
+      // exactly what a train set off at the hardest pull runs over the steps the walker ends on the
+      // crossing, the step it sets foot on among them: its time on the tile, and a step more
+      const k = wayUnderWalker(walk, 40, false).onSteps;
+      expect(k, walk).toBeLessThanOrEqual(Math.ceil(onFor / SIM_STEP) + 1);
+      expect(gap, walk).toBeCloseTo((HARDEST_PULL * SIM_STEP ** 2 * k * (k + 1)) / 2, 3);
+      // pinned: a change that widens it, or narrows it, fails here
+      expect(gap, walk).toBeCloseTo(width, 2);
+      // the same train standing with its way set before the walker comes, from any gap: the
+      // walker waits for it or is over before it can come, and walkers waited
+      let waits = 0;
+      for (let at = 0.05; at < 40; at += 0.25) {
+        const r = wayUnderWalker(walk, at, true);
+        expect(r.met, `${walk} walk, ${at} tiles`).toBe(false);
+        if (r.waited) waits++;
+      }
+      expect(waits, walk).toBeGreaterThanOrEqual(40);
+    }
+  });
 });
 
 // ------------------------------------------------------------------ in the game's step
@@ -1014,11 +1272,12 @@ function tenMinutes(w: SimWorld, train: Train | null) {
     if (train)
       runs.push({
         distance: train.distance,
-        allowed: train.speed > 0 ? crossingReach(train, CROSSING_HORIZON) : null,
+        allowed: ROUTED_STATES.has(train.state) ? crossingReach(train, CROSSING_HORIZON) : null,
       });
   }
-  // a moving train never ran further in the horizon than the watch counted on, short of the
-  // eighth of a tile between the arc it reads and the crossing's edge
+  // a train with its way set, running or standing on it, never ran further in the horizon than
+  // the watch counted on, short of the eighth of a tile between the arc it reads and the
+  // crossing's edge
   for (let i = 0; i + ahead < runs.length; i++) {
     const allowed = runs[i].allowed;
     if (allowed === null) continue;
