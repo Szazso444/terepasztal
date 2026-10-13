@@ -155,7 +155,7 @@ describe('a grown map', () => {
     ]);
     const g = grown(SEED, 160);
     expect([fnv(g.terrain), fnv(g.biome), fnv(g.variant), propHash(g)]).toEqual([
-      2993987856, 2425567965, 1107381422, 904992078,
+      3055034070, 107203715, 1107381422, 904992078,
     ]);
   });
 });

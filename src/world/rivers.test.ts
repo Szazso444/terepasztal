@@ -1027,9 +1027,9 @@ interface Slow {
   /** the highest ground on each core tile's way out */
   spill: Float32Array;
   acc: Float32Array;
-  /** river tiles the one-channel rule took away (some may be river again, run on from above) */
+  /** river tiles the one-channel rule took away (some may be river again, a lake's outlet) */
   pruned: Uint8Array;
-  /** the rivers the one-channel rule left, before any ran on (step 6) */
+  /** the rivers the one-channel rule left, before any lake overflowed (step 6) */
   channel: Uint8Array;
   /** each lake's tiles, and the tile its outlet starts on (-1: none, or across the core's edge) */
   lakes: { tiles: number[]; outlet: number }[];
@@ -1149,11 +1149,23 @@ function slowDrain(p: DrainInput): Slow {
     if (down[i] >= 0) acc[down[i]] += acc[i];
   }
 
-  // 4. rivers where enough rain gathered on land, more from level step 2 up
+  // 4. rivers where enough rain gathered on land, more from level step 2 up, and every river runs
+  // on down the flood until it meets water or the core's edge
   const isLand = (i: number) => kind[i] === WaterKind.Land || kind[i] === WaterKind.Dry;
   for (const i of tiles) {
     if (!isLand(i) || mark[i] & KEEP_OUT) continue;
     if (acc[i] >= (steps(elev[i]) >= 2 ? HIGH_RIVER_FLOW : RIVER_FLOW)) kind[i] = WaterKind.River;
+  }
+  const runDown = (from: number) => {
+    for (let i = from; i >= 0 && isLand(i); i = down[i]) kind[i] = WaterKind.River;
+  };
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const i of tiles)
+      if (kind[i] === WaterKind.River && down[i] >= 0 && isLand(down[i])) {
+        runDown(down[i]);
+        grew = true;
+      }
   }
   // 5. one channel: a river that is not the fullest inflow of the river it joins and gathers less
   // than SIDE_STREAM_FLOW is land again, and so is the river above it, downstream first
@@ -1174,12 +1186,9 @@ function slowDrain(p: DrainInput): Slow {
     }
   }
   const channel = kind.map((k) => (k === WaterKind.River ? 1 : 0));
-  // 6. outlets: each lake overflows from its fullest tile that drains out of it, and every river
-  // runs on down the flood until it meets water or the core's edge
+  // 6. outlets: each lake overflows from its fullest tile that drains out of it, and the way from
+  // there runs on down the flood until it meets water or the core's edge
   const lakeExits: number[] = [];
-  const runDown = (from: number) => {
-    for (let i = from; i >= 0 && isLand(i); i = down[i]) kind[i] = WaterKind.River;
-  };
   lakes.forEach((lake, l) => {
     let best = -1;
     for (const t of lake.tiles) {
@@ -1193,14 +1202,6 @@ function slowDrain(p: DrainInput): Slow {
       runDown(down[best]);
     }
   });
-  for (let grew = true; grew;) {
-    grew = false;
-    for (const i of tiles)
-      if (kind[i] === WaterKind.River && down[i] >= 0 && isLand(down[i])) {
-        runDown(down[i]);
-        grew = true;
-      }
-  }
 
   // 7. width: a full river below the hills takes the tile across its way, south of a river along
   // x and east of one along y

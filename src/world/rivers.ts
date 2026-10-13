@@ -222,14 +222,16 @@ class TileHeap {
  * 3. Flow. Rain is 1 + RAIN_PER_STEP for every step above RAIN_FROM; each tile passes what it
  *    gathered to the tile it drains into.
  * 4. Rivers: land that gathered RIVER_FLOW, or HIGH_RIVER_FLOW at step 2 or more; none where
- *    KEEP_OUT, where no rain falls either.
+ *    KEEP_OUT, where no rain falls either. No river ends on land (the issue's rule; the demo had
+ *    none): one that drains onto land needing more rain to be one runs on down until it meets
+ *    water or the core's edge, whatever it gathers, so the next step sees each river's whole way.
  * 5. One channel: a river tile that is not the main inflow of the river it joins (its fullest
  *    inflow, ties by tile index), with less than SIDE_STREAM_FLOW, is land again, and so is
  *    every river tile upstream of it. A river into a lake or the sea is never removed.
  * 6. Outlets (the issue's rule; the demo had none): each lake overflows at its fullest exit, and
- *    the way from there is river until it meets water or the core's edge, whatever it gathers.
- *    The start's pond and nearby river (see DrainInput) are laid here, and a river that drains
- *    onto land needing more rain to be one runs on the same way, so none ends on land.
+ *    the way from there is river until it meets water or the core's edge, whatever it gathers,
+ *    so an outlet may join a river with less than SIDE_STREAM_FLOW. The start's pond and nearby
+ *    river (see DrainInput) are laid here, running on the same way.
  * 7. Width (#341): a river of WIDE_FLOW or more on land below the hills takes the tile beside
  *    it, east of a river along y and south of one along x, where that is land below the hills.
  * 8. Levels (#341): a river tile on Hill ground stands at level 2 (0 where LOW, and beside the
@@ -363,6 +365,15 @@ export function drain(p: DrainInput): Drainage {
       const need = stepsOf(elev[i]) >= 2 ? HIGH_RIVER_FLOW : RIVER_FLOW;
       if (acc[i] >= need) kind[i] = WaterKind.River;
     }
+  // the way down from `from` is river until it meets water or the core's edge
+  const runDown = (from: number) => {
+    for (let i = from; i >= 0 && isLand(i); i = down[i]) kind[i] = WaterKind.River;
+  };
+  // no river ends on land: one that drains onto ground needing more rain runs on regardless,
+  // before the one-channel rule, which then sees where it joins
+  for (let y = y0; y < y1; y++)
+    for (let x = x0, i = y * w + x; x < x1; x++, i++)
+      if (kind[i] === WaterKind.River) runDown(down[i]);
   // 5. one channel, downstream first
   const pruned = new Uint8Array(n);
   for (let k = 0; k < on; k++) {
@@ -375,10 +386,7 @@ export function drain(p: DrainInput): Drainage {
     }
   }
 
-  // 6. outlets: the way down from `from` is river until it meets water or the core's edge
-  const runDown = (from: number) => {
-    for (let i = from; i >= 0 && isLand(i); i = down[i]) kind[i] = WaterKind.River;
-  };
+  // 6. outlets, each running down as far as a river does
   const lakeExits: number[] = [];
   /** Lays each lake's outlet; the lakes from `first` on. */
   const outlets = (first: number) => {
@@ -450,10 +458,6 @@ export function drain(p: DrainInput): Drainage {
       }
     if (!any && fullest >= 0) runDown(fullest);
   }
-  // no river ends on land: one that drains onto ground needing more rain runs on regardless
-  for (let y = y0; y < y1; y++)
-    for (let x = x0, i = y * w + x; x < x1; x++, i++)
-      if (kind[i] === WaterKind.River) runDown(down[i]);
 
   // 7. width
   const raised = (i: number) => land[i] === Terrain.Hill && !(mark[i] & LOW);
