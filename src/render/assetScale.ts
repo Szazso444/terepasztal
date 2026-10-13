@@ -1,7 +1,12 @@
-/** The existing miniature game uses a compressed metre, independent of rail gauge. */
-export const HUMAN_HEIGHT_PX = 11;
-export const HUMAN_HEIGHT_M = 1.75;
-export const DOOR_HEIGHT_M = 2.1;
+/** A walker's height on screen (peopleRenderer.ts); no building is sized by it. */
+export const PERSON_PX = 9;
+/**
+ * A standard door's height on screen: a building is scaled so its door is this tall. It is the
+ * 2.1 m door beside the 1.75 m, 11 px person the buildings were calibrated against, and it stays
+ * when a walker is drawn smaller. The miniature game uses a compressed metre, independent of rail
+ * gauge.
+ */
+export const DOOR_PX = 13.2;
 export const TREE_SCALE = 1.5;
 export const DOOR_REFERENCE_PX: Record<string, number> = {
   station: 10.5,
@@ -26,6 +31,8 @@ export const DOOR_FRACTION: Record<string, number> = {
 export const EQUIPMENT_SCALE: Record<string, number> = {
   water_tower: 0.7,
   fuel_stop: 0.65,
+  // the Fuel Pump: an estimate beside its neighbours until its art brings a measured reference
+  fuel_pump: 0.65,
   kiln: 0.7,
   refinery: 1.1,
   power_plant: 1.1,
@@ -77,7 +84,7 @@ export function structureScale(frame: string, illustratedHeight?: number) {
     illustratedHeight && DOOR_FRACTION[name]
       ? illustratedHeight * DOOR_FRACTION[name]
       : DOOR_REFERENCE_PX[name];
-  if (door) return ((DOOR_HEIGHT_M / HUMAN_HEIGHT_M) * HUMAN_HEIGHT_PX) / door;
+  if (door) return DOOR_PX / door;
   return EQUIPMENT_SCALE[name] ?? 1;
 }
 /** How a building frame is sized: the family it is measured by and the scale that gives. */
