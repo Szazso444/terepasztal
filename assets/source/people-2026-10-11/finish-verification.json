@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-10-13T00:41:11.157Z",
+  "branch": "art/331-people",
+  "rawPaintingsVerified": 94,
+  "acceptedByteIdenticalPoses": 36,
+  "stripsReviewed": [
+    "pump-hand-back-walk",
+    "pump-hand-front-carry",
+    "pump-hand-back-carry",
+    "lumberjack-back-walk",
+    "lumberjack-back-carry",
+    "stone-mason-back-walk",
+    "stone-mason-back-carry",
+    "farmer-back-walk",
+    "farmer-back-carry"
+  ],
+  "allReturnedDimensionsMatch": true,
+  "maxFiveReferences": true,
+  "uniformScalingAndMeasuredSoleAnchors": true,
+  "allChangesInside": "assets/source/people-2026-10-11/",
+  "protectedFiles": "redo-protection.mjs check passed",
+  "tests": {
+    "file": "pose-tools.test.mjs",
+    "passed": 5,
+    "failed": 0
+  },
+  "knownExceptions": "See finish-report.json; pump-hand-front-carry f2 repeats f0, Core0,1,0,1 fallback; retained size/bob/palette exceptions explicitly recorded."
+}

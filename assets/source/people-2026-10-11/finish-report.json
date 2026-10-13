@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-13T00:28:58.949Z",
+  "updatedAt": "2026-10-13T00:41:05.913Z",
   "branch": "art/331-people",
   "brief": "finish-brief-2026-10-12.txt",
   "strips": [
@@ -267,18 +267,34 @@
     {
       "strip": "farmer-back-carry",
       "acceptedAttempts": [
-        null,
-        null,
-        null,
-        null
+        2,
+        2,
+        3,
+        3
       ],
-      "cycleReview": "not assembled",
+      "cycleReview": "passed",
       "repeatedFrames": [],
-      "findings": null,
-      "headBobFraction": null,
-      "outputPaletteCheck": null,
-      "rawPaletteExceptionsKept": [],
-      "measurementsKeptAfterThree": []
+      "findings": "Offline9px-6x and36px inspected: f0/f2 opposite contactX, f1 left raised sole above plantedright, f3 right raised sole above plantedleft; allfour selected distinct.9px profession reads by broad wheat/hat/teal;36px shows alternating legs. Accepted2,2,3,3. f3 bodyheight6.42% excess best after3: first6.77% with2954amber, second repeatsf0. Grounded cap range21.875px=6.08% exceeds2% target and retained after capped attempts. Rawf1 has22amber pixels; final0white/1amber. Same older woman and one broad sheaf; uniform256px columns maxreach112.5, no clipping.",
+      "headBobFraction": 0.06076388888888889,
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 378419,
+        "opaquePixels": 135122,
+        "antialiasedPixels": 10747,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 1
+      },
+      "rawPaletteExceptionsKept": [
+        {
+          "frame": 1,
+          "whiteCapViolations": 0,
+          "strongAmberPixels": 22,
+          "reason": "Best of three: only combination of genuinely raised left sole above planted right boot, passing height and subdued palette; third lowered lifted sole below ground.22 raw amber pixels kept under author instruction."
+        }
+      ],
+      "measurementsKeptAfterThree": [
+        3
+      ]
     }
   ]
 }

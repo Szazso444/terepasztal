@@ -1,0 +1,24 @@
+{
+  "alignment": "Each portrait body x=512*s and measured sole row aligned to (160,420)",
+  "lowerBodyContactIoU": 0.38156174750601995,
+  "contactOverlay": "checks/farmer-back-carry-contact-overlay.png",
+  "passingBoxes": [
+    {
+      "x": 65,
+      "y": 54,
+      "width": 184,
+      "height": 366
+    },
+    {
+      "x": 48,
+      "y": 27,
+      "width": 202,
+      "height": 393
+    }
+  ],
+  "requiresVisualChecks": [
+    "f0/f2 opposite thigh overlap X",
+    "f1/f3 opposite lifted foot",
+    "inspect offline 9px-6x and 36px four-frame sheets"
+  ]
+}

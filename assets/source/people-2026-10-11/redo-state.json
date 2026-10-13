@@ -1,7 +1,7 @@
 {
   "date": "2026-10-11",
   "baseCommit": "3f5a4f7f",
-  "status": "8 of 9 complete; farmer-back-carry remaining",
+  "status": "9 of 9 complete; offline9px/36px reviewed, retained exceptions documented",
   "order": [
     "pump-hand-back-walk",
     "pump-hand-front-carry",
@@ -21,7 +21,8 @@
     "lumberjack-back-carry",
     "stone-mason-back-walk",
     "stone-mason-back-carry",
-    "farmer-back-walk"
+    "farmer-back-walk",
+    "farmer-back-carry"
   ],
   "firstStripGate": "pump-hand-back-walk must be fully checked and committed before painting strip2",
   "originalStripHashes": {
@@ -338,7 +339,7 @@
     "refs/stone-mason-front-walk.png": "c216ebf704b5c9c321077cdfdd3c248e57cd2ef7d2d9fd99edb521630dcab775",
     "pose-geometry.json": "c4af4a2097c75b9e8998b377032ff6c5f88639048b2613642ff7adb9ff3f182c"
   },
-  "lastUpdatedAt": "2026-10-13T00:28:58.436Z",
+  "lastUpdatedAt": "2026-10-13T00:41:30.035Z",
   "toolBlockHistory": [
     {
       "type": "usage_limit_reached",
@@ -437,9 +438,14 @@
     },
     {
       "strip": "farmer-back-carry",
-      "acceptedFrames": [],
-      "returnedPaintings": 0,
-      "cycleReview": null
+      "acceptedFrames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "returnedPaintings": 11,
+      "cycleReview": "passed"
     }
   ],
   "authorDecision": {
