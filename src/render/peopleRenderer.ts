@@ -1,10 +1,15 @@
 import { Container, Sprite } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
-import { tileToWorld, depthKey } from '../engine/iso';
+import { tileToWorld } from '../engine/iso';
 import type { PeopleSim } from '../sim/people';
 import { HUMAN_HEIGHT_PX } from './assetScale';
+import { walkerDepth, walkerGround } from './walkerGround';
 
-/** Tiny walkers in the object layer; two frames alternate while they move. */
+/**
+ * Tiny walkers in the object layer; two frames alternate while they move. A walker stands on the
+ * ground under it with no jump at a tile edge, and is drawn over the ground cover of its tile
+ * (walkerGround.ts).
+ */
 export class PeopleRenderer {
   private sprites = new Map<number, Sprite>();
   private t = 0;
@@ -35,8 +40,8 @@ export class PeopleRenderer {
       s.anchor.set(f.anchorX, f.anchorY);
       s.scale.set(HUMAN_HEIGHT_PX / f.h);
       const w = tileToWorld(p.x, p.y);
-      s.position.set(Math.round(w.x), Math.round(w.y + this.elevation(p.x, p.y)));
-      s.zIndex = depthKey(p.x, p.y, 16);
+      s.position.set(Math.round(w.x), Math.round(w.y + walkerGround(this.elevation, p.x, p.y)));
+      s.zIndex = walkerDepth(sim.map, p.x, p.y);
     }
     for (const [id, s] of this.sprites)
       if (!seen.has(id)) {
