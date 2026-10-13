@@ -45,6 +45,8 @@ function walker(x: number, y: number, state: Person['state'] = 'walk'): Person {
     y,
     home: 'house',
     outfit: 0,
+    profession: 'passenger',
+    carrying: false,
     state,
     timer: 0,
     path: [],
