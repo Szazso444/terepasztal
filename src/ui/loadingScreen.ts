@@ -1,3 +1,4 @@
+import { audio } from '../engine/audio';
 import { STR } from '../strings';
 import { el } from './dom';
 import {
@@ -41,6 +42,10 @@ type Phase = 'loading' | 'ready' | 'begun' | 'reveal' | 'gone';
  * the pointer for as long as it is up: the world under it sees no hover and no hotkey. Any click
  * or key skips the reveal to its end; `onRevealStart` has fired by then, since it fires as the
  * reveal begins. Under `prefers-reduced-motion` the iris is a plain fade of the black away.
+ *
+ * The keys never reach the audio bus's own `keydown` listener (they stop here), so a begin or a
+ * skip that is a key unlocks the bus itself, before `waitForClick` resolves: the music that
+ * `onRevealStart` starts then plays at once, whichever the player used.
  */
 export class LoadingScreen {
   readonly root: HTMLElement;
@@ -165,20 +170,40 @@ export class LoadingScreen {
   }
 
   private onClick = () => {
-    if (this.phase === 'ready') this.beginClick();
-    else if (this.phase === 'reveal') this.skip();
+    if (this.phase === 'ready') {
+      this.unlockAudio();
+      this.beginClick();
+    } else if (this.phase === 'reveal') {
+      this.unlockAudio();
+      this.skip();
+    }
   };
 
   private onKey = (e: KeyboardEvent) => {
     if (!isPlainKey(e)) return;
-    // no hotkey of the game acts on a key pressed over this screen
+    // no hotkey of the game acts on a key pressed over this screen, and the audio bus's own
+    // keydown listener (a bubble listener on window) does not see it either
     e.stopImmediatePropagation();
     if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.preventDefault();
     if (e.repeat) return;
     if (this.phase === 'ready') {
-      if (e.key === 'Enter' || e.key === ' ') this.beginClick();
-    } else if (this.phase === 'reveal') this.skip();
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      this.unlockAudio();
+      this.beginClick();
+    } else if (this.phase === 'reveal') {
+      this.unlockAudio();
+      this.skip();
+    }
   };
+
+  /**
+   * The gesture the player just made is the one browsers want before any sound: unlock the bus
+   * (idempotent) so the music that starts at `onRevealStart` is not left waiting for the next
+   * pointer or key. Only a real gesture calls it, never `reveal()` on its own.
+   */
+  private unlockAudio() {
+    audio.unlock();
+  }
 
   private skip() {
     if (!canSkip(performance.now() - this.t0)) return;
