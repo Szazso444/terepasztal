@@ -18,7 +18,14 @@ import {
   HALF_H,
   TILE_H,
 } from '../engine/iso';
-import { Terrain, Biome, type GameMap, type PropInstance, idx } from '../world/tiles';
+import {
+  Terrain,
+  Biome,
+  type GameMap,
+  type PropInstance,
+  type PropKind,
+  idx,
+} from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, materialAt } from './landscapeModel';
@@ -67,6 +74,13 @@ const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
 
 const CHUNK = 8;
 
+/**
+ * Props a railway cuts instead of pushing aside. A wheat field lies over its whole tile, so
+ * moved beside the rails it would land half on the next tile and over the sleepers; the track
+ * cuts it, and the field shows again when the track goes.
+ */
+const CUT_BY_TRACK: ReadonlySet<PropKind> = new Set<PropKind>(['wheat']);
+
 /** An illustrated picture: more texels than world pixels (an atlas `resolution` above 1). */
 function illustrated(f: FrameInfo) {
   return f.texture.frame.width / f.w > 1;
@@ -110,6 +124,8 @@ export class WorldRenderer {
   /** number of void tiles drawn around the playable map */
   static readonly BORDER = 8;
   private propSprites = new Map<number, Sprite[]>();
+  /** The prop sprites that track cuts rather than displaces (CUT_BY_TRACK). */
+  private cutSprites = new WeakSet<Sprite>();
   /** Visual-only nature (scatter.ts) per tile, with each sprite's offset inside its tile. */
   private scatterSprites = new Map<number, { s: Sprite; ox: number; oy: number }[]>();
   /** Stations, buildings and placed decor, as the game knows them; scatter keeps clear. */
@@ -308,7 +324,9 @@ export class WorldRenderer {
 
   /**
    * Track was laid on the tile: push its trees and bushes to the sides of the rails (straight
-   * pieces) or clear them (curves, switches, crossings need the whole tile).
+   * pieces) or clear them (curves, switches, crossings need the whole tile). A field is neither
+   * moved nor cleared: it stays in the map at its own place and is not drawn while track lies on
+   * the tile (CUT_BY_TRACK).
    */
   displaceProps(x: number, y: number, links: [number, number][]) {
     const i = idx(this.map, x, y);
@@ -316,13 +334,20 @@ export class WorldRenderer {
     if (!list?.length) return;
     const ns = links.length === 1 && links[0].includes(0) && links[0].includes(2);
     const ew = links.length === 1 && links[0].includes(1) && links[0].includes(3);
-    if (!ns && !ew) {
+    // curves, switches and crossings clear everything but a field
+    const kept = ns || ew ? list : list.filter((p) => CUT_BY_TRACK.has(p.kind));
+    if (!kept.length) {
       this.map.props.delete(i);
       this.removeProps(x, y);
       return;
     }
-    for (const p of list) {
-      if (ns) {
+    if (kept.length < list.length) this.map.props.set(i, kept);
+    for (const p of kept) {
+      if (CUT_BY_TRACK.has(p.kind)) {
+        // the field is only cut, never moved: one a save kept pushed aside is put back
+        p.ox = 0;
+        p.oy = 0;
+      } else if (ns) {
         p.ox = p.ox >= 0 ? 0.4 : -0.4;
         p.oy = Math.max(-0.3, Math.min(0.3, p.oy));
       } else {
@@ -331,6 +356,8 @@ export class WorldRenderer {
       }
     }
     this.rebuildProps(x, y);
+    // the track sprite follows this call: the tile counts as railed from here
+    this.showProps(i, true);
   }
   /** Re-create the prop sprites of one tile from the map data (after terrain edits). */
   rebuildProps(x: number, y: number) {
@@ -356,7 +383,7 @@ export class WorldRenderer {
     if (flat) this.flattened.add(i);
     else this.flattened.delete(i);
     this.refreshGround(x, y);
-    for (const s of this.propSprites.get(i) ?? []) s.visible = !flat;
+    this.showProps(i);
   }
   isFlattened(x: number, y: number) {
     return this.flattened.has(idx(this.map, x, y));
@@ -387,11 +414,23 @@ export class WorldRenderer {
       for (const p of list) {
         const s = this.propSprite(x, y, p);
         if (!s) continue;
-        s.visible = !this.flattened.has(i);
+        if (CUT_BY_TRACK.has(p.kind)) this.cutSprites.add(s);
         sprites.push(s);
       }
-      if (sprites.length) this.propSprites.set(i, sprites);
+      if (sprites.length) {
+        this.propSprites.set(i, sprites);
+        this.showProps(i);
+      }
     }
+  }
+  /**
+   * Show or hide the prop sprites of tile `i`: all of them are hidden on flattened ground, and
+   * those track cuts while track lies on the tile (`railed`, by default whether it has a sprite).
+   */
+  private showProps(i: number, railed = this.trackSprites.has(i)) {
+    const flat = this.flattened.has(i);
+    for (const s of this.propSprites.get(i) ?? [])
+      s.visible = !flat && !(railed && this.cutSprites.has(s));
   }
 
   private propSprite(x: number, y: number, p: PropInstance) {
@@ -1114,6 +1153,7 @@ export class WorldRenderer {
       }
       this.trackMeshes.get(i)?.destroy();
       this.trackMeshes.delete(i);
+      this.showProps(i);
       this.refreshScatter(x, y, 0);
       return;
     }
@@ -1127,6 +1167,7 @@ export class WorldRenderer {
     s.anchor.set(f.anchorX, f.anchorY);
     s.tint = this.trackColour(i);
     this.placeTrackSprite(s, x, y);
+    this.showProps(i);
     this.refreshScatter(x, y, 0);
   }
   /**

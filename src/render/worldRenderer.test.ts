@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   Container,
   Graphics,
+  Mesh,
   Rectangle,
   Sprite,
   Texture,
@@ -9,12 +10,21 @@ import {
   type FillInstruction,
 } from 'pixi.js';
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
-import { ELEV_PX, tileToWorld } from '../engine/iso';
+import { Dir, ELEV_PX, depthKey, tileToWorld } from '../engine/iso';
 import { harvestBreakdown } from '../sim/stations';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
-import { Terrain, type GameMap } from '../world/tiles';
+import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
+import {
+  TRACK_ITEMS,
+  TRACK_KINDS,
+  isUnitKind,
+  makePiece,
+  pieceFrame,
+  rotationCount,
+  type TrackPiece,
+} from '../world/track';
 import { structureScale, TREE_SCALE } from './assetScale';
 import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
@@ -372,5 +382,418 @@ describe('the harvest highlight in a whole world', () => {
       // a whole world per case: twelve seeds, some 240 frames, keep it well inside the default limit
       { seeds: SEEDS.slice(0, 12), shrink: (moves) => shrinkArray(moves) },
     );
+  });
+});
+
+/** Prop pictures for the fields below: a field covers its tile, a tree stands on it. */
+const WHEAT = frame(64, 32);
+const OAK = frame(20, 30);
+const PROP_ATLAS = {
+  has: (k: string) => !k.startsWith('props/') || k === 'props/wheat_0' || k === 'props/oak_0',
+  get: (k: string) => (k === 'props/wheat_0' ? WHEAT : k === 'props/oak_0' ? OAK : ANY_FRAME),
+} as unknown as AtlasRegistry;
+
+const TILE = { x: 2, y: 2 };
+const ID = TILE.y * 6 + TILE.x;
+const field = (): PropInstance => ({ kind: 'wheat', variant: 0, ox: 0, oy: 0 });
+const oak = (ox: number, oy: number): PropInstance => ({ kind: 'oak', variant: 0, ox, oy });
+
+/** A 6 x 6 world whose tile (2, 2) holds `props`, built as the game builds it. */
+function propWorld(props: PropInstance[], atlas = PROP_ATLAS, fill = Terrain.Grass) {
+  const map = emptyMap(1, 6, 6, fill);
+  map.props.set(ID, props);
+  return new WorldRenderer(atlas, map, new RegionState(map));
+}
+
+/** The sprites of one picture the world draws now: neither hidden nor destroyed. */
+function drawn(world: WorldRenderer, texture: Texture): Sprite[] {
+  return world.objects.children.filter(
+    (c): c is Sprite =>
+      c instanceof Sprite && !c.destroyed && c.texture === texture && c.visible && c.renderable,
+  );
+}
+const fieldsDrawn = (world: WorldRenderer) => drawn(world, WHEAT.texture);
+const oaksDrawn = (world: WorldRenderer) => drawn(world, OAK.texture);
+
+/** Lay a piece as the game does (onTrackChanged): displace the props, then show the piece. */
+function lay(world: WorldRenderer, p: TrackPiece) {
+  world.displaceProps(TILE.x, TILE.y, p.unit ? [] : (p.links as [number, number][]));
+  world.setTrack(TILE.x, TILE.y, pieceFrame(p));
+}
+/** A member of a multi-tile piece, as the track graph stores one. */
+const member = (p: TrackPiece): TrackPiece => ({
+  ...p,
+  unit: { ax: TILE.x, ay: TILE.y, member: 0 },
+});
+
+/** Where a prop at offset (ox, oy) in the tile is drawn: position and depth key. */
+function placed(world: WorldRenderer, ox: number, oy: number) {
+  const p = tileToWorld(TILE.x + ox, TILE.y + oy);
+  return {
+    x: Math.round(p.x),
+    y: Math.round(p.y + world.elevationOf(TILE.x + ox, TILE.y + oy)),
+    z: depthKey(TILE.x + ox, TILE.y + oy, 10),
+  };
+}
+const whereIs = (s: Sprite) => ({ x: s.x, y: s.y, z: s.zIndex });
+
+/** Every kind of track a tile can carry, and what the world does to a tree beside it. */
+const TRACK: { name: string; piece: TrackPiece; trees: 'along y' | 'along x' | 'cleared' }[] = [
+  { name: 'straight along y', piece: makePiece('straight', 0), trees: 'along y' },
+  { name: 'straight along x', piece: makePiece('straight', 1), trees: 'along x' },
+  { name: 'high speed straight', piece: makePiece('straight', 0, 'high_speed'), trees: 'along y' },
+  { name: 'narrow straight', piece: makePiece('straight', 1, 'narrow'), trees: 'along x' },
+  { name: 'bridge', piece: makePiece('bridge', 0), trees: 'along y' },
+  { name: 'transition', piece: makePiece('transition', 1), trees: 'along x' },
+  { name: 'regular curve', piece: member(makePiece('curve', 0)), trees: 'cleared' },
+  { name: 'narrow curve', piece: makePiece('curve', 2, 'narrow'), trees: 'cleared' },
+  { name: 'regular switch', piece: member(makePiece('switch', 1)), trees: 'cleared' },
+  { name: 'narrow switch', piece: makePiece('switch', 5, 'narrow'), trees: 'cleared' },
+  { name: 'crossing', piece: makePiece('crossing', 0), trees: 'cleared' },
+];
+
+describe('a wheat field under track', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('is drawn whole, at offset 0, where there is no track', () => {
+    const world = propWorld([field()]);
+    expect(fieldsDrawn(world).map(whereIs)).toEqual([placed(world, 0, 0)]);
+  });
+
+  for (const { name, piece, trees } of TRACK) {
+    it(`is not drawn on a ${name}, but stays in the map; a tree is displaced as before`, () => {
+      // the tree's offsets exercise both clamps and both signs
+      const world = propWorld([field(), oak(-0.2, 0.35)]);
+      expect(fieldsDrawn(world)).toHaveLength(1);
+      expect(oaksDrawn(world).map(whereIs)).toEqual([placed(world, -0.2, 0.35)]);
+      lay(world, piece);
+      const [wheat, ...rest] = world.map.props.get(ID) ?? [];
+      expect(wheat, 'the field is still in the map data').toEqual(field());
+      expect(fieldsDrawn(world)).toHaveLength(0);
+      if (trees === 'cleared') {
+        // curves, switches and crossings need the whole tile
+        expect(rest).toEqual([]);
+        expect(oaksDrawn(world)).toHaveLength(0);
+      } else {
+        // beside the rails: 0.4 tile out across them, the other offset kept within 0.3
+        const beside = trees === 'along y' ? oak(-0.4, 0.3) : oak(-0.2, 0.4);
+        expect(rest).toEqual([beside]);
+        expect(oaksDrawn(world).map(whereIs)).toEqual([placed(world, beside.ox, beside.oy)]);
+      }
+      // retiled from the map data (a terrain edit, a repair), the field is still under the track
+      world.retile(TILE.x, TILE.y);
+      expect(fieldsDrawn(world)).toHaveLength(0);
+    });
+
+    it(`is drawn again at offset 0 when the ${name} is removed`, () => {
+      const world = propWorld([field(), oak(0.1, -0.1)]);
+      lay(world, piece);
+      world.setTrack(TILE.x, TILE.y, null);
+      expect(fieldsDrawn(world).map(whereIs)).toEqual([placed(world, 0, 0)]);
+      expect(world.map.props.get(ID)?.[0]).toEqual(field());
+    });
+  }
+
+  it('is hidden as soon as displaceProps runs, before the piece itself is shown', () => {
+    for (const { name, piece } of TRACK) {
+      const world = propWorld([field()]);
+      world.displaceProps(TILE.x, TILE.y, piece.unit ? [] : (piece.links as [number, number][]));
+      expect(fieldsDrawn(world), name).toHaveLength(0);
+    }
+  });
+
+  it('is put back at offset 0 where a save kept it pushed aside', () => {
+    const world = propWorld([{ kind: 'wheat', variant: 0, ox: 0.4, oy: -0.1 }]);
+    lay(world, makePiece('straight', 0));
+    expect(fieldsDrawn(world)).toHaveLength(0);
+    world.setTrack(TILE.x, TILE.y, null);
+    expect(world.map.props.get(ID)).toEqual([field()]);
+    expect(fieldsDrawn(world).map(whereIs)).toEqual([placed(world, 0, 0)]);
+  });
+
+  it('follows the track and the ground through any order of laying, removing and flattening', () => {
+    type Op = 'straight' | 'curve' | 'remove' | 'retile' | 'flatten' | 'level';
+    const OPS: Op[] = ['straight', 'curve', 'remove', 'retile', 'flatten', 'level'];
+    forAll(
+      (rng) => Array.from({ length: rng.int(1, 14) }, () => rng.pick(OPS)),
+      (ops) => {
+        const world = propWorld([field(), oak(0.2, 0.1)]);
+        let railed = false,
+          flat = false,
+          tree = true;
+        ops.forEach((op, n) => {
+          if (op === 'straight') lay(world, makePiece('straight', 0));
+          if (op === 'curve') lay(world, makePiece('curve', 1, 'narrow'));
+          if (op === 'straight' || op === 'curve') railed = true;
+          if (op === 'curve') tree = false;
+          if (op === 'remove') {
+            world.setTrack(TILE.x, TILE.y, null);
+            railed = false;
+          }
+          if (op === 'retile') world.retile(TILE.x, TILE.y);
+          if (op === 'flatten' || op === 'level') {
+            world.setFlattened(TILE.x, TILE.y, op === 'flatten');
+            flat = op === 'flatten';
+          }
+          const at = `after ${ops.slice(0, n + 1).join(', ')}`;
+          expect(fieldsDrawn(world).length, `field ${at}`).toBe(!railed && !flat ? 1 : 0);
+          expect(oaksDrawn(world).length, `tree ${at}`).toBe(tree && !flat ? 1 : 0);
+          expect(world.map.props.get(ID)?.[0], `field data ${at}`).toEqual(field());
+        });
+      },
+      { seeds: SEEDS.slice(0, 40), shrink: (ops) => shrinkArray(ops) },
+    );
+  });
+});
+
+/** The track a wheat field sits under, one by one: every item the builder offers, at every turn. */
+const EVERY_PIECE: TrackPiece[] = [
+  ...TRACK_ITEMS,
+  // the bridge is laid by the builder rather than offered as an item, in every class
+  ...(['regular', 'high_speed', 'narrow'] as const).map((cls) => ({
+    kind: 'bridge' as const,
+    cls,
+  })),
+].flatMap((item) =>
+  Array.from({ length: rotationCount(item.kind) }, (_, rot) => {
+    const piece = makePiece(item.kind, rot, item.cls, 'cls2' in item ? item.cls2 : undefined);
+    // a curve or switch wider than one tile is stored as one member piece per tile
+    return isUnitKind(item.kind, item.cls) ? member(piece) : piece;
+  }),
+);
+
+/**
+ * How a piece lies on its tile: a single link through it, north to south (along y) or east to
+ * west (along x), or otherwise (curves, switches, crossings, every multi-tile member).
+ */
+function alongOf(piece: TrackPiece): 'y' | 'x' | null {
+  if (piece.unit || piece.links.length !== 1) return null;
+  const [a, b] = [...piece.links[0]].sort();
+  return a === Dir.N && b === Dir.S ? 'y' : a === Dir.E && b === Dir.W ? 'x' : null;
+}
+
+/**
+ * The oracle: a tile's props once `piece` is laid on it. A field is kept as it is, put back at
+ * offset 0. Every other prop is moved 0.4 tile to the side of a straight line (the other offset
+ * kept within 0.3, a prop at offset 0 going to the positive side) and cleared by anything else:
+ * the rule before fields were cut, kept for coal, oil, trees, bushes and rocks.
+ */
+function afterLaying(props: PropInstance[], piece: TrackPiece): PropInstance[] {
+  const along = alongOf(piece);
+  const side = (v: number) => (v >= 0 ? 0.4 : -0.4);
+  const within = (v: number) => Math.max(-0.3, Math.min(0.3, v));
+  return props.flatMap((p): PropInstance[] => {
+    if (p.kind === 'wheat') return [{ ...p, ox: 0, oy: 0 }];
+    if (along === 'y') return [{ ...p, ox: side(p.ox), oy: within(p.oy) }];
+    if (along === 'x') return [{ ...p, ox: within(p.ox), oy: side(p.oy) }];
+    return [];
+  });
+}
+
+/**
+ * One picture per prop kind, so each kind's sprites can be told apart; `rock` has none, which
+ * leaves a tile's sprites one short of its props (the world skips a prop it has no picture for).
+ */
+const MIXED = ['wheat', 'oak', 'bush', 'coal', 'oil', 'rock'] as const;
+const MIXED_FRAMES = new Map<string, FrameInfo>(
+  MIXED.filter((k) => k !== 'rock').map((k) => [k, frame(k === 'wheat' ? 64 : 20, 30)]),
+);
+const MIXED_WHEAT = MIXED_FRAMES.get('wheat')!;
+const MIXED_ATLAS = {
+  has: (k: string) => !k.startsWith('props/') || MIXED_FRAMES.has(k.slice(6, -2)),
+  get: (k: string) => (k.startsWith('props/') && MIXED_FRAMES.get(k.slice(6, -2))) || ANY_FRAME,
+} as unknown as AtlasRegistry;
+
+const prop = (kind: (typeof MIXED)[number], ox: number, oy: number): PropInstance => ({
+  kind,
+  variant: 0,
+  ox,
+  oy,
+});
+const byText = (a: unknown, b: unknown) => (JSON.stringify(a) < JSON.stringify(b) ? -1 : 1);
+/** Every live sprite of one picture, hidden or not. */
+const existing = (world: WorldRenderer, texture: Texture) =>
+  world.objects.children.filter(
+    (c): c is Sprite => c instanceof Sprite && !c.destroyed && c.texture === texture,
+  );
+
+/**
+ * Lay `piece` on a tile holding `props`, then retile it, then take the piece away, and check at
+ * each step that the map holds what `afterLaying` says and that each kind is drawn where the
+ * props put it: a field only while the tile has no track, every other kind as the oracle says.
+ */
+function checkMixedTile(props: PropInstance[], piece: TrackPiece) {
+  const world = propWorld(
+    props.map((p) => ({ ...p })),
+    MIXED_ATLAS,
+  );
+  const after = afterLaying(props, piece);
+  const sees = (stage: string, inMap: PropInstance[], railed: boolean) => {
+    expect(world.map.props.get(ID) ?? [], `${stage}: the map data`).toEqual(inMap);
+    for (const [kind, f] of MIXED_FRAMES) {
+      const want = inMap.filter((p) => p.kind === kind && !(railed && kind === 'wheat'));
+      expect(drawn(world, f.texture).map(whereIs).sort(byText), `${stage}: ${kind} drawn`).toEqual(
+        want.map((p) => placed(world, p.ox, p.oy)).sort(byText),
+      );
+    }
+    // a tile is never left with a second, stale picture of its field
+    expect(existing(world, MIXED_WHEAT.texture), `${stage}: field sprites`).toHaveLength(
+      inMap.filter((p) => p.kind === 'wheat').length,
+    );
+  };
+  sees('before the track', props, false);
+  lay(world, piece);
+  sees('with the track', after, true);
+  world.retile(TILE.x, TILE.y);
+  sees('retiled under the track', after, true);
+  world.setTrack(TILE.x, TILE.y, null);
+  sees('with the track gone', after, false);
+}
+
+/** A piece as text, for a failure message. */
+const named = ({ kind, cls, cls2, rot, unit }: TrackPiece) =>
+  `${kind} ${cls}${cls2 ? `/${cls2}` : ''} rot ${rot}${unit ? ' (member)' : ''}`;
+
+describe('a tile of mixed props under track', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('has a case for every kind of track the graph holds', () => {
+    // fails when a track kind is added without being run through the tests below
+    expect([...new Set(EVERY_PIECE.map((p) => p.kind))].sort()).toEqual([...TRACK_KINDS].sort());
+    expect(new Set(EVERY_PIECE.map(alongOf))).toEqual(new Set(['y', 'x', null]));
+  });
+
+  it('cuts the field and moves or clears the rest as before, under every piece at every turn', () => {
+    // a rock (no picture) first and a field pushed aside in the middle: sprites and props do not
+    // line up by index, and the offsets sit on both sides of 0 and of the clamp
+    const props = [
+      prop('rock', 0.1, 0.1),
+      prop('oak', -0.2, 0.35),
+      prop('wheat', 0.4, -0.1),
+      prop('coal', 0, 0),
+      prop('oil', 0.3, -0.3),
+      prop('bush', -0.05, 0.05),
+    ];
+    for (const piece of EVERY_PIECE)
+      try {
+        checkMixedTile(props, piece);
+      } catch (error) {
+        throw new Error(`${named(piece)}: ${String(error)}`, { cause: error });
+      }
+  });
+
+  it('does so for any mix of props and any piece', () => {
+    const OFFSETS = [-0.42, -0.3, -0.2, -0.05, 0, 0.05, 0.3, 0.35, 0.42];
+    forAll(
+      (rng) => ({
+        piece: rng.pick(EVERY_PIECE),
+        props: Array.from({ length: rng.int(1, 5) }, () =>
+          prop(rng.pick(MIXED), rng.pick(OFFSETS), rng.pick(OFFSETS)),
+        ),
+      }),
+      ({ piece, props }) => {
+        checkMixedTile(props, piece);
+      },
+      {
+        seeds: SEEDS.slice(0, 60),
+        shrink: ({ piece, props }) =>
+          [...shrinkArray(props)].filter((p) => p.length > 0).map((p) => ({ piece, props: p })),
+        format: ({ piece, props }) => `${named(piece)} over ${JSON.stringify(props)}`,
+      },
+    );
+  });
+
+  it('cuts only the field when displaceProps runs, before the piece itself is shown', () => {
+    for (const piece of EVERY_PIECE) {
+      const props = [prop('oak', 0.2, -0.2), prop('wheat', 0, 0), prop('coal', -0.1, 0.1)];
+      const after = afterLaying(props, piece);
+      const world = propWorld(
+        props.map((p) => ({ ...p })),
+        MIXED_ATLAS,
+      );
+      world.displaceProps(TILE.x, TILE.y, piece.unit ? [] : (piece.links as [number, number][]));
+      const at = named(piece);
+      expect(drawn(world, MIXED_WHEAT.texture), `${at}: field`).toHaveLength(0);
+      for (const kind of ['oak', 'coal']) {
+        const want = after.filter((p) => p.kind === kind);
+        expect(
+          drawn(world, MIXED_FRAMES.get(kind)!.texture).map(whereIs),
+          `${at}: ${kind} drawn`,
+        ).toEqual(want.map((p) => placed(world, p.ox, p.oy)));
+      }
+    }
+  });
+
+  it('is cut by a piece shown alone, where the game never displaces props', () => {
+    // game.ts displaces props only on forest and grass; on sand the oak stays where it stands
+    const world = propWorld([field(), oak(0.2, 0.1)], PROP_ATLAS, Terrain.Sand);
+    world.setTrack(TILE.x, TILE.y, pieceFrame(makePiece('straight', 0)));
+    expect(fieldsDrawn(world)).toHaveLength(0);
+    expect(oaksDrawn(world).map(whereIs)).toEqual([placed(world, 0.2, 0.1)]);
+    // another picture on the same tile (a piece replaced) leaves the field cut
+    world.setTrack(TILE.x, TILE.y, pieceFrame(makePiece('curve', 1, 'narrow')));
+    expect(fieldsDrawn(world)).toHaveLength(0);
+    world.setTrack(TILE.x, TILE.y, null);
+    expect(fieldsDrawn(world).map(whereIs)).toEqual([placed(world, 0, 0)]);
+    expect(oaksDrawn(world).map(whereIs)).toEqual([placed(world, 0.2, 0.1)]);
+  });
+
+  it('stays cut under a piece the world bends into a mesh along its rail, and shows when it goes', () => {
+    const map = emptyMap(1, 6, 6);
+    map.props.set(ID, [field()]);
+    const world = new WorldRenderer(PROP_ATLAS, map, new RegionState(map));
+    // a painting landscape (the track follows the rail profile only then) and a climbing rail
+    Object.assign(world, { landscape: working(map).landscape });
+    world.setRailBeds(
+      new Map([[ID, { axis: 'y', flat: false, spans: [{ from: 0, to: 5, a: 0, b: 2 }] }]]),
+    );
+    lay(world, makePiece('straight', 0));
+    const meshes = () => world.track.children.filter((c) => c instanceof Mesh && !c.destroyed);
+    expect(meshes(), 'the piece is drawn as a mesh').toHaveLength(1);
+    expect(fieldsDrawn(world)).toHaveLength(0);
+    world.retile(TILE.x, TILE.y);
+    expect(fieldsDrawn(world)).toHaveLength(0);
+    world.setTrack(TILE.x, TILE.y, null);
+    expect(meshes()).toHaveLength(0);
+    expect(fieldsDrawn(world).map(whereIs)).toEqual([placed(world, 0, 0)]);
+  });
+
+  it('is cut when it is put on the map under track and the tile is retiled', () => {
+    // a tile with track and no props: nothing to displace, nothing drawn
+    const world = propWorld([]);
+    world.map.props.delete(ID);
+    lay(world, makePiece('straight', 0));
+    expect(fieldsDrawn(world)).toHaveLength(0);
+    world.map.props.set(ID, [field()]);
+    world.retile(TILE.x, TILE.y);
+    expect(fieldsDrawn(world)).toHaveLength(0);
+    world.setTrack(TILE.x, TILE.y, null);
+    expect(fieldsDrawn(world).map(whereIs)).toEqual([placed(world, 0, 0)]);
+  });
+
+  it('leaves the fields of the tiles around it alone', () => {
+    const map = emptyMap(1, 6, 6);
+    for (const [x, y] of [
+      [1, 2],
+      [3, 2],
+      [2, 1],
+      [2, 3],
+      [2, 2],
+    ])
+      map.props.set(y * 6 + x, [field()]);
+    const world = new WorldRenderer(PROP_ATLAS, map, new RegionState(map));
+    expect(fieldsDrawn(world)).toHaveLength(5);
+    lay(world, makePiece('straight', 0));
+    expect(fieldsDrawn(world)).toHaveLength(4);
+    world.setTrack(TILE.x, TILE.y, null);
+    expect(fieldsDrawn(world)).toHaveLength(5);
   });
 });
