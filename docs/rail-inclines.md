@@ -11,6 +11,14 @@ so pieces conform automatically as neighbours are laid or removed.
 - Straights, crossings and class transitions may be placed on slopes and inclines.
 - Curves and switches, regular and high speed alike, need smooth tiles: no bank reaches into any
   tile of their footprint.
+- The ground's side of this rule needs no renderer: `groundAllowsAt(map, levels, x, y, need)` in
+  `src/world/slope.ts` answers it over `tileLevels` (`groundAllowsOn(map, x, y, need)` does the
+  same from the terrain for a few tiles, with no levels to keep). `need` is `'straight'` for
+  pieces that may climb and `'level'` for the rest. A straight fits every tile on the map, because
+  neighbouring levels differ by at most one; a level piece fits a tile whose four sides (not the
+  diagonals) stand at the tile's own level, a side off the map counting as level 0, so a tile on
+  the map border fits only at level 0. Off the map nothing fits. The renderer's `groundAllows`
+  gives the same answer for every tile (`src/world/slope.test.ts` compares them on seeded maps).
 - Exception: a curve or switch whose tiles are not all smooth needs a bridge platform under
   every tile it covers (all four of a high-speed curve). It sits at the deck: the level of the
   rails it meets off the bridge, or its highest tile when every neighbour is on a platform too.
