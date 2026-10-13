@@ -160,6 +160,7 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     houses: { list: [], arrivals: [], visited: [] },
     supply,
     people: { rng: 7 },
+    roads: [],
   };
 }
 /**
@@ -275,7 +276,8 @@ describe('a save from before saves kept their ground', () => {
       const save = parseSave(JSON.stringify(oldFile(world, 18, supply)))!;
       const step = MIGRATIONS.find((m) => m.from === 18)!;
       expect(save.loadedFrom).toBe(18);
-      expect(save.migrationNotes).toEqual([`v18→v19: ${step.note}`]);
+      // the steps after it run too, each with a note of its own
+      expect(save.migrationNotes?.[0]).toBe(`v18→v19: ${step.note}`);
       expect(save.world).toEqual({ ...world, chunks: {} });
       // the first load generates every chunk with the save's chain, and stores them
       const gen = counting(generatorOf(save.supply));

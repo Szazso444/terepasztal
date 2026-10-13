@@ -354,6 +354,17 @@ export const STR = {
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,
     needTrackHere: 'Signals stand on track',
+    /** a road tried on a tile that has one (src/sim/roads.ts) */
+    roadHere: 'There is a road here already',
+    /**
+     * A road and track on one tile make a level crossing: the road crosses a plain straight of
+     * regular or narrow track at right angles (src/sim/roads.ts), whichever of the two is laid
+     * second.
+     */
+    crossingStraight:
+      'A road crosses only plain straight track: no curve, switch, crossing or transition',
+    crossingHighSpeed: 'No level crossings on high-speed track',
+    crossingAlong: 'A road crosses track at right angles, never along it',
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,

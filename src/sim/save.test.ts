@@ -121,6 +121,10 @@ function fullParts(): SaveParts {
     houses: { list: [], arrivals: [], visited: [] },
     supply: 'simple',
     people: { rng: 31337 },
+    roads: [
+      [4, 7],
+      [4, 8],
+    ],
   };
 }
 
@@ -183,6 +187,7 @@ describe('the migration registry', () => {
       [8, 'houses', block],
       [8, 'supply', (v) => typeof v === 'string'],
       [9, 'crafting', block],
+      [19, 'roads', list],
     ];
     for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
       const j = migrate({ ...oldestSave(), version });
@@ -251,6 +256,7 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   houses: true,
   supply: true,
   people: true,
+  roads: true,
   loadedFrom: true,
   migrationNotes: true,
 };
@@ -332,6 +338,7 @@ describe('migrate', () => {
     expect(j.towns).toEqual([]);
     expect(j.trade).toEqual(expect.any(Object));
     expect(j.supply).toBe('simple');
+    expect(j.roads).toEqual([]);
   });
 
   it('leaves a current save alone', () => {
@@ -2153,6 +2160,7 @@ function genFile(rng: Rng): Record<string, unknown> {
     houses: () => ({ list: [], arrivals: [], visited: [] }),
     supply: () => rng.pick(['simple', 'full']),
     people: () => ({ rng: rng.int(0, 0xffffffff) }),
+    roads: () => list(3, () => [tile(), tile()]),
     settings: () => ({ ...DEFAULT_SETTINGS, music: rng.next() }),
     somethingNewer: () => ({ a: rng.int(0, 9) }),
   };
@@ -2988,6 +2996,7 @@ function withoutFilled(from: number, file: unknown): unknown {
     6: ['towns'],
     7: ['trade'],
     9: ['crafting'],
+    19: ['roads'],
   };
   for (const key of top[from] ?? []) delete copy[key];
   if (from === 6) for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
@@ -3131,6 +3140,7 @@ describe('the defaults the steps fill', () => {
         field('regions', 4, (v) => expect(v, 'regions').toEqual(owned));
         field('seasonOffset', 5, (v) => expect(v, 'seasonOffset').toBe(0));
         field('towns', 6, (v) => expect(v, 'towns').toEqual([]));
+        field('roads', 19, (v) => expect(v, 'roads').toEqual([]));
         // the step to v12 restarts a desk's cycle: the rest of a desk the file had is kept
         const besideCycle = (desk: unknown) =>
           Object.entries(desk as object).filter(([k]) => k !== 'nextAt' && k !== 'driftDay');
@@ -3184,7 +3194,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17, 18]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17, 18, 19]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },
@@ -3365,8 +3375,8 @@ describe('the ground of a file of any version', () => {
           expect(world && 'chunks' in world, 'a level stores no chunks').toBeFalsy();
           return;
         }
-        // the step from v18 starts the store empty; a file of this version without one has none
-        if (from < SAVE_VERSION) expect(world.chunks, `from v${from}`).toEqual({});
+        // the step from v18 starts the store empty; a file of a later version without one has none
+        if (from <= 18) expect(world.chunks, `from v${from}`).toEqual({});
         const calls: unknown[] = [];
         const first = groundOf(world, (s, p) => {
           calls.push(p);

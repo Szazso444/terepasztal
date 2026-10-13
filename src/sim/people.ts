@@ -4,6 +4,7 @@ import type { Builder } from './build';
 import type { Station } from './stations';
 import { decorDef } from './build';
 import { buildingDef } from './buildings';
+import type { RoadTiles } from './roads';
 import { Rng } from '../engine/rng';
 
 /**
@@ -72,6 +73,8 @@ export interface Person {
 export const WALK_SPEED = 0.2;
 /** a figure boarding or alighting hurries */
 export const BOARDING_SPEED_MUL = 1.5;
+/** along a road a walker goes this many times its pace (Q36 a), and a walk counts it so */
+export const ROAD_SPEED_MUL = 2;
 /** furthest a person walks from home on foot */
 const ROAM = 6;
 /** furthest station a traveller walks to */
@@ -84,11 +87,31 @@ const PEOPLE_SEED = 0x9e091e;
 
 /**
  * How fast a walker goes, in tiles a second. One pace for every profession and every kind of
- * ground, faster only for a figure boarding or alighting; even that is at most half the top speed
- * of the slowest engine, so a walker never outpaces a train.
+ * ground, faster for a figure boarding or alighting, and faster still along a road (`onRoad`,
+ * `roadStep`): there every walker goes ROAD_SPEED_MUL times the pace, a boarding figure no faster
+ * than any other. Off a road the fastest is at most half the top speed of the slowest engine; on
+ * one, a walker is still slower than any engine, so a walker never outpaces a train.
  */
-export function walkSpeed(p: Pick<Person, 'transient'>): number {
-  return WALK_SPEED * (p.transient ? BOARDING_SPEED_MUL : 1);
+export function walkSpeed(p: Pick<Person, 'transient'>, onRoad = false): number {
+  return WALK_SPEED * Math.max(p.transient ? BOARDING_SPEED_MUL : 1, onRoad ? ROAD_SPEED_MUL : 1);
+}
+
+/**
+ * A step from tile `a` to tile `b` goes along a road: both hold one and they share a side, as a
+ * road's pieces join (src/sim/roads.ts). A diagonal step, or one on or off a road, goes at the
+ * walker's pace off the road.
+ */
+export function roadStep(
+  roads: RoadTiles | null | undefined,
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+): boolean {
+  return (
+    !!roads &&
+    Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1 &&
+    roads.has(a.x, a.y) &&
+    roads.has(b.x, b.y)
+  );
 }
 
 /** What a save keeps of the walkers: their random stream. The persons start over on load. */
@@ -106,28 +129,107 @@ export function walkable(map: GameMap, x: number, y: number) {
   return t !== Terrain.Water && t !== Terrain.Rock && t !== Terrain.Mountain;
 }
 
-/** Breadth-first walk between two tiles over walkable ground (8 directions) inside a small box. */
+/** Tiles a walk may stray beyond the box its two ends span (`findWalk`). */
+export const WALK_MARGIN = 4;
+/**
+ * What a step off a road costs a walk: ROAD_SPEED_MUL against the 1 of a step along a road
+ * (`roadStep`), as the time it takes, counted as the search has always counted steps off a road:
+ * each alike, straight or diagonal.
+ */
+export const OFF_ROAD_STEP = ROAD_SPEED_MUL;
+
+/** Tiles of a walk search by weight, the one reached first among equals first: a binary heap. */
+class WalkQueue {
+  private readonly weight: number[] = [];
+  private readonly order: number[] = [];
+  private readonly tile: number[] = [];
+  private reached = 0;
+  get size() {
+    return this.tile.length;
+  }
+  private before(i: number, j: number) {
+    const a = this.weight[i];
+    const b = this.weight[j];
+    return a < b || (a === b && this.order[i] < this.order[j]);
+  }
+  private swap(i: number, j: number) {
+    for (const list of [this.weight, this.order, this.tile])
+      [list[i], list[j]] = [list[j], list[i]];
+  }
+  push(weight: number, tile: number) {
+    this.weight.push(weight);
+    this.order.push(this.reached++);
+    this.tile.push(tile);
+    for (let i = this.size - 1; i > 0;) {
+      const up = (i - 1) >> 1;
+      if (!this.before(i, up)) break;
+      this.swap(i, up);
+      i = up;
+    }
+  }
+  /** The lightest tile and its weight; the queue must not be empty. */
+  pop(): [weight: number, tile: number] {
+    const top: [number, number] = [this.weight[0], this.tile[0]];
+    this.swap(0, this.size - 1);
+    this.weight.pop();
+    this.order.pop();
+    this.tile.pop();
+    for (let i = 0; ;) {
+      const l = 2 * i + 1;
+      const r = l + 1;
+      let m = i;
+      if (l < this.size && this.before(l, m)) m = l;
+      if (r < this.size && this.before(r, m)) m = r;
+      if (m === i) break;
+      this.swap(i, m);
+      i = m;
+    }
+    return top;
+  }
+}
+
+/**
+ * The cheapest walk between two tiles over walkable ground, in 8 directions, inside the box the two
+ * ends span and WALK_MARGIN tiles round it; null when there is none. A step along a road costs 1
+ * and any other OFF_ROAD_STEP, so a walk takes a road wherever that costs less, and of two walks
+ * that cost the same the one with fewer steps off the road: a walker keeps to a road round a
+ * corner rather than cut it. A diagonal step off a road costs what a straight one does, as it
+ * always has, so a walk may still leave a road for a diagonal across the grass that costs less.
+ * Tiles are searched lightest first, and of equal ones the one reached first, and the first way
+ * found to a tile is kept unless a lighter one comes: with no road it is the breadth-first walk it
+ * has always been, step for step.
+ */
 export function findWalk(
   map: GameMap,
   from: { x: number; y: number },
   to: { x: number; y: number },
+  roads?: RoadTiles | null,
 ): { x: number; y: number }[] | null {
-  const margin = 4;
+  const margin = WALK_MARGIN;
   const x0 = Math.max(0, Math.min(from.x, to.x) - margin);
   const y0 = Math.max(0, Math.min(from.y, to.y) - margin);
   const x1 = Math.min(map.w - 1, Math.max(from.x, to.x) + margin);
   const y1 = Math.min(map.h - 1, Math.max(from.y, to.y) + margin);
   const W = x1 - x0 + 1;
   const H = y1 - y0 + 1;
+  // A walk's weight is its cost in units of more than any walk in the box has steps, plus its
+  // steps off the road: the cost decides, and the steps off the road only between equal costs.
+  const unit = W * H + 1;
+  const alongRoad = unit;
+  const offRoad = OFF_ROAD_STEP * unit + 1;
   const prev = new Int32Array(W * H).fill(-2);
+  const weight = new Float64Array(W * H).fill(Infinity);
   const key = (x: number, y: number) => (y - y0) * W + (x - x0);
   const sk = key(from.x, from.y);
   const tk = key(to.x, to.y);
   prev[sk] = -1;
-  const queue = [sk];
-  let qi = 0;
-  while (qi < queue.length) {
-    const k = queue[qi++];
+  weight[sk] = 0;
+  const queue = new WalkQueue();
+  queue.push(0, sk);
+  while (queue.size) {
+    const [w, k] = queue.pop();
+    // reached again more lightly since: that entry is the one that counts
+    if (w !== weight[k]) continue;
     if (k === tk) break;
     const cx = (k % W) + x0;
     const cy = Math.floor(k / W) + y0;
@@ -138,10 +240,13 @@ export function findWalk(
         const ny = cy + dy;
         if (nx < x0 || ny < y0 || nx > x1 || ny > y1) continue;
         const nk = key(nx, ny);
-        if (prev[nk] !== -2) continue;
+        const next =
+          w + (roadStep(roads, { x: cx, y: cy }, { x: nx, y: ny }) ? alongRoad : offRoad);
+        if (next >= weight[nk]) continue;
         if (!walkable(map, nx, ny) && !(nx === to.x && ny === to.y)) continue;
         prev[nk] = k;
-        queue.push(nk);
+        weight[nk] = next;
+        queue.push(next, nk);
       }
   }
   if (prev[tk] === -2) return null;
@@ -277,7 +382,7 @@ export class PeopleSim {
   private spawnTransient(st: Station, plat: { x: number; y: number }, boarding: boolean) {
     const from = boarding ? st : plat;
     const to = boarding ? plat : st;
-    const path = findWalk(this.map, from, to) ?? [from, to];
+    const path = findWalk(this.map, from, to, this.builder.roads) ?? [from, to];
     this.persons.push({
       id: this.nextId++,
       x: from.x + (this.rnd() - 0.5) * 0.4,
@@ -329,7 +434,7 @@ export class PeopleSim {
     to: { x: number; y: number },
     state: PersonState,
   ) {
-    const path = findWalk(this.map, from, to);
+    const path = findWalk(this.map, from, to, this.builder.roads);
     if (!path || path.length < 2) return false;
     p.path = path;
     p.step = 0;
@@ -384,7 +489,12 @@ export class PeopleSim {
       p.profession = home.profession;
       // the way home led to a place that is gone or closed: walk to the new home from here
       if (!known && p.state === 'return') {
-        const back = findWalk(this.map, { x: Math.round(p.x), y: Math.round(p.y) }, home);
+        const back = findWalk(
+          this.map,
+          { x: Math.round(p.x), y: Math.round(p.y) },
+          home,
+          this.builder.roads,
+        );
         if (back && back.length >= 2) {
           p.path = back;
           p.step = 0;
@@ -472,7 +582,12 @@ export class PeopleSim {
 
   /** Turn for home from the tile the walker stands on; false when there is no way. */
   private turnHome(p: Person, home: Place) {
-    const back = findWalk(this.map, { x: Math.round(p.x), y: Math.round(p.y) }, home);
+    const back = findWalk(
+      this.map,
+      { x: Math.round(p.x), y: Math.round(p.y) },
+      home,
+      this.builder.roads,
+    );
     if (!back || back.length < 2) return false;
     p.path = back;
     p.step = 0;
@@ -482,13 +597,14 @@ export class PeopleSim {
   }
 
   /**
-   * Move along the path; returns false once the end is reached. A step is the walker's state and
-   * the time, nothing else, and draws no random number.
+   * Move along the path; returns false once the end is reached. A step is the walker's state, the
+   * time and the roads under the leg it walks (`roadStep`), nothing else, and draws no random
+   * number.
    */
   private advance(p: Person, gdt: number) {
     const next = p.path[p.step + 1];
     if (!next) return false;
-    const speed = walkSpeed(p);
+    const speed = walkSpeed(p, roadStep(this.builder.roads, p.path[p.step], next));
     const dx = next.x - p.x;
     const dy = next.y - p.y;
     const d = Math.hypot(dx, dy);

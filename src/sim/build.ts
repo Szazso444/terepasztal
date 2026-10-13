@@ -6,6 +6,7 @@ import {
   pieceCost,
   footprintOf,
   isUnitKind,
+  makePiece,
   portClass,
   classesJoin,
   rotationCount,
@@ -40,6 +41,7 @@ import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
 import { planReclass, type PieceChange, type WideClass } from '../world/reclass';
 import { continuesLine, onRails, stone } from './mountainTrack';
+import { Roads, crossingRefusal, roadCost } from './roads';
 
 const trackData = content.track;
 
@@ -79,9 +81,9 @@ export interface PlacementCheck {
 
 /**
  * Why nothing can be built on terrain `t`, naming the ground, or null when it takes buildings.
- * The one list of where nothing stands: stations, works, decor off the track and a depot's gates
- * all ask it, and a bridge platform asks it everywhere but on water, which it spans. Track has
- * rules of its own (`checkTrackTile`, and `trackRules` for rock and mountain), and so do the
+ * The one list of where nothing stands: stations, works, decor off the track, roads and a depot's
+ * gates all ask it, and a bridge platform asks it everywhere but on water, which it spans. Track
+ * has rules of its own (`checkTrackTile`, and `trackRules` for rock and mountain), and so do the
  * walkers (`walkable` in people.ts) and the town paving (`cityTiles` in city.ts).
  */
 export function unbuildable(t: Terrain): string | null {
@@ -153,6 +155,8 @@ export class Builder {
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
+  /** fired when a road is laid on or taken off a tile (`placeRoad`, `removeRoad`) */
+  onRoadChanged: ((x: number, y: number) => void) | null = null;
   /** electrification overlay (set by the game) */
   catenary: Catenary | null = null;
   /** fired once when a producing station or a works building is newly placed (not on load or upgrade) */
@@ -176,6 +180,8 @@ export class Builder {
     readonly track: TrackGraph,
     readonly economy: Economy,
     readonly stock: Stockpile,
+    /** the roads on the map (src/sim/roads.ts); a line's probe shares its builder's */
+    readonly roads: Roads = new Roads(track),
   ) {}
 
   // ------------------------------------------------------------------ helpers
@@ -486,6 +492,15 @@ export class Builder {
     // class compatibility with the neighbours the new piece would open onto
     const probe = new TrackGraph(this.map.w, this.map.h);
     probe.place(x, y, kind, rot, item.cls, item.cls2);
+    // A road on a tile the piece covers makes a level crossing there, which only a plain straight
+    // across the road can be (src/sim/roads.ts).
+    for (const t of tiles) {
+      if (!this.roads.has(t.x, t.y)) continue;
+      const why = crossingRefusal(probe.get(t.x, t.y), t.x, t.y, (rx, ry) =>
+        this.roads.has(rx, ry),
+      );
+      if (why) return { ok: false, cost: {}, reason: why };
+    }
     // Rock and mountain take track only as the continuation of a line, so a mountain line is
     // always drawn up from its foot or from track already on the mountain. The ground under it
     // is asked next, as anywhere.
@@ -603,6 +618,8 @@ export class Builder {
         changes: [],
         reason: STR.build.reclass[plan.reason ?? 'nothing'],
       };
+    const crossing = this.reclassCrossing(plan.changes);
+    if (crossing) return { ok: false, cost: {}, changes: plan.changes, reason: crossing };
     const cost: Cost = {};
     if (target === 'high_speed')
       for (const c of plan.changes) {
@@ -617,6 +634,22 @@ export class Builder {
           if (v > (was[k] ?? 0)) cost[k] = (cost[k] ?? 0) + v - (was[k] ?? 0);
       }
     return { ...this.affordable(cost), changes: plan.changes };
+  }
+  /**
+   * Why converting would leave a level crossing on a piece no road may cross (high-speed track, a
+   * transition), or null when it would not: a road keeps its tile, so the piece laid there in the
+   * place of the old one has to take it (`crossingRefusal`).
+   */
+  private reclassCrossing(changes: readonly PieceChange[]): string | null {
+    const road = (rx: number, ry: number) => this.roads.has(rx, ry);
+    for (const c of changes)
+      for (const t of footprintOf(c.x, c.y, c.kind, c.rot, c.cls)) {
+        if (!road(t.x, t.y)) continue;
+        // every tile of a wide piece is a part of its curve or switch: the kind refuses it
+        const why = crossingRefusal(makePiece(c.kind, c.rot, c.cls, c.cls2), t.x, t.y, road);
+        if (why) return why;
+      }
+    return null;
   }
   /** Convert the pieces on `tiles` between wide and high-speed track, keeping the line joined. */
   reclassTrack(
@@ -734,7 +767,7 @@ export class Builder {
   private probe(): Builder {
     const track = new TrackGraph(this.track.w, this.track.h);
     for (const [k, p] of this.track.pieces) track.pieces.set(k, p);
-    const b = new Builder(this.map, this.regions, track, this.economy, this.stock);
+    const b = new Builder(this.map, this.regions, track, this.economy, this.stock, this.roads);
     b.free = this.free;
     b.groundCheck = this.groundCheck;
     b.stations.push(...this.stations);
@@ -759,7 +792,8 @@ export class Builder {
         this.track.has(tx, ty) ||
         this.stationAt(tx, ty) ||
         this.decorAt(tx, ty) ||
-        this.buildingAt(tx, ty)
+        this.buildingAt(tx, ty) ||
+        this.roads.has(tx, ty)
       )
         return { ok: false, cost: {}, reason: STR.build.occupied };
       if (this.groundCheck && !this.groundCheck(tx, ty, 'level'))
@@ -932,6 +966,8 @@ export class Builder {
       if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
+      // a road keeps its tile from what stands off the rails; a pole goes beside it
+      if (!def.anyTile && this.roads.has(x, y)) return STR.build.occupied;
       if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
         return STR.build.notLevel;
     }
@@ -1019,7 +1055,13 @@ export class Builder {
     if (bad) return { ok: false, cost: {}, reason: bad };
     if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
       return { ok: false, cost: {}, reason: STR.build.notLevel };
-    if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
+    if (
+      this.track.has(x, y) ||
+      this.stationAt(x, y) ||
+      this.decorAt(x, y) ||
+      this.buildingAt(x, y) ||
+      this.roads.has(x, y)
+    )
       return { ok: false, cost: {}, reason: STR.build.occupied };
     if (
       def.needsWater &&
@@ -1098,6 +1140,56 @@ export class Builder {
     delete b.work;
     this.refund(buildingDef(b.id).cost);
     this.onBuildingChanged?.(b, true);
+    sfx('build.remove');
+    return true;
+  }
+
+  // ------------------------------------------------------------------ roads
+  /**
+   * Whether a road may be laid on (x, y), and its price: on owned buildable land (not water, rock
+   * or a mountain) with no road on it yet, off every station's footprint, works and bridge
+   * platform and off the tile of decor that stands off the rails (a house, a tower); a signal or
+   * a pole may share its tile. On track it is a level crossing, which only a plain straight of
+   * regular or narrow track takes, the road across it (`Roads.trackRefusal`). Each tile costs
+   * `roadCost`, scaled by the build cost tuning, whatever the ground.
+   */
+  checkRoad(x: number, y: number): PlacementCheck {
+    const reason = this.roadRules(x, y);
+    if (reason) return { ok: false, cost: {}, reason };
+    return this.affordable(this.priced(roadCost(), 1));
+  }
+  private roadRules(x: number, y: number): string | null {
+    if (!inBounds(this.map, x, y)) return STR.build.offMap;
+    if (!this.unlocked(x, y)) return STR.build.locked;
+    if (this.roads.has(x, y)) return STR.build.roadHere;
+    const bad = unbuildable(terrainAt(this.map, x, y));
+    if (bad) return bad;
+    const dec = this.decorAt(x, y);
+    if (this.stationAt(x, y) || this.buildingAt(x, y) || (dec && !decorDef(dec.id).onTrack))
+      return STR.build.occupied;
+    return this.roads.trackRefusal(x, y);
+  }
+  /** Lay a road on (x, y) and pay for it; false, with nothing paid, when `checkRoad` refuses. */
+  placeRoad(x: number, y: number): boolean {
+    const c = this.checkRoad(x, y);
+    if (!c.ok || !this.pay(c.cost)) return false;
+    this.roads.add(x, y);
+    this.onRoadChanged?.(x, y);
+    sfx('build.place');
+    return true;
+  }
+  /** What `removeRoad` gives back: the refund share of a road's cost, each part rounded down. */
+  roadRefund(): Cost {
+    const out: Cost = {};
+    if (this.free) return out;
+    for (const [k, v] of Object.entries(roadCost())) out[k] = Math.floor(v * rules.refundRate);
+    return out;
+  }
+  /** Take the road off (x, y) for its refund; the track of a level crossing stays. */
+  removeRoad(x: number, y: number): boolean {
+    if (!this.roads.remove(x, y)) return false;
+    this.refund(roadCost());
+    this.onRoadChanged?.(x, y);
     sfx('build.remove');
     return true;
   }

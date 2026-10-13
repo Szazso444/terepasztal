@@ -1178,6 +1178,7 @@ export class Game implements UiHost {
         wires: this.catenary.toJSON(),
         houses: this.houses.toJSON(),
         people: this.people.toJSON(),
+        roads: this.builder.roads.toJSON(),
       },
       this.saveExtra,
     );
@@ -1267,6 +1268,7 @@ export class Game implements UiHost {
         this.onSupplyChanged(x, y);
       }
     } else this.legacySupplyPending = true;
+    this.builder.roads.load(j.roads);
     resetStationIds(1);
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);
