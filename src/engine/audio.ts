@@ -148,12 +148,13 @@ class AudioBus {
   /**
    * Fetch the first track of the playlist now, without playing it, so it starts at once when the
    * music does. It needs no gesture. A track that fails is skipped and the next one is fetched in
-   * its place. Does nothing outside a browser, with the music element already there, or once every
-   * file has failed.
+   * its place. Does nothing outside a browser, with the music element already there, while an age
+   * change fades the old track out (the end of the fade fetches the set selected last), or once
+   * every file has failed.
    */
   preload() {
     this.listen();
-    if (typeof Audio === 'undefined') return;
+    if (typeof Audio === 'undefined' || this.handingOver) return;
     const src = this.musicSets.track;
     if (src !== null) this.musicTrack(src);
   }

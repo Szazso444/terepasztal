@@ -360,6 +360,19 @@ describe('audio in a browser', () => {
       expect(bus.playlist.tracks).toEqual(electric);
     });
 
+    it('fetches nothing on preload() during the wait, so the set selected last is the one that opens', async () => {
+      const { bus, srcs, playing } = await steamPlaying();
+      bus.setAge('diesel');
+      vi.advanceTimersByTime(500);
+      bus.preload();
+      expect(srcs()).toEqual([steam[0]]);
+      bus.setAge('electric');
+      vi.advanceTimersByTime(MUSIC_FADE_MS * 2);
+      expect(srcs()).toEqual([steam[0], electric[0]]);
+      expect(playing()).toEqual([FakeAudio.made[1]]);
+      expect(FakeAudio.overlaps).toBe(0);
+    });
+
     it('opens the original set on its first track when the age changes back during the wait', async () => {
       const { bus, old, srcs, playing } = await steamPlaying();
       bus.setAge('diesel');
