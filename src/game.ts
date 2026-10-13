@@ -585,6 +585,7 @@ export class Game implements UiHost {
   }
   /** The clock runs again at the speed it had (in a game; the editor stays stopped). */
   resumeGame() {
+    audio.startMusic(); // the title screen holds the music back; closing a menu lets it start
     if (!this.paused) return;
     this.paused = false;
     if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed);

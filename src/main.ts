@@ -19,6 +19,7 @@ import { Terrain } from './world/tiles';
 import type { SupplyMode } from './sim/supply';
 import { armDevReload, takeDevSession, reportDevTraffic } from './engine/devsession';
 import { groundPassPending, startupToasts } from './engine/saveMessages';
+import { audio } from './engine/audio';
 
 declare global {
   interface Window {
@@ -69,6 +70,10 @@ function afterPaint() {
 }
 
 async function boot() {
+  // no music until the title screen's Play or the end of this boot; its first track downloads
+  // meanwhile, so it starts at once
+  audio.hold();
+  audio.preload();
   const loading = el('div', { id: 'loading' }, STR.title, el('small', { text: STR.loading }));
   document.getElementById('ui-root')!.append(loading);
   // saves stored before saves kept their ground get it once: Continue's and every named one. That
@@ -162,6 +167,7 @@ async function boot() {
       traffic: game.traffic.report(game.fleet.trains),
     }));
   loading.remove();
+  if (start !== 'menu') audio.startMusic();
 }
 
 boot().catch((e) => {
