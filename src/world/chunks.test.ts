@@ -98,6 +98,12 @@ function firstDifference(
 /** Whether world tile (`wx`, `wy`) lies in one of the chunks of `store`. */
 const inStore = (store: ChunkStore, wx: number, wy: number) =>
   Object.hasOwn(store, chunkKey(chunkOf(wx), chunkOf(wy)));
+/**
+ * Whether world tile (`wx`, `wy`) has a side on a tile `stored` says is stored: where the seam
+ * may end a new river in a pond (#341, buildMap's seam), so the tile is not the generator's.
+ */
+const besideStored = (stored: (wx: number, wy: number) => boolean, wx: number, wy: number) =>
+  stored(wx + 1, wy) || stored(wx - 1, wy) || stored(wx, wy + 1) || stored(wx, wy - 1);
 
 /** A map's frame and seed, any size and origin, either production chain. */
 interface Case {
@@ -449,7 +455,9 @@ describe('a map built from stored chunks', () => {
       expect(grown.added).toContain('1,1');
       expect(firstDifference(first.map, grown.map)).toBeNull();
       const rest = buildMap(seed, big, {}, other).map;
-      const outside = (wx: number, wy: number) => wx < 0 || wy < 0 || wx >= 48 || wy >= 48;
+      const inside = (wx: number, wy: number) => wx >= 0 && wy >= 0 && wx < 48 && wy < 48;
+      // the rest as generated, but where a river runs into the stored part and ends at the seam
+      const outside = (wx: number, wy: number) => !inside(wx, wy) && !besideStored(inside, wx, wy);
       expect(firstDifference(grown.map, rest, { only: outside })).toBeNull();
       // and with the generator unchanged it is the grown world
       expect(
@@ -492,8 +500,10 @@ describe('a map built from stored chunks', () => {
             expect(encodeChunk(built.map, cx, cy), `${name}: chunk ${k}`).toBe(text);
           }
           expect(firstDifference(old.map, built.map), name).toBeNull();
-          // the new chunks are the generator's
-          const fresh = (wx: number, wy: number) => !inStore(old.chunks, wx, wy);
+          // the new chunks are the generator's, but where a river runs into a stored chunk and ends
+          // at the seam
+          const kept = (wx: number, wy: number) => inStore(old.chunks, wx, wy);
+          const fresh = (wx: number, wy: number) => !kept(wx, wy) && !besideStored(kept, wx, wy);
           expect(firstDifference(built.map, now, { near: true, only: fresh }), name).toBeNull();
         }
   }, 20_000);

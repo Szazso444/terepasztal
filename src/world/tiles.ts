@@ -33,7 +33,7 @@ export const enum Biome {
   Ocean = 5,
   /** water that is neither sea nor river */
   Lake = 6,
-  /** water the river pass cut through land */
+  /** water the river pass made of land */
   River = 7,
   /** sand on the sea shore */
   Beach = 8,
@@ -101,6 +101,20 @@ export interface GameMap {
    * every tile's climate is its biome. Read it through climateAt or climateAtIndex.
    */
   climate?: Uint8Array;
+  /**
+   * per-tile water level of each Water tile, 0 to MAX_LEVEL: the level its surface stands at
+   * (levelTarget). Rivers on high ground stand above level 0 and never rise downstream. A map
+   * without the plane, a level or the editor's, and a chunk stored before it, has all its water at
+   * level 0, as has a tile whose terrain is not Water.
+   */
+  waterSurface?: Uint8Array;
+  /** per-tile flow of each river tile: the tiles of rain it gathers (at most FLOW_CAP), 0 elsewhere */
+  flow?: Uint16Array;
+  /**
+   * per-tile downstream side of each river tile, as Dir + 1 (1 N, 2 E, 3 S, 4 W): the tile its
+   * water runs into, which is water or off the map. 0 elsewhere.
+   */
+  flowDir?: Uint8Array;
   /** per-tile decoration, sparse */
   props: Map<number, PropInstance[]>;
   /** region size in tiles (regions are square blocks) */

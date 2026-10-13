@@ -113,6 +113,34 @@ describe('rail inclines', () => {
     }
   });
 
+  it('stands a deck over raised water at the water level, never below it', () => {
+    // abutments at level 0, the water under the bridge at level 1
+    const bridged = [false, false, true, false, false];
+    expect(lineSpans([0, 0, 1, 0, 0], bridged, 0, [], [0, 0, 1, 0, 0]).levels[2]).toBe(1);
+    // with no water under it the deck carries the abutments' level, as over a dip
+    expect(lineSpans([0, 0, 1, 0, 0], bridged).levels[2]).toBe(0);
+    // on a map: a river at level 1 between grass banks, bridged by a straight line along x
+    const m = emptyMap(5, 16, 16);
+    m.waterSurface = new Uint8Array(16 * 16);
+    for (let y = 0; y < 16; y++) {
+      m.terrain[y * 16 + 8] = Terrain.Water;
+      m.waterSurface[y * 16 + 8] = 1;
+    }
+    const track = new TrackGraph(16, 16);
+    for (let x = 4; x < 13; x++) track.place(x, 8, 'straight', 1, 'regular');
+    const beds = railProfile(m, track, (x, y) => x === 8 && y === 8);
+    const deck = beds.get(8 * 16 + 8)!;
+    expect(deck.bridge).toBe(true);
+    expect(railLevel(deck, 8)).toBeCloseTo(1);
+    // the rail climbs onto it from the banks at level 0
+    expect(railLevel(beds.get(8 * 16 + 4)!, 4)).toBeCloseTo(0);
+    // the same water at level 0 leaves the deck at the banks' level
+    m.waterSurface.fill(0);
+    expect(
+      railLevel(railProfile(m, track, (x, y) => x === 8 && y === 8).get(8 * 16 + 8)!, 8),
+    ).toBeCloseTo(0);
+  });
+
   it('seats a supported curve at the level of the rails it meets, or refuses it', () => {
     const m = emptyMap(6, 16, 16);
     // A level-2 hill over x 4..11, y 4..11; its edge ring is level 1.

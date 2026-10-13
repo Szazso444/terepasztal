@@ -313,9 +313,11 @@ describe('wheat fields', () => {
   // In these worlds a field reaches in across the small map's edge beside where an oil field
   // could lie, out beyond the tiles the small map generates oil on: the field must keep off it in
   // both maps. They are the pairs a search of random frames found where fields kept off only the
-  // oil a map generates. 3 pairs of maps: about 0.2 s alone.
+  // oil a map generates; the first, since the rivers of #341 changed the worlds, is one a search
+  // found with a field at the small map's edge and oil of the full chain within 2 tiles of it,
+  // outside the map. 3 pairs of maps: about 0.2 s alone.
   it.each([
-    { seed: 1111732493, w: 35, h: 38, ox: -87, oy: 90 },
+    { seed: 1637860701, w: 42, h: 71, ox: 36, oy: -2 },
     { seed: 1383765659, w: 78, h: 58, ox: 8, oy: -97 },
     { seed: 50341479, w: 67, h: 60, ox: 24, oy: 42 },
   ])(
@@ -556,7 +558,7 @@ describe('wheat fields, more widely', () => {
   // the seeps reach out past it (#276) to where a field grows. 3 pairs of maps: about 0.1 s alone
   it.each([
     { seed: 14, size: 96 },
-    { seed: 214, size: 96 },
+    { seed: 132, size: 96 },
     { seed: 209, size: 160 },
   ])(
     'never lie under a start seep that reaches past the ring (seed $seed at $size x $size, Water at its top)',

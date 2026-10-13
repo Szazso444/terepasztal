@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateMap } from './mapgen';
-import { levelAt, tileLevels, MAX_LEVEL } from './elevation';
+import { levelAt, levelTarget, tileLevels, MAX_LEVEL } from './elevation';
 import { Terrain } from './tiles';
 
 describe('tile elevation', () => {
@@ -18,12 +18,33 @@ describe('tile elevation', () => {
       for (let x = 0; x < map.w; x++) {
         const k = y * map.w + x,
           t = map.terrain[k];
-        if (t !== Terrain.Hill && t !== Terrain.Mountain) expect(levels[k]).toBe(0);
-        else raised++;
+        if (t === Terrain.Hill || t === Terrain.Mountain) raised++;
+        else if (t !== Terrain.Water) expect(levels[k]).toBe(0);
         expect(levels[k]).toBeLessThanOrEqual(MAX_LEVEL);
         if (x) expect(Math.abs(levels[k] - levels[k - 1])).toBeLessThanOrEqual(1);
         if (y) expect(Math.abs(levels[k] - levels[k - map.w])).toBeLessThanOrEqual(1);
       }
     expect(raised).toBeGreaterThan(0);
+  });
+  it('stands water at its own level, and a map without the plane at level 0', () => {
+    // a 5 x 5 plateau of hill with a pool at its middle raised to level 2
+    const map = generateMap(1, { w: 32, h: 32 });
+    map.terrain.fill(Terrain.Grass);
+    for (let y = 10; y < 15; y++)
+      for (let x = 10; x < 15; x++) map.terrain[y * 32 + x] = Terrain.Hill;
+    const pool = 12 * 32 + 12;
+    map.terrain[pool] = Terrain.Water;
+    map.waterSurface = new Uint8Array(32 * 32);
+    map.waterSurface[pool] = 2;
+    expect(levelTarget(map, pool)).toBe(2);
+    expect(tileLevels(map)[pool]).toBe(2);
+    expect(levelAt(map, 12, 12)).toBe(2);
+    // the level is the water's only while the tile is water
+    map.terrain[pool] = Terrain.Grass;
+    expect(levelTarget(map, pool)).toBe(0);
+    map.terrain[pool] = Terrain.Water;
+    const bare = { w: map.w, h: map.h, terrain: map.terrain };
+    expect(levelTarget(bare, pool)).toBe(0);
+    expect(levelAt(bare, 12, 12)).toBe(0);
   });
 });
