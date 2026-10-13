@@ -38,3 +38,10 @@ pixel at or above either cap.
 
 Not kept from Codex's branch `art/287-loading`: the duplicate `loading-2.png` (byte-identical to attempt 1 in
 the first delivery and to attempt 3 in the second) and the `review/` crops of attempts 2 to 4.
+
+## Decisions (Core, 2026-10-13)
+
+- The bottom gradient stays at 55% over the bottom 30%. `GRADIENT.strength` in
+  `tools/loading-pictures.mjs` is the one number to change later; rerun the tool to rewrite the
+  three files (the test rebuilds each from the paintings and compares).
+- loading-3 stays as delivered: the warm light reads as dusk, so no repaint or Codex edit.
