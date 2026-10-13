@@ -1,9 +1,40 @@
 import { Terrain, type GameMap } from '../world/tiles';
+import type { StationDef } from '../data/content';
 import type { Builder } from './build';
 import type { Station } from './stations';
 import { decorDef } from './build';
 import { buildingDef } from './buildings';
 import { Rng } from '../engine/rng';
+
+/**
+ * What a walker does for a living, which follows from where it lives. The ids are what the art
+ * keys its figures by (`people/<profession>_...`).
+ */
+export const PROFESSIONS = [
+  'passenger',
+  'lumberjack',
+  'stone_mason',
+  'farmer',
+  'pump_hand',
+  'railway_worker',
+] as const;
+export type Profession = (typeof PROFESSIONS)[number];
+
+/** The profession of those who live at a station of this kind and gather from the ground. */
+const GATHERER: Record<string, Profession> = {
+  lumber: 'lumberjack',
+  quarry: 'stone_mason',
+  farm: 'farmer',
+  pump: 'pump_hand',
+};
+
+/**
+ * Who lives at a station: the gatherers by their kind of yard or field, passengers at a station
+ * that takes passengers, and railway workers at any other (a depot, a warehouse, a mine).
+ */
+export function stationProfession(def: Pick<StationDef, 'id' | 'accepts'>): Profession {
+  return GATHERER[def.id] ?? (def.accepts.includes('passengers') ? 'passenger' : 'railway_worker');
+}
 
 export interface Place {
   x: number;
@@ -11,6 +42,8 @@ export interface Place {
   key: string;
   /** what the crew here goes out to gather */
   gathers: Terrain | null;
+  /** what those who live here do */
+  profession: Profession;
 }
 export type PersonState =
   'inside' | 'idle' | 'walk' | 'gather' | 'toStation' | 'waiting' | 'return';
@@ -20,6 +53,10 @@ export interface Person {
   y: number;
   home: string;
   outfit: number;
+  /** from the place the walker lives at; a boarding or alighting figure is a passenger */
+  profession: Profession;
+  /** on its way home from a gather tile with the haul; only a picture, it changes nothing */
+  carrying: boolean;
   state: PersonState;
   /** seconds left in the current state */
   timer: number;
@@ -31,16 +68,28 @@ export interface Person {
   stationId: number | null;
 }
 
-const WALK_SPEED = 1.1;
+/** tiles a second, for every walker whatever its profession or the ground under it */
+export const WALK_SPEED = 0.2;
+/** a figure boarding or alighting hurries */
+export const BOARDING_SPEED_MUL = 1.5;
 /** furthest a person walks from home on foot */
 const ROAM = 6;
 /** furthest station a traveller walks to */
-const STATION_REACH = 14;
-/** day fraction window when people are outside */
-const WAKE = 0.27;
-const SLEEP = 0.85;
+export const STATION_REACH = 14;
+/** day fraction window when people are outside: after WAKE and before SLEEP */
+export const WAKE = 0.27;
+export const SLEEP = 0.85;
 /** mixed into the map seed so the walkers draw their own stream */
 const PEOPLE_SEED = 0x9e091e;
+
+/**
+ * How fast a walker goes, in tiles a second. One pace for every profession and every kind of
+ * ground, faster only for a figure boarding or alighting; even that is at most half the top speed
+ * of the slowest engine, so a walker never outpaces a train.
+ */
+export function walkSpeed(p: Pick<Person, 'transient'>): number {
+  return WALK_SPEED * (p.transient ? BOARDING_SPEED_MUL : 1);
+}
 
 /** What a save keeps of the walkers: their random stream. The persons start over on load. */
 export interface PeopleJSON {
@@ -123,7 +172,8 @@ function nearestPlace(places: readonly Place[], x: number, y: number): Place | n
  * The population as a few quiet walkers: everyone belongs to a station, works or service and
  * spends most of the day inside; now and then someone steps out to idle by the door, walks to a
  * nearby resource tile to gather, or goes to the closest station to catch a train with a coach.
- * Nobody is outside at night. Nothing here changes the map.
+ * Each has the profession of the place it lives at. Nobody sets out at night, and one caught on
+ * the way to a station turns home. Nothing here changes the map.
  */
 export class PeopleSim {
   persons: Person[] = [];
@@ -171,13 +221,27 @@ export class PeopleSim {
           y: s.y,
           key: `s${s.id}`,
           gathers: this.gatherTerrain[s.def.id] ?? null,
+          profession: stationProfession(s.def),
         });
     for (const b of this.builder.buildings.values())
       if (!b.work && buildingDef(b.id).crew > 0)
-        out.push({ x: b.x, y: b.y, key: `b${b.x},${b.y}`, gathers: null });
+        out.push({
+          x: b.x,
+          y: b.y,
+          key: `b${b.x},${b.y}`,
+          gathers: null,
+          profession: 'railway_worker',
+        });
     for (const d of this.builder.decor.values())
       if (decorDef(d.id).crew > 0 || decorDef(d.id).residents)
-        out.push({ x: d.x, y: d.y, key: `d${d.x},${d.y}`, gathers: null });
+        out.push({
+          x: d.x,
+          y: d.y,
+          key: `d${d.x},${d.y}`,
+          gathers: null,
+          // a house is lived in; any other service stop is a railway worker's post
+          profession: decorDef(d.id).residents ? 'passenger' : 'railway_worker',
+        });
     return out;
   }
 
@@ -220,6 +284,8 @@ export class PeopleSim {
       y: from.y + (this.rnd() - 0.5) * 0.4,
       home: '',
       outfit: Math.floor(this.rnd() * 4),
+      profession: 'passenger',
+      carrying: false,
       state: 'walk',
       timer: 0,
       path,
@@ -286,6 +352,8 @@ export class PeopleSim {
         y: home.y,
         home: home.key,
         outfit: Math.floor(this.rnd() * 4),
+        profession: home.profession,
+        carrying: false,
         state: 'inside',
         timer: 5 + this.rnd() * 40,
         path: [],
@@ -313,6 +381,7 @@ export class PeopleSim {
       const home = known ?? nearestPlace(places, p.x, p.y);
       if (!home) continue;
       p.home = home.key;
+      p.profession = home.profession;
       // the way home led to a place that is gone or closed: walk to the new home from here
       if (!known && p.state === 'return') {
         const back = findWalk(this.map, { x: Math.round(p.x), y: Math.round(p.y) }, home);
@@ -363,23 +432,20 @@ export class PeopleSim {
         case 'gather':
         case 'toStation':
         case 'return':
+          // night fell on the way to a station: turn for home from where it stands
+          if (p.state === 'toStation' && !daytime && this.turnHome(p, home)) break;
           if (!this.advance(p, gdt)) {
             if (p.state === 'gather') {
               p.state = 'idle';
               p.timer = 8 + this.rnd() * 10;
-              // walk back afterwards
-              const back = findWalk(this.map, { x: Math.round(p.x), y: Math.round(p.y) }, home);
-              if (back && back.length >= 2) {
-                p.path = back;
-                p.step = 0;
-                p.state = 'return';
-                p.timer = 0;
-              }
+              // walk back afterwards, carrying what it gathered
+              if (this.turnHome(p, home)) p.carrying = true;
             } else if (p.state === 'toStation') {
               p.state = 'waiting';
               p.timer = 60 + this.rnd() * 90;
             } else {
               p.state = 'inside';
+              p.carrying = false;
               p.timer = 20 + this.rnd() * 60;
             }
           }
@@ -404,11 +470,25 @@ export class PeopleSim {
     }
   }
 
-  /** Move along the path; returns false once the end is reached. */
+  /** Turn for home from the tile the walker stands on; false when there is no way. */
+  private turnHome(p: Person, home: Place) {
+    const back = findWalk(this.map, { x: Math.round(p.x), y: Math.round(p.y) }, home);
+    if (!back || back.length < 2) return false;
+    p.path = back;
+    p.step = 0;
+    p.state = 'return';
+    p.timer = 0;
+    return true;
+  }
+
+  /**
+   * Move along the path; returns false once the end is reached. A step is the walker's state and
+   * the time, nothing else, and draws no random number.
+   */
   private advance(p: Person, gdt: number) {
     const next = p.path[p.step + 1];
     if (!next) return false;
-    const speed = WALK_SPEED * (p.transient ? 1.5 : 1);
+    const speed = walkSpeed(p);
     const dx = next.x - p.x;
     const dy = next.y - p.y;
     const d = Math.hypot(dx, dy);
