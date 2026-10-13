@@ -5123,12 +5123,884 @@
         "note": "Visual figure bounds include cap/body/gripping forearms/hands/boots, exclude stone; load below cap, alpha>128 hat and lowest planted sole."
       },
       "visualNote": "Three compared:1 correct other lifted sole and height4.77% excess,4 white/74 amber;2 height5.90%/84 white/10 amber;3 height8.51%/8 white/97 amber. Keep1 for correct pose and best size/palette total."
+    },
+    {
+      "id": "farmer-back-walk-f0-attempt-1",
+      "strip": "farmer-back-walk",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x301..743,y192..1343,width443,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Exactly THREE short CHUNKY pitchfork tines, its head top NO HIGHER than HAT TOP192; shaft short thick as GUIDE1, do NOT copy tall thin fork in identity/back references. Same older olive-skinned woman, grey-brown short hair, broad subdued straw hat, muted TEAL477B82 smock, charcoal trousers/brown boots. Hat soft oat/moss/limestone shades, not bright white or strong golden amber. Adult nominal1152px, cap192 lowestsole1344, margins192 unchanged.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f0.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f0-attempt-1.png",
+      "rawSha256": "dc4bfecebca9c3879705a2636f7161c473cff8572531fa1db09e6c796071f7d9",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 292,
+          "y": 191,
+          "width": 515,
+          "height": 1170
+        },
+        "guideBox": {
+          "x": 301,
+          "y": 192,
+          "width": 443,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 292,
+          "y": 191,
+          "width": 462,
+          "height": 1170
+        },
+        "hatTop": 191,
+        "soleRow": 1360,
+        "soleOffset": 16,
+        "figureHeight": 1170,
+        "heightError": 0.015625,
+        "totalWidth": 515,
+        "bodyWidthRatio": 1.0428893905191874,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit fork/shaft; fork top is below hat, alpha>128 hat and lowest boot extrema from full silhouette.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f0-attempt-1-look.png",
+        "foreground": 293099,
+        "nearOpaqueFraction": 0.9807539432069028,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 743,
+        "nonzeroAlphaPixels": 317541
+      },
+      "anatomy": {
+        "hatTop": 191,
+        "soleRow": 1360,
+        "bodyBox": {
+          "x": 292,
+          "y": 191,
+          "width": 462,
+          "height": 1170
+        },
+        "note": "Visual hat/body/arms/boots bounds omit fork/shaft; fork top is below hat, alpha>128 hat and lowest boot extrema from full silhouette."
+      },
+      "visualNote": "Correct short3-tine fork/geometry1.56% height;743 amber skin pixels, palette retry requested."
+    },
+    {
+      "id": "farmer-back-walk-f0-attempt-2",
+      "strip": "farmer-back-walk",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x301..743,y192..1343,width443,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: First tool shape and figure height1170 were correct: keep SHORT THICK fork with EXACTLY THREE chunky tines whose top stays BELOW hat top, same guide contact legs/camera/hat/smock. Fix743 strong amber pixels: older womans skin must be muted warm OLIVE brown, baseAD885E/highlightC7A376/shadow86694A, not saturated orange skin. Straw hat soft oatE4D5B5/limestoneBCA98B/mutedgoldC7AF71, no strong yellow-orange. Same grey-brown bob, teal477B82 smock over ivory sleeves/collar, darkest charcoal trousers/brown boots. Collar brightestOAT, no white glint. Cap192 lowestsole1344 nominal1152; no full outline.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f0.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f0-attempt-2.png",
+      "rawSha256": "9ed1ab090e1f51a05200cff099933ef1bbfe8437ca78cbd25cfb63e09e80018b",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 296,
+          "y": 184,
+          "width": 526,
+          "height": 1220
+        },
+        "guideBox": {
+          "x": 301,
+          "y": 192,
+          "width": 443,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 296,
+          "y": 184,
+          "width": 464,
+          "height": 1220
+        },
+        "hatTop": 184,
+        "soleRow": 1403,
+        "soleOffset": 59,
+        "figureHeight": 1220,
+        "heightError": 0.05902777777777768,
+        "totalWidth": 526,
+        "bodyWidthRatio": 1.0474040632054176,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit fork/shaft; fork top is below hat, alpha>128 hat and lowest boot extrema from full silhouette.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f0-attempt-2-look.png",
+        "foreground": 300473,
+        "nearOpaqueFraction": 0.9812495631887058,
+        "whiteCapViolations": 618,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 320155
+      },
+      "anatomy": {
+        "hatTop": 184,
+        "soleRow": 1403,
+        "bodyBox": {
+          "x": 296,
+          "y": 184,
+          "width": 464,
+          "height": 1220
+        },
+        "note": "Visual hat/body/arms/boots bounds omit fork/shaft; fork top is below hat, alpha>128 hat and lowest boot extrema from full silhouette."
+      },
+      "visualNote": "Olive skin corrected/0 amber, but618 white cloth pixels and5.90% height excess; third matte palette/size correction requested."
+    },
+    {
+      "id": "farmer-back-walk-f0-attempt-3",
+      "strip": "farmer-back-walk",
+      "frame": 0,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f0 CONTACT: near RIGHT leg reaches forward heel down, far LEFT leg trails toe touching ground; LEFT arm forward except bracing arm. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x301..743,y192..1343,width443,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST ATTEMPT: keep correct SHORT CHUNKY THREE-TINE fork, top below straw-hat top, same back-right older woman and guide contact legs. Previous height1220px5.9% too tall: reduce whole figure/tool to1152, cap-top192 and lowestsole1344, preserve192px margins. First size1170 was good. MATTE LIMITED PALETTE, no brighter extra glint layer: cloth baseD0BE9C/shadowBCA98B/brightestD9C9A8 (shirt/neck collar MUST NOT be white or light cream, previous618 cursor-white pixels). Hat soft oat/limestone brightestE4D5B5; olive skinAD885E/C7A376/86694A, no orange. Teal477B82 smock, charcoal trousers, brown ankle boots, grey-brown bob. Selective lower/side rims only.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[457.6,1036.8] -> ankle[364.79999999999995,1257.6] -> toe[422.4,1344]; far LEFT hip[476.8,787.1999999999999] -> knee[550.4,988.8] -> ankle[617.6,1084.8] -> toe[652.8,1132.8]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f0.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f0-attempt-3.png",
+      "rawSha256": "15d604ed355d7bc0aaabba1d0a562cd443b3ab68992a3bdf6650f2af861b3007",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 299,
+          "y": 199,
+          "width": 524,
+          "height": 1196
+        },
+        "guideBox": {
+          "x": 301,
+          "y": 192,
+          "width": 443,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 299,
+          "y": 199,
+          "width": 460,
+          "height": 1196
+        },
+        "hatTop": 199,
+        "soleRow": 1394,
+        "soleOffset": 50,
+        "figureHeight": 1196,
+        "heightError": 0.03819444444444442,
+        "totalWidth": 524,
+        "bodyWidthRatio": 1.0383747178329572,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds exclude fork and shaft; exactly3 chunky tines start below hat top, alpha>128 hat/sole extrema from full silhouette.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f0-attempt-3-look.png",
+        "foreground": 293935,
+        "nearOpaqueFraction": 0.981393845578104,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 313716
+      },
+      "anatomy": {
+        "hatTop": 199,
+        "soleRow": 1394,
+        "bodyBox": {
+          "x": 299,
+          "y": 199,
+          "width": 460,
+          "height": 1196
+        },
+        "note": "Visual hat/body/arms/boots bounds exclude fork and shaft; exactly3 chunky tines start below hat top, alpha>128 hat/sole extrema from full silhouette."
+      },
+      "keptDespiteFailedMeasurements": false,
+      "accepted": true,
+      "visualNote": "Best of three: correct older olive-brown woman/grey-brown hair/broad straw hat/teal smock, contact legs, same-hand short thick3-tine fork with top below hat. Height within3.82%, width recorded without tool, white/amber0. Shirt now matte subdued oat, skin natural olive.",
+      "acceptedFile": "poses/farmer-back-walk-f0.png"
+    },
+    {
+      "id": "farmer-back-walk-f1-attempt-1",
+      "strip": "farmer-back-walk",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x361..743,y192..1343,width383,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Literal PASSING waist-down: RIGHT leg longest VERTICAL SCREEN RIGHT to plantedsole1344, LEFT bent/tucked SCREEN LEFT with sole facing viewer entirely ABOVE1230. No crossed contact thighs, never copy f0 pants/boots. Same head/outfit/fork size as accepted f0. Fork EXACTLY3 chunky short tines, headtop BELOW hat, short thickshaft per guide, not tall reference fork. Olive skinAD885E/C7A376, matte clothD0BE9C/D9C9A8 on sleeves/NECK COLLAR not white; hat soft oat/limestone no bright amber. Teal477B82 smock, charcoal/brown ankle boots; body1152 cap192 sole1344 within margins.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f1.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f1-attempt-1.png",
+      "rawSha256": "760e4ded9032b2abca033b67f19c0505a21dbb1f1f133b7153b85b6e0de67303",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 300,
+          "y": 168,
+          "width": 552,
+          "height": 1225
+        },
+        "guideBox": {
+          "x": 361,
+          "y": 192,
+          "width": 383,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 300,
+          "y": 168,
+          "width": 491,
+          "height": 1225
+        },
+        "hatTop": 168,
+        "soleRow": 1392,
+        "soleOffset": 48,
+        "figureHeight": 1225,
+        "heightError": 0.06336805555555558,
+        "totalWidth": 552,
+        "bodyWidthRatio": 1.2819843342036554,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f1-attempt-1-look.png",
+        "foreground": 332617,
+        "nearOpaqueFraction": 0.9824061909042532,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 353340
+      },
+      "anatomy": {
+        "hatTop": 168,
+        "soleRow": 1392,
+        "bodyBox": {
+          "x": 300,
+          "y": 168,
+          "width": 491,
+          "height": 1225
+        },
+        "note": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat."
+      },
+      "visualNote": "Three compared:2 smallest height excess5.0347%, permitted body width after excluding fork, correct left raised sole;1/3 larger. Keep2 with two raw white pixels."
+    },
+    {
+      "id": "farmer-back-walk-f2-attempt-1",
+      "strip": "farmer-back-walk",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x342..743,y192..1343,width402,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Literal GUIDE2 OPEN V lower half: bottommost BOOT ON SCREEN RIGHT near700,1344, other boot SCREEN LEFT near410,1130. No f0 diagonal thigh crossing to grounded screen-left boot; ignore reference legs, trace mannequin. Free left arm per guide. Same head/outfit/fork size as accepted f0. Fork EXACTLY3 chunky short tines, headtop BELOW hat, short thickshaft per guide, not tall reference fork. Olive skinAD885E/C7A376, matte clothD0BE9C/D9C9A8 on sleeves/NECK COLLAR not white; hat soft oat/limestone no bright amber. Teal477B82 smock, charcoal/brown ankle boots; body1152 cap192 sole1344 within margins.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f2.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f2-attempt-1.png",
+      "rawSha256": "a9ca9511afa1720b452f909f90c919f1c11eef2591bc45ea95864f7a0abc822f",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 298,
+          "y": 188,
+          "width": 553,
+          "height": 1212
+        },
+        "guideBox": {
+          "x": 342,
+          "y": 192,
+          "width": 402,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 298,
+          "y": 188,
+          "width": 553,
+          "height": 1212
+        },
+        "hatTop": 188,
+        "soleRow": 1399,
+        "soleOffset": 55,
+        "figureHeight": 1212,
+        "heightError": 0.05208333333333326,
+        "totalWidth": 553,
+        "bodyWidthRatio": 1.3756218905472637,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f2-attempt-1-look.png",
+        "foreground": 317468,
+        "nearOpaqueFraction": 0.9830250607935288,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 335702
+      },
+      "anatomy": {
+        "hatTop": 188,
+        "soleRow": 1399,
+        "bodyBox": {
+          "x": 298,
+          "y": 188,
+          "width": 553,
+          "height": 1212
+        },
+        "note": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat."
+      },
+      "visualNote": "Only opposite contact after three: rightmost grounded boot and left higher boot, opposite thigh overlap;2/3 repeat f0. Retain height5.21% and body width37.56% above guide (span from forward boot/free arm, same build) under author decision. Palette0/0, short3-tine fork below hat; no repeated selected phase.",
+      "keptDespiteFailedMeasurements": true,
+      "accepted": true,
+      "acceptedFile": "poses/farmer-back-walk-f2.png",
+      "retainedGeometryReason": "Only opposite contact after three; width/height caveats retained, palette passes."
+    },
+    {
+      "id": "farmer-back-walk-f3-attempt-1",
+      "strip": "farmer-back-walk",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x355..743,y192..1343,width389,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Literal OTHER PASSING lower half: LEFT VERTICAL planted SCREEN LEFT to1344, RIGHT bent raised SCREEN RIGHT showing sole entirely above1280. No crossed contact thighs, never copy f0 pants/boots. Same head/outfit/fork size as accepted f0. Fork EXACTLY3 chunky short tines, headtop BELOW hat, short thickshaft per guide, not tall reference fork. Olive skinAD885E/C7A376, matte clothD0BE9C/D9C9A8 on sleeves/NECK COLLAR not white; hat soft oat/limestone no bright amber. Teal477B82 smock, charcoal/brown ankle boots; body1152 cap192 sole1344 within margins.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f3.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f3-attempt-1.png",
+      "rawSha256": "7c9c89f653673f9efb6b728ec0adc50d71cbdb947da52ac9c07b562c3908b9a7",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 298,
+          "y": 176,
+          "width": 527,
+          "height": 1229
+        },
+        "guideBox": {
+          "x": 355,
+          "y": 192,
+          "width": 389,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 298,
+          "y": 176,
+          "width": 465,
+          "height": 1229
+        },
+        "hatTop": 176,
+        "soleRow": 1404,
+        "soleOffset": 60,
+        "figureHeight": 1229,
+        "heightError": 0.06684027777777768,
+        "totalWidth": 527,
+        "bodyWidthRatio": 1.1953727506426735,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit short fork/shaft; top fork below hat, alpha>128 cap and lowest sole extrema.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f3-attempt-1-look.png",
+        "foreground": 307399,
+        "nearOpaqueFraction": 0.9810767113751183,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 327303
+      },
+      "anatomy": {
+        "hatTop": 176,
+        "soleRow": 1404,
+        "bodyBox": {
+          "x": 298,
+          "y": 176,
+          "width": 465,
+          "height": 1229
+        },
+        "note": "Visual hat/body/arms/boots bounds omit short fork/shaft; top fork below hat, alpha>128 cap and lowest sole extrema."
+      },
+      "visualNote": "Three compared:2 correct other raised sole and smallest height error5.82%;1 larger6.68%,3 reverted more contact-like sole and6.34%. Keep2, body-only width within25%,11 raw white pixels/no amber."
+    },
+    {
+      "id": "farmer-back-walk-f1-attempt-2",
+      "strip": "farmer-back-walk",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x361..743,y192..1343,width383,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Previous correct PASSING (RIGHT vertical planted screen-right, LEFT raised screen-left with visible sole), correct short3-tine fork and palette0/0. But height1225 is6.34% too tall and body/arm span is too wide for guide. Reduce whole anatomy/tool about6%, same f0 body/head/fork size, cap192 sole1344 height1152. Free left arm closer to GUIDE1 position, avoid expanding forearms/cap. Keep oliveAD885E/C7A376 skin and matte muted oatD0BE9C/D9C9A8 collar/sleeves, teal477B82 smock. Fork remains short/thick and below hat, same hand, no new bright glints.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f1.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f1-attempt-2.png",
+      "rawSha256": "4f95eaf733f7bcafefc84ebacb052852646bf8f3e9f27c4ccae7cc3982477efe",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 308,
+          "y": 167,
+          "width": 518,
+          "height": 1210
+        },
+        "guideBox": {
+          "x": 361,
+          "y": 192,
+          "width": 383,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 308,
+          "y": 167,
+          "width": 468,
+          "height": 1210
+        },
+        "hatTop": 167,
+        "soleRow": 1376,
+        "soleOffset": 32,
+        "figureHeight": 1210,
+        "heightError": 0.05034722222222232,
+        "totalWidth": 518,
+        "bodyWidthRatio": 1.2219321148825066,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f1-attempt-2-look.png",
+        "foreground": 317318,
+        "nearOpaqueFraction": 0.9826861381957531,
+        "whiteCapViolations": 2,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 337486
+      },
+      "anatomy": {
+        "hatTop": 167,
+        "soleRow": 1376,
+        "bodyBox": {
+          "x": 308,
+          "y": 167,
+          "width": 468,
+          "height": 1210
+        },
+        "note": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat."
+      },
+      "visualNote": "Best of three: correct right planted/left lifted sole, shortest passing variant. Body without fork22.19% wider than guide (permitted); height5.0347% excess (1210px just over1209.6 limit) retained after three. Same identity/short3-tine fork below hat, two raw white pixels, no amber.",
+      "keptStyleViolations": {
+        "whiteCapViolations": 2,
+        "strongAmberPixels": 0,
+        "reason": "Best after three in body size/identity and correct left raised sole."
+      },
+      "keptDespiteFailedMeasurements": true,
+      "accepted": true,
+      "acceptedFile": "poses/farmer-back-walk-f1.png"
+    },
+    {
+      "id": "farmer-back-walk-f2-attempt-2",
+      "strip": "farmer-back-walk",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x342..743,y192..1343,width402,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Previous OPPOSITE contact and0 white/0 amber good, but height1212 is5.21% over1152 and wide foot/arm span exceeds guide. Shrink anatomy to guide size; ground SCREEN-RIGHT boot aroundx700,y1344, not x850 at far-right canvas. Literal near-leg joints below, do not enlarge/overspread toes. Body without fork must be within25% of guide402px width. Same f0 head/outfit/short3-tine fork sizes, cap192. Keep olive skin/matte oatD0BE9C/D9C9A8 and teal477B82; headtop below hat, no new glints.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f2.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f2-attempt-2.png",
+      "rawSha256": "af8100f2252e4ee44ff6735786532324f6e2350dc0c5e9c607ca70592742d388",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 294,
+          "y": 177,
+          "width": 541,
+          "height": 1218
+        },
+        "guideBox": {
+          "x": 342,
+          "y": 192,
+          "width": 402,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 294,
+          "y": 177,
+          "width": 478,
+          "height": 1218
+        },
+        "hatTop": 177,
+        "soleRow": 1394,
+        "soleOffset": 50,
+        "figureHeight": 1218,
+        "heightError": 0.05729166666666674,
+        "totalWidth": 541,
+        "bodyWidthRatio": 1.1890547263681592,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f2-attempt-2-look.png",
+        "foreground": 323893,
+        "nearOpaqueFraction": 0.9837137573210906,
+        "whiteCapViolations": 190,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 342669
+      },
+      "anatomy": {
+        "hatTop": 177,
+        "soleRow": 1394,
+        "bodyBox": {
+          "x": 294,
+          "y": 177,
+          "width": 478,
+          "height": 1218
+        },
+        "note": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat."
+      },
+      "visualNote": "Only1 has opposite contact after three.2/3 reverted to f0. Keep1 with5.21% height and37.56% body-width excess; raw palette0/0, same identity. Wider span mainly forward boot/free arm, not a second figure."
+    },
+    {
+      "id": "farmer-back-walk-f3-attempt-2",
+      "strip": "farmer-back-walk",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x355..743,y192..1343,width389,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: Correct OTHER lifted foot and0 white/0 amber, but1229px height6.68% too tall. Keep LEFT planted SCREEN LEFT and RIGHT raised SCREEN RIGHT with sole facing viewer above1280, do not copy f0 contact. Reduce whole anatomy/tool6% to1152, cap192 plantedsole1344, same f0 body/head/fork dimensions. Olive skin and matte oat collar/sleeves, teal477B82 smock, short3-tine fork below hat; no white/amber glints.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f3.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f3-attempt-2.png",
+      "rawSha256": "bdb11ac75d6ceb45069591e0dfcddb978f1d2ed558e081573f638533477daa0c",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 296,
+          "y": 181,
+          "width": 532,
+          "height": 1219
+        },
+        "guideBox": {
+          "x": 355,
+          "y": 192,
+          "width": 389,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 296,
+          "y": 181,
+          "width": 472,
+          "height": 1219
+        },
+        "hatTop": 181,
+        "soleRow": 1399,
+        "soleOffset": 55,
+        "figureHeight": 1219,
+        "heightError": 0.05815972222222232,
+        "totalWidth": 532,
+        "bodyWidthRatio": 1.2133676092544987,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit short fork/shaft; top fork below hat, alpha>128 cap and lowest sole extrema.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f3-attempt-2-look.png",
+        "foreground": 316968,
+        "nearOpaqueFraction": 0.98345889805911,
+        "whiteCapViolations": 11,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 337333
+      },
+      "anatomy": {
+        "hatTop": 181,
+        "soleRow": 1399,
+        "bodyBox": {
+          "x": 296,
+          "y": 181,
+          "width": 472,
+          "height": 1219
+        },
+        "note": "Visual hat/body/arms/boots bounds omit short fork/shaft; top fork below hat, alpha>128 cap and lowest sole extrema."
+      },
+      "visualNote": "Best after three: left boot planted and right sole raised toward viewer, opposite f1. Retain5.82% height excess; body-only width21.34% over guide permitted, raw11 white pixels/no amber. Same olive older woman/teal smock/short3-tine fork below hat; no repeated phase.",
+      "keptStyleViolations": {
+        "whiteCapViolations": 11,
+        "strongAmberPixels": 0,
+        "reason": "Best of three: clearest other lifted sole, smallest height error, body-only width permitted; raw white specks retained."
+      },
+      "keptDespiteFailedMeasurements": true,
+      "accepted": true,
+      "acceptedFile": "poses/farmer-back-walk-f3.png"
+    },
+    {
+      "id": "farmer-back-walk-f1-attempt-3",
+      "strip": "farmer-back-walk",
+      "frame": 1,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f1 PASSING: RIGHT leg PLANTED under hips, LEFT knee bent and LEFT foot LIFTED next to right shin; guide lifted boot position is mandatory. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x361..743,y192..1343,width383,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST SIZE attempt: previous1210px still just over5% maximum1209.6. Copy guide cap192/lowestsole1344 and actual1152px height, leave192px margins; shrink whole anatomy/tool4% more. Keep RIGHT VERTICAL planted SCREEN RIGHT and LEFT bent raised SCREEN LEFT, sole visible HIGHER than ground. Same f0 head/outfit/fork; no expanding free left arm. MATTE limited cloth paletteD0BE9C/BCA98B/brightestD9C9A8 on collar/sleeves, no white glint (previous2 pixels); oliveAD885E/C7A376, teal477B82, short3-tine fork BELOW hat.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[537.6,787.1999999999999] -> knee[556.8,1030.4] -> ankle[553.6,1257.6] -> toe[633.6,1344]; far LEFT hip[483.2,790.4] -> knee[473.6,1014.4] -> ankle[406.4,1184] -> toe[422.4,1235.2]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f1.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f1-attempt-3.png",
+      "rawSha256": "f369a440af0c9b689fb972f6d1916eef3d89cd9cf6f26d298a31ba314c97ebea",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 297,
+          "y": 180,
+          "width": 544,
+          "height": 1221
+        },
+        "guideBox": {
+          "x": 361,
+          "y": 192,
+          "width": 383,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 297,
+          "y": 180,
+          "width": 484,
+          "height": 1221
+        },
+        "hatTop": 180,
+        "soleRow": 1400,
+        "soleOffset": 56,
+        "figureHeight": 1221,
+        "heightError": 0.05989583333333326,
+        "totalWidth": 544,
+        "bodyWidthRatio": 1.2637075718015667,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f1-attempt-3-look.png",
+        "foreground": 325647,
+        "nearOpaqueFraction": 0.9825885084155542,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 347062
+      },
+      "anatomy": {
+        "hatTop": 180,
+        "soleRow": 1400,
+        "bodyBox": {
+          "x": 297,
+          "y": 180,
+          "width": 484,
+          "height": 1221
+        },
+        "note": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat."
+      },
+      "visualNote": "Three compared:2 smallest height excess5.0347%, permitted body width after excluding fork, correct left raised sole;1/3 larger. Keep2 with two raw white pixels."
+    },
+    {
+      "id": "farmer-back-walk-f2-attempt-3",
+      "strip": "farmer-back-walk",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f2 OPPOSITE CONTACT: far LEFT leg FORWARD, near RIGHT leg TRAILING; thighs overlap OPPOSITE way from f0, RIGHT arm forward except bracing arm. Do NOT repeat or mirror f0. Follow the new guide foot positions and occlusion. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x342..743,y192..1343,width402,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST ATTEMPT: second image wrongly repeated f0 contact and1218px height. TRACE GUIDE2 pants/boots literally: OPEN V, bottommost planted BOOT ON SCREEN RIGHT near700,1344, other boot SCREEN LEFT near410,1130. No diagonal near thigh crossing to left grounded boot, no stock reference legs. Keep short ANKLE boots and charcoal cuffs down to ankles. Figure WITHOUT fork no more than502px wide, avoid giant rightward toe reach beyondx790; same f0 head/outfit/fork. Actualheight1152, cap192/sole1344. Fix190 white glints with matte clothD0BE9C/BCA98B/brightestD9C9A8, especially neck/sleeves, oliveAD885E/C7A376, no amber.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[576,1033.6] -> ankle[636.8,1260.8] -> toe[700.8,1344]; far LEFT hip[483.2,790.4] -> knee[428.8,976] -> ankle[387.2,1084.8] -> toe[454.4,1142.4]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f2.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f2-attempt-3.png",
+      "rawSha256": "ee7dfe833707380a4dd312627137dbaf02cc565230800351105034d8cb4ab2bf",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 306,
+          "y": 195,
+          "width": 522,
+          "height": 1200
+        },
+        "guideBox": {
+          "x": 342,
+          "y": 192,
+          "width": 402,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 306,
+          "y": 195,
+          "width": 459,
+          "height": 1200
+        },
+        "hatTop": 195,
+        "soleRow": 1394,
+        "soleOffset": 50,
+        "figureHeight": 1200,
+        "heightError": 0.04166666666666674,
+        "totalWidth": 522,
+        "bodyWidthRatio": 1.1417910447761195,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat.",
+        "boxPass": true
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f2-attempt-3-look.png",
+        "foreground": 299918,
+        "nearOpaqueFraction": 0.9825619002527357,
+        "whiteCapViolations": 8,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 319824
+      },
+      "anatomy": {
+        "hatTop": 195,
+        "soleRow": 1394,
+        "bodyBox": {
+          "x": 306,
+          "y": 195,
+          "width": 459,
+          "height": 1200
+        },
+        "note": "Visual hat/body/arms/boots bounds omit pitchfork/shaft; right forward boot included when wider than tool, alpha>128 hat/sole extrema, fork below hat."
+      },
+      "visualNote": "Only1 has opposite contact after three.2/3 reverted to f0. Keep1 with5.21% height and37.56% body-width excess; raw palette0/0, same identity. Wider span mainly forward boot/free arm, not a second figure."
+    },
+    {
+      "id": "farmer-back-walk-f3-attempt-3",
+      "strip": "farmer-back-walk",
+      "frame": 3,
+      "prompt": "Use case: sketch-to-render. EDIT image1 flat grey mannequin into ONE painted person, preserving its exact placement and limb pose. Canvas1024x1536 PORTRAIT, RGBA transparent. image1: EDIT TARGET and EXACT pose/box authority; image2: IDENTITY/CLOTHES/LOAD ONLY, not pose; image3: BACK CLOTHING ONLY, ignore its wrong legs; image4: PAINTED STYLE ONLY, not its character; image5: ACCEPTED f0: SAME head/outfit/body dimensions/colour/load ONLY, NEVER its legs or arm pose.\nPERSON: older woman, warm olive skin, grey-brown hair, broad straw hat, muted teal work smock, charcoal trousers, brown boots. LOAD: SHORT CHUNKY three-tine pitchfork in same hand as front reference; fork top NO HIGHER than HAT TOPy192, not the tall shaft of earlier drawing; no wheat.\nCAMERA: orthographic2:1 isometric30degrees DOWN, realistic adult7to7.5heads, BACK-RIGHT3/4 walking AWAY toward UPPER RIGHT, back of head/clothes and right side visible, NO face or front clothes. Right leg is NEAR/DARK GREY leg; left is FAR/light grey leg. f3 OPPOSITE PASSING: LEFT leg PLANTED, RIGHT knee bent and RIGHT foot LIFTED. Lift the OTHER foot from f1, preserve body facing, no mirroring. All limbs follow IMAGE1, never identity/style/f0 references. Copy the guide leg joints, planted sole, lifted boot and torso position exactly.\nGEOMETRY: hipsx512; HAT TOPy192, SOLE LINEy1344, bodyheight1152. Exact guide opaque box x355..743,y192..1343,width389,height1152. Keep hat-to-lowest-sole height within5% of1152. Width is measured, not forced into this box: swinging arms and the load may extend beyond it. Only a body without its load more than25% wider than the guide is wrong. Preserve transparent margins, do not expand to fillcanvas, do not recenter the load instead of body. Head/outfit size stays identical to accepted f0, bob <=23px. Arms may grip load as guide shows, legs always perform specified phase.\nSTYLE: broad smooth PAINTED colour clusters,3or4 shades/material, ONE UPPER-LEFT light. Selective dark lower/side occluded rims ONLY. Upper-left cap, shoulder, arm and leg edges merge with the painted material without any dark drawn perimeter; NEVER a full dark/black outline. Subdued forest#294638,moss#78804C,oat#E4D5B5,limestone#BCA98B,slate#626B6C,teal#477B82,copper#A36B42. Warm natural skin/hair. No highlight at/abovecursorwhite#ECE4D0 and no orange/yellow as strong as selectionamber#E8AA48.\nAlpha0 outside silhouette, opaquefigure, clean smooth contours. NO ground,floor,cast/ground shadow,haze,glow,labels,text,numbers,borders,extraobjects,extraperson. Exactly ONE figure. Return exactly1024x1536.\nCORRECTION: LAST SIZE attempt: previous1219px5.82% too tall. Shrink anatomy/tool6% to actual1152px, cap192 lowestsole1344, margins192; same f0 size. Keep LEFT VERTICAL planted SCREEN LEFT, RIGHT raised SCREEN RIGHT with large sole facing viewer above1280, not f0 contact. Short3-tine fork BELOW hat, brown ankle boots/charcoal cuffs. Remove11 white glints: MATTE clothD0BE9C/BCA98B/brightestD9C9A8 on collar/sleeves, no white/cream bright layer; oliveAD885E/C7A376 skin, teal477B82 smock, hat soft oat/limestone not amber.\nEXACT LEG PATHS (image1 is authoritative): near RIGHT hip[540.8,787.1999999999999] -> knee[601.6,972.8] -> ankle[678.4,1155.2] -> toe[675.2,1222.4]; far LEFT hip[483.2,787.1999999999999] -> knee[451.2,1040] -> ankle[441.6,1251.2] -> toe[512,1344]. Paint these mannequin legs first, then clothe them. Identity references supply colour and clothes only. Keep their leg pose out of this edit.",
+      "references": [
+        "guides/farmer-back-walk-f3.png",
+        "refs/farmer-front-walk.png",
+        "refs/farmer-back-walk-back.png",
+        "reference-passenger.png",
+        "poses/farmer-back-walk-f0.png"
+      ],
+      "file": "raw/poses/farmer-back-walk-f3-attempt-3.png",
+      "rawSha256": "de0ba906adea9372569a5cc8f7f9aba9a4b9ca4dea156e8f7baba661d63ad011",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 288,
+          "y": 195,
+          "width": 546,
+          "height": 1225
+        },
+        "guideBox": {
+          "x": 355,
+          "y": 192,
+          "width": 389,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 288,
+          "y": 195,
+          "width": 485,
+          "height": 1225
+        },
+        "hatTop": 195,
+        "soleRow": 1419,
+        "soleOffset": 75,
+        "figureHeight": 1225,
+        "heightError": 0.06336805555555558,
+        "totalWidth": 546,
+        "bodyWidthRatio": 1.2467866323907455,
+        "anatomyMethod": "Visual hat/body/arms/boots bounds omit short fork/shaft; top fork below hat, alpha>128 cap and lowest sole extrema.",
+        "boxPass": false
+      },
+      "rawStyleCheck": {
+        "look": "checks/farmer-back-walk-f3-attempt-3-look.png",
+        "foreground": 314287,
+        "nearOpaqueFraction": 0.9819750737383347,
+        "whiteCapViolations": 3,
+        "strongAmberPixels": 0,
+        "nonzeroAlphaPixels": 332637
+      },
+      "anatomy": {
+        "hatTop": 195,
+        "soleRow": 1419,
+        "bodyBox": {
+          "x": 288,
+          "y": 195,
+          "width": 485,
+          "height": 1225
+        },
+        "note": "Visual hat/body/arms/boots bounds omit short fork/shaft; top fork below hat, alpha>128 cap and lowest sole extrema."
+      },
+      "visualNote": "Three compared:2 correct other raised sole and smallest height error5.82%;1 larger6.68%,3 reverted more contact-like sole and6.34%. Keep2, body-only width within25%,11 raw white pixels/no amber."
     }
   ],
   "redoStatus": {
     "requestedStripCount": 9,
-    "completedStripCount": 7,
-    "status": "7/9 strips complete; stone-mason-back-carry four distinct phases with both stone ends, retained small size/bob/palette caveats.",
+    "completedStripCount": 8,
+    "status": "8 of 9 complete; farmer-back-carry remaining",
     "geometry": "pose-geometry.json",
     "workflow": "redo-workflow.md",
     "protection": "redo-state.json",
@@ -5145,7 +6017,7 @@
     ],
     "imageTool": "built-in image_gen",
     "fallbackApiUsed": false,
-    "paintingCount": 71,
+    "paintingCount": 83,
     "diagnosticCandidate": "checks/pump-hand-back-walk-candidate.html",
     "resolvedBlockHistory": [
       {
@@ -6340,6 +7212,172 @@
       "headBobRange": 10,
       "headBobFraction": 0.027777777777777776,
       "headBobWithinTwoPercent": false
+    },
+    "farmer-back-walk": {
+      "canvas": [
+        1024,
+        512
+      ],
+      "columns": 4,
+      "columnWidth": 256,
+      "anchors": [
+        [
+          128,
+          480
+        ],
+        [
+          384,
+          480
+        ],
+        [
+          640,
+          480
+        ],
+        [
+          896,
+          480
+        ]
+      ],
+      "uniformScaling": true,
+      "scaleFormula": "360 / (1152 * returnedWidth / 1024)",
+      "resampling": "premultiplied-alpha area averaging",
+      "maxReach": 105.9375,
+      "frames": [
+        {
+          "frame": 0,
+          "pose": "poses/farmer-back-walk-f0.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1394
+          ],
+          "soleRow": 1394,
+          "anchor": [
+            128,
+            480
+          ],
+          "leftReach": 66.5625,
+          "rightReach": 97.1875,
+          "bounds": {
+            "x": 62,
+            "y": 107,
+            "width": 163,
+            "height": 373
+          }
+        },
+        {
+          "frame": 1,
+          "pose": "poses/farmer-back-walk-f1.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1376
+          ],
+          "soleRow": 1376,
+          "anchor": [
+            384,
+            480
+          ],
+          "leftReach": 63.75,
+          "rightReach": 98.125,
+          "bounds": {
+            "x": 64,
+            "y": 102,
+            "width": 162,
+            "height": 378
+          }
+        },
+        {
+          "frame": 2,
+          "pose": "poses/farmer-back-walk-f2.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1399
+          ],
+          "soleRow": 1399,
+          "anchor": [
+            640,
+            480
+          ],
+          "leftReach": 66.875,
+          "rightReach": 105.9375,
+          "bounds": {
+            "x": 61,
+            "y": 101,
+            "width": 173,
+            "height": 379
+          }
+        },
+        {
+          "frame": 3,
+          "pose": "poses/farmer-back-walk-f3.png",
+          "returned": [
+            1024,
+            1536
+          ],
+          "uniformScale": 0.3125,
+          "normalizedScale": 0.3125,
+          "sourceAnchor": [
+            512,
+            1399
+          ],
+          "soleRow": 1399,
+          "anchor": [
+            896,
+            480
+          ],
+          "leftReach": 67.5,
+          "rightReach": 98.75,
+          "bounds": {
+            "x": 60,
+            "y": 99,
+            "width": 167,
+            "height": 381
+          }
+        }
+      ],
+      "visualCycleReview": "passed",
+      "outputPaletteCheck": {
+        "rgba": true,
+        "alphaZeroPixels": 397295,
+        "opaquePixels": 116793,
+        "antialiasedPixels": 10200,
+        "cursorWhitePixels": 0,
+        "strongAmberPixels": 0
+      },
+      "visualFindings": {
+        "contactX": true,
+        "oppositeLiftedFoot": true,
+        "offline9pxAnd36pxInspected": true,
+        "browserPlayback": false,
+        "repeatedFrames": [],
+        "note": "Offline9px-6x and36px sheets inspected: f0/f2 opposite contact X, f1 left lifted sole and f3 right lifted sole; all four selected phases distinct. Accepted3,2,1,2. At9px silhouette alternation is subtle; clearer at36px. Same older olive woman, teal smock and three-tine short fork below hat. f1 height5.03%, f2 height5.21% and body width37.56% excess, f3 height5.82% retained as best after three; later f2 attempts repeated f0. Grounded cap range7.1875px=1.997% within2% target. Raw tiny white exceptions documented."
+      },
+      "groundedHatRows": [
+        106.5625,
+        102.1875,
+        101.5625,
+        99.375
+      ],
+      "headBobRange": 7.1875,
+      "headBobFraction": 0.019965277777777776,
+      "headBobWithinTwoPercent": true
     }
   }
 }

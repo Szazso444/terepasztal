@@ -1,6 +1,6 @@
 ## Current continuation — 2026-10-12
 
-7/9 requested strips checked. See finish-report.json for accepted attempts and observations, redo-state.json for progress, and finish-brief-2026-10-12.txt for the current authority. Canonical strips use uniform area averaging and individual measured sole rows. Offline checks are under checks/: <strip>-9px-6x.png and <strip>-36px.png. Carry columns are at least256px; walks expand only when needed. Original inputs, guides, refs, review and game-scale exports are preserved. Historical notes below record earlier rejected attempts and superseded rules.
+8/9 requested strips checked. See finish-report.json for accepted attempts and observations, redo-state.json for progress, and finish-brief-2026-10-12.txt for the current authority. Canonical strips use uniform area averaging and individual measured sole rows. Offline checks are under checks/: <strip>-9px-6x.png and <strip>-36px.png. Carry columns are at least256px; walks expand only when needed. Original inputs, guides, refs, review and game-scale exports are preserved. Historical notes below record earlier rejected attempts and superseded rules.
 
 ## Historical notes before Core acceptance
 
