@@ -8,7 +8,7 @@ import { content } from '../data/content';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
-import { resetStationIds } from './stations';
+import { Station, resetStationIds } from './stations';
 import { startWork } from './upgrade';
 import { rules, DEFAULT_RULES, daySeconds } from './rules';
 import {
@@ -26,13 +26,53 @@ import {
   type PersonState,
   type Profession,
 } from './people';
-import { forAll } from '../testing/property';
+import { forAll, shrinkInt, SEEDS } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 const DT = 1;
 const MIDDAY = 0.5;
+const NIGHT = 0.05;
+
+/** Tiles along a walk, diagonals counting root two. */
+const lengthOf = (path: { x: number; y: number }[]) =>
+  path.slice(1).reduce((n, q, i) => n + Math.hypot(q.x - path[i].x, q.y - path[i].y), 0);
+
+const MOVES = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+] as const;
+/** `moves` unit steps, straight or diagonal, from open ground south of the line; seeded. */
+function wander(seed: number, moves: number) {
+  const rng = new Rng(seed);
+  const path = [{ x: 30, y: 38 }];
+  for (let i = 0; i < moves; i++) {
+    const [dx, dy] = rng.pick(MOVES);
+    const at = path[i];
+    // turn about at the edge of the open ground rather than leave it
+    path.push({
+      x: at.x + dx < 3 || at.x + dx > 60 ? at.x - dx : at.x + dx,
+      y: at.y + dy < 27 || at.y + dy > 45 ? at.y - dy : at.y + dy,
+    });
+  }
+  return path;
+}
+
+/** Smaller cases for forAll: each named count cut toward its floor, first the floor itself. */
+function* shrinkCounts<T>(c: T, floors: { [K in keyof T]?: number }): Iterable<T> {
+  for (const k of Object.keys(floors) as (keyof T)[])
+    for (const v of shrinkInt(c[k] as number, floors[k] as number)) yield { ...c, [k]: v };
+}
+
 const GATHERERS: readonly Profession[] = ['lumberjack', 'stone_mason', 'farmer', 'pump_hand'];
+/** The states a walker is walking in; a boarding or alighting figure's own is 'walk'. */
+const WALKING: readonly PersonState[] = ['gather', 'toStation', 'return'];
 const GROUNDS: readonly Terrain[] = [
   Terrain.Grass,
   Terrain.Forest,
@@ -138,10 +178,12 @@ describe('walking speed', () => {
     expect(WALK_SPEED).toBeLessThan(halfSlowestEngine());
   });
 
-  it('is what a walker covers in a tick, in every profession and on every ground', () => {
+  it('is what a walker covers in a tick, in every profession, state and ground', () => {
     forAll(
       (rng) => ({
         ground: rng.pick(GROUNDS),
+        state: rng.pick(WALKING),
+        carrying: rng.chance(0.5),
         gdt: rng.pick([0.05, 0.25, 0.5, 1, 2.5, 5]),
         stream: rng.int(0, 0xffffffff),
       }),
@@ -166,7 +208,16 @@ describe('walking speed', () => {
         const walkers = [...people.persons];
         const population = walkers.length;
         for (const p of walkers)
-          Object.assign(p, { state: 'return', path, step: 0, x: 6, y, timer: 0 });
+          Object.assign(p, {
+            state: c.state,
+            carrying: c.carrying,
+            stationId: builder.stations.at(-1)!.id,
+            path,
+            step: 0,
+            x: 6,
+            y,
+            timer: 0,
+          });
         // boarding figures: no home, a path of their own
         const boarders: Person[] = walkers.map((p, i) => ({
           ...p,
@@ -184,7 +235,7 @@ describe('walking speed', () => {
 
         people.tick(c.gdt, population, MIDDAY);
         for (const p of walkers) {
-          expect(p.state, `${p.profession} on ${c.ground}`).toBe('return');
+          expect(p.state, `${p.profession} on ${c.ground}`).toBe(c.state);
           expect(Math.hypot(p.x - 6, p.y - y)).toBeCloseTo(WALK_SPEED * c.gdt, 9);
         }
         for (const p of boarders)
@@ -212,6 +263,71 @@ describe('walking speed', () => {
         for (let i = 0; i < steps; i++) people.tick(gdt, 1, MIDDAY);
         expect(p.x - 6).toBeCloseTo(WALK_SPEED * gdt * steps, 6);
       },
+      { shrink: (c) => shrinkCounts(c, { steps: 1 }) },
+    );
+  });
+
+  it('gets along a path in its length over the pace, a tick a corner more at most, never faster', () => {
+    forAll(
+      (rng) => ({
+        shape: rng.int(0, 0xffffffff),
+        moves: rng.int(1, 40),
+        gdt: rng.pick([0.05, 0.1, 0.5, 1, 2.5]),
+        boarding: rng.chance(0.5),
+        state: rng.pick(WALKING),
+        carrying: rng.chance(0.5),
+        home: rng.int(0, 7),
+        stream: rng.int(0, 0xffffffff),
+      }),
+      (c) => {
+        const { map, builder, keys } = town();
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        const path = wander(c.shape, c.moves);
+        let p: Person;
+        if (c.boarding) {
+          // a figure the sim itself sends from the platform to the station door
+          people.alight(builder.stations.at(-1)!, 1);
+          p = people.persons[0];
+          expect(p.transient).toBe(true);
+        } else {
+          people.tick(DT, 1, MIDDAY);
+          p = people.persons[0];
+          p.home = Object.values(keys)[c.home];
+          p.state = c.state;
+        }
+        const door = builder.stations.at(-1)!;
+        Object.assign(p, {
+          carrying: c.carrying,
+          stationId: door.id,
+          path,
+          step: 0,
+          x: path[0].x,
+          y: path[0].y,
+          timer: 0,
+        });
+        const pace = walkSpeed(p);
+        // a walker is done on the tick after it reaches the end, when it takes up the next state,
+        // or is gone if it was boarding
+        const done = () => (c.boarding ? !people.persons.includes(p) : p.state !== c.state);
+        let ticks = 0;
+        const stream = people.toJSON().rng;
+        while (!done() && ticks < 100_000) {
+          const was = { x: p.x, y: p.y };
+          people.tick(c.gdt, c.boarding ? 0 : 1, MIDDAY);
+          ticks++;
+          if (done()) break;
+          expect(Math.hypot(p.x - was.x, p.y - was.y), `tick ${ticks}`).toBeLessThanOrEqual(
+            pace * c.gdt + 1e-9,
+          );
+          // a step is the walker's state and the time: it takes no draw (a crossing can hook in)
+          expect(people.toJSON().rng, `tick ${ticks}`).toBe(stream);
+        }
+        expect(done(), 'it got to the end of the path').toBe(true);
+        const walking = (ticks - 1) * c.gdt;
+        expect(walking).toBeGreaterThanOrEqual(lengthOf(path) / pace - 1e-9);
+        expect(walking).toBeLessThanOrEqual(lengthOf(path) / pace + c.moves * c.gdt + 1e-9);
+      },
+      { shrink: (c) => shrinkCounts(c, { moves: 1 }) },
     );
   });
 });
@@ -268,11 +384,64 @@ describe('professions', () => {
     expect(stationProfession(civic)).toBe('railway_worker');
   });
 
+  it('are the issue’s for every station, works and decor in the content that is a home', () => {
+    // each kind on a tile of its own, put on the builder's lists as the world would: placement
+    // rules are not what is under test, and some kinds need a deposit, a hillside or a water edge
+    const { map, builder } = flat(1, W, 48, 20);
+    const want = new Map<string, Profession>();
+    let n = 0;
+    const spot = () => {
+      const i = n++;
+      return { x: 2 + (i % 58), y: 26 + 4 * Math.floor(i / 58) };
+    };
+    const byKind: Record<string, Profession> = {
+      farm: 'farmer',
+      lumber: 'lumberjack',
+      quarry: 'stone_mason',
+      pump: 'pump_hand',
+    };
+    for (const def of content.stations.defs) {
+      const { x, y } = spot();
+      const s = new Station(def.id, x, y);
+      builder.stations.push(s);
+      want.set(
+        `s${s.id}`,
+        byKind[def.id] ?? (def.accepts.includes('passengers') ? 'passenger' : 'railway_worker'),
+      );
+    }
+    for (const def of content.buildings) {
+      const { x, y } = spot();
+      builder.buildings.set(y * W + x, {
+        id: def.id,
+        x,
+        y,
+        acc: 0,
+        rot: 0,
+        active: false,
+        rate: 0,
+      });
+      if (def.crew > 0) want.set(`b${x},${y}`, 'railway_worker');
+    }
+    for (const def of content.decor) {
+      const { x, y } = spot();
+      builder.decor.set(y * W + x, { id: def.id, x, y, rot: 0 });
+      if (def.residents) want.set(`d${x},${y}`, 'passenger');
+      else if (def.crew > 0) want.set(`d${x},${y}`, 'railway_worker');
+    }
+    const places = new PeopleSim(map, builder).places();
+    expect(places.map((pl) => pl.key).sort()).toEqual([...want.keys()].sort());
+    for (const pl of places) expect(pl.profession, pl.key).toBe(want.get(pl.key));
+    // and each of the six is the profession of some place there is
+    expect(new Set(places.map((pl) => pl.profession))).toEqual(new Set(PROFESSIONS));
+  });
+
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
   it('are the profession of the home of every walker, at every tick', { timeout: 90_000 }, () => {
+    let rehomed = 0;
     forAll(
       (rng) => ({
         stream: rng.int(0, 0xffffffff),
+        closings: rng.int(0, 0xffffffff),
         population: rng.int(1, 60),
         gdt: rng.pick([0.25, 1, 2.5]),
         day0: rng.next(),
@@ -280,18 +449,39 @@ describe('professions', () => {
       }),
       (c) => {
         const { map, builder } = town();
+        const mill = builder.buildingAt(38, 24)!;
         const people = new PeopleSim(map, builder, new Rng(c.stream));
+        const shutter = new Rng(c.closings);
+        // everything but the house may be closed for an upgrade now and then, and opens again
+        const closable = [...builder.stations, mill];
         for (let t = 0; t < c.ticks; t++) {
+          if (shutter.chance(0.04)) {
+            const x = shutter.pick(closable);
+            if (x instanceof Station) x.work = x.work ? null : startWork(x.level + 1);
+            else if (x.work) delete x.work;
+            else x.work = startWork(2)!;
+          }
           if (t % 40 === 0) people.alight(builder.stations.at(-1)!, 2);
+          const before = new Map(people.persons.map((p) => [p, p.home]));
           people.tick(c.gdt, c.population, (c.day0 + (t * c.gdt) / daySeconds()) % 1);
           const profession = new Map(people.places().map((pl) => [pl.key, pl.profession]));
           for (const p of people.persons) {
-            if (p.transient) expect(p.profession).toBe('passenger');
-            else expect(p.profession, `walker ${p.id} at ${p.home}`).toBe(profession.get(p.home));
+            if (p.transient) {
+              expect(p.profession, `boarding walker ${p.id}`).toBe('passenger');
+              continue;
+            }
+            expect(profession.has(p.home), `walker ${p.id} lives at ${p.home}, which is shut`).toBe(
+              true,
+            );
+            expect(p.profession, `walker ${p.id} at ${p.home}`).toBe(profession.get(p.home));
+            if (before.has(p) && before.get(p) !== p.home) rehomed++;
           }
         }
       },
+      { shrink: (c) => shrinkCounts(c, { ticks: 1, population: 1 }) },
     );
+    // the plays are worth checking: walkers were moved from a home that shut to another
+    expect(rehomed).toBeGreaterThan(0);
   });
 
   it('go with a walker whose home closes to the home it is given, drawing nothing', () => {
@@ -342,6 +532,7 @@ describe('professions and carrying, from the same seed', () => {
   // seeded layouts run for a second or two; the margin keeps a loaded CI runner green
   it('play out the same, walker for walker, with no Math.random', { timeout: 90_000 }, () => {
     let someoneCarried = 0;
+    const endings = new Set<string>();
     forAll(
       (rng) => ({
         stream: rng.int(0, 0xffffffff),
@@ -365,11 +556,61 @@ describe('professions and carrying, from the same seed', () => {
         const a = play();
         expect(play()).toEqual(a);
         if (a.some((row) => row.includes(' true '))) someoneCarried++;
+        endings.add(a.at(-1)!);
       },
+      { shrink: (c) => shrinkCounts(c, { ticks: 1, population: 1 }) },
     );
-    // the plays are worth comparing: in many of them someone came back from gathering
+    // the plays are worth comparing: in many of them someone came back from gathering, and the
+    // seeds give plays of their own rather than one play over and over
     expect(someoneCarried).toBeGreaterThan(0);
+    expect(endings.size).toBeGreaterThan(SEEDS.length / 2);
     expect(Math.random).not.toHaveBeenCalled();
+  });
+});
+
+// ------------------------------------------------------------------ the people stream and the save
+
+describe('the walkers and the save', () => {
+  it('draw nothing for a profession: a new walker costs its home, outfit and first timer', () => {
+    forAll(
+      (rng) => ({ stream: rng.int(0, 0xffffffff), population: rng.int(1, 120) }),
+      (c) => {
+        const { map, builder } = town();
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        // at night nobody steps out, so the spawn is all that draws from the stream
+        people.tick(DT, c.population, NIGHT);
+        expect(people.persons).toHaveLength(c.population);
+        const twin = new Rng(c.stream);
+        for (let i = 0; i < 3 * c.population; i++) twin.next();
+        expect(people.toJSON().rng).toBe(twin.state);
+      },
+      { shrink: (c) => shrinkCounts(c, { population: 1 }) },
+    );
+  });
+
+  it('save their stream and no more, and start over with professions on a load', () => {
+    const { map, builder } = town();
+    const people = new PeopleSim(map, builder, new Rng(9));
+    for (let t = 0; t < 600; t++) people.tick(DT, 40, (t / daySeconds()) % 1);
+    // the play was worth saving: walkers of several professions, some of them out
+    expect(new Set(people.persons.map((p) => p.profession)).size).toBeGreaterThan(1);
+    expect(people.outside).toBeGreaterThan(0);
+
+    const save = people.toJSON();
+    expect(Object.keys(save)).toEqual(['rng']);
+    expect(JSON.stringify(save)).not.toMatch(/profession|carrying/);
+
+    resetStationIds(1);
+    const world = town();
+    const fresh = new PeopleSim(world.map, world.builder, new Rng(1));
+    fresh.load(JSON.parse(JSON.stringify(save)));
+    expect(fresh.persons).toEqual([]);
+    fresh.tick(DT, 60, MIDDAY);
+    expect(fresh.persons).toHaveLength(60);
+    const professions = new Map(fresh.places().map((pl) => [pl.key, pl.profession]));
+    for (const p of fresh.persons)
+      expect(p.profession, `walker ${p.id}`).toBe(professions.get(p.home));
+    expect(new Set(fresh.persons.map((p) => p.profession)).size).toBeGreaterThan(1);
   });
 });
 
@@ -418,8 +659,43 @@ describe('carrying', () => {
           }
         }
       },
+      { shrink: (c) => shrinkCounts(c, { ticks: 1, population: 1 }) },
     );
     expect(returned).toBeGreaterThan(0);
+  });
+});
+
+describe('a gatherer with no way home', () => {
+  it('carries nothing: carrying is for the way home, and there is none', () => {
+    forAll(
+      (rng) => ({ stream: rng.int(0, 0xffffffff) }),
+      (c) => {
+        const { map, builder, sites, keys } = town();
+        // a pocket of two tiles in a ring of water: the gather tile and the one before it
+        for (let y = 36; y <= 39; y++)
+          for (let x = 29; x <= 31; x++) map.terrain[y * W + x] = Terrain.Water;
+        for (const y of [37, 38]) map.terrain[y * W + 30] = Terrain.Grass;
+        const path = [
+          { x: 30, y: 37 },
+          { x: 30, y: 38 },
+        ];
+        expect(findWalk(map, path[1], sites.farm)).toBeNull();
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        people.tick(DT, 1, MIDDAY);
+        const [p] = people.persons;
+        Object.assign(p, { home: keys.farm, state: 'gather', path, step: 0, x: 30, y: 37 });
+        // from the walk to the tile, through the stand there, to going in: no haul on the way
+        let idled = false;
+        for (let t = 0; t < 200 && p.state !== 'inside'; t++) {
+          people.tick(DT, 1, MIDDAY);
+          expect(p.carrying, `tick ${t}, ${p.state}`).toBe(false);
+          expect(p.state, `tick ${t}`).not.toBe('return');
+          if (p.state === 'idle') idled = true;
+        }
+        expect(idled, 'it got to the gather tile').toBe(true);
+        expect(p.state).toBe('inside');
+      },
+    );
   });
 });
 
@@ -435,9 +711,6 @@ function trip(seed: number, dx: number, dy: number) {
 }
 
 const daytime = (day: number) => day > WAKE && day < SLEEP;
-/** Tiles along a walk, diagonals counting root two. */
-const lengthOf = (path: { x: number; y: number }[]) =>
-  path.slice(1).reduce((n, q, i) => n + Math.hypot(q.x - path[i].x, q.y - path[i].y), 0);
 
 describe('a walker bound for a station', () => {
   // the longest a walker may be out: to the farthest station and back, and the wait there
@@ -459,9 +732,12 @@ describe('a walker bound for a station', () => {
           dy: rng.int(2, 6),
           gdt: rng.pick([0.5, 1, 2.5]),
           day0: rng.next(),
+          // the Game tuning slider runs from 30 s to 1200 s; a short day leaves little to walk in
+          daySeconds: rng.pick([30, 90, 240, 600]),
         }),
         (c) => {
           expect(Math.abs(c.dx) + c.dy).toBeLessThanOrEqual(STATION_REACH);
+          rules.daySeconds = c.daySeconds;
           const { map, builder, station, mill } = trip(c.mapSeed, c.dx, c.dy);
           const people = new PeopleSim(map, builder, new Rng(c.stream));
           const days = 3;
@@ -475,6 +751,8 @@ describe('a walker bound for a station', () => {
             people.tick(c.gdt, 20, day);
             for (const p of people.persons) {
               const was = before.get(p);
+              if (was === 'inside' && p.state !== 'inside')
+                expect(daytime(day), `walker ${p.id} stepped out at night`).toBe(true);
               if (p.state === 'toStation' && was !== 'toStation') {
                 // it set off for the station
                 expect(daytime(day), `walker ${p.id} set off at night`).toBe(true);
@@ -505,6 +783,7 @@ describe('a walker bound for a station', () => {
                 );
           }
         },
+        { shrink: (c) => shrinkCounts(c, { dx: 0, dy: 2, daySeconds: 240 }) },
       );
       // the property is worth checking: walkers do get there, and others are caught by night
       expect(arrived).toBeGreaterThan(0);
@@ -520,6 +799,8 @@ describe('a walker bound for a station', () => {
         dx: rng.int(-6, 6),
         dy: rng.int(3, 8),
         along: rng.next(),
+        // how far between one tile of the way and the next
+        between: rng.next(),
         night: rng.pick([0.1, 0.5 * (1 + SLEEP), 0.9, 0.99]),
       }),
       (c) => {
@@ -527,18 +808,19 @@ describe('a walker bound for a station', () => {
         const people = new PeopleSim(map, builder, new Rng(c.stream));
         people.tick(DT, 1, MIDDAY);
         const [p] = people.persons;
-        // make it a mill walker mid-way to the station
+        // make it a mill walker part of the way to the station, between two tiles
         const path = findWalk(map, mill, station)!;
         expect(path.length).toBeGreaterThanOrEqual(3);
         const step = 1 + Math.floor(c.along * (path.length - 2));
+        const [a, b] = [path[step], path[step + 1]];
         Object.assign(p, {
           home,
           state: 'toStation',
           stationId: station.id,
           path,
           step,
-          x: path[step].x,
-          y: path[step].y,
+          x: a.x + c.between * (b.x - a.x),
+          y: a.y + c.between * (b.y - a.y),
           timer: 0,
         });
         const at = { x: p.x, y: p.y };
@@ -547,16 +829,24 @@ describe('a walker bound for a station', () => {
         expect(daytime(c.night)).toBe(false);
         expect(p.state).toBe('return');
         expect({ x: p.x, y: p.y }).toEqual(at);
+        // the way home starts at the tile it stands on and ends at its door
+        expect(p.path[0]).toEqual({ x: Math.round(at.x), y: Math.round(at.y) });
         expect(p.path.at(-1)).toEqual({ x: mill.x, y: mill.y });
         expect(p.carrying).toBe(false);
         expect(people.toJSON().rng).toBe(stream);
-        // and gets home
+        // the way back is no longer than the way out, and is walked at the pace
+        const back = p.path;
+        expect(back.length).toBeLessThanOrEqual(path.length);
         let t = 0;
-        while (p.state !== 'inside' && t++ < 1000) people.tick(DT, 1, c.night);
+        while (p.state !== 'inside' && t < 1000) {
+          people.tick(DT, 1, c.night);
+          t++;
+        }
         expect(p.state).toBe('inside');
-        // by the shortest way back, which is no longer than the way out
-        expect(t * WALK_SPEED).toBeLessThanOrEqual(lengthOf(path) * Math.SQRT2 + 2);
+        expect(t).toBeGreaterThanOrEqual((lengthOf(back) - 1) / WALK_SPEED);
+        expect(t).toBeLessThanOrEqual((lengthOf(back) + 1) / WALK_SPEED + back.length + 1);
       },
+      { shrink: (c) => shrinkCounts(c, { dx: 0, dy: 3 }) },
     );
   });
 
