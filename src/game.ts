@@ -2237,6 +2237,7 @@ export class Game implements UiHost {
       fieldActive ? this.hoverTile : null,
       this.build,
       this.season ?? 'spring',
+      this.build.placingAt(fieldActive ? this.hoverTile : null),
     );
     // the hovered tile's outline takes the colour the harvest layer gives it (#335)
     this.cursor.tint = this.world.harvest.outline;

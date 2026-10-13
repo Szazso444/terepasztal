@@ -1952,3 +1952,22 @@ describe('placement and target keys, over seeded cases', () => {
     );
   });
 });
+
+describe('the root over the field', () => {
+  it('is known by its target while it is open, and is not a term tooltip opened from a panel', () => {
+    expect(stack.fieldRoot).toBeNull();
+    rest(TILE_A, ROOT_DELAY_MS - FRAME);
+    expect(stack.fieldRoot, 'still waiting to open').toBeNull();
+    rest(TILE_A, 2 * FRAME);
+    expect(stack.fieldRoot).toBe(TILE_A);
+    lockedRoot(TILE_A);
+    rest(TILE_B, FRAME);
+    expect(stack.fieldRoot, 'a locked root stays for its own target').toBe(TILE_A);
+    stack.closeAll();
+    expect(stack.fieldRoot).toBeNull();
+    openTerm(-1, 'panel term');
+    expect(stack.depth).toBe(1);
+    expect(stack.fieldRoot).toBeNull();
+    stack.closeAll();
+  });
+});
