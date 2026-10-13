@@ -1200,6 +1200,231 @@ describe('landscape painter', () => {
       },
     );
   });
+
+  describe('the ground in view', () => {
+    // The limit is real time; only the timers are faked, the clock the painter reads stays the test's.
+    beforeEach(() => void vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
+    afterEach(() => void vi.useRealTimers());
+    /** Lets promise reactions run. */
+    const tick = async () => {
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    };
+    /** Starts a wait and records how it ended, or leaves `ended` undefined while it goes on. */
+    const waitFor = (landscape: Landscape, ms: number) => {
+      const wait: { ended?: string } = {};
+      void landscape.whenViewPainted(ms).then((how) => (wait.ended = how));
+      return wait;
+    };
+    /** Four chunks added in the view of one, the pool of two loaded and the first job each out. */
+    function loading() {
+      const w = paintWorld();
+      w.landscape.focus(ONE_CHUNK, 1);
+      for (const [x, y] of CHUNKS) w.landscape.add(x, y, 8, 8);
+      const [a, b] = w.current();
+      a.step();
+      b.step();
+      return { w, a, b };
+    }
+    /** The pool failing for good: the first crash restarts it, the second turns the landscape off. */
+    function failPainting(w: World) {
+      w.current()[0].crash({ message: 'first' });
+      w.current()[0].crash({ message: 'second' });
+      expect(w.landscape.failed).toBe(true);
+    }
+
+    it('counts the chunks in view that are painted, all of them until the camera is placed', () => {
+      const w = paintWorld();
+      for (const [x, y] of CHUNKS) w.landscape.add(x, y, 8, 8);
+      expect(w.landscape.viewProgress()).toEqual({ done: 0, total: 4 });
+      w.landscape.focus(ONE_CHUNK, 1);
+      expect(w.landscape.viewProgress()).toEqual({ done: 0, total: 1 });
+      settle(w);
+      expect(w.landscape.viewProgress()).toEqual({ done: 1, total: 1 });
+      w.landscape.focus(VIEW, 1);
+      expect(w.landscape.viewProgress()).toEqual({ done: 4, total: 4 });
+    });
+
+    it('counts the chunks the painter ranks as in view, whatever the view', () => {
+      const w = paintWorld(RendererType.WEBGL, 32);
+      for (const [x, y] of CHUNKS_32) w.landscape.add(x, y, 8, 8);
+      const ranked = w.landscape as unknown as { rank(c: ChunkInside): number };
+      forAll(
+        (rng) => ({
+          x: rng.int(-1500, 1500),
+          y: rng.int(-300, 1100),
+          w: rng.int(0, 1400),
+          h: rng.int(0, 900),
+        }),
+        (view) => {
+          w.landscape.focus(view, 1);
+          const inView = [...inside(w.landscape).chunks.values()].filter(
+            (c) => ranked.rank(c) < 1e9,
+          );
+          const { done, total } = w.landscape.viewProgress();
+          expect(total).toBe(inView.length);
+          expect(done).toBeLessThanOrEqual(total);
+        },
+      );
+    });
+
+    it('takes a chunk out while an edit waits to repaint it, and until it is painted again', () => {
+      const w = paintedWorld();
+      w.landscape.focus(VIEW, 1);
+      expect(w.landscape.viewProgress()).toEqual({ done: 4, total: 4 });
+      // The edit reaches every chunk of the 16 x 16 map.
+      w.edit(8, 8);
+      expect(w.landscape.viewProgress()).toEqual({ done: 0, total: 4 });
+      w.frame();
+      expect(w.landscape.viewProgress()).toEqual({ done: 0, total: 4 });
+      settle(w);
+      expect(w.landscape.viewProgress()).toEqual({ done: 4, total: 4 });
+    });
+
+    it('counts nothing as painted after a lost context, and after the landscape has failed', () => {
+      const w = paintedWorld();
+      w.landscape.focus(VIEW, 1);
+      w.lose();
+      expect(w.landscape.viewProgress()).toEqual({ done: 0, total: 4 });
+      w.restore();
+      settle(w);
+      expect(w.landscape.viewProgress()).toEqual({ done: 4, total: 4 });
+      failPainting(w);
+      expect(w.landscape.viewProgress()).toEqual({ done: 0, total: 4 });
+    });
+
+    it('resolves painted at once for a view that is painted, or has no chunk in it', async () => {
+      const w = paintedWorld();
+      w.landscape.focus(VIEW, 1);
+      await expect(w.landscape.whenViewPainted(10_000)).resolves.toBe('painted');
+      w.landscape.focus({ x: 9000, y: 9000, w: 10, h: 10 }, 1);
+      expect(w.landscape.viewProgress()).toEqual({ done: 0, total: 0 });
+      await expect(w.landscape.whenViewPainted(10_000)).resolves.toBe('painted');
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('resolves painted when the last chunk in view is, not before', async () => {
+      const { w, a, b } = loading();
+      w.landscape.focus(VIEW, 1);
+      const wait = waitFor(w.landscape, 10_000);
+      // One worker paints all it is given; the other still holds its chunk.
+      a.drain();
+      const mid = w.landscape.viewProgress();
+      expect(mid.done).toBeGreaterThan(0);
+      expect(mid.done).toBeLessThan(mid.total);
+      await tick();
+      expect(wait.ended).toBeUndefined();
+      expect(vi.getTimerCount()).toBe(1);
+      b.drain();
+      await tick();
+      expect(wait.ended).toBe('painted');
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('keeps waiting while the camera is on unpainted ground, and ends when it moves off it', async () => {
+      const { w, a } = loading();
+      a.drain();
+      w.landscape.focus(VIEW, 1);
+      const wait = waitFor(w.landscape, 10_000);
+      w.frame();
+      await tick();
+      expect(wait.ended).toBeUndefined();
+      // Chunk 8,8 was painted first, as the camera was on it; the camera returns there.
+      w.landscape.focus(ONE_CHUNK, 1);
+      w.frame();
+      await tick();
+      expect(wait.ended).toBe('painted');
+    });
+
+    it('resolves failed at once when the landscape has already failed, whatever the limit', async () => {
+      const w = paintWorld();
+      w.landscape.add(0, 0, 8, 8);
+      failPainting(w);
+      for (const ms of [10_000, 0, -1, Infinity])
+        await expect(w.landscape.whenViewPainted(ms)).resolves.toBe('failed');
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('resolves failed at once when painting fails during the wait, not at the limit', async () => {
+      const { w } = loading();
+      const wait = waitFor(w.landscape, 10_000);
+      // The first crash only restarts the pool.
+      w.current()[0].crash({ message: 'first' });
+      await tick();
+      expect(wait.ended).toBeUndefined();
+      expect(vi.getTimerCount()).toBe(1);
+      w.current()[0].crash({ message: 'second' });
+      await tick();
+      expect(wait.ended).toBe('failed');
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('resolves failed when the landscape is destroyed during the wait', async () => {
+      const { w } = loading();
+      const wait = waitFor(w.landscape, 10_000);
+      w.landscape.root.destroy();
+      await tick();
+      expect(wait.ended).toBe('failed');
+      expect(vi.getTimerCount()).toBe(0);
+      await expect(w.landscape.whenViewPainted(10_000)).resolves.toBe('failed');
+    });
+
+    it('resolves timeout at the limit when the view is still unpainted, and not a moment before', async () => {
+      const { w } = loading();
+      const wait = waitFor(w.landscape, 10_000);
+      await vi.advanceTimersByTimeAsync(9_999);
+      expect(wait.ended).toBeUndefined();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(wait.ended).toBe('timeout');
+      expect(vi.getTimerCount()).toBe(0);
+      // Painting goes on, and a later wait is a fresh one.
+      const later = waitFor(w.landscape, 10_000);
+      for (const worker of w.current()) worker.drain();
+      await tick();
+      expect(later.ended).toBe('painted');
+    });
+
+    it('gives each wait its own limit, and a limit of 0 or less ends an unpainted wait at once', async () => {
+      const { w } = loading();
+      const short = waitFor(w.landscape, 1_000);
+      const long = waitFor(w.landscape, 5_000);
+      const none = waitFor(w.landscape, 0);
+      const negative = waitFor(w.landscape, -5);
+      await tick();
+      expect([none.ended, negative.ended]).toEqual(['timeout', 'timeout']);
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect([short.ended, long.ended]).toEqual(['timeout', undefined]);
+      await vi.advanceTimersByTimeAsync(4_000);
+      expect(long.ended).toBe('timeout');
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('waits without a limit for the paint when the limit is infinite', async () => {
+      const { w } = loading();
+      const wait = waitFor(w.landscape, Infinity);
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(3_600_000);
+      expect(wait.ended).toBeUndefined();
+      for (const worker of w.current()) worker.drain();
+      await tick();
+      expect(wait.ended).toBe('painted');
+    });
+
+    it('leaves ready, sharpReady and the building rules as they were', () => {
+      const { w } = loading();
+      const state = () => [
+        w.landscape.ready,
+        w.landscape.sharpReady,
+        w.landscape.groundAllows(3, 3, 'level'),
+      ];
+      const before = state();
+      void w.landscape.whenViewPainted(10_000);
+      void w.landscape.viewProgress();
+      expect(state()).toEqual(before);
+      expect(before.slice(0, 2)).toEqual([false, false]);
+      settle(w);
+      expect(w.landscape.ready).toBe(true);
+    });
+  });
 });
 
 describe('chunk textures', () => {
