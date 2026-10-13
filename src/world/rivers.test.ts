@@ -1450,6 +1450,47 @@ function planeInput(c: PlaneCase): DrainInput {
   return p;
 }
 
+/**
+ * Where the drainage `d` of `p` breaks "a river rises where enough rain gathered and ends in
+ * water": the first river tile in the core whose course runs onto land, or else the first that
+ * gathered less rain than a river needs at its height (any, kept out), with no river's course and
+ * no lake's flood way running into it. A tile laid beside a full river (step 7) is left out.
+ * Undefined where there is none. `s` gives the flood and the rain, which no rule here changes.
+ */
+function riverWithoutSource(
+  p: DrainInput,
+  d: ReturnType<typeof drain>,
+  s: Slow,
+): string | undefined {
+  const { w, core } = p;
+  const at = (i: number) => `(${i % w}, ${Math.floor(i / w)})`;
+  const fed = new Uint8Array(d.kind.length);
+  for (let i = 0; i < d.kind.length; i++) {
+    if (d.kind[i] === WaterKind.Lake && s.down[i] >= 0) fed[s.down[i]] = 1;
+    if (d.kind[i] !== WaterKind.River) continue;
+    const x = (i % w) + DIR_DX[d.dir[i] - 1];
+    const y = Math.floor(i / w) + DIR_DY[d.dir[i] - 1];
+    if (x < core.x0 || y < core.y0 || x >= core.x1 || y >= core.y1) continue;
+    const j = y * w + x;
+    const k = d.kind[j];
+    if (k !== WaterKind.River && k !== WaterKind.Lake && k !== WaterKind.Sea)
+      return `the river at ${at(i)} ends on land at ${at(j)}`;
+    fed[j] = 1;
+  }
+  for (let i = 0; i < d.kind.length; i++) {
+    if (d.kind[i] !== WaterKind.River || s.wide[i] >= 0 || fed[i]) continue;
+    const steps = levelSteps(p, p.elev[i]);
+    const need = steps >= 2 ? HIGH_RIVER_FLOW : RIVER_FLOW;
+    if (!(p.mark[i] & KEEP_OUT) && s.acc[i] >= need) continue;
+    return (
+      `a river rises at ${at(i)} with ${s.acc[i].toFixed(1)} tiles of rain at level step ` +
+      `${steps.toFixed(2)}${p.mark[i] & KEEP_OUT ? ', kept out' : ''}, where it needs ${need}, ` +
+      'and nothing runs into it'
+    );
+  }
+  return undefined;
+}
+
 /** Throws at the first tile where `a` and `b` differ, naming it on the plane `w` tiles wide. */
 function samePlane(name: string, a: ArrayLike<number>, b: ArrayLike<number>, w: number) {
   for (let i = 0; i < a.length; i++)
@@ -1818,4 +1859,86 @@ describe('the drainage, against a slow one', () => {
     );
     expect(joins).toBeGreaterThan(0);
   }, 40_000);
+
+  // 2000 planes, each drained once and slowly: about 2 s alone
+  it('raises every river where enough rain gathered or water runs in, and ends it in water', () => {
+    // "Rivers thinner on slopes" and "no river ends on dry land": a river tile gathered RIVER_FLOW,
+    // HIGH_RIVER_FLOW from level step 2 up, or a river or a lake runs into it; and its course runs
+    // into water or off the core. The slow drainage follows the same steps, so this holds the steps
+    // themselves to the rules.
+    let sources = 0;
+    let high = 0;
+    forAll(
+      genPlane,
+      (c) => {
+        const p = planeInput(c);
+        const d = drain(p);
+        const s = slowDrain(p);
+        const broken = riverWithoutSource(p, d, s);
+        if (broken) throw new Error(broken);
+        // what the case met: rivers that rise, no river running into them
+        const into = new Uint8Array(d.kind.length);
+        for (let k = 0; k < d.kind.length; k++)
+          if (d.kind[k] === WaterKind.River && s.wide[k] < 0 && s.down[k] >= 0) into[s.down[k]] = 1;
+        for (let i = 0; i < d.kind.length; i++) {
+          if (d.kind[i] !== WaterKind.River || s.wide[i] >= 0 || into[i]) continue;
+          sources++;
+          if (levelSteps(p, p.elev[i]) >= 2) high++;
+        }
+      },
+      {
+        seeds: Array.from({ length: 2000 }, (_, i) => i + 1),
+        shrink: shrinkPlane,
+        shrinkBudget: 2000,
+      },
+    );
+    // rivers rose, on high ground too
+    expect(sources).toBeGreaterThan(0);
+    expect(high).toBeGreaterThan(0);
+  }, 40_000);
+
+  it('leaves no river on a rim a removed side stream ran on over', () => {
+    // A stream on low ground gathers 62 tiles of rain, a river below level step 2, and runs on over
+    // a rim at step 2.14 to the core's edge. Beside it a slope at step 2 and more gathers 63 into
+    // the rim, no river there; together 126, less than HIGH_RIVER_FLOW, so the rim is no river of
+    // its own. The stream is not the rim's fullest inflow and gathers less than SIDE_STREAM_FLOW;
+    // whether it goes or stays, no river may rise on the rim from nothing.
+    const edge = (x: number, y: number) => x === 0 || y === 0 || x === 16 || y === 13;
+    const { p, at, mid } = corePlane(
+      17,
+      14,
+      (x, y) =>
+        x === 8 && y === 0
+          ? 0.39
+          : edge(x, y)
+            ? 0.6
+            : x === 8
+              ? y === 1
+                ? 0.56
+                : 0.6
+              : x < 8
+                ? 0.4 + 0.002 * (8 - x) + 0.001 * y
+                : 0.57 + 0.002 * (x - 8) + 0.001 * y,
+      Terrain.Grass,
+      // the ridge between the halves, the rows below 10, and one more tile in the west
+      (x, y) => (x === 8 && y >= 2) || (!edge(x, y) && y >= 10) || (x === 1 && y === 9),
+    );
+    const s = slowDrain(p);
+    const rim = at(mid, 1);
+    expect(levelSteps(p, p.elev[rim])).toBeGreaterThan(2);
+    expect(levelSteps(p, p.elev[at(mid - 1, 1)])).toBeLessThan(2);
+    expect(levelSteps(p, p.elev[at(mid + 1, 1)])).toBeGreaterThan(2);
+    for (const [x, y, into, rain] of [
+      [mid - 1, 1, rim, 62],
+      [mid + 1, 1, rim, 63],
+      [mid, 1, at(mid, 0), 126],
+    ]) {
+      expect(s.down[at(x, y)], `(${x}, ${y})`).toBe(into);
+      expect(s.acc[at(x, y)], `(${x}, ${y})`).toBe(rain);
+    }
+    const d = drain(p);
+    // the edge tile below the rim gathers enough below step 2: a river either way
+    expect(d.kind[at(mid, 0)]).toBe(WaterKind.River);
+    expect(riverWithoutSource(p, d, s)).toBeUndefined();
+  });
 });
