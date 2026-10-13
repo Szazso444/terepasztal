@@ -114,6 +114,63 @@ export function roadStep(
   );
 }
 
+/** The level crossing on (x, y) is closed to walkers now (`CrossingWatch.closed`, crossings.ts). */
+export type CrossingClosed = (x: number, y: number) => boolean;
+
+/** Tiles inside a tile's edge a walker has to be to stand on that tile, against rounding. */
+const EDGE_EPS = 1e-6;
+
+/** A walker at `p` stands on tile (x, y): inside its edge; one on the edge stands beside it. */
+function standsOn(p: { x: number; y: number }, x: number, y: number): boolean {
+  return Math.max(Math.abs(p.x - x), Math.abs(p.y - y)) < 0.5 - EDGE_EPS;
+}
+
+/**
+ * How far a walker at `from` may go straight towards `to` before it sets foot on a closed level
+ * crossing (`closed`) it does not stand on yet: to the edge of the first such tile the way enters,
+ * or Infinity when it enters none. A crossing the walker stands on does not hold it, and neither
+ * does one the way only touches at a corner or an edge.
+ */
+export function clearAhead(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  closed: CrossingClosed,
+): number {
+  const len = Math.hypot(to.x - from.x, to.y - from.y);
+  if (!(len > 0)) return Infinity;
+  const ux = (to.x - from.x) / len;
+  const uy = (to.y - from.y) / len;
+  // the tiles whose inside the way may cross: a tile's centre within half a tile of it
+  const x0 = Math.floor(Math.min(from.x, to.x) - 0.5) + 1;
+  const x1 = Math.ceil(Math.max(from.x, to.x) + 0.5) - 1;
+  const y0 = Math.floor(Math.min(from.y, to.y) - 0.5) + 1;
+  const y1 = Math.ceil(Math.max(from.y, to.y) + 0.5) - 1;
+  let best = Infinity;
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
+      if (!closed(x, y) || standsOn(from, x, y)) continue;
+      // the stretch of the way inside the tile, as distances from `from` along it
+      const across = slab(from.x, ux, x);
+      const down = slab(from.y, uy, y);
+      if (!across || !down) continue;
+      const enter = Math.max(0, across[0], down[0]);
+      const leave = Math.min(len, across[1], down[1]);
+      if (leave - enter > EDGE_EPS) best = Math.min(best, enter);
+    }
+  return best;
+}
+
+/**
+ * Where the line `p + t * u` lies less than half a tile from `c`, on one axis: the range of t, or
+ * null when it never does.
+ */
+function slab(p: number, u: number, c: number): [number, number] | null {
+  if (u === 0) return Math.abs(p - c) < 0.5 ? [-Infinity, Infinity] : null;
+  const a = (c - 0.5 - p) / u;
+  const b = (c + 0.5 - p) / u;
+  return a < b ? [a, b] : [b, a];
+}
+
 /** What a save keeps of the walkers: their random stream. The persons start over on load. */
 export interface PeopleJSON {
   rng: number;
@@ -278,7 +335,8 @@ function nearestPlace(places: readonly Place[], x: number, y: number): Place | n
  * spends most of the day inside; now and then someone steps out to idle by the door, walks to a
  * nearby resource tile to gather, or goes to the closest station to catch a train with a coach.
  * Each has the profession of the place it lives at. Nobody sets out at night, and one caught on
- * the way to a station turns home. Nothing here changes the map.
+ * the way to a station turns home. A walker waits in front of a level crossing while it is closed
+ * (src/sim/crossings.ts). Nothing here changes the map.
  */
 export class PeopleSim {
   persons: Person[] = [];
@@ -444,7 +502,17 @@ export class PeopleSim {
     return true;
   }
 
-  tick(gdt: number, population: number, dayFraction: number) {
+  /**
+   * One step of `gdt` game seconds for `population` walkers at `dayFraction` of the day. A walker
+   * stops at the edge of a level crossing `crossingClosed` holds closed and goes on when it opens
+   * (`advance`); with none given, every crossing is open.
+   */
+  tick(
+    gdt: number,
+    population: number,
+    dayFraction: number,
+    crossingClosed: CrossingClosed | null = null,
+  ) {
     population = Math.min(160, Math.max(0, Math.floor(population)));
     const places = this.places();
     const byKey = new Map(places.map((p) => [p.key, p]));
@@ -478,7 +546,7 @@ export class PeopleSim {
     for (let i = this.persons.length - 1; i >= 0; i--) {
       const p = this.persons[i];
       if (p.transient) {
-        if (!this.advance(p, gdt)) this.persons.splice(i, 1);
+        if (!this.advance(p, gdt, crossingClosed)) this.persons.splice(i, 1);
         continue;
       }
       // a home that closed or went: the nearest open place to where the walker stands, no draw
@@ -544,7 +612,7 @@ export class PeopleSim {
         case 'return':
           // night fell on the way to a station: turn for home from where it stands
           if (p.state === 'toStation' && !daytime && this.turnHome(p, home)) break;
-          if (!this.advance(p, gdt)) {
+          if (!this.advance(p, gdt, crossingClosed)) {
             if (p.state === 'gather') {
               p.state = 'idle';
               p.timer = 8 + this.rnd() * 10;
@@ -571,7 +639,7 @@ export class PeopleSim {
           }
           break;
         case 'walk':
-          if (!this.advance(p, gdt)) {
+          if (!this.advance(p, gdt, crossingClosed)) {
             p.state = 'inside';
             p.timer = 20 + this.rnd() * 40;
           }
@@ -598,17 +666,20 @@ export class PeopleSim {
 
   /**
    * Move along the path; returns false once the end is reached. A step is the walker's state, the
-   * time and the roads under the leg it walks (`roadStep`), nothing else, and draws no random
-   * number.
+   * time, the roads under the leg it walks (`roadStep`) and the level crossings closed now
+   * (`clearAhead`), nothing else, and draws no random number. A walker goes no further than the
+   * edge of a closed crossing it is not on yet and waits there, its path, state and timer as they
+   * were, until the crossing opens; one already on a crossing goes on.
    */
-  private advance(p: Person, gdt: number) {
+  private advance(p: Person, gdt: number, crossingClosed: CrossingClosed | null) {
     const next = p.path[p.step + 1];
     if (!next) return false;
     const speed = walkSpeed(p, roadStep(this.builder.roads, p.path[p.step], next));
     const dx = next.x - p.x;
     const dy = next.y - p.y;
     const d = Math.hypot(dx, dy);
-    const stepLen = speed * gdt;
+    let stepLen = speed * gdt;
+    if (crossingClosed) stepLen = Math.min(stepLen, clearAhead(p, next, crossingClosed));
     if (d <= stepLen) {
       p.x = next.x;
       p.y = next.y;
