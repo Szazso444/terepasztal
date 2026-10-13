@@ -682,6 +682,8 @@ describe('audio in a browser', () => {
         const { bus, win } = await musicBus({});
         expect(win.addEventListener).not.toHaveBeenCalled();
         bus[first]();
+        // the call itself listens: nothing else is needed for a gesture to be heard
+        expect(win.types()).toEqual(['pointerdown', 'keydown']);
         bus.hold();
         bus.preload();
         bus.startMusic();
@@ -870,6 +872,11 @@ describe('audio in a browser', () => {
             expect(plays(), say('a held bus played a track')).toBe(before.plays);
             expect(loops, say('a held bus started the synth loop')).toBe(before.loops);
           }
+          // browsers refuse audio before a gesture: until one is heard, nothing is started
+          if (!unlocked) {
+            expect(plays(), say('a track played before any gesture')).toBe(0);
+            expect(loops, say('the synth loop started before any gesture')).toBe(0);
+          }
           // two tracks never play together
           expect(FakeAudio.overlaps, say('two tracks played together')).toBe(0);
           expect(els.filter((el) => el.playing).length, say('two tracks play')).toBeLessThan(2);
@@ -916,8 +923,24 @@ describe('audio in a browser', () => {
             plays: plays(),
             loops: setInterval.mock.calls.length,
           };
+          // These calls leave the music alone: a hold stops nothing that plays, a preload only
+          // fetches (one file at most), and a start with no hold to end changes nothing.
+          const inert = s.op === 'hold' || s.op === 'preload' || (s.op === 'start' && !held);
+          const playingBefore = music().flatMap((el, at) => (el.playing ? [at] : []));
           step(s);
-          verify(`step ${i + 1} ${JSON.stringify(s)}`, before);
+          const where = `step ${i + 1} ${JSON.stringify(s)}`;
+          if (inert) {
+            const playingNow = music().flatMap((el, at) => (el.playing ? [at] : []));
+            expect(plays(), `${where}: it played a track`).toBe(before.plays);
+            expect(playingNow, `${where}: it changed which tracks play`).toEqual(playingBefore);
+            expect(setInterval.mock.calls.length, `${where}: it started the synth`).toBe(
+              before.loops,
+            );
+            expect(music().length - before.n, `${where}: it fetched files`).toBeLessThanOrEqual(
+              s.op === 'preload' ? 1 : 0,
+            );
+          }
+          verify(where, before);
         });
         // let any fade run out, then check the end state once more
         const before = { n: music().length, plays: plays(), loops: setInterval.mock.calls.length };
@@ -937,6 +960,65 @@ describe('audio in a browser', () => {
 
     it('keeps the same with age changes in the mix, and ends on the first file of the age selected last', () => {
       forAll((rng) => genCase(rng, true), run, { shrink: shrinkCase });
+    });
+
+    it('plays Pastoral Pulse first, then each variation once, then whole rounds, whatever the shuffle', () => {
+      const ROUNDS = 3; // after the first round of Pastoral Pulse and the variations
+      const sorted = (list: readonly string[]) => [...list].sort();
+      forAll(
+        (rng) => rng.int(1, 1_000_000),
+        (shuffle) => {
+          FakeAudio.made = [];
+          FakeAudio.overlaps = 0;
+          const win = target();
+          const { ctx } = fakeContext();
+          vi.stubGlobal('window', {
+            addEventListener: win.addEventListener,
+            setInterval: vi.fn(() => 1),
+            AudioContext: function () {
+              return ctx;
+            },
+          });
+          vi.stubGlobal('Audio', FakeAudio);
+          const stream = new Rng(shuffle);
+          vi.spyOn(Math, 'random').mockImplementation(() => stream.next());
+          try {
+            const bus = new Bus();
+            const music = () => FakeAudio.made.filter((el) => el.src.includes('/music/'));
+            // what the game does: held and fetched ahead on the title, started with the first gesture
+            bus.hold();
+            bus.preload();
+            win.fire('pointerdown');
+            bus.startMusic();
+            const tracks = MUSIC_TRACKS.length;
+            const total = tracks + ROUNDS * tracks;
+            // each track plays to its end
+            while (music().length < total) {
+              const n = music().length;
+              fire(music()[n - 1], 'ended');
+              expect(music().length, 'a track ended and the next one did not start').toBe(n + 1);
+            }
+            const srcs = music().map((el) => el.src);
+            expect(srcs[0], 'Pastoral Pulse is not first').toBe(MUSIC_TRACKS[0]);
+            expect(sorted(srcs.slice(1, tracks)), 'the first round misses a variation').toEqual(
+              sorted(MUSIC_TRACKS.slice(1)),
+            );
+            for (let round = 1; round <= ROUNDS; round++)
+              expect(
+                sorted(srcs.slice(round * tracks, (round + 1) * tracks)),
+                `round ${round} is not every file once: ${srcs.join(' ')}`,
+              ).toEqual(sorted(MUSIC_TRACKS));
+            for (let i = 1; i < srcs.length; i++)
+              expect(srcs[i], `a file repeats at once at ${i}`).not.toBe(srcs[i - 1]);
+            // one file plays at a time, the newest
+            expect(FakeAudio.overlaps, 'two tracks played together').toBe(0);
+            expect(music().filter((el) => el.playing)).toEqual([music()[music().length - 1]]);
+          } finally {
+            vi.unstubAllGlobals();
+            vi.restoreAllMocks();
+          }
+        },
+      );
     });
   });
 
