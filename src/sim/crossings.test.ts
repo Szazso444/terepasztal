@@ -286,6 +286,49 @@ describe('CrossingWatch with plain trains', () => {
     );
   });
 
+  it('holds each crossing from the last step a train was over or coming, a train in the hold restarting it', () => {
+    // The oracle reads the whole history: a crossing is closed while a car is on it or a train is
+    // coming, and after that while the steps since the first clear one add up to under the hold.
+    const xs = [5, 20, 40];
+    forAll(
+      (rng) => ({
+        steps: Array.from({ length: rng.int(1, 120) }, () => ({
+          gdt: rng.pick([SIM_STEP, 0.1, 0.25, 0.4, 0.7]),
+          busy: xs.map(() =>
+            rng.pick(['car', 'coming', 'clear', 'clear', 'clear', 'clear'] as const),
+          ),
+        })),
+      }),
+      (c) => {
+        const keys = new Set(xs.map((x) => keyOf(x, 3)));
+        const watch = new CrossingWatch(W);
+        c.steps.forEach((s, i) => {
+          const trains = s.busy.flatMap((b, j) =>
+            b === 'car'
+              ? [plain({ cars: [keyOf(xs[j], 3)] })]
+              : b === 'coming'
+                ? [plain({ speed: 1, progress: 0, ahead: [{ x: xs[j], y: 3, arc: 2 }] })]
+                : [],
+          );
+          watch.update(trains, keys, s.gdt);
+          xs.forEach((x, j) => {
+            let last = -1;
+            for (let m = 0; m <= i; m++) if (c.steps[m].busy[j] !== 'clear') last = m;
+            let since = 0;
+            for (let m = last + 2; m <= i; m++) since += c.steps[m].gdt;
+            const want = last === i || (last >= 0 && since < CROSSING_HOLD - 1e-9);
+            expect(watch.closed(x, 3), `crossing ${x} at step ${i}, ${since} s clear`).toBe(want);
+          });
+        });
+      },
+      {
+        shrink: function* (c) {
+          for (const steps of shrinkArray(c.steps)) if (steps.length) yield { steps };
+        },
+      },
+    );
+  });
+
   it('opens a crossing at once when its road or track is taken up, even in its hold', () => {
     const watch = new CrossingWatch(W);
     const k = keyOf(7, 7);
@@ -544,6 +587,285 @@ describe('a walker at a level crossing', () => {
       },
     );
   });
+});
+
+// ------------------------------------------------------------------ any run of a moving train
+
+/** Tiles/s² a plain train brakes at. Any will do: the horizon bounds how soon a train can come. */
+const BRAKE = 1.65;
+/** The eight ways a walk can leave a tile. */
+const DIRS8: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [1, 1],
+  [0, 1],
+  [-1, 1],
+  [-1, 0],
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+];
+
+/** What a plain running train is made of. */
+interface RunnerSpec {
+  /** +1 runs east along row CY, -1 west */
+  dir: 1 | -1;
+  /** tiles from its head to the edge of the crossing it reaches first */
+  gap: number;
+  /** tiles of cars behind the head */
+  length: number;
+  acceleration: number;
+  maxSpeed: number;
+  /** share of its top speed downhill it starts at */
+  share: number;
+  /** the least it slows to: above 0, as a train standing still closes only the tiles under it */
+  floor: number;
+}
+
+/**
+ * A train on row CY of the walkers' field, read as the watch reads a Train and moved as trains.ts
+ * moves one: each step its speed is set first, gaining no faster than its acceleration and never
+ * past its top speed downhill, and then it runs that speed's distance. `push` picks the speed in
+ * what the step allows, 0 braking hardest and 1 gaining fastest. Its cars cover the tiles from
+ * the tail's to the head's, and pathAhead puts each tile's arc an eighth of a tile past the edge
+ * the train enters it by, as on a plain straight.
+ */
+class Runner implements CrossingTrain {
+  speed: number;
+  pathProgress = 0;
+  readonly acceleration: number;
+  readonly maxSpeed: number;
+  private readonly x0: number;
+  constructor(readonly spec: RunnerSpec) {
+    this.acceleration = spec.acceleration;
+    this.maxSpeed = spec.maxSpeed;
+    this.speed = Math.max(spec.floor, spec.share * spec.maxSpeed * DESCENT_SPEED);
+    this.x0 = CX - spec.dir * (0.5 + spec.gap);
+  }
+  /** where its head is along the row */
+  get head() {
+    return this.x0 + this.spec.dir * this.pathProgress;
+  }
+  /** the columns its cars cover, westmost first */
+  private span(): [number, number] {
+    const tail = this.head - this.spec.dir * this.spec.length;
+    return [
+      Math.floor(Math.min(this.head, tail) + 0.5),
+      Math.floor(Math.max(this.head, tail) + 0.5),
+    ];
+  }
+  /** a car of it is on the crossing */
+  get onCrossing() {
+    const [lo, hi] = this.span();
+    return lo <= CX && CX <= hi;
+  }
+  /** its last car has left the crossing behind */
+  get past() {
+    return this.spec.dir * (this.head - this.spec.dir * this.spec.length - CX) > 0.5;
+  }
+  occupancyKeys(w: number) {
+    const [lo, hi] = this.span();
+    return Array.from({ length: hi - lo + 1 }, (_, i) => CY * w + lo + i);
+  }
+  pathAhead() {
+    const out: { x: number; y: number; arc: number }[] = [];
+    const under = Math.floor(this.head + 0.5);
+    for (let i = -1; i <= 60; i++) {
+      const x = under + this.spec.dir * i;
+      const arc = this.spec.dir * (x - this.x0) - 0.5 + 1 / 8;
+      if (arc >= this.pathProgress - 0.5) out.push({ x, y: CY, arc });
+    }
+    return out;
+  }
+  move(gdt: number, push: number) {
+    const top = Math.max(this.speed, this.maxSpeed * DESCENT_SPEED);
+    const lo = Math.max(this.spec.floor, this.speed - BRAKE * gdt);
+    const hi = Math.max(lo, Math.min(top, this.speed + this.acceleration * gdt));
+    this.speed = lo + (hi - lo) * push;
+    this.pathProgress += this.speed * gdt;
+  }
+}
+
+/**
+ * How a train is driven, from its own stream: flat out, braking, half way between or anything,
+ * each held for a while. A third of them run flat out throughout, the run the horizon is for.
+ */
+function driver(seed: number) {
+  const rng = new Rng(seed);
+  const steady = rng.chance(1 / 3);
+  let mode = steady ? 0 : rng.int(0, 3);
+  return () => {
+    if (!steady && rng.chance(1 / 40)) mode = rng.int(0, 3);
+    return mode === 0 ? 1 : mode === 1 ? 0 : mode === 2 ? 0.5 : rng.next();
+  };
+}
+
+/** A walk over the crossing and the trains along its line, as the horizon property draws them. */
+interface RunCase {
+  trains: RunnerSpec[];
+  /** the walk: from `from[1]` tiles out in direction `from[0]`, over the crossing, to `to` */
+  from: readonly [readonly [number, number], number];
+  to: readonly [readonly [number, number], number];
+  /** where in its first tile the walker stands at the start (a walk turned where it stood) */
+  offset: readonly [number, number];
+  /** a walker with a home, at the slowest pace there is; otherwise a boarding figure */
+  regular: boolean;
+  /**
+   * Seconds before (-) or after (+) the crossing would first close (`closing`), or the first car
+   * would come (`car`), that the walker would reach it with no crossing in its way.
+   */
+  lead: number;
+  anchor: 'closing' | 'car';
+  /** the trains' driving */
+  profile: number;
+}
+
+/** Steps a run of the horizon property is given at most. */
+const RUN_STEPS = 6000;
+/** Where the regular walker of the horizon property lives, far from the crossing. */
+const HOME = { x: 1, y: 1 };
+
+/**
+ * Walkers and trains moved in SimStep's order, a step at a time: the watch from the trains as they
+ * stand, then the walker with what the watch holds closed, then the trains. Returns what happened,
+ * or a line on the first step a walker stood on the crossing while a car was on it.
+ */
+function crossingRun(c: RunCase) {
+  const { map, builder } = field();
+  expect(builder.spawnDecor(HOME.x, HOME.y, 'townhouse', 0)).not.toBeNull();
+  const [[fx, fy], fk] = c.from;
+  const [[tx, ty], tk] = c.to;
+  const path = [
+    ...walkOf(CX + fx * fk, CY + fy * fk, CX, CY),
+    ...walkOf(CX, CY, CX + tx * tk, CY + ty * tk).slice(1),
+  ];
+  const walker = (): Person => {
+    const p = figure(
+      path.map((q) => ({ ...q })),
+      { x: path[0].x + c.offset[0], y: path[0].y + c.offset[1] },
+    );
+    return c.regular ? { ...p, transient: false, home: `d${HOME.x},${HOME.y}` } : p;
+  };
+  const population = (p: Person | undefined) => (p && !p.transient ? 1 : 0);
+  const keys = new Set([CY * map.w + CX]);
+  // when the crossing would first close and the first car would come, and when the walker would
+  // reach the crossing with none
+  const alone = c.trains.map((s) => new Runner(s));
+  const drive = c.trains.map((_, i) => driver(c.profile + i));
+  const ahead = new CrossingWatch(map.w);
+  let closingAt = RUN_STEPS;
+  let carAt = RUN_STEPS;
+  for (let i = 0; i < RUN_STEPS && carAt === RUN_STEPS; i++) {
+    ahead.update(alone, keys, SIM_STEP);
+    if (closingAt === RUN_STEPS && ahead.closed(CX, CY)) closingAt = i;
+    alone.forEach((t, k) => t.move(SIM_STEP, drive[k]()));
+    if (alone.some((t) => t.onCrossing)) carAt = i;
+  }
+  const free = new PeopleSim(map, builder, new Rng(1));
+  free.persons.push(walker());
+  let reach = 0;
+  while (reach < RUN_STEPS && !onTile(free.persons[0], CX, CY)) {
+    free.tick(SIM_STEP, population(free.persons[0]), MIDDAY);
+    reach++;
+  }
+  const at = c.anchor === 'closing' ? closingAt : carAt;
+  const start = Math.max(0, at - reach + Math.round(c.lead / SIM_STEP));
+
+  const trains = c.trains.map((s) => new Runner(s));
+  const drives = c.trains.map((_, i) => driver(c.profile + i));
+  const watch = new CrossingWatch(map.w);
+  const people = new PeopleSim(map, builder, new Rng(1));
+  const out = { waited: false, steppedOn: -1, firstCar: -1, done: false };
+  let before: Person | null = null;
+  for (let i = 0; i < RUN_STEPS; i++) {
+    watch.update(trains, keys, SIM_STEP);
+    if (i === start) people.persons.push(walker());
+    const p = people.persons[0] as Person | undefined;
+    people.tick(SIM_STEP, population(p), MIDDAY, watch.size ? watch.closed : null);
+    trains.forEach((t, k) => t.move(SIM_STEP, drives[k]()));
+    const car = trains.some((t) => t.onCrossing);
+    if (car && out.firstCar < 0) out.firstCar = i;
+    const walking = !!p && people.persons.includes(p) && p.state === 'walk';
+    if (walking && onTile(p, CX, CY)) {
+      if (car)
+        return {
+          ...out,
+          hit: `step ${i}: walker at ${p.x}, ${p.y} on the crossing with a car; heads at ${trains
+            .map((t) => t.head.toFixed(3))
+            .join(', ')}`,
+        };
+      if (out.steppedOn < 0) out.steppedOn = i;
+    }
+    if (walking && before && p.x === before.x && p.y === before.y) out.waited = true;
+    before = walking ? { ...p } : null;
+    if (i > start && !walking && trains.every((t) => t.past)) {
+      out.done = true;
+      break;
+    }
+  }
+  return { ...out, hit: null };
+}
+
+describe('the horizon, against any run a train can make', () => {
+  // The trains here keep moving, if only slowly: by the issue's rule a train standing still closes
+  // only the tiles under its cars, so one that sets off near a crossing is not covered.
+  // slow: up to 6000 steps of the watch, a walker and two trains for each of the 100 seeds
+  it(
+    'keeps every walker off the crossing while a car is on it, whatever the walk and the driving of a moving train',
+    { timeout: 120_000 },
+    () => {
+      const seen = { waited: 0, ahead: 0, closest: Infinity, done: 0 };
+      forAll(
+        (rng): RunCase => ({
+          trains: Array.from({ length: rng.chance(0.25) ? 2 : 1 }, () => {
+            const spec: RunnerSpec = {
+              dir: rng.pick([1, -1] as const),
+              gap: 0,
+              length: rng.pick([0.8, 1.6, 2.5, 4]),
+              acceleration: rng.pick([0.02, 0.1, 0.3, 0.6, 1.2]),
+              maxSpeed: rng.pick([0.3, 0.8, 1.4, 2.2, 3.5]),
+              share: rng.chance(0.4) ? 0 : rng.next(),
+              floor: rng.pick([0.05, 0.2, 0.5]),
+            };
+            // from well inside to well outside what the watch looks ahead for this train
+            const far = crossingReach(new Runner(spec), CROSSING_HORIZON) + CROSSING_LEAD;
+            return { ...spec, gap: rng.chance(0.2) ? rng.range(0, 2) : far * rng.range(0.9, 2.5) };
+          }),
+          from: [rng.pick(DIRS8), rng.int(1, 4)],
+          to: [rng.pick(DIRS8), rng.int(1, 4)],
+          offset: rng.chance(0.3) ? [rng.range(-0.45, 0.45), rng.range(-0.45, 0.45)] : [0, 0],
+          regular: rng.chance(0.5),
+          lead: rng.range(-9, 1),
+          anchor: rng.pick(['closing', 'car'] as const),
+          profile: rng.int(1, 2 ** 30),
+        }),
+        (c) => {
+          const r = crossingRun(c);
+          expect(r.hit).toBeNull();
+          if (r.waited) seen.waited++;
+          if (r.done) seen.done++;
+          // it stepped on ahead of the first car: how long before that car came
+          if (r.steppedOn >= 0 && r.firstCar > r.steppedOn) {
+            seen.ahead++;
+            seen.closest = Math.min(seen.closest, (r.firstCar - r.steppedOn) * SIM_STEP);
+          }
+        },
+        {
+          shrink: function* (c) {
+            if (c.trains.length > 1) for (const t of c.trains) yield { ...c, trains: [t] };
+            for (const lead of shrinkInt(Math.round(c.lead))) yield { ...c, lead };
+            if (c.offset[0] || c.offset[1]) yield { ...c, offset: [0, 0] as const };
+            if (!c.regular) yield { ...c, regular: true };
+          },
+        },
+      );
+      // not vacuous: walkers waited for trains, others crossed ahead of them, one of those within
+      // a second of the closest the watch allows, and nearly every run played out to the end
+      expect(seen.waited).toBeGreaterThanOrEqual(20);
+      expect(seen.ahead).toBeGreaterThanOrEqual(10);
+      expect(seen.closest).toBeLessThan(CROSSING_HORIZON + 1);
+      expect(seen.done).toBeGreaterThanOrEqual(90);
+    },
+  );
 });
 
 // ------------------------------------------------------------------ in the game's step

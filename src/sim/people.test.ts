@@ -12,6 +12,7 @@ import { buildingDef, type Building } from './buildings';
 import { rules, DEFAULT_RULES } from './rules';
 import {
   PeopleSim,
+  clearAhead,
   findWalk,
   type PeopleJSON,
   type Person,
@@ -1320,6 +1321,104 @@ describe('re-homing a walker whose home closed', () => {
         for (let i = 0; i < 50; i++) people.tick(DT, c.population, MIDDAY);
         expect(people.persons).toEqual(before);
         expect(people.toJSON().rng).toBe(stream);
+      },
+    );
+  });
+});
+
+describe('clearAhead, against the way sampled', () => {
+  /** Chebyshev distance from a point to the centre of tile (x, y): under 0.5 is on the tile. */
+  const cheb = (p: { x: number; y: number }, x: number, y: number) =>
+    Math.max(Math.abs(p.x - x), Math.abs(p.y - y));
+
+  it('stops a way where it first enters a closed tile the walker is not on, and only there', () => {
+    // Points on a lattice of eighths, so that a way entering a tile at all runs a sampled stretch
+    // inside it. The ways run from anywhere, from the edges and corners walkers halt on, and along
+    // a tile's edge, which touches the tile without entering it.
+    forAll(
+      (rng) => {
+        const closed: [number, number][] = Array.from({ length: rng.int(1, 5) }, () => [
+          rng.int(2, 8),
+          rng.int(2, 8),
+        ]);
+        // two crossings side by side, as on a double line
+        if (rng.chance(0.4)) {
+          const [x, y] = closed[0];
+          closed.push(rng.chance(0.5) ? [x + 1, y] : [x, y + 1]);
+        }
+        const eighth = (lo: number, hi: number) => rng.int(lo * 8, hi * 8) / 8;
+        const [cx, cy] = rng.pick(closed);
+        const tile = () => ({ x: rng.int(1, 9), y: rng.int(1, 9) });
+        let from: { x: number; y: number };
+        let to: { x: number; y: number };
+        switch (rng.int(0, 3)) {
+          case 0:
+            from = { x: eighth(1, 9), y: eighth(1, 9) };
+            to = tile();
+            break;
+          case 1: {
+            // on an edge or a corner of a closed tile
+            const side = rng.pick([-0.5, 0.5]);
+            const along = rng.int(-4, 4) / 8;
+            from = rng.chance(0.5)
+              ? { x: cx + side, y: cy + along }
+              : { x: cx + along, y: cy + side };
+            to = tile();
+            break;
+          }
+          case 2: {
+            // along the line of a closed tile's edge
+            const edge = rng.pick([-0.5, 0.5]);
+            const a = [eighth(cx - 3, cx + 3), eighth(cx - 3, cx + 3)];
+            const b = [eighth(cy - 3, cy + 3), eighth(cy - 3, cy + 3)];
+            if (rng.chance(0.5)) {
+              from = { x: cx + edge, y: b[0] };
+              to = { x: cx + edge, y: b[1] };
+            } else {
+              from = { x: a[0], y: cy + edge };
+              to = { x: a[1], y: cy + edge };
+            }
+            break;
+          }
+          default:
+            // corners, edge midpoints and centres
+            from = { x: rng.int(2, 18) / 2, y: rng.int(2, 18) / 2 };
+            to = { x: rng.int(2, 18) / 2, y: rng.int(2, 18) / 2 };
+        }
+        return { closed, from, to };
+      },
+      (c) => {
+        const isClosed = (x: number, y: number) => c.closed.some(([a, b]) => a === x && b === y);
+        const r = clearAhead(c.from, c.to, isClosed);
+        const len = Math.hypot(c.to.x - c.from.x, c.to.y - c.from.y);
+        if (len === 0) {
+          expect(r).toBe(Infinity);
+          return;
+        }
+        // the closed tiles that hold the walker: all but one it stands on
+        const holding = c.closed.filter(([x, y]) => cheb(c.from, x, y) >= 0.5 - 1e-6);
+        const at = (t: number) => ({
+          x: c.from.x + ((c.to.x - c.from.x) * t) / len,
+          y: c.from.y + ((c.to.y - c.from.y) * t) / len,
+        });
+        const n = 40_000;
+        let first = Infinity;
+        for (let i = 0; i <= n && first === Infinity; i++)
+          if (holding.some(([x, y]) => cheb(at((len * i) / n), x, y) < 0.5 - 1e-7))
+            first = (len * i) / n;
+        if (first === Infinity) {
+          expect(r, 'a way that never enters a closed tile').toBe(Infinity);
+          return;
+        }
+        // it stops on the way, short of the first point inside and within a sample of it
+        expect(r).toBeGreaterThanOrEqual(0);
+        expect(r).toBeLessThanOrEqual(first);
+        expect(r).toBeGreaterThan(first - len / n - 1e-9);
+      },
+      {
+        shrink: function* (c) {
+          for (const closed of shrinkArray(c.closed)) if (closed.length) yield { ...c, closed };
+        },
       },
     );
   });
