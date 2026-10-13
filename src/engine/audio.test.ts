@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { audio, MUSIC_FADE_MS, sfx, SOUND_EVENTS } from './audio';
 import { Ambience } from './ambience';
 import { Synth } from './synth';
-import { MUSIC_TRACKS } from './musicPlaylist';
+import { AGE_MUSIC, MUSIC_TRACKS, musicForAge } from './musicPlaylist';
+import { Rng } from './rng';
+import { forAll, shrinkArray } from '../testing/property';
 
 type Listener = () => void;
 
@@ -192,6 +194,10 @@ describe('audio in a browser', () => {
     });
     vi.stubGlobal('Audio', FakeAudio);
     vi.useFakeTimers();
+    // the playlist shuffles its rounds with Math.random: a fixed stream gives the same order on
+    // every run (afterEach restores it)
+    const shuffle = new Rng(285);
+    vi.spyOn(Math, 'random').mockImplementation(() => shuffle.next());
     vi.resetModules();
     const playlist = await import('./musicPlaylist');
     const fresh = await import('./audio');
@@ -621,6 +627,303 @@ describe('audio in a browser', () => {
       expect(music()[0].play).not.toHaveBeenCalled();
       expect(playing()).toEqual([music()[1]]);
       expect(FakeAudio.overlaps).toBe(0);
+    });
+
+    it.each([0.2, 0])(
+      'starts at the volume the sliders show when Play is pressed (music %s), not the one it was fetched at',
+      async (level) => {
+        const { bus, win, music, playing, setInterval } = await musicBus({});
+        bus.hold();
+        bus.preload();
+        expect(music()[0].volume).toBe(bus.master * bus.music); // fetched at the default volume
+        win.fire('pointerdown'); // the player clicks on the title screen
+        bus.music = level; // and drags the music slider there
+        bus.applyMusic();
+        expect(playing()).toEqual([]);
+        bus.startMusic();
+        expect(music()[0].volume).toBe(bus.master * level);
+        expect(playing()).toEqual(level > 0 ? [music()[0]] : []);
+        expect(setInterval).not.toHaveBeenCalled(); // a muted file is not a failed one
+        bus.music = 0.5;
+        bus.applyMusic();
+        expect(playing()).toEqual([music()[0]]);
+        expect(music()).toHaveLength(1);
+      },
+    );
+
+    it('lets the ambience beds start on a gesture while the music is held', async () => {
+      const { bus, win, ctx, music } = await musicBus({});
+      const beds = vi.spyOn(ctx, 'createBufferSource');
+      bus.hold();
+      bus.updateAmbience(0, 0);
+      expect(beds).not.toHaveBeenCalled(); // nothing before a gesture, held or not
+      win.fire('pointerdown');
+      bus.updateAmbience(0, 0);
+      expect(beds).toHaveBeenCalled();
+      expect(music()).toHaveLength(0);
+    });
+
+    it.each(['hold', 'preload', 'startMusic'] as const)(
+      'adds the gesture listeners once, however the calls come (%s first)',
+      async (first) => {
+        const { bus, win } = await musicBus({});
+        expect(win.addEventListener).not.toHaveBeenCalled();
+        bus[first]();
+        bus.hold();
+        bus.preload();
+        bus.startMusic();
+        bus.hold();
+        expect(win.types()).toEqual(['pointerdown', 'keydown']);
+      },
+    );
+  });
+
+  describe('under any order of calls', () => {
+    // forAll runs a synchronous property, and the module exports no way to make a second bus, so
+    // each case builds its own from the singleton's constructor
+    const Bus = audio.constructor as unknown as new () => typeof audio;
+    const pristine = { ...AGE_MUSIC };
+    const AGES = ['steam', 'diesel', 'electric', 'nuclear']; // nuclear lists no files: the default
+
+    type Step =
+      | { op: 'hold' | 'preload' | 'start' | 'apply' | 'sfx' | 'fail' | 'end' | 'canplay' }
+      | { op: 'gesture'; on: 'pointerdown' | 'keydown' }
+      | { op: 'volume'; master: number; music: number }
+      | { op: 'age'; id: string }
+      | { op: 'tick'; ms: number }
+      | { op: 'stale'; event: 'error' | 'ended' | 'canplay'; pick: number };
+    /**
+     * `ages` cases change the age and never fail or end the track playing (the age changes are what
+     * they exercise); the rest never change the age, and fail and end the track playing.
+     */
+    interface Case {
+      ages: boolean;
+      shuffle: number;
+      steps: Step[];
+    }
+
+    function genStep(rng: Rng, ages: boolean): Step {
+      const level = () => (rng.chance(0.2) ? 0 : rng.pick([0.3, 0.6, 1]));
+      const ops = [
+        ...['gesture', 'gesture', 'gesture', 'start', 'start', 'start'],
+        ...['hold', 'preload', 'apply', 'volume', 'volume', 'sfx', 'tick', 'tick', 'stale'],
+        ...(ages ? ['age', 'age', 'age', 'age'] : ['fail', 'fail', 'end', 'end', 'end', 'canplay']),
+      ] as Step['op'][];
+      const op = rng.pick(ops);
+      switch (op) {
+        case 'gesture':
+          return { op, on: rng.pick(['pointerdown', 'keydown'] as const) };
+        case 'volume':
+          return { op, master: level(), music: level() };
+        case 'age':
+          return { op, id: rng.pick(AGES) };
+        case 'tick':
+          return { op, ms: rng.pick([10, 50, 400, 1600]) };
+        case 'stale':
+          return {
+            op,
+            event: rng.pick(['error', 'ended', 'canplay'] as const),
+            pick: rng.int(0, 5),
+          };
+        default:
+          return { op };
+      }
+    }
+
+    function genCase(rng: Rng, ages: boolean): Case {
+      const steps: Step[] = [];
+      // most cases open as the boot does; the rest start from a bus nobody held
+      if (rng.chance(0.8)) steps.push({ op: 'hold' });
+      if (rng.chance(0.5)) steps.push({ op: 'preload' });
+      for (let n = rng.int(1, 30); n > 0; n--) steps.push(genStep(rng, ages));
+      return { ages, shuffle: rng.int(1, 1_000_000), steps };
+    }
+
+    function* shrinkCase(c: Case): Iterable<Case> {
+      for (const steps of shrinkArray(c.steps)) yield { ...c, steps };
+    }
+
+    /** Runs the steps on a fresh bus and checks every property after each one. */
+    function run(c: Case) {
+      FakeAudio.made = [];
+      FakeAudio.overlaps = 0;
+      const win = target();
+      const { ctx } = fakeContext();
+      const setInterval = vi.fn(() => 1);
+      vi.stubGlobal('window', {
+        addEventListener: win.addEventListener,
+        setInterval,
+        AudioContext: function () {
+          return ctx;
+        },
+      });
+      vi.stubGlobal('Audio', FakeAudio);
+      vi.useFakeTimers();
+      const shuffle = new Rng(c.shuffle);
+      vi.spyOn(Math, 'random').mockImplementation(() => shuffle.next());
+      Object.assign(AGE_MUSIC, { steam, diesel, electric });
+      try {
+        const bus = new Bus();
+        const music = () => FakeAudio.made.filter((el) => el.src.includes('/music/'));
+        const plays = () => music().reduce((n, el) => n + el.play.mock.calls.length, 0);
+        const newest = () => music()[music().length - 1] as FakeAudio | undefined;
+        // the model: what the calls so far should have done, written without the bus's internals
+        let held = false;
+        let unlocked = false;
+        let now = 0;
+        let settleAt = 0; // an age change may still be fading the old track out until then
+        let selected: string | null = null;
+        const failed = new Set<string>();
+        const letGo = new Map<FakeAudio, number>(); // plays an element had when a newer one came
+
+        const step = (s: Step) => {
+          const cur = newest();
+          switch (s.op) {
+            case 'hold':
+              bus.hold();
+              held = true;
+              break;
+            case 'preload':
+              bus.preload();
+              break;
+            case 'start':
+              bus.startMusic();
+              held = false;
+              break;
+            case 'gesture': {
+              // the first call of the bus adds the listeners: a gesture before that is nobody's
+              const heard = win.addEventListener.mock.calls.length > 0;
+              win.fire(s.on);
+              if (heard) unlocked = true;
+              break;
+            }
+            case 'apply':
+              bus.applyMusic();
+              break;
+            case 'volume': // what applySettings does
+              bus.master = s.master;
+              bus.music = s.music;
+              bus.applyMusic();
+              break;
+            case 'sfx':
+              bus.play('ui.click');
+              break;
+            case 'age':
+              bus.setAge(s.id);
+              selected = s.id;
+              settleAt = now + MUSIC_FADE_MS + 100;
+              break;
+            case 'tick':
+              vi.advanceTimersByTime(s.ms);
+              now += s.ms;
+              break;
+            case 'fail':
+              // the newest element is the bus's own, unless every file has failed already
+              if (cur) failed.add(cur.src);
+              if (cur) fire(cur, 'error');
+              break;
+            case 'end':
+              if (cur?.playing) fire(cur, 'ended');
+              break;
+            case 'canplay':
+              if (cur) fire(cur, 'canplay');
+              break;
+            case 'stale': {
+              // an element that is not the newest is one the bus let go of: its events do nothing
+              const old = music().slice(0, -1);
+              if (!old.length) break;
+              const n = music().length;
+              const p = plays();
+              const loops = setInterval.mock.calls.length;
+              fire(old[s.pick % old.length], s.event);
+              expect(music().length, 'a let-go track moved the music on').toBe(n);
+              expect(plays(), 'a let-go track started a track').toBe(p);
+              expect(setInterval.mock.calls.length, 'a let-go track started the synth').toBe(loops);
+              break;
+            }
+          }
+        };
+
+        const verify = (where: string, before: { n: number; plays: number; loops: number }) => {
+          const els = music();
+          const top = newest();
+          const fresh = els.slice(before.n);
+          const v = Math.min(1, bus.master * bus.music);
+          const loops = setInterval.mock.calls.length;
+          const say = (what: string) => `${where}: ${what}`;
+
+          // the title is silent: while held, a call starts no track and no synth loop
+          if (held) {
+            expect(plays(), say('a held bus played a track')).toBe(before.plays);
+            expect(loops, say('a held bus started the synth loop')).toBe(before.loops);
+          }
+          // two tracks never play together
+          expect(FakeAudio.overlaps, say('two tracks played together')).toBe(0);
+          expect(els.filter((el) => el.playing).length, say('two tracks play')).toBeLessThan(2);
+          // a track the bus has let go of is never played again
+          for (const [el, n] of letGo)
+            expect(el.play.mock.calls.length, say('a let-go track was played')).toBe(n);
+          for (const el of els.slice(0, -1))
+            if (!letGo.has(el)) letGo.set(el, el.play.mock.calls.length);
+          // a call fetches at most one file, a file of the set that plays, never one that failed
+          expect(fresh.length, say('a call fetched more than one file')).toBeLessThan(2);
+          for (const el of fresh) {
+            expect(failed.has(el.src), say(`a failed file was fetched again: ${el.src}`)).toBe(
+              false,
+            );
+            if (c.ages)
+              expect(el.src, say('not the first file of the age')).toBe(musicForAge(selected)[0]);
+            else if (before.n === 0)
+              expect(el.src, say('Pastoral Pulse is not first')).toBe(MUSIC_TRACKS[0]);
+            else expect(MUSIC_TRACKS, say('a file of no set')).toContain(el.src);
+          }
+          // the synth loop stands in only when every file has failed, and then it does
+          const every = failed.size === MUSIC_TRACKS.length;
+          if (loops > 0) expect(every, say('the synth loop took over with a file left')).toBe(true);
+          if (every && unlocked && !held && v > 0)
+            expect(loops, say('every file failed and nothing plays')).toBeGreaterThan(0);
+          // once a gesture has unlocked a released bus, it plays the newest file at the volumes
+          if (unlocked && !held && now >= settleAt && !every) {
+            expect(top, say('an unlocked, released bus has no track')).toBeDefined();
+            expect(top!.volume, say('not at the volume of the sliders')).toBe(v);
+            const playing = els.filter((el) => el.playing).map((el) => els.indexOf(el));
+            const expected = v > 0 ? [els.length - 1] : [];
+            expect(
+              playing,
+              say('playing tracks (by index) are not the newest, or not muted'),
+            ).toEqual(expected);
+            if (c.ages)
+              expect(top!.src, say('not the first file of the age')).toBe(musicForAge(selected)[0]);
+          }
+        };
+
+        c.steps.forEach((s, i) => {
+          const before = {
+            n: music().length,
+            plays: plays(),
+            loops: setInterval.mock.calls.length,
+          };
+          step(s);
+          verify(`step ${i + 1} ${JSON.stringify(s)}`, before);
+        });
+        // let any fade run out, then check the end state once more
+        const before = { n: music().length, plays: plays(), loops: setInterval.mock.calls.length };
+        step({ op: 'tick', ms: MUSIC_FADE_MS + 100 });
+        verify('after the last step and the fade', before);
+      } finally {
+        Object.assign(AGE_MUSIC, pristine);
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+      }
+    }
+
+    it('keeps the title silent, one track playing and the synth for the last resort, whatever the calls', () => {
+      forAll((rng) => genCase(rng, false), run, { shrink: shrinkCase });
+    });
+
+    it('keeps the same with age changes in the mix, and ends on the first file of the age selected last', () => {
+      forAll((rng) => genCase(rng, true), run, { shrink: shrinkCase });
     });
   });
 
