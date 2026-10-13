@@ -152,6 +152,39 @@ describe('a building picture standing on the ground', () => {
     });
   });
 
+  it('finds the same feet behind a yard painted on the ground, opaque rim and all', () => {
+    type Case = { b: Building; depth: number; paint: number; rim: number };
+    function* shrink(c: Case): Iterable<Case> {
+      for (const b of shrinkBuilding(c.b)) yield { ...c, b };
+      for (const depth of shrinkInt(c.depth, 1)) yield { ...c, depth };
+    }
+    forAll(
+      (rng): Case => ({
+        b: building(rng),
+        depth: rng.int(1, 6),
+        paint: rng.int(1, SOLID - 1),
+        rim: rng.int(SOLID, 255),
+      }),
+      ({ b, depth, paint, rim }) => {
+        const p = pictureOf(b),
+          d = b.density,
+          q = withMargins(p, 0, 0, 0, (depth + 1) * d),
+          data = q.data as Uint8ClampedArray;
+        // under each wall `depth` px of translucent paint, then a rim one px thick, as
+        // PixelBuf.outline draws round a baked yard
+        for (let x = 0; x < q.width; x++) {
+          const X = Math.floor(x / d);
+          if (X < b.fx - b.left || X > b.fx + b.right) continue;
+          const below = (wallFoot(b, X) + 1) * d;
+          for (let y = below; y < below + (depth + 1) * d; y++)
+            data.set([30, 40, 30, y < below + depth * d ? paint : rim], (y * q.width + x) * 4);
+        }
+        expect([...footContour(q)]).toEqual([...footContour(p)]);
+      },
+      { shrink },
+    );
+  });
+
   it('has no foot where nothing stands', () => {
     const empty = { data: new Uint8ClampedArray(8 * 8 * 4), width: 8, height: 8, density: 1 };
     expect([...footContour(empty)].every((f) => f === -1)).toBe(true);

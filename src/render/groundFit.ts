@@ -60,21 +60,31 @@ const BLUR = 1.5;
  * The row of each texel column's foot, or -1 where the column does not stand on the ground. A
  * foot is the column's lowest opaque texel, kept when an opaque run of `FOOT_RUN` rises from it
  * and it lies on or below the ground lines through the front corner (the lowest such foot),
- * within `FOOT_TOLERANCE`.
+ * within `FOOT_TOLERANCE`. A thinner opaque run with translucent paint over it is drawn on the
+ * ground, the rim of a baked yard or shadow (`PixelBuf.outline` rims the paint too), so the foot
+ * is looked for above the paint; one with nothing over it (a sail, a lamp) has none.
  */
 export function footContour({ data, width: w, height: h, density: d }: Picture): Int32Array {
   const foot = new Int32Array(w).fill(-1),
     minRun = FOOT_RUN * d;
   let low = -1;
   for (let x = 0; x < w; x++) {
+    const alpha = (y: number) => data[(y * w + x) * 4 + 3];
     let y = h - 1;
-    while (y >= 0 && data[(y * w + x) * 4 + 3] < SOLID) y--;
-    if (y < 0) continue;
-    let run = 0;
-    while (run < minRun && y - run >= 0 && data[((y - run) * w + x) * 4 + 3] >= SOLID) run++;
-    if (run < minRun) continue;
-    foot[x] = y;
-    low = Math.max(low, y);
+    while (y >= 0 && alpha(y) < SOLID) y--;
+    while (y >= 0) {
+      let run = 0;
+      while (run < minRun && y - run >= 0 && alpha(y - run) >= SOLID) run++;
+      if (run >= minRun) {
+        foot[x] = y;
+        low = Math.max(low, y);
+        break;
+      }
+      // a rim drawn on the ground: past it and the paint over it to the next opaque run
+      y -= run;
+      while (y >= 0 && alpha(y) > 0 && alpha(y) < SOLID) y--;
+      if (y >= 0 && alpha(y) === 0) break;
+    }
   }
   if (low < 0) return foot;
   const apex = frontCorner(foot),
