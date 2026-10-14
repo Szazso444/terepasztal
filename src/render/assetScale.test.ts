@@ -247,7 +247,7 @@ describe('turned structure frames', () => {
         if (turned === key) continue;
         turns++;
         const where = `${key} at rotation ${rot} (${turned})`;
-        // family (window lights), reference (contact patches) and scale are the frame's own
+        // family (window lights), reference (ground fit) and scale are the frame's own
         const own = hasScaleReference(key)
           ? { family: structureFamily(key), scale: structureScale(key) }
           : null;

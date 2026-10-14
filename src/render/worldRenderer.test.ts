@@ -62,47 +62,116 @@ const FRAMES: Record<string, FrameInfo> = {
   'props/oak_2': frame(20, 30),
 };
 
+/** What a ground fit hands out in these tests, one set per picture and scale, as surfaces cache. */
+const FIT_TEXTURES = new Map<
+  string,
+  { foot: Texture; shadow: Texture; feet: { x: number; y: number; right: boolean }[] }
+>();
+function fitTextures(key: string, scale: number) {
+  const id = `${key}|${scale}`;
+  if (!FIT_TEXTURES.has(id))
+    FIT_TEXTURES.set(id, {
+      foot: new Texture({ source: SOURCE, frame: new Rectangle(0, 0, 4, 4) }),
+      shadow: new Texture({ source: SOURCE, frame: new Rectangle(0, 0, 8, 4) }),
+      feet: Array.from({ length: 41 }, (_, i) => i - 20).map((x) => ({
+        x,
+        y: 10 - Math.abs(x) / 2,
+        right: x > 0,
+      })),
+    });
+  return FIT_TEXTURES.get(id)!;
+}
+
+/**
+ * The copies of their atlas frames that buildings are drawn from, one per frame as surfaces cache
+ * them, with the frame each was copied from. surfaceAssets.test.ts pins that a copy holds its
+ * frame's own texels.
+ */
+const PICTURES = new Map<string, { texture: Texture; from: FrameInfo }>();
+function pictureOf(key: string, f: FrameInfo) {
+  if (!PICTURES.has(key))
+    PICTURES.set(key, {
+      texture: new Texture({
+        source: SOURCE,
+        frame: new Rectangle(0, 0, f.texture.frame.width, f.texture.frame.height),
+        orig: new Rectangle(0, 0, f.w, f.h),
+      }),
+      from: f,
+    });
+  return PICTURES.get(key)!.texture;
+}
+
 /**
  * A world renderer with only what placing a structure touches: the atlas above, a one-tile map,
  * its two layers, and surfaces that hand back textures without reading pixels (Node has no
- * canvas). `families` records the window-light family each building was lit with.
+ * canvas), the pictures from `PICTURES`. `families` records the window-light family each building
+ * was lit with; `fits` the picture and scale each ground fit was asked for.
  */
 function renderer() {
   const objects = new Container(),
     contactGround = new Container(),
-    families: string[] = [];
+    families: string[] = [],
+    fits: string[] = [],
+    weeds: { texture: Texture; items: number }[] = [];
   const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
   Object.assign(world, {
     atlas: { has: (k: string) => k in FRAMES, get: (k: string) => FRAMES[k] },
     map: { w: 1, h: 1, originX: 0, originY: 0, terrain: [0], biome: [0] },
     objects,
     contactGround,
+    city: new Set(),
+    propTint: 0xffffff,
     structures: new Map(),
     structureAnchors: new Map(),
     windowLights: new Map(),
-    contactPatches: new Map(),
+    groundFits: new Map(),
     surfaces: {
-      contact: () => Texture.EMPTY,
+      picture: pictureOf,
       window: (_key: string, _f: FrameInfo, _procedural: boolean, family: string) => {
         families.push(family);
         return Texture.EMPTY;
       },
-      groundContour: () => [{ x: 0, y: 0 }],
+      groundFit: (key: string, _f: FrameInfo, scale: number) => {
+        fits.push(`${key}|${scale}`);
+        const t = fitTextures(key, scale);
+        return {
+          foot: { texture: t.foot, anchorX: 0.5, anchorY: 0.8 },
+          shadow: { texture: t.shadow, anchorX: 0.3, anchorY: 0.2 },
+          feet: t.feet,
+        };
+      },
+      weeds: (items: readonly unknown[], ground: string) => {
+        if (!items.length || ground === 'none') return null;
+        const texture = new Texture({ source: SOURCE, frame: new Rectangle(0, 0, 6, 3) });
+        weeds.push({ texture, items: items.length });
+        return { texture, anchorX: 0.5, anchorY: 0.5 };
+      },
     },
+    landscape: { setCity: () => {}, invalidate: () => {} },
+    groundSprites: [],
     elevationOf: () => 0,
     refreshScatter: () => {},
   });
   const lights = () => objects.children.filter((c) => c.label === 'emissive').length;
-  return { world, lights, patches: () => contactGround.children.length, families };
+  return {
+    world,
+    objects,
+    contactGround,
+    lights,
+    patches: () => contactGround.children.length,
+    families,
+    fits,
+    weeds,
+  };
 }
 
 describe('a structure sprite switching frames', () => {
-  it('takes its new frame size, lights and patches, never the frame before', () => {
+  it('takes its new frame size, lights and ground shadow, never the frame before', () => {
     const { world, lights, patches, families } = renderer();
     const s = world.setStructure('decor:0,0', 0, 0, 'structures/water_tower');
     expect(s.scale.x).toBeCloseTo(0.7, 9);
     expect([lights(), patches()]).toEqual([1, 1]);
-    // the same sprite shows a frame with no scale reference: scale 1, no lights, no patches
+    // the same sprite shows a frame with no scale reference: scale 1, no lights, no shadow
     expect(world.setStructure('decor:0,0', 0, 0, 'structures/power_line')).toBe(s);
     expect([s.scale.x, s.scale.y]).toEqual([1, 1]);
     expect([lights(), patches()]).toEqual([0, 0]);
@@ -130,6 +199,284 @@ describe('a structure sprite switching frames', () => {
     // the turn is a generated picture, so its door is the generator's reference door
     world.setStructure('station:1', 0, 0, 'structures/station_1_r1');
     expect(s.scale.x).toBeCloseTo(structureScale('structures/station_1'), 9);
+  });
+});
+
+type FitParts = { shadow: Sprite; foot: Sprite; weeds: Sprite };
+const fitsOf = (world: WorldRenderer) =>
+  (world as unknown as { groundFits: Map<string, FitParts> }).groundFits;
+
+describe('a building fitted to the ground', () => {
+  const BUILDINGS = [
+    'structures/water_tower',
+    'structures/water_tower_r2',
+    'structures/station_1',
+    'structures/station_1_r1',
+    'structures/townhouse_s1',
+    'structures/townhouse_s1_r3',
+  ];
+
+  it("shows its own atlas frame's copy at the frame's size, whatever it showed before", () => {
+    const { world } = renderer();
+    for (const frame of [...BUILDINGS, 'structures/power_line', ...[...BUILDINGS].reverse()]) {
+      const s = world.setStructure('station:1', 0, 0, frame),
+        f = FRAMES[frame];
+      if (frame === 'structures/power_line') {
+        // no building: the atlas frame itself, as any other sprite
+        expect(s.texture, frame).toBe(f.texture);
+        continue;
+      }
+      expect(s.texture, frame).toBe(PICTURES.get(frame)?.texture);
+      expect(PICTURES.get(frame)!.from, frame).toBe(f);
+      // the copy changes no size: the sprite is the frame's world size at the building's scale
+      expect(s.width, frame).toBeCloseTo(f.w * s.scale.x, 9);
+      expect(s.height, frame).toBeCloseTo(f.h * s.scale.y, 9);
+      expect([s.anchor.x, s.anchor.y], frame).toEqual([f.anchorX, f.anchorY]);
+    }
+  });
+
+  it('casts its shadow on the ground and draws its foot and weeds in its own depth', () => {
+    const { world, objects, contactGround } = renderer();
+    const s = world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1', 20, 3, 5),
+      fit = fitsOf(world).get('decor:0,0')!;
+    expect(fit.shadow.parent).toBe(contactGround);
+    expect([fit.foot.parent, fit.weeds.parent]).toEqual([objects, objects]);
+    expect(fit.weeds.tint).toBe(0xffffff);
+    // right after the picture, before anything a depth step in front (a wheat field, a train)
+    for (const part of [fit.foot, fit.weeds]) {
+      expect(part.zIndex).toBeGreaterThan(s.zIndex);
+      expect(part.zIndex).toBeLessThan(depthKey(1, 0, 10));
+      expect(part.zIndex).toBeLessThan(depthKey(0, 0, 21));
+    }
+    expect(fit.foot.zIndex).toBeLessThan(fit.weeds.zIndex);
+    expect(fit.weeds.visible).toBe(true);
+  });
+
+  it('grows no weeds on paving, grows them again when the paving goes, and frees each set', () => {
+    const { world, weeds } = renderer();
+    world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1');
+    const sprite = fitsOf(world).get('decor:0,0')!.weeds,
+      shown = () => (sprite.visible ? sprite.texture : null);
+    expect(weeds.length).toBe(1);
+    expect(weeds[0].items).toBeGreaterThan(0);
+    expect(shown()).toBe(weeds[0].texture);
+    // the same building on the same ground keeps its weeds
+    world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1');
+    expect(weeds.length).toBe(1);
+    world.setCity(new Set([0]));
+    expect(shown()).toBeNull();
+    expect(weeds[0].texture.destroyed).toBe(true);
+    world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1_r3');
+    expect(shown()).toBeNull();
+    world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1');
+    world.setCity(new Set());
+    expect(weeds.length).toBe(2);
+    expect(shown()).toBe(weeds[1].texture);
+    world.removeStructure('decor:0,0');
+    expect(weeds[1].texture.destroyed).toBe(true);
+  });
+
+  it('moves, turns, scales and goes with its building', () => {
+    const { world, objects, contactGround, fits } = renderer();
+    const check = (frame: string) => {
+      const s = world.getStructure('decor:0,0')!,
+        fit = fitsOf(world).get('decor:0,0')!,
+        t = fitTextures(frame, s.scale.x);
+      expect(fits.at(-1)).toBe(`${frame}|${s.scale.x}`);
+      expect([fit.shadow.texture, fit.foot.texture]).toEqual([t.shadow, t.foot]);
+      for (const part of [fit.shadow, fit.foot, fit.weeds])
+        expect([part.x, part.y], frame).toEqual([s.x, s.y]);
+      expect([fit.foot.scale.x, fit.foot.scale.y]).toEqual([s.scale.x, s.scale.y]);
+      expect(contactGround.children).toEqual([fit.shadow]);
+    };
+    world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1', 20, 3, 5);
+    check('structures/townhouse_s1');
+    const first = fitsOf(world).get('decor:0,0')!;
+    // turned, moved and grown into another building: the same parts follow
+    world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1_r3', 20, -4, 2);
+    check('structures/townhouse_s1_r3');
+    world.setStructure('decor:0,0', 0, 0, 'structures/water_tower', 20, 0, 0);
+    check('structures/water_tower');
+    expect(fitsOf(world).get('decor:0,0')).toBe(first);
+    // a frame that is no building has no ground fit
+    world.setStructure('decor:0,0', 0, 0, 'structures/power_line', 14);
+    expect(fitsOf(world).has('decor:0,0')).toBe(false);
+    expect([first.shadow, first.foot, first.weeds].every((p) => p.destroyed)).toBe(true);
+    expect(contactGround.children).toEqual([]);
+    world.setStructure('decor:0,0', 0, 0, 'structures/station_1');
+    check('structures/station_1');
+    const last = fitsOf(world).get('decor:0,0')!;
+    world.removeStructure('decor:0,0');
+    expect(fitsOf(world).size).toBe(0);
+    expect([last.shadow, last.foot, last.weeds].every((p) => p.destroyed)).toBe(true);
+    expect([contactGround.children.length, objects.children.length]).toEqual([0, 0]);
+  });
+
+  it("draws its shadow and weeds at the size they were made for, its foot at the picture's, each on its own anchor", () => {
+    const { world } = renderer();
+    for (const frame of BUILDINGS) {
+      const s = world.setStructure('decor:0,0', 0, 0, frame),
+        fit = fitsOf(world).get('decor:0,0')!;
+      // the shadow and weeds are world px at the building's scale already; the foot is the picture's
+      expect([fit.shadow.scale.x, fit.shadow.scale.y], frame).toEqual([1, 1]);
+      expect([fit.weeds.scale.x, fit.weeds.scale.y], frame).toEqual([1, 1]);
+      expect([fit.foot.scale.x, fit.foot.scale.y], frame).toEqual([s.scale.x, s.scale.y]);
+      // the anchors the surfaces mock hands out for the shadow, the foot and the weeds
+      expect([fit.shadow.anchor.x, fit.shadow.anchor.y], frame).toEqual([0.3, 0.2]);
+      expect([fit.foot.anchor.x, fit.foot.anchor.y], frame).toEqual([0.5, 0.8]);
+      expect([fit.weeds.anchor.x, fit.weeds.anchor.y], frame).toEqual([0.5, 0.5]);
+    }
+    // the scales differ between these frames, so the checks above are not all at scale 1
+    const scales = new Set(BUILDINGS.map((f) => world.setStructure('decor:0,0', 0, 0, f).scale.x));
+    expect(scales.size).toBeGreaterThan(1);
+  });
+
+  it('shows no cast shadow for a picture with its own baked in, and no foot or weeds where it has no foot', () => {
+    const { world } = renderer(),
+      surfaces = (world as unknown as { surfaces: { groundFit: (...a: never[]) => unknown } })
+        .surfaces,
+      fitted = surfaces.groundFit;
+    // as surfaces answer: station_1_r1 has its shadow baked in, water_tower_r2 stands on no foot
+    surfaces.groundFit = ((key: string, f: FrameInfo, scale: number) => {
+      const art = (fitted as (k: string, f: FrameInfo, s: number) => Record<string, unknown>)(
+        key,
+        f,
+        scale,
+      );
+      if (key === 'structures/station_1_r1') return { ...art, shadow: null };
+      if (key === 'structures/water_tower_r2') return { foot: null, shadow: null, feet: [] };
+      return art;
+    }) as never;
+    const shown = () => {
+      const fit = fitsOf(world).get('decor:0,0')!;
+      return [fit.shadow.visible, fit.foot.visible, fit.weeds.visible];
+    };
+    world.setStructure('decor:0,0', 0, 0, 'structures/station_1');
+    expect(shown()).toEqual([true, true, true]);
+    world.setStructure('decor:0,0', 0, 0, 'structures/station_1_r1');
+    expect(shown()).toEqual([false, true, true]);
+    world.setStructure('decor:0,0', 0, 0, 'structures/water_tower_r2');
+    expect(shown()).toEqual([false, false, false]);
+    // turned back, all of it shows again
+    world.setStructure('decor:0,0', 0, 0, 'structures/station_1');
+    expect(shown()).toEqual([true, true, true]);
+  });
+
+  it("grows the same weeds on the same world tile, wherever the map's origin lies", () => {
+    /** The weeds and pebbles a building on local tile (x, y) grows, with the map's origin. */
+    const grown = (originX: number, originY: number, x: number, y: number) => {
+      const { world } = renderer(),
+        surfaces = (
+          world as unknown as {
+            surfaces: { weeds: (items: readonly unknown[], ground: string) => unknown };
+          }
+        ).surfaces,
+        draw = surfaces.weeds,
+        items: unknown[][] = [];
+      surfaces.weeds = (it, ground) => {
+        items.push([...it]);
+        return draw(it, ground);
+      };
+      Object.assign(world, {
+        map: { w: 8, h: 8, originX, originY, terrain: Array(64).fill(0), biome: Array(64).fill(0) },
+      });
+      world.setStructure('decor:b', x, y, 'structures/townhouse_s1');
+      return items;
+    };
+    const here = grown(0, 0, 3, 4);
+    expect(here.length).toBe(1);
+    expect(here[0].length).toBeGreaterThan(0);
+    // world tile (3, 4) again, on a map that has grown so its origin is elsewhere
+    expect(grown(-2, 1, 5, 3)).toEqual(here);
+    expect(grown(3, 4, 0, 0)).toEqual(here);
+    // the next tile grows its own
+    expect(grown(0, 0, 4, 4)).not.toEqual(here);
+  });
+
+  it('follows its building when the ground under it is repainted to another height', () => {
+    const { world } = renderer();
+    let lift = 0;
+    // what animate touches besides the buildings: a landscape that has just been repainted
+    Object.assign(world, {
+      elevationOf: () => -lift,
+      landscape: {
+        flush: () => true,
+        active: false,
+        ready: true,
+        root: { visible: false },
+        isPainted: () => false,
+      },
+      refreshSummits: () => {},
+      harvest: { refresh: () => {} },
+      trackSprites: new Map(),
+      scatterSprites: new Map(),
+      propSprites: new Map(),
+      ground: { visible: true },
+      view: null,
+      waterClock: 0,
+      rippleRefresh: 0,
+      waterPhase: 0,
+      waterSprites: [],
+    });
+    const s = world.setStructure('decor:0,0', 0, 0, 'structures/townhouse_s1', 20, 3, 5),
+      fit = fitsOf(world).get('decor:0,0')!,
+      p = tileToWorld(0, 0);
+    for (lift of [13, -7, 0, 20]) {
+      world.animate(0);
+      expect([s.x, s.y], `lifted ${lift}`).toEqual([p.x + 5, p.y - lift + 3]);
+      for (const part of [fit.shadow, fit.foot, fit.weeds])
+        expect([part.x, part.y], `lifted ${lift}`).toEqual([s.x, s.y]);
+      expect([fit.foot.scale.x, fit.foot.scale.y]).toEqual([s.scale.x, s.scale.y]);
+      expect(fit.foot.zIndex).toBeGreaterThan(s.zIndex);
+      expect(fit.weeds.zIndex).toBeGreaterThan(fit.foot.zIndex);
+    }
+  });
+
+  it('leaves the shadow, shade and weeds of another building with the same picture whole when one goes', () => {
+    const { world } = renderer();
+    world.setStructure('decor:a', 0, 0, 'structures/townhouse_s1');
+    world.setStructure('decor:b', 0, 0, 'structures/townhouse_s1');
+    const a = fitsOf(world).get('decor:a')!,
+      b = fitsOf(world).get('decor:b')!,
+      shown = (fit: FitParts) => [fit.shadow.texture, fit.foot.texture, fit.weeds.texture],
+      aWeeds = a.weeds.texture,
+      bShows = shown(b);
+    // the shadow and shade are the picture's, shared; the weeds are each building's own
+    expect([a.shadow.texture, a.foot.texture]).toEqual(bShows.slice(0, 2));
+    expect(aWeeds).not.toBe(bShows[2]);
+    world.removeStructure('decor:a');
+    expect(aWeeds.destroyed, "the gone building's own weeds").toBe(true);
+    expect(shown(b)).toEqual(bShows);
+    expect(bShows.map((t) => t.destroyed)).toEqual([false, false, false]);
+    // and when the other turns into a frame that is no building, the picture's layers still stand
+    world.setStructure('decor:a', 0, 0, 'structures/townhouse_s1');
+    const again = shown(fitsOf(world).get('decor:a')!);
+    world.setStructure('decor:b', 0, 0, 'structures/power_line', 14);
+    expect(bShows[2].destroyed).toBe(true);
+    expect(again.map((t) => t.destroyed)).toEqual([false, false, false]);
+  });
+
+  it('draws every building of one frame from the one copy, which outlives each of them', () => {
+    const { world } = renderer();
+    for (const frame of BUILDINGS) {
+      const a = world.setStructure('decor:a', 0, 0, frame),
+        b = world.setStructure('decor:b', 0, 0, frame),
+        copy = PICTURES.get(frame)!.texture,
+        shown = (s: Sprite, at: string) => {
+          expect(s.texture, `${frame} ${at}`).toBe(copy);
+          expect(copy.destroyed, `${frame} ${at}`).toBe(false);
+        };
+      shown(a, 'shown twice');
+      shown(b, 'shown twice');
+      world.removeStructure('decor:a');
+      shown(b, 'when the other goes');
+      // the other shows a frame that is no building, then goes too; the next shows the copy again
+      world.setStructure('decor:b', 0, 0, 'structures/power_line', 14);
+      expect(copy.destroyed, `${frame} when the other shows no building`).toBe(false);
+      world.removeStructure('decor:b');
+      shown(world.setStructure('decor:c', 0, 0, frame), 'when both have gone');
+      world.removeStructure('decor:c');
+    }
   });
 });
 
