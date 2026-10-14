@@ -104,8 +104,8 @@ function pictureOf(key: string, f: FrameInfo) {
 /**
  * A world renderer with only what placing a structure touches: the atlas above, a one-tile map,
  * its two layers, and surfaces that hand back textures without reading pixels (Node has no
- * canvas), the pictures from `PICTURES`. `families` records the window-light family each building was lit with; `fits` the
- * picture and scale each ground fit was asked for.
+ * canvas), the pictures from `PICTURES`. `families` records the window-light family each building
+ * was lit with; `fits` the picture and scale each ground fit was asked for.
  */
 function renderer() {
   const objects = new Container(),
@@ -454,6 +454,29 @@ describe('a building fitted to the ground', () => {
     world.setStructure('decor:b', 0, 0, 'structures/power_line', 14);
     expect(bShows[2].destroyed).toBe(true);
     expect(again.map((t) => t.destroyed)).toEqual([false, false, false]);
+  });
+
+  it('draws every building of one frame from the one copy, which outlives each of them', () => {
+    const { world } = renderer();
+    for (const frame of BUILDINGS) {
+      const a = world.setStructure('decor:a', 0, 0, frame),
+        b = world.setStructure('decor:b', 0, 0, frame),
+        copy = PICTURES.get(frame)!.texture,
+        shown = (s: Sprite, at: string) => {
+          expect(s.texture, `${frame} ${at}`).toBe(copy);
+          expect(copy.destroyed, `${frame} ${at}`).toBe(false);
+        };
+      shown(a, 'shown twice');
+      shown(b, 'shown twice');
+      world.removeStructure('decor:a');
+      shown(b, 'when the other goes');
+      // the other shows a frame that is no building, then goes too; the next shows the copy again
+      world.setStructure('decor:b', 0, 0, 'structures/power_line', 14);
+      expect(copy.destroyed, `${frame} when the other shows no building`).toBe(false);
+      world.removeStructure('decor:b');
+      shown(world.setStructure('decor:c', 0, 0, frame), 'when both have gone');
+      world.removeStructure('decor:c');
+    }
   });
 });
 

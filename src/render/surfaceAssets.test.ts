@@ -13,7 +13,7 @@ import {
   type Foot,
   type FootGround,
 } from './groundFit';
-import { SurfaceAssets } from './surfaceAssets';
+import { SurfaceAssets, type AnchoredTexture } from './surfaceAssets';
 
 /** Node has no ImageData: a stand-in that keeps the pixels. */
 class FakeImageData {
@@ -185,6 +185,13 @@ function frameOf(b: Building): FrameInfo {
   };
 }
 const pixelsOf = (f: FrameInfo) => f.image as unknown as FakeImageData;
+/** Where two runs of texel values first differ, or null where they match, length and all. */
+function firstDifference(a: ArrayLike<number> | null, b: ArrayLike<number> | null) {
+  if (!a || !b) return a === b ? null : `${a ? 'texels' : 'none'} against ${b ? 'texels' : 'none'}`;
+  if (a.length !== b.length) return `${a.length} values against ${b.length}`;
+  for (let k = 0; k < a.length; k++) if (a[k] !== b[k]) return `value ${k} is ${a[k]}, not ${b[k]}`;
+  return null;
+}
 
 /**
  * Where a sprite showing `t` from (`ax`, `ay`) at `scale` draws the centre of its texel (i, j):
@@ -203,6 +210,89 @@ function pictureAt(f: FrameInfo, scale: number, x: number, y: number) {
     py = Math.floor((y / scale / f.h + f.anchorY) * h),
     inside = px >= 0 && py >= 0 && px < w && py < h;
   return { px, py, alpha: inside ? pixelsOf(f).data[(py * w + px) * 4 + 3] : 0 };
+}
+
+/**
+ * Test building `b` with its frame cut `below` px under its lowest foot, at most its margin (0: the
+ * foot is the frame's last row, as in a trimmed atlas), packed at texel (`x`, `y`) of an atlas with
+ * `right` and `under` texels of other frames past it, every one of them painted from `seed`.
+ */
+interface Packed {
+  b: Building;
+  below: number;
+  x: number;
+  y: number;
+  right: number;
+  under: number;
+  seed: number;
+}
+function packed(rng: Rng): Packed {
+  const b = building(rng);
+  return {
+    b,
+    below: rng.pick([0, rng.int(0, b.margin)]),
+    x: rng.int(0, 9),
+    y: rng.int(0, 9),
+    right: rng.int(0, 9),
+    under: rng.int(0, 9),
+    seed: rng.int(1, 1_000_000),
+  };
+}
+function* shrinkPacked(p: Packed): Iterable<Packed> {
+  for (const b of shrinkBuilding(p.b)) yield { ...p, b };
+  for (const below of shrinkInt(p.below)) yield { ...p, below };
+  for (const k of ['x', 'y', 'right', 'under'] as const)
+    for (const v of shrinkInt(p[k])) yield { ...p, [k]: v };
+}
+/** Its frame alone in an atlas of its own, and the same frame packed among the others. */
+function packedFrames(p: Packed) {
+  const { b } = p,
+    whole = frameOf(b),
+    { width: W, data } = pixelsOf(whole),
+    fy = b.margin + b.height + Math.ceil(Math.max(b.left, b.right) / 2),
+    h = fy + 1 + Math.min(p.below, b.margin),
+    H = h * b.density,
+    own = data.slice(0, W * H * 4),
+    AW = p.x + W + p.right,
+    AH = p.y + H + p.under,
+    rng = new Rng(p.seed),
+    sheet = new Uint8ClampedArray(AW * AH * 4);
+  for (let k = 0; k < sheet.length; k++) sheet[k] = rng.pick([0, 255, rng.int(0, 255)]);
+  for (let j = 0; j < H; j++)
+    sheet.set(own.subarray(j * W * 4, (j + 1) * W * 4), ((p.y + j) * AW + p.x) * 4);
+  const at = (image: FakeImageData, x: number, y: number): FrameInfo => ({
+    image: image as never,
+    texture: new Texture({
+      source: SOURCE,
+      frame: new Rectangle(x, y, W, H),
+      orig: new Rectangle(0, 0, whole.w, h),
+    }),
+    anchorX: whole.anchorX,
+    anchorY: (fy + 1 - b.anchorUp) / h,
+    w: whole.w,
+    h,
+  });
+  return {
+    alone: at(new FakeImageData(own, W, H), 0, 0),
+    packed: at(new FakeImageData(sheet, AW, AH), p.x, p.y),
+  };
+}
+/**
+ * The edges of a sprite showing `t` from anchor (`ax`, `ay`), in texels of picture `f` drawn at
+ * the same position and scale from its own anchor: 0 to its width and height are the picture's.
+ */
+function edgesOver(f: FrameInfo, t: Texture, ax: number, ay: number, scale: number) {
+  const { width: w, height: h } = f.texture.frame,
+    left = -ax * t.orig.width * scale,
+    top = -ay * t.orig.height * scale,
+    column = (x: number) => (x / scale / f.w + f.anchorX) * w,
+    row = (y: number) => (y / scale / f.h + f.anchorY) * h;
+  return {
+    left: column(left),
+    right: column(left + t.orig.width * scale),
+    top: row(top),
+    bottom: row(top + t.orig.height * scale),
+  };
 }
 
 /**
@@ -244,6 +334,24 @@ function atlasOf(s: Sheet) {
     };
   return { image, f };
 }
+function sheet(rng: Rng): Sheet {
+  return {
+    density: rng.pick([1, 2, 4]),
+    w: rng.int(1, 12),
+    h: rng.int(1, 12),
+    x: rng.int(0, 9),
+    y: rng.int(0, 9),
+    right: rng.int(0, 9),
+    below: rng.int(0, 9),
+    seed: rng.int(1, 1_000_000),
+  };
+}
+function* shrinkSheet(s: Sheet): Iterable<Sheet> {
+  if (s.density !== 1) yield { ...s, density: 1 };
+  for (const k of ['w', 'h'] as const) for (const v of shrinkInt(s[k], 1)) yield { ...s, [k]: v };
+  for (const k of ['x', 'y', 'right', 'below'] as const)
+    for (const v of shrinkInt(s[k])) yield { ...s, [k]: v };
+}
 
 describe('the picture a building is drawn from', () => {
   beforeEach(() => {
@@ -254,16 +362,7 @@ describe('the picture a building is drawn from', () => {
 
   it("holds its atlas frame's own texels, every one and nothing else, at the frame's size", () => {
     forAll(
-      (rng): Sheet => ({
-        density: rng.pick([1, 2, 4]),
-        w: rng.int(1, 12),
-        h: rng.int(1, 12),
-        x: rng.int(0, 9),
-        y: rng.int(0, 9),
-        right: rng.int(0, 9),
-        below: rng.int(0, 9),
-        seed: rng.int(1, 1_000_000),
-      }),
+      sheet,
       (s) => {
         const { image, f } = atlasOf(s),
           atlas = Uint8ClampedArray.from(image.data),
@@ -293,8 +392,9 @@ describe('the picture a building is drawn from', () => {
           f.texture.orig.width,
           f.texture.orig.height,
         ]);
-        expect(image.data, 'the atlas itself').toEqual(atlas);
+        expect(firstDifference(image.data, atlas), 'the atlas itself').toBeNull();
       },
+      { shrink: shrinkSheet },
     );
   });
 
@@ -355,6 +455,74 @@ describe('the ground fit drawn with a building', () => {
     vi.stubGlobal('document', { createElement: fakeCanvas });
   });
   afterEach(() => vi.unstubAllGlobals());
+
+  // a hundred pictures fitted twice, alone and packed, cast shadows and all: 0.7 s alone
+  it('fits a packed frame cut anywhere under its foot as it fits it alone: the shade on its columns, one clear row past the lowest foot or to the edge', () => {
+    const cut = new Set<boolean>();
+    forAll(
+      packed,
+      (p) => {
+        cut.add(p.below === 0);
+        const { b } = p,
+          { alone, packed: inSheet } = packedFrames(p),
+          surfaces = new SurfaceAssets(),
+          own = surfaces.groundFit('structures/alone', alone, b.scale),
+          fit = surfaces.groundFit('structures/packed', inSheet, b.scale),
+          picture = surfaces.picture('structures/packed', inSheet),
+          { width: w, height: h, data } = pixelsOf(alone),
+          lowest = Math.max(...footContour({ data, width: w, height: h, density: b.density })),
+          layer = (t: AnchoredTexture | null) => t && canvasOf(t.texture).put!.data,
+          wrong: string[] = [];
+        // nothing of the frames round it reaches its picture, its shade, its shadow or its feet
+        for (const [name, a, at] of [
+          ['picture', canvasOf(picture).pixels, data],
+          ['shade', layer(fit.foot), layer(own.foot)],
+          ['shadow', layer(fit.shadow), layer(own.shadow)],
+        ] as const) {
+          const d = firstDifference(a, at);
+          if (d) wrong.push(`${name}: ${d}`);
+        }
+        expect(wrong).toEqual([]);
+        expect([fit.foot!.anchorX, fit.foot!.anchorY]).toEqual([
+          own.foot!.anchorX,
+          own.foot!.anchorY,
+        ]);
+        expect(fit.feet).toEqual(own.feet);
+        // drawn over the picture at its place and scale: its columns and whole rows of it, one texel
+        // on one texel, down to a clear row under the lowest foot, or to the picture's own edge
+        const shade = fit.foot!,
+          band = canvasOf(shade.texture).put!,
+          e = edgesOver(inSheet, shade.texture, shade.anchorX, shade.anchorY, b.scale),
+          top = Math.round(e.top),
+          bottom = Math.min(lowest + 2, h);
+        expect(top, 'top edge').toBeGreaterThanOrEqual(0);
+        for (const [edge, at] of [
+          ['left', 0],
+          ['right', w],
+          ['top', top],
+          ['bottom', bottom],
+        ] as const)
+          expect(e[edge], `${edge} edge`).toBeCloseTo(at, 6);
+        expect([band.width, band.height], 'texels').toEqual([w, bottom - top]);
+        const clear = band.data.subarray((band.height - 1) * w * 4).every((v) => v === 0);
+        expect(clear, 'its last row clear, under the lowest foot, not on it').toBe(
+          bottom > lowest + 1,
+        );
+        // sampled as the picture: linearly, without mipmaps
+        for (const [name, t] of [
+          ['picture', picture],
+          ['shade', shade.texture],
+        ] as const)
+          expect(
+            [t.source.magFilter, t.source.minFilter, t.source.autoGenerateMipmaps],
+            name,
+          ).toEqual(['linear', 'linear', false]);
+      },
+      { shrink: shrinkPacked },
+    );
+    // the seeds draw frames cut at the foot and frames that go on below it alike
+    expect([...cut].sort()).toEqual([false, true]);
+  }, 20_000);
 
   // a hundred pictures fitted whole, cast shadow and all, take up to half a second alone
   it("lays the shade on the picture's own texels, darkest on each foot, where the sprites draw them", () => {
