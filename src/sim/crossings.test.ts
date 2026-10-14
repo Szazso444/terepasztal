@@ -1657,6 +1657,157 @@ describe('the crossings the step watches', () => {
     once();
     expect(step.crossings!.closed(x, y), 'the track under the road taken up').toBe(false);
   });
+
+  it('close on the first step of a step made anew, as after a load, before its walkers move', () => {
+    // Nothing of the watch is saved, and a load starts a new SimStep: its first step reads the
+    // trains before the walkers of that step move, so none of them finds the crossing open with a
+    // car on it or the train coming.
+    const cases: readonly (readonly [string, (t: Train) => boolean])[] = [
+      ['a car on it', (t) => t.occupancyKeys(SIDE).includes(CROSS_KEY)],
+      // running east towards it, with no car on it yet
+      ['the train coming', (t) => t.speed > 0.5 && t.headTile?.x === CROSS_X - 4],
+    ];
+    for (const [why, there] of cases) {
+      const { w, train } = crossingWorld('adler', 4242);
+      const ctx = playContext(w);
+      const before = new SimStep(w);
+      for (let i = 0; i < 4000 && !there(train!); i++) w.clock.run((gdt) => before.run(gdt, ctx));
+      expect(there(train!), why).toBe(true);
+      expect(train!.occupancyKeys(SIDE).includes(CROSS_KEY), why).toBe(why === 'a car on it');
+      const step = new SimStep(w);
+      expect(step.crossings, why).toBeNull();
+      const tick = vi.spyOn(w.people, 'tick');
+      w.clock.run((gdt) => step.run(gdt, ctx));
+      expect(tick).toHaveBeenCalledTimes(1);
+      expect(tick.mock.calls[0][3]?.(CROSS_X, ROW) ?? false, why).toBe(true);
+    }
+  });
+});
+
+// ------------------------------------------------------------------ a train standing at the platform by the crossing
+
+/** Game seconds the train of platformWorld stands at the passenger platform each time it calls. */
+const DWELL = 60;
+/** The passenger platform of crossingWorld: the tile right east of the crossing. */
+const PLATFORM_KEY = CROSS_KEY + 1;
+
+/**
+ * crossingWorld with a train of `loco` and a hopper calling at the warehouse, the passenger station
+ * and the quarry in turn, loading nothing. Back west from the warehouse it stands DWELL game seconds
+ * at the platform right east of the crossing, with no way set; it is then given its way on west
+ * over the crossing to the quarry, and runs back east over it and past the platform.
+ */
+function platformWorld(loco: string, seed: number) {
+  const { w } = crossingWorld(null, seed);
+  const id = (def: string) => w.builder.stations.find((s) => s.def.id === def)!.id;
+  expect(w.builder.platformTiles(w.builder.stationById(id('station'))!)).toEqual([
+    { x: CROSS_X + 1, y: ROW },
+  ]);
+  const stop = (stationId: number, dwell: number): StopPlan => ({
+    ...defaultStop(stationId),
+    load: 'none',
+    unload: 'none',
+    waitFull: false,
+    minDwell: dwell,
+    maxDwell: dwell + 3,
+  });
+  const l = w.inventory.add(loco, 0);
+  const hopper = w.inventory.add('wood_hopper', 0);
+  const train = w.fleet.create(
+    [l.uid],
+    [hopper.uid],
+    [stop(id('warehouse'), 0), stop(id('station'), DWELL), stop(id('quarry'), 0)],
+  );
+  if (typeof train === 'string') throw new Error(`fleet.create: ${train}`);
+  return { w, train };
+}
+
+describe('a train standing at the platform by a level crossing, ten game minutes in the step', () => {
+  // Core's rule for #404 on the trains of trains.ts: a train with no way set closes only the tiles
+  // under its cars, so walkers go on crossing in front of one standing at a platform. Given its way
+  // over the crossing, it closes it from the next step; a walker already on the crossing then is the
+  // gap, and the only walker a car may meet there.
+  // slow: 12 000 steps of a whole world with a train and some forty walkers
+  it.each([
+    ['adler', 4242],
+    ['f7', 7],
+    ['mav375', 99],
+  ] as const)(
+    '%s, seed %i: closes exactly as the rule says, walkers cross in front of the standing train, and a car meets only a walker on the crossing before the train had its way over it',
+    (loco, seed) => {
+      const { w, train } = platformWorld(loco, seed);
+      const step = new SimStep(w);
+      const ctx = playContext(w);
+      // the crossing as the walkers of the step found it
+      const tick = w.people.tick.bind(w.people);
+      let found: boolean | null = null;
+      vi.spyOn(w.people, 'tick').mockImplementation((gdt, population, day, closed) => {
+        found = closed?.(CROSS_X, ROW) ?? false;
+        tick(gdt, population, day, closed);
+      });
+      const hold = Math.round(CROSSING_HOLD / SIM_STEP);
+      // the last step that, as the step read the train before it, had a car on the crossing or the
+      // train with its way set over it, within its reach
+      let busy = -Infinity;
+      // each walker on the crossing, and whether the train had its way over it as it set foot there
+      const onIt = new Map<number, boolean>();
+      const out = { inFront: 0, setOff: 0, underIt: 0 };
+      let overBefore = false;
+      for (let i = 0; i < Math.round(600 / SIM_STEP); i++) {
+        // the oracle reads the train through this file's own table of states, not ROUTED_STATES
+        const over = ROUTED[train.state]
+          ? train.pathAhead().find((s) => s.x === CROSS_X && s.y === ROW)
+          : undefined;
+        const cars = train.occupancyKeys(SIDE);
+        if (cars.includes(CROSS_KEY)) busy = i;
+        const reach = crossingReach(train, CROSSING_HORIZON) + CROSSING_LEAD;
+        if (over && over.arc - train.pathProgress <= reach) busy = i;
+        const standing = train.state === 'loading' && cars.includes(PLATFORM_KEY);
+        // given its way over the crossing in the last step, where it stood at the platform: the
+        // walkers on the crossing then had set foot on it before
+        if (over && !overBefore && train.speed === 0 && cars.includes(PLATFORM_KEY)) {
+          out.setOff++;
+          out.underIt += onIt.size;
+        }
+        overBefore = !!over;
+        found = null;
+        w.clock.run((gdt) => step.run(gdt, ctx));
+        for (const t of w.fleet.trains) {
+          t.coal = t.coalCap;
+          t.water = t.waterCap;
+          t.oil = t.oilCap;
+        }
+        // closed exactly from a busy step to CROSSING_HOLD after it, and so never for the train
+        // standing at the platform with no way set
+        expect(found, `seed ${seed}, step ${i}, ${train.state}`).toBe(i - busy <= hold);
+        const car = train.occupancyKeys(SIDE).includes(CROSS_KEY);
+        for (const p of w.people.persons) {
+          if (!onTile(p, CROSS_X, ROW)) {
+            onIt.delete(p.id);
+            continue;
+          }
+          if (!onIt.has(p.id)) {
+            onIt.set(p.id, !!over);
+            if (standing) out.inFront++;
+          }
+          // a car on it: only a walker that set foot on it before the train had its way over it
+          if (car)
+            expect(
+              onIt.get(p.id),
+              `seed ${seed}: walker ${p.id} on the crossing with a car, step ${i}`,
+            ).toBe(false);
+        }
+      }
+      // not vacuous: walkers crossed in front of the train standing at the platform, it set off
+      // over the crossing from there again and again, and walkers were on the crossing as it did
+      // (24 to 58 walkers in front, 3 or 4 departures and 3 to 24 walkers on it as it set off, with
+      // 3 to 23 of them met by a car, over these three runs)
+      expect(out.inFront).toBeGreaterThanOrEqual(15);
+      expect(out.setOff).toBeGreaterThanOrEqual(3);
+      expect(out.underIt).toBeGreaterThanOrEqual(1);
+    },
+    120_000,
+  );
 });
 
 // ------------------------------------------------------------------ walkers set down by a crossing
