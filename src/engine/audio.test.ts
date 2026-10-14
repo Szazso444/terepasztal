@@ -580,6 +580,28 @@ describe('audio in a browser', () => {
         expect(playing()).toEqual([]);
       });
 
+      it('plays the track at the volumes the settings set after it was fetched', async () => {
+        const { bus, music } = await musicBus({});
+        bus.hold();
+        bus.preload(); // fetched at the bus's own volumes, before the boot reads the settings
+        // Game.init applies the settings while the bus is still locked, so they reach no track
+        bus.master = 0.5;
+        bus.music = 0.4;
+        bus.applyMusic();
+        bus.startMusic();
+        const el = music()[0];
+        const heard: number[] = [];
+        const play = el.play.getMockImplementation()!;
+        el.play.mockImplementation(() => {
+          heard.push(el.volume);
+          return play();
+        });
+        bus.tryUnlock();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(heard.length).toBeGreaterThan(0);
+        for (const volume of heard) expect(volume).toBeCloseTo(0.2, 12);
+      });
+
       it('changes nothing where the browser refuses: the first gesture starts the music', async () => {
         const { bus, win, ctx, music, playing } = await musicBus({});
         const beds = vi.spyOn(ctx, 'createBufferSource');

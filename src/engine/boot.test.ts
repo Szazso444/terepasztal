@@ -10,7 +10,7 @@ import {
   type BootStage,
 } from './boot';
 import type { Intent } from '../intent';
-import { forAll, shrinkArray } from '../testing/property';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import type { Rng } from './rng';
 
 type Weights = Record<BootStage, number>;
@@ -99,6 +99,29 @@ describe('BootProgress', () => {
     );
   });
 
+  it("is each stage's best report, held to 0..1, weighted as declared, whatever the order", () => {
+    forAll(
+      (rng) => ({ w: weights(rng), rs: reports(rng) }),
+      ({ w, rs }) => {
+        const p = new BootProgress(w);
+        for (const [stage, f] of rs) p.report(stage, f);
+        // the slow obvious sum over the whole history: a stage counts at the most it reported,
+        // a value above 1 as 1, and NaN or anything below 0 as nothing
+        let all = 0;
+        let done = 0;
+        for (const stage of BOOT_STAGES) {
+          const best = rs
+            .filter(([s, f]) => s === stage && f > 0)
+            .reduce((most, [, f]) => Math.max(most, Math.min(1, f)), 0);
+          all += w[stage];
+          done += w[stage] * best;
+        }
+        expect(p.total).toBeCloseTo(done / all, 12);
+      },
+      { shrink: shrinkReports },
+    );
+  });
+
   it('declares a share above 0 for every stage, so each one moves the bar', () => {
     for (const stage of BOOT_STAGES) expect(STAGE_WEIGHTS[stage]).toBeGreaterThan(0);
     // the default progress is weighted by the declared shares
@@ -114,6 +137,32 @@ describe('groundFraction', () => {
     expect(groundFraction({ done: 0, total: 4 })).toBe(0);
     expect(groundFraction({ done: 3, total: 4 })).toBe(0.75);
     expect(groundFraction({ done: 4, total: 4 })).toBe(1);
+  });
+
+  it('stays within 0..1, is 1 exactly when every chunk in view is painted, and never goes back', () => {
+    type View = { done: number; total: number };
+    forAll(
+      (rng): View => {
+        const total = rng.int(0, 64);
+        // a count the landscape should not give, more painted than in view, now and then
+        return { done: rng.int(0, total + (rng.chance(0.2) ? 8 : 0)), total };
+      },
+      ({ done, total }) => {
+        const f = groundFraction({ done, total });
+        expect(f).toBeGreaterThanOrEqual(0);
+        expect(f).toBeLessThanOrEqual(1);
+        expect(f === 1).toBe(done >= total);
+        if (done <= total && total > 0) expect(f).toBe(done / total);
+        // one more chunk painted never takes the bar back
+        expect(groundFraction({ done: done + 1, total })).toBeGreaterThanOrEqual(f);
+      },
+      {
+        *shrink({ done, total }: View): Iterable<View> {
+          for (const t of shrinkInt(total)) yield { done: Math.min(done, t + 8), total: t };
+          for (const d of shrinkInt(done)) yield { done: d, total };
+        },
+      },
+    );
   });
 });
 
