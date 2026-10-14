@@ -1006,8 +1006,8 @@ describe('the drainage', () => {
 // lower tile index) instead of keeping a heap, the clearance reads the whole 5 x 5 square instead
 // of a sliding count, the main inflow is searched over every tile, the rivers run on down the
 // flood until nothing changes, the way a removed side stream ran on goes until nothing changes,
-// and the levels are the greatest every rule allows, pulled from upstream instead of pushed down. On small planes drawn from a seed, drain gives the same water
-// tile for tile.
+// and the levels are the greatest every rule allows, pulled from upstream instead of pushed down.
+// On small planes drawn from a seed, drain gives the same water tile for tile.
 
 /** Rain grows from this many level steps above the sea, RAIN_PER_STEP a step (the demo's 0.55). */
 const RAIN_FROM = (0.55 - 0.24) / 0.11;
@@ -1505,6 +1505,41 @@ function riverWithoutSource(
   return undefined;
 }
 
+/**
+ * Where the drainage `d` of `p` joins a side stream below SIDE_STREAM_FLOW to a river: the first
+ * river tile that runs into a river tile whose fullest inflow (of any kind) is another, gathering
+ * less than SIDE_STREAM_FLOW, and is no lake's outlet. Else how many river tiles join a river as
+ * a side stream. `s` gives the flood, the rain and the lakes' outlets.
+ */
+function sideStreamJoins(p: DrainInput, d: ReturnType<typeof drain>, s: Slow): number | string {
+  const n = d.kind.length;
+  // a lake's outlet runs down the flood until it meets a river or other water
+  const outlet = new Uint8Array(n);
+  for (const l of s.lakes)
+    for (let i = l.outlet; i >= 0 && d.kind[i] === WaterKind.River && !s.channel[i];) {
+      outlet[i] = 1;
+      i = s.down[i];
+    }
+  let joins = 0;
+  for (let i = 0; i < n; i++) {
+    const j = s.down[i];
+    if (d.kind[i] !== WaterKind.River || s.wide[i] >= 0 || j < 0) continue;
+    if (d.kind[j] !== WaterKind.River) continue;
+    let main = -1;
+    for (let k = 0; k < n; k++)
+      if (s.down[k] === j && (main < 0 || s.acc[k] > s.acc[main])) main = k;
+    if (main === i) continue;
+    joins++;
+    if (s.acc[i] < SIDE_STREAM_FLOW && !outlet[i])
+      return (
+        `a side stream of ${s.acc[i].toFixed(1)} at (${i % p.w}, ${Math.floor(i / p.w)}) ` +
+        `joins the river at (${j % p.w}, ${Math.floor(j / p.w)}), ` +
+        `whose fullest inflow gathers ${s.acc[main].toFixed(1)}`
+      );
+  }
+  return joins;
+}
+
 /** Throws at the first tile where `a` and `b` differ, naming it on the plane `w` tiles wide. */
 function samePlane(name: string, a: ArrayLike<number>, b: ArrayLike<number>, w: number) {
   for (let i = 0; i < a.length; i++)
@@ -1839,31 +1874,9 @@ describe('the drainage, against a slow one', () => {
       (c) => {
         const p = planeInput(c);
         const d = drain(p);
-        const s = slowDrain(p);
-        const n = d.kind.length;
-        // a lake's outlet runs down the flood until it meets a river or other water
-        const outlet = new Uint8Array(n);
-        for (const l of s.lakes)
-          for (let i = l.outlet; i >= 0 && d.kind[i] === WaterKind.River && !s.channel[i];) {
-            outlet[i] = 1;
-            i = s.down[i];
-          }
-        for (let i = 0; i < n; i++) {
-          const j = s.down[i];
-          if (d.kind[i] !== WaterKind.River || s.wide[i] >= 0 || j < 0) continue;
-          if (d.kind[j] !== WaterKind.River) continue;
-          let main = -1;
-          for (let k = 0; k < n; k++)
-            if (s.down[k] === j && (main < 0 || s.acc[k] > s.acc[main])) main = k;
-          if (main === i) continue;
-          joins++;
-          if (s.acc[i] < SIDE_STREAM_FLOW && !outlet[i])
-            throw new Error(
-              `a side stream of ${s.acc[i].toFixed(1)} at (${i % p.w}, ${Math.floor(i / p.w)}) ` +
-                `joins the river at (${j % p.w}, ${Math.floor(j / p.w)}), ` +
-                `whose fullest inflow gathers ${s.acc[main].toFixed(1)}`,
-            );
-        }
+        const joined = sideStreamJoins(p, d, slowDrain(p));
+        if (typeof joined === 'string') throw new Error(joined);
+        joins += joined;
       },
       {
         seeds: Array.from({ length: 2000 }, (_, i) => i + 1),
@@ -1955,4 +1968,451 @@ describe('the drainage, against a slow one', () => {
     expect(d.kind[at(mid, 0)]).toBe(WaterKind.River);
     expect(riverWithoutSource(p, d, s)).toBeUndefined();
   });
+});
+
+// The one-channel rule against what the issue says it removes, read off the flood and the rain
+// rather than drain's steps. Before the rule a river runs on every land tile where one rises and on
+// every land tile a river runs on over to water (the issue's "no river ends on dry land"). The rule
+// takes a river that rises from its own rain away only as a side stream (not the fullest inflow of
+// the river it joins, under SIDE_STREAM_FLOW) or above one. The way a removed stream ran on goes
+// with it, as far as no other river runs in and no river rises of its own, and riverWithoutSource
+// holds what is left to that. Such a run-on goes only where a stream runs into it beside a fuller
+// dry slope, on ground where no river rises of its own (high ground short of HIGH_RIVER_FLOW, or
+// kept out); random planes almost never draw that, so the rule is also checked on mazes, whose
+// corridors gather any rain.
+
+/** The rivers before the one-channel rule, read off the flood and the rain of `s` alone. */
+interface Before {
+  /** the core's tiles, in index order */
+  tiles: number[];
+  /** whether a river rises on tile `i`: the rain its height needs, and not kept out */
+  rises: (i: number) => boolean;
+  /** whether tile `i` is a lake or the sea */
+  water: (i: number) => boolean;
+  /** 1 on every land tile where a river rises or a river runs on over */
+  river: Uint8Array;
+  /** each tile's fullest inflow of any kind, ties to the lower index; -1 for none */
+  fullest: Int32Array;
+  /**
+   * whether a side stream lies on the way down from river tile `i` while a river runs there: a
+   * tile that is not the fullest inflow of the river it joins and gathers less than
+   * SIDE_STREAM_FLOW, which the rule takes away with every river above it
+   */
+  side: (i: number) => boolean;
+}
+
+function riversBefore(p: DrainInput, d: ReturnType<typeof drain>, s: Slow): Before {
+  const { w, core } = p;
+  const n = d.kind.length;
+  const tiles: number[] = [];
+  for (let y = core.y0; y < core.y1; y++)
+    for (let x = core.x0; x < core.x1; x++) tiles.push(y * w + x);
+  const water = (i: number) => d.kind[i] === WaterKind.Lake || d.kind[i] === WaterKind.Sea;
+  const rises = (i: number) =>
+    !(p.mark[i] & KEEP_OUT) &&
+    s.acc[i] >= (levelSteps(p, p.elev[i]) >= 2 ? HIGH_RIVER_FLOW : RIVER_FLOW);
+  const river = new Uint8Array(n);
+  for (const i of tiles) if (!water(i) && rises(i)) river[i] = 1;
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const i of tiles) {
+      const j = s.down[i];
+      if (river[i] && j >= 0 && !water(j) && !river[j]) {
+        river[j] = 1;
+        grew = true;
+      }
+    }
+  }
+  const fullest = new Int32Array(n).fill(-1);
+  for (const i of tiles) {
+    const j = s.down[i];
+    if (j >= 0 && (fullest[j] < 0 || s.acc[i] > s.acc[fullest[j]])) fullest[j] = i;
+  }
+  const side = (i: number) => {
+    for (let c = i; c >= 0 && river[c]; c = s.down[c]) {
+      const j = s.down[c];
+      if (j >= 0 && river[j] && fullest[j] !== c && s.acc[c] < SIDE_STREAM_FLOW) return true;
+    }
+    return false;
+  };
+  return { tiles, rises, water, river, fullest, side };
+}
+
+/**
+ * Where the drainage `d` of `p` takes away a river the rule keeps: the first core tile where a
+ * river rises that is no river, though no side stream lies on its way down while a river runs
+ * there before the rule. Undefined where there is none. `s` gives the flood and the rain.
+ */
+function riverTakenWithoutCause(
+  p: DrainInput,
+  d: ReturnType<typeof drain>,
+  s: Slow,
+): string | undefined {
+  const at = (i: number) => `(${i % p.w}, ${Math.floor(i / p.w)})`;
+  const b = riversBefore(p, d, s);
+  for (const i of b.tiles) {
+    if (!b.river[i] || !b.rises(i) || d.kind[i] === WaterKind.River || b.side(i)) continue;
+    const j = s.down[i];
+    const into = j >= 0 && b.water(j) ? (d.kind[j] === WaterKind.Sea ? 'the sea' : 'a lake') : '';
+    return (
+      `the river rising at ${at(i)} with ${s.acc[i].toFixed(1)} tiles of rain is gone, though no ` +
+      `side stream lies on its way down${into ? `; it ran into ${into} at ${at(j)}` : ''}`
+    );
+  }
+  return undefined;
+}
+
+/** A maze of corridors that drain as a tree: the numbers that shape it, so a failing one shrinks. */
+interface MazeCase {
+  seed: number;
+  /** maze cells a side: the core is 2 * cells + 1 tiles wide and two more high */
+  cells: number;
+  low: boolean;
+  /** what the tree drains into: off the core's edge, the sea, or a lake of the ground's water */
+  mouth: 'edge' | 'sea' | 'lake';
+  /** the chance the maze grows on from its newest cell rather than any: long streams, or many */
+  wind: number;
+  /** the chance a cell's height class differs from that of the cell it drains into */
+  flip: number;
+  /**
+   * where the tree allows, a stream that rises meets a fuller dry slope on ground where no river
+   * rises (high, or kept out), some of it the ground's own water; and runs on kept out to where a
+   * river of its own runs in, or up to 8 tiles more like it
+   */
+  plant: boolean;
+  /** shares of corridor tiles kept out (no rain, no river rises) and of the ground's own water */
+  kept: number;
+  ponds: number;
+}
+
+const genMaze = (rng: Rng): MazeCase => ({
+  seed: rng.int(0, 2 ** 31 - 1),
+  cells: rng.int(2, 16),
+  low: rng.chance(0.3),
+  mouth: rng.pick(['edge', 'sea', 'lake'] as const),
+  wind: rng.range(0, 1),
+  flip: rng.range(0.05, 0.5),
+  plant: rng.chance(0.7),
+  kept: rng.chance(0.5) ? rng.range(0, 0.15) : 0,
+  ponds: rng.chance(0.4) ? rng.range(0, 0.15) : 0,
+});
+
+/** Smaller mazes first, then without each feature. */
+function* shrinkMaze(c: MazeCase): Iterable<MazeCase> {
+  for (const cells of shrinkInt(c.cells, 2)) yield { ...c, cells };
+  if (c.kept) yield { ...c, kept: 0 };
+  if (c.ponds) yield { ...c, ponds: 0 };
+  if (c.plant) yield { ...c, plant: false };
+  if (c.mouth !== 'edge') yield { ...c, mouth: 'edge' };
+  if (c.low) yield { ...c, low: false };
+}
+
+/** Height classes of a maze's corridor tiles. */
+const LOW_TILE = 0;
+const HIGH_TILE = 1;
+const HILL_TILE = 2;
+const KEPT_TILE = 3;
+
+/**
+ * The maze's planes, and the tile each corridor tile is cut from (-1 elsewhere). The cells are the
+ * core tiles at odd x and odd y from 3, cut out one from another from the middle cell of the top
+ * row, which drains down a stem of two tiles and across the core's edge (its mouth). Everything
+ * else is wall, kept out and higher than any kept-out corridor tile, so the flood reaches every
+ * corridor tile from the tile it was cut from: the drainage is the maze. A tile is low (level step
+ * 0.2 to 1.8), high (2 to 3), hill (3 and up, Hill ground) or kept out and low, mostly as the tile
+ * below it is. A mouth on land is low, high or kept out; a lake is the mouth and the stem, low
+ * ground around it.
+ */
+function mazeInput(c: MazeCase): { p: DrainInput; from: Int32Array } {
+  const rng = new Rng(c.seed);
+  const r = LAKE_CLEARANCE;
+  const cw = 2 * c.cells + 1;
+  const ch = cw + 2;
+  const w = cw + 2 * r;
+  const h = ch + 2 * r;
+  const scale = c.low ? LOW_SCALE : DEFAULT_SCALE;
+  const elevAt = (step: number) => {
+    const { waterLevel: sea, hillLevel: hill, rockLevel: rock } = scale;
+    return step < 3 ? sea + (step * (hill - sea)) / 3 : hill + (step - 3) * (rock - hill);
+  };
+  const p: DrainInput = {
+    ...scale,
+    w,
+    h,
+    core: { x0: r, y0: r, x1: r + cw, y1: r + ch },
+    elev: new Float32Array(w * h).fill(elevAt(1.95)),
+    ground: new Uint8Array(w * h).fill(Terrain.Grass),
+    land: new Uint8Array(w * h).fill(Terrain.Grass),
+    sea: new Uint8Array(w * h),
+    mark: new Uint8Array(w * h),
+  };
+  const tile = (x: number, y: number) => (y + r) * w + x + r;
+  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) p.mark[tile(x, y)] = KEEP_OUT;
+  // the corridor tiles in the order they are cut, each with the tile it is cut from and its class
+  const a0 = Math.floor(c.cells / 2);
+  const mx = 2 * a0 + 1;
+  const from = new Int32Array(w * h).fill(-1);
+  const cls = new Int8Array(w * h);
+  const pond = new Uint8Array(w * h);
+  const planted = new Uint8Array(w * h);
+  const order: number[] = [];
+  const cut = (x: number, y: number, to: number, k: number) => {
+    const i = tile(x, y);
+    from[i] = to;
+    cls[i] = k;
+    order.push(i);
+    return i;
+  };
+  const cellTile = (cell: number): [number, number] => [
+    2 * (cell % c.cells) + 1,
+    2 * Math.floor(cell / c.cells) + 3,
+  ];
+  const k0 = rng.int(LOW_TILE, HILL_TILE);
+  for (const y of [1, 2, 3]) cut(mx, y, tile(mx, y - 1), k0);
+  const done = new Uint8Array(c.cells * c.cells);
+  done[a0] = 1;
+  const open = [a0];
+  while (open.length) {
+    const k = rng.chance(c.wind) ? open.length - 1 : rng.int(0, open.length - 1);
+    const cell = open[k];
+    const [bx, by] = cellTile(cell);
+    const free = [
+      [bx, by - 2],
+      [bx + 2, by],
+      [bx, by + 2],
+      [bx - 2, by],
+    ].filter(
+      ([x, y]) =>
+        x > 0 && y > 2 && x < cw && y < ch && !done[((y - 3) / 2) * c.cells + (x - 1) / 2],
+    );
+    if (!free.length) {
+      open.splice(k, 1);
+      continue;
+    }
+    const [ax, ay] = rng.pick(free);
+    const next = ((ay - 3) / 2) * c.cells + (ax - 1) / 2;
+    done[next] = 1;
+    open.push(next);
+    const below = cls[tile(bx, by)];
+    const v = rng.chance(c.flip) ? (below + rng.int(1, 2)) % 3 : below;
+    cut(ax, ay, cut((ax + bx) / 2, (ay + by) / 2, tile(bx, by), v), v);
+  }
+  if (c.plant) {
+    // a tile two of whose inflows gather a stream's rain and a fuller dry slope's, each cut to the
+    // rain wanted by keeping tiles out above it: on high ground where together they gather too
+    // little to rise, or on ground kept out
+    const size = new Int32Array(w * h);
+    const into = new Map<number, number[]>();
+    for (let k = order.length - 1; k >= 0; k--) {
+      const i = order[k];
+      size[i]++;
+      size[from[i]] += size[i];
+      into.set(from[i], [...(into.get(from[i]) ?? []), i]);
+    }
+    const fits: [number, number, number][] = [];
+    for (const i of order)
+      for (const a of into.get(i) ?? [])
+        for (const b of into.get(i) ?? [])
+          if (a !== b && size[a] >= RIVER_FLOW && size[b] >= RIVER_FLOW) fits.push([i, a, b]);
+    // the first tile below each that a river of its own may run into
+    const joinBelow = (j: number): [number, number] => {
+      for (let i = from[j], last = j; from[i] >= 0; last = i, i = from[i]) {
+        const q = (into.get(i) ?? []).find((t) => t !== last && size[t] >= SIDE_STREAM_FLOW);
+        if (q !== undefined) return [i, q];
+      }
+      return [-1, -1];
+    };
+    const joining = fits.filter(([j]) => joinBelow(j)[0] >= 0);
+    if (fits.length) {
+      const joins = joining.length > 0 && rng.chance(0.5);
+      const [j, a, b] = rng.pick(joins ? joining : fits);
+      const high = rng.chance(0.6);
+      const most = Math.min(size[a], size[b], high ? 65 : SIDE_STREAM_FLOW - 1);
+      const ra = rng.int(RIVER_FLOW, most);
+      const rb = rng.int(
+        ra,
+        Math.min(size[b], high ? HIGH_RIVER_FLOW - 2 - ra : HIGH_RIVER_FLOW - 1),
+      );
+      // tile i and those above it of class k, gathering `rain`: i itself and as many above it as
+      // that takes, the rest kept out
+      const fillAbove = (i: number, k: number, rain: number) => {
+        const tiles = [i];
+        for (let t = 0; t < tiles.length; t++) tiles.push(...(into.get(tiles[t]) ?? []));
+        const out = new Set(rng.shuffle(tiles.slice(1)).slice(0, Math.max(0, tiles.length - rain)));
+        for (const t of tiles) {
+          cls[t] = out.has(t) ? KEPT_TILE : k;
+          planted[t] = 1;
+        }
+      };
+      fillAbove(a, LOW_TILE, ra);
+      fillAbove(b, HIGH_TILE, rb);
+      cls[j] = high ? HIGH_TILE : KEPT_TILE;
+      planted[j] = 1;
+      pond[j] = rng.chance(0.3) ? 1 : 0;
+      // the way on: kept out to the first tile a river of its own runs into, or up to 8 tiles
+      const [join, q] = joins ? joinBelow(j) : [-1, -1];
+      if (q >= 0) fillAbove(q, LOW_TILE, size[q]);
+      let left = join >= 0 ? Infinity : rng.int(0, 8);
+      for (let i = from[j]; left > 0 && from[i] >= 0 && i !== join; i = from[i], left--) {
+        cls[i] = join >= 0 ? KEPT_TILE : rng.pick([HIGH_TILE, KEPT_TILE]);
+        planted[i] = 1;
+        pond[i] = rng.chance(0.2) ? 1 : 0;
+      }
+      if (join >= 0) {
+        cls[join] = KEPT_TILE;
+        planted[join] = 1;
+      }
+    }
+  }
+  const lake = c.mouth === 'lake';
+  for (const i of order) {
+    const x = (i % w) - r;
+    const y = Math.floor(i / w) - r;
+    const kept = cls[i] === KEPT_TILE || (!planted[i] && rng.chance(c.kept));
+    const low = kept || cls[i] === LOW_TILE || (lake && Math.abs(x - mx) <= 2 && y <= 4);
+    const step = low
+      ? rng.range(0.2, 1.8)
+      : cls[i] === HIGH_TILE
+        ? rng.range(2.05, 2.8)
+        : rng.range(3.05, 3.9);
+    p.elev[i] = elevAt(step);
+    p.mark[i] = kept ? KEEP_OUT : 0;
+    p.ground[i] = p.land[i] = step >= 3 ? Terrain.Hill : Terrain.Grass;
+    if (rng.chance(c.ponds) || pond[i]) {
+      p.ground[i] = Terrain.Water;
+      p.land[i] = step >= 3 ? Terrain.Hill : Terrain.Sand;
+    }
+  }
+  // the mouth, on the core's top edge
+  for (const y of lake ? [0, 1, 2] : [0]) {
+    const i = tile(mx, y);
+    const k = c.mouth === 'edge' ? rng.int(0, 2) : -1;
+    p.elev[i] = elevAt(k < 0 ? -0.5 : k === 1 ? 2.5 : 0.5);
+    p.mark[i] = k === 2 ? KEEP_OUT : 0;
+    p.ground[i] = k < 0 ? Terrain.Water : Terrain.Grass;
+    p.land[i] = k < 0 ? Terrain.Sand : Terrain.Grass;
+    p.sea[i] = c.mouth === 'sea' ? 1 : 0;
+  }
+  return { p, from };
+}
+
+describe('the one-channel rule', () => {
+  const MAZE_SEEDS = Array.from({ length: 300 }, (_, i) => i + 1);
+
+  it('draws mazes of every kind the property claims', () => {
+    // The generator, checked: without this a narrowed generator would pass the property vacuously.
+    const cases = MAZE_SEEDS.map((s) => genMaze(new Rng(s)));
+    for (const mouth of ['edge', 'sea', 'lake'] as const)
+      expect(cases.some((c) => c.mouth === mouth)).toBe(true);
+    expect(cases.some((c) => c.cells <= 3)).toBe(true);
+    expect(cases.some((c) => c.cells >= 14)).toBe(true);
+    expect(cases.some((c) => c.low) && cases.some((c) => !c.low)).toBe(true);
+    expect(cases.some((c) => c.wind > 0.8) && cases.some((c) => c.wind < 0.2)).toBe(true);
+    expect(cases.some((c) => c.kept > 0.1) && cases.some((c) => c.ponds > 0.1)).toBe(true);
+    expect(cases.some((c) => c.kept === 0 && c.ponds === 0)).toBe(true);
+    expect(cases.some((c) => c.plant) && cases.some((c) => !c.plant)).toBe(true);
+  });
+
+  // 300 mazes up to 33 tiles a side, each drained once and slowly: about 3 s alone, and a failure
+  // shrinks through up to 300 more
+  it('takes away only side streams and the way they ran on, as the slow drainage does', () => {
+    const seen = {
+      // rivers taken away as side streams or above one
+      side: 0,
+      // tiles a removed stream ran on over, taken away with it: two or more in a row, on high
+      // ground, on kept-out ground, on the ground's own water (Dry again)
+      runOn: 0,
+      longRunOn: 0,
+      highRunOn: 0,
+      keptRunOn: 0,
+      dryRunOn: 0,
+      // where such a removal stops: rain enough for a river of its own, or another river runs in
+      toRain: 0,
+      toJoin: 0,
+      joins: 0,
+      lake: 0,
+    };
+    forAll(
+      genMaze,
+      (c) => {
+        const { p, from } = mazeInput(c);
+        const d = drain(p);
+        const s = slowDrain(p);
+        // the maze drains as it was cut
+        for (let i = 0; i < from.length; i++)
+          if (from[i] >= 0 && s.down[i] !== from[i])
+            throw new Error(`the flood takes (${i % p.w}, ${Math.floor(i / p.w)}) another way`);
+        samePlane('kind', d.kind, s.kind, p.w);
+        samePlane('water level', d.surface, s.surface, p.w);
+        samePlane('flow', d.flow, s.flow, p.w);
+        samePlane('side', d.dir, s.dir, p.w);
+        expect(d.exits).toEqual(s.exits);
+        const broken = riverWithoutSource(p, d, s) ?? riverTakenWithoutCause(p, d, s);
+        if (broken) throw new Error(broken);
+        // a tile taken back is the land it was: the ground's own water Dry, other ground Land
+        for (let i = 0; i < d.kind.length; i++)
+          if (
+            p.ground[i] === Terrain.Water
+              ? d.kind[i] === WaterKind.Land
+              : d.kind[i] === WaterKind.Dry
+          )
+            throw new Error(
+              `water kind ${d.kind[i]} on terrain ${p.ground[i]} at (${i % p.w}, ${Math.floor(i / p.w)})`,
+            );
+        const joined = sideStreamJoins(p, d, s);
+        if (typeof joined === 'string') throw new Error(joined);
+        // what the case met
+        seen.joins += joined;
+        seen.lake += d.kind.some((k) => k === WaterKind.Lake) ? 1 : 0;
+        const b = riversBefore(p, d, s);
+        const gone = (i: number) => b.river[i] === 1 && d.kind[i] !== WaterKind.River;
+        for (const i of b.tiles) {
+          if (!gone(i)) continue;
+          if (b.side(i)) {
+            seen.side++;
+            continue;
+          }
+          seen.runOn++;
+          const j = s.down[i];
+          if (j >= 0 && gone(j) && !b.rises(j)) seen.longRunOn++;
+          if (p.mark[i] & KEEP_OUT) seen.keptRunOn++;
+          else seen.highRunOn++;
+          if (p.ground[i] === Terrain.Water) seen.dryRunOn++;
+          if (j >= 0 && d.kind[j] === WaterKind.River) seen[b.rises(j) ? 'toRain' : 'toJoin']++;
+        }
+      },
+      { seeds: MAZE_SEEDS, shrink: shrinkMaze, shrinkBudget: 300 },
+    );
+    for (const [k, v] of Object.entries(seen)) expect(v, k).toBeGreaterThan(0);
+  }, 60_000);
+
+  // 2000 planes, each drained once and slowly: about 2 s alone
+  it('takes a river rising from its own rain away only as a side stream, on any small plane', () => {
+    // "A side stream ... is removed, and the removal carries upstream. Rivers into a lake or the
+    // sea are never removed." A river that gathered the rain it needs stays unless it, or a river
+    // below it, joins a river whose fullest inflow is another with less than SIDE_STREAM_FLOW; so
+    // one that runs into a lake or the sea stays.
+    let side = 0;
+    forAll(
+      genPlane,
+      (c) => {
+        const p = planeInput(c);
+        const d = drain(p);
+        const s = slowDrain(p);
+        const broken = riverTakenWithoutCause(p, d, s);
+        if (broken) throw new Error(broken);
+        const b = riversBefore(p, d, s);
+        side += b.tiles.filter(
+          (i) => b.river[i] && b.rises(i) && d.kind[i] !== WaterKind.River,
+        ).length;
+      },
+      {
+        seeds: Array.from({ length: 2000 }, (_, i) => i + 1),
+        shrink: shrinkPlane,
+        shrinkBudget: 2000,
+      },
+    );
+    // side streams were taken away
+    expect(side).toBeGreaterThan(0);
+  }, 40_000);
 });
