@@ -393,7 +393,7 @@ export class Game implements UiHost {
   /**
    * Set by the boot while the title screen it opened is up (`main.ts`): leaving that title for the
    * game under it (its Continue) runs this once in place of starting the music, as the boot
-   * reveals the game first and starts the music with the reveal.
+   * shows its loading screen over the game first and starts the music as that finishes.
    */
   onTitleContinue: (() => void) | null = null;
   /** The panels, screens, menus and hotkeys of the game (src/ui/panels.ts), built in `init`. */
@@ -594,7 +594,7 @@ export class Game implements UiHost {
   resumeGame() {
     const begin = this.onTitleContinue;
     this.onTitleContinue = null;
-    // the title screen holds the music back; closing a menu lets it start, or the boot's reveal
+    // the title screen holds the music back; closing a menu lets it start, or the boot does
     if (begin) begin();
     else audio.startMusic();
     if (!this.paused) return;

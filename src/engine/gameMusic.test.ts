@@ -136,7 +136,7 @@ describe('Game.resumeGame and the held music', () => {
     expect(playing()).toEqual([MUSIC_TRACKS[0]]);
   });
 
-  it("hands the title's Continue at boot to the boot once, which starts the music with its reveal", async () => {
+  it("hands the title's Continue at boot to the boot once, which starts the music as its loading ends", async () => {
     const { Game, audio, gesture, playing } = await rig();
     audio.hold();
     audio.preload();
@@ -145,7 +145,8 @@ describe('Game.resumeGame and the held music', () => {
     const begin = vi.fn();
     Object.assign(game, { onTitleContinue: begin });
     game.resumeGame(); // Continue on the title the boot opened
-    // the boot's reveal starts the music, not the click on Continue; the clock resumes as ever
+    // the boot's loading screen starts the music, not the click on Continue; the clock resumes
+    // as ever
     expect(begin).toHaveBeenCalledTimes(1);
     expect(playing()).toEqual([]);
     expect(setSpeed.mock.calls).toEqual([[3]]);

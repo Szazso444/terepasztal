@@ -118,19 +118,32 @@ describe('groundFraction', () => {
 });
 
 describe('bootPlan', () => {
-  const INTO_PLAY: BootPlan = { loading: true, reveal: true, clickToBegin: true };
-  const TITLE: BootPlan = { loading: true, reveal: false, clickToBegin: false };
-  const NONE: BootPlan = { loading: false, reveal: false, clickToBegin: false };
+  /** into play where the player clicked on the way: the music starts as loading finishes */
+  const INTO_PLAY: BootPlan = { loading: true, reveal: true, clickToBegin: true, music: 'loaded' };
+  /** into play on a page opened afresh: the music starts at "Click to begin" */
+  const AFRESH: BootPlan = { loading: true, reveal: true, clickToBegin: true, music: 'click' };
+  const TITLE: BootPlan = { loading: true, reveal: false, clickToBegin: false, music: null };
+  const NONE: BootPlan = { loading: false, reveal: false, clickToBegin: false, music: null };
 
-  /** Every way the boot is started, with what it shows. */
+  /**
+   * Every way the boot is started, with what it shows. The flags are what `main.ts` knows: a page
+   * that no menu reloaded into (no stored intent) is opened afresh.
+   */
   const ROUTES: [string, Intent | null, BootFlags, BootPlan][] = [
-    ['the first page load', null, {}, TITLE],
+    ['the first page load', null, { fresh: true }, TITLE],
     ['the title, from the editor or a play test', { action: 'menu' }, {}, TITLE],
     ['New game', { action: 'new', seed: 42 }, {}, INTO_PLAY],
     ['New game in the Full chain', { action: 'new', seed: 42, supply: 'full' }, {}, INTO_PLAY],
+    ['New game from an old #seed=…&new link', { action: 'new', seed: 42 }, { fresh: true }, AFRESH],
     ['Play level', { action: 'play', levelId: 'l1' }, {}, INTO_PLAY],
     ['the continue intent', { action: 'continue' }, {}, INTO_PLAY],
     ['Continue at boot', null, { continueFromTitle: true }, INTO_PLAY],
+    [
+      'Continue at boot, on the title of the first page load',
+      null,
+      { continueFromTitle: true, fresh: true },
+      INTO_PLAY,
+    ],
     [
       'Continue at boot, on the title from the editor',
       { action: 'menu' },
@@ -141,7 +154,7 @@ describe('bootPlan', () => {
     ['a save slot', { action: 'continue' }, {}, INTO_PLAY],
     // `Game.buyChunk` grows the world and reloads into it at the speed it ran
     ['the growth reload', { action: 'continue', keepSpeed: true }, {}, INTO_PLAY],
-    ['the dev reload', null, { devReload: true }, NONE],
+    ['the dev reload', null, { devReload: true, fresh: true }, NONE],
     ['the editor on a level', { action: 'edit', levelId: 'l1' }, {}, NONE],
     [
       'the editor on a new level',
@@ -157,17 +170,17 @@ describe('bootPlan', () => {
   });
 
   const INTENTS = [null, ...ROUTES.map(([, intent]) => intent)];
-  const FLAGS: BootFlags[] = [
-    {},
-    { devReload: true },
-    { continueFromTitle: true },
-    { devReload: true, continueFromTitle: true },
-  ];
+  /** Every combination of the flags. */
+  const FLAGS: BootFlags[] = [false, true].flatMap((devReload) =>
+    [false, true].flatMap((continueFromTitle) =>
+      [false, true].map((fresh) => ({ devReload, continueFromTitle, fresh })),
+    ),
+  );
 
   it('shows nothing on a dev reload, whatever the intent', () => {
     for (const intent of INTENTS)
-      for (const continueFromTitle of [false, true])
-        expect(bootPlan(intent, { devReload: true, continueFromTitle })).toEqual(NONE);
+      for (const flags of FLAGS)
+        expect(bootPlan(intent, { ...flags, devReload: true })).toEqual(NONE);
   });
 
   it('asks for the click wherever the reveal plays, and reveals only what it loaded', () => {
@@ -176,6 +189,20 @@ describe('bootPlan', () => {
         const plan = bootPlan(intent, flags);
         expect(plan.clickToBegin).toBe(plan.reveal);
         if (plan.reveal) expect(plan.loading).toBe(true);
+      }
+  });
+
+  it('starts the music wherever it reveals, at the click only where nothing was clicked before', () => {
+    for (const intent of INTENTS)
+      for (const flags of FLAGS) {
+        const plan = bootPlan(intent, flags);
+        expect(plan.music !== null).toBe(plan.reveal);
+        if (!plan.reveal) continue;
+        // a menu of the page before, or the title's Continue on this one, was a click
+        const clicked = !flags.fresh || !!flags.continueFromTitle;
+        expect(plan.music).toBe(clicked ? 'loaded' : 'click');
+        // the music that waits for the click is never left without one
+        if (plan.music === 'click') expect(plan.clickToBegin).toBe(true);
       }
   });
 

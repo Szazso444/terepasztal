@@ -380,10 +380,16 @@ describe('Game.loadSlot, Game.loadSave and Game.importSave', () => {
       expect(g.host.keepStoredSave).toBe(true);
       expect(stop).toHaveBeenCalledTimes(1);
       expect(reload).toHaveBeenCalledTimes(1);
-      // the boot carries the intent out: the stored game, the loading screen, then the reveal
+      // the boot carries the intent out: the stored game, the loading screen, then the reveal,
+      // with the music as loading finishes, since the player clicked to load
       const intent = JSON.parse(session.getItem(INTENT_KEY)!) as Intent;
       expect(intent).toEqual({ action: 'continue' });
-      expect(bootPlan(intent)).toEqual({ loading: true, reveal: true, clickToBegin: true });
+      expect(bootPlan(intent)).toEqual({
+        loading: true,
+        reveal: true,
+        clickToBegin: true,
+        music: 'loaded',
+      });
     },
   );
 });

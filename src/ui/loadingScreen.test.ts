@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const unlock = vi.hoisted(() => vi.fn());
-vi.mock('../engine/audio', () => ({ audio: { unlock }, sfx: vi.fn() }));
+const sfx = vi.hoisted(() => vi.fn());
+vi.mock('../engine/audio', () => ({ audio: { unlock }, sfx }));
 
 import { SKIP_GUARD_MS } from './loadingMath';
 import { LoadingScreen } from './loadingScreen';
@@ -94,10 +95,16 @@ describe('the loading screen and the audio bus', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     unlock.mockReset();
+    sfx.mockReset();
     log = [];
     unlock.mockImplementation(() => log.push('unlock'));
+    sfx.mockImplementation((name: string) => log.push(`sfx ${name}`));
     browser = fakeBrowser();
-    screen = new LoadingScreen({ random: () => 0, onRevealStart: () => log.push('reveal start') });
+    screen = new LoadingScreen({
+      random: () => 0,
+      onLoaded: () => log.push('loaded'),
+      onRevealStart: () => log.push('reveal start'),
+    });
   });
 
   afterEach(() => {
@@ -113,24 +120,52 @@ describe('the loading screen and the audio bus', () => {
   /** A click on the screen, as the browser delivers it to the root. */
   const click = () => (screen.root as unknown as FakeElement).click();
 
+  describe('loading finished', () => {
+    it('fires onLoaded once, at done(), before "Click to begin" is shown', async () => {
+      screen.setProgress(0.5);
+      expect(log).toEqual([]);
+      screen.done();
+      expect(log).toEqual(['loaded']);
+      screen.done();
+      ready();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(log).toEqual(['loaded']);
+    });
+
+    it('fires it from waitForClick when the boot did not call done()', async () => {
+      ready();
+      expect(log).toEqual(['loaded']);
+      click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(log).toEqual(['loaded', 'unlock', 'sfx ui.click', 'begun']);
+    });
+
+    it('fires a hook set after the screen was made', () => {
+      const late = new LoadingScreen({ random: () => 0 });
+      late.onLoaded = () => log.push('late loaded');
+      late.done();
+      expect(log).toEqual(['late loaded']);
+    });
+  });
+
   describe('begin', () => {
     // the keys stop at the screen, so the bus's own listener never hears them
     it.each(['Enter', ' '])(
-      'unlocks the bus before %j begins, which the key cannot',
+      'unlocks the bus, then plays the click sound, before %j begins, which the key cannot',
       async (key) => {
         ready();
         expect(browser.press(key)).toBe(false);
         expect(browser.reachedAudio).toBe(false);
         await vi.advanceTimersByTimeAsync(0);
-        expect(log).toEqual(['unlock', 'begun']);
+        expect(log).toEqual(['loaded', 'unlock', 'sfx ui.click', 'begun']);
       },
     );
 
-    it('unlocks the bus before a click begins', async () => {
+    it('unlocks the bus, then plays the click sound, before a click begins', async () => {
       ready();
       click();
       await vi.advanceTimersByTimeAsync(0);
-      expect(log).toEqual(['unlock', 'begun']);
+      expect(log).toEqual(['loaded', 'unlock', 'sfx ui.click', 'begun']);
     });
 
     it('leaves the bus alone for a key that does not begin, and does not begin', async () => {
@@ -139,7 +174,8 @@ describe('the loading screen and the audio bus', () => {
         expect(browser.press(key)).toBe(false);
       await vi.advanceTimersByTimeAsync(0);
       expect(unlock).not.toHaveBeenCalled();
-      expect(log).toEqual([]);
+      expect(sfx).not.toHaveBeenCalled();
+      expect(log).toEqual(['loaded']);
     });
 
     it('leaves a chord to the browser: no begin, no unlock, still seen by the page', async () => {
@@ -147,16 +183,26 @@ describe('the loading screen and the audio bus', () => {
       expect(browser.press('Enter', { ctrlKey: true })).toBe(true);
       await vi.advanceTimersByTimeAsync(0);
       expect(unlock).not.toHaveBeenCalled();
-      expect(log).toEqual([]);
+      expect(sfx).not.toHaveBeenCalled();
+      expect(log).toEqual(['loaded']);
     });
 
-    it('unlocks once for a key held down, not once per repeat', async () => {
+    it('unlocks and clicks once for a key held down, not once per repeat', async () => {
       ready();
       browser.press('Enter');
       browser.press('Enter', { repeat: true });
       browser.press('Enter', { repeat: true });
       await vi.advanceTimersByTimeAsync(0);
       expect(unlock).toHaveBeenCalledTimes(1);
+      expect(sfx).toHaveBeenCalledTimes(1);
+    });
+
+    it('clicks once for a second click that lands before the reveal', async () => {
+      ready();
+      click();
+      click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(sfx).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -176,11 +222,12 @@ describe('the loading screen and the audio bus', () => {
       expect(log).toEqual(['reveal start', 'unlock']);
     });
 
-    it('unlocks the bus for a click that skips it', async () => {
+    it('unlocks the bus for a click that skips it, which is no begin and plays no click', async () => {
       void screen.reveal();
       await vi.advanceTimersByTimeAsync(SKIP_GUARD_MS);
       click();
       expect(log).toEqual(['reveal start', 'unlock']);
+      expect(sfx).not.toHaveBeenCalled();
     });
 
     it('hands the keys back to the game once it is gone', async () => {

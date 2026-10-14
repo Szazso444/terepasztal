@@ -119,17 +119,30 @@ async function groundInView(game: Game, report: (fraction: number) => void) {
 }
 
 /**
- * The end of the loading screen, its bar full: "Click to begin" where the plan asks for it, then
- * the reveal, which `begin` starts the game with as it begins. Where no reveal plays (the title),
- * the screen still leaves through its fade and iris, its only way out, and `begin` is not called.
+ * The music starts now. The player clicked on the way here, and a browser that carries that click
+ * over the reload it led to plays the music at once; one that does not plays it at the next click.
+ */
+function startMusicNow() {
+  audio.startMusic();
+  audio.tryUnlock();
+}
+
+/**
+ * The end of the loading screen, its bar full: the music as it finishes where the plan says so,
+ * "Click to begin" where the plan asks for it, then the reveal, which `begin` starts the game with
+ * as it begins. Where no reveal plays (the title), the screen still leaves through its fade and
+ * iris, its only way out, and `begin` is not called.
  */
 async function endLoading(screen: LoadingScreen, plan: BootPlan, begin: () => void) {
+  if (plan.music === 'loaded') screen.onLoaded = startMusicNow;
   screen.done();
   if (plan.clickToBegin) await screen.waitForClick();
   screen.onRevealStart = () => {
     // the click unlocks the sound; without one, the keys pressed over the screen never reached
     // the bus, so it unlocks here, once the page has had a gesture at all
     if (!plan.clickToBegin && navigator.userActivation?.hasBeenActive !== false) audio.unlock();
+    // on a page opened afresh, the click to begin is the page's first, and the music starts with it
+    if (plan.music === 'click') audio.startMusic();
     if (plan.reveal) begin();
   };
   await screen.reveal();
@@ -137,8 +150,9 @@ async function endLoading(screen: LoadingScreen, plan: BootPlan, begin: () => vo
 
 /**
  * Continue on the title the boot opened: the game under it begins as every way into play does,
- * behind the loading screen until the ground in view is painted, then "Click to begin" and the
- * reveal with the music. The stages before the ground were loaded with the title.
+ * behind the loading screen until the ground in view is painted, with the music as that finishes,
+ * then "Click to begin" and the reveal. The stages before the ground were loaded with the title,
+ * and the clock runs from the Continue on (`Game.resumeGame`).
  */
 async function continueFromTitle(game: Game) {
   const plan = bootPlan(null, { continueFromTitle: true });
@@ -148,19 +162,21 @@ async function continueFromTitle(game: Game) {
   for (const stage of BOOT_STAGES)
     if (stage !== 'ground') screen.setProgress(progress.report(stage, 1));
   await groundInView(game, (f) => screen.setProgress(progress.report('ground', f)));
-  await endLoading(screen, plan, () => audio.startMusic());
+  await endLoading(screen, plan, () => {});
 }
 
 async function boot() {
-  // no music until the reveal or the title screen's Play; its first track downloads meanwhile, so
-  // it starts at once
+  // no music until loading finishes or the title screen's Play; its first track downloads
+  // meanwhile, so it starts at once
   audio.hold();
   audio.preload();
-  const intent = takeIntent() ?? legacyHashIntent();
+  // an intent a menu stored before reloading; with none, the page was opened afresh
+  const stored = takeIntent();
+  const intent = stored ?? legacyHashIntent();
   if (location.hash) history.replaceState(null, '', location.pathname);
   // A dev-server reload carries the running game over, so an edit lands where you were.
   const resumed = takeDevSession();
-  const asked = bootPlan(intent, { devReload: resumed !== null });
+  const asked = bootPlan(intent, { devReload: resumed !== null, fresh: stored === null });
   const screen = asked.loading ? new LoadingScreen() : null;
   const progress = new BootProgress();
   const report = (stage: BootStage, fraction: number) =>
@@ -268,10 +284,7 @@ async function boot() {
     }));
   if (screen) {
     await groundInView(game, (f) => report('ground', f));
-    await endLoading(screen, plan, () => {
-      game.clock.setSpeed(speed);
-      audio.startMusic();
-    });
+    await endLoading(screen, plan, () => game.clock.setSpeed(speed));
   } else if (start !== 'menu') audio.startMusic();
   toasts.release();
 }

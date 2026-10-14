@@ -1,4 +1,4 @@
-import { audio } from '../engine/audio';
+import { audio, sfx } from '../engine/audio';
 import { STR } from '../strings';
 import { el } from './dom';
 import {
@@ -17,6 +17,8 @@ import {
 export interface LoadingScreenOptions {
   /** the source of the picture and tip picks, a number in 0..1 each call (`Math.random`) */
   random?: () => number;
+  /** see `LoadingScreen.onLoaded` */
+  onLoaded?: () => void;
   /** see `LoadingScreen.onRevealStart` */
   onRevealStart?: () => void;
 }
@@ -31,27 +33,33 @@ type Phase = 'loading' | 'ready' | 'begun' | 'reveal' | 'gone';
  *
  * The boot drives it:
  *
- *     const screen = new LoadingScreen({ onRevealStart: () => audio.startMusic() });
+ *     const screen = new LoadingScreen({ onLoaded: () => audio.startMusic() });
  *     screen.setProgress(0.4);
  *     ...
- *     screen.done();
+ *     screen.done(); // fires onLoaded
  *     await screen.waitForClick();
  *     await screen.reveal(); // resolves once the game is uncovered
  *
  * The root is `position: fixed` on `<body>`, above every layer of the game (style.css), and takes
- * the pointer for as long as it is up: the world under it sees no hover and no hotkey. Any click
- * or key skips the reveal to its end; `onRevealStart` has fired by then, since it fires as the
- * reveal begins. Under `prefers-reduced-motion` the iris is a plain fade of the black away.
+ * the pointer for as long as it is up: the world under it sees no hover and no hotkey. The click
+ * (or Enter or Space) that begins plays the click sound of the game's buttons. Any click or key
+ * skips the reveal to its end; `onRevealStart` has fired by then, since it fires as the reveal
+ * begins. Under `prefers-reduced-motion` the iris is a plain fade of the black away.
  *
  * The keys never reach the audio bus's own `keydown` listener (they stop here), so a begin or a
- * skip that is a key unlocks the bus itself, before `waitForClick` resolves: the music that
- * `onRevealStart` starts then plays at once, whichever the player used.
+ * skip that is a key unlocks the bus itself, before `waitForClick` resolves: music started by then
+ * (at `onLoaded`, or at `onRevealStart`) plays at once, whichever the player used.
  */
 export class LoadingScreen {
   readonly root: HTMLElement;
   /**
-   * Called once, as the reveal begins (the click that starts it, or `reveal()`): the music
-   * starts here, and a skip never costs it.
+   * Called once, as loading finishes: at `done()`, which `waitForClick()` calls, as the bar fills
+   * and "Click to begin" appears. Where the player clicked on the way here, the music starts here.
+   */
+  onLoaded: (() => void) | null;
+  /**
+   * Called once, as the reveal begins (the click that starts it, or `reveal()`); a skip never
+   * costs it.
    */
   onRevealStart: (() => void) | null;
 
@@ -72,6 +80,7 @@ export class LoadingScreen {
   private revealed: Promise<void> | null = null;
   private resolveReveal: (() => void) | null = null;
   private fired = false;
+  private loaded = false;
   private t0 = 0;
   private reduced = false;
   private opened = false;
@@ -80,6 +89,7 @@ export class LoadingScreen {
 
   constructor(opts: LoadingScreenOptions = {}) {
     const random = opts.random ?? Math.random;
+    this.onLoaded = opts.onLoaded ?? null;
     this.onRevealStart = opts.onRevealStart ?? null;
 
     // a picture that is missing or fails to decode leaves the plain #0e150f of the root
@@ -115,9 +125,12 @@ export class LoadingScreen {
     this.bar.setAttribute('aria-valuenow', String(Math.round(this.progress * 100)));
   }
 
-  /** Loading is over: the bar is full. */
+  /** Loading is over: the bar is full, and `onLoaded` fires the first time. */
   done() {
     this.setProgress(1);
+    if (this.loaded) return;
+    this.loaded = true;
+    this.onLoaded?.();
   }
 
   /**
@@ -169,10 +182,16 @@ export class LoadingScreen {
     this.resolveClick = null;
   }
 
+  /** The player begins: the bus unlocks, then the click sound the game's buttons play. */
+  private begin() {
+    this.unlockAudio();
+    sfx('ui.click');
+    this.beginClick();
+  }
+
   private onClick = () => {
     if (this.phase === 'ready') {
-      this.unlockAudio();
-      this.beginClick();
+      this.begin();
     } else if (this.phase === 'reveal') {
       this.unlockAudio();
       this.skip();
@@ -188,8 +207,7 @@ export class LoadingScreen {
     if (e.repeat) return;
     if (this.phase === 'ready') {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      this.unlockAudio();
-      this.beginClick();
+      this.begin();
     } else if (this.phase === 'reveal') {
       this.unlockAudio();
       this.skip();
@@ -198,8 +216,8 @@ export class LoadingScreen {
 
   /**
    * The gesture the player just made is the one browsers want before any sound: unlock the bus
-   * (idempotent) so the music that starts at `onRevealStart` is not left waiting for the next
-   * pointer or key. Only a real gesture calls it, never `reveal()` on its own.
+   * (idempotent) so the music started by then, or at `onRevealStart`, is not left waiting for the
+   * next pointer or key. Only a real gesture calls it, never `reveal()` on its own.
    */
   private unlockAudio() {
     audio.unlock();

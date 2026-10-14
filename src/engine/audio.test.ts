@@ -554,6 +554,68 @@ describe('audio in a browser', () => {
       expect(playing()).toEqual([music()[0]]);
     });
 
+    describe('tryUnlock, as loading finishes on a page a click led to', () => {
+      /** The browser refuses the element's next play: this page has had no gesture of its own. */
+      const refuse = (el: FakeAudio) =>
+        el.play.mockImplementationOnce(() =>
+          Promise.reject(new DOMException('no gesture', 'NotAllowedError')),
+        );
+
+      it('plays at once where the browser lets the page play, and unlocks the bus', async () => {
+        const { bus, ctx, music, playing } = await musicBus({});
+        const beds = vi.spyOn(ctx, 'createBufferSource');
+        bus.hold();
+        bus.preload();
+        bus.startMusic();
+        bus.tryUnlock();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(music().map((el) => el.src)).toEqual([first]);
+        expect(playing()).toEqual([music()[0]]);
+        expect(FakeAudio.overlaps).toBe(0);
+        // unlocked as a gesture would: the ambience starts and the settings reach the track
+        bus.updateAmbience(0, 0);
+        expect(beds).toHaveBeenCalled();
+        bus.music = 0;
+        bus.applyMusic();
+        expect(playing()).toEqual([]);
+      });
+
+      it('changes nothing where the browser refuses: the first gesture starts the music', async () => {
+        const { bus, win, ctx, music, playing } = await musicBus({});
+        const beds = vi.spyOn(ctx, 'createBufferSource');
+        bus.hold();
+        bus.preload();
+        bus.startMusic();
+        refuse(music()[0]);
+        bus.tryUnlock();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(playing()).toEqual([]);
+        bus.updateAmbience(0, 0);
+        expect(beds).not.toHaveBeenCalled();
+        // the refused track is kept for the gesture, not skipped as a failed file
+        win.fire('pointerdown');
+        expect(music().map((el) => el.src)).toEqual([first]);
+        expect(playing()).toEqual([music()[0]]);
+      });
+
+      it('tries nothing while the music is held, at no music volume, or once unlocked', async () => {
+        const { bus, win, music } = await musicBus({});
+        bus.hold();
+        bus.preload();
+        bus.tryUnlock(); // the title: the music stays back
+        expect(music()[0].play).not.toHaveBeenCalled();
+        bus.startMusic();
+        bus.music = 0;
+        bus.tryUnlock(); // nothing to hear, so nothing to try
+        expect(music()[0].play).not.toHaveBeenCalled();
+        bus.music = 0.5;
+        win.fire('pointerdown');
+        const plays = music()[0].play.mock.calls.length;
+        bus.tryUnlock(); // a gesture unlocked it already
+        expect(music()[0].play).toHaveBeenCalledTimes(plays);
+      });
+    });
+
     it('keeps the volumes: the track follows master and music, and music 0 pauses it', async () => {
       const { bus, win, music, playing } = await musicBus({});
       bus.hold();
