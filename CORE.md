@@ -21,6 +21,16 @@ Last audit: 2026-10-09, on `develop` at `cef6d11`.
 - **First delivery through the process.** #35, the seeded property runner in `src/testing`, went
   through issue, role agent in its own worktree, QA, pull request (#38) and merge. #36
   (pathfinding properties) and #37 (track geometry properties) are in progress.
+- **The author's machine.** The author works on the `G:` drive. The main clone is
+  `G:\DEV\Terepasztal\terepasztal`, and worktrees live under `G:\DEV\Terepasztal\worktrees`
+  (`docs/process/workspace.md`).
+  - `C:` has no room. Never give the author a command that clones, copies or fetches the repository
+    onto `C:`.
+  - Name the `G:` folder for anything the author runs. Prefer GitHub's web pages (for example,
+    deleting a branch on the Branches page) or a targeted fetch over commands that download
+    everything.
+  - Hosted sessions cannot create tags or delete branches outside their own `claude/*` names, so
+    those chores go to the author, done the way above.
 
 ## Roadmap
 
