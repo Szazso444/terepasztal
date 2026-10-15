@@ -29,6 +29,8 @@ import { structureScale, TREE_SCALE } from './assetScale';
 import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
 import { buildRelief, groundAllows } from './terrainRelief';
+import { underPaintedWater } from './terrainMaterials';
+import { WATERLINE } from './bridgeMeshes';
 import { WorldRenderer } from './worldRenderer';
 
 const SOURCE = new TextureSource({ width: 1024, height: 1024 });
@@ -1220,4 +1222,123 @@ describe('textured bridges over the painted water', () => {
     for (const x of [10, 11]) expect(second.get(at(x)), `x ${x}`).toBe(first.get(at(x)));
     expect(second.get(at(25))).not.toBe(first.get(at(25)));
   });
+
+  type Edit = { kind: 'pave' | 'water' | 'fail'; x: number; y: number };
+  /** One bridge tile of the fixture's four: a stone or timber span, or a pad, at some level. */
+  type Kind = { material: 'stone' | 'wood'; pad: boolean; level: number };
+  // a whole world per case and a fresh drawing after each edit: some 2 s alone
+  it('match a fresh drawing after any paving, terrain edit or landscape failure', () => {
+    // The cache's own invariant: whatever happens round the bridges, each tile's meshes after
+    // the next frame are the ones drawing it from scratch gives. The four bridge tiles are spans
+    // or pads of either material at any level; edits land on and round both rivers, in the
+    // bridges' reach and out of it; the landscape may fail on the way.
+    const signature = (world: WorldRenderer) =>
+      new Map(
+        [...(world['texturedParts'] as Map<number, { under: Container; near: Container }>)].map(
+          ([k, p]) => [
+            k,
+            [p.under, p.near]
+              .flatMap((c) => c.children)
+              .map((m) =>
+                m instanceof Mesh
+                  ? `${m.label} ${Array.from(m.geometry.positions).join(',')}`
+                  : `${m.label}:${(m as Graphics).context?.instructions.length}`,
+              ),
+          ],
+        ),
+      );
+    forAll(
+      (rng) => ({
+        kinds: Array.from({ length: 4 }, (): Kind => ({
+          material: rng.pick(['stone', 'wood'] as const),
+          pad: rng.chance(0.3),
+          level: rng.int(1, 3),
+        })),
+        edits: Array.from({ length: rng.int(1, 6) }, (): Edit => {
+          const kind = rng.chance(0.1) ? 'fail' : rng.chance(0.5) ? 'pave' : 'water';
+          // Mostly on the rivers and their banks, beside and in front of the bridges. Paving a
+          // bank takes the sliver of river painted over its edge, which no ground sample sees.
+          return {
+            kind,
+            x: rng.chance(0.6)
+              ? rng.pick(kind === 'pave' ? [9, 12, 23, 26] : [9, 10, 11, 12, 23, 24, 25, 26])
+              : rng.int(7, 28),
+            y: rng.chance(0.6) ? rng.int(5, 8) : rng.int(3, 10),
+          };
+        }),
+      }),
+      ({ kinds, edits }) => {
+        const { map, world, tiles: spans } = bridged(),
+          city = new Set<number>(),
+          tiles = spans.map((t, i) => ({
+            ...t,
+            material: kinds[i].material,
+            axis: kinds[i].pad ? null : t.axis,
+            level: kinds[i].level,
+          }));
+        world.setTexturedBridges(tiles);
+        edits.forEach((e, step) => {
+          const k = e.y * 32 + e.x;
+          if (e.kind === 'fail') Object.assign(world, { landscape: failed(map).landscape });
+          else if (e.kind === 'pave') {
+            if (!city.delete(k)) city.add(k);
+            world.setCity(new Set(city));
+          } else {
+            map.terrain[k] = map.terrain[k] === Terrain.Water ? Terrain.Grass : Terrain.Water;
+            world.retile(e.x, e.y);
+          }
+          world.animate(1 / 60);
+          const kept = signature(world);
+          // drawn from scratch: every tile's cached parts dropped first
+          (world['texturedParts'] as Map<number, unknown>).clear();
+          world.setTexturedBridges(tiles);
+          expect(kept, `after edit ${step + 1}`).toEqual(signature(world));
+        });
+      },
+      {
+        seeds: SEEDS.slice(0, 12),
+        shrink: function* (c) {
+          for (const edits of shrinkArray(c.edits)) yield { ...c, edits };
+        },
+      },
+    );
+  }, 60_000);
+
+  // a whole world per case: under a second alone
+  it("cut to the painter's own waterline, paving included, or per tile once it has failed", () => {
+    // The ground the world cuts its bridges to is the waterline exactly where the landscape
+    // paints water alone (underPaintedWater, the rule its painter shares), a town's paving
+    // included; with the landscape failed, exactly on the water tiles the per-tile ground shows.
+    forAll(
+      (rng) => ({
+        paved: Array.from({ length: rng.int(0, 8) }, () => rng.int(4, 9) * 32 + rng.int(8, 27)),
+        points: Array.from({ length: 200 }, () => [rng.range(8, 28), rng.range(4, 10)]),
+      }),
+      ({ paved, points }) => {
+        const { map, world } = bridged(),
+          city = new Set(paved),
+          ground = (x: number, y: number) =>
+            (world['bridgeGround'] as (x: number, y: number) => number).call(world, x, y);
+        world.setCity(new Set(city));
+        for (const [x, y] of points)
+          expect(ground(x, y), `painted at ${x},${y}`).toBe(
+            underPaintedWater(map, x, y, (k) => city.has(k)) ? WATERLINE : -world.elevationOf(x, y),
+          );
+        Object.assign(world, { landscape: failed(map).landscape });
+        for (const [x, y] of points)
+          expect(ground(x, y), `per tile at ${x},${y}`).toBe(
+            map.terrain[Math.round(y) * 32 + Math.round(x)] === Terrain.Water
+              ? WATERLINE
+              : -world.elevationOf(x, y),
+          );
+      },
+      {
+        seeds: SEEDS.slice(0, 20),
+        shrink: function* (c) {
+          for (const points of shrinkArray(c.points)) if (points.length) yield { ...c, points };
+          for (const paved of shrinkArray(c.paved)) yield { ...c, paved };
+        },
+      },
+    );
+  }, 20_000);
 });

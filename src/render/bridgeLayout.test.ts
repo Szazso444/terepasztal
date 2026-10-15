@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Graphics, MeshSimple, Texture, type Container } from 'pixi.js';
+import { Graphics, MeshSimple, Texture, type Container, type FillInstruction } from 'pixi.js';
 import {
   bridgeJoins,
   bridgePlan,
@@ -19,6 +19,8 @@ import {
   type BridgeSurfaces,
 } from './bridgeMeshes';
 import { paintedWater, underPaintedWater } from './terrainMaterials';
+import type { Rng } from '../engine/rng';
+import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { lineSpans, railLevel, type RailBed } from '../world/railProfile';
@@ -630,6 +632,489 @@ describe('bridge meshes over the painted waterline', () => {
     m.terrain[(site.y + 1) * W + site.x] = Terrain.Grass;
     expect(draw()).not.toBe(first[1]);
   });
+
+  // Properties over seeded cases (docs/process/verification.md): a few bridge tiles round (8, 8),
+  // spans along either axis and pads, stone and timber, over water and land, level and graded,
+  // with any edges open, over the waterline with banks raised in it (slivers included).
+
+  /** A bank over the water: a map rect and its plane, `z` px up at (x0, y0), rising gx, gy per tile. */
+  interface Bank {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+    z: number;
+    gx: number;
+    gy: number;
+  }
+  type Placed = Site & { level: number };
+  interface Crossing {
+    sites: Placed[];
+    banks: Bank[];
+    /** How far above the highest ground the bound given to the tiles stands. */
+    slack: number;
+  }
+  const bankAt = (b: Bank, x: number, y: number) => b.z + b.gx * (x - b.x0) + b.gy * (y - b.y0);
+  const onBank = (b: Bank, x: number, y: number) =>
+    x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1;
+  /** The waterline, and over it each bank's plane where it stands highest. */
+  const bankGround = (banks: Bank[]) => (x: number, y: number) => {
+    let z = WATERLINE;
+    for (const b of banks) if (onBank(b, x, y)) z = Math.max(z, bankAt(b, x, y));
+    return z;
+  };
+  /** The highest the ground stands in GROUND_BOX of a tile: a plane peaks at a corner. */
+  const bankTop = (banks: Bank[], s: Site) => {
+    const [low, high] = GROUND_BOX;
+    let top = WATERLINE;
+    for (const b of banks) {
+      const xs = [Math.max(s.x + low, b.x0), Math.min(s.x + high, b.x1)],
+        ys = [Math.max(s.y + low, b.y0), Math.min(s.y + high, b.y1)];
+      if (xs[0] > xs[1] || ys[0] > ys[1]) continue;
+      for (const x of xs) for (const y of ys) top = Math.max(top, bankAt(b, x, y));
+    }
+    return top;
+  };
+  /**
+   * A crossing whose banks are at least `thinnest` tile across, down to slivers by default. Half
+   * the crossings are tiles alike, which merge into one bridge and stand supports on their seams.
+   * Banks lie anywhere round the tiles, in front of one of them, or start on a tile edge.
+   */
+  function crossing(rng: Rng, thinnest = 0.02): Crossing {
+    const kind = () => ({
+        material: rng.pick(['stone', 'wood'] as const),
+        water: rng.chance(0.6),
+        level: rng.int(1, 3),
+        z: rng.pick([0, 0, 8, 20, 40]),
+        pad: rng.chance(0.3),
+        axis: rng.pick([0, 1] as const),
+        grade: rng.chance(0.5) ? 0 : rng.range(-12, 12),
+      }),
+      alike = rng.chance(0.5) ? kind() : undefined,
+      sites: Placed[] = [],
+      taken = new Set<number>();
+    for (let n = rng.int(1, 4); n > 0; n--) {
+      const x = rng.int(7, 9),
+        y = rng.int(7, 9);
+      if (taken.has(y * W + x)) continue;
+      taken.add(y * W + x);
+      const k = alike ?? kind(),
+        more = {
+          material: k.material,
+          water: k.water,
+          open: [0, 1, 2, 3].map(() => rng.chance(0.5)),
+        };
+      if (k.pad) sites.push({ ...pad(x, y, k.z, more), level: k.level });
+      else {
+        const deck = DECK_SAMPLES.map((l) => Math.max(k.water ? 0 : -40, k.z + k.grade * l));
+        sites.push({ ...span(x, y, k.axis, k.z, { ...more, deck }), level: k.level });
+      }
+    }
+    const size = () => (rng.chance(0.3) ? rng.range(thinnest, 0.1) : rng.range(0.1, 2));
+    const banks = Array.from({ length: rng.int(0, 5) }, (): Bank => {
+      const place = rng.int(0, 3),
+        // a small bank right in front of a support's foot hides part of a face, not all of it
+        w = place === 3 ? rng.range(thinnest, 0.06) : size(),
+        h = place === 3 ? rng.range(thinnest, 0.06) : size();
+      let x0 = rng.range(6, 11),
+        y0 = rng.range(6, 11);
+      if (place === 1 || place === 3) {
+        // across the line of sight from a point of a tile (by a support's foot), `d` tiles ahead
+        const s = rng.pick(sites),
+          d = place === 3 ? rng.range(0.05, 0.6) : rng.range(0.05, 1.2),
+          at = () =>
+            place === 3
+              ? rng.pick([-0.4, -0.38, 0.38, 0.4]) + rng.range(-0.06, 0.06)
+              : rng.range(-0.6, 0.6);
+        x0 = s.x + at() + d - w / 2;
+        y0 = s.y + at() + d - h / 2;
+      } else if (place === 2) {
+        if (rng.chance(0.5)) x0 = Math.floor(x0) + 0.5;
+        else y0 = Math.floor(y0) + 0.5;
+      }
+      return {
+        x0,
+        y0,
+        x1: x0 + w,
+        y1: y0 + h,
+        z: rng.range(-24, 30),
+        gx: rng.range(-10, 10),
+        gy: rng.range(-10, 10),
+      };
+    });
+    return { sites, banks, slack: rng.chance(0.5) ? 0 : rng.range(0, 20) };
+  }
+  function* shrinkCrossing(c: Crossing): Iterable<Crossing> {
+    for (const sites of shrinkArray(c.sites)) if (sites.length) yield { ...c, sites };
+    for (const banks of shrinkArray(c.banks)) yield { ...c, banks };
+    if (c.slack) yield { ...c, slack: 0 };
+  }
+  /** Each tile of a crossing as bridgeTileMeshes takes it, cut to `ground`. */
+  const tilesOf = (c: Crossing, ground: (x: number, y: number) => number) =>
+    plans(c.sites).map((t) => ({
+      tile: { ...t.site, water: !!t.site.water, level: (t.site as Placed).level, ground },
+      plan: t.plan,
+    }));
+  /** How tall (px) the tallest strip of a mesh of walls stands: each quad is a top edge over its foot. */
+  const tallest = (m: MeshSimple) => {
+    const v = m.geometry.positions;
+    let most = 0;
+    for (let q = 0; q < v.length; q += 8)
+      most = Math.max(most, v[q + 7] - v[q + 1], v[q + 5] - v[q + 3]);
+    return most;
+  };
+  /**
+   * The support meshes under a tile, each as its label and corners, and how many bands of water
+   * fade it draws. A timber bent's cap beam, 2.5 px tall, by label only: its foot is the deck's,
+   * which a bound may spare from being looked along, so its faces may be split otherwise.
+   */
+  const supportsOf = (under: Container) => {
+    const fades = under.children
+      .filter((g): g is Graphics => g instanceof Graphics)
+      .map((g) => g.context.instructions.length);
+    return [
+      ...meshes(under)
+        .filter((m) => m.label.startsWith('support:'))
+        .map((m) =>
+          tallest(m) <= 2.5 + 1e-3
+            ? m.label
+            : `${m.label} ${Array.from(m.geometry.positions).join(',')}`,
+        ),
+      `fades ${fades.join(',')}`,
+    ];
+  };
+
+  it('reads the ground only inside GROUND_BOX of each tile, whatever its parts', () => {
+    // A tile's ground bound and its mesh key (worldRenderer.ts) cover GROUND_BOX: a face read
+    // outside it could be cut to ground neither of them saw.
+    const [low, high] = GROUND_BOX;
+    forAll(
+      crossing,
+      (c) => {
+        const ground = bankGround(c.banks);
+        for (const { tile, plan } of tilesOf(c, ground))
+          for (const top of [undefined, bankTop(c.banks, tile) + c.slack]) {
+            const outside: string[] = [];
+            bridgeTileMeshes(
+              {
+                ...tile,
+                top,
+                ground: (x, y) => {
+                  const dx = x - tile.x,
+                    dy = y - tile.y;
+                  if (dx < low || dx > high || dy < low || dy > high)
+                    outside.push(`${dx.toFixed(4)},${dy.toFixed(4)}`);
+                  return ground(x, y);
+                },
+              },
+              plan,
+              surfaces,
+            );
+            expect(outside.slice(0, 5), `tile ${tile.x},${tile.y}, top ${top}`).toEqual([]);
+          }
+      },
+      { seeds: SEEDS.slice(0, 40), shrink: shrinkCrossing },
+    );
+  });
+
+  /** A half-pixel point (2 sx, 2 sy) as one number; the bridges here lie well inside 4096 px. */
+  const HALF = 16384,
+    halfPoint = (hx: number, hy: number) => (hy + HALF) * 2 * HALF + hx + HALF;
+  /**
+   * The half-pixel points the faces of a tile's parts cover, by label. Tops are left out: they
+   * follow the deck alone, never the ground.
+   */
+  const coverage = (parts: { under: Container; near: Container }) => {
+    const out = new Map<string, Set<number>>();
+    for (const m of [...meshes(parts.under), ...meshes(parts.near)]) {
+      if (m.label.endsWith(':top')) continue;
+      const at = out.get(m.label) ?? new Set<number>();
+      out.set(m.label, at);
+      for (const [[ax, ay], [bx, by], [cx, cy]] of triangles(m)) {
+        const d = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+        if (Math.abs(d) < 1e-9) continue;
+        for (let hy = Math.ceil(Math.min(ay, by, cy) * 2); hy <= Math.max(ay, by, cy) * 2; hy++)
+          for (let hx = Math.ceil(Math.min(ax, bx, cx) * 2); hx <= Math.max(ax, bx, cx) * 2; hx++) {
+            const sx = hx / 2,
+              sy = hy / 2,
+              u = ((bx - sx) * (cy - sy) - (by - sy) * (cx - sx)) / d,
+              v = ((cx - sx) * (ay - sy) - (cy - sy) * (ax - sx)) / d;
+            if (u > 1e-6 && v > 1e-6 && 1 - u - v > 1e-6) at.add(halfPoint(hx, hy));
+          }
+      }
+    }
+    return out;
+  };
+  /** Points of `a` with no point of `b` at or next to them (half a pixel), by label. */
+  const beyond = (a: Map<string, Set<number>>, b: Map<string, Set<number>>) => {
+    const out: string[] = [];
+    for (const [label, points] of a) {
+      const other = b.get(label) ?? new Set<number>();
+      for (const p of points) {
+        const hx = (p % (2 * HALF)) - HALF,
+          hy = Math.floor(p / (2 * HALF)) - HALF;
+        if (
+          ![-1, 0, 1].some((dx) => [-1, 0, 1].some((dy) => other.has(halfPoint(hx + dx, hy + dy))))
+        )
+          out.push(`${label} at ${hx / 2},${hy / 2}`);
+      }
+    }
+    return out;
+  };
+
+  // 40 crossings, each tile drawn twice and rasterised to the half pixel: under a second alone
+  it('cuts every part as it would with no ground bound, given one the ground stays under', () => {
+    // The bound only spares looking along ground that cannot rise high enough to hide anything.
+    // Every pier, arch wall, post and brace, and every water fade, comes out the same to the
+    // vertex; every face (decks, parapets and cap beams too, whose splits may differ where a
+    // bound spares a look) covers the same pixels to within half a pixel.
+    forAll(
+      crossing,
+      (c) => {
+        const ground = bankGround(c.banks);
+        for (const { tile, plan } of tilesOf(c, ground)) {
+          const top = bankTop(c.banks, tile) + c.slack,
+            free = bridgeTileMeshes(tile, plan, surfaces),
+            bound = bridgeTileMeshes({ ...tile, top }, plan, surfaces),
+            where = `tile ${tile.x},${tile.y}, top ${top}`;
+          expect(supportsOf(bound.under), where).toEqual(supportsOf(free.under));
+          const [a, b] = [coverage(free), coverage(bound)];
+          expect(beyond(a, b).slice(0, 5), `${where}: drawn only without the bound`).toEqual([]);
+          expect(beyond(b, a).slice(0, 5), `${where}: drawn only with the bound`).toEqual([]);
+        }
+      },
+      { seeds: SEEDS.slice(0, 40), shrink: shrinkCrossing },
+    );
+  }, 30_000);
+
+  it("paints the water a tile's faces read from the tiles of WATER_TILES alone, on any map", () => {
+    // What the mesh key holds (worldRenderer.ts, bridgeWaterKey): on any map, bridge tile and
+    // paving, no tile outside WATER_TILES, by its water or its paving, changes the painted water
+    // anywhere in GROUND_BOX. Maps from 3 tiles, so bridge tiles sit at every edge.
+    const [low, high] = GROUND_BOX,
+      [from, to] = WATER_TILES;
+    forAll(
+      (rng) => {
+        const w = rng.int(3, 9),
+          h = rng.int(3, 9),
+          density = rng.range(0.2, 0.9),
+          x = rng.int(0, w - 1),
+          y = rng.int(0, h - 1),
+          water: number[] = [],
+          paved: number[] = [],
+          flips: { tile: number; paving: boolean }[] = [];
+        for (let k = 0; k < w * h; k++) {
+          if (rng.chance(density)) water.push(k);
+          if (rng.chance(0.15)) paved.push(k);
+          const tx = k % w,
+            ty = Math.floor(k / w);
+          if (tx < x + from || tx > x + to || ty < y + from || ty > y + to)
+            flips.push({ tile: k, paving: rng.chance(0.3) });
+        }
+        return {
+          w,
+          h,
+          originX: rng.int(-4000, 4000),
+          originY: rng.int(-4000, 4000),
+          x,
+          y,
+          water,
+          paved,
+          flips: rng.shuffle(flips).slice(0, 6),
+          // inside the box, and on its edges, where the reach is longest
+          points: Array.from({ length: 48 }, (_, i) => {
+            const edge = rng.pick([low, high]),
+              along = rng.range(low, high),
+              [dx, dy] =
+                i < 24 ? [rng.range(low, high), along] : i % 2 ? [edge, along] : [along, edge];
+            return [x + dx, y + dy];
+          }),
+        };
+      },
+      (c) => {
+        const m = emptyMap(1, c.w, c.h, Terrain.Grass, c.originX, c.originY),
+          paved = new Set(c.paved);
+        for (const k of c.water) m.terrain[k] = Terrain.Water;
+        const read = () =>
+          c.points
+            .map(([x, y]) => (underPaintedWater(m, x, y, (k) => paved.has(k)) ? 1 : 0))
+            .join('');
+        const before = read();
+        for (const { tile, paving } of c.flips) {
+          const was = m.terrain[tile];
+          if (paving) paved[paved.has(tile) ? 'delete' : 'add'](tile);
+          else m.terrain[tile] = was === Terrain.Water ? Terrain.Grass : Terrain.Water;
+          expect(read(), `${paving ? 'paving' : 'water'} of tile ${tile}`).toBe(before);
+          if (paving) paved[paved.has(tile) ? 'delete' : 'add'](tile);
+          else m.terrain[tile] = was;
+        }
+      },
+      {
+        shrink: function* (c) {
+          for (const flips of shrinkArray(c.flips)) if (flips.length) yield { ...c, flips };
+          for (const points of shrinkArray(c.points)) if (points.length) yield { ...c, points };
+        },
+      },
+    );
+  });
+
+  /** Spans across the water a row (axis 1) or column (axis 0) meets first, open at both ends. */
+  const acrossWater = (
+    m: ReturnType<typeof emptyMap>,
+    axis: 0 | 1,
+    at: number,
+    more: Partial<Site>,
+  ) => {
+    const sites: Placed[] = [];
+    for (let l = 0; l < W; l++) {
+      const [x, y] = axis === 1 ? [l, at] : [at, l];
+      if (m.terrain[y * W + x] !== Terrain.Water) {
+        if (sites.length) break;
+        continue;
+      }
+      if (sites.length === 3) break;
+      const open = axis === 1 ? [false, true, false, true] : [true, false, true, false];
+      sites.push({ ...span(x, y, axis, 0, { water: true, open, ...more }), level: 1 });
+    }
+    return sites;
+  };
+
+  // A whole crossing's meshes, rasterised to the quarter pixel, per case: some 2 s alone
+  it('shows nothing under a deck over painted bank, across any lake', () => {
+    // Lakes of a few overlapping rects with ponds and islets round them, a town paving some of
+    // their shore; a crossing along either axis over the first water a row or column meets, its
+    // deck at the ground's level. Everything under such a deck stands below the ground, so a
+    // quarter pixel of it shows over the ground point in front of it that it hides (on a deck
+    // raised over the ground, a part above it rightly hides the ground behind it instead).
+    forAll(
+      (rng) => {
+        const water: number[] = [],
+          paved: number[] = [];
+        for (let n = rng.int(1, 3); n > 0; n--) {
+          const x0 = rng.int(4, 10),
+            y0 = rng.int(4, 10),
+            x1 = x0 + rng.int(0, 4),
+            y1 = y0 + rng.int(0, 4);
+          for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) water.push(y * W + x);
+        }
+        for (let n = rng.int(0, 6); n > 0; n--) {
+          const k = rng.int(3, 15) * W + rng.int(3, 15);
+          if (rng.chance(0.5)) water.push(k);
+          else paved.push(k);
+        }
+        const axis = rng.pick([0, 1] as const),
+          // a row or column with water in it
+          k = rng.pick(water);
+        return {
+          water,
+          paved,
+          originX: rng.int(-4000, 4000),
+          originY: rng.int(-4000, 4000),
+          axis,
+          at: axis === 1 ? Math.floor(k / W) : k % W,
+          material: rng.pick(['stone', 'wood'] as const),
+        };
+      },
+      (c) => {
+        const m = emptyMap(4242, W, W, Terrain.Grass, c.originX, c.originY),
+          paved = new Set(c.paved),
+          town = (k: number) => paved.has(k);
+        for (const k of c.water) m.terrain[k] = Terrain.Water;
+        // a shrunk lake may leave the row dry: nothing to cross
+        const sites = acrossWater(m, c.axis, c.at, { material: c.material });
+        if (!sites.length) return;
+        const ground = (x: number, y: number) => (underPaintedWater(m, x, y, town) ? WATERLINE : 0),
+          tiles = plans(sites).map((t) =>
+            bridgeTileMeshes(
+              { ...t.site, water: true, level: 1, ground, top: 0 },
+              t.plan,
+              surfaces,
+            ),
+          ),
+          shown = shownUnder(tiles),
+          onBank = shown
+            .filter(
+              (p) => paintedWater(m, p.x, p.y, town(Math.round(p.y) * W + Math.round(p.x))) === 0,
+            )
+            .map((p) => `${p.label} at ${p.x.toFixed(3)},${p.y.toFixed(3)}`);
+        expect(onBank.slice(0, 5), `${onBank.length} quarter pixels over bank`).toEqual([]);
+        return shown.length > 0;
+      },
+      {
+        seeds: SEEDS.slice(0, 16),
+        shrink: function* (c) {
+          for (const water of shrinkArray(c.water)) yield { ...c, water };
+          for (const paved of shrinkArray(c.paved)) yield { ...c, paved };
+        },
+      },
+    );
+  }, 60_000);
+
+  // 40 crossings, each rasterised to the quarter pixel: about a second alone
+  it('fades a foot into the water only on the faces it shows, whatever bank stands in front', () => {
+    // Every quarter pixel of a water fade lies on the support faces drawn there, or within half
+    // a pixel above their foot (the fade reaches the waterline, a face may end half a pixel over
+    // it): never over a bank in front of the foot. Timber spans and pads over water, with banks
+    // round them down to 1/32 tile across, the step the line of sight is read at: a narrower
+    // sliver can slip between the looks of the fade and not those of the face.
+    forAll(
+      (rng) => {
+        const c = crossing(rng, 1 / 32);
+        for (const s of c.sites) {
+          s.water = true;
+          // over water a deck never sinks below the ground (worldRenderer.ts, deckProfile)
+          s.deck = s.deck.map((z) => Math.max(0, z));
+          if (s.axis !== null) s.material = 'wood';
+        }
+        return c;
+      },
+      (c) => {
+        const ground = bankGround(c.banks);
+        for (const { tile, plan } of tilesOf(c, ground)) {
+          const { under } = bridgeTileMeshes(tile, plan, surfaces),
+            faces = new Set<string>();
+          for (const m of meshes(under))
+            if (m.label.startsWith('support:'))
+              for (const tri of triangles(m))
+                for (const [sx, sy] of inside(tri)) faces.add(`${sx},${sy}`);
+          const off: string[] = [];
+          for (const g of under.children.filter((g): g is Graphics => g instanceof Graphics))
+            for (const ins of g.context.instructions)
+              for (const { shape } of (ins as FillInstruction).data.path.shapePath
+                .shapePrimitives) {
+                const pts = (shape as { points?: number[] }).points ?? [];
+                for (const [sx, sy] of inPolygon(pts))
+                  if (
+                    ![0, -0.25, 0.25].some((dx) =>
+                      [0, -0.25, -0.5].some((dy) => faces.has(`${sx + dx},${sy + dy}`)),
+                    )
+                  )
+                    off.push(`${sx},${sy}`);
+              }
+          expect(off.slice(0, 5), `tile ${tile.x},${tile.y}: ${off.length} off its faces`).toEqual(
+            [],
+          );
+        }
+      },
+      { seeds: SEEDS.slice(0, 40), shrink: shrinkCrossing },
+    );
+  }, 30_000);
+  /** Quarter-pixel points strictly inside a polygon (even-odd), as `inside` finds them in a triangle. */
+  function* inPolygon(pts: number[]) {
+    const xs = pts.filter((_, i) => i % 2 === 0),
+      ys = pts.filter((_, i) => i % 2 === 1);
+    for (let sy = Math.ceil(Math.min(...ys) * 4) / 4; sy <= Math.max(...ys); sy += 0.25)
+      for (let sx = Math.ceil(Math.min(...xs) * 4) / 4; sx <= Math.max(...xs); sx += 0.25) {
+        let inside = false;
+        for (let i = 0, j = xs.length - 1; i < xs.length; j = i++)
+          if (
+            ys[i] > sy !== ys[j] > sy &&
+            sx < ((xs[j] - xs[i]) * (sy - ys[i])) / (ys[j] - ys[i]) + xs[i]
+          )
+            inside = !inside;
+        if (inside) yield [sx, sy] as const;
+      }
+  }
 });
 
 it('joins are symmetric', () => {

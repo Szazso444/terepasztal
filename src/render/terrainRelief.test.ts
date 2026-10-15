@@ -11,12 +11,14 @@ import {
   hillFamily,
   groundAllows,
   RELIEF_MAX,
+  DEFAULT_RELIEF,
   TILE_SIDE_PX,
   type ReliefStyle,
 } from './terrainRelief';
 import { surfaceMaterial, surfaceColor, surfaceBlend, grassDetail } from './terrainMaterials';
 import { readFileSync } from 'node:fs';
 import { lineSpans, type RailBed } from '../world/railProfile';
+import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { PNG } from 'pngjs';
 
 /** The corner-slope style these geometry tests were written for (still selectable). */
@@ -349,4 +351,107 @@ describe('connected illustrated terrain', () => {
     for (let y = 1; y < 15; y++)
       for (let x = 1; x < 15; x++) expect(surfaceMaterial(m, x, y)).toBe((x + y) % 2 ? 5 : 0);
   });
+});
+
+describe('the top of the relief in a box, on any map', () => {
+  // A relief per case: about half a second alone
+  it('is never below the surface anywhere in the box, its corners and edges included', () => {
+    // Bridges stop looking ahead for ground that could hide them at reliefTop, so it must bound
+    // the surface everywhere in the box: on maps of hills and mountains in clumps among every
+    // other terrain, tiles built on, a rail line riding the hills, terraces (painted peaks too)
+    // or corner slopes, and boxes reaching off the map.
+    const STYLES = {
+      terraces: DEFAULT_RELIEF,
+      corners: CORNERS,
+      // the preview style whose summits rise as painted rock
+      peaks: { ...DEFAULT_RELIEF, paintedPeaks: 2 },
+    };
+    const KINDS = [
+      Terrain.Grass,
+      Terrain.Forest,
+      Terrain.Water,
+      Terrain.Rock,
+      Terrain.Sand,
+    ] as const;
+    forAll(
+      (rng) => {
+        const w = rng.int(6, 16),
+          h = rng.int(6, 16),
+          terrain = Array.from({ length: w * h }, () => rng.pick(KINDS) as Terrain),
+          built: number[] = [];
+        for (let n = rng.int(1, 6); n > 0; n--) {
+          // the first clump on the map's far edge, whose last cells a bound must cover too
+          const far = n === 1 ? rng.int(0, 1) : -1,
+            cx = far === 0 ? w - 1 : rng.int(0, w - 1),
+            cy = far === 1 ? h - 1 : rng.int(0, h - 1),
+            r = rng.int(1, 4),
+            kind = rng.chance(0.3) ? Terrain.Mountain : Terrain.Hill;
+          for (let y = Math.max(0, cy - r); y <= Math.min(h - 1, cy + r); y++)
+            for (let x = Math.max(0, cx - r); x <= Math.min(w - 1, cx + r); x++)
+              if (rng.chance(0.85)) terrain[y * w + x] = kind;
+        }
+        for (let n = rng.int(0, 4); n > 0; n--) built.push(rng.int(0, w * h - 1));
+        const rail = rng.chance(0.5) ? rng.int(0, h - 1) : -1;
+        return {
+          w,
+          h,
+          seed: rng.int(1, 9999),
+          terrain,
+          built,
+          rail,
+          style: rng.pick(['terraces', 'terraces', 'corners', 'peaks'] as const),
+          // anywhere; narrow, in the map's last column or row of cells; or along the rail line
+          boxes: Array.from({ length: 12 }, (_, i) => {
+            if (i % 3 === 1) {
+              const across = rng.range(-1, w),
+                edge = rng.range(w - 1, w - 0.5),
+                [x0, y0] = rng.chance(0.5) ? [edge, across] : [across, edge - w + h];
+              return [x0, y0, x0 + rng.range(0, 0.4), y0 + rng.range(0, 0.4)];
+            }
+            const x0 = rng.range(-1.5, w),
+              y0 = i % 3 === 2 && rail >= 0 ? rail - rng.range(0, 2) : rng.range(-1.5, h);
+            return [x0, y0, x0 + rng.range(0, 3), y0 + rng.range(0, 3)];
+          }),
+        };
+      },
+      (c) => {
+        const m = emptyMap(c.seed, c.w, c.h);
+        c.terrain.forEach((t, k) => (m.terrain[k] = t));
+        const built = new Set(c.built),
+          rails = new Map<number, RailBed>();
+        if (c.rail >= 0) {
+          const natural = buildRelief(m, built),
+            { spans } = lineSpans(
+              Array.from({ length: c.w }, (_, x) => natural.tiles![c.rail * c.w + x]),
+            );
+          for (let x = 0; x < c.w; x++)
+            rails.set(c.rail * c.w + x, { axis: 'x', spans, flat: false });
+        }
+        const r = buildRelief(m, built, STYLES[c.style], rails);
+        for (const [x0, y0, x1, y1] of c.boxes) {
+          const top = reliefTop(m, r, x0, y0, x1, y1),
+            // the corners, the middles of the edges, and a grid inside
+            at = (k: number) => [
+              x0 + ((x1 - x0) * (k % 9)) / 8,
+              y0 + ((y1 - y0) * Math.floor(k / 9)) / 8,
+            ];
+          for (let k = 0; k < 81; k++) {
+            const [px, py] = at(k);
+            expect(
+              reliefHeight(m, r, px, py),
+              `at ${px},${py} in ${[x0, y0, x1, y1]}`,
+            ).toBeLessThanOrEqual(top);
+          }
+        }
+      },
+      {
+        seeds: SEEDS.slice(0, 50),
+        shrink: function* (c) {
+          for (const boxes of shrinkArray(c.boxes)) if (boxes.length) yield { ...c, boxes };
+          if (c.rail >= 0) yield { ...c, rail: -1 };
+          for (const built of shrinkArray(c.built)) yield { ...c, built };
+        },
+      },
+    );
+  }, 20_000);
 });

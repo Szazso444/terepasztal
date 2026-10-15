@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { Rng } from '../engine/rng';
+import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { Material } from './landscapeModel';
-import { paintedWater, surfaceColor, underPaintedWater } from './terrainMaterials';
+import { paintedWater, surfaceBlend, surfaceColor, underPaintedWater } from './terrainMaterials';
 
 // The waterline bridges cut what stands in the water to (underPaintedWater) is the landscape
 // painter's own: the water's share of the blend it paints (paintedWater, which the painter weighs
@@ -138,5 +140,165 @@ describe('the painted waterline', () => {
       [-0.6, 6],
     ])
       expect(underPaintedWater(m, x, y, paved)).toBe(false);
+  });
+});
+
+// Properties of the waterline over seeded small maps (docs/process/verification.md): scattered
+// water, lone water tiles three apart (the ground round them is not coastal, so the painter's warp
+// reaches farthest there), and lakes with lone islets; towns paving tiles at random; the map's
+// origin anywhere, since the warp follows world coordinates; points off the map too.
+
+/** A small map, its water and paving by tile index, and the map points read on it. */
+interface Shore {
+  w: number;
+  h: number;
+  originX: number;
+  originY: number;
+  water: number[];
+  paved: number[];
+  points: [number, number][];
+}
+/** The land between the water: none of it is painted as water, whatever it is. */
+const LAND = [Terrain.Grass, Terrain.Forest, Terrain.Sand, Terrain.Hill];
+function shoreMap(c: Shore) {
+  const m = emptyMap(1, c.w, c.h, Terrain.Grass, c.originX, c.originY);
+  for (let i = 0; i < c.w * c.h; i++) m.terrain[i] = LAND[(i * 7) % LAND.length];
+  for (const i of c.water) m.terrain[i] = Terrain.Water;
+  return m;
+}
+function shore(rng: Rng, points = 300): Shore {
+  const w = rng.int(2, 12),
+    h = rng.int(2, 12),
+    originX = rng.int(-4000, 4000),
+    originY = rng.int(-4000, 4000),
+    style = rng.int(0, 2),
+    density = rng.range(0.1, 0.9),
+    a = rng.int(0, 2),
+    b = rng.int(0, 2),
+    water: number[] = [],
+    paved: number[] = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const lake =
+        style === 0
+          ? rng.chance(density)
+          : style === 1
+            ? x % 3 === a && y % 3 === b
+            : rng.chance(0.9);
+      if (lake) water.push(y * w + x);
+      if (rng.chance(0.15)) paved.push(y * w + x);
+    }
+  return {
+    w,
+    h,
+    originX,
+    originY,
+    water,
+    paved,
+    points: Array.from({ length: points }, () => [rng.range(-1, w + 0.5), rng.range(-1, h + 0.5)]),
+  };
+}
+/** Fewer points first (down to the one that fails), then fewer water tiles, then less paving. */
+function* shrinkShore(c: Shore): Iterable<Shore> {
+  for (const points of shrinkArray(c.points)) yield { ...c, points };
+  for (const water of shrinkArray(c.water)) yield { ...c, water };
+  for (const paved of shrinkArray(c.paved)) yield { ...c, paved };
+}
+/** The water's share of the painter's blend at a point, read straight off surfaceBlend. */
+function blendShare(m: ReturnType<typeof shoreMap>, x: number, y: number) {
+  const blend = new Array<number>(8);
+  surfaceBlend(m, x, y, blend);
+  let share = 0;
+  for (let k = 0; k < 4; k++) if (blend[k] === Material.Water) share += blend[k + 4];
+  return share;
+}
+/**
+ * The waterline with nothing skipped: on the map, on a tile no town paves, the blend water alone
+ * (to its float error) at the point and half a world pixel lower on screen.
+ */
+function slowWaterline(m: ReturnType<typeof shoreMap>, paved: Set<number>, x: number, y: number) {
+  const alone = (u: number, v: number) =>
+    u >= -0.5 &&
+    v >= -0.5 &&
+    u < m.w - 0.5 &&
+    v < m.h - 0.5 &&
+    !paved.has(Math.round(v) * m.w + Math.round(u)) &&
+    blendShare(m, u, v) >= 1 - 1e-6;
+  return alone(x, y) && alone(x + 1 / 64, y + 1 / 64);
+}
+/** Every point of a case reads as the slow waterline does. */
+function agrees(c: Shore) {
+  const m = shoreMap(c),
+    paved = new Set(c.paved);
+  for (const [x, y] of c.points)
+    expect(
+      underPaintedWater(m, x, y, (k) => paved.has(k)),
+      `at ${x},${y}`,
+    ).toBe(slowWaterline(m, paved, x, y));
+}
+
+describe('the painted waterline, on any shore', () => {
+  it('agrees with the blend read at every point, however the rule skips it', () => {
+    forAll((rng) => shore(rng), agrees, { shrink: shrinkShore });
+  });
+
+  // 1500 points on each of 50 maps, read twice each: about a second alone
+  it('agrees with the blend read as far from a lone water tile as its water is painted', () => {
+    // Away from the coast the painter's warp moves a point up to 0.4 tile, so the water of a lone
+    // tile is painted alone up to some 0.8 tile from its centre, where the ground round it is not
+    // coastal. Points in the ring 0.7 to 0.85 tile out are where the rule's reach must hold.
+    forAll(
+      (rng) => {
+        const w = rng.int(4, 12),
+          h = rng.int(4, 12),
+          a = rng.int(0, 2),
+          b = rng.int(0, 2),
+          c: Shore = {
+            w,
+            h,
+            originX: rng.int(-4000, 4000),
+            originY: rng.int(-4000, 4000),
+            water: [],
+            paved: [],
+            points: [],
+          };
+        for (let y = b; y < h; y += 3) for (let x = a; x < w; x += 3) c.water.push(y * w + x);
+        for (let n = 0; n < 1500; n++) {
+          const k = rng.pick(c.water),
+            out = rng.range(0.7, 0.85) * (rng.chance(0.5) ? 1 : -1),
+            across = rng.range(-0.85, 0.85),
+            [dx, dy] = rng.chance(0.5) ? [out, across] : [across, out];
+          c.points.push([(k % w) + dx, Math.floor(k / w) + dy]);
+        }
+        return c;
+      },
+      agrees,
+      { seeds: SEEDS.slice(0, 50), shrink: shrinkShore },
+    );
+  }, 20_000);
+
+  it('is the water part of the very blend it leaves for the painter, and none where paved', () => {
+    // The painter weighs its colours by the blend paintedWater leaves, so the share must be read
+    // off that blend, paved or not.
+    forAll(
+      (rng) => shore(rng, 50),
+      (c) => {
+        const m = shoreMap(c);
+        for (const [x, y] of c.points)
+          for (const paved of [false, true]) {
+            const left = new Array<number>(8).fill(NaN),
+              own = new Array<number>(8),
+              share = paintedWater(m, x, y, paved, left);
+            surfaceBlend(m, x, y, own);
+            expect(left, `blend at ${x},${y}`).toEqual(own);
+            let water = 0;
+            for (let k = 0; k < 4; k++) if (left[k] === Material.Water) water += left[k + 4];
+            expect(share, `share at ${x},${y}, paved ${paved}`).toBe(paved ? 0 : water);
+            expect(share).toBeGreaterThanOrEqual(0);
+            expect(share).toBeLessThanOrEqual(1 + 1e-12);
+          }
+      },
+      { shrink: shrinkShore },
+    );
   });
 });
