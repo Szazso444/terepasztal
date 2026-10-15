@@ -411,3 +411,70 @@ The rejected alternatives and zoom comparisons are kept in
 [building-production.md](building-production.md) describes how the 548 building pictures are
 made: the tools, the artist agent's brief, what the check enforces, what the image generator
 does wrong, and how to run the work again or extend it.
+
+## Building ground data
+
+Every building frame of the `structures` atlas, as the game builds it (the generators in
+`src/art`, with their placeholder turns `_r1` to `_r3`, and `public/assets/structures.*` laid
+over them), ships with data on where it stands on the ground: one file,
+`src/art/buildingGround.json`, written by `tools/building-ground.mjs` from the frames' own pixels
+and read through `src/art/buildingGround.ts` (`groundOf(frameKey)`; pure data, no DOM). Nothing
+in it is typed in, and the tool changes no pixel, size or anchor. It is for the renderer's yards,
+door paths, plinths and contact shadows, for walkers at doors (#406) and for roads that end at
+doors (#408, #409).
+
+```
+node tools/building-ground.mjs            # write the file, print the findings (--all lists every one)
+node tools/building-ground.mjs --check    # say whether the file is what the frames give now
+```
+
+Run it again after changing a generator, `public/assets/structures.*` or a place's `doors` in
+`src/data`. A run with nothing changed writes the same bytes. `tools/building-ground.test.mjs`
+fails when a building frame has no entry, when a corner of an entry's foot lies more than 1 world
+px off the frame's opaque pixels, when a door disagrees with `doorsOf` (`src/sim/doors.ts`), and
+when the file is not what the tool writes now.
+
+An entry, keyed by frame (`structures/farm_1`, `structures/depot_r1_r3`). Every point is in
+**world px from the frame's anchor** (texels over the atlas's `resolution`, x right, y down),
+before the renderer's scale reference (`scaleReference`, `src/render/assetScale.ts`): a frame
+drawn at scale k puts a point at k times these numbers. The anchor is the footprint's centre on
+the ground. A tile is `[dx, dy]` from the footprint's corner tile (lowest x and y), the way
+`doorsOf` counts them.
+
+- `source`: `generated` (src/art) or `illustrated` (the shipped file pair); `rot`: the rotation
+  the frame shows, 0 to 3 (a depot's `_r<axis>` frame is rotation 0 or 1, `_r2`/`_r3` turn it).
+- `footprint`: the tiles it covers at that rotation.
+- `foot`: where its walls meet the ground, the corners n, e, s, w (far, right, near, left) of a
+  parallelogram on the game's 2:1 ground lines. The camera sees the S wall (w to s) and the E
+  wall (s to e). Each corner lies on the picture's opaque pixels, within 1 world px.
+- `fit`: `walls` when a straight base was found (the two lines that most of the wall columns
+  stand on, columns counting for the height of their run, so that a bench, a lamp post or ground
+  paint in front is not taken for a wall); `outline` when no base is long enough and the foot is
+  the silhouette's lowest stand (machinery, heaps, a trestle). Treat `outline` as approximate.
+- `baked`: world px squared of opaque pixels below the foot between its outer corners: ground
+  painted into the picture (a yard, a pond, a field) or what stands in front of the walls. 0 for
+  a clean cut-out. A yard drawn by the renderer would double a baked one.
+- `front`: the wall the building's front faces (S, W, N, E for r0 to r3), its two foot corners in
+  tile order, and whether the camera sees it (`visible`).
+- `doors`: only the doors the picture shows. Kind, tile, side and `reach` come from `doorsOf`
+  (#406): a door of the data is the opening in the picture nearest the middle of its tile's share
+  of the wall, within 0.3 tile, on a wall the camera sees (S or E). `point` is where the opening
+  meets the ground (a step, if it has one), `width` the opening's width and `offset` its distance
+  from that middle in tiles, along the wall. A door on a wall the camera cannot see, or one the
+  picture does not show, has no entry: nothing is guessed, and a consumer fits a door by `reach`
+  and the foot's wall.
+
+The findings the tool prints are what the pictures do not give or disagree on: a door of the data
+that is not seen, a door that stands off the middle of its tile, a door-shaped opening where the
+data has no door, a foot that is `outline`, and ground baked into a picture. The illustrated
+frames are drawn as cut-outs, so ground painted into the picture is a mark of the generators.
+A door is found as a run of columns on the wall that differ from the wall's own colour at that
+height, as tall and as wide as a door and standing near the foot. That is a heuristic: a door can
+go unseen (a canopy over it, a plinth under it), and where the door is hidden the opening nearest
+the middle of its tile can be a window or an arch of a door's size.
+
+`node tools/building-ground.mjs --sheets` draws what was measured over every frame (the foot's
+walls the camera sees in magenta, the two it does not in cyan, the front wall in orange, each
+door in green, the anchor in red) into `scratchpad/building-ground/`, which is where a listed
+door and a foot are checked by eye. `scratchpad/building-ground-findings.txt` is the full list of
+findings for the pictures as they were when the data was first written (#435).
