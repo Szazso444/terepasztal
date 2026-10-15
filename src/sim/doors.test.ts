@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
-import { Terrain } from '../world/tiles';
+import { Terrain, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph, type TrackItem } from '../world/track';
 import { Rng } from '../engine/rng';
@@ -18,10 +18,19 @@ import { Builder, decorDef } from './build';
 import { buildingDef } from './buildings';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
-import { Station, resetStationIds, stationGates, stationSpan } from './stations';
+import { Station, resetStationIds, stationDef, stationGates, stationSpan } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
 import { BUILDING_ROTATIONS, rotationAxis } from './rotation';
-import { PeopleSim, SLEEP, WAKE, doorstep, type Person, type PersonState } from './people';
+import {
+  PeopleSim,
+  SLEEP,
+  WAKE,
+  WALK_MARGIN,
+  doorstep,
+  walkable,
+  type Person,
+  type PersonState,
+} from './people';
 import {
   defDoors,
   doorProblems,
@@ -31,7 +40,7 @@ import {
   type Door,
   type PlaceDef,
 } from './doors';
-import { forAll } from '../testing/property';
+import { forAll, shrinkArray } from '../testing/property';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -1050,85 +1059,90 @@ function tickDraws(
 }
 
 describe('two doors facing one tile', () => {
-  it('take a traveller from a house, a works or a service stop facing a station’s street door to it at once, where it waits and boards or walks back in, with the draws any trip takes, at every rotation of both', () => {
-    // as in 'the draws walkers take': these places gather nothing, and the station stays
-    const COST: Record<string, number> = {
-      'inside>idle': 4,
-      'inside>toStation': 1,
-      'idle>inside': 1,
-      'toStation>waiting': 1,
-      'waiting>return': 0,
-      'return>inside': 1,
-      'idle>idle': 0,
-      'waiting>waiting': 0,
-    };
-    let returned = 0;
-    let pairs = 0;
-    for (const kind of FACERS)
-      for (const stopRot of ROTATIONS)
-        for (const rot of ROTATIONS) {
-          const town = facingStation(stopRot, rot, kind);
-          if (!town) continue;
-          pairs++;
-          const { map, builder, stop, key, reach } = town;
-          const pair = `${kind} r${rot} facing the station r${stopRot}`;
-          const crossingAt = (x: number, y: number) => builder.roads.isCrossing(x, y);
-          // not vacuous: both doorsteps are the one tile
-          const doors = doorsBy(new PeopleSim(map, builder));
-          expect(doors.get(key), pair).toBeDefined();
-          expect(doorstep(map, doors.get(key)!, crossingAt), pair).toEqual(reach);
-          expect(doorstep(map, doors.get(`s${stop.id}`)!, crossingAt), pair).toEqual(reach);
-          let waited = 0;
-          let boarded = 0;
-          for (const stream of [1, 2, 3]) {
-            const sim = new PeopleSim(map, builder, new Rng(stream));
-            for (let t = 0; t < 400; t++) {
-              const label = `${pair}, stream ${stream} tick ${t}`;
-              const from = sim.toJSON().rng;
-              const was = new Map(
-                sim.persons.map((p) => [p.id, { state: p.state, timer: p.timer }]),
-              );
-              sim.tick(DT, 10, MIDDAY);
-              const cost = tickDraws(sim, was, COST, label);
-              expect(drawsBetween(from, sim.toJSON().rng, cost + 10_000), label).toBe(cost);
-              for (const p of sim.persons) {
-                const b = was.get(p.id)?.state;
-                const move = `${b}>${p.state}`;
-                const who = `${label}: walker ${p.id} of ${p.home}, ${move}`;
-                if (move === 'inside>toStation') {
-                  // only the facing place's walkers travel: the station's own never did
-                  expect(p.home, who).toBe(key);
-                  expect(p.stationId, who).toBe(stop.id);
-                  expect(p.path, who).toEqual([reach]);
-                  expect(at(p), who).toEqual(reach);
+  // slow: 400 steps of ten walkers, three times over, for each of 36 pairs of places
+  it(
+    'take a traveller from a house, a works or a service stop facing a station’s street door to it at once, where it waits and boards or walks back in, with the draws any trip takes, at every rotation of both',
+    { timeout: 60_000 },
+    () => {
+      // as in 'the draws walkers take': these places gather nothing, and the station stays
+      const COST: Record<string, number> = {
+        'inside>idle': 4,
+        'inside>toStation': 1,
+        'idle>inside': 1,
+        'toStation>waiting': 1,
+        'waiting>return': 0,
+        'return>inside': 1,
+        'idle>idle': 0,
+        'waiting>waiting': 0,
+      };
+      let returned = 0;
+      let pairs = 0;
+      for (const kind of FACERS)
+        for (const stopRot of ROTATIONS)
+          for (const rot of ROTATIONS) {
+            const town = facingStation(stopRot, rot, kind);
+            if (!town) continue;
+            pairs++;
+            const { map, builder, stop, key, reach } = town;
+            const pair = `${kind} r${rot} facing the station r${stopRot}`;
+            const crossingAt = (x: number, y: number) => builder.roads.isCrossing(x, y);
+            // not vacuous: both doorsteps are the one tile
+            const doors = doorsBy(new PeopleSim(map, builder));
+            expect(doors.get(key), pair).toBeDefined();
+            expect(doorstep(map, doors.get(key)!, crossingAt), pair).toEqual(reach);
+            expect(doorstep(map, doors.get(`s${stop.id}`)!, crossingAt), pair).toEqual(reach);
+            let waited = 0;
+            let boarded = 0;
+            for (const stream of [1, 2, 3]) {
+              const sim = new PeopleSim(map, builder, new Rng(stream));
+              for (let t = 0; t < 400; t++) {
+                const label = `${pair}, stream ${stream} tick ${t}`;
+                const from = sim.toJSON().rng;
+                const was = new Map(
+                  sim.persons.map((p) => [p.id, { state: p.state, timer: p.timer }]),
+                );
+                sim.tick(DT, 10, MIDDAY);
+                const cost = tickDraws(sim, was, COST, label);
+                expect(drawsBetween(from, sim.toJSON().rng, cost + 10_000), label).toBe(cost);
+                for (const p of sim.persons) {
+                  const b = was.get(p.id)?.state;
+                  const move = `${b}>${p.state}`;
+                  const who = `${label}: walker ${p.id} of ${p.home}, ${move}`;
+                  if (move === 'inside>toStation') {
+                    // only the facing place's walkers travel: the station's own never did
+                    expect(p.home, who).toBe(key);
+                    expect(p.stationId, who).toBe(stop.id);
+                    expect(p.path, who).toEqual([reach]);
+                    expect(at(p), who).toEqual(reach);
+                  }
+                  // there at once, it arrives on its next step, and home again on the one after
+                  if (b === 'toStation') expect(p.state, who).toBe('waiting');
+                  if (b === 'return') expect(p.state, who).toBe('inside');
+                  if (move === 'toStation>waiting') {
+                    expect(at(p), who).toEqual(reach);
+                    waited++;
+                  }
+                  if (move === 'waiting>return') {
+                    expect(p.path, who).toEqual([reach]);
+                    returned++;
+                  }
                 }
-                // there at once, it arrives on its next step, and home again on the one after
-                if (b === 'toStation') expect(p.state, who).toBe('waiting');
-                if (b === 'return') expect(p.state, who).toBe('inside');
-                if (move === 'toStation>waiting') {
-                  expect(at(p), who).toEqual(reach);
-                  waited++;
+                // a train with a coach calls now and then; one waiting the longest boards
+                if (t % 90 === 89 && sim.waitingAt(stop.id).length) {
+                  const before = sim.persons.length;
+                  sim.board(stop, 1);
+                  boarded += before - sim.persons.length;
                 }
-                if (move === 'waiting>return') {
-                  expect(p.path, who).toEqual([reach]);
-                  returned++;
-                }
-              }
-              // a train with a coach calls now and then; one waiting the longest boards
-              if (t % 90 === 89 && sim.waitingAt(stop.id).length) {
-                const before = sim.persons.length;
-                sim.board(stop, 1);
-                boarded += before - sim.persons.length;
               }
             }
+            expect(waited, pair).toBeGreaterThan(0);
+            expect(boarded, pair).toBeGreaterThan(0);
           }
-          expect(waited, pair).toBeGreaterThan(0);
-          expect(boarded, pair).toBeGreaterThan(0);
-        }
-    // every place stood both across the tile from the station and beside it
-    expect(pairs).toBe(FACERS.length * 12);
-    expect(returned).toBeGreaterThan(20);
-  });
+      // every place stood both across the tile from the station and beside it
+      expect(pairs).toBe(FACERS.length * 12);
+      expect(returned).toBeGreaterThan(20);
+    },
+  );
 
   it('let a gatherer whose one tile to gather is its own doorstep gather there and carry it in, with the draws it takes elsewhere, at every rotation', () => {
     // as in 'the draws walkers take', with the one forest tile in reach
@@ -1181,5 +1195,548 @@ describe('two doors facing one tile', () => {
       }
       expect(gathered, `r${rot}`).toBeGreaterThan(5);
     }
+  });
+});
+
+// ------------------------------------------------------------------ a walk however short
+
+type Tile = { x: number; y: number };
+const same = (a: Tile, b: Tile) => a.x === b.x && a.y === b.y;
+/** Each step of the walk is one of the eight to a tile beside it. */
+const stepwise = (path: Tile[]) =>
+  path.every(
+    (t, i) =>
+      i === 0 || Math.max(Math.abs(t.x - path[i - 1].x), Math.abs(t.y - path[i - 1].y)) === 1,
+  );
+
+/**
+ * Whether a walk joins `from` to `to`: 8-way steps over ground a walker stands on, but for `to`,
+ * inside the box the two ends span and WALK_MARGIN round it, by a plain flood. The slow obvious
+ * oracle of `findWalk` finding a walk at all, however long or short.
+ */
+function joined(map: GameMap, from: Tile, to: Tile): boolean {
+  const x0 = Math.max(0, Math.min(from.x, to.x) - WALK_MARGIN);
+  const y0 = Math.max(0, Math.min(from.y, to.y) - WALK_MARGIN);
+  const x1 = Math.min(map.w - 1, Math.max(from.x, to.x) + WALK_MARGIN);
+  const y1 = Math.min(map.h - 1, Math.max(from.y, to.y) + WALK_MARGIN);
+  const seen = new Set([`${from.x},${from.y}`]);
+  const open = [from];
+  while (open.length) {
+    const t = open.pop()!;
+    if (same(t, to)) return true;
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const n = { x: t.x + dx, y: t.y + dy };
+        if (n.x < x0 || n.y < y0 || n.x > x1 || n.y > y1 || seen.has(`${n.x},${n.y}`)) continue;
+        if (!walkable(map, n.x, n.y) && !same(n, to)) continue;
+        seen.add(`${n.x},${n.y}`);
+        open.push(n);
+      }
+  }
+  return false;
+}
+
+/**
+ * Point the walkers' stream at the next state whose first draw `want` takes: the draw a walker
+ * due to step out decides by. The stream is the one a save resumes (`PeopleSim.load`), so this is
+ * a resumed game, not a change to the walkers.
+ */
+function steer(sim: PeopleSim, want: (r: number) => boolean) {
+  const twin = new Rng(0);
+  twin.state = sim.toJSON().rng;
+  for (;;) {
+    const from = twin.state;
+    if (want(twin.next())) return sim.load({ rng: from });
+  }
+}
+
+/** The side of the map of `smallTown`, and where its passenger station stands. */
+const TOWN = 24;
+const STOP_AT = { x: 12, y: 12 };
+/** A kind of place the walkers live at, by the list `PeopleSim.places` reads it from. */
+interface HomeKind {
+  group: 'station' | 'building' | 'decor';
+  id: string;
+}
+/**
+ * How the home of `smallTown` stands to its passenger station: `apart`, its corner `off` from the
+ * station's; `facing`, its street door facing the tile the station's faces; `intoStop`, its street
+ * door facing the station's door tile, with nowhere to stand outside the station's door;
+ * `intoHome`, the station's street door facing the home's door tile, with nowhere to stand outside
+ * the home's; `self`, the home is the station. The last four make the two doorsteps one tile, but
+ * where a door blocked besides moves one of them.
+ */
+const STANDS = ['apart', 'facing', 'intoStop', 'intoHome', 'self'] as const;
+interface TownCase {
+  home: HomeKind;
+  rot: number;
+  stopRot: number;
+  stand: (typeof STANDS)[number];
+  off: Tile;
+  /** a level crossing, rather than water, where nobody stands outside a door */
+  crossing: boolean;
+  /** nobody stands outside the home's street door, or the station's, besides what `stand` says */
+  blockHome: boolean;
+  blockStop: boolean;
+  /** water, by y * TOWN + x; none on a footprint or where a door is blocked */
+  water: number[];
+  /** and a ring of water two tiles round the station, but where something stands */
+  moat: boolean;
+  stream: number;
+  /** the walker's wait at the station ends at nightfall rather than with its timer */
+  night: boolean;
+  /** the home is taken down while its walker waits at the station */
+  closeHome: boolean;
+  /** night falls on the step after it sets out for the station */
+  dusk: boolean;
+}
+
+const homeDef = (k: HomeKind): PlaceDef =>
+  k.group === 'station'
+    ? stationDef(k.id)
+    : k.group === 'building'
+      ? buildingDef(k.id)
+      : decorDef(k.id);
+
+/**
+ * Where everything of a `TownCase` stands; null where the home would stand on the station, off the
+ * map, or with a blocked doorstep on a footprint or off the map.
+ */
+function townLayout(c: TownCase) {
+  const stopDef = stationDef('station');
+  const stopTiles = footprint(stopDef, STOP_AT.x, STOP_AT.y, c.stopRot);
+  const stopDoor = streetDoor(stopDef, STOP_AT.x, STOP_AT.y, c.stopRot);
+  const def = c.stand === 'self' ? stopDef : homeDef(c.home);
+  const rot = c.stand === 'self' ? c.stopRot : c.rot;
+  const at0 = streetDoor(def, 0, 0, rot);
+  const corner = {
+    apart: { x: STOP_AT.x + c.off.x, y: STOP_AT.y + c.off.y },
+    facing: {
+      x: stopDoor.reach.x - DIR_DX[at0.side] - at0.tile.x,
+      y: stopDoor.reach.y - DIR_DY[at0.side] - at0.tile.y,
+    },
+    intoStop: {
+      x: stopDoor.tile.x - DIR_DX[at0.side] - at0.tile.x,
+      y: stopDoor.tile.y - DIR_DY[at0.side] - at0.tile.y,
+    },
+    intoHome: { x: stopDoor.reach.x - at0.tile.x, y: stopDoor.reach.y - at0.tile.y },
+    self: STOP_AT,
+  }[c.stand];
+  const homeTiles = footprint(def, corner.x, corner.y, rot);
+  const homeDoor = streetDoor(def, corner.x, corner.y, rot);
+  const inMap = (t: Tile) => t.x >= 0 && t.y >= 0 && t.x < TOWN && t.y < TOWN;
+  const on = (t: Tile) => covers(stopTiles, t) || covers(homeTiles, t);
+  const blocked: (Tile & { side: Dir })[] = [];
+  const block = (d: Door) => {
+    if (!blocked.some((b) => same(b, d.reach))) blocked.push({ ...d.reach, side: d.side });
+  };
+  if (c.blockStop || c.stand === 'intoStop') block(stopDoor);
+  if (c.blockHome || c.stand === 'intoHome') block(homeDoor);
+  const apart = c.stand === 'self' || !homeTiles.some((t) => covers(stopTiles, t));
+  if (!homeTiles.every(inMap) || !apart || !blocked.every((b) => inMap(b) && !on(b))) return null;
+  return { corner, homeDoor, stopDoor, blocked, on };
+}
+
+/**
+ * A passenger station at STOP_AT and, as the case stands it, a home of a kind the walkers live at,
+ * on grass with the case's water, and a level crossing or water on each blocked doorstep. `close`
+ * takes the home down.
+ */
+function smallTown(c: TownCase) {
+  const lay = townLayout(c)!;
+  resetStationIds(1);
+  const { map, builder } = bare(TOWN);
+  const stop = new Station('station', STOP_AT.x, STOP_AT.y);
+  stop.rot = c.stopRot;
+  builder.stations.push(stop);
+  const { x, y } = lay.corner;
+  let key = `s${stop.id}`;
+  let close = () => {};
+  if (c.stand !== 'self' && c.home.group === 'station') {
+    const s = new Station(c.home.id, x, y);
+    s.rot = c.rot;
+    builder.stations.push(s);
+    key = `s${s.id}`;
+    close = () => void builder.stations.splice(builder.stations.indexOf(s), 1);
+  } else if (c.stand !== 'self' && c.home.group === 'building') {
+    const b = { id: c.home.id, x, y, acc: 0, rot: c.rot, active: false, rate: 0 };
+    builder.buildings.set(y * TOWN + x, b);
+    key = `b${x},${y}`;
+    close = () => void builder.buildings.delete(y * TOWN + x);
+  } else if (c.stand !== 'self') {
+    builder.decor.set(y * TOWN + x, { id: c.home.id, x, y, rot: c.rot });
+    key = `d${x},${y}`;
+    close = () => void builder.decor.delete(y * TOWN + x);
+  }
+  const ring = (i: number) =>
+    Math.max(Math.abs((i % TOWN) - STOP_AT.x), Math.abs(Math.floor(i / TOWN) - STOP_AT.y)) === 2;
+  const moat = Array.from({ length: TOWN * TOWN }, (_, i) => i).filter(ring);
+  const water = c.moat ? [...c.water, ...moat] : c.water;
+  for (const i of water) {
+    const t = { x: i % TOWN, y: Math.floor(i / TOWN) };
+    if (!lay.on(t) && !lay.blocked.some((b) => same(b, t))) map.terrain[i] = Terrain.Water;
+  }
+  builder.free = true;
+  for (const b of lay.blocked) {
+    // a straight across the way out of the door, and a road over it along that way
+    const along = b.side === Dir.N || b.side === Dir.S ? 1 : 0;
+    if (c.crossing) {
+      expect(builder.placeTrack(b.x, b.y, STRAIGHT, along), `track at ${b.x},${b.y}`).toBe(true);
+      expect(builder.placeRoad(b.x, b.y), `road at ${b.x},${b.y}`).toBe(true);
+    } else map.terrain[b.y * TOWN + b.x] = Terrain.Water;
+  }
+  builder.free = false;
+  return { map, builder, stop, key, close, lay };
+}
+
+/** Seeds for the towns: three hundred, as each home kind stands each way only now and then. */
+const TOWN_SEEDS = Array.from({ length: 300 }, (_, i) => i + 1);
+
+function* shrinkTown(c: TownCase): Iterable<TownCase> {
+  for (const water of shrinkArray(c.water)) yield { ...c, water };
+  const flags = [
+    'moat',
+    'dusk',
+    'closeHome',
+    'night',
+    'blockHome',
+    'blockStop',
+    'crossing',
+  ] as const;
+  for (const flag of flags) if (c[flag]) yield { ...c, [flag]: false };
+  if (c.rot) yield { ...c, rot: 0 };
+  if (c.stopRot) yield { ...c, stopRot: 0 };
+}
+
+/** Every kind of place the walkers live at, by the list `PeopleSim.places` finds it in. */
+const homeKinds = (): HomeKind[] =>
+  placeDefs().map((def) => ({
+    group: isStation(def)
+      ? 'station'
+      : content.buildings.some((b) => b.id === def.id)
+        ? 'building'
+        : 'decor',
+    id: def.id,
+  }));
+
+/** The gatherers' yards, and the ground each one's walkers gather (`gatherTerrain` in people.ts). */
+const YARDS = ['farm', 'lumber', 'quarry', 'pump'] as const;
+const GROUND: Record<(typeof YARDS)[number], readonly Terrain[]> = {
+  farm: [Terrain.Grass],
+  lumber: [Terrain.Forest],
+  quarry: [Terrain.Hill, Terrain.Rock],
+  pump: [Terrain.Water],
+};
+/** Where the yard of `yardTown` stands. */
+const YARD = { x: 12, y: 12 };
+interface YardCase {
+  id: (typeof YARDS)[number];
+  rot: number;
+  /** tiles of its ground, off the yard by (dx, dy), each of GROUND[id][t] */
+  ground: { dx: number; dy: number; t: number }[];
+  /** what is outside its street door: whatever the ground there is, water, or a level crossing */
+  outside: 'open' | 'water' | 'crossing';
+  stream: number;
+}
+
+/**
+ * A gatherer's yard at YARD turned to `rot`, alone on sand, with the case's tiles of its ground
+ * round it, all within three tiles of it, and outside its street door what the case says. The yard
+ * stands on ground a walker stands on.
+ */
+function yardTown(c: YardCase) {
+  resetStationIds(1);
+  const { map, builder } = bare(TOWN);
+  map.terrain.fill(Terrain.Sand);
+  const yard = new Station(c.id, YARD.x, YARD.y);
+  yard.rot = c.rot;
+  builder.stations.push(yard);
+  const door = streetDoor(yard.def, YARD.x, YARD.y, c.rot);
+  for (const g of c.ground) {
+    const t = GROUND[c.id][g.t];
+    const under = g.dx === 0 && g.dy === 0;
+    if (!under || (t !== Terrain.Water && t !== Terrain.Rock))
+      map.terrain[(YARD.y + g.dy) * TOWN + YARD.x + g.dx] = t;
+  }
+  const { x, y } = door.reach;
+  if (c.outside === 'water') map.terrain[y * TOWN + x] = Terrain.Water;
+  if (c.outside === 'crossing') {
+    map.terrain[y * TOWN + x] = Terrain.Sand;
+    builder.free = true;
+    const along = door.side === Dir.N || door.side === Dir.S ? 1 : 0;
+    expect(builder.placeTrack(x, y, STRAIGHT, along), `track at ${x},${y}`).toBe(true);
+    expect(builder.placeRoad(x, y), `road at ${x},${y}`).toBe(true);
+    builder.free = false;
+  }
+  return { map, builder, door };
+}
+
+/**
+ * The tile a gatherer at YARD goes to, as it has always been chosen: of the tiles of its ground,
+ * all in reach here, the nearest by |dx| + |dy| plus up to 2 drawn at random, one draw for each in
+ * rows from the top, the first among equals; for ground nobody stands on, the first of its
+ * neighbours E, W, S and N that a walker stands on, or none.
+ */
+function nearestGround(map: GameMap, ground: readonly Terrain[], twin: Rng) {
+  let best: (Tile & { d: number }) | null = null;
+  let draws = 0;
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      if (!ground.includes(map.terrain[y * map.w + x])) continue;
+      const d = Math.abs(x - YARD.x) + Math.abs(y - YARD.y) + twin.next() * 2;
+      draws++;
+      if (!best || d < best.d) best = { x, y, d };
+    }
+  if (!best || walkable(map, best.x, best.y))
+    return { spot: best && { x: best.x, y: best.y }, draws };
+  for (const [dx, dy] of [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ])
+    if (walkable(map, best.x + dx, best.y + dy))
+      return { spot: { x: best.x + dx, y: best.y + dy }, draws };
+  return { spot: null, draws };
+}
+
+function* shrinkYard(c: YardCase): Iterable<YardCase> {
+  for (const ground of shrinkArray(c.ground)) if (ground.length) yield { ...c, ground };
+  if (c.outside !== 'open') yield { ...c, outside: 'open' };
+  if (c.rot) yield { ...c, rot: 0 };
+}
+
+describe('a walk between two doorsteps, however short', () => {
+  it('takes a traveller to its station whenever a walk joins the two doorsteps, of one tile or many, and home again, but never from a station to itself, at every rotation', () => {
+    const kinds = homeKinds();
+    const seen = {
+      ...{ outside: 0, onDoorTile: 0, many: 0, noWalk: 0, own: 0 },
+      ...{ dusk: 0, nowStation: 0, home: 0, homeAtOnce: 0 },
+    };
+    forAll(
+      (rng): TownCase => {
+        for (;;) {
+          const c: TownCase = {
+            home: rng.pick(kinds),
+            rot: rng.int(0, 3),
+            stopRot: rng.int(0, 3),
+            stand: rng.pick(STANDS),
+            off: { x: rng.int(-6, 6), y: rng.int(-6, 6) },
+            crossing: rng.chance(0.5),
+            blockHome: rng.chance(0.2),
+            blockStop: rng.chance(0.2),
+            water: Array.from(
+              { length: rng.int(0, 70) },
+              () => rng.int(5, 19) * TOWN + rng.int(5, 19),
+            ),
+            moat: rng.chance(0.3),
+            stream: rng.int(0, 0xffffffff),
+            night: rng.chance(0.3),
+            closeHome: rng.chance(0.3),
+            dusk: rng.chance(0.15),
+          };
+          if (townLayout(c)) return c;
+        }
+      },
+      (c) => {
+        if (!townLayout(c)) return true;
+        const { map, builder, stop, key, close, lay } = smallTown(c);
+        const crossingAt = (x: number, y: number) => builder.roads.isCrossing(x, y);
+        const sim = new PeopleSim(map, builder, new Rng(c.stream));
+        // one walker, living at the home and due to step out as the day starts
+        sim.tick(DT, 1, NIGHT);
+        const [p] = sim.persons;
+        Object.assign(p, { home: key, x: lay.corner.x, y: lay.corner.y, timer: 0 });
+        // it steps out for a train trip
+        steer(sim, (r) => r >= 0.92);
+        const from = doorstep(map, lay.homeDoor, crossingAt);
+        const to = doorstep(map, lay.stopDoor, crossingAt);
+        // the nearest station taking passengers is its home, where its home is one
+        const own =
+          c.stand === 'self' ||
+          (c.home.group === 'station' && stationDef(c.home.id).accepts.includes('passengers'));
+        let rng = sim.toJSON().rng;
+        sim.tick(DT, 1, MIDDAY);
+        expect(drawsBetween(rng, sim.toJSON().rng, 1000), 'stepping out').toBe(1);
+        if (own || !joined(map, from, to)) {
+          expect([p.state, p.timer]).toEqual(['inside', 10]);
+          seen[own ? 'own' : 'noWalk']++;
+          return;
+        }
+        expect(p.state).toBe('toStation');
+        expect(p.stationId).toBe(stop.id);
+        expect(at(p)).toEqual(from);
+        expect(p.path[0]).toEqual(from);
+        expect(p.path.at(-1)).toEqual(to);
+        expect(stepwise(p.path)).toBe(true);
+        // the tile alone where the doorsteps are one, and never where they are not
+        const length = p.path.length;
+        expect(length === 1).toBe(same(from, to));
+        const onDoor = same(from, lay.homeDoor.tile) || same(from, lay.stopDoor.tile);
+        seen[length > 1 ? 'many' : onDoor ? 'onDoorTile' : 'outside']++;
+        if (c.dusk) {
+          // night falls as it sets out: on its doorstep still, it has no walk home to turn for and
+          // goes on, as one on its home's tile always did
+          rng = sim.toJSON().rng;
+          sim.tick(DT, 1, NIGHT);
+          expect(p.state).toBe(length === 1 ? 'waiting' : 'toStation');
+          expect(drawsBetween(rng, sim.toJSON().rng, 1000)).toBe(length === 1 ? 1 : 0);
+          seen.dusk++;
+          return;
+        }
+        // there at the end of the walk: on the next step, for a walk of one tile
+        let steps = 0;
+        while (p.state === 'toStation') {
+          rng = sim.toJSON().rng;
+          sim.tick(DT, 1, MIDDAY);
+          steps++;
+          expect(steps).toBeLessThanOrEqual(8 * length);
+          const arrived = p.state === 'toStation' ? 0 : 1;
+          expect(drawsBetween(rng, sim.toJSON().rng, 1000), `step ${steps}`).toBe(arrived);
+        }
+        if (length === 1) expect(steps).toBe(1);
+        expect(p.state).toBe('waiting');
+        expect(at(p)).toEqual(to);
+        // no train comes; with its home taken down, the station is the one place left
+        if (c.closeHome) close();
+        p.timer = c.night ? 99 : 0;
+        rng = sim.toJSON().rng;
+        sim.tick(DT, 1, c.night ? NIGHT : MIDDAY);
+        expect(drawsBetween(rng, sim.toJSON().rng, 1000), 'the wait ends').toBe(0);
+        if (c.closeHome) {
+          // a walk from the station to itself is none: it goes in at once, as it always has
+          expect(p.home).toBe(`s${stop.id}`);
+          expect([p.state, p.timer]).toEqual(['inside', 30]);
+          seen.nowStation++;
+          return;
+        }
+        expect(p.home).toBe(key);
+        // the same ground both ways
+        expect(joined(map, to, from)).toBe(true);
+        expect(p.state).toBe('return');
+        expect(p.path[0]).toEqual(to);
+        expect(p.path.at(-1)).toEqual(from);
+        expect(stepwise(p.path)).toBe(true);
+        const back = p.path.length;
+        expect(back === 1).toBe(same(from, to));
+        steps = 0;
+        while (p.state === 'return') {
+          rng = sim.toJSON().rng;
+          sim.tick(DT, 1, MIDDAY);
+          steps++;
+          expect(steps).toBeLessThanOrEqual(8 * back);
+          const arrived = p.state === 'return' ? 0 : 1;
+          expect(drawsBetween(rng, sim.toJSON().rng, 1000), `step ${steps} home`).toBe(arrived);
+        }
+        if (back === 1) expect(steps).toBe(1);
+        expect(p.state).toBe('inside');
+        expect(at(p)).toEqual(from);
+        seen[back === 1 ? 'homeAtOnce' : 'home']++;
+      },
+      { shrink: shrinkTown, seeds: TOWN_SEEDS },
+    );
+    // not vacuous: trips of one tile, outside both doors or on one's own tile, and of many, and
+    // home again from each, homes with no walk to the station, stations' own walkers, walkers
+    // caught by nightfall on their doorstep, and walkers whose home became the station
+    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(10);
+  });
+
+  it('takes a gatherer to the nearest tile of its ground and home with it whenever a walk joins it to its doorstep, there at once where that is the doorstep, and keeps it in where that is under its yard, at every rotation', () => {
+    const seen = { underYard: 0, onDoorstep: 0, beyond: 0, carried: 0 };
+    forAll(
+      (rng): YardCase => {
+        const id = rng.pick(YARDS);
+        const rot = rng.int(0, 3);
+        const { reach } = streetDoor(stationDef(id), 0, 0, rot);
+        return {
+          id,
+          rot,
+          ground: Array.from({ length: rng.int(1, 4) }, () => {
+            const where = rng.next();
+            const at = where < 0.3 ? reach : where < 0.5 ? { x: 0, y: 0 } : null;
+            return {
+              dx: at ? at.x : rng.int(-3, 3),
+              dy: at ? at.y : rng.int(-3, 3),
+              t: rng.int(0, GROUND[id].length - 1),
+            };
+          }),
+          outside: rng.pick(['open', 'open', 'water', 'crossing'] as const),
+          stream: rng.int(0, 0xffffffff),
+        };
+      },
+      (c) => {
+        const { map, builder, door } = yardTown(c);
+        const crossingAt = (x: number, y: number) => builder.roads.isCrossing(x, y);
+        const sim = new PeopleSim(map, builder, new Rng(c.stream));
+        // one walker, living at the yard and due to step out as the day starts
+        sim.tick(DT, 1, NIGHT);
+        const [p] = sim.persons;
+        Object.assign(p, { home: 's1', x: YARD.x, y: YARD.y, timer: 0 });
+        // it steps out to gather
+        steer(sim, (r) => r >= 0.65 && r < 0.92);
+        let rng = sim.toJSON().rng;
+        const twin = new Rng(0);
+        twin.state = rng;
+        twin.next();
+        const { spot, draws } = nearestGround(map, GROUND[c.id], twin);
+        const from = doorstep(map, door, crossingAt);
+        sim.tick(DT, 1, MIDDAY);
+        expect(drawsBetween(rng, sim.toJSON().rng, 1000), 'stepping out').toBe(1 + draws);
+        // no spot, the spot under its own yard, or no walk to it: it stays in, as it always has
+        if (!spot || same(spot, YARD) || !joined(map, from, spot)) {
+          expect([p.state, p.timer]).toEqual(['inside', 10]);
+          if (spot && same(spot, YARD)) seen.underYard++;
+          return;
+        }
+        expect(p.state).toBe('gather');
+        expect(at(p)).toEqual(from);
+        expect(p.path[0]).toEqual(from);
+        expect(p.path.at(-1)).toEqual(spot);
+        expect(stepwise(p.path)).toBe(true);
+        const length = p.path.length;
+        expect(length === 1).toBe(same(from, spot));
+        seen[length === 1 ? 'onDoorstep' : 'beyond']++;
+        // there at the end of the walk: on the next step, for a walk of one tile
+        let steps = 0;
+        while (p.state === 'gather') {
+          rng = sim.toJSON().rng;
+          sim.tick(DT, 1, MIDDAY);
+          steps++;
+          expect(steps).toBeLessThanOrEqual(8 * length);
+          const arrived = p.state === 'gather' ? 0 : 1;
+          expect(drawsBetween(rng, sim.toJSON().rng, 1000), `step ${steps}`).toBe(arrived);
+        }
+        if (length === 1) expect(steps).toBe(1);
+        expect(at(p)).toEqual(spot);
+        // it turns for home with what it gathered, where a walk joins the spot to its doorstep
+        if (!joined(map, spot, from)) {
+          expect([p.state, p.carrying]).toEqual(['idle', false]);
+          return;
+        }
+        expect([p.state, p.carrying]).toEqual(['return', true]);
+        expect(p.path[0]).toEqual(spot);
+        expect(p.path.at(-1)).toEqual(from);
+        expect(stepwise(p.path)).toBe(true);
+        expect(p.path.length === 1).toBe(same(from, spot));
+        const back = p.path.length;
+        steps = 0;
+        while (p.state === 'return') {
+          rng = sim.toJSON().rng;
+          sim.tick(DT, 1, MIDDAY);
+          steps++;
+          expect(steps).toBeLessThanOrEqual(8 * back);
+          const arrived = p.state === 'return' ? 0 : 1;
+          expect(drawsBetween(rng, sim.toJSON().rng, 1000), `step ${steps} home`).toBe(arrived);
+        }
+        if (back === 1) expect(steps).toBe(1);
+        expect([p.state, p.carrying]).toEqual(['inside', false]);
+        expect(at(p)).toEqual(from);
+        seen.carried++;
+      },
+      { shrink: shrinkYard },
+    );
+    // not vacuous: gatherers stayed in over their yard, gathered on their doorstep and beyond it,
+    // and carried it home
+    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(10);
   });
 });
