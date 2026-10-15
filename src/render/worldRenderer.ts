@@ -39,12 +39,15 @@ import { scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
+import { underPaintedWater } from './terrainMaterials';
 import { PAL, type RGB } from '../art/palette';
 import BRIDGE_KIT_JSON from './bridgeKit.json';
 import {
   bridgeTileMeshes,
   destroyBridgeParts,
+  GROUND_BOX,
   prepareSurface,
+  WATER_TILES,
   WATERLINE,
   type BridgeSurfaces,
 } from './bridgeMeshes';
@@ -240,6 +243,7 @@ export class WorldRenderer {
     this.landscape.setCity(tiles);
     for (const k of changed)
       if (old.has(k) !== tiles.has(k)) {
+        // the painter paves a town's tiles over their water too (refreshGround tells bridges)
         this.refreshGround(k % this.map.w, Math.floor(k / this.map.w));
         this.refreshScatter(k % this.map.w, Math.floor(k / this.map.w), 0);
       }
@@ -354,6 +358,8 @@ export class WorldRenderer {
   /** Re-texture a ground tile (after flattening a hill, etc). */
   refreshGround(x: number, y: number) {
     this.landscape.invalidate(x, y);
+    // the water painted there may have moved under a bridge: it is drawn again (animate)
+    if (!this.bridgeWaterChanged && this.nearTexturedBridge(x, y)) this.bridgeWaterChanged = true;
     const i = idx(this.map, x, y);
     const s = this.groundSprites[i];
     if (!s) return;
@@ -621,6 +627,9 @@ export class WorldRenderer {
             !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
       }
     }
+    // Bridges follow the water painted round them: a tile whose water changed is drawn again.
+    if (this.bridgeWaterChanged || this.texturedFailed !== this.landscape.failed)
+      this.setTexturedBridges(this.texturedTiles);
     this.landscape.root.visible = this.landscape.active;
     this.ground.visible = !this.landscape.active || !this.landscape.ready;
     if (
@@ -971,12 +980,21 @@ export class WorldRenderer {
     }
   }
   private texturedParts = new Map<number, { key: string; under: Container; near: Container }>();
+  /** The bridge tiles last drawn, drawn again when the water painted round them may change. */
+  private texturedTiles: readonly TexturedBridge[] = [];
+  /** A town's paving or a terrain edit came near a textured bridge since it was drawn. */
+  private bridgeWaterChanged = false;
+  /** Whether the landscape had failed when the bridges were drawn (bridgeGround). */
+  private texturedFailed = false;
   /**
    * Every bridge tile in the textured style (none in the others): supports, deck and far
    * parapets under the trains, near parapets over them. Tiles merge with their neighbours
    * (bridgeLayout.ts); a tile whose parts did not change keeps its meshes.
    */
   setTexturedBridges(tiles: readonly TexturedBridge[]) {
+    this.texturedTiles = tiles;
+    this.bridgeWaterChanged = false;
+    this.texturedFailed = this.landscape.failed;
     const surfaces = this.bridgeMode === 'textured' ? this.bridgeSurfaces : null,
       sites = surfaces
         ? tiles.map((t) => ({ ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water) }))
@@ -988,7 +1006,8 @@ export class WorldRenderer {
       const k = idx(this.map, site.x, site.y),
         j = joins.get(k)!,
         // Everything the meshes depend on, to a tenth of a pixel: the ground is sampled under
-        // the tile and in front of it, where it can hide the tile's faces.
+        // the tile and in front of it, where it can hide the tile's faces, and the water painted
+        // there is given by what it is painted from.
         key = JSON.stringify([
           site.material,
           site.axis,
@@ -998,16 +1017,22 @@ export class WorldRenderer {
           j,
           site.deck.map((z) => Math.round(z * 10)),
           GROUND_SAMPLES.map(([dx, dy]) => Math.round(ground(site.x + dx, site.y + dy) * 10)),
+          this.bridgeWaterKey(site.x, site.y),
         ]);
       keep.add(k);
       const old = this.texturedParts.get(k);
       if (old?.key === key) continue;
       if (old) for (const c of [old.under, old.near]) destroyBridgeParts(c);
-      const parts = bridgeTileMeshes(
-        { ...site, ground },
-        bridgePlan(site, j, site.water),
-        surfaces!,
-      );
+      const [from, to] = GROUND_BOX,
+        parts = bridgeTileMeshes(
+          {
+            ...site,
+            ground,
+            top: this.groundTop(site.x + from, site.y + from, site.x + to, site.y + to),
+          },
+          bridgePlan(site, j, site.water),
+          surfaces!,
+        );
       parts.under.zIndex = site.x + site.y;
       parts.near.zIndex = depthKey(site.x, site.y, 35);
       this.piers.addChild(parts.under);
@@ -1032,17 +1057,59 @@ export class WorldRenderer {
     if (axis === null || !bed || this.landscape.failed) return [floor(-this.railAt(x, y).dz)];
     return deckSamples(bed, axis === 1 ? x : y, this.levelPx).map(floor);
   }
-  /** Ground under a bridge, world px up: the terrain, or over water the waterline. */
+  /**
+   * Ground under a bridge, world px up: the terrain, or the waterline where the landscape paints
+   * water (`underPaintedWater`, the painter's own waterline inside the tile). With the landscape
+   * off for the session the per-tile ground shows instead, its water a whole tile.
+   */
   private bridgeGround(tx: number, ty: number) {
-    const x = Math.round(tx),
-      y = Math.round(ty),
+    let water: boolean;
+    if (!this.landscape.failed) water = underPaintedWater(this.map, tx, ty, this.paved);
+    else {
+      const x = Math.round(tx),
+        y = Math.round(ty);
       water =
         x >= 0 &&
         y >= 0 &&
         x < this.map.w &&
         y < this.map.h &&
         this.map.terrain[idx(this.map, x, y)] === Terrain.Water;
+    }
     return water ? WATERLINE : -this.elevationOf(tx, ty);
+  }
+  /** A height (world px up) the ground under bridges never exceeds in the box given. */
+  private groundTop(x0: number, y0: number, x1: number, y1: number) {
+    // The per-tile ground stands a mountain's two steps up at most (elevationOf).
+    return this.landscape.failed ? 2 * ELEV_PX : this.landscape.heightTop(x0, y0, x1, y1);
+  }
+  /** A town's tile, paved by the painter (`setCity`). */
+  private readonly paved = (tile: number) => this.city.has(tile);
+  /**
+   * What the water painted round bridge tile (x, y) is made from: per tile of WATER_TILES (the
+   * painter's blend reads no others for the points the tile's faces are cut to), whether it is
+   * water and whether it is paved, and whether the per-tile ground stands in for the landscape.
+   * Off the map, the edge tile, as the painter reads it.
+   */
+  private bridgeWaterKey(x: number, y: number) {
+    const { w, h } = this.map,
+      [from, to] = WATER_TILES;
+    let key = this.landscape.failed ? 'tiles:' : 'painted:';
+    for (let ty = y + from; ty <= y + to; ty++)
+      for (let tx = x + from; tx <= x + to; tx++) {
+        const k = Math.max(0, Math.min(h - 1, ty)) * w + Math.max(0, Math.min(w - 1, tx));
+        key += (this.map.terrain[k] === Terrain.Water ? 1 : 0) + (this.city.has(k) ? 2 : 0);
+      }
+    return key;
+  }
+  /** Is tile (x, y) among the tiles whose water a textured bridge tile is cut to (WATER_TILES)? */
+  private nearTexturedBridge(x: number, y: number) {
+    const [from, to] = WATER_TILES;
+    for (const k of this.texturedParts.keys()) {
+      const dx = x - (k % this.map.w),
+        dy = y - Math.floor(k / this.map.w);
+      if (dx >= from && dx <= to && dy >= from && dy <= to) return true;
+    }
+    return false;
   }
   private kitParts = new Map<number, Container>();
   /**
