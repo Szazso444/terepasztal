@@ -432,6 +432,11 @@ export class PeopleSim {
    * walkers are not.
    */
   private readonly retry = new WeakMap<Person, { path: Person['path']; left: number }>();
+  /**
+   * Each walker that stopped on a tile's edge after walking: the tile it walked off onto that edge,
+   * the one its way crossed just before it (`standingAt`). Not saved, as the walkers are not.
+   */
+  private readonly stood = new WeakMap<Person, { x: number; y: number }>();
 
   toJSON(): PeopleJSON {
     return { rng: this.rng.state };
@@ -763,11 +768,13 @@ export class PeopleSim {
 
   /**
    * Move along the path; returns false once the end is reached. A step is the walker's state, the
-   * time, the roads under the leg it walks (`roadStep`) and the level crossings closed now
-   * (`clearAhead`), nothing else, and draws no random number. A walker goes no further than the
-   * edge of a closed crossing it is not on yet and waits there, its path, state and timer as they
-   * were, until the crossing opens; one already on a crossing goes on. At the edge of one that
-   * `detour` says only trains out of fuel or power hold closed, it walks round (`walkRound`).
+   * time, the roads under the leg it walks (`roadStep`), the level crossings closed now
+   * (`clearAhead`) and the tile it walked off onto an edge it stands on (`standingAt`), nothing
+   * else, and draws no random number. A walker goes no further than the edge of a closed crossing
+   * it is not on yet and waits there, its path, state and timer as they were, until the crossing
+   * opens; one already on a crossing goes on, and one on the edge of the tile it stands at may go
+   * back into it while only trains out of fuel or power hold it closed (`closedTo`). At the edge of
+   * one that `detour` says only such trains hold closed, it walks round (`walkRound`).
    */
   private advance(
     p: Person,
@@ -785,7 +792,7 @@ export class PeopleSim {
     // the closed crossings it stops at the edge of in this step, if any
     let held: { x: number; y: number }[] = [];
     if (crossingClosed) {
-      const ahead = heldAt(p, next, crossingClosed);
+      const ahead = heldAt(p, next, this.closedTo(p, crossingClosed, detour));
       if (ahead.at <= stepLen) {
         stepLen = ahead.at;
         held = ahead.tiles;
@@ -798,6 +805,12 @@ export class PeopleSim {
     } else {
       p.x += (dx / d) * stepLen;
       p.y += (dy / d) * stepLen;
+      // stopped on a tile's edge: it stands at the tile its way crossed just before it
+      if (stepLen > EDGE_EPS && !standsOn(p, Math.round(p.x), Math.round(p.y)))
+        this.stood.set(p, {
+          x: Math.round(p.x - (dx / d) * EDGE_EPS),
+          y: Math.round(p.y - (dy / d) * EDGE_EPS),
+        });
     }
     if (crossingClosed && detour && held.length && held.every((t) => detour.detour(t.x, t.y)))
       this.walkRound(p, gdt, crossingClosed, detour);
@@ -806,14 +819,41 @@ export class PeopleSim {
   }
 
   /**
+   * The tile a walker on a tile's edge stands at: the one it walked off onto that edge, while it is
+   * on that tile or its edge still. Null where it never walked off a tile onto an edge, as for one
+   * set down on an edge that has not walked since, and where it stands off that tile.
+   */
+  private standingAt(p: Person): { x: number; y: number } | null {
+    const t = this.stood.get(p);
+    return t && Math.max(Math.abs(p.x - t.x), Math.abs(p.y - t.y)) <= 0.5 + EDGE_EPS ? t : null;
+  }
+
+  /**
+   * The crossings that hold a walker at `p`: those `crossingClosed` closes, but for the tile it
+   * stands at (`standingAt`) while only trains standing out of fuel or power close it (`detour`),
+   * as it never left that tile (#447). Of its legs, only one back into that tile enters it.
+   */
+  private closedTo(
+    p: Person,
+    crossingClosed: CrossingClosed,
+    detour: CrossingDetour | null,
+  ): CrossingClosed {
+    const own = detour && this.standingAt(p);
+    if (!own || !detour.detour(own.x, own.y)) return crossingClosed;
+    return (x, y) => !(x === own.x && y === own.y) && crossingClosed(x, y);
+  }
+
+  /**
    * A walker at the edge of a closed crossing that only trains standing out of fuel or power hold
    * closed (#447) looks for a way round it at once: the walk `findWalk` gives from the tile it
    * stands at to the end of its walk, on no crossing closed now and no tile a car stands on, and
    * taken in place of the walk it had. It goes from where it stands straight on to that walk's
    * next tile, or back to the middle of the tile it stands at first where the way straight on would
-   * cut a corner of one of those. With none, it waits at the edge as it was and tries again every
-   * DETOUR_RETRY game seconds. A try is the walker's place and walk, the map, the roads and the
-   * crossings, and changes the walk alone: no random number, state or timer.
+   * cut a corner of one of those. It never left the tile it walked off onto the edge, so it steps
+   * back into that tile even where a car stands on it or it is a crossing closed since, unless a
+   * train that may still move closes it: then, as with none, it waits at the edge as it was and
+   * tries again every DETOUR_RETRY game seconds. A try is the walker's place and walk, the map, the
+   * roads and the crossings, and changes the walk alone: no random number, state or timer.
    */
   private walkRound(
     p: Person,
@@ -835,9 +875,11 @@ export class PeopleSim {
     const next = p.path[p.step + 1];
     const end = p.path[p.path.length - 1];
     const avoid = (x: number, y: number) => crossingClosed(x, y) || detour.occupied(x, y);
-    // the tile it stands at: the one its way crossed just before the crossing's edge
+    // the tile it stands at: the one it walked off onto the crossing's edge, or, for one set down
+    // there that has not walked since, the one its way crosses just before the edge
+    const own = this.standingAt(p);
     const len = Math.hypot(next.x - p.x, next.y - p.y);
-    const back = {
+    const back = own ?? {
       x: Math.round(p.x - ((next.x - p.x) / len) * EDGE_EPS),
       y: Math.round(p.y - ((next.y - p.y) / len) * EDGE_EPS),
     };
@@ -845,7 +887,13 @@ export class PeopleSim {
     if (!walk) return false;
     const path =
       walk.length > 1 && clearAhead(p, walk[1], avoid) === Infinity ? walk : [back, ...walk];
-    if (clearAhead(p, path[1], avoid) !== Infinity) return false;
+    // back into the tile it walked off onto the edge, whatever else keeps it off, but for a crossing
+    // a train that may still move closes
+    const reenter = !!own && (!crossingClosed(own.x, own.y) || detour.detour(own.x, own.y));
+    const first = reenter
+      ? (x: number, y: number) => !(x === back.x && y === back.y) && avoid(x, y)
+      : avoid;
+    if (clearAhead(p, path[1], first) !== Infinity) return false;
     p.path = path;
     p.step = 0;
     return true;

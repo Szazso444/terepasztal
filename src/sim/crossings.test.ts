@@ -31,6 +31,7 @@ import {
   WAKE,
   WALK_MARGIN,
   WALK_SPEED,
+  findWalk,
   offCrossing,
   walkSpeed,
   walkable,
@@ -2579,6 +2580,146 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
       },
     );
   });
+
+  it('is walked round from the tile a walker stands at where that tile is kept off: a car on it, or a crossing it walked onto that dry trains alone hold since', () => {
+    // The walkers found waiting for ever (#447): one bound east over a crossing only a dry train
+    // holds, a car on the tile before it; and one bound north over the two crossings of a double
+    // track, held at the second's edge after it stepped onto the first, then both held by dry trains
+    // alone. Each steps back to the middle of the tile it stands at and walks round, in the step it
+    // reaches the edge or the step the trains run dry, over neither crossing ahead and drawing
+    // nothing.
+    const { map, builder } = field();
+    const none = () => false;
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const p = figure(walkOf(CX - 3, CY, CX, CY));
+      people.persons.push(p);
+      const stream = people.toJSON().rng;
+      const ahead = { x: CX - 1, y: CY };
+      const closed = among([ahead]);
+      const detour = { detour: closed, occupied: among([{ x: CX - 2, y: CY }]) };
+      const way = p.path;
+      for (let i = 0; i < 400 && p.path === way; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, closed, detour);
+        // the step it reaches the edge
+        expect(onEdge(p, ahead.x, ahead.y)).toBe(p.path !== way);
+      }
+      expect(p.path).toEqual([
+        { x: CX - 2, y: CY },
+        { x: CX - 2, y: CY },
+        { x: CX - 1, y: CY - 1 },
+        { x: CX, y: CY },
+      ]);
+      for (let i = 0; i < 2000 && people.persons.length; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, closed, detour);
+        expect(onTile(p, ahead.x, ahead.y)).toBe(false);
+      }
+      expect(people.persons).toEqual([]);
+      expect(people.toJSON().rng).toBe(stream);
+    }
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const p = figure(walkOf(CX, CY + 3, CX, CY - 2));
+      people.persons.push(p);
+      const stream = people.toJSON().rng;
+      const first = { x: CX, y: CY + 1 };
+      const both = among([first, { x: CX, y: CY }]);
+      // a train passing over the second crossing while the walker steps onto the first
+      for (let i = 0; i < 400 && !onEdge(p, CX, CY); i++)
+        people.tick(SIM_STEP, 0, MIDDAY, closedC, { detour: none, occupied: none });
+      expect(p).toMatchObject({ x: CX, y: CY + 0.5 });
+      const way = p.path;
+      for (let i = 0; i < 40; i++) people.tick(SIM_STEP, 0, MIDDAY, closedC);
+      expect(p.path).toBe(way);
+      // both held by dry trains alone: back into the first, round the second
+      const dry = { detour: both, occupied: none };
+      people.tick(SIM_STEP, 0, MIDDAY, both, dry);
+      expect(p.path).toEqual([
+        first,
+        first,
+        { x: CX - 1, y: CY },
+        { x: CX - 1, y: CY - 1 },
+        { x: CX, y: CY - 2 },
+      ]);
+      for (let i = 0; i < 2000 && people.persons.length; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, dry);
+        expect(onTile(p, CX, CY)).toBe(false);
+      }
+      expect(people.persons).toEqual([]);
+      expect(people.toJSON().rng).toBe(stream);
+    }
+  });
+
+  it('keeps a walker out of the tile it stands at while a train that may still move holds it, that tile being the one it walked off onto the edge', () => {
+    const { map, builder } = field();
+    const none = () => false;
+    // The double track, the first crossing held by a train that may still move: the walker waits
+    // on the edge of the second with its walk as it was, trying every DETOUR_RETRY, and walks round
+    // at the first try after dry trains alone hold the first.
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const p = figure(walkOf(CX, CY + 3, CX, CY - 2));
+      people.persons.push(p);
+      const first = { x: CX, y: CY + 1 };
+      const both = among([first, { x: CX, y: CY }]);
+      for (let i = 0; i < 400 && !onEdge(p, CX, CY); i++)
+        people.tick(SIM_STEP, 0, MIDDAY, closedC, { detour: none, occupied: none });
+      const way = p.path;
+      const held = JSON.stringify(p);
+      const firm = { detour: closedC, occupied: none };
+      // tries fall every period steps from the first: two and a half periods of them
+      const period = Math.round(DETOUR_RETRY / SIM_STEP);
+      const waits = Math.round(2.5 * period);
+      for (let i = 0; i < waits; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, firm);
+        expect(JSON.stringify(p), `step ${i}`).toBe(held);
+      }
+      let round = -1;
+      for (let i = 0; i < 2 * period && round < 0; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, { detour: both, occupied: none });
+        if (p.path !== way) round = i;
+      }
+      expect(round).toBe(3 * period - waits);
+      expect(p.path.slice(0, 3)).toEqual([first, first, { x: CX - 1, y: CY }]);
+    }
+    // A walker that walked round straight on from the edge of a crossing, back across the tile it
+    // stands at, finds that tile a crossing closed in the next step: it stays on the edge while a
+    // train that may still move holds it, and steps into it once dry trains alone do, never onto
+    // the crossing it walks round.
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const ahead = { x: CX - 1, y: CY };
+      const own = { x: CX - 2, y: CY };
+      const p = figure([
+        ...walkOf(CX - 3, CY, CX - 1, CY),
+        ...walkOf(CX - 1, CY - 1, CX - 1, CY - 2),
+        ...walkOf(CX - 2, CY - 3, CX - 2, CY - 4),
+      ]);
+      people.persons.push(p);
+      const closed = among([ahead]);
+      const way = p.path;
+      for (let i = 0; i < 400 && p.path === way; i++)
+        people.tick(SIM_STEP, 0, MIDDAY, closed, { detour: closed, occupied: none });
+      expect(onEdge(p, ahead.x, ahead.y)).toBe(true);
+      // straight on from the edge, back across its own tile
+      const round = p.path;
+      expect(round[0]).toEqual(own);
+      expect(round[1]).not.toEqual(own);
+      expect(onEdge(p, own.x, own.y)).toBe(true);
+      const at = { x: p.x, y: p.y };
+      const both = among([ahead, own]);
+      for (let i = 0; i < 40; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, { detour: closed, occupied: none });
+        expect(p).toMatchObject({ ...at, path: round, step: 0 });
+      }
+      for (let i = 0; i < 2000 && people.persons.length; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, { detour: both, occupied: none });
+        expect(onTile(p, ahead.x, ahead.y)).toBe(false);
+        if (people.persons.length) expect(p.path).toBe(round);
+      }
+      expect(people.persons).toEqual([]);
+    }
+  });
 });
 
 /**
@@ -2636,11 +2777,14 @@ function roundRun(seed: number, head: number, dry: boolean, minutes: number) {
       const edge = onEdge(p, CROSS_X, ROW);
       if (edge && waited(p, b)) out.waits++;
       if (edge && b && WALKING.includes(b.state) && p.state === b.state && p.path !== b.path) {
-        // a walk round, from the tile it stands at, on neither the crossing nor a car's tile
+        // a walk round, from the tile it stands at, on neither the crossing nor a car's tile but
+        // the one it stands at, which a way back to its middle first names twice
         out.rounds++;
         rounded.add(p.id);
         out.walks.push(`${i} ${p.id} ${JSON.stringify(p.path)}`);
-        for (const s of p.path.slice(1)) {
+        const [start, second] = p.path;
+        const twice = !!second && second.x === start.x && second.y === start.y;
+        for (const s of p.path.slice(twice ? 2 : 1)) {
           expect(s.x === CROSS_X && s.y === ROW, `walker ${p.id}`).toBe(false);
           expect(cars.includes(s.y * SIDE + s.x), `walker ${p.id} at ${s.x},${s.y}`).toBe(false);
         }
@@ -2729,8 +2873,13 @@ const cutsInto = (p: Tile, q: Tile, tiles: readonly Tile[]) =>
 /** Of those, the ones it runs into at once: the closed crossings a walker at `p` is held at. */
 const entersAt = (p: Tile, q: Tile, tiles: readonly Tile[]) =>
   cutsInto(p, q, tiles).filter((t) => clip(p, q, t.x, t.y)![0] <= 1e-6);
-/** The tile a walker at `p` on its way to `q` stands at: the one its way crossed just before `p`. */
-function standingAt(p: Tile, q: Tile): Tile {
+/**
+ * The tile a walker at `p` on its leg from tile `from` to `q` stands at: `from` while it is on that
+ * tile or its edge, as it walked off it there, and otherwise the one its way crossed just before
+ * `p`. A walk round's leg sets out from the tile the walker stood at, as any other from its middle.
+ */
+function standingAt(p: Tile, from: Tile, q: Tile): Tile {
+  if (cheb(p, from.x, from.y) <= 0.5 + 1e-6) return { x: from.x, y: from.y };
   const len = Math.hypot(q.x - p.x, q.y - p.y);
   return {
     x: Math.round(p.x - ((q.x - p.x) / len) * 1e-7),
@@ -2762,7 +2911,7 @@ interface DryCase {
 describe('a walker among crossings that close, open and run dry at random', () => {
   // slow: 300 cases of up to some thousands of steps, each step read against the oracle
   it(
-    'never sets foot on a closed one, and walks round exactly when and as the detour says: at once at the edge of one only dry trains hold, again every DETOUR_RETRY, by the fewest steps, to the same end',
+    'never sets foot on a closed one but back into the one it walked off, and walks round exactly when and as the detour says: at once at the edge of one only dry trains hold, again every DETOUR_RETRY, by the fewest steps, to the same end',
     { timeout: 120_000 },
     () => {
       // A walker on a walk past up to six crossings, each open, closed, or closed by trains out of
@@ -2776,7 +2925,9 @@ describe('a walker among crossings that close, open and run dry at random', () =
         turnedDry: 0,
         retried: 0,
         noWay: 0,
-        startKeptOff: 0,
+        reentered: 0,
+        reenteredDry: 0,
+        firmStart: 0,
       };
       forAll(
         (rng): DryCase => {
@@ -2875,38 +3026,52 @@ describe('a walker among crossings that close, open and run dry at random', () =
             const keepOff = [...closedTiles, ...cars];
             const avoid = among(keepOff);
             const was = { ...p };
+            const wasNext = was.path[was.step + 1];
+            // the tile it stands at as the step begins, and so the closed crossings that hold it:
+            // all but that one while only dry trains hold it, as it never left it
+            const stood = wasNext ? standingAt(was, was.path[was.step], wasNext) : null;
+            const isStood = (t: Tile) => !!stood && t.x === stood.x && t.y === stood.y;
+            const holding = closedTiles.filter((t) => !isStood(t) || closing(t) !== 'dry');
             people.tick(c.gdt, population, MIDDAY, closed, detour);
-            // never onto a closed crossing it is not on, whatever it walks
-            for (const t of cutsInto(was, p, closedTiles))
+            // never onto a closed crossing it is not on, whatever it walks, but back into the one
+            // it stands at while only dry trains hold it
+            for (const t of cutsInto(was, p, holding))
               expect.fail(`step ${i}: onto the closed crossing ${t.x},${t.y}`);
             done = !people.persons.includes(p) || p.state !== c.state;
             if (done) break;
             expect(people.toJSON().rng, `step ${i}`).toBe(stream);
             // where it is held, read off where it stands and its way on as it had it
-            const next = was.path[was.step + 1];
+            const next = wasNext!;
             const changed = p.path !== was.path;
             const reached = !changed && p.step !== was.step;
             const moved = Math.hypot(p.x - was.x, p.y - was.y);
             const stopped =
               !reached && moved < Math.min(full, Math.hypot(next.x - was.x, next.y - was.y)) - 1e-9;
-            const at = stopped && closed ? entersAt(p, next, closedTiles) : [];
+            const at = stopped && closed ? entersAt(p, next, holding) : [];
             const nowHeld = at.length > 0;
             const nowHeldDry = nowHeld && at.every((t) => closing(t) === 'dry');
             // a try: the step it is first held so, then each period steps while it stays so
             const tries = nowHeldDry && (!heldDry || sinceTry + 1 >= period);
-            const back = nowHeldDry ? standingAt(p, next) : null;
+            const back = nowHeldDry ? standingAt(p, was.path[was.step], next) : null;
             const steps = tries ? fewestSteps(map, back!, end, avoid) : null;
-            // Left open for the author (#447): the tile it stands at is one it keeps off (a car's,
-            // or a closed crossing it walked onto) and its way round starts back through it. The
-            // walker waits there and tries again, where section 10 of docs/traffic-current.md says
-            // it takes the walk; either is let through here and counted.
-            const startKeptOff = tries && steps !== null && avoid(back!.x, back!.y) && !changed;
-            if (startKeptOff) seen.startKeptOff++;
-            else
-              expect(
-                changed,
-                `step ${i}: walked round ${changed}, a try ${tries}, ${steps} steps`,
-              ).toBe(tries && steps !== null);
+            // It never left the tile it stands at, so it steps back into it whatever keeps the walk
+            // round off it (a car on it, or a crossing it walked onto that closed since), but not
+            // into a crossing a train that may still move holds: then it walks round only straight
+            // on from the edge, where the walk findWalk gives lets it.
+            const reenter = !!back && closing(back) !== 'firm';
+            const firstOff = reenter
+              ? keepOff.filter((t) => t.x !== back.x || t.y !== back.y)
+              : keepOff;
+            let takes = tries && steps !== null;
+            if (takes && !reenter) {
+              const walk = findWalk(map, back!, end, builder.roads, avoid)!;
+              takes = walk.length > 1 && cutsInto(p, walk[1], keepOff).length === 0;
+              if (!takes) seen.firmStart++;
+            }
+            expect(
+              changed,
+              `step ${i}: walked round ${changed}, a try ${tries}, ${steps} steps`,
+            ).toBe(takes);
             if (tries && steps === null) seen.noWay++;
             if (changed) {
               // as it was but for its walk, standing where its old way stopped it
@@ -2928,10 +3093,12 @@ describe('a walker among crossings that close, open and run dry at random', () =
               });
               // straight on from where it stands, or back to its tile's middle first exactly where
               // the way straight on would cut into a tile it keeps off
-              expect(cutsInto(p, round[1], keepOff)).toEqual([]);
+              expect(cutsInto(p, round[1], firstOff)).toEqual([]);
               if (own.length > 1) expect(twice).toBe(cutsInto(p, own[1], keepOff).length > 0);
               seen.rounds++;
               if (twice) seen.back++;
+              if (twice && avoid(back!.x, back!.y)) seen.reentered++;
+              if (twice && closing(back!) === 'dry') seen.reenteredDry++;
               if (isCrossing(back!.x, back!.y)) seen.offCrossing++;
               if (held && !heldDry) seen.turnedDry++;
               if (heldDry) seen.retried++;
@@ -2970,13 +3137,18 @@ describe('a walker among crossings that close, open and run dry at random', () =
         },
       );
       // not vacuous: walks round straight on and back through the middle of the tile first, from a
-      // crossing's tile, in the step the trains ran dry and at a later try; and tries that found none
+      // crossing's tile, in the step the trains ran dry and at a later try; back into a tile it
+      // keeps off, a crossing only dry trains hold among them; tries that found none, and tries
+      // that found no way straight on from the edge of a crossing a train that may still move holds
       expect(seen.rounds - seen.back).toBeGreaterThanOrEqual(40);
       expect(seen.back).toBeGreaterThanOrEqual(40);
       expect(seen.offCrossing).toBeGreaterThanOrEqual(3);
       expect(seen.turnedDry).toBeGreaterThanOrEqual(6);
       expect(seen.retried).toBeGreaterThanOrEqual(5);
+      expect(seen.reentered).toBeGreaterThanOrEqual(4);
+      expect(seen.reenteredDry).toBeGreaterThanOrEqual(2);
       expect(seen.noWay).toBeGreaterThanOrEqual(40);
+      expect(seen.firmStart).toBeGreaterThanOrEqual(2);
     },
   );
 });
