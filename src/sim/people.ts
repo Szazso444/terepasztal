@@ -5,7 +5,9 @@ import type { Station } from './stations';
 import { decorDef } from './build';
 import { buildingDef } from './buildings';
 import type { RoadTiles } from './roads';
+import { streetDoor, type Door } from './doors';
 import { Rng } from '../engine/rng';
+import { DIR_DX, DIR_DY } from '../engine/iso';
 
 /**
  * What a walker does for a living, which follows from where it lives. The ids are what the art
@@ -45,6 +47,11 @@ export interface Place {
   gathers: Terrain | null;
   /** what those who live here do */
   profession: Profession;
+  /**
+   * its street door (`streetDoor`, src/sim/doors.ts): walkers idle in front of it, and their walks
+   * from and to the place start and end outside it (`doorstep`)
+   */
+  door: Door;
 }
 export type PersonState =
   'inside' | 'idle' | 'walk' | 'gather' | 'toStation' | 'waiting' | 'return';
@@ -247,6 +254,20 @@ export function walkable(map: GameMap, x: number, y: number) {
   return t !== Terrain.Water && t !== Terrain.Rock && t !== Terrain.Mountain;
 }
 
+/**
+ * Where a walk out of a door starts and a walk to it ends: the tile outside it (`Door.reach`), or
+ * the door's own tile where nobody stands outside it: off the map, on ground nobody walks on
+ * (`walkable`), or on a level crossing (`isCrossing`), where nobody is set down.
+ */
+export function doorstep(
+  map: GameMap,
+  door: Door,
+  isCrossing: (x: number, y: number) => boolean,
+): { x: number; y: number } {
+  const { reach } = door;
+  return walkable(map, reach.x, reach.y) && !isCrossing(reach.x, reach.y) ? reach : door.tile;
+}
+
 /** Tiles a walk may stray beyond the box its two ends span (`findWalk`). */
 export const WALK_MARGIN = 4;
 /**
@@ -394,12 +415,19 @@ function nearestPlace(places: readonly Place[], x: number, y: number): Place | n
   return best;
 }
 
+/** The key of the place a station is (`Place.key`). */
+const stationKey = (id: number) => `s${id}`;
+
 /**
  * The population as a few quiet walkers: everyone belongs to a station, works or service and
  * spends most of the day inside; now and then someone steps out to idle by the door, walks to a
  * nearby resource tile to gather, or goes to the closest station to catch a train with a coach.
- * Each has the profession of the place it lives at. Nobody sets out at night, and one caught on
- * the way to a station turns home. A walker waits in front of a level crossing while it is closed
+ * The door is the place's street door (src/sim/doors.ts), turned with the place: walkers idle in
+ * front of it, and a walk out of a place or back to it, a station's too, starts or ends on the
+ * tile outside it (`doorstep`). Between two places whose doors face one tile that walk has no
+ * length: the walker is there at once and arrives on its next step (`startWalk`). Each has the
+ * profession of the place it lives at. Nobody sets out at night, and one caught on the way to a
+ * station turns home. A walker waits in front of a level crossing while it is closed
  * (src/sim/crossings.ts), or walks round it when only trains out of fuel or power hold it closed
  * (`walkRound`), and none is set down on one (`offCrossing`). Nothing here changes the map.
  */
@@ -426,6 +454,10 @@ export class PeopleSim {
   }
   /** The tile is a level crossing (`Roads.isCrossing`). */
   private readonly isCrossing = (x: number, y: number) => this.builder.roads.isCrossing(x, y);
+  /** Where a walk out of the door starts and a walk to it ends (`doorstep`). */
+  private doorstepOf(door: Door) {
+    return doorstep(this.map, door, this.isCrossing);
+  }
   /**
    * Each walker that found no way round a crossing it waits at (`walkRound`): the walk it waits on,
    * and the game seconds to its next try. Kept while it waits there on that walk; not saved, as the
@@ -460,9 +492,10 @@ export class PeopleSim {
         out.push({
           x: s.x,
           y: s.y,
-          key: `s${s.id}`,
+          key: stationKey(s.id),
           gathers: this.gatherTerrain[s.def.id] ?? null,
           profession: stationProfession(s.def),
+          door: streetDoor(s.def, s.x, s.y, s.rot),
         });
     for (const b of this.builder.buildings.values())
       if (!b.work && buildingDef(b.id).crew > 0)
@@ -472,6 +505,7 @@ export class PeopleSim {
           key: `b${b.x},${b.y}`,
           gathers: null,
           profession: 'railway_worker',
+          door: streetDoor(buildingDef(b.id), b.x, b.y, b.rot ?? 0),
         });
     for (const d of this.builder.decor.values())
       if (decorDef(d.id).crew > 0 || decorDef(d.id).residents)
@@ -482,6 +516,7 @@ export class PeopleSim {
           gathers: null,
           // a house is lived in; any other service stop is a railway worker's post
           profession: decorDef(d.id).residents ? 'passenger' : 'railway_worker',
+          door: streetDoor(decorDef(d.id), d.x, d.y, d.rot),
         });
     return out;
   }
@@ -573,14 +608,22 @@ export class PeopleSim {
     return best;
   }
 
+  /**
+   * Set the walker off on the walk `findWalk` gives from `from` to `to`, at its start, in `state`;
+   * false when there is none. A walk from a tile to itself is none, but where `there` says the
+   * walker is already where it goes: from one place to another whose door faces the same tile as
+   * its own, so the two doorsteps are one. That walk is the tile alone, and the walker arrives at
+   * its end on its next step, as at the end of any walk.
+   */
   private startWalk(
     p: Person,
     from: { x: number; y: number },
     to: { x: number; y: number },
     state: PersonState,
+    there = false,
   ) {
     const path = findWalk(this.map, from, to, this.builder.roads);
-    if (!path || path.length < 2) return false;
+    if (!path || path.length < (there ? 1 : 2)) return false;
     p.path = path;
     p.step = 0;
     p.x = from.x;
@@ -650,7 +693,7 @@ export class PeopleSim {
         const back = findWalk(
           this.map,
           { x: Math.round(p.x), y: Math.round(p.y) },
-          home,
+          this.doorstepOf(home.door),
           this.builder.roads,
         );
         if (back && back.length >= 2) {
@@ -665,17 +708,31 @@ export class PeopleSim {
           // step outside: mostly idling, sometimes gathering, rarely a train trip
           const r = this.rnd();
           if (r < 0.65) {
-            // in front of the door, at most a fifth of a tile out from its own tile, but never on
-            // a level crossing there: then short of its own tile's edge, the same draw spread over
-            // that
-            const reach = this.isCrossing(home.x, home.y + 1) ? 0.2 : 0.4;
-            p.x = home.x + (this.rnd() - 0.5) * 0.8;
-            p.y = home.y + 0.3 + this.rnd() * reach;
+            // in front of its street door, at most a fifth of a tile out from the door's tile, but
+            // never on a level crossing there: then short of that tile's edge, the same draw spread
+            // over that. The first draw places it along the door's side, the second out from it:
+            // for a door facing S, x then y, as before there were doors.
+            const { tile, side, reach } = home.door;
+            const out = this.isCrossing(reach.x, reach.y) ? 0.2 : 0.4;
+            const nx = DIR_DX[side];
+            const ny = DIR_DY[side];
+            const along = (this.rnd() - 0.5) * 0.8;
+            const away = this.rnd() * out;
+            p.x = tile.x + nx * 0.3 + nx * away + ny * along;
+            p.y = tile.y + ny * 0.3 + ny * away - nx * along;
             p.state = 'idle';
             p.timer = 6 + this.rnd() * 14;
           } else if (r < 0.92 && home.gathers !== null) {
             const spot = this.nearestTile(home, home.gathers);
-            if (!spot || !this.startWalk(p, home, spot, 'gather')) p.timer = 10;
+            // a gather tile under its own home is none: it stays in, as it always has. One on its
+            // doorstep is a walk of no length: it gathers there
+            const under = spot && spot.x === home.x && spot.y === home.y;
+            if (
+              !spot ||
+              under ||
+              !this.startWalk(p, this.doorstepOf(home.door), spot, 'gather', true)
+            )
+              p.timer = 10;
           } else {
             const st = this.builder.stations
               .filter(
@@ -689,15 +746,27 @@ export class PeopleSim {
                   Math.abs(a.y - home.y) -
                   (Math.abs(b.x - home.x) + Math.abs(b.y - home.y)),
               )[0];
-            if (st && this.startWalk(p, home, st, 'toStation')) p.stationId = st.id;
+            // a station whose street door faces the tile its own door faces is there at once; its
+            // own station is none, as it always was
+            if (
+              st &&
+              this.startWalk(
+                p,
+                this.doorstepOf(home.door),
+                this.doorstepOf(streetDoor(st.def, st.x, st.y, st.rot)),
+                'toStation',
+                home.key !== stationKey(st.id),
+              )
+            )
+              p.stationId = st.id;
             else p.timer = 10;
           }
           break;
         }
         case 'idle': {
           // a level crossing laid where it idles, or the tile it gathered on with no way home:
-          // it stands at the crossing's edge, on the side of its home
-          const off = offCrossing(p, home, this.isCrossing);
+          // it stands at the crossing's edge, on the side of its home's door
+          const off = offCrossing(p, home.door.tile, this.isCrossing);
           if (off) {
             p.x = off.x;
             p.y = off.y;
@@ -718,8 +787,9 @@ export class PeopleSim {
             if (p.state === 'gather') {
               p.state = 'idle';
               p.timer = 8 + this.rnd() * 10;
-              // walk back afterwards, carrying what it gathered
-              if (this.turnHome(p, home)) p.carrying = true;
+              // walk back afterwards, carrying what it gathered: from its doorstep, a walk of no
+              // length
+              if (this.turnHome(p, home, true)) p.carrying = true;
             } else if (p.state === 'toStation') {
               p.state = 'waiting';
               p.timer = 60 + this.rnd() * 90;
@@ -733,9 +803,20 @@ export class PeopleSim {
         case 'waiting':
           p.timer -= gdt;
           if (p.timer <= 0 || !daytime) {
-            // no train came: walk home
+            // no train came: walk home, out of the station's street door and in by its own, at once
+            // where the two face one tile, but for one whose home is now the station
             const st = this.builder.stationById(p.stationId ?? -1);
-            if (st && this.startWalk(p, st, home, 'return')) break;
+            if (
+              st &&
+              this.startWalk(
+                p,
+                this.doorstepOf(streetDoor(st.def, st.x, st.y, st.rot)),
+                this.doorstepOf(home.door),
+                'return',
+                home.key !== stationKey(st.id),
+              )
+            )
+              break;
             p.state = 'inside';
             p.timer = 30;
           }
@@ -750,15 +831,18 @@ export class PeopleSim {
     }
   }
 
-  /** Turn for home from the tile the walker stands on; false when there is no way. */
-  private turnHome(p: Person, home: Place) {
+  /**
+   * Turn for home's door from the tile the walker stands on; false when there is no way, and when
+   * it stands on its doorstep but where `there` takes that for a walk of no length (`startWalk`).
+   */
+  private turnHome(p: Person, home: Place, there = false) {
     const back = findWalk(
       this.map,
       { x: Math.round(p.x), y: Math.round(p.y) },
-      home,
+      this.doorstepOf(home.door),
       this.builder.roads,
     );
-    if (!back || back.length < 2) return false;
+    if (!back || back.length < (there ? 1 : 2)) return false;
     p.path = back;
     p.step = 0;
     p.state = 'return';

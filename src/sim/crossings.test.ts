@@ -1194,9 +1194,10 @@ const HOUSES: readonly (readonly [number, number])[] = [
 /**
  * A grass world with a line along ROW from a depot at its west end, a quarry and a warehouse near
  * its ends, a passenger station south of it and houses north of it, joined by a road over the line
- * on CROSS_X: the one level crossing. With `loco`, a train of it and a hopper shuttles between the
- * quarry and the warehouse, stopping at each without loading, over the crossing each way. The
- * clock stands just after the walkers wake.
+ * on CROSS_X: the one level crossing. The station is turned to face the line (r2), its street door
+ * on its south side, away from its platform: the houses' walkers go over the crossing to it. With
+ * `loco`, a train of it and a hopper shuttles between the quarry and the warehouse, stopping at
+ * each without loading, over the crossing each way. The clock stands just after the walkers wake.
  */
 function crossingWorld(loco: string | null, seed: number): { w: SimWorld; train: Train | null } {
   const w = simWorld({ terrain: 'grass', size: SIDE, seed });
@@ -1205,7 +1206,7 @@ function crossingWorld(loco: string | null, seed: number): { w: SimWorld; train:
   line(w, 6, ROW, 60);
   const quarry = station(w, 'quarry', 10, ROW - 1);
   const warehouse = station(w, 'warehouse', 56, ROW - 1);
-  station(w, 'station', CROSS_X + 1, ROW + 1);
+  station(w, 'station', CROSS_X + 1, ROW + 1, 2);
   w.builder.free = true;
   for (let y = 8; y <= ROW + 1; y++)
     expect(w.builder.placeRoad(CROSS_X, y), `road at ${CROSS_X},${y}`).toBe(true);
@@ -1734,9 +1735,11 @@ describe('a train standing at the platform by a level crossing, ten game minutes
   // over the crossing, it closes it from the next step; a walker already on the crossing then is the
   // gap, and the only walker a car may meet there.
   // slow: 12 000 steps of a whole world with a train and some forty walkers
+  // seeds where a walker is on the crossing as the train sets off over it: with walks from and to
+  // the doors (#406), adler 4242 and f7 7 have none
   it.each([
-    ['adler', 4242],
-    ['f7', 7],
+    ['adler', 1],
+    ['f7', 1],
     ['mav375', 99],
   ] as const)(
     '%s, seed %i: closes exactly as the rule says, walkers cross in front of the standing train, and a car meets only a walker on the crossing before the train had its way over it',
@@ -1806,8 +1809,8 @@ describe('a train standing at the platform by a level crossing, ten game minutes
       }
       // not vacuous: walkers crossed in front of the train standing at the platform, it set off
       // over the crossing from there again and again, and walkers were on the crossing as it did
-      // (24 to 58 walkers in front, 3 or 4 departures and 3 to 24 walkers on it as it set off, with
-      // 3 to 23 of them met by a car, over these three runs)
+      // (25 to 35 walkers in front, 3 or 4 departures and 1 to 9 walkers on it as it set off, over
+      // these three runs)
       expect(out.inFront).toBeGreaterThanOrEqual(15);
       expect(out.setOff).toBeGreaterThanOrEqual(3);
       expect(out.underIt).toBeGreaterThanOrEqual(1);
@@ -3460,7 +3463,8 @@ describe('a walker whose walk home is made anew where it waits at a crossing', (
             }
             // the step a train out of fuel alone holds it: a walk round from the tile it walked off
             expect(p.path[0]).toEqual(walkedOff);
-            expect(p.path.at(-1)).toEqual({ x: second.x, y: second.y });
+            // to the tile outside the other house's street door, on its S side at r0
+            expect(p.path.at(-1)).toEqual({ x: second.x, y: second.y + 1 });
             break;
           }
           // and home by it, never on the crossing
