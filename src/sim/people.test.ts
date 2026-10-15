@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
-import { Terrain } from '../world/tiles';
+import { Terrain, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
@@ -13,6 +13,7 @@ import { rules, DEFAULT_RULES } from './rules';
 import {
   PeopleSim,
   clearAhead,
+  doorstep,
   findWalk,
   type PeopleJSON,
   type Person,
@@ -20,6 +21,7 @@ import {
   type Place,
 } from './people';
 import { startWork } from './upgrade';
+import { streetDoor, type Door } from './doors';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
 import { simWorld, line, station as placeStation } from '../testing/simWorld';
 
@@ -43,6 +45,15 @@ function world(seed = 4242) {
 const POPULATION = 12;
 const DT = 1;
 const MIDDAY = 0.5;
+
+/** Where a walk out of a door starts and a walk back to it ends, on this map (`doorstep`). */
+const stepOf = (f: { map: GameMap; builder: Builder }, door: Door) =>
+  doorstep(f.map, door, (x, y) => f.builder.roads.isCrossing(x, y));
+/** The street door of a station or a works. */
+const doorOf = (x: Station | Building) =>
+  x instanceof Station
+    ? streetDoor(x.def, x.x, x.y, x.rot)
+    : streetDoor(buildingDef(x.id), x.x, x.y, x.rot ?? 0);
 
 /** Who waits at the station after each tick, with where everyone is. */
 function run(people: PeopleSim, station: Station, ticks: number) {
@@ -171,7 +182,7 @@ describe('walkers and a works closed for its upgrade', () => {
     expect(lived.length).toBeGreaterThan(0);
     // one of them on its way home to the works, a few tiles off
     const walker = lived[0];
-    const path = findWalk(map, { x: 27, y: 40 }, mill)!;
+    const path = findWalk(map, { x: 27, y: 40 }, stepOf({ map, builder }, doorOf(mill)))!;
     Object.assign(walker, { state: 'return', path, step: 0, x: 27, y: 40, timer: 0 });
 
     mill.work = startWork(2)!;
@@ -181,13 +192,14 @@ describe('walkers and a works closed for its upgrade', () => {
     expect(walker.state).toBe('return');
     expect(walker.home).not.toBe(key);
     const home = people.places().find((p) => p.key === walker.home)!;
-    expect(walker.path.at(-1)).toEqual({ x: home.x, y: home.y });
+    expect(walker.path.at(-1)).toEqual(stepOf({ map, builder }, home.door));
     expect(walker.y).toBeGreaterThan(38);
+    const millStep = stepOf({ map, builder }, doorOf(mill));
     for (let i = 0; i < 400; i++) {
       for (const p of people.persons) {
         expect(p.home, `tick ${i}`).not.toBe(key);
         if (p.state === 'return' || p.state === 'walk')
-          expect(p.path.at(-1), `tick ${i}`).not.toEqual({ x: mill.x, y: mill.y });
+          expect(p.path.at(-1), `tick ${i}`).not.toEqual(millStep);
       }
       people.tick(DT, POPULATION, MIDDAY);
     }
@@ -666,7 +678,11 @@ function rehomedTwin(
     if (!home) return q;
     q.home = home.key;
     if (q.state === 'return') {
-      const back = findWalk(f.map, { x: Math.round(q.x), y: Math.round(q.y) }, home);
+      const back = findWalk(
+        f.map,
+        { x: Math.round(q.x), y: Math.round(q.y) },
+        stepOf(f, home.door),
+      );
       if (back && back.length >= 2) Object.assign(q, { path: back, step: 0 });
     }
     return q;
@@ -693,10 +709,11 @@ function parting(a: PeopleSim, b: PeopleSim): string | null {
  * Plays the case with its closings, checking every tick: a walker whose home is not among the
  * places has, after the tick, the first listed of the open places nearest to where it stood; a
  * walker whose home is among them keeps it; while any place is open every walker lives at one
- * and there are as many as the population; a walk out to gather starts at the walker's own open
- * home; and with no place open the walkers stay as they are. With `twin`, the tick also equals a
- * `rehomedTwin`'s: re-homing changes the home, and the way home of a walker on it, and nothing
- * else, drawing nothing. Returns how many walkers were re-homed, and in which states.
+ * and there are as many as the population; a walk out to gather starts outside the street door of
+ * the walker's own open home; and with no place open the walkers stay as they are. With `twin`,
+ * the tick also equals a `rehomedTwin`'s: re-homing changes the home, and the way home of a walker
+ * on it, and nothing else, drawing nothing. Returns how many walkers were re-homed, and in which
+ * states.
  */
 function playShut(people: PeopleSim, f: Layout, c: ShutCase, twin = false) {
   let moved = 0;
@@ -746,7 +763,8 @@ function playShut(people: PeopleSim, f: Layout, c: ShutCase, twin = false) {
     if (homeless) throw new Error(`${at}: walker ${homeless.id} lives at ${homeless.home}`);
     for (const p of setOutToGather(people, before)) {
       const home = places.find((pl) => pl.key === p.home);
-      if (!home || p.path[0].x !== home.x || p.path[0].y !== home.y)
+      const from = home && stepOf(f, home.door);
+      if (!from || p.path[0].x !== from.x || p.path[0].y !== from.y)
         throw new Error(`${at}: walker ${p.id} of ${p.home} set out to gather from elsewhere`);
     }
     const parted = other && parting(people, other);
@@ -949,6 +967,8 @@ describe('walkers and a station closed for its upgrade', () => {
           const town = builder.placeStation(30, 21, 'station')!;
           expect([site, mill, town].every(Boolean)).toBe(true);
           const key = stationKey(site);
+          // where its gatherers set out from: outside its street door
+          const from = stepOf({ map, builder }, doorOf(site));
           const people = new PeopleSim(map, builder, new Rng(c.stream));
           moveIn(people, key, site);
           // the day goes on: some step out to idle by the door or to gather
@@ -967,7 +987,7 @@ describe('walkers and a station closed for its upgrade', () => {
             const lives = people.persons.find((p) => p.home === key);
             if (lives) throw new Error(`tick ${i}: walker ${lives.id} lives at the closed station`);
             const out = setOutToGather(people, before).find(
-              (p) => p.path[0].x === site.x && p.path[0].y === site.y,
+              (p) => p.path[0].x === from.x && p.path[0].y === from.y,
             );
             if (out) throw new Error(`tick ${i}: walker ${out.id} set out from it to gather`);
           }
@@ -982,7 +1002,7 @@ describe('walkers and a station closed for its upgrade', () => {
             people.tick(DT, 3 * POPULATION, MIDDAY);
             gathered = setOutToGather(people, before).some(
               (p) =>
-                !old.has(p) && p.home === key && p.path[0].x === site.x && p.path[0].y === site.y,
+                !old.has(p) && p.home === key && p.path[0].x === from.x && p.path[0].y === from.y,
             );
           }
           expect(gathered, 'nobody newly homed there went gathering').toBe(true);
@@ -1004,7 +1024,7 @@ describe('walkers and a station closed for its upgrade', () => {
         people.tick(DT, 1, MIDDAY);
         const [p] = people.persons;
         const from = { x: Math.round(c.x), y: Math.round(c.y) };
-        const path = findWalk(map, from, station)!;
+        const path = findWalk(map, from, stepOf({ map, builder }, doorOf(station)))!;
         Object.assign(p, {
           home: stationKey(station),
           state: 'return',
@@ -1020,7 +1040,7 @@ describe('walkers and a station closed for its upgrade', () => {
         expect(p.state).toBe('return');
         expect(p.home).toBe(home.key);
         expect(p.path[0]).toEqual(from);
-        expect(p.path.at(-1)).toEqual({ x: home.x, y: home.y });
+        expect(p.path.at(-1)).toEqual(stepOf({ map, builder }, home.door));
       },
     );
   });
@@ -1251,7 +1271,7 @@ describe('re-homing a walker whose home closed', () => {
         expect(displaced.map((p) => p.home)).toEqual(displaced.map(() => stationKey(far)));
         for (const p of returning)
           if (p.state === 'return') {
-            expect(p.path.at(-1)).toEqual({ x: far.x, y: far.y });
+            expect(p.path.at(-1)).toEqual(stepOf({ map, builder }, doorOf(far)));
             turned++;
           }
       },
@@ -1287,11 +1307,12 @@ describe('re-homing a walker whose home closed', () => {
 
         setClosed(gone, true);
         const farKey = stationKey(far);
+        const farStep = stepOf({ map, builder }, doorOf(far));
         for (let i = 0; i < 400; i++) {
           people.tick(DT, POPULATION, MIDDAY);
           for (const p of displaced) {
             const end = p.path.at(-1);
-            if (p.home === farKey || (end && end.x === far.x && end.y === far.y))
+            if (p.home === farKey || (end && end.x === farStep.x && end.y === farStep.y))
               throw new Error(
                 `tick ${i}: walker ${p.id} ${p.state} home ${p.home}, bound for the far station`,
               );

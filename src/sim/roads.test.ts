@@ -21,6 +21,7 @@ import { resetTrainIds } from './trains';
 import { rules, DEFAULT_RULES } from './rules';
 import { SimStep, startStock, type StepDomains } from './step';
 import { Roads, crossable, roadCost } from './roads';
+import { streetDoor } from './doors';
 import {
   PeopleSim,
   OFF_ROAD_STEP,
@@ -1243,11 +1244,14 @@ describe('a walk with roads', () => {
     const stream = people.toJSON().rng;
     people.tick(0.05, 1, 0.5);
     expect(p.home).toBe(`s${st.id}`);
-    const along = findWalk(map, { x: 24, y: 19 }, st, builder.roads)!;
+    // to the station's street door, on its side away from the platform: where the road ends
+    const door = { x: 10, y: 18 };
+    expect(streetDoor(st.def, st.x, st.y, st.rot).reach).toEqual(door);
+    const along = findWalk(map, { x: 24, y: 19 }, door, builder.roads)!;
     expect(p.path).toEqual(along);
     // the walk the roads give, not the one across the grass: up the road and along it, until a
     // cut across costs no more (a step off the road counts alike straight or diagonal)
-    const bare = findWalk(map, { x: 24, y: 19 }, st)!;
+    const bare = findWalk(map, { x: 24, y: 19 }, door)!;
     expect(along).not.toEqual(bare);
     expect(along.slice(0, 15).map((q) => [q.x, q.y])).toEqual(road.slice(0, 15));
     expect(costOf(builder.roads, along).cost).toBeLessThan(costOf(builder.roads, bare).cost);

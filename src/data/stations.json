@@ -26,7 +26,19 @@
       ],
       "accepts": [],
       "art": "farm",
-      "terrain": "grass"
+      "terrain": "grass",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "lumber",
@@ -45,7 +57,19 @@
       ],
       "accepts": [],
       "art": "lumber",
-      "terrain": "forest"
+      "terrain": "forest",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "quarry",
@@ -64,7 +88,19 @@
       ],
       "accepts": [],
       "art": "quarry",
-      "terrain": "rock"
+      "terrain": "rock",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "pump",
@@ -86,7 +122,19 @@
       "water": true,
       "terrain": "water",
       "standOn": ["grass", "forest"],
-      "needsWater": true
+      "needsWater": true,
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "town",
@@ -114,7 +162,19 @@
         "wire",
         "food"
       ],
-      "art": "town"
+      "art": "town",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "warehouse",
@@ -146,7 +206,19 @@
       "stockpile": true,
       "fuel": true,
       "water": true,
-      "contracts": false
+      "contracts": false,
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "depot",
@@ -177,7 +249,14 @@
       "depot": true,
       "fuel": true,
       "water": true,
-      "contracts": false
+      "contracts": false,
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 1],
+          "side": "S"
+        }
+      ]
     },
     {
       "id": "narrow_depot",
@@ -209,7 +288,14 @@
       "depot": true,
       "fuel": true,
       "water": true,
-      "contracts": false
+      "contracts": false,
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "S"
+        }
+      ]
     },
     {
       "id": "station",
@@ -228,7 +314,19 @@
         }
       ],
       "accepts": ["passengers"],
-      "art": "station"
+      "art": "station",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     }
   ]
 }

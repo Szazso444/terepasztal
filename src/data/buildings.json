@@ -17,7 +17,14 @@
         "food": 5
       }
     },
-    "perWeek": 60
+    "perWeek": 60,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "kiln",
@@ -38,7 +45,14 @@
         "coal": 1
       }
     },
-    "perWeek": 40
+    "perWeek": 40,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "grinder",
@@ -58,7 +72,14 @@
         "iron": 1
       }
     },
-    "perWeek": 20
+    "perWeek": 20,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "refinery",
@@ -82,7 +103,14 @@
         "oil": 1
       }
     },
-    "perWeek": 15
+    "perWeek": 15,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "power_plant",
@@ -111,7 +139,14 @@
       "water": 1
     },
     "power": true,
-    "perWeek": 60
+    "perWeek": 60,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "substation",
@@ -132,7 +167,14 @@
       "radius": 6,
       "throughput": 3
     },
-    "perWeek": 0
+    "perWeek": 0,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "hydro_plant",
@@ -153,7 +195,14 @@
     },
     "power": true,
     "needsWater": true,
-    "perWeek": 120
+    "perWeek": 120,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "bridge_wood",

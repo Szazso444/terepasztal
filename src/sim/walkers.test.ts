@@ -19,6 +19,7 @@ import {
   STATION_REACH,
   WAKE,
   WALK_SPEED,
+  doorstep,
   findWalk,
   stationProfession,
   walkSpeed,
@@ -27,6 +28,8 @@ import {
   type Profession,
 } from './people';
 import { forAll, shrinkInt, SEEDS } from '../testing/property';
+import { streetDoor } from './doors';
+import { buildingDef } from './buildings';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -715,13 +718,34 @@ describe('a gatherer with no way home', () => {
 
 // ------------------------------------------------------------------ station trips
 
-/** A windmill `dx` and `dy` tiles from a passenger station on a long line; the only places. */
+/**
+ * A windmill `dx` and `dy` tiles from a passenger station on a long line; the only places. Walks
+ * out of each and back to it start and end outside its street door (`doorstep`): the station's
+ * and the mill's.
+ */
 function trip(seed: number, dx: number, dy: number) {
   const { map, builder } = flat(seed, 64, 48, 20);
   const station = builder.placeStation(32, 21, 'station')!;
   const mill = builder.placeBuilding(32 + dx, 21 + dy, 'windmill')!;
   expect([station, mill].every(Boolean)).toBe(true);
-  return { map, builder, station, mill, home: `b${mill.x},${mill.y}` };
+  const crossing = (x: number, y: number) => builder.roads.isCrossing(x, y);
+  return {
+    map,
+    builder,
+    station,
+    mill,
+    home: `b${mill.x},${mill.y}`,
+    stationStep: doorstep(
+      map,
+      streetDoor(station.def, station.x, station.y, station.rot),
+      crossing,
+    ),
+    millStep: doorstep(
+      map,
+      streetDoor(buildingDef(mill.id), mill.x, mill.y, mill.rot ?? 0),
+      crossing,
+    ),
+  };
 }
 
 const daytime = (day: number) => day > WAKE && day < SLEEP;
@@ -773,9 +797,9 @@ describe('a walker bound for a station', () => {
         (c) => {
           expect(Math.abs(c.dx) + c.dy).toBeLessThanOrEqual(STATION_REACH);
           rules.daySeconds = c.daySeconds;
-          const { map, builder, station, mill } = trip(c.mapSeed, c.dx, c.dy);
+          const { map, builder, station, stationStep, millStep } = trip(c.mapSeed, c.dx, c.dy);
           const people = new PeopleSim(map, builder, new Rng(c.stream));
-          const longest = stranded(map, mill, station, c.gdt);
+          const longest = stranded(map, millStep, stationStep, c.gdt);
           const days = 3;
           const ticks = Math.ceil((days * daySeconds()) / c.gdt);
           // when each walker who is outside stepped out
@@ -796,14 +820,14 @@ describe('a walker bound for a station', () => {
               }
               if (was === 'toStation' && p.state !== 'toStation') {
                 if (p.state === 'waiting') {
-                  // got there
-                  expect([p.x, p.y]).toEqual([station.x, station.y]);
+                  // got there, outside its street door
+                  expect([p.x, p.y]).toEqual([stationStep.x, stationStep.y]);
                   arrived++;
                 } else {
                   // turned home, which only night does
                   expect(p.state, `walker ${p.id} left its way to the station`).toBe('return');
                   expect(daytime(day), `walker ${p.id} turned back by day`).toBe(false);
-                  expect(p.path.at(-1)).toEqual({ x: mill.x, y: mill.y });
+                  expect(p.path.at(-1)).toEqual(millStep);
                   turned++;
                 }
               }
@@ -840,12 +864,12 @@ describe('a walker bound for a station', () => {
         night: rng.pick([0.1, 0.5 * (1 + SLEEP), 0.9, 0.99]),
       }),
       (c) => {
-        const { map, builder, station, mill, home } = trip(c.mapSeed, c.dx, c.dy);
+        const { map, builder, station, home, stationStep, millStep } = trip(c.mapSeed, c.dx, c.dy);
         const people = new PeopleSim(map, builder, new Rng(c.stream));
         people.tick(DT, 1, MIDDAY);
         const [p] = people.persons;
         // make it a mill walker part of the way to the station, between two tiles
-        const path = findWalk(map, mill, station)!;
+        const path = findWalk(map, millStep, stationStep)!;
         expect(path.length).toBeGreaterThanOrEqual(3);
         const step = 1 + Math.floor(c.along * (path.length - 2));
         const [a, b] = [path[step], path[step + 1]];
@@ -867,7 +891,7 @@ describe('a walker bound for a station', () => {
         expect({ x: p.x, y: p.y }).toEqual(at);
         // the way home starts at the tile it stands on and ends at its door
         expect(p.path[0]).toEqual({ x: Math.round(at.x), y: Math.round(at.y) });
-        expect(p.path.at(-1)).toEqual({ x: mill.x, y: mill.y });
+        expect(p.path.at(-1)).toEqual(millStep);
         expect(p.carrying).toBe(false);
         expect(people.toJSON().rng).toBe(stream);
         // the way back is no longer than the way out, and is walked at the pace
@@ -909,8 +933,8 @@ describe('a walker bound for a station', () => {
             stationId: f.station.id,
             path: [],
             step: 0,
-            x: f.station.x,
-            y: f.station.y,
+            x: f.stationStep.x,
+            y: f.stationStep.y,
             timer: c.left,
           });
           return { ...f, people, p };
@@ -934,9 +958,10 @@ describe('a walker bound for a station', () => {
         expect(dusk.p.state).toBe('return');
         expect(dusk.people.toJSON().rng).toBe(stream);
         for (const w of [day, dusk]) {
-          const { p, station, mill } = w;
-          expect(p.path[0]).toEqual({ x: station.x, y: station.y });
-          expect(p.path.at(-1)).toEqual({ x: mill.x, y: mill.y });
+          const { p, stationStep, millStep } = w;
+          // out of the station's street door, and in by the mill's
+          expect(p.path[0]).toEqual(stationStep);
+          expect(p.path.at(-1)).toEqual(millStep);
           expect(p.carrying).toBe(false);
         }
         // and gets there at the pace
