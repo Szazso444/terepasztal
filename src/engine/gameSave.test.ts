@@ -3,9 +3,10 @@ import { Game } from '../game';
 import { AutosavePause } from './autosavePause';
 import { BrokenNumberWarning, StorageRefusalWarning } from './saveRefusal';
 import { UNREADABLE_NOTICE_TTL } from './saveMessages';
-import { SAVE_KEY, type SaveGame } from '../sim/save';
+import { SAVE_KEY, SAVE_MIN_VERSION, SLOTS_KEY, type SaveGame } from '../sim/save';
 import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
-import { INTENT_KEY } from '../intent';
+import { INTENT_KEY, type Intent } from '../intent';
+import { bootPlan } from './boot';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
 import { RegionState } from '../world/regions';
 import { emptyMap } from '../world/mapgen';
@@ -334,6 +335,63 @@ describe('Game.save and Game.saveSlot', () => {
     expect(g.game.save(true)).toBe(false);
     expect(g.toasts).toEqual([{ text: STR.settings.autosaveFailed, kind: 'warn' }]);
   });
+});
+
+// ------------------------------------------------------------------ reloads into a stored save
+
+describe('Game.loadSlot, Game.loadSave and Game.importSave', () => {
+  /** A save in the oldest format a load still reads, as a slot or a file the player has. */
+  const SAVED = JSON.stringify({
+    version: SAVE_MIN_VERSION,
+    savedAt: 1700000000000,
+    seed: 12345,
+    clock: { time: 0, speedIndex: 1 },
+    economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
+    track: [],
+    stations: [],
+    trains: [],
+    contracts: { contracts: [] },
+    inventory: { items: [] },
+    gacha: {},
+    camera: { x: 0, y: 0, zoomIndex: 2 },
+    lastDay: 0,
+  });
+
+  it.each(['a save slot', 'the stored game', 'an imported save'] as const)(
+    'reload straight into play with %s',
+    (way) => {
+      const session = new MemoryStorage();
+      vi.stubGlobal('sessionStorage', session);
+      const reload = vi.fn();
+      vi.stubGlobal('location', { hash: '#from-before', reload });
+      const g = standIn();
+      const stop = vi.fn();
+      Object.assign(g.host, { loop: { stop }, tooltip: { stack: { closeAll: vi.fn() } } });
+      if (way === 'a save slot') {
+        store.setItem(SLOTS_KEY, JSON.stringify({ mine: SAVED }));
+        expect(g.game.loadSlot('mine')).toBe(true);
+      } else if (way === 'the stored game') {
+        store.setItem(SAVE_KEY, SAVED);
+        expect(g.game.loadSave()).toBe(true);
+      } else expect(g.game.importSave(SAVED)).toEqual({ ok: true });
+
+      // the game it reloads into is the stored one, and the game being left does not save over it
+      expect((JSON.parse(store.getItem(SAVE_KEY)!) as SaveGame).seed).toBe(12345);
+      expect(g.host.keepStoredSave).toBe(true);
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(reload).toHaveBeenCalledTimes(1);
+      // the boot carries the intent out: the stored game, the loading screen, then the reveal,
+      // with the music as loading finishes, since the player clicked to load
+      const intent = JSON.parse(session.getItem(INTENT_KEY)!) as Intent;
+      expect(intent).toEqual({ action: 'continue' });
+      expect(bootPlan(intent)).toEqual({
+        loading: true,
+        reveal: true,
+        clickToBegin: true,
+        music: 'loaded',
+      });
+    },
+  );
 });
 
 // ------------------------------------------------------------------ Game.buyChunk

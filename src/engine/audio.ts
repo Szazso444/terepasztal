@@ -172,6 +172,28 @@ class AudioBus {
   }
 
   /**
+   * Play the music without waiting for a gesture, where the browser lets this page play already:
+   * Chrome does when a click on the page before this one, on the same site, led here (a menu, a
+   * save slot or the world's growth reloads the page). The track is tried; if it plays, the bus
+   * unlocks as a gesture would, and if the browser refuses, nothing changes and the first gesture
+   * starts it. Does nothing while the music is held, at no music volume or with no file to try.
+   */
+  tryUnlock() {
+    this.listen();
+    if (this.unlocked || this.held || this.handingOver || typeof Audio === 'undefined') return;
+    const v = Math.min(1, this.master * this.music);
+    const src = this.musicSets.track;
+    if (src === null || v <= 0) return;
+    const el = this.musicTrack(src);
+    el.volume = v;
+    // refused (no click to carry over), or the file failed: its own error event moves it on
+    void el.play().then(
+      () => this.unlock(),
+      () => {},
+    );
+  }
+
+  /**
    * The player is in this age (an id of `src/data/ages.json`). When its set differs from the one
    * playing, the current track fades out over `MUSIC_FADE_MS` and the new set starts with its first
    * track in the step that stops the old one, never before. Nothing audible means no wait: before
