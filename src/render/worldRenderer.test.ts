@@ -122,6 +122,7 @@ function renderer() {
     objects,
     contactGround,
     city: new Set(),
+    doorsteps: [],
     propTint: 0xffffff,
     structures: new Map(),
     structureAnchors: new Map(),
@@ -1341,4 +1342,46 @@ describe('textured bridges over the painted water', () => {
       },
     );
   }, 20_000);
+});
+
+describe('the town paving handed to the painter', () => {
+  /** A world renderer on a 4 x 4 map with only what `setCity` touches. */
+  function paver() {
+    const handed: (readonly number[])[] = [],
+      repainted: string[] = [];
+    const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
+    Object.assign(world, {
+      map: emptyMap(3, 4, 4),
+      city: new Set(),
+      doorsteps: [],
+      groundFits: new Map(),
+      groundSprites: [],
+      texturedParts: new Map(),
+      landscape: {
+        setCity: (_tiles: Set<number>, steps: readonly number[]) => handed.push(steps),
+        invalidate: (x: number, y: number) => repainted.push(`${x},${y}`),
+      },
+      refreshScatter: () => {},
+    });
+    return { world, handed, repainted };
+  }
+  const tiles = new Set([5, 6]);
+  const doors = [
+    { tile: { x: 1, y: 1 }, side: Dir.S },
+    { tile: { x: 3, y: 3 }, side: Dir.N },
+  ];
+
+  it('hands over a doorstep for each door on a paved tile, and repaints only where one changes', () => {
+    const { world, handed, repainted } = paver();
+    world.setCity(tiles, doors);
+    // the door on paved tile 1,1 faces south; the one on 3,3 stands on bare ground
+    expect(handed.at(-1)).toEqual([1, 1.56, 0.17, 0.2]);
+    expect(repainted).toEqual(expect.arrayContaining(['1,1', '2,1', '1,2']));
+    repainted.length = 0;
+    world.setCity(new Set(tiles), doors);
+    expect(repainted).toEqual([]);
+    world.setCity(new Set(tiles));
+    expect(handed.at(-1)).toEqual([]);
+    expect(repainted.sort()).toEqual(['1,1', '1,2']);
+  });
 });

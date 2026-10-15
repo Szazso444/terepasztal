@@ -40,6 +40,7 @@ import { levelAt } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
+import { doorstepChanges, pavingDoorsteps, type PavingDoor } from './townPaving';
 import { PAL, type RGB } from '../art/palette';
 import BRIDGE_KIT_JSON from './bridgeKit.json';
 import {
@@ -236,17 +237,31 @@ export class WorldRenderer {
   }
 
   private city = new Set<number>();
-  setCity(tiles: Set<number>) {
+  /** The doorsteps the painter lays (`pavingDoorsteps`), four numbers each. */
+  private doorsteps: readonly number[] = [];
+  /**
+   * The towns' paved tiles (`cityTiles`, src/sim/city.ts) and the street doors of the places that
+   * stand among them (src/sim/doors.ts): the painter paves the tiles and lays a doorstep in front
+   * of each door on a paved tile.
+   */
+  setCity(tiles: Set<number>, doors: Iterable<PavingDoor> = []) {
+    const { w, h } = this.map;
     const changed = new Set([...this.city, ...tiles]);
     const old = this.city;
+    const oldSteps = this.doorsteps,
+      steps = pavingDoorsteps(doors, (k) => tiles.has(k), w, h);
     this.city = tiles;
-    this.landscape.setCity(tiles);
+    this.doorsteps = steps;
+    this.landscape.setCity(tiles, steps);
     for (const k of changed)
       if (old.has(k) !== tiles.has(k)) {
         // the painter paves a town's tiles over their water too (refreshGround tells bridges)
-        this.refreshGround(k % this.map.w, Math.floor(k / this.map.w));
-        this.refreshScatter(k % this.map.w, Math.floor(k / this.map.w), 0);
+        this.refreshGround(k % w, Math.floor(k / w));
+        this.refreshScatter(k % w, Math.floor(k / w), 0);
       }
+    // a doorstep laid or taken up is painted again where it reaches
+    for (const k of doorstepChanges(oldSteps, steps, w, h))
+      this.refreshGround(k % w, Math.floor(k / w));
     // nothing grows at a building's foot on paving
     for (const fit of this.groundFits.values()) this.growWeeds(fit);
   }

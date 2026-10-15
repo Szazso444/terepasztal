@@ -221,6 +221,8 @@ export class Landscape {
   sharpPaintMilliseconds = 0;
   visibilityVersion = 0;
   private city: ReadonlySet<number> = new Set();
+  /** The doorsteps of the street doors on paved tiles (`pavingDoorsteps`, townPaving.ts). */
+  private doorsteps: readonly number[] = [];
   constructor(
     private readonly map: LandscapeMap,
     private readonly flat: ReadonlySet<number>,
@@ -607,6 +609,7 @@ export class Landscape {
         version: this.version,
         tint: this.tint,
         city: [...this.city],
+        doorsteps: this.doorsteps,
         snowLevels: SNOW_LEVELS,
       });
   }
@@ -633,8 +636,13 @@ export class Landscape {
     this.focusKey = '';
     this.pump();
   }
-  setCity(tiles: ReadonlySet<number>) {
+  /**
+   * The towns' paved tiles and their doorsteps (`pavingDoorsteps`), for the paint workers from the
+   * next map hand-off. The caller invalidates the tiles whose picture changes.
+   */
+  setCity(tiles: ReadonlySet<number>, doorsteps: readonly number[] = []) {
     this.city = tiles;
+    this.doorsteps = doorsteps;
   }
   isPainted(x: number, y: number) {
     const chunk = this.chunks.get(`${Math.floor(x / 8) * 8},${Math.floor(y / 8) * 8}`);
