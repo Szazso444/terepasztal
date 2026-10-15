@@ -4,6 +4,7 @@ import {
   bridgeJoins,
   bridgePlan,
   deckAt,
+  deckAtOffset,
   deckSamples,
   DECK_SAMPLES,
   type BridgePlan,
@@ -24,7 +25,7 @@ import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { lineSpans, railLevel, type RailBed } from '../world/railProfile';
-import { tileToWorld } from '../engine/iso';
+import { TILE_H, tileToWorld, worldToTile } from '../engine/iso';
 
 const W = 64;
 const N = 0,
@@ -1087,6 +1088,21 @@ describe('bridge meshes over the painted waterline', () => {
     return out;
   };
 
+  /**
+   * A crossing whose tiles all stand over water, its spans in timber (stone ones stand on arched
+   * walls, which have no feet to fade): every tile has feet in the water.
+   */
+  const overWater = (rng: Rng) => {
+    const c = crossing(rng);
+    for (const s of c.sites) {
+      s.water = true;
+      // over water a deck never sinks below the ground (worldRenderer.ts, deckProfile)
+      s.deck = s.deck.map((z) => Math.max(0, z));
+      if (s.axis !== null) s.material = 'wood';
+    }
+    return c;
+  };
+
   // 40 crossings, each rasterised to the quarter pixel: about a second alone
   it('fades a foot into the water only on the faces it shows, whatever bank stands in front', () => {
     // Every quarter pixel of a water fade lies on the support faces drawn there, or within half
@@ -1094,16 +1110,7 @@ describe('bridge meshes over the painted waterline', () => {
     // over water, with banks round them down to slivers far narrower than the line of sight is
     // read at: the fade goes by where the faces were cut, not by looks of its own.
     forAll(
-      (rng) => {
-        const c = crossing(rng);
-        for (const s of c.sites) {
-          s.water = true;
-          // over water a deck never sinks below the ground (worldRenderer.ts, deckProfile)
-          s.deck = s.deck.map((z) => Math.max(0, z));
-          if (s.axis !== null) s.material = 'wood';
-        }
-        return c;
-      },
+      overWater,
       (c) => {
         for (const { tile, off } of fadeOffFaces(c))
           expect(off.slice(0, 5), `tile ${tile}: ${off.length} off its faces`).toEqual([]);
@@ -1147,6 +1154,201 @@ describe('bridge meshes over the painted waterline', () => {
     expect(bands).toBeGreaterThan(0);
     expect(off.slice(0, 5), `${off.length} off the faces`).toEqual([]);
   });
+
+  /** A support's foot as its fade gives it: the +y face from (x0, y) to (x1, y). */
+  type Foot = { x0: number; x1: number; y: number };
+  /**
+   * The feet a tile fades into the water, read back from its fade: a foot's bands stack, each
+   * one's top edge on the bottom edge of the one before, and the last ends on the waterline. The
+   * foot's +y face runs from (x0, y) to (x1, y) there, its +x face on to (x1, y - (x1 - x0)).
+   */
+  const fadedFeet = (under: Container) => {
+    const feet: Foot[] = [];
+    let last: number[] | undefined;
+    // A band is a, b, c along its top edge, then c2, b2, a2 along its bottom edge.
+    const end = () => {
+      if (!last) return;
+      const a = worldToTile(last[10], last[11] + WATERLINE),
+        b = worldToTile(last[8], last[9] + WATERLINE);
+      feet.push({ x0: a.x, x1: b.x, y: a.y });
+    };
+    for (const g of under.children.filter((g): g is Graphics => g instanceof Graphics))
+      for (const ins of g.context.instructions) {
+        const [{ shape }] = (ins as FillInstruction).data.path.shapePath.shapePrimitives,
+          pts = (shape as unknown as { points: number[] }).points;
+        if (!last || Math.hypot(pts[0] - last[10], pts[1] - last[11]) > 1e-9) end();
+        last = pts;
+      }
+    end();
+    return feet;
+  };
+  const footKey = (f: Foot) => `${f.x0.toFixed(5)},${f.x1.toFixed(5)},${f.y.toFixed(5)}`;
+  /** A bank grown by `e` on every side, on the same plane. */
+  const grown = (b: Bank, e: number): Bank => ({
+    ...b,
+    x0: b.x0 - e,
+    y0: b.y0 - e,
+    x1: b.x1 + e,
+    y1: b.y1 + e,
+    z: bankAt(b, b.x0 - e, b.y0 - e),
+  });
+  /**
+   * The most bank `b` hides of the face from (ax, ay) to (bx, by): the highest `z - TILE_H * d`
+   * over its points `d` tiles (0 to `reach`) along the line of sight (+x +y) from a point of the
+   * face, `z` its plane there. Where along the face the look starts (`s`, 0 to 1) and `d` lie in
+   * a polygon the rect and the ranges bound, and the height is linear in both, so the highest is
+   * at a corner of it: where two of its bounds cross.
+   */
+  const hides = (b: Bank, ax: number, ay: number, bx: number, by: number, reach: number) => {
+    const ux = bx - ax,
+      uy = by - ay,
+      // each [k, l, m] stands for k s + l d <= m
+      bounds = [
+        [-ux, -1, ax - b.x0],
+        [ux, 1, b.x1 - ax],
+        [-uy, -1, ay - b.y0],
+        [uy, 1, b.y1 - ay],
+        [0, -1, 0],
+        [0, 1, reach],
+        [-1, 0, 0],
+        [1, 0, 1],
+      ];
+    let most = -Infinity;
+    for (const [k1, l1, m1] of bounds)
+      for (const [k2, l2, m2] of bounds) {
+        const det = k1 * l2 - k2 * l1;
+        if (Math.abs(det) < 1e-12) continue;
+        const s = (m1 * l2 - m2 * l1) / det,
+          d = (k1 * m2 - k2 * m1) / det;
+        if (bounds.every(([k, l, m]) => k * s + l * d <= m + 1e-9))
+          most = Math.max(most, bankAt(b, ax + ux * s + d, ay + uy * s + d) - TILE_H * d);
+      }
+    return most;
+  };
+  /**
+   * Where a tile's deck ends on an abutment, the ground past that edge stands at least at the
+   * deck's end (bridgeMeshes.ts, onAbutments): a level bank there, reaching in farther than the
+   * abutment starts.
+   */
+  const abutmentBanks = (t: BridgeSite, plan: BridgePlan): Bank[] => {
+    const inset = 1 / 16,
+      out: Bank[] = [];
+    if (plan.abutments.e)
+      out.push({
+        x0: t.x + 0.5 - inset,
+        x1: t.x + 1.5,
+        y0: t.y - 0.5,
+        y1: t.y + 0.5,
+        z: deckAtOffset(t, 0.5, 0),
+        gx: 0,
+        gy: 0,
+      });
+    if (plan.abutments.s)
+      out.push({
+        x0: t.x - 0.5,
+        x1: t.x + 0.5,
+        y0: t.y + 0.5 - inset,
+        y1: t.y + 1.5,
+        z: deckAtOffset(t, 0, 0.5),
+        gx: 0,
+        gy: 0,
+      });
+    return out;
+  };
+
+  /** Each tile of a crossing with the feet it stands on, found on open water, where all fade. */
+  const feetOf = (c: Crossing, ground: (x: number, y: number) => number) =>
+    tilesOf(c, ground).map(({ tile, plan }) => ({
+      tile,
+      plan,
+      feet: fadedFeet(
+        bridgeTileMeshes(
+          { ...tile, ground: () => WATERLINE },
+          { ...plan, abutments: { e: false, s: false } },
+          surfaces,
+        ).under,
+      ),
+    }));
+  /** How far ahead the faces are cut: GROUND_BOX reaches that far past the parts' 0.6 tile. */
+  const SIGHT = GROUND_BOX[1] + GROUND_BOX[0];
+  /** The most bank `b` hides of a foot's two faces (hides). */
+  const hidesFoot = (b: Bank, f: Foot, reach = SIGHT) =>
+    Math.max(
+      hides(b, f.x0, f.y, f.x1, f.y, reach),
+      hides(b, f.x1, f.y, f.x1, f.y - (f.x1 - f.x0), reach),
+    );
+
+  // 40 crossings, each tile drawn three times: about half a second alone
+  it('fades every foot no bank in front of it rises to hide, abutments included', () => {
+    // The other half of the fade lying on the faces: no fade is lost where the faces reach the
+    // water. On the crossing, a foot that no bank, nor the line's bed past an abutment, rises
+    // within half a pixel of hiding anywhere along its two faces (found exactly: a bank is a plane
+    // over a rect) fades. Besides the crossing's own banks, a bank or two grazes the line of sight
+    // from a foot's faces, its highest within half a pixel either side of that. The banks are
+    // grown by NUDGE and the sight by as much, for the ground read just inside a tile's edge and
+    // just past an edge the sight crosses (Painter.ground, Painter.horizon), which moves a plane
+    // by less than SLACK px.
+    const NUDGE = 2e-3,
+      SLACK = 0.05;
+    let near = 0,
+      grazed = 0;
+    forAll(
+      (rng) => {
+        const c = overWater(rng),
+          feet = feetOf(c, () => WATERLINE).flatMap((t) => t.feet);
+        for (let n = rng.int(1, 3); n > 0; n--) {
+          const f = rng.pick(feet),
+            k = rng.range(0, 1),
+            // a point of the +y face, or of the +x face
+            [px, py] = rng.chance(0.5)
+              ? [f.x0 + (f.x1 - f.x0) * k, f.y]
+              : [f.x1, f.y - (f.x1 - f.x0) * k],
+            d = rng.range(0.02, 1.4),
+            w = rng.range(0.02, 0.6),
+            h = rng.range(0.02, 0.6),
+            x0 = px + d - w * rng.range(0, 1),
+            y0 = py + d - h * rng.range(0, 1),
+            flat = {
+              x0,
+              y0,
+              x1: x0 + w,
+              y1: y0 + h,
+              z: 0,
+              gx: rng.range(-10, 10),
+              gy: rng.range(-10, 10),
+            };
+          c.banks.push({ ...flat, z: WATERLINE + rng.range(-0.5, 0.5) - hidesFoot(flat, f) });
+        }
+        return c;
+      },
+      (c) => {
+        const ground = bankGround(c.banks),
+          reach = SIGHT + NUDGE;
+        for (const { tile, plan, feet } of feetOf(c, ground)) {
+          const where = `tile ${tile.x},${tile.y}`,
+            faded = new Set(fadedFeet(bridgeTileMeshes(tile, plan, surfaces).under).map(footKey)),
+            banks = [...c.banks, ...abutmentBanks(tile, plan)].map((b) => grown(b, NUDGE));
+          // a pier stands on one foot, a timber bent on a post at each end
+          expect(feet.length, `${where}: feet on open water`).toBe(
+            plan.piers.length + 2 * plan.trestles.length,
+          );
+          for (const f of feet) {
+            const most = Math.max(WATERLINE, ...banks.map((b) => hidesFoot(b, f, reach)));
+            if (most > WATERLINE + 0.5 - SLACK) continue;
+            if (banks.some((b) => hidesFoot(b, f, reach) > -Infinity)) near++;
+            if (most > WATERLINE + 0.25) grazed++;
+            expect(faded.has(footKey(f)), `${where}: foot ${footKey(f)} hidden to ${most} px`).toBe(
+              true,
+            );
+          }
+        }
+      },
+      { seeds: SEEDS.slice(0, 40), shrink: shrinkCrossing },
+    );
+    // Feet with a bank in sight were among them, some within a quarter pixel of being hidden.
+    expect(near).toBeGreaterThan(0);
+    expect(grazed).toBeGreaterThan(0);
+  }, 10_000);
   /** Quarter-pixel points strictly inside a polygon (even-odd), as `inside` finds them in a triangle. */
   function* inPolygon(pts: number[]) {
     const xs = pts.filter((_, i) => i % 2 === 0),
