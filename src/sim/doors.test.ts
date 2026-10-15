@@ -15,6 +15,7 @@ import {
   type StationDef,
 } from '../data/content';
 import { Builder, decorDef } from './build';
+import { buildingDef } from './buildings';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, stationGates, stationSpan } from './stations';
@@ -984,4 +985,201 @@ describe('a door with nowhere to stand outside it', () => {
       for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(20);
     },
   );
+});
+
+// ------------------------------------------------------------------ two doors facing one tile
+
+/** Where the station of `facingStation` and `campOnForest` stands. */
+const FACED = { x: 20, y: 20 };
+/** A house, a works and a service stop: places whose walkers go to a station, and gather nothing. */
+const FACERS = ['townhouse', 'windmill', 'water_tower'] as const;
+type Facer = (typeof FACERS)[number];
+
+/**
+ * A passenger station at FACED turned to `stopRot`, and a `kind` of place turned to `rot` standing
+ * where its street door faces the tile the station's street door faces, `reach`, so the two
+ * doorsteps are that tile: across it from the station or beside it. Null where that place would
+ * stand on the station. Nothing else, on grass.
+ */
+function facingStation(stopRot: number, rot: number, kind: Facer) {
+  resetStationIds(1);
+  const { map, builder } = bare(SIDE);
+  const stop = new Station('station', FACED.x, FACED.y);
+  stop.rot = stopRot;
+  builder.stations.push(stop);
+  const { reach } = streetDoor(stop.def, stop.x, stop.y, stopRot);
+  const works = kind === 'windmill';
+  const own = streetDoor(works ? buildingDef(kind) : decorDef(kind), 0, 0, rot);
+  const x = reach.x - DIR_DX[own.side] - own.tile.x;
+  const y = reach.y - DIR_DY[own.side] - own.tile.y;
+  if (covers(footprint(stop.def, stop.x, stop.y, stopRot), { x, y })) return null;
+  if (works)
+    builder.buildings.set(y * SIDE + x, { id: kind, x, y, acc: 0, rot, active: false, rate: 0 });
+  else builder.decor.set(y * SIDE + x, { id: kind, x, y, rot });
+  return { map, builder, stop, key: works ? `b${x},${y}` : `d${x},${y}`, reach };
+}
+
+/**
+ * The draws one tick took, as 'the draws walkers take' counts them: a new walker three, a change
+ * of state what `cost` says it draws, and a walker due by day that stays in one. Fails on a change
+ * of state `cost` does not name.
+ */
+function tickDraws(
+  sim: PeopleSim,
+  was: Map<number, { state: PersonState; timer: number }>,
+  cost: Record<string, number>,
+  label: string,
+) {
+  let n = 0;
+  for (const p of sim.persons) {
+    const b = was.get(p.id);
+    if (!b) {
+      n += 3;
+      continue;
+    }
+    const move = `${b.state}>${p.state}`;
+    if (move === 'inside>inside') {
+      const due = b.timer - DT <= 0;
+      expect(p.timer, `${label} walker ${p.id}`).toBe(due ? 10 : b.timer - DT);
+      n += due ? 1 : 0;
+    } else if (!(move in cost))
+      expect.fail(`${label} walker ${p.id}: ${move}, which no walker makes`);
+    else n += cost[move];
+  }
+  return n;
+}
+
+describe('two doors facing one tile', () => {
+  it('take a traveller from a house, a works or a service stop facing a station’s street door to it at once, where it waits and boards or walks back in, with the draws any trip takes, at every rotation of both', () => {
+    // as in 'the draws walkers take': these places gather nothing, and the station stays
+    const COST: Record<string, number> = {
+      'inside>idle': 4,
+      'inside>toStation': 1,
+      'idle>inside': 1,
+      'toStation>waiting': 1,
+      'waiting>return': 0,
+      'return>inside': 1,
+      'idle>idle': 0,
+      'waiting>waiting': 0,
+    };
+    let returned = 0;
+    let pairs = 0;
+    for (const kind of FACERS)
+      for (const stopRot of ROTATIONS)
+        for (const rot of ROTATIONS) {
+          const town = facingStation(stopRot, rot, kind);
+          if (!town) continue;
+          pairs++;
+          const { map, builder, stop, key, reach } = town;
+          const pair = `${kind} r${rot} facing the station r${stopRot}`;
+          const crossingAt = (x: number, y: number) => builder.roads.isCrossing(x, y);
+          // not vacuous: both doorsteps are the one tile
+          const doors = doorsBy(new PeopleSim(map, builder));
+          expect(doors.get(key), pair).toBeDefined();
+          expect(doorstep(map, doors.get(key)!, crossingAt), pair).toEqual(reach);
+          expect(doorstep(map, doors.get(`s${stop.id}`)!, crossingAt), pair).toEqual(reach);
+          let waited = 0;
+          let boarded = 0;
+          for (const stream of [1, 2, 3]) {
+            const sim = new PeopleSim(map, builder, new Rng(stream));
+            for (let t = 0; t < 400; t++) {
+              const label = `${pair}, stream ${stream} tick ${t}`;
+              const from = sim.toJSON().rng;
+              const was = new Map(
+                sim.persons.map((p) => [p.id, { state: p.state, timer: p.timer }]),
+              );
+              sim.tick(DT, 10, MIDDAY);
+              const cost = tickDraws(sim, was, COST, label);
+              expect(drawsBetween(from, sim.toJSON().rng, cost + 10_000), label).toBe(cost);
+              for (const p of sim.persons) {
+                const b = was.get(p.id)?.state;
+                const move = `${b}>${p.state}`;
+                const who = `${label}: walker ${p.id} of ${p.home}, ${move}`;
+                if (move === 'inside>toStation') {
+                  // only the facing place's walkers travel: the station's own never did
+                  expect(p.home, who).toBe(key);
+                  expect(p.stationId, who).toBe(stop.id);
+                  expect(p.path, who).toEqual([reach]);
+                  expect(at(p), who).toEqual(reach);
+                }
+                // there at once, it arrives on its next step, and home again on the one after
+                if (b === 'toStation') expect(p.state, who).toBe('waiting');
+                if (b === 'return') expect(p.state, who).toBe('inside');
+                if (move === 'toStation>waiting') {
+                  expect(at(p), who).toEqual(reach);
+                  waited++;
+                }
+                if (move === 'waiting>return') {
+                  expect(p.path, who).toEqual([reach]);
+                  returned++;
+                }
+              }
+              // a train with a coach calls now and then; one waiting the longest boards
+              if (t % 90 === 89 && sim.waitingAt(stop.id).length) {
+                const before = sim.persons.length;
+                sim.board(stop, 1);
+                boarded += before - sim.persons.length;
+              }
+            }
+          }
+          expect(waited, pair).toBeGreaterThan(0);
+          expect(boarded, pair).toBeGreaterThan(0);
+        }
+    // every place stood both across the tile from the station and beside it
+    expect(pairs).toBe(FACERS.length * 12);
+    expect(returned).toBeGreaterThan(20);
+  });
+
+  it('let a gatherer whose one tile to gather is its own doorstep gather there and carry it in, with the draws it takes elsewhere, at every rotation', () => {
+    // as in 'the draws walkers take', with the one forest tile in reach
+    const COST: Record<string, number> = {
+      'inside>idle': 4,
+      'inside>gather': 2,
+      'idle>inside': 1,
+      'gather>return': 1,
+      'return>inside': 1,
+      'idle>idle': 0,
+    };
+    for (const rot of ROTATIONS) {
+      resetStationIds(1);
+      const { map, builder } = bare(SIDE);
+      const camp = new Station('lumber', FACED.x, FACED.y);
+      camp.rot = rot;
+      builder.stations.push(camp);
+      const { reach } = streetDoor(camp.def, camp.x, camp.y, rot);
+      map.terrain[reach.y * SIDE + reach.x] = Terrain.Forest;
+      let gathered = 0;
+      for (const stream of [1, 2, 3]) {
+        const sim = new PeopleSim(map, builder, new Rng(stream));
+        for (let t = 0; t < 300; t++) {
+          const label = `r${rot}, stream ${stream} tick ${t}`;
+          const from = sim.toJSON().rng;
+          const was = new Map(sim.persons.map((p) => [p.id, { state: p.state, timer: p.timer }]));
+          sim.tick(DT, 6, MIDDAY);
+          const cost = tickDraws(sim, was, COST, label);
+          expect(drawsBetween(from, sim.toJSON().rng, cost + 10_000), label).toBe(cost);
+          for (const p of sim.persons) {
+            const b = was.get(p.id)?.state;
+            const who = `${label}: walker ${p.id}, ${b}>${p.state}`;
+            if (b === 'inside' && p.state === 'gather') {
+              expect(p.path, who).toEqual([reach]);
+              expect(at(p), who).toEqual(reach);
+              gathered++;
+            }
+            // it gathers on its next step and turns in carrying it, and is in on the one after
+            if (b === 'gather') {
+              expect(p.state, who).toBe('return');
+              expect(p.path, who).toEqual([reach]);
+              expect(p.carrying, who).toBe(true);
+            }
+            if (b === 'return') {
+              expect(p.state, who).toBe('inside');
+              expect(p.carrying, who).toBe(false);
+            }
+          }
+        }
+      }
+      expect(gathered, `r${rot}`).toBeGreaterThan(5);
+    }
+  });
 });
