@@ -93,6 +93,12 @@ type Light = keyof typeof LIGHT;
 type P = { x: number; y: number };
 /** Height in world px up at a map point. */
 type Z = (x: number, y: number) => number;
+/**
+ * A support's square foot: the middle of its +y face (`x`, `y`), its half side, and the highest
+ * the two faces the camera sees end (`cut`, world px up) as drawn, cut to the ground and to the
+ * bank in front (waterFade).
+ */
+type Foot = { x: number; y: number; half: number; cut: number };
 
 /** Map point (tx, ty) at height z (world px up) to world px. */
 function screen(tx: number, ty: number, z: number): P {
@@ -217,7 +223,8 @@ function upright(p: Painter, x: number, y: number, s: number, top: number, foot:
  * changes by more than CUT_PX between two, the upright halfway is asked for: if the foot runs
  * straight through it the two strips stand, otherwise each half is split again, down to CUT_STEP.
  * So the foot follows the ground in front to within a fraction of a pixel and drops straight at
- * a rim.
+ * a rim. Returns the highest the wall's foot stands at any of its uprights: the foot drawn runs
+ * straight between them, so nowhere along the wall does it end higher.
  */
 function wall(
   p: Painter,
@@ -227,8 +234,13 @@ function wall(
   step: number,
   at: (k: number) => Upright,
   uv: (s: number, z: number) => [number, number],
-) {
+): number {
+  let highest = -Infinity;
   const buried = (u: Upright) => u.top - u.bottom < 0.05,
+    draw = (a: Upright, b: Upright) => {
+      highest = Math.max(highest, a.bottom, b.bottom);
+      strip(p, surface, light, a, b, uv);
+    },
     split = (ka: number, a: Upright, kb: number, b: Upright): void => {
       const span = (kb - ka) * length,
         coarse = span > STEP * 1.5 && (a.near || b.near),
@@ -236,12 +248,12 @@ function wall(
           span > CUT_STEP * 1.5 &&
           Math.abs(a.bottom - b.bottom) > CUT_PX &&
           !(buried(a) && buried(b));
-      if (!coarse && !jumps) return strip(p, surface, light, a, b, uv);
+      if (!coarse && !jumps) return draw(a, b);
       const km = (ka + kb) / 2,
         m = at(km);
       if (!coarse && Math.abs(m.bottom - (a.bottom + b.bottom) / 2) <= CUT_PX / 2) {
-        strip(p, surface, light, a, m, uv);
-        strip(p, surface, light, m, b, uv);
+        draw(a, m);
+        draw(m, b);
         return;
       }
       split(ka, a, km, m);
@@ -254,6 +266,7 @@ function wall(
     split((i - 1) / n, a, i / n, b);
     a = b;
   }
+  return highest;
 }
 
 /**
@@ -295,7 +308,7 @@ function strip(
 /**
  * A vertical face from map point a to b, between `top` and `bottom` (cut to the ground and to
  * the ground in front, Painter.horizon), split so both edges follow their heights. `along` turns
- * timber grain to run along the face.
+ * timber grain to run along the face. Returns the highest its foot ends (wall).
  */
 function face(
   p: Painter,
@@ -318,10 +331,13 @@ function face(
     },
     uv = (s: number, z: number) =>
       (along ? [-z / su, s / sv] : [s / su, -z / sv]) as [number, number];
-  wall(p, surface, light, Math.hypot(bx - ax, by - ay), GRADE, at, uv);
+  return wall(p, surface, light, Math.hypot(bx - ax, by - ay), GRADE, at, uv);
 }
 
-/** A flat-sided box over `r` (tile offsets) from `bottom` to `top`: its top and the two faces the camera sees. */
+/**
+ * A flat-sided box over `r` (tile offsets) from `bottom` to `top`: its top and the two faces the
+ * camera sees. Returns the highest the foot of those faces ends (wall).
+ */
 function prism(
   p: Painter,
   r: Rect,
@@ -336,9 +352,11 @@ function prism(
     x1 = t.x + r.x1,
     y0 = t.y + r.y0,
     y1 = t.y + r.y1;
-  face(p, x0, y1, x1, y1, top, bottom, side, 'left', along);
-  face(p, x1, y1, x1, y0, top, bottom, side, 'right', along);
-  if (!cap) return;
+  const cut = Math.max(
+    face(p, x0, y1, x1, y1, top, bottom, side, 'left', along),
+    face(p, x1, y1, x1, y0, top, bottom, side, 'right', along),
+  );
+  if (!cap) return cut;
   // The top, split along the span so it follows the deck's grade; planks run along the span.
   const nx = t.axis === 1 ? Math.max(1, Math.ceil((r.x1 - r.x0) / GRADE - 1e-6)) : 1,
     ny = t.axis === 0 ? Math.max(1, Math.ceil((r.y1 - r.y0) / GRADE - 1e-6)) : 1,
@@ -362,6 +380,7 @@ function prism(
         [uv(xa, ya), uv(xb, ya), uv(xb, yb), uv(xa, yb)],
       );
     }
+  return cut;
 }
 
 /**
@@ -379,15 +398,15 @@ export function bridgeTileMeshes(tile: BridgeTile, plan: BridgePlan, surfaces: B
     deck: Z = (x, y) => deckAtOffset(t, x - t.x, y - t.y),
     underside: Z = (x, y) => deck(x, y) - DECK,
     floor: Z = () => -Infinity,
-    feet: { x: number; y: number; half: number }[] = [];
+    feet: Foot[] = [];
   // Supports, far ones first. Their tops are under the deck, which always covers them.
   const supports: { depth: number; draw: () => void }[] = [];
   for (const r of plan.piers)
     supports.push({
       depth: t.x + t.y + (r.x0 + r.x1 + r.y0 + r.y1) / 2,
       draw: () => {
-        prism(p, r, underside, floor, side, null);
-        feet.push({ x: t.x + (r.x0 + r.x1) / 2, y: t.y + r.y1, half: (r.x1 - r.x0) / 2 });
+        const cut = prism(p, r, underside, floor, side, null);
+        feet.push({ x: t.x + (r.x0 + r.x1) / 2, y: t.y + r.y1, half: (r.x1 - r.x0) / 2, cut });
       },
     });
   for (const w of plan.arches)
@@ -400,7 +419,7 @@ export function bridgeTileMeshes(tile: BridgeTile, plan: BridgePlan, surfaces: B
     s.draw();
     p.flush();
   }
-  if (t.water && feet.length) under.addChild(waterFade(p, feet));
+  if (t.water && feet.length) under.addChild(waterFade(feet));
   // The deck slab, then the far parapets on it.
   p.part = 'deck';
   prism(p, plan.deck, deck, underside, side, top, !stone);
@@ -468,12 +487,7 @@ function archWall(p: Painter, w: number, underside: Z) {
 }
 
 /** A timber bent along a span at across `w`: a post at each end, an X brace and a cap beam. */
-function trestle(
-  p: Painter,
-  w: number,
-  underside: Z,
-  feet: { x: number; y: number; half: number }[],
-) {
+function trestle(p: Painter, w: number, underside: Z, feet: Foot[]) {
   const t = p.t,
     axis = t.axis!,
     post = 0.045,
@@ -498,9 +512,10 @@ function trestle(
     return { l, ...c, foot: p.horizon(c.x, c.y), head: underside(c.x, c.y) };
   });
   for (const e of ends) {
-    prism(p, box(e.l - post, e.l + post, w - post, w + post), underside, floor, 'woodGrain', null);
+    const r = box(e.l - post, e.l + post, w - post, w + post),
+      cut = prism(p, r, underside, floor, 'woodGrain', null);
     p.flush();
-    feet.push({ x: e.x, y: e.y + post, half: post });
+    feet.push({ x: e.x, y: e.y + post, half: post, cut });
   }
   const lo = Math.max(...ends.map((e) => e.foot)),
     hi = Math.min(...ends.map((e) => e.head));
@@ -593,26 +608,15 @@ function parapet(p: Painter, r: Rect, deck: Z) {
 
 /**
  * Water hides the feet of whatever stands in it: a fade to the water colour below the surface,
- * over the foot's two faces the camera sees. Only a foot that shows down to the waterline all
- * along both faces has one, so the fade lies wholly on painted water: a foot on land, or partly
- * hidden by the bank in front of it, has none.
+ * over the foot's two faces the camera sees. Only a foot whose faces, as drawn, end within half a
+ * pixel of the waterline all along has one (`cut`, read from the very uprights they were cut at),
+ * so the fade lies wholly on those faces and never strays past where they were cut: a foot on
+ * land, or one a bank in front cuts anywhere along its faces, has none.
  */
-function waterFade(p: Painter, feet: { x: number; y: number; half: number }[]) {
-  const g = new Graphics(),
-    inWater = (x: number, y: number) => p.horizon(x, y) <= WATERLINE + 0.5,
-    // Along the +y face, then the +x face, corners included, at least every STEP.
-    showsAll = (f: { x: number; y: number; half: number }) => {
-      const n = 2 * Math.max(1, Math.ceil((2 * f.half) / STEP));
-      for (let i = 0; i <= n; i++) {
-        const k = (2 * i) / n,
-          x = f.x - f.half + 2 * f.half * Math.min(1, k),
-          y = f.y - 2 * f.half * Math.max(0, k - 1);
-        if (!inWater(x, y)) return false;
-      }
-      return true;
-    };
+function waterFade(feet: Foot[]) {
+  const g = new Graphics();
   for (const f of feet) {
-    if (!showsAll(f)) continue;
+    if (f.cut > WATERLINE + 0.5) continue;
     for (let k = 0; k < 6; k++) {
       const z = WATERLINE + 12 - k * 2,
         a = screen(f.x - f.half, f.y, z),

@@ -1050,16 +1050,52 @@ describe('bridge meshes over the painted waterline', () => {
     );
   }, 60_000);
 
+  /**
+   * How many bands of water fade each tile of a crossing draws, and where they stray off the
+   * support faces drawn there: the quarter pixels of them that lie neither on those faces nor
+   * within half a pixel below their foot (the fade reaches the waterline, a face may end half a
+   * pixel over it).
+   */
+  const fadeOffFaces = (c: Crossing) => {
+    const ground = bankGround(c.banks),
+      out: { tile: string; bands: number; off: string[] }[] = [];
+    for (const { tile, plan } of tilesOf(c, ground)) {
+      const { under } = bridgeTileMeshes(tile, plan, surfaces),
+        faces = new Set<string>();
+      for (const m of meshes(under))
+        if (m.label.startsWith('support:'))
+          for (const tri of triangles(m))
+            for (const [sx, sy] of inside(tri)) faces.add(`${sx},${sy}`);
+      const off: string[] = [];
+      let bands = 0;
+      for (const g of under.children.filter((g): g is Graphics => g instanceof Graphics))
+        for (const ins of g.context.instructions) {
+          bands++;
+          for (const { shape } of (ins as FillInstruction).data.path.shapePath.shapePrimitives) {
+            const pts = (shape as { points?: number[] }).points ?? [];
+            for (const [sx, sy] of inPolygon(pts))
+              if (
+                ![0, -0.25, 0.25].some((dx) =>
+                  [0, -0.25, -0.5].some((dy) => faces.has(`${sx + dx},${sy + dy}`)),
+                )
+              )
+                off.push(`${sx},${sy}`);
+          }
+        }
+      out.push({ tile: `${tile.x},${tile.y}`, bands, off });
+    }
+    return out;
+  };
+
   // 40 crossings, each rasterised to the quarter pixel: about a second alone
   it('fades a foot into the water only on the faces it shows, whatever bank stands in front', () => {
     // Every quarter pixel of a water fade lies on the support faces drawn there, or within half
-    // a pixel above their foot (the fade reaches the waterline, a face may end half a pixel over
-    // it): never over a bank in front of the foot. Timber spans and pads over water, with banks
-    // round them down to 1/32 tile across, the step the line of sight is read at: a narrower
-    // sliver can slip between the looks of the fade and not those of the face.
+    // a pixel below their foot: never over a bank in front of the foot. Timber spans and pads
+    // over water, with banks round them down to slivers far narrower than the line of sight is
+    // read at: the fade goes by where the faces were cut, not by looks of its own.
     forAll(
       (rng) => {
-        const c = crossing(rng, 1 / 32);
+        const c = crossing(rng);
         for (const s of c.sites) {
           s.water = true;
           // over water a deck never sinks below the ground (worldRenderer.ts, deckProfile)
@@ -1069,36 +1105,48 @@ describe('bridge meshes over the painted waterline', () => {
         return c;
       },
       (c) => {
-        const ground = bankGround(c.banks);
-        for (const { tile, plan } of tilesOf(c, ground)) {
-          const { under } = bridgeTileMeshes(tile, plan, surfaces),
-            faces = new Set<string>();
-          for (const m of meshes(under))
-            if (m.label.startsWith('support:'))
-              for (const tri of triangles(m))
-                for (const [sx, sy] of inside(tri)) faces.add(`${sx},${sy}`);
-          const off: string[] = [];
-          for (const g of under.children.filter((g): g is Graphics => g instanceof Graphics))
-            for (const ins of g.context.instructions)
-              for (const { shape } of (ins as FillInstruction).data.path.shapePath
-                .shapePrimitives) {
-                const pts = (shape as { points?: number[] }).points ?? [];
-                for (const [sx, sy] of inPolygon(pts))
-                  if (
-                    ![0, -0.25, 0.25].some((dx) =>
-                      [0, -0.25, -0.5].some((dy) => faces.has(`${sx + dx},${sy + dy}`)),
-                    )
-                  )
-                    off.push(`${sx},${sy}`);
-              }
-          expect(off.slice(0, 5), `tile ${tile.x},${tile.y}: ${off.length} off its faces`).toEqual(
-            [],
-          );
-        }
+        for (const { tile, off } of fadeOffFaces(c))
+          expect(off.slice(0, 5), `tile ${tile}: ${off.length} off its faces`).toEqual([]);
       },
       { seeds: SEEDS.slice(0, 40), shrink: shrinkCrossing },
     );
   }, 30_000);
+
+  it('fades no foot over a bank sliver that slips between looks one STEP apart', () => {
+    // A bank 0.045 by 0.021 tile in front of a post of a timber span over water hides the strip
+    // y = 8.39 to 8.41 of the post's +x face. The face, split down to 1/512 tile where its cut
+    // jumps, is cut to the sliver; a fade that looked along the face every 0.03 tile, at y = 8.385
+    // and 8.415, missed it and hung over the bank.
+    const c: Crossing = {
+      sites: [
+        {
+          ...span(7, 8, 0, 0, {
+            material: 'wood',
+            water: true,
+            open: [false, true, false, true],
+            deck: [0, 0, 0, 2.8682962311431766, 5.736592462286353],
+          }),
+          level: 2,
+        },
+      ],
+      banks: [
+        {
+          x0: 6.933093570114579,
+          y0: 8.670708859472068,
+          x1: 6.978171222729142,
+          y1: 8.691595564403103,
+          z: -7.110157078597695,
+          gx: -4.301147181540728,
+          gy: -6.5278556337580085,
+        },
+      ],
+      slack: 0,
+    };
+    const [{ bands, off }] = fadeOffFaces(c);
+    // The posts the sliver leaves whole still fade into the water.
+    expect(bands).toBeGreaterThan(0);
+    expect(off.slice(0, 5), `${off.length} off the faces`).toEqual([]);
+  });
   /** Quarter-pixel points strictly inside a polygon (even-odd), as `inside` finds them in a triangle. */
   function* inPolygon(pts: number[]) {
     const xs = pts.filter((_, i) => i % 2 === 0),
