@@ -982,13 +982,15 @@ const secondsOf = (roads: Roads, path: { x: number; y: number }[]) =>
 
 /**
  * The lightest cost of a walk inside the box (`costOf`, `lighter`), the slow obvious way: relax
- * every tile's eight neighbours until nothing changes. Null when there is no walk.
+ * every tile's eight neighbours until nothing changes. Null when there is no walk. A walk steps on
+ * no tile `avoid` names, `to` among them; it may set out from one.
  */
 function cheapest(
   map: GameMap,
   roads: Roads,
   from: { x: number; y: number },
   to: { x: number; y: number },
+  avoid: (x: number, y: number) => boolean = () => false,
 ) {
   const x0 = Math.max(0, Math.min(from.x, to.x) - WALK_MARGIN);
   const y0 = Math.max(0, Math.min(from.y, to.y) - WALK_MARGIN);
@@ -1010,6 +1012,7 @@ function cheapest(
             const ny = y + dy;
             if ((!dx && !dy) || nx < x0 || ny < y0 || nx > x1 || ny > y1) continue;
             if (!walkable(map, nx, ny) && !(nx === to.x && ny === to.y)) continue;
+            if (avoid(nx, ny)) continue;
             const along = roadStep(roads, { x, y }, { x: nx, y: ny });
             const c = {
               cost: here.cost + (along ? 1 : OFF_ROAD_STEP),
@@ -1112,6 +1115,73 @@ describe('a walk with roads', () => {
       },
       { shrink: shrinkWalk },
     );
+  });
+
+  it('keeps off every tile it is told to avoid, its end among them, and costs no more than any walk that does (#447)', () => {
+    // The walk round a crossing only trains out of fuel or power hold closed: the tiles to keep off
+    // are seeded about the two ends, and now and then the start or the end is one of them.
+    const seen = { rerouted: 0, refused: 0 };
+    forAll(
+      (rng) => {
+        const c = walkCase(rng);
+        const near = (at: number[]) => [
+          Math.min(c.side - 1, Math.max(0, at[0] + rng.int(-3, 3))),
+          Math.min(c.side - 1, Math.max(0, at[1] + rng.int(-3, 3))),
+        ];
+        const avoid = Array.from({ length: rng.int(0, 8) }, () =>
+          near(rng.chance(0.5) ? c.from : c.to),
+        );
+        // and some across the way straight from one end to the other, short of both
+        for (let n = rng.int(0, 4); n > 0; n--) {
+          const f = rng.range(0.2, 0.8);
+          avoid.push([
+            Math.round(c.from[0] + (c.to[0] - c.from[0]) * f),
+            Math.round(c.from[1] + (c.to[1] - c.from[1]) * f),
+          ]);
+        }
+        if (rng.chance(0.15)) avoid.push([...c.from]);
+        if (rng.chance(0.15)) avoid.push([...c.to]);
+        return { ...c, avoid };
+      },
+      (c) => {
+        const { map, roads, from, to } = walkWorld(c);
+        const avoid = (x: number, y: number) => c.avoid.some(([ax, ay]) => ax === x && ay === y);
+        const path = findWalk(map, from, to, roads, avoid);
+        const best = cheapest(map, roads, from, to, avoid);
+        const plain = findWalk(map, from, to, roads);
+        if (!path) {
+          expect(best, 'no walk found where there is one').toBeNull();
+          if (plain) seen.refused++;
+          return;
+        }
+        expect(best, 'a walk found where there is none').not.toBeNull();
+        if (JSON.stringify(path) !== JSON.stringify(plain)) seen.rerouted++;
+        expect(path[0]).toEqual(from);
+        expect(path.at(-1)).toEqual(to);
+        path.slice(1).forEach((q, i) => {
+          const p = path[i];
+          expect(Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)), `step ${i}`).toBe(1);
+          expect(avoid(q.x, q.y), `tile ${i + 1} at ${q.x},${q.y}`).toBe(false);
+          expect(q.x).toBeGreaterThanOrEqual(Math.min(from.x, to.x) - WALK_MARGIN);
+          expect(q.x).toBeLessThanOrEqual(Math.max(from.x, to.x) + WALK_MARGIN);
+          expect(q.y).toBeGreaterThanOrEqual(Math.min(from.y, to.y) - WALK_MARGIN);
+          expect(q.y).toBeLessThanOrEqual(Math.max(from.y, to.y) + WALK_MARGIN);
+          if (i + 1 < path.length - 1) expect(walkable(map, q.x, q.y), `tile ${i + 1}`).toBe(true);
+        });
+        expect(costOf(roads, path)).toEqual(best);
+        // told to avoid nothing, it is the walk it always was, step for step
+        expect(findWalk(map, from, to, roads, () => false)).toEqual(plain);
+      },
+      {
+        shrink: function* (c) {
+          for (const avoid of shrinkArray(c.avoid)) yield { ...c, avoid };
+          for (const w of shrinkWalk(c)) yield { ...w, avoid: c.avoid };
+        },
+      },
+    );
+    // not vacuous: the tiles to keep off turned some walks and left others none
+    expect(seen.rerouted).toBeGreaterThanOrEqual(25);
+    expect(seen.refused).toBeGreaterThanOrEqual(10);
   });
 
   it('takes a road round when the road is quicker than the way straight across', () => {
