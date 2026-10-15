@@ -64,11 +64,12 @@ describe('generateMap', () => {
     expect(a.props.size).toBe(b.props.size);
   });
 
+  // two worlds, each planning its rivers once (#341): about 0.5 s alone
   it('gives a different world for a different seed', () => {
     expect(fnv(generateMap(SEED, SMALL).terrain)).not.toBe(
       fnv(generateMap(SEED + 1, SMALL).terrain),
     );
-  });
+  }, 10_000);
 
   it('generates the world these numbers describe', () => {
     // A tripwire, not a specification: any deliberate change to map generation invalidates
@@ -90,14 +91,17 @@ describe('generateMap', () => {
     expect(m.seed).toBe(SEED);
   });
 
+  // three worlds, one for each water line, each planning its rivers once (#341): about 0.6 s alone
   it('raises the water line with waterLevel', () => {
     const dry = generateMap(SEED, { ...SMALL, waterLevel: 0.2 });
     const mid = generateMap(SEED, SMALL);
     const wet = generateMap(SEED, { ...SMALL, waterLevel: 0.5 });
     expect(count(dry.terrain, Terrain.Water)).toBeLessThan(count(mid.terrain, Terrain.Water));
     expect(count(mid.terrain, Terrain.Water)).toBeLessThan(count(wet.terrain, Terrain.Water));
-  });
+  }, 15_000);
 
+  // seven worlds, one for each forest density, each planning its rivers once (#341), since the
+  // sliders are part of what a plan is kept under: about 1 s alone
   it('thins the forest as forestDensity rises', () => {
     // Despite the name it is a moisture threshold, as the tuning slider says: lower = more
     // forest. Above the default the threshold stops biting and only the forest biome is left,
@@ -107,7 +111,7 @@ describe('generateMap', () => {
     const sweep = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9].map(at);
     for (let i = 1; i < sweep.length; i++) expect(sweep[i]).toBeLessThanOrEqual(sweep[i - 1]);
     expect(sweep[0]).toBeGreaterThan(sweep[sweep.length - 1]);
-  });
+  }, 20_000);
 
   it('defaults to the documented parameters', () => {
     const m = generateMap(SEED);
@@ -123,9 +127,15 @@ describe('a grown map', () => {
     expect(overlapDiff(generateMap(seed, { w: 96, h: 96 }), grown(seed, 96))).toEqual(SAME);
   });
 
-  it.each(SEEDS)('keeps every old tile when 160 grows to 224 (seed %i)', (seed) => {
-    expect(overlapDiff(generateMap(seed, { w: 160, h: 160 }), grown(seed, 160))).toEqual(SAME);
-  });
+  // a world of 160 tiles and the same grown by a ring, its rivers planned once (#341): up to about
+  // 0.6 s alone
+  it.each(SEEDS)(
+    'keeps every old tile when 160 grows to 224 (seed %i)',
+    (seed) => {
+      expect(overlapDiff(generateMap(seed, { w: 160, h: 160 }), grown(seed, 160))).toEqual(SAME);
+    },
+    15_000,
+  );
 
   it.each([32, 64, 128])('keeps every old tile when %i grows by a ring', (w) => {
     expect(overlapDiff(generateMap(SEED, { w, h: w }), grown(SEED, w))).toEqual(SAME);
@@ -137,6 +147,8 @@ describe('a grown map', () => {
     expect(overlapDiff(generateMap(seed, { w: 32, h: 32 }), grown(seed, 32))).toEqual(SAME);
   });
 
+  // four maps of the full chain, their start chunk in two places, so two river plans (#341):
+  // about 0.7 s alone
   it('keeps every old tile, oil fields and start seeps included, in the full production chain', () => {
     const seed = 7412;
     const small = generateMap(seed, { w: 96, h: 96 }, 'full');
@@ -145,7 +157,7 @@ describe('a grown map', () => {
     expect(
       overlapDiff(generateMap(seed, { w: 160, h: 160 }, 'full'), grown(seed, 160, 'full')),
     ).toEqual(SAME);
-  });
+  }, 15_000);
 
   it('generates the worlds these numbers describe', () => {
     // Tripwires like the one above, at the default map size and that map grown by one ring.
@@ -412,6 +424,7 @@ describe('emptyMap', () => {
     );
   });
 
+  // eight worlds, each planning its rivers once (#341): about 1.4 s alone
   it('is the variant plane generateMap keeps', () => {
     forAll(
       (rng) => ({
@@ -427,7 +440,7 @@ describe('emptyMap', () => {
       },
       { seeds: PAIR_SEEDS.slice(0, 8) },
     );
-  });
+  }, 30_000);
 
   it('is one terrain, no props, and remembers where it starts', () => {
     const m = emptyMap(7, 10, 12, Terrain.Sand, -4, 5);

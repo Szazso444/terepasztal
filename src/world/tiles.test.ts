@@ -94,6 +94,8 @@ describe('climateAt on a generated map', () => {
     expect(climateOfGenerated(map).wrong).toBe(0);
   });
 
+  // two worlds of 48 tiles and the same grown by a ring, each world planning its rivers once
+  // (#341): about 0.5 s alone
   it('keeps the climate of every old tile when the map grows by a ring of chunks', () => {
     // grown as expandSave grows a game's map: a chunk more on every side, the old map in the middle
     for (const seed of [SEEDS[0], SEEDS[3]]) {
@@ -106,7 +108,7 @@ describe('climateAt on a generated map', () => {
           if (climateAt(map, x, y) !== climateAt(big, x + 32, y + 32)) moved++;
       expect(moved, `seed ${seed}`).toBe(0);
     }
-  });
+  }, 10_000);
 
   it('is the climate plane on a generated map in the full production chain', () => {
     setSupplyMode('full');

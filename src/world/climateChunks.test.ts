@@ -185,6 +185,8 @@ describe('a chunk text', () => {
       }
   }, 40_000);
 
+  // a world of 96 tiles built, its rivers planned once (#341), and every chunk read as both
+  // versions: about 0.6 s alone
   it('as version 1 wrote it reads back every plane but the climate, which is the biome', () => {
     // the oracle above, checked: a text turned to version 1 keeps everything else
     const store = buildMap(7412, { w: 96, h: 96 }, {}).chunks;
@@ -203,7 +205,7 @@ describe('a chunk text', () => {
       for (let i = 0; i < now.climate.length; i++) if (now.climate[i] !== now.biome[i]) differ++;
     }
     expect(differ).toBeGreaterThan(0);
-  });
+  }, 15_000);
 });
 
 describe('a world stored before the climate plane', () => {

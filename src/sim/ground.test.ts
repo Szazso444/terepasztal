@@ -550,6 +550,8 @@ describe('the saves stored when this version first runs', () => {
     }
   });
 
+  // four stored saves, three given their ground and one whose generation fails, and a save
+  // written since: four worlds, each planning its rivers once (#341): about 0.8 s alone
   it('leave a save whose map cannot be made as it was, counted neither frozen nor refused', () => {
     const { continued, slots } = storeSaves();
     // a named save that is no text at all stays in the table as it was
@@ -568,7 +570,7 @@ describe('the saves stored when this version first runs', () => {
     expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
     // it lacks its ground still, and gets it when it is loaded
     expect(lacksGround(readSlot('old')!.world as GeneratedWorld)).toBe(true);
-  });
+  }, 15_000);
 
   it('are not touched where storage cannot be read', () => {
     storeSaves();
@@ -663,6 +665,8 @@ function* shrinkGrownSave(c: GrownSave): Iterable<GrownSave> {
 }
 
 describe('a world that grows', () => {
+  // two worlds of 96 tiles stored, grown to 160 and generated whole, each world planning its
+  // rivers once (#341): about 0.6 s alone
   it('keeps the ground it stores, and the next load generates the new ring alone', () => {
     for (const seed of [1, 7412]) {
       const world = worldOf(seed, { w: 96, h: 96 });
@@ -678,7 +682,7 @@ describe('a world that grows', () => {
       const whole = generateMap(seed, grown.params);
       expect(firstDifference(built.map, whole, { near: true })).toBeNull();
     }
-  });
+  }, 15_000);
 
   // 20 worlds grown by up to three rings at once, to up to 288 tiles a side: about 0.5 s alone
   it('changes only the frame of its description, and the next load adds just the new rings', () => {

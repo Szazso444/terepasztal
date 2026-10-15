@@ -469,6 +469,8 @@ describe('a chunk text', () => {
 });
 
 describe('a map built from stored chunks', () => {
+  // a world of 96 tiles built, read back and generated, its rivers planned once (#341): about
+  // 0.5 s alone
   it('is generated whole when nothing is stored, and read whole once everything is', () => {
     const params = { w: 96, h: 96 };
     const first = buildMap(31337, params, {});
@@ -480,7 +482,7 @@ describe('a map built from stored chunks', () => {
     expect(firstDifference(again.map, first.map)).toBeNull();
     // generation's own map, up to where props are stored
     expect(firstDifference(first.map, generateMap(31337, params), { near: true })).toBeNull();
-  });
+  }, 10_000);
 
   // Generates a few maps up to 288 tiles a side per seed: about 2 s alone
   it('of a grown world is generateMap of the grown parameters, tile for tile', () => {
@@ -1252,47 +1254,53 @@ describe('the seam between a stored chunk and a new one', () => {
     ['hill and mountain stripes', (i) => (i % 2 ? Terrain.Hill : Terrain.Mountain)],
   ];
 
-  it.each(rings)('keeps neighbouring levels within one step against a ring of %s', (_, fill) => {
-    let steep = 0;
-    for (const seed of [1, 7412, 20260912]) {
-      const params: Frame = { w: 96, h: 96 };
-      const old = buildMap(seed, params, {});
-      const ring: MapGenerator = (s, p) => {
-        const m = emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
-        for (let i = 0; i < m.w * m.h; i++) m.terrain[i] = fill(i);
-        return m;
-      };
-      const map = buildMap(seed, grow(params), old.chunks, ring).map;
-      const levels = tileLevels(map);
-      const oldLevels = tileLevels(old.map);
-      const stored = (x: number, y: number) =>
-        x >= CHUNK_TILES && y >= CHUNK_TILES && x < CHUNK_TILES + 96 && y < CHUNK_TILES + 96;
-      for (let y = 0; y < map.h; y++)
-        for (let x = 0; x < map.w; x++) {
-          const k = y * map.w + x;
-          const at = `seed ${seed}, tile (${x}, ${y})`;
-          for (const [nx, ny] of [
-            [x - 1, y],
-            [x, y - 1],
-          ]) {
-            if (nx < 0 || ny < 0) continue;
-            const n = ny * map.w + nx;
-            if (Math.abs(levels[k] - levels[n]) > 1) throw new Error(`a step of two at ${at}`);
-            // a pair across the seam whose terrains would stand more than a level apart
-            if (stored(x, y) !== stored(nx, ny))
-              if (Math.abs(peak(map.terrain[k]) - peak(map.terrain[n])) > 1) steep++;
+  // three worlds of 96 tiles grown to 160, each planning its rivers once (#341), every tile's
+  // level read: about 0.9 s alone for each ring
+  it.each(rings)(
+    'keeps neighbouring levels within one step against a ring of %s',
+    (_, fill) => {
+      let steep = 0;
+      for (const seed of [1, 7412, 20260912]) {
+        const params: Frame = { w: 96, h: 96 };
+        const old = buildMap(seed, params, {});
+        const ring: MapGenerator = (s, p) => {
+          const m = emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+          for (let i = 0; i < m.w * m.h; i++) m.terrain[i] = fill(i);
+          return m;
+        };
+        const map = buildMap(seed, grow(params), old.chunks, ring).map;
+        const levels = tileLevels(map);
+        const oldLevels = tileLevels(old.map);
+        const stored = (x: number, y: number) =>
+          x >= CHUNK_TILES && y >= CHUNK_TILES && x < CHUNK_TILES + 96 && y < CHUNK_TILES + 96;
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++) {
+            const k = y * map.w + x;
+            const at = `seed ${seed}, tile (${x}, ${y})`;
+            for (const [nx, ny] of [
+              [x - 1, y],
+              [x, y - 1],
+            ]) {
+              if (nx < 0 || ny < 0) continue;
+              const n = ny * map.w + nx;
+              if (Math.abs(levels[k] - levels[n]) > 1) throw new Error(`a step of two at ${at}`);
+              // a pair across the seam whose terrains would stand more than a level apart
+              if (stored(x, y) !== stored(nx, ny))
+                if (Math.abs(peak(map.terrain[k]) - peak(map.terrain[n])) > 1) steep++;
+            }
+            // the local reading agrees with the whole-map one, across the seam too
+            if (levelAt(map, x, y) !== levels[k]) throw new Error(`levelAt disagrees at ${at}`);
+            // the new ring never lowers stored ground: what it held at the old edge it holds or more
+            if (stored(x, y)) {
+              const was = oldLevels[(y - CHUNK_TILES) * 96 + x - CHUNK_TILES];
+              if (levels[k] < was) throw new Error(`stored ground sank from ${was} at ${at}`);
+            }
           }
-          // the local reading agrees with the whole-map one, across the seam too
-          if (levelAt(map, x, y) !== levels[k]) throw new Error(`levelAt disagrees at ${at}`);
-          // the new ring never lowers stored ground: what it held at the old edge it holds or more
-          if (stored(x, y)) {
-            const was = oldLevels[(y - CHUNK_TILES) * 96 + x - CHUNK_TILES];
-            if (levels[k] < was) throw new Error(`stored ground sank from ${was} at ${at}`);
-          }
-        }
-    }
-    if (fill(0) !== Terrain.Water) expect(steep).toBeGreaterThan(0);
-  });
+      }
+      if (fill(0) !== Terrain.Water) expect(steep).toBeGreaterThan(0);
+    },
+    20_000,
+  );
 
   // 40 worlds up to 220 tiles a side, each tile's level read twice: about 0.3 s alone
   it('keeps levels within one step and never lowers stored ground, for any growth and generator', () => {

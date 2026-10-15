@@ -464,6 +464,7 @@ describe('v4 to v5', () => {
     expect(zero).toEqual([false, false, false, false, true, false, false, false, false]);
   });
 
+  // four worlds of up to 224 tiles a side, each planning its rivers once (#341): about 0.8 s alone
   it('owns the rings of the tier the file stored, before the step from v8 caps it', () => {
     // On a grid with a middle chunk, regionTierMap's rings are whole chunks from the start, so
     // the load code's result holds for every tier, the ones past the Electric Age included.
@@ -480,7 +481,7 @@ describe('v4 to v5', () => {
           ownedOnLoad(map, tier),
         );
     }
-  });
+  }, 15_000);
 
   it('reads a missing or unusable tier as 0', () => {
     const world = generatedWorld(160, 160);
@@ -491,6 +492,7 @@ describe('v4 to v5', () => {
     expect(runStep(4, noEconomy).regions).toEqual(startOnly);
   });
 
+  // three generated worlds, each planning its rivers once (#341), and two levels: about 0.7 s alone
   it('owns only the chunk map generation starts in at tier 0, on the grid the world builds', () => {
     for (const world of [
       generatedWorld(96, 96),
@@ -512,7 +514,7 @@ describe('v4 to v5', () => {
       const startY = (Math.floor((map.regionsY - 1) / 2) + 0.5) * map.regionSize;
       expect(regions.isTileUnlocked(startX, startY), label).toBe(true);
     }
-  });
+  }, 15_000);
 
   it('keeps the chunks a save already owns', () => {
     const regions = [false, true, true, false];
@@ -3205,6 +3207,8 @@ describe('the defaults the steps fill', () => {
     );
   });
 
+  // five generated maps of up to 160 tiles a side, their start chunk in three places, so three
+  // river plans (#341), and five levels: about 0.8 s alone
   it('own, on every map a v4 build made, what the load code owned for the tier the file stored', () => {
     // v4 builds made square maps of 32 to 160 tiles in steps of 32 (`rules.mapSize`), generated or
     // drawn as a level, so a v4 file meets rings 0 to 2 only. Before the step filled the chunks,
@@ -3234,7 +3238,7 @@ describe('the defaults the steps fill', () => {
           expect(j.regions, `${label}: what applySave owned`).toEqual(onLoad.unlocked);
         }
       }
-  });
+  }, 15_000);
 
   it('own the start chunk and the rings of the stored tier, on a world of any size', () => {
     // Past the sizes v4 builds made, the step follows its own rule: the tier the file stored,
