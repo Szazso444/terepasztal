@@ -2873,6 +2873,13 @@ const cutsInto = (p: Tile, q: Tile, tiles: readonly Tile[]) =>
 /** Of those, the ones it runs into at once: the closed crossings a walker at `p` is held at. */
 const entersAt = (p: Tile, q: Tile, tiles: readonly Tile[]) =>
   cutsInto(p, q, tiles).filter((t) => clip(p, q, t.x, t.y)![0] <= 1e-6);
+/** The two tiles are the same tile. */
+const same = (a: Tile, b: Tile) => a.x === b.x && a.y === b.y;
+/** How far the way from `a` straight to `b` runs inside tile `t`. */
+const runIn = (a: Tile, b: Tile, t: Tile) => {
+  const c = clip(a, b, t.x, t.y);
+  return c ? c[1] - c[0] : 0;
+};
 /**
  * The tile a walker at `p` on its leg from tile `from` to `q` stands at: `from` while it is on that
  * tile or its edge, as it walked off it there, and otherwise the one its way crossed just before
@@ -2928,6 +2935,8 @@ describe('a walker among crossings that close, open and run dry at random', () =
         reentered: 0,
         reenteredDry: 0,
         firmStart: 0,
+        backStays: 0,
+        fullStays: 0,
       };
       forAll(
         (rng): DryCase => {
@@ -3009,6 +3018,9 @@ describe('a walker among crossings that close, open and run dry at random', () =
           let heldDry = false;
           // steps since its last try for a way round, while it waits at such an edge
           let sinceTry = 0;
+          // each crossing it is on now: how far it went inside it, in how many steps ending there,
+          // and whether it was closed in the step it set foot on it
+          const stays = new Map<Tile, { run: number; steps: number; closed: boolean }>();
           let done = false;
           for (let i = 0; i < limit && !done; i++) {
             const ph = phase < c.phases.length ? c.phases[phase] : null;
@@ -3037,6 +3049,27 @@ describe('a walker among crossings that close, open and run dry at random', () =
             // it stands at while only dry trains hold it
             for (const t of cutsInto(was, p, holding))
               expect.fail(`step ${i}: onto the closed crossing ${t.x},${t.y}`);
+            // on any crossing, open or closed, for no more than √2 tiles of its way from the step it
+            // set foot on it to the step it is off it, and never standing still there: a walk round
+            // that sets out from an edge as well (CROSSING_WALK; the step-back limit of section 10)
+            for (const t of tiles) {
+              const stay = stays.get(t) ?? { run: 0, steps: 0, closed: closing(t) !== 'open' };
+              stay.run += runIn(was, p, t);
+              const where = `step ${i}: ${stay.run} tiles in ${stay.steps + 1} steps on ${t.x},${t.y}`;
+              expect(stay.run, where).toBeLessThanOrEqual(Math.SQRT2 + 1e-9);
+              if (!onTile(p, t.x, t.y)) {
+                if (stay.closed && stay.run > 1e-6) seen.backStays++;
+                if (stay.run > Math.SQRT2 - 1e-9) seen.fullStays++;
+                stays.delete(t);
+                continue;
+              }
+              stay.steps++;
+              // a step going in part way, one ending at its middle, and the rest whole steps
+              expect(stay.steps * c.gdt, where).toBeLessThanOrEqual(
+                Math.SQRT2 / walkSpeed(p) + 2 * c.gdt + 1e-9,
+              );
+              stays.set(t, stay);
+            }
             done = !people.persons.includes(p) || p.state !== c.state;
             if (done) break;
             expect(people.toJSON().rng, `step ${i}`).toBe(stream);
@@ -3149,19 +3182,14 @@ describe('a walker among crossings that close, open and run dry at random', () =
       expect(seen.reenteredDry).toBeGreaterThanOrEqual(2);
       expect(seen.noWay).toBeGreaterThanOrEqual(40);
       expect(seen.firmStart).toBeGreaterThanOrEqual(2);
+      // and stays on a crossing it set foot on while closed, and stays as long as √2 tiles
+      expect(seen.backStays).toBeGreaterThanOrEqual(6);
+      expect(seen.fullStays).toBeGreaterThanOrEqual(25);
     },
   );
 });
 
 // ------------------------------------------------------------------ back on the crossing it walked off (#447)
-
-/** The two tiles are the same tile. */
-const same = (a: Tile, b: Tile) => a.x === b.x && a.y === b.y;
-/** How far the way from `a` straight to `b` runs inside tile `t`. */
-const runIn = (a: Tile, b: Tile, t: Tile) => {
-  const c = clip(a, b, t.x, t.y);
-  return c ? c[1] - c[0] : 0;
-};
 
 describe('a walker back on the crossing it walked off', () => {
   it('steps into it only while dry trains alone hold it, onto no other closed crossing, and no further than its middle and half a diagonal off it', () => {
@@ -3172,6 +3200,10 @@ describe('a walker back on the crossing it walked off', () => {
     // trains alone, with other crossings closed round them, cars and water, all held so until its
     // walk ends. Measured along the way it actually goes, not along its walk.
     const seen = { middle: 0, corner: 0, aside: 0, firm: 0 };
+    // the furthest any walker went on it, and the fewest steps of its own by which a walker with a
+    // home was on it for less than CROSSING_WALK
+    let furthest = 0;
+    let short = Infinity;
     forAll(
       (rng) => {
         const near = () => ({ x: CX + rng.int(-2, 2), y: CY + rng.int(-2, 2) });
@@ -3275,6 +3307,8 @@ describe('a walker back on the crossing it walked off', () => {
           // dry trains alone: it walks round from it wherever a walk round is, and so ends its walk
           expect(done, `a walk round of ${walkRound} steps`).toBe(walkRound !== null);
           if (inside > 0) seen[at]++;
+          furthest = Math.max(furthest, inside);
+          if (c.regular) short = Math.min(short, (CROSSING_WALK - stepsOn * c.gdt) / c.gdt);
         }
       },
       {
@@ -3294,6 +3328,55 @@ describe('a walker back on the crossing it walked off', () => {
     expect(seen.corner).toBeGreaterThanOrEqual(5);
     expect(seen.aside).toBeGreaterThanOrEqual(5);
     expect(seen.firm).toBeGreaterThanOrEqual(10);
+    // the limit section 10 states is reached, not only a bound: √2 tiles, above the 1.21 first
+    // stated for it, and for a walker with a home off a road CROSSING_WALK to within a step
+    expect(furthest).toBeGreaterThan(1.21);
+    expect(furthest).toBeCloseTo(Math.SQRT2, 9);
+    expect(short).toBeLessThanOrEqual(1);
+  });
+
+  it('is on it for √2 tiles from a corner, back to its middle and off by the opposite corner: CROSSING_WALK at the slowest pace', () => {
+    // A walker with a home, off any road, bound from the crossing's middle north-east and then
+    // back south-west, held at the corner of the crossing ahead by a train that may still move.
+    // Then trains out of fuel alone hold both: the way round sets out south-west from the one it
+    // walked off, and the way straight there from the corner runs over that crossing, so it steps
+    // back to its middle first.
+    const own = { x: CX, y: CY };
+    const ahead = { x: CX + 1, y: CY - 1 };
+    const end = { x: CX - 3, y: CY + 3 };
+    const { map, builder } = field();
+    const house = builder.spawnDecor(CX + 8, CY + 8, 'townhouse', 0);
+    expect(house).not.toBeNull();
+    const people = new PeopleSim(map, builder, new Rng(1));
+    const p: Person = {
+      ...figure([own, ahead, ...walkOf(CX, CY, end.x, end.y)]),
+      transient: false,
+      home: `d${house!.x},${house!.y}`,
+    };
+    people.persons.push(p);
+    const none = () => false;
+    for (let i = 0; i < 400 && !onEdge(p, ahead.x, ahead.y); i++)
+      people.tick(SIM_STEP, 1, MIDDAY, among([ahead]), { detour: none, occupied: none });
+    expect(p.x).toBeCloseTo(CX + 0.5, 9);
+    expect(p.y).toBeCloseTo(CY - 0.5, 9);
+    const both = among([own, ahead]);
+    const dry = { detour: both, occupied: none };
+    people.tick(SIM_STEP, 1, MIDDAY, both, dry);
+    expect(p.path).toEqual([own, own, ...walkOf(CX - 1, CY + 1, end.x, end.y)]);
+    let inside = 0;
+    let stepsOn = 0;
+    for (let i = 0; i < 2000 && p.state === 'walk'; i++) {
+      const was = { x: p.x, y: p.y };
+      people.tick(SIM_STEP, 1, MIDDAY, both, dry);
+      expect(onTile(p, ahead.x, ahead.y)).toBe(false);
+      inside += runIn(was, p, own);
+      if (onTile(p, own.x, own.y)) stepsOn++;
+    }
+    expect(p.state).toBe('inside');
+    // corner to corner through its middle, at 0.2 tiles a second: 7.07 s, in steps of SIM_STEP
+    expect(inside).toBeCloseTo(Math.SQRT2, 9);
+    expect(Math.abs(stepsOn * SIM_STEP - CROSSING_WALK)).toBeLessThanOrEqual(SIM_STEP);
+    expect(CROSSING_WALK).toBeCloseTo(7.07, 2);
   });
 });
 
