@@ -1,7 +1,8 @@
-import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
+import { DIRS, DIR_DX, DIR_DY, opposite, type Dir } from '../engine/iso';
 import type { TrackGraph, TrackPiece } from '../world/track';
 import { content, type Cost } from '../data/content';
 import { STR } from '../strings';
+import { streetDoors, type Door, type PlaceAt } from './doors';
 
 /**
  * Roads the player lays for stone (Q36 a). Walkers prefer them and go twice their pace along them
@@ -10,6 +11,12 @@ import { STR } from '../strings';
  * or narrow track at right angles: that tile is a level crossing, the track on it is not changed
  * and trains run over it as before. Where a road may go and what it costs is the builder's
  * (`Builder.checkRoad`); this module holds the tiles and the level-crossing rule.
+ *
+ * A road never stands on a building, and joins one only at a street door (src/sim/doors.ts, #408):
+ * on the tile outside it (`Door.reach`), towards it (`roadLinks`), and a place a road reaches so is
+ * served (`roadServes`). The game lays the road from a door to the road network itself, free (D2,
+ * the author on 2026-10-14): the spur `findSpur` finds, which `Builder` lays when a place is
+ * placed and when the player lays a road near a door that has none.
  */
 
 /** What a save keeps of the roads (v20): each road tile as [x, y]. */
@@ -140,6 +147,13 @@ export class Roads implements RoadTiles {
     return null;
   }
 
+  /** A copy of these roads on the same track, to try roads on without laying them here. */
+  copy(): Roads {
+    const out = new Roads(this.track);
+    for (const k of this.tiles) out.tiles.add(k);
+    return out;
+  }
+
   toJSON(): RoadJSON {
     return this.list().map(({ x, y }) => [x, y]);
   }
@@ -157,4 +171,108 @@ export class Roads implements RoadTiles {
       if (typeof x === 'number' && typeof y === 'number') this.add(x, y);
     }
   }
+}
+
+// ------------------------------------------------------------------ doors (#408)
+
+/** What a road tile joins, as a picture of it reads them (`roadLinks`). */
+export interface RoadLinks {
+  /**
+   * every side the road joins, one bit a side (`1 << Dir`): a side whose next tile holds a road
+   * (`Roads.joins`), and a side a street door faces the tile across (`doors`)
+   */
+  sides: number;
+  /**
+   * the sides of `sides` that lead into a building: the tile is the `reach` of a street door, and
+   * the door's tile is across that side. A platform door has none, and neither has any other side
+   * of a footprint: a road joins a building only at a street door, and only towards it.
+   */
+  doors: number;
+}
+
+/**
+ * The sides the road on (x, y) joins (`RoadLinks`), with `doors` the street doors there are (the
+ * `streetDoors` of every place; any other door in the list is passed over). Nothing for a tile
+ * with no road.
+ */
+export function roadLinks(roads: Roads, doors: readonly Door[], x: number, y: number): RoadLinks {
+  if (!roads.has(x, y)) return { sides: 0, doors: 0 };
+  let into = 0;
+  for (const d of doors)
+    if (d.kind === 'street' && d.reach.x === x && d.reach.y === y) into |= 1 << opposite(d.side);
+  return { sides: roads.joins(x, y) | into, doors: into };
+}
+
+/**
+ * A road serves the place: one stands on the `reach` tile of one of its street doors. A platform
+ * door does not count (#406 D1). A place without a road still has its door, and walkers use its
+ * reach tile off the road.
+ */
+export function roadServes(roads: RoadTiles, place: PlaceAt): boolean {
+  return streetDoors(place).some((d) => roads.has(d.reach.x, d.reach.y));
+}
+
+/**
+ * The longest spur the game lays from a street door to a road, in tiles, the door's reach tile
+ * among them: the bound of the search `findSpur` makes, so a road this many tiles off or nearer is
+ * joined. A door further from every road gets its reach tile alone (`Builder.laySpur`).
+ */
+export const SPUR_REACH = 12;
+
+/** The rails of the piece on (x, y) run through its side `d`. */
+function railsThrough(track: TrackGraph, x: number, y: number, d: Dir): boolean {
+  return !!track.get(x, y)?.links.some((l) => l.includes(d));
+}
+
+/**
+ * The spur from a door's reach tile `from` to the road network (D2): the fewest tiles, side to
+ * side, from `from` to a tile beside a road `network` takes (any road, unless it says otherwise),
+ * at most SPUR_REACH of them; null when none is that near. Every tile but `from` is one `free`
+ * lets a road be laid on as the map stands, and no step runs along rails (into or out of a tile
+ * through a side its rails run through), so where a spur crosses track it crosses at right angles,
+ * as a level crossing must. Of spurs alike in length the first found wins: tiles are searched
+ * nearest first, and each one's sides in the order N, E, S, W. `from` holds no road. No tile is
+ * judged here against the spur's other tiles: a builder still judges the spur whole, tile by tile,
+ * before it lays it.
+ */
+export function findSpur(
+  roads: Roads,
+  from: { x: number; y: number },
+  free: (x: number, y: number) => boolean,
+  network: (x: number, y: number) => boolean = (x, y) => roads.has(x, y),
+): { x: number; y: number }[] | null {
+  const { w, h, track } = roads;
+  const key = (x: number, y: number) => y * w + x;
+  const prev = new Map<number, number>([[key(from.x, from.y), -1]]);
+  const queue: { x: number; y: number; tiles: number }[] = [{ ...from, tiles: 1 }];
+  /** the tile a step from (x, y) through side `d` goes to; null off the map or along rails */
+  const step = (x: number, y: number, d: Dir) => {
+    const nx = x + DIR_DX[d];
+    const ny = y + DIR_DY[d];
+    if (nx < 0 || ny < 0 || nx >= w || ny >= h) return null;
+    if (railsThrough(track, x, y, d) || railsThrough(track, nx, ny, opposite(d))) return null;
+    return { x: nx, y: ny };
+  };
+  for (let i = 0; i < queue.length; i++) {
+    const at = queue[i];
+    const beside = DIRS.some((d) => {
+      const n = step(at.x, at.y, d);
+      return !!n && network(n.x, n.y);
+    });
+    // beside a road: the spur ends here and joins it
+    if (beside) {
+      const out: { x: number; y: number }[] = [];
+      for (let k = key(at.x, at.y); k >= 0; k = prev.get(k)!)
+        out.push({ x: k % w, y: Math.floor(k / w) });
+      return out.reverse();
+    }
+    if (at.tiles >= SPUR_REACH) continue;
+    for (const d of DIRS) {
+      const n = step(at.x, at.y, d);
+      if (!n || prev.has(key(n.x, n.y)) || roads.has(n.x, n.y) || !free(n.x, n.y)) continue;
+      prev.set(key(n.x, n.y), key(at.x, at.y));
+      queue.push({ ...n, tiles: at.tiles + 1 });
+    }
+  }
+  return null;
 }

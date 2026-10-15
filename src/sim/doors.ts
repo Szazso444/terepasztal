@@ -114,6 +114,29 @@ export function streetDoor(def: PlaceDef, x: number, y: number, rot: number): Do
   return doorsOf(def, x, y, rot).find((d) => d.kind === 'street')!;
 }
 
+/** A place where it stands: its def, its footprint's corner and its rotation. */
+export interface PlaceAt {
+  def: PlaceDef;
+  x: number;
+  y: number;
+  rot: number;
+}
+
+/** Every street door of a place where it stands (`doorsOf`), in their order there. */
+export function streetDoors(p: PlaceAt): Door[] {
+  return doorsOf(p.def, p.x, p.y, p.rot).filter((d) => d.kind === 'street');
+}
+
+/**
+ * Whether what stands of `def` is a place, with doors: every station, a works with a crew and a
+ * decor with a crew or residents (a service stop, a house), the kinds `PeopleSim.places` lists. A
+ * bridge platform, a signal or a power pole has no door.
+ */
+export function hasDoors(def: PlaceDef): boolean {
+  if (isStationDef(def)) return true;
+  return def.crew > 0 || ('residents' in def && !!def.residents);
+}
+
 /**
  * What is wrong with a def's doors, for the content check; nothing when it has none. Each is a
  * street or a platform door on a tile of the footprint at rotation 0 (`placeSpan`), facing out of

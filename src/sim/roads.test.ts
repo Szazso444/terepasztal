@@ -175,7 +175,7 @@ describe('laying a road', () => {
     });
   });
 
-  it('is refused on any tile of a station, a works, a bridge platform or a house', () => {
+  it('is refused on any tile of a station, a works, a bridge platform or a house (#408)', () => {
     const w = world();
     w.builder.free = true;
     lay(w, 10, 10, STRAIGHT, EW);
@@ -200,13 +200,17 @@ describe('laying a road', () => {
       { x: 7, y: 5 },
     ];
     expect(depot.footprint().length).toBeGreaterThan(1);
+    // the roads there are the places laid at their doors, no road being near (#408)
+    const laid = w.roads.toJSON();
+    const reaches = w.builder.streetDoors().map((d) => `${d.reach.x},${d.reach.y}`);
+    for (const [x, y] of laid) expect(reaches, `${x},${y}`).toContain(`${x},${y}`);
     for (const t of taken) {
-      expect(refusal(w, t.x, t.y), `${t.x},${t.y}`).toBe(STR.build.occupied);
+      expect(refusal(w, t.x, t.y), `${t.x},${t.y}`).toBe(STR.build.roadOnBuilding);
       expect(w.builder.placeRoad(t.x, t.y)).toBe(false);
     }
     // the platform on water is water's: nothing is built on it but its rail
     expect(refusal(w, 25, 25)).toBe(STR.build.nothingOn.water);
-    expect(w.roads.size).toBe(0);
+    expect(w.roads.toJSON()).toEqual(laid);
   });
 
   it('may share its tile with a signal or a power pole', () => {
@@ -235,12 +239,12 @@ describe('laying a road', () => {
       [5, 5],
       [shed.x, shed.y],
     ]);
-    expect(w.builder.checkStation(10, 11, 'farm').reason).toBe(STR.build.occupied);
-    expect(w.builder.checkStation(2, 20, 'depot').reason).toBe(STR.build.occupied);
-    expect(w.builder.checkBuilding(20, 20, 'windmill').reason).toBe(STR.build.occupied);
-    expect(w.builder.checkBuilding(20, 20, 'bridge_wood').reason).toBe(STR.build.occupied);
-    expect(w.builder.canPlaceDecor(5, 5, 'townhouse')).toBe(STR.build.occupied);
-    expect(w.builder.canPlaceDecor(5, 5, 'water_tower')).toBe(STR.build.occupied);
+    expect(w.builder.checkStation(10, 11, 'farm').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.checkStation(2, 20, 'depot').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.checkBuilding(20, 20, 'windmill').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.checkBuilding(20, 20, 'bridge_wood').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.canPlaceDecor(5, 5, 'townhouse')).toBe(STR.build.roadInWay);
+    expect(w.builder.canPlaceDecor(5, 5, 'water_tower')).toBe(STR.build.roadInWay);
     // a town raising a house goes by the same rule
     expect(w.builder.spawnDecor(5, 5, 'townhouse', 0)).toBeNull();
     expect(w.builder.stations).toHaveLength(0);
@@ -761,33 +765,47 @@ describe('roads, whatever is built in whatever order', () => {
     );
   });
 
-  it('change only by a road laid or taken up, which moves the version on and tells the game once', () => {
+  it('change only by a road laid or taken up, or by the spur of a place placed, which moves the version on and tells the game once a tile', () => {
     // A renderer keeps what it drew until `version` moves (#309, #329) and redraws the tile
     // `onRoadChanged` names: a change that moved neither would leave a stale picture, and one
-    // made by anything but laying or taking up a road would be a road the player never touched.
+    // made by anything but laying or taking up a road, or the free spur a place gets at its door
+    // (#408), would be a road nobody laid.
+    /** ops whose place has a street door, and so may lay a spur */
+    const placing = new Set(['decor', 'station', 'works', 'house']);
     forAll(
       genOps,
       (c) => {
         const w = site(c);
         const told: string[] = [];
         w.builder.onRoadChanged = (x, y) => told.push(`${x},${y}`);
+        const tiles = () => w.roads.toJSON().map(([x, y]) => `${x},${y}`);
         c.ops.forEach((o, i) => {
-          const was = JSON.stringify(w.roads.toJSON());
+          const was = tiles();
           const version = w.roads.version;
           told.length = 0;
           const done = perform(w, o);
-          const now = JSON.stringify(w.roads.toJSON());
+          const now = tiles();
           const at = `op ${i} ${JSON.stringify(o)}`;
-          if (o.op === 'road' || o.op === 'unroad') {
-            expect(now !== was, `${at}: changed as it said`).toBe(done);
-            if (done) expect(w.roads.has(o.x, o.y), at).toBe(o.op === 'road');
-          } else expect(now, `${at}: the roads`).toBe(was);
-          if (now === was) {
+          const gone = was.filter((t) => !now.includes(t));
+          const added = now.filter((t) => !was.includes(t));
+          const tile = `${o.x},${o.y}`;
+          if (o.op === 'unroad') {
+            expect(gone, `${at}: taken up`).toEqual(done ? [tile] : []);
+            expect(added, `${at}: laid`).toEqual([]);
+          } else {
+            expect(gone, `${at}: taken up`).toEqual([]);
+            // a road laid is laid first, any spur it brings after it
+            if (o.op === 'road') expect(added[0], `${at}: laid`).toBe(done ? tile : undefined);
+            else if (!done || !placing.has(o.op)) expect(added, `${at}: laid`).toEqual([]);
+          }
+          // what stood keeps its place in the list, and what is new comes after it
+          expect(now, at).toEqual([...was.filter((t) => !gone.includes(t)), ...added]);
+          if (!gone.length && !added.length) {
             expect(w.roads.version, `${at}: the version`).toBe(version);
             expect(told, `${at}: the game told`).toEqual([]);
           } else {
             expect(w.roads.version, `${at}: the version`).toBeGreaterThan(version);
-            expect(told, `${at}: the game told`).toEqual([`${o.x},${o.y}`]);
+            expect(told, `${at}: the game told`).toEqual([...gone, ...added]);
           }
         });
       },
@@ -1224,7 +1242,10 @@ describe('a walk with roads', () => {
     for (let y = 19; y > 16; y--) road.push([24, y]);
     for (let x = 24; x >= 10; x--) road.push([x, 16]);
     for (let y = 17; y <= 18; y++) road.push([10, y]);
-    for (const [x, y] of road) expect(builder.placeRoad(x, y), `${x},${y}`).toBe(true);
+    // the tile above the station holds the road the station laid at its door already (#408)
+    expect(builder.roads.toJSON()).toEqual([[10, 18]]);
+    for (const [x, y] of road)
+      expect(builder.roads.has(x, y) || builder.placeRoad(x, y), `${x},${y}`).toBe(true);
     const people = new PeopleSim(map, builder, new Rng(1));
     people.tick(0.05, 1, 0.5);
     const [p] = people.persons;

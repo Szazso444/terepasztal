@@ -488,7 +488,9 @@ describe('stations and decor in a level', () => {
           rot: rng.int(0, 3),
         }));
         const [d] = tiles(rng, 1, 22, 24, SIZE - 4);
-        const [h, t] = tiles(rng, 2, 28, 30);
+        const [h] = tiles(rng, 1, 28, 30);
+        // two columns or more apart: neither stands on the road the other's door gets (#408)
+        const t = { x: (h.x + 2 + rng.int(0, SIZE - 5)) % SIZE, y: rng.int(28, 30) };
         return {
           works,
           depot: { ...d, rot: rng.int(0, 3) },
