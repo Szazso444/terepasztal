@@ -4,6 +4,7 @@ import { Terrain } from '../world/tiles';
 import {
   buildRelief,
   reliefHeight,
+  reliefTop,
   reliefCorners,
   reliefTileAtWorld,
   surfaceAlongRay,
@@ -284,6 +285,36 @@ describe('connected illustrated terrain', () => {
         for (let bx = -1; bx < 32; bx += 0.211)
           expect(surfaceAlongRay(m, r, bx, by, 10)).toBe(plain(bx, by));
     }
+  }, 20_000);
+  it('never lets the surface rise above the top it gives a box', () => {
+    // Bridges stop looking ahead for ground that could hide them at reliefTop: no point of the
+    // box may stand higher, rails, hills, mountains and the map's edge included; and the top is
+    // the box's own, not the map's, where it can be.
+    const m = fixture(),
+      y = 16,
+      natural = buildRelief(m, new Set()),
+      { spans } = lineSpans(Array.from({ length: 32 }, (_, x) => natural.tiles![y * 32 + x])),
+      rails = new Map<number, RailBed>();
+    for (let x = 0; x < 32; x++) rails.set(y * 32 + x, { axis: 'x', spans, flat: false });
+    for (const r of [
+      natural,
+      buildRelief(m, new Set(), undefined, rails),
+      buildRelief(m, new Set(), CORNERS),
+    ]) {
+      const over: string[] = [];
+      for (let y0 = -1; y0 < 32; y0 += 1.7)
+        for (let x0 = -1; x0 < 32; x0 += 2.3) {
+          const x1 = x0 + 2.7,
+            y1 = y0 + 2.7,
+            top = reliefTop(m, r, x0, y0, x1, y1);
+          for (let py = y0; py <= y1; py += 0.05)
+            for (let px = x0; px <= x1; px += 0.05)
+              if (reliefHeight(m, r, px, py) > top) over.push(`${px.toFixed(2)},${py.toFixed(2)}`);
+        }
+      expect(over).toEqual([]);
+    }
+    // Flat ground away from the hills: the box's top is its own, near the ground.
+    expect(reliefTop(m, natural, 0.2, 0.2, 1.4, 1.4)).toBeLessThan(1);
   }, 20_000);
   it('keeps level pieces and structures on terrace tiles no bank reaches into', () => {
     const m = fixture(),

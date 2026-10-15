@@ -12,6 +12,7 @@ import { type LandscapeMap } from './landscapeModel';
 import {
   buildRelief,
   reliefHeight,
+  reliefTop,
   reliefCorners,
   reliefTileAtWorld,
   groundAllows,
@@ -755,6 +756,11 @@ export class Landscape {
   elevation(x: number, y: number) {
     this.updateHeights();
     return -reliefHeight(this.map, this.relief, x, y);
+  }
+  /** A height (world px up) the surface never exceeds in the box from (x0, y0) to (x1, y1). */
+  heightTop(x0: number, y0: number, x1: number, y1: number) {
+    this.updateHeights();
+    return reliefTop(this.map, this.relief, x0, y0, x1, y1);
   }
   /** Can the ground at tile (x, y) carry a straight climbing rail, or only level structures? */
   get style() {

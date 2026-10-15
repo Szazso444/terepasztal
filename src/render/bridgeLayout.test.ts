@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MeshSimple, Texture, type Container } from 'pixi.js';
+import { Graphics, MeshSimple, Texture, type Container } from 'pixi.js';
 import {
   bridgeJoins,
   bridgePlan,
@@ -11,7 +11,16 @@ import {
   type Joins,
   type Rect,
 } from './bridgeLayout';
-import { bridgeTileMeshes, WATERLINE, type BridgeSurfaces } from './bridgeMeshes';
+import {
+  bridgeTileMeshes,
+  GROUND_BOX,
+  WATER_TILES,
+  WATERLINE,
+  type BridgeSurfaces,
+} from './bridgeMeshes';
+import { paintedWater, underPaintedWater } from './terrainMaterials';
+import { emptyMap } from '../world/mapgen';
+import { Terrain } from '../world/tiles';
 import { lineSpans, railLevel, type RailBed } from '../world/railProfile';
 import { tileToWorld } from '../engine/iso';
 
@@ -355,6 +364,271 @@ describe('bridge meshes', () => {
       // Wherever a face has an edge, its lowest point is on the ground.
       for (const [key, gap] of bottoms) expect(Math.abs(gap), key).toBeLessThan(0.05);
     });
+  });
+});
+
+describe('bridge meshes over the painted waterline', () => {
+  const surfaces: BridgeSurfaces = {
+    stoneTop: Texture.WHITE,
+    stoneWall: Texture.WHITE,
+    woodTop: Texture.WHITE,
+    woodGrain: Texture.WHITE,
+  };
+  const meshes = (c: Container) =>
+    c.children.filter((m): m is MeshSimple => m instanceof MeshSimple);
+  /** The meshes of every tile, cut to `ground` (and `top`, the highest it rises, if given). */
+  const build = (sites: Site[], ground: (x: number, y: number) => number, top?: number) =>
+    plans(sites).map((t) =>
+      bridgeTileMeshes(
+        { ...t.site, water: !!t.site.water, level: 1, ground, top },
+        t.plan,
+        surfaces,
+      ),
+    );
+  /** The triangles of a mesh, as screen points. */
+  const triangles = (m: MeshSimple) => {
+    const v = m.geometry.positions,
+      ix = m.geometry.indices,
+      out: [number, number][][] = [];
+    for (let i = 0; i < ix.length; i += 3)
+      out.push([0, 1, 2].map((k) => [v[ix[i + k] * 2], v[ix[i + k] * 2 + 1]]));
+    return out;
+  };
+  /** Screen points inside a triangle, on one quarter-pixel grid for all. */
+  function* inside(tri: [number, number][]) {
+    const [[ax, ay], [bx, by], [cx, cy]] = tri,
+      d = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+    if (Math.abs(d) < 1e-9) return;
+    for (let sy = Math.ceil(Math.min(ay, by, cy) * 4) / 4; sy <= Math.max(ay, by, cy); sy += 0.25)
+      for (
+        let sx = Math.ceil(Math.min(ax, bx, cx) * 4) / 4;
+        sx <= Math.max(ax, bx, cx);
+        sx += 0.25
+      ) {
+        const u = ((bx - sx) * (cy - sy) - (by - sy) * (cx - sx)) / d,
+          v = ((cx - sx) * (ay - sy) - (cy - sy) * (ax - sx)) / d;
+        if (u > 1e-6 && v > 1e-6 && 1 - u - v > 1e-6) yield [sx, sy] as const;
+      }
+  }
+  /** A map with a river two tiles wide along y at x = 30, 31 and one along x at y = 20, 21. */
+  const riverMap = () => {
+    const m = emptyMap(4242, W, W);
+    for (let y = 0; y < W; y++)
+      for (let x = 0; x < W; x++)
+        if (x === 30 || x === 31 || y === 20 || y === 21) m.terrain[y * W + x] = Terrain.Water;
+    return m;
+  };
+  /** The ground bridges see on a flat map: the waterline where the painter paints water. */
+  const painted = (m: ReturnType<typeof riverMap>) => (x: number, y: number) =>
+    underPaintedWater(m, x, y) ? WATERLINE : 0;
+  /** Lone spans across both rivers, over water, the track running on off both ends. */
+  const crossings = (material: 'stone' | 'wood'): Site[] => [
+    ...[30, 31].map((x) =>
+      span(x, 10, 1, 0, { material, water: true, open: [false, true, false, true] }),
+    ),
+    ...[20, 21].map((y) =>
+      span(10, y, 0, 0, { material, water: true, open: [true, false, true, false] }),
+    ),
+  ];
+  const isUnder = (label: string) =>
+    label.startsWith('support:') || (label.startsWith('deck:') && !label.endsWith(':top'));
+
+  /**
+   * The quarter pixels of every support and deck side that no deck top or parapet covers, each
+   * with the map point the ground under it on screen shows on a flat map.
+   */
+  const shownUnder = (tiles: { under: Container; near: Container }[]) => {
+    const all = tiles.flatMap((t) => [...meshes(t.under), ...meshes(t.near)]),
+      covered = new Set<string>(),
+      out: { label: string; x: number; y: number }[] = [];
+    for (const c of all)
+      if (c.label.endsWith(':top') || c.label.startsWith('parapet:'))
+        for (const tri of triangles(c))
+          for (const [sx, sy] of inside(tri)) covered.add(`${sx},${sy}`);
+    for (const c of all) {
+      if (!isUnder(c.label)) continue;
+      for (const tri of triangles(c))
+        for (const [sx, sy] of inside(tri))
+          if (!covered.has(`${sx},${sy}`))
+            out.push({ label: c.label, x: sx / 64 + sy / 32, y: sy / 32 - sx / 64 });
+    }
+    return out;
+  };
+
+  it('shows nothing under a deck over ground painted as bank, only over painted water', () => {
+    const m = riverMap();
+    for (const material of ['stone', 'wood'] as const)
+      for (const top of [undefined, 0]) {
+        const shown = shownUnder(build(crossings(material), painted(m), top)),
+          onBank = shown
+            .filter((p) => paintedWater(m, p.x, p.y) === 0)
+            .map((p) => `${p.label} at ${p.x.toFixed(3)},${p.y.toFixed(3)}`);
+        expect(shown.length, material).toBeGreaterThan(1000);
+        expect(onBank, `${material}, top ${top}`).toEqual([]);
+      }
+  });
+
+  /**
+   * A stone span over land at (5, 5) with its deck 20 px up, cut to `ground`: the foot of each
+   * strip of its near pier's +x face (on x = 5.45), from one end to the other, as y along the
+   * face and z up; and where, outside `skip`, a foot strays more than half a pixel from the
+   * height the ground in front hides there (looked for every 1/16384 tile).
+   */
+  const pierFace = (ground: (x: number, y: number) => number, skip: (y: number) => boolean) => {
+    const fx = 5.45,
+      [tile] = build([span(5, 5, 1, 20)], ground),
+      face = meshes(tile.under)
+        .filter((c) => c.label === 'support:stoneWall:right')
+        .at(-1)!,
+      v = face.geometry.positions,
+      at = (k: number) => {
+        const y = fx - v[k * 2] / 32;
+        return { y, z: (fx + y) * 16 - v[k * 2 + 1] };
+      },
+      hidden = (y: number) => {
+        let h = ground(fx, y);
+        for (let d = 1 / 16384; d <= 1.5; d += 1 / 16384)
+          h = Math.max(h, ground(fx + d, y + d) - 32 * d);
+        return h;
+      },
+      // Each strip's corners: top a, top b, bottom b, bottom a. Its foot runs from a to b.
+      feet = Array.from({ length: v.length / 8 }, (_, q) => [at(q * 4 + 3), at(q * 4 + 2)]),
+      strays: string[] = [];
+    for (const [a, b] of feet)
+      for (let k = 0; k <= 8; k++) {
+        const y = a.y + ((b.y - a.y) * k) / 8,
+          z = a.z + ((b.z - a.z) * k) / 8;
+        if (!skip(y) && Math.abs(z - hidden(y)) > 0.5)
+          strays.push(`${y.toFixed(4)}: ${z.toFixed(2)} vs ${hidden(y).toFixed(2)}`);
+      }
+    return { feet, strays };
+  };
+
+  it('drops a face straight where the ground in front of it ends, not in a slant over it', () => {
+    // The pier stands over a ditch 40 px deep with a small bank in front: ground ahead of the
+    // face hides it down to a height that changes along it, and jumps where the line of sight
+    // starts to miss the bank (at y = 5.1). The line of sight is looked along every 1/32 tile, so
+    // it may miss a sliver of the bank narrower than that: the drop stands within 1/32 of the jump.
+    const bank = (x: number, y: number) => x >= 5.85 && x <= 6.15 && y >= 5.2 && y <= 5.5,
+      jump = 5.1,
+      { feet, strays } = pierFace(
+        (x, y) => (bank(x, y) ? 0 : -40),
+        (y) => y >= jump - 1 / 32 && y <= jump,
+      ),
+      drops = feet
+        .filter(([a, b]) => Math.abs(a.z - b.z) > 20)
+        .map(([a, b]) => Math.abs(b.y - a.y));
+    expect(strays).toEqual([]);
+    // One strip carries the drop from -12.8 to -40 px, over 1/256 tile at most.
+    expect(drops.length).toBe(1);
+    expect(drops[0]).toBeLessThanOrEqual(2 / 512);
+  });
+
+  it('cuts a face to a bank in front narrower than a quarter tile of it', () => {
+    // A strip of bank running away from the face, seen only from y = 5.05 to 5.1 along it: the
+    // face is split finely enough where ground in front may cut it to find it.
+    const bank = (x: number, y: number) =>
+        x - y >= 0.35 && x - y <= 0.4 && x + y >= 11 && x + y <= 11.4,
+      { feet, strays } = pierFace(
+        (x, y) => (bank(x, y) ? 0 : -40),
+        (y) => Math.abs(y - 5.05) < 2 / 512 || Math.abs(y - 5.1) < 2 / 512,
+      );
+    expect(strays).toEqual([]);
+    expect(feet.some(([a]) => a.y > 5.05 && a.y < 5.1 && a.z > -10)).toBe(true);
+  });
+
+  it('fades a foot into the water only where it shows down to the waterline all along its faces', () => {
+    // A timber span over open water; a narrow bank ahead hides the far corner of one post's +x
+    // face, though not the post's own foot point.
+    const bank = (x: number, y: number) =>
+        x - y >= 0.08 && x - y <= 0.2 && x + y > 11.2 && x + y < 11.6,
+      fills = (ground: (x: number, y: number) => number) => {
+        const [tile] = build([span(5, 5, 1, 0, { material: 'wood', water: true })], ground),
+          fade = tile.under.children.find((c): c is Graphics => c instanceof Graphics)!;
+        return fade.context.instructions.filter((i) => i.action === 'fill').length;
+      };
+    // Four posts, six bands each.
+    expect(fills(() => WATERLINE)).toBe(24);
+    expect(fills((x, y) => (bank(x, y) ? 0 : WATERLINE))).toBe(18);
+  });
+
+  it("rests the deck's end on the bank where the track leaves it, whatever water is painted there", () => {
+    // A span over water from x = 3 to 5 with water beyond it too, and the track running on off
+    // its +x end onto the tile x = 6: nothing under the deck shows over that tile, where the
+    // line's bed carries on, and the deck's end face is buried in it.
+    const endFace = (c: Container) =>
+      meshes(c).some((m) => m.label.startsWith('deck:') && m.label.endsWith(':right'));
+    for (const material of ['stone', 'wood'] as const) {
+      const site = (x: number, open: boolean) =>
+          span(x, 5, 1, 0, {
+            material,
+            water: true,
+            open: open ? [false, true, false, true] : undefined,
+          }),
+        tiles = build(
+          [3, 4, 5].map((x) => site(x, true)),
+          () => WATERLINE,
+        ),
+        shown = shownUnder(tiles),
+        onApproach = shown.filter((p) => p.x > 5.5 && Math.abs(p.y - 5) < 0.5);
+      expect(onApproach.map((p) => `${p.label} at ${p.x.toFixed(3)},${p.y.toFixed(3)}`)).toEqual(
+        [],
+      );
+      expect(endFace(tiles[2].under)).toBe(false);
+      // The supports show over the water beside it.
+      expect(shown.some((p) => p.x > 5.5)).toBe(true);
+      // Where the track ends on the bridge, its end stands over the water and shows.
+      const ending = build(
+        [3, 4, 5].map((x) => site(x, false)),
+        () => WATERLINE,
+      );
+      expect(endFace(ending[2].under)).toBe(true);
+    }
+  });
+
+  it('reads the water of no tile outside WATER_TILES', () => {
+    // Where a tile's faces read the ground (GROUND_BOX, and half a pixel below), the water painted
+    // stays the same whatever lies on the tiles round its window, and so do its meshes: the mesh
+    // key, which holds the water and paving of the window's tiles (worldRenderer.ts), covers all
+    // it reads.
+    const m = riverMap(),
+      site = span(30, 10, 1, 0, { water: true, open: [false, true, false, true] }),
+      [t] = plans([site]),
+      [low, high] = GROUND_BOX,
+      water = () => {
+        let out = '';
+        for (let y = site.y + low; y <= site.y + high + 1 / 64; y += 1 / 16)
+          for (let x = site.x + low; x <= site.x + high + 1 / 64; x += 1 / 16)
+            out += underPaintedWater(m, x, y) ? 1 : 0;
+        return out;
+      },
+      draw = () =>
+        meshes(
+          bridgeTileMeshes(
+            { ...site, water: true, level: 1, ground: painted(m), top: 0 },
+            t.plan,
+            surfaces,
+          ).under,
+        )
+          .map((c) => `${c.label}:${Array.from(c.geometry.positions).join(',')}`)
+          .join('|'),
+      first = [water(), draw()],
+      [from, to] = WATER_TILES,
+      changed: string[] = [];
+    for (let y = site.y + from - 2; y <= site.y + to + 2; y++)
+      for (let x = site.x + from - 2; x <= site.x + to + 2; x++) {
+        if (x >= site.x + from && x <= site.x + to && y >= site.y + from && y <= site.y + to)
+          continue;
+        const k = y * W + x,
+          was = m.terrain[k];
+        m.terrain[k] = was === Terrain.Water ? Terrain.Grass : Terrain.Water;
+        if (water() !== first[0] || draw() !== first[1]) changed.push(`${x},${y}`);
+        m.terrain[k] = was;
+      }
+    expect(changed).toEqual([]);
+    // The window's own tiles do matter: a bank right in front of the near supports hides them.
+    m.terrain[(site.y + 1) * W + site.x] = Terrain.Grass;
+    expect(draw()).not.toBe(first[1]);
   });
 });
 

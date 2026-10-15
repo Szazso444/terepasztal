@@ -2,10 +2,10 @@ import { snowLineAt, stoneGroundAt, type LandscapeMap } from './landscapeModel';
 import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
+  paintedWater,
   rockExposure,
   shareSurfaceDetail,
   surfaceNoise,
-  surfaceBlend,
   surfaceColor,
   surfaceMaterial,
 } from './terrainMaterials';
@@ -89,13 +89,15 @@ self.onmessage = async (event: MessageEvent) => {
         if (tx < x - 0.57 || ty < y - 0.57 || tx >= x + w - 0.43 || ty >= y + h - 0.43) continue;
         const wx = tx + map.originX,
           wy = ty + map.originY;
-        surfaceBlend(map, tx, ty, blend);
         const tileIndex = Math.round(ty) * map.w + Math.round(tx),
-          terrain = map.terrain[tileIndex];
+          terrain = map.terrain[tileIndex],
+          paved = city.has(tileIndex);
         // Pilot: the climate's own ground between the stones (desert sand, taiga moss...).
         const stoneGround = relief.style.biomeTops ? stoneGroundAt(map, tileIndex) : 0;
         color[0] = color[1] = color[2] = 0;
-        let waterWeight = 0;
+        // Water and paving keep their colours under the season's tint. The water's share is the
+        // waterline bridges cut their supports to (paintedWater); paving adds its own below.
+        let waterWeight = paintedWater(map, tx, ty, paved, blend);
         // Tile-face style: rock shows where the slope is steep, not in random islands.
         let steep: number | undefined,
           slope = 0;
@@ -125,7 +127,7 @@ self.onmessage = async (event: MessageEvent) => {
           const weight = blend[m + 4];
           if (!weight) continue;
           let material = blend[m];
-          if (city.has(tileIndex)) material = 8;
+          if (paved) material = 8;
           if (z > 2 && terrain === Terrain.Mountain && material === 7) material = 9;
           surfaceColor(
             source,
@@ -136,7 +138,7 @@ self.onmessage = async (event: MessageEvent) => {
             EXPOSED[material] ? steep : undefined,
             stoneGround,
           );
-          if (material === 5 || material === 8) waterWeight += weight;
+          if (material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
         }
         let shade = 1;

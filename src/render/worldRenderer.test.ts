@@ -148,6 +148,7 @@ function renderer() {
       },
     },
     landscape: { setCity: () => {}, invalidate: () => {} },
+    texturedParts: new Map(),
     groundSprites: [],
     elevationOf: () => 0,
     refreshScatter: () => {},
@@ -1142,5 +1143,81 @@ describe('a tile of mixed props under track', () => {
     expect(fieldsDrawn(world)).toHaveLength(4);
     world.setTrack(TILE.x, TILE.y, null);
     expect(fieldsDrawn(world)).toHaveLength(5);
+  });
+});
+
+describe('textured bridges over the painted water', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  /**
+   * A whole world with two rivers along y, at x = 10, 11 and x = 24, 25, its landscape painting
+   * and the bridge surfaces loaded, and a stone bridge over each river at y = 6.
+   */
+  function bridged() {
+    const map = emptyMap(4242, 32, 32);
+    for (let y = 0; y < 32; y++)
+      for (const x of [10, 11, 24, 25]) map.terrain[y * 32 + x] = Terrain.Water;
+    const world = wholeWorld(map),
+      white = Texture.WHITE;
+    Object.assign(world, {
+      landscape: working(map).landscape,
+      bridgeSurfaces: { stoneTop: white, stoneWall: white, woodTop: white, woodGrain: white },
+    });
+    const tiles = [10, 11, 24, 25].map((x) => ({
+      x,
+      y: 6,
+      material: 'stone' as const,
+      axis: 1 as const,
+      open: [false, true, false, true],
+      water: true,
+      level: 1,
+    }));
+    world.setTexturedBridges(tiles);
+    /** Each bridge tile's parts under the trains, by tile. */
+    const parts = () =>
+      new Map(
+        [...(world['texturedParts'] as Map<number, { under: Container }>)].map(([k, p]) => [
+          k,
+          p.under,
+        ]),
+      );
+    return { map, world, tiles, parts };
+  }
+  const at = (x: number) => 6 * 32 + x;
+
+  it('keep their meshes while the water painted round them stays as it is', () => {
+    const { world, tiles, parts } = bridged(),
+      first = parts();
+    expect(first.size).toBe(4);
+    world.setTexturedBridges(tiles);
+    world.animate(1 / 60);
+    for (const [k, under] of parts()) expect(under, `tile ${k}`).toBe(first.get(k));
+  });
+
+  it("are drawn again when a town paves a bank in their water's reach, and only those", () => {
+    const { world, parts } = bridged(),
+      first = parts();
+    // A town's paving on the near bank of the first river, beside its bridge.
+    world.setCity(new Set([7 * 32 + 12]));
+    world.animate(1 / 60);
+    const second = parts();
+    for (const x of [10, 11]) expect(second.get(at(x)), `x ${x}`).not.toBe(first.get(at(x)));
+    for (const x of [24, 25]) expect(second.get(at(x)), `x ${x}`).toBe(first.get(at(x)));
+  });
+
+  it('are drawn again when the terrain round them turns to water, and only those', () => {
+    const { map, world, parts } = bridged(),
+      first = parts();
+    // The second river widens in front of its bridge.
+    map.terrain[7 * 32 + 26] = Terrain.Water;
+    world.retile(26, 7);
+    world.animate(1 / 60);
+    const second = parts();
+    for (const x of [10, 11]) expect(second.get(at(x)), `x ${x}`).toBe(first.get(at(x)));
+    expect(second.get(at(25))).not.toBe(first.get(at(25)));
   });
 });
