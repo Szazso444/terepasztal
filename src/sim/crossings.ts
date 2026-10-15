@@ -8,7 +8,8 @@ import { consistPhysics, type TrainState } from './trains';
  * seconds, running or standing on it and setting off at once, and for CROSSING_HOLD game seconds
  * after the watch first sees it clear of both. A train with no way set (loading or waiting at a
  * platform, idle, with no route) closes only the tiles under its cars. Walkers stop at the edge of
- * a closed crossing (`clearAhead` in people.ts); trains never wait for walkers, and nothing here
+ * a closed crossing (`clearAhead` in people.ts), and walk round one that only trains standing out
+ * of fuel or power hold closed (`detour`, #447); trains never wait for walkers, and nothing here
  * changes a train.
  */
 
@@ -49,6 +50,14 @@ export const ROUTED_STATES: ReadonlySet<TrainState> = new Set<TrainState>([
   'noPower',
   'overweight',
 ]);
+/**
+ * The states in which a train stands on its way with no telling when it goes on: out of fuel or
+ * water (`noFuel`), or an electric engine out of power (`noPower`). Walkers walk round a crossing
+ * only such trains hold closed (`CrossingWatch.detour`), rather than wait in front of it for ever.
+ * A train passing, held at a signal or behind another train (`moving`), or stopped for its pull
+ * (`overweight`) keeps them waiting.
+ */
+export const DETOUR_STATES: ReadonlySet<TrainState> = new Set<TrainState>(['noFuel', 'noPower']);
 /** Seconds of hold within which a crossing counts as open, against rounding in the sums. */
 const HOLD_EPS = 1e-9;
 
@@ -130,8 +139,9 @@ export function crossingReach(train: CrossingTrain, t: number): number {
 
 /**
  * Which level crossings are closed to walkers now. `update` moves it on by one step from where the
- * trains stand, before the walkers move; `closed` is what they ask. Nothing of it is saved: after
- * a load the trains close the crossings again on the first step.
+ * trains stand, before the walkers move; `closed` is what they ask, and `detour` and `occupied`
+ * what one held at a closed crossing asks to walk round it. Nothing of it is saved: after a load
+ * the trains close the crossings again on the first step.
  */
 export class CrossingWatch {
   /**
@@ -139,6 +149,13 @@ export class CrossingWatch {
    * while a car is on it or a train is coming. An open crossing has no entry.
    */
   private readonly clear = new Map<number, number>();
+  /**
+   * The keys of the crossings closed now only by trains standing out of fuel or power
+   * (DETOUR_STATES): a car of one on it, or it within the reach of one, and of no other train.
+   */
+  private readonly dry = new Set<number>();
+  /** The keys of every tile a car stands on now, crossing or not. */
+  private readonly cars = new Set<number>();
 
   /** `w` is the width of the map the keys are of (`y * w + x`). */
   constructor(readonly w: number) {}
@@ -165,6 +182,23 @@ export class CrossingWatch {
   readonly closed = (x: number, y: number): boolean =>
     x >= 0 && x < this.w && y >= 0 && this.clear.has(y * this.w + x);
 
+  /**
+   * The level crossing on (x, y) is closed, and only trains standing out of fuel or power
+   * (DETOUR_STATES) hold it so: a car of one stands on it or it lies within the reach of one, and
+   * no other train's car is on it nor any other train coming. Walkers walk round it (#447). False
+   * for a crossing open, in its CROSSING_HOLD, or closed by any other train as well, and for any
+   * other tile.
+   */
+  readonly detour = (x: number, y: number): boolean =>
+    x >= 0 && x < this.w && y >= 0 && this.dry.has(y * this.w + x);
+
+  /**
+   * A car of a train stands on (x, y), any tile, as the last `update` read the trains while the map
+   * had a level crossing; with none, the watch reads no train and holds no car.
+   */
+  readonly occupied = (x: number, y: number): boolean =>
+    x >= 0 && x < this.w && y >= 0 && this.cars.has(y * this.w + x);
+
   /** How many crossings are closed now. */
   get size() {
     return this.clear.size;
@@ -173,21 +207,36 @@ export class CrossingWatch {
   /**
    * The crossings a car stands on, or that a train with its way set (ROUTED_STATES) could reach
    * along it within CROSSING_HORIZON, running on from its speed now or setting off from a
-   * standstill. Any other train runs nowhere, whatever speed it was left with.
+   * standstill. Any other train runs nowhere, whatever speed it was left with. On the way it notes
+   * the tiles under every car, and which of those crossings only trains standing out of fuel or
+   * power close; it reads the trains for nothing else.
    */
   private busy(trains: Iterable<CrossingTrain>, crossingKeys: ReadonlySet<number>): Set<number> {
     const out = new Set<number>();
+    this.cars.clear();
+    this.dry.clear();
     if (!crossingKeys.size) return out;
+    // the crossings a train not standing out of fuel or power closes
+    const firm = new Set<number>();
     for (const t of trains) {
-      for (const k of t.occupancyKeys(this.w)) if (crossingKeys.has(k)) out.add(k);
+      const dry = DETOUR_STATES.has(t.state);
+      const close = (k: number) => {
+        out.add(k);
+        if (!dry) firm.add(k);
+      };
+      for (const k of t.occupancyKeys(this.w)) {
+        this.cars.add(k);
+        if (crossingKeys.has(k)) close(k);
+      }
       if (!ROUTED_STATES.has(t.state)) continue;
       const far = crossingReach(t, CROSSING_HORIZON) + CROSSING_LEAD;
       for (const s of t.pathAhead()) {
         if (s.arc - t.pathProgress > far) break;
         const k = s.y * this.w + s.x;
-        if (crossingKeys.has(k)) out.add(k);
+        if (crossingKeys.has(k)) close(k);
       }
     }
+    for (const k of out) if (!firm.has(k)) this.dry.add(k);
     return out;
   }
 }
