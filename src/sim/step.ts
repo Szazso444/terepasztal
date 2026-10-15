@@ -219,8 +219,9 @@ export class SimStep {
       this.nextCityCheck = clock.time + CITY_CHECK_SECONDS;
       this.hooks.refreshCity?.();
     }
-    // walkers wait at the level crossings the trains close, read where the trains stood at the
-    // end of the last step: they move before the trains do
+    // walkers wait at the level crossings the trains close, and walk round those only trains out
+    // of fuel or power close, read where the trains stood at the end of the last step: they move
+    // before the trains do
     if (play) {
       const crossings = this.watchCrossings(gdt);
       people.tick(
@@ -228,6 +229,7 @@ export class SimStep {
         builder.crewTotal() + houses.residentsTotal(),
         clock.dayFraction,
         crossings.size ? crossings.closed : null,
+        crossings.size ? crossings : null,
       );
     }
     const famineMul = stock.famine ? FAMINE_PRODUCTION_MUL : 1;

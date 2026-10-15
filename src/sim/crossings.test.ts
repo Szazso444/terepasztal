@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
-import { Terrain } from '../world/tiles';
+import { Terrain, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { DESCENT_SPEED } from '../world/railProfile';
@@ -25,12 +25,17 @@ import { SimStep, startStock, type StepContext } from './step';
 import { SIM_STEP } from './time';
 import {
   BOARDING_SPEED_MUL,
+  DETOUR_RETRY,
   PeopleSim,
   ROAD_SPEED_MUL,
   WAKE,
+  WALK_MARGIN,
   WALK_SPEED,
+  findWalk,
   offCrossing,
   walkSpeed,
+  walkable,
+  type CrossingDetour,
   type Person,
   type PersonState,
 } from './people';
@@ -41,6 +46,7 @@ import {
   CROSSING_MARGIN,
   CROSSING_WALK,
   CrossingWatch,
+  DETOUR_STATES,
   ROUTED_STATES,
   crossingPull,
   crossingReach,
@@ -2037,5 +2043,1539 @@ describe('a walker set down by a level crossing', () => {
       for (const p of crossing.persons) expect(onTile(p, px, py)).toBe(false);
     }
     expect(crossing.persons).toHaveLength(0);
+  });
+});
+
+// ------------------------------------------------------------------ walking round a crossing trains out of fuel hold (#447)
+
+/**
+ * Every state a train can be in, and whether walkers walk round a crossing that trains in it alone
+ * hold closed: standing out of fuel or water (the author, 2026-10-14), or an electric engine
+ * standing out of power (Core's reading of it). A state added to TrainState fails the typecheck
+ * here until it is told one way or the other.
+ */
+const DRY: Record<TrainState, boolean> = {
+  moving: false,
+  noFuel: true,
+  noPower: true,
+  overweight: false,
+  loading: false,
+  waiting: false,
+  idle: false,
+  yielding: false,
+  noRoute: false,
+  stranded: false,
+};
+
+type Tile = { x: number; y: number };
+/** The tiles of `list`, as a predicate. */
+const among =
+  (list: readonly Tile[]) =>
+  (x: number, y: number): boolean =>
+    list.some((t) => t.x === x && t.y === y);
+/** A walker at `p` stands on the edge of tile (x, y), off it. */
+const onEdge = (p: Tile, x: number, y: number) => Math.abs(cheb(p, x, y) - 0.5) <= 1e-6;
+
+/**
+ * The fewest steps of a walk from `a` to `b` in 8 directions over walkable tiles `avoid` does not
+ * name, `b` among them, inside findWalk's box (WALK_MARGIN round the two ends): breadth first, as a
+ * walk with no road under it is the fewest steps; null when there is none.
+ */
+function fewestSteps(
+  map: GameMap,
+  a: Tile,
+  b: Tile,
+  avoid: (x: number, y: number) => boolean,
+): number | null {
+  const x0 = Math.max(0, Math.min(a.x, b.x) - WALK_MARGIN);
+  const y0 = Math.max(0, Math.min(a.y, b.y) - WALK_MARGIN);
+  const x1 = Math.min(map.w - 1, Math.max(a.x, b.x) + WALK_MARGIN);
+  const y1 = Math.min(map.h - 1, Math.max(a.y, b.y) + WALK_MARGIN);
+  const seen = new Set([`${a.x},${a.y}`]);
+  let front: Tile[] = [a];
+  for (let d = 0; front.length; d++) {
+    if (front.some((t) => t.x === b.x && t.y === b.y)) return d;
+    const next: Tile[] = [];
+    for (const t of front)
+      for (const [dx, dy] of DIRS8) {
+        const n = { x: t.x + dx, y: t.y + dy };
+        if (n.x < x0 || n.y < y0 || n.x > x1 || n.y > y1 || seen.has(`${n.x},${n.y}`)) continue;
+        if (avoid(n.x, n.y)) continue;
+        if (!walkable(map, n.x, n.y) && !(n.x === b.x && n.y === b.y)) continue;
+        seen.add(`${n.x},${n.y}`);
+        next.push(n);
+      }
+    front = next;
+  }
+  return null;
+}
+
+/** All of a walker but where it stands and its walk: what walking round may not change. */
+const besidesWalk = (p: Person) => ({ ...p, x: 0, y: 0, path: [], step: 0 });
+
+describe('a crossing only trains out of fuel or power hold closed', () => {
+  it('names the states whose trains walkers walk round, each one a train standing on its way in', () => {
+    expect([...DETOUR_STATES].sort()).toEqual(STATES.filter((s) => DRY[s]).sort());
+    for (const s of DETOUR_STATES) expect(ROUTED[s], s).toBe(true);
+  });
+
+  it('is told apart by the watch, which also says the tiles cars stand on', () => {
+    const y = 9;
+    forAll(
+      (rng) => ({
+        crossings: Array.from({ length: rng.int(0, 6) }, () => rng.int(0, 15)),
+        trains: Array.from({ length: rng.int(0, 3) }, () => ({
+          state: rng.pick(STATES),
+          speed: rng.pick([0, 0, 0.4, 1.5]),
+          head: rng.int(0, 15),
+          length: rng.int(1, 4),
+          progress: rng.range(0, 10),
+          acceleration: rng.pick([undefined, 0, 0.05, 0.4]),
+          maxSpeed: rng.pick([undefined, 0.5, 1]),
+        })),
+      }),
+      (c) => {
+        // each train on row y, its head on `head` and its cars behind it to the west, its way east
+        const trains = c.trains.map((t) => ({
+          ...t,
+          cars: Array.from({ length: t.length }, (_, i) => t.head - i)
+            .filter((x) => x >= 0)
+            .map((x) => keyOf(x, y)),
+          ahead: eastward(t.head, y, t.progress, 16 - t.head),
+        }));
+        const plains = trains.map((t) => plain(t));
+        const keys = new Set(c.crossings.map((x) => keyOf(x, y)));
+        const watch = new CrossingWatch(W);
+        watch.update(plains, keys, SIM_STEP);
+        for (let x = 0; x < W; x++)
+          for (const ty of [y - 1, y, y + 1]) {
+            const k = keyOf(x, ty);
+            // the trains that close the tile: a car on it, or a train with its way set reaching it
+            const closers = trains.filter((t, i) => {
+              if (t.cars.includes(k)) return true;
+              if (!ROUTED[t.state]) return false;
+              const far = crossingReach(plains[i], CROSSING_HORIZON) + CROSSING_LEAD;
+              return t.ahead.some((s) => s.x === x && s.y === ty && s.arc - t.progress <= far);
+            });
+            const closed = keys.has(k) && closers.length > 0;
+            expect(watch.closed(x, ty), `${x},${ty}`).toBe(closed);
+            expect(watch.detour(x, ty), `${x},${ty}`).toBe(
+              closed && closers.every((t) => DRY[t.state]),
+            );
+            expect(watch.occupied(x, ty), `${x},${ty}`).toBe(
+              keys.size > 0 && trains.some((t) => t.cars.includes(k)),
+            );
+          }
+        // the trains gone: the crossings they closed are in their hold, none walked round, and no
+        // car stands anywhere
+        const held = closedKeys(watch);
+        watch.update([], keys, SIM_STEP);
+        expect(closedKeys(watch)).toEqual(held);
+        for (let x = 0; x < W; x++) {
+          expect(watch.detour(x, y)).toBe(false);
+          expect(watch.occupied(x, y)).toBe(false);
+        }
+      },
+      {
+        shrink: function* (c) {
+          for (const crossings of shrinkArray(c.crossings)) yield { ...c, crossings };
+          for (const trains of shrinkArray(c.trains)) yield { ...c, trains };
+        },
+      },
+    );
+  });
+
+  it('is walked round from the step a walker reaches its edge, on no closed crossing and no tile under a car, and the walker keeps to that walk', () => {
+    // A walk straight over the crossing in any of the eight ways, the cars of a train along any line
+    // through it or beside it, other crossings closed round it, walked round or not, in any walking
+    // state and step; then the crossings stay as they are, or all open.
+    const seen = { straight: 0, back: 0, none: 0 };
+    forAll(
+      (rng) => {
+        const dir = rng.pick(DIRS8);
+        const line = rng.pick(DIRS8);
+        const shift = rng.pick([
+          [0, 0],
+          [0, 0],
+          [1, 0],
+          [0, 1],
+          [-1, 0],
+          [0, -1],
+        ] as const);
+        const first = rng.int(-5, 1);
+        return {
+          dir,
+          before: rng.int(1, 4),
+          after: rng.int(1, 4),
+          cars: Array.from({ length: rng.int(0, 6) }, (_, i) => ({
+            x: CX + line[0] * (first + i) + shift[0],
+            y: CY + line[1] * (first + i) + shift[1],
+          })),
+          others: Array.from({ length: rng.int(0, 4) }, () => ({
+            x: CX + rng.int(-4, 4),
+            y: CY + rng.int(-4, 4),
+            round: rng.chance(0.5),
+          })),
+          state: rng.pick(WALKING),
+          stream: rng.int(1, 1e6),
+          gdt: rng.pick([SIM_STEP, 0.25, 1]),
+          opens: rng.chance(0.5),
+        };
+      },
+      (c) => {
+        const [sx, sy] = c.dir;
+        const walk = walkOf(
+          CX - sx * c.before,
+          CY - sy * c.before,
+          CX + sx * c.after,
+          CY + sy * c.after,
+        );
+        // the tile it stands at on the crossing's edge, and the end of its walk
+        const back = walk[c.before - 1];
+        const end = walk[walk.length - 1];
+        // nothing in the way before the crossing, and nothing on the end of the walk
+        const kept = among([...walk.slice(0, c.before), end, { x: CX, y: CY }]);
+        const cars = c.cars.filter((t) => !kept(t.x, t.y));
+        const others = c.others.filter((t) => !kept(t.x, t.y));
+        const closed = among([{ x: CX, y: CY }, ...others]);
+        const detour: CrossingDetour = {
+          detour: among([{ x: CX, y: CY }, ...others.filter((t) => t.round)]),
+          occupied: among(cars),
+        };
+        const avoid = (x: number, y: number) => closed(x, y) || detour.occupied(x, y);
+        const { map, builder } = field();
+        const house = builder.spawnDecor(CX + 8, CY + 8, 'townhouse', 0);
+        expect(house).not.toBeNull();
+        const transient = c.state === 'walk';
+        const population = transient ? 0 : 1;
+        const make = () => {
+          const people = new PeopleSim(map, builder, new Rng(c.stream));
+          const p: Person = {
+            ...figure(walk.map((t) => ({ ...t }))),
+            state: c.state,
+            transient,
+            home: transient ? '' : `d${house!.x},${house!.y}`,
+          };
+          people.persons.push(p);
+          return { people, p };
+        };
+        // the same walker with no crossing at all, and with these
+        const free = make();
+        const { people, p } = make();
+        const stream = people.toJSON().rng;
+        const way = p.path;
+        let reached = false;
+        for (let i = 0; i < 2000 && !reached; i++) {
+          const before = { ...p };
+          free.people.tick(c.gdt, population, MIDDAY);
+          people.tick(c.gdt, population, MIDDAY, closed, detour);
+          if (p.path === way && JSON.stringify(p) === JSON.stringify(free.p)) continue;
+          // the step it reaches the edge: it stops on it, as it was but for its walk, no draw
+          reached = true;
+          expect(onEdge(p, CX, CY), `at ${p.x}, ${p.y}`).toBe(true);
+          expect(besidesWalk(p)).toEqual(besidesWalk(before));
+          expect(people.toJSON().rng).toBe(stream);
+        }
+        expect(reached).toBe(true);
+        const steps = fewestSteps(map, back, end, avoid);
+        if (steps === null) {
+          // no way round: it waits on the edge with the walk it had
+          expect(p.path).toBe(way);
+          seen.none++;
+          return;
+        }
+        // a walk round from the tile it stands at, back to that tile's middle first only where the
+        // way straight on would cut into a tile it keeps off, as short as any, on no tile it keeps
+        // off
+        expect(p.path).not.toBe(way);
+        expect(p.step).toBe(0);
+        const round = p.path;
+        expect(round[0]).toEqual(back);
+        const tiles = round[1].x === back.x && round[1].y === back.y ? round.slice(1) : round;
+        seen[tiles === round ? 'straight' : 'back']++;
+        expect(tiles[tiles.length - 1]).toEqual(end);
+        expect(tiles.length - 1).toBe(steps);
+        tiles.forEach((t, k) => {
+          if (!k) return;
+          const s = tiles[k - 1];
+          expect(Math.max(Math.abs(t.x - s.x), Math.abs(t.y - s.y))).toBe(1);
+          expect(avoid(t.x, t.y), `${t.x},${t.y}`).toBe(false);
+        });
+        // on to its end, the crossings closed as they were or all open: it keeps to the walk round,
+        // sets foot on none of the tiles it kept off, and draws nothing until its walk ends
+        const off: Tile[] = [{ x: CX, y: CY }, ...others, ...cars];
+        let done = false;
+        for (let i = 0; i < 4000 && !done; i++) {
+          people.tick(c.gdt, population, MIDDAY, c.opens ? null : closed, c.opens ? null : detour);
+          done = !people.persons.includes(p) || p.state !== c.state;
+          if (done) break;
+          expect(p.path).toBe(round);
+          for (const t of off) expect(onTile(p, t.x, t.y), `${t.x},${t.y}`).toBe(false);
+          expect(people.toJSON().rng).toBe(stream);
+        }
+        expect(done).toBe(true);
+      },
+    );
+    // not vacuous: most walkers found a way round, some straight on from the edge and some back
+    // through the middle of the tile they stood at first
+    expect(seen.straight + seen.back).toBeGreaterThanOrEqual(90);
+    expect(seen.straight).toBeGreaterThanOrEqual(10);
+    expect(seen.back).toBeGreaterThanOrEqual(10);
+  });
+
+  it('is walked round along the roads where a road goes round, as any walk keeps to them', () => {
+    const { map, builder } = field();
+    // a road north over the crossing, and one round it to the east; a train across the crossing
+    const loop = [
+      { x: CX + 1, y: CY + 1 },
+      { x: CX + 2, y: CY + 1 },
+      { x: CX + 2, y: CY },
+      { x: CX + 2, y: CY - 1 },
+      { x: CX + 1, y: CY - 1 },
+    ];
+    for (let y = CY - 4; y <= CY + 4; y++) expect(builder.roads.add(CX, y)).toBe(true);
+    for (const t of loop) expect(builder.roads.add(t.x, t.y)).toBe(true);
+    const cars = [
+      { x: CX - 1, y: CY },
+      { x: CX, y: CY },
+      { x: CX + 1, y: CY },
+    ];
+    const people = new PeopleSim(map, builder, new Rng(1));
+    const way = walkOf(CX, CY + 4, CX, CY - 4);
+    const p = figure(way);
+    people.persons.push(p);
+    const detour = { detour: closedC, occupied: among(cars) };
+    for (let i = 0; i < 400 && p.path === way; i++)
+      people.tick(SIM_STEP, 0, MIDDAY, closedC, detour);
+    // straight on from the edge along the road round, which costs no more than a way over the
+    // grass beside the train and keeps to the road all the way
+    expect(p.path).toEqual([{ x: CX, y: CY + 1 }, ...loop, ...walkOf(CX, CY - 1, CX, CY - 4)]);
+    expect(p).toMatchObject({ x: CX, y: CY + 0.5, step: 0 });
+    for (let i = 0; i < 2000 && people.persons.length; i++) {
+      people.tick(SIM_STEP, 0, MIDDAY, closedC, detour);
+      for (const t of cars) expect(onTile(p, t.x, t.y)).toBe(false);
+    }
+    expect(people.persons).toEqual([]);
+  });
+
+  it('with no way round, keeps a walker waiting on its edge as it was, trying again every DETOUR_RETRY game seconds', () => {
+    // A lane of grass through water over the crossing, the walker on its edge bound north over it;
+    // a tile beside the crossing turns to grass some steps on. It takes the way round at the first
+    // try after.
+    expect(DETOUR_RETRY).toBe(5);
+    forAll(
+      (rng) => {
+        const gdt = rng.pick([SIM_STEP, 0.25, 0.5, 1]);
+        const period = Math.round(DETOUR_RETRY / gdt);
+        const n = rng.int(1, 3);
+        return {
+          gdt,
+          // the step in which the way opens, after the first: on a try, just before one, or any
+          opens: rng.pick([n * period - 1, n * period, rng.int(0, 3 * period)]),
+          state: rng.pick(WALKING),
+          stream: rng.int(1, 1e6),
+        };
+      },
+      (c) => {
+        const { map, builder } = field();
+        const house = builder.spawnDecor(0, 0, 'townhouse', 0);
+        expect(house).not.toBeNull();
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++)
+            if (!(x === CX && Math.abs(y - CY) <= 4) && !(x === 0 && y === 0))
+              map.terrain[y * map.w + x] = Terrain.Water;
+        const transient = c.state === 'walk';
+        const population = transient ? 0 : 1;
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        const way = walkOf(CX, CY + 1, CX, CY - 4);
+        const p: Person = {
+          ...figure(way, { x: CX, y: CY + 0.5 }),
+          state: c.state,
+          transient,
+          home: transient ? '' : `d${house!.x},${house!.y}`,
+        };
+        people.persons.push(p);
+        const held = JSON.stringify(p);
+        const stream = people.toJSON().rng;
+        const detour = { detour: closedC, occupied: () => false };
+        const tick = () => people.tick(c.gdt, population, MIDDAY, closedC, detour);
+        // tries fall every period steps from the first: it takes the way at the first try after
+        // the step the way opens in
+        const period = Math.round(DETOUR_RETRY / c.gdt);
+        const takes = (Math.floor(c.opens / period) + 1) * period;
+        for (let i = 0; i < takes; i++) {
+          tick();
+          expect(JSON.stringify(p), `step ${i}`).toBe(held);
+          expect(people.toJSON().rng).toBe(stream);
+          if (i === c.opens) map.terrain[CY * map.w + CX - 1] = Terrain.Grass;
+        }
+        tick();
+        // back to the middle of the tile it stands at, as the way straight on would cut the
+        // crossing's corner, then round it over the new grass
+        expect(p.path).toEqual([
+          { x: CX, y: CY + 1 },
+          { x: CX, y: CY + 1 },
+          { x: CX - 1, y: CY },
+          ...walkOf(CX, CY - 1, CX, CY - 4),
+        ]);
+        expect(besidesWalk(p)).toEqual(besidesWalk(JSON.parse(held) as Person));
+        expect(people.toJSON().rng).toBe(stream);
+        for (let i = 0; i < 4000 && people.persons.includes(p) && p.state === c.state; i++) {
+          tick();
+          expect(onTile(p, CX, CY)).toBe(false);
+        }
+        expect(people.persons.includes(p) && p.state === c.state).toBe(false);
+      },
+    );
+  });
+
+  it('keeps a walker waiting as before for a train passing, held at a signal or behind another, or standing in any other state', () => {
+    // Plain trains on row CY of the walker field, read by a watch as the step reads them, stand
+    // there for 40 game seconds and are gone. The walker goes north over the crossing, and a twin
+    // of it is told of no way round: it waits as #404 has it.
+    const crossing = keyOf(CX, CY);
+    const keys = new Set([crossing]);
+    // standing short of the crossing to the west with its way east over it, within its reach
+    const short = (state: TrainState): Plain => ({
+      state,
+      speed: 0,
+      progress: 12,
+      cars: [keyOf(CX - 2, CY), keyOf(CX - 3, CY)],
+      ahead: eastward(CX - 2, CY, 12, 6),
+      acceleration: 0.4,
+      maxSpeed: 1,
+    });
+    // standing on it, its way east
+    const on = (state: TrainState): Plain => ({
+      state,
+      cars: [crossing, keyOf(CX - 1, CY)],
+      ahead: eastward(CX, CY, 12, 4),
+    });
+    const passing: Plain = {
+      speed: 1.5,
+      progress: 3,
+      cars: [keyOf(CX - 1, CY)],
+      ahead: eastward(CX - 1, CY, 3, 6),
+    };
+    const cases: [string, Plain[]][] = [
+      ['passing over it', [passing]],
+      ['held at a signal short of it', [short('moving')]],
+      ['out of fuel on it, another held behind it', [on('noFuel'), short('moving')]],
+      ['out of fuel on it, another passing', [on('noFuel'), passing]],
+      [
+        'out of fuel on it, an electric one out of power behind it',
+        [on('noFuel'), short('noPower')],
+      ],
+      ...STATES.map((s): [string, Plain[]] => [`${s} on it`, [on(s)]]),
+      ...ROUTED_LIST.map((s): [string, Plain[]] => [`${s} short of it`, [short(s)]]),
+    ];
+    let rounds = 0;
+    for (const [name, trains] of cases) {
+      const walkedRound = trains.every((t) => DRY[t.state ?? 'moving']);
+      const { map, builder } = field();
+      const watch = new CrossingWatch(W);
+      const [told, twin] = [0, 1].map(() => {
+        const people = new PeopleSim(map, builder, new Rng(5));
+        people.persons.push(figure(walkOf(CX, CY + 4, CX, CY - 4)));
+        return people;
+      });
+      const way = told.persons[0].path;
+      let edge = -1;
+      let differs = -1;
+      let walk: Tile[] | null = null;
+      for (let i = 0; i < 400 && told.persons.length + twin.persons.length; i++) {
+        watch.update(i < 160 ? trains.map(plain) : [], keys, 0.25);
+        if (i < 160) expect(watch.closed(CX, CY), name).toBe(true);
+        told.tick(0.25, 0, MIDDAY, watch.closed, watch);
+        twin.tick(0.25, 0, MIDDAY, watch.closed);
+        if (edge < 0 && twin.persons.length && onEdge(twin.persons[0], CX, CY)) edge = i;
+        if (differs < 0 && JSON.stringify(told.persons) !== JSON.stringify(twin.persons)) {
+          differs = i;
+          walk = told.persons[0].path;
+        }
+      }
+      // the twin waited on the edge while the trains stood there
+      expect(edge, name).toBeGreaterThanOrEqual(0);
+      expect(edge, name).toBeLessThan(160);
+      if (walkedRound) {
+        // a way round the step it reached the edge
+        expect(differs, name).toBe(edge);
+        expect(walk, name).not.toBe(way);
+        rounds++;
+      } else {
+        // it waited and went on over the crossing exactly as its twin
+        expect(differs, name).toBe(-1);
+        expect(told.persons, name).toEqual([]);
+      }
+    }
+    expect(rounds).toBe(2 + 2 + 1);
+  });
+
+  it('is walked round in the step the train holding it runs out of fuel or power, by a walker waiting on its edge', () => {
+    // A train held at a signal short of the crossing, or standing on it with its way set, keeps the
+    // walker waiting (#404). At any step of that wait it runs dry: the watch says so in that step,
+    // and the walker walks round in it.
+    const crossing = keyOf(CX, CY);
+    const keys = new Set([crossing]);
+    forAll(
+      (rng) => ({
+        dry: rng.pick(['noFuel', 'noPower'] as const),
+        on: rng.chance(0.5),
+        gdt: rng.pick([SIM_STEP, 0.25, 1]),
+        wait: rng.int(0, 60),
+        north: rng.chance(0.5),
+        stream: rng.int(1, 1e6),
+      }),
+      (c) => {
+        const cars = c.on ? [crossing, keyOf(CX - 1, CY)] : [keyOf(CX - 2, CY), keyOf(CX - 3, CY)];
+        const train = (state: TrainState): CrossingTrain =>
+          c.on
+            ? plain({ state, cars, ahead: eastward(CX, CY, 12, 4) })
+            : plain({
+                state,
+                speed: 0,
+                progress: 12,
+                cars,
+                ahead: eastward(CX - 2, CY, 12, 6),
+                acceleration: 0.4,
+                maxSpeed: 1,
+              });
+        const { map, builder } = field();
+        const people = new PeopleSim(map, builder, new Rng(c.stream));
+        const way = c.north ? walkOf(CX, CY + 4, CX, CY - 4) : walkOf(CX, CY - 4, CX, CY + 4);
+        const p = figure(way);
+        people.persons.push(p);
+        const stream = people.toJSON().rng;
+        const watch = new CrossingWatch(W);
+        let edge = -1;
+        let round = -1;
+        for (let i = 0; i < 4000 && round < 0; i++) {
+          const dry = edge >= 0 && i > edge + c.wait;
+          watch.update([train(dry ? c.dry : 'moving')], keys, c.gdt);
+          expect(watch.closed(CX, CY), `step ${i}`).toBe(true);
+          expect(watch.detour(CX, CY), `step ${i}`).toBe(dry);
+          const was = { ...p };
+          people.tick(c.gdt, 0, MIDDAY, watch.closed, watch);
+          expect(onTile(p, CX, CY), `step ${i}`).toBe(false);
+          expect(people.toJSON().rng).toBe(stream);
+          if (!dry) {
+            expect(p.path, `step ${i}`).toBe(way);
+            if (edge < 0 && onEdge(p, CX, CY)) edge = i;
+            continue;
+          }
+          // the first step the train stands dry: a walk round from where it waits
+          round = i;
+          expect(p.path).not.toBe(way);
+          expect(Math.hypot(p.x - was.x, p.y - was.y)).toBeLessThan(1e-9);
+          expect(besidesWalk(p)).toEqual(besidesWalk(was));
+          expect(p.path[0]).toEqual({ x: CX, y: CY + (c.north ? 1 : -1) });
+          expect(p.path.at(-1)).toEqual(way.at(-1));
+          for (const t of p.path.slice(1)) {
+            expect(t.x === CX && t.y === CY).toBe(false);
+            expect(cars.includes(keyOf(t.x, t.y)), `${t.x},${t.y}`).toBe(false);
+          }
+        }
+        expect(edge).toBeGreaterThanOrEqual(0);
+        expect(round).toBe(edge + c.wait + 1);
+      },
+    );
+  });
+
+  it('is walked round from the tile a walker stands at where that tile is kept off: a car on it, or a crossing it walked onto that dry trains alone hold since', () => {
+    // The walkers found waiting for ever (#447): one bound east over a crossing only a dry train
+    // holds, a car on the tile before it; and one bound north over the two crossings of a double
+    // track, held at the second's edge after it stepped onto the first, then both held by dry trains
+    // alone. Each steps back to the middle of the tile it stands at and walks round, in the step it
+    // reaches the edge or the step the trains run dry, over neither crossing ahead and drawing
+    // nothing.
+    const { map, builder } = field();
+    const none = () => false;
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const p = figure(walkOf(CX - 3, CY, CX, CY));
+      people.persons.push(p);
+      const stream = people.toJSON().rng;
+      const ahead = { x: CX - 1, y: CY };
+      const closed = among([ahead]);
+      const detour = { detour: closed, occupied: among([{ x: CX - 2, y: CY }]) };
+      const way = p.path;
+      for (let i = 0; i < 400 && p.path === way; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, closed, detour);
+        // the step it reaches the edge
+        expect(onEdge(p, ahead.x, ahead.y)).toBe(p.path !== way);
+      }
+      expect(p.path).toEqual([
+        { x: CX - 2, y: CY },
+        { x: CX - 2, y: CY },
+        { x: CX - 1, y: CY - 1 },
+        { x: CX, y: CY },
+      ]);
+      for (let i = 0; i < 2000 && people.persons.length; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, closed, detour);
+        expect(onTile(p, ahead.x, ahead.y)).toBe(false);
+      }
+      expect(people.persons).toEqual([]);
+      expect(people.toJSON().rng).toBe(stream);
+    }
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const p = figure(walkOf(CX, CY + 3, CX, CY - 2));
+      people.persons.push(p);
+      const stream = people.toJSON().rng;
+      const first = { x: CX, y: CY + 1 };
+      const both = among([first, { x: CX, y: CY }]);
+      // a train passing over the second crossing while the walker steps onto the first
+      for (let i = 0; i < 400 && !onEdge(p, CX, CY); i++)
+        people.tick(SIM_STEP, 0, MIDDAY, closedC, { detour: none, occupied: none });
+      expect(p).toMatchObject({ x: CX, y: CY + 0.5 });
+      const way = p.path;
+      for (let i = 0; i < 40; i++) people.tick(SIM_STEP, 0, MIDDAY, closedC);
+      expect(p.path).toBe(way);
+      // both held by dry trains alone: back into the first, round the second
+      const dry = { detour: both, occupied: none };
+      people.tick(SIM_STEP, 0, MIDDAY, both, dry);
+      expect(p.path).toEqual([
+        first,
+        first,
+        { x: CX - 1, y: CY },
+        { x: CX - 1, y: CY - 1 },
+        { x: CX, y: CY - 2 },
+      ]);
+      for (let i = 0; i < 2000 && people.persons.length; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, dry);
+        expect(onTile(p, CX, CY)).toBe(false);
+      }
+      expect(people.persons).toEqual([]);
+      expect(people.toJSON().rng).toBe(stream);
+    }
+  });
+
+  it('keeps a walker out of the tile it stands at while a train that may still move holds it, that tile being the one it walked off onto the edge', () => {
+    const { map, builder } = field();
+    const none = () => false;
+    // The double track, the first crossing held by a train that may still move: the walker waits
+    // on the edge of the second with its walk as it was, trying every DETOUR_RETRY, and walks round
+    // at the first try after dry trains alone hold the first.
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const p = figure(walkOf(CX, CY + 3, CX, CY - 2));
+      people.persons.push(p);
+      const first = { x: CX, y: CY + 1 };
+      const both = among([first, { x: CX, y: CY }]);
+      for (let i = 0; i < 400 && !onEdge(p, CX, CY); i++)
+        people.tick(SIM_STEP, 0, MIDDAY, closedC, { detour: none, occupied: none });
+      const way = p.path;
+      const held = JSON.stringify(p);
+      const firm = { detour: closedC, occupied: none };
+      // tries fall every period steps from the first: two and a half periods of them
+      const period = Math.round(DETOUR_RETRY / SIM_STEP);
+      const waits = Math.round(2.5 * period);
+      for (let i = 0; i < waits; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, firm);
+        expect(JSON.stringify(p), `step ${i}`).toBe(held);
+      }
+      let round = -1;
+      for (let i = 0; i < 2 * period && round < 0; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, { detour: both, occupied: none });
+        if (p.path !== way) round = i;
+      }
+      expect(round).toBe(3 * period - waits);
+      expect(p.path.slice(0, 3)).toEqual([first, first, { x: CX - 1, y: CY }]);
+    }
+    // A walker that walked round straight on from the edge of a crossing, back across the tile it
+    // stands at, finds that tile a crossing closed in the next step: it stays on the edge while a
+    // train that may still move holds it, and steps into it once dry trains alone do, never onto
+    // the crossing it walks round.
+    {
+      const people = new PeopleSim(map, builder, new Rng(3));
+      const ahead = { x: CX - 1, y: CY };
+      const own = { x: CX - 2, y: CY };
+      const p = figure([
+        ...walkOf(CX - 3, CY, CX - 1, CY),
+        ...walkOf(CX - 1, CY - 1, CX - 1, CY - 2),
+        ...walkOf(CX - 2, CY - 3, CX - 2, CY - 4),
+      ]);
+      people.persons.push(p);
+      const closed = among([ahead]);
+      const way = p.path;
+      for (let i = 0; i < 400 && p.path === way; i++)
+        people.tick(SIM_STEP, 0, MIDDAY, closed, { detour: closed, occupied: none });
+      expect(onEdge(p, ahead.x, ahead.y)).toBe(true);
+      // straight on from the edge, back across its own tile
+      const round = p.path;
+      expect(round[0]).toEqual(own);
+      expect(round[1]).not.toEqual(own);
+      expect(onEdge(p, own.x, own.y)).toBe(true);
+      const at = { x: p.x, y: p.y };
+      const both = among([ahead, own]);
+      for (let i = 0; i < 40; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, { detour: closed, occupied: none });
+        expect(p).toMatchObject({ ...at, path: round, step: 0 });
+      }
+      for (let i = 0; i < 2000 && people.persons.length; i++) {
+        people.tick(SIM_STEP, 0, MIDDAY, both, { detour: both, occupied: none });
+        expect(onTile(p, ahead.x, ahead.y)).toBe(false);
+        if (people.persons.length) expect(p.path).toBe(round);
+      }
+      expect(people.persons).toEqual([]);
+    }
+  });
+});
+
+/**
+ * crossingWorld with its shuttle, run in play mode with the weather off until it runs east with its
+ * head on column `head`. Given `dry`, its tanks are then emptied: it stands out of fuel on its way
+ * over the crossing, and stays so. Otherwise they are kept full and it shuttles on over it. Then
+ * `minutes` game minutes of steps, each walker read against the crossing after each step: none
+ * steps onto it while it is closed, and no walk round goes over it or a tile a car stands on.
+ * Returns how many walkers walked
+ * round it (their walk changed on its edge in the step), how many steps a walker spent waiting on
+ * its edge, how many of those that walked round went over the line, and every walk round taken, in
+ * order, with the walkers' random stream at the end.
+ */
+function roundRun(seed: number, head: number, dry: boolean, minutes: number) {
+  const { w, train } = crossingWorld('adler', seed);
+  const step = new SimStep(w);
+  const ctx = playContext(w);
+  const t = train!;
+  const tanks = () => {
+    t.coal = dry ? 0 : t.coalCap;
+    t.water = dry ? 0 : t.waterCap;
+    t.oil = dry ? 0 : t.oilCap;
+  };
+  for (let i = 0; i < 6000 && !(t.speed > 0.5 && t.headTile?.x === head); i++) {
+    w.clock.run((gdt) => step.run(gdt, ctx));
+    t.coal = t.coalCap;
+    t.water = t.waterCap;
+    t.oil = t.oilCap;
+  }
+  expect(t.headTile?.x).toBe(head);
+  // the step the watch first reads it out of fuel, before the walkers move
+  tanks();
+  w.clock.run((gdt) => step.run(gdt, ctx));
+  if (dry) expect(t.state).toBe('noFuel');
+  const out = { rounds: 0, waits: 0, over: 0, walks: [] as string[], rng: 0 };
+  const rounded = new Set<number>();
+  const side = new Map<number, number>();
+  let before = was(w.people);
+  for (let i = 0; i < Math.round((minutes * 60) / SIM_STEP); i++) {
+    // the crossing and the cars as the walkers of this step find them
+    const cars = t.occupancyKeys(SIDE);
+    w.clock.run((gdt) => step.run(gdt, ctx));
+    tanks();
+    const watch = step.crossings!;
+    const closed = watch.closed(CROSS_X, ROW);
+    if (dry) {
+      expect(t.state).toBe('noFuel');
+      expect(closed).toBe(true);
+      expect(watch.detour(CROSS_X, ROW)).toBe(true);
+    } else expect(watch.detour(CROSS_X, ROW)).toBe(false);
+    for (const p of w.people.persons) {
+      const b = before.get(p.id);
+      if (closed && onTile(p, CROSS_X, ROW) && !(b && onTile(b, CROSS_X, ROW)))
+        expect.fail(`walker ${p.id} stepped onto the closed crossing at ${w.clock.time}`);
+      const edge = onEdge(p, CROSS_X, ROW);
+      if (edge && waited(p, b)) out.waits++;
+      if (edge && b && WALKING.includes(b.state) && p.state === b.state && p.path !== b.path) {
+        // a walk round, from the tile it stands at, on neither the crossing nor a car's tile but
+        // the one it stands at, which a way back to its middle first names twice
+        out.rounds++;
+        rounded.add(p.id);
+        out.walks.push(`${i} ${p.id} ${JSON.stringify(p.path)}`);
+        const [start, second] = p.path;
+        const twice = !!second && second.x === start.x && second.y === start.y;
+        for (const s of p.path.slice(twice ? 2 : 1)) {
+          expect(s.x === CROSS_X && s.y === ROW, `walker ${p.id}`).toBe(false);
+          expect(cars.includes(s.y * SIDE + s.x), `walker ${p.id} at ${s.x},${s.y}`).toBe(false);
+        }
+      }
+      // north or south of the line, off it; a walker that walked round and is now on the other side
+      // went over the line somewhere other than the crossing
+      const now = p.y < ROW - 0.5 ? -1 : p.y > ROW + 0.5 ? 1 : 0;
+      if (!now) continue;
+      if (rounded.has(p.id) && side.has(p.id) && side.get(p.id) !== now) out.over++;
+      side.set(p.id, now);
+    }
+    before = was(w.people);
+  }
+  out.rng = w.people.toJSON().rng;
+  return out;
+}
+
+describe('walkers at a crossing a real train holds, in the step', () => {
+  // slow: up to 6000 steps to bring the train there, then 4800 of a whole world with some forty
+  // walkers, twice over
+  it.each([
+    ['standing out of fuel short of it, its way over it', CROSS_X - 3],
+    ['standing out of fuel across it', CROSS_X + 1],
+  ] as const)(
+    '%s: walkers walk round it from the step they reach its edge, never waiting there, and the same seed gives the same walks',
+    (_, head) => {
+      const out = roundRun(4242, head, true, 4);
+      expect(out.waits).toBe(0);
+      // not vacuous: many walked round, and walkers went over the line elsewhere
+      expect(out.rounds).toBeGreaterThanOrEqual(10);
+      expect(out.over).toBeGreaterThanOrEqual(5);
+      // determinism: the same world gives the same walks round, and the same stream after them
+      const again = roundRun(4242, head, true, 4);
+      expect(again.walks).toEqual(out.walks);
+      expect(again.rng).toBe(out.rng);
+    },
+    180_000,
+  );
+
+  // slow: as above, once
+  it(
+    'a train passing over it keeps walkers waiting on its edge, none walking round',
+    { timeout: 120_000 },
+    () => {
+      const out = roundRun(4242, CROSS_X - 4, false, 4);
+      expect(out.rounds).toBe(0);
+      // not vacuous: walkers waited on its edge
+      expect(out.waits).toBeGreaterThanOrEqual(20);
+    },
+  );
+});
+
+// ------------------------------------------------------------------ crossings that close, open and run dry at random (#447)
+
+/**
+ * Where the way from `a` straight to `b` runs inside tile (x, y): how far along it it enters the
+ * tile's square and how far it leaves it, or null where it never runs inside it.
+ */
+function clip(a: Tile, b: Tile, x: number, y: number): [number, number] | null {
+  const len = Math.hypot(b.x - a.x, b.y - a.y);
+  if (!(len > 0)) return null;
+  let enter = 0;
+  let leave = len;
+  for (const [from, u, c] of [
+    [a.x, (b.x - a.x) / len, x],
+    [a.y, (b.y - a.y) / len, y],
+  ]) {
+    if (u === 0) {
+      if (Math.abs(from - c) >= 0.5) return null;
+      continue;
+    }
+    const s0 = (c - 0.5 - from) / u;
+    const s1 = (c + 0.5 - from) / u;
+    enter = Math.max(enter, Math.min(s0, s1));
+    leave = Math.min(leave, Math.max(s0, s1));
+  }
+  return leave > enter ? [enter, leave] : null;
+}
+/** Of `tiles`, those the way from `p` to `q` runs into for more than rounding, but one `p` is on. */
+const cutsInto = (p: Tile, q: Tile, tiles: readonly Tile[]) =>
+  tiles.filter((t) => {
+    if (onTile(p, t.x, t.y)) return false;
+    const c = clip(p, q, t.x, t.y);
+    return !!c && c[1] - c[0] > 1e-6;
+  });
+/** Of those, the ones it runs into at once: the closed crossings a walker at `p` is held at. */
+const entersAt = (p: Tile, q: Tile, tiles: readonly Tile[]) =>
+  cutsInto(p, q, tiles).filter((t) => clip(p, q, t.x, t.y)![0] <= 1e-6);
+/** The two tiles are the same tile. */
+const same = (a: Tile, b: Tile) => a.x === b.x && a.y === b.y;
+/** How far the way from `a` straight to `b` runs inside tile `t`. */
+const runIn = (a: Tile, b: Tile, t: Tile) => {
+  const c = clip(a, b, t.x, t.y);
+  return c ? c[1] - c[0] : 0;
+};
+/**
+ * The tile a walker at `p` on its leg from tile `from` to `q` stands at: `from` while it is on that
+ * tile or its edge, as it walked off it there, and otherwise the one its way crossed just before
+ * `p`. A walk round's leg sets out from the tile the walker stood at, as any other from its middle.
+ */
+function standingAt(p: Tile, from: Tile, q: Tile): Tile {
+  if (cheb(p, from.x, from.y) <= 0.5 + 1e-6) return { x: from.x, y: from.y };
+  const len = Math.hypot(q.x - p.x, q.y - p.y);
+  return {
+    x: Math.round(p.x - ((q.x - p.x) / len) * 1e-7),
+    y: Math.round(p.y - ((q.y - p.y) / len) * 1e-7),
+  };
+}
+
+/** Three hundred seeds: walks round, tries and waits are a fraction of the steps of a case. */
+const DRY_SEEDS: readonly number[] = Array.from({ length: 300 }, (_, i) => i + 1);
+type Closing = 'open' | 'firm' | 'dry';
+/** Game seconds over which each crossing stays open, closed, or closed by dry trains alone. */
+interface Phase {
+  seconds: number;
+  /** one for each of the case's crossings, in order */
+  states: Closing[];
+  cars: Tile[];
+}
+interface DryCase {
+  from: Tile;
+  to: Tile;
+  crossings: Tile[];
+  water: Tile[];
+  phases: Phase[];
+  state: PersonState;
+  stream: number;
+  gdt: number;
+}
+
+describe('a walker among crossings that close, open and run dry at random', () => {
+  // slow: 300 cases of up to some thousands of steps, each step read against the oracle
+  it(
+    'never sets foot on a closed one but back into the one it walked off, and walks round exactly when and as the detour says: at once at the edge of one only dry trains hold, again every DETOUR_RETRY, by the fewest steps, to the same end',
+    { timeout: 120_000 },
+    () => {
+      // A walker on a walk past up to six crossings, each open, closed, or closed by trains out of
+      // fuel or power alone, and cars on tiles round them, all changing every few seconds; then all
+      // open. Step lengths are never a whole part of the half tile from a tile's middle to its
+      // edge, so the step a walker reaches an edge in is never a matter of rounding.
+      const seen = {
+        rounds: 0,
+        back: 0,
+        offCrossing: 0,
+        turnedDry: 0,
+        retried: 0,
+        noWay: 0,
+        reentered: 0,
+        reenteredDry: 0,
+        firmStart: 0,
+        backStays: 0,
+        fullStays: 0,
+      };
+      forAll(
+        (rng): DryCase => {
+          const near = (r: number) => ({ x: CX + rng.int(-r, r), y: CY + rng.int(-r, r) });
+          const dir = rng.pick(DIRS8);
+          const through = rng.chance(0.7);
+          const before = rng.int(1, 4);
+          const after = rng.int(1, 4);
+          const from = through ? { x: CX - dir[0] * before, y: CY - dir[1] * before } : near(4);
+          let to = through ? { x: CX + dir[0] * after, y: CY + dir[1] * after } : near(4);
+          if (to.x === from.x && to.y === from.y) to = { x: to.x + 1, y: to.y };
+          const steady = rng.chance(0.4);
+          const crossings = [
+            { x: CX, y: CY },
+            ...Array.from({ length: rng.int(0, 5) }, () => near(2)),
+          ];
+          return {
+            from,
+            to,
+            crossings,
+            water: Array.from({ length: rng.int(0, 8) }, () => near(4)),
+            phases: Array.from({ length: rng.int(1, 8) }, () => ({
+              seconds: rng.pick([0.5, 2, 5, 12, 20]),
+              // the first crossing held dry throughout in some cases, as by a train that stays so
+              states: crossings.map((_, k) =>
+                !k && steady ? 'dry' : rng.pick<Closing>(['open', 'firm', 'dry', 'dry', 'dry']),
+              ),
+              // trains: lines of cars through the tiles round the crossing
+              cars: Array.from({ length: rng.int(0, 2) }, () => {
+                const at = near(3);
+                const [dx, dy] = rng.pick(DIRS8);
+                return Array.from({ length: rng.int(1, 6) }, (_, k) => ({
+                  x: at.x + dx * k,
+                  y: at.y + dy * k,
+                }));
+              }).flat(),
+            })),
+            state: rng.pick(WALKING),
+            stream: rng.int(1, 1e6),
+            gdt: rng.pick([0.07, 0.3, 0.9]),
+          };
+        },
+        (c) => {
+          const { map, builder } = field();
+          const house = builder.spawnDecor(CX + 8, CY + 8, 'townhouse', 0);
+          expect(house).not.toBeNull();
+          const walk = walkOf(c.from.x, c.from.y, c.to.x, c.to.y);
+          const end = walk[walk.length - 1];
+          // each crossing once, the first of a tile's entries telling how it closes
+          const tiles = c.crossings.filter(
+            (t, i) => c.crossings.findIndex((s) => s.x === t.x && s.y === t.y) === i,
+          );
+          const index = (t: Tile) => c.crossings.findIndex((s) => s.x === t.x && s.y === t.y);
+          const isCrossing = among(tiles);
+          for (const t of c.water)
+            if (!among(walk)(t.x, t.y) && !isCrossing(t.x, t.y))
+              map.terrain[t.y * map.w + t.x] = Terrain.Water;
+          const transient = c.state === 'walk';
+          const population = transient ? 0 : 1;
+          const people = new PeopleSim(map, builder, new Rng(c.stream));
+          const p: Person = {
+            ...figure(walk),
+            state: c.state,
+            transient,
+            home: transient ? '' : `d${house!.x},${house!.y}`,
+          };
+          people.persons.push(p);
+          const stream = people.toJSON().rng;
+          // no road here: one pace on every leg
+          const full = walkSpeed(p) * c.gdt;
+          // steps from one try for a way round to the next: the first DETOUR_RETRY or more after it
+          const period = Math.ceil(DETOUR_RETRY / c.gdt - 1e-9);
+          const lengths = c.phases.map((ph) => Math.max(1, Math.round(ph.seconds / c.gdt)));
+          const limit = lengths.reduce((a, b) => a + b, 0) + Math.ceil(400 / c.gdt);
+          let phase = 0;
+          let inPhase = 0;
+          // the step before: held at the edge of crossings, and only dry trains closing them all
+          let held = false;
+          let heldDry = false;
+          // steps since its last try for a way round, while it waits at such an edge
+          let sinceTry = 0;
+          // each crossing it is on now: how far it went inside it, in how many steps ending there,
+          // and whether it was closed in the step it set foot on it
+          const stays = new Map<Tile, { run: number; steps: number; closed: boolean }>();
+          let done = false;
+          for (let i = 0; i < limit && !done; i++) {
+            const ph = phase < c.phases.length ? c.phases[phase] : null;
+            const closing = (t: Tile): Closing =>
+              ph && isCrossing(t.x, t.y) ? ph.states[index(t)] : 'open';
+            const closedTiles = tiles.filter((t) => closing(t) !== 'open');
+            // a car stands on a crossing only while that crossing is closed
+            const cars = ph
+              ? ph.cars.filter((t) => !isCrossing(t.x, t.y) || closing(t) !== 'open')
+              : [];
+            const closed = ph ? among(closedTiles) : null;
+            const detour: CrossingDetour | null = ph
+              ? { detour: (x, y) => closing({ x, y }) === 'dry', occupied: among(cars) }
+              : null;
+            const keepOff = [...closedTiles, ...cars];
+            const avoid = among(keepOff);
+            const was = { ...p };
+            const wasNext = was.path[was.step + 1];
+            // the tile it stands at as the step begins, and so the closed crossings that hold it:
+            // all but that one while only dry trains hold it, as it never left it
+            const stood = wasNext ? standingAt(was, was.path[was.step], wasNext) : null;
+            const isStood = (t: Tile) => !!stood && t.x === stood.x && t.y === stood.y;
+            const holding = closedTiles.filter((t) => !isStood(t) || closing(t) !== 'dry');
+            people.tick(c.gdt, population, MIDDAY, closed, detour);
+            // never onto a closed crossing it is not on, whatever it walks, but back into the one
+            // it stands at while only dry trains hold it
+            for (const t of cutsInto(was, p, holding))
+              expect.fail(`step ${i}: onto the closed crossing ${t.x},${t.y}`);
+            // on any crossing, open or closed, for no more than √2 tiles of its way from the step it
+            // set foot on it to the step it is off it, and never standing still there: a walk round
+            // that sets out from an edge as well (CROSSING_WALK; the step-back limit of section 10)
+            for (const t of tiles) {
+              const stay = stays.get(t) ?? { run: 0, steps: 0, closed: closing(t) !== 'open' };
+              stay.run += runIn(was, p, t);
+              const where = `step ${i}: ${stay.run} tiles in ${stay.steps + 1} steps on ${t.x},${t.y}`;
+              expect(stay.run, where).toBeLessThanOrEqual(Math.SQRT2 + 1e-9);
+              if (!onTile(p, t.x, t.y)) {
+                if (stay.closed && stay.run > 1e-6) seen.backStays++;
+                if (stay.run > Math.SQRT2 - 1e-9) seen.fullStays++;
+                stays.delete(t);
+                continue;
+              }
+              stay.steps++;
+              // a step going in part way, one ending at its middle, and the rest whole steps
+              expect(stay.steps * c.gdt, where).toBeLessThanOrEqual(
+                Math.SQRT2 / walkSpeed(p) + 2 * c.gdt + 1e-9,
+              );
+              stays.set(t, stay);
+            }
+            done = !people.persons.includes(p) || p.state !== c.state;
+            if (done) break;
+            expect(people.toJSON().rng, `step ${i}`).toBe(stream);
+            // where it is held, read off where it stands and its way on as it had it
+            const next = wasNext!;
+            const changed = p.path !== was.path;
+            const reached = !changed && p.step !== was.step;
+            const moved = Math.hypot(p.x - was.x, p.y - was.y);
+            const stopped =
+              !reached && moved < Math.min(full, Math.hypot(next.x - was.x, next.y - was.y)) - 1e-9;
+            const at = stopped && closed ? entersAt(p, next, holding) : [];
+            const nowHeld = at.length > 0;
+            const nowHeldDry = nowHeld && at.every((t) => closing(t) === 'dry');
+            // a try: the step it is first held so, then each period steps while it stays so
+            const tries = nowHeldDry && (!heldDry || sinceTry + 1 >= period);
+            const back = nowHeldDry ? standingAt(p, was.path[was.step], next) : null;
+            const steps = tries ? fewestSteps(map, back!, end, avoid) : null;
+            // It never left the tile it stands at, so it steps back into it whatever keeps the walk
+            // round off it (a car on it, or a crossing it walked onto that closed since), but not
+            // into a crossing a train that may still move holds: then it walks round only straight
+            // on from the edge, where the walk findWalk gives lets it.
+            const reenter = !!back && closing(back) !== 'firm';
+            const firstOff = reenter
+              ? keepOff.filter((t) => t.x !== back.x || t.y !== back.y)
+              : keepOff;
+            let takes = tries && steps !== null;
+            if (takes && !reenter) {
+              const walk = findWalk(map, back!, end, builder.roads, avoid)!;
+              takes = walk.length > 1 && cutsInto(p, walk[1], keepOff).length === 0;
+              if (!takes) seen.firmStart++;
+            }
+            expect(
+              changed,
+              `step ${i}: walked round ${changed}, a try ${tries}, ${steps} steps`,
+            ).toBe(takes);
+            if (tries && steps === null) seen.noWay++;
+            if (changed) {
+              // as it was but for its walk, standing where its old way stopped it
+              expect(besidesWalk(p)).toEqual(besidesWalk(was));
+              expect(p.step).toBe(0);
+              const round = p.path;
+              expect(round[0]).toEqual(back);
+              expect(round.at(-1)).toEqual(end);
+              const twice = round.length > 1 && round[1].x === back!.x && round[1].y === back!.y;
+              const own = twice ? round.slice(1) : round;
+              // the fewest steps of any walk keeping off the closed crossings and the cars' tiles
+              expect(own.length - 1).toBe(steps);
+              own.forEach((t, k) => {
+                if (!k) return;
+                const s = own[k - 1];
+                expect(Math.max(Math.abs(t.x - s.x), Math.abs(t.y - s.y))).toBe(1);
+                expect(avoid(t.x, t.y), `${t.x},${t.y}`).toBe(false);
+                if (k < own.length - 1) expect(walkable(map, t.x, t.y), `${t.x},${t.y}`).toBe(true);
+              });
+              // straight on from where it stands, or back to its tile's middle first exactly where
+              // the way straight on would cut into a tile it keeps off
+              expect(cutsInto(p, round[1], firstOff)).toEqual([]);
+              if (own.length > 1) expect(twice).toBe(cutsInto(p, own[1], keepOff).length > 0);
+              seen.rounds++;
+              if (twice) seen.back++;
+              if (twice && avoid(back!.x, back!.y)) seen.reentered++;
+              if (twice && closing(back!) === 'dry') seen.reenteredDry++;
+              if (isCrossing(back!.x, back!.y)) seen.offCrossing++;
+              if (held && !heldDry) seen.turnedDry++;
+              if (heldDry) seen.retried++;
+            }
+            sinceTry = tries ? 0 : sinceTry + 1;
+            held = nowHeld && !changed;
+            heldDry = nowHeldDry && !changed;
+            if (ph && ++inPhase >= lengths[phase]) {
+              phase++;
+              inPhase = 0;
+            }
+          }
+          expect(done, 'still walking when the steps ran out').toBe(true);
+        },
+        {
+          seeds: DRY_SEEDS,
+          shrink: function* (c) {
+            for (const phases of shrinkArray(c.phases)) if (phases.length) yield { ...c, phases };
+            for (const water of shrinkArray(c.water)) yield { ...c, water };
+            for (let i = c.crossings.length - 1; i > 0; i--)
+              yield {
+                ...c,
+                crossings: c.crossings.filter((_, k) => k !== i),
+                phases: c.phases.map((ph) => ({
+                  ...ph,
+                  states: ph.states.filter((_, k) => k !== i),
+                })),
+              };
+            for (let i = 0; i < c.phases.length; i++)
+              for (const cars of shrinkArray(c.phases[i].cars))
+                yield {
+                  ...c,
+                  phases: c.phases.map((ph, k) => (k === i ? { ...ph, cars } : ph)),
+                };
+          },
+        },
+      );
+      // not vacuous: walks round straight on and back through the middle of the tile first, from a
+      // crossing's tile, in the step the trains ran dry and at a later try; back into a tile it
+      // keeps off, a crossing only dry trains hold among them; tries that found none, and tries
+      // that found no way straight on from the edge of a crossing a train that may still move holds
+      expect(seen.rounds - seen.back).toBeGreaterThanOrEqual(40);
+      expect(seen.back).toBeGreaterThanOrEqual(40);
+      expect(seen.offCrossing).toBeGreaterThanOrEqual(3);
+      expect(seen.turnedDry).toBeGreaterThanOrEqual(6);
+      expect(seen.retried).toBeGreaterThanOrEqual(5);
+      expect(seen.reentered).toBeGreaterThanOrEqual(4);
+      expect(seen.reenteredDry).toBeGreaterThanOrEqual(2);
+      expect(seen.noWay).toBeGreaterThanOrEqual(40);
+      expect(seen.firmStart).toBeGreaterThanOrEqual(2);
+      // and stays on a crossing it set foot on while closed, and stays as long as √2 tiles
+      expect(seen.backStays).toBeGreaterThanOrEqual(6);
+      expect(seen.fullStays).toBeGreaterThanOrEqual(25);
+    },
+  );
+});
+
+// ------------------------------------------------------------------ back on the crossing it walked off (#447)
+
+describe('a walker back on the crossing it walked off', () => {
+  it('steps into it only while dry trains alone hold it, onto no other closed crossing, and no further than its middle and half a diagonal off it', () => {
+    // A walker sets out over a crossing, from its middle as a walk does or from anywhere on it as
+    // after a walk round, towards any of its eight neighbours, which a train that may still move
+    // holds closed, and stops on that neighbour's edge or corner. Then the crossing it walked off
+    // closes too, by dry trains alone or by a train that may still move, the one ahead by dry
+    // trains alone, with other crossings closed round them, cars and water, all held so until its
+    // walk ends. Measured along the way it actually goes, not along its walk.
+    const seen = { middle: 0, corner: 0, aside: 0, firm: 0 };
+    // the furthest any walker went on it, and the fewest steps of its own by which a walker with a
+    // home was on it for less than CROSSING_WALK
+    let furthest = 0;
+    let short = Infinity;
+    forAll(
+      (rng) => {
+        const near = () => ({ x: CX + rng.int(-2, 2), y: CY + rng.int(-2, 2) });
+        return {
+          dir: rng.pick(DIRS8),
+          from: rng.chance(0.5)
+            ? { x: 0, y: 0 }
+            : { x: rng.range(-0.45, 0.45), y: rng.range(-0.45, 0.45) },
+          end: { x: CX + rng.int(-5, 5), y: CY + rng.int(-5, 5) },
+          firm: rng.chance(0.25),
+          others: Array.from({ length: rng.int(0, 4) }, () => ({
+            ...near(),
+            dry: rng.chance(0.6),
+          })),
+          cars: Array.from({ length: rng.int(0, 6) }, near),
+          water: Array.from({ length: rng.int(0, 6) }, near),
+          regular: rng.chance(0.5),
+          gdt: rng.pick([SIM_STEP, 0.25, 0.7]),
+        };
+      },
+      (c) => {
+        const own = { x: CX, y: CY };
+        const ahead = { x: CX + c.dir[0], y: CY + c.dir[1] };
+        const start = { x: CX + c.from.x, y: CY + c.from.y };
+        // its way runs from the crossing straight into the tile ahead, through no third tile
+        const third = DIRS8.map(([dx, dy]) => ({ x: CX + dx, y: CY + dy })).filter(
+          (t) => !same(t, ahead),
+        );
+        if (cutsInto(start, ahead, third).length) return;
+        const end =
+          same(c.end, own) || same(c.end, ahead)
+            ? { x: ahead.x + c.dir[0], y: ahead.y + c.dir[1] }
+            : c.end;
+        const others = c.others.filter((t) => !same(t, own) && !same(t, ahead));
+        const { map, builder } = field();
+        for (const t of c.water)
+          if (!same(t, own) && !same(t, ahead) && !among(others)(t.x, t.y))
+            map.terrain[t.y * map.w + t.x] = Terrain.Water;
+        const house = builder.spawnDecor(CX + 8, CY + 8, 'townhouse', 0);
+        expect(house).not.toBeNull();
+        const people = new PeopleSim(map, builder, new Rng(1));
+        const p: Person = {
+          ...figure([own, ...walkOf(ahead.x, ahead.y, end.x, end.y)], start),
+          transient: !c.regular,
+          home: c.regular ? `d${house!.x},${house!.y}` : '',
+        };
+        people.persons.push(p);
+        const population = c.regular ? 1 : 0;
+        const none = () => false;
+        // up to the edge of the tile ahead, held there by a train that may still move
+        for (let i = 0; i < 2000 && !onEdge(p, ahead.x, ahead.y); i++)
+          people.tick(c.gdt, population, MIDDAY, among([ahead]), {
+            detour: none,
+            occupied: none,
+          });
+        expect(onEdge(p, ahead.x, ahead.y)).toBe(true);
+        expect(onEdge(p, own.x, own.y)).toBe(true);
+        const held = { x: p.x, y: p.y };
+        const off = [Math.abs(held.x - CX), Math.abs(held.y - CY)].sort((a, b) => a - b);
+        const at = off[0] > 0.5 - 1e-6 ? 'corner' : off[0] < 1e-9 ? 'middle' : 'aside';
+
+        const closedTiles = [own, ahead, ...others];
+        const closed = among(closedTiles);
+        const detour: CrossingDetour = {
+          detour: among([ahead, ...(c.firm ? [] : [own]), ...others.filter((t) => t.dry)]),
+          occupied: among(c.cars),
+        };
+        const avoid = (x: number, y: number) => closed(x, y) || detour.occupied(x, y);
+        const walkRound = fewestSteps(map, own, end, avoid);
+        // how far it went on the crossing it walked off, and the steps it ended on it
+        let inside = 0;
+        let stepsOn = 0;
+        let done = false;
+        const limit = Math.ceil(300 / c.gdt);
+        for (let i = 0; i < limit && !done; i++) {
+          const was = { x: p.x, y: p.y };
+          people.tick(c.gdt, population, MIDDAY, closed, detour);
+          done = !people.persons.includes(p) || p.state !== 'walk';
+          const now = { x: p.x, y: p.y };
+          for (const t of closedTiles)
+            if (!onTile(was, t.x, t.y) && cutsInto(was, now, [t]).length)
+              expect(
+                same(t, own) && !c.firm,
+                `step ${i}: from ${was.x},${was.y} onto the closed crossing ${t.x},${t.y}`,
+              ).toBe(true);
+          inside += runIn(was, now, own);
+          if (onTile(now, own.x, own.y)) stepsOn++;
+        }
+        // to its middle, then off it by its next tile's edge or corner, at its own pace, with the
+        // rest of a step at its middle where its way back ends there; at most √2 tiles, from a
+        // corner, which at the slowest pace is CROSSING_WALK
+        const most = Math.hypot(held.x - CX, held.y - CY) + Math.SQRT1_2;
+        expect(inside, `held at ${held.x},${held.y}`).toBeLessThanOrEqual(most + 1e-9);
+        expect(stepsOn * c.gdt).toBeLessThanOrEqual(most / walkSpeed(p) + c.gdt + 1e-9);
+        if (c.regular) expect(stepsOn * c.gdt).toBeLessThanOrEqual(CROSSING_WALK + c.gdt + 1e-9);
+        if (c.firm) {
+          // a train that may still move holds it: it keeps out of it, but for rounding
+          expect(inside).toBeLessThan(1e-6);
+          seen.firm++;
+        } else {
+          // dry trains alone: it walks round from it wherever a walk round is, and so ends its walk
+          expect(done, `a walk round of ${walkRound} steps`).toBe(walkRound !== null);
+          if (inside > 0) seen[at]++;
+          furthest = Math.max(furthest, inside);
+          if (c.regular) short = Math.min(short, (CROSSING_WALK - stepsOn * c.gdt) / c.gdt);
+        }
+      },
+      {
+        shrink: function* (c) {
+          for (const others of shrinkArray(c.others)) yield { ...c, others };
+          for (const cars of shrinkArray(c.cars)) yield { ...c, cars };
+          for (const water of shrinkArray(c.water)) yield { ...c, water };
+          if (c.from.x || c.from.y) yield { ...c, from: { x: 0, y: 0 } };
+          if (c.regular) yield { ...c, regular: false };
+          if (c.gdt !== SIM_STEP) yield { ...c, gdt: SIM_STEP };
+        },
+      },
+    );
+    // not vacuous: back in from an edge's middle, from a corner and from an edge off its middle,
+    // and kept out where a train that may still move holds it
+    expect(seen.middle).toBeGreaterThanOrEqual(5);
+    expect(seen.corner).toBeGreaterThanOrEqual(5);
+    expect(seen.aside).toBeGreaterThanOrEqual(5);
+    expect(seen.firm).toBeGreaterThanOrEqual(10);
+    // the limit section 10 states is reached, not only a bound: √2 tiles, above the 1.21 first
+    // stated for it, and for a walker with a home off a road CROSSING_WALK to within a step
+    expect(furthest).toBeGreaterThan(1.21);
+    expect(furthest).toBeCloseTo(Math.SQRT2, 9);
+    expect(short).toBeLessThanOrEqual(1);
+  });
+
+  it('is on it for √2 tiles from a corner, back to its middle and off by the opposite corner: CROSSING_WALK at the slowest pace', () => {
+    // A walker with a home, off any road, bound from the crossing's middle north-east and then
+    // back south-west, held at the corner of the crossing ahead by a train that may still move.
+    // Then trains out of fuel alone hold both: the way round sets out south-west from the one it
+    // walked off, and the way straight there from the corner runs over that crossing, so it steps
+    // back to its middle first.
+    const own = { x: CX, y: CY };
+    const ahead = { x: CX + 1, y: CY - 1 };
+    const end = { x: CX - 3, y: CY + 3 };
+    const { map, builder } = field();
+    const house = builder.spawnDecor(CX + 8, CY + 8, 'townhouse', 0);
+    expect(house).not.toBeNull();
+    const people = new PeopleSim(map, builder, new Rng(1));
+    const p: Person = {
+      ...figure([own, ahead, ...walkOf(CX, CY, end.x, end.y)]),
+      transient: false,
+      home: `d${house!.x},${house!.y}`,
+    };
+    people.persons.push(p);
+    const none = () => false;
+    for (let i = 0; i < 400 && !onEdge(p, ahead.x, ahead.y); i++)
+      people.tick(SIM_STEP, 1, MIDDAY, among([ahead]), { detour: none, occupied: none });
+    expect(p.x).toBeCloseTo(CX + 0.5, 9);
+    expect(p.y).toBeCloseTo(CY - 0.5, 9);
+    const both = among([own, ahead]);
+    const dry = { detour: both, occupied: none };
+    people.tick(SIM_STEP, 1, MIDDAY, both, dry);
+    expect(p.path).toEqual([own, own, ...walkOf(CX - 1, CY + 1, end.x, end.y)]);
+    let inside = 0;
+    let stepsOn = 0;
+    for (let i = 0; i < 2000 && p.state === 'walk'; i++) {
+      const was = { x: p.x, y: p.y };
+      people.tick(SIM_STEP, 1, MIDDAY, both, dry);
+      expect(onTile(p, ahead.x, ahead.y)).toBe(false);
+      inside += runIn(was, p, own);
+      if (onTile(p, own.x, own.y)) stepsOn++;
+    }
+    expect(p.state).toBe('inside');
+    // corner to corner through its middle, at 0.2 tiles a second: 7.07 s, in steps of SIM_STEP
+    expect(inside).toBeCloseTo(Math.SQRT2, 9);
+    expect(Math.abs(stepsOn * SIM_STEP - CROSSING_WALK)).toBeLessThanOrEqual(SIM_STEP);
+    expect(CROSSING_WALK).toBeCloseTo(7.07, 2);
+  });
+});
+
+describe('a walker whose walk home is made anew where it waits at a crossing', () => {
+  // slow: 100 walks of a few hundred steps each, half a second alone
+  it(
+    'walks round from the tile it walked off, not from where its new walk sets out, and never onto the crossing',
+    { timeout: 20_000 },
+    () => {
+      // A walker bound home south, east or south-east over a crossing waits on its edge, where
+      // Math.round of where it stands is the crossing itself, but for rounding in its walk there.
+      // Its home goes, and its walk to the other home, beyond the crossing too, is made anew from
+      // there (`tick`), and so sets out from the crossing. The crossing stays held by a train that
+      // may still move for some steps, then by a train out of fuel alone, its cars along the line
+      // across the walker's way.
+      let fromCrossing = 0;
+      forAll(
+        (rng) => ({
+          dir: rng.pick([
+            [0, 1],
+            [1, 0],
+            [1, 1],
+          ] as const),
+          wait: rng.int(0, 30),
+          side: rng.int(-2, 2),
+          gdt: rng.pick([SIM_STEP, 0.25, 0.7]),
+          stream: rng.int(1, 1e6),
+        }),
+        (c) => {
+          const [dx, dy] = c.dir;
+          const { map, builder } = field();
+          const first = builder.spawnDecor(CX + 5 * dx, CY + 5 * dy, 'townhouse', 0)!;
+          const second = builder.spawnDecor(
+            first.x + (dx ? 1 : c.side),
+            first.y + (dy ? 1 : c.side),
+            'townhouse',
+            0,
+          )!;
+          expect(first).not.toBeNull();
+          expect(second).not.toBeNull();
+          const people = new PeopleSim(map, builder, new Rng(c.stream));
+          const p: Person = {
+            ...figure(walkOf(CX - 4 * dx, CY - 4 * dy, first.x, first.y)),
+            state: 'return',
+            transient: false,
+            home: `d${first.x},${first.y}`,
+          };
+          people.persons.push(p);
+          const stream = people.toJSON().rng;
+          const none = () => false;
+          // up to the crossing's edge, held there by a train that may still move, and the last tile
+          // it stood on on the way, read off where it went
+          let walkedOff: Tile | null = null;
+          for (let i = 0; i < 2000 && !onEdge(p, CX, CY); i++) {
+            people.tick(c.gdt, 1, MIDDAY, closedC, { detour: none, occupied: none });
+            const t = { x: Math.round(p.x), y: Math.round(p.y) };
+            if (onTile(p, t.x, t.y)) walkedOff = t;
+          }
+          expect(onEdge(p, CX, CY)).toBe(true);
+          expect(walkedOff).toEqual({ x: CX - dx, y: CY - dy });
+          const rounded = { x: Math.round(p.x), y: Math.round(p.y) };
+          expect(builder.removeDecor(first.x, first.y)).toBe(true);
+          const cars = Array.from({ length: 7 }, (_, k) =>
+            dx && !dy ? { x: CX, y: CY - 3 + k } : { x: CX - 3 + k, y: CY },
+          );
+          const dry = { detour: closedC, occupied: among(cars) };
+          const at = { x: p.x, y: p.y };
+          for (let i = 0; ; i++) {
+            const held = i < c.wait;
+            people.tick(c.gdt, 1, MIDDAY, closedC, held ? { detour: none, occupied: none } : dry);
+            expect(onTile(p, CX, CY), `step ${i}`).toBe(false);
+            expect(people.toJSON().rng).toBe(stream);
+            expect(p.home).toBe(`d${second.x},${second.y}`);
+            if (held) {
+              // its walk made anew from Math.round of where it stands, and waiting as it was
+              expect(p.path[0]).toEqual(rounded);
+              expect(p.step).toBe(0);
+              expect(Math.hypot(p.x - at.x, p.y - at.y)).toBeLessThan(1e-9);
+              if (!i && closedC(rounded.x, rounded.y)) fromCrossing++;
+              continue;
+            }
+            // the step a train out of fuel alone holds it: a walk round from the tile it walked off
+            expect(p.path[0]).toEqual(walkedOff);
+            expect(p.path.at(-1)).toEqual({ x: second.x, y: second.y });
+            break;
+          }
+          // and home by it, never on the crossing
+          for (let i = 0; i < 4000 && p.state === 'return'; i++) {
+            people.tick(c.gdt, 1, MIDDAY, closedC, dry);
+            expect(onTile(p, CX, CY), `step ${i}`).toBe(false);
+          }
+          expect(p.state).toBe('inside');
+        },
+      );
+      // not vacuous: in many, its walk was seen made anew from the crossing it waits at
+      expect(fromCrossing).toBeGreaterThanOrEqual(40);
+    },
+  );
+});
+
+describe('walkers at the same crossings', () => {
+  // slow: 100 cases of two to four walkers, each walked twice over, over a second alone
+  it('walk round each exactly as it would alone, whenever each comes', { timeout: 30_000 }, () => {
+    // Up to four boarding figures, each setting out at its own step on a walk over the crossing,
+    // at crossings that close, open and run dry together, with cars round them changing; then all
+    // open. What walking round keeps of a walker (the tile it walked off, its next try) is its own:
+    // with the others there or not, each goes the same way step for step.
+    const seen = { rounds: 0, shared: 0 };
+    forAll(
+      (rng) => {
+        const near = (r: number) => ({ x: CX + rng.int(-r, r), y: CY + rng.int(-r, r) });
+        const crossings = [
+          { x: CX, y: CY },
+          ...Array.from({ length: rng.int(0, 3) }, () => near(2)),
+        ];
+        return {
+          walkers: Array.from({ length: rng.int(2, 4) }, () => {
+            const [dx, dy] = rng.pick(DIRS8);
+            const before = rng.int(1, 4);
+            const after = rng.int(1, 4);
+            return {
+              from: { x: CX - dx * before, y: CY - dy * before },
+              to: { x: CX + dx * after, y: CY + dy * after },
+              joins: rng.int(0, 60),
+            };
+          }),
+          crossings,
+          phases: Array.from({ length: rng.int(1, 6) }, () => ({
+            seconds: rng.pick([0.5, 2, 5, 12]),
+            states: crossings.map(() => rng.pick<Closing>(['open', 'firm', 'dry', 'dry'])),
+            cars: Array.from({ length: rng.int(0, 5) }, () => near(3)),
+          })),
+          gdt: rng.pick([SIM_STEP, 0.3, 0.9]),
+        };
+      },
+      (c) => {
+        const { map, builder } = field();
+        const none = () => false;
+        const make = (k: number): Person => ({
+          ...figure(
+            walkOf(c.walkers[k].from.x, c.walkers[k].from.y, c.walkers[k].to.x, c.walkers[k].to.y),
+          ),
+          id: k + 1,
+        });
+        const together = new PeopleSim(map, builder, new Rng(1));
+        const alone = c.walkers.map(() => new PeopleSim(map, builder, new Rng(1)));
+        const lengths = c.phases.map((ph) => Math.max(1, Math.round(ph.seconds / c.gdt)));
+        const closing = lengths.reduce((a, b) => a + b, 0);
+        const rounded = new Set<number>();
+        const last = Math.max(...c.walkers.map((w) => w.joins));
+        let phase = 0;
+        let inPhase = 0;
+        for (let i = 0; i < closing + Math.ceil(200 / c.gdt); i++) {
+          const ph = i < closing ? c.phases[phase] : null;
+          const of = (s: Closing) =>
+            ph ? among(c.crossings.filter((_, k) => ph.states[k] === s)) : none;
+          const firm = of('firm');
+          const dry = of('dry');
+          const closed = ph ? (x: number, y: number) => firm(x, y) || dry(x, y) : null;
+          const detour: CrossingDetour | null = ph
+            ? { detour: (x, y) => dry(x, y) && !firm(x, y), occupied: among(ph.cars) }
+            : null;
+          c.walkers.forEach((w, k) => {
+            if (i !== w.joins) return;
+            together.persons.push(make(k));
+            alone[k].persons.push(make(k));
+          });
+          const ways = new Map(together.persons.map((p) => [p, p.path]));
+          together.tick(c.gdt, 0, MIDDAY, closed, detour);
+          alone.forEach((a) => a.tick(c.gdt, 0, MIDDAY, closed, detour));
+          for (const p of together.persons) if (p.path !== ways.get(p)) rounded.add(p.id);
+          c.walkers.forEach((_, k) => {
+            const p = together.persons.find((q) => q.id === k + 1);
+            expect(p, `walker ${k + 1} at step ${i}`).toEqual(alone[k].persons[0]);
+          });
+          // all of them came and walked to their ends
+          if (i >= last && !together.persons.length) break;
+          if (ph && ++inPhase >= lengths[phase]) {
+            phase++;
+            inPhase = 0;
+          }
+        }
+        expect(together.persons).toEqual([]);
+        seen.rounds += rounded.size;
+        if (rounded.size > 1) seen.shared++;
+      },
+      {
+        shrink: function* (c) {
+          for (const walkers of shrinkArray(c.walkers))
+            if (walkers.length > 1) yield { ...c, walkers };
+          for (const phases of shrinkArray(c.phases)) if (phases.length) yield { ...c, phases };
+          for (let i = 0; i < c.phases.length; i++)
+            for (const cars of shrinkArray(c.phases[i].cars))
+              yield { ...c, phases: c.phases.map((ph, k) => (k === i ? { ...ph, cars } : ph)) };
+        },
+      },
+    );
+    // not vacuous: walkers walked round, in some cases more than one of them
+    expect(seen.rounds).toBeGreaterThanOrEqual(60);
+    expect(seen.shared).toBeGreaterThanOrEqual(15);
   });
 });

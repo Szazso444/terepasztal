@@ -117,6 +117,27 @@ export function roadStep(
 /** The level crossing on (x, y) is closed to walkers now (`CrossingWatch.closed`, crossings.ts). */
 export type CrossingClosed = (x: number, y: number) => boolean;
 
+/**
+ * What a walker held at the edge of a closed level crossing reads to walk round it (#447), as
+ * `CrossingWatch` in crossings.ts gives it.
+ */
+export interface CrossingDetour {
+  /** the closed crossing on (x, y) is held closed only by trains standing out of fuel or power */
+  detour(x: number, y: number): boolean;
+  /** a car of a train stands on (x, y) */
+  occupied(x: number, y: number): boolean;
+}
+
+/**
+ * Game seconds between a walker's tries for a way round a crossing only trains out of fuel or power
+ * hold closed, while it finds none: a walker's time over one tile off a road (1 / WALK_SPEED at 0.2
+ * tiles a second), often enough to see another crossing open or a train move off, and seldom enough
+ * that a crowd at the edge costs little.
+ */
+export const DETOUR_RETRY = 5;
+/** Seconds of the wait for the next try within which it is due, against rounding in the sums. */
+const RETRY_EPS = 1e-9;
+
 /** Tiles inside a tile's edge a walker has to be to stand on that tile, against rounding. */
 const EDGE_EPS = 1e-6;
 
@@ -136,8 +157,20 @@ export function clearAhead(
   to: { x: number; y: number },
   closed: CrossingClosed,
 ): number {
+  return heldAt(from, to, closed).at;
+}
+
+/**
+ * `clearAhead`'s distance, and the closed crossings the way sets foot on there: none when it sets
+ * foot on none, and more than one only where it enters two at once.
+ */
+function heldAt(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  closed: CrossingClosed,
+): { at: number; tiles: { x: number; y: number }[] } {
   const len = Math.hypot(to.x - from.x, to.y - from.y);
-  if (!(len > 0)) return Infinity;
+  if (!(len > 0)) return { at: Infinity, tiles: [] };
   const ux = (to.x - from.x) / len;
   const uy = (to.y - from.y) / len;
   // the tiles whose inside the way may cross: a tile's centre within half a tile of it
@@ -146,6 +179,7 @@ export function clearAhead(
   const y0 = Math.floor(Math.min(from.y, to.y) - 0.5) + 1;
   const y1 = Math.ceil(Math.max(from.y, to.y) + 0.5) - 1;
   let best = Infinity;
+  const entered: { x: number; y: number; enter: number }[] = [];
   for (let y = y0; y <= y1; y++)
     for (let x = x0; x <= x1; x++) {
       if (!closed(x, y) || standsOn(from, x, y)) continue;
@@ -155,9 +189,15 @@ export function clearAhead(
       if (!across || !down) continue;
       const enter = Math.max(0, across[0], down[0]);
       const leave = Math.min(len, across[1], down[1]);
-      if (leave - enter > EDGE_EPS) best = Math.min(best, enter);
+      if (leave - enter > EDGE_EPS) {
+        best = Math.min(best, enter);
+        entered.push({ x, y, enter });
+      }
     }
-  return best;
+  return {
+    at: best,
+    tiles: entered.filter((t) => t.enter <= best + EDGE_EPS).map(({ x, y }) => ({ x, y })),
+  };
 }
 
 /**
@@ -275,13 +315,15 @@ class WalkQueue {
  * always has, so a walk may still leave a road for a diagonal across the grass that costs less.
  * Tiles are searched lightest first, and of equal ones the one reached first, and the first way
  * found to a tile is kept unless a lighter one comes: with no road it is the breadth-first walk it
- * has always been, step for step.
+ * has always been, step for step. A walk never steps on a tile `avoid` names, `to` among them; it
+ * may set out from one.
  */
 export function findWalk(
   map: GameMap,
   from: { x: number; y: number },
   to: { x: number; y: number },
   roads?: RoadTiles | null,
+  avoid?: ((x: number, y: number) => boolean) | null,
 ): { x: number; y: number }[] | null {
   const margin = WALK_MARGIN;
   const x0 = Math.max(0, Math.min(from.x, to.x) - margin);
@@ -322,6 +364,7 @@ export function findWalk(
           w + (roadStep(roads, { x: cx, y: cy }, { x: nx, y: ny }) ? alongRoad : offRoad);
         if (next >= weight[nk]) continue;
         if (!walkable(map, nx, ny) && !(nx === to.x && ny === to.y)) continue;
+        if (avoid?.(nx, ny)) continue;
         prev[nk] = k;
         weight[nk] = next;
         queue.push(next, nk);
@@ -357,8 +400,8 @@ function nearestPlace(places: readonly Place[], x: number, y: number): Place | n
  * nearby resource tile to gather, or goes to the closest station to catch a train with a coach.
  * Each has the profession of the place it lives at. Nobody sets out at night, and one caught on
  * the way to a station turns home. A walker waits in front of a level crossing while it is closed
- * (src/sim/crossings.ts), and none is set down on one (`offCrossing`). Nothing here changes the
- * map.
+ * (src/sim/crossings.ts), or walks round it when only trains out of fuel or power hold it closed
+ * (`walkRound`), and none is set down on one (`offCrossing`). Nothing here changes the map.
  */
 export class PeopleSim {
   persons: Person[] = [];
@@ -383,6 +426,17 @@ export class PeopleSim {
   }
   /** The tile is a level crossing (`Roads.isCrossing`). */
   private readonly isCrossing = (x: number, y: number) => this.builder.roads.isCrossing(x, y);
+  /**
+   * Each walker that found no way round a crossing it waits at (`walkRound`): the walk it waits on,
+   * and the game seconds to its next try. Kept while it waits there on that walk; not saved, as the
+   * walkers are not.
+   */
+  private readonly retry = new WeakMap<Person, { path: Person['path']; left: number }>();
+  /**
+   * Each walker that stopped on a tile's edge after walking: the tile it walked off onto that edge,
+   * the one its way crossed just before it (`standingAt`). Not saved, as the walkers are not.
+   */
+  private readonly stood = new WeakMap<Person, { x: number; y: number }>();
 
   toJSON(): PeopleJSON {
     return { rng: this.rng.state };
@@ -538,13 +592,16 @@ export class PeopleSim {
   /**
    * One step of `gdt` game seconds for `population` walkers at `dayFraction` of the day. A walker
    * stops at the edge of a level crossing `crossingClosed` holds closed and goes on when it opens
-   * (`advance`); with none given, every crossing is open.
+   * (`advance`); with none given, every crossing is open. At one that `detour` says only trains out
+   * of fuel or power hold closed, it walks round instead (`walkRound`); with none given, it waits
+   * at every closed crossing.
    */
   tick(
     gdt: number,
     population: number,
     dayFraction: number,
     crossingClosed: CrossingClosed | null = null,
+    detour: CrossingDetour | null = null,
   ) {
     population = Math.min(160, Math.max(0, Math.floor(population)));
     const places = this.places();
@@ -579,7 +636,7 @@ export class PeopleSim {
     for (let i = this.persons.length - 1; i >= 0; i--) {
       const p = this.persons[i];
       if (p.transient) {
-        if (!this.advance(p, gdt, crossingClosed)) this.persons.splice(i, 1);
+        if (!this.advance(p, gdt, crossingClosed, detour)) this.persons.splice(i, 1);
         continue;
       }
       // a home that closed or went: the nearest open place to where the walker stands, no draw
@@ -657,7 +714,7 @@ export class PeopleSim {
         case 'return':
           // night fell on the way to a station: turn for home from where it stands
           if (p.state === 'toStation' && !daytime && this.turnHome(p, home)) break;
-          if (!this.advance(p, gdt, crossingClosed)) {
+          if (!this.advance(p, gdt, crossingClosed, detour)) {
             if (p.state === 'gather') {
               p.state = 'idle';
               p.timer = 8 + this.rnd() * 10;
@@ -684,7 +741,7 @@ export class PeopleSim {
           }
           break;
         case 'walk':
-          if (!this.advance(p, gdt, crossingClosed)) {
+          if (!this.advance(p, gdt, crossingClosed, detour)) {
             p.state = 'inside';
             p.timer = 20 + this.rnd() * 40;
           }
@@ -711,12 +768,20 @@ export class PeopleSim {
 
   /**
    * Move along the path; returns false once the end is reached. A step is the walker's state, the
-   * time, the roads under the leg it walks (`roadStep`) and the level crossings closed now
-   * (`clearAhead`), nothing else, and draws no random number. A walker goes no further than the
-   * edge of a closed crossing it is not on yet and waits there, its path, state and timer as they
-   * were, until the crossing opens; one already on a crossing goes on.
+   * time, the roads under the leg it walks (`roadStep`), the level crossings closed now
+   * (`clearAhead`) and the tile it walked off onto an edge it stands on (`standingAt`), nothing
+   * else, and draws no random number. A walker goes no further than the edge of a closed crossing
+   * it is not on yet and waits there, its path, state and timer as they were, until the crossing
+   * opens; one already on a crossing goes on, and one on the edge of the tile it stands at may go
+   * back into it while only trains out of fuel or power hold it closed (`closedTo`). At the edge of
+   * one that `detour` says only such trains hold closed, it walks round (`walkRound`).
    */
-  private advance(p: Person, gdt: number, crossingClosed: CrossingClosed | null) {
+  private advance(
+    p: Person,
+    gdt: number,
+    crossingClosed: CrossingClosed | null,
+    detour: CrossingDetour | null,
+  ) {
     const next = p.path[p.step + 1];
     if (!next) return false;
     const speed = walkSpeed(p, roadStep(this.builder.roads, p.path[p.step], next));
@@ -724,7 +789,15 @@ export class PeopleSim {
     const dy = next.y - p.y;
     const d = Math.hypot(dx, dy);
     let stepLen = speed * gdt;
-    if (crossingClosed) stepLen = Math.min(stepLen, clearAhead(p, next, crossingClosed));
+    // the closed crossings it stops at the edge of in this step, if any
+    let held: { x: number; y: number }[] = [];
+    if (crossingClosed) {
+      const ahead = heldAt(p, next, this.closedTo(p, crossingClosed, detour));
+      if (ahead.at <= stepLen) {
+        stepLen = ahead.at;
+        held = ahead.tiles;
+      }
+    }
     if (d <= stepLen) {
       p.x = next.x;
       p.y = next.y;
@@ -732,7 +805,97 @@ export class PeopleSim {
     } else {
       p.x += (dx / d) * stepLen;
       p.y += (dy / d) * stepLen;
+      // stopped on a tile's edge: it stands at the tile its way crossed just before it
+      if (stepLen > EDGE_EPS && !standsOn(p, Math.round(p.x), Math.round(p.y)))
+        this.stood.set(p, {
+          x: Math.round(p.x - (dx / d) * EDGE_EPS),
+          y: Math.round(p.y - (dy / d) * EDGE_EPS),
+        });
     }
+    if (crossingClosed && detour && held.length && held.every((t) => detour.detour(t.x, t.y)))
+      this.walkRound(p, gdt, crossingClosed, detour);
+    else this.retry.delete(p);
+    return true;
+  }
+
+  /**
+   * The tile a walker on a tile's edge stands at: the one it walked off onto that edge, while it is
+   * on that tile or its edge still. Null where it never walked off a tile onto an edge, as for one
+   * set down on an edge that has not walked since, and where it stands off that tile.
+   */
+  private standingAt(p: Person): { x: number; y: number } | null {
+    const t = this.stood.get(p);
+    return t && Math.max(Math.abs(p.x - t.x), Math.abs(p.y - t.y)) <= 0.5 + EDGE_EPS ? t : null;
+  }
+
+  /**
+   * The crossings that hold a walker at `p`: those `crossingClosed` closes, but for the tile it
+   * stands at (`standingAt`) while only trains standing out of fuel or power close it (`detour`),
+   * as it never left that tile (#447). Of its legs, only one back into that tile enters it.
+   */
+  private closedTo(
+    p: Person,
+    crossingClosed: CrossingClosed,
+    detour: CrossingDetour | null,
+  ): CrossingClosed {
+    const own = detour && this.standingAt(p);
+    if (!own || !detour.detour(own.x, own.y)) return crossingClosed;
+    return (x, y) => !(x === own.x && y === own.y) && crossingClosed(x, y);
+  }
+
+  /**
+   * A walker at the edge of a closed crossing that only trains standing out of fuel or power hold
+   * closed (#447) looks for a way round it at once: the walk `findWalk` gives from the tile it
+   * stands at to the end of its walk, on no crossing closed now and no tile a car stands on, and
+   * taken in place of the walk it had. It goes from where it stands straight on to that walk's
+   * next tile, or back to the middle of the tile it stands at first where the way straight on would
+   * cut a corner of one of those. It never left the tile it walked off onto the edge, so it steps
+   * back into that tile even where a car stands on it or it is a crossing closed since, unless a
+   * train that may still move closes it: then, as with none, it waits at the edge as it was and
+   * tries again every DETOUR_RETRY game seconds. A try is the walker's place and walk, the map, the
+   * roads and the crossings, and changes the walk alone: no random number, state or timer.
+   */
+  private walkRound(
+    p: Person,
+    gdt: number,
+    crossingClosed: CrossingClosed,
+    detour: CrossingDetour,
+  ) {
+    const wait = this.retry.get(p);
+    if (wait?.path === p.path) {
+      wait.left -= gdt;
+      if (wait.left > RETRY_EPS) return;
+    }
+    if (this.findRound(p, crossingClosed, detour)) this.retry.delete(p);
+    else this.retry.set(p, { path: p.path, left: DETOUR_RETRY });
+  }
+
+  /** Give the walker its way round (`walkRound`); false when there is none. */
+  private findRound(p: Person, crossingClosed: CrossingClosed, detour: CrossingDetour) {
+    const next = p.path[p.step + 1];
+    const end = p.path[p.path.length - 1];
+    const avoid = (x: number, y: number) => crossingClosed(x, y) || detour.occupied(x, y);
+    // the tile it stands at: the one it walked off onto the crossing's edge, or, for one set down
+    // there that has not walked since, the one its way crosses just before the edge
+    const own = this.standingAt(p);
+    const len = Math.hypot(next.x - p.x, next.y - p.y);
+    const back = own ?? {
+      x: Math.round(p.x - ((next.x - p.x) / len) * EDGE_EPS),
+      y: Math.round(p.y - ((next.y - p.y) / len) * EDGE_EPS),
+    };
+    const walk = findWalk(this.map, back, end, this.builder.roads, avoid);
+    if (!walk) return false;
+    const path =
+      walk.length > 1 && clearAhead(p, walk[1], avoid) === Infinity ? walk : [back, ...walk];
+    // back into the tile it walked off onto the edge, whatever else keeps it off, but for a crossing
+    // a train that may still move closes
+    const reenter = !!own && (!crossingClosed(own.x, own.y) || detour.detour(own.x, own.y));
+    const first = reenter
+      ? (x: number, y: number) => !(x === back.x && y === back.y) && avoid(x, y)
+      : avoid;
+    if (clearAhead(p, path[1], first) !== Infinity) return false;
+    p.path = path;
+    p.step = 0;
     return true;
   }
 }
