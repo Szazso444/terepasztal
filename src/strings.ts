@@ -390,6 +390,12 @@ export const STR = {
       'A road crosses only plain straight track: no curve, switch, crossing or transition',
     crossingHighSpeed: 'No level crossings on high-speed track',
     crossingAlong: 'A road crosses track at right angles, never along it',
+    /** the road tool's drag (#328): how many tiles its release lays, and `cost` (`fmtCost`) */
+    roadLine: (tiles: number, cost: string) =>
+      `${tiles} road ${tiles === 1 ? 'tile' : 'tiles'}: ${cost}`,
+    /** the road tool's drag: how many of its tiles are not laid, and each reason once */
+    roadNotLaid: (tiles: number, reasons: readonly string[]) =>
+      `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} not laid: ${reasons.join(' · ')}`,
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
@@ -416,6 +422,11 @@ export const STR = {
     downgradeHint:
       'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
+    /** the toolbar category of roads, and the road tool in it (#328) */
+    roads: 'Roads',
+    road: 'Road',
+    roadDesc:
+      'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a run.',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
     typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
     bridges: 'Bridges',
@@ -447,6 +458,7 @@ export const STR = {
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
+      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight wide or narrow track at right angles, as a level crossing; never high-speed track.',
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
