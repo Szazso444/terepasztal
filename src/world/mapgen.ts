@@ -12,6 +12,7 @@ import {
   type PropKind,
 } from './tiles';
 import { DRY, FLOW_CAP, KEEP_OUT, LAKE_CLEARANCE, LOW, WaterKind, drain } from './rivers';
+import { markWaterfalls } from './waterfalls';
 
 /** Smooth value noise built from the coordinate hash. */
 function valueNoise(x: number, y: number, seed: number): number {
@@ -649,7 +650,8 @@ export function generateMap(
 
 /**
  * generateMap's map with planes its biome rules read, as tiles of the map, for tests. The river
- * pass's own output is `river` and `lake` with the map's waterSurface, flow and flowDir planes.
+ * pass's own output is `river` and `lake` with the map's waterSurface, flow and flowDir planes;
+ * the map's feature plane holds the waterfalls read off them (waterfalls.ts).
  */
 export interface MapPlanes {
   map: GameMap;
@@ -764,6 +766,14 @@ export function generateMapPlanes(
   const sea = seaWater(field, pass, grow(shoreSpan, 1));
   seaShore(field, sea, shoreSpan);
   field.biome = biomeRules(field, river, sea, inMap);
+  // the waterfalls of the map's tiles, read on the field, where a river tile at the map's edge has
+  // the tile it runs into
+  const feature = new Uint8Array(w * h);
+  markWaterfalls(
+    { w, h, terrain, waterSurface: water.surface, flowDir: water.dir },
+    feature,
+    inMap,
+  );
   // crop the map out of the field
   map.terrain = cropPlane(terrain, w, mw, mh);
   map.biome = cropPlane(field.biome, w, mw, mh);
@@ -771,6 +781,7 @@ export function generateMapPlanes(
   map.waterSurface = cropPlane(water.surface, w, mw, mh);
   map.flow = cropPlane(water.flow, w, mw, mh);
   map.flowDir = cropPlane(water.dir, w, mw, mh);
+  map.feature = cropPlane(feature, w, mw, mh);
   decorateProps(map, seed);
   // the fields and deposits read the field around the map; they go over the map's props, the
   // wheat fields, then the oil fields, then the start seeps, as if all four had been laid on the

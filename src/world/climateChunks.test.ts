@@ -68,15 +68,31 @@ function waterBytes(c: ChunkPlanes): number {
 }
 
 /**
+ * How many bytes the water features of version 4 (#342) take at the end of a text: the count of
+ * tiles with a feature, and each one's skip and byte.
+ */
+function featureBytes(c: ChunkPlanes): number {
+  let n = 0;
+  let tiles = 0;
+  for (let i = 0, last = -1; i < c.feature.length; i++) {
+    if (!c.feature[i]) continue;
+    n += varintBytes(i - last - 1) + 1;
+    last = i;
+    tiles++;
+  }
+  return n + varintBytes(tiles);
+}
+
+/**
  * The text `text` would have had in version 1, before the climate plane: the same bytes with the
  * version byte 1 and without the climate runs, which come right after the biome runs, and without
- * the water planes of version 3, which come last.
+ * the water planes of version 3 and the features of version 4, which come last.
  */
 function asVersion1(text: string): string {
   const c = decodeChunk(text)!;
   const bytes = bytesOf(text);
   const planes = 5 + runBytes(c.terrain) + runBytes(c.biome);
-  const water = c.version >= 3 ? waterBytes(c) : 0;
+  const water = (c.version >= 3 ? waterBytes(c) : 0) + (c.version >= 4 ? featureBytes(c) : 0);
   return textOf([
     1,
     ...bytes.slice(1, planes),
@@ -195,13 +211,17 @@ describe('a chunk text', () => {
       const now = decodeChunk(text)!;
       const old = decodeChunk(asVersion1(text))!;
       expect(old).not.toBeNull();
-      const water = { waterSurface: now.waterSurface, flow: now.flow, flowDir: now.flowDir };
+      const water = {
+        waterSurface: now.waterSurface,
+        flow: now.flow,
+        flowDir: now.flowDir,
+        feature: now.feature,
+      };
       expect({ ...old, version: now.version, climate: now.climate, ...water }).toEqual(now);
       expect([...old.climate]).toEqual([...old.biome]);
-      // and no water level, flow or side, which version 1 does not hold
-      expect([old.waterSurface, old.flow, old.flowDir].every((a) => a.every((v) => v === 0))).toBe(
-        true,
-      );
+      // and no water level, flow, side or waterfall, which version 1 does not hold
+      const planes = [old.waterSurface, old.flow, old.flowDir, old.feature];
+      expect(planes.every((a) => a.every((v) => v === 0))).toBe(true);
       for (let i = 0; i < now.climate.length; i++) if (now.climate[i] !== now.biome[i]) differ++;
     }
     expect(differ).toBeGreaterThan(0);

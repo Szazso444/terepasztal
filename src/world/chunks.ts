@@ -2,6 +2,7 @@ import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './
 import { DIR_DX, DIR_DY } from '../engine/iso';
 import { levelTarget } from './elevation';
 import { FLOW_CAP } from './rivers';
+import { FALL_BITS, MAX_DROP, fallAt, fallDrop, fallFeature, isFeature } from './waterfalls';
 import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from './tiles';
 
 /**
@@ -36,7 +37,11 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  *   way, then the rivers: a varint count of the tiles with a downstream side (GameMap.flowDir), and
  *   for each of those tiles a varint of the tiles skipped since the one before, then a varint of
  *   its flow (GameMap.flow, at most FLOW_CAP) times four plus its side less one. Both live only on
- *   water, so a chunk without a river spends a byte or two on them.
+ *   water, so a chunk without a river spends a byte or two on them;
+ * - from version 4, the water features (GameMap.feature, laid out in waterfalls.ts: a waterfall's
+ *   drop and edge, and bits kept for #356): a varint count of the tiles whose byte is not 0, and
+ *   for each of those tiles a varint of the tiles skipped since the one before, then its byte. A
+ *   chunk without a waterfall spends a byte on them, and a waterfall two or three more.
  *
  * Varints are unsigned LEB128. Offsets are rounded to the nearest 256th of a tile, so a stored
  * prop sits at most a 512th of a tile from where generation put it; buildMap gives every chunk,
@@ -45,13 +50,14 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  * A later plane joins under a bump of CHUNK_VERSION, at a place in the bytes its version names,
  * and a chunk of an older version decodes with that plane empty: version 1 holds no climate, and
  * its climate is its biome; versions 1 and 2 hold no water levels, flow or sides, so their water
- * is at level 0 and their rivers have neither.
+ * is at level 0 and their rivers have neither; versions 1 to 3 hold no water features, so they
+ * have no waterfalls.
  */
 
 /** Chunk edge in world tiles: emptyMap's region size. */
 export const CHUNK_TILES = 32;
 /** The encoding encodeChunk writes; decodeChunk reads it and every one before it. */
-export const CHUNK_VERSION = 3;
+export const CHUNK_VERSION = 4;
 
 /**
  * The index a chunk stores each prop kind under. Only ever add to it: an index written into a save
@@ -110,6 +116,8 @@ export interface ChunkPlanes {
   waterSurface: Uint8Array;
   flow: Uint16Array;
   flowDir: Uint8Array;
+  /** the water features (waterfalls.ts); all 0, no waterfalls, in a chunk of version 1 to 3 */
+  feature: Uint8Array;
 }
 
 /** What buildMap made. */
@@ -325,8 +333,8 @@ function fromBase64(text: string): Uint8Array | null {
  * The text of chunk (`cx`, `cy`): the part of it `map` covers, as the map has it. Call it on a map
  * as generated, before anything is built on it or repaired under it. Throws when the map does not
  * cover the chunk, and when it holds what this encoding cannot (a terrain, biome or climate id over
- * 15, a variant over 3, a prop kind PROP_KINDS lacks), so a generator that makes one has to come
- * with a new CHUNK_VERSION.
+ * 15, a variant over 3, a prop kind PROP_KINDS lacks, a feature byte isFeature refuses), so a
+ * generator that makes one has to come with a new CHUNK_VERSION.
  */
 export function encodeChunk(map: GameMap, cx: number, cy: number): string {
   const c = coverage(map, cx, cy);
@@ -339,6 +347,7 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
   const surface = new Uint8Array(n);
   const flow = new Uint16Array(n);
   const flowDir = new Uint8Array(n);
+  const feature = new Uint8Array(n);
   // the map tile of the rectangle's first tile
   const mx = cx * CHUNK_TILES + c.x0 - map.originX;
   const my = cy * CHUNK_TILES + c.y0 - map.originY;
@@ -351,6 +360,7 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
     if (map.waterSurface) surface.set(map.waterSurface.subarray(from, from + c.w), y * c.w);
     if (map.flow) flow.set(map.flow.subarray(from, from + c.w), y * c.w);
     if (map.flowDir) flowDir.set(map.flowDir.subarray(from, from + c.w), y * c.w);
+    if (map.feature) feature.set(map.feature.subarray(from, from + c.w), y * c.w);
   }
   const out = new Writer();
   for (const b of [CHUNK_VERSION, c.x0, c.y0, c.w, c.h]) out.byte(b);
@@ -399,6 +409,23 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
   for (const i of rivers) {
     out.varint(i - last - 1);
     out.varint(flow[i] * 4 + flowDir[i] - 1);
+    last = i;
+  }
+  const features: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const f = feature[i];
+    if (!isFeature(f))
+      throw new Error(
+        `chunk encoding ${CHUNK_VERSION} holds waterfalls of 1 to ${MAX_DROP} levels and no ` +
+          `other feature, not the byte ${f}`,
+      );
+    if (f) features.push(i);
+  }
+  out.varint(features.length);
+  last = -1;
+  for (const i of features) {
+    out.varint(i - last - 1);
+    out.byte(feature[i]);
     last = i;
   }
   return toBase64(out.buf.subarray(0, out.n));
@@ -455,6 +482,18 @@ export function decodeChunk(text: string): ChunkPlanes | null {
         last = i;
       }
     }
+    const feature = new Uint8Array(n);
+    if (version >= 4) {
+      const tiles = r.varint();
+      for (let t = 0, last = -1; t < tiles; t++) {
+        const i = last + 1 + r.varint();
+        if (i >= n) return null;
+        const f = r.byte();
+        if (!f || !isFeature(f)) return null;
+        feature[i] = f;
+        last = i;
+      }
+    }
     // bytes left over are not something encodeChunk writes
     if (r.i !== bytes.length) return null;
     return {
@@ -471,6 +510,7 @@ export function decodeChunk(text: string): ChunkPlanes | null {
       waterSurface,
       flow,
       flowDir,
+      feature,
     };
   } catch (e) {
     if (e instanceof Corrupt) return null;
@@ -480,9 +520,10 @@ export function decodeChunk(text: string): ChunkPlanes | null {
 
 /**
  * Writes chunk (`cx`, `cy`)'s planes into `map` wherever the map covers them: terrain, biome,
- * climate, variant, and the props of those tiles, which replace the map's own (the map takes the
- * chunk's prop lists themselves, so decode a chunk again for another map). A map with no climate
- * plane is given one, its climate its biome until a chunk says otherwise. A plane the chunk's
+ * climate, variant, the water planes and features, and the props of those tiles, which replace the
+ * map's own (the map takes the chunk's prop lists themselves, so decode a chunk again for another
+ * map). A map with no climate plane is given one, its climate its biome until a chunk says
+ * otherwise, and one with no water plane or feature plane is given it empty. A plane the chunk's
  * version does not hold is empty there; for the climate that means it is the biome.
  */
 export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes) {
@@ -497,6 +538,7 @@ export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes)
   const surface = (map.waterSurface ??= new Uint8Array(map.w * map.h));
   const flow = (map.flow ??= new Uint16Array(map.w * map.h));
   const flowDir = (map.flowDir ??= new Uint8Array(map.w * map.h));
+  const feature = (map.feature ??= new Uint8Array(map.w * map.h));
   for (let y = y0; y < y1; y++)
     for (let x = x0; x < x1; x++) {
       const i = (y - map.originY) * map.w + x - map.originX;
@@ -508,6 +550,7 @@ export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes)
       surface[i] = c.waterSurface[j];
       flow[i] = c.flow[j];
       flowDir[i] = c.flowDir[j];
+      feature[i] = c.feature[j];
       const list = c.props.get(j);
       if (list) map.props.set(i, list);
       else map.props.delete(i);
@@ -605,11 +648,15 @@ export function buildMap(
  * - a new river whose way runs into a stored tile that is not water ends at the seam in a pond on
  *   the new side: its last tile is a lake (Lake biome, no flow, no side);
  * - new water stands no higher than one level above a stored tile beside it (levelTarget), and a
- *   river never higher than the water it runs from, so its levels still never rise downstream.
+ *   river never higher than the water it runs from, so its levels still never rise downstream;
+ * - new water's waterfalls are those of its levels as they now stand (fallAt). Where a new river
+ *   runs off the map, the generator saw the tile it runs into and the map does not: its drop is
+ *   the generator's less what the seam lowered it by.
  *
- * A stored river that runs into a new tile is left as it is: a chunk stored before CHUNK_VERSION 3
- * does not say which way its rivers run. Coasts, lake edges and biome edges cut at the seam are
- * accepted as they fall, and the levels across it stay within one step (tileLevels).
+ * A stored river that runs into a new tile is left as it is, its waterfall too: a chunk stored
+ * before CHUNK_VERSION 3 does not say which way its rivers run, and one stored before version 4
+ * has no waterfalls. Coasts, lake edges and biome edges cut at the seam are accepted as they fall,
+ * and the levels across it stay within one step (tileLevels).
  */
 function seam(map: GameMap, stored: Uint8Array) {
   const { w, h, terrain } = map;
@@ -625,6 +672,8 @@ function seam(map: GameMap, stored: Uint8Array) {
   };
   const fresh: number[] = [];
   for (let i = 0; i < w * h; i++) if (!stored[i] && terrain[i] === Terrain.Water) fresh.push(i);
+  // the levels the generator gave, for its waterfalls off the map
+  const generated = Uint8Array.from(fresh, (i) => surface[i]);
   for (const i of fresh) {
     const d = flowDir[i];
     if (!d) continue;
@@ -657,4 +706,14 @@ function seam(map: GameMap, stored: Uint8Array) {
       }
     }
   }
+  const feature = map.feature!;
+  fresh.forEach((i, k) => {
+    const d = flowDir[i];
+    let fall: number;
+    if (d && ahead(i, d) < 0) {
+      const drop = fallDrop(feature[i]) - (generated[k] - surface[i]);
+      fall = drop > 0 ? fallFeature(drop, d - 1) : 0;
+    } else fall = fallAt(map, i);
+    feature[i] = (feature[i] & ~FALL_BITS) | fall;
+  });
 }
