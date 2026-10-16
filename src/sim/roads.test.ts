@@ -1596,10 +1596,12 @@ function patchRules(c: SpurPatch) {
 
 /**
  * The fewest tiles of a spur from the patch's start, by exhaustive search over every simple path
- * of at most `bound` tiles: each tile after the first open, each step across a side neither tile's
- * rails run through, the last joining a network road the same way. Infinity when there is none.
- * A path that could not end shorter than the best found, or within the bound, is cut, by the
- * Manhattan distance to the nearest network road, which never overstates what is left.
+ * of at most `bound` tiles: each tile after the first open, and sharing no side either tile's
+ * rails run through with any tile of the path before it (so each step crosses rails at right
+ * angles, and no tile lies where the rails of another tile of the path run on to), the last
+ * joining a network road across such a side too. Infinity when there is none. A path that could
+ * not end shorter than the best found, or within the bound, is cut, by the Manhattan distance to
+ * the nearest network road, which never overstates what is left.
  */
 function fewestByHand(c: SpurPatch, bound: number): number {
   const { at, net, across, joins, open } = patchRules(c);
@@ -1620,7 +1622,10 @@ function fewestByHand(c: SpurPatch, bound: number): number {
     for (const d of DIRS) {
       const nx = x + DIR_DX[d];
       const ny = y + DIR_DY[d];
-      if (open(nx, ny) && !on.has(at(nx, ny)) && across(x, y, d)) visit(nx, ny, n + 1);
+      const clear = DIRS.every(
+        (e) => !on.has(at(nx + DIR_DX[e], ny + DIR_DY[e])) || across(nx, ny, e),
+      );
+      if (open(nx, ny) && !on.has(at(nx, ny)) && clear) visit(nx, ny, n + 1);
     }
     on.delete(at(x, y));
   };
@@ -1646,6 +1651,11 @@ function spurFault(c: SpurPatch, spur: { x: number; y: number }[]): string {
     if (d === undefined) return `${at(p.x, p.y)} and ${at(x, y)} share no side`;
     if (!across(p.x, p.y, d)) return `${at(p.x, p.y)} to ${at(x, y)} runs along rails`;
   }
+  // judged whole: no two tiles of it share a side either one's rails run through
+  for (const { x, y } of spur)
+    for (const d of DIRS)
+      if (seen.has(at(x + DIR_DX[d], y + DIR_DY[d])) && !across(x, y, d))
+        return `${at(x, y)} and ${at(x + DIR_DX[d], y + DIR_DY[d])} share a side rails run through`;
   const last = spur[spur.length - 1];
   if (!joins(last.x, last.y)) return `ends at ${at(last.x, last.y)}, joining no network road`;
   return '';

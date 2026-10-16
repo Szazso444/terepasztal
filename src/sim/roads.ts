@@ -228,12 +228,17 @@ function railsThrough(track: TrackGraph, x: number, y: number, d: Dir): boolean 
  * The spur from a door's reach tile `from` to the road network (D2): the fewest tiles, side to
  * side, from `from` to a tile beside a road `network` takes (any road, unless it says otherwise),
  * at most SPUR_REACH of them; null when none is that near. Every tile but `from` is one `free`
- * lets a road be laid on as the map stands, and no step runs along rails (into or out of a tile
- * through a side its rails run through), so where a spur crosses track it crosses at right angles,
- * as a level crossing must. Of spurs alike in length the first found wins: tiles are searched
- * nearest first, and each one's sides in the order N, E, S, W. `from` holds no road. No tile is
- * judged here against the spur's other tiles: a builder still judges the spur whole, tile by tile,
- * before it lays it.
+ * lets a road be laid on as the map stands, and no rails run through a side two tiles of the spur
+ * share, nor the side its last tile shares with the road it joins: where the spur crosses track it
+ * crosses at right angles, as a level crossing must, and no tile of it lies where the rails of one
+ * of its own crossings run on to. Of spurs alike in length the first wins, their steps compared in
+ * turn, each one's sides in the order N, E, S, W. `from` holds no road.
+ *
+ * The search goes nearest first over the tiles a spur may take, none where the rails of `from` run
+ * on to it or its own rails run on to `from`, and the first way it finds to the network is the
+ * spur when it keeps that rule whole. When it does not, as where it crosses a line and comes back
+ * beside the rails, every way is tried in turn, a tile longer each round, and a way is cut where
+ * the tiles still to come could not fit in.
  */
 export function findSpur(
   roads: Roads,
@@ -242,37 +247,95 @@ export function findSpur(
   network: (x: number, y: number) => boolean = (x, y) => roads.has(x, y),
 ): { x: number; y: number }[] | null {
   const { w, h, track } = roads;
-  const key = (x: number, y: number) => y * w + x;
-  const prev = new Map<number, number>([[key(from.x, from.y), -1]]);
-  const queue: { x: number; y: number; tiles: number }[] = [{ ...from, tiles: 1 }];
-  /** the tile a step from (x, y) through side `d` goes to; null off the map or along rails */
-  const step = (x: number, y: number, d: Dir) => {
-    const nx = x + DIR_DX[d];
-    const ny = y + DIR_DY[d];
-    if (nx < 0 || ny < 0 || nx >= w || ny >= h) return null;
-    if (railsThrough(track, x, y, d) || railsThrough(track, nx, ny, opposite(d))) return null;
-    return { x: nx, y: ny };
+  const tileOf = (k: number) => ({ x: k % w, y: Math.floor(k / w) });
+  /** the key of the tile across side `d` of tile `k`; -1 off the map */
+  const beside = (k: number, d: Dir) => {
+    const x = (k % w) + DIR_DX[d];
+    const y = Math.floor(k / w) + DIR_DY[d];
+    return x < 0 || y < 0 || x >= w || y >= h ? -1 : y * w + x;
   };
-  for (let i = 0; i < queue.length; i++) {
-    const at = queue[i];
-    const beside = DIRS.some((d) => {
-      const n = step(at.x, at.y, d);
-      return !!n && network(n.x, n.y);
+  /** the tile a step from tile `k` through side `d` goes to; -1 off the map or along rails */
+  const step = (k: number, d: Dir) => {
+    const n = beside(k, d);
+    if (n < 0) return -1;
+    const at = tileOf(k);
+    const to = tileOf(n);
+    return railsThrough(track, at.x, at.y, d) || railsThrough(track, to.x, to.y, opposite(d))
+      ? -1
+      : n;
+  };
+  /** a step from tile `k` joins a road of the network */
+  const joins = (k: number) =>
+    DIRS.some((d) => {
+      const n = step(k, d);
+      return n >= 0 && network(n % w, Math.floor(n / w));
     });
-    // beside a road: the spur ends here and joins it
-    if (beside) {
-      const out: { x: number; y: number }[] = [];
-      for (let k = key(at.x, at.y); k >= 0; k = prev.get(k)!)
-        out.push({ x: k % w, y: Math.floor(k / w) });
-      return out.reverse();
+  /** no rails run through a side tile `k` shares with a tile of `spur` */
+  const clear = (k: number, spur: Set<number>) =>
+    DIRS.every((d) => !spur.has(beside(k, d)) || step(k, d) >= 0);
+
+  // nearest first: every tile a spur may take within the bound, its tiles that far, its way there;
+  // none where the rails of `from` run on to it, or its own rails run on to `from`
+  const start = from.y * w + from.x;
+  const origin = new Set([start]);
+  const prev = new Map<number, number>([[start, -1]]);
+  const tiles = new Map<number, number>([[start, 1]]);
+  const queue = [start];
+  const ends: number[] = [];
+  for (let i = 0; i < queue.length; i++) {
+    const k = queue[i];
+    // beside a road: a spur may end here and join it
+    if (joins(k)) {
+      if (!ends.length) {
+        const first: number[] = [];
+        for (let t = k; t >= 0; t = prev.get(t)!) first.push(t);
+        const on = new Set(first);
+        if (first.every((t) => clear(t, on))) return first.reverse().map(tileOf);
+      }
+      ends.push(k);
+      continue;
     }
-    if (at.tiles >= SPUR_REACH) continue;
+    if (tiles.get(k)! >= SPUR_REACH) continue;
     for (const d of DIRS) {
-      const n = step(at.x, at.y, d);
-      if (!n || prev.has(key(n.x, n.y)) || roads.has(n.x, n.y) || !free(n.x, n.y)) continue;
-      prev.set(key(n.x, n.y), key(at.x, at.y));
-      queue.push({ ...n, tiles: at.tiles + 1 });
+      const n = step(k, d);
+      if (n < 0 || prev.has(n)) continue;
+      const { x, y } = tileOf(n);
+      if (roads.has(x, y) || !clear(n, origin) || !free(x, y)) continue;
+      prev.set(n, k);
+      tiles.set(n, tiles.get(k)! + 1);
+      queue.push(n);
     }
   }
+  if (!ends.length) return null;
+
+  // the fewest tiles still to come after each of those tiles, back from where a spur may end
+  const left = new Map<number, number>(ends.map((k) => [k, 0]));
+  const back = [...ends];
+  for (let i = 0; i < back.length; i++)
+    for (const d of DIRS) {
+      const n = step(back[i], d);
+      if (n < 0 || !prev.has(n) || left.has(n)) continue;
+      left.set(n, left.get(back[i])! + 1);
+      back.push(n);
+    }
+  // every way of at most `most` tiles, each tile's sides in turn: the first that ends wins
+  const way: number[] = [];
+  const laid = new Set<number>();
+  const go = (k: number, most: number): boolean => {
+    way.push(k);
+    laid.add(k);
+    if (left.get(k) === 0) return true;
+    for (const d of DIRS) {
+      const n = step(k, d);
+      const rest = n < 0 || laid.has(n) ? undefined : left.get(n);
+      if (rest === undefined || way.length + 1 + rest > most || !clear(n, laid)) continue;
+      if (go(n, most)) return true;
+    }
+    way.pop();
+    laid.delete(k);
+    return false;
+  };
+  for (let most = 1 + left.get(start)!; most <= SPUR_REACH; most++)
+    if (go(start, most)) return way.map(tileOf);
   return null;
 }

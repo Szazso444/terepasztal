@@ -1328,14 +1328,14 @@ export class Builder {
   /**
    * Lay the road from a street door to the road network, free (D2, the author on 2026-10-14): the
    * spur `findSpur` finds from the door's reach tile to the nearest road of the network
-   * (`network`), at most SPUR_REACH tiles. Every tile of it is one a road could be laid on
-   * (`checkRoad`'s rules, judged tile by tile as if the tiles before it stood, the stock aside), on
-   * land the player owns even where the builder lifts the lock, and off every station's platform
-   * and depot's gates (`spurSite`), which a road to a door never touches (#406 D1). With no road
-   * that near, or none a spur keeping to those rules reaches, the reach tile alone is laid when
-   * `alone` says so, and nothing otherwise. Nothing either when the reach tile holds a road already
-   * or can take none. Each tile laid is told (`onRoadChanged`); nothing is paid. The tiles laid,
-   * the reach tile first.
+   * (`network`), the fewest tiles that keep every rule below, at most SPUR_REACH of them. Every
+   * tile of it is one a road could be laid on (`checkRoad`'s rules, judged tile by tile as if the
+   * tiles before it stood, the stock aside), on land the player owns even where the builder lifts
+   * the lock, and off every station's platform and depot's gates (`spurSite`), which a road to a
+   * door never touches (#406 D1). With no road that near, or none a spur keeping to those rules
+   * reaches, the reach tile alone is laid when `alone` says so, and nothing otherwise. Nothing
+   * either when the reach tile holds a road already or can take none. Each tile laid is told
+   * (`onRoadChanged`); nothing is paid. The tiles laid, the reach tile first.
    */
   private laySpur(
     door: Door,
@@ -1350,7 +1350,8 @@ export class Builder {
     if (!open(reach.x, reach.y)) return [];
     let tiles = findSpur(this.roads, reach, open, this.network(site.reaches));
     if (tiles) {
-      // judged whole: no tile may run along a level crossing another tile of it makes
+      // judged whole once more, by `checkRoad`'s rules: `findSpur` already keeps every tile off
+      // the rails of the spur's own crossings, the one rule a tile of it could break for another
       const tried = this.roads.copy();
       for (const t of tiles) {
         if (!open(t.x, t.y, tried)) {
