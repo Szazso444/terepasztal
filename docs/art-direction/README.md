@@ -462,7 +462,9 @@ the ground. A tile is `[dx, dy]` from the footprint's corner tile (lowest x and 
   generated `windmill_r3`, `warehouse_4`, `farm_2`), the redraw can stand on the other one.
 - `fit`: `walls` when a straight base was found (the two lines that most of the wall columns
   stand on, columns counting for the height of their run, so that a bench, a lamp post or ground
-  paint in front is not taken for a wall); `outline` when no base is long enough and the foot is
+  paint in front is not taken for a wall; the near corner is the base's lowest point, so a column
+  that stands more than 1 world px and half a texel below it, such as a bench against the base, is
+  on neither line); `outline` when no base is long enough and the foot is
   the silhouette's lowest stand on the game's 2:1 (machinery, heaps, a trestle). Treat `outline`
   as approximate. A base whose near corner stands above the anchor, the footprint's centre on the
   ground, is on stilts or a roof, and is passed over for what stands lower (the generated coal

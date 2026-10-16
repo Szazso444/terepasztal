@@ -299,17 +299,20 @@ function footCandidates(frame) {
  * the near corner where the base is, each wall's line pivots on it to the slope in `MEASURE.slope`
  * whose line has most of the wall's columns close to it, the game's 0.5 unless another is clearly
  * better, and is moved to where those columns stand. The near corner is where the two lines meet,
- * and the walls are followed again from there. A gap of more than `MEASURE.gap` world px ends a
- * wall. Texels; null when the base is shorter than `MEASURE.wall` world px, or either wall
- * shorter than `MEASURE.side`.
+ * and the walls are followed again from there. The near corner is the lowest point of the base: a
+ * column that stands more than `MEASURE.tolerance` and half a texel below it is something in front
+ * of the walls (a bench against the base, a lamp post), and is on neither line. A gap of more than
+ * `MEASURE.gap` world px ends a wall. Texels; null when the base is shorter than `MEASURE.wall`
+ * world px, or either wall shorter than `MEASURE.side`.
  */
 function followBase(cand, x0, x1, start, d) {
   const band = Math.max(1, Math.round(MEASURE.follow * d)) + 0.5;
+  const below = Math.max(1, Math.round(MEASURE.tolerance * d)) + 0.5;
   const reach = MEASURE.gap * d;
   /**
    * The columns outward from the near corner `at` that stand on the line of slope `a` through it,
    * moved `down` texels: the nearest candidate of each, `dy` its distance below the line through
-   * the corner itself.
+   * the corner itself. A candidate lower than the corner by more than `below` is none of them.
    */
   const collect = (at, side, a, down = 0) => {
     const slope = side < 0 ? a : -a;
@@ -322,6 +325,7 @@ function followBase(cand, x0, x1, start, d) {
       const y = at[1] + slope * (x + 0.5 - at[0]);
       let near = null;
       for (const c of cand[x]) {
+        if (c.y > at[1] + below) continue;
         const off = Math.abs(c.y - y - down);
         if (off <= band && (!near || off < near.off))
           near = { off, x, y: c.y, dy: c.y - y, run: c.run };
@@ -474,14 +478,17 @@ export function footFits(frame) {
   // lower one, which stands nearer the camera, then the one nearer the middle of the picture, and
   // only then the left one. Nothing before the last depends on which way round the picture is
   // drawn, so that a picture and its mirror image give mirror images of one foot, even where two
-  // volumes look alike.
+  // volumes look alike. The error and the near corner's height are compared to a millionth of a
+  // texel: the mirror image sums the same columns in the other order, and the float noise of that
+  // must not decide between two volumes before their place does.
   const settled = (f) => Math.round(f.error * 1e6);
+  const lowness = (f) => Math.round(f.s[1] * 1e6);
   const middle = (f) => Math.abs((f.xl + f.xr) / 2 - (frame.middle ?? frame.w / 2));
   fits.sort(
     (a, b) =>
       b.score - a.score ||
       settled(a) - settled(b) ||
-      b.s[1] - a.s[1] ||
+      lowness(b) - lowness(a) ||
       middle(a) - middle(b) ||
       a.xl - b.xl,
   );

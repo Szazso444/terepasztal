@@ -1097,17 +1097,30 @@ describe('the foot of a drawn box', () => {
           if (c[key]) yield { ...c, [key]: null };
         yield* shrinkBox(c);
       }
-      forAll(
-        genScene,
-        (c) => {
-          const { frame, truth } = box({ ...c, extra: scenery(c) });
-          const foot = measureFoot(frame);
-          expect(foot?.fit).toBe('walls');
-          for (const corner of ['s', 'w', 'e'])
-            within(foot[corner], truth[corner], 2 * c.k, corner);
-        },
-        { shrink: shrinkScene, seeds: DRAWN, shrinkBudget: SHRINK },
-      );
+      const found = (c) => {
+        const { frame, truth } = box({ ...c, extra: scenery(c) });
+        const foot = measureFoot(frame);
+        expect(foot?.fit).toBe('walls');
+        for (const corner of ['s', 'w', 'e']) within(foot[corner], truth[corner], 2 * c.k, corner);
+      };
+      forAll(genScene, found, { shrink: shrinkScene, seeds: DRAWN, shrinkBudget: SHRINK });
+      // found by review past these seeds (seed 151 of 1 to 400): a lamp post and a bench against
+      // the S wall next to the near corner hide its base there, and the line through the bench's
+      // underside pulled the near corner 2.1 px along the E wall
+      const reviewed = {
+        k: 1,
+        a: 16,
+        b: 16,
+        h: 14,
+        sx: 114,
+        sy: 165,
+        lamp: { x: 107, drop: 3, tall: 49 },
+        bench: { x: 101, drop: 5 },
+        strip: null,
+        shadow: false,
+        chimney: null,
+      };
+      expect(() => found(reviewed), JSON.stringify(reviewed)).not.toThrow();
     },
     SLOW,
   );
@@ -1216,6 +1229,26 @@ describe('the foot of a drawn box', () => {
         for (const key of Object.keys(least))
           for (const v of shrinkInt(c[key], least[key])) yield { ...c, [key]: v };
       }
+      const mirrorsIt = (c) => {
+        const frame = pair(c);
+        const foot = measureFoot(frame);
+        const flipped = measureFoot(mirrored(frame));
+        expect(flipped.fit, 'fit of the mirror image').toBe(foot.fit);
+        for (const [corner, other] of [
+          ['n', 'n'],
+          ['e', 'w'],
+          ['s', 's'],
+          ['w', 'e'],
+        ])
+          within(
+            flipped[other],
+            [frame.w - foot[corner][0], foot[corner][1]],
+            1.5 * c.k,
+            `mirrored ${corner}`,
+          );
+      };
+      // the standard seeds: two equal boxes side by side are rare among the cases, and a cut list
+      // missed seed 66
       forAll(
         (rng) => {
           const a = rng.int(16, 40);
@@ -1230,26 +1263,16 @@ describe('the foot of a drawn box', () => {
             lift: rng.pick([0, 0, 4, 10]),
           };
         },
-        (c) => {
-          const frame = pair(c);
-          const foot = measureFoot(frame);
-          const flipped = measureFoot(mirrored(frame));
-          expect(flipped.fit, 'fit of the mirror image').toBe(foot.fit);
-          for (const [corner, other] of [
-            ['n', 'n'],
-            ['e', 'w'],
-            ['s', 's'],
-            ['w', 'e'],
-          ])
-            within(
-              flipped[other],
-              [frame.w - foot[corner][0], foot[corner][1]],
-              1.5 * c.k,
-              `mirrored ${corner}`,
-            );
-        },
-        { shrink: shrinkPair, seeds: DRAWN, shrinkBudget: SHRINK },
+        mirrorsIt,
+        { shrink: shrinkPair, seeds: SEEDS, shrinkBudget: SHRINK },
       );
+      // found by review (seeds 66 and 160): the near corners of two equal boxes differ by float
+      // noise (3e-14 texels) between the picture and its mirror image, which once chose the box
+      for (const c of [
+        { k: 1, a: 19, b: 19, h: 14, sx: 23, sy: 168, gap: 4, lift: 0 },
+        { k: 1, a: 37, b: 37, h: 14, sx: 43, sy: 178, gap: 3, lift: 0 },
+      ])
+        expect(() => mirrorsIt(c), JSON.stringify(c)).not.toThrow();
     },
     SLOW,
   );
