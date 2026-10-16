@@ -7,12 +7,13 @@ import { Rng } from '../src/engine/rng';
 import { structureFamily, unturnedFrame } from '../src/render/assetScale';
 import { doorsOf, placeSpan } from '../src/sim/doors';
 import { SEEDS, forAll, shrinkInt } from '../src/testing/property';
-import { FIT } from './building-fit.mjs';
+import { FIT, measureBase } from './building-fit.mjs';
 import { ROTATIONS } from './building-kit.mjs';
 import {
   DOOR,
   GROUND_FILE,
   GROUP,
+  MEASURE,
   REACH,
   SOLID,
   atlasFrames,
@@ -97,18 +98,20 @@ function within(p, q, by, label) {
 /**
  * A box standing on the game's ground lines, in a 200 x 200 world px frame at `k` texels per world
  * px: its near corner at (sx, sy), the S wall `a` long to the left of it and the E wall `b` long
- * to the right, `h` high, with a roof of another colour. `doors` are dark openings on a wall,
- * `{ wall: 'S' | 'E', x, width, height, up }`: the centre column, the size and the rise above the
- * foot, in world px. `extra(x, y, ground)` paints over the box and around it: it gets a texel's
- * centre in world px and returns [r, g, b, a], or nothing to leave the texel. `truth` is the foot
- * the box was drawn on, in texels.
+ * to the right, `h` high, with a roof of another colour. `slopes` are the two ground lines' slopes
+ * left and right of the near corner, where a picture is not on the game's 0.5 and 0.5. `doors`
+ * are dark openings on a wall, `{ wall: 'S' | 'E', x, width, height, up }`: the centre column, the
+ * size and the rise above the foot, in world px. `extra(x, y, ground)` paints over the box and
+ * around it: it gets a texel's centre in world px and returns [r, g, b, a], or nothing to leave
+ * the texel. `truth` is the foot the box was drawn on, in texels.
  */
-function box({ k = 1, a, b, h, sx, sy, doors = [], extra, ax = 0, ay = 0 }) {
-  const w = [sx - a, sy - a / 2];
-  const e = [sx + b, sy - b / 2];
-  const n = [w[0] + b, w[1] - b / 2];
-  const low = (x) => (x < sx ? w[1] + (x - w[0]) * 0.5 : sy - (x - sx) * 0.5);
-  const far = (x) => (x < n[0] ? w[1] - (x - w[0]) * 0.5 : n[1] + (x - n[0]) * 0.5);
+function box({ k = 1, a, b, h, sx, sy, slopes = [0.5, 0.5], doors = [], extra, ax = 0, ay = 0 }) {
+  const [sl, sr] = slopes;
+  const w = [sx - a, sy - a * sl];
+  const e = [sx + b, sy - b * sr];
+  const n = [w[0] + b, w[1] - b * sr];
+  const low = (x) => (x < sx ? w[1] + (x - w[0]) * sl : sy - (x - sx) * sr);
+  const far = (x) => (x < n[0] ? w[1] - (x - w[0]) * sr : n[1] + (x - n[0]) * sl);
   const ground = { low, w, e, n, s: [sx, sy] };
   const frame = drawn(
     200 * k,
@@ -403,18 +406,28 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     expect(off, `${off.length} corners off the picture: ${off.slice(0, 5)}`).toEqual([]);
   });
 
-  it("lays the foot on the game's ground lines, near corner lowest", () => {
+  it("lays the foot on ground lines near the game's, near corner lowest", () => {
+    // each wall's slope as the picture draws it, within the range building-fit trusts (the game's
+    // ground is 0.5); a frame whose base the game's own lines fit is on them exactly
+    let sloped = 0;
     for (const [key, e] of Object.entries(data)) {
       const [n, ee, s, w] = e.foot;
-      // a parallelogram whose sides run at 1 to 2 across and down, as the ground does
+      // a parallelogram, so that two opposite walls are as long and as steep as each other
       expect(n[0] + s[0], key).toBeCloseTo(ee[0] + w[0], 1);
       expect(n[1] + s[1], key).toBeCloseTo(ee[1] + w[1], 1);
       expect(w[0], key).toBeLessThan(s[0]);
       expect(s[0], key).toBeLessThan(ee[0]);
-      expect((s[1] - w[1]) / (s[0] - w[0]), key).toBeCloseTo(0.5, 1);
-      expect((s[1] - ee[1]) / (s[0] - ee[0]), key).toBeCloseTo(-0.5, 1);
+      for (const slope of [(s[1] - w[1]) / (s[0] - w[0]), (s[1] - ee[1]) / (ee[0] - s[0])]) {
+        // to the rounding of the two decimals the corners are written in
+        expect(slope, key).toBeGreaterThanOrEqual(MEASURE.slope[0] - 0.02);
+        expect(slope, key).toBeLessThanOrEqual(MEASURE.slope[1] + 0.02);
+        if (Math.abs(slope - 0.5) > 0.02) sloped++;
+      }
       expect(n[1], key).toBeLessThan(s[1]);
     }
+    // most pictures are drawn on the game's lines, and some are not
+    expect(sloped).toBeGreaterThan(0);
+    expect(sloped).toBeLessThan(Object.keys(data).length);
   });
 
   it('names the front wall for the rotation, and whether the camera sees it', () => {
@@ -690,6 +703,9 @@ describe(`the ground data of the ${GROUP} frames`, () => {
       const frame = frames.get(key);
       const d = frame.resolution;
       const [, east, south, west] = e.foot;
+      // each wall's own slope, from its corners
+      const left = (south[1] - west[1]) / (south[0] - west[0]);
+      const right = (south[1] - east[1]) / (east[0] - south[0]);
       let texels = 0;
       for (let y = 0; y < frame.h; y++)
         for (let x = 0; x < frame.w; x++) {
@@ -698,14 +714,75 @@ describe(`the ground data of the ${GROUP} frames`, () => {
           const wy = (y + 0.5 - frame.ay) / d;
           if (wx < west[0] || wx >= east[0]) continue;
           const line =
-            wx < south[0] ? west[1] + (wx - west[0]) * 0.5 : south[1] - (wx - south[0]) * 0.5;
+            wx < south[0] ? west[1] + (wx - west[0]) * left : south[1] - (wx - south[0]) * right;
           if (wy > line + 1.5) texels++;
         }
-      // the tool counts whole columns from the corners outwards: a few texels' difference at most
-      if (Math.abs(texels / (d * d) - e.baked) > 15)
+      // the tool counts whole columns from the corners outwards, and a texel row whose top is
+      // above the line's reach: up to a row of the foot's width and a few texels more
+      const row = (east[0] - west[0]) / d;
+      if (Math.abs(texels / (d * d) - e.baked) > 15 + row)
         off.push(`${key} ${e.baked} / ${texels / d / d}`);
     }
     expect(off, `baked disagrees with a recount: ${off.slice(0, 5)}`).toEqual([]);
+  });
+
+  it(
+    'is the mirror image of its own foot on the mirror image of every frame',
+    () => {
+      // the game's turns `_r1` and `_r3` are mirrors of `_r2` and of the generator's own; a foot
+      // that picked another volume once mirrored would put a yard on the wrong one
+      const flipped = [];
+      for (const key of Object.keys(data)) {
+        const frame = frames.get(key);
+        const foot = measureFoot(frame);
+        const back = measureFoot(mirrored(frame));
+        let worst = foot.fit === back.fit ? 0 : Infinity;
+        for (const [corner, other] of [
+          ['n', 'n'],
+          ['e', 'w'],
+          ['s', 's'],
+          ['w', 'e'],
+        ])
+          worst = Math.max(
+            worst,
+            Math.hypot(
+              back[other][0] - (frame.w - foot[corner][0]),
+              back[other][1] - foot[corner][1],
+            ) / frame.resolution,
+          );
+        if (worst > 0.5) flipped.push(`${key} ${worst.toFixed(1)}`);
+      }
+      expect(
+        flipped,
+        `${flipped.length} feet change with the mirror: ${flipped.slice(0, 5)}`,
+      ).toEqual([]);
+    },
+    SLOW,
+  );
+
+  it('covers most of the base that building-fit measures for each illustrated picture, and no more', () => {
+    // the pipeline lays a picture on its footprint by this base (tools/building-fit.mjs), so it is
+    // the independent measure of how much of the picture stands on the ground. The wall foot may
+    // be shorter where a picture has stretches that are not walls (a conveyor, a cage), and
+    // longer by what the walls reach that the base's own lines do not.
+    const short = [];
+    const long = [];
+    let illustrated = 0;
+    for (const [key, e] of Object.entries(data)) {
+      if (e.source !== 'illustrated') continue;
+      illustrated++;
+      const frame = frames.get(key);
+      const base = measureBase({ width: frame.w, height: frame.h, data: frame.data });
+      const d = frame.resolution;
+      const [from, to] = [e.foot[3][0], e.foot[1][0]].map((x) => frame.ax + x * d);
+      if ((to - from) / (base.e[0] - base.w[0]) < 0.6) short.push(key);
+      if (to - base.e[0] > 20 * d || base.w[0] - from > 20 * d) long.push(key);
+    }
+    expect(illustrated).toBeGreaterThan(50);
+    expect(short.length, `feet under 0.6 of the base: ${short}`).toBeLessThanOrEqual(
+      illustrated * 0.1,
+    );
+    expect(long, 'feet reaching 20 world px past the base').toEqual([]);
   });
 });
 
@@ -845,6 +922,187 @@ describe('the foot of a drawn box', () => {
     },
     SLOW,
   );
+
+  // two equal volumes tie in everything but their place: which one the foot is on must not depend
+  // on which end of the picture is looked at first
+  it(
+    'is the same foot on a picture and on its mirror image, where two volumes look alike',
+    () => {
+      /** two equal boxes `gap` apart, the second `lift` further back */
+      const pair = (c) => {
+        const one = box(c).frame;
+        const two = box({ ...c, sx: c.sx + c.a + c.b + c.gap, sy: c.sy - c.lift }).frame;
+        const data = new Uint8ClampedArray(one.data);
+        for (let i = 0; i < data.length; i += 4)
+          if (two.data[i + 3] >= SOLID && data[i + 3] < SOLID)
+            data.set(two.data.subarray(i, i + 4), i);
+        return { ...one, data };
+      };
+      const least = { k: 1, a: 16, b: 16, h: 14, gap: 2, lift: 0 };
+      function* shrinkPair(c) {
+        for (const key of Object.keys(least))
+          for (const v of shrinkInt(c[key], least[key])) yield { ...c, [key]: v };
+      }
+      forAll(
+        (rng) => {
+          const a = rng.int(16, 40);
+          return {
+            k: rng.pick([1, 2]),
+            a,
+            b: rng.int(16, 40),
+            h: rng.int(14, 60),
+            sx: a + 4,
+            sy: rng.int(150, 180),
+            gap: rng.int(2, 30),
+            lift: rng.pick([0, 0, 4, 10]),
+          };
+        },
+        (c) => {
+          const frame = pair(c);
+          const foot = measureFoot(frame);
+          const flipped = measureFoot(mirrored(frame));
+          expect(flipped.fit, 'fit of the mirror image').toBe(foot.fit);
+          for (const [corner, other] of [
+            ['n', 'n'],
+            ['e', 'w'],
+            ['s', 's'],
+            ['w', 'e'],
+          ])
+            within(
+              flipped[other],
+              [frame.w - foot[corner][0], foot[corner][1]],
+              1.5 * c.k,
+              `mirrored ${corner}`,
+            );
+        },
+        { shrink: shrinkPair, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  // an image generator keeps a camera only near the game's: the picture's own ground lines count
+  it(
+    "finds the whole base of a building drawn on ground lines a little off the game's own",
+    () => {
+      forAll(
+        (rng) => ({
+          ...genBox(rng, [1, 2, 4]),
+          a: rng.int(28, 64),
+          b: rng.int(28, 64),
+          slopes: [rng.int(38, 62) / 100, rng.int(38, 62) / 100],
+        }),
+        (c) => {
+          const { frame, truth } = box(c);
+          const foot = measureFoot(frame);
+          expect(foot?.fit).toBe('walls');
+          for (const corner of ['w', 's', 'e'])
+            within(foot[corner], truth[corner], 2.5 * c.k, `${corner} of ${c.slopes}`);
+        },
+        {
+          shrink: function* (c) {
+            for (const key of ['k', 'a', 'b', 'h'])
+              for (const v of shrinkInt(c[key], { k: 1, a: 28, b: 28, h: 14 }[key]))
+                yield { ...c, [key]: v };
+            if (c.slopes.some((s) => s !== 0.5)) yield { ...c, slopes: [0.5, 0.5] };
+          },
+          seeds: DRAWN,
+          shrinkBudget: SHRINK,
+        },
+      );
+    },
+    SLOW,
+  );
+
+  it(
+    'takes a row of piers for one base, not for one pier',
+    () => {
+      forAll(
+        (rng) => ({
+          k: rng.pick([1, 2]),
+          a: rng.int(30, 60),
+          b: rng.int(30, 60),
+          sx: rng.int(90, 110),
+          sy: rng.int(150, 170),
+          pitch: rng.int(8, 14),
+          tall: rng.int(14, 30),
+        }),
+        (c) => {
+          // posts 3 wide on both ground lines, from the far ends in towards a post at the near
+          // corner, and one at the far corner; nothing else is drawn
+          const posts = [c.sx - 1];
+          for (let x = c.sx - c.a; x < c.sx - 4; x += c.pitch) posts.push(x);
+          for (let x = c.sx + c.b - 3; x > c.sx + 1; x -= c.pitch) posts.push(x);
+          const { frame, truth } = box({
+            ...c,
+            h: 20,
+            extra: (x, y, { low, n }) => {
+              const front = posts.some((p) => x >= p && x < p + 3) && y < low(x);
+              const back = x >= n[0] - 1 && x < n[0] + 2 && y < n[1];
+              const bottom = back ? n[1] : low(x);
+              return (front || back) && y >= bottom - c.tall ? [120, 90, 60, 255] : [0, 0, 0, 0];
+            },
+          });
+          const foot = measureFoot(frame);
+          expect(foot?.fit).toBe('walls');
+          // from the first post to the last, not one stretch of them
+          expect(foot.w[0] / c.k, 'left end').toBeLessThanOrEqual(truth.w[0] / c.k + 2);
+          expect(foot.e[0] / c.k, 'right end').toBeGreaterThanOrEqual(truth.e[0] / c.k - 2);
+          within(foot.s, truth.s, 3 * c.k, 'near corner');
+        },
+        { seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  // the anchor is the footprint's centre on the ground: walls whose near corner stands above it
+  // are on stilts or a roof, and what they stand on is the foot, if the picture shows it
+  it(
+    'gives no foot to walls that stand above the footprint centre, and one to the same walls on it',
+    () => {
+      forAll(
+        genBox,
+        (c) => {
+          const above = measureFoot(box({ ...c, ay: (c.sy + MEASURE.floor + 4) * c.k }).frame);
+          expect(above, 'walls above the anchor').toBeNull();
+          const on = measureFoot(box({ ...c, ay: (c.sy - 8) * c.k }).frame);
+          expect(on?.fit, 'the same walls below it').toBe('walls');
+        },
+        { shrink: shrinkBox, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  it('stands a coal stand on its legs, not on its underside', () => {
+    // a body on four legs 3 wide, its underside `lift` above the ground, the anchor on the ground
+    for (const k of [1, 2, 4]) {
+      const c = { k, a: 14, b: 14, h: 24, sx: 100, sy: 140, lift: 18 };
+      const { frame, truth } = box({
+        ...c,
+        ax: c.sx * k,
+        ay: (c.sy + c.lift - 7) * k,
+        extra: (x, y, { low, n }) => {
+          // the far leg stands behind the near one when the walls are as long
+          const legs = [
+            [c.sx - c.a, low(x)],
+            [c.sx - 1, low(x)],
+            [c.sx + c.b - 3, low(x)],
+            [n[0] - 1, n[1]],
+          ];
+          return legs.some(
+            ([left, under]) => x >= left && x < left + 3 && y < under + c.lift && y >= under - 2,
+          )
+            ? [90, 70, 50, 255]
+            : undefined;
+        },
+      });
+      const foot = measureFoot(frame);
+      // the near corner on the ground, a lift below the body's own
+      within(foot.s, [truth.s[0], truth.s[1] + c.lift * k], 2 * k, `near corner at ${k}`);
+    }
+  });
 });
 
 describe('the doors of a drawn wall', () => {

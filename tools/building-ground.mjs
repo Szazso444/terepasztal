@@ -20,11 +20,15 @@
  *              and y), as `doorsOf` in src/sim/doors.ts counts them. The anchor is the
  *              footprint's centre on the ground.
  *   foot       where its walls meet the ground: the corners n, e, s, w (far, right, near, left)
- *              of a parallelogram on the game's 2:1 ground lines. The two walls the camera
- *              sees run w to s (the S wall) and s to e (the E wall).
+ *              of a parallelogram. Its sides run on the picture's own ground lines, which are
+ *              the game's 2:1 or near it (a slope of 0.33 to 0.67), and it reaches as far along
+ *              the base as the base goes, across the gaps between piers. The two walls the
+ *              camera sees run w to s (the S wall) and s to e (the E wall). Walls whose near
+ *              corner stands above the anchor have no foot (stilts, a roof): what they stand on
+ *              is.
  *   fit        "walls" when the foot is a straight base found in the picture; "outline" when the
  *              picture has no such base (machinery, heaps, a trestle) and the foot is the
- *              silhouette's lowest stand.
+ *              silhouette's lowest stand, on the game's 2:1.
  *   baked      world px squared of opaque pixels below the foot: ground painted into the picture
  *              or what stands in front of the walls; 0 for a clean cut-out.
  *   front      the wall the building's front faces (S, W, N, E for r0 to r3), the two foot
@@ -40,6 +44,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { PNG } from 'pngjs';
 import { isMain } from './is-main.mjs';
+import { FIT } from './building-fit.mjs';
 import { writeWhole } from './building-kit.mjs';
 
 /** Where the data is written. */
@@ -55,8 +60,14 @@ export const REACH = 1;
 export const MEASURE = {
   /** a wall rises at least this far (world px) in one opaque run from its foot */
   run: 8,
-  /** feet this far apart (world px) along the base still belong to one wall */
-  gap: 6,
+  /** feet this far apart (world px) along the base still belong to one wall: a row of piers */
+  gap: 20,
+  /** a wall's base is followed this far (world px) off its line, which the picture may bend */
+  follow: 2,
+  /** a wall's base slopes between these (building-fit's FIT.slope); the game's ground is 0.5 */
+  slope: FIT.slope,
+  /** the slopes tried between them */
+  slopeStep: 0.01,
   /** lowest opaque runs kept per column as candidate feet */
   candidates: 4,
   /** a column counts for as much as its run in world px, up to this */
@@ -65,8 +76,12 @@ export const MEASURE = {
   tolerance: 1,
   /** a straight base shorter than this (world px) is no wall */
   wall: 12,
+  /** and each of the two walls the camera sees is at least this long (world px) */
+  side: 3,
   /** a foot is moved up or down by at most this (world px) to stand on the picture */
   settle: 6,
+  /** its near corner is at most this far (world px) above the anchor, the footprint's centre */
+  floor: 2,
   /** lines that fit the base nearly as well as the best are tried too, this many at most */
   alternatives: 12,
   /** pixels this far (world px) under the foot's lines are below the foot */
@@ -276,12 +291,114 @@ function footCandidates(frame) {
 }
 
 /**
- * The foot of a building in its picture. The base of a wall is a line of slope 1/2 going up and
- * away from the near corner on each side, so the foot is found as the near corner (xs, ys) whose
- * two lines have most wall columns on them, a column counting for the height of its run. The
- * outer corners are where the columns on the lines end. Where no such base is long enough, the
- * silhouette's lowest stand is taken instead (`fit` "outline"): the lowest tight pair of lines
- * over the tall columns. In texels; null for an empty frame.
+ * The base that a start (the near corner `xs`, `ys` of the best stretch of base, texels) belongs
+ * to, followed outward along each wall for as long as it goes on. A picture's ground lines are not
+ * always the game's 2:1 (an image generator is a little off): once the game's own slope has put
+ * the near corner where the base is, each wall's line pivots on it to the slope in `MEASURE.slope`
+ * whose line has most of the wall's columns close to it, the game's 0.5 unless another is clearly
+ * better, and is moved to where those columns stand. The near corner is where the two lines meet,
+ * and the walls are followed again from there. A gap of more than `MEASURE.gap` world px ends a
+ * wall. Texels; null when the base is shorter than `MEASURE.wall` world px, or either wall
+ * shorter than `MEASURE.side`.
+ */
+function followBase(cand, x0, x1, start, d) {
+  const band = Math.max(1, Math.round(MEASURE.follow * d)) + 0.5;
+  const reach = MEASURE.gap * d;
+  /**
+   * The columns outward from the near corner `at` that stand on the line of slope `a` through it,
+   * moved `down` texels: the nearest candidate of each, `dy` its distance below the line through
+   * the corner itself.
+   */
+  const collect = (at, side, a, down = 0) => {
+    const slope = side < 0 ? a : -a;
+    const pts = [];
+    // the columns left of the corner, or right of it: one whose middle is on it is neither's
+    const from = side < 0 ? Math.ceil(at[0] - 0.5) - 1 : Math.floor(at[0] - 0.5) + 1;
+    let last = from - side;
+    for (let x = from; x >= x0 && x <= x1; x += side) {
+      if (Math.abs(x - last) > reach) break;
+      const y = at[1] + slope * (x + 0.5 - at[0]);
+      let near = null;
+      for (const c of cand[x]) {
+        const off = Math.abs(c.y - y - down);
+        if (off <= band && (!near || off < near.off))
+          near = { off, x, y: c.y, dy: c.y - y, run: c.run };
+      }
+      if (near) {
+        pts.push(near);
+        last = x;
+      }
+    }
+    return pts;
+  };
+  const weight = (pts) => pts.reduce((sum, p) => sum + Math.min(p.run, MEASURE.cap * d), 0);
+  /** the same, a column counting the less the further it lies from the line */
+  const closeness = (pts) =>
+    pts.reduce((sum, p) => sum + Math.min(p.run, MEASURE.cap * d) * (1 - (p.off / band) ** 2), 0);
+  /** a slope's columns, the line moved once to where the columns near it stand */
+  const along = (at, side, a) => {
+    const first = collect(at, side, a);
+    if (!first.length) return { a, pts: first, close: 0 };
+    const pts = collect(at, side, a, first.reduce((sum, p) => sum + p.dy, 0) / first.length);
+    return { a, pts, close: closeness(pts) };
+  };
+  /** the slope with the most columns close to its line: the game's own unless another is clearly better */
+  const bestSlope = (at, side, free) => {
+    let best = along(at, side, 0.5);
+    const steps = free ? Math.round(0.5 / MEASURE.slopeStep) : 0;
+    for (let k = 1; k <= steps; k++)
+      for (const a of [0.5 - k * MEASURE.slopeStep, 0.5 + k * MEASURE.slopeStep]) {
+        if (a < MEASURE.slope[0] || a > MEASURE.slope[1]) continue;
+        const found = along(at, side, a);
+        if (found.close > best.close + 0.5 * MEASURE.cap * d) best = found;
+      }
+    return best;
+  };
+  let at = [start.xs, start.ys];
+  let left = [],
+    right = [];
+  let slopes = [0.5, 0.5];
+  // first with the game's slope, to put the near corner where the base is; then the slopes are free
+  for (let round = 0; round < 3; round++) {
+    const free = round > 0;
+    const l = bestSlope(at, -1, free);
+    const r = bestSlope(at, 1, free);
+    left = l.pts;
+    right = r.pts;
+    if (left.length < 4 || right.length < 4) {
+      if (free) break;
+      continue;
+    }
+    slopes = [l.a, r.a];
+    // each line moved to where its columns stand, and the near corner to where the lines meet
+    const shift = (pts) => pts.reduce((sum, p) => sum + p.dy, 0) / pts.length;
+    const lb = at[1] + shift(left) - l.a * at[0];
+    const rb = at[1] + shift(right) + r.a * at[0];
+    const meet = (rb - lb) / (l.a + r.a);
+    if (!Number.isFinite(meet) || meet <= x0 || meet >= x1 + 1) break;
+    at = [meet, lb + l.a * meet];
+  }
+  const xl = left.length ? left[left.length - 1].x : at[0];
+  const xr = right.length ? right[right.length - 1].x + 1 : at[0];
+  if (xr - xl < MEASURE.wall * d || at[0] - xl < MEASURE.side * d || xr - at[0] < MEASURE.side * d)
+    return null;
+  // how far the columns lie from the lines the foot is drawn on, texels each: of fits that cover
+  // as much, the one that sits closer on its base is the better placed
+  const miss = (pts, slope) =>
+    pts.reduce((sum, p) => sum + Math.abs(p.y - (at[1] + slope * (p.x + 0.5 - at[0]))), 0);
+  const error = (miss(left, slopes[0]) + miss(right, -slopes[1])) / (left.length + right.length);
+  return { s: at, slopes, xl, xr, score: weight(left) + weight(right), error };
+}
+
+/**
+ * The fits of a building's foot in its picture, the one that covers most of the base first. The
+ * base of a wall is a line going up and away from the near corner on each side, near the game's
+ * slope of 1/2: the places to look are the near corners (xs, ys) whose two such lines have most
+ * wall columns on them, a column counting for the height of its run, and each is followed along
+ * its base (`followBase`) as far as the base goes. Where no such base is long enough, the
+ * silhouette's lowest stand is added (`fit` "outline"): the lowest tight pair of lines over the
+ * tall columns. Nothing here depends on which way round the picture is drawn. In texels; an empty
+ * list for an empty frame.
  */
 export function footFits(frame) {
   const d = frame.resolution;
@@ -309,7 +426,7 @@ export function footFits(frame) {
     for (let x = x0; x <= x1; x++)
       for (const c of cand[x]) {
         const v = Math.round(lift(c, x, xs)) + span;
-        const weight = Math.min(c.run / d, MEASURE.cap);
+        const weight = Math.min(c.run, MEASURE.cap * d);
         for (let b = v - tol; b <= v + tol; b++)
           if (last[b] !== x) {
             last[b] = x;
@@ -322,58 +439,63 @@ export function footFits(frame) {
         best = { score: bins[b], xs, ys: b - span };
     perColumn.push(best);
   }
-  // the best few, one for each place along the base: a base made of several volumes has several
-  perColumn.sort((a, b) => b.score - a.score || a.xs - b.xs);
+  // the best few, one for each place along the base: a base made of several volumes has several.
+  // Taken by score, a score at a time, so that equal scores neither shadow each other nor depend
+  // on which end of the picture is looked at first: neighbours of one score are one place.
   const picks = [];
-  for (const p of perColumn) {
-    if (picks.length >= MEASURE.alternatives || p.score < perColumn[0].score * 0.5) break;
-    if (picks.every((q) => Math.abs(q.xs - p.xs) > 4 * d || Math.abs(q.ys - p.ys) > 2 * tol))
-      picks.push(p);
+  const levels = [...new Set(perColumn.map((p) => p.score))].sort((p, q) => q - p);
+  for (const score of levels) {
+    if (picks.length >= MEASURE.alternatives || score < levels[0] * 0.5) break;
+    const free = perColumn.filter(
+      (p) =>
+        p.score === score &&
+        picks.every((q) => Math.abs(q.xs - p.xs) > 4 * d || Math.abs(q.ys - p.ys) > 2 * tol),
+    );
+    for (let i = 0; i < free.length;) {
+      let j = i;
+      while (j + 1 < free.length && free[j + 1].xs === free[j].xs + 1) j++;
+      const run = free.slice(i, j + 1);
+      picks.push({
+        score,
+        xs: (run[0].xs + run[run.length - 1].xs) / 2,
+        ys: run.reduce((sum, p) => sum + p.ys, 0) / run.length,
+      });
+      i = j + 1;
+    }
   }
-  const reach = MEASURE.gap * d;
   const fits = [];
   for (const best of picks) {
-    // the columns on the two lines, each with the foot that is on it
-    const onLine = [];
-    for (let x = x0; x <= x1; x++) {
-      let foot = null;
-      for (const c of cand[x]) {
-        const off = Math.abs(lift(c, x, best.xs) - best.ys);
-        if (off <= tol + 0.5 && (!foot || off < foot.off)) foot = { x, y: c.y, off };
-      }
-      if (foot) onLine.push(foot);
-    }
-    // the near corner is where the two lines fitted through those feet meet, not where the
-    // search stood: a line of slope 1/2 through the left feet, one of slope -1/2 through the right
-    const mean = (list, of) => list.reduce((a, p) => a + of(p), 0) / list.length;
-    const left = onLine.filter((p) => p.x + 0.5 <= best.xs);
-    const right = onLine.filter((p) => p.x + 0.5 > best.xs);
-    let xs = best.xs;
-    let ys = best.ys;
-    if (left.length >= 4 && right.length >= 4) {
-      const a = mean(left, (p) => p.y - 0.5 * (p.x + 0.5));
-      const b = mean(right, (p) => p.y + 0.5 * (p.x + 0.5));
-      const meet = b - a;
-      if (meet >= left[0].x && meet <= right[right.length - 1].x + 1) {
-        xs = meet;
-        ys = a + 0.5 * meet;
-      }
-    } else if (onLine.length) ys = mean(onLine, (p) => lift({ y: p.y }, p.x, xs));
-    let xl = xs,
-      xr = xs;
-    for (const p of onLine.filter((q) => q.x + 0.5 <= xs).reverse()) {
-      if (xl - p.x > reach) break;
-      xl = p.x;
-    }
-    let at = xs;
-    for (const p of onLine.filter((q) => q.x + 0.5 > xs)) {
-      if (p.x - at > reach) break;
-      at = p.x;
-      xr = p.x + 1;
-    }
-    if (xr - xl >= MEASURE.wall * d)
-      fits.push({ fit: 'walls', s: [xs, ys], xl, xr, score: best.score });
+    const walls = followBase(cand, x0, x1, best, d);
+    if (walls) fits.push({ fit: 'walls', ...walls });
   }
+  // the fit that covers most of the base first; of equals the one that sits closest on it, then the
+  // lower one, which stands nearer the camera, then the one nearer the middle of the picture, and
+  // only then the left one. Nothing before the last depends on which way round the picture is
+  // drawn, so that a picture and its mirror image give mirror images of one foot, even where two
+  // volumes look alike.
+  const settled = (f) => Math.round(f.error * 1e6);
+  const middle = (f) => Math.abs((f.xl + f.xr) / 2 - frame.w / 2);
+  fits.sort(
+    (a, b) =>
+      b.score - a.score ||
+      settled(a) - settled(b) ||
+      b.s[1] - a.s[1] ||
+      middle(a) - middle(b) ||
+      a.xl - b.xl,
+  );
+  const kept = fits.filter(
+    (f, i) =>
+      !fits
+        .slice(0, i)
+        .some(
+          (g) =>
+            Math.abs(g.xl - f.xl) <= d &&
+            Math.abs(g.xr - f.xr) <= d &&
+            Math.abs(g.s[1] - f.s[1]) <= d,
+        ),
+  );
+  fits.length = 0;
+  fits.push(...kept);
   // where there is no straight base: the tight pair of lines over the tall columns
   const tall = [];
   for (let x = x0; x <= x1; x++) {
@@ -381,12 +503,15 @@ export function footFits(frame) {
     if (c) tall.push({ x, y: c.y });
   }
   if (tall.length < 3) return fits;
+  // the lowest stand: where the lines are lowest, the middle of a stretch of equally low ones
   let tight = null;
   for (let xs = tall[0].x; xs <= tall[tall.length - 1].x + 1; xs++) {
     const v = tall.map((t) => t.y + 0.5 * Math.abs(t.x + 0.5 - xs)).sort((p, q) => p - q);
     const ys = v[Math.floor(v.length * 0.95)];
-    if (!tight || ys < tight.ys) tight = { xs, ys };
+    if (!tight || ys < tight.ys) tight = { from: xs, to: xs, ys };
+    else if (ys === tight.ys) tight.to = xs;
   }
+  tight.xs = (tight.from + tight.to) / 2;
   const trim = Math.floor(tall.length * 0.03);
   fits.push({
     fit: 'outline',
@@ -409,7 +534,7 @@ export function measureFoot(frame) {
   for (const kind of ['walls', 'outline']) {
     let best = null;
     for (const fit of fits.filter((f) => f.fit === kind)) {
-      const settled = settle(frame, fit.s, fit.xl, fit.xr);
+      const settled = settle(frame, fit);
       if (!settled) continue;
       const moved = Math.abs(settled.dy);
       if (moved <= d) return { fit: kind, ...settled };
@@ -421,24 +546,29 @@ export function measureFoot(frame) {
 }
 
 /**
- * The foot's corners for a near corner `s` and outer corners at columns `xl` and `xr`, the whole
- * drawn up or down by at most `MEASURE.settle` world px, and an outer corner in along its line,
- * until every corner stands on the picture, within `REACH` of an opaque texel: the foot is a
- * measure of the base, and a corner off the picture is a measure that missed it. The smallest
- * change wins; null when no change brings the foot onto the picture.
+ * The foot's corners for a fit: its near corner `s`, the slopes of its two walls and its outer
+ * corners at columns `xl` and `xr`, the whole drawn up or down by at most `MEASURE.settle` world
+ * px, and an outer corner in along its line, until every corner stands on the picture, within
+ * `REACH` of an opaque texel: the foot is a measure of the base, and a corner off the picture is a
+ * measure that missed it. The smallest change wins; null when no change brings the foot onto the
+ * picture.
  */
-function settle(frame, s, xl, xr) {
+function settle(frame, { s, xl, xr, slopes = [0.5, 0.5] }) {
   const d = frame.resolution;
+  const [left, right] = slopes;
   const on = (p) => solidGap(frame, p[0], p[1]) <= REACH * d * 0.9;
+  // the anchor is the footprint's centre on the ground: walls whose near corner stands above it
+  // are on stilts or a roof, not on the ground, and drawing them down would be no measure
+  if (s[1] < frame.ay - MEASURE.floor * d) return null;
   const steps = [0];
   for (let i = 1; i <= MEASURE.settle * d; i++) steps.push(-i, i);
   for (const dy of steps) {
     const near = [s[0], s[1] + dy];
     if (!on(near)) continue;
-    let w = [xl, s[1] + dy - 0.5 * (s[0] - xl)];
-    let e = [xr, s[1] + dy - 0.5 * (xr - s[0])];
-    while (!on(w) && w[0] < near[0] - 1) w = [w[0] + 1, w[1] + 0.5];
-    while (!on(e) && e[0] > near[0] + 1) e = [e[0] - 1, e[1] + 0.5];
+    let w = [xl, near[1] - left * (s[0] - xl)];
+    let e = [xr, near[1] - right * (xr - s[0])];
+    while (!on(w) && w[0] < near[0] - 1) w = [w[0] + 1, w[1] + left];
+    while (!on(e) && e[0] > near[0] + 1) e = [e[0] - 1, e[1] + right];
     const far = [w[0] + e[0] - near[0], w[1] + e[1] - near[1]];
     // both walls the camera sees have some length
     const long = near[0] - w[0] >= 2 * d && e[0] - near[0] >= 2 * d;
@@ -455,11 +585,14 @@ function settle(frame, s, xl, xr) {
 export function belowFoot(frame, foot) {
   const { w, h, data, resolution: d } = frame;
   let count = 0;
+  // each wall's own slope: the picture's ground lines are near the game's 2:1, not always on it
+  const left = (foot.s[1] - foot.w[1]) / (foot.s[0] - foot.w[0]);
+  const right = (foot.s[1] - foot.e[1]) / (foot.e[0] - foot.s[0]);
   for (let x = Math.max(0, Math.floor(foot.w[0])); x < Math.min(w, Math.ceil(foot.e[0])); x++) {
-    const left = x + 0.5 < foot.s[0];
-    const line = left
-      ? foot.w[1] + (x + 0.5 - foot.w[0]) * 0.5
-      : foot.s[1] - (x + 0.5 - foot.s[0]) * 0.5;
+    const line =
+      x + 0.5 < foot.s[0]
+        ? foot.w[1] + (x + 0.5 - foot.w[0]) * left
+        : foot.s[1] - (x + 0.5 - foot.s[0]) * right;
     for (let y = Math.max(0, Math.floor(line + MEASURE.below * d)); y < h; y++)
       if (data[(y * w + x) * 4 + 3] >= SOLID) count++;
   }
@@ -585,7 +718,14 @@ export function measureFrame(frame, info, { doorsOf, placeSpan }) {
   if (!foot)
     return { entry: null, notes: ['no foot: the frame has no wall that stands on the ground'] };
   if (foot.fit === 'outline') notes.push('foot: no straight base, the silhouette stands in for it');
-  const baked = Math.round(belowFoot(frame, foot));
+  // counted under the foot as it is written, to two decimals, so that the file says what it counts
+  const written = Object.fromEntries(
+    ['n', 'e', 's', 'w'].map((c) => {
+      const [x, y] = world(foot[c]);
+      return [c, [x * d + frame.ax, y * d + frame.ay]];
+    }),
+  );
+  const baked = Math.round(belowFoot(frame, written));
   if (baked >= MEASURE.baked)
     notes.push(`baked ground: ${baked} world px² opaque below the foot (a yard, a pond, props)`);
 

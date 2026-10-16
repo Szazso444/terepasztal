@@ -36,7 +36,11 @@ export interface FrameGround {
   rot: 0 | 1 | 2 | 3;
   /** the tiles it covers, [dx, dy] from the footprint's corner tile (lowest x and y) */
   footprint: Point[];
-  /** where its walls meet the ground: the far, right, near and left corners (n, e, s, w) */
+  /**
+   * where its walls meet the ground: the far, right, near and left corners (n, e, s, w) of a
+   * parallelogram on the picture's own ground lines, a slope of 0.33 to 0.67 (the game's is 0.5),
+   * as far along the base as the base goes
+   */
   foot: [Point, Point, Point, Point];
   /** `walls` for a straight base found in the picture, `outline` for the silhouette's lowest stand */
   fit: 'walls' | 'outline';
@@ -53,9 +57,12 @@ export interface FrameGround {
 
 const FRAMES = (GROUND as unknown as { frames: Record<string, FrameGround> }).frames;
 
-/** The ground data of an atlas frame key (`structures/farm_1`), or undefined for any other frame. */
+/**
+ * The ground data of an atlas frame key (`structures/farm_1`), or undefined for any other frame:
+ * only the file's own keys count, not the names every object has (`constructor`, `toString`).
+ */
 export function groundOf(frame: string): FrameGround | undefined {
-  return FRAMES[frame];
+  return Object.hasOwn(FRAMES, frame) ? FRAMES[frame] : undefined;
 }
 
 /** Every frame that has ground data. */

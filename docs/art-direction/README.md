@@ -431,8 +431,10 @@ node tools/building-ground.mjs --check    # say whether the file is what the fra
 Run it again after changing a generator, `public/assets/structures.*` or a place's `doors` in
 `src/data`. A run with nothing changed writes the same bytes. `tools/building-ground.test.mjs`
 fails when a building frame has no entry, when a corner of an entry's foot lies more than 1 world
-px off the frame's opaque pixels, when a door disagrees with `doorsOf` (`src/sim/doors.ts`), and
-when the file is not what the tool writes now.
+px off the frame's opaque pixels, when a door disagrees with `doorsOf` (`src/sim/doors.ts`), when
+the foot of a frame and of its mirror image are not mirror images, when an illustrated picture's
+foot covers little of the base that `tools/building-fit.mjs` measures for it, and when the file is
+not what the tool writes now.
 
 An entry, keyed by frame (`structures/farm_1`, `structures/depot_r1_r3`). Every point is in
 **world px from the frame's anchor** (texels over the atlas's `resolution`, x right, y down),
@@ -445,15 +447,25 @@ the ground. A tile is `[dx, dy]` from the footprint's corner tile (lowest x and 
   the frame shows, 0 to 3 (a depot's `_r<axis>` frame is rotation 0 or 1, `_r2`/`_r3` turn it).
 - `footprint`: the tiles it covers at that rotation.
 - `foot`: where its walls meet the ground, the corners n, e, s, w (far, right, near, left) of a
-  parallelogram on the game's 2:1 ground lines. The camera sees the S wall (w to s) and the E
-  wall (s to e). Each corner lies on the picture's opaque pixels, within 1 world px.
+  parallelogram. Its sides run on the picture's own ground lines: the game's 2:1 or near it (a
+  slope of 0.33 to 0.67, the range `tools/building-fit.mjs` trusts), because an image generator
+  keeps the camera only near the game's. It reaches as far along the base as the base goes,
+  across the gaps between the piers of a trestle (up to 20 world px), and no further. The camera
+  sees the S wall (w to s) and the E wall (s to e). Each corner lies on the picture's opaque
+  pixels, within 1 world px. Where a picture has stretches that are not walls (a conveyor, a
+  cage, steps), the foot is the walls' base and stops short of them, so it can be off the anchor
+  by what the picture is off its footprint.
 - `fit`: `walls` when a straight base was found (the two lines that most of the wall columns
   stand on, columns counting for the height of their run, so that a bench, a lamp post or ground
   paint in front is not taken for a wall); `outline` when no base is long enough and the foot is
-  the silhouette's lowest stand (machinery, heaps, a trestle). Treat `outline` as approximate.
+  the silhouette's lowest stand on the game's 2:1 (machinery, heaps, a trestle). Treat `outline`
+  as approximate. A base whose near corner stands above the anchor, the footprint's centre on the
+  ground, is on stilts or a roof, and is passed over for what stands lower (the generated coal
+  stand `fuel_stop_r1` to `_r3` stands on its legs).
 - `baked`: world px squared of opaque pixels below the foot between its outer corners: ground
-  painted into the picture (a yard, a pond, a field) or what stands in front of the walls. 0 for
-  a clean cut-out. A yard drawn by the renderer would double a baked one.
+  painted into the picture (a yard, a pond, a field) or what stands in front of the walls (a
+  conveyor, a cage, steps), counted below the foot as written in the entry. 0 for a clean
+  cut-out. A yard drawn by the renderer would double a baked one.
 - `front`: the wall the building's front faces (S, W, N, E for r0 to r3), its two foot corners in
   tile order, and whether the camera sees it (`visible`).
 - `doors`: only the doors the picture shows. Kind, tile, side and `reach` come from `doorsOf`
@@ -467,7 +479,8 @@ the ground. A tile is `[dx, dy]` from the footprint's corner tile (lowest x and 
 The findings the tool prints are what the pictures do not give or disagree on: a door of the data
 that is not seen, a door that stands off the middle of its tile, a door-shaped opening where the
 data has no door, a foot that is `outline`, and ground baked into a picture. The illustrated
-frames are drawn as cut-outs, so ground painted into the picture is a mark of the generators.
+frames are drawn as cut-outs, so ground painted into the picture is a mark of the generators; in
+an illustrated frame `baked` is what stands in front of the walls.
 A door is found as a run of columns on the wall that differ from the wall's own colour at that
 height, as tall and as wide as a door and standing near the foot. That is a heuristic: a door can
 go unseen (a canopy over it, a plinth under it), and where the door is hidden the opening nearest
@@ -477,4 +490,5 @@ the middle of its tile can be a window or an arch of a door's size.
 walls the camera sees in magenta, the two it does not in cyan, the front wall in orange, each
 door in green, the anchor in red) into `scratchpad/building-ground/`, which is where a listed
 door and a foot are checked by eye. `scratchpad/building-ground-findings.txt` is the full list of
-findings for the pictures as they were when the data was first written (#435).
+findings (`--all`) for the pictures and the measure as they stand with the data committed (#435);
+it is a snapshot, and the tool prints the current one.

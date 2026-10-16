@@ -36,6 +36,12 @@ describe('the ground data reader', () => {
       expect(groundOf(key), key).toBeUndefined();
   });
 
+  it('gives nothing for a name every object has, as a frame key never is one', () => {
+    // the file is a plain object: a lookup by key finds the names it inherits
+    for (const key of Object.getOwnPropertyNames(Object.prototype).concat(['__proto__']))
+      expect(groundOf(key), key).toBeUndefined();
+  });
+
   it('keeps the shape the types promise, in every entry', () => {
     for (const key of KEYS) {
       const e = FILE[key];
