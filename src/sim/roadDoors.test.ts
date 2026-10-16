@@ -791,6 +791,8 @@ function broken(w: World): string {
 }
 
 describe('every spur', () => {
+  // slow: seeded sites of builder steps, every spur checked rule by rule, 1 s alone; the limit is
+  // room for a busy machine
   it('keeps every rule a road keeps, from the door to a road, off every platform', () => {
     /** spurs of more than one tile, spur tiles on track (level crossings), spurs a road brought */
     const seen = { spurs: 0, crossings: 0, near: 0 };
@@ -896,7 +898,7 @@ describe('every spur', () => {
     expect(seen.spurs).toBeGreaterThanOrEqual(50);
     expect(seen.crossings).toBeGreaterThanOrEqual(3);
     expect(seen.near).toBeGreaterThanOrEqual(10);
-  });
+  }, 30_000);
 });
 
 // ------------------------------------------------------------------ the spur against an exhaustive search
@@ -1189,6 +1191,8 @@ function stockUp(w: World) {
 }
 
 describe('every spur, against an exhaustive search', () => {
+  // slow: seeded boxes of builder steps, every spur checked against a search, 0.7 s alone; the
+  // limit is room for a busy machine
   it('is the fewest tiles a legal spur takes, or no road where none is; only the price is paid', () => {
     /**
      * spurs of more than one tile, of SPUR_REACH tiles, over track, brought by a road laid; doors
@@ -1289,7 +1293,7 @@ describe('every spur, against an exhaustive search', () => {
     expect(seen.beyond).toBeGreaterThanOrEqual(5);
     expect(seen.crossings).toBeGreaterThanOrEqual(8);
     expect(seen.near).toBeGreaterThanOrEqual(25);
-  });
+  }, 30_000);
 
   it('is laid where the first of the shortest ways would run along a line the spur crosses', () => {
     // A line ends at (23, 7), a straight east to west; a water tower at (24, 8) faces north, so its

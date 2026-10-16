@@ -742,6 +742,8 @@ function broken(w: ReturnType<typeof site>): string {
 }
 
 describe('roads, whatever is built in whatever order', () => {
+  // slow: seeded sites of builder steps, the roads judged after each, 0.6 s alone; the limit is
+  // room for a busy machine
   it('cross only plain straights of regular or narrow track at right angles, off every footprint', () => {
     forAll(
       genOps,
@@ -763,8 +765,10 @@ describe('roads, whatever is built in whatever order', () => {
       },
       { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
     );
-  });
+  }, 30_000);
 
+  // slow: seeded sites of builder steps, the roads compared after each, 0.8 s alone; the limit is
+  // room for a busy machine
   it('change only by a road laid or taken up, or by the spur of a place placed, which moves the version on and tells the game once a tile', () => {
     // A renderer keeps what it drew until `version` moves (#309, #329) and redraws the tile
     // `onRoadChanged` names: a change that moved neither would leave a stale picture, and one
@@ -811,7 +815,7 @@ describe('roads, whatever is built in whatever order', () => {
       },
       { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
     );
-  });
+  }, 30_000);
 });
 
 // ------------------------------------------------------------------ the save
