@@ -1563,6 +1563,79 @@ function genPatch(rng: Rng): SpurPatch {
     }
   return { w, h, from, rails, roads, closed, anyRoad: rng.chance(0.3) };
 }
+/**
+ * A seeded patch round a hook, where the fewest steps run along the rails of the spur's own
+ * crossing: a line of plain straights ends on a tile P, its rails running on to the tile A beyond
+ * that end, and the start lies further along that way. A wall, closed tiles or roads of no network,
+ * shuts the side of the line the network lies on from the patch's edge to A's row, so the way
+ * crosses on P, or further along the line, or goes round its far end. Stepping on to A and round
+ * it to P is as short as stepping aside before A, so the first of the shortest ways judged step by
+ * step often runs through A, and the spur is another of that length, a longer one, or none.
+ * Drawn north to south, then mirrored or not and turned to any of the four rotations, with
+ * straights, closed tiles and roads scattered over the rest.
+ */
+function genHookPatch(rng: Rng): SpurPatch {
+  const w = rng.int(4, 8);
+  const h = rng.int(4, Math.min(8, Math.floor(48 / w)));
+  const px = rng.int(1, w - 2);
+  const py = rng.int(2, h - 1);
+  const kept = new Set<string>();
+  const keep = (x: number, y: number) => kept.add(`${x},${y}`);
+  const rails: SpurPatch['rails'] = [];
+  const roads: SpurPatch['roads'] = [];
+  const closed: SpurPatch['closed'] = [];
+  // the line, from P south
+  for (let y = py; y < h && (y === py || rng.chance(0.6)); y++) {
+    rails.push({ x: px, y, ns: true });
+    keep(px, y);
+  }
+  // the start north of A, the way down to A open, and the tiles west of A and P
+  const from = { x: px, y: rng.int(0, py - 2) };
+  for (let y = from.y; y < py; y++) keep(px, y);
+  keep(px - 1, py - 1);
+  keep(px - 1, py);
+  // the wall east of the start and A
+  for (let y = 0; y < py; y++) {
+    keep(px + 1, y);
+    if (rng.chance(0.5)) closed.push({ x: px + 1, y });
+    else roads.push({ x: px + 1, y, net: false });
+  }
+  // a network road east of the line, level with P or south of it
+  const net = { x: rng.int(px + 1, w - 1), y: rng.int(py, h - 1) };
+  roads.push({ ...net, net: true });
+  keep(net.x, net.y);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (kept.has(`${x},${y}`)) continue;
+      const r = rng.next();
+      if (r < 0.08) rails.push({ x, y, ns: rng.chance(0.5) });
+      else if (r < 0.14) closed.push({ x, y });
+      else if (r < 0.18) roads.push({ x, y, net: rng.chance(0.5) });
+    }
+  // mirrored east to west or not, then turned a quarter clockwise `turns` times
+  const mirror = rng.chance(0.5);
+  const turns = rng.int(0, 3);
+  const odd = turns % 2 === 1;
+  const place = <T extends { x: number; y: number }>(t: T): T => {
+    let x = mirror ? w - 1 - t.x : t.x;
+    let y = t.y;
+    let tall = h;
+    for (let i = 0; i < turns; i++) {
+      [x, y] = [tall - 1 - y, x];
+      tall = tall === h ? w : h;
+    }
+    return { ...t, x, y };
+  };
+  return {
+    w: odd ? h : w,
+    h: odd ? w : h,
+    from: place(from),
+    rails: rails.map((r) => ({ ...place(r), ns: r.ns !== odd })),
+    roads: roads.map(place),
+    closed: closed.map(place),
+    anyRoad: false,
+  };
+}
 /** The patches are small and quick: four hundred of them, so the bound is met often enough. */
 const PATCH_SEEDS = Array.from({ length: 400 }, (_, i) => i + 1);
 function* shrinkPatch(c: SpurPatch): Iterable<SpurPatch> {
@@ -1661,6 +1734,85 @@ function spurFault(c: SpurPatch, spur: { x: number; y: number }[]): string {
   return '';
 }
 
+/** The sides a path's steps leave through, in turn. */
+const stepsOf = (path: { x: number; y: number }[]): Dir[] =>
+  path
+    .slice(1)
+    .map((t, i) =>
+      DIRS.find((d) => path[i].x + DIR_DX[d] === t.x && path[i].y + DIR_DY[d] === t.y)!,
+    );
+
+/**
+ * The first of the spurs with the fewest tiles from the patch's start, by exhaustive search over
+ * every simple path of at most `bound` tiles, and how many spurs have that many tiles. Of spurs
+ * alike in length the first is the one whose steps come first, compared in turn, a step's side
+ * ranked N, E, S, W. `whole` judges a path as `fewestByHand` does: no tile of it shares a side
+ * either tile's rails run through with any other tile of it. Otherwise only each step is judged,
+ * across a side no rails of either tile run through, the rule `findSpur` kept before it judged a
+ * spur whole. A path that could not end within the bound, or in as few tiles as the best found, is
+ * cut by the Manhattan distance to the nearest network road. Null and 0 when there is none.
+ */
+function firstShortestByHand(c: SpurPatch, bound: number, whole: boolean) {
+  const { at, net, across, joins, open } = patchRules(c);
+  const goals = [...net].map((k) => k.split(',').map(Number));
+  /** the fewest tiles still to come after (x, y), which joins no network road: one at least */
+  const left = (x: number, y: number) =>
+    Math.max(1, Math.min(...goals.map(([gx, gy]) => Math.abs(gx - x) + Math.abs(gy - y))) - 1);
+  /** `a` comes before `b`, both of one length, by their steps in turn */
+  const before = (a: { x: number; y: number }[], b: { x: number; y: number }[]) => {
+    const sa = stepsOf(a);
+    const sb = stepsOf(b);
+    const i = sa.findIndex((d, j) => d !== sb[j]);
+    return i >= 0 && sa[i] < sb[i];
+  };
+  let first: { x: number; y: number }[] | null = null;
+  let count = 0;
+  const path: { x: number; y: number }[] = [];
+  const on = new Set<string>();
+  const visit = (x: number, y: number) => {
+    path.push({ x, y });
+    on.add(at(x, y));
+    const n = path.length;
+    if (joins(x, y)) {
+      if (!first || n < first.length) {
+        first = [...path];
+        count = 1;
+      } else if (n === first.length) {
+        count++;
+        if (before(path, first)) first = [...path];
+      }
+    } else if (n + left(x, y) <= bound && (!first || n + left(x, y) <= first.length)) {
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d];
+        const ny = y + DIR_DY[d];
+        if (!open(nx, ny) || on.has(at(nx, ny)) || !across(x, y, d)) continue;
+        const clear = DIRS.every(
+          (e) => !on.has(at(nx + DIR_DX[e], ny + DIR_DY[e])) || across(nx, ny, e),
+        );
+        if (!whole || clear) visit(nx, ny);
+      }
+    }
+    path.pop();
+    on.delete(at(x, y));
+  };
+  if (goals.length) visit(c.from.x, c.from.y);
+  return { first: first as { x: number; y: number }[] | null, count };
+}
+
+/** Ask `findSpur` for the patch's spur, its rails laid as regular straights. */
+function patchSpur(c: SpurPatch) {
+  const track = new TrackGraph(c.w, c.h);
+  for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+  const roads = new Roads(track);
+  for (const r of c.roads) roads.add(r.x, r.y);
+  const { at, net } = patchRules(c);
+  const closed = new Set(c.closed.map((t) => at(t.x, t.y)));
+  const free = (x: number, y: number) => !closed.has(at(x, y));
+  return c.anyRoad
+    ? findSpur(roads, c.from, free)
+    : findSpur(roads, c.from, free, (x, y) => net.has(at(x, y)));
+}
+
 describe('the spur search', () => {
   it('finds as few tiles as an exhaustive search, and none exactly when no spur is within SPUR_REACH', () => {
     /** spurs exactly SPUR_REACH long; patches whose network is only further; spurs over rails */
@@ -1701,6 +1853,47 @@ describe('the spur search', () => {
     expect(seen.atBound).toBeGreaterThanOrEqual(8);
     expect(seen.beyond).toBeGreaterThanOrEqual(20);
     expect(seen.crossings).toBeGreaterThanOrEqual(20);
+  });
+
+  it('gives, of the spurs with the fewest tiles, the first by its steps, a step’s side ranked N, E, S, W', () => {
+    // each generator with what its cases must show at least, so the property is not vacuous: the
+    // patches break ties, and the hooks often need the spur judged whole, at times to SPUR_REACH
+    for (const [name, gen, least] of [
+      ['patch', genPatch, { ties: 20 }],
+      ['hook', genHookPatch, { ties: 100, whole: 70, longer: 10, atBound: 2, none: 5 }],
+    ] as const) {
+      /**
+       * patches with more than one spur of the fewest tiles; patches where the first of the
+       * shortest ways judged step by step breaks the rule whole, the case judging a spur whole
+       * changes, and of those where the spur is longer, where it is SPUR_REACH tiles, and where
+       * there is none
+       */
+      const seen = { ties: 0, whole: 0, longer: 0, atBound: 0, none: 0 };
+      forAll(
+        gen,
+        (c) => {
+          const spur = patchSpur(c);
+          const want = firstShortestByHand(c, SPUR_REACH, true);
+          expect(spur, `${name}: ${want.count} spurs of the fewest tiles`).toEqual(want.first);
+          if (want.count > 1) seen.ties++;
+          // a spur judged whole is one judged step by step: with no way that keeps the steps, none
+          const stepwise = firstShortestByHand(c, SPUR_REACH, false).first;
+          if (!stepwise) return;
+          // where the first way judged step by step keeps the rule whole, it is the spur
+          if (!spurFault(c, stepwise)) {
+            expect(spur, `${name}: the first way judged step by step`).toEqual(stepwise);
+            return;
+          }
+          seen.whole++;
+          if (!spur) seen.none++;
+          else if (spur.length > stepwise.length) seen.longer++;
+          if (spur?.length === SPUR_REACH) seen.atBound++;
+        },
+        { shrink: shrinkPatch, seeds: PATCH_SEEDS },
+      );
+      for (const [what, n] of Object.entries(least))
+        expect(seen[what as keyof typeof seen], `${name}: ${what}`).toBeGreaterThanOrEqual(n);
+    }
   });
 
   it('gives the same spur every time it is asked, and leaves the roads as they were', () => {
