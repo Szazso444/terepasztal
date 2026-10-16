@@ -237,6 +237,24 @@ describe("a road drag's preview against its release", () => {
     expect(placed).toEqual(c.steps.map((s) => s.state === 'lay'));
   });
 
+  it('names what the whole drag is short of, when the stock pays for none of it', () => {
+    const map = emptyMap(7, W, W, Terrain.Grass);
+    const regions = new RegionState(map);
+    regions.load([true, false, false, false]);
+    const stock = new Stockpile();
+    const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), stock);
+    const tiles = strokeTiles({ x: 2, y: 2 }, { x: 7, y: 2 });
+    // each tile alone is refused for its price
+    for (const t of tiles) expect(builder.checkRoad(t.x, t.y).ok).toBe(false);
+    const c = judgeStroke(tiles, builderJudge(builder));
+    expect(c.laid).toBe(0);
+    expect(c.refused).toBe(tiles.length);
+    const whole: Cost = {};
+    for (const [k, v] of Object.entries(roadCost())) whole[k] = v * tiles.length;
+    expect(c.reasons).toEqual([STR.build.needResources(fmtCost(stock.missing(whole)))]);
+    expect(tiles.map((t) => builder.placeRoad(t.x, t.y))).toEqual(tiles.map(() => false));
+  });
+
   it('costs what a road costs a tile, times the tiles', () => {
     const map = emptyMap(7, W, W, Terrain.Grass);
     const regions = new RegionState(map);
