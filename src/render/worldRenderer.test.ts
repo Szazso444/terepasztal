@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   Container,
   Graphics,
@@ -11,8 +11,12 @@ import {
 } from 'pixi.js';
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import { Dir, ELEV_PX, depthKey, tileToWorld } from '../engine/iso';
+import type { Rng } from '../engine/rng';
+import type { Game } from '../game';
+import { DEFAULT_RULES, rules } from '../sim/rules';
 import { harvestBreakdown } from '../sim/stations';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
+import { simWorld, type SimWorld } from '../testing/simWorld';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
@@ -30,6 +34,7 @@ import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
 import { buildRelief, groundAllows } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
+import { PAVING_FRINGE, TownPaving } from './townPaving';
 import { WATERLINE } from './bridgeMeshes';
 import { WorldRenderer } from './worldRenderer';
 
@@ -122,6 +127,7 @@ function renderer() {
     objects,
     contactGround,
     city: new Set(),
+    doorsteps: [],
     propTint: 0xffffff,
     structures: new Map(),
     structureAnchors: new Map(),
@@ -1342,3 +1348,288 @@ describe('textured bridges over the painted water', () => {
     );
   }, 20_000);
 });
+
+describe('the town paving handed to the painter', () => {
+  /** A world renderer on a 4 x 4 map with only what `setCity` touches. */
+  function paver() {
+    const handed: (readonly number[])[] = [],
+      repainted: string[] = [];
+    const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
+    Object.assign(world, {
+      map: emptyMap(3, 4, 4),
+      city: new Set(),
+      doorsteps: [],
+      groundFits: new Map(),
+      groundSprites: [],
+      texturedParts: new Map(),
+      landscape: {
+        setCity: (_tiles: Set<number>, steps: readonly number[]) => handed.push(steps),
+        invalidate: (x: number, y: number) => repainted.push(`${x},${y}`),
+      },
+      refreshScatter: () => {},
+    });
+    return { world, handed, repainted };
+  }
+  const tiles = new Set([5, 6]);
+  const doors = [
+    { tile: { x: 1, y: 1 }, side: Dir.S },
+    { tile: { x: 3, y: 3 }, side: Dir.N },
+  ];
+
+  it('hands over a doorstep for each door on a paved tile, and repaints only where one changes', () => {
+    const { world, handed, repainted } = paver();
+    world.setCity(tiles, doors);
+    // the door on paved tile 1,1 faces south; the one on 3,3 stands on bare ground
+    expect(handed.at(-1)).toEqual([1, 1.56, 0.17, 0.2]);
+    expect(repainted).toEqual(expect.arrayContaining(['1,1', '2,1', '1,2']));
+    repainted.length = 0;
+    world.setCity(new Set(tiles), doors);
+    expect(repainted).toEqual([]);
+    world.setCity(new Set(tiles));
+    expect(handed.at(-1)).toEqual([]);
+    expect(repainted.sort()).toEqual(['1,1', '1,2']);
+  });
+});
+
+describe('the paving of a town the simulation raises, as the game hands it over', () => {
+  /** The game's prototype, for its `refreshCity`. */
+  let GameClass: typeof Game;
+  // Slow: loads the whole game, every domain and screen (about four seconds alone). Loaded here,
+  // not with the file, so the rest of the file does not depend on it.
+  beforeAll(async () => {
+    GameClass = (await import('../game')).Game;
+  }, 90_000);
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      throw new Error('the town drew from Math.random');
+    });
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  /** Side of the grass map, and the town hall's tile in its middle (its platform track south). */
+  const SIZE = 28,
+    HALL = { x: 14, y: 14 };
+  /** Places with a street door besides the houses: decor (service stops) and a works with a crew. */
+  const PLACES = ['water_tower', 'fuel_stop', 'windmill'] as const;
+  /** What one round of the town's life does, in order. */
+  type Op =
+    // a house on the tile, turned `rot`; one already standing there only takes on the state
+    | { op: 'house'; x: number; y: number; rot: number; built: boolean; residents: number }
+    | { op: 'place'; id: (typeof PLACES)[number]; x: number; y: number; rot: number }
+    // what stands on the tile comes down
+    | { op: 'remove'; x: number; y: number; rot: number };
+  /** The rounds of a town's life; the game refreshes its paving after each. */
+  type Plan = Op[][];
+
+  function plan(rng: Rng): Plan {
+    const spot = () => ({
+      x: rng.int(HALL.x - 7, HALL.x + 7),
+      y: rng.int(HALL.y - 7, HALL.y + 7),
+      rot: rng.int(0, 3),
+    });
+    const house = (built: number): Op => ({
+      op: 'house',
+      ...spot(),
+      built: rng.chance(built),
+      residents: rng.int(0, 140),
+    });
+    const first = Array.from({ length: rng.int(8, 22) }, () => house(0.85));
+    for (let n = rng.int(0, 3); n > 0; n--)
+      first.push({ op: 'place', id: rng.pick(PLACES), ...spot() });
+    // later rounds: houses raised (most not finished yet, so the paving stays), grown, pulled down
+    const later = () =>
+      Array.from({ length: rng.int(1, 12) }, (): Op =>
+        rng.chance(0.2) ? { op: 'remove', ...spot() } : house(0.2),
+      );
+    return [first, later(), later()];
+  }
+  const shrinkPlan = (p: Plan): Iterable<Plan> => shrinkArray(p, (round) => shrinkArray(round));
+
+  function act(w: SimWorld, o: Op) {
+    const b = w.builder;
+    if (o.op === 'remove') {
+      if (!b.removeDecor(o.x, o.y)) b.removeBuilding(o.x, o.y);
+    } else if (o.op === 'place') {
+      if (o.id === 'windmill') b.placeBuilding(o.x, o.y, o.id, o.rot);
+      else b.spawnDecor(o.x, o.y, o.id, o.rot);
+    } else {
+      b.spawnDecor(o.x, o.y, 'townhouse', o.rot);
+      const house = w.houses.at(o.x, o.y);
+      if (!house) return;
+      house.progress = o.built ? 1 : 0.5;
+      house.residents = o.residents;
+    }
+  }
+
+  /** What the world renderer handed its landscape at one refresh, and the tiles it repainted. */
+  interface Handed {
+    tiles: ReadonlySet<number>;
+    steps: readonly number[];
+    repainted: ReadonlySet<number>;
+  }
+  /**
+   * The town of `p` on a grass map, its hall on a straight track piece and each round's changes
+   * made through the builder. After each round the game's own `refreshCity` (src/game.ts) runs, on
+   * a game holding only what it reads, and hands the paving to a world renderer whose landscape
+   * records what it is given and where it is told to repaint. `look` sees the world and the
+   * hand-offs so far after each round.
+   */
+  function live(p: Plan, look: (w: SimWorld, handed: readonly Handed[]) => void) {
+    const w = simWorld({ terrain: 'grass', size: SIZE });
+    w.builder.free = true;
+    if (!w.builder.placeTrackKind(HALL.x, HALL.y + 1, 'straight', 1)) throw new Error('no track');
+    if (!w.builder.placeStation(HALL.x, HALL.y, 'town', 0)) throw new Error('no town hall');
+    w.towns.refresh();
+    const handed: Handed[] = [];
+    let given: Omit<Handed, 'repainted'>[] = [],
+      repainted = new Set<number>();
+    const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
+    Object.assign(world, {
+      map: w.map,
+      city: new Set(),
+      doorsteps: [],
+      groundFits: new Map(),
+      groundSprites: [],
+      texturedParts: new Map(),
+      landscape: {
+        setCity: (tiles: ReadonlySet<number>, steps: readonly number[]) =>
+          given.push({ tiles, steps }),
+        invalidate: (x: number, y: number) => repainted.add(y * SIZE + x),
+      },
+      refreshScatter: () => {},
+    });
+    const game = Object.create(GameClass.prototype) as Game;
+    Object.assign(game, {
+      map: w.map,
+      houses: w.houses,
+      towns: w.towns,
+      builder: w.builder,
+      world,
+    });
+    for (const round of p) {
+      for (const o of round) act(w, o);
+      (game as unknown as { refreshCity(): void }).refreshCity();
+      expect(given, 'one hand-off a refresh').toHaveLength(1);
+      handed.push({ ...given[0], repainted });
+      given = [];
+      repainted = new Set();
+      look(w, handed);
+    }
+  }
+  /** The paving the paint workers build from a hand-off (landscape.worker.ts). */
+  const pavingOf = (w: SimWorld, h: Handed) =>
+    new TownPaving(SIZE, SIZE, w.map.originX, w.map.originY, h.tiles, h.steps);
+
+  // Slow: raises a hundred towns over three rounds each (about half a second alone).
+  it('lays a doorstep out toward the reach of each street door the builder lists on the paving, none off it', () => {
+    let bare = 0,
+      off = 0;
+    forAll(
+      plan,
+      (p) =>
+        live(p, (w, handed) => {
+          const { tiles, steps } = handed.at(-1)!,
+            paving = pavingOf(w, handed.at(-1)!),
+            doors = w.builder.streetDoors(),
+            on = doors.filter((d) => tiles.has(d.tile.y * SIZE + d.tile.x));
+          off += doors.length - on.length;
+          expect(steps.length, 'four numbers a doorstep, one for each door on the paving').toBe(
+            on.length * 4,
+          );
+          for (const d of on) {
+            if (!tiles.has(d.reach.y * SIZE + d.reach.x)) bare++;
+            // from the middle of the door's side out toward the middle of the tile it reaches
+            for (const t of [0.5, 0.6, 0.66]) {
+              const x = d.tile.x + (d.reach.x - d.tile.x) * t,
+                y = d.tile.y + (d.reach.y - d.tile.y) * t;
+              expect(
+                paving.distance(x, y),
+                `door at ${d.tile.x},${d.tile.y} to ${d.reach.x},${d.reach.y}, ${t} out`,
+              ).toBeGreaterThan(0);
+            }
+          }
+        }),
+      { shrink: shrinkPlan },
+    );
+    // doors on the paving out to bare ground, where the doorstep shows, and doors off the paving
+    expect(bare).toBeGreaterThan(100);
+    expect(off).toBeGreaterThan(100);
+  }, 20_000);
+
+  // The landscape repaints every chunk within six tiles of a tile it is told of (`touchedByEdit`);
+  // this holds the paving to one, the most its picture reaches beyond a tile that changed.
+  // Slow: paints the paving twice at every point of every tile it reaches, 200 times over (about
+  // a second and a half alone).
+  it('repaints round every tile whose paving picture changes as the town grows', () => {
+    // refreshes at which a doorstep was laid or taken up with nothing paved or unpaved round it
+    let alone = 0;
+    forAll(
+      plan,
+      (p) =>
+        live(p, (w, handed) => {
+          if (handed.length < 2) return;
+          const was = pavingOf(w, handed.at(-2)!),
+            is = pavingOf(w, handed.at(-1)!),
+            // the tiles within one of a tile repainted
+            covered = new Uint8Array(SIZE * SIZE);
+          for (const k of handed.at(-1)!.repainted)
+            for (let j = Math.floor(k / SIZE) - 1; j <= Math.floor(k / SIZE) + 1; j++)
+              for (let i = (k % SIZE) - 1; i <= (k % SIZE) + 1; i++)
+                if (i >= 0 && j >= 0 && i < SIZE && j < SIZE) covered[j * SIZE + i] = 1;
+          let doorstep = false;
+          for (let j = 0; j < SIZE; j++)
+            for (let i = 0; i < SIZE; i++) {
+              const k = j * SIZE + i;
+              if (!was.near(k) && !is.near(k)) continue;
+              const points = picturePoints(i, j);
+              if (covered[k]) {
+                doorstep ||=
+                  !paveChanged(was, is, i, j) &&
+                  points.some(([x, y]) => picture(was, x, y).join() !== picture(is, x, y).join());
+                continue;
+              }
+              for (const [x, y] of points) {
+                const before = picture(was, x, y),
+                  after = picture(is, x, y);
+                if (after.join() !== before.join())
+                  expect(
+                    after,
+                    `tile ${i},${j} at ${x}, ${y}, with no tile repainted within one of it`,
+                  ).toEqual(before);
+              }
+            }
+          if (doorstep) alone++;
+        }),
+      { shrink: shrinkPlan },
+    );
+    expect(alone).toBeGreaterThan(10);
+  }, 30_000);
+});
+
+/** Points on tile (i, j) the paving picture is read at: a 3 x 3 grid across it. */
+function picturePoints(i: number, j: number): [number, number][] {
+  const out: [number, number][] = [];
+  for (const v of [-0.4, 0, 0.4]) for (const u of [-0.4, 0, 0.4]) out.push([i + u, j + v]);
+  return out;
+}
+/** Did any tile within one of (i, j) change from paved to bare or back? */
+function paveChanged(was: TownPaving, is: TownPaving, i: number, j: number) {
+  for (let dj = -1; dj <= 1; dj++)
+    for (let di = -1; di <= 1; di++) {
+      const x = i + di,
+        y = j + dj;
+      if (x < 0 || y < 0 || x >= was.w || y >= was.h) continue;
+      if (was.paved(y * was.w + x) !== is.paved(y * was.w + x)) return true;
+    }
+  return false;
+}
+/** What the painter takes from the paving at map point (x, y): its distance and colour there. */
+function picture(p: TownPaving, x: number, y: number) {
+  const d = p.near(Math.round(y) * p.w + Math.round(x)) ? p.distance(x, y) : -9;
+  if (d <= -PAVING_FRINGE) return [];
+  if (d <= 0) return [d, p.fringe(x, y, d)];
+  const out = [0, 0, 0];
+  p.paint(x, y, d, [70, 190, 60], 1, out);
+  return [d, ...out];
+}
