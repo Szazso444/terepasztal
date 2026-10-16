@@ -680,6 +680,60 @@ describe('the wear at the paving edge', () => {
   });
 });
 
+describe('the setts', () => {
+  /** Directions the extent of a sett is measured in, and the step along each (tiles). */
+  const RAYS = 24,
+    STEP = 0.004;
+  /**
+   * The sett at world point (u, v), measured from its centre: how far it reaches in each of RAYS
+   * directions (where `settAt` first names another sett), its farthest reach and the side of a
+   * square of its area. Undefined for a sett the scale in front covers at its centre.
+   */
+  function measure(u: number, v: number) {
+    const sett = settAt(u, v);
+    if (settAt(sett.u, sett.v).id !== sett.id) return undefined;
+    let area = 0,
+      far = 0;
+    for (let n = 0; n < RAYS; n++) {
+      const a = (n / RAYS) * 2 * Math.PI;
+      let r = 0;
+      while (r < 1 && settAt(sett.u + Math.cos(a) * r, sett.v + Math.sin(a) * r).id === sett.id)
+        r += STEP;
+      area += (r * r * Math.PI) / RAYS;
+      far = Math.max(far, r);
+    }
+    return { far, side: Math.sqrt(area) };
+  }
+
+  it('are about a tenth of a tile, none larger than a fifth of one across, with no hole between them', () => {
+    let measured = 0,
+      sides = 0;
+    forAll(
+      (rng) => Array.from({ length: 20 }, () => [rng.range(-3000, 3000), rng.range(-3000, 3000)]),
+      (points) => {
+        for (const [u, v] of points) {
+          // a point no scale of the fan covers gets the fallback: itself as the centre, no inside
+          const sett = settAt(u, v);
+          if (sett.u === u && sett.v === v && sett.inside === 0)
+            throw new Error(`no sett at ${u}, ${v}`);
+          const m = measure(u, v);
+          if (!m) continue;
+          if (m.far > 0.1 + STEP) throw new Error(`the sett at ${u}, ${v} reaches ${m.far}`);
+          if (m.side < 0.05 || m.side > 0.15)
+            throw new Error(`the sett at ${u}, ${v} is ${m.side} across`);
+          measured++;
+          sides += m.side;
+        }
+      },
+      { shrink: (points) => shrinkArray(points) },
+    );
+    // most setts show whole; their size, on average
+    expect(measured).toBeGreaterThan(1600);
+    expect(sides / measured).toBeGreaterThan(0.08);
+    expect(sides / measured).toBeLessThan(0.13);
+  });
+});
+
 describe('the light on the setts', () => {
   it('falls from the upper left: a sett is lighter along its -x rim than its +x rim', () => {
     let lighter = 0,
