@@ -3,9 +3,9 @@ import { Dir } from '../engine/iso';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { BIOME_DEFS } from '../sim/biomes';
-import { buildRelief } from './terrainRelief';
+import { buildRelief, surfaceAlongRay } from './terrainRelief';
 import { paintedWater } from './terrainMaterials';
-import { pavingDoorsteps, PAVING_FRINGE, TownPaving } from './townPaving';
+import { pavingDoorsteps, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
 
 /** Side of one cell of the stand-in surface sheet: ten cells stacked, one per material. */
 const CELL = 64;
@@ -158,6 +158,7 @@ function pointOf(r: Reply, px: number, py: number, scale: number) {
 }
 
 describe('the painter with a town', () => {
+  // Slow: paints twelve chunks, six at twice the size (about 4 s alone).
   it('paints the pixels two neighbouring chunks share alike, paving and all', async () => {
     const w = world(),
       paving = new TownPaving(w.map.w, w.map.h, w.map.originX, w.map.originY, w.city, w.doorsteps);
@@ -202,8 +203,9 @@ describe('the painter with a town', () => {
         expect(shared).toBeGreaterThan(50 * scale);
         expect(paved).toBeGreaterThan(10 * scale);
       }
-  });
+  }, 80_000);
 
+  // Slow: paints six chunks and checks every pixel against its twin (about 3 s alone).
   it('changes nothing beyond the paving and its fringe, nor water outside the town', async () => {
     const w = world(),
       bare = { ...w, city: [], doorsteps: [] },
@@ -236,5 +238,63 @@ describe('the painter with a town', () => {
     }
     expect(far).toBeGreaterThan(1000);
     expect(water).toBeGreaterThan(20);
-  });
+  }, 60_000);
+
+  // Slow: paints eight chunks, a town on the flat and on a hill (about 2.5 s alone).
+  it('shows no step where the ground under the paving stops being painted, on a hill too', async () => {
+    for (const hill of [false, true]) {
+      const w = world();
+      // the town on a hill: level 2 under most of it, as the shipped style lights it
+      if (hill)
+        for (let y = 1; y <= 13; y++)
+          for (let x = 3; x <= 14; x++) w.map.terrain[y * w.map.w + x] = Terrain.Hill;
+      const relief = buildRelief(w.map, new Set()),
+        paving = new TownPaving(
+          w.map.w,
+          w.map.h,
+          w.map.originX,
+          w.map.originY,
+          w.city,
+          w.doorsteps,
+        );
+      /** How far inside the paving the point painted at pixel (px, py) lies. */
+      const inside = (r: Reply, px: number, py: number) => {
+        const [bx, by] = pointOf(r, px, py, 1),
+          z = surfaceAlongRay(w.map, relief, bx, by, 10),
+          tx = bx + z / 32,
+          ty = by + z / 32;
+        return paving.near(Math.round(ty) * w.map.w + Math.round(tx))
+          ? paving.distance(tx, ty)
+          : -9;
+      };
+      // neighbouring pixels either side of PAVING_SOLID, from which the ground under the paving is
+      // not painted, both within 0.06 of it: the inner one's brightness over the outer one's
+      const ratios: number[] = [];
+      for (const [x, y] of [
+        [0, 0],
+        [8, 0],
+        [0, 8],
+        [8, 8],
+      ]) {
+        const r = await paint(w, x, y);
+        for (let py = 0; py < r.height; py++)
+          for (let px = 0; px + 1 < r.width; px++) {
+            const ka = (py * r.width + px) * 4,
+              kb = ka + 4;
+            if (r.pixels[ka + 3] !== 255 || r.pixels[kb + 3] !== 255) continue;
+            const da = inside(r, px, py),
+              db = inside(r, px + 1, py);
+            if (Math.abs(da - PAVING_SOLID) > 0.06 || Math.abs(db - PAVING_SOLID) > 0.06) continue;
+            if (da >= PAVING_SOLID === db >= PAVING_SOLID) continue;
+            const [inner, outer] = da >= PAVING_SOLID ? [ka, kb] : [kb, ka],
+              light = (k: number) => r.pixels[k] + r.pixels[k + 1] + r.pixels[k + 2];
+            ratios.push(light(inner) / light(outer));
+          }
+      }
+      ratios.sort((a, b) => a - b);
+      const median = ratios[Math.floor(ratios.length / 2)];
+      expect(ratios.length, `on a hill: ${hill}`).toBeGreaterThan(40);
+      expect(Math.abs(median - 1), `on a hill: ${hill}, median ratio ${median}`).toBeLessThan(0.03);
+    }
+  }, 50_000);
 });

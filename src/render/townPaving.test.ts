@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
+import { doorsOf as placeDoors, type PlaceDef } from '../sim/doors';
 import {
   doorstepChanges,
   doorstepTiles,
+  FRINGE_EARTH,
   PAVING_DEEP,
   PAVING_FRINGE,
   PAVING_SOLID,
@@ -315,5 +317,406 @@ describe('the paving picture', () => {
         return true;
       },
     );
+  });
+});
+
+/** Is tile (i, j) paved? Off the map counts as bare ground, as it does for the painter. */
+const pavedAt = (c: Town, paved: ReadonlySet<number>, i: number, j: number) =>
+  i >= 0 && j >= 0 && i < c.w && j < c.h && paved.has(j * c.w + i);
+/** Distance from (x, y) to the segment from (ax, ay) to (bx, by). */
+function toSegment(x: number, y: number, ax: number, ay: number, bx: number, by: number) {
+  const ux = bx - ax,
+    uy = by - ay,
+    t = Math.max(0, Math.min(1, ((x - ax) * ux + (y - ay) * uy) / (ux * ux + uy * uy || 1)));
+  return Math.hypot(x - ax - t * ux, y - ay - t * uy);
+}
+/** A tile's corners, as the directions out of it there. */
+const CORNERS = [
+  [-1, -1],
+  [1, -1],
+  [-1, 1],
+  [1, 1],
+] as const;
+/**
+ * The oracle: signed distance (inside positive) from (x, y) to the paved tiles with every convex
+ * corner rounded to a quarter circle of radius r and every concave one left sharp, worked out piece
+ * by piece from the sides between paved and bare tiles and the arcs at the corners. Pieces of tiles
+ * more than two from the point's own lie a tile away, beyond anything the paving shows.
+ */
+function roundedTiles(c: Town, paved: ReadonlySet<number>, r: number, x: number, y: number) {
+  const at = (i: number, j: number) => pavedAt(c, paved, i, j);
+  // a convex corner: the tiles beside the paved tile on both sides of the corner are bare
+  const convex = (i: number, j: number, sx: number, sy: number) => !at(i + sx, j) && !at(i, j + sy);
+  const i0 = Math.round(x),
+    j0 = Math.round(y);
+  let edge = Infinity;
+  for (let j = j0 - 2; j <= j0 + 2; j++)
+    for (let i = i0 - 2; i <= i0 + 2; i++) {
+      if (!at(i, j)) continue;
+      for (const [sx, sy] of CORNERS) {
+        if (!convex(i, j, sx, sy)) continue;
+        // the arc from side to side, its centre r in from the corner on both
+        const vx = x - (i + sx * (0.5 - r)),
+          vy = y - (j + sy * (0.5 - r));
+        edge = Math.min(
+          edge,
+          vx * sx >= 0 && vy * sy >= 0
+            ? Math.abs(Math.hypot(vx, vy) - r)
+            : Math.min(Math.hypot(vx - sx * r, vy), Math.hypot(vx, vy - sy * r)),
+        );
+      }
+      // the sides facing bare ground, cut back by r where they end in a convex corner
+      for (const s of [-1, 1]) {
+        if (!at(i + s, j)) {
+          const a = j - 0.5 + (convex(i, j, s, -1) ? r : 0),
+            b = j + 0.5 - (convex(i, j, s, 1) ? r : 0);
+          edge = Math.min(edge, toSegment(x, y, i + s * 0.5, a, i + s * 0.5, b));
+        }
+        if (!at(i, j + s)) {
+          const a = i - 0.5 + (convex(i, j, -1, s) ? r : 0),
+            b = i + 0.5 - (convex(i, j, 1, s) ? r : 0);
+          edge = Math.min(edge, toSegment(x, y, a, j + s * 0.5, b, j + s * 0.5));
+        }
+      }
+    }
+  // inside: on a paved tile, and not in the part a convex corner of it cuts off
+  let inside = at(i0, j0);
+  for (const [sx, sy] of CORNERS)
+    if (inside && convex(i0, j0, sx, sy)) {
+      const a = (i0 + sx * 0.5 - x) * sx,
+        b = (j0 + sy * 0.5 - y) * sy;
+      if (a < r && b < r && Math.hypot(r - a, r - b) > r) inside = false;
+    }
+  return inside ? edge : -edge;
+}
+/** Inside distance of (x, y) from the doorstep at `at` in `steps` (`pavingDoorsteps`), as a box. */
+function stepBox(steps: readonly number[], at: number, x: number, y: number) {
+  const qx = Math.abs(x - steps[at]) - steps[at + 2],
+    qy = Math.abs(y - steps[at + 1]) - steps[at + 3];
+  return -Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - Math.min(Math.max(qx, qy), 0);
+}
+/** The most a gentle wobble may move the outline (tiles). */
+const WOBBLE = 0.08;
+/** A convex corner's radius lies between these (tiles); a doorstep's corners round under 0.1. */
+const ROUND_MIN = 0.2,
+  ROUND_MAX = 0.35,
+  STEP_ROUND_MAX = 0.1;
+/**
+ * The least and the most the outline's unwobbled distance may be at (x, y): the paved tiles rounded
+ * with the largest and the smallest corner radius allowed, joined with the doorsteps' boxes (with
+ * the most and the least rounding of theirs).
+ */
+function outlineBounds(
+  c: Town,
+  paved: ReadonlySet<number>,
+  steps: readonly number[],
+  x: number,
+  y: number,
+) {
+  let lo = roundedTiles(c, paved, ROUND_MAX, x, y),
+    hi = roundedTiles(c, paved, ROUND_MIN, x, y);
+  for (let at = 0; at + 3 < steps.length; at += 4) {
+    const box = stepBox(steps, at, x, y);
+    hi = Math.max(hi, box);
+    lo = Math.max(lo, box - STEP_ROUND_MAX * (Math.SQRT2 - 1));
+  }
+  return { lo, hi };
+}
+function stepsOf(c: Town, doors = c.doors) {
+  const paved = new Set(c.paved);
+  return pavingDoorsteps(
+    doors.map((d) => ({ tile: d, side: d.side })),
+    (k) => paved.has(k),
+    c.w,
+    c.h,
+  );
+}
+/** A town with half its points within a third of a tile of a tile corner, where corners show. */
+function cornered(rng: Rng): Town {
+  const c = town(rng, 150);
+  for (let n = 0; n < 150; n++)
+    c.points.push([
+      rng.int(0, c.w - 2) + 0.5 + rng.range(-0.33, 0.33),
+      rng.int(0, c.h - 2) + 0.5 + rng.range(-0.33, 0.33),
+    ]);
+  return c;
+}
+
+describe('the town paving outline, against the shape worked out piece by piece', () => {
+  // Slow: works the shape out twice per point for 30 000 points (about a second alone).
+  it('is the paved tiles, convex corners rounded and concave ones sharp, and the doorsteps', () => {
+    forAll(
+      cornered,
+      (c) => {
+        const p = paving(c),
+          paved = new Set(c.paved),
+          steps = stepsOf(c);
+        for (const [x, y] of c.points) {
+          const { lo, hi } = outlineBounds(c, paved, steps, x, y),
+            d = felt(p.distance(x, y)),
+            at = `at ${x}, ${y}: ${d}, not ${lo} to ${hi} give or take the wobble`;
+          expect(d, at).toBeGreaterThanOrEqual(felt(lo - WOBBLE) - 1e-9);
+          expect(d, at).toBeLessThanOrEqual(felt(hi + WOBBLE) + 1e-9);
+        }
+      },
+      { shrink: shrinkTown },
+    );
+  }, 20_000);
+
+  it('wobbles both ways along a straight edge', () => {
+    let least = 0,
+      most = 0;
+    forAll(cornered, (c) => {
+      const p = paving(c),
+        paved = new Set(c.paved),
+        steps = stepsOf(c);
+      for (const [x, y] of c.points) {
+        const { lo, hi } = outlineBounds(c, paved, steps, x, y);
+        // near an edge whose place no corner or doorstep decides, the wobble alone moves it
+        if (Math.abs(hi - lo) > 1e-9 || Math.abs(hi) > 0.15) continue;
+        least = Math.min(least, p.distance(x, y) - hi);
+        most = Math.max(most, p.distance(x, y) - hi);
+      }
+    });
+    expect(least).toBeLessThan(-0.03);
+    expect(most).toBeGreaterThan(0.03);
+  });
+});
+
+/** What the painter takes from the paving at map point (x, y): its distance and colour there. */
+function picture(p: TownPaving, x: number, y: number) {
+  const d = p.near(Math.round(y) * p.w + Math.round(x)) ? p.distance(x, y) : -9;
+  if (d <= -PAVING_FRINGE) return [];
+  if (d <= 0) return [d, p.fringe(x, y, d)];
+  const out = [0, 0, 0];
+  p.paint(x, y, d, [70, 190, 60], 1, out);
+  return [d, ...out];
+}
+
+describe('the town paving picture, wherever it is asked for', () => {
+  it('is the same at a point whatever was painted before it, as in two chunks', () => {
+    forAll(
+      (rng) => town(rng),
+      (c) => {
+        const first = paving(c),
+          forward = c.points.map(([x, y]) => picture(first, x, y));
+        // the other way round, on a paving of its own, with other setts asked for in between
+        const p = paving(c);
+        for (let n = c.points.length - 1; n >= 0; n--) {
+          const [x, y] = c.points[n];
+          settAt(c.originX + y * 1.7, c.originY - x * 0.9);
+          expect(picture(p, x, y), `point ${n} at ${x}, ${y}`).toEqual(forward[n]);
+        }
+      },
+      { shrink: shrinkTown },
+    );
+  });
+
+  it('changes, when doors come and go, only on the tiles doorstepChanges repaints', () => {
+    forAll(
+      (rng) => {
+        const c = town(rng);
+        const after = c.doors.filter(() => rng.chance(0.5));
+        for (let n = rng.int(0, 4); n > 0; n--)
+          after.push({
+            x: rng.int(0, c.w - 1),
+            y: rng.int(0, c.h - 1),
+            side: rng.int(0, 3) as Dir,
+          });
+        // and points round the doors, where the change is
+        for (const d of [...c.doors, ...after])
+          for (let n = 0; n < 40; n++)
+            c.points.push([
+              Math.max(-0.5, Math.min(c.w - 0.501, d.x + rng.range(-1.5, 1.5))),
+              Math.max(-0.5, Math.min(c.h - 0.501, d.y + rng.range(-1.5, 1.5))),
+            ]);
+        return { ...c, after };
+      },
+      (c) => {
+        const before = stepsOf(c),
+          now = stepsOf(c, c.after),
+          was = new TownPaving(c.w, c.h, c.originX, c.originY, c.paved, before),
+          is = new TownPaving(c.w, c.h, c.originX, c.originY, c.paved, now),
+          repainted = doorstepChanges(before, now, c.w, c.h);
+        for (const [x, y] of c.points) {
+          const k = Math.round(y) * c.w + Math.round(x);
+          if (repainted.has(k)) continue;
+          expect(picture(is, x, y), `tile ${k}, at ${x}, ${y}`).toEqual(picture(was, x, y));
+        }
+      },
+      {
+        shrink: function* (c) {
+          for (const after of shrinkArray(c.after)) yield { ...c, after };
+          for (const t of shrinkTown(c)) yield { ...c, ...t };
+        },
+      },
+    );
+  });
+});
+
+describe('doorsteps of the simulation doors', () => {
+  // a house, a square station, a long one and a depot, as src/sim/doors.ts gives them doors
+  const defs = {
+    house: {},
+    station: { accepts: [], size: 2 },
+    long: { accepts: [], long: true },
+    depot: { accepts: [], depot: true, size: 2 },
+  } as unknown as Record<string, PlaceDef>;
+
+  it('lie across the side each door faces, out over the tile it reaches', () => {
+    for (const [name, def] of Object.entries(defs))
+      for (let rot = 0; rot < 4; rot++)
+        for (const door of placeDoors(def, 3, 3, rot)) {
+          const at = `${name} at rotation ${rot}, its ${door.kind} door`,
+            steps = pavingDoorsteps([door], () => true, 8, 8);
+          expect(steps, at).toHaveLength(4);
+          const [cx, cy, hx, hy] = steps,
+            ux = door.reach.x - door.tile.x,
+            uy = door.reach.y - door.tile.y,
+            along = ux ? hy : hx,
+            out = ux ? hx : hy,
+            centre = (cx - door.tile.x) * ux + (cy - door.tile.y) * uy;
+          // the middle of the door's side is on it, centred there, and it is narrower than the side
+          expect(Math.abs(door.tile.x + ux / 2 - cx) < hx, at).toBe(true);
+          expect(Math.abs(door.tile.y + uy / 2 - cy) < hy, at).toBe(true);
+          expect(ux ? cy - door.tile.y : cx - door.tile.x, at).toBe(0);
+          expect(along, at).toBeLessThan(0.5);
+          // it reaches out over the reach tile, short of its middle, and not back to the door's
+          expect(centre + out, at).toBeGreaterThan(0.6);
+          expect(centre + out, at).toBeLessThanOrEqual(1);
+          expect(centre - out, at).toBeGreaterThan(0);
+        }
+  });
+});
+
+describe('the wear at the paving edge', () => {
+  /** The share of the ground in the colour paint gives at (x, y) for `d`: it is affine in it. */
+  function groundShare(p: TownPaving, x: number, y: number, d: number, scale: number) {
+    const dark = [0, 0, 0],
+      light = [0, 0, 0];
+    p.paint(x, y, d, [0, 0, 0], scale, dark);
+    p.paint(x, y, d, [255, 255, 255], scale, light);
+    return (light[1] - dark[1]) / 255;
+  }
+
+  it('shows no less of the ground at a spot the nearer it lies to the outline', () => {
+    forAll(
+      (rng) => town(rng, 40),
+      (c) => {
+        const p = paving(c);
+        for (const [x, y] of c.points) {
+          if (!(p.distance(x, y) > 0)) continue;
+          let before = Infinity;
+          for (let d = 0.002; d < PAVING_DEEP; d += 0.02) {
+            const share = groundShare(p, x, y, d, 2);
+            if (share > before + 1e-12 || (d >= PAVING_SOLID && share !== 0))
+              throw new Error(`at ${x}, ${y}, ${d} in: ${share} of the ground, ${before} nearer`);
+            before = share;
+          }
+        }
+      },
+    );
+  });
+
+  it('loses setts whole toward the outline, fewer farther in, and none deep inside', () => {
+    // points well inside a sett, clear of its joint, where only a missing sett shows the ground,
+    // by how far inside the paving they lie: up to 0.05, 0.1, 0.15 and 0.2
+    const bands = [0.05, 0.1, 0.15, 0.2],
+      seen = [0, 0, 0, 0],
+      gone = [0, 0, 0, 0];
+    let deep = 0;
+    forAll(
+      (rng) => town(rng, 400),
+      (c) => {
+        const p = paving(c);
+        for (const [x, y] of c.points) {
+          const d = p.distance(x, y);
+          if (!(d > 0) || settAt(x + c.originX, y + c.originY).inside < 0.03) continue;
+          const share = groundShare(p, x, y, d, 4),
+            band = bands.findIndex((b) => d < b);
+          if (band >= 0) {
+            seen[band]++;
+            if (share > 0.2) gone[band]++;
+          } else if (d >= PAVING_DEEP) {
+            deep++;
+            if (share !== 0) throw new Error(`at ${x}, ${y}, ${d} in: ${share} of the ground`);
+          }
+        }
+      },
+    );
+    const missing = seen.map((n, i) => gone[i] / n);
+    expect(Math.min(...seen)).toBeGreaterThan(80);
+    expect(deep).toBeGreaterThan(500);
+    expect(missing[0]).toBeGreaterThan(0.5);
+    for (let i = 1; i < bands.length; i++) expect(missing[i]).toBeLessThan(missing[i - 1]);
+    expect(missing[bands.length - 1]).toBeGreaterThan(0);
+  });
+
+  it('meets a fringe of packed earth outside that fades into the ground by PAVING_FRINGE', () => {
+    expect(FRINGE_EARTH[0] >= FRINGE_EARTH[1] && FRINGE_EARTH[1] >= FRINGE_EARTH[2]).toBe(true);
+    forAll(
+      (rng) => town(rng, 60),
+      (c) => {
+        const p = paving(c);
+        for (const [x, y] of c.points) {
+          let before = p.fringe(x, y, 0);
+          if (!(before > 0.5 && before <= 1))
+            throw new Error(`at ${x}, ${y}, on the outline: ${before} earth`);
+          // a hundredth of a tile farther out, a little less earth: it fades, with no edge of its own
+          for (let d = -0.01; d > -0.3; d -= 0.01) {
+            const share = p.fringe(x, y, d);
+            if (
+              share > before ||
+              share < before - 0.1 ||
+              share < 0 ||
+              (d <= -PAVING_FRINGE && share !== 0)
+            )
+              throw new Error(`at ${x}, ${y}, ${-d} out: ${share} earth, ${before} nearer`);
+            before = share;
+          }
+        }
+      },
+    );
+  });
+});
+
+describe('the light on the setts', () => {
+  it('falls from the upper left: a sett is lighter along its -x rim than its +x rim', () => {
+    let lighter = 0,
+      setts = 0;
+    forAll(
+      (rng) => town(rng, 150),
+      (c) => {
+        const p = paving(c);
+        for (const [x, y] of c.points) {
+          if (p.distance(x, y) < PAVING_DEEP + 0.4) continue;
+          const sett = settAt(x + c.originX, y + c.originY);
+          /** The sett's last point clear of its joint from its centre along x, toward `dir`. */
+          const rim = (dir: number) => {
+            let last: number | undefined;
+            for (let t = 0; t < 0.2; t += 0.001) {
+              const here = settAt(sett.u + dir * t, sett.v);
+              if (here.id !== sett.id) break;
+              if (here.inside >= 0.016) last = sett.u + dir * t;
+            }
+            return last;
+          };
+          const west = rim(-1),
+            east = rim(1);
+          if (west === undefined || east === undefined) continue;
+          const light = (u: number) => {
+            const out = [0, 0, 0],
+              mx = u - c.originX,
+              my = sett.v - c.originY;
+            p.paint(mx, my, p.distance(mx, my), null, 4, out);
+            return out[0] + out[1] + out[2];
+          };
+          setts++;
+          if (light(west) > light(east)) lighter++;
+        }
+      },
+    );
+    expect(setts).toBeGreaterThan(200);
+    expect(lighter / setts).toBeGreaterThan(0.75);
   });
 });
