@@ -1,5 +1,8 @@
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
-import { Terrain, type GameMap, type PropInstance, type PropKind } from './tiles';
+import { DIR_DX, DIR_DY } from '../engine/iso';
+import { levelTarget } from './elevation';
+import { FLOW_CAP } from './rivers';
+import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from './tiles';
 
 /**
  * Stored chunks: the ground of a generated world as it was generated, one chunk at a time, so a
@@ -28,7 +31,12 @@ import { Terrain, type GameMap, type PropInstance, type PropKind } from './tiles
  *   more, and a varint after it holds the count less four); then each of its props as one byte,
  *   the kind's index in PROP_KINDS plus 32 times the variant (for an index over 30 or a variant
  *   over 7 the byte is 31, and a varint index and a varint variant follow), and the offsets `ox`
- *   and `oy` in 256ths of a tile, a signed byte each.
+ *   and `oy` in 256ths of a tile, a signed byte each;
+ * - from version 3, the water level of each tile (GameMap.waterSurface, 0 to 15) as runs the same
+ *   way, then the rivers: a varint count of the tiles with a downstream side (GameMap.flowDir), and
+ *   for each of those tiles a varint of the tiles skipped since the one before, then a varint of
+ *   its flow (GameMap.flow, at most FLOW_CAP) times four plus its side less one. Both live only on
+ *   water, so a chunk without a river spends a byte or two on them.
  *
  * Varints are unsigned LEB128. Offsets are rounded to the nearest 256th of a tile, so a stored
  * prop sits at most a 512th of a tile from where generation put it; buildMap gives every chunk,
@@ -36,13 +44,14 @@ import { Terrain, type GameMap, type PropInstance, type PropKind } from './tiles
  *
  * A later plane joins under a bump of CHUNK_VERSION, at a place in the bytes its version names,
  * and a chunk of an older version decodes with that plane empty: version 1 holds no climate, and
- * its climate is its biome.
+ * its climate is its biome; versions 1 and 2 hold no water levels, flow or sides, so their water
+ * is at level 0 and their rivers have neither.
  */
 
 /** Chunk edge in world tiles: emptyMap's region size. */
 export const CHUNK_TILES = 32;
 /** The encoding encodeChunk writes; decodeChunk reads it and every one before it. */
-export const CHUNK_VERSION = 2;
+export const CHUNK_VERSION = 3;
 
 /**
  * The index a chunk stores each prop kind under. Only ever add to it: an index written into a save
@@ -97,6 +106,10 @@ export interface ChunkPlanes {
   variant: Uint8Array;
   /** props by tile of the rectangle (`y * w + x`) */
   props: Map<number, PropInstance[]>;
+  /** the water levels, flow and downstream sides; all 0 in a chunk of version 1 or 2 */
+  waterSurface: Uint8Array;
+  flow: Uint16Array;
+  flowDir: Uint8Array;
 }
 
 /** What buildMap made. */
@@ -323,6 +336,9 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
   const biome = new Uint8Array(n);
   const climate = new Uint8Array(n);
   const variant = new Uint8Array(n);
+  const surface = new Uint8Array(n);
+  const flow = new Uint16Array(n);
+  const flowDir = new Uint8Array(n);
   // the map tile of the rectangle's first tile
   const mx = cx * CHUNK_TILES + c.x0 - map.originX;
   const my = cy * CHUNK_TILES + c.y0 - map.originY;
@@ -332,6 +348,9 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
     biome.set(map.biome.subarray(from, from + c.w), y * c.w);
     climate.set((map.climate ?? map.biome).subarray(from, from + c.w), y * c.w);
     variant.set(map.variant.subarray(from, from + c.w), y * c.w);
+    if (map.waterSurface) surface.set(map.waterSurface.subarray(from, from + c.w), y * c.w);
+    if (map.flow) flow.set(map.flow.subarray(from, from + c.w), y * c.w);
+    if (map.flowDir) flowDir.set(map.flowDir.subarray(from, from + c.w), y * c.w);
   }
   const out = new Writer();
   for (const b of [CHUNK_VERSION, c.x0, c.y0, c.w, c.h]) out.byte(b);
@@ -360,6 +379,26 @@ export function encodeChunk(map: GameMap, cx: number, cy: number): string {
     out.varint((i - last - 1) * 4 + more);
     if (more === 3) out.varint(list.length - 4);
     for (const p of list) writeProp(out, p);
+    last = i;
+  }
+  writeRuns(out, surface, 'water level');
+  const rivers: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const d = flowDir[i];
+    if (d > 4) throw new Error(`chunk encoding ${CHUNK_VERSION} holds sides 1 to 4, not ${d}`);
+    if (d) rivers.push(i);
+    else if (flow[i])
+      throw new Error(`chunk encoding ${CHUNK_VERSION} holds flow on a river tile only`);
+    if (flow[i] > FLOW_CAP)
+      throw new Error(
+        `chunk encoding ${CHUNK_VERSION} holds flow up to ${FLOW_CAP}, not ${flow[i]}`,
+      );
+  }
+  out.varint(rivers.length);
+  last = -1;
+  for (const i of rivers) {
+    out.varint(i - last - 1);
+    out.varint(flow[i] * 4 + flowDir[i] - 1);
     last = i;
   }
   return toBase64(out.buf.subarray(0, out.n));
@@ -401,9 +440,38 @@ export function decodeChunk(text: string): ChunkPlanes | null {
       props.set(i, list);
       last = i;
     }
+    const waterSurface = version >= 3 ? readRuns(r, n) : new Uint8Array(n);
+    const flow = new Uint16Array(n);
+    const flowDir = new Uint8Array(n);
+    if (version >= 3) {
+      const rivers = r.varint();
+      for (let t = 0, last = -1; t < rivers; t++) {
+        const i = last + 1 + r.varint();
+        if (i >= n) return null;
+        const v = r.varint();
+        if (v >= (FLOW_CAP + 1) * 4) return null;
+        flow[i] = Math.floor(v / 4);
+        flowDir[i] = (v % 4) + 1;
+        last = i;
+      }
+    }
     // bytes left over are not something encodeChunk writes
     if (r.i !== bytes.length) return null;
-    return { version, x0, y0, w, h, terrain, biome, climate, variant, props };
+    return {
+      version,
+      x0,
+      y0,
+      w,
+      h,
+      terrain,
+      biome,
+      climate,
+      variant,
+      props,
+      waterSurface,
+      flow,
+      flowDir,
+    };
   } catch (e) {
     if (e instanceof Corrupt) return null;
     throw e;
@@ -426,6 +494,9 @@ export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes)
   const x1 = Math.min(wx + c.w, map.originX + map.w);
   const y1 = Math.min(wy + c.h, map.originY + map.h);
   const climate = (map.climate ??= map.biome.slice());
+  const surface = (map.waterSurface ??= new Uint8Array(map.w * map.h));
+  const flow = (map.flow ??= new Uint16Array(map.w * map.h));
+  const flowDir = (map.flowDir ??= new Uint8Array(map.w * map.h));
   for (let y = y0; y < y1; y++)
     for (let x = x0; x < x1; x++) {
       const i = (y - map.originY) * map.w + x - map.originX;
@@ -434,6 +505,9 @@ export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes)
       map.biome[i] = c.biome[j];
       map.variant[i] = c.variant[j];
       climate[i] = c.climate[j];
+      surface[i] = c.waterSurface[j];
+      flow[i] = c.flow[j];
+      flowDir[i] = c.flowDir[j];
       const list = c.props.get(j);
       if (list) map.props.set(i, list);
       else map.props.delete(i);
@@ -465,7 +539,8 @@ export function encodeMap(map: GameMap): ChunkStore {
  * The map has every chunk as its text decodes, generated ones too: props where the store puts
  * them (see the encoding above), and a climate plane, which is the biome in a chunk stored before
  * the plane. Whatever is later built on the map or repaired under it, the store keeps the ground as
- * generated.
+ * generated. Where a generated tile meets a stored one, the generated side is fitted to it before
+ * it is stored (seam: a river that ran on into a stored chunk ends in a pond).
  */
 export function buildMap(
   seed: number,
@@ -497,8 +572,19 @@ export function buildMap(
   const out: ChunkStore = { ...chunks };
   const added: string[] = [];
   const unreadable: string[] = [];
+  for (const c of plan) if (c.stored) placeChunk(map, c.cx, c.cy, c.stored);
+  if (plan.some((c) => c.stored) && plan.some((c) => !c.whole)) {
+    const stored = new Uint8Array(map.w * map.h);
+    for (const c of plan) {
+      if (!c.stored) continue;
+      const wx = c.cx * CHUNK_TILES + c.stored.x0 - map.originX;
+      const wy = c.cy * CHUNK_TILES + c.stored.y0 - map.originY;
+      for (let y = Math.max(0, wy); y < Math.min(map.h, wy + c.stored.h); y++)
+        stored.fill(1, y * map.w + Math.max(0, wx), y * map.w + Math.min(map.w, wx + c.stored.w));
+    }
+    seam(map, stored);
+  }
   for (const c of plan) {
-    if (c.stored) placeChunk(map, c.cx, c.cy, c.stored);
     if (c.whole) continue;
     // generated now, any stored tiles kept, and given as a later load will decode it
     const text = encodeChunk(map, c.cx, c.cy);
@@ -510,4 +596,65 @@ export function buildMap(
     }
   }
   return { map, chunks: out, added, unreadable };
+}
+
+/**
+ * The seam between stored tiles (1 in `stored`) and tiles generated now, which a generator that
+ * changed in between may not have made to fit (#339's seam rule):
+ *
+ * - a new river whose way runs into a stored tile that is not water ends at the seam in a pond on
+ *   the new side: its last tile is a lake (Lake biome, no flow, no side);
+ * - new water stands no higher than one level above a stored tile beside it (levelTarget), and a
+ *   river never higher than the water it runs from, so its levels still never rise downstream.
+ *
+ * A stored river that runs into a new tile is left as it is: a chunk stored before CHUNK_VERSION 3
+ * does not say which way its rivers run. Coasts, lake edges and biome edges cut at the seam are
+ * accepted as they fall, and the levels across it stay within one step (tileLevels).
+ */
+function seam(map: GameMap, stored: Uint8Array) {
+  const { w, h, terrain } = map;
+  const surface = map.waterSurface!;
+  const flow = map.flow!;
+  const flowDir = map.flowDir!;
+  const ahead = (i: number, d: number) => {
+    const x = i % w;
+    const y = (i - x) / w;
+    const nx = x + DIR_DX[d - 1];
+    const ny = y + DIR_DY[d - 1];
+    return nx < 0 || ny < 0 || nx >= w || ny >= h ? -1 : ny * w + nx;
+  };
+  const fresh: number[] = [];
+  for (let i = 0; i < w * h; i++) if (!stored[i] && terrain[i] === Terrain.Water) fresh.push(i);
+  for (const i of fresh) {
+    const d = flowDir[i];
+    if (!d) continue;
+    const n = ahead(i, d);
+    if (n >= 0 && stored[n] && terrain[n] !== Terrain.Water) {
+      map.biome[i] = Biome.Lake;
+      flow[i] = 0;
+      flowDir[i] = 0;
+    }
+  }
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const i of fresh) {
+      let v = surface[i];
+      if (!v) continue;
+      for (let d = 1; d <= 4; d++) {
+        const n = ahead(i, d);
+        if (n >= 0) v = Math.min(v, levelTarget(map, n) + 1);
+      }
+      if (v < surface[i]) {
+        surface[i] = v;
+        changed = true;
+      }
+    }
+    for (const i of fresh) {
+      const n = flowDir[i] ? ahead(i, flowDir[i]) : -1;
+      if (n >= 0 && !stored[n] && surface[n] > surface[i]) {
+        surface[n] = surface[i];
+        changed = true;
+      }
+    }
+  }
 }

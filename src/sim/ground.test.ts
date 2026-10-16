@@ -123,6 +123,12 @@ const keysOf = (p: Partial<MapGenParams>) =>
 /** Whether world tile (`wx`, `wy`) lies in a chunk the store holds. */
 const inStore = (store: ChunkStore, wx: number, wy: number) =>
   Object.hasOwn(store, chunkKey(chunkOf(wx), chunkOf(wy)));
+/**
+ * Whether world tile (`wx`, `wy`) has a side on a tile `stored` says is stored: where the seam
+ * may end a new river in a pond (#341, buildMap's seam), so the tile is not the generator's.
+ */
+const besideStored = (stored: (wx: number, wy: number) => boolean, wx: number, wy: number) =>
+  stored(wx + 1, wy) || stored(wx - 1, wy) || stored(wx, wy + 1) || stored(wx, wy - 1);
 
 /** A generated world of `seed` on `frame`, nothing stored. */
 const worldOf = (seed: number, frame: Partial<MapGenParams>): GeneratedWorld => ({
@@ -181,7 +187,7 @@ function oldFile(world: unknown, version: number, supply: SupplyMode = 'simple')
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
 describe('the ground a save stores', () => {
-  // 15 worlds of up to 96 tiles a side, each generated twice: about 0.5 s alone
+  // 15 worlds of up to 96 tiles a side, each generated twice: about 2.5 s alone
   it('comes back byte for byte through the save text, for several seeds, frames and chains', () => {
     const frames: Partial<MapGenParams>[] = [
       { w: 32, h: 32 },
@@ -214,8 +220,9 @@ describe('the ground a save stores', () => {
           // and written again, the store is the same text
           expect(JSON.stringify(read.chunks), at).toBe(JSON.stringify(world.chunks));
         }
-  }, 20_000);
+  }, 50_000);
 
+  // two worlds of 96 tiles stored, grown and generated again: about 0.7 s alone
   it('is never changed by the generator a later load runs, before or after the world grows', () => {
     for (const seed of [1, 31337]) {
       const world = worldOf(seed, { w: 96, h: 96 });
@@ -236,10 +243,11 @@ describe('the ground a save stores', () => {
       const now = changed(seed, grown.params);
       // the stub would have made other ground where the chunks are stored
       expect(firstDifference(old.map, now)).not.toBeNull();
-      const fresh = (wx: number, wy: number) => !inStore(before, wx, wy);
+      const kept = (wx: number, wy: number) => inStore(before, wx, wy);
+      const fresh = (wx: number, wy: number) => !kept(wx, wy) && !besideStored(kept, wx, wy);
       expect(firstDifference(built.map, now, { near: true, only: fresh })).toBeNull();
     }
-  });
+  }, 15_000);
 
   it('reports a stored chunk it cannot read, generates its ground for the load, and keeps its text', () => {
     const world = worldOf(5, { w: 64, h: 64 });
@@ -368,6 +376,7 @@ describe('the saves stored when this version first runs', () => {
   const slotTexts = (): Record<string, string> =>
     JSON.parse(store.items.get(SLOTS_KEY)!) as Record<string, string>;
 
+  // four stored saves given their ground: about 0.6 s alone
   it('each get their ground once, and nothing else of them changes', () => {
     const { continued, slots } = storeSaves();
     const listed = listSlots();
@@ -416,8 +425,9 @@ describe('the saves stored when this version first runs', () => {
     });
     expect(again.calls).toEqual([]);
     expect(store.writes).toBe(writes);
-  });
+  }, 15_000);
 
+  // four stored saves given their ground, two read again: about 0.8 s alone
   it('are given their chain: a full-chain save its oil', () => {
     storeSaves();
     freezeStoredSaves();
@@ -429,8 +439,9 @@ describe('the saves stored when this version first runs', () => {
     expect(full.supply).toBe('full');
     expect(oil(full)).toBe(true);
     expect(oil(readSave())).toBe(false);
-  });
+  }, 15_000);
 
+  // four stored saves given their ground: about 0.5 s alone
   it('stay as they were where storage will not keep them with their ground, and are counted', () => {
     const { continued, slots } = storeSaves();
     // what each save's ground adds to what storage holds (a named save is a text in a table)
@@ -457,7 +468,7 @@ describe('the saves stored when this version first runs', () => {
     expect(lacksGround(readSave()!.world as GeneratedWorld)).toBe(true);
     expect(lacksGround(readSlot('old')!.world as GeneratedWorld)).toBe(true);
     expect(lacksGround(readSlot('full')!.world as GeneratedWorld)).toBe(false);
-  });
+  }, 10_000);
 
   it('are left as they were where the file holds a number JSON cannot write', () => {
     // the step from v8 drops the reputation, so the save loads; the file itself still holds it
@@ -473,6 +484,7 @@ describe('the saves stored when this version first runs', () => {
     expect(store.items.get(SAVE_KEY)).toBe(raw);
   });
 
+  // four stored saves given their ground: about 0.5 s alone
   it('run again on the next start when storage would not keep that the pass ran', () => {
     storeSaves();
     const s = store;
@@ -495,7 +507,7 @@ describe('the saves stored when this version first runs', () => {
     expect(again.calls).toEqual([]);
     expect(s.writes).toBe(writes + 1);
     expect(s.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
-  });
+  }, 10_000);
 
   it('in a diagnostics bundle get their ground in the save it carries, the bundle otherwise kept', () => {
     const inner = oldFile(small(7), 18);
@@ -540,6 +552,8 @@ describe('the saves stored when this version first runs', () => {
     }
   });
 
+  // four stored saves, three given their ground and one whose generation fails, and a save
+  // written since: four worlds, each planning its rivers once (#341): about 0.8 s alone
   it('leave a save whose map cannot be made as it was, counted neither frozen nor refused', () => {
     const { continued, slots } = storeSaves();
     // a named save that is no text at all stays in the table as it was
@@ -558,7 +572,7 @@ describe('the saves stored when this version first runs', () => {
     expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
     // it lacks its ground still, and gets it when it is loaded
     expect(lacksGround(readSlot('old')!.world as GeneratedWorld)).toBe(true);
-  });
+  }, 15_000);
 
   it('are not touched where storage cannot be read', () => {
     storeSaves();
@@ -653,6 +667,8 @@ function* shrinkGrownSave(c: GrownSave): Iterable<GrownSave> {
 }
 
 describe('a world that grows', () => {
+  // two worlds of 96 tiles stored, grown to 160 and generated whole, each world planning its
+  // rivers once (#341): about 0.6 s alone
   it('keeps the ground it stores, and the next load generates the new ring alone', () => {
     for (const seed of [1, 7412]) {
       const world = worldOf(seed, { w: 96, h: 96 });
@@ -668,7 +684,7 @@ describe('a world that grows', () => {
       const whole = generateMap(seed, grown.params);
       expect(firstDifference(built.map, whole, { near: true })).toBeNull();
     }
-  });
+  }, 15_000);
 
   // 20 worlds grown by up to three rings at once, to up to 288 tiles a side: about 0.5 s alone
   it('changes only the frame of its description, and the next load adds just the new rings', () => {
@@ -707,6 +723,7 @@ describe('a world that grows', () => {
     );
   }, 10_000);
 
+  // three worlds of 96 tiles grown to 160, track laid across the seams: about 0.7 s alone
   it('mixes stored and new ground after a generator change, and track crosses the seam', () => {
     for (const seed of [1, 7412, 31337]) {
       const world = worldOf(seed, { w: 96, h: 96 });
@@ -719,7 +736,8 @@ describe('a world that grows', () => {
       const now = changed(seed, grown.params);
       // the stored chunks as they were, the new ring the changed generator's, meeting at a seam
       expect(firstDifference(old, map)).toBeNull();
-      const ring = (wx: number, wy: number) => wx < 0 || wy < 0 || wx >= 96 || wy >= 96;
+      const inner = (wx: number, wy: number) => wx >= 0 && wy >= 0 && wx < 96 && wy < 96;
+      const ring = (wx: number, wy: number) => !inner(wx, wy) && !besideStored(inner, wx, wy);
       expect(firstDifference(map, now, { near: true, only: ring })).toBeNull();
       expect(firstDifference(old, now)).not.toBeNull();
 
@@ -774,7 +792,7 @@ describe('a world that grows', () => {
       }
       expect(laid).toBe(12);
     }
-  });
+  }, 15_000);
 });
 
 /**
@@ -903,7 +921,7 @@ describe('a world grown again and again, under another generator at every load',
     expect(overruled).toBeGreaterThan(0);
   }, 40_000);
 
-  // three maps of real ground up to 224 tiles a side, for each seed: about 0.6 s alone
+  // three maps of real ground up to 224 tiles a side, for each seed: about 0.9 s alone
   it('keeps each ring of real ground as the generator of its day made it, over two growths', () => {
     const changedAgain: MapGenerator = (s, p) => ({ ...generateMap(s + 2, p), seed: s });
     for (const seed of [1, 7412]) {
@@ -923,24 +941,26 @@ describe('a world grown again and again, under another generator at every load',
         save = parseSave(JSON.stringify(buildSave(partsOf(w))))!;
       });
       const last = groundOf(save.world as GeneratedWorld, never).map;
-      // ring by ring, the ground of the generator of the load that first covered it
+      // ring by ring, the ground of the generator of the load that first covered it, but for the
+      // tiles beside an older ring, which the seam fits to it
       const ringOf = (wx: number, wy: number) =>
         Math.max(0, -chunkOf(wx), -chunkOf(wy), chunkOf(wx) - 2, chunkOf(wy) - 2);
       maps.forEach((m, ring) => {
+        const older = (wx: number, wy: number) => ringOf(wx, wy) < ring;
         const where = firstDifference(last, m, {
           near: true,
-          only: (wx, wy) => ringOf(wx, wy) === ring,
+          only: (wx, wy) => ringOf(wx, wy) === ring && !besideStored(older, wx, wy),
         });
         expect(where, `seed ${seed}, ring ${ring}`).toBeNull();
       });
       // the generators differ where the rings meet them
       expect(firstDifference(maps[1], maps[2], { near: true })).not.toBeNull();
     }
-  }, 10_000);
+  }, 20_000);
 });
 
 describe('the seams of a world grown under a changed generator', () => {
-  // four worlds of 160 tiles a side, each seam row checked against the build rules: about 0.2 s
+  // four worlds of 160 tiles a side, each seam row checked against the build rules: about 1 s alone
   it('take track on every row of ordinary ground across each of the four seams', () => {
     const straight = { kind: 'straight', cls: 'regular' } as const;
     for (const seed of [1, 7412, 31337, 20260912]) {
@@ -1012,7 +1032,7 @@ describe('the seams of a world grown under a changed generator', () => {
         expect(path, `seed ${seed}: a way across the ${s.name} seam`).not.toBeNull();
       }
     }
-  });
+  }, 20_000);
 });
 
 describe('the chain a save is given its ground in', () => {
