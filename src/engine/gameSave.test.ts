@@ -10,6 +10,7 @@ import { setSeasonOffset } from '../sim/weather';
 import { resetStationIds } from '../sim/stations';
 import { resetTrainIds } from '../sim/trains';
 import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
+import { unbuildable } from '../sim/build';
 import { INTENT_KEY, type Intent } from '../intent';
 import { bootPlan } from './boot';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
@@ -1075,14 +1076,15 @@ describe('Game.fixBuiltTiles', () => {
 describe('roads through Game.snapshot and Game.applySave', () => {
   const SEED = 11;
   const SIZE = 64;
-  beforeEach(() => {
-    // a load applies the save's tuning; every test starts from the defaults
+  // a load applies the save's tuning; every test, and every case of a property, starts from the defaults
+  const reset = () => {
     Object.assign(rules, DEFAULT_RULES);
     setSupplyMode(DEFAULT_SUPPLY);
     setSeasonOffset(0);
     resetStationIds(1);
     resetTrainIds(1);
-  });
+  };
+  beforeEach(reset);
 
   /** What the renderer and the panels are to a headless game: all of it is itself, and calling it answers itself. */
   const inert: object = new Proxy(function inert() {}, {
@@ -1251,4 +1253,128 @@ describe('roads through Game.snapshot and Game.applySave', () => {
     // the repair took the roads off and bent no ground for them
     for (const [x, y, t] of spoilt) expect(treated.map.terrain[y * treated.map.w + x]).toBe(t);
   });
+
+  /** The scene's track, depot and house with the roads `laid` tried in that order, for free: the builder refuses what it must. */
+  function sceneOf(laid: readonly (readonly [number, number])[]) {
+    const w = simWorld({ seed: SEED, size: SIZE, terrain: 'grass' });
+    station(w, 'depot', 44, 44);
+    line(w, 10, 20, 30);
+    w.builder.free = true;
+    expect(w.builder.placeDecor(20, 26, 'townhouse', 0), 'the house').not.toBeNull();
+    for (const [x, y] of laid) w.builder.placeRoad(x, y);
+    w.builder.free = false;
+    return w;
+  }
+
+  /** Roads to try laying, and ground for a load to make: tiles round the track, the house and the depot. */
+  interface RoadCase {
+    laid: [number, number][];
+    spoil: [number, number, Terrain][];
+  }
+  // water, rock and a mountain twice each: ground that holds no road, six in ten
+  const GROUNDS = [
+    Terrain.Water,
+    Terrain.Rock,
+    Terrain.Mountain,
+    Terrain.Water,
+    Terrain.Rock,
+    Terrain.Mountain,
+    Terrain.Hill,
+    Terrain.Forest,
+    Terrain.Sand,
+    Terrain.Grass,
+  ];
+  function genRoadCase(rng: Rng): RoadCase {
+    // runs of road, a step at a time, with now and then a jump, often onto the track's row 20
+    const jump = (): [number, number] => [rng.int(12, 28), rng.chance(0.3) ? 20 : rng.int(17, 27)];
+    const laid: [number, number][] = [];
+    let at = jump();
+    for (let n = rng.int(0, 45); n > 0; n--) {
+      laid.push(at);
+      if (!rng.chance(0.8)) at = jump();
+      else {
+        const [dx, dy] = rng.pick([
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ]);
+        at = [Math.min(30, Math.max(10, at[0] + dx)), Math.min(28, Math.max(16, at[1] + dy))];
+      }
+    }
+    // ground a load makes: on a road laid, on a crossing of the track, or anywhere
+    const crossings = laid.filter(([, y]) => y === 20);
+    const spoil: [number, number, Terrain][] = Array.from({ length: rng.int(0, 12) }, () => {
+      const at =
+        rng.chance(0.4) && laid.length
+          ? laid
+          : rng.chance(0.5) && crossings.length
+            ? crossings
+            : null;
+      const [x, y] = at ? rng.pick(at) : [rng.int(10, 46), rng.int(16, 46)];
+      return [x, y, rng.pick(GROUNDS)];
+    });
+    return { laid, spoil };
+  }
+  function* shrinkRoadCase(c: RoadCase): Iterable<RoadCase> {
+    for (const laid of shrinkArray(c.laid)) yield { ...c, laid };
+    for (const spoil of shrinkArray(c.spoil)) yield { ...c, spoil };
+  }
+
+  // a second long: a hundred worlds, each saved and loaded three times
+  it('survive any roads and any ground a load makes: only the roads the ground cannot hold go, unpaid', () => {
+    const seen = { roads: 0, crossings: 0, gone: 0, goneCrossings: 0 };
+    forAll(
+      genRoadCase,
+      ({ laid, spoil }) => {
+        reset();
+        const w = sceneOf(laid);
+        const saved = gameOn(w).snapshot();
+        // a refund would show, as in the test above
+        saved.rules = { ...saved.rules, refundRate: 1 };
+        saved.stockpile = undefined;
+        const tiles = saved.roads ?? [];
+
+        // on the ground they were laid on, the roads come back as they were
+        const before = roadsOf(w);
+        const control = loaded(saved);
+        expect(roadsOf(control)).toEqual(before);
+
+        // on other ground, exactly the roads its repaired ground cannot hold are gone
+        const treated = loaded(saved, (map) => {
+          for (const [x, y, t] of spoil) map.terrain[y * map.w + x] = t;
+        });
+        const ground = (x: number, y: number) => treated.map.terrain[y * treated.map.w + x];
+        const kept = tiles.filter(([x, y]) => unbuildable(ground(x, y)) === null);
+        expect(treated.builder.roads.toJSON()).toEqual(kept);
+        // and no road stands where the builder would refuse one for the ground
+        for (const { x, y } of treated.builder.roads.list())
+          expect(unbuildable(ground(x, y)), `${x},${y}`).toBeNull();
+        // nothing was paid back
+        expect(treated.economy.money).toBe(control.economy.money);
+        expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
+        // the track under a level crossing stays; one the ground left no road on is no crossing
+        expect(treated.track.pieces.size).toBe(control.track.pieces.size);
+        const crossings = [...control.builder.roads.crossingKeys()];
+        expect([...treated.builder.roads.crossingKeys()]).toEqual(
+          crossings.filter((k) => treated.builder.roads.has(k % SIZE, Math.floor(k / SIZE))),
+        );
+
+        // the repaired game saves and loads again as it is: on its own ground, nothing more goes
+        const again = gameOn(treated).snapshot();
+        const read = readSaveText(JSON.stringify(again));
+        if (!('save' in read)) throw new Error(read.error);
+        const settled = loaded(read.save, (map) => map.terrain.set(treated.map.terrain));
+        expect(roadsOf(settled)).toEqual(roadsOf(treated));
+
+        seen.roads += tiles.length;
+        seen.crossings += crossings.length;
+        seen.gone += tiles.length - kept.length;
+        seen.goneCrossings += crossings.length - treated.builder.roads.crossingKeys().size;
+      },
+      { shrink: shrinkRoadCase },
+    );
+    // the seeds reach roads kept, roads taken off, and level crossings among both
+    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(20);
+  }, 20_000);
 });
