@@ -1,7 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { structureFrame } from '../src/art/frames';
 import { generateStructuresAtlas } from '../src/art/structures';
+import { Rng } from '../src/engine/rng';
+import { structureFamily, unturnedFrame } from '../src/render/assetScale';
 import { doorsOf, placeSpan } from '../src/sim/doors';
+import { SEEDS, forAll, shrinkInt } from '../src/testing/property';
+import { FIT } from './building-fit.mjs';
 import { ROTATIONS } from './building-kit.mjs';
 import {
   DOOR,
@@ -14,6 +20,7 @@ import {
   classify,
   generatedFrames,
   measureFoot,
+  measureFrame,
   openingsOnWall,
   placeDefs,
   serialise,
@@ -55,6 +62,139 @@ function slab(extra = () => null, resolution = 1) {
   );
 }
 
+/**
+ * The file's bytes are the text the tool writes. When they are not, the failure names the frames
+ * that differ: a diff of two 200 KB strings is not a message, and takes minutes to compute.
+ */
+function expectSameBytes(text, file, label) {
+  if (text === file) return;
+  const now = JSON.parse(text).frames;
+  const was = JSON.parse(file).frames;
+  const stale = [...new Set([...Object.keys(now), ...Object.keys(was)])].filter(
+    (key) => JSON.stringify(now[key]) !== JSON.stringify(was[key]),
+  );
+  throw new Error(
+    `${label}: the file is not what the tool writes: ${stale.length} frames differ` +
+      (stale.length ? `, ${stale.slice(0, 5).join(', ')}` : ' (the text only)'),
+  );
+}
+
+/* ------------------------------------------------ drawn buildings, for the properties below */
+
+const WALL = [150, 120, 90, 255];
+const ROOF = [200, 60, 60, 255];
+const DARK = [30, 30, 30, 255];
+const CORNERS = ['n', 'e', 's', 'w'];
+
+/** [x, y] and [x, y] at most `by` apart, with the case named in the failure. */
+function within(p, q, by, label) {
+  expect(
+    Math.hypot(p[0] - q[0], p[1] - q[1]),
+    `${label}: ${p} is not within ${by} of ${q}`,
+  ).toBeLessThanOrEqual(by);
+}
+
+/**
+ * A box standing on the game's ground lines, in a 200 x 200 world px frame at `k` texels per world
+ * px: its near corner at (sx, sy), the S wall `a` long to the left of it and the E wall `b` long
+ * to the right, `h` high, with a roof of another colour. `doors` are dark openings on a wall,
+ * `{ wall: 'S' | 'E', x, width, height, up }`: the centre column, the size and the rise above the
+ * foot, in world px. `extra(x, y, ground)` paints over the box and around it: it gets a texel's
+ * centre in world px and returns [r, g, b, a], or nothing to leave the texel. `truth` is the foot
+ * the box was drawn on, in texels.
+ */
+function box({ k = 1, a, b, h, sx, sy, doors = [], extra, ax = 0, ay = 0 }) {
+  const w = [sx - a, sy - a / 2];
+  const e = [sx + b, sy - b / 2];
+  const n = [w[0] + b, w[1] - b / 2];
+  const low = (x) => (x < sx ? w[1] + (x - w[0]) * 0.5 : sy - (x - sx) * 0.5);
+  const far = (x) => (x < n[0] ? w[1] - (x - w[0]) * 0.5 : n[1] + (x - n[0]) * 0.5);
+  const ground = { low, w, e, n, s: [sx, sy] };
+  const frame = drawn(
+    200 * k,
+    200 * k,
+    (tx, ty) => {
+      const x = (tx + 0.5) / k;
+      const y = (ty + 0.5) / k;
+      const over = extra?.(x, y, ground);
+      if (over) return over;
+      if (x < w[0] || x >= e[0] || y >= low(x) || y < far(x) - h) return null;
+      for (const d of doors)
+        if ((d.wall === 'S') === x < sx && Math.abs(x - d.x) < d.width / 2) {
+          const base = low(x) - d.up;
+          if (y < base && y >= base - d.height) return DARK;
+        }
+      return y < low(x) - h ? ROOF : WALL;
+    },
+    { resolution: k, ax, ay },
+  );
+  const texels = (p) => p.map((v) => v * k);
+  return { frame, truth: { n: texels(n), e: texels(e), s: texels([sx, sy]), w: texels(w) } };
+}
+
+/** The frame with its pixels moved right and down by whole texels. */
+function shifted(f, dx, dy) {
+  const w = f.w + dx;
+  const h = f.h + dy;
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < f.h; y++)
+    for (let x = 0; x < f.w; x++)
+      data.set(
+        f.data.subarray((y * f.w + x) * 4, (y * f.w + x) * 4 + 4),
+        ((y + dy) * w + x + dx) * 4,
+      );
+  return { ...f, w, h, data };
+}
+
+/** The frame as in a mirror, left for right. */
+function mirrored(f) {
+  const data = new Uint8ClampedArray(f.data.length);
+  for (let y = 0; y < f.h; y++)
+    for (let x = 0; x < f.w; x++)
+      data.set(
+        f.data.subarray((y * f.w + x) * 4, (y * f.w + x) * 4 + 4),
+        (y * f.w + f.w - 1 - x) * 4,
+      );
+  return { ...f, data };
+}
+
+/** The frame with every texel made `m` by `m`: the same picture at `m` times the resolution. */
+function upscaled(f, m) {
+  const w = f.w * m;
+  const h = f.h * m;
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const from = (Math.floor(y / m) * f.w + Math.floor(x / m)) * 4;
+      data.set(f.data.subarray(from, from + 4), (y * w + x) * 4);
+    }
+  return { ...f, w, h, data, resolution: f.resolution * m };
+}
+
+/** Seeds for the properties that draw a frame per case: enough to cover the cases, in seconds. */
+const DRAWN = SEEDS.slice(0, 60);
+/** Property calls a failing case may spend shrinking: each draws and measures a frame. */
+const SHRINK = 400;
+
+/** The smallest a box, and so a failing case, gets drawn. */
+const SMALLEST = { k: 1, a: 16, b: 16, h: 14, sx: 100, sy: 165 };
+
+function genBox(rng, resolutions = [1, 2, 4]) {
+  return {
+    k: rng.pick(resolutions),
+    a: rng.int(16, 64),
+    b: rng.int(16, 64),
+    h: rng.int(14, 70),
+    sx: rng.int(80, 120),
+    sy: rng.int(150, 180),
+  };
+}
+
+function* shrinkBox(c) {
+  for (const key of Object.keys(SMALLEST))
+    for (const v of shrinkInt(c[key], SMALLEST[key])) yield { ...c, [key]: v };
+}
+
 describe('the foot of a frame', () => {
   const near = (p, q, by) => {
     expect(Math.abs(p[0] - q[0])).toBeLessThanOrEqual(by);
@@ -91,6 +231,10 @@ describe('the foot of a frame', () => {
     const shadow = (x, y) =>
       y >= 70 && y < 80 && x > 20 && x < 80 ? [30, 40, 30, SOLID - 1] : null;
     near(measureFoot(slab(shadow)).s, [50, 70], 1.5);
+  });
+
+  it('takes a texel for the building from the same alpha as building-fit does', () => {
+    expect(SOLID).toBe(FIT.alpha);
   });
 
   it('gives no foot for an empty frame', () => {
@@ -333,13 +477,702 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     async () => {
       const mods = { doorsOf, placeSpan };
       const again = buildGround(frames, places, mods).data;
-      expect(await serialise(again)).toBe(file);
+      expectSameBytes(await serialise(again), file, 'the tool now');
       // and generating the frames twice gives the same pixels
       const first = generatedFrames(generateStructuresAtlas);
       const second = generatedFrames(generateStructuresAtlas);
       expect([...first.keys()]).toEqual([...second.keys()]);
       for (const [key, f] of first)
         expect(Buffer.from(f.data).equals(Buffer.from(second.get(key).data)), key).toBe(true);
+    },
+    SLOW,
+  );
+
+  // Two more runs of the tool, each about 2.5 s alone; the file is checked against each.
+  it(
+    'is the same bytes whatever order the frames and the defs come in',
+    async () => {
+      for (const seed of [1, 2]) {
+        const rng = new Rng(seed);
+        const inOrder = new Map(rng.shuffle([...frames.keys()]).map((k) => [k, frames.get(k)]));
+        const written = buildGround(inOrder, rng.shuffle(places.slice()), { doorsOf, placeSpan });
+        expectSameBytes(await serialise(written.data), file, `seed ${seed}`);
+      }
+    },
+    SLOW,
+  );
+
+  // the tool's own command, which loads the game's code through a Vite server rather than
+  // through vitest: about 5 s alone
+  it(
+    'is what `node tools/building-ground.mjs --check` finds, from the command line, and leaves alone',
+    () => {
+      const said = execFileSync(process.execPath, ['tools/building-ground.mjs', '--check'], {
+        encoding: 'utf8',
+      });
+      expect(said).toContain(`${Object.keys(data).length} frames`);
+      expect(readFileSync(GROUND_FILE, 'utf8')).toBe(file);
+    },
+    SLOW,
+  );
+
+  it('writes plain numbers: finite, to two decimals, no negative zero', () => {
+    const bad = [];
+    const walk = (v, path) => {
+      if (typeof v === 'number') {
+        if (
+          !Number.isFinite(v) ||
+          Object.is(v, -0) ||
+          Math.abs(v * 100 - Math.round(v * 100)) > 1e-6
+        )
+          bad.push(`${path} = ${v}`);
+      } else if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${path}[${i}]`));
+      else if (v && typeof v === 'object')
+        for (const [key, x] of Object.entries(v)) walk(x, `${path}.${key}`);
+    };
+    walk(data, 'frames');
+    expect(bad, `${bad.length} numbers: ${bad.slice(0, 5)}`).toEqual([]);
+    expect(file).not.toMatch(/-0(?![.\d])/);
+    expect(JSON.parse(file).version).toBe(1);
+  });
+
+  it('has an entry for exactly the frames of the places in src/data, by the renderer family rule', () => {
+    // read from src/data and public/assets directly, and the family by the renderer's own rule
+    const read = (name) => JSON.parse(readFileSync(`src/data/${name}`, 'utf8'));
+    const placed = new Set([
+      ...[...read('stations.json').defs, ...read('stations_full.json')].map((d) => d.art),
+      ...['buildings.json', 'buildings_full.json'].flatMap((f) =>
+        read(f)
+          .filter((d) => !d.bridge)
+          .map((d) => d.id),
+      ),
+      ...read('decor.json')
+        .filter((d) => !d.onTrack && !d.power)
+        .map((d) => d.id),
+    ]);
+    const atlas = { has: (key) => frames.has(key) };
+    const illustrated = new Set(
+      Object.keys(JSON.parse(readFileSync(`public/assets/${GROUP}.json`, 'utf8')).frames),
+    );
+    const families = new Set();
+    for (const key of frames.keys()) {
+      if (!key.startsWith(`${GROUP}/`)) continue;
+      // a depot's frame carries its gate axis: depot_r1, depot_narrow_r0
+      const family = structureFamily(unturnedFrame(atlas, key)).replace(
+        /^(depot|depot_narrow)_r[01]$/,
+        '$1',
+      );
+      expect(Boolean(data[key]), `${key} (family ${family})`).toBe(placed.has(family));
+      if (data[key]) {
+        families.add(family);
+        expect(data[key].source, key).toBe(illustrated.has(key) ? 'illustrated' : 'generated');
+      }
+    }
+    expect([...families].sort(), 'a def of the data has no frame at all').toEqual(
+      [...placed].sort(),
+    );
+  });
+
+  it('has the whole grid of its footprint, once, and one footprint for every turn of a family', () => {
+    const unturned = new Map();
+    for (const [key, e] of Object.entries(data)) {
+      const w = Math.max(...e.footprint.map((t) => t[0])) + 1;
+      const h = Math.max(...e.footprint.map((t) => t[1])) + 1;
+      const grid = [];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) grid.push([x, y]);
+      expect(e.footprint, key).toEqual(grid);
+      // a quarter turn swaps the sides: turned back, every frame of a family is the same size
+      const { family } = building(key);
+      const size = (e.rot % 2 ? [h, w] : [w, h]).join('x');
+      expect(size, `${key} is ${size}, its family ${family} is ${unturned.get(family)}`).toBe(
+        unturned.get(family) ?? size,
+      );
+      unturned.set(family, size);
+    }
+  });
+
+  it('gives the frame the game draws at a rotation the data of that rotation', () => {
+    // as src/game.ts asks: a depot for `structures/<art>_r<rot % 2>` (and `_lv<n>`), anything
+    // else for its own frame, then `structureFrame` turns the key to the rotation
+    const atlas = { has: (key) => frames.has(key) };
+    let asked = 0;
+    for (const key of Object.keys(data)) {
+      if (unturnedFrame(atlas, key) !== key) continue;
+      const axis = /^structures\/depot(?:_narrow)?_r([01])(?:_lv\d+)?$/.exec(key);
+      // the toolbar's icon of a depot (`depot_1`) is never drawn on the ground, so never turned
+      if (!axis && /^structures\/depot(?:_narrow)?_\d+$/.test(key)) continue;
+      for (const want of [0, 1, 2, 3]) {
+        if (axis && Number(axis[1]) !== want % 2) continue;
+        const drawn = structureFrame(atlas, key, want);
+        asked++;
+        expect(data[drawn], `${key} turned to ${want} is ${drawn}`).toBeDefined();
+        expect(data[drawn].rot, `${key} turned to ${want} is ${drawn}`).toBe(want);
+      }
+    }
+    expect(asked).toBeGreaterThan(300);
+  });
+
+  it('puts every door on a point of its wall, inside its tile, where it says', () => {
+    let seen = 0;
+    for (const [key, e] of Object.entries(data)) {
+      const [, east, south, west] = e.foot;
+      const w = Math.max(...e.footprint.map((t) => t[0])) + 1;
+      const h = Math.max(...e.footprint.map((t) => t[1])) + 1;
+      for (const door of e.doors) {
+        seen++;
+        const [a, b] = door.side === 'S' ? [west, south] : [south, east];
+        // how far along the wall from its left end
+        const along = (door.point[0] - a[0]) / (b[0] - a[0]);
+        expect(along, `${key} door off its wall`).toBeGreaterThan(0);
+        expect(along, `${key} door off its wall`).toBeLessThan(1);
+        // the offset runs along the tile axis: tile x on the S wall, left to right on the picture,
+        // tile y on the E wall, right to left, from the far corner to the near one
+        const offset =
+          door.side === 'S'
+            ? along * w - (door.tile[0] + 0.5)
+            : (1 - along) * h - (door.tile[1] + 0.5);
+        expect(offset, `${key} door offset`).toBeCloseTo(door.offset, 1);
+        // on the wall's foot line, or above it by the step an opening may start on
+        const line = a[1] + ((door.point[0] - a[0]) * (b[1] - a[1])) / (b[0] - a[0]);
+        expect(line - door.point[1], `${key} door height above its foot`).toBeGreaterThan(-1.5);
+        expect(line - door.point[1], `${key} door height above its foot`).toBeLessThan(
+          DOOR.touch + 1.5,
+        );
+        expect(door.width, key).toBeGreaterThanOrEqual(DOOR.minWidth - 0.1);
+        expect(door.width, key).toBeLessThanOrEqual(DOOR.maxWidth + 0.1);
+      }
+      // no two doors of a frame are the same opening
+      const points = e.doors.map((d) => d.point.join());
+      expect(new Set(points).size, key).toBe(points.length);
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
+
+  it("keeps most of each visible wall's foot on the picture, not only its corners", () => {
+    // a foot whose corners touch the silhouette but whose walls float over it would pass the
+    // corner check; here the columns along the S and E feet each need opaque texels on or just
+    // above the line (a bench or a post in front can hide a stretch of the base, not most of it)
+    const bare = [];
+    for (const [key, e] of Object.entries(data)) {
+      if (e.fit !== 'walls') continue;
+      const frame = frames.get(key);
+      const d = frame.resolution;
+      const solid = (x, y) =>
+        x >= 0 &&
+        y >= 0 &&
+        x < frame.w &&
+        y < frame.h &&
+        frame.data[(y * frame.w + x) * 4 + 3] >= FIT.alpha;
+      const [, east, south, west] = e.foot.map((p) => [frame.ax + p[0] * d, frame.ay + p[1] * d]);
+      let on = 0;
+      let columns = 0;
+      for (const [a, b] of [
+        [west, south],
+        [south, east],
+      ])
+        for (let x = Math.ceil(a[0]); x < b[0]; x++) {
+          const y = Math.floor(a[1] + ((x + 0.5 - a[0]) * (b[1] - a[1])) / (b[0] - a[0]));
+          columns++;
+          for (let up = -Math.round(0.5 * d); up <= Math.round(1.5 * d); up++)
+            if (solid(x, y - up)) {
+              on++;
+              break;
+            }
+        }
+      if (on < columns / 2) bare.push(`${key} ${on}/${columns}`);
+    }
+    expect(bare, `feet mostly off the picture: ${bare.slice(0, 5)}`).toEqual([]);
+  });
+
+  it('counts what lies below the foot as an independent count of the texels does', () => {
+    const off = [];
+    for (const [key, e] of Object.entries(data)) {
+      const frame = frames.get(key);
+      const d = frame.resolution;
+      const [, east, south, west] = e.foot;
+      let texels = 0;
+      for (let y = 0; y < frame.h; y++)
+        for (let x = 0; x < frame.w; x++) {
+          if (frame.data[(y * frame.w + x) * 4 + 3] < FIT.alpha) continue;
+          const wx = (x + 0.5 - frame.ax) / d;
+          const wy = (y + 0.5 - frame.ay) / d;
+          if (wx < west[0] || wx >= east[0]) continue;
+          const line =
+            wx < south[0] ? west[1] + (wx - west[0]) * 0.5 : south[1] - (wx - south[0]) * 0.5;
+          if (wy > line + 1.5) texels++;
+        }
+      // the tool counts whole columns from the corners outwards: a few texels' difference at most
+      if (Math.abs(texels / (d * d) - e.baked) > 15)
+        off.push(`${key} ${e.baked} / ${texels / d / d}`);
+    }
+    expect(off, `baked disagrees with a recount: ${off.slice(0, 5)}`).toEqual([]);
+  });
+});
+
+/* ------------------------------------------------ properties of the measurement */
+
+describe('the foot of a drawn box', () => {
+  // each case draws a frame of up to 800 x 800 texels and measures it: about 20 ms alone
+  it(
+    'is found wherever the box stands, at any size and resolution',
+    () => {
+      forAll(
+        genBox,
+        (c) => {
+          const { frame, truth } = box(c);
+          const foot = measureFoot(frame);
+          expect(foot?.fit).toBe('walls');
+          for (const corner of ['s', 'w', 'e'])
+            within(foot[corner], truth[corner], 1.5 * c.k, corner);
+          within(foot.n, truth.n, 2.5 * c.k, 'n');
+        },
+        { shrink: shrinkBox, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  it(
+    'is found with a lamp post, a bench, ground paint, a shadow and a chimney about it',
+    () => {
+      const genScene = (rng) => {
+        const c = genBox(rng);
+        const left = c.sx - c.a;
+        const right = c.sx + c.b;
+        return {
+          ...c,
+          lamp: rng.chance(0.6)
+            ? { x: rng.int(left + 4, right - 6), drop: rng.int(2, 14), tall: rng.int(30, 50) }
+            : null,
+          bench: rng.chance(0.6)
+            ? { x: rng.int(left + 2, right - 14), drop: rng.int(3, 10) }
+            : null,
+          strip: rng.chance(0.6) ? { drop: rng.int(3, 6), thick: rng.int(2, 4) } : null,
+          shadow: rng.chance(0.6),
+          chimney: rng.chance(0.6)
+            ? { x: rng.int(left + 10, right - 14), rise: rng.int(10, 20) }
+            : null,
+        };
+      };
+      // what a picture has besides walls: none of it is one (a wall rises at least MEASURE.run)
+      const scenery =
+        (c) =>
+        (x, y, { low }) => {
+          const { lamp, bench, strip, shadow, chimney } = c;
+          const onBox = x >= c.sx - c.a && x < c.sx + c.b;
+          if (lamp && x >= lamp.x && x < lamp.x + 2) {
+            const bottom = low(lamp.x) + lamp.drop;
+            if (y < bottom && y >= bottom - lamp.tall) return [40, 40, 40, 255];
+          }
+          if (bench && x >= bench.x && x < bench.x + 12) {
+            const bottom = low(bench.x) + bench.drop + 4;
+            if (y < bottom && y >= bottom - 4) return [90, 60, 30, 255];
+          }
+          if (strip && onBox) {
+            const top = low(x) + strip.drop;
+            if (y >= top && y < top + strip.thick) return [200, 190, 150, 255];
+          }
+          if (shadow && onBox && y >= low(x) && y < low(x) + 10) return [30, 40, 30, FIT.alpha - 1];
+          if (chimney && x >= chimney.x && x < chimney.x + 4) {
+            const roof = low(chimney.x) - c.h - 20;
+            if (y < roof && y >= roof - chimney.rise) return [160, 60, 40, 255];
+          }
+          return undefined;
+        };
+      function* shrinkScene(c) {
+        for (const key of ['lamp', 'bench', 'strip', 'shadow', 'chimney'])
+          if (c[key]) yield { ...c, [key]: null };
+        yield* shrinkBox(c);
+      }
+      forAll(
+        genScene,
+        (c) => {
+          const { frame, truth } = box({ ...c, extra: scenery(c) });
+          const foot = measureFoot(frame);
+          expect(foot?.fit).toBe('walls');
+          for (const corner of ['s', 'w', 'e'])
+            within(foot[corner], truth[corner], 2 * c.k, corner);
+        },
+        { shrink: shrinkScene, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  // three measurements of each case, one of them on a frame twice the size
+  it(
+    'moves with the picture: shifted, mirrored and drawn at twice the resolution',
+    () => {
+      forAll(
+        (rng) => genBox(rng, [1, 2]),
+        (c) => {
+          const { frame } = box(c);
+          const foot = measureFoot(frame);
+          // shifted by whole texels, every corner is exactly as far on
+          const dx = 3 + (c.a % 7);
+          const dy = 2 + (c.b % 5);
+          const moved = measureFoot(shifted(frame, dx, dy));
+          for (const corner of CORNERS) {
+            expect(moved[corner][0], `shifted ${corner}`).toBeCloseTo(foot[corner][0] + dx, 6);
+            expect(moved[corner][1], `shifted ${corner}`).toBeCloseTo(foot[corner][1] + dy, 6);
+          }
+          // mirrored, the left corner is the right one, as far from the other edge of the frame
+          const flipped = measureFoot(mirrored(frame));
+          for (const [corner, other] of [
+            ['n', 'n'],
+            ['e', 'w'],
+            ['s', 's'],
+            ['w', 'e'],
+          ])
+            within(
+              flipped[other],
+              [frame.w - foot[corner][0], foot[corner][1]],
+              1.5 * c.k,
+              `mirrored ${corner}`,
+            );
+          // the same picture at twice the resolution is the same foot, in world px
+          const big = measureFoot(upscaled(frame, 2));
+          for (const corner of CORNERS)
+            within(
+              [big[corner][0] / 2, big[corner][1] / 2],
+              foot[corner],
+              c.k,
+              `doubled ${corner}`,
+            );
+        },
+        { shrink: shrinkBox, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+});
+
+describe('the doors of a drawn wall', () => {
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  /** a door `width` wide, as tall as its width says a door is, `up` above the foot */
+  const doorSize = (rng) => {
+    const width = rng.int(3, 9);
+    return { width, height: clamp(Math.round(width * rng.range(1.8, 3.2)), 8, 18) };
+  };
+  /** the wall a door is on, from its left end (`from`) for `length`: the foot's wall for the call */
+  const wallOf = (frame, wall) => {
+    const foot = measureFoot(frame);
+    return wall === 'S' ? [foot.w, foot.s] : [foot.s, foot.e];
+  };
+  const openings = (frame, wall) => openingsOnWall(frame, ...wallOf(frame, wall));
+  /** the opening of a case's size standing on its wall at the column `x` */
+  const door = (c, x) => ({ wall: c.wall, x, width: c.width, height: c.height, up: c.up });
+  /** the column a door at `at` (0 to 1) along a wall stands on, in world px */
+  const columnOf = (c, wall, at) => (wall === 'S' ? c.sx - c.a + at * c.a : c.sx + (1 - at) * c.b);
+
+  const genWall = (rng) => ({
+    k: rng.pick([1, 2, 4]),
+    a: rng.int(40, 64),
+    b: rng.int(40, 64),
+    h: rng.int(50, 70),
+    sx: rng.int(90, 110),
+    sy: rng.int(150, 170),
+    wall: rng.pick(['S', 'E']),
+  });
+  function* shrinkWall(c) {
+    for (const key of ['k', 'a', 'b', 'h'])
+      for (const v of shrinkInt(c[key], { k: 1, a: 40, b: 40, h: 50 }[key]))
+        yield { ...c, [key]: v };
+    for (const [key, least] of [
+      ['width', 3],
+      ['up', 0],
+    ])
+      if (c[key] !== undefined) for (const v of shrinkInt(c[key], least)) yield { ...c, [key]: v };
+  }
+
+  // each case draws a frame of up to 800 x 800 texels, measures its foot and reads a wall
+  it(
+    'finds a door where it stands, on either wall, up to a step above the foot',
+    () => {
+      forAll(
+        (rng) => ({
+          ...genWall(rng),
+          ...doorSize(rng),
+          at: rng.int(30, 70) / 100,
+          up: rng.int(0, 6),
+        }),
+        (c) => {
+          const x = columnOf(c, c.wall, c.at);
+          const { frame } = box({ ...c, doors: [door(c, x)] });
+          const found = openings(frame, c.wall);
+          expect(found, 'openings found').toHaveLength(1);
+          const centre = (found[0].from + found[0].to) / 2 / c.k;
+          within([centre, 0], [x, 0], 1, 'door centre');
+          expect(
+            Math.abs((found[0].to - found[0].from) / c.k - c.width),
+            'width',
+          ).toBeLessThanOrEqual(1.5);
+        },
+        { shrink: shrinkWall, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  it(
+    'finds two doors on a wall, side by side, in order',
+    () => {
+      forAll(
+        (rng) => ({ ...genWall(rng), ...doorSize(rng) }),
+        (c) => {
+          const first = columnOf(c, c.wall, 0.3);
+          const second = columnOf(c, c.wall, 0.7);
+          const doors = [first, second].map((x) => door({ ...c, up: 0 }, x));
+          const found = openings(box({ ...c, doors }).frame, c.wall);
+          expect(found, 'openings found').toHaveLength(2);
+          // left to right on the picture: the S wall's first door is its left one, the E wall's its right
+          const centres = found.map((o) => (o.from + o.to) / 2 / c.k);
+          const expected = [first, second].sort((p, q) => p - q);
+          centres.forEach((centre, i) => within([centre, 0], [expected[i], 0], 1, `door ${i}`));
+        },
+        { shrink: shrinkWall, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  it(
+    'takes an opening high on the wall for a window, not a door',
+    () => {
+      forAll(
+        (rng) => ({
+          ...genWall(rng),
+          ...doorSize(rng),
+          at: rng.int(30, 70) / 100,
+          up: rng.int(14, 22),
+        }),
+        (c) => {
+          const x = columnOf(c, c.wall, c.at);
+          const { frame } = box({ ...c, doors: [door(c, x)] });
+          expect(openings(frame, c.wall), 'openings found').toHaveLength(0);
+        },
+        { shrink: shrinkWall, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  // sixteen frames of up to 800 x 800 texels, drawn and measured
+  it(
+    'takes an opening too wide, too squat, too low or too tall for a door',
+    () => {
+      const shapes = {
+        wide: [DOOR.maxWidth + 3, 14],
+        squat: [10, Math.round(10 * DOOR.aspect[0]) - 3],
+        low: [5, DOOR.minHeight - 2],
+        tall: [6, DOOR.maxHeight + 6],
+      };
+      for (const [name, [width, height]] of Object.entries(shapes))
+        for (const wall of ['S', 'E'])
+          for (const k of [1, 4]) {
+            const c = { k, a: 64, b: 64, h: 60, sx: 100, sy: 165, wall };
+            const { frame } = box({
+              ...c,
+              doors: [{ wall, x: columnOf(c, wall, 0.5), width, height, up: 0 }],
+            });
+            expect(
+              openings(frame, wall),
+              `${name} ${width}x${height} on ${wall} at ${k}`,
+            ).toHaveLength(0);
+          }
+    },
+    SLOW,
+  );
+});
+
+describe('the data of a drawn building', () => {
+  const FOOTPRINTS = [
+    { w: 1, h: 1 },
+    { w: 2, h: 1, long: true },
+    { w: 2, h: 2, size: 2 },
+  ];
+  /** a place def with the doors given, as src/data holds them: tile [dx, dy] and side, at rotation 0 */
+  const defOf = (fp, doors) => ({
+    accepts: [],
+    ...(fp.long && { long: true }),
+    ...(fp.size && { size: fp.size }),
+    doors,
+  });
+  /** a tile on the edge of a footprint that faces `side` */
+  const edgeTile = (fp, side, rng) => {
+    const x = rng.int(0, fp.w - 1);
+    const y = rng.int(0, fp.h - 1);
+    return { N: [x, 0], S: [x, fp.h - 1], W: [0, y], E: [fp.w - 1, y] }[side];
+  };
+  const genPlace = (rng) => {
+    const fp = rng.pick(FOOTPRINTS);
+    const street = rng.pick(DIRS);
+    const doors = [{ kind: 'street', tile: edgeTile(fp, street, rng), side: street }];
+    const other = rng.pick(DIRS);
+    const platform = { kind: 'platform', tile: edgeTile(fp, other, rng), side: other };
+    if (
+      rng.chance(0.5) &&
+      (platform.side !== street || platform.tile.join() !== doors[0].tile.join())
+    )
+      doors.push(platform);
+    // how far each door stands from the middle of its tile, in tiles, along the tile axis
+    const shifts = doors.map(() => rng.int(-20, 20) / 100);
+    return { fp, doors, shifts, rot: rng.int(0, 3), k: rng.pick([1, 2]) };
+  };
+  function* shrinkPlace(c) {
+    if (c.doors.length > 1)
+      yield { ...c, doors: c.doors.slice(0, 1), shifts: c.shifts.slice(0, 1) };
+    yield { ...c, shifts: c.shifts.map(() => 0) };
+    for (const rot of shrinkInt(c.rot, 0)) yield { ...c, rot };
+    for (const k of shrinkInt(c.k, 1)) yield { ...c, k };
+  }
+
+  const ANCHOR = [100, 160];
+  /**
+   * Where the picture of a place has a door on its wall, in world px, from the isometric ground
+   * alone: on the S wall, running left to right, tile x goes with the screen; on the E wall, whose
+   * left end is the near corner, tile y runs against it. `shift` is in tiles along the tile axis.
+   */
+  const standsAt = (door, shift, { W, H, sx, a, b }) =>
+    DIRS[door.side] === 'S'
+      ? sx - a + ((door.tile.x + 0.5 + shift) / W) * a
+      : sx + (1 - (door.tile.y + 0.5 + shift) / H) * b;
+  /** The place drawn with its doors where `place(door, index, geometry)` says, and measured. */
+  const draw = (c, place) => {
+    const odd = c.rot % 2;
+    const geometry = { W: odd ? c.fp.h : c.fp.w, H: odd ? c.fp.w : c.fp.h, sx: 100 };
+    geometry.a = geometry.W * 30;
+    geometry.b = geometry.H * 30;
+    const def = defOf(c.fp, c.doors);
+    const wall = (door) => DIRS[door.side];
+    const doors = doorsOf(def, 0, 0, c.rot)
+      .map((door, i) => ({ door, i, x: place(door, i, geometry) }))
+      .filter((p) => wall(p.door) === 'S' || wall(p.door) === 'E');
+    const { frame, truth } = box({
+      k: c.k,
+      a: geometry.a,
+      b: geometry.b,
+      h: 60,
+      sx: geometry.sx,
+      sy: 170,
+      ax: ANCHOR[0] * c.k,
+      ay: ANCHOR[1] * c.k,
+      doors: doors.map((p) => ({ wall: wall(p.door), x: p.x, width: 6, height: 14, up: 0 })),
+    });
+    const info = { rot: c.rot, defs: [{ def }] };
+    const measured = measureFrame(frame, info, { doorsOf, placeSpan });
+    return { ...measured, doors, truth, W: geometry.W, H: geometry.H };
+  };
+
+  // each case draws a frame of up to 400 x 400 texels and measures it
+  it(
+    'has the footprint, the foot from the anchor and each visible door in its own tile',
+    () => {
+      forAll(
+        genPlace,
+        (c) => {
+          const { entry, doors, truth, W, H } = draw(c, (door, i, g) =>
+            standsAt(door, c.shifts[i], g),
+          );
+          expect(entry, 'an entry').not.toBeNull();
+          // the foot in world px from the anchor
+          CORNERS.forEach((corner, i) =>
+            within(
+              entry.foot[i],
+              [truth[corner][0] / c.k - ANCHOR[0], truth[corner][1] / c.k - ANCHOR[1]],
+              1.5,
+              `foot ${corner}`,
+            ),
+          );
+          const tiles = [];
+          for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) tiles.push([x, y]);
+          expect(entry.footprint).toEqual(tiles);
+          expect(entry.front.side).toBe(['S', 'W', 'N', 'E'][c.rot]);
+          // the front wall's two foot corners in tile order, and whether the camera sees it
+          const edge = { S: [3, 2], W: [0, 3], N: [0, 1], E: [1, 2] }[entry.front.side];
+          expect(entry.front.edge, 'front edge').toEqual(edge.map((i) => entry.foot[i]));
+          expect(entry.front.visible).toBe(['S', 'E'].includes(entry.front.side));
+          // nothing is painted below the foot
+          expect(entry.baked, 'baked').toBe(0);
+          // one door for each door of the data on a wall the camera sees, in its own tile
+          expect(
+            entry.doors.map((d) => [d.kind, d.tile, d.side, d.reach]),
+            'doors found',
+          ).toEqual(
+            doors.map(({ door }) => [
+              door.kind,
+              [door.tile.x, door.tile.y],
+              DIRS[door.side],
+              [door.reach.x, door.reach.y],
+            ]),
+          );
+          entry.doors.forEach((found, j) => {
+            // where it stands, and how far from its tile's middle, along the tile axis
+            const painted = doors[j];
+            expect(
+              Math.abs(found.point[0] - (painted.x - ANCHOR[0])),
+              `point of door ${j}`,
+            ).toBeLessThanOrEqual(1);
+            expect(found.offset, `offset of door ${j}`).toBeCloseTo(c.shifts[painted.i], 1);
+          });
+        },
+        { shrink: shrinkPlace, seeds: SEEDS, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  it('counts what is painted below the foot in world px squared, at any resolution', () => {
+    const def = defOf(FOOTPRINTS[0], [{ kind: 'street', tile: [0, 0], side: 'S' }]);
+    const info = { rot: 0, defs: [{ def }] };
+    // two benches of 12 x 4 world px, a few px under the near corner, and a clean box
+    const bench = (x0) => (x, y) =>
+      x >= x0 && x < x0 + 12 && y >= 169 && y < 173 ? [90, 60, 30, 255] : undefined;
+    for (const k of [1, 2, 4]) {
+      const baked = (extra) => {
+        const { frame } = box({ k, a: 40, b: 40, h: 50, sx: 100, sy: 165, extra });
+        return measureFrame(frame, info, { doorsOf, placeSpan }).entry.baked;
+      };
+      expect(baked(undefined), `clean at ${k}`).toBe(0);
+      expect(baked(bench(94)), `one bench at ${k}`).toBe(48);
+      expect(
+        baked((x, y) => bench(80)(x, y) ?? bench(108)(x, y)),
+        `two benches at ${k}`,
+      ).toBe(96);
+    }
+  });
+
+  it(
+    'does not take a door in the next tile along the wall for the one in its own',
+    () => {
+      forAll(
+        (rng) => {
+          const fp = rng.pick(FOOTPRINTS);
+          const side = rng.pick(DIRS);
+          return {
+            fp,
+            side,
+            tile: edgeTile(fp, side, rng),
+            rot: rng.int(0, 3),
+            k: rng.pick([1, 2]),
+          };
+        },
+        (c) => {
+          const doors = [{ kind: 'street', tile: c.tile, side: c.side }];
+          const [door] = doorsOf(defOf(c.fp, doors), 0, 0, c.rot);
+          const wall = DIRS[door.side];
+          const tiles = c.rot % 2 ? [c.fp.h, c.fp.w] : [c.fp.w, c.fp.h];
+          // only the walls the camera sees, and only when the wall has another tile
+          const along = wall === 'S' ? tiles[0] : tiles[1];
+          if ((wall !== 'S' && wall !== 'E') || along < 2) return;
+          // painted in the middle of the next tile of the same wall instead
+          const axis = wall === 'S' ? 'x' : 'y';
+          const next = { ...door, tile: { ...door.tile, [axis]: (door.tile[axis] + 1) % along } };
+          const { entry } = draw({ ...c, doors }, (_, __, g) => standsAt(next, 0, g));
+          expect(entry.doors, `door ${door.tile.x},${door.tile.y} on ${wall}`).toEqual([]);
+        },
+        { seeds: SEEDS, shrinkBudget: SHRINK },
+      );
     },
     SLOW,
   );
