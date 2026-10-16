@@ -28,6 +28,7 @@ import {
   type SupplyMode,
 } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
+import { FLOW_CAP } from './rivers';
 
 /** A frame of a map: its size and where its tile (0, 0) lies in the world. */
 type Frame = Pick<MapGenParams, 'w' | 'h' | 'originX' | 'originY'>;
@@ -98,6 +99,12 @@ function firstDifference(
 /** Whether world tile (`wx`, `wy`) lies in one of the chunks of `store`. */
 const inStore = (store: ChunkStore, wx: number, wy: number) =>
   Object.hasOwn(store, chunkKey(chunkOf(wx), chunkOf(wy)));
+/**
+ * Whether world tile (`wx`, `wy`) has a side on a tile `stored` says is stored: where the seam
+ * may end a new river in a pond (#341, buildMap's seam), so the tile is not the generator's.
+ */
+const besideStored = (stored: (wx: number, wy: number) => boolean, wx: number, wy: number) =>
+  stored(wx + 1, wy) || stored(wx - 1, wy) || stored(wx, wy + 1) || stored(wx, wy - 1);
 
 /** A map's frame and seed, any size and origin, either production chain. */
 interface Case {
@@ -234,7 +241,7 @@ describe('a chunk text', () => {
     }
   });
 
-  // 24 generated maps up to 128 tiles a side, each read back and stored again: about 0.8 s alone
+  // 24 generated maps up to 128 tiles a side, each read back and stored again: about 4.5 s alone
   it('comes back byte for byte, its planes as the map has them, over seeds and sizes', () => {
     let oil = 0;
     forAll(
@@ -269,7 +276,7 @@ describe('a chunk text', () => {
     );
     // full-chain cases with their oil ran
     expect(oil).toBeGreaterThan(0);
-  }, 30_000);
+  }, 90_000);
 
   it('holds any value it allows, in tiles as odd as it allows', () => {
     // every terrain and biome id 0 to 15, every variant, long and single runs, props by the
@@ -348,6 +355,92 @@ describe('a chunk text', () => {
     expect(() => encodeChunk(map, 1, 0)).toThrow(/cover/);
   });
 
+  it('holds any water level, flow and side it allows, and reads them back as they were', () => {
+    // the water planes of version 3 (#341): levels 0 to 15 in runs, and a flow up to FLOW_CAP with
+    // a side 1 to 4 on any tile, flow 0 included, on parts of chunks off the grid
+    let rivers = 0;
+    forAll(
+      (rng) => {
+        const w = rng.int(1, 40);
+        const h = rng.int(1, 40);
+        const map = emptyMap(
+          rng.int(0, 1000),
+          w,
+          h,
+          Terrain.Grass,
+          rng.int(-50, 50),
+          rng.int(-50, 50),
+        );
+        map.waterSurface = new Uint8Array(w * h);
+        map.flow = new Uint16Array(w * h);
+        map.flowDir = new Uint8Array(w * h);
+        const runs = rng.chance(0.5);
+        const share = rng.pick([0, 0.02, 0.3, 1]);
+        for (let i = 0; i < w * h; i++) {
+          map.waterSurface[i] =
+            runs && i > 0 && rng.chance(0.9) ? map.waterSurface[i - 1] : rng.int(0, 15);
+          if (!rng.chance(share)) continue;
+          map.flowDir[i] = rng.int(1, 4);
+          map.flow[i] = rng.pick([0, 1, FLOW_CAP, rng.int(1, FLOW_CAP)]);
+        }
+        return map;
+      },
+      (map) => {
+        const frame = { w: map.w, h: map.h, originX: map.originX, originY: map.originY };
+        for (const { cx, cy } of mapChunks(map)) {
+          const c = decodeChunk(encodeChunk(map, cx, cy))!;
+          expect(c).not.toBeNull();
+          rivers += c.flowDir.filter((d) => d).length;
+        }
+        const back = buildMap(map.seed, frame, encodeMap(map), never).map;
+        for (const [name, a, b] of [
+          ['water level', back.waterSurface!, map.waterSurface!],
+          ['flow', back.flow!, map.flow!],
+          ['side', back.flowDir!, map.flowDir!],
+        ] as const)
+          for (let i = 0; i < a.length; i++)
+            if (a[i] !== b[i])
+              throw new Error(`${name} ${a[i]} read back, ${b[i]} stored, at tile ${i}`);
+      },
+      { format: (m) => `${m.w} x ${m.h} at (${m.originX}, ${m.originY}), seed ${m.seed}` },
+    );
+    expect(rivers).toBeGreaterThan(0);
+  });
+
+  it('refuses a water level, flow or side it cannot hold', () => {
+    const map = () => {
+      const m = emptyMap(1, 32, 32);
+      m.waterSurface = new Uint8Array(32 * 32);
+      m.flow = new Uint16Array(32 * 32);
+      m.flowDir = new Uint8Array(32 * 32);
+      return m;
+    };
+    const level = map();
+    level.waterSurface![4] = 16;
+    expect(() => encodeChunk(level, 0, 0)).toThrow(/water level/);
+    const side = map();
+    side.flowDir![4] = 5;
+    expect(() => encodeChunk(side, 0, 0)).toThrow(/sides/);
+    const flow = map();
+    flow.flowDir![4] = 1;
+    flow.flow![4] = FLOW_CAP + 1;
+    expect(() => encodeChunk(flow, 0, 0)).toThrow(/flow/);
+    const loose = map();
+    loose.flow![4] = 7;
+    expect(() => encodeChunk(loose, 0, 0)).toThrow(/river tile/);
+    // and the most it holds, at the last tile
+    const most = map();
+    most.flowDir![32 * 32 - 1] = 4;
+    most.flow![32 * 32 - 1] = FLOW_CAP;
+    most.waterSurface![32 * 32 - 1] = 15;
+    const c = decodeChunk(encodeChunk(most, 0, 0))!;
+    expect([c.flow[32 * 32 - 1], c.flowDir[32 * 32 - 1], c.waterSurface[32 * 32 - 1]]).toEqual([
+      FLOW_CAP,
+      4,
+      15,
+    ]);
+  });
+
   it('that is not one encodeChunk writes reads as nothing', () => {
     const map = generateMap(7412, { w: 32, h: 32 });
     const text = encodeChunk(map, 0, 0);
@@ -376,6 +469,8 @@ describe('a chunk text', () => {
 });
 
 describe('a map built from stored chunks', () => {
+  // a world of 96 tiles built, read back and generated, its rivers planned once (#341): about
+  // 0.5 s alone
   it('is generated whole when nothing is stored, and read whole once everything is', () => {
     const params = { w: 96, h: 96 };
     const first = buildMap(31337, params, {});
@@ -387,7 +482,7 @@ describe('a map built from stored chunks', () => {
     expect(firstDifference(again.map, first.map)).toBeNull();
     // generation's own map, up to where props are stored
     expect(firstDifference(first.map, generateMap(31337, params), { near: true })).toBeNull();
-  });
+  }, 10_000);
 
   // Generates a few maps up to 288 tiles a side per seed: about 2 s alone
   it('of a grown world is generateMap of the grown parameters, tile for tile', () => {
@@ -435,6 +530,7 @@ describe('a map built from stored chunks', () => {
     expect(oil).toBeGreaterThan(0);
   }, 60_000);
 
+  // three worlds of 48 tiles grown to 96, each built four times: about 0.7 s alone
   it('keeps a part of a chunk it stored when the map grows over the rest of it', () => {
     // 48 tiles hold chunk 1 in part; grown by a chunk before it the start chunk stays chunk 0
     for (const seed of [1, 7412, 20260912]) {
@@ -449,14 +545,16 @@ describe('a map built from stored chunks', () => {
       expect(grown.added).toContain('1,1');
       expect(firstDifference(first.map, grown.map)).toBeNull();
       const rest = buildMap(seed, big, {}, other).map;
-      const outside = (wx: number, wy: number) => wx < 0 || wy < 0 || wx >= 48 || wy >= 48;
+      const inside = (wx: number, wy: number) => wx >= 0 && wy >= 0 && wx < 48 && wy < 48;
+      // the rest as generated, but where a river runs into the stored part and ends at the seam
+      const outside = (wx: number, wy: number) => !inside(wx, wy) && !besideStored(inside, wx, wy);
       expect(firstDifference(grown.map, rest, { only: outside })).toBeNull();
       // and with the generator unchanged it is the grown world
       expect(
         firstDifference(buildMap(seed, big, first.chunks).map, buildMap(seed, big, {}).map),
       ).toBeNull();
     }
-  });
+  }, 15_000);
 
   // Eight worlds grown from 64 to 192 tiles a side, each generated twice: about 0.7 s alone
   it('never changes a stored chunk, whatever the generator makes now', () => {
@@ -492,8 +590,10 @@ describe('a map built from stored chunks', () => {
             expect(encodeChunk(built.map, cx, cy), `${name}: chunk ${k}`).toBe(text);
           }
           expect(firstDifference(old.map, built.map), name).toBeNull();
-          // the new chunks are the generator's
-          const fresh = (wx: number, wy: number) => !inStore(old.chunks, wx, wy);
+          // the new chunks are the generator's, but where a river runs into a stored chunk and ends
+          // at the seam
+          const kept = (wx: number, wy: number) => inStore(old.chunks, wx, wy);
+          const fresh = (wx: number, wy: number) => !kept(wx, wy) && !besideStored(kept, wx, wy);
           expect(firstDifference(built.map, now, { near: true, only: fresh }), name).toBeNull();
         }
   }, 20_000);
@@ -545,14 +645,16 @@ describe('a map built from stored chunks', () => {
     ).toThrow(/generator/);
   });
 
+  // five worlds of 49 chunks: about 0.6 s alone
   it('adds at most about 150 KB to the save for a 49-chunk world', () => {
     for (const seed of [1, 7412, 20260912, 31337, 987654321]) {
       const { chunks } = buildMap(seed, { w: 224, h: 224, originX: -64, originY: -64 }, {});
       expect(Object.keys(chunks)).toHaveLength(49);
       expect(JSON.stringify(chunks).length).toBeLessThanOrEqual(150_000);
     }
-  });
+  }, 15_000);
 
+  // five worlds of 49 chunks in the full chain: about 0.8 s alone
   it('adds at most about 150 KB for a 49-chunk world in the full production chain too', () => {
     // the full chain's oil fields and start seeps are props of their own
     let oil = 0;
@@ -565,7 +667,7 @@ describe('a map built from stored chunks', () => {
       expect(JSON.stringify(chunks).length, `seed ${seed}`).toBeLessThanOrEqual(150_000);
     }
     expect(oil).toBeGreaterThan(0);
-  });
+  }, 15_000);
 });
 
 describe('the production chain of a built map', () => {
@@ -1152,47 +1254,53 @@ describe('the seam between a stored chunk and a new one', () => {
     ['hill and mountain stripes', (i) => (i % 2 ? Terrain.Hill : Terrain.Mountain)],
   ];
 
-  it.each(rings)('keeps neighbouring levels within one step against a ring of %s', (_, fill) => {
-    let steep = 0;
-    for (const seed of [1, 7412, 20260912]) {
-      const params: Frame = { w: 96, h: 96 };
-      const old = buildMap(seed, params, {});
-      const ring: MapGenerator = (s, p) => {
-        const m = emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
-        for (let i = 0; i < m.w * m.h; i++) m.terrain[i] = fill(i);
-        return m;
-      };
-      const map = buildMap(seed, grow(params), old.chunks, ring).map;
-      const levels = tileLevels(map);
-      const oldLevels = tileLevels(old.map);
-      const stored = (x: number, y: number) =>
-        x >= CHUNK_TILES && y >= CHUNK_TILES && x < CHUNK_TILES + 96 && y < CHUNK_TILES + 96;
-      for (let y = 0; y < map.h; y++)
-        for (let x = 0; x < map.w; x++) {
-          const k = y * map.w + x;
-          const at = `seed ${seed}, tile (${x}, ${y})`;
-          for (const [nx, ny] of [
-            [x - 1, y],
-            [x, y - 1],
-          ]) {
-            if (nx < 0 || ny < 0) continue;
-            const n = ny * map.w + nx;
-            if (Math.abs(levels[k] - levels[n]) > 1) throw new Error(`a step of two at ${at}`);
-            // a pair across the seam whose terrains would stand more than a level apart
-            if (stored(x, y) !== stored(nx, ny))
-              if (Math.abs(peak(map.terrain[k]) - peak(map.terrain[n])) > 1) steep++;
+  // three worlds of 96 tiles grown to 160, each planning its rivers once (#341), every tile's
+  // level read: about 0.9 s alone for each ring
+  it.each(rings)(
+    'keeps neighbouring levels within one step against a ring of %s',
+    (_, fill) => {
+      let steep = 0;
+      for (const seed of [1, 7412, 20260912]) {
+        const params: Frame = { w: 96, h: 96 };
+        const old = buildMap(seed, params, {});
+        const ring: MapGenerator = (s, p) => {
+          const m = emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+          for (let i = 0; i < m.w * m.h; i++) m.terrain[i] = fill(i);
+          return m;
+        };
+        const map = buildMap(seed, grow(params), old.chunks, ring).map;
+        const levels = tileLevels(map);
+        const oldLevels = tileLevels(old.map);
+        const stored = (x: number, y: number) =>
+          x >= CHUNK_TILES && y >= CHUNK_TILES && x < CHUNK_TILES + 96 && y < CHUNK_TILES + 96;
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++) {
+            const k = y * map.w + x;
+            const at = `seed ${seed}, tile (${x}, ${y})`;
+            for (const [nx, ny] of [
+              [x - 1, y],
+              [x, y - 1],
+            ]) {
+              if (nx < 0 || ny < 0) continue;
+              const n = ny * map.w + nx;
+              if (Math.abs(levels[k] - levels[n]) > 1) throw new Error(`a step of two at ${at}`);
+              // a pair across the seam whose terrains would stand more than a level apart
+              if (stored(x, y) !== stored(nx, ny))
+                if (Math.abs(peak(map.terrain[k]) - peak(map.terrain[n])) > 1) steep++;
+            }
+            // the local reading agrees with the whole-map one, across the seam too
+            if (levelAt(map, x, y) !== levels[k]) throw new Error(`levelAt disagrees at ${at}`);
+            // the new ring never lowers stored ground: what it held at the old edge it holds or more
+            if (stored(x, y)) {
+              const was = oldLevels[(y - CHUNK_TILES) * 96 + x - CHUNK_TILES];
+              if (levels[k] < was) throw new Error(`stored ground sank from ${was} at ${at}`);
+            }
           }
-          // the local reading agrees with the whole-map one, across the seam too
-          if (levelAt(map, x, y) !== levels[k]) throw new Error(`levelAt disagrees at ${at}`);
-          // the new ring never lowers stored ground: what it held at the old edge it holds or more
-          if (stored(x, y)) {
-            const was = oldLevels[(y - CHUNK_TILES) * 96 + x - CHUNK_TILES];
-            if (levels[k] < was) throw new Error(`stored ground sank from ${was} at ${at}`);
-          }
-        }
-    }
-    if (fill(0) !== Terrain.Water) expect(steep).toBeGreaterThan(0);
-  });
+      }
+      if (fill(0) !== Terrain.Water) expect(steep).toBeGreaterThan(0);
+    },
+    20_000,
+  );
 
   // 40 worlds up to 220 tiles a side, each tile's level read twice: about 0.3 s alone
   it('keeps levels within one step and never lowers stored ground, for any growth and generator', () => {

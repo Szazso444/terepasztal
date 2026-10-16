@@ -57,8 +57,8 @@ function pumpTiles(m: GameMap, inChunk = false): number[] {
 }
 
 describe('the start chunk', () => {
-  // #320's measurement: 50 maps of 160 x 160, about 1.1 s alone. Before the guarantee, seeds 10,
-  // 29 and 39 had no such tile: their lakes are shored with sand.
+  // 50 maps of 160 x 160, each world planning its rivers: about 7 s alone. In #320's measurement,
+  // before the guarantee, seeds 10, 29 and 39 had no such tile: their lakes are shored with sand.
   it('holds a tile a Water Pump can stand on in 50 worlds at the default size and sliders', () => {
     const none: number[] = [];
     for (let seed = 1; seed <= 50; seed++) {
@@ -66,7 +66,7 @@ describe('the start chunk', () => {
       if (pumpTiles(m).length === 0) none.push(seed);
     }
     expect(none).toEqual([]);
-  }, 40_000);
+  }, 140_000);
 
   interface Case {
     seed: number;
@@ -102,7 +102,7 @@ describe('the start chunk', () => {
     for (const h of shrinkInt(c.h, 32)) yield { ...c, h };
   }
 
-  // 30 maps up to 160 tiles a side: about 0.4 s alone
+  // 30 maps up to 160 tiles a side: about 4 s alone
   it('holds one with its water inside the chunk on any sliders, size, origin and chain', () => {
     forAll(
       genCase,
@@ -117,9 +117,9 @@ describe('the start chunk', () => {
       },
       { seeds: Array.from({ length: 30 }, (_, i) => i + 1), shrink: shrinkCase },
     );
-  }, 20_000);
+  }, 80_000);
 
-  // 16 combinations of the Map sliders' ends, two worlds each, at 32 and 96 tiles: about 0.3 s
+  // 16 combinations of the Map sliders' ends, two worlds each, at 32 and 96 tiles: about 4 s
   it('holds one at every end of the Map sliders', () => {
     const keys = ['waterLevel', 'hillLevel', 'rockLevel', 'forestDensity'] as const;
     const ends = keys.map((key) => {
@@ -139,7 +139,7 @@ describe('the start chunk', () => {
         ).toBeGreaterThan(0);
       }
     }
-  }, 15_000);
+  }, 80_000);
 
   // The worlds of the 50 above where the guarantee changes the ground: on develop seeds 10, 29 and
   // 39 had no pump tile, and seed 23 had one only with its water outside the start chunk. Six maps

@@ -6,6 +6,7 @@ import {
   chunkKey,
   chunkOf,
   decodeChunk,
+  type ChunkPlanes,
   type ChunkStore,
   type MapGenerator,
 } from './chunks';
@@ -43,15 +44,44 @@ function runBytes(plane: Uint8Array): number {
   return n;
 }
 
+/** How many bytes varint `v` takes. */
+function varintBytes(v: number): number {
+  let n = 1;
+  for (; v >= 128; v = Math.floor(v / 128)) n++;
+  return n;
+}
+
+/**
+ * How many bytes the water planes of version 3 (#341) take at the end of a text: the water level
+ * runs, the count of river tiles, and each one's skip and flow with its side.
+ */
+function waterBytes(c: ChunkPlanes): number {
+  let n = runBytes(c.waterSurface);
+  let rivers = 0;
+  for (let i = 0, last = -1; i < c.flowDir.length; i++) {
+    if (!c.flowDir[i]) continue;
+    n += varintBytes(i - last - 1) + varintBytes(c.flow[i] * 4 + c.flowDir[i] - 1);
+    last = i;
+    rivers++;
+  }
+  return n + varintBytes(rivers);
+}
+
 /**
  * The text `text` would have had in version 1, before the climate plane: the same bytes with the
- * version byte 1 and without the climate runs, which come right after the biome runs.
+ * version byte 1 and without the climate runs, which come right after the biome runs, and without
+ * the water planes of version 3, which come last.
  */
 function asVersion1(text: string): string {
   const c = decodeChunk(text)!;
   const bytes = bytesOf(text);
   const planes = 5 + runBytes(c.terrain) + runBytes(c.biome);
-  return textOf([1, ...bytes.slice(1, planes), ...bytes.slice(planes + runBytes(c.climate))]);
+  const water = c.version >= 3 ? waterBytes(c) : 0;
+  return textOf([
+    1,
+    ...bytes.slice(1, planes),
+    ...bytes.slice(planes + runBytes(c.climate), bytes.length - water),
+  ]);
 }
 
 /** The world as map generation made it before the landform biomes: its biome is its climate. */
@@ -74,8 +104,8 @@ function climateDiff(a: GameMap, b: GameMap, only?: (wx: number, wy: number) => 
 }
 
 describe('a chunk text', () => {
-  it('is version 2, with the climate', () => {
-    expect(CHUNK_VERSION).toBe(2);
+  it('is version 2 or later, with the climate', () => {
+    expect(CHUNK_VERSION).toBeGreaterThanOrEqual(2);
   });
 
   // A chunk text in a save must mean the same to every later version. Version 1, as chunks.ts
@@ -137,6 +167,7 @@ describe('a chunk text', () => {
     expect([...again.map.climate!]).toEqual([...m.climate!]);
   });
 
+  // 4 worlds, each with two start chunks (two river plans) and three maps: about 2 s alone
   it('holds the climate of a generated map, and a map built from it reads it back', () => {
     for (const seed of [1, 7412, 20260912, 31337])
       for (const frame of [
@@ -152,8 +183,10 @@ describe('a chunk text', () => {
         expect(climateDiff(again.map, generated), at).toBe(0);
         expect([...again.map.climate!], at).toEqual([...generated.climate!]);
       }
-  });
+  }, 40_000);
 
+  // a world of 96 tiles built, its rivers planned once (#341), and every chunk read as both
+  // versions: about 0.6 s alone
   it('as version 1 wrote it reads back every plane but the climate, which is the biome', () => {
     // the oracle above, checked: a text turned to version 1 keeps everything else
     const store = buildMap(7412, { w: 96, h: 96 }, {}).chunks;
@@ -162,12 +195,17 @@ describe('a chunk text', () => {
       const now = decodeChunk(text)!;
       const old = decodeChunk(asVersion1(text))!;
       expect(old).not.toBeNull();
-      expect({ ...old, version: 2, climate: now.climate }).toEqual(now);
+      const water = { waterSurface: now.waterSurface, flow: now.flow, flowDir: now.flowDir };
+      expect({ ...old, version: now.version, climate: now.climate, ...water }).toEqual(now);
       expect([...old.climate]).toEqual([...old.biome]);
+      // and no water level, flow or side, which version 1 does not hold
+      expect([old.waterSurface, old.flow, old.flowDir].every((a) => a.every((v) => v === 0))).toBe(
+        true,
+      );
       for (let i = 0; i < now.climate.length; i++) if (now.climate[i] !== now.biome[i]) differ++;
     }
     expect(differ).toBeGreaterThan(0);
-  });
+  }, 15_000);
 });
 
 describe('a world stored before the climate plane', () => {
@@ -224,6 +262,7 @@ describe('a world stored before the climate plane', () => {
 });
 
 describe('the climate plane in a save', () => {
+  // six worlds of 9 and 49 chunks: about 0.6 s alone
   it('takes a small share of the stored text of 9- and 49-chunk worlds', () => {
     // the climate is the biome but under a landform, so its runs are long; measured for #354 at
     // about 6 % of the store for 9, 49 and 784 chunks
@@ -239,7 +278,7 @@ describe('the climate plane in a save', () => {
         const share = ((climate * 4) / 3 / JSON.stringify(chunks).length) * 100;
         expect(share, `seed ${seed}, ${side} tiles`).toBeLessThan(10);
       }
-  });
+  }, 15_000);
 
   it('holds no landform: every stored climate is a climate', () => {
     const { chunks } = buildMap(7412, { w: 160, h: 160, originX: -32, originY: -32 }, {});

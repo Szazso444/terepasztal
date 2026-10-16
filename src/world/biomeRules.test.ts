@@ -17,8 +17,9 @@ import type { SupplyMode } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
 
 // The biome rules of generateMap (#340, #354): after the climate is smoothed, a tile's landform
-// relabels it. Water the river pass cut through land is River, other water is Lake unless it is
-// sea (Water in the Ocean climate, a rule of reach 0), sand within BEACH_REACH tiles of sea water
+// relabels it. Water the river pass made of land is River, other water is Lake unless it is sea
+// (Water in the Ocean climate that the pass made no river or lake, a rule of reach 0; #341 makes
+// lakes in basins, an island's too), sand within BEACH_REACH tiles of sea water
 // is Beach (grass, forest and sand beside the sea turn to sand first), and Mountain terrain is
 // Mountain, with every Rock tile that reaches it in MOUNTAIN_REACH steps over Rock. Every other
 // tile keeps its climate, which the map keeps in its own plane.
@@ -153,6 +154,7 @@ function checkRules(small: MapPlanes, big: MapPlanes, seen: Seen) {
   const { w, h, terrain, biome } = B;
   const climate = B.climate!;
   const river = big.river;
+  const lake = big.lake;
   const at = (x: number, y: number) =>
     `world tile (${x + B.originX}, ${y + B.originY}), terrain ${terrain[y * w + x]}, ` +
     `biome ${biome[y * w + x]}, climate ${climate[y * w + x]}`;
@@ -160,7 +162,7 @@ function checkRules(small: MapPlanes, big: MapPlanes, seen: Seen) {
   const isSea = (x: number, y: number) => {
     if (!on(x, y)) return false;
     const i = y * w + x;
-    return terrain[i] === Terrain.Water && !river[i] && climate[i] === Biome.Ocean;
+    return terrain[i] === Terrain.Water && !river[i] && !lake[i] && climate[i] === Biome.Ocean;
   };
   /** The fewest steps from (x, y) over Rock and Mountain to a Mountain tile, up to `limit`. */
   const stepsToMountain = (x: number, y: number, limit: number): number => {
@@ -260,7 +262,8 @@ function seaAtStart(small: MapPlanes, big: MapPlanes): number {
   for (let y = ry * rs - 1; y <= Math.min(S.h, (ry + 1) * rs); y++)
     for (let x = rx * rs - 1; x <= Math.min(S.w, (rx + 1) * rs); x++) {
       const j = (y + RING) * B.w + x + RING;
-      if (B.terrain[j] === Terrain.Water && !big.river[j] && B.climate![j] === Biome.Ocean) sea++;
+      const pass = big.river[j] || big.lake[j];
+      if (B.terrain[j] === Terrain.Water && !pass && B.climate![j] === Biome.Ocean) sea++;
     }
   return sea;
 }
@@ -531,11 +534,11 @@ describe('the biome rules, read again as the issues word them', () => {
       const B = big.map;
       const { w, h, terrain, biome } = B;
       const climate = B.climate!;
-      const { river, shore } = big;
+      const { river, lake, shore } = big;
       const sea = (x: number, y: number) => {
         if (x < 0 || y < 0 || x >= w || y >= h) return false;
         const i = y * w + x;
-        return terrain[i] === Terrain.Water && !river[i] && climate[i] === Biome.Ocean;
+        return terrain[i] === Terrain.Water && !river[i] && !lake[i] && climate[i] === Biome.Ocean;
       };
       const steps = stepsFromMountains(B);
       for (let y = RING; y < RING + 160; y++)
@@ -670,6 +673,7 @@ describe('the decorations and oil fields of a generated map', () => {
   // against itself with its biome set to its climate, which leaves only the climate to read.
   const DECO_SEEDS = [1, 2, 3, 4, 5, 7412, 20260912, 31337];
 
+  // 8 worlds of 160 x 160, each with its own river plan: about 3 s alone
   it('are the decorations its climate gives, on every tile', () => {
     // decorated tiles under each landform biome, so the check cannot pass on maps without one
     const under = new Map<number, number>();
@@ -685,8 +689,9 @@ describe('the decorations and oil fields of a generated map', () => {
           under.set(m.biome[i], (under.get(m.biome[i]) ?? 0) + 1);
     }
     expect(under.get(Biome.Beach) ?? 0).toBeGreaterThan(0);
-  });
+  }, 60_000);
 
+  // 8 worlds of 160 x 160, each with its own river plan: about 3 s alone
   it('lay oil where the climate takes it, never on ground in the Ocean climate', () => {
     let oil = 0;
     for (const seed of DECO_SEEDS) {
@@ -703,7 +708,7 @@ describe('the decorations and oil fields of a generated map', () => {
       expect(propsDiff(own, bare), `seed ${seed}`).toBeNull();
     }
     expect(oil).toBeGreaterThan(0);
-  });
+  }, 60_000);
 
   it('read the climate under a beach: palms on an island, cacti in the desert, oil off the sea', () => {
     /** The decoration kinds and the oil tiles of a field of beach sand over `climate`. */

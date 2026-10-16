@@ -437,7 +437,7 @@ describe('mountains sit inside rock', () => {
   }
 
   let mountains = 0;
-  // 40 maps up to 128 tiles a side: about 0.7 s alone
+  // 40 maps up to 128 tiles a side: about 6 s alone
   it('has only Rock or Mountain on the 8 tiles around a Mountain, and two rings of Rock', () => {
     forAll(
       genCase,
@@ -453,7 +453,7 @@ describe('mountains sit inside rock', () => {
     );
     // not vacuous: the cases do grow mountains
     expect(mountains).toBeGreaterThan(0);
-  }, 30_000);
+  }, 120_000);
 
   // 8 maps of 160 x 160 tiles at the default sliders: about 0.2 s alone
   it('holds in worlds at the default sliders', () => {

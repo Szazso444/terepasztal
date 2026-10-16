@@ -10,7 +10,7 @@ import {
   type TrackPiece,
 } from '../world/track';
 import { Rng } from '../engine/rng';
-import { DIR_DX, DIR_DY } from '../engine/iso';
+import { DIRS, DIR_DX, DIR_DY, Dir, opposite } from '../engine/iso';
 import { STR } from '../strings';
 import { content } from '../data/content';
 import { Builder, decorDef, type LinePiece } from './build';
@@ -20,7 +20,7 @@ import { resetStationIds, stationFootprint } from './stations';
 import { resetTrainIds } from './trains';
 import { rules, DEFAULT_RULES } from './rules';
 import { SimStep, startStock, type StepDomains } from './step';
-import { Roads, crossable, roadCost } from './roads';
+import { Roads, SPUR_REACH, crossable, findSpur, roadCost } from './roads';
 import { streetDoor } from './doors';
 import {
   PeopleSim,
@@ -175,7 +175,7 @@ describe('laying a road', () => {
     });
   });
 
-  it('is refused on any tile of a station, a works, a bridge platform or a house', () => {
+  it('is refused on any tile of a station, a works, a bridge platform or a house (#408)', () => {
     const w = world();
     w.builder.free = true;
     lay(w, 10, 10, STRAIGHT, EW);
@@ -200,13 +200,17 @@ describe('laying a road', () => {
       { x: 7, y: 5 },
     ];
     expect(depot.footprint().length).toBeGreaterThan(1);
+    // the roads there are the places laid at their doors, no road being near (#408)
+    const laid = w.roads.toJSON();
+    const reaches = w.builder.streetDoors().map((d) => `${d.reach.x},${d.reach.y}`);
+    for (const [x, y] of laid) expect(reaches, `${x},${y}`).toContain(`${x},${y}`);
     for (const t of taken) {
-      expect(refusal(w, t.x, t.y), `${t.x},${t.y}`).toBe(STR.build.occupied);
+      expect(refusal(w, t.x, t.y), `${t.x},${t.y}`).toBe(STR.build.roadOnBuilding);
       expect(w.builder.placeRoad(t.x, t.y)).toBe(false);
     }
     // the platform on water is water's: nothing is built on it but its rail
     expect(refusal(w, 25, 25)).toBe(STR.build.nothingOn.water);
-    expect(w.roads.size).toBe(0);
+    expect(w.roads.toJSON()).toEqual(laid);
   });
 
   it('may share its tile with a signal or a power pole', () => {
@@ -235,12 +239,12 @@ describe('laying a road', () => {
       [5, 5],
       [shed.x, shed.y],
     ]);
-    expect(w.builder.checkStation(10, 11, 'farm').reason).toBe(STR.build.occupied);
-    expect(w.builder.checkStation(2, 20, 'depot').reason).toBe(STR.build.occupied);
-    expect(w.builder.checkBuilding(20, 20, 'windmill').reason).toBe(STR.build.occupied);
-    expect(w.builder.checkBuilding(20, 20, 'bridge_wood').reason).toBe(STR.build.occupied);
-    expect(w.builder.canPlaceDecor(5, 5, 'townhouse')).toBe(STR.build.occupied);
-    expect(w.builder.canPlaceDecor(5, 5, 'water_tower')).toBe(STR.build.occupied);
+    expect(w.builder.checkStation(10, 11, 'farm').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.checkStation(2, 20, 'depot').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.checkBuilding(20, 20, 'windmill').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.checkBuilding(20, 20, 'bridge_wood').reason).toBe(STR.build.roadInWay);
+    expect(w.builder.canPlaceDecor(5, 5, 'townhouse')).toBe(STR.build.roadInWay);
+    expect(w.builder.canPlaceDecor(5, 5, 'water_tower')).toBe(STR.build.roadInWay);
     // a town raising a house goes by the same rule
     expect(w.builder.spawnDecor(5, 5, 'townhouse', 0)).toBeNull();
     expect(w.builder.stations).toHaveLength(0);
@@ -761,33 +765,47 @@ describe('roads, whatever is built in whatever order', () => {
     );
   });
 
-  it('change only by a road laid or taken up, which moves the version on and tells the game once', () => {
+  it('change only by a road laid or taken up, or by the spur of a place placed, which moves the version on and tells the game once a tile', () => {
     // A renderer keeps what it drew until `version` moves (#309, #329) and redraws the tile
     // `onRoadChanged` names: a change that moved neither would leave a stale picture, and one
-    // made by anything but laying or taking up a road would be a road the player never touched.
+    // made by anything but laying or taking up a road, or the free spur a place gets at its door
+    // (#408), would be a road nobody laid.
+    /** ops whose place has a street door, and so may lay a spur */
+    const placing = new Set(['decor', 'station', 'works', 'house']);
     forAll(
       genOps,
       (c) => {
         const w = site(c);
         const told: string[] = [];
         w.builder.onRoadChanged = (x, y) => told.push(`${x},${y}`);
+        const tiles = () => w.roads.toJSON().map(([x, y]) => `${x},${y}`);
         c.ops.forEach((o, i) => {
-          const was = JSON.stringify(w.roads.toJSON());
+          const was = tiles();
           const version = w.roads.version;
           told.length = 0;
           const done = perform(w, o);
-          const now = JSON.stringify(w.roads.toJSON());
+          const now = tiles();
           const at = `op ${i} ${JSON.stringify(o)}`;
-          if (o.op === 'road' || o.op === 'unroad') {
-            expect(now !== was, `${at}: changed as it said`).toBe(done);
-            if (done) expect(w.roads.has(o.x, o.y), at).toBe(o.op === 'road');
-          } else expect(now, `${at}: the roads`).toBe(was);
-          if (now === was) {
+          const gone = was.filter((t) => !now.includes(t));
+          const added = now.filter((t) => !was.includes(t));
+          const tile = `${o.x},${o.y}`;
+          if (o.op === 'unroad') {
+            expect(gone, `${at}: taken up`).toEqual(done ? [tile] : []);
+            expect(added, `${at}: laid`).toEqual([]);
+          } else {
+            expect(gone, `${at}: taken up`).toEqual([]);
+            // a road laid is laid first, any spur it brings after it
+            if (o.op === 'road') expect(added[0], `${at}: laid`).toBe(done ? tile : undefined);
+            else if (!done || !placing.has(o.op)) expect(added, `${at}: laid`).toEqual([]);
+          }
+          // what stood keeps its place in the list, and what is new comes after it
+          expect(now, at).toEqual([...was.filter((t) => !gone.includes(t)), ...added]);
+          if (!gone.length && !added.length) {
             expect(w.roads.version, `${at}: the version`).toBe(version);
             expect(told, `${at}: the game told`).toEqual([]);
           } else {
             expect(w.roads.version, `${at}: the version`).toBeGreaterThan(version);
-            expect(told, `${at}: the game told`).toEqual([`${o.x},${o.y}`]);
+            expect(told, `${at}: the game told`).toEqual([...gone, ...added]);
           }
         });
       },
@@ -1224,7 +1242,10 @@ describe('a walk with roads', () => {
     for (let y = 19; y > 16; y--) road.push([24, y]);
     for (let x = 24; x >= 10; x--) road.push([x, 16]);
     for (let y = 17; y <= 18; y++) road.push([10, y]);
-    for (const [x, y] of road) expect(builder.placeRoad(x, y), `${x},${y}`).toBe(true);
+    // the tile above the station holds the road the station laid at its door already (#408)
+    expect(builder.roads.toJSON()).toEqual([[10, 18]]);
+    for (const [x, y] of road)
+      expect(builder.roads.has(x, y) || builder.placeRoad(x, y), `${x},${y}`).toBe(true);
     const people = new PeopleSim(map, builder, new Rng(1));
     people.tick(0.05, 1, 0.5);
     const [p] = people.persons;
@@ -1501,5 +1522,391 @@ describe('the pace on a road', () => {
         expect(p.step).toBe(path.length - 1);
       },
     );
+  });
+});
+
+// ------------------------------------------------------------------ the spur search (#408)
+
+/**
+ * A seeded patch for `findSpur`: a small grid whose tiles may each hold a plain straight (rails
+ * north to south or east to west), a road (of the network a spur joins, or not), or be closed to a
+ * spur (`free` says no), and the reach tile a spur starts from, which holds no road. About a third
+ * are corridors one or two tiles deep and 11 to 15 long, the start at the west end and the network
+ * at the east end, so the bound of SPUR_REACH tiles is met and passed.
+ */
+interface SpurPatch {
+  w: number;
+  h: number;
+  from: { x: number; y: number };
+  rails: { x: number; y: number; ns: boolean }[];
+  roads: { x: number; y: number; net: boolean }[];
+  closed: { x: number; y: number }[];
+  /** `findSpur` is asked with no network of its own: every road is one */
+  anyRoad: boolean;
+}
+function genPatch(rng: Rng): SpurPatch {
+  const corridor = rng.chance(0.35);
+  const w = corridor ? rng.int(11, 15) : rng.int(1, 8);
+  const h = corridor ? rng.int(1, 2) : rng.int(1, Math.min(6, Math.floor(40 / w)));
+  const from = { x: corridor ? 0 : rng.int(0, w - 1), y: rng.int(0, h - 1) };
+  const rails: SpurPatch['rails'] = [];
+  const roads: SpurPatch['roads'] = [];
+  const closed: SpurPatch['closed'] = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (rng.chance(corridor ? 0.08 : 0.2)) rails.push({ x, y, ns: rng.chance(0.5) });
+      // the start may be closed: `free` is not asked about it
+      if (rng.chance(corridor ? 0.04 : 0.15)) closed.push({ x, y });
+      else if (x === from.x && y === from.y) continue;
+      else if (corridor ? x === w - 1 : rng.chance(0.12))
+        roads.push({ x, y, net: corridor || rng.chance(0.7) });
+    }
+  return { w, h, from, rails, roads, closed, anyRoad: rng.chance(0.3) };
+}
+/**
+ * A seeded patch round a hook, where the fewest steps run along the rails of the spur's own
+ * crossing: a line of plain straights ends on a tile P, its rails running on to the tile A beyond
+ * that end, and the start lies further along that way. A wall, closed tiles or roads of no network,
+ * shuts the side of the line the network lies on from the patch's edge to A's row, so the way
+ * crosses on P, or further along the line, or goes round its far end. Stepping on to A and round
+ * it to P is as short as stepping aside before A, so the first of the shortest ways judged step by
+ * step often runs through A, and the spur is another of that length, a longer one, or none.
+ * Drawn north to south, then mirrored or not and turned to any of the four rotations, with
+ * straights, closed tiles and roads scattered over the rest.
+ */
+function genHookPatch(rng: Rng): SpurPatch {
+  const w = rng.int(4, 8);
+  const h = rng.int(4, Math.min(8, Math.floor(48 / w)));
+  const px = rng.int(1, w - 2);
+  const py = rng.int(2, h - 1);
+  const kept = new Set<string>();
+  const keep = (x: number, y: number) => kept.add(`${x},${y}`);
+  const rails: SpurPatch['rails'] = [];
+  const roads: SpurPatch['roads'] = [];
+  const closed: SpurPatch['closed'] = [];
+  // the line, from P south
+  for (let y = py; y < h && (y === py || rng.chance(0.6)); y++) {
+    rails.push({ x: px, y, ns: true });
+    keep(px, y);
+  }
+  // the start north of A, the way down to A open, and the tiles west of A and P
+  const from = { x: px, y: rng.int(0, py - 2) };
+  for (let y = from.y; y < py; y++) keep(px, y);
+  keep(px - 1, py - 1);
+  keep(px - 1, py);
+  // the wall east of the start and A
+  for (let y = 0; y < py; y++) {
+    keep(px + 1, y);
+    if (rng.chance(0.5)) closed.push({ x: px + 1, y });
+    else roads.push({ x: px + 1, y, net: false });
+  }
+  // a network road east of the line, level with P or south of it
+  const net = { x: rng.int(px + 1, w - 1), y: rng.int(py, h - 1) };
+  roads.push({ ...net, net: true });
+  keep(net.x, net.y);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (kept.has(`${x},${y}`)) continue;
+      const r = rng.next();
+      if (r < 0.08) rails.push({ x, y, ns: rng.chance(0.5) });
+      else if (r < 0.14) closed.push({ x, y });
+      else if (r < 0.18) roads.push({ x, y, net: rng.chance(0.5) });
+    }
+  // mirrored east to west or not, then turned a quarter clockwise `turns` times
+  const mirror = rng.chance(0.5);
+  const turns = rng.int(0, 3);
+  const odd = turns % 2 === 1;
+  const place = <T extends { x: number; y: number }>(t: T): T => {
+    let x = mirror ? w - 1 - t.x : t.x;
+    let y = t.y;
+    let tall = h;
+    for (let i = 0; i < turns; i++) {
+      [x, y] = [tall - 1 - y, x];
+      tall = tall === h ? w : h;
+    }
+    return { ...t, x, y };
+  };
+  return {
+    w: odd ? h : w,
+    h: odd ? w : h,
+    from: place(from),
+    rails: rails.map((r) => ({ ...place(r), ns: r.ns !== odd })),
+    roads: roads.map(place),
+    closed: closed.map(place),
+    anyRoad: false,
+  };
+}
+/** The patches are small and quick: four hundred of them, so the bound is met often enough. */
+const PATCH_SEEDS = Array.from({ length: 400 }, (_, i) => i + 1);
+function* shrinkPatch(c: SpurPatch): Iterable<SpurPatch> {
+  for (const rails of shrinkArray(c.rails)) yield { ...c, rails };
+  for (const roads of shrinkArray(c.roads)) yield { ...c, roads };
+  for (const closed of shrinkArray(c.closed)) yield { ...c, closed };
+}
+
+/** What the patch says of each tile, read from the case alone, apart from any track or roads. */
+function patchRules(c: SpurPatch) {
+  const at = (x: number, y: number) => `${x},${y}`;
+  const rails = new Map(
+    c.rails.map((r) => [at(r.x, r.y), r.ns ? [Dir.N, Dir.S] : [Dir.E, Dir.W]] as const),
+  );
+  const road = new Set(c.roads.map((r) => at(r.x, r.y)));
+  const net = new Set(c.roads.filter((r) => r.net || c.anyRoad).map((r) => at(r.x, r.y)));
+  const closed = new Set(c.closed.map((t) => at(t.x, t.y)));
+  const inside = (x: number, y: number) => x >= 0 && y >= 0 && x < c.w && y < c.h;
+  /** a step from (x, y) across its side `d` runs along no rails, of either tile */
+  const across = (x: number, y: number, d: Dir) =>
+    !rails.get(at(x, y))?.includes(d) &&
+    !rails.get(at(x + DIR_DX[d], y + DIR_DY[d]))?.includes(opposite(d));
+  /** (x, y) shares a side with a network road, the step to it along no rails */
+  const joins = (x: number, y: number) =>
+    DIRS.some((d) => across(x, y, d) && net.has(at(x + DIR_DX[d], y + DIR_DY[d])));
+  /** a tile after the first may carry the spur */
+  const open = (x: number, y: number) =>
+    inside(x, y) && !road.has(at(x, y)) && !closed.has(at(x, y));
+  return { at, net, across, joins, open };
+}
+
+/**
+ * The fewest tiles of a spur from the patch's start, by exhaustive search over every simple path
+ * of at most `bound` tiles: each tile after the first open, and sharing no side either tile's
+ * rails run through with any tile of the path before it (so each step crosses rails at right
+ * angles, and no tile lies where the rails of another tile of the path run on to), the last
+ * joining a network road across such a side too. Infinity when there is none. A path that could
+ * not end shorter than the best found, or within the bound, is cut, by the Manhattan distance to
+ * the nearest network road, which never overstates what is left.
+ */
+function fewestByHand(c: SpurPatch, bound: number): number {
+  const { at, net, across, joins, open } = patchRules(c);
+  const goals = [...net].map((k) => k.split(',').map(Number));
+  if (!goals.length) return Infinity;
+  /** the fewest tiles still to come after (x, y), which joins no network road: one at least */
+  const left = (x: number, y: number) =>
+    Math.max(1, Math.min(...goals.map(([gx, gy]) => Math.abs(gx - x) + Math.abs(gy - y))) - 1);
+  let best = Infinity;
+  const on = new Set<string>();
+  const visit = (x: number, y: number, n: number) => {
+    if (joins(x, y)) {
+      best = Math.min(best, n);
+      return;
+    }
+    if (n + left(x, y) >= best || n + left(x, y) > bound) return;
+    on.add(at(x, y));
+    for (const d of DIRS) {
+      const nx = x + DIR_DX[d];
+      const ny = y + DIR_DY[d];
+      const clear = DIRS.every(
+        (e) => !on.has(at(nx + DIR_DX[e], ny + DIR_DY[e])) || across(nx, ny, e),
+      );
+      if (open(nx, ny) && !on.has(at(nx, ny)) && clear) visit(nx, ny, n + 1);
+    }
+    on.delete(at(x, y));
+  };
+  visit(c.from.x, c.from.y, 1);
+  return best;
+}
+
+/** What is wrong with a spur `findSpur` gave for the patch, '' when nothing is. */
+function spurFault(c: SpurPatch, spur: { x: number; y: number }[]): string {
+  const { at, across, joins, open } = patchRules(c);
+  if (!spur.length) return 'an empty spur';
+  if (at(spur[0].x, spur[0].y) !== at(c.from.x, c.from.y))
+    return `starts at ${at(spur[0].x, spur[0].y)}`;
+  if (spur.length > SPUR_REACH) return `${spur.length} tiles, more than ${SPUR_REACH}`;
+  const seen = new Set([at(c.from.x, c.from.y)]);
+  for (let i = 1; i < spur.length; i++) {
+    const { x, y } = spur[i];
+    const p = spur[i - 1];
+    if (!open(x, y)) return `${at(x, y)} is a road, closed or off the patch`;
+    if (seen.has(at(x, y))) return `${at(x, y)} twice`;
+    seen.add(at(x, y));
+    const d = DIRS.find((s) => p.x + DIR_DX[s] === x && p.y + DIR_DY[s] === y);
+    if (d === undefined) return `${at(p.x, p.y)} and ${at(x, y)} share no side`;
+    if (!across(p.x, p.y, d)) return `${at(p.x, p.y)} to ${at(x, y)} runs along rails`;
+  }
+  // judged whole: no two tiles of it share a side either one's rails run through
+  for (const { x, y } of spur)
+    for (const d of DIRS)
+      if (seen.has(at(x + DIR_DX[d], y + DIR_DY[d])) && !across(x, y, d))
+        return `${at(x, y)} and ${at(x + DIR_DX[d], y + DIR_DY[d])} share a side rails run through`;
+  const last = spur[spur.length - 1];
+  if (!joins(last.x, last.y)) return `ends at ${at(last.x, last.y)}, joining no network road`;
+  return '';
+}
+
+/** The sides a path's steps leave through, in turn. */
+const stepsOf = (path: { x: number; y: number }[]): Dir[] =>
+  path
+    .slice(1)
+    .map((t, i) =>
+      DIRS.find((d) => path[i].x + DIR_DX[d] === t.x && path[i].y + DIR_DY[d] === t.y)!,
+    );
+
+/**
+ * The first of the spurs with the fewest tiles from the patch's start, by exhaustive search over
+ * every simple path of at most `bound` tiles, and how many spurs have that many tiles. Of spurs
+ * alike in length the first is the one whose steps come first, compared in turn, a step's side
+ * ranked N, E, S, W. `whole` judges a path as `fewestByHand` does: no tile of it shares a side
+ * either tile's rails run through with any other tile of it. Otherwise only each step is judged,
+ * across a side no rails of either tile run through, the rule `findSpur` kept before it judged a
+ * spur whole. A path that could not end within the bound, or in as few tiles as the best found, is
+ * cut by the Manhattan distance to the nearest network road. Null and 0 when there is none.
+ */
+function firstShortestByHand(c: SpurPatch, bound: number, whole: boolean) {
+  const { at, net, across, joins, open } = patchRules(c);
+  const goals = [...net].map((k) => k.split(',').map(Number));
+  /** the fewest tiles still to come after (x, y), which joins no network road: one at least */
+  const left = (x: number, y: number) =>
+    Math.max(1, Math.min(...goals.map(([gx, gy]) => Math.abs(gx - x) + Math.abs(gy - y))) - 1);
+  /** `a` comes before `b`, both of one length, by their steps in turn */
+  const before = (a: { x: number; y: number }[], b: { x: number; y: number }[]) => {
+    const sa = stepsOf(a);
+    const sb = stepsOf(b);
+    const i = sa.findIndex((d, j) => d !== sb[j]);
+    return i >= 0 && sa[i] < sb[i];
+  };
+  let first: { x: number; y: number }[] | null = null;
+  let count = 0;
+  const path: { x: number; y: number }[] = [];
+  const on = new Set<string>();
+  const visit = (x: number, y: number) => {
+    path.push({ x, y });
+    on.add(at(x, y));
+    const n = path.length;
+    if (joins(x, y)) {
+      if (!first || n < first.length) {
+        first = [...path];
+        count = 1;
+      } else if (n === first.length) {
+        count++;
+        if (before(path, first)) first = [...path];
+      }
+    } else if (n + left(x, y) <= bound && (!first || n + left(x, y) <= first.length)) {
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d];
+        const ny = y + DIR_DY[d];
+        if (!open(nx, ny) || on.has(at(nx, ny)) || !across(x, y, d)) continue;
+        const clear = DIRS.every(
+          (e) => !on.has(at(nx + DIR_DX[e], ny + DIR_DY[e])) || across(nx, ny, e),
+        );
+        if (!whole || clear) visit(nx, ny);
+      }
+    }
+    path.pop();
+    on.delete(at(x, y));
+  };
+  if (goals.length) visit(c.from.x, c.from.y);
+  return { first: first as { x: number; y: number }[] | null, count };
+}
+
+/** Ask `findSpur` for the patch's spur, its rails laid as regular straights. */
+function patchSpur(c: SpurPatch) {
+  const track = new TrackGraph(c.w, c.h);
+  for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+  const roads = new Roads(track);
+  for (const r of c.roads) roads.add(r.x, r.y);
+  const { at, net } = patchRules(c);
+  const closed = new Set(c.closed.map((t) => at(t.x, t.y)));
+  const free = (x: number, y: number) => !closed.has(at(x, y));
+  return c.anyRoad
+    ? findSpur(roads, c.from, free)
+    : findSpur(roads, c.from, free, (x, y) => net.has(at(x, y)));
+}
+
+describe('the spur search', () => {
+  it('finds as few tiles as an exhaustive search, and none exactly when no spur is within SPUR_REACH', () => {
+    /** spurs exactly SPUR_REACH long; patches whose network is only further; spurs over rails */
+    const seen = { atBound: 0, beyond: 0, crossings: 0 };
+    forAll(
+      genPatch,
+      (c) => {
+        const track = new TrackGraph(c.w, c.h);
+        for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+        // the patch's rails are the track's
+        for (const r of c.rails)
+          expect([...track.get(r.x, r.y)!.links[0]].sort()).toEqual(
+            (r.ns ? [Dir.N, Dir.S] : [Dir.E, Dir.W]).sort(),
+          );
+        const roads = new Roads(track);
+        for (const r of c.roads) roads.add(r.x, r.y);
+        const { at, net } = patchRules(c);
+        const closed = new Set(c.closed.map((t) => at(t.x, t.y)));
+        const free = (x: number, y: number) => !closed.has(at(x, y));
+        const spur = c.anyRoad
+          ? findSpur(roads, c.from, free)
+          : findSpur(roads, c.from, free, (x, y) => net.has(at(x, y)));
+        const fewest = fewestByHand(c, SPUR_REACH);
+        if (fewest === Infinity) {
+          expect(spur, 'a spur where an exhaustive search finds none').toBeNull();
+          if (fewestByHand(c, SPUR_REACH + 3) < Infinity) seen.beyond++;
+          return;
+        }
+        expect(spur, `no spur where one of ${fewest} tiles is`).not.toBeNull();
+        expect(spurFault(c, spur!)).toBe('');
+        expect(spur!.length).toBe(fewest);
+        if (fewest === SPUR_REACH) seen.atBound++;
+        if (spur!.some((t) => track.has(t.x, t.y))) seen.crossings++;
+      },
+      { shrink: shrinkPatch, seeds: PATCH_SEEDS },
+    );
+    // not vacuous: the bound was met and passed, and spurs went over rails
+    expect(seen.atBound).toBeGreaterThanOrEqual(8);
+    expect(seen.beyond).toBeGreaterThanOrEqual(20);
+    expect(seen.crossings).toBeGreaterThanOrEqual(20);
+  });
+
+  it('gives, of the spurs with the fewest tiles, the first by its steps, a step’s side ranked N, E, S, W', () => {
+    // each generator with what its cases must show at least, so the property is not vacuous: the
+    // patches break ties, and the hooks often need the spur judged whole, at times to SPUR_REACH
+    for (const [name, gen, least] of [
+      ['patch', genPatch, { ties: 20 }],
+      ['hook', genHookPatch, { ties: 100, whole: 70, longer: 10, atBound: 2, none: 5 }],
+    ] as const) {
+      /**
+       * patches with more than one spur of the fewest tiles; patches where the first of the
+       * shortest ways judged step by step breaks the rule whole, the case judging a spur whole
+       * changes, and of those where the spur is longer, where it is SPUR_REACH tiles, and where
+       * there is none
+       */
+      const seen = { ties: 0, whole: 0, longer: 0, atBound: 0, none: 0 };
+      forAll(
+        gen,
+        (c) => {
+          const spur = patchSpur(c);
+          const want = firstShortestByHand(c, SPUR_REACH, true);
+          expect(spur, `${name}: ${want.count} spurs of the fewest tiles`).toEqual(want.first);
+          if (want.count > 1) seen.ties++;
+          // a spur judged whole is one judged step by step: with no way that keeps the steps, none
+          const stepwise = firstShortestByHand(c, SPUR_REACH, false).first;
+          if (!stepwise) return;
+          // where the first way judged step by step keeps the rule whole, it is the spur
+          if (!spurFault(c, stepwise)) {
+            expect(spur, `${name}: the first way judged step by step`).toEqual(stepwise);
+            return;
+          }
+          seen.whole++;
+          if (!spur) seen.none++;
+          else if (spur.length > stepwise.length) seen.longer++;
+          if (spur?.length === SPUR_REACH) seen.atBound++;
+        },
+        { shrink: shrinkPatch, seeds: PATCH_SEEDS },
+      );
+      for (const [what, n] of Object.entries(least))
+        expect(seen[what as keyof typeof seen], `${name}: ${what}`).toBeGreaterThanOrEqual(n);
+    }
+  });
+
+  it('gives the same spur every time it is asked, and leaves the roads as they were', () => {
+    forAll(genPatch, (c) => {
+      const track = new TrackGraph(c.w, c.h);
+      for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+      const roads = new Roads(track);
+      for (const r of c.roads) roads.add(r.x, r.y);
+      const before = { list: roads.toJSON(), version: roads.version };
+      const ask = () => findSpur(roads, c.from, () => true);
+      const first = ask();
+      expect(ask()).toEqual(first);
+      expect({ list: roads.toJSON(), version: roads.version }).toEqual(before);
+    });
   });
 });

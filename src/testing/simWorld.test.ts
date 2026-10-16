@@ -138,6 +138,7 @@ describe('simWorld from one seed', () => {
     20_000,
   );
 
+  // three new games' worlds, each planning its rivers once (#341): about 0.8 s alone
   it('another seed gives another map', () => {
     const worlds = SEEDS.map((seed) => simWorld({ seed }));
     for (let i = 0; i < worlds.length; i++)
@@ -147,7 +148,7 @@ describe('simWorld from one seed', () => {
         expect(firstDiff(a.map.terrain, b.map.terrain), `${pair}: terrain`).not.toBe(-1);
         expect(firstDiff(a.map.variant, b.map.variant), `${pair}: variant`).not.toBe(-1);
       }
-  });
+  }, 15_000);
 });
 
 describe('simWorld as Game builds it', () => {
