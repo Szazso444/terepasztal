@@ -10,7 +10,7 @@ import {
   type TrackPiece,
 } from '../world/track';
 import { Rng } from '../engine/rng';
-import { DIR_DX, DIR_DY } from '../engine/iso';
+import { DIRS, DIR_DX, DIR_DY, Dir, opposite } from '../engine/iso';
 import { STR } from '../strings';
 import { content } from '../data/content';
 import { Builder, decorDef, type LinePiece } from './build';
@@ -20,7 +20,7 @@ import { resetStationIds, stationFootprint } from './stations';
 import { resetTrainIds } from './trains';
 import { rules, DEFAULT_RULES } from './rules';
 import { SimStep, startStock, type StepDomains } from './step';
-import { Roads, crossable, roadCost } from './roads';
+import { Roads, SPUR_REACH, crossable, findSpur, roadCost } from './roads';
 import { streetDoor } from './doors';
 import {
   PeopleSim,
@@ -1522,5 +1522,188 @@ describe('the pace on a road', () => {
         expect(p.step).toBe(path.length - 1);
       },
     );
+  });
+});
+
+// ------------------------------------------------------------------ the spur search (#408)
+
+/**
+ * A seeded patch for `findSpur`: a small grid whose tiles may each hold a plain straight (rails
+ * north to south or east to west), a road (of the network a spur joins, or not), or be closed to a
+ * spur (`free` says no), and the reach tile a spur starts from, which holds no road. About a third
+ * are corridors one or two tiles deep and 11 to 15 long, the start at the west end and the network
+ * at the east end, so the bound of SPUR_REACH tiles is met and passed.
+ */
+interface SpurPatch {
+  w: number;
+  h: number;
+  from: { x: number; y: number };
+  rails: { x: number; y: number; ns: boolean }[];
+  roads: { x: number; y: number; net: boolean }[];
+  closed: { x: number; y: number }[];
+  /** `findSpur` is asked with no network of its own: every road is one */
+  anyRoad: boolean;
+}
+function genPatch(rng: Rng): SpurPatch {
+  const corridor = rng.chance(0.35);
+  const w = corridor ? rng.int(11, 15) : rng.int(1, 8);
+  const h = corridor ? rng.int(1, 2) : rng.int(1, Math.min(6, Math.floor(40 / w)));
+  const from = { x: corridor ? 0 : rng.int(0, w - 1), y: rng.int(0, h - 1) };
+  const rails: SpurPatch['rails'] = [];
+  const roads: SpurPatch['roads'] = [];
+  const closed: SpurPatch['closed'] = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (rng.chance(corridor ? 0.08 : 0.2)) rails.push({ x, y, ns: rng.chance(0.5) });
+      // the start may be closed: `free` is not asked about it
+      if (rng.chance(corridor ? 0.04 : 0.15)) closed.push({ x, y });
+      else if (x === from.x && y === from.y) continue;
+      else if (corridor ? x === w - 1 : rng.chance(0.12))
+        roads.push({ x, y, net: corridor || rng.chance(0.7) });
+    }
+  return { w, h, from, rails, roads, closed, anyRoad: rng.chance(0.3) };
+}
+/** The patches are small and quick: four hundred of them, so the bound is met often enough. */
+const PATCH_SEEDS = Array.from({ length: 400 }, (_, i) => i + 1);
+function* shrinkPatch(c: SpurPatch): Iterable<SpurPatch> {
+  for (const rails of shrinkArray(c.rails)) yield { ...c, rails };
+  for (const roads of shrinkArray(c.roads)) yield { ...c, roads };
+  for (const closed of shrinkArray(c.closed)) yield { ...c, closed };
+}
+
+/** What the patch says of each tile, read from the case alone, apart from any track or roads. */
+function patchRules(c: SpurPatch) {
+  const at = (x: number, y: number) => `${x},${y}`;
+  const rails = new Map(
+    c.rails.map((r) => [at(r.x, r.y), r.ns ? [Dir.N, Dir.S] : [Dir.E, Dir.W]] as const),
+  );
+  const road = new Set(c.roads.map((r) => at(r.x, r.y)));
+  const net = new Set(c.roads.filter((r) => r.net || c.anyRoad).map((r) => at(r.x, r.y)));
+  const closed = new Set(c.closed.map((t) => at(t.x, t.y)));
+  const inside = (x: number, y: number) => x >= 0 && y >= 0 && x < c.w && y < c.h;
+  /** a step from (x, y) across its side `d` runs along no rails, of either tile */
+  const across = (x: number, y: number, d: Dir) =>
+    !rails.get(at(x, y))?.includes(d) &&
+    !rails.get(at(x + DIR_DX[d], y + DIR_DY[d]))?.includes(opposite(d));
+  /** (x, y) shares a side with a network road, the step to it along no rails */
+  const joins = (x: number, y: number) =>
+    DIRS.some((d) => across(x, y, d) && net.has(at(x + DIR_DX[d], y + DIR_DY[d])));
+  /** a tile after the first may carry the spur */
+  const open = (x: number, y: number) =>
+    inside(x, y) && !road.has(at(x, y)) && !closed.has(at(x, y));
+  return { at, net, across, joins, open };
+}
+
+/**
+ * The fewest tiles of a spur from the patch's start, by exhaustive search over every simple path
+ * of at most `bound` tiles: each tile after the first open, each step across a side neither tile's
+ * rails run through, the last joining a network road the same way. Infinity when there is none.
+ * A path that could not end shorter than the best found, or within the bound, is cut, by the
+ * Manhattan distance to the nearest network road, which never overstates what is left.
+ */
+function fewestByHand(c: SpurPatch, bound: number): number {
+  const { at, net, across, joins, open } = patchRules(c);
+  const goals = [...net].map((k) => k.split(',').map(Number));
+  if (!goals.length) return Infinity;
+  /** the fewest tiles still to come after (x, y), which joins no network road: one at least */
+  const left = (x: number, y: number) =>
+    Math.max(1, Math.min(...goals.map(([gx, gy]) => Math.abs(gx - x) + Math.abs(gy - y))) - 1);
+  let best = Infinity;
+  const on = new Set<string>();
+  const visit = (x: number, y: number, n: number) => {
+    if (joins(x, y)) {
+      best = Math.min(best, n);
+      return;
+    }
+    if (n + left(x, y) >= best || n + left(x, y) > bound) return;
+    on.add(at(x, y));
+    for (const d of DIRS) {
+      const nx = x + DIR_DX[d];
+      const ny = y + DIR_DY[d];
+      if (open(nx, ny) && !on.has(at(nx, ny)) && across(x, y, d)) visit(nx, ny, n + 1);
+    }
+    on.delete(at(x, y));
+  };
+  visit(c.from.x, c.from.y, 1);
+  return best;
+}
+
+/** What is wrong with a spur `findSpur` gave for the patch, '' when nothing is. */
+function spurFault(c: SpurPatch, spur: { x: number; y: number }[]): string {
+  const { at, across, joins, open } = patchRules(c);
+  if (!spur.length) return 'an empty spur';
+  if (at(spur[0].x, spur[0].y) !== at(c.from.x, c.from.y))
+    return `starts at ${at(spur[0].x, spur[0].y)}`;
+  if (spur.length > SPUR_REACH) return `${spur.length} tiles, more than ${SPUR_REACH}`;
+  const seen = new Set([at(c.from.x, c.from.y)]);
+  for (let i = 1; i < spur.length; i++) {
+    const { x, y } = spur[i];
+    const p = spur[i - 1];
+    if (!open(x, y)) return `${at(x, y)} is a road, closed or off the patch`;
+    if (seen.has(at(x, y))) return `${at(x, y)} twice`;
+    seen.add(at(x, y));
+    const d = DIRS.find((s) => p.x + DIR_DX[s] === x && p.y + DIR_DY[s] === y);
+    if (d === undefined) return `${at(p.x, p.y)} and ${at(x, y)} share no side`;
+    if (!across(p.x, p.y, d)) return `${at(p.x, p.y)} to ${at(x, y)} runs along rails`;
+  }
+  const last = spur[spur.length - 1];
+  if (!joins(last.x, last.y)) return `ends at ${at(last.x, last.y)}, joining no network road`;
+  return '';
+}
+
+describe('the spur search', () => {
+  it('finds as few tiles as an exhaustive search, and none exactly when no spur is within SPUR_REACH', () => {
+    /** spurs exactly SPUR_REACH long; patches whose network is only further; spurs over rails */
+    const seen = { atBound: 0, beyond: 0, crossings: 0 };
+    forAll(
+      genPatch,
+      (c) => {
+        const track = new TrackGraph(c.w, c.h);
+        for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+        // the patch's rails are the track's
+        for (const r of c.rails)
+          expect([...track.get(r.x, r.y)!.links[0]].sort()).toEqual(
+            (r.ns ? [Dir.N, Dir.S] : [Dir.E, Dir.W]).sort(),
+          );
+        const roads = new Roads(track);
+        for (const r of c.roads) roads.add(r.x, r.y);
+        const { at, net } = patchRules(c);
+        const closed = new Set(c.closed.map((t) => at(t.x, t.y)));
+        const free = (x: number, y: number) => !closed.has(at(x, y));
+        const spur = c.anyRoad
+          ? findSpur(roads, c.from, free)
+          : findSpur(roads, c.from, free, (x, y) => net.has(at(x, y)));
+        const fewest = fewestByHand(c, SPUR_REACH);
+        if (fewest === Infinity) {
+          expect(spur, 'a spur where an exhaustive search finds none').toBeNull();
+          if (fewestByHand(c, SPUR_REACH + 3) < Infinity) seen.beyond++;
+          return;
+        }
+        expect(spur, `no spur where one of ${fewest} tiles is`).not.toBeNull();
+        expect(spurFault(c, spur!)).toBe('');
+        expect(spur!.length).toBe(fewest);
+        if (fewest === SPUR_REACH) seen.atBound++;
+        if (spur!.some((t) => track.has(t.x, t.y))) seen.crossings++;
+      },
+      { shrink: shrinkPatch, seeds: PATCH_SEEDS },
+    );
+    // not vacuous: the bound was met and passed, and spurs went over rails
+    expect(seen.atBound).toBeGreaterThanOrEqual(8);
+    expect(seen.beyond).toBeGreaterThanOrEqual(20);
+    expect(seen.crossings).toBeGreaterThanOrEqual(20);
+  });
+
+  it('gives the same spur every time it is asked, and leaves the roads as they were', () => {
+    forAll(genPatch, (c) => {
+      const track = new TrackGraph(c.w, c.h);
+      for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+      const roads = new Roads(track);
+      for (const r of c.roads) roads.add(r.x, r.y);
+      const before = { list: roads.toJSON(), version: roads.version };
+      const ask = () => findSpur(roads, c.from, () => true);
+      const first = ask();
+      expect(ask()).toEqual(first);
+      expect({ list: roads.toJSON(), version: roads.version }).toEqual(before);
+    });
   });
 });

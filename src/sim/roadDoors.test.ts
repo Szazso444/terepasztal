@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { TERRAIN_NAMES, Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
-import { TrackGraph, type TrackItem } from '../world/track';
+import { TrackGraph, type TrackItem, type TrackPiece } from '../world/track';
 import { Rng } from '../engine/rng';
-import { DIRS, DIR_DX, DIR_DY, Dir } from '../engine/iso';
+import { DIRS, DIR_DX, DIR_DY, Dir, opposite } from '../engine/iso';
 import { STR } from '../strings';
-import { content, type DecorDef, type StationDef } from '../data/content';
+import { content, type BuildingDef, type DecorDef, type StationDef } from '../data/content';
 import { Builder, buildingPlace, decorDef, decorPlace, stationPlace, type Decor } from './build';
 import type { Building } from './buildings';
 import { Stockpile } from './stockpile';
@@ -837,6 +837,458 @@ describe('every spur', () => {
     expect(seen.spurs).toBeGreaterThanOrEqual(50);
     expect(seen.crossings).toBeGreaterThanOrEqual(3);
     expect(seen.near).toBeGreaterThanOrEqual(10);
+  });
+});
+
+// ------------------------------------------------------------------ the spur against an exhaustive search
+
+/** A tile's key, `y * W + x`; -1 off the map, so no tile off it ever matches one on it. */
+const keyOf = (t: Tile) => (t.x < 0 || t.y < 0 || t.x >= W || t.y >= W ? -1 : t.y * W + t.x);
+const tileOf = (k: number): Tile => ({ x: k % W, y: Math.floor(k / W) });
+const stepTo = (t: Tile, d: Dir): Tile => ({ x: t.x + DIR_DX[d], y: t.y + DIR_DY[d] });
+const entryOf = (id: string) => PLACES.find((e) => e.def.id === id)!;
+
+/**
+ * Whether `e` has doors, read from its def apart from `hasDoors`: every station, a works with a
+ * crew that is no bridge platform, a decor with a crew or residents (a service stop, a house).
+ */
+function doorsByRule(e: Entry): boolean {
+  if (e.kind === 'station') return true;
+  if (e.kind === 'works') return (e.def as BuildingDef).crew > 0 && !(e.def as BuildingDef).bridge;
+  const def = e.def as DecorDef;
+  return def.crew > 0 || !!def.residents;
+}
+/**
+ * The street doors of everything standing that has doors (`doorsByRule`), read from the builder's
+ * lists apart from `doorPlaces`: the stations', then the works', then the decor's, each in its
+ * list's order.
+ */
+function doorsByHand(w: World): Door[] {
+  const b = w.builder;
+  const out: Door[] = [];
+  for (const s of b.stations) out.push(...streetOf({ def: s.def, x: s.x, y: s.y, rot: s.rot }));
+  for (const k of b.buildings.values()) {
+    const def = content.buildings.find((d) => d.id === k.id)!;
+    if (doorsByRule({ kind: 'works', def }))
+      out.push(...streetOf({ def, x: k.x, y: k.y, rot: k.rot ?? 0 }));
+  }
+  for (const d of b.decor.values()) {
+    const def = decorDef(d.id);
+    if (doorsByRule({ kind: 'decor', def }))
+      out.push(...streetOf({ def, x: d.x, y: d.y, rot: d.rot }));
+  }
+  return out;
+}
+/** What no spur takes: each station's platform (a gate tile with track), each depot's gates. */
+function keptOffByHand(w: World): Set<number> {
+  const out = new Set<number>();
+  for (const s of w.builder.stations)
+    for (const g of s.gateTiles()) if (s.def.depot || w.track.has(g.x, g.y)) out.add(keyOf(g));
+  return out;
+}
+/** A plain one-tile straight of regular or narrow track: the one piece a road may cross. */
+const plainStraight = (p: TrackPiece | undefined): p is TrackPiece =>
+  !!p && p.kind === 'straight' && !p.unit && p.cls !== 'high_speed';
+
+/**
+ * Whether a road may stand on `t` with the roads `roads` laid, the rules of #318 and #408 written
+ * out again: on the player's land, whoever places (a spur keeps to it), on ground that is not
+ * water, rock or a mountain, with no road on it, off every station and works and every decor that
+ * stands off the rails, off `off`; on track only across a plain straight whose rails run on to no
+ * road, and never where a level crossing beside it has its rails run on to it.
+ */
+function roadMayStand(w: World, t: Tile, roads: Set<number>, off: Set<number>): boolean {
+  const { map, track, builder, regions } = w;
+  const k = keyOf(t);
+  if (k < 0 || !regions.isTileUnlocked(t.x, t.y) || roads.has(k) || off.has(k)) return false;
+  const ground = map.terrain[k];
+  if (ground === Terrain.Water || ground === Terrain.Rock || ground === Terrain.Mountain)
+    return false;
+  if (builder.stationAt(t.x, t.y) || builder.buildingAt(t.x, t.y)) return false;
+  const d = builder.decorAt(t.x, t.y);
+  if (d && !decorDef(d.id).onTrack) return false;
+  const p = track.get(t.x, t.y);
+  if (p && (!plainStraight(p) || p.links[0].some((s) => roads.has(keyOf(stepTo(t, s))))))
+    return false;
+  return DIRS.every((s) => {
+    const n = stepTo(t, s);
+    const q = roads.has(keyOf(n)) ? track.get(n.x, n.y) : undefined;
+    return !plainStraight(q) || !q.links[0].includes(opposite(s));
+  });
+}
+/**
+ * The road tiles a spur may join: every run of road, tile to side-sharing tile, that holds a tile
+ * which is no street door's reach.
+ */
+function networkByHand(roads: Set<number>, reaches: Set<number>): Set<number> {
+  const out = new Set<number>();
+  const done = new Set<number>();
+  for (const start of roads) {
+    if (done.has(start)) continue;
+    const run = [start];
+    done.add(start);
+    for (let i = 0; i < run.length; i++)
+      for (const d of DIRS) {
+        const n = keyOf(stepTo(tileOf(run[i]), d));
+        if (roads.has(n) && !done.has(n)) {
+          done.add(n);
+          run.push(n);
+        }
+      }
+    if (run.some((k) => !reaches.has(k))) for (const k of run) out.add(k);
+  }
+  return out;
+}
+/**
+ * The fewest tiles of a legal spur from `from` to the network, by exhaustive search over every
+ * simple path of at most `bound` tiles: each tile one a road may stand on (`roadMayStand`) with
+ * the roads and the path's tiles before it laid, the last beside a network road. Infinity when
+ * there is none. A path that could not end shorter than the best found, or within the bound, is
+ * cut by the Manhattan distance to the nearest network road, which never overstates what is left.
+ */
+function fewestLegal(
+  w: World,
+  from: Tile,
+  roads: Set<number>,
+  net: Set<number>,
+  off: Set<number>,
+  bound = SPUR_REACH,
+): number {
+  const goals = [...net].map(tileOf);
+  if (!goals.length) return Infinity;
+  const left = (t: Tile) =>
+    Math.max(1, Math.min(...goals.map((g) => Math.abs(g.x - t.x) + Math.abs(g.y - t.y))) - 1);
+  const laid = new Set(roads);
+  let best = Infinity;
+  const visit = (t: Tile, n: number) => {
+    laid.add(keyOf(t));
+    if (DIRS.some((d) => net.has(keyOf(stepTo(t, d))))) best = Math.min(best, n);
+    else if (n + left(t) <= bound && n + left(t) < best)
+      for (const d of DIRS) {
+        const m = stepTo(t, d);
+        if (roadMayStand(w, m, laid, off)) visit(m, n + 1);
+      }
+    laid.delete(keyOf(t));
+  };
+  visit(from, 1);
+  return best;
+}
+/**
+ * What is wrong with `spur`, laid for the door whose reach is `from` over `roads`, as a legal spur
+ * to the network `net`; '' when nothing is.
+ */
+function legalFault(
+  w: World,
+  spur: Tile[],
+  from: Tile,
+  roads: Set<number>,
+  net: Set<number>,
+  off: Set<number>,
+): string {
+  if (!spur.length) return 'nothing laid';
+  if (!same(spur[0], from)) return `starts at ${at(spur[0])}, not the reach ${at(from)}`;
+  const laid = new Set(roads);
+  for (let i = 0; i < spur.length; i++) {
+    const t = spur[i];
+    if (i && sideTo(spur[i - 1], t) === undefined)
+      return `${at(spur[i - 1])} and ${at(t)} share no side`;
+    if (!roadMayStand(w, t, laid, off)) return `${at(t)} breaks a road rule`;
+    laid.add(keyOf(t));
+  }
+  const last = spur[spur.length - 1];
+  if (!DIRS.some((d) => net.has(keyOf(stepTo(last, d)))))
+    return `ends at ${at(last)}, beside no road of the network`;
+  return '';
+}
+
+type SiteOp =
+  | { op: 'place'; x: number; y: number; id: string; rot: number }
+  | { op: 'road'; x: number; y: number };
+/**
+ * A seeded box of land in a ring of water, so nothing beyond it counts: some of it rough ground,
+ * straights of every class and curves, roads, places standing as a save from before spurs holds
+ * them (some with the reach tile of their door laid), then what the player does, placing and
+ * laying roads, or the editor doing it. A third of the boxes are long and narrow, so spurs meet
+ * SPUR_REACH and pass it; many run on past x 32, where the player's land ends.
+ */
+function genBox(rng: Rng) {
+  const long = rng.chance(0.35);
+  const box = {
+    x: long ? rng.int(12, 19) : rng.int(22, 29),
+    y: rng.int(3, 20),
+    w: long ? rng.int(13, 16) : rng.int(3, 8),
+    h: long ? rng.int(1, 3) : rng.int(3, 6),
+  };
+  const inBox = () => ({ x: box.x + rng.int(0, box.w - 1), y: box.y + rng.int(0, box.h - 1) });
+  const ids = ['townhouse', 'townhouse', 'water_tower', 'fuel_stop', 'windmill', 'station'];
+  const ground = Array.from({ length: rng.int(0, Math.floor((box.w * box.h) / 6)) }, () => ({
+    ...inBox(),
+    n: rng.int(0, 2),
+  }));
+  const track = Array.from({ length: rng.int(0, 5) }, () => {
+    const kind = rng.chance(0.85) ? ('straight' as const) : ('curve' as const);
+    return {
+      ...inBox(),
+      kind,
+      cls: rng.pick(['regular', 'regular', 'narrow', 'high_speed'] as const),
+      rot: kind === 'straight' ? rng.int(0, 1) : rng.int(0, 7),
+    };
+  });
+  const roads = Array.from({ length: rng.int(0, 6) }, inBox);
+  const old = Array.from({ length: rng.int(0, 3) }, () => ({
+    ...inBox(),
+    id: rng.pick([...ids, 'depot']),
+    rot: rng.int(0, 3),
+    stub: rng.chance(0.5),
+  }));
+  const ops = Array.from({ length: rng.int(1, 5) }, (): SiteOp => {
+    const t = inBox();
+    if (rng.chance(0.35)) return { op: 'road', ...t };
+    return {
+      op: 'place',
+      ...t,
+      id: rng.pick([...ids, 'depot', 'narrow_depot']),
+      rot: rng.int(0, 3),
+    };
+  });
+  // a long box often has its one road at its west end, and a house placed 11 to 13 tiles east of it
+  // first: a spur of about SPUR_REACH tiles, or none
+  if (long && rng.chance(0.6)) {
+    const y = () => box.y + rng.int(0, box.h - 1);
+    roads.splice(0, roads.length, { x: box.x, y: y() });
+    const x = box.x + rng.int(11, 13);
+    ops.unshift({ op: 'place', x, y: y(), id: 'townhouse', rot: rng.int(0, 3) });
+  }
+  // a quarter of them in the editor's way: no price, no lock, and still no spur off the player's land
+  return { box, ground, track, roads, old, ops, free: rng.chance(0.25) };
+}
+type Box = ReturnType<typeof genBox>;
+/** The boxes are small and quick to search: six hundred of them. */
+const BOX_SEEDS = Array.from({ length: 600 }, (_, i) => i + 1);
+function* shrinkBox(c: Box): Iterable<Box> {
+  if (c.free) yield { ...c, free: false };
+  for (const ops of shrinkArray(c.ops)) if (ops.length) yield { ...c, ops };
+  for (const old of shrinkArray(c.old)) yield { ...c, old };
+  for (const roads of shrinkArray(c.roads)) yield { ...c, roads };
+  for (const track of shrinkArray(c.track)) yield { ...c, track };
+  for (const ground of shrinkArray(c.ground)) yield { ...c, ground };
+}
+
+/** What placing `e` with its corner at (x, y) turned to `rot` would cost, and whether it may. */
+function checkAt(w: World, e: Entry, x: number, y: number, rot: number) {
+  if (e.kind === 'station') return w.builder.checkStation(x, y, e.def.id, rot);
+  if (e.kind === 'works') return w.builder.checkBuilding(x, y, e.def.id, rot);
+  return w.builder.checkDecor(x, y, e.def.id);
+}
+/** Place `e` through the builder; where it stands, as a place, or null when it was refused. */
+function placeAt(w: World, e: Entry, x: number, y: number, rot: number): PlaceAt | null {
+  const b = w.builder;
+  const done =
+    e.kind === 'station'
+      ? b.placeStation(x, y, e.def.id, rot)
+      : e.kind === 'works'
+        ? b.placeBuilding(x, y, e.def.id, rot)
+        : b.placeDecor(x, y, e.def.id, rot);
+  return done && { def: e.def, x, y, rot: done.rot ?? 0 };
+}
+
+/** Lay the box: its water ring, its ground, its track and roads, and what stands from before. */
+function boxWorld(c: Box): World {
+  rules.narrowUnlocked = 1;
+  const w = world();
+  const { box } = c;
+  for (let y = box.y - 1; y <= box.y + box.h; y++)
+    for (let x = box.x - 1; x <= box.x + box.w; x++)
+      if (x < box.x || y < box.y || x >= box.x + box.w || y >= box.y + box.h)
+        w.map.terrain[y * W + x] = Terrain.Water;
+  for (const g of c.ground)
+    w.map.terrain[g.y * W + g.x] = [Terrain.Water, Terrain.Rock, Terrain.Mountain][g.n];
+  freely(w, () => {
+    for (const t of c.track) w.builder.placeTrack(t.x, t.y, { kind: t.kind, cls: t.cls }, t.rot);
+    // on the player's land, as the player lays them; nothing with a door stands yet, so no spur
+    for (const r of c.roads) if (w.regions.isTileUnlocked(r.x, r.y)) w.builder.placeRoad(r.x, r.y);
+  });
+  for (const o of c.old) {
+    const e = entryOf(o.id);
+    if (!freely(w, () => checkAt(w, e, o.x, o.y, o.rot).ok)) continue;
+    const p = stand(w, e, o.x, o.y, o.rot);
+    const roads = new Set(roadsOf(w).map(keyOf));
+    for (const d of streetOf(p))
+      if (o.stub && roadMayStand(w, d.reach, roads, keptOffByHand(w)))
+        w.roads.add(d.reach.x, d.reach.y);
+  }
+  // the player's way from here: the region lock, and the stock to pay for anything
+  const ids = [content.stations.defs, content.buildings, content.decor].flatMap((defs) =>
+    defs.flatMap((d) => Object.keys(d.cost)),
+  );
+  for (const id of new Set([...ids, ...Object.keys(roadCost())])) w.stock.add(id, 1e6);
+  return w;
+}
+
+describe('every spur, against an exhaustive search', () => {
+  it('is the fewest tiles a legal spur takes, or the reach tile alone where none is; only the price is paid', () => {
+    /**
+     * spurs of more than one tile, of SPUR_REACH tiles, over track, brought by a road laid; doors
+     * whose fewest legal tiles are just beyond SPUR_REACH
+     */
+    const seen = { spurs: 0, atBound: 0, crossings: 0, near: 0, beyond: 0 };
+    forAll(
+      genBox,
+      (c) => {
+        const w = boxWorld(c);
+        const b = w.builder;
+        b.free = c.free;
+        c.ops.forEach((o, i) => {
+          const step = `op ${i} ${JSON.stringify(o)}`;
+          const before = roadsOf(w);
+          const stock = w.stock.toJSON().amounts;
+          const roads = new Set(before.map(keyOf));
+          /** the doors that may get a spur, and whether one with no road near gets its reach */
+          let doors: Door[];
+          let alone: boolean;
+          let price: Record<string, number>;
+          let laid: Tile[];
+          if (o.op === 'place') {
+            const e = entryOf(o.id);
+            const check = checkAt(w, e, o.x, o.y, o.rot);
+            const p = placeAt(w, e, o.x, o.y, o.rot);
+            expect(!!p, `${step}: ${check.reason}`).toBe(check.ok);
+            laid = roadsOf(w).slice(before.length);
+            if (!p) {
+              expect(laid, step).toEqual([]);
+              expect(w.stock.toJSON().amounts, step).toEqual(stock);
+              return;
+            }
+            price = check.cost as Record<string, number>;
+            doors = doorsByRule(e) ? streetOf(p) : [];
+            alone = true;
+          } else {
+            const check = b.checkRoad(o.x, o.y);
+            const done = b.placeRoad(o.x, o.y);
+            expect(done, `${step}: ${check.reason}`).toBe(check.ok);
+            const added = roadsOf(w).slice(before.length);
+            if (!done) {
+              expect(added, step).toEqual([]);
+              expect(w.stock.toJSON().amounts, step).toEqual(stock);
+              return;
+            }
+            expect(check.cost, step).toEqual(c.free ? {} : roadCost());
+            expect(added[0], step).toEqual({ x: o.x, y: o.y });
+            laid = added.slice(1);
+            roads.add(keyOf(o));
+            price = check.cost as Record<string, number>;
+            doors = doorsByHand(w).filter(
+              (d) =>
+                Math.abs(d.reach.x - o.x) + Math.abs(d.reach.y - o.y) <= SPUR_REACH &&
+                !roads.has(keyOf(d.reach)),
+            );
+            alone = false;
+            if (laid.length) seen.near++;
+          }
+          expect(roadsOf(w).slice(0, before.length), step).toEqual(before);
+          // the price and nothing more, however many tiles of spur were laid
+          const paid = Object.fromEntries(
+            Object.entries(stock).map(([id, n]) => [id, n - (price[id] ?? 0)]),
+          );
+          expect(w.stock.toJSON().amounts, `${step}: the stock`).toEqual(paid);
+          // door by door, in the builder's order, each spur judged on the roads before it
+          const off = keptOffByHand(w);
+          const reaches = new Set(doorsByHand(w).map((d) => keyOf(d.reach)));
+          let used = 0;
+          for (const d of doors) {
+            const what = `${step}: the door on ${at(d.tile)}, reach ${at(d.reach)}, laid ${JSON.stringify(laid)}`;
+            if (!roadMayStand(w, d.reach, roads, off)) continue;
+            const net = networkByHand(roads, reaches);
+            const fewest = fewestLegal(w, d.reach, roads, net, off);
+            const want = fewest < Infinity ? fewest : alone ? 1 : 0;
+            const spur = laid.slice(used, used + want);
+            if (fewest < Infinity) {
+              expect(spur.length, `${what}: a legal spur of ${fewest} tiles`).toBe(fewest);
+              expect(legalFault(w, spur, d.reach, roads, net, off), what).toBe('');
+              if (spur.length > 1) seen.spurs++;
+              if (spur.length === SPUR_REACH) seen.atBound++;
+              if (spur.some((t) => w.track.has(t.x, t.y))) seen.crossings++;
+            } else {
+              expect(spur, `${what}: no road within reach`).toEqual(alone ? [d.reach] : []);
+              if (fewestLegal(w, d.reach, roads, net, off, SPUR_REACH + 2) < Infinity)
+                seen.beyond++;
+            }
+            for (const t of spur) roads.add(keyOf(t));
+            used += spur.length;
+          }
+          expect(laid.slice(used), `${step}: tiles laid for no door`).toEqual([]);
+          // the editor lays roads off the player's land; the spurs were judged above
+          if (!c.free) expect(broken(w), step).toBe('');
+        });
+      },
+      { shrink: shrinkBox, seeds: BOX_SEEDS },
+    );
+    // not vacuous: spurs were laid, over track too, and for roads laid near a door
+    expect(seen.spurs).toBeGreaterThanOrEqual(80);
+    expect(seen.atBound).toBeGreaterThanOrEqual(4);
+    expect(seen.beyond).toBeGreaterThanOrEqual(5);
+    expect(seen.crossings).toBeGreaterThanOrEqual(8);
+    expect(seen.near).toBeGreaterThanOrEqual(25);
+  });
+
+  it('is laid where the first of the shortest ways would run along a line the spur crosses', () => {
+    // A line ends at (23, 7), a straight east to west; a water tower at (24, 8) faces north, so its
+    // reach tile (24, 7) is where the rails of that straight run on to; a road is at (23, 9). Of
+    // the shortest ways there, five tiles each, one goes north and round to cross the straight on
+    // (23, 7) and down to (23, 8), but no road may cross there: its rails run on to the reach
+    // tile's road. Another goes east and round by (25, 9) to (24, 9), and keeps every rule.
+    const w = world();
+    w.builder.free = true;
+    expect(w.builder.placeTrack(23, 7, STRAIGHT, EW)).toBe(true);
+    pave(w, [{ x: 23, y: 9 }]);
+    const before = roadsOf(w);
+    expect(w.builder.placeDecor(24, 8, 'water_tower', 2)).not.toBeNull();
+    const tower = decorPlace(w.builder.decorAt(24, 8)!);
+    const [door] = streetOf(tower);
+    expect(door.reach).toEqual({ x: 24, y: 7 });
+    const roads = new Set(before.map(keyOf));
+    const net = networkByHand(roads, new Set([keyOf(door.reach)]));
+    const off = keptOffByHand(w);
+    expect(fewestLegal(w, door.reach, roads, net, off)).toBe(5);
+    const spur = roadsOf(w).slice(before.length);
+    expect(spur, `laid ${JSON.stringify(spur)}`).toHaveLength(5);
+    expect(legalFault(w, spur, door.reach, roads, net, off)).toBe('');
+    expect(w.builder.roadServes(tower)).toBe(true);
+
+    // the same for a tower from before spurs, when the player lays that road
+    const old = world();
+    old.builder.free = true;
+    expect(old.builder.placeTrack(23, 7, STRAIGHT, EW)).toBe(true);
+    const was = stand(old, entryOf('water_tower'), 24, 8, 2);
+    const [reach] = streetOf(was).map((d) => d.reach);
+    pave(old, [{ x: 23, y: 9 }]);
+    const [road, ...laid] = roadsOf(old);
+    const paved = new Set([keyOf(road)]);
+    const joined = networkByHand(paved, new Set([keyOf(reach)]));
+    expect(laid, `laid ${JSON.stringify(laid)}`).toHaveLength(5);
+    expect(legalFault(old, laid, reach, paved, joined, keptOffByHand(old))).toBe('');
+    expect(old.builder.roadServes(was)).toBe(true);
+  });
+
+  it('is laid for a road laid within SPUR_REACH of the door, whichever road it joins, and not for one further', () => {
+    for (const gap of [SPUR_REACH, SPUR_REACH + 1]) {
+      const w = world();
+      w.builder.free = true;
+      // a road two tiles east of the reach tile of a house from before spurs, which has no road
+      pave(w, [{ x: 12, y: 11 }]);
+      const house = stand(w, HOUSE, 10, 10, 0);
+      // the player lays a road `gap` tiles south of the reach tile: the spur joins the nearer road
+      pave(w, [{ x: 10, y: 11 + gap }]);
+      expect(roadsOf(w).slice(2), `${gap}`).toEqual(
+        gap <= SPUR_REACH
+          ? [
+              { x: 10, y: 11 },
+              { x: 11, y: 11 },
+            ]
+          : [],
+      );
+      expect(w.builder.roadServes(house), `${gap}`).toBe(gap <= SPUR_REACH);
+    }
   });
 });
 
