@@ -11,6 +11,7 @@ import {
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import {
   tileToWorld,
+  worldToTile,
   worldToTileInt,
   depthKey,
   ELEV_PX,
@@ -28,7 +29,7 @@ import {
 } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
-import { MATERIAL_COLORS, materialAt } from './landscapeModel';
+import { MATERIAL_COLORS, Material, materialAt } from './landscapeModel';
 import { scaleReference, TREE_SCALE, isTree, type ScaleReference } from './assetScale';
 import { SurfaceAssets, windowSprite } from './surfaceAssets';
 import { footGround, footScatter, type Foot } from './groundFit';
@@ -54,6 +55,9 @@ import {
 } from './bridgeMeshes';
 import { bridgeJoins, bridgePlan, deckSamples, type BridgeSite } from './bridgeLayout';
 import { HarvestHighlight } from './harvestHighlight';
+import { groundOf as groundDataOf, type FrameGround } from '../art/buildingGround';
+import { buildingYard, footprintTiles, sameYard, yardTiles, type Yard } from './buildingYard';
+import { plinthColour, plinthOf, plinthShapes } from './plinth';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -118,6 +122,31 @@ function showWeeds(fit: GroundFitSprites, texture: Texture | null) {
   fit.weedsTexture = texture;
   if (!fit.weeds.destroyed) fit.weeds.texture = texture ?? Texture.EMPTY;
   old?.destroy(true);
+}
+
+/**
+ * What fits one building to the ground under it beyond its ground fit (#436): its yard, which the
+ * painter wears into the ground, and the plinth under its picture where the ground drops away.
+ */
+interface Footing {
+  frame: string;
+  ground: FrameGround;
+  scale: number;
+  /** its anchor, the footprint's centre, in map tile coordinates */
+  x: number;
+  y: number;
+  /** the tile it was placed on (`setStructure`), whose ground height its picture stands at */
+  tx: number;
+  ty: number;
+  yard: Yard;
+  /** the colour of its walls' base (`baseColour`), which its plinth is built in */
+  wall: RGB | null;
+  /** how far (world px) its picture is lifted onto the highest ground under its foot */
+  lift: number;
+  /** the plinth, drawn just under its picture; null where the ground under it is level */
+  plinth: Graphics | null;
+  /** what the plinth was last drawn for */
+  drawn: string;
 }
 
 /** Put a building's ground fit where its picture `s` stands, at its scale and depth. */
@@ -190,6 +219,12 @@ export class WorldRenderer {
   private groundFits = new Map<string, GroundFitSprites>();
   /** The buildings' cast shadows: on the ground, under the track and everything that stands. */
   private contactGround = new Container({ cullableChildren: true });
+  /** Each building's yard and plinth, keyed like its structure. */
+  private footings = new Map<string, Footing>();
+  /** Whether a road lies on tile (x, y) (src/sim/roads.ts): a door path runs on to it. */
+  roadAt: (x: number, y: number) => boolean = () => false;
+  /** The street doors of every place (`setCity`), by the tile they are in. */
+  private doorsByTile = new Map<number, PavingDoor[]>();
   private waterDetails = new Graphics();
   private waterClock = 0;
   private rippleRefresh = 0;
@@ -248,8 +283,9 @@ export class WorldRenderer {
     const { w, h } = this.map;
     const changed = new Set([...this.city, ...tiles]);
     const old = this.city;
+    const list = [...doors];
     const oldSteps = this.doorsteps,
-      steps = pavingDoorsteps(doors, (k) => tiles.has(k), w, h);
+      steps = pavingDoorsteps(list, (k) => tiles.has(k), w, h);
     this.city = tiles;
     this.doorsteps = steps;
     this.landscape.setCity(tiles, steps);
@@ -264,6 +300,22 @@ export class WorldRenderer {
       this.refreshGround(k % w, Math.floor(k / w));
     // nothing grows at a building's foot on paving
     for (const fit of this.groundFits.values()) this.growWeeds(fit);
+    // a door's path follows the doors the places have now
+    this.doorsByTile = new Map();
+    for (const d of list) {
+      const k = d.tile.y * w + d.tile.x,
+        at = this.doorsByTile.get(k);
+      if (at) at.push(d);
+      else this.doorsByTile.set(k, [d]);
+    }
+    this.refreshYards(() => true);
+  }
+  /**
+   * A road was laid on tile (x, y) or taken off it: the yards of the buildings beside it take
+   * their door paths on to it, or back to their own edge.
+   */
+  roadChanged(x: number, y: number) {
+    this.refreshYards((f) => Math.abs(f.x - x) < 3 && Math.abs(f.y - y) < 3);
   }
   private groundFrame(x: number, y: number): string {
     if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
@@ -630,6 +682,8 @@ export class WorldRenderer {
         if (!s) continue;
         const p = this.surfacePoint(a.x, a.y);
         s.position.set(p.x + a.dx, p.y + a.dy);
+        const footing = this.footings.get(id);
+        if (footing) this.fitPlinth(footing, s);
         const fit = this.groundFits.get(id);
         if (fit) placeGroundFit(fit, s);
         this.windowLights.get(id)?.position.copyFrom(s.position);
@@ -1452,7 +1506,8 @@ export class WorldRenderer {
     else {
       // a copy of its atlas frame, texel for texel, sampled without mipmaps (surfaceAssets.ts)
       s.texture = this.surfaces.picture(frame, f);
-      this.fitToGround(id, s, frame, f, building.scale, x, y);
+      const art = this.fitToGround(id, s, frame, f, building.scale, x, y);
+      this.setFooting(id, s, frame, building.scale, x, y, dx, dy, art.base ?? null);
       let light = this.windowLights.get(id);
       if (!light) {
         light = windowSprite();
@@ -1516,6 +1571,144 @@ export class WorldRenderer {
     this.growWeeds(fit);
     fit.weeds.tint = this.propTint;
     placeGroundFit(fit, s);
+    return art;
+  }
+  /**
+   * The yard and plinth of building `id`, picture `s` showing `frame` at `scale`, placed on tile
+   * (x, y) and moved (dx, dy) world px from it, as `setStructure` places it: its anchor is the
+   * footprint's centre on the ground. A frame without ground data (src/art/buildingGround.json)
+   * has neither. `wall` is the colour of its walls' base.
+   */
+  private setFooting(
+    id: string,
+    s: Sprite,
+    frame: string,
+    scale: number,
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    wall: RGB | null,
+  ) {
+    const ground = groundDataOf(frame);
+    if (!ground) {
+      this.dropFooting(id);
+      return;
+    }
+    const off = worldToTile(dx, dy);
+    let footing = this.footings.get(id);
+    const was = footing?.yard ?? null;
+    const site = { frame, ground, scale, x: x + off.x, y: y + off.y, tx: x, ty: y, wall };
+    if (footing) Object.assign(footing, site);
+    else {
+      footing = { ...site, yard: null as unknown as Yard, lift: 0, plinth: null, drawn: '' };
+      this.footings.set(id, footing);
+    }
+    const yard = this.yardOf(footing);
+    footing.yard = yard;
+    if (!sameYard(was, yard)) this.yardsChanged(was, yard);
+    this.fitPlinth(footing, s);
+    const fit = this.groundFits.get(id);
+    if (fit) placeGroundFit(fit, s);
+  }
+  /** A building's yard as its footing, the doors and the roads round it stand now. */
+  private yardOf(f: Footing): Yard {
+    const { w, h } = this.map,
+      material = materialAt(this.map, f.tx, f.ty),
+      doors: PavingDoor[] = [];
+    for (const t of footprintTiles(f.ground, f.x, f.y))
+      if (t.x >= 0 && t.y >= 0 && t.x < w && t.y < h)
+        doors.push(...(this.doorsByTile.get(t.y * w + t.x) ?? []));
+    return buildingYard(
+      f.frame,
+      f.ground,
+      {
+        x: f.x,
+        y: f.y,
+        scale: f.scale,
+        sandy: material === Material.Sand || material === Material.Desert,
+      },
+      doors,
+      // a path runs on to a road next door, not on to the rails of a level crossing
+      (rx, ry) =>
+        rx >= 0 &&
+        ry >= 0 &&
+        rx < w &&
+        ry < h &&
+        this.roadAt(rx, ry) &&
+        !this.trackSprites.has(idx(this.map, rx, ry)),
+    );
+  }
+  /** Work out again the yards of the footings `which` picks; repaint those that changed. */
+  private refreshYards(which: (f: Footing) => boolean) {
+    for (const f of this.footings.values()) {
+      if (!which(f)) continue;
+      const yard = this.yardOf(f);
+      if (sameYard(f.yard, yard)) continue;
+      const was = f.yard;
+      f.yard = yard;
+      this.yardsChanged(was, yard);
+    }
+  }
+  /** Hand the yards to the painter and repaint where yard `was` gave way to `now`. */
+  private yardsChanged(was: Yard | null, now: Yard | null) {
+    const { w, h } = this.map;
+    this.landscape.setYards([...this.footings.values()].map((f) => f.yard));
+    const tiles = new Set<number>();
+    for (const yard of [was, now]) if (yard) for (const k of yardTiles(yard, w, h)) tiles.add(k);
+    for (const k of tiles) this.landscape.repaint(k % w, Math.floor(k / w));
+  }
+  /**
+   * Stand building `f`'s picture `s` on the ground under its foot, from where its tile's ground
+   * puts it: lifted onto the highest ground under its foot, with a plinth from its walls' foot down
+   * to the ground wherever that drops away (plinth.ts), drawn just under the picture. Off the
+   * painted relief (the per-tile ground) and under machinery measured by its outline, none.
+   */
+  private fitPlinth(f: Footing, s: Sprite) {
+    const plinth =
+      this.landscape.failed || f.ground.fit !== 'walls'
+        ? null
+        : plinthOf(
+            f.ground.foot.map(([px, py]) => [px * f.scale, py * f.scale] as const),
+            f.x,
+            f.y,
+            -this.elevationOf(f.tx, f.ty),
+            (mx, my) => -this.elevationOf(mx, my),
+          );
+    f.lift = plinth?.lift ?? 0;
+    s.y -= f.lift;
+    if (!plinth?.runs.length) {
+      f.plinth?.destroy();
+      f.plinth = null;
+      f.drawn = '';
+      return;
+    }
+    if (!f.plinth) {
+      f.plinth = new Graphics({ cullable: true });
+      this.objects.addChild(f.plinth);
+    }
+    const colour = plinthColour(f.wall),
+      key = JSON.stringify([colour, plinth.runs]);
+    if (key !== f.drawn) {
+      f.drawn = key;
+      const g = f.plinth.clear();
+      for (const shape of plinthShapes(plinth, colour)) {
+        g.poly(shape.points, shape.width === undefined);
+        if (shape.width === undefined) g.fill({ color: shape.colour, alpha: shape.alpha });
+        else g.stroke({ color: shape.colour, alpha: shape.alpha, width: shape.width });
+      }
+    }
+    f.plinth.position.copyFrom(s.position);
+    // under the picture, over everything a depth step behind it
+    f.plinth.zIndex = s.zIndex - 0.004;
+  }
+  /** A building's yard and plinth go with it: the ground under its yard is painted again. */
+  private dropFooting(id: string) {
+    const f = this.footings.get(id);
+    if (!f) return;
+    this.footings.delete(id);
+    f.plinth?.destroy();
+    this.yardsChanged(f.yard, null);
   }
   /** Draw a building's weeds and pebbles for the ground its tile has now (none on paving). */
   private growWeeds(fit: GroundFitSprites) {
@@ -1556,8 +1749,9 @@ export class WorldRenderer {
       this.atmosphereTints.set(object, { base, applied });
     }
   }
-  /** A structure's window lights and ground fit, which only a building has. */
+  /** A structure's window lights, ground fit, yard and plinth, which only a building has. */
   private dropBuildingDressing(id: string) {
+    this.dropFooting(id);
     const fit = this.groundFits.get(id);
     if (fit) {
       showWeeds(fit, null);

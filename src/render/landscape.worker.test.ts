@@ -6,6 +6,8 @@ import { BIOME_DEFS } from '../sim/biomes';
 import { buildRelief, reliefHeight, surfaceAlongRay, type TerrainRelief } from './terrainRelief';
 import { paintedWater } from './terrainMaterials';
 import { pavingDoorsteps, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
+import { groundOf } from '../art/buildingGround';
+import { BuildingYards, buildingYard, yardTiles, type Yard } from './buildingYard';
 
 /** Side of one cell of the stand-in surface sheet: ten cells stacked, one per material. */
 const CELL = 64;
@@ -138,9 +140,12 @@ function onHill(w: ReturnType<typeof world>) {
     for (let x = 3; x <= 14; x++) w.map.terrain[y * w.map.w + x] = Terrain.Hill;
   return w;
 }
-/** Paints the 8 x 8 chunk at (x, y); `snowLevels` by climate, the content's by default. */
+/**
+ * Paints the 8 x 8 chunk at (x, y), with the buildings' `yards` if the world has them;
+ * `snowLevels` by climate, the content's by default.
+ */
 async function paint(
-  { map, city, doorsteps }: ReturnType<typeof world>,
+  { map, city, doorsteps, yards = [] }: ReturnType<typeof world> & { yards?: Yard[] },
   x: number,
   y: number,
   scale = 1,
@@ -162,6 +167,7 @@ async function paint(
     tint: 0xd8e8c0,
     city,
     doorsteps,
+    yards,
     snowLevels,
   });
   replies = [];
@@ -513,5 +519,88 @@ describe('the painter with a town on the flat, on a hill and above the snow line
     expect(taken.stone, 'stones the paving takes').toBeGreaterThan(15);
     expect(kept.tuft, 'tufts beyond the fringe').toBeGreaterThan(500);
     expect(kept.stone, 'stones beyond the fringe').toBeGreaterThan(20);
+  });
+});
+
+describe('the painter with building yards', () => {
+  /** Buildings on the grass south of the town, west of the river: a station, a farm and a house. */
+  function yarded() {
+    const w = world(),
+      bare = { ...w, city: [], doorsteps: [] };
+    const yards = (
+      [
+        ['structures/station_2', 5, 14],
+        ['structures/farm_1', 9, 14],
+        ['structures/townhouse', 12, 15],
+      ] as const
+    ).map(([frame, x, y]) =>
+      buildingYard(frame, groundOf(frame)!, { x, y, scale: 0.8, sandy: false }, [], () => false),
+    );
+    return { bare, built: { ...bare, yards } };
+  }
+
+  // Slow: paints four chunks twice and checks every pixel (about 2 s alone).
+  it('wears each yard into the ground on the tiles it lists, and changes nothing elsewhere', async () => {
+    const { bare, built } = yarded(),
+      { map } = bare,
+      listed = new Set(built.yards.flatMap((y) => yardTiles(y, map.w, map.h))),
+      yards = new BuildingYards(map.w, map.h, map.originX, map.originY, built.yards);
+    let off = 0,
+      inside = 0;
+    for (const [x, y] of [
+      [0, 8],
+      [8, 8],
+      [0, 16],
+      [8, 16],
+    ]) {
+      const a = await paint(built, x, y),
+        b = await paint(bare, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          const [tx, ty] = pointOf(a, px, py, 1),
+            tile = Math.round(ty) * map.w + Math.round(tx);
+          if (!listed.has(tile)) {
+            off++;
+            for (let c = 0; c < 3; c++)
+              expect(a.pixels[k + c], `pixel ${px},${py} of ${x},${y}`).toBe(b.pixels[k + c]);
+          } else if (yards.weigh(tx, ty, tile) === 1) {
+            inside++;
+            // grass is green; a whole yard is the grey or brown of its ground
+            expect(a.pixels[k + 1] - a.pixels[k + 2], `pixel ${px},${py}`).toBeLessThan(
+              b.pixels[k + 1] - b.pixels[k + 2],
+            );
+          }
+        }
+    }
+    expect(off).toBeGreaterThan(5000);
+    expect(inside).toBeGreaterThan(500);
+  }, 30_000);
+
+  it('grows no grass tufts on a yard', async () => {
+    const { built } = yarded(),
+      { map } = built,
+      yards = new BuildingYards(map.w, map.h, map.originX, map.originY, built.yards);
+    let tufts = 0;
+    for (const [x, y] of [
+      [0, 8],
+      [8, 8],
+    ]) {
+      const r = await paint(built, x, y);
+      for (let i = 0; i < r.grass.length; i += 4) {
+        // a tuft stands at its map point on flat ground (pointOf at one pixel per world pixel)
+        const sx = r.grass[i] + r.left,
+          sy = r.grass[i + 1] + r.top,
+          tx = sx / 64 + sy / 32,
+          ty = sy / 32 - sx / 64;
+        tufts++;
+        expect(
+          yards.weigh(tx, ty, Math.round(ty) * map.w + Math.round(tx)),
+          `tuft at ${tx}, ${ty}`,
+        ).toBeLessThanOrEqual(0.5);
+      }
+    }
+    expect(tufts).toBeGreaterThan(50);
   });
 });

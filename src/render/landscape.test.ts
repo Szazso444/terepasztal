@@ -7,6 +7,7 @@ import { forAll, shrinkArray } from '../testing/property';
 import { BIOME_DEFS } from '../sim/biomes';
 import { HALF_W, tileToWorld, worldToTileInt } from '../engine/iso';
 import { buildRelief, RELIEF_MAX } from './terrainRelief';
+import type { Yard } from './buildingYard';
 import {
   Landscape,
   JOB_TIMEOUT_MS,
@@ -231,6 +232,26 @@ describe('what the landscape hands the paint workers with the map', () => {
     expect(sent().doorsteps).toEqual(doorsteps);
     spawned[0].crash({ message: 'out of memory' });
     expect(structuredClone(sent())).toMatchObject({ city: [67, 68], doorsteps });
+  });
+
+  it('carries the yards of the buildings from the next hand-off, a fresh pool too', () => {
+    const { landscape, spawned } = setup();
+    const yards: Yard[] = [
+      {
+        kind: 'gravel',
+        foot: [4.6, 4.7, 5.4, 4.7, 5.4, 5.3, 4.6, 5.3],
+        margin: 0.12,
+        kerb: { x: 5, y: 5, dx: 0, dy: 1, at: 0.64, from: -0.4, to: 0.4, face: true },
+        paths: [{ x: 5, y: 5.3, dx: 0, dy: 1, length: 0.28, open: false }],
+      },
+    ];
+    landscape.setYards(yards);
+    landscape.repaint(5, 5);
+    landscape.flush();
+    const sent = () => lastMap(spawned[spawned.length - 1]) as unknown as { yards: Yard[] };
+    expect(sent().yards).toEqual(yards);
+    spawned[0].crash({ message: 'out of memory' });
+    expect(structuredClone(sent().yards)).toEqual(yards);
   });
 
   it('sends a map message that survives the copy to a worker, with a level for every biome', () => {
@@ -1882,5 +1903,31 @@ describe('landscape worker', () => {
       { stale: true, id: '8,0', scale: 2, version: 0 },
       { stale: true, id: '0,0', scale: 1, version: 4 },
     ]);
+  });
+});
+
+describe('a tile repainted for a building yard', () => {
+  it('paints again the chunks it reaches, moving nothing and building no relief', () => {
+    const w = paintedWorld();
+    const relief = (w.landscape as unknown as { relief: unknown }).relief,
+      jobs = () => w.workers.reduce((n, worker) => n + jobsOf(worker).length, 0),
+      before = jobs();
+    w.landscape.repaint(1, 1);
+    expect(w.landscape.ready).toBe(false);
+    // nothing that stands on the ground moves (the world renderer lays nothing out again)
+    expect(w.frame()).toBe(false);
+    expect([...inside(w.landscape).pending]).toEqual(['0,0']);
+    expect((w.landscape as unknown as { relief: unknown }).relief).toBe(relief);
+    settle(w);
+    expect(w.landscape.ready).toBe(true);
+    expect(jobs()).toBe(before + 1);
+    // the whole map stays as it was for the building rules
+    expect((w.landscape as unknown as { relief: unknown }).relief).toBe(relief);
+  });
+
+  it('is no repaint once the landscape is off for the session', () => {
+    const { landscape } = failedSetup();
+    landscape.repaint(3, 3);
+    expect((landscape as unknown as { invalid: boolean }).invalid).toBe(false);
   });
 });

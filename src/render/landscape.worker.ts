@@ -15,7 +15,8 @@ import {
   surfaceColor,
   surfaceMaterial,
 } from './terrainMaterials';
-import { FRINGE_EARTH, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
+import { FRINGE_EARTH, PAVING_FAR, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
+import { BuildingYards } from './buildingYard';
 import { hash2 } from '../engine/rng';
 import { Terrain } from '../world/tiles';
 
@@ -28,6 +29,8 @@ let version = -1,
   tint = 0xffffff;
 /** The towns' paving: the paved tiles and the doorsteps, with the outline drawn from them. */
 let paving = new TownPaving(0, 0, 0, 0, []);
+/** The buildings' yards and door paths (buildingYard.ts). */
+let yards = new BuildingYards(0, 0, 0, 0, []);
 // Where snow starts, by biome id: sent by the landscape, as this worker cannot read the content.
 let snowLevels: readonly number[] = [];
 self.onmessage = async (event: MessageEvent) => {
@@ -60,6 +63,7 @@ self.onmessage = async (event: MessageEvent) => {
         data.city,
         data.doorsteps ?? [],
       );
+      yards = new BuildingYards(map.w, map.h, map.originX, map.originY, data.yards ?? []);
       snowLevels = data.snowLevels;
       return;
     }
@@ -120,10 +124,12 @@ self.onmessage = async (event: MessageEvent) => {
         const waterWeight = solid ? 0 : paintedWater(map, tx, ty, paved, blend);
         // Tile-face style: rock shows where the slope is steep, not in random islands.
         let steep: number | undefined,
-          slope = 0;
+          slope = 0,
+          // levels the surface climbs per tile here, once read
+          levels = -1;
         if (!solid && relief.style.faces && relief.style.rockFaces !== false && raised) {
           faceGradient(tx, ty);
-          const levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
+          levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
           if (relief.tiles && !relief.style.everyBankRock) {
             // Terraces: a one-level bank stays grassy with the odd outcrop; banks stacked two
             // levels within about a tile, or on mountains, are rock.
@@ -160,6 +166,19 @@ self.onmessage = async (event: MessageEvent) => {
             stoneGround,
           );
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
+        }
+        // A building's yard and its door paths are worn into its ground (buildingYard.ts), under
+        // the paving; they keep out of the water and off a steep bank, as a yard is level ground.
+        if (!solid && yards.near(tileIndex)) {
+          yards.weigh(tx, ty, tileIndex);
+          if (yards.touched) {
+            if (raised && levels < 0) {
+              faceGradient(tx, ty);
+              levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
+            }
+            const bank = raised ? unit((levels - 0.25) / 0.35) : 0;
+            yards.paint(tx, ty, color, (1 - waterWeight) * (1 - bank), tint, source, part);
+          }
         }
         let shade = 1;
         if (raised && relief.style.faces) shade = faceShade(tx, ty);
@@ -240,8 +259,8 @@ self.onmessage = async (event: MessageEvent) => {
         const tx = ix * 0.18 - ox + (hash2(ix, iy, 111) - 0.5) * 0.15,
           ty = iy * 0.18 - oy + (hash2(ix, iy, 114) - 0.5) * 0.15;
         if (tx < -0.5 || ty < -0.5 || tx >= map.w - 0.5 || ty >= map.h - 0.5) continue;
-        // none on the paving, nor on the packed earth round it
-        if (onPaving(tx, ty, -0.1)) continue;
+        // none on the paving, nor on the packed earth round it, nor on a building's yard
+        if (onPaving(tx, ty, -0.1) || onYard(tx, ty)) continue;
         const material = surfaceMaterial(map, tx, ty);
         if (![0, 1, 3, 4, 7].includes(material)) continue;
         if (material === 7 && rockExposure(tx + ox, ty + oy) > 0.45) continue;
@@ -321,11 +340,14 @@ function halve(pixels: Uint8ClampedArray, width: number, height: number) {
       }
   return out;
 }
-/** Returned by the paving for a point it does not reach. */
-const PAVING_FAR = 9;
 /** Does the towns' paving reach map point (x, y) on the map, to within `margin` tiles outside it? */
 function onPaving(x: number, y: number, margin: number) {
   return paving.near(Math.round(y) * map.w + Math.round(x)) && paving.distance(x, y) > margin;
+}
+/** Is map point (x, y) well inside a building's yard or on a door path? */
+function onYard(x: number, y: number) {
+  const k = Math.round(y) * map.w + Math.round(x);
+  return yards.near(k) && yards.weigh(x, y, k) > 0.5;
 }
 /**
  * The ground under the paving of the town's tile at (x, y) where its blend reads water: the tile's
