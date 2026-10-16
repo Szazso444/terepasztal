@@ -24,9 +24,13 @@ function sheet() {
       }
   return out;
 }
-/** The 2D context the painter uses: it keeps the pixels put in, and gives the sheet otherwise. */
+/**
+ * The 2D context the painter uses: it keeps the pixels put in, and gives the sheet otherwise. It
+ * keeps the centre of each ellipse drawn, the shadow under each small stone.
+ */
 class Context {
   data: Uint8ClampedArray | null = null;
+  ellipses: number[] = [];
   constructor(private readonly surfaces: Uint8ClampedArray) {}
   drawImage() {}
   getImageData() {
@@ -37,7 +41,9 @@ class Context {
   }
   setTransform() {}
   beginPath() {}
-  ellipse() {}
+  ellipse(x: number, y: number) {
+    this.ellipses.push(x, y);
+  }
   moveTo() {}
   lineTo() {}
   closePath() {}
@@ -52,16 +58,22 @@ type Reply = {
   width: number;
   height: number;
   pixels: Uint8ClampedArray;
+  /** The grass tufts, four numbers each: where (chunk pixels at one per world pixel), size, kind. */
+  grass: Float32Array;
+  /** The small stones' shadows drawn into the chunk, as `Context.ellipses` keeps them. */
+  stones: number[];
 };
 let replies: Reply[] = [];
 let send: (data: object) => Promise<void>;
+/** The context of the canvas made last: a paint job's own. */
+let lastContext: Context | null = null;
 
 beforeAll(async () => {
   const surfaces = sheet();
   vi.stubGlobal(
     'OffscreenCanvas',
     class {
-      context = new Context(surfaces);
+      context = (lastContext = new Context(surfaces));
       constructor(
         public width: number,
         public height: number,
@@ -156,7 +168,7 @@ async function paint(
   await send({ id: `${x},${y}`, x, y, w: 8, h: 8, version: 1, scale });
   const reply = replies[0];
   expect(reply.error).toBeUndefined();
-  return reply;
+  return { ...reply, stones: lastContext!.ellipses };
 }
 /** The map point the painter reads for pixel (px, py) of a flat chunk. */
 function pointOf(r: Reply, px: number, py: number, scale: number) {
@@ -260,10 +272,16 @@ describe('the painter with a town on the flat, on a hill and above the snow line
   }
   /**
    * Paints the world() town's four chunks, on a hill if `raise`, with every climate's snow line at
-   * `snowLine` (the content's if none).
+   * `snowLine` (the content's if none); with no town on the map at all if not `paved`.
    */
-  async function town(name: string, raise: boolean, snowLine?: number): Promise<Painted> {
-    const w = raise ? onHill(world()) : world(),
+  async function town(
+    name: string,
+    raise: boolean,
+    snowLine?: number,
+    paved = true,
+  ): Promise<Painted> {
+    const built = raise ? onHill(world()) : world(),
+      w = paved ? built : { ...built, city: [], doorsteps: [] },
       snowLevels = snowLine === undefined ? undefined : BIOME_DEFS.map(() => snowLine),
       chunks: Reply[] = [];
     for (const [x, y] of [
@@ -281,14 +299,16 @@ describe('the painter with a town on the flat, on a hill and above the snow line
       chunks,
     };
   }
-  let flat: Painted, hill: Painted, snowy: Painted;
-  // Slow: paints the town's four chunks three times (about 4 s alone).
+  let flat: Painted, hill: Painted, snowy: Painted, bare: Painted;
+  // Slow: paints the town's four chunks three times, and the flat map's once with no town (about
+  // 5 s alone).
   beforeAll(async () => {
     flat = await town('on the flat', false);
     hill = await town('on a hill', true);
     // level 2 is a level above this snow line: full snow on the ground, patches on level 1
     snowy = await town('on a hill above the snow line', true, 1);
-  }, 80_000);
+    bare = await town('on the flat with no town', false, undefined, false);
+  }, 100_000);
 
   /**
    * The map point the painter reads at pixel (px, py), raised as the painter raises it, its height
@@ -390,4 +410,108 @@ describe('the painter with a town on the flat, on a hill and above the snow line
       if (c === hill) expect(raised, c.name).toBeGreaterThan(2000);
     }
   }, 40_000);
+
+  it('paints the pixels two neighbouring chunks share alike on a hill and in snow too', () => {
+    // the chunks at 0,0 and 8,0; 8,0 and 8,8; 0,8 and 8,8; 0,0 and 0,8
+    const pairs = [
+      [0, 1],
+      [1, 3],
+      [2, 3],
+      [0, 2],
+    ];
+    for (const c of [hill, snowy]) {
+      let shared = 0,
+        solid = 0;
+      for (const [i, j] of pairs) {
+        const ra = c.chunks[i],
+          rb = c.chunks[j],
+          ox = ra.left - rb.left,
+          oy = ra.top - rb.top;
+        for (let py = 0; py < ra.height; py++)
+          for (let px = 0; px < ra.width; px++) {
+            const ka = (py * ra.width + px) * 4,
+              bx = px + ox,
+              by = py + oy;
+            if (ra.pixels[ka + 3] !== 255 || bx < 0 || by < 0 || bx >= rb.width || by >= rb.height)
+              continue;
+            const kb = (by * rb.width + bx) * 4;
+            if (rb.pixels[kb + 3] !== 255) continue;
+            shared++;
+            const { z, d } = readAt(c, ra, px, py);
+            if (d >= PAVING_SOLID && z > 0) solid++;
+            for (let ch = 0; ch < 3; ch++)
+              if (rb.pixels[kb + ch] !== ra.pixels[ka + ch])
+                expect.fail(
+                  `${c.name}: pixel ${px},${py} of chunk ${ra.left},${ra.top} is ` +
+                    `[${ra.pixels.slice(ka, ka + 3).join()}], and ` +
+                    `[${rb.pixels.slice(kb, kb + 3).join()}] in chunk ${rb.left},${rb.top} ` +
+                    `(${d.toFixed(3)} inside the paving)`,
+                );
+          }
+      }
+      // 4558 shared pixels, 2787 of them on the raised solid paving, which the painter lights
+      // without painting the ground under it
+      expect(shared, c.name).toBeGreaterThan(2000);
+      expect(solid, `${c.name}: shared pixels of raised solid paving`).toBeGreaterThan(1000);
+    }
+  });
+
+  it('keeps grass tufts and stones off the paving, and leaves those beyond its fringe be', () => {
+    /** Each tuft's and each stone's map point and its key, from a flat chunk's reply. */
+    const scatter = (r: Reply) => {
+      const out: { kind: 'tuft' | 'stone'; key: string; x: number; y: number }[] = [],
+        point = (sx: number, sy: number) => {
+          const a = (sx + r.left) / 32,
+            b = (sy + r.top) / 16;
+          return { x: (a + b) / 2, y: (b - a) / 2 };
+        };
+      for (let k = 0; k + 3 < r.grass.length; k += 4)
+        out.push({
+          kind: 'tuft',
+          key: `tuft ${r.grass.slice(k, k + 4).join()}`,
+          ...point(r.grass[k], r.grass[k + 1]),
+        });
+      // a stone's shadow lies 0.3 below the stone
+      for (let k = 0; k + 1 < r.stones.length; k += 2)
+        out.push({
+          kind: 'stone',
+          key: `stone ${r.stones[k]},${r.stones[k + 1]}`,
+          ...point(r.stones[k], r.stones[k + 1] - 0.3),
+        });
+      return out;
+    };
+    const { map } = flat.w,
+      inside = (x: number, y: number) =>
+        flat.paving.near(Math.round(y) * map.w + Math.round(x)) ? flat.paving.distance(x, y) : -9;
+    const taken = { tuft: 0, stone: 0 },
+      kept = { tuft: 0, stone: 0 };
+    for (const [i, r] of flat.chunks.entries()) {
+      const town = scatter(r),
+        none = scatter(bare.chunks[i]),
+        before = new Set(none.map((s) => s.key)),
+        after = new Set(town.map((s) => s.key));
+      const at = (s: (typeof town)[number]) =>
+        `chunk ${r.left},${r.top}: ${s.key} at ${s.x.toFixed(3)},${s.y.toFixed(3)}, ` +
+        `${inside(s.x, s.y).toFixed(3)} inside the paving`;
+      for (const s of town) {
+        // the paving only takes scatter away, and leaves none on it
+        if (!before.has(s.key)) expect.fail(`${at(s)}, which the map with no town does not have`);
+        if (inside(s.x, s.y) > 0) expect.fail(`${at(s)}, on the paving`);
+      }
+      for (const s of none) {
+        const d = inside(s.x, s.y);
+        if (d > 0) taken[s.kind]++;
+        else if (d <= -PAVING_FRINGE) {
+          kept[s.kind]++;
+          if (!after.has(s.key)) expect.fail(`${at(s)}, beyond the fringe, is gone`);
+        }
+      }
+    }
+    // the map with no town has scatter where the paving lies (606 tufts, 37 stones), and the town
+    // keeps what is beyond it (1054 and 50)
+    expect(taken.tuft, 'tufts the paving takes').toBeGreaterThan(300);
+    expect(taken.stone, 'stones the paving takes').toBeGreaterThan(15);
+    expect(kept.tuft, 'tufts beyond the fringe').toBeGreaterThan(500);
+    expect(kept.stone, 'stones beyond the fringe').toBeGreaterThan(20);
+  });
 });
