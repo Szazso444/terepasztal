@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
-import { TERRAIN_NAMES, Terrain } from '../world/tiles';
+import { TERRAIN_NAMES, Terrain, type PropInstance } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph, type TrackItem, type TrackPiece } from '../world/track';
 import { Rng } from '../engine/rng';
@@ -1456,7 +1456,31 @@ function inOrder(c: Pair, roadFirst: boolean) {
   return { w, told, roads: roadsOf(w), ...done };
 }
 
+/**
+ * The ground a place of any kind needs at `corner`, turned to `rot`, beyond grass: track beside a
+ * station, a hill under a works that wants one, the deposit a works mines, and water on a side of
+ * its footprint, the one furthest from its street door.
+ */
+function groundFor(w: World, e: Entry, rot: number, corner: Tile) {
+  if (wantsTrack(e)) platformFor(w, rot, corner);
+  const wants = e.def as { terrain?: string; deposit?: string; needsWater?: boolean };
+  const k = corner.y * W + corner.x;
+  if (wants.terrain === 'hill') w.map.terrain[k] = Terrain.Hill;
+  if (wants.deposit)
+    w.map.props.set(k, [{ kind: wants.deposit as PropInstance['kind'], variant: 0, ox: 0, oy: 0 }]);
+  if (wants.needsWater) {
+    const p: PlaceAt = { def: e.def, x: corner.x, y: corner.y, rot };
+    const [door] = streetOf(p);
+    const apart = (t: Tile) => Math.abs(t.x - door.reach.x) + Math.abs(t.y - door.reach.y);
+    const [side] = ringOf(tilesOf(p))
+      .filter((t) => !w.track.has(t.x, t.y) && !same(t, door.reach))
+      .sort((a, b) => apart(b) - apart(a));
+    w.map.terrain[side.y * W + side.x] = Terrain.Water;
+  }
+}
+
 describe('a place and a road, with no stub between them (#455)', () => {
+  // slow: 200 seeds of up to 24 builder steps, 1.5 s alone; the limit is room for a busy machine
   it('a patch with no road stays without one, whatever is placed, turned and taken up on it', () => {
     const seen = { placed: 0, removed: 0, turned: 0, depots: 0, crowded: 0 };
     forAll(
@@ -1506,8 +1530,9 @@ describe('a place and a road, with no stub between them (#455)', () => {
     expect(seen.turned).toBeGreaterThanOrEqual(120);
     expect(seen.depots).toBeGreaterThanOrEqual(70);
     expect(seen.crowded).toBeGreaterThanOrEqual(20);
-  });
+  }, 30_000);
 
+  // slow: 400 seeds, two worlds each, 0.7 s alone; the limit is room for a busy machine
   it('come to the same roads whichever is first: the road laid after a place brings the spur the road before it would', () => {
     const seen = { compared: 0, refused: 0, spurs: 0, bare: 0, atBound: 0, crossings: 0 };
     forAll(
@@ -1539,7 +1564,7 @@ describe('a place and a road, with no stub between them (#455)', () => {
     expect(seen.bare).toBeGreaterThanOrEqual(60);
     expect(seen.atBound).toBeGreaterThanOrEqual(15);
     expect(seen.crossings).toBeGreaterThanOrEqual(8);
-  });
+  }, 15_000);
 
   it('grants the start depot its spur to a road within SPUR_REACH tiles, free, and none to a road beyond', () => {
     rules.narrowUnlocked = 1;
@@ -1577,6 +1602,67 @@ describe('a place and a road, with no stub between them (#455)', () => {
         expect(broken(w), what).toBe('');
       }
   });
+
+  // slow: 540 worlds, 0.7 s alone; the limit is room for a busy machine
+  it('holds for every kind of place with a door, at every turn: no road, or the straight spur to a road at the bound, and none one tile past it', () => {
+    const at15 = { x: 15, y: 15 };
+    const seen = { cases: 0, bare: 0, spurs: 0, past: 0, kinds: new Set<string>() };
+    for (const e of PLACES)
+      for (const rot of ROTATIONS) {
+        const ghost: PlaceAt = { def: e.def, x: at15.x, y: at15.y, rot };
+        const doors = streetOf(ghost);
+        expect(doors, label(e, rot)).toHaveLength(1);
+        const [door] = doors;
+        const out = sideTo(door.tile, door.reach)!;
+        const along = (k: number) => ({
+          x: door.reach.x + DIR_DX[out] * k,
+          y: door.reach.y + DIR_DY[out] * k,
+        });
+        // no road at all, then a road `gap` tiles out from the reach tile, on the line away from the
+        // door, laid before the place or after it
+        for (const gap of [0, SPUR_REACH, SPUR_REACH + 1])
+          for (const roadFirst of gap ? [true, false] : [false]) {
+            const what = `${label(e, rot)}, ${gap ? `road ${gap} out, ${roadFirst ? 'first' : 'second'}` : 'no road'}`;
+            const w = world();
+            w.builder.free = true;
+            groundFor(w, e, rot, at15);
+            const told: string[] = [];
+            w.builder.onRoadChanged = (x, y) => told.push(at({ x, y }));
+            const lay = () => gap && pave(w, [along(gap)]);
+            const set = () => {
+              const why = checkAt(w, e, at15.x, at15.y, rot).reason;
+              const p = placeAt(w, e, at15.x, at15.y, rot);
+              expect(p, `${what}: ${why}`).not.toBeNull();
+              return p!;
+            };
+            let p: PlaceAt;
+            if (roadFirst) {
+              lay();
+              p = set();
+            } else {
+              p = set();
+              lay();
+            }
+            const spur =
+              gap && gap <= SPUR_REACH ? Array.from({ length: gap }, (_, k) => along(k)) : [];
+            const want = gap ? [along(gap), ...spur] : [];
+            expect(roadsOf(w), what).toEqual(want);
+            expect(told, `${what}: told`).toEqual(want.map(at));
+            expect(w.builder.roadServes(p), what).toBe(spur.length > 0);
+            seen.cases++;
+            seen.kinds.add(e.def.id);
+            if (!gap) seen.bare++;
+            else if (spur.length) seen.spurs++;
+            else seen.past++;
+          }
+      }
+    // not vacuous: every kind with a door, at four turns, with nothing, a spur and a road too far
+    expect(seen.kinds.size).toBe(PLACES.length);
+    expect(seen.cases).toBe(PLACES.length * ROTATIONS.length * 5);
+    expect(seen.bare).toBe(PLACES.length * ROTATIONS.length);
+    expect(seen.spurs).toBe(PLACES.length * ROTATIONS.length * 2);
+    expect(seen.past).toBe(PLACES.length * ROTATIONS.length * 2);
+  }, 15_000);
 });
 
 // ------------------------------------------------------------------ walkers and the save
@@ -1624,6 +1710,45 @@ describe('a walker from a house to a station', () => {
     expect(path.slice(1).every((t, i) => roadStep(w.roads, path[i], t))).toBe(true);
     expect(straight.length).toBeLessThan(path.length);
     expect(cost(path)).toBeLessThan(cost(straight));
+  });
+});
+
+describe('a walker from a door with no road outside it (#455)', () => {
+  it('steps out on the tile outside the door, track across it or none, and walks off the road to the other door', () => {
+    const w = world();
+    w.builder.free = true;
+    // a line east to west along row 11, a passenger station on it at (20, 10), a house at (10, 10)
+    for (let x = 16; x <= 26; x++) w.track.place(x, 11, 'straight', EW, 'regular');
+    const st = w.builder.placeStation(20, 10, 'station', 0)!;
+    expect(st).not.toBeNull();
+    expect(w.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
+    // nothing near them is a road, so no door got a tile of one
+    expect(roadsOf(w)).toEqual([]);
+    const house = decorPlace(w.builder.decorAt(10, 10)!);
+    const [home] = streetOf(house);
+    const [station] = streetOf(stationPlace(st));
+    const crossing = (x: number, y: number) => w.roads.isCrossing(x, y);
+    expect(doorstep(w.map, home, crossing)).toEqual(home.reach);
+    expect(doorstep(w.map, station, crossing)).toEqual(station.reach);
+    // a straight laid across the tile outside the house's door is no level crossing: nobody is
+    // set down beside it instead
+    expect(w.builder.placeTrack(home.reach.x, home.reach.y, STRAIGHT, EW)).toBe(true);
+    expect(doorstep(w.map, home, crossing)).toEqual(home.reach);
+
+    const people = new PeopleSim(w.map, w.builder, new Rng(3));
+    let walk: { x: number; y: number }[] | null = null;
+    for (let t = 0; t < 4000 && !walk; t++) {
+      people.tick(1, 12, 0.5);
+      const p = people.persons.find((q) => q.home === 'd10,10' && q.state === 'toStation');
+      if (p) walk = p.path;
+    }
+    expect(walk, 'a walk from the house to the station').not.toBeNull();
+    const path = walk!;
+    expect(path[0]).toEqual(home.reach);
+    expect(path.at(-1)).toEqual(station.reach);
+    expect(path).toEqual(findWalk(w.map, home.reach, station.reach, w.roads));
+    // every step is off a road, there being none
+    expect(path.slice(1).some((t, i) => roadStep(w.roads, path[i], t))).toBe(false);
   });
 });
 
