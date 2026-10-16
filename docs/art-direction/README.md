@@ -432,7 +432,8 @@ Run it again after changing a generator, `public/assets/structures.*` or a place
 `src/data`. A run with nothing changed writes the same bytes. `tools/building-ground.test.mjs`
 fails when a building frame has no entry, when a corner of an entry's foot lies more than 1 world
 px off the frame's opaque pixels, when a door disagrees with `doorsOf` (`src/sim/doors.ts`), when
-the foot of a frame and of its mirror image are not mirror images, when an illustrated picture's
+the foot of a frame and of its mirror image are not mirror images, when the same picture declared
+at 2 or 3 times its resolution has a foot more than 1 world px away, when an illustrated picture's
 foot covers little of the base that `tools/building-fit.mjs` measures for it, and when the file is
 not what the tool writes now.
 
@@ -454,7 +455,11 @@ the ground. A tile is `[dx, dy]` from the footprint's corner tile (lowest x and 
   sees the S wall (w to s) and the E wall (s to e). Each corner lies on the picture's opaque
   pixels, within 1 world px. Where a picture has stretches that are not walls (a conveyor, a
   cage, steps), the foot is the walls' base and stops short of them, so it can be off the anchor
-  by what the picture is off its footprint.
+  by what the picture is off its footprint. It is measured at the detail the picture has: a
+  picture enlarged without new detail (each texel copied m by m, at any offset, and declared at m
+  times the resolution) is measured on its own texels and has the same foot. A picture redrawn
+  with new detail is a new picture, and where two volumes fit its base nearly as well (the
+  generated `windmill_r3`, `warehouse_4`, `farm_2`), the redraw can stand on the other one.
 - `fit`: `walls` when a straight base was found (the two lines that most of the wall columns
   stand on, columns counting for the height of their run, so that a bench, a lamp post or ground
   paint in front is not taken for a wall); `outline` when no base is long enough and the foot is

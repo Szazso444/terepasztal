@@ -23,6 +23,7 @@ import {
   measureFoot,
   measureFrame,
   openingsOnWall,
+  ownDetail,
   placeDefs,
   serialise,
 } from './building-ground.mjs';
@@ -172,6 +173,16 @@ function upscaled(f, m) {
       data.set(f.data.subarray(from, from + 4), (y * w + x) * 4);
     }
   return { ...f, w, h, data, resolution: f.resolution * m };
+}
+
+/**
+ * The same picture declared at `m` times the resolution: every texel made `m` by `m`, the anchor
+ * with them, the whole moved `by` texels right and down (so that the copies of a texel need not
+ * start on a multiple of `m`).
+ */
+function enlarged(f, m, by = 0) {
+  const big = shifted(upscaled(f, m), by, by);
+  return { ...big, ax: f.ax * m + by, ay: f.ay * m + by };
 }
 
 /** Seeds for the properties that draw a frame per case: enough to cover the cases, in seconds. */
@@ -893,6 +904,45 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     SLOW,
   );
 
+  it(
+    'gives every frame the same foot, in world px, when the same picture is declared at 2 or 3 times its resolution',
+    () => {
+      // a frame redrawn at another resolution (#407) must not stand on another volume only
+      // because its texels are smaller: structures/windmill_r3 at twice its resolution once took
+      // the longer of two bases that fit nearly as well and moved 20 world px
+      const world = (f, p) => [(p[0] - f.ax) / f.resolution, (p[1] - f.ay) / f.resolution];
+      const moved = [];
+      for (const key of Object.keys(data)) {
+        const frame = frames.get(key);
+        const foot = measureFoot(frame);
+        // [times, texels moved]: the generated frames at 2 and 3 times and moved by a texel; the
+        // illustrated, already at 4, at 8 and moved
+        const cases =
+          frame.source === 'generated'
+            ? [
+                [2, 0],
+                [3, 0],
+                [2, 1],
+              ]
+            : [[2, 1]];
+        for (const [m, by] of cases) {
+          const big = enlarged(frame, m, by);
+          const again = measureFoot(big);
+          let worst = again?.fit === foot.fit ? 0 : Infinity;
+          for (const corner of CORNERS)
+            if (again) {
+              const [x, y] = world(big, again[corner]);
+              const [x0, y0] = world(frame, foot[corner]);
+              worst = Math.max(worst, Math.hypot(x - x0, y - y0));
+            }
+          if (worst > REACH) moved.push(`${key} x${m}${by ? ' moved' : ''} ${worst.toFixed(1)}`);
+        }
+      }
+      expect(moved, `${moved.length} feet move: ${moved.slice(0, 5)}`).toEqual([]);
+    },
+    SLOW,
+  );
+
   it('covers most of the base that building-fit measures for each illustrated picture, and no more', () => {
     // the pipeline lays a picture on its footprint by this base (tools/building-fit.mjs), so it is
     // the independent measure of how much of the picture stands on the ground. The wall foot may
@@ -1051,6 +1101,42 @@ describe('the foot of a drawn box', () => {
             );
         },
         { shrink: shrinkBox, seeds: DRAWN, shrinkBudget: SHRINK },
+      );
+    },
+    SLOW,
+  );
+
+  // a picture enlarged without new detail is the picture it was made from: the foot is measured
+  // on its own texels, so that two volumes that fit nearly as well are not chosen between by the
+  // size of the copies (a box drawn at its resolution has detail of its own and is measured as is)
+  it(
+    'is measured on the texels a picture has: enlarged 2 or 3 times at any offset, the same foot',
+    () => {
+      forAll(
+        (rng) => ({ ...genBox(rng, [1, 2]), m: rng.int(2, 3), by: rng.int(0, 2) }),
+        (c) => {
+          const { frame } = box(c);
+          expect(ownDetail(frame).m, 'a drawn box').toBe(1);
+          const foot = measureFoot(frame);
+          const by = c.by % c.m;
+          const big = shifted(upscaled(frame, c.m), by, by);
+          expect(ownDetail(big).m, 'the box enlarged').toBe(c.m);
+          const again = measureFoot(big);
+          expect(again?.fit, 'fit').toBe(foot.fit);
+          for (const corner of CORNERS) {
+            expect(again[corner][0], corner).toBeCloseTo(foot[corner][0] * c.m + by, 6);
+            expect(again[corner][1], corner).toBeCloseTo(foot[corner][1] * c.m + by, 6);
+          }
+        },
+        {
+          shrink: function* (c) {
+            if (c.by) yield { ...c, by: 0 };
+            if (c.m > 2) yield { ...c, m: 2 };
+            yield* shrinkBox(c);
+          },
+          seeds: DRAWN,
+          shrinkBudget: SHRINK,
+        },
       );
     },
     SLOW,

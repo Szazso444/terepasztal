@@ -25,7 +25,9 @@
  *              the base as the base goes, across the gaps between piers. The two walls the
  *              camera sees run w to s (the S wall) and s to e (the E wall). Walls whose near
  *              corner stands above the anchor have no foot (stilts, a roof): what they stand on
- *              is.
+ *              is. It is measured at the detail the picture has: a picture enlarged without new
+ *              detail (each texel copied m by m) is measured on its own texels, so that the same
+ *              picture declared at another resolution has the same foot.
  *   fit        "walls" when the foot is a straight base found in the picture; "outline" when the
  *              picture has no such base (machinery, heaps, a trestle) and the foot is the
  *              silhouette's lowest stand, on the game's 2:1.
@@ -474,7 +476,7 @@ export function footFits(frame) {
   // drawn, so that a picture and its mirror image give mirror images of one foot, even where two
   // volumes look alike.
   const settled = (f) => Math.round(f.error * 1e6);
-  const middle = (f) => Math.abs((f.xl + f.xr) / 2 - frame.w / 2);
+  const middle = (f) => Math.abs((f.xl + f.xr) / 2 - (frame.middle ?? frame.w / 2));
   fits.sort(
     (a, b) =>
       b.score - a.score ||
@@ -523,11 +525,92 @@ export function footFits(frame) {
 }
 
 /**
+ * The picture at the detail it has. A frame whose texels come in m by m blocks, each block all
+ * opaque or all clear (texels outside the frame count as clear), is a picture enlarged without
+ * new detail. It holds no more than the frame with one texel per block, at 1/m the resolution,
+ * and that smaller frame is the one measured, so that declaring a picture at another resolution
+ * does not move its foot: the choice between two volumes that fit nearly as well is made on the
+ * picture's own texels, not on the copies of them. The blocks may start at any texel; m is the
+ * largest that fits, up to the resolution, and 1 (the frame itself) when none does. `origin` is
+ * the texel where the smaller frame's texel 0, 0 begins, at or before the frame's corner.
+ */
+export function ownDetail(frame) {
+  const { w, h, data, resolution: d } = frame;
+  const solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && data[(y * w + x) * 4 + 3] >= SOLID;
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  // the edges between clear and opaque, across and down: blocks of m have edges only every m
+  // texels, so m divides the distance between any two edges
+  const edges = { x: null, y: null, gx: 0, gy: 0 };
+  for (let y = 0; y <= h; y++)
+    for (let x = 0; x <= w; x++) {
+      const here = solid(x, y);
+      if (y < h && here !== solid(x - 1, y)) {
+        if (edges.x === null) edges.x = x;
+        else edges.gx = gcd(edges.gx, Math.abs(x - edges.x));
+      }
+      if (x < w && here !== solid(x, y - 1)) {
+        if (edges.y === null) edges.y = y;
+        else edges.gy = gcd(edges.gy, Math.abs(y - edges.y));
+      }
+    }
+  const same = { frame, origin: [0, 0], m: 1 };
+  if (edges.x === null) return same;
+  const g = gcd(edges.gx, edges.gy);
+  let m = Math.min(Math.floor(d), g);
+  while (m >= 2 && g % m) m--;
+  if (m < 2) return same;
+  // the blocks begin at an edge; the first block starts at or before the frame's corner
+  const start = (at) => (at % m ? (at % m) - m : 0);
+  const ox = start(edges.x);
+  const oy = start(edges.y);
+  const sw = Math.ceil((w - ox) / m);
+  const sh = Math.ceil((h - oy) / m);
+  const small = new Uint8ClampedArray(sw * sh * 4);
+  for (let y = 0; y < sh; y++)
+    for (let x = 0; x < sw; x++) {
+      // the block's texel nearest its corner that is inside the frame
+      const fx = Math.max(0, ox + x * m);
+      const fy = Math.max(0, oy + y * m);
+      if (fx < w && fy < h)
+        small.set(data.subarray((fy * w + fx) * 4, (fy * w + fx) * 4 + 4), (y * sw + x) * 4);
+    }
+  const own = {
+    ...frame,
+    w: sw,
+    h: sh,
+    ax: (frame.ax - ox) / m,
+    ay: (frame.ay - oy) / m,
+    resolution: d / m,
+    data: small,
+    // the frame's middle column, which the choice between volumes that tie measures from
+    middle: ((frame.middle ?? w / 2) - ox) / m,
+  };
+  return { frame: own, origin: [ox, oy], m };
+}
+
+/**
  * The foot of a building in its picture, in texels: the best of `footFits` that stands on the
  * picture (`settle`) with the least change, the highest scoring one among those that need
- * hardly any. Null when none does.
+ * hardly any. It is measured at the detail the picture has (`ownDetail`). Null when none stands.
  */
 export function measureFoot(frame) {
+  const own = ownDetail(frame);
+  const foot = footOf(own.frame);
+  if (!foot || own.m === 1) return foot;
+  const { origin, m } = own;
+  const texels = (p) => [origin[0] + p[0] * m, origin[1] + p[1] * m];
+  return {
+    fit: foot.fit,
+    s: texels(foot.s),
+    w: texels(foot.w),
+    e: texels(foot.e),
+    n: texels(foot.n),
+    dy: foot.dy * m,
+  };
+}
+
+/** `measureFoot` on a frame as it is. */
+function footOf(frame) {
   const d = frame.resolution;
   const fits = footFits(frame);
   // a straight base first, the silhouette only where none stands on the picture
