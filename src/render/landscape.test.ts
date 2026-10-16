@@ -219,6 +219,20 @@ describe('what the landscape hands the paint workers with the map', () => {
     }
   });
 
+  it('carries the paved tiles and their doorsteps from the next hand-off, a fresh pool too', () => {
+    const { landscape, spawned } = setup();
+    const doorsteps = [3, 4.56, 0.17, 0.2];
+    landscape.setCity(new Set([67, 68]), doorsteps);
+    landscape.invalidate(3, 4);
+    landscape.flush();
+    const sent = () =>
+      lastMap(spawned[spawned.length - 1]) as unknown as { city: number[]; doorsteps: number[] };
+    expect(sent().city).toEqual([67, 68]);
+    expect(sent().doorsteps).toEqual(doorsteps);
+    spawned[0].crash({ message: 'out of memory' });
+    expect(structuredClone(sent())).toMatchObject({ city: [67, 68], doorsteps });
+  });
+
   it('sends a map message that survives the copy to a worker, with a level for every biome', () => {
     const { map, spawned } = setup();
     map.climate = new Uint8Array(map.w * map.h).fill(3);

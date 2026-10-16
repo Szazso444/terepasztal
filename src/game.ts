@@ -1892,6 +1892,7 @@ export class Game implements UiHost {
   private refreshCity() {
     this.world.setCity(
       cityTiles(this.map, this.houses.houses.values(), (x, y) => !!this.towns.townAt(x, y)),
+      this.builder.streetDoors(),
     );
   }
   // ---------------------------------------------------------------- sim

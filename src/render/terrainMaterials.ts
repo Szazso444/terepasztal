@@ -69,7 +69,8 @@ const blendAt: number[] = new Array(8);
  * The landscape painter's water at map point (x, y): the share of the water material in the blend
  * it paints there (`surfaceBlend`, left in `blend`), from 0 (none) to 1 (water alone). The edge
  * of the water is where this falls from 1, inside a tile wherever the blend puts it. A paved tile
- * (a town's, `paved`) is painted as paving whatever its blend holds, so it has none. The painter
+ * (a town's, `paved`) has none: the painter paves it over its water, and where the paving wears
+ * out at its edge it shows the tile's own land (townPaving.ts). The painter
  * (landscape.worker.ts) weighs its colours by this, and bridges cut what stands in the water to it
  * (`underPaintedWater`), so the two can never disagree.
  */
