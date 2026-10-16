@@ -59,8 +59,14 @@ function harness(stone = 100) {
   const b = new BuildController(input as never, builder, world as never, () => pointer);
   const status: string[] = [];
   b.onStatus = (t) => status.push(t);
-  /** One frame with the pointer on `t`; `press`, `release` and `click` (a button) happen in it. */
-  const frame = (t: Tile, o: { press?: boolean; release?: boolean; click?: number } = {}) => {
+  /**
+   * One frame with the pointer on `t`; `press`, `release` and `click` (a button) happen in it.
+   * `active: false` is a frame the field does not take, the pointer over a panel.
+   */
+  const frame = (
+    t: Tile,
+    o: { press?: boolean; release?: boolean; click?: number; active?: boolean } = {},
+  ) => {
     pointer = t;
     if (o.press) {
       input.buttons.add(0);
@@ -71,7 +77,7 @@ function harness(stone = 100) {
       input.buttonReleased.add(0);
     }
     if (o.click !== undefined) input.clicks.push({ button: o.click });
-    b.update(true);
+    b.update(o.active ?? true);
     input.buttonPressed.clear();
     input.buttonReleased.clear();
     input.clicks.length = 0;
@@ -118,6 +124,30 @@ describe('the road tool', () => {
     h.frame({ x: 6, y: 5 }, { release: true });
     expect(h.builder.roads.has(4, 5)).toBe(false);
     expect(h.builder.roads.size).toBe(5);
+  });
+
+  it('lays nothing for a drag let go over a panel, and starts the next drag at its own press', () => {
+    const h = harness();
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: 2, y: 2 }, { press: true });
+    h.frame({ x: 2, y: 6 });
+    // the release falls over a panel: the field never sees it
+    h.frame({ x: 2, y: 6 }, { release: true, active: false });
+    h.frame({ x: 4, y: 6 });
+    expect(h.builder.roads.size).toBe(0);
+    // a press the field does not see either, let go over the field: no stroke was started
+    h.frame({ x: 4, y: 6 }, { press: true, active: false });
+    h.frame({ x: 4, y: 9 });
+    h.frame({ x: 4, y: 9 }, { release: true });
+    expect(h.builder.roads.size).toBe(0);
+    // a press the field sees starts the stroke there
+    h.frame({ x: 4, y: 6 }, { press: true });
+    h.frame({ x: 4, y: 8 }, { release: true });
+    expect(h.builder.roads.list()).toEqual([
+      { x: 4, y: 6 },
+      { x: 4, y: 7 },
+      { x: 4, y: 8 },
+    ]);
   });
 
   it('prices or refuses the one tile under the cursor before a press', () => {

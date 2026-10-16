@@ -610,7 +610,7 @@ export class BuildController {
     const inp = this.input;
     if (this.ghost) this.ghost.visible = false;
     this.ghostDiamond.visible = false;
-    // a press off the map starts no stroke, and drops one its release was not seen for
+    // a press starts a stroke on the map, none off it
     if (inp.buttonPressed.has(0)) this.dragStart = inMap ? { x: t.x, y: t.y } : null;
     if (this.dragStart && inp.buttons.has(0)) {
       const stroke = this.roadStroke(this.dragStart, t);
@@ -625,6 +625,8 @@ export class BuildController {
       for (const r of tiles) this.builder.placeRoad(r.x, r.y);
       return;
     }
+    // the button is up: a stroke whose release fell over a panel lays nothing, and is over
+    this.dragStart = null;
     if (!inMap) {
       for (const g of this.lineGhosts) g.visible = false;
       this.status('');

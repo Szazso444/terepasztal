@@ -127,6 +127,8 @@ export function judgeStroke(tiles: readonly Tile[], judge: StrokeJudge): RoadStr
  * (`Roads.trackRefusal`) once more on a copy of the roads that holds the stroke's tiles laid before
  * it, as the builder judges a spur (`Builder.laySpur`): a stroke that runs along a line of track
  * makes one crossing on it, and its release refuses the next tile of that line, which this shows.
+ * A tile `checkRoad` refuses only for its price (the stock is short of even that one tile) passes
+ * here with that price, so `judgeStroke` says what the whole stroke is short of.
  */
 export function builderJudge(builder: Builder): StrokeJudge {
   const tried = builder.roads.copy();
@@ -134,8 +136,12 @@ export function builderJudge(builder: Builder): StrokeJudge {
     has: (t) => builder.roads.has(t.x, t.y),
     check: (t) => {
       const c = builder.checkRoad(t.x, t.y);
-      const why = c.ok ? tried.trackRefusal(t.x, t.y) : null;
-      return why ? { ok: false, cost: {}, reason: why } : c;
+      // the rules take the tile when only its price refuses it: a refusal of the rules carries no
+      // price, which any stock pays
+      const rulesTake = c.ok || !builder.stock.canAfford(c.cost);
+      if (!rulesTake) return c;
+      const why = tried.trackRefusal(t.x, t.y);
+      return why ? { ok: false, cost: {}, reason: why } : { ok: true, cost: c.cost };
     },
     lay: (t) => {
       tried.add(t.x, t.y);
