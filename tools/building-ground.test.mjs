@@ -6,8 +6,10 @@ import { join } from 'node:path';
 import { PNG } from 'pngjs';
 import { structureFrame } from '../src/art/frames';
 import { generateStructuresAtlas } from '../src/art/structures';
+import { worldToTile } from '../src/engine/iso';
 import { Rng } from '../src/engine/rng';
 import { structureFamily, unturnedFrame } from '../src/render/assetScale';
+import { footContour } from '../src/render/groundFit';
 import { doorsOf, placeSpan, streetDoor } from '../src/sim/doors';
 import { SEEDS, forAll, shrinkInt } from '../src/testing/property';
 import { FIT, measureBase } from './building-fit.mjs';
@@ -22,6 +24,7 @@ import {
   atlasFrames,
   buildGround,
   classify,
+  describe as report,
   generatedFrames,
   measureFoot,
   measureFrame,
@@ -2293,5 +2296,259 @@ describe('the sheets that show what was measured', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+/* ------------------------------------------------ the data against measures the tool does not make */
+
+describe(`the ground data of the ${GROUP} frames against measures of their own`, () => {
+  let frames, places, data;
+  beforeAll(() => {
+    frames = atlasFrames(generateStructuresAtlas);
+    places = placeDefs();
+    data = JSON.parse(readFileSync(GROUND_FILE, 'utf8')).frames;
+  }, SLOW);
+
+  /** the footprint's size in tiles, at the entry's rotation */
+  const sizeOf = (e) => ({
+    W: Math.max(...e.footprint.map((t) => t[0])) + 1,
+    H: Math.max(...e.footprint.map((t) => t[1])) + 1,
+  });
+  /**
+   * A point in world px from the anchor as tiles from the footprint's corner, on the game's own
+   * projection (`worldToTile`, src/engine/iso.ts). The anchor is the footprint's centre, so the
+   * footprint is 0 to W by 0 to H there, whatever the tool measured.
+   */
+  const inTiles = (p, { W, H }) => {
+    const t = worldToTile(p[0], p[1]);
+    return [t.x + W / 2, t.y + H / 2];
+  };
+
+  it("keeps each foot corner near its footprint and each door in its own tile, on the game's projection", () => {
+    // a picture is never exactly its footprint (the README: the foot can be off the anchor by what
+    // the picture is off its footprint), but a foot corner more than half a tile out stands past
+    // the middle of the next tile, and a door more than a quarter tile out of its tile is in
+    // another one. Today's widest are 0.37 (the illustrated station_4) and 0.0 (a door).
+    const far = [];
+    let doors = 0;
+    for (const [key, e] of Object.entries(data)) {
+      const size = sizeOf(e);
+      for (const [i, p] of e.foot.entries()) {
+        const [u, v] = inTiles(p, size);
+        const out = Math.max(-u, u - size.W, -v, v - size.H);
+        if (out > 0.5) far.push(`${key} ${'nesw'[i]} corner ${out.toFixed(2)} tiles out`);
+      }
+      for (const door of e.doors) {
+        doors++;
+        const [u, v] = inTiles(door.point, size);
+        const [x, y] = door.tile;
+        const out = Math.max(x - u, u - (x + 1), y - v, v - (y + 1));
+        if (out > 0.25)
+          far.push(
+            `${key} ${door.kind} door at ${door.tile} on ${door.side} ${out.toFixed(2)} out`,
+          );
+      }
+    }
+    expect(far, `${far.length} points out of place: ${far.slice(0, 5)}`).toEqual([]);
+    expect(doors).toBeGreaterThan(50);
+  });
+
+  /**
+   * How far (world px) the foot's walls stand below the lowest foot the renderer finds in each
+   * column of the picture (`footContour`, src/render/groundFit.ts: Rendering's own reading of
+   * where walls meet the ground, from the alpha alone), sorted, over the columns the contour has
+   * between the foot's outer corners. Negative where the foot is above the contour.
+   */
+  function belowContour(key, e) {
+    const f = frames.get(key);
+    const d = f.resolution;
+    const contour = footContour({ data: f.data, width: f.w, height: f.h, density: d });
+    const [, east, south, west] = e.foot.map((p) => [f.ax + p[0] * d, f.ay + p[1] * d]);
+    const left = (south[1] - west[1]) / (south[0] - west[0]);
+    const right = (south[1] - east[1]) / (east[0] - south[0]);
+    const out = [];
+    for (let x = 0; x < f.w; x++) {
+      const at = x + 0.5;
+      if (contour[x] < 0 || at < west[0] || at > east[0]) continue;
+      const line =
+        at < south[0] ? west[1] + (at - west[0]) * left : south[1] - (at - south[0]) * right;
+      out.push((line - (contour[x] + 1)) / d);
+    }
+    return out.sort((p, q) => p - q);
+  }
+
+  it("never stands lower than the renderer's foot contour, and on it where no ground is baked in", () => {
+    // two measures of one thing, made by different code on the same alpha (the contour is the
+    // lowest wall run of each column, the foot the base of the walls): the walls cannot stand
+    // below the lowest of them. Where the picture has no ground painted under its walls
+    // (`baked` under MEASURE.baked) the two are the same line, and a foot that drifted up into
+    // the wall face, or onto another volume, would leave it. Where ground is painted in, the
+    // contour is the painted edge and the foot is above it by design.
+    const below = [];
+    const off = [];
+    let columns = 0;
+    let clean = 0;
+    for (const [key, e] of Object.entries(data)) {
+      const devs = belowContour(key, e);
+      if (devs.length < 8) continue;
+      columns++;
+      const signed = devs[Math.floor(devs.length / 2)];
+      // today's highest is 1.25 (the generated townhouse_s2 turns)
+      if (signed > 2) below.push(`${key} ${signed.toFixed(2)} below`);
+      if (e.fit !== 'walls' || e.baked >= MEASURE.baked) continue;
+      clean++;
+      const apart = devs.map(Math.abs).sort((p, q) => p - q)[Math.floor(devs.length / 2)];
+      // today's widest is 1.5 (the illustrated ironworks, the generated quarry turns)
+      if (apart > 3) off.push(`${key} ${apart.toFixed(2)} apart (baked ${e.baked})`);
+    }
+    expect(below, `${below.length} feet below the contour: ${below.slice(0, 5)}`).toEqual([]);
+    expect(off, `${off.length} feet off the contour: ${off.slice(0, 5)}`).toEqual([]);
+    // not vacuous: most frames have a contour to compare with, and most are clean
+    expect(columns).toBeGreaterThan(350);
+    expect(clean).toBeGreaterThan(250);
+  });
+
+  it('gives the placeholder turn that is another frame mirrored the mirror image of its foot', () => {
+    // src/art/structures.ts `addTurns`: `_r1` is `_r2` mirrored and `_r3` is the unturned frame
+    // mirrored, the anchor mirrored with the picture so that it stands on the same footprint
+    // point. Where the two pictures are mirror images (the alpha, the size and the anchor), their
+    // entries must be as well: the corners in the mirror's order, the fit, the ground baked in.
+    const mirrorImages = (a, b) => {
+      if (a.w !== b.w || a.h !== b.h || a.resolution !== b.resolution) return false;
+      if (a.ax + b.ax !== a.w || a.ay !== b.ay) return false;
+      for (let y = 0; y < a.h; y++)
+        for (let x = 0; x < a.w; x++)
+          if (
+            a.data[(y * a.w + x) * 4 + 3] >= SOLID !==
+            b.data[(y * b.w + (b.w - 1 - x)) * 4 + 3] >= SOLID
+          )
+            return false;
+      return true;
+    };
+    const off = [];
+    let pairs = 0;
+    for (const key of Object.keys(data)) {
+      const turn = /^(.*)_r([13])$/.exec(key);
+      if (!turn) continue;
+      const other = turn[2] === '1' ? `${turn[1]}_r2` : turn[1];
+      if (!data[other] || !mirrorImages(frames.get(key), frames.get(other))) continue;
+      pairs++;
+      const [n, e, s, w] = data[other].foot;
+      const mirror = [n, w, s, e].map((p) => [-p[0], p[1]]);
+      let worst = 0;
+      for (const [i, p] of data[key].foot.entries())
+        worst = Math.max(worst, Math.hypot(p[0] - mirror[i][0], p[1] - mirror[i][1]));
+      const label = `${key} and ${other}`;
+      if (worst > 0.05) off.push(`${label}: corners ${worst.toFixed(2)} px from mirrored`);
+      if (data[key].fit !== data[other].fit) off.push(`${label}: fit ${data[key].fit}`);
+      if (Math.abs(data[key].baked - data[other].baked) > 1)
+        off.push(`${label}: baked ${data[key].baked} and ${data[other].baked}`);
+    }
+    expect(off, `${off.length} pairs differ: ${off.slice(0, 5)}`).toEqual([]);
+    // most of the generated families' turns are such pairs (a depot's turns are half turns)
+    expect(pairs).toBeGreaterThan(60);
+  });
+
+  // runs the tool over every frame of the atlas once more: about 4 s alone
+  it(
+    'lists each finding once, under its kind, with a count for each kind',
+    () => {
+      const mods = { doorsOf, placeSpan };
+      const { data: made, findings } = buildGround(frames, places, mods);
+      const frameCount = Object.keys(made.frames).length;
+      const lines = report(findings, frameCount).split('\n');
+      const gap = lines.indexOf('');
+      const head = lines.slice(0, gap);
+      const listed = lines.slice(gap + 1);
+      const all = Object.entries(findings).flatMap(([key, notes]) =>
+        notes.map((n) => `${key}: ${n}`),
+      );
+      expect(listed, 'every finding, in order, once').toEqual(all);
+      expect(all.length, 'findings').toBeGreaterThan(100);
+      expect(head[0]).toBe(
+        `${frameCount} building frames, ${Object.keys(findings).length} with findings`,
+      );
+      const counted = head.slice(1).map((line) => Number(line.trim().split(/\s+/)[0]));
+      expect(
+        counted.every((n) => Number.isInteger(n) && n > 0),
+        'a count for each kind',
+      ).toBe(true);
+      expect(
+        counted.reduce((sum, n) => sum + n, 0),
+        'the kinds count every finding',
+      ).toBe(all.length);
+      // and a finding is what the data says: ground baked in, a silhouette for a foot, and nothing
+      // for a frame without an entry
+      for (const [key, e] of Object.entries(data)) {
+        const notes = findings[key] ?? [];
+        expect(
+          notes.some((n) => n.startsWith('baked ground')),
+          `${key}: baked ${e.baked}`,
+        ).toBe(e.baked >= MEASURE.baked);
+        expect(
+          notes.some((n) => n.startsWith('foot: no straight base')),
+          `${key}: fit ${e.fit}`,
+        ).toBe(e.fit === 'outline');
+        expect(
+          notes.some((n) => n.startsWith('no foot')),
+          `${key}: no foot`,
+        ).toBe(false);
+      }
+      expect(Object.keys(findings).filter((key) => !data[key])).toEqual([]);
+    },
+    SLOW,
+  );
+
+  it('leaves no stand-ins for the DOM behind it, after a run or a failed one', () => {
+    // generatedFrames puts an ImageData and a document in the global scope to run the generators:
+    // left there, they would tell every later test in the process that it has a DOM
+    const tiny = () => {
+      const { document, ImageData } = globalThis;
+      const context = document.createElement('canvas').getContext('2d');
+      context.putImageData(new ImageData(new Uint8ClampedArray(2 * 2 * 4).fill(255), 2, 2), 0, 0);
+      return { frames: { 'structures/tiny': { x: 0, y: 0, w: 2, h: 2, ax: 1, ay: 1 } } };
+    };
+    const names = ['ImageData', 'document'];
+    const was = names.map((n) => [n, n in globalThis, globalThis[n]]);
+    const same = () =>
+      was.every(([n, had, value]) => n in globalThis === had && globalThis[n] === value);
+    expect(generatedFrames(tiny).get('structures/tiny'), 'the frame it made').toMatchObject({
+      w: 2,
+      h: 2,
+      source: 'generated',
+    });
+    expect(same(), 'after a run').toBe(true);
+    expect(() =>
+      generatedFrames(() => {
+        throw new Error('boom');
+      }),
+    ).toThrow('boom');
+    expect(same(), 'after a failed run').toBe(true);
+    // a stand-in of the test's own is put back as it was, not removed
+    const marker = { marker: true };
+    globalThis.document = marker;
+    try {
+      generatedFrames(tiny);
+      expect(globalThis.document, 'a document that was there').toBe(marker);
+    } finally {
+      delete globalThis.document;
+    }
+    expect(same()).toBe(true);
+  });
+
+  it('gives the limits the README states as the numbers the tool keeps', () => {
+    // docs say what is true now: a limit changed in the tool and not in the doc is a doc bug
+    const readme = readFileSync('docs/art-direction/README.md', 'utf8');
+    const from = readme.indexOf('\n## Building ground data\n');
+    const to = readme.indexOf('\n## ', from + 1);
+    const section = readme.slice(from, to < 0 ? undefined : to).replace(/\s+/g, ' ');
+    for (const phrase of [
+      `a slope of ${MEASURE.slope[0]} to ${MEASURE.slope[1]}`,
+      `(up to ${MEASURE.gap} world px)`,
+      `within ${REACH} world px`,
+      `within ${DOOR.near} tile`,
+      `more than ${MEASURE.tolerance} world px and half a texel`,
+    ])
+      expect(section, `the README says "${phrase}"`).toContain(phrase);
   });
 });
