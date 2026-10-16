@@ -68,8 +68,11 @@ export const PAVING_SOLID = WEAR + RAG;
  * the way travelled (the outline's 1, its wobble's 1.2), so the centre is PAVING_SOLID in too.
  */
 export const PAVING_DEEP = 0.55;
-/** Returned for a point the paving does not reach, and for one deep inside it. */
-const FAR = 9;
+/**
+ * Returned (negated) for a point the paving does not reach, and for one deep inside it; the
+ * painter reads a tile the paving cannot reach as this far outside it.
+ */
+export const PAVING_FAR = 9;
 
 /** Seeds of the paving's noise. */
 const SEED_WOBBLE = 4431,
@@ -332,8 +335,8 @@ export class TownPaving {
       e = f & OPEN_E,
       n = f & OPEN_N,
       s = f & OPEN_S;
-    const dx = w && e ? 0.5 - Math.abs(x - i) : w ? x - i + 0.5 : e ? i + 0.5 - x : FAR;
-    const dy = n && s ? 0.5 - Math.abs(y - j) : n ? y - j + 0.5 : s ? j + 0.5 - y : FAR;
+    const dx = w && e ? 0.5 - Math.abs(x - i) : w ? x - i + 0.5 : e ? i + 0.5 - x : PAVING_FAR;
+    const dy = n && s ? 0.5 - Math.abs(y - j) : n ? y - j + 0.5 : s ? j + 0.5 - y : PAVING_FAR;
     const qx = CORNER - dx,
       qy = CORNER - dy;
     return CORNER - outside(qx, qy) - Math.min(Math.max(qx, qy), 0);
@@ -352,10 +355,10 @@ export class TownPaving {
       h = this.h,
       i0 = Math.round(x),
       j0 = Math.round(y);
-    if (i0 < 0 || j0 < 0 || i0 >= w || j0 >= h) return -FAR;
+    if (i0 < 0 || j0 < 0 || i0 >= w || j0 >= h) return -PAVING_FAR;
     const flags = this.flags,
       f = flags[j0 * w + i0];
-    if (!(f & NEAR)) return -FAR;
+    if (!(f & NEAR)) return -PAVING_FAR;
     let d: number;
     if (f & PAVED) {
       d = this.tileOutline(i0, j0, f, x, y);
@@ -371,7 +374,7 @@ export class TownPaving {
             if (out < d) d = out;
           }
     } else {
-      d = -FAR;
+      d = -PAVING_FAR;
       for (let dj = -1; dj <= 1; dj++)
         for (let di = -1; di <= 1; di++) {
           const i = i0 + di,

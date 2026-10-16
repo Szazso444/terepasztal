@@ -107,6 +107,33 @@ export function frontCorner(foot: Int32Array): number {
   return low < 0 ? -1 : Math.floor((first + last) / 2);
 }
 
+/** The colour of the walls' base is read from this far above each foot (world px) ... */
+export const BASE_FROM = 2;
+/** ... to this far, in the walls' opaque texels. */
+export const BASE_TO = 7;
+/**
+ * The colour of a picture's walls just above their foot, where a plinth under them starts: the
+ * median of each channel over the opaque texels (alpha over 200) from BASE_FROM to BASE_TO world
+ * px above every foot, so a door or a post does not count. Null when nothing stands on the ground.
+ */
+export function baseColour({ data, width: w, density: d }: Picture, foot: Int32Array) {
+  const channels: number[][] = [[], [], []];
+  for (let x = 0; x < w; x++) {
+    if (foot[x] < 0) continue;
+    for (let y = Math.round(foot[x] - BASE_FROM * d); y >= foot[x] - BASE_TO * d && y >= 0; y--) {
+      const k = (y * w + x) * 4;
+      if (data[k + 3] <= 200) continue;
+      for (let c = 0; c < 3; c++) channels[c].push(data[k + c]);
+    }
+  }
+  if (!channels[0].length) return null;
+  return channels.map((list) => list.sort((a, b) => a - b)[list.length >> 1]) as unknown as [
+    number,
+    number,
+    number,
+  ];
+}
+
 /** An RGBA layer `rows` texels high whose top row is the picture's row `top`. */
 export interface Band {
   top: number;

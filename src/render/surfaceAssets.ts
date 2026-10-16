@@ -4,6 +4,7 @@ import { PAL } from '../art/palette';
 import { structureFamily } from './assetScale';
 import {
   bakedShadow,
+  baseColour,
   contactShadow,
   feetOf,
   footContour,
@@ -123,6 +124,8 @@ export interface GroundFitArt {
   shadow: AnchoredTexture | null;
   /** Its feet about one world px apart, in world px from its anchor at that scale. */
   feet: Foot[];
+  /** The colour of its walls just above their foot (`baseColour`), for a plinth under them. */
+  base: readonly [number, number, number] | null;
 }
 /**
  * Colour statistics measured from the atlases (terrain/mountain_* frames, and the rock material
@@ -290,6 +293,7 @@ export class SurfaceAssets {
         anchorY: (-cast.y * cast.resolution) / cast.height,
       },
       feet: feetOf(picture, foot, at),
+      base: baseColour(picture, foot),
     };
     this.groundFits.set(id, result);
     return result;

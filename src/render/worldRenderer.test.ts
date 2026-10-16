@@ -30,6 +30,8 @@ import {
   type TrackPiece,
 } from '../world/track';
 import { structureScale, TREE_SCALE } from './assetScale';
+import { groundOf as groundDataOf } from '../art/buildingGround';
+import { yardTiles, type Yard } from './buildingYard';
 import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
 import { buildRelief, groundAllows } from './terrainRelief';
@@ -155,7 +157,11 @@ function renderer() {
         return { texture, anchorX: 0.5, anchorY: 0.5 };
       },
     },
-    landscape: { setCity: () => {}, invalidate: () => {} },
+    landscape: { setCity: () => {}, invalidate: () => {}, setYards: () => {}, repaint: () => {} },
+    footings: new Map(),
+    doorsByTile: new Map(),
+    trackSprites: new Map(),
+    roadAt: () => false,
     texturedParts: new Map(),
     groundSprites: [],
     elevationOf: () => 0,
@@ -414,6 +420,8 @@ describe('a building fitted to the ground', () => {
         ready: true,
         root: { visible: false },
         isPainted: () => false,
+        setYards: () => {},
+        repaint: () => {},
       },
       refreshSummits: () => {},
       harvest: { refresh: () => {} },
@@ -486,6 +494,139 @@ describe('a building fitted to the ground', () => {
       shown(world.setStructure('decor:c', 0, 0, frame), 'when both have gone');
       world.removeStructure('decor:c');
     }
+  });
+});
+
+/** A footing as the world renderer keeps it (the parts these tests read). */
+type FootingParts = { yard: Yard; lift: number; plinth: Graphics | null };
+const footingsOf = (world: WorldRenderer) =>
+  (world as unknown as { footings: Map<string, FootingParts> }).footings;
+
+describe("a building's yard and plinth", () => {
+  /**
+   * The one-tile world above on an 8 x 8 map, its ground `height` world px high at any map point
+   * (level by default), with a landscape that records the yards it is handed and the tiles it is
+   * told to repaint.
+   */
+  function yarded(height: (x: number, y: number) => number = () => 0) {
+    const r = renderer(),
+      handed: Yard[][] = [],
+      repainted = new Set<number>();
+    Object.assign(r.world, {
+      map: emptyMap(3, 8, 8),
+      elevationOf: (x: number, y: number) => -height(x, y),
+      landscape: {
+        setCity: () => {},
+        invalidate: () => {},
+        setYards: (yards: Yard[]) => handed.push(yards),
+        repaint: (x: number, y: number) => repainted.add(y * 8 + x),
+      },
+    });
+    return { ...r, handed, repainted };
+  }
+
+  it('hands its yard to the painter and repaints the ground it covers, then takes it back', () => {
+    const { world, handed, repainted } = yarded();
+    world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    const yard = footingsOf(world).get('decor:3,3')!.yard;
+    expect(handed.at(-1)).toEqual([yard]);
+    expect(yard.kind).toBe('gravel');
+    expect([...repainted].sort()).toEqual(yardTiles(yard, 8, 8).sort());
+    // the same building again changes nothing
+    repainted.clear();
+    const calls = handed.length;
+    world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    expect([handed.length, repainted.size]).toEqual([calls, 0]);
+    // a second building: both yards, the new one's ground repainted
+    world.setStructure('station:1', 5, 5, 'structures/station_1');
+    const station = footingsOf(world).get('station:1')!.yard;
+    expect(handed.at(-1)).toEqual([yard, station]);
+    expect(station.kerb).not.toBeNull();
+    for (const k of yardTiles(station, 8, 8)) expect(repainted.has(k)).toBe(true);
+    // a frame that is no building has no yard: its ground is repainted bare
+    repainted.clear();
+    world.setStructure('decor:3,3', 3, 3, 'structures/power_line', 14);
+    expect(handed.at(-1)).toEqual([station]);
+    expect([...repainted].sort()).toEqual(yardTiles(yard, 8, 8).sort());
+    repainted.clear();
+    world.removeStructure('station:1');
+    expect(handed.at(-1)).toEqual([]);
+    expect([...repainted].sort()).toEqual(yardTiles(station, 8, 8).sort());
+    expect(footingsOf(world).size).toBe(0);
+  });
+
+  it("stands its yard's foot where its anchor puts it: moved off its tile, a long or square footprint's middle", () => {
+    const { world } = yarded();
+    // a 2 x 2 depot is anchored at its middle, a long one between its two tiles (src/game.ts)
+    world.setStructure('station:2', 4, 4, 'structures/station_1', 20, -16);
+    const moved = footingsOf(world).get('station:2')!.yard,
+      ground = groundDataOf('structures/station_1')!,
+      s = world.getStructure('station:2')!;
+    ground.foot.forEach(([px, py], i) => {
+      const k = s.scale.x;
+      expect(moved.foot[i * 2]).toBeCloseTo(3.5 + (px / 64 + py / 32) * k, 9);
+      expect(moved.foot[i * 2 + 1]).toBeCloseTo(3.5 + (py / 32 - px / 64) * k, 9);
+    });
+  });
+
+  it('takes a door path on to a road laid beside the door, and back off it', () => {
+    const { world, handed } = yarded();
+    let road = false;
+    world.roadAt = (x, y) => road && x === 3 && y === 4;
+    // the house's street door faces S, to tile 3, 4 (src/sim/doors.ts)
+    world.setCity(new Set(), [{ tile: { x: 3, y: 3 }, side: Dir.S }]);
+    world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    const path = () =>
+      footingsOf(world)
+        .get('decor:3,3')!
+        .yard.paths.find((p) => p.dy === 1)!;
+    expect(path().open).toBe(false);
+    road = true;
+    world.roadChanged(3, 4);
+    expect(path().open).toBe(true);
+    expect(handed.at(-1)![0].paths).toContainEqual(path());
+    // a road that comes up beside it takes the path back
+    road = false;
+    world.roadChanged(3, 4);
+    expect(path().open).toBe(false);
+  });
+
+  it('stands on a plinth under its picture where the ground under it drops away', () => {
+    // the ground falls 8 px east of x = 3.2, under the house's right corner
+    const { world, objects } = yarded((x) => (x > 3.2 ? -8 : 0));
+    const s = world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1'),
+      footing = footingsOf(world).get('decor:3,3')!,
+      plinth = footing.plinth!;
+    expect(plinth).not.toBeNull();
+    expect(plinth.parent).toBe(objects);
+    expect(footing.lift).toBe(0);
+    // under the picture, over everything a depth step behind it
+    expect(plinth.zIndex).toBeLessThan(s.zIndex);
+    expect(plinth.zIndex).toBeGreaterThan(depthKey(3, 2, 21));
+    expect([plinth.x, plinth.y]).toEqual([s.x, s.y]);
+    expect(plinth.context.instructions.length).toBeGreaterThan(0);
+    // it goes with its building
+    world.removeStructure('decor:3,3');
+    expect(plinth.destroyed).toBe(true);
+    // on level ground there is none
+    const level = yarded();
+    level.world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    expect(footingsOf(level.world).get('decor:3,3')!.plinth).toBeNull();
+  });
+
+  it('is lifted onto ground that stands higher under its foot, its ground fit with it', () => {
+    // the ground rises 6 px under the back of the house, as a terrace's bank reaches into it
+    const { world } = yarded((x, y) => (x + y < 5.9 ? 6 : 0));
+    const s = world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1', 20, 3, 5),
+      footing = footingsOf(world).get('decor:3,3')!,
+      fit = fitsOf(world).get('decor:3,3')!,
+      p = tileToWorld(3, 3);
+    expect(footing.lift).toBe(6);
+    expect([s.x, s.y]).toEqual([p.x + 5, p.y + 3 - 6]);
+    for (const part of [fit.shadow, fit.foot, fit.weeds])
+      expect([part.x, part.y]).toEqual([s.x, s.y]);
+    // and its front, now over lower ground, stands on a plinth
+    expect(footing.plinth).not.toBeNull();
   });
 });
 
@@ -1360,6 +1501,7 @@ describe('the town paving handed to the painter', () => {
       city: new Set(),
       doorsteps: [],
       groundFits: new Map(),
+      footings: new Map(),
       groundSprites: [],
       texturedParts: new Map(),
       landscape: {
@@ -1490,6 +1632,7 @@ describe('the paving of a town the simulation raises, as the game hands it over'
       city: new Set(),
       doorsteps: [],
       groundFits: new Map(),
+      footings: new Map(),
       groundSprites: [],
       texturedParts: new Map(),
       landscape: {
