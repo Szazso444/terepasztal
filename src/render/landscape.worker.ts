@@ -172,7 +172,9 @@ self.onmessage = async (event: MessageEvent) => {
             1.3;
           shade = Math.max(0.83, Math.min(1.12, 1 + dx * 0.012 - dy * 0.015));
         }
-        if (!solid && raised && waterWeight < 1) {
+        // The paving is lit by its level like the ground, the solid middle too, so the line from
+        // which the ground under it is not painted shows no step; snow goes on painted ground only.
+        if (raised && waterWeight < 1) {
           // Grass on a slope reads a shade apart from grass on the flat.
           const bankGrass = relief.style.bankGrass;
           if (bankGrass && slope > 0) {
@@ -188,7 +190,7 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             snowLineAt(map, snowLevels, tileIndex),
             steep ?? 0,
-            color,
+            solid ? null : color,
           );
         }
         if (pave > -PAVING_FRINGE) {
@@ -410,10 +412,11 @@ const BANK_TONES = {
 };
 const SNOW = [234, 239, 246];
 /**
- * Preview looks from the relief style (all off in the shipped style): higher levels paint lighter
- * (ground level unchanged), snow patches from the tile's snow line and full snow a level above,
- * and a cast shadow darkens ground that a higher tile hides from the upper-left light. Returns
- * the shading factor.
+ * Looks from the relief style (the shipped style has the height light and snow): higher levels
+ * paint lighter (ground level unchanged), snow patches from the tile's snow line and full snow a
+ * level above, and a cast shadow darkens ground that a higher tile hides from the upper-left light.
+ * Snow goes on `color`, the ground's colour, which is null where the ground is not painted (under
+ * solid paving). Returns the shading factor.
  */
 function previewLooks(
   x: number,
@@ -423,13 +426,13 @@ function previewLooks(
   wy: number,
   snowLine: number,
   steep: number,
-  color: number[],
+  color: number[] | null,
 ) {
   const style = relief.style,
     level = Math.max(0, z / style.step);
   let factor = 1;
   if (style.heightLight) factor *= 1 + style.heightLight * level;
-  if (style.snow) {
+  if (style.snow && color) {
     const above = level - snowLine,
       // Half cover (patches) on the snow line's level, full cover from the level above.
       cover = 0.5 * unit((above + 0.25) / 0.25) + 0.5 * unit((above - 0.75) / 0.25);
