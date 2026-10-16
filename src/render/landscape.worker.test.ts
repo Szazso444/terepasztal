@@ -3,7 +3,7 @@ import { Dir } from '../engine/iso';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { BIOME_DEFS } from '../sim/biomes';
-import { buildRelief, surfaceAlongRay } from './terrainRelief';
+import { buildRelief, reliefHeight, surfaceAlongRay, type TerrainRelief } from './terrainRelief';
 import { paintedWater } from './terrainMaterials';
 import { pavingDoorsteps, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
 
@@ -120,11 +120,19 @@ function world() {
   );
   return { map, city, doorsteps };
 }
+/** The world() town on a hill: level 2 under most of it, as the shipped style lights it. */
+function onHill(w: ReturnType<typeof world>) {
+  for (let y = 1; y <= 13; y++)
+    for (let x = 3; x <= 14; x++) w.map.terrain[y * w.map.w + x] = Terrain.Hill;
+  return w;
+}
+/** Paints the 8 x 8 chunk at (x, y); `snowLevels` by climate, the content's by default. */
 async function paint(
   { map, city, doorsteps }: ReturnType<typeof world>,
   x: number,
   y: number,
   scale = 1,
+  snowLevels: readonly number[] = BIOME_DEFS.map((def) => def.snowLevel),
 ) {
   await send({
     map: {
@@ -142,7 +150,7 @@ async function paint(
     tint: 0xd8e8c0,
     city,
     doorsteps,
-    snowLevels: BIOME_DEFS.map((def) => def.snowLevel),
+    snowLevels,
   });
   replies = [];
   await send({ id: `${x},${y}`, x, y, w: 8, h: 8, version: 1, scale });
@@ -239,62 +247,147 @@ describe('the painter with a town', () => {
     expect(far).toBeGreaterThan(1000);
     expect(water).toBeGreaterThan(20);
   }, 60_000);
+});
 
-  // Slow: paints eight chunks, a town on the flat and on a hill (about 2.5 s alone).
-  it('shows no step where the ground under the paving stops being painted, on a hill too', async () => {
-    for (const hill of [false, true]) {
-      const w = world();
-      // the town on a hill: level 2 under most of it, as the shipped style lights it
-      if (hill)
-        for (let y = 1; y <= 13; y++)
-          for (let x = 3; x <= 14; x++) w.map.terrain[y * w.map.w + x] = Terrain.Hill;
-      const relief = buildRelief(w.map, new Set()),
-        paving = new TownPaving(
-          w.map.w,
-          w.map.h,
-          w.map.originX,
-          w.map.originY,
-          w.city,
-          w.doorsteps,
-        );
-      /** How far inside the paving the point painted at pixel (px, py) lies. */
-      const inside = (r: Reply, px: number, py: number) => {
-        const [bx, by] = pointOf(r, px, py, 1),
-          z = surfaceAlongRay(w.map, relief, bx, by, 10),
-          tx = bx + z / 32,
-          ty = by + z / 32;
-        return paving.near(Math.round(ty) * w.map.w + Math.round(tx))
-          ? paving.distance(tx, ty)
-          : -9;
-      };
-      // neighbouring pixels either side of PAVING_SOLID, from which the ground under the paving is
-      // not painted, both within 0.06 of it: the inner one's brightness over the outer one's
+describe('the painter with a town on the flat, on a hill and above the snow line', () => {
+  /** A town's four chunks as painted, with the relief and the paving the painter builds. */
+  interface Painted {
+    name: string;
+    w: ReturnType<typeof world>;
+    relief: TerrainRelief;
+    paving: TownPaving;
+    chunks: Reply[];
+  }
+  /**
+   * Paints the world() town's four chunks, on a hill if `raise`, with every climate's snow line at
+   * `snowLine` (the content's if none).
+   */
+  async function town(name: string, raise: boolean, snowLine?: number): Promise<Painted> {
+    const w = raise ? onHill(world()) : world(),
+      snowLevels = snowLine === undefined ? undefined : BIOME_DEFS.map(() => snowLine),
+      chunks: Reply[] = [];
+    for (const [x, y] of [
+      [0, 0],
+      [8, 0],
+      [0, 8],
+      [8, 8],
+    ])
+      chunks.push(await paint(w, x, y, 1, snowLevels));
+    return {
+      name,
+      w,
+      relief: buildRelief(w.map, new Set()),
+      paving: new TownPaving(w.map.w, w.map.h, w.map.originX, w.map.originY, w.city, w.doorsteps),
+      chunks,
+    };
+  }
+  let flat: Painted, hill: Painted, snowy: Painted;
+  // Slow: paints the town's four chunks three times (about 4 s alone).
+  beforeAll(async () => {
+    flat = await town('on the flat', false);
+    hill = await town('on a hill', true);
+    // level 2 is a level above this snow line: full snow on the ground, patches on level 1
+    snowy = await town('on a hill above the snow line', true, 1);
+  }, 80_000);
+
+  /**
+   * The map point the painter reads at pixel (px, py), raised as the painter raises it, its height
+   * and how far inside the paving it lies.
+   */
+  function readAt({ w, relief, paving }: Painted, r: Reply, px: number, py: number) {
+    const [bx, by] = pointOf(r, px, py, 1),
+      z = surfaceAlongRay(w.map, relief, bx, by, 10),
+      tx = bx + z / 32,
+      ty = by + z / 32,
+      d = paving.near(Math.round(ty) * w.map.w + Math.round(tx)) ? paving.distance(tx, ty) : -9;
+    return { tx, ty, z, d };
+  }
+  const light = (r: Reply, k: number) => r.pixels[k] + r.pixels[k + 1] + r.pixels[k + 2];
+
+  // Slow: reads the point under every pixel of twelve chunks (about 0.7 s alone).
+  it('shows no step where the ground under the paving stops being painted, on a hill and in snow', () => {
+    for (const c of [flat, hill, snowy]) {
+      // neighbouring pixels either side of PAVING_SOLID, from which the ground under the paving
+      // is not painted, both within 0.06 of it: the inner one's brightness over the outer one's
       const ratios: number[] = [];
-      for (const [x, y] of [
-        [0, 0],
-        [8, 0],
-        [0, 8],
-        [8, 8],
-      ]) {
-        const r = await paint(w, x, y);
-        for (let py = 0; py < r.height; py++)
-          for (let px = 0; px + 1 < r.width; px++) {
-            const ka = (py * r.width + px) * 4,
-              kb = ka + 4;
-            if (r.pixels[ka + 3] !== 255 || r.pixels[kb + 3] !== 255) continue;
-            const da = inside(r, px, py),
-              db = inside(r, px + 1, py);
-            if (Math.abs(da - PAVING_SOLID) > 0.06 || Math.abs(db - PAVING_SOLID) > 0.06) continue;
-            if (da >= PAVING_SOLID === db >= PAVING_SOLID) continue;
-            const [inner, outer] = da >= PAVING_SOLID ? [ka, kb] : [kb, ka],
-              light = (k: number) => r.pixels[k] + r.pixels[k + 1] + r.pixels[k + 2];
-            ratios.push(light(inner) / light(outer));
+      for (const r of c.chunks)
+        for (let py = 0; py < r.height; py++) {
+          // how far inside the paving the pixel to the left lies (NaN where nothing is painted)
+          let left = NaN;
+          for (let px = 0; px < r.width; px++) {
+            const k = (py * r.width + px) * 4,
+              d = r.pixels[k + 3] === 255 ? readAt(c, r, px, py).d : NaN,
+              was = left;
+            left = d;
+            if (!(Math.abs(was - PAVING_SOLID) <= 0.06 && Math.abs(d - PAVING_SOLID) <= 0.06))
+              continue;
+            if (was >= PAVING_SOLID === d >= PAVING_SOLID) continue;
+            const [inner, outer] = was >= PAVING_SOLID ? [k - 4, k] : [k, k - 4];
+            ratios.push(light(r, inner) / light(r, outer));
           }
-      }
+        }
       ratios.sort((a, b) => a - b);
       const median = ratios[Math.floor(ratios.length / 2)];
-      expect(ratios.length, `on a hill: ${hill}`).toBeGreaterThan(40);
-      expect(Math.abs(median - 1), `on a hill: ${hill}, median ratio ${median}`).toBeLessThan(0.03);
+      expect(ratios.length, c.name).toBeGreaterThan(40);
+      expect(Math.abs(median - 1), `${c.name}: median ratio ${median}`).toBeLessThan(0.03);
     }
-  }, 50_000);
+    // the snow is there to show a step: the worn joints and the fringe show it (by 60 of 765)
+    let snowed = 0;
+    for (const [i, r] of snowy.chunks.entries()) {
+      const bare = hill.chunks[i];
+      for (let k = 0; k < r.pixels.length; k += 4) {
+        if (r.pixels[k + 3] !== 255 || light(r, k) < light(bare, k) + 60) continue;
+        const p = k / 4,
+          d = readAt(snowy, r, p % r.width, Math.floor(p / r.width)).d;
+        if (d > -PAVING_FRINGE && d < PAVING_SOLID) snowed++;
+      }
+    }
+    expect(snowed, 'snowed pixels in the worn edge and the fringe').toBeGreaterThan(200);
+  }, 40_000);
+
+  // Slow: reads the point under every pixel of eight chunks and paints the paving there (about
+  // 0.5 s alone).
+  it('lights the solid paving on a level top by its level alone, untinted and unshaded', () => {
+    const around = [
+      [0.15, 0],
+      [-0.15, 0],
+      [0, 0.15],
+      [0, -0.15],
+    ];
+    for (const c of [flat, hill]) {
+      const { map } = c.w,
+        step = c.relief.style.step,
+        heightLight = c.relief.style.heightLight ?? 0,
+        out = [0, 0, 0];
+      let checked = 0,
+        raised = 0;
+      for (const r of c.chunks)
+        for (let py = 0; py < r.height; py++)
+          for (let px = 0; px < r.width; px++) {
+            const k = (py * r.width + px) * 4;
+            if (r.pixels[k + 3] !== 255) continue;
+            const { tx, ty, z, d } = readAt(c, r, px, py);
+            if (d < PAVING_SOLID) continue;
+            // on a level top, where neither a bank's slope nor its rims light it (faceShade)
+            const top = reliefHeight(map, c.relief, tx, ty);
+            if (around.some(([dx, dy]) => reliefHeight(map, c.relief, tx + dx, ty + dy) !== top))
+              continue;
+            // the paving's own colour, times the light the shipped style gives a level
+            c.paving.paint(tx, ty, d, null, 1, out);
+            const lit = 1 + heightLight * (z / step);
+            for (let ch = 0; ch < 3; ch++)
+              if (Math.abs(r.pixels[k + ch] - out[ch] * lit) > 0.51)
+                expect.fail(
+                  `${c.name}: pixel ${px},${py} of chunk ${r.left},${r.top} at ${tx.toFixed(3)},` +
+                    `${ty.toFixed(3)}, level ${(z / step).toFixed(3)}, ${d.toFixed(3)} in: ` +
+                    `[${r.pixels.slice(k, k + 3).join()}], not the paving's ` +
+                    `[${out.map((v) => v.toFixed(1)).join()}] lit by ${lit.toFixed(3)}`,
+                );
+            checked++;
+            if (z > step / 2) raised++;
+          }
+      expect(checked, c.name).toBeGreaterThan(2000);
+      if (c === hill) expect(raised, c.name).toBeGreaterThan(2000);
+    }
+  }, 40_000);
 });
