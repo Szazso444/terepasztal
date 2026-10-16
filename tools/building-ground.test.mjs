@@ -1,6 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { PNG } from 'pngjs';
 import { structureFrame } from '../src/art/frames';
 import { generateStructuresAtlas } from '../src/art/structures';
 import { Rng } from '../src/engine/rng';
@@ -26,6 +29,8 @@ import {
   ownDetail,
   placeDefs,
   serialise,
+  sheetOf,
+  writeSheets,
 } from './building-ground.mjs';
 
 const DIRS = ['N', 'E', 'S', 'W'];
@@ -576,6 +581,46 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     expect(JSON.parse(file).version).toBe(1);
   });
 
+  it('is documented where the issue asks: where the data lives, how it is written and read', () => {
+    // docs/art-direction/README.md says where the data lives and how to regenerate it (#435)
+    const readme = readFileSync('docs/art-direction/README.md', 'utf8');
+    const from = readme.indexOf('\n## Building ground data\n');
+    expect(from, 'the section "Building ground data"').toBeGreaterThan(-1);
+    const to = readme.indexOf('\n## ', from + 1);
+    const section = readme.slice(from, to < 0 ? undefined : to);
+    for (const file of [
+      GROUND_FILE,
+      'tools/building-ground.mjs',
+      'tools/building-ground.test.mjs',
+      'src/art/buildingGround.ts',
+    ]) {
+      expect(section, `${file} is named`).toContain(file);
+      expect(existsSync(file), `${file} exists`).toBe(true);
+    }
+    // the commands it gives are the commands the tool takes
+    const tool = readFileSync('tools/building-ground.mjs', 'utf8');
+    expect(section).toContain('node tools/building-ground.mjs ');
+    for (const flag of ['--check', '--all', '--sheets']) {
+      expect(section, `${flag} is explained`).toContain(flag);
+      expect(tool, `the tool takes ${flag}`).toContain(`args.includes('${flag}')`);
+    }
+    // the frames it names (a name ending in a number, a level or a turn) are in the data
+    const named = [
+      ...section.matchAll(/`((?:structures\/)?[a-z]+(?:_[a-z]+)*_(?:\d+|lv\d+|r\d)(?:_r\d)?)`/g),
+    ].map((m) => m[1]);
+    expect(new Set(named).size, `frames named: ${named}`).toBeGreaterThanOrEqual(5);
+    for (const name of named)
+      expect(
+        data[name.includes('/') ? name : `${GROUP}/${name}`],
+        `${name} is a frame`,
+      ).toBeDefined();
+    // and every field of an entry is explained, as a bullet of its own or after a semicolon
+    for (const field of Object.keys(Object.values(data)[0]))
+      expect(section, `the field ${field} is explained`).toMatch(
+        new RegExp(`(^- |; )\`${field}\`:`, 'm'),
+      );
+  });
+
   it('has an entry for exactly the frames of the places in src/data, by the renderer family rule', () => {
     // read from src/data and public/assets directly, and the family by the renderer's own rule
     const read = (name) => JSON.parse(readFileSync(`src/data/${name}`, 'utf8'));
@@ -870,6 +915,7 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     expect(off, `baked outside a recount's bracket: ${off.slice(0, 5)}`).toEqual([]);
   });
 
+  // measures every frame of the atlas twice: about 5 s alone
   it(
     'is the mirror image of its own foot on the mirror image of every frame',
     () => {
@@ -904,6 +950,7 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     SLOW,
   );
 
+  // measures every frame of the atlas at two or three sizes: about 15 s alone
   it(
     'gives every frame the same foot, in world px, when the same picture is declared at 2 or 3 times its resolution',
     () => {
@@ -924,7 +971,10 @@ describe(`the ground data of the ${GROUP} frames`, () => {
                 [3, 0],
                 [2, 1],
               ]
-            : [[2, 1]];
+            : [
+                [2, 0],
+                [2, 1],
+              ];
         for (const [m, by] of cases) {
           const big = enlarged(frame, m, by);
           const again = measureFoot(big);
@@ -935,7 +985,10 @@ describe(`the ground data of the ${GROUP} frames`, () => {
               const [x0, y0] = world(frame, foot[corner]);
               worst = Math.max(worst, Math.hypot(x - x0, y - y0));
             }
-          if (worst > REACH) moved.push(`${key} x${m}${by ? ' moved' : ''} ${worst.toFixed(1)}`);
+          // a copy that starts where the picture does is measured on the same texels: the same foot
+          // to the float; moved by a texel, within the 1 world px the issue allows
+          if (worst > (by ? REACH : 1e-6))
+            moved.push(`${key} x${m}${by ? ' moved' : ''} ${worst.toFixed(3)}`);
         }
       }
       expect(moved, `${moved.length} feet move: ${moved.slice(0, 5)}`).toEqual([]);
@@ -1109,6 +1162,7 @@ describe('the foot of a drawn box', () => {
   // a picture enlarged without new detail is the picture it was made from: the foot is measured
   // on its own texels, so that two volumes that fit nearly as well are not chosen between by the
   // size of the copies (a box drawn at its resolution has detail of its own and is measured as is)
+  // 60 cases, each draws a frame, enlarges it and measures both: about 7 s alone
   it(
     'is measured on the texels a picture has: enlarged 2 or 3 times at any offset, the same foot',
     () => {
@@ -1324,6 +1378,310 @@ describe('the foot of a drawn box', () => {
   });
 });
 
+describe('the detail a picture has', () => {
+  const opaque = (f, x, y) =>
+    x >= 0 && y >= 0 && x < f.w && y < f.h && f.data[(y * f.w + x) * 4 + 3] >= SOLID;
+
+  /**
+   * The largest m, up to the resolution, for which the picture is made of m by m blocks, each all
+   * opaque or all clear (texels outside the frame are clear), found by trying every m and every
+   * place the blocks can start. The slow, obvious answer for what `ownDetail` gets from the gaps
+   * between the picture's edges; 1 when no m does.
+   */
+  function blockSize(f) {
+    for (let m = Math.floor(f.resolution); m >= 2; m--)
+      for (let ox = 0; ox < m; ox++)
+        for (let oy = 0; oy < m; oy++) {
+          let blocks = true;
+          for (let y = -m; y < f.h + m && blocks; y++)
+            for (let x = -m; x < f.w + m && blocks; x++)
+              blocks =
+                opaque(f, x, y) ===
+                opaque(f, ox + Math.floor((x - ox) / m) * m, oy + Math.floor((y - oy) / m) * m);
+          if (blocks) return m;
+        }
+    return 1;
+  }
+
+  /**
+   * A picture of rectangles on a grid of `w0` by `h0` blocks, each block `q` by `q` texels, the
+   * whole `bx`, `by` texels in from the top left and cut `cx`, `cy` short at the right and the
+   * bottom, declared at `r` texels per world px. Opaque texels have any alpha from SOLID up and
+   * any colour, clear ones sometimes a weaker alpha (a shadow): none of that is in the mask.
+   */
+  function blocky(c) {
+    const noise = new Rng(c.noise);
+    return drawn(
+      c.w0 * c.q + c.bx - c.cx,
+      c.h0 * c.q + c.by - c.cy,
+      (x, y) => {
+        const lx = Math.floor((x - c.bx) / c.q);
+        const ly = Math.floor((y - c.by) / c.q);
+        const rgb = [noise.int(0, 255), noise.int(0, 255), noise.int(0, 255)];
+        const on = c.rects.some(([x0, y0, x1, y1]) => lx >= x0 && lx < x1 && ly >= y0 && ly < y1);
+        return [
+          ...rgb,
+          on ? noise.int(SOLID, 255) : noise.chance(0.3) ? noise.int(1, SOLID - 1) : 0,
+        ];
+      },
+      { resolution: c.r, ax: c.ax, ay: c.ay },
+    );
+  }
+  const MANY = Array.from({ length: 300 }, (_, i) => i + 1);
+  const genBlocky = (rng) => {
+    const q = rng.int(1, 4);
+    const w0 = rng.int(3, 10);
+    const h0 = rng.int(3, 10);
+    const rects = [];
+    for (let i = rng.int(1, 3); i > 0; i--) {
+      const x0 = rng.int(0, w0 - 1);
+      const y0 = rng.int(0, h0 - 1);
+      rects.push([x0, y0, rng.int(x0 + 1, w0), rng.int(y0 + 1, h0)]);
+    }
+    const cut = () => (q > 1 && rng.chance(0.3) ? rng.int(1, q - 1) : 0);
+    return {
+      q,
+      w0,
+      h0,
+      rects,
+      bx: rng.int(0, q - 1),
+      by: rng.int(0, q - 1),
+      cx: cut(),
+      cy: cut(),
+      r: rng.pick([1, 2, 3, 4, 5, 1.5, 2.5]),
+      ax: rng.int(0, 20),
+      ay: rng.int(0, 20),
+      noise: rng.int(1, 1_000_000),
+    };
+  };
+  function* shrinkBlocky(c) {
+    for (const key of ['bx', 'by', 'cx', 'cy'])
+      for (const v of shrinkInt(c[key], 0)) yield { ...c, [key]: v };
+    for (const [key, least] of [
+      ['q', 1],
+      ['w0', 3],
+      ['h0', 3],
+    ])
+      for (const v of shrinkInt(c[key], least))
+        yield {
+          ...c,
+          [key]: v,
+          // the blocks stay inside the grid and the offsets inside a block
+          rects: c.rects
+            .map(([x0, y0, x1, y1]) => [
+              x0,
+              y0,
+              Math.min(x1, key === 'w0' ? v : x1),
+              Math.min(y1, key === 'h0' ? v : y1),
+            ])
+            .filter(([x0, y0, x1, y1]) => x1 > x0 && y1 > y0),
+          bx: Math.min(c.bx, key === 'q' ? v - 1 : c.bx),
+          by: Math.min(c.by, key === 'q' ? v - 1 : c.by),
+          cx: Math.min(c.cx, key === 'q' ? v - 1 : c.cx),
+          cy: Math.min(c.cy, key === 'q' ? v - 1 : c.cy),
+        };
+    if (c.rects.length > 1)
+      for (let i = 0; i < c.rects.length; i++)
+        yield { ...c, rects: c.rects.filter((_, j) => j !== i) };
+    yield { ...c, r: 1 };
+    yield { ...c, ax: 0, ay: 0 };
+  }
+
+  it('is the largest block size the picture is made of, and loses none of the picture', () => {
+    forAll(
+      genBlocky,
+      (c) => {
+        const f = blocky(c);
+        const own = ownDetail(f);
+        const m = own.m;
+        expect(m, 'the largest m the picture is made of').toBe(blockSize(f));
+        expect(m).toBeLessThanOrEqual(Math.max(1, Math.floor(f.resolution)));
+        // declared at exactly the enlargement it has, the picture is found whole
+        if (c.r === c.q && !c.cx && !c.cy) expect(m, 'declared at its enlargement').toBe(c.q);
+        if (m === 1) {
+          expect(own.frame, 'a picture without blocks is measured as it is').toBe(f);
+          expect(own.origin).toEqual([0, 0]);
+          return;
+        }
+        const [ox, oy] = own.origin;
+        const s = own.frame;
+        // the smaller picture starts at or before the corner, less than a block back
+        expect(ox <= 0 && ox > -m && oy <= 0 && oy > -m, `origin ${ox},${oy}`).toBe(true);
+        expect(s.w, 'width').toBe(Math.ceil((f.w - ox) / m));
+        expect(s.h, 'height').toBe(Math.ceil((f.h - oy) / m));
+        // the same places in world px: the anchor, the resolution and the middle move with it
+        expect(s.resolution * m, 'resolution').toBeCloseTo(f.resolution, 9);
+        expect(s.ax * m + ox, 'anchor x').toBeCloseTo(f.ax, 9);
+        expect(s.ay * m + oy, 'anchor y').toBeCloseTo(f.ay, 9);
+        expect(s.middle * m + ox, 'middle').toBeCloseTo(f.w / 2, 9);
+        // every texel of the picture is the texel of its block
+        let wrong = null;
+        for (let y = 0; y < f.h; y++)
+          for (let x = 0; x < f.w; x++)
+            if (opaque(s, Math.floor((x - ox) / m), Math.floor((y - oy) / m)) !== opaque(f, x, y))
+              wrong ??= `${x},${y}`;
+        expect(wrong, 'a texel the smaller picture does not give back').toBeNull();
+      },
+      { shrink: shrinkBlocky, seeds: MANY, shrinkBudget: SHRINK },
+    );
+  });
+
+  /**
+   * Two boxes side by side on one ground: the second `gap` to the right of the first and `lift`
+   * further back, of the first's size when `clone` (two volumes that tie in everything but their
+   * place, which is where the foot's choice between them is made), else its own `a2`, `b2`, `h2`.
+   * `centred` puts the pair on the frame's middle line (the ties the middle itself cannot break).
+   */
+  function twin(c) {
+    const first = { k: 1, a: c.a, b: c.b, h: c.h, sx: c.sx, sy: c.sy };
+    const second = c.clone ? first : { ...first, a: c.a2, b: c.b2, h: c.h2 };
+    const sx = c.centred ? 100 - c.b - c.gap / 2 : c.sx;
+    const one = box({ ...first, sx }).frame;
+    const two = box({
+      ...second,
+      sx: sx + c.a + c.b + c.gap + (second.a - first.a),
+      sy: c.sy - c.lift,
+    }).frame;
+    const data = new Uint8ClampedArray(one.data);
+    for (let i = 0; i < data.length; i += 4)
+      if (two.data[i + 3] >= SOLID && data[i + 3] < SOLID) data.set(two.data.subarray(i, i + 4), i);
+    return { ...one, data };
+  }
+  const leastTwin = { a: 16, b: 16, h: 14, gap: 2, lift: 0, a2: 16, b2: 16, h2: 14 };
+  const genTwin = (rng) => {
+    const a = rng.int(16, 36);
+    const centred = rng.chance(0.3);
+    return {
+      a,
+      b: rng.int(16, 36),
+      h: rng.int(14, 60),
+      sx: a + 4,
+      sy: rng.int(150, 180),
+      gap: centred ? 2 * rng.int(1, 12) : rng.int(2, 24),
+      lift: rng.pick([0, 0, 4, 10]),
+      clone: rng.chance(0.5),
+      centred,
+      a2: rng.int(16, 36),
+      b2: rng.int(16, 36),
+      h2: rng.int(14, 60),
+    };
+  };
+  function* shrinkTwin(c) {
+    if (c.centred) yield { ...c, centred: false };
+    if (!c.clone) yield { ...c, clone: true };
+    for (const key of Object.keys(leastTwin))
+      for (const v of shrinkInt(c[key], leastTwin[key])) yield { ...c, [key]: v };
+  }
+
+  // of two volumes that tie in everything else, the foot stands on the one nearer the middle of the
+  // picture; a picture that was a crop of a larger one (`ownDetail` makes one) names its own middle
+  it("stands on the volume nearer the middle the frame names, the frame's own unless it names another", () => {
+    // two equal boxes, their near corners at x 60 and 116 on the same line of the picture's pixels
+    const pair = twin({ clone: true, a: 16, b: 16, h: 30, sx: 60, sy: 165, gap: 24, lift: 0 });
+    const stands = (middle) => Math.round(measureFoot({ ...pair, middle }).s[0]);
+    expect(stands(undefined), "the frame's own middle, 100").toBe(116);
+    expect(stands(100)).toBe(116);
+    expect(stands(40), 'nearer the left one').toBe(60);
+    expect(stands(160), 'nearer the right one').toBe(116);
+  });
+
+  /** The picture with every texel made `m` by `m`, moved `bx`, `by` texels in, anchor with it. */
+  const declaredAt = (f, m, bx, by) => {
+    const big = shifted(upscaled(f, m), bx, by);
+    return { ...big, ax: f.ax * m + bx, ay: f.ay * m + by };
+  };
+
+  // the choice between two volumes is made on the picture's own texels: it does not change with
+  // the size they are copied to, where they start or what is in their alpha and colour
+  // 60 cases, each draws a pair of boxes, enlarges it and measures both: about 3 s alone
+  it(
+    'stands on the same one of two volumes when the picture is declared at 2 or 3 times its resolution',
+    () => {
+      forAll(
+        (rng) => ({ ...genTwin(rng), m: rng.int(2, 3), bx: rng.int(0, 2), by: rng.int(0, 2) }),
+        (c) => {
+          const frame = twin(c);
+          const foot = measureFoot(frame);
+          const bx = c.bx % c.m;
+          const by = c.by % c.m;
+          const again = measureFoot(declaredAt(frame, c.m, bx, by));
+          expect(again?.fit, 'fit').toBe(foot.fit);
+          for (const corner of CORNERS) {
+            expect(again[corner][0], `${corner} x`).toBeCloseTo(foot[corner][0] * c.m + bx, 6);
+            expect(again[corner][1], `${corner} y`).toBeCloseTo(foot[corner][1] * c.m + by, 6);
+          }
+        },
+        {
+          shrink: function* (c) {
+            if (c.bx || c.by) yield { ...c, bx: 0, by: 0 };
+            if (c.m > 2) yield { ...c, m: 2 };
+            yield* shrinkTwin(c);
+          },
+          seeds: DRAWN,
+          shrinkBudget: SHRINK,
+        },
+      );
+    },
+    SLOW,
+  );
+
+  /** how far (texels) the foot of the mirror image is from the mirror image of the foot */
+  function mirrorGap(frame) {
+    const foot = measureFoot(frame);
+    const flipped = measureFoot(mirrored(frame));
+    if (!foot || !flipped || foot.fit !== flipped.fit) return Infinity;
+    let worst = 0;
+    for (const [corner, other] of [
+      ['n', 'n'],
+      ['e', 'w'],
+      ['s', 's'],
+      ['w', 'e'],
+    ])
+      worst = Math.max(
+        worst,
+        Math.hypot(
+          flipped[other][0] - (frame.w - foot[corner][0]),
+          flipped[other][1] - foot[corner][1],
+        ),
+      );
+    return worst;
+  }
+
+  // a picture that is its own mirror image, or nearly (two equal boxes about its middle), has no
+  // mirrored foot to find: it stands on one of two volumes that look the same. Of the others, the
+  // picture declared at another resolution has the mirrored feet its own texels give.
+  // 60 cases, each measures a pair of boxes and its mirror image, enlarged and not: about 4 s alone
+  it(
+    'is the mirror image of its foot on the mirror image of a picture declared at 2 or 3 times its resolution',
+    () => {
+      let checked = 0;
+      forAll(
+        (rng) => ({ ...genTwin(rng), m: rng.int(2, 3), bx: rng.int(0, 2), by: rng.int(0, 2) }),
+        (c) => {
+          const frame = twin(c);
+          if (mirrorGap(frame) > 1.5) return;
+          checked++;
+          const big = declaredAt(frame, c.m, c.bx % c.m, c.by % c.m);
+          expect(mirrorGap(big) / c.m, 'texels of the picture it is made from').toBeLessThanOrEqual(
+            1.5,
+          );
+        },
+        {
+          shrink: function* (c) {
+            if (c.bx || c.by) yield { ...c, bx: 0, by: 0 };
+            if (c.m > 2) yield { ...c, m: 2 };
+            yield* shrinkTwin(c);
+          },
+          seeds: DRAWN,
+          shrinkBudget: SHRINK,
+        },
+      );
+      expect(checked, 'cases that had a mirrored foot to keep').toBeGreaterThan(DRAWN.length / 2);
+    },
+    SLOW,
+  );
+});
+
 describe('the doors of a drawn wall', () => {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   /** a door `width` wide, as tall as its width says a door is, `up` above the foot */
@@ -1534,11 +1892,17 @@ describe('the data of a drawn building', () => {
       sy: 170,
       ax: ANCHOR[0] * c.k,
       ay: ANCHOR[1] * c.k,
-      doors: doors.map((p) => ({ wall: wall(p.door), x: p.x, width: 6, height: 14, up: 0 })),
+      doors: doors.map((p) => ({
+        wall: wall(p.door),
+        x: p.x,
+        width: 6,
+        height: 14,
+        up: c.up ?? 0,
+      })),
     });
     const info = { rot: c.rot, defs: [{ def }] };
     const measured = measureFrame(frame, info, { doorsOf, placeSpan });
-    return { ...measured, doors, truth, W: geometry.W, H: geometry.H };
+    return { ...measured, frame, info, doors, truth, W: geometry.W, H: geometry.H };
   };
 
   // each case draws a frame of up to 400 x 400 texels and measures it
@@ -1599,6 +1963,98 @@ describe('the data of a drawn building', () => {
     SLOW,
   );
 
+  // the entry of a picture is in world px, so the same picture declared at 2 or 3 times its
+  // resolution, at any offset, has the same entry: the foot to its two decimals, the doors where
+  // they were, to within the texel they are found on
+  // 60 cases, each draws a place, enlarges it and measures its entry twice: about 3 s alone
+  it(
+    'gives the picture declared at 2 or 3 times its resolution the entry it has',
+    () => {
+      let compared = 0;
+      forAll(
+        (rng) => ({ ...genPlace(rng), k: 1, m: rng.int(2, 3), by: rng.int(0, 2) }),
+        (c) => {
+          const { entry, frame, info } = draw(c, (door, i, g) => standsAt(door, c.shifts[i], g));
+          const by = c.by % c.m;
+          const again = measureFrame(enlarged(frame, c.m, by), info, { doorsOf, placeSpan }).entry;
+          expect(again, 'an entry').not.toBeNull();
+          for (const key of ['source', 'rot', 'footprint', 'fit'])
+            expect(again[key], key).toEqual(entry[key]);
+          expect(again.front.side).toBe(entry.front.side);
+          expect(again.front.visible).toBe(entry.front.visible);
+          for (const [i, corner] of entry.foot.entries()) {
+            expect(again.foot[i][0], `foot ${CORNERS[i]} x`).toBeCloseTo(corner[0], 1);
+            expect(again.foot[i][1], `foot ${CORNERS[i]} y`).toBeCloseTo(corner[1], 1);
+          }
+          entry.front.edge.forEach((p, i) => {
+            expect(again.front.edge[i][0], `front edge ${i} x`).toBeCloseTo(p[0], 1);
+            expect(again.front.edge[i][1], `front edge ${i} y`).toBeCloseTo(p[1], 1);
+          });
+          expect(again.baked, 'baked').toBeCloseTo(entry.baked, 0);
+          expect(
+            again.doors.map((d) => [d.kind, d.tile, d.side, d.reach]),
+            'doors found',
+          ).toEqual(entry.doors.map((d) => [d.kind, d.tile, d.side, d.reach]));
+          entry.doors.forEach((door, j) => {
+            compared++;
+            const other = again.doors[j];
+            within(other.point, door.point, 1, `point of door ${j}`);
+            expect(Math.abs(other.width - door.width), `width of door ${j}`).toBeLessThanOrEqual(1);
+            expect(other.offset, `offset of door ${j}`).toBeCloseTo(door.offset, 1);
+          });
+        },
+        {
+          shrink: function* (c) {
+            if (c.by) yield { ...c, by: 0 };
+            if (c.m > 2) yield { ...c, m: 2 };
+            yield* shrinkPlace(c);
+          },
+          seeds: DRAWN,
+          shrinkBudget: SHRINK,
+        },
+      );
+      expect(compared, 'doors compared').toBeGreaterThan(30);
+    },
+    SLOW,
+  );
+
+  // a door that stands on a step has its point where the step meets the ground, `up` above the foot
+  // 100 cases, each draws a place of up to 400 x 400 texels and measures it: about 2 s alone
+  it(
+    'puts the point of a door at the foot of its opening, up to a step above the foot of its wall',
+    () => {
+      let seen = 0;
+      forAll(
+        (rng) => ({ ...genPlace(rng), up: rng.int(0, 6) }),
+        (c) => {
+          const { entry } = draw(c, (door, i, g) => standsAt(door, c.shifts[i], g));
+          for (const found of entry.doors) {
+            seen++;
+            const [a, b] =
+              found.side === 'S' ? [entry.foot[3], entry.foot[2]] : [entry.foot[2], entry.foot[1]];
+            const line = a[1] + ((found.point[0] - a[0]) * (b[1] - a[1])) / (b[0] - a[0]);
+            expect(line - found.point[1], `rise above the foot, up ${c.up}`).toBeGreaterThanOrEqual(
+              c.up - 1,
+            );
+            expect(line - found.point[1], `rise above the foot, up ${c.up}`).toBeLessThanOrEqual(
+              c.up + 1,
+            );
+          }
+        },
+        {
+          shrink: function* (c) {
+            for (const up of shrinkInt(c.up, 0)) yield { ...c, up };
+            yield* shrinkPlace(c);
+          },
+          seeds: SEEDS,
+          shrinkBudget: SHRINK,
+        },
+      );
+      expect(seen, 'doors measured').toBeGreaterThan(30);
+    },
+    SLOW,
+  );
+
   it('counts what is painted below the foot in world px squared, at any resolution', () => {
     const def = defOf(FOOTPRINTS[0], [{ kind: 'street', tile: [0, 0], side: 'S' }]);
     const info = { rot: 0, defs: [{ def }] };
@@ -1653,4 +2109,166 @@ describe('the data of a drawn building', () => {
     },
     SLOW,
   );
+});
+
+describe('the sheets that show what was measured', () => {
+  // the colours docs/art-direction/README.md names: walls the camera sees in magenta, the two it
+  // does not in cyan, the front wall in orange, doors in green, the anchor in red
+  const INK = {
+    wall: [255, 0, 255],
+    hidden: [0, 230, 230],
+    front: [255, 140, 0],
+    door: [0, 255, 0],
+    anchor: [255, 0, 0],
+  };
+  const AT = [100, 160];
+  const drawnPlace = (rot) => {
+    const def = { accepts: [], doors: [{ kind: 'street', tile: [0, 0], side: 'S' }] };
+    const { frame } = box({
+      k: 1,
+      a: 40,
+      b: 40,
+      h: 50,
+      sx: 100,
+      sy: 165,
+      ax: AT[0],
+      ay: AT[1],
+      doors: [{ wall: 'S', x: 80, width: 6, height: 14, up: 0 }],
+    });
+    const { entry } = measureFrame(frame, { rot, defs: [{ def }] }, { doorsOf, placeSpan });
+    return { frame, entry };
+  };
+  /** the pixels of a sheet that are exactly this colour, [x, y] each */
+  const inked = (sheet, rgb) => {
+    const out = [];
+    for (let y = 0; y < sheet.height; y++)
+      for (let x = 0; x < sheet.width; x++) {
+        const i = (y * sheet.width + x) * 4;
+        if (rgb.every((v, c) => sheet.data[i + c] === v)) out.push([x, y]);
+      }
+    return out;
+  };
+  /** how far a pixel is from the segment a-b (the ends included), in px */
+  const toSegment = ([x, y], a, b) => {
+    const long = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2;
+    const t = Math.max(
+      0,
+      Math.min(1, ((x - a[0]) * (b[0] - a[0]) + (y - a[1]) * (b[1] - a[1])) / long),
+    );
+    return Math.hypot(x - (a[0] + t * (b[0] - a[0])), y - (a[1] + t * (b[1] - a[1])));
+  };
+  /** the pixels all lie on the segment, and there are as many as it is wide */
+  const lineOf = (pixels, a, b, label) => {
+    expect(pixels.length, `${label}: pixels`).toBeGreaterThanOrEqual(Math.abs(b[0] - a[0]));
+    for (const p of pixels)
+      expect(toSegment(p, a, b), `${label}: ${p} is off the line`).toBeLessThanOrEqual(1);
+  };
+
+  it('draws the foot, the front wall, the door and the anchor where the entry says', () => {
+    // one frame to a sheet at scale 1: the frame's corner is 3 px in from the sheet's
+    const { frame, entry } = drawnPlace(0);
+    const sheet = sheetOf(new Map([['k', frame]]), { k: entry }, ['k'], { scale: 1, cols: 1 });
+    const at = (p) => [3 + AT[0] + p[0], 3 + AT[1] + p[1]];
+    const [n, e, s, w] = entry.foot.map(at);
+    // the front is the S wall at rotation 0: orange over the wall's own colour
+    lineOf(inked(sheet, INK.front), w, s, 'front');
+    lineOf(inked(sheet, INK.wall), s, e, 'E wall');
+    // each of the two is as many pixels as it is wide, less the corners that others cover
+    expect(
+      inked(sheet, INK.hidden).length,
+      'the walls the camera does not see',
+    ).toBeGreaterThanOrEqual(Math.abs(e[0] - n[0]) + Math.abs(n[0] - w[0]) - 5);
+    for (const p of inked(sheet, INK.hidden))
+      expect(Math.min(toSegment(p, n, e), toSegment(p, n, w)), `hidden ${p}`).toBeLessThanOrEqual(
+        1,
+      );
+    // the door: a green line up from its point
+    expect(entry.doors, 'the door was found').toHaveLength(1);
+    const [dx, dy] = at(entry.doors[0].point);
+    const green = inked(sheet, INK.door);
+    expect(green, 'the door line').toContainEqual([Math.round(dx), Math.round(dy)]);
+    expect(green.length).toBe(10);
+    for (const [x, y] of green) {
+      expect(x).toBe(Math.round(dx));
+      expect(y).toBeLessThanOrEqual(Math.round(dy));
+    }
+    // the anchor: a cross of five px, on top of everything else
+    const cross = [
+      [0, 0],
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ].map(([x, y]) => [3 + AT[0] + x, 3 + AT[1] + y]);
+    expect(inked(sheet, INK.anchor).sort()).toEqual(cross.sort());
+  });
+
+  it('draws the front wall over a hidden wall when the building faces away', () => {
+    // at rotation 1 the front is W, the n-w edge
+    const { frame, entry } = drawnPlace(1);
+    const sheet = sheetOf(new Map([['k', frame]]), { k: entry }, ['k'], { scale: 1, cols: 1 });
+    const at = (p) => [3 + AT[0] + p[0], 3 + AT[1] + p[1]];
+    const [n, , s, w] = entry.foot.map(at);
+    expect(entry.front.visible).toBe(false);
+    lineOf(inked(sheet, INK.front), n, w, 'front');
+    // the S wall keeps its own colour
+    expect(inked(sheet, INK.wall).length).toBeGreaterThan(Math.abs(s[0] - w[0]));
+  });
+
+  it('pages the frames of each source: 60 generated and 40 illustrated to a sheet', () => {
+    const tiny = drawn(24, 24, (x, y) =>
+      y > 6 && y < 20 && x > 3 && x < 20 ? [90, 90, 90, 255] : null,
+    );
+    const entry = (source) => ({
+      source,
+      foot: [
+        [0, -6],
+        [8, -2],
+        [0, 2],
+        [-8, -2],
+      ],
+      front: {
+        side: 'S',
+        edge: [
+          [-8, -2],
+          [0, 2],
+        ],
+        visible: true,
+      },
+      doors: [],
+    });
+    const frames = new Map();
+    const data = {};
+    for (const [source, count] of [
+      ['generated', 72],
+      ['illustrated', 41],
+    ])
+      for (let i = 0; i < count; i++) {
+        frames.set(`${source}/${i}`, { ...tiny, source });
+        data[`${source}/${i}`] = entry(source);
+      }
+    const dir = mkdtempSync(join(tmpdir(), 'building-ground-sheets-'));
+    try {
+      writeSheets(frames, data, join(dir, 'sheets'));
+      const names = [
+        'generated-1.png',
+        'generated-2.png',
+        'illustrated-1.png',
+        'illustrated-2.png',
+      ];
+      expect(readdirSync(join(dir, 'sheets')).sort()).toEqual(names);
+      // a page is `cols` cells wide and as many rows as its frames need; a cell is the biggest
+      // frame at the source's scale and 6 px
+      const size = (name) => {
+        const png = PNG.sync.read(readFileSync(join(dir, 'sheets', name)));
+        return [png.width, png.height];
+      };
+      expect(size('generated-1.png')).toEqual([12 * (24 * 3 + 6), 5 * (24 * 3 + 6)]);
+      expect(size('generated-2.png')).toEqual([12 * (24 * 3 + 6), 24 * 3 + 6]);
+      expect(size('illustrated-1.png')).toEqual([10 * (24 * 0.5 + 6), 4 * (24 * 0.5 + 6)]);
+      expect(size('illustrated-2.png')).toEqual([10 * (24 * 0.5 + 6), 24 * 0.5 + 6]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
