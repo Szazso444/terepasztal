@@ -6,7 +6,7 @@ import {
   type BuiltObjects,
 } from './loadRepair';
 import type { Rng } from './rng';
-import { Terrain, inBounds, type GameMap, type PropInstance } from '../world/tiles';
+import { Terrain, TERRAIN_NAMES, inBounds, type GameMap, type PropInstance } from '../world/tiles';
 import { DEFAULT_MAP_PARAMS, emptyMap } from '../world/mapgen';
 import type { MapGenerator } from '../world/chunks';
 import { RegionState } from '../world/regions';
@@ -23,6 +23,7 @@ import { DIR_DX, DIR_DY, opposite } from './iso';
 import { stationFootprint } from '../sim/stations';
 import { buildingDef, buildingToJSON } from '../sim/buildings';
 import { Builder, DECOR_DEFS, unbuildable } from '../sim/build';
+import { Roads } from '../sim/roads';
 import { Economy } from '../sim/economy';
 import { Stockpile } from '../sim/stockpile';
 import { STR } from '../strings';
@@ -510,6 +511,13 @@ function* shrinkCase(c: Case): Iterable<Case> {
       terrain[i] = Terrain.Grass;
       yield { ...c, terrain };
     }
+}
+
+/** A case with fewer roads saved, then one `shrinkCase` makes smaller. */
+function* shrinkRoadCase(c: Case): Iterable<Case> {
+  for (const xs of shrinkArray((c.built.roads ?? []) as unknown[]))
+    yield { ...c, built: { ...c.built, roads: xs as BuiltObjects['roads'] } };
+  yield* shrinkCase(c);
 }
 
 /**
@@ -1260,6 +1268,12 @@ const keys = (list: readonly { x: number; y: number }[]) => list.map((r) => `${r
 const roadsOf = (list: unknown): BuiltObjects['roads'] => list as BuiltObjects['roads'];
 
 describe('a road on ground that cannot hold one', () => {
+  it('is tried on every ground there is', () => {
+    // a ground added to the game is one more for the tests below to try, not one they miss
+    expect([...ALL].sort()).toEqual(TERRAIN_NAMES.map((_, t) => t));
+    expect(NO_LAND.every((t) => ALL.includes(t as (typeof ALL)[number]))).toBe(true);
+  });
+
   it('is taken off exactly where the ground is water, rock or a mountain', () => {
     for (const t of ALL) {
       const m = flat(t);
@@ -1356,7 +1370,16 @@ describe('a road on ground that cannot hold one', () => {
     const odd = roadsOf([
       road(9, 9),
       road(-1, 0),
+      // off the side of a 9 wide map, where the index `y * w + x` lands on a tile of the next row
+      // or the one before: a check on the index alone would take them for roads on 0,1 and 8,0
+      road(9, 0),
+      road(-1, 1),
       [1.5, 2],
+      // two halves that add up to a whole index on a 9 wide map (0.5 * 9 + 0.5 = 5, a rock tile):
+      // a check on the index alone would take this for a road on tile 5,0
+      [0.5, 0.5],
+      [Number.NaN, 4],
+      [4, Number.POSITIVE_INFINITY],
       ['3', 4],
       [5],
       [],
@@ -1368,6 +1391,10 @@ describe('a road on ground that cannot hold one', () => {
       road(4, 4),
     ]);
     expect(keys(repairBuiltRoads(m, only({ roads: odd })))).toEqual(['4,4']);
+    // what a load skips is what `Roads.load` skips: the one road it keeps is the one that goes
+    const kept = new Roads(new TrackGraph(m.w, m.h));
+    kept.load(odd);
+    expect(keys(kept.list())).toEqual(['4,4']);
     for (const none of [undefined, null, 5, 'roads', { 0: [4, 4] }, []])
       expect(repairBuiltRoads(m, only({ roads: roadsOf(none) })), String(none)).toEqual([]);
     expect(repairBuiltRoads(m, only({}))).toEqual([]);
@@ -1394,9 +1421,11 @@ describe('a road on ground that cannot hold one', () => {
         const m = flat(Terrain.Grass, SIZE, SIZE);
         m.terrain.set(c.terrain);
         const was = Uint8Array.from(m.terrain);
+        const builtWas = structuredClone(c.built);
         const lost = repairBuiltRoads(m, c.built);
-        // asking reads the map and changes nothing
+        // asking reads the map and the save and changes neither
         expect([...m.terrain]).toEqual([...was]);
+        expect(c.built).toEqual(builtWas);
         // the roads do not change the ground the repair gives the other things built
         const tiles = repairBuiltTiles(m, c.built);
         expect(repairBuiltTiles(m, { ...c.built, roads: [] })).toEqual(tiles);
@@ -1404,31 +1433,22 @@ describe('a road on ground that cannot hold one', () => {
         // asked again, of the repaired map, it answers the same
         expect(repairBuiltRoads(m, c.built)).toEqual(lost);
 
-        const saved = (c.built.roads as unknown[]).filter(
-          (t): t is [number, number] =>
-            Array.isArray(t) &&
-            Number.isInteger(t[0]) &&
-            Number.isInteger(t[1]) &&
-            inBounds(m, t[0], t[1]),
-        );
-        const gone = new Set(keys(lost));
-        expect(gone.size, 'each road once').toBe(lost.length);
-        // the ones that go are those the builder would refuse for the ground they stand on now
-        for (const [x, y] of saved) {
-          const refused = unbuildable(at(m, x, y)) !== null;
-          expect(gone.has(`${x},${y}`), `${x},${y} on ${name(at(m, x, y))}`).toBe(refused);
-          if (refused) seen.gone++;
+        // the roads a load keeps: whole tiles on the map, once each, in the order saved
+        const loaded = new Roads(new TrackGraph(SIZE, SIZE));
+        loaded.load(c.built.roads);
+        const saved = loaded.list();
+        for (const { x, y } of saved)
+          if (unbuildable(at(m, x, y)) !== null) seen.gone++;
           else {
             seen.kept++;
             if (NO_LAND.includes(c.terrain[y * SIZE + x])) seen.landMade++;
           }
-        }
-        // and they are listed in the order the save has them
-        const order = [...new Set(keys(saved.map(([x, y]) => ({ x, y }))))].filter((k) =>
-          gone.has(k),
-        );
-        expect(keys(lost)).toEqual(order);
+        // the ones that go are those the builder would refuse for the ground they stand on now,
+        // each once and in the order saved, and no other
+        const refused = saved.filter(({ x, y }) => unbuildable(at(m, x, y)) !== null);
+        expect(keys(lost)).toEqual(keys(refused));
       },
+      { shrink: shrinkRoadCase },
     );
     // the seeds reach roads taken off, roads left, and roads left on ground made land for another
     for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(10);
