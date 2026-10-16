@@ -375,6 +375,13 @@ export const STR = {
     /** a road tried on a tile that has one (src/sim/roads.ts) */
     roadHere: 'There is a road here already',
     /**
+     * a road tried on a tile of a station, a works, a bridge platform, a house or a service stop:
+     * a road meets a building only at its street door, from the tile outside it (#408)
+     */
+    roadOnBuilding: 'A road goes round a building and meets it only at its door',
+    /** a station, a works, a house or a service stop tried on a tile that holds a road (#408) */
+    roadInWay: 'A road is in the way: remove it first',
+    /**
      * A road and track on one tile make a level crossing: the road crosses a plain straight of
      * regular or narrow track at right angles (src/sim/roads.ts), whichever of the two is laid
      * second.
