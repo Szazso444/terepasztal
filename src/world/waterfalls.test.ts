@@ -18,6 +18,7 @@ import {
   encodeChunk,
   encodeMap,
   mapChunks,
+  placeChunk,
   type ChunkPlanes,
   type ChunkStore,
   type MapGenerator,
@@ -35,7 +36,7 @@ import {
 } from './waterfalls';
 import { DIRS, DIR_DX, DIR_DY, Dir } from '../engine/iso';
 import { Rng } from '../engine/rng';
-import { forAll, shrinkInt } from '../testing/property';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
 // Waterfalls (#342): a river tile whose water drops to a lower level on the tile downstream of it
 // is a waterfall, marked in the feature plane with its drop and the edge it falls over. Generated
@@ -806,4 +807,357 @@ describe('waterfalls of a world grown beside a chunk an older generator stored',
     // the seam moved a waterfall somewhere
     expect(changed).toBeGreaterThan(0);
   }, 90_000);
+});
+
+// Verification (#342): properties checked against oracles written apart from chunks.ts and
+// waterfalls.ts, the feature section of a chunk text read byte by byte here, and the waterfalls a
+// seam leaves read off the levels it leaves.
+
+describe('a feature section written by hand', () => {
+  /**
+   * The text of rectangle (`x0`, `y0`, `w`, `h`) of chunk 0, 0 with a feature section of its own:
+   * a count `extra` off the number of `entries`, and for each tile its skip since the one before
+   * and its byte, any of them.
+   */
+  interface HandFeatures {
+    x0: number;
+    y0: number;
+    w: number;
+    h: number;
+    extra: number;
+    entries: [skip: number, byte: number][];
+  }
+  const genHand = (rng: Rng): HandFeatures => {
+    const w = rng.int(1, 32);
+    const h = rng.int(1, 32);
+    const k = rng.int(0, 5);
+    const entries: [number, number][] = [];
+    for (let t = 0; t < k; t++) {
+      // mostly tiles inside the rectangle, some at its last tile and past it
+      const skip = rng.chance(0.15)
+        ? rng.int(w * h - 1, w * h + 200)
+        : rng.int(0, Math.ceil((w * h) / k));
+      // mostly a waterfall's byte, some 0 and some any byte at all
+      const byte = rng.chance(0.7)
+        ? fallFeature(rng.int(1, MAX_DROP), rng.pick(DIRS))
+        : rng.chance(0.15)
+          ? 0
+          : rng.int(0, 255);
+      entries.push([skip, byte]);
+    }
+    const extra = rng.chance(0.15) ? rng.pick([-1, 1]) : 0;
+    return { x0: rng.int(0, 32 - w), y0: rng.int(0, 32 - h), w, h, extra, entries };
+  };
+  function* shrinkHand(c: HandFeatures): Iterable<HandFeatures> {
+    for (const entries of shrinkArray(c.entries)) yield { ...c, entries };
+    if (c.extra) yield { ...c, extra: 0 };
+    for (const w of shrinkInt(c.w, 1)) yield { ...c, w, x0: Math.min(c.x0, 32 - w) };
+    for (const h of shrinkInt(c.h, 1)) yield { ...c, h, y0: Math.min(c.y0, 32 - h) };
+  }
+  const count = (c: HandFeatures) => Math.max(0, c.entries.length + c.extra);
+  const varint = (out: number[], v: number) => {
+    for (; v >= 0x80; v = Math.floor(v / 0x80)) out.push((v % 0x80) | 0x80);
+    out.push(v);
+  };
+  /** The text: the planes encodeChunk writes for the rectangle, then the section by hand. */
+  function handText(c: HandFeatures): string {
+    const m = emptyMap(0, c.w, c.h, Terrain.Grass, c.x0, c.y0);
+    const bytes = bytesOf(encodeChunk(m, 0, 0));
+    // a map with no waterfalls ends in a count of 0
+    if (bytes.pop() !== 0) throw new Error('a chunk text with no waterfalls ends in a count of 0');
+    varint(bytes, count(c));
+    for (const [skip, byte] of c.entries) {
+      varint(bytes, skip);
+      bytes.push(byte);
+    }
+    return textOf(bytes);
+  }
+  /**
+   * What decodeChunk has to make of the section, read here and not by chunks.ts: the feature plane
+   * it lists, or null with the reason encodeChunk never writes such a section.
+   */
+  function expected(c: HandFeatures): { plane: Uint8Array | null; why: string } {
+    const n = c.w * c.h;
+    const plane = new Uint8Array(n);
+    let last = -1;
+    for (const [skip, byte] of c.entries.slice(0, count(c))) {
+      const i = last + 1 + skip;
+      if (i >= n) return { plane: null, why: 'a tile past the rectangle' };
+      if (!byte) return { plane: null, why: 'a 0 listed' };
+      // a waterfall's byte: a drop of 1 to MAX_DROP in bits 0 to 2, an edge in 3 and 4, nothing
+      // above them
+      if (byte >= 32 || (byte & 7) > MAX_DROP || !(byte & 7))
+        return { plane: null, why: 'not a waterfall' };
+      plane[i] = byte;
+      last = i;
+    }
+    if (count(c) < c.entries.length) return { plane: null, why: 'bytes left over' };
+    if (count(c) > c.entries.length) return { plane: null, why: 'cut short' };
+    return { plane, why: plane.some((f) => f) ? 'read, with waterfalls' : 'read, none' };
+  }
+  /** The ground around a rectangle that holds part of its chunk: grass, no water. */
+  const plain: MapGenerator = (s, p) =>
+    emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
+
+  // 400 texts, each read, built into a map and written again
+  it('reads as the waterfalls it lists, on the tiles it lists them, or as nothing', () => {
+    const seen = new Set<string>();
+    forAll(
+      genHand,
+      (c) => {
+        const text = handText(c);
+        const want = expected(c);
+        seen.add(want.why);
+        const got = decodeChunk(text);
+        const built = buildMap(1, { w: 32, h: 32 }, { '0,0': text }, plain);
+        if (!want.plane) {
+          expect(got, want.why).toBeNull();
+          expect(built.unreadable).toEqual(['0,0']);
+          return;
+        }
+        expect(got, want.why).not.toBeNull();
+        expect([...got!.feature]).toEqual([...want.plane]);
+        // the map has each one on its tile of the rectangle, and none elsewhere
+        for (let y = 0; y < 32; y++)
+          for (let x = 0; x < 32; x++) {
+            const inside = x >= c.x0 && y >= c.y0 && x < c.x0 + c.w && y < c.y0 + c.h;
+            const f = inside ? want.plane[(y - c.y0) * c.w + x - c.x0] : 0;
+            const fall = waterfallAt(built.map, x, y);
+            const read = fall ? fall.drop | (fall.edge << 3) : 0;
+            if (built.map.feature![y * 32 + x] !== f || read !== f)
+              throw new Error(`tile (${x}, ${y}): ${built.map.feature![y * 32 + x]}, not ${f}`);
+          }
+        // and the planes it read, written again, are the same text
+        const m = emptyMap(0, c.w, c.h, Terrain.Grass, c.x0, c.y0);
+        placeChunk(m, 0, 0, got!);
+        expect(encodeChunk(m, 0, 0)).toBe(text);
+      },
+      {
+        seeds: Array.from({ length: 400 }, (_, i) => i + 1),
+        shrink: shrinkHand,
+        format: (c) => `${JSON.stringify(c)}, text ${handText(c)}`,
+      },
+    );
+    // every way out was taken
+    for (const why of [
+      'read, with waterfalls',
+      'read, none',
+      'a tile past the rectangle',
+      'a 0 listed',
+      'not a waterfall',
+      'bytes left over',
+      'cut short',
+    ])
+      expect(seen, why).toContain(why);
+  });
+});
+
+describe('waterfalls of a world grown beside a stored chunk of any ground', () => {
+  /** The ground a stored chunk is drawn from, simplest first. */
+  const GROUND = [Terrain.Grass, Terrain.Water, Terrain.Hill, Terrain.Mountain];
+  /**
+   * Where the stored chunk lies: beside a river, beside water at level 2 (which the seam may
+   * lower), or where a river at level 1 or 2 runs into it.
+   */
+  const NEAR = ['beside', 'raised', 'into'] as const;
+  /**
+   * A world of RAISED_WORLDS, and a chunk an older generator stored `near` one of its rivers:
+   * ground of the first `kinds` of GROUND in square patches of `patch` tiles, its water at any level
+   * 0 to MAX_LEVEL, a river on some of it running any way, out of the chunk too (`rivers`), and on
+   * some of those a waterfall of any drop over that way (`falls`), whatever the levels say. With
+   * `pool`, the tiles a river at level 1 or 2 of the world runs into are still water at level 0.
+   */
+  interface Beside {
+    seed: number;
+    near: (typeof NEAR)[number];
+    pick: number;
+    salt: number;
+    kinds: number;
+    patch: number;
+    rivers: boolean;
+    falls: boolean;
+    pool: boolean;
+  }
+  const genBeside = (rng: Rng): Beside => ({
+    seed: rng.pick(RAISED_WORLDS),
+    near: rng.pick(NEAR),
+    pick: rng.int(0, 999),
+    salt: rng.int(1, 2 ** 31 - 1),
+    kinds: rng.int(1, GROUND.length),
+    patch: rng.pick([1, 2, 4, 8]),
+    rivers: rng.chance(0.8),
+    falls: rng.chance(0.8),
+    pool: rng.chance(0.5),
+  });
+  function* shrinkBeside(c: Beside): Iterable<Beside> {
+    if (c.pool) yield { ...c, pool: false };
+    if (c.falls) yield { ...c, falls: false };
+    if (c.rivers) yield { ...c, rivers: false, falls: false };
+    for (const kinds of shrinkInt(c.kinds, 1)) yield { ...c, kinds };
+  }
+
+  const PARAMS = { w: 160, h: 160 };
+  /** The chunk of map tile `i`, in reading order over the map's 5 x 5 chunks. */
+  const chunkOfTile = (i: number) =>
+    Math.floor(i / 160 / CHUNK_TILES) * 5 + Math.floor((i % 160) / CHUNK_TILES);
+  /** A world as generated and stored, and the chunks near its rivers each way NEAR names. */
+  interface World {
+    fresh: GameMap;
+    near: Record<Beside['near'], number[]>;
+    /** the tiles a river at level 1 or 2 of another chunk runs into */
+    entries: Set<number>;
+  }
+  const worlds = new Map<number, World>();
+  function worldOf(seed: number): World {
+    let w = worlds.get(seed);
+    if (w) return w;
+    const fresh = buildMap(seed, PARAMS, {}).map;
+    const near = { beside: new Set<number>(), raised: new Set<number>(), into: new Set<number>() };
+    const entries = new Set<number>();
+    for (let i = 0; i < 160 * 160; i++) {
+      if (!fresh.flowDir![i]) continue;
+      const x = i % 160;
+      const y = Math.floor(i / 160);
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d];
+        const ny = y + DIR_DY[d];
+        if (nx < 0 || ny < 0 || nx >= 160 || ny >= 160) continue;
+        const n = ny * 160 + nx;
+        const k = chunkOfTile(n);
+        if (k === chunkOfTile(i)) continue;
+        near.beside.add(k);
+        if (fresh.waterSurface![i] >= 2) near.raised.add(k);
+        if (fresh.waterSurface![i] >= 1 && fresh.flowDir![i] === d + 1) {
+          near.into.add(k);
+          entries.add(n);
+        }
+      }
+    }
+    const sorted = (s: Set<number>) => [...s].sort((a, b) => a - b);
+    w = {
+      fresh,
+      near: { beside: sorted(near.beside), raised: sorted(near.raised), into: sorted(near.into) },
+      entries,
+    };
+    worlds.set(seed, w);
+    return w;
+  }
+  /** The stored chunk (`cx`, `cy`) of case `c` in world `w`, on a map of the world's frame. */
+  function storedGround(c: Beside, w: World, cx: number, cy: number): GameMap {
+    const m = blank(160, 160);
+    const rng = new Rng(c.salt);
+    const side = CHUNK_TILES / c.patch;
+    const kinds = Array.from({ length: side * side }, () => GROUND[rng.int(0, c.kinds - 1)]);
+    const levels = Array.from({ length: side * side }, () => rng.int(0, MAX_LEVEL));
+    for (let y = 0; y < CHUNK_TILES; y++)
+      for (let x = 0; x < CHUNK_TILES; x++) {
+        const i = (cy * CHUNK_TILES + y) * 160 + cx * CHUNK_TILES + x;
+        const p = Math.floor(y / c.patch) * side + Math.floor(x / c.patch);
+        const pool = c.pool && w.entries.has(i);
+        m.terrain[i] = pool ? Terrain.Water : kinds[p];
+        if (m.terrain[i] !== Terrain.Water) continue;
+        m.biome[i] = Biome.Lake;
+        m.waterSurface![i] = pool ? 0 : levels[p];
+        if (pool || !c.rivers || rng.chance(0.4)) continue;
+        const way = rng.pick(DIRS);
+        m.biome[i] = Biome.River;
+        m.flowDir![i] = way + 1;
+        m.flow![i] = rng.int(1, 200);
+        if (c.falls && rng.chance(0.5)) m.feature![i] = fallFeature(rng.int(1, MAX_DROP), way);
+      }
+    return m;
+  }
+
+  // 30 cases over 7 worlds of 160 tiles, each built with its stored chunk and read back: about
+  // 4 s alone
+  it("keep the stored chunk's bytes, and give every new river tile the drop its levels leave", () => {
+    const met = { lowered: 0, ponds: 0, intoStored: 0, moved: 0, outward: 0, falls: 0 };
+    forAll(
+      genBeside,
+      (c) => {
+        const w = worldOf(c.seed);
+        const { fresh } = w;
+        const list = w.near[c.near].length ? w.near[c.near] : w.near.beside;
+        const k = list[c.pick % list.length];
+        const [cx, cy] = [k % 5, Math.floor(k / 5)];
+        const ground = storedGround(c, w, cx, cy);
+        const key = chunkKey(cx, cy);
+        const store: ChunkStore = { [key]: encodeChunk(ground, cx, cy) };
+        const built = buildMap(c.seed, PARAMS, store);
+        expect(built.chunks[key]).toBe(store[key]);
+        const m = built.map;
+        const level = m.waterSurface!;
+        const way = m.flowDir!;
+        const feature = m.feature!;
+        const isStored = (i: number) => chunkOfTile(i) === k;
+        const at = (i: number) => `chunk ${key}, map tile (${i % 160}, ${Math.floor(i / 160)})`;
+        for (let i = 0; i < 160 * 160; i++) {
+          const f = feature[i];
+          // a waterfall's bits read here: the drop in bits 0 to 2, the edge in 3 and 4
+          const drop = f & 7;
+          if (isStored(i)) {
+            // a stored tile keeps the byte it was stored with, whatever the new side does
+            if (f !== ground.feature![i])
+              throw new Error(`stored feature ${ground.feature![i]} read as ${f} at ${at(i)}`);
+            const n = drop ? downstream(m, i) : -1;
+            if (n >= 0 && !isStored(n)) met.outward++;
+            continue;
+          }
+          if (fresh.flowDir![i] && !way[i]) met.ponds++;
+          if (m.terrain[i] === Terrain.Water && level[i] < fresh.waterSurface![i]) met.lowered++;
+          if (f !== fresh.feature![i]) met.moved++;
+          if (f >= 32 || (f && !drop)) throw new Error(`feature byte ${f} at ${at(i)}`);
+          if (!way[i]) {
+            if (f) throw new Error(`a waterfall ${f} on a tile that runs nowhere at ${at(i)}`);
+            continue;
+          }
+          if (drop) {
+            met.falls++;
+            // River-biome water, falling over its downstream edge
+            if (m.terrain[i] !== Terrain.Water || m.biome[i] !== Biome.River)
+              throw new Error(`a waterfall off a river at ${at(i)}`);
+            if (f >> 3 !== way[i] - 1)
+              throw new Error(
+                `a waterfall over edge ${f >> 3}, downstream ${way[i] - 1}, ${at(i)}`,
+              );
+          }
+          const n = downstream(m, i);
+          let want: number;
+          if (n >= 0) {
+            // the difference of the levels the seam leaves, into stored water too
+            want = m.terrain[n] === Terrain.Water && level[i] > level[n] ? level[i] - level[n] : 0;
+            if (want && isStored(n)) met.intoStored++;
+          } else
+            // off the map: the drop the generator saw, less what the seam lowered the tile by
+            want = Math.max(0, fallDrop(fresh.feature![i]) - (fresh.waterSurface![i] - level[i]));
+          if (drop !== want || want > MAX_DROP)
+            throw new Error(`a drop of ${drop}, not ${want}, at ${at(i)}`);
+        }
+        // new river tiles' water within a level of each other's, but across a waterfall's edge
+        for (let i = 0; i < 160 * 160; i++) {
+          if (isStored(i) || !way[i]) continue;
+          for (const j of [i % 160 < 159 ? i + 1 : -1, i + 160 < 160 * 160 ? i + 160 : -1]) {
+            if (j < 0 || isStored(j) || !way[j]) continue;
+            const apart = Math.abs(level[i] - level[j]);
+            const fall =
+              downstream(m, i) === j ? feature[i] & 7 : downstream(m, j) === i ? feature[j] & 7 : 0;
+            if (fall ? apart !== fall : apart > 1)
+              throw new Error(`river water ${apart} levels apart at ${at(i)}`);
+          }
+        }
+        // and a load reads the same waterfalls back from the store alone
+        const again = buildMap(c.seed, PARAMS, built.chunks, never).map;
+        for (let i = 0; i < 160 * 160; i++)
+          if (again.feature![i] !== feature[i])
+            throw new Error(`feature ${again.feature![i]} on a load, ${feature[i]}, at ${at(i)}`);
+      },
+      {
+        seeds: Array.from({ length: 30 }, (_, i) => i + 1),
+        shrink: shrinkBeside,
+        shrinkBudget: 10,
+      },
+    );
+    // every way the seam meets a waterfall was met
+    for (const [what, n] of Object.entries(met)) expect(n, what).toBeGreaterThan(0);
+  }, 120_000);
 });
