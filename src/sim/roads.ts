@@ -215,7 +215,7 @@ export function roadServes(roads: RoadTiles, place: PlaceAt): boolean {
 /**
  * The longest spur the game lays from a street door to a road, in tiles, the door's reach tile
  * among them: the bound of the search `findSpur` makes, so a road this many tiles off or nearer is
- * joined. A door further from every road gets its reach tile alone (`Builder.laySpur`).
+ * joined. A door further from every road gets no road (`Builder.laySpur`).
  */
 export const SPUR_REACH = 12;
 

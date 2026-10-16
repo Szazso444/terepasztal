@@ -1242,8 +1242,9 @@ describe('a walk with roads', () => {
     for (let y = 19; y > 16; y--) road.push([24, y]);
     for (let x = 24; x >= 10; x--) road.push([x, 16]);
     for (let y = 17; y <= 18; y++) road.push([10, y]);
-    // the tile above the station holds the road the station laid at its door already (#408)
-    expect(builder.roads.toJSON()).toEqual([[10, 18]]);
+    // no road was near the station when it was placed, so it laid none at its door (#455); the
+    // road laid up to its door brings the tile above the station, free
+    expect(builder.roads.toJSON()).toEqual([]);
     for (const [x, y] of road)
       expect(builder.roads.has(x, y) || builder.placeRoad(x, y), `${x},${y}`).toBe(true);
     const people = new PeopleSim(map, builder, new Rng(1));

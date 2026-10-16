@@ -1251,15 +1251,16 @@ export class Builder {
     return roadServes(this.roads, place);
   }
   /**
-   * A place was placed: each of its street doors gets its spur (`laySpur`), or, where no road is
-   * near enough, its reach tile alone, so the next road laid beside it joins it. Nothing for what
-   * has no door. A place is turned by placing it anew: it gets the spur of its door where it faces
-   * now, and the spur it had stays, a road like any other.
+   * A place was placed: each of its street doors gets its spur (`laySpur`) where a road of the
+   * network is near enough, and no road tile otherwise; a road laid near the door later brings it
+   * its spur (`connectNear`). Nothing for what has no door. A place is turned by placing it anew:
+   * it gets the spur of its door where it faces now, and the spur it had stays, a road like any
+   * other.
    */
   private connectPlace(p: PlaceAt) {
     if (!hasDoors(p.def)) return;
     const site = this.spurSite();
-    for (const d of streetDoors(p)) this.laySpur(d, true, site);
+    for (const d of streetDoors(p)) this.laySpur(d, site);
   }
   /**
    * A road was laid on (x, y): each street door with no road on its reach tile within SPUR_REACH
@@ -1274,7 +1275,7 @@ export class Builder {
     );
     if (!near.length) return;
     const site = this.spurSite();
-    for (const d of near) this.laySpur(d, false, site);
+    for (const d of near) this.laySpur(d, site);
   }
   /**
    * What every spur laid now is judged against. `platforms`: the keys of the tiles a spur keeps
@@ -1333,13 +1334,13 @@ export class Builder {
    * tiles before it stood, the stock aside), on land the player owns even where the builder lifts
    * the lock, and off every station's platform and depot's gates (`spurSite`), which a road to a
    * door never touches (#406 D1). With no road that near, or none a spur keeping to those rules
-   * reaches, the reach tile alone is laid when `alone` says so, and nothing otherwise. Nothing
-   * either when the reach tile holds a road already or can take none. Each tile laid is told
-   * (`onRoadChanged`); nothing is paid. The tiles laid, the reach tile first.
+   * reaches, nothing is laid: a lone road tile at a door would be one the player can neither see
+   * nor remove until roads are drawn (#329) and can be removed (#409). Nothing either when the
+   * reach tile holds a road already or can take none. Each tile laid is told (`onRoadChanged`);
+   * nothing is paid. The tiles laid, the reach tile first.
    */
   private laySpur(
     door: Door,
-    alone: boolean,
     site: { platforms: Set<number>; reaches: Set<number> },
   ): { x: number; y: number }[] {
     const open = (x: number, y: number, roads = this.roads) =>
@@ -1361,7 +1362,7 @@ export class Builder {
         tried.add(t.x, t.y);
       }
     }
-    tiles ??= alone ? [reach] : [];
+    if (!tiles) return [];
     for (const t of tiles) {
       this.roads.add(t.x, t.y);
       this.onRoadChanged?.(t.x, t.y);
