@@ -5,7 +5,7 @@ import { structureFrame } from '../src/art/frames';
 import { generateStructuresAtlas } from '../src/art/structures';
 import { Rng } from '../src/engine/rng';
 import { structureFamily, unturnedFrame } from '../src/render/assetScale';
-import { doorsOf, placeSpan } from '../src/sim/doors';
+import { doorsOf, placeSpan, streetDoor } from '../src/sim/doors';
 import { SEEDS, forAll, shrinkInt } from '../src/testing/property';
 import { FIT, measureBase } from './building-fit.mjs';
 import { ROTATIONS } from './building-kit.mjs';
@@ -240,6 +240,11 @@ describe('the foot of a frame', () => {
     expect(SOLID).toBe(FIT.alpha);
   });
 
+  it("holds the issue's bound: a foot corner is within 1 world px of the picture, no more", () => {
+    // the data test below judges every corner by REACH, so a looser REACH would pass any foot
+    expect(REACH).toBe(1);
+  });
+
   it('gives no foot for an empty frame', () => {
     expect(measureFoot(drawn(20, 20, () => null))).toBeNull();
   });
@@ -430,6 +435,16 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     expect(sloped).toBeLessThan(Object.keys(data).length);
   });
 
+  it('passes over walls on stilts: no foot has its near corner above the anchor', () => {
+    // the anchor is the footprint's centre on the ground (docs/art-direction/README.md): a base
+    // whose near corner stands more than 2 world px above it is on legs or a roof, and the foot is
+    // what it stands on (the generated coal stand, `fuel_stop_r1` to `_r3`)
+    const above = Object.entries(data)
+      .filter(([, e]) => e.foot[2][1] < -2)
+      .map(([key, e]) => `${key} ${e.foot[2][1]}`);
+    expect(above, `near corners above the anchor: ${above.slice(0, 5)}`).toEqual([]);
+  });
+
   it('names the front wall for the rotation, and whether the camera sees it', () => {
     for (const [key, e] of Object.entries(data)) {
       const r = ROTATIONS[e.rot];
@@ -476,7 +491,8 @@ describe(`the ground data of the ${GROUP} frames`, () => {
       for (const door of e.doors) {
         seen++;
         expect(['S', 'E'], key).toContain(door.side);
-        expect(Math.abs(door.offset), key).toBeLessThanOrEqual(DOOR.near);
+        // within 0.3 tile of the middle of its tile, the window docs/art-direction/README.md gives
+        expect(Math.abs(door.offset), key).toBeLessThanOrEqual(0.3);
         expect(gap(frames.get(key), door.point), `${key} door point`).toBeLessThanOrEqual(REACH);
       }
       // at most one picture door for each door of the data
@@ -661,6 +677,113 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     expect(seen).toBeGreaterThan(0);
   });
 
+  it('draws the longer side of a footprint as the longer wall of the foot', () => {
+    // an oracle for the footprint's orientation that does not share the tool's arithmetic: the S
+    // wall runs along x, so a footprint wider than it is deep has the longer S wall, at every turn
+    let unequal = 0;
+    for (const [key, e] of Object.entries(data)) {
+      const w = Math.max(...e.footprint.map((t) => t[0])) + 1;
+      const h = Math.max(...e.footprint.map((t) => t[1])) + 1;
+      if (w === h) continue;
+      unequal++;
+      const [, east, south, west] = e.foot;
+      const along = { S: south[0] - west[0], E: east[0] - south[0] };
+      expect(
+        Math.sign(along.S - along.E),
+        `${key}: ${w} x ${h} tiles, walls ${along.S} and ${along.E}`,
+      ).toBe(Math.sign(w - h));
+    }
+    expect(unequal).toBeGreaterThan(0);
+  });
+
+  it('names each door once, on a tile of its own wall, with the tile across it as `reach`', () => {
+    // from the entry alone, so that a door cannot agree with doorsOf and still be misfiled: the S
+    // wall is the footprint's last row, the E wall its last column, and `reach` is the tile
+    // beyond it, outside the footprint
+    const STEP = { S: [0, 1], E: [1, 0] };
+    let seen = 0;
+    for (const [key, e] of Object.entries(data)) {
+      const w = Math.max(...e.footprint.map((t) => t[0])) + 1;
+      const h = Math.max(...e.footprint.map((t) => t[1])) + 1;
+      const named = new Set();
+      for (const door of e.doors) {
+        seen++;
+        const [x, y] = door.tile;
+        const label = `${key}: ${door.kind} door at ${x},${y} on ${door.side}`;
+        expect(e.footprint, `${label} is not in the footprint`).toContainEqual([x, y]);
+        expect(door.side === 'S' ? y === h - 1 : x === w - 1, `${label} is not on that wall`).toBe(
+          true,
+        );
+        const [dx, dy] = STEP[door.side];
+        expect(door.reach, `${label}: reach`).toEqual([x + dx, y + dy]);
+        expect(e.footprint, `${label}: reach is inside the footprint`).not.toContainEqual(
+          door.reach,
+        );
+        const id = `${door.kind} ${door.tile} ${door.side}`;
+        expect(named.has(id), `${key}: ${id} listed twice`).toBe(false);
+        named.add(id);
+      }
+    }
+    expect(seen).toBeGreaterThan(50);
+  });
+
+  it("has the front wall where #406's doors are: a platform door on it, a street door on it or across", () => {
+    // the front the pictures are made for (S, W, N, E for r0 to r3) and the doors the game has
+    // come from two places; a station's platform door is on its front and its street door on the
+    // side away from it (D1 of #406), every other place has its street door on its front
+    let checked = 0;
+    for (const [key, e] of Object.entries(data)) {
+      const front = DIRS.indexOf(e.front.side);
+      for (const { id, kind, def } of building(key).defs) {
+        const label = `${key} (${id}, ${kind}) at rotation ${e.rot}`;
+        const doors = doorsOf(def, 0, 0, e.rot);
+        const street = streetDoor(def, 0, 0, e.rot);
+        expect(street, label).toEqual(doors.find((d) => d.kind === 'street'));
+        if (kind === 'station') {
+          const platform = doors.find((d) => d.kind === 'platform');
+          expect(platform?.side, `${label}: platform door`).toBe(front);
+          expect(street.side, `${label}: street door`).toBe((front + 2) % 4);
+        } else {
+          expect(street.side, `${label}: street door`).toBe(front);
+        }
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThanOrEqual(Object.keys(data).length);
+  });
+
+  it('lists for #407 exactly the doors the pictures do not show or place off the middle', () => {
+    // the findings are what the door art is redone from; here they are derived again from the
+    // data and doorsOf alone: a door of the data on a wall the camera sees is either in the
+    // entry, off the middle of its tile by more than 0.05 or not, or it is "not seen"
+    const { data: made, findings } = buildGround(frames, places, { doorsOf, placeSpan });
+    expect(Object.keys(made.frames)).toEqual(Object.keys(data));
+    let listed = 0;
+    for (const [key, e] of Object.entries(data)) {
+      const expected = [];
+      for (const door of doorsOf(building(key).defs[0].def, 0, 0, e.rot)) {
+        const side = DIRS[door.side];
+        if (side !== 'S' && side !== 'E') continue;
+        const label = `${door.kind} door at tile ${door.tile.x},${door.tile.y} on ${side}`;
+        const found = e.doors.find(
+          (d) =>
+            d.kind === door.kind &&
+            d.side === side &&
+            d.tile.join() === `${door.tile.x},${door.tile.y}`,
+        );
+        if (!found) expected.push(`${label}: not seen`);
+        else if (Math.abs(found.offset) > 0.05)
+          expected.push(
+            `${label}: the picture's door is ${found.offset > 0 ? '+' : ''}${found.offset} tile off the middle`,
+          );
+      }
+      const doorNotes = (findings[key] ?? []).filter((n) => /^(street|platform) door /.test(n));
+      expect(doorNotes.sort(), key).toEqual(expected.sort());
+      listed += doorNotes.length;
+    }
+    expect(listed).toBeGreaterThan(100);
+  });
+
   it("keeps most of each visible wall's foot on the picture, not only its corners", () => {
     // a foot whose corners touch the silhouette but whose walls float over it would pass the
     // corner check; here the columns along the S and E feet each need opaque texels on or just
@@ -697,33 +820,43 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     expect(bare, `feet mostly off the picture: ${bare.slice(0, 5)}`).toEqual([]);
   });
 
-  it('counts what lies below the foot as an independent count of the texels does', () => {
+  it('counts what lies below the foot between two counts of the texels, a texel of slack apart', () => {
+    // `baked` is the opaque texels below the foot by 1.5 world px, in whole columns from the
+    // outer corners. Counted again here by texel centres in world px, the line a texel further
+    // down and the columns inside the corners is the least it can be, and the line a texel
+    // further up and a column more at each end the most: a bracket as wide as the counting's own
+    // rounding, not a tolerance of the foot's width (the flag is at MEASURE.baked, 40)
+    const BELOW = 1.5;
     const off = [];
     for (const [key, e] of Object.entries(data)) {
       const frame = frames.get(key);
       const d = frame.resolution;
+      const t = 1 / d;
       const [, east, south, west] = e.foot;
       // each wall's own slope, from its corners
       const left = (south[1] - west[1]) / (south[0] - west[0]);
       const right = (south[1] - east[1]) / (east[0] - south[0]);
-      let texels = 0;
-      for (let y = 0; y < frame.h; y++)
-        for (let x = 0; x < frame.w; x++) {
-          if (frame.data[(y * frame.w + x) * 4 + 3] < FIT.alpha) continue;
-          const wx = (x + 0.5 - frame.ax) / d;
-          const wy = (y + 0.5 - frame.ay) / d;
-          if (wx < west[0] || wx >= east[0]) continue;
-          const line =
-            wx < south[0] ? west[1] + (wx - west[0]) * left : south[1] - (wx - south[0]) * right;
-          if (wy > line + 1.5) texels++;
-        }
-      // the tool counts whole columns from the corners outwards, and a texel row whose top is
-      // above the line's reach: up to a row of the foot's width and a few texels more
-      const row = (east[0] - west[0]) / d;
-      if (Math.abs(texels / (d * d) - e.baked) > 15 + row)
-        off.push(`${key} ${e.baked} / ${texels / d / d}`);
+      const count = (below, from, to) => {
+        let texels = 0;
+        for (let y = 0; y < frame.h; y++)
+          for (let x = 0; x < frame.w; x++) {
+            if (frame.data[(y * frame.w + x) * 4 + 3] < FIT.alpha) continue;
+            const wx = (x + 0.5 - frame.ax) / d;
+            const wy = (y + 0.5 - frame.ay) / d;
+            if (wx < from || wx >= to) continue;
+            const line =
+              wx < south[0] ? west[1] + (wx - west[0]) * left : south[1] - (wx - south[0]) * right;
+            if (wy > line + below) texels++;
+          }
+        return texels / (d * d);
+      };
+      const least = count(BELOW + t, west[0], east[0]);
+      const most = count(BELOW - t, west[0] - t, east[0] + t);
+      // and a world px squared for the corners' two decimals
+      if (e.baked < least - 1 || e.baked > most + 1)
+        off.push(`${key} ${e.baked} / ${least} to ${most}`);
     }
-    expect(off, `baked disagrees with a recount: ${off.slice(0, 5)}`).toEqual([]);
+    expect(off, `baked outside a recount's bracket: ${off.slice(0, 5)}`).toEqual([]);
   });
 
   it(
