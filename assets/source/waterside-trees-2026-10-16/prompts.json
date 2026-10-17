@@ -1,0 +1,123 @@
+{
+  "tool": "built-in image_gen",
+  "attempts": [
+    {
+      "file": "tree-mangrove-1.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nA young mangrove: a slim trunk, eight to ten prop roots, a compact crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 6.126869297355321,
+        "box": [
+          123,
+          91,
+          1130,
+          1170
+        ],
+        "footAuto": [
+          623.5,
+          1022.25
+        ],
+        "foot": [
+          623.5,
+          1022.25
+        ],
+        "anchor": [
+          623.5,
+          1022.25
+        ],
+        "kind": "mangrove",
+        "height": 30,
+        "k": 0.032214765100671144,
+        "drawn": {
+          "width": 38.96697986577182,
+          "footFromCentre": -0.11597315436241612,
+          "belowFoot": 4.759731543624161,
+          "rootSpread": 22.846711409395972
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 181.6958,
+        "look": "checks/tree-mangrove-1-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Recognizable arched prop roots and centered waterline at both zooms; smooth clusters agree with oak. Highlights are too bright for the requested species cap; retry with darker leaf palette.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-mangrove-1.png",
+      "attempt": 2,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nA young mangrove: a slim trunk, eight to ten prop roots, a compact crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt had yellow-green leaf highlights that were too bright. Use the red mangrove palette exactly: deep #1C2E28, mid #2F4A36, light #55703F, tiny lit tips capped at #8A9A4E. Keep the crown dark glossy forest green throughout. Preserve a crown slightly wider than its height and roots spread about 60 percent of the crown width, with the blunt dark tips evenly distributed on a flat 2:1 ellipse. No painted water or shadow.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 5.342902711323764,
+        "box": [
+          156,
+          149,
+          1103,
+          1078
+        ],
+        "footAuto": [
+          637,
+          950.5
+        ],
+        "foot": [
+          637,
+          950.5
+        ],
+        "anchor": [
+          637,
+          950.5
+        ],
+        "kind": "mangrove",
+        "height": 30,
+        "k": 0.037429819089207735,
+        "drawn": {
+          "width": 42.580162195882714,
+          "footFromCentre": 0.3368683718028696,
+          "belowFoot": 4.772301933873986,
+          "rootSpread": 22.907049282595132
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 158.6676,
+        "look": "checks/tree-mangrove-1-attempt-2-look.png",
+        "footReadByEye": false,
+        "lookReview": "Pass at zoom 1 and 2: dark clustered crown, upper-left light, visible arched roots, flat elliptical tip arrangement centered on water tile; no ground, water, or cast shadow; highlights subdued below the oak.",
+        "failed": []
+      }
+    }
+  ]
+}
