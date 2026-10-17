@@ -28,7 +28,7 @@ Core's art review of 2026-10-17 read three more feet by eye (finish F1), and `re
 | `props/willow_1`   | tree-willow-2.png   | 173 x 144      | 86.1, 128.0     |           48 |
 | `props/willow_2`   | tree-willow-3.png   | 197 x 160      | 101.9, 144.0    |           54 |
 
-Each is `k * 4 / TREE_SCALE` texels per source px (the atlas's resolution 4, the renderer's tree scale 1.5), anchored where `trees.json` puts the anchor, drawn 1.2 wider like every prop, rounded by `smoothPng(2)` and passed through the atlas cap pass. A picture whose alpha box no longer matches its `trees.json` entry is refused, so a repainted tree must be measured again before it is packed.
+Each is `k * 4 / TREE_SCALE` texels per source px (the atlas's resolution 4, the renderer's tree scale 1.5), anchored where `trees.json` puts the anchor, drawn 1.2 wider like every prop, rounded by `smoothPng(2)` and passed through the atlas cap pass. A picture whose alpha box no longer matches its `trees.json` entry is refused, so a repainted tree must be measured again before it is packed. Because the props atlas is partial, `src/art/props.ts` draws procedural fallbacks for the same six keys, within a world px of the same frame size and anchor.
 
 Every selected painting has zero edge pixels, zero cursor-white pixels, zero selection-amber pixels, and zero cyan-water percentage. All widths, root spreads, center offsets and willow below-foot distances pass. The looks in `checks/` were inspected at zoom 1 and zoom 2 for species, placement, clusters, light, colour depth and absence of painted ground, water and shadows. Earlier attempts were retained because their highlights were too bright; young willow attempt 1 also failed the width range.
 

@@ -77,6 +77,9 @@
     "props/flowers_1": "14x8@7,7",
     "props/flowers_2": "14x8@7,7",
     "props/flowers_3": "14x8@7,7",
+    "props/mangrove_0": "27x22@14,20",
+    "props/mangrove_1": "36x29@18,25",
+    "props/mangrove_2": "49x34@25,31",
     "props/oak_0": "34x41@17,37",
     "props/oak_1": "36x43@18,39",
     "props/oak_2": "38x43@19,39",
@@ -101,7 +104,10 @@
     "props/tree_2": "30x38@15,34",
     "props/wheat_0": "50x31@26,17",
     "props/wheat_1": "49x30@24,17",
-    "props/wheat_2": "44x30@22,16"
+    "props/wheat_2": "44x30@22,16",
+    "props/willow_0": "35x31@17,27",
+    "props/willow_1": "43x36@22,32",
+    "props/willow_2": "49x40@25,36"
   },
   "rolling": {
     "rolling/loco_diesel_cab_medium_blue_body_f0": "75x52@38,38",
