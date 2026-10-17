@@ -799,7 +799,7 @@
         "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
-    "kept": true,
+    "kept": false,
     "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nReferences: the first is the style board. The second is this very picture as it was painted before, laid onto its footprint and straightened to exactly the block-out's camera, scale and place. Paint the SAME building again, wall for wall and detail for detail, with its wall feet on the lines they run along in this reference. Straightening has stretched or squashed it a little: keep its wall feet exactly, and give everything above them natural proportions again.\n\nWhat was wrong with it: It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen.\n\nCorrection: the earlier r1 came back a low, long bin, not this coaling stage turned. Its piers stood outside the grey plinth, its bunker was longer and deeper than in the front view and its legs half as long. Stand the six piers on the plinth: the outer piers on the plinth's left, near and right corners, nothing outside it. Paint the bunker of the front-view reference, the same size, no longer and no deeper, on the same tall legs: from the pier caps to the bunker's floor longer than the bunker's plank wall is deep. The bunker's top rim rises above the grey block's top face, by about half the block's height, as in the front view. The lower-left wall is the right-hand side, the long side: three piers and two X-braced bays. The lower-right wall is the back, the short side: two piers and one bay. The chute, the winch and the chain are on the front, out of sight: none of them shows.\n\nCorrection: attempt 4 still failed the height: its fitted box.top was 443.4, but it must be at most 340 (r0 is 284.8). Its piers spread 809 pixels across the returned canvas, against r0's 636, so the bunker became too big and the legs too short in the game. Keep the six pier feet on the grey plinth corners, the bunker no longer or deeper than r0, and extend the tall X-braced legs between the pier caps and bunker floor. The bunker rim must rise above the guide block's top by about half the block's height. Preserve the correct long lower-left side and short lower-right back, with no chute, winch or chain visible.\n\nCorrection: attempt 5 still has box.top399.3, failing the340 limit. Its actual outer pier corners give long/short408/256=1.594, beyond1.57. Keep r0's compact bunker plan at1.364 long/short, with the six piers exactly on the plinth corners, and raise that same bunker on much taller X-braced legs. The pier-cap to bunker-floor distance must exceed the plank wall's height. Copy the tall front-view reference's structure, not the low camera-repaint reference's proportions.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces, smooth painted contours.",
     "references": [
       "assets/source/buildings-v2/guides/t1-r1.png",
@@ -1097,7 +1097,7 @@
         "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
-    "kept": true,
+    "kept": false,
     "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nReferences: the first is the style board. The second is this very picture as it was painted before, laid onto its footprint and straightened to exactly the block-out's camera, scale and place. Paint the SAME building again, wall for wall and detail for detail, with its wall feet on the lines they run along in this reference. Straightening has stretched or squashed it a little: keep its wall feet exactly, and give everything above them natural proportions again.\n\nWhat was wrong with it: It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen.\n\nCorrection: the earlier r3 came back mirrored: the winch drum, the chain and the chute stood at the front's right end, where the front view has them at its left end. This view is the front view turned on a turntable, not flipped. The lower-right wall is the front, the short side: two piers and one bay, with the chute sloping out from it, and the winch drum and chain at the front's left end, which in this picture is the near (bottom) corner. The lower-left wall is the left-hand side, the long side: three piers and two X-braced bays. Stand the six piers on the plinth: the outer piers on the plinth's left, near and right corners, nothing outside it. Keep the stage as tall as in the front view: the bunker's top rim rises above the grey block's top face by about half the block's height.\n\nCorrection: attempt4 had the front apparatus on the correct lower-right short face, with the winch and chain toward the near/bottom end; keep that turned arrangement. Its fitted box.top351.2 is still above the maximum340, so retain r0's compact bunker and extend the tall X-braced legs slightly. Keep the six piers exactly on the footprint corners, three along the long lower-left side. Use the added front-view reference for the stage's full height, rather than shortening it to match the camera-repaint reference.\n\nCorrection: attempt5 lost more height: fitted box.top375.8, still failing maximum340. The added fourth image is r0 at the required height; use that for the long timber legs and bunker height, not the shortened third image. Raise the bunker on the same six piers and tall legs, without making its plan larger. Preserve the passing1.294 plan ratio, short front on the lower right, long two-bay side lower left, and chain/winch at the near end.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces, smooth painted contours.",
     "references": [
       "assets/source/buildings-v2/guides/t1-r3.png",
@@ -1399,7 +1399,7 @@
         "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
-    "kept": true,
+    "kept": false,
     "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r2: The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.\n\nReferences: the first is the style board. The second is this very picture as it was painted before, laid onto its footprint and straightened to exactly the block-out's camera, scale and place. Paint the SAME building again, wall for wall and detail for detail, with its wall feet on the lines they run along in this reference. Straightening has stretched or squashed it a little: keep its wall feet exactly, and give everything above them natural proportions again.\n\nWhat was wrong with it: It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen.\n\nCorrection: the earlier r2 came back a low, long bin, not this coaling stage turned. Its piers stood outside the grey plinth, its bunker was longer and deeper than in the front view and its legs short. Stand the six piers on the plinth: the outer piers on the plinth's left, near and right corners, nothing outside it. Paint the bunker of the front-view reference, the same size, on the same tall legs: from the pier caps to the bunker's floor longer than the bunker's plank wall is deep. The bunker's top rim rises above the grey block's top face, by about half the block's height, as in the front view. The lower-left wall is the back, the short side, two piers and one bay, as r1 shows it. The lower-right wall is the left-hand side, the long side, three piers and two X-braced bays, as r3 shows it. The chute, the winch and the chain are on the front, out of sight: none of them shows.\n\nCorrection: attempt4 came back too low: fitted box.top442.5 fails maximum340 (r0 top284.8). Its plan0.768 passes, so keep that compact plan and the six piers on the footprint, but raise the bunker on much taller X-braced timber legs. Preserve r0's deep plank bunker and coal heap, with the pier-cap-to-bunker-floor height longer than the plank wall depth. The added fourth reference is r0 for the required full height; do not copy the shortened proportions of the camera-repaint reference. Keep the short plain back lower left, long two-bay side lower right; no chute, winch or chain visible.\n\nCorrection: attempt5 was even lower: fitted top470.2, not340 or less. Its0.731 plan is right, so do not widen or deepen the bunker. Put that same bunker much higher on the six tall legs, taking the height from r0 in the fourth image. The whole stage must extend above the guide block by half the grey block's height; the pier-cap-to-bunker-floor legs must be longer than the bunker wall. Preserve the rear walls and no front apparatus.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces, smooth painted contours.",
     "references": [
       "assets/source/buildings-v2/guides/t1-r2.png",
@@ -1430,5 +1430,917 @@
       "cameraSelf": 5,
       "r0": 3
     }
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 7,
+    "file": "raw/fuel_stop-a0-r1-attempt-7.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [232, 997.3995362273301],
+        "s": [528.3607873806269, 1176.811810237005],
+        "e": [1025, 935.813506655867],
+        "sure": [true, true]
+      },
+      "used": {
+        "w": [232, 997.3995362273301],
+        "s": [528.3607873806269, 1176.811810237005],
+        "e": [1025, 935.813506655867]
+      },
+      "readByEye": false,
+      "lowerLeft": 296.3607873806269,
+      "lowerRight": 496.6392126193731,
+      "ratio": 0.5967325572573331
+    },
+    "top": 400,
+    "height": 1.2088068181818181,
+    "camera": {
+      "off": true,
+      "by": 3.2,
+      "elevation": 2.8,
+      "turn": 3.2
+    },
+    "highlights": {
+      "white": 2475,
+      "amber": 1145,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 3.2°: it looks down from 32.8° where the game looks down from 30° and the building is turned 3.2° towards its lower-right wall (the wall feet slope 0.60 and -0.48, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [true, true],
+        "measured": [0.605, -0.485],
+        "slopes": [0.605, -0.485],
+        "base": {
+          "w": [232, 997.4],
+          "s": [528.4, 1176.8],
+          "e": [1025, 935.8]
+        },
+        "scale": 0.5682,
+        "vertical": 0.9169,
+        "shear": -0.0551,
+        "cx": 628.5,
+        "cy": 851.7,
+        "box": {
+          "left": 286.7,
+          "top": 400,
+          "right": 737.3,
+          "bottom": 944.7
+        },
+        "camera": {
+          "elevation": 32.8,
+          "turn": 3.2
+        },
+        "area": 508872
+      },
+      "camera": {
+        "by": 3.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right side is the back: built as the reference shows the building built, no higher than the lower-left side, and plainer than it. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the chute. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the earlier r1 came back a low, long bin (box.top 445.2 where r0's is 284.8), not this coaling stage turned. Paint the stage to the full height of this grey block: the post tops and the coal heap reach its top face, and the legs are as tall as r0's, from the pier caps to the bunker's floor longer than the bunker's plank wall is deep. Stand the six piers on the plinth: the outer piers on its left, near and right corners, nothing outside it. The bunker is r0's, the same size, no longer and no deeper. The lower-left wall is the right-hand side, the long side: three piers and two X-braced bays. The lower-right wall is the back, the short side: two piers and one bay. The chute, the winch and the chain are on the front, out of sight: none of them shows.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": false,
+      "plan": false,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-9fc83fef-2d88-4289-9083-709623c0ccb2.png",
+    "sha256": "7ccb35d4685cfd591e6c7761cec1098d3262ba932fc1cc1d1a6df23471ff5fc8",
+    "cameraMeasured": true,
+    "observation": "Front apparatus hidden, but short side on lower left: reversed plan. Too low and bright.",
+    "closestRaw": false,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 8,
+    "file": "raw/fuel_stop-a0-r1-attempt-8.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [242, 863.6758469451044],
+        "s": [734.0326918207753, 1181.0826794117042],
+        "e": [1023, 1001.9113287039004],
+        "sure": [true, true]
+      },
+      "used": {
+        "w": [242, 863.6758469451044],
+        "s": [734.0326918207753, 1181.0826794117042],
+        "e": [1023, 1001.9113287039004]
+      },
+      "readByEye": false,
+      "lowerLeft": 492.0326918207753,
+      "lowerRight": 288.9673081792247,
+      "ratio": 1.702727879222948
+    },
+    "top": 466,
+    "height": 1.0623224431818181,
+    "camera": {
+      "off": true,
+      "by": 9.2,
+      "elevation": 9.2,
+      "turn": 0.6
+    },
+    "highlights": {
+      "white": 473,
+      "amber": 8,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 9.2°: it looks down from 39.2° where the game looks down from 30° (the wall feet slope 0.65 and -0.62, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [true, true],
+        "measured": [0.645, -0.62],
+        "slopes": [0.645, -0.62],
+        "base": {
+          "w": [242, 863.7],
+          "s": [734, 1181.1],
+          "e": [1023, 1001.9]
+        },
+        "scale": 0.5769,
+        "vertical": 0.7904,
+        "shear": -0.0099,
+        "cx": 632.5,
+        "cy": 731,
+        "box": {
+          "left": 286.7,
+          "top": 466,
+          "right": 737.3,
+          "bottom": 944.2
+        },
+        "camera": {
+          "elevation": 39.2,
+          "turn": 0.6
+        },
+        "area": 503729
+      },
+      "camera": {
+        "by": 9.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right side is the back: built as the reference shows the building built, no higher than the lower-left side, and plainer than it. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the chute. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the earlier r1 came back a low, long bin (box.top 445.2 where r0's is 284.8), not this coaling stage turned. Paint the stage to the full height of this grey block: the post tops and the coal heap reach its top face, and the legs are as tall as r0's, from the pier caps to the bunker's floor longer than the bunker's plank wall is deep. Stand the six piers on the plinth: the outer piers on its left, near and right corners, nothing outside it. The bunker is r0's, the same size, no longer and no deeper. The lower-left wall is the right-hand side, the long side: three piers and two X-braced bays. The lower-right wall is the back, the short side: two piers and one bay. The chute, the winch and the chain are on the front, out of sight: none of them shows.\n\nCorrection: attempt 7 stood at box.top 400, height 1.209, where r0 is 284.8, height 1.464. Its plan ratio was 0.597 instead of 1.16–1.57: the long side was incorrectly on the right. Paint the LONG side on the LOWER LEFT, with three piers and two X-braced bays, and the SHORT back wall on the LOWER RIGHT, two piers and one bay. Lengthen the open timber legs until the stage fills the tall grey block; do not lengthen the bunker. Its highlights counted 2475 white and 1145 amber pixels, exceeding r0's 553 and zero: use muted darker timber and limestone, no yellow-gold timber highlights or pale white stone. Keep all timber away from #E8AA48 and every stone highlight below #ECE4D0. The lower-left wall must be lighter than the lower-right.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": false,
+      "plan": false,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-8497cce6-e6f4-4d08-8512-9cd492eb93b2.png",
+    "sha256": "503d0f68a8de9964efaf21742325b8e73ac016dd1017c59af14ab2e42e15dd3a",
+    "cameraMeasured": true,
+    "observation": "Long side correctly lower left, no front apparatus. Too low, long and camera too high.",
+    "closestRaw": false,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 9,
+    "file": "raw/fuel_stop-a0-r1-attempt-9.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [224, 887.5466454699805],
+        "s": [722.0856580434987, 1182.4908363457434],
+        "e": [1018, 1016.4406539591291],
+        "sure": [true, true]
+      },
+      "used": {
+        "w": [224, 887.5466454699805],
+        "s": [722.0856580434987, 1182.4908363457434],
+        "e": [1018, 1016.4406539591291]
+      },
+      "readByEye": false,
+      "lowerLeft": 498.0856580434987,
+      "lowerRight": 295.9143419565013,
+      "ratio": 1.683208913600802
+    },
+    "top": 446.6,
+    "height": 1.105379971590909,
+    "camera": {
+      "off": true,
+      "by": 5.2,
+      "elevation": 5.2,
+      "turn": 0.8
+    },
+    "highlights": {
+      "white": 723,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 5.2°: it looks down from 35.2° where the game looks down from 30° (the wall feet slope 0.59 and -0.56, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [true, true],
+        "measured": [0.592, -0.561],
+        "slopes": [0.592, -0.561],
+        "base": {
+          "w": [224, 887.5],
+          "s": [722.1, 1182.5],
+          "e": [1018, 1016.4]
+        },
+        "scale": 0.5675,
+        "vertical": 0.8671,
+        "shear": -0.0134,
+        "cx": 621,
+        "cy": 817.1,
+        "box": {
+          "left": 286.7,
+          "top": 446.6,
+          "right": 737.3,
+          "bottom": 944.4
+        },
+        "camera": {
+          "elevation": 35.2,
+          "turn": 0.8
+        },
+        "area": 480611
+      },
+      "camera": {
+        "by": 5.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right side is the back: built as the reference shows the building built, no higher than the lower-left side, and plainer than it. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the chute. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the earlier r1 came back a low, long bin (box.top 445.2 where r0's is 284.8), not this coaling stage turned. Paint the stage to the full height of this grey block: the post tops and the coal heap reach its top face, and the legs are as tall as r0's, from the pier caps to the bunker's floor longer than the bunker's plank wall is deep. Stand the six piers on the plinth: the outer piers on its left, near and right corners, nothing outside it. The bunker is r0's, the same size, no longer and no deeper. The lower-left wall is the right-hand side, the long side: three piers and two X-braced bays. The lower-right wall is the back, the short side: two piers and one bay. The chute, the winch and the chain are on the front, out of sight: none of them shows.\n\nCorrection: attempt 7 stood at box.top 400, height 1.209, where r0 is 284.8, height 1.464. Its plan ratio was 0.597 instead of 1.16–1.57: the long side was incorrectly on the right. Paint the LONG side on the LOWER LEFT, with three piers and two X-braced bays, and the SHORT back wall on the LOWER RIGHT, two piers and one bay. Lengthen the open timber legs until the stage fills the tall grey block; do not lengthen the bunker. Its highlights counted 2475 white and 1145 amber pixels, exceeding r0's 553 and zero: use muted darker timber and limestone, no yellow-gold timber highlights or pale white stone. Keep all timber away from #E8AA48 and every stone highlight below #ECE4D0. The lower-left wall must be lighter than the lower-right.\n\nCorrection: attempt 8 stood at box.top 466, height 1.062 instead of 1.464, still a short bin. The plan ratio was 1.703, beyond 1.16–1.57. Build the much taller open timber support structure of r0: pier-cap to bunker-floor height must be LONGER than the entire plank bunker wall height. The bunker floor must sit well above the middle of the tall grey block; coal and post tops reach the grey top face. Keep the six stone piers at the corners of that block footprint, not spread into a longer rectangle. Amber count was 8; r0 permits zero, so remove yellow-gold highlights entirely. Do not reuse the low previous building.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": false,
+      "plan": false,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-a5e04dc9-97bd-4aff-873d-a9e89ccc4678.png",
+    "sha256": "bd793ed1ba690522b12dd1428ea5d7b77144dac69b4b0e503e59e1c4b8cd3c39",
+    "cameraMeasured": true,
+    "observation": "Long side correctly lower left, no front apparatus. Too low and long; not accepted.",
+    "closestRaw": true,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 7,
+    "file": "raw/fuel_stop-a0-r3-attempt-7.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [279, 886.1014180381901],
+        "s": [689.5676179627986, 1172.7161910186007],
+        "e": [973, 1031],
+        "sure": [true, false]
+      },
+      "used": {
+        "w": [279, 886.1014180381901],
+        "s": [689.5676179627986, 1172.7161910186007],
+        "e": [973, 1031]
+      },
+      "readByEye": false,
+      "lowerLeft": 410.56761796279864,
+      "lowerRight": 283.43238203720136,
+      "ratio": 1.4485557896094963
+    },
+    "top": 390.5,
+    "height": 1.229891690340909,
+    "camera": {
+      "off": true,
+      "by": null,
+      "foot": 0,
+      "slope": 0.698
+    },
+    "highlights": {
+      "white": 3371,
+      "amber": 2089,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off: the lower-left wall's foot slopes 0.70 where the game's slopes 0.50"
+      ],
+      "notes": ["placed by its outline: no straight wall base was found"],
+      "fit": {
+        "method": "outline",
+        "sure": [true, false],
+        "measured": [0.698, -0.5],
+        "slopes": [0.67, -0.5],
+        "base": {
+          "w": [279, 886.1],
+          "s": [689.6, 1172.7],
+          "e": [973, 1031]
+        },
+        "scale": 0.6492,
+        "vertical": 0.8547,
+        "shear": -0.0726,
+        "cx": 626,
+        "cy": 773.8,
+        "box": {
+          "left": 286.7,
+          "top": 390.5,
+          "right": 743.8,
+          "bottom": 939.8
+        },
+        "camera": null,
+        "area": 451757
+      },
+      "camera": {
+        "by": null,
+        "was": "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nCorrection: the earlier r3 was turned right but came back low (box.top 420.2 where r0's is 284.8). This view is the front view turned on a turntable, not flipped. The lower-right wall is the front, the short side: two piers and one bay, with the chute sloping out from it, and the winch drum and chain at the front's left end, which in this picture is the near (bottom) end, by the dark opening the guide has on that wall. The lower-left wall is the left-hand side, the long side: three piers and two X-braced bays. Paint the stage to the full height of the grey block: the post tops and the coal heap reach its top face, on legs as tall as r0's. Stand the six piers on the plinth, the outer piers on its left, near and right corners, nothing outside it.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": false,
+      "plan": true,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-83a6583a-0854-4d90-b2b9-2ffac7e3ee60.png",
+    "sha256": "b302f41ec42fe1208028c431249e91a46722550bbd1e1c95e04e7cc5df005a12",
+    "cameraMeasured": false,
+    "observation": "Chute and winch on short lower-right front, chain at near end; long left side has two bays. Too low and bright; base camera not reliably measurable.",
+    "closestRaw": false,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 8,
+    "file": "raw/fuel_stop-a0-r3-attempt-8.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [267, 877.5513027635438],
+        "s": [677.37597088071, 1196.8120145596451],
+        "e": [1004, 1033.5],
+        "sure": [true, false]
+      },
+      "used": {
+        "w": [267, 877.5513027635438],
+        "s": [677.37597088071, 1196.8120145596451],
+        "e": [1004, 1033.5]
+      },
+      "readByEye": false,
+      "lowerLeft": 410.37597088071004,
+      "lowerRight": 326.62402911928996,
+      "ratio": 1.2564169635260733
+    },
+    "top": 398.9,
+    "height": 1.2112482244318181,
+    "camera": {
+      "off": true,
+      "by": null,
+      "foot": 0,
+      "slope": 0.778
+    },
+    "highlights": {
+      "white": 683,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off: the lower-left wall's foot slopes 0.78 where the game's slopes 0.50"
+      ],
+      "notes": ["placed by its outline: no straight wall base was found"],
+      "fit": {
+        "method": "outline",
+        "sure": [true, false],
+        "measured": [0.778, -0.5],
+        "slopes": [0.67, -0.5],
+        "base": {
+          "w": [267, 877.6],
+          "s": [677.4, 1196.8],
+          "e": [1004, 1033.5]
+        },
+        "scale": 0.6113,
+        "vertical": 0.8547,
+        "shear": -0.0726,
+        "cx": 635.5,
+        "cy": 770.5,
+        "box": {
+          "left": 286.7,
+          "top": 398.9,
+          "right": 737.3,
+          "bottom": 938
+        },
+        "camera": null,
+        "area": 506546
+      },
+      "camera": {
+        "by": null,
+        "was": "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nCorrection: the earlier r3 was turned right but came back low (box.top 420.2 where r0's is 284.8). This view is the front view turned on a turntable, not flipped. The lower-right wall is the front, the short side: two piers and one bay, with the chute sloping out from it, and the winch drum and chain at the front's left end, which in this picture is the near (bottom) end, by the dark opening the guide has on that wall. The lower-left wall is the left-hand side, the long side: three piers and two X-braced bays. Paint the stage to the full height of the grey block: the post tops and the coal heap reach its top face, on legs as tall as r0's. Stand the six piers on the plinth, the outer piers on its left, near and right corners, nothing outside it.\n\nCorrection: attempt 7 stood at box.top 390.5, height 1.230, below the required 1.318–1.611 and r0 1.464. Lengthen the open X-braced legs, from pier cap to bunker floor longer than the plank bunker wall is deep, to fill the tall block with coal and post tops at its top face. The plan ratio 1.449 passed: keep that plan and the front winch and chain at the near end. Its 3371 white and 2089 amber pixels exceed r0 553 and zero: paint darker muted brown timber, no gold or yellow highlights, and limestone no paler than #BCA98B. Keep the outer pier feet clearly visible with their edges parallel to the grey plinth edges; the chute stays high, not masking the feet.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": false,
+      "plan": true,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-c2809997-6ffc-47b1-80ac-eec1e6ad5684.png",
+    "sha256": "18b9b75afd86db0c918fdf85d584e91349f4512cdbb243f58c49cd779cca32ef",
+    "cameraMeasured": false,
+    "observation": "Correct front near-end apparatus and long lower-left side; too low and bright; camera unreadable.",
+    "closestRaw": false,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 9,
+    "file": "raw/fuel_stop-a0-r3-attempt-9.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [254, 917.6560821833464],
+        "s": [634.831447064676, 1168.8312288832603],
+        "e": [991, 1034.9716546650184],
+        "sure": [true, true]
+      },
+      "used": {
+        "w": [254, 917.6560821833464],
+        "s": [634.831447064676, 1168.8312288832603],
+        "e": [991, 1034.9716546650184]
+      },
+      "readByEye": false,
+      "lowerLeft": 380.831447064676,
+      "lowerRight": 356.168552935324,
+      "ratio": 1.069245007528305
+    },
+    "top": 326.6,
+    "height": 1.3717151988636362,
+    "camera": {
+      "off": true,
+      "by": 8,
+      "elevation": -0.1,
+      "turn": 8
+    },
+    "highlights": {
+      "white": 1025,
+      "amber": 11,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 8.0°: the building is turned 8.0° towards its lower-right wall (the wall feet slope 0.66 and -0.38, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [true, true],
+        "measured": [0.66, -0.376],
+        "slopes": [0.66, -0.376],
+        "base": {
+          "w": [254, 917.7],
+          "s": [634.8, 1168.8],
+          "e": [991, 1035]
+        },
+        "scale": 0.6113,
+        "vertical": 0.9658,
+        "shear": -0.137,
+        "cx": 622.5,
+        "cy": 857.7,
+        "box": {
+          "left": 286.7,
+          "top": 326.6,
+          "right": 752.6,
+          "bottom": 945.1
+        },
+        "camera": {
+          "elevation": 29.9,
+          "turn": 8
+        },
+        "area": 514704
+      },
+      "camera": {
+        "by": 8,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nCorrection: the earlier r3 was turned right but came back low (box.top 420.2 where r0's is 284.8). This view is the front view turned on a turntable, not flipped. The lower-right wall is the front, the short side: two piers and one bay, with the chute sloping out from it, and the winch drum and chain at the front's left end, which in this picture is the near (bottom) end, by the dark opening the guide has on that wall. The lower-left wall is the left-hand side, the long side: three piers and two X-braced bays. Paint the stage to the full height of the grey block: the post tops and the coal heap reach its top face, on legs as tall as r0's. Stand the six piers on the plinth, the outer piers on its left, near and right corners, nothing outside it.\n\nCorrection: attempt 7 stood at box.top 390.5, height 1.230, below the required 1.318–1.611 and r0 1.464. Lengthen the open X-braced legs, from pier cap to bunker floor longer than the plank bunker wall is deep, to fill the tall block with coal and post tops at its top face. The plan ratio 1.449 passed: keep that plan and the front winch and chain at the near end. Its 3371 white and 2089 amber pixels exceed r0 553 and zero: paint darker muted brown timber, no gold or yellow highlights, and limestone no paler than #BCA98B. Keep the outer pier feet clearly visible with their edges parallel to the grey plinth edges; the chute stays high, not masking the feet.\n\nCorrection: attempt 8 stood at box.top 398.9, height 1.211, still far below r0 1.464. Plan 1.256 passes; keep the plan. The timber legs must be dramatically taller, not the bunker: place the bunker floor above the midpoint of the grey block and extend the long X-braced legs from it down to the six short stone piers. The coal heap and top posts must reach the grey block top face, leaving no missing upper part. White count 683 exceeds 553; use darker limestone with no near-white edges. Keep the rightmost and near pier foot edges exposed and parallel to the plinth, the chute shorter and high above them, so both base edges can be measured. Preserve the winch and chain at the front near end.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": true,
+      "plan": false,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-8cf8515b-deac-4528-b1c1-8b843b2def8d.png",
+    "sha256": "219d623ae76bd091e89461b9689592f9c80fe150c7f478b3085ca1fe719f38a9",
+    "cameraMeasured": true,
+    "observation": "Turned front apparatus at near end, long lower-left side. Height passes, measured plan and camera fail, highlights exceed caps.",
+    "closestRaw": true,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r2",
+    "attempt": 7,
+    "file": "raw/fuel_stop-a0-r2-attempt-7.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [262, 958.3257911697435],
+        "s": [599.3600564450154, 1175.605011351858],
+        "e": [1017, 959.4561997529545],
+        "sure": [true, true]
+      },
+      "used": {
+        "w": [262, 958.3257911697435],
+        "s": [599.3600564450154, 1175.605011351858],
+        "e": [1017, 959.4561997529545]
+      },
+      "readByEye": false,
+      "lowerLeft": 337.3600564450154,
+      "lowerRight": 417.6399435549846,
+      "ratio": 0.8077772771765546
+    },
+    "top": 399.4,
+    "height": 1.2101384943181819,
+    "camera": {
+      "off": true,
+      "by": 5.3,
+      "elevation": 5.3,
+      "turn": 3.1
+    },
+    "highlights": {
+      "white": 2287,
+      "amber": 268,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 5.3°: it looks down from 35.3° where the game looks down from 30° and the building is turned 3.1° towards its lower-right wall (the wall feet slope 0.64 and -0.52, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [true, true],
+        "measured": [0.644, -0.518],
+        "slopes": [0.644, -0.518],
+        "base": {
+          "w": [262, 958.3],
+          "s": [599.4, 1175.6],
+          "e": [1017, 959.5]
+        },
+        "scale": 0.5968,
+        "vertical": 0.8609,
+        "shear": -0.0545,
+        "cx": 639.5,
+        "cy": 790.7,
+        "box": {
+          "left": 286.7,
+          "top": 399.4,
+          "right": 737.3,
+          "bottom": 945
+        },
+        "camera": {
+          "elevation": 35.3,
+          "turn": 3.1
+        },
+        "area": 527311
+      },
+      "camera": {
+        "by": 5.3,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r2: The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the chute. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the earlier r2 came back a low, long bin (box.top 458.1 where r0's is 284.8). Paint the stage to the full height of this grey block: the post tops and the coal heap reach its top face, on legs as tall as r0's. Stand the six piers on the plinth, the outer piers on its left, near and right corners, nothing outside it. The bunker is r0's, the same size. The lower-left wall is the back, the short side, two piers and one bay, as r1 shows it. The lower-right wall is the left-hand side, the long side, three piers and two X-braced bays, as r3 shows it. The chute, the winch and the chain are on the front, out of sight: none of them shows. Attach r1 and r3 only if they passed; r2 then copies their walls. If one failed, record it (below) and show lists r2 from r0 alone.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r2.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": false,
+      "plan": true,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-bb8362c2-2e13-4f61-840f-bdf40b957679.png",
+    "sha256": "3c525b9764ef057701e9f77dea9518ea8be0d02a6bd2922fe27cba6160a0f380",
+    "cameraMeasured": true,
+    "observation": "No front apparatus; short back left and long left-hand side right. Plan passes, height/camera/highlights fail.",
+    "closestRaw": false,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r2",
+    "attempt": 8,
+    "file": "raw/fuel_stop-a0-r2-attempt-8.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [294, 1011.2879979682923],
+        "s": [592.0758111251313, 1183.8589343407803],
+        "e": [1019, 958.7392077589441],
+        "sure": [true, true]
+      },
+      "used": {
+        "w": [294, 1011.2879979682923],
+        "s": [592.0758111251313, 1183.8589343407803],
+        "e": [1019, 958.7392077589441]
+      },
+      "readByEye": false,
+      "lowerLeft": 298.0758111251313,
+      "lowerRight": 426.9241888748687,
+      "ratio": 0.6981937751306407
+    },
+    "top": 338.4,
+    "height": 1.3455255681818181,
+    "camera": {
+      "off": true,
+      "by": 3.5,
+      "elevation": 3.5,
+      "turn": 1.3
+    },
+    "highlights": {
+      "white": 1027,
+      "amber": 126,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 3.5°: it looks down from 33.5° where the game looks down from 30° (the wall feet slope 0.58 and -0.53, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [true, true],
+        "measured": [0.579, -0.527],
+        "slopes": [0.579, -0.527],
+        "base": {
+          "w": [294, 1011.3],
+          "s": [592.1, 1183.9],
+          "e": [1019, 958.7]
+        },
+        "scale": 0.6215,
+        "vertical": 0.9039,
+        "shear": -0.0233,
+        "cx": 656.5,
+        "cy": 875.1,
+        "box": {
+          "left": 286.7,
+          "top": 338.4,
+          "right": 737.3,
+          "bottom": 945.3
+        },
+        "camera": {
+          "elevation": 33.5,
+          "turn": 1.3
+        },
+        "area": 497683
+      },
+      "camera": {
+        "by": 3.5,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r2: The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the chute. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the earlier r2 came back a low, long bin (box.top 458.1 where r0's is 284.8). Paint the stage to the full height of this grey block: the post tops and the coal heap reach its top face, on legs as tall as r0's. Stand the six piers on the plinth, the outer piers on its left, near and right corners, nothing outside it. The bunker is r0's, the same size. The lower-left wall is the back, the short side, two piers and one bay, as r1 shows it. The lower-right wall is the left-hand side, the long side, three piers and two X-braced bays, as r3 shows it. The chute, the winch and the chain are on the front, out of sight: none of them shows. Attach r1 and r3 only if they passed; r2 then copies their walls. If one failed, record it (below) and show lists r2 from r0 alone.\n\nCorrection: attempt 7 stood at box.top 399.4, height 1.210, where r0 is 284.8, height 1.464. Plan 0.808 passes; keep the short BACK wall on the lower left and the long LEFT side on the lower right. Make the open X-braced legs much taller without enlarging the bunker: the legs from pier cap to bunker floor must be longer than the plank wall is deep, with the bunker floor above the midpoint of the tall grey block. Coal heap and post tops reach the grey top face. White count 2287 and amber 268 exceeded r0 553 and zero. Use darker muted brown timber without yellow-gold highlights and limestone no lighter than #BCA98B. No chute, winch or chain visible.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r2.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": true,
+      "plan": true,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-083749e0-906b-4bde-94d6-c701f07526c9.png",
+    "sha256": "51366e302e1cbafeeb70319b4b60ab582bbf1fc006a656cbb352f7798eaf75ff",
+    "cameraMeasured": true,
+    "observation": "No front apparatus. Height and plan pass; camera and highlights fail.",
+    "closestRaw": true,
+    "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r2",
+    "attempt": 9,
+    "file": "raw/fuel_stop-a0-r2-attempt-9.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "measured": {
+        "w": [297, 959.6365584527467],
+        "s": [590.178961335452, 1136.350997961055],
+        "e": [960, 942.564567316158],
+        "sure": [true, true]
+      },
+      "used": {
+        "w": [297, 959.6365584527467],
+        "s": [590.178961335452, 1136.350997961055],
+        "e": [960, 942.564567316158]
+      },
+      "readByEye": false,
+      "lowerLeft": 293.17896133545196,
+      "lowerRight": 369.82103866454804,
+      "ratio": 0.7927590122891427
+    },
+    "top": 376.1,
+    "height": 1.2618519176136362,
+    "camera": {
+      "off": true,
+      "by": 4.2,
+      "elevation": 4.2,
+      "turn": 2
+    },
+    "highlights": {
+      "white": 106,
+      "amber": 4,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "referenceHighlights": {
+      "white": 553,
+      "amber": 0,
+      "strictWhite": 0,
+      "strictAmber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 4.2°: it looks down from 34.2° where the game looks down from 30° (the wall feet slope 0.60 and -0.52, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [true, true],
+        "measured": [0.603, -0.524],
+        "slopes": [0.603, -0.524],
+        "base": {
+          "w": [297, 959.6],
+          "s": [590.2, 1136.4],
+          "e": [960, 942.6]
+        },
+        "scale": 0.6796,
+        "vertical": 0.8875,
+        "shear": -0.0349,
+        "cx": 628.5,
+        "cy": 822.1,
+        "box": {
+          "left": 286,
+          "top": 376.1,
+          "right": 737.3,
+          "bottom": 944.5
+        },
+        "camera": {
+          "elevation": 34.2,
+          "turn": 2
+        },
+        "area": 399994
+      },
+      "camera": {
+        "by": 4.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "kept": false,
+    "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Coaling Stage. A coaling stage where engines take fuel.\n\nAge: Steam. Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A raised timber coaling stage on stone piers with a coal bunker and a loading chute.\n\nKeep in every age: a raised stage with a coal bunker and a chute.\n\nFront: the side with the chute.\n\nView r2: The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the chute. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the earlier r2 came back a low, long bin (box.top 458.1 where r0's is 284.8). Paint the stage to the full height of this grey block: the post tops and the coal heap reach its top face, on legs as tall as r0's. Stand the six piers on the plinth, the outer piers on its left, near and right corners, nothing outside it. The bunker is r0's, the same size. The lower-left wall is the back, the short side, two piers and one bay, as r1 shows it. The lower-right wall is the left-hand side, the long side, three piers and two X-braced bays, as r3 shows it. The chute, the winch and the chain are on the front, out of sight: none of them shows. Attach r1 and r3 only if they passed; r2 then copies their walls. If one failed, record it (below) and show lists r2 from r0 alone.\n\nCorrection: attempt 7 stood at box.top 399.4, height 1.210, where r0 is 284.8, height 1.464. Plan 0.808 passes; keep the short BACK wall on the lower left and the long LEFT side on the lower right. Make the open X-braced legs much taller without enlarging the bunker: the legs from pier cap to bunker floor must be longer than the plank wall is deep, with the bunker floor above the midpoint of the tall grey block. Coal heap and post tops reach the grey top face. White count 2287 and amber 268 exceeded r0 553 and zero. Use darker muted brown timber without yellow-gold highlights and limestone no lighter than #BCA98B. No chute, winch or chain visible.\n\nCorrection: attempt 8 reached box.top 338.4, height 1.346, and plan ratio 0.698: both pass. Preserve that tall open-legged form and short-left/long-right plan. Its white count 1027 and amber count 126 still exceed r0 553 and zero: every timber highlight must be muted brown, never gold, orange-yellow or amber; stone cap and mortar highlights must be darker limestone rather than cream-white. No visible pixel should reach all channels of #ECE4D0, and no timber colour should approach #E8AA48. The guide is the precise orthographic camera to follow; make both plain visible pier foot lines parallel to its plinth edges. No front apparatus anywhere visible.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces. Keep all material highlights below cursor white #ECE4D0 and timber away from selection amber #E8AA48.",
+    "references": [
+      "assets/source/buildings-v2/guides/fuel_stop-r2.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "tests": {
+      "height": false,
+      "plan": true,
+      "camera": false,
+      "highlights": false
+    },
+    "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-4ef67fc4-3348-48a0-a193-b0a780de5665.png",
+    "sha256": "f3db0eea69b03c34ab8c905e068d77cb668a5c1d6becb1d654cd456c40882004",
+    "cameraMeasured": true,
+    "observation": "No front apparatus. Plan passes, height/camera/amber fail.",
+    "closestRaw": false,
+    "disposition": "rejected"
   }
 ]

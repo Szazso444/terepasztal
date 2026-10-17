@@ -12,7 +12,7 @@
     }
   ],
   "accepted": [],
-  "mark": 1792249829831,
+  "mark": 1792280702818,
   "chat": "01a12c68-070c-7b91-9ff6-217c3f4318b1",
   "counts": {
     "pictures": 548,
@@ -5479,14 +5479,9 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r1.png",
-      "status": "generated",
+      "status": "rejected",
       "attempts": 3,
-      "note": "kept with its camera off by 2.6° after 3 attempts",
-      "kept": 2.6,
-      "repaint": {
-        "by": 5.2,
-        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+      "note": "Attempts 7–9 failed: closest correctly turned attempt 9 top 446.6, height 1.105 (required 1.318–1.611), plan 1.683 (required 1.16–1.57), camera 5.2 degrees, white 723 > 553. All native returns retained in raw; none accepted."
     },
     {
       "id": "fuel_stop-a0-r2",
@@ -5494,14 +5489,9 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png",
-      "status": "generated",
+      "status": "rejected",
       "attempts": 3,
-      "note": "kept with its camera off by 3.9° after 3 attempts",
-      "repaint": {
-        "by": 5.2,
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
-      },
-      "kept": 3.9
+      "note": "Attempts 7–9 failed: closest attempt 8 top 338.4, height 1.346 and plan 0.698 pass; camera 3.5 degrees > 2, white 1027 > 553 and amber 126 > 0 fail. All raw returns retained; none accepted."
     },
     {
       "id": "fuel_stop-a0-r3",
@@ -5509,14 +5499,9 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r3.png",
-      "status": "generated",
+      "status": "rejected",
       "attempts": 3,
-      "note": "kept with its camera off by 3.4° after 3 attempts",
-      "kept": 3.4,
-      "repaint": {
-        "by": 4.3,
-        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+      "note": "Attempts 7–9 failed: closest height-matching attempt 9 top 326.6, height 1.372; plan 1.069 (required 1.16–1.57), camera 8 degrees, white 1025 > 553 and amber 11 > 0. All raw returns retained; none accepted."
     }
   ]
 }
