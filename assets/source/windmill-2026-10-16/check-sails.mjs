@@ -7,7 +7,7 @@ const save = (p, png) => writeFileSync(local(p), PNG.sync.write(png));
 const src = read(process.argv[2]);
 const hub = JSON.parse(readFileSync(local('hub.json'), 'utf8'));
 const side = src.width,
-  centre = side / 2;
+  centre = (side - 1) / 2;
 let reach = 0,
   weight = 0,
   sumX = 0,

@@ -172,7 +172,7 @@
     {
       "picture": "windmill-sails-front.png",
       "attempt": 3,
-      "selected": true,
+      "selected": false,
       "file": "raw/windmill-sails-front-attempt-3.png",
       "prompt": "Paint the four sails of this windmill as one picture of their own, over the grey guide, seen face on, looking straight along the windshaft. Two crossed timber stocks make an X along the guide's grey bars, and the square iron plate with four bolts covers their crossing at the exact centre of the picture. On each arm a timber lattice sail as on the reference windmill: the same warm brown timber, the same long frame of rails and bars, beginning about a quarter of the way out from the centre and running to the tip, on the same side of its stock as there. All four sails are alike: each is the next one turned by a quarter turn about the centre, never mirrored. The tips end where the guide's bars end, with a clear margin to the picture's edge. Soft light from the upper left with little contrast: each timber a little lighter on its upper left face and a little darker on its lower and right rims, no shadow cast on another sail, no strong highlight, because the game turns this picture about its centre. A real RGBA PNG with a transparent background (alpha 0), opaque timber and iron. Never: the tower, the cap, the windshaft, ground, sky, a shadow, motion blur, text, a border, a glow. References: the second picture is the windmill whose sails these are: take their timber, lattice and plate, not their angle. The third is the same mill without its sails: the plate sits on its hub. The fourth is the game's style board.\n\nCorrection: the last picture overfilled the canvas (reach 57% instead of at most 49% of the side), used mirrored and unequal sails (quarter-turn overlap only 43%), and had bright white and saturated amber highlights. Follow the grey guide's bars exactly, keeping every painted corner within a circle of radius 470 on the 1024 canvas. Use one identical narrow lattice arm repeated by exact 90-degree turns, all with the lattice on the same clockwise side of its stock; never mirror an arm. The plate is centred at (512,512). Keep ample transparent margins and muted dark brown timber: copper #A36B42 as the brightest warm face, dark iron, no bright yellow, amber, cream or white specks. Use broad smooth painted masses, three or four shades per material, soft low-contrast upper-left light. Return exactly 1024x1024.\n\nCorrection: the second attempt is still too large and has reflected arms. Shrink the ENTIRE sail cross to 76% of the size you painted last time, centred in the unchanged square canvas; add wide transparent margins, particularly at the four corners. All paint must fit inside a centred circle of radius 46% of the canvas side. Do not fill the square diagonally. Make a SINGLE arm with one narrow ladder on the clockwise side of its stock, then repeat exactly that entire arm by 90,180,270 degree rotations around the centre. Do not use bilateral mirror symmetry: a quarter turn must superimpose each ladder and each stock on the next. Keep all warm paint below RGB (195,150,105), all metal below (180,180,180), no white or bright yellow pixels, no isolated bright edge flecks. Face-on flat X, no perspective or foreshortening.\n\nOutput size: 1024x1024.",
       "references": [
@@ -210,15 +210,204 @@
         ],
         "readByEye": "Closest after three: safe reach and colours, but reflected/unequal arms. Pivot is fixed on body hub; painted plate lies above it, causing visible wobble. Tips miss master by up to 96.49 px. Independent sails fit padded diagnostic sheets, and timber lattice remains readable at game size."
       }
+    },
+    {
+      "picture": "windmill-sail-arm.png",
+      "attempt": 1,
+      "selected": false,
+      "file": "raw/windmill-sail-arm-attempt-1.png",
+      "prompt": "Paint one sail of this windmill as a picture of its own, over the grey guide, seen face on, looking straight along the windshaft. One timber stock runs along the guide's grey bar from the centre to the upper right, and the square iron plate with four bolts covers the guide's dark square at the exact centre of the picture. On the stock a timber lattice sail as on the reference windmill: the same warm brown timber, the same wide frame of three long rails with cross bars between them, two bays wide, beginning about a quarter of the way out from the centre and running to the end of the bar, on the same side of its stock as the reference's upper-right sail. Only this one arm and the plate: the other three quarters of the picture stay empty and transparent. The sail ends where the guide's bar ends, with a clear margin to the picture's edge. Soft light from the upper left with little contrast: each timber a little lighter on its upper left face and a little darker on its lower and right rims, no strong highlight, because the game turns this picture about its centre. The timber is as dark as the reference's, a mid brown, never orange. A real RGBA PNG with a transparent background (alpha 0), opaque timber and iron. Never: other arms, the tower, the cap, the windshaft, ground, sky, a shadow, motion blur, text, a border, a glow. References: the second picture is the windmill whose sails these are: take their timber, lattice and plate, not their angle. The third is the game's style board.\n\nOutput size: 1024x1024.",
+      "references": [
+        "guides/sail-arm.png",
+        "../base-v1/windmill.png",
+        "../../../docs/art-direction/images/03-theme-town-growth.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "composition": {
+          "returned": [1254, 1254],
+          "plateCentre": [602.4999999999999, 718.4999999999999],
+          "plateShift": [24, -92],
+          "shiftedPlateCentre": [626.4999999999999, 626.4999999999999],
+          "plateRadius": 67.759245622012,
+          "platePixels": 4807,
+          "quarterPixels": 97662,
+          "borderCounts": {
+            "left": 74,
+            "top": 0,
+            "right": 0,
+            "bottom": 82
+          },
+          "lostBorderPixels": 155,
+          "lostBorderShare": 0.0015871065511662674,
+          "canvasLostPixels": 0,
+          "reach": 729.9003356623424,
+          "frameWidth": 256,
+          "frameWidthShare": 0.35073281582710164,
+          "failures": []
+        },
+        "checks": {
+          "returned": [1254, 1254],
+          "reach": 729.9003356623424,
+          "reachFraction": 0.5820576839412619,
+          "centroid": [626.5552113240757, 626.5110565696599],
+          "centroidMiss": 0.056307530924686794,
+          "quarterTurnOverlap": 0.9975265967661405,
+          "cursorWhitePixels": 10,
+          "selectionAmberPixels": 0,
+          "tips": [
+            [1065, 43],
+            [43, 188],
+            [188, 1210],
+            [1210, 1065]
+          ],
+          "sailScale": 1.4732298641759867,
+          "sailAngle": 32.65840360061068,
+          "sailAffine": [
+            [0.6004773305528156, -0.12629081500015485],
+            [0.2326531263461876, 0.6949758284538188]
+          ],
+          "fitMiss": 86.54623042050994,
+          "failures": ["reach outside 0.40–0.49 of side", "10 cursor-white pixels"]
+        },
+        "readByEye": "Three rails and two bays; four repeated arms align and balance, but reach and cursor-white tests fail."
+      }
+    },
+    {
+      "picture": "windmill-sail-arm.png",
+      "attempt": 2,
+      "selected": false,
+      "file": "raw/windmill-sail-arm-attempt-2.png",
+      "prompt": "Paint one sail of this windmill as a picture of its own, over the grey guide, seen face on, looking straight along the windshaft. One timber stock runs along the guide's grey bar from the centre to the upper right, and the square iron plate with four bolts covers the guide's dark square at the exact centre of the picture. On the stock a timber lattice sail as on the reference windmill: the same warm brown timber, the same wide frame of three long rails with cross bars between them, two bays wide, beginning about a quarter of the way out from the centre and running to the end of the bar, on the same side of its stock as the reference's upper-right sail. Only this one arm and the plate: the other three quarters of the picture stay empty and transparent. The sail ends where the guide's bar ends, with a clear margin to the picture's edge. Soft light from the upper left with little contrast: each timber a little lighter on its upper left face and a little darker on its lower and right rims, no strong highlight, because the game turns this picture about its centre. The timber is as dark as the reference's, a mid brown, never orange. A real RGBA PNG with a transparent background (alpha 0), opaque timber and iron. Never: other arms, the tower, the cap, the windshaft, ground, sky, a shadow, motion blur, text, a border, a glow. References: the second picture is the windmill whose sails these are: take their timber, lattice and plate, not their angle. The third is the game's style board.\n\nCorrection: the previous single arm was correctly two bays wide with three long rails, but it was enlarged far beyond the grey guide. After recentering its plate, reach was 58.2% of the canvas side; it must be 40% to 49%. Shrink the ENTIRE painted arm and plate to 78% of that size, keep their proportions and three-rail width, and leave much wider transparent margins. Keep the iron plate centred on the guide's dark square and the tip at the grey bar's tip. There were ten bright cursor-white pixels: use muted mid-brown copper #A36B42 as the brightest timber face and soft dark slate iron, with no white, cream or sparkling bolt highlights. No light pixel may have all R>=236, G>=228, B>=208. Keep the mid-brown timber, not orange.\n\nOutput size: 1024x1024.",
+      "references": [
+        "guides/sail-arm.png",
+        "../base-v1/windmill.png",
+        "../../../docs/art-direction/images/03-theme-town-growth.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "composition": {
+          "returned": [1254, 1254],
+          "plateCentre": [625.4999999999999, 690.9999999999998],
+          "plateShift": [1, -64],
+          "shiftedPlateCentre": [626.4999999999999, 626.9999999999998],
+          "plateRadius": 41.754617128336186,
+          "platePixels": 1645,
+          "quarterPixels": 68077,
+          "borderCounts": {
+            "left": 67,
+            "top": 0,
+            "right": 0,
+            "bottom": 64
+          },
+          "lostBorderPixels": 130,
+          "lostBorderShare": 0.0019096023620312293,
+          "canvasLostPixels": 0,
+          "reach": 654.1976001178849,
+          "frameWidth": 208,
+          "frameWidthShare": 0.3179467487537693,
+          "failures": []
+        },
+        "checks": {
+          "returned": [1254, 1254],
+          "reach": 654.1976001178849,
+          "reachFraction": 0.5216886763300518,
+          "centroid": [626.5002204630974, 626.4998165936826],
+          "centroidMiss": 0.0002867784067966011,
+          "quarterTurnOverlap": 1,
+          "cursorWhitePixels": 8,
+          "selectionAmberPixels": 0,
+          "tips": [
+            [1028, 110],
+            [110, 225],
+            [225, 1143],
+            [1143, 1028]
+          ],
+          "sailScale": 1.3204315637029407,
+          "sailAngle": 32.65840360061068,
+          "sailAffine": [
+            [0.6721732252739357, -0.12995634085675664],
+            [0.24689087784435754, 0.7795289205314803]
+          ],
+          "fitMiss": 86.54623042050994,
+          "failures": ["reach outside 0.40–0.49 of side", "8 cursor-white pixels"]
+        },
+        "readByEye": "Three rails and two bays, exact rotational alpha overlap, but reach and cursor-white tests fail."
+      }
+    },
+    {
+      "picture": "windmill-sail-arm.png",
+      "attempt": 3,
+      "selected": true,
+      "file": "raw/windmill-sail-arm-attempt-3.png",
+      "prompt": "Paint one sail of this windmill as a picture of its own, over the grey guide, seen face on, looking straight along the windshaft. One timber stock runs along the guide's grey bar from the centre to the upper right, and the square iron plate with four bolts covers the guide's dark square at the exact centre of the picture. On the stock a timber lattice sail as on the reference windmill: the same warm brown timber, the same wide frame of three long rails with cross bars between them, two bays wide, beginning about a quarter of the way out from the centre and running to the end of the bar, on the same side of its stock as the reference's upper-right sail. Only this one arm and the plate: the other three quarters of the picture stay empty and transparent. The sail ends where the guide's bar ends, with a clear margin to the picture's edge. Soft light from the upper left with little contrast: each timber a little lighter on its upper left face and a little darker on its lower and right rims, no strong highlight, because the game turns this picture about its centre. The timber is as dark as the reference's, a mid brown, never orange. A real RGBA PNG with a transparent background (alpha 0), opaque timber and iron. Never: other arms, the tower, the cap, the windshaft, ground, sky, a shadow, motion blur, text, a border, a glow. References: the second picture is the windmill whose sails these are: take their timber, lattice and plate, not their angle. The third is the game's style board.\n\nCorrection: the previous single arm was correctly two bays wide with three long rails, but it was enlarged far beyond the grey guide. After recentering its plate, reach was 58.2% of the canvas side; it must be 40% to 49%. Shrink the ENTIRE painted arm and plate to 78% of that size, keep their proportions and three-rail width, and leave much wider transparent margins. Keep the iron plate centred on the guide's dark square and the tip at the grey bar's tip. There were ten bright cursor-white pixels: use muted mid-brown copper #A36B42 as the brightest timber face and soft dark slate iron, with no white, cream or sparkling bolt highlights. No light pixel may have all R>=236, G>=228, B>=208. Keep the mid-brown timber, not orange.\n\nCorrection: the second attempt still reaches 52.17% of the canvas side after moving its plate to the centre, above the 49% maximum, and still contains eight cursor-white pixels. Reduce the complete arm and plate another 13% from that attempt, retaining the same broad three-rail, two-bay frame and mid-brown timber. Keep a very wide transparent margin; from the plate centre to the farthest sail corner should be about 45% of the image side. Every painted face and every bolt must be muted: maximum channel 200, no cream, white, pale highlights or bright isolated antialias flecks anywhere. Make the iron plate's face a plain dark neutral grey with four dark bolts, gentle shading, no bright reflections.\n\nOutput size: 1024x1024.",
+      "references": [
+        "guides/sail-arm.png",
+        "../base-v1/windmill.png",
+        "../../../docs/art-direction/images/03-theme-town-growth.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "composition": {
+          "returned": [1254, 1254],
+          "plateCentre": [622.25, 743.2499999999999],
+          "plateShift": [4, -117],
+          "shiftedPlateCentre": [626.25, 626.2499999999999],
+          "plateRadius": 64.1024224355894,
+          "platePixels": 4995,
+          "quarterPixels": 86030,
+          "borderCounts": {
+            "left": 69,
+            "top": 0,
+            "right": 0,
+            "bottom": 71
+          },
+          "lostBorderPixels": 139,
+          "lostBorderShare": 0.0016157154480995002,
+          "canvasLostPixels": 0,
+          "reach": 715.71817079071,
+          "frameWidth": 238,
+          "frameWidthShare": 0.33253312506662047,
+          "failures": []
+        },
+        "checks": {
+          "returned": [1254, 1254],
+          "reach": 715.71817079071,
+          "reachFraction": 0.5707481425763238,
+          "centroid": [626.5485814852362, 626.5052047438003],
+          "centroidMiss": 0.048859493097919295,
+          "quarterTurnOverlap": 0.9967918820667951,
+          "cursorWhitePixels": 0,
+          "selectionAmberPixels": 0,
+          "tips": [
+            [1060, 57],
+            [57, 193],
+            [193, 1196],
+            [1196, 1060]
+          ],
+          "sailScale": 1.444604601511055,
+          "sailAngle": 32.65840360061068,
+          "sailAffine": [
+            [0.6131585497386542, -0.12501451920683648],
+            [0.23288807765701486, 0.7101966315440139]
+          ],
+          "fitMiss": 86.54623042050999,
+          "failures": ["reach outside 0.40–0.49 of side"]
+        },
+        "readByEye": "Closest after three: one wide timber frame, three long rails and two bays, repeated by quarter turns; neutral four-bolt plate at the pivot. Timber lattice reads at game size; the plane and fixed pivot are stable. Overlay fit misses the irregular master tips by 86.55 px, as expected. Reach fails; rotation in the fixed square canvas clips the far corners at intermediate turns."
+      }
     }
   ],
   "selection": {
     "body": 2,
-    "sails": 3,
-    "status": "Closest attempts retained after the maximum of three per picture; acceptance criteria not all met.",
-    "reason": "Body 2 alone passes registration. Sails 3 alone passes reach and both colour limits; 2 has better symmetry but fails reach and colours.",
-    "checks": ["checks/sails-overlay.png", "checks/sails-turn.png"],
-    "rendering": "Sheets have transparent top padding to show the independent sails sweeping beyond the original body canvas. Body, metadata and raw sail canvases unchanged. Pack body by hub.json.box; packing is a later task."
+    "sails": {
+      "method": "one painted arm composed by quarter turns",
+      "attempt": 3,
+      "file": "composed/3/windmill-sails-front.png"
+    },
+    "status": "Body accepted by user. Closest composed sail retained after three new arm paintings; only reach fails.",
+    "reason": "Arm 3 is the only composed painting with no forbidden colours, and passes width, border, centroid and quarter-turn overlap.",
+    "checks": ["checks/sails-overlay.png", "checks/sails-turn.png"]
   },
   "validation": {
     "typecheck": "pass",
@@ -280,6 +469,50 @@
       "centroid": [512, 512],
       "quarterTurnOverlap": 0.9450972279685561,
       "failures": []
+    }
+  },
+  "armPrompt": "Paint one sail of this windmill as a picture of its own, over the grey guide, seen face on, looking straight along the windshaft. One timber stock runs along the guide's grey bar from the centre to the upper right, and the square iron plate with four bolts covers the guide's dark square at the exact centre of the picture. On the stock a timber lattice sail as on the reference windmill: the same warm brown timber, the same wide frame of three long rails with cross bars between them, two bays wide, beginning about a quarter of the way out from the centre and running to the end of the bar, on the same side of its stock as the reference's upper-right sail. Only this one arm and the plate: the other three quarters of the picture stay empty and transparent. The sail ends where the guide's bar ends, with a clear margin to the picture's edge. Soft light from the upper left with little contrast: each timber a little lighter on its upper left face and a little darker on its lower and right rims, no strong highlight, because the game turns this picture about its centre. The timber is as dark as the reference's, a mid brown, never orange. A real RGBA PNG with a transparent background (alpha 0), opaque timber and iron. Never: other arms, the tower, the cap, the windshaft, ground, sky, a shadow, motion blur, text, a border, a glow. References: the second picture is the windmill whose sails these are: take their timber, lattice and plate, not their angle. The third is the game's style board.",
+  "armRepaint": {
+    "bodyAccepted": true,
+    "bodySha256": "5dc7567962dab66cdf61e9a14aa34667c2413e835c3752e3c75220696645ff46",
+    "centre": "(side - 1) / 2",
+    "attemptLimit": 3,
+    "selectedAttempt": 3,
+    "remainingFailures": [
+      "reach 0.5707481425763238 exceeds 0.49; tips clip during some rotations in the fixed square canvas"
+    ],
+    "scripts": "Node built-ins and pngjs only. Plate identified by local low-saturation iron mask, eroded to remove narrow stock rims; largest connected face gives plate square bounds. Entire input shifted by integer pixels; upper-right quarter repeated with exact integer quarter-turn mapping, central plate restored once within its own bounds and radius plus 6.",
+    "integrity": {
+      "masterSha256": "2f3b3d8ce6748cd3563049470aa6473e34a8f976efe4bec9447b03e4601e6d56",
+      "bodySha256": "5dc7567962dab66cdf61e9a14aa34667c2413e835c3752e3c75220696645ff46",
+      "rawCopies": [
+        {
+          "file": "raw/windmill-sail-arm-attempt-1.png",
+          "sha256": "6456847138503985c6e720688c378954652ac0b20d48a2d110babd1f2cff4816",
+          "byteExact": true
+        },
+        {
+          "file": "raw/windmill-sail-arm-attempt-2.png",
+          "sha256": "3371db57f5153fda8163c2daa79a9eed0ab94f8ecfbd4d5bdd47fb4d9bc9a799",
+          "byteExact": true
+        },
+        {
+          "file": "raw/windmill-sail-arm-attempt-3.png",
+          "sha256": "ef524d19d436a599aded40992683e2bfacbe41668dd776af046da799a5dc9e4f",
+          "byteExact": true
+        }
+      ],
+      "selectedCopyByteExact": true
+    },
+    "validation": {
+      "typecheck": "pass",
+      "lint": "pass",
+      "build": "pass (existing chunk-size warning)",
+      "scriptSyntax": "pass",
+      "taskFormatting": "pass",
+      "diffCheck": "pass",
+      "scope": "all current changes confined to assets/source/windmill-2026-10-16/; Art scope verified after commit",
+      "fullSuite": "Not repeated: no application changes; the previous full-suite failures remain recorded under validation."
     }
   }
 }
