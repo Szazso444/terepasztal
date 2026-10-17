@@ -39,7 +39,7 @@ import { footGround, footScatter, type Foot } from './groundFit';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
-import { scatterFor } from './scatter';
+import { clearedByPaving, scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
@@ -228,6 +228,8 @@ export class WorldRenderer {
   private cutSprites = new WeakSet<Sprite>();
   /** The prop sprites of deposits (coal, oil): a road hides no deposit, as the player needs it. */
   private deposits = new WeakSet<Sprite>();
+  /** The prop sprites that town paving hides (`clearedByPaving`): bushes, flowers, rocks. */
+  private paveCleared = new WeakSet<Sprite>();
   /** Visual-only nature (scatter.ts) per tile, with each sprite's offset inside its tile. */
   private scatterSprites = new Map<number, { s: Sprite; ox: number; oy: number }[]>();
   /** Stations, buildings and placed decor, as the game knows them; scatter keeps clear. */
@@ -370,6 +372,8 @@ export class WorldRenderer {
         // the painter paves a town's tiles over their water too (refreshGround tells bridges)
         this.refreshGround(k % w, Math.floor(k / w));
         this.refreshScatter(k % w, Math.floor(k / w), 0);
+        // the map's own bushes and the like hide under the paving, or show again
+        this.showProps(k);
         // a field ends short of paving
         this.wheat.near(k % w, Math.floor(k / w));
       }
@@ -718,6 +722,7 @@ export class WorldRenderer {
         if (!s) continue;
         if (CUT_BY_TRACK.has(p.kind)) this.cutSprites.add(s);
         if (p.kind === 'coal' || p.kind === 'oil') this.deposits.add(s);
+        if (clearedByPaving(p.kind)) this.paveCleared.add(s);
         // a field shows its picture once it is painted (#444)
         if (p.kind === 'wheat' && !this.wheat.sprite(i)) this.wheat.set(i, s);
         sprites.push(s);
@@ -731,13 +736,19 @@ export class WorldRenderer {
   /**
    * Show or hide the prop sprites of tile `i`: all of them are hidden on flattened ground, those
    * track cuts while track lies on the tile (`railed`, by default whether it has a sprite), and all
-   * but a deposit while a road does. The map's props stay as they are.
+   * but a deposit while a road does, and those that give way to paving (`clearedByPaving`) while
+   * the tile is paved. The map's props stay as they are, so they show again when the paving goes.
    */
   private showProps(i: number, railed = this.trackSprites.has(i)) {
     const flat = this.flattened.has(i),
-      road = this.roads.has(i);
+      road = this.roads.has(i),
+      paved = this.paved(i);
     for (const s of this.propSprites.get(i) ?? [])
-      s.visible = !flat && !(railed && this.cutSprites.has(s)) && !(road && !this.deposits.has(s));
+      s.visible =
+        !flat &&
+        !(railed && this.cutSprites.has(s)) &&
+        !(road && !this.deposits.has(s)) &&
+        !(paved && this.paveCleared.has(s));
   }
 
   private propSprite(x: number, y: number, p: PropInstance) {

@@ -53,6 +53,9 @@ import {
 import { WheatFields } from './wheatFields';
 import { WorldRenderer } from './worldRenderer';
 
+/** The paved tiles a world renderer holds (`setCity`), which its `paved` reads. */
+const cityOf = (world: WorldRenderer) => (world as unknown as { city: Set<number> }).city;
+
 const SOURCE = new TextureSource({ width: 1024, height: 1024 });
 
 /** A frame `w` x `h` world px across, at `resolution` texels per px; its pixels are never read. */
@@ -82,6 +85,8 @@ const FRAMES: Record<string, FrameInfo> = {
   'structures/townhouse_s1_r3': frame(40, 50),
   'terrain/ghost_ok': frame(64, 32),
   'props/oak_2': frame(20, 30),
+  'props/bush_0': frame(12, 10),
+  'props/coal_0': frame(24, 16),
 };
 
 /** What a ground fit hands out in these tests, one set per picture and scale, as surfaces cache. */
@@ -139,6 +144,7 @@ const noRoads = () => ({
   flattened: new Set(),
   cutSprites: new WeakSet(),
   deposits: new WeakSet(),
+  paveCleared: new WeakSet(),
 });
 
 /**
@@ -160,6 +166,7 @@ function renderer() {
     objects,
     contactGround,
     city: new Set(),
+    paved: (tile: number) => cityOf(world).has(tile),
     doorsteps: [],
     propTint: 0xffffff,
     structures: new Map(),
@@ -328,6 +335,32 @@ describe('a building fitted to the ground', () => {
     expect(shown()).toBe(weeds[1].texture);
     world.removeStructure('decor:0,0');
     expect(weeds[1].texture.destroyed).toBe(true);
+  });
+
+  it("hides the map's bushes under paving, and shows them again when the paving goes", () => {
+    const { world } = renderer();
+    const props: PropInstance[] = [
+      { kind: 'bush', variant: 0, ox: 0, oy: 0 },
+      { kind: 'oak', variant: 2, ox: 0.1, oy: 0.1 },
+      { kind: 'coal', variant: 0, ox: -0.1, oy: 0 },
+    ];
+    Object.assign(world, { isBuilt: () => true });
+    (world as unknown as { buildPropsAt(i: number, l: PropInstance[]): void }).buildPropsAt(
+      0,
+      props,
+    );
+    const sprites = (world as unknown as { propSprites: Map<number, Sprite[]> }).propSprites.get(
+      0,
+    )!;
+    const shown = () => sprites.map((s) => s.visible);
+    expect(sprites.length).toBe(3);
+    expect(shown()).toEqual([true, true, true]);
+    world.setCity(new Set([0]));
+    expect(shown()).toEqual([false, true, true]);
+    world.setCity(new Set());
+    expect(shown()).toEqual([true, true, true]);
+    // the sprites were only hidden, never destroyed
+    expect(sprites.every((s) => !s.destroyed)).toBe(true);
   });
 
   it('moves, turns, scales and goes with its building', () => {
@@ -2002,6 +2035,7 @@ describe('the town paving handed to the painter', () => {
       map: emptyMap(3, 4, 4),
       wheat: new WheatFields(4, 4),
       city: new Set(),
+      paved: (tile: number) => cityOf(world).has(tile),
       doorsteps: [],
       groundFits: new Map(),
       footings: new Map(),
@@ -2012,6 +2046,7 @@ describe('the town paving handed to the painter', () => {
         invalidate: (x: number, y: number) => repainted.push(`${x},${y}`),
       },
       ...noRoads(),
+      trackSprites: new Map(),
       refreshScatter: () => {},
     });
     return { world, handed, repainted };
@@ -2135,6 +2170,7 @@ describe('the paving of a town the simulation raises, as the game hands it over'
       map: w.map,
       wheat: new WheatFields(w.map.w, w.map.h),
       city: new Set(),
+      paved: (tile: number) => cityOf(world).has(tile),
       doorsteps: [],
       groundFits: new Map(),
       footings: new Map(),
@@ -2146,6 +2182,7 @@ describe('the paving of a town the simulation raises, as the game hands it over'
         invalidate: (x: number, y: number) => repainted.add(y * SIZE + x),
       },
       ...noRoads(),
+      trackSprites: new Map(),
       refreshScatter: () => {},
     });
     const game = Object.create(GameClass.prototype) as Game;
