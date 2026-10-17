@@ -523,6 +523,47 @@ describe('the share of the ground a yard is given', () => {
       { shrink: shrinkPoints, format: brief },
     );
   });
+
+  // The share scales the yard's weight (`paint`): half the land, half the change, and the kerb's
+  // dark foot line past the platform takes its share the same way. Only where a yard and the foot
+  // line overlap, past the kerb's line, does the change go with the share squared; those points
+  // are left out.
+  it("changes the ground in proportion to its share, along a kerb's foot line too", () => {
+    let footLine = 0,
+      yard = 0;
+    forAll(
+      sharing,
+      (c) => {
+        const built = yardOf(c),
+          kb = built.kerb,
+          painter = new BuildingYards(W, H, c.origin[0], c.origin[1], [built]);
+        for (const [x, y] of c.points) {
+          weigh(painter, x, y);
+          if (!painter.touched) continue;
+          const pastKerb = !!kb && (x - kb.x) * kb.dx + (y - kb.y) * kb.dy - kb.at >= 0;
+          if (pastKerb && painter.weight > 0) continue;
+          const at = (share: number) => {
+            const ground = [110, 125, 69];
+            painter.paint(x, y, ground, share, 0xd8e8c0, SHEET, [0, 0, 0]);
+            return ground;
+          };
+          const none = at(0),
+            half = at(0.5),
+            full = at(1);
+          if (painter.weight > 0) yard++;
+          else footLine++;
+          for (let i = 0; i < 3; i++)
+            expect(half[i], `${c.frame} at ${x}, ${y}, channel ${i}`).toBeCloseTo(
+              (none[i] + full[i]) / 2,
+              9,
+            );
+        }
+      },
+      { shrink: shrinkPoints, format: brief },
+    );
+    expect(footLine, 'points on a foot line alone').toBeGreaterThan(150);
+    expect(yard, 'points on a yard').toBeGreaterThan(1500);
+  });
 });
 
 describe('yards that meet', () => {
@@ -656,6 +697,120 @@ describe("a door's worn path", () => {
     }
     expect(doors).toBeGreaterThan(240);
     expect(off, `${off.length} door paths miss their door`).toEqual([]);
+  });
+
+  // Where the door stands on the ground, exactly: on its wall's foot line, at the door's own x in
+  // the picture (its point is a step or so above that line, or a hair below it), so the path
+  // starts neither behind the wall nor out in front of it.
+  it("starts on its wall's foot line, straight below the door, and heads out of the foot", () => {
+    const off: string[] = [];
+    let doors = 0;
+    for (const frame of FRAMES) {
+      const ground = groundOf(frame)!;
+      for (const scale of scales(frame))
+        for (const road of [false, true]) {
+          const { site: at, yard } = standing(frame, 12, 12, { scale, road: () => road });
+          ground.doors.forEach((d, i) => {
+            doors++;
+            const p = yard.paths[i],
+              [a, b] = WALL[d.side],
+              [ax, ay] = ground.foot[a].map((v) => v * scale),
+              [bx, by] = ground.foot[b].map((v) => v * scale),
+              // the path's start in world px from the anchor, as the picture is drawn
+              sx = (p.x - at.x - (p.y - at.y)) * 32,
+              sy = (p.x - at.x + (p.y - at.y)) * 16,
+              // the foot line below the door's point, within the wall
+              x = Math.max(Math.min(ax, bx), Math.min(Math.max(ax, bx), d.point[0] * scale)),
+              y = ay + ((by - ay) * (x - ax)) / (bx - ax),
+              where = `${frame} at scale ${scale}${road ? ', a road next door' : ''}, door ${i}`;
+            if (Math.abs(sx - x) > 1e-6 || Math.abs(sy - y) > 1e-6)
+              off.push(
+                `${where} on its ${d.side} wall: the path starts at ${sx.toFixed(3)}, ` +
+                  `${sy.toFixed(3)} px, not at ${x.toFixed(3)}, ${y.toFixed(3)} on the foot line`,
+              );
+            // a hair along it is off the foot, a hair back from its start is on it
+            if (outside(yard.foot, p.x + p.dx * 0.01, p.y + p.dy * 0.01) <= 0)
+              off.push(`${where}: the path heads into the foot`);
+            if (outside(yard.foot, p.x - p.dx * 0.01, p.y - p.dy * 0.01) > 0)
+              off.push(`${where}: the path starts out in front of its wall`);
+          });
+        }
+    }
+    expect(doors).toBeGreaterThan(240);
+    expect(off.slice(0, 5), `${off.length} door paths off their wall`).toEqual([]);
+  });
+
+  // A street door (#406) on a wall the camera does not see has no point in the picture: its path
+  // starts on its side's wall, level with its tile's middle along it (`streetDoors` gives only
+  // sides that open off the footprint). A door the picture shows gets no second path.
+  it("starts a street door's path on its own side's wall, level with its tile, where the picture does not show it", () => {
+    const off: string[] = [];
+    let hidden = 0,
+      shownTwice = 0;
+    for (const frame of FRAMES) {
+      const ground = groundOf(frame)!;
+      for (const scale of scales(frame)) {
+        const { site: at } = standing(frame, 12, 12, { scale }),
+          tiles = footprintTiles(ground, at.x, at.y),
+          inFootprint = (x: number, y: number) => tiles.some((t) => t.x === x && t.y === y);
+        for (const tile of tiles)
+          for (const side of [Dir.N, Dir.E, Dir.S, Dir.W]) {
+            const rx = tile.x + DIR_DX[side],
+              ry = tile.y + DIR_DY[side];
+            if (inFootprint(rx, ry)) continue;
+            const name = (['N', 'E', 'S', 'W'] as const)[side],
+              shown = ground.doors.some(
+                (d) => 12 + d.tile[0] === tile.x && 12 + d.tile[1] === tile.y && d.side === name,
+              );
+            for (const road of [false, true]) {
+              const { yard } = standing(frame, 12, 12, {
+                  scale,
+                  doors: [{ tile, side }],
+                  road: (x, y) => road && x === rx && y === ry,
+                }),
+                where = `${frame} at scale ${scale}, a door on the ${name} of ${tile.x}, ${tile.y}${road ? ' by a road' : ''}`;
+              if (shown) {
+                shownTwice++;
+                if (yard.paths.length !== ground.doors.length)
+                  off.push(`${where}, which the picture shows: ${yard.paths.length} paths`);
+                continue;
+              }
+              hidden++;
+              if (yard.paths.length !== ground.doors.length + 1) {
+                off.push(`${where}: ${yard.paths.length} paths`);
+                continue;
+              }
+              const p = yard.paths[yard.paths.length - 1],
+                [a, b] = WALL[name],
+                F = yard.foot;
+              if (p.dx !== DIR_DX[side] || p.dy !== DIR_DY[side] || p.open !== road)
+                off.push(`${where}: runs ${p.dx}, ${p.dy}, open ${p.open}`);
+              // on its side's wall, level with its tile's middle where the wall reaches that far
+              const wall = toSegment(p.x, p.y, F[a * 2], F[a * 2 + 1], F[b * 2], F[b * 2 + 1]);
+              const along = (x: number, y: number) =>
+                  -(x - tile.x) * DIR_DY[side] + (y - tile.y) * DIR_DX[side],
+                da = along(F[a * 2], F[a * 2 + 1]),
+                db = along(F[b * 2], F[b * 2 + 1]),
+                level = Math.max(Math.min(da, db), Math.min(0, Math.max(da, db)));
+              if (wall > 1e-9 || Math.abs(along(p.x, p.y) - level) > 1e-9)
+                off.push(
+                  `${where}: starts ${wall} off its wall, ${along(p.x, p.y)} along it, not ${level}`,
+                );
+              if (outside(F, p.x + p.dx * 0.01, p.y + p.dy * 0.01) <= 0)
+                off.push(`${where}: heads into the foot`);
+              // on to the road tile's middle, or past the yard's margin
+              const reach = road
+                ? (rx - p.x) * p.dx + (ry - p.y) * p.dy - 0.05
+                : yard.margin + 0.16;
+              if (Math.abs(p.length - reach) > 1e-9)
+                off.push(`${where}: ${p.length} long, not ${reach}`);
+            }
+          }
+      }
+    }
+    expect(hidden).toBeGreaterThan(2000);
+    expect(shownTwice).toBeGreaterThan(200);
+    expect(off.slice(0, 5), `${off.length} street door paths`).toEqual([]);
   });
 
   it("runs whole on to the middle of the road's tile where one is next door", () => {
@@ -829,4 +984,107 @@ describe("a yard's edge", () => {
     expect(low / all, 'the share of the margin gone').toBeGreaterThan(0.1);
     expect(high / all, 'the share of the margin whole').toBeGreaterThan(0.05);
   });
+});
+
+describe('the tiles a yard repaints, with street doors and roads round it', () => {
+  /**
+   * Any building at any scale, street doors (#406) on some sides of its footprint that open off
+   * it, and roads on some of the tiles round it, with points along and round each door path.
+   */
+  function doored(rng: Rng) {
+    const frame = rng.pick(FRAMES),
+      cx = rng.int(6, 30),
+      cy = rng.int(6, 30),
+      ground = groundOf(frame)!,
+      tiles = footprintTiles(ground, ...anchorOf(ground, cx, cy)),
+      inFootprint = (x: number, y: number) => tiles.some((t) => t.x === x && t.y === y),
+      doors: { tile: { x: number; y: number }; side: Dir }[] = [],
+      roads: number[] = [];
+    for (const tile of tiles)
+      for (const side of [Dir.N, Dir.E, Dir.S, Dir.W]) {
+        const rx = tile.x + DIR_DX[side],
+          ry = tile.y + DIR_DY[side];
+        if (inFootprint(rx, ry)) continue;
+        if (rng.chance(0.4)) doors.push({ tile, side });
+        if (rng.chance(0.5)) roads.push(ry * W + rx);
+      }
+    return {
+      frame,
+      cx,
+      cy,
+      scale: rng.range(0.6, 1.5),
+      sandy: rng.chance(0.3),
+      origin: [rng.int(-60, 60), rng.int(-60, 60)] as At,
+      doors,
+      roads,
+      // where along a path (0 its start, 1 its end, past them a little) and how far off it
+      reads: Array.from({ length: 120 }, () => [rng.range(-0.2, 1.3), rng.range(-0.25, 0.25)]),
+    };
+  }
+  /** The anchor (footprint's centre) of a building whose footprint's corner is on (cx, cy). */
+  function anchorOf(ground: FrameGround, cx: number, cy: number): [number, number] {
+    let mx = 0,
+      my = 0;
+    for (const [dx, dy] of ground.footprint) {
+      mx += dx / ground.footprint.length;
+      my += dy / ground.footprint.length;
+    }
+    return [cx + mx, cy + my];
+  }
+
+  // A door path can run on past the yard's own reach, on to the road next door: placing the
+  // building, or laying the road, repaints the tiles it reaches (`yardTiles`), and it paints on
+  // no other. Slow: weighs 120 points round each path of 100 buildings (about 0.3 s alone; the
+  // limit is 10 s).
+  it('paints nothing off the tiles it lists, along and round every door path', () => {
+    let paths = 0,
+      open = 0,
+      beyond = 0;
+    forAll(
+      doored,
+      (c) => {
+        const roads = new Set(c.roads),
+          {
+            ground,
+            site: at,
+            yard,
+          } = standing(c.frame, c.cx, c.cy, {
+            scale: c.scale,
+            sandy: c.sandy,
+            doors: c.doors,
+            road: (x, y) => roads.has(y * W + x),
+          }),
+          painter = new BuildingYards(W, H, c.origin[0], c.origin[1], [yard]),
+          listed = new Set(yardTiles(yard, W, H)),
+          own = new Set(footprintTiles(ground, at.x, at.y).map((t) => t.y * W + t.x)),
+          // read through the anchor's tile, which lists the yard: its whole shape, cut by no tile
+          home = Math.round(at.y) * W + Math.round(at.x);
+        expect(listed.has(home)).toBe(true);
+        for (const p of yard.paths) {
+          paths++;
+          if (p.open) open++;
+          for (const [u, off] of c.reads) {
+            const x = p.x + p.dx * p.length * u - p.dy * off,
+              y = p.y + p.dy * p.length * u + p.dx * off,
+              tile = Math.round(y) * W + Math.round(x);
+            painter.weigh(x, y, home);
+            if (!painter.touched) continue;
+            if (!own.has(tile)) beyond++;
+            expect(
+              listed.has(tile),
+              `${c.frame}, the path out of ${p.x}, ${p.y}, at ${x}, ${y}`,
+            ).toBe(true);
+          }
+        }
+      },
+      {
+        shrink: (c) => [...shrinkArray(c.reads)].map((reads) => ({ ...c, reads })),
+        format: brief,
+      },
+    );
+    // about 190 paths, half of them on to a road, painting some 6000 points off the footprint
+    expect(paths).toBeGreaterThan(120);
+    expect(open).toBeGreaterThan(50);
+    expect(beyond).toBeGreaterThan(2000);
+  }, 10_000);
 });

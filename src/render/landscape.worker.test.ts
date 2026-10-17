@@ -678,6 +678,76 @@ describe('the painter with yards beside water, paving and chunk edges', () => {
     expect(touched.slice(0, 5), `${touched.length} pixels painted`).toEqual([]);
   }, 40_000);
 
+  // The kerb's dark foot line lies past the platform, on whatever ground is there: on a steep
+  // bank it is given no share of the point, like the rest of the yard. Slow: paints four chunks of
+  // a hill twice and checks every pixel (about 3.5 s alone; the limit is 60 s).
+  it("keeps a platform's kerb and the dark line at its foot off a steep bank", async () => {
+    const w = onHill(world()),
+      bare = { ...w, city: [], doorsteps: [] },
+      { map } = w,
+      relief = buildRelief(map, new Set()),
+      // stations on the hill's edges, two to a side, their platforms facing out over its banks
+      yards = (
+        [
+          ['structures/station_2', 8, 13],
+          ['structures/station_1', 5, 12],
+          ['structures/station_1_r3', 14, 5],
+          ['structures/station_3_r3', 13, 9],
+          ['structures/station_1_r2', 9, 1],
+          ['structures/station_2_r2', 11, 2],
+          ['structures/station_1_r1', 3, 4],
+          ['structures/station_2_r1', 4, 10],
+        ] as const
+      ).map(([frame, x, y]) => yardAt(frame, x, y)),
+      painter = new BuildingYards(map.w, map.h, map.originX, map.originY, yards);
+    expect(relief.tiles).toBeDefined();
+    const seen = { foot: 0, platform: 0 },
+      touched: string[] = [];
+    for (const [x, y] of [
+      [0, 0],
+      [8, 0],
+      [0, 8],
+      [8, 8],
+    ]) {
+      const a = await paint({ ...bare, yards }, x, y),
+        b = await paint(bare, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          // the map point the painter reads here, raised as it raises it
+          const [bx, by] = pointOf(a, px, py, 1),
+            z = surfaceAlongRay(map, relief, bx, by, 10),
+            tx = bx + z / 32,
+            ty = by + z / 32,
+            tile = Math.round(ty) * map.w + Math.round(tx);
+          if (!painter.near(tile)) continue;
+          painter.weigh(tx, ty, tile);
+          if (!painter.touched) continue;
+          // the levels the surface climbs per tile here, as the painter measures a terrace's slope
+          const d = 0.05,
+            gx =
+              (reliefHeight(map, relief, tx + d, ty) - reliefHeight(map, relief, tx - d, ty)) / 0.1,
+            gy =
+              (reliefHeight(map, relief, tx, ty + d) - reliefHeight(map, relief, tx, ty - d)) / 0.1;
+          if (Math.hypot(gx, gy) / relief.style.step < 0.6) continue;
+          if (painter.weight > 0) seen.platform++;
+          else seen.foot++;
+          const was = [...b.pixels.subarray(k, k + 3)],
+            now = [...a.pixels.subarray(k, k + 3)];
+          if (now.some((c, i) => c !== was[i]))
+            touched.push(
+              `${painter.weight > 0 ? 'platform' : 'foot line'} at ${tx.toFixed(3)}, ` +
+                `${ty.toFixed(3)} (chunk ${x},${y} pixel ${px},${py}): ${was} painted ${now}`,
+            );
+        }
+    }
+    // the kerbs' foot lines and their platforms both reach over the banks
+    expect(seen.foot, 'foot line pixels on a steep bank').toBeGreaterThan(60);
+    expect(seen.platform, 'platform pixels on a steep bank').toBeGreaterThan(2000);
+    expect(touched.slice(0, 5), `${touched.length} pixels painted`).toEqual([]);
+  }, 60_000);
+
   // Slow: paints two chunks twice and checks every pixel (about a second alone).
   it('keeps every yard out of the water and off the solid paving', async () => {
     const w = world(),
