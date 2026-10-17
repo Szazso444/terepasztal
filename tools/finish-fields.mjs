@@ -38,6 +38,9 @@
  *   6. Highlights. No pixel may reach the selection amber (#E8AA48) or the cursor white
  *      (#ECE4D0) in all three channels; red is held under HIGHLIGHT_CAP with a soft knee, the
  *      hue kept, so a field never reads as selected.
+ *   7. The atlas cap pass (`tools/atlas-cap.mjs`) on the cut frame: alpha under 16 goes, 250 and
+ *      over is solid, and the odd ear step 6 left as strong as the amber in hue, saturation and
+ *      value is toned. The size and anchor stay.
  *
  * Then the frames are packed with 4 texel gutters in a new row under the frames the atlas already
  * has, which stay byte for byte where they are. Run it after `tools/illustrated-sprites.mjs`,
@@ -49,6 +52,7 @@ import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { isMain } from './is-main.mjs';
 import { packFrames } from './illustrated-sprites.mjs';
+import { capFrame } from './atlas-cap.mjs';
 
 /** Texels per world pixel: the props atlas's `resolution`. */
 export const DENSITY = 4;
@@ -503,15 +507,19 @@ export function finishAll({
     if (grade) gradeImage(img, grade);
     const finished = raiseField(img, p.variant.seed, raise, CANVAS, ridge);
     const frame = toFrame(finished);
+    // the atlas cap pass, after the frame is cut, so its size and anchor stay
+    const capped = capFrame(p.variant.key, frame.png);
     return {
       key: p.variant.key,
       file: p.variant.file,
       ...frame,
+      png: capped.png,
       report: {
         scale: p.variant.scale,
         texelsPerPaintingPx: Number(p.k.toFixed(5)),
         shiftTexels: shift.map((n) => Number(n.toFixed(2))),
         shiftWorldPx: shift.map((n) => Number((n / DENSITY).toFixed(2))),
+        capped: capped.counts,
       },
     };
   });

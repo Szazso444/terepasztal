@@ -907,6 +907,8 @@ const GENERATORS: [string, (rng: Rng) => Scene, ForAllOptions<Scene>][] = [
 
 describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
   const options: ForAllOptions<Scene> = { shrink: shrinkScene, format: formatScene, ...seeds };
+  // slow because each seeded line is judged piece by piece against a twin world that lays it with
+  // the single-piece tools: 0.51 s alone, so a limit of 30 s
   it('judges every piece as the single-piece tools would after the passed pieces before it', () => {
     // The oracle walks the line on a twin world with ample stock and lays, with the single-piece
     // tools, only the pieces the line passes. Every verdict, refused pieces and those after them
@@ -1002,7 +1004,7 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
       },
       options,
     );
-  });
+  }, 30_000);
 
   it('lays an accepted line once: laying it again skips every piece, free and silent', () => {
     forAll(

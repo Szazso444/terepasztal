@@ -73,6 +73,8 @@ function columns(img) {
 }
 
 describe('highlight cap', () => {
+  // slow because 27 864 colours are capped and checked three ways each: 0.57 s alone, so a limit of
+  // 30 s
   it('keeps every colour below the selection amber and the cursor white, in red alone', () => {
     for (let r = 0; r <= 255; r += 3)
       for (let g = 0; g <= 255; g += 15)
@@ -82,7 +84,7 @@ describe('highlight cap', () => {
           expect(dominates(out, AMBER)).toBe(false);
           expect(dominates(out, CURSOR_WHITE)).toBe(false);
         }
-  });
+  }, 30_000);
   it('leaves a colour under the knee alone and keeps the hue of one above it', () => {
     expect(capHighlight([180, 150, 70])).toEqual([180, 150, 70]);
     const [r, g, b] = capHighlight([240, 200, 100]);
@@ -165,6 +167,8 @@ describe('colour grade', () => {
       last = Math.max(...out);
     }
   });
+  // slow because every wheat painting is finished twice, graded and plain: 0.95 s alone, so a limit
+  // of 30 s
   it('changes colour only: the frames come out the same size, anchor and alpha without it', () => {
     const plain = finishAll({ grade: null });
     const graded = finishAll();
@@ -178,7 +182,7 @@ describe('colour grade', () => {
       ]);
       for (let o = 3; o < g.png.data.length; o += 4) expect(g.png.data[o]).toBe(p.png.data[o]);
     });
-  });
+  }, 30_000);
   it('reads as straw gold after the summer prop tint, not orange-rust', () => {
     // the game multiplies a prop by the season's tint (SEASON_FX), so the colour is judged after it
     const tint = [16, 8, 0].map((sh) => ((SEASON_FX.summer.props >> sh) & 255) / 255);
@@ -382,6 +386,7 @@ describe('the shipped wheat frames', () => {
     for (const v of VARIANTS) expect(json.frames[v.key]).toBeDefined();
     expect(Object.keys(json.frames)).toContain('props/tree_0');
   });
+  // slow because every texel of every shipped wheat frame is read: 0.71 s alone, so a limit of 30 s
   it('keep the highlights under the selection amber and the cursor white', () => {
     for (const f of shipped.frames)
       for (let i = 0; i < f.png.data.length; i += 4) {
@@ -391,7 +396,7 @@ describe('the shipped wheat frames', () => {
         expect(dominates(px, AMBER)).toBe(false);
         expect(dominates(px, CURSOR_WHITE)).toBe(false);
       }
-  });
+  }, 30_000);
   it('stay inside the tile: every texel lies over a ground point of the patch, within the stalks and ears', () => {
     const reach = Math.ceil(((STALK_MIN + STALK_SWELL) * 1 + bounds.ears) * DENSITY) + 2;
     for (const f of shipped.frames) {

@@ -536,6 +536,30 @@
     "anchorY": 7
   },
   {
+    "key": "props/mangrove_0",
+    "group": "props",
+    "width": 26.75,
+    "height": 21.75,
+    "anchorX": 14,
+    "anchorY": 20
+  },
+  {
+    "key": "props/mangrove_1",
+    "group": "props",
+    "width": 36,
+    "height": 28.5,
+    "anchorX": 18,
+    "anchorY": 25
+  },
+  {
+    "key": "props/mangrove_2",
+    "group": "props",
+    "width": 49.25,
+    "height": 34,
+    "anchorX": 25,
+    "anchorY": 31
+  },
+  {
     "key": "props/oak_0",
     "group": "props",
     "width": 34,
@@ -734,6 +758,30 @@
     "height": 30.25,
     "anchorX": 27,
     "anchorY": 16
+  },
+  {
+    "key": "props/willow_0",
+    "group": "props",
+    "width": 35,
+    "height": 30.75,
+    "anchorX": 17,
+    "anchorY": 27
+  },
+  {
+    "key": "props/willow_1",
+    "group": "props",
+    "width": 43.25,
+    "height": 36,
+    "anchorX": 22,
+    "anchorY": 32
+  },
+  {
+    "key": "props/willow_2",
+    "group": "props",
+    "width": 49.25,
+    "height": 40,
+    "anchorX": 25,
+    "anchorY": 36
   },
   {
     "key": "rolling/bogie3_f0",

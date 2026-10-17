@@ -458,6 +458,8 @@ describe('bridge meshes over the painted waterline', () => {
     return out;
   };
 
+  // slow because a whole crossing's meshes are rasterised to the quarter pixel for stone and wood
+  // at two ground heights: 0.82 s alone, so a limit of 30 s
   it('shows nothing under a deck over ground painted as bank, only over painted water', () => {
     const m = riverMap();
     for (const material of ['stone', 'wood'] as const)
@@ -469,7 +471,7 @@ describe('bridge meshes over the painted waterline', () => {
         expect(shown.length, material).toBeGreaterThan(1000);
         expect(onBank, `${material}, top ${top}`).toEqual([]);
       }
-  });
+  }, 30_000);
 
   /**
    * A stone span over land at (5, 5) with its deck 20 px up, cut to `ground`: the foot of each

@@ -11,12 +11,13 @@ import type { SaveGame } from '../sim/save';
  * station would strand it). A pure function of the map and the saved objects, so a headless test
  * can call it; `Game` only applies what it answers (`applyTileRepairs`) and redraws the tiles. It
  * changes the map in memory and never the text a save stores for a chunk: the store keeps the
- * ground as generated.
+ * ground as generated. A road is the one thing the ground is not bent for: one on ground that
+ * cannot hold it is taken off (`repairBuiltRoads`).
  */
 
 /** The saved objects the repair reads: what stands on the map. */
 export type BuiltObjects = Pick<SaveGame, 'track' | 'stations'> &
-  Partial<Pick<SaveGame, 'decor' | 'buildings'>>;
+  Partial<Pick<SaveGame, 'decor' | 'buildings' | 'roads'>>;
 
 /** A tile to give `terrain` in place of the one the map holds. */
 export interface TileRepair {
@@ -59,12 +60,11 @@ function groundFor(standing: Standing, t: Terrain): Terrain {
 }
 
 /**
- * The tiles of `map` to give another terrain so everything in `built` stands on ground that
- * allows it, in the order the objects are met: track, stations, decor, works. Pure: the map is
- * read, never changed, and the answer lists only tiles whose terrain ends up different; applying
- * it and asking again answers nothing. Tiles off the map are skipped.
+ * The terrain each tile `built` stands on has once the ground is repaired for it, keyed
+ * `y * w + x`, in the order the objects are met: track, stations, decor, works. Only tiles an object
+ * needed another ground for are listed, and one may come back to the terrain it has.
  */
-export function repairBuiltTiles(map: GameMap, built: BuiltObjects): TileRepair[] {
+function repairedGround(map: GameMap, built: BuiltObjects): Map<number, Terrain> {
   // a platform off the map stands on no tile, even where its index `y * w + x` lands on one
   const platforms = new Set<number>();
   for (const [x, y, id] of built.buildings ?? [])
@@ -94,8 +94,19 @@ export function repairBuiltTiles(map: GameMap, built: BuiltObjects): TileRepair[
     stand(x, y, onRails(id) && rails.has(y * map.w + x) ? 'rails' : 'land');
   for (const [x, y, id] of built.buildings ?? [])
     stand(x, y, buildingDef(id).bridge ? 'platform' : 'land');
+  return after;
+}
+
+/**
+ * The tiles of `map` to give another terrain so everything in `built` stands on ground that
+ * allows it, in the order the objects are met: track, stations, decor, works. Pure: the map is
+ * read, never changed, and the answer lists only tiles whose terrain ends up different; applying
+ * it and asking again answers nothing. Tiles off the map are skipped. Roads are not here: the
+ * ground is not bent for a road, which goes instead (`repairBuiltRoads`).
+ */
+export function repairBuiltTiles(map: GameMap, built: BuiltObjects): TileRepair[] {
   const out: TileRepair[] = [];
-  for (const [i, terrain] of after)
+  for (const [i, terrain] of repairedGround(map, built))
     if (terrain !== map.terrain[i]) out.push({ x: i % map.w, y: Math.floor(i / map.w), terrain });
   return out;
 }
@@ -110,4 +121,33 @@ export function applyTileRepairs(map: GameMap, repairs: readonly TileRepair[]): 
     map.terrain[i] = r.terrain;
     map.props.delete(i);
   }
+}
+
+/**
+ * The saved roads (`built.roads`) to take off the map because the ground under them cannot hold
+ * one: each tile once, in the order the save lists them. A road needs what `placeRoad` asks of the
+ * ground (`checkRoad` in src/sim/build.ts): not water, rock or a mountain, the ground a station
+ * stands on. The ground is judged as the repair leaves it (`repairBuiltTiles`), so a level
+ * crossing whose tile came back water stays, the track having made it land, while one whose tile
+ * came back rock or a mountain goes. Every other road is left, and so is an entry `Roads.load`
+ * would skip (not a whole [x, y] on the map). A road taken off this way is not refunded: the
+ * answer names tiles, and `Roads.remove` pays nothing, as `Builder.removeRoad` does. Pure, and the
+ * same asked of the map before the repair is applied or after it.
+ */
+export function repairBuiltRoads(map: GameMap, built: BuiltObjects): { x: number; y: number }[] {
+  if (!Array.isArray(built.roads) || !built.roads.length) return [];
+  const after = repairedGround(map, built);
+  const out: { x: number; y: number }[] = [];
+  const met = new Set<number>();
+  for (const t of built.roads as unknown[]) {
+    const [x, y] = Array.isArray(t) ? (t as unknown[]) : [];
+    if (typeof x !== 'number' || typeof y !== 'number') continue;
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !inBounds(map, x, y)) continue;
+    const i = y * map.w + x;
+    const ground = after.get(i) ?? (map.terrain[i] as Terrain);
+    if (met.has(i) || groundFor('land', ground) === ground) continue;
+    met.add(i);
+    out.push({ x, y });
+  }
+  return out;
 }

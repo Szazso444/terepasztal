@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FrameDef } from '../engine/atlas';
 import { HALF_H, HALF_W } from '../engine/iso';
@@ -104,5 +105,132 @@ describe('wheat field frames', () => {
         .join(';'),
     );
     expect(new Set(shapes).size).toBe(3);
+  });
+});
+
+const WATERSIDE = ['mangrove', 'willow'].flatMap((kind) =>
+  [0, 1, 2].map((v) => `props/${kind}_${v}`),
+);
+/** The packed paintings these frames fall back from (partial, so the generator covers them). */
+const painted = JSON.parse(readFileSync('public/assets/props.json', 'utf8')) as {
+  resolution: number;
+  partial: boolean;
+  frames: Record<string, FrameDef>;
+};
+const luma = ([r, g, b]: number[]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+describe('waterside tree fallbacks', () => {
+  it('cover every waterside frame the partial props atlas paints', () => {
+    expect(painted.partial).toBe(true);
+    const keys = Object.keys(painted.frames).filter((k) => /^props\/(mangrove|willow)_/.test(k));
+    expect(keys.sort()).toEqual([...WATERSIDE].sort());
+    for (const key of WATERSIDE) expect(frames[key], key).toBeDefined();
+  });
+
+  it('stand where the paintings stand: the same size and anchor within a world px', () => {
+    for (const key of WATERSIDE) {
+      const f = frames[key];
+      const p = painted.frames[key];
+      const r = painted.resolution;
+      for (const [got, want, what] of [
+        [f.w, p.w / r, 'w'],
+        [f.h, p.h / r, 'h'],
+        [f.ax, p.ax / r, 'ax'],
+        [f.ay, p.ay / r, 'ay'],
+      ] as const)
+        expect(Math.abs(got - want), `${key} ${what} ${got} against ${want}`).toBeLessThanOrEqual(
+          1,
+        );
+    }
+  });
+
+  it('keep every colour under the cursor white and weaker than the selection amber', () => {
+    for (const key of WATERSIDE)
+      for (const { rgba } of ink(key)) {
+        const [r, g, b] = rgba;
+        expect(r >= PAL.white[0] && g >= PAL.white[1] && b >= PAL.white[2], `${key} ${rgba}`).toBe(
+          false,
+        );
+        expect(r >= PAL.amber[0] && g >= PAL.amber[1] && b >= PAL.amber[2], `${key} ${rgba}`).toBe(
+          false,
+        );
+      }
+  });
+
+  it('keep every colour weaker than the selection amber by the packer`s measure too', () => {
+    // #465: as strong as the amber is hue 25 to 50 degrees, saturation 0.62 or more and value
+    // 0.85 or more; the packed paintings are held under it, so their fallbacks are as well
+    const strong = ([r, g, b]: readonly number[]) => {
+      const max = Math.max(r, g, b);
+      const d = max - Math.min(r, g, b);
+      if (!d) return false;
+      const h =
+        max === r
+          ? 60 * ((g - b) / d)
+          : max === g
+            ? 60 * (2 + (b - r) / d)
+            : 60 * (4 + (r - g) / d);
+      const hue = h < 0 ? h + 360 : h;
+      return hue >= 25 && hue <= 50 && d / max >= 0.62 && max / 255 >= 0.85;
+    };
+    expect(strong(PAL.amber), 'the amber itself').toBe(true);
+    for (const key of WATERSIDE)
+      for (const { rgba } of ink(key)) expect(strong(rgba), `${key} ${rgba}`).toBe(false);
+  });
+
+  it('take the light from the upper left: the left half is lighter than the right', () => {
+    for (const key of WATERSIDE) {
+      const f = frames[key];
+      const half = (left: boolean) => {
+        const px = ink(key).filter(
+          ({ x, rgba }) => rgba[3] === 255 && (left ? x < f.w / 2 : x >= f.w / 2),
+        );
+        return px.reduce((s, { rgba }) => s + luma(rgba), 0) / px.length;
+      };
+      expect(half(true), key).toBeGreaterThan(half(false));
+    }
+  });
+
+  it('touch their ground: a willow`s shadow under its trunk foot, a mangrove`s root tips at the waterline', () => {
+    for (const key of WATERSIDE) {
+      const f = frames[key];
+      const px = ink(key);
+      if (key.includes('willow')) {
+        // the trunk foot on the anchor row, and a soft shadow right under it
+        expect(
+          px.some(({ x, y, rgba }) => y === f.ay && Math.abs(x - f.ax) <= 1 && rgba[3] === 255),
+          key,
+        ).toBe(true);
+        expect(
+          px.some(({ x, y, rgba }) => y === f.ay + 1 && Math.abs(x - f.ax) <= 1 && rgba[3] < 255),
+          key,
+        ).toBe(true);
+      } else {
+        // opaque root tips reach the anchor's row, on both sides of it, and nothing opaque lies
+        // more than the frame's last rows below it
+        const tips = px.filter(({ y, rgba }) => Math.abs(y - f.ay) <= 1 && rgba[3] === 255);
+        expect(
+          tips.some(({ x }) => x < f.ax - 2),
+          `${key} left tips`,
+        ).toBe(true);
+        expect(
+          tips.some(({ x }) => x > f.ax + 2),
+          `${key} right tips`,
+        ).toBe(true);
+        expect(
+          Math.max(...px.filter(({ rgba }) => rgba[3] === 255).map(({ y }) => y)),
+        ).toBeLessThan(f.h);
+      }
+    }
+  });
+
+  it('grow from variant to variant', () => {
+    for (const kind of ['mangrove', 'willow']) {
+      const [a, b, c] = [0, 1, 2].map((v) => frames[`props/${kind}_${v}`]);
+      expect(a.h).toBeLessThan(b.h);
+      expect(b.h).toBeLessThan(c.h);
+      expect(a.w).toBeLessThan(b.w);
+      expect(b.w).toBeLessThan(c.w);
+    }
   });
 });

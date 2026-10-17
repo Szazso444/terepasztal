@@ -742,6 +742,8 @@ function broken(w: ReturnType<typeof site>): string {
 }
 
 describe('roads, whatever is built in whatever order', () => {
+  // slow: seeded sites of builder steps, the roads judged after each, 0.6 s alone; the limit is
+  // room for a busy machine
   it('cross only plain straights of regular or narrow track at right angles, off every footprint', () => {
     forAll(
       genOps,
@@ -763,8 +765,10 @@ describe('roads, whatever is built in whatever order', () => {
       },
       { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
     );
-  });
+  }, 30_000);
 
+  // slow: seeded sites of builder steps, the roads compared after each, 0.8 s alone; the limit is
+  // room for a busy machine
   it('change only by a road laid or taken up, or by the spur of a place placed, which moves the version on and tells the game once a tile', () => {
     // A renderer keeps what it drew until `version` moves (#309, #329) and redraws the tile
     // `onRoadChanged` names: a change that moved neither would leave a stale picture, and one
@@ -811,7 +815,7 @@ describe('roads, whatever is built in whatever order', () => {
       },
       { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
     );
-  });
+  }, 30_000);
 });
 
 // ------------------------------------------------------------------ the save
@@ -1242,8 +1246,9 @@ describe('a walk with roads', () => {
     for (let y = 19; y > 16; y--) road.push([24, y]);
     for (let x = 24; x >= 10; x--) road.push([x, 16]);
     for (let y = 17; y <= 18; y++) road.push([10, y]);
-    // the tile above the station holds the road the station laid at its door already (#408)
-    expect(builder.roads.toJSON()).toEqual([[10, 18]]);
+    // no road was near the station when it was placed, so it laid none at its door (#455); the
+    // road laid up to its door brings the tile above the station, free
+    expect(builder.roads.toJSON()).toEqual([]);
     for (const [x, y] of road)
       expect(builder.roads.has(x, y) || builder.placeRoad(x, y), `${x},${y}`).toBe(true);
     const people = new PeopleSim(map, builder, new Rng(1));
@@ -1855,6 +1860,8 @@ describe('the spur search', () => {
     expect(seen.crossings).toBeGreaterThanOrEqual(20);
   });
 
+  // slow because each seeded patch and hook is searched for its spur and the search compared with
+  // the rule: 0.39 s alone, so a limit of 30 s
   it('gives, of the spurs with the fewest tiles, the first by its steps, a step’s side ranked N, E, S, W', () => {
     // each generator with what its cases must show at least, so the property is not vacuous: the
     // patches break ties, and the hooks often need the spur judged whole, at times to SPUR_REACH
@@ -1894,7 +1901,7 @@ describe('the spur search', () => {
       for (const [what, n] of Object.entries(least))
         expect(seen[what as keyof typeof seen], `${name}: ${what}`).toBeGreaterThanOrEqual(n);
     }
-  });
+  }, 30_000);
 
   it('gives the same spur every time it is asked, and leaves the roads as they were', () => {
     forAll(genPatch, (c) => {
