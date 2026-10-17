@@ -55,6 +55,8 @@ const SEED = 20260912;
 const SMALL = { w: 48, h: 48 };
 
 describe('generateMap', () => {
+  // the first test of the file to generate, so it pays the generator's warm-up and the rivers'
+  // plan: 0.3 s alone, so a limit of 30 s
   it('gives the same world for the same seed', () => {
     const a = generateMap(SEED, SMALL);
     const b = generateMap(SEED, SMALL);
@@ -62,7 +64,7 @@ describe('generateMap', () => {
     expect(fnv(a.biome)).toBe(fnv(b.biome));
     expect(fnv(a.variant)).toBe(fnv(b.variant));
     expect(a.props.size).toBe(b.props.size);
-  });
+  }, 30_000);
 
   // two worlds, each planning its rivers once (#341): about 0.5 s alone
   it('gives a different world for a different seed', () => {

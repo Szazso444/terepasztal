@@ -519,7 +519,8 @@ describe('waterfalls in stored chunks', () => {
     expect(falls(back)).toEqual(falls(m));
   });
 
-  // 200 maps of up to 3 x 3 chunks, any frame, a waterfall of any drop and edge on any tile
+  // 200 maps of up to 3 x 3 chunks, any frame, a waterfall of any drop and edge on any tile: 0.38 s
+  // alone, so a limit of 30 s
   it('hold any feature byte on any tile and read it back as it was', () => {
     let stored = 0;
     forAll(
@@ -560,7 +561,7 @@ describe('waterfalls in stored chunks', () => {
       },
     );
     expect(stored).toBeGreaterThan(0);
-  });
+  }, 30_000);
 
   it('refuse a feature byte the plane does not hold', () => {
     for (const f of [MAX_DROP + 1, 7, 0b1000, 0b10_0000, 0b100_0001, 0x80 | 1]) {
@@ -881,7 +882,7 @@ describe('a feature section written by hand', () => {
   const plain: MapGenerator = (s, p) =>
     emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
 
-  // 400 texts, each read, built into a map and written again
+  // 400 texts, each read, built into a map and written again: 0.93 s alone, so a limit of 30 s
   it('reads as the waterfalls it lists, on the tiles it lists them, or as nothing', () => {
     const seen = new Set<string>();
     forAll(
@@ -933,7 +934,7 @@ describe('a feature section written by hand', () => {
       'cut short',
     ])
       expect(seen, why).toContain(why);
-  });
+  }, 30_000);
 });
 
 describe('waterfalls of a world grown beside a stored chunk of any ground', () => {
