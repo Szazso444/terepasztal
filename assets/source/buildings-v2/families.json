@@ -386,6 +386,7 @@
       "what": "A coaling stage where engines take fuel.",
       "keep": "a raised stage with a coal bunker and a chute",
       "front": "the side with the chute",
+      "blockHeight": 62,
       "base": "assets/source/base-v1/coaling-stage.png",
       "ages": {
         "a0": "A raised timber coaling stage on stone piers with a coal bunker and a loading chute."

@@ -105,6 +105,11 @@ function checkFamilies(inventory, families) {
     if (!d) throw new Error(`families.json has no description of "${f.family}" (${f.name})`);
     for (const key of ['what', 'keep', 'front'])
       if (!d[key]) throw new Error(`families.json: "${f.family}" has no "${key}"`);
+    const h = d.blockHeight;
+    if (h !== undefined && !(Number.isFinite(h) && h >= 20 && h <= 100))
+      throw new Error(
+        `families.json: "${f.family}" has blockHeight ${JSON.stringify(h)}, which is not a number from 20 to 100 (game px)`,
+      );
     for (let n = 0; n < f.ages; n++) {
       const tag = AGES[f.firstAge + n].tag;
       if (!d.ages?.[tag])
@@ -289,7 +294,7 @@ export function describeEntry(
     file: pictureFile(f.family, age, rot),
     footprint: f.footprint,
     canvas: FOOTPRINTS[f.footprint].canvas,
-    guide: guideFile(f.footprint, rot),
+    guide: guideFile(f.footprint, rot, d.blockHeight === undefined ? null : f.family),
     repaint,
     // what the picture is built on, and what the generator is shown of it
     sources: ref.files,
