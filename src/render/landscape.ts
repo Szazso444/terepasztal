@@ -228,6 +228,8 @@ export class Landscape {
   private doorsteps: readonly number[] = [];
   /** The buildings' yards (buildingYard.ts). */
   private yards: readonly Yard[] = [];
+  /** The road tiles, two numbers each: the tile's index and its code (roadShape.ts). */
+  private roads: readonly number[] = [];
   constructor(
     private readonly map: LandscapeMap,
     private readonly flat: ReadonlySet<number>,
@@ -616,6 +618,7 @@ export class Landscape {
         city: [...this.city],
         doorsteps: this.doorsteps,
         yards: this.yards,
+        roads: this.roads,
         snowLevels: SNOW_LEVELS,
       });
   }
@@ -656,6 +659,14 @@ export class Landscape {
    */
   setYards(yards: readonly Yard[]) {
     this.yards = yards;
+  }
+  /**
+   * The road tiles, two numbers each: the tile's index (`y * w + x`) and its code (`roadCode`,
+   * roadShape.ts), for the paint workers from the next map hand-off. The caller repaints the tiles
+   * whose picture changes (`repaint`).
+   */
+  setRoads(roads: readonly number[]) {
+    this.roads = roads;
   }
   /**
    * The picture of tile (x, y) changes while its ground stays (a building's yard): the chunks it

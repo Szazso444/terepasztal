@@ -14,6 +14,9 @@ import {
   worldToTile,
   worldToTileInt,
   depthKey,
+  DIRS,
+  DIR_DX,
+  DIR_DY,
   ELEV_PX,
   HALF_W,
   HALF_H,
@@ -70,6 +73,8 @@ import {
   type FieldPicture,
 } from './wheatField';
 import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
+import { doorSides, roadCode, roadSides } from './roadShape';
+import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -179,6 +184,11 @@ export class WorldRenderer {
   readonly root = new Container();
   readonly ground = new Container();
   readonly track = new Container();
+  /**
+   * The level-crossing decks (#309, #329) laid over the track where a road crosses it: over the
+   * track and under the ground lights, the harvest highlight and everything that stands.
+   */
+  readonly crossings = new Container();
   readonly platforms = new Container();
   /** Piers of bridges carried over land, standing on the ground under their decks. */
   private piers = new Container();
@@ -198,6 +208,11 @@ export class WorldRenderer {
   /** out-of-map void ring */
   readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
+  /** The frame each track sprite shows (`setTrack`): a plain straight takes a level crossing. */
+  private trackFrames = new Map<number, string>();
+  /** The level-crossing decks by tile, and the meshes of those on a climbing straight. */
+  private decks = new Map<number, Sprite>();
+  private deckMeshes = new Map<number, Mesh>();
   private structures = new Map<string, Sprite>();
   private groundSprites: Sprite[] = [];
   private fogShapes = new Map<number, Graphics>();
@@ -211,6 +226,8 @@ export class WorldRenderer {
   private propSprites = new Map<number, Sprite[]>();
   /** The prop sprites that track cuts rather than displaces (CUT_BY_TRACK). */
   private cutSprites = new WeakSet<Sprite>();
+  /** The prop sprites of deposits (coal, oil): a road hides no deposit, as the player needs it. */
+  private deposits = new WeakSet<Sprite>();
   /** Visual-only nature (scatter.ts) per tile, with each sprite's offset inside its tile. */
   private scatterSprites = new Map<number, { s: Sprite; ox: number; oy: number }[]>();
   /** Stations, buildings and placed decor, as the game knows them; scatter keeps clear. */
@@ -237,6 +254,12 @@ export class WorldRenderer {
   roadAt: (x: number, y: number) => boolean = () => false;
   /** The street doors of every place (`setCity`), by the tile they are in. */
   private doorsByTile = new Map<number, PavingDoor[]>();
+  /** The same doors by the tile each reaches: a road there runs an arm to its door. */
+  private doorsByReach = new Map<number, PavingDoor[]>();
+  /** The road tiles as the renderer last heard of them (`setRoads`, `roadChanged`). */
+  private roads = new Set<number>();
+  /** The code of each road tile as the painter was last handed it (`roadCode`, roadShape.ts). */
+  private roadCodes = new Map<number, number>();
   private waterDetails = new Graphics();
   private waterClock = 0;
   private rippleRefresh = 0;
@@ -299,6 +322,7 @@ export class WorldRenderer {
     this.ground.cullableChildren = true;
     this.fog.cullableChildren = true;
     this.track.cullableChildren = true;
+    this.crossings.cullableChildren = true;
     this.border.cullableChildren = true;
     this.lights.cullableChildren = true;
     this.root.addChild(
@@ -310,6 +334,7 @@ export class WorldRenderer {
       this.piers,
       this.platforms,
       this.track,
+      this.crossings,
       this.lights,
       this.harvest.layer,
       this.objects,
@@ -355,22 +380,121 @@ export class WorldRenderer {
     for (const fit of this.groundFits.values()) this.growWeeds(fit);
     // a door's path follows the doors the places have now
     this.doorsByTile = new Map();
+    this.doorsByReach = new Map();
     for (const d of list) {
       const k = d.tile.y * w + d.tile.x,
         at = this.doorsByTile.get(k);
       if (at) at.push(d);
       else this.doorsByTile.set(k, [d]);
+      const rx = d.tile.x + DIR_DX[d.side],
+        ry = d.tile.y + DIR_DY[d.side];
+      if (rx < 0 || ry < 0 || rx >= w || ry >= h) continue;
+      const to = this.doorsByReach.get(ry * w + rx);
+      if (to) to.push(d);
+      else this.doorsByReach.set(ry * w + rx, [d]);
     }
     this.refreshYards(() => true);
+    // and a road on a door's reach runs an arm to it
+    this.updateRoads(this.roads);
   }
   /**
-   * A road was laid on tile (x, y) or taken off it: the yards of the buildings beside it take
-   * their door paths on to it, or back to their own edge.
+   * A road was laid on tile (x, y) or taken off it (`roadAt` says which): the yards of the
+   * buildings beside it take their door paths on to it, or back to their own edge; the tile and
+   * its four neighbours are painted again with the road's new shape, a level crossing's deck is
+   * laid or lifted, and the nature on the tile hides under the road or comes back.
    */
   roadChanged(x: number, y: number) {
+    const { w, h } = this.map;
+    if (x >= 0 && y >= 0 && x < w && y < h) {
+      const k = y * w + x;
+      if (this.roadAt(x, y)) this.roads.add(k);
+      else this.roads.delete(k);
+      this.roadShown(x, y);
+      const around = [k];
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d],
+          ny = y + DIR_DY[d];
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h) around.push(ny * w + nx);
+      }
+      this.updateRoads(around, around);
+    }
     this.refreshYards((f) => Math.abs(f.x - x) < 3 && Math.abs(f.y - y) < 3);
     // a field ends short of a road
     this.wheat.near(x, y);
+  }
+  /**
+   * The roads a save holds (`Roads.list`), in place of any the renderer knew: every road tile is
+   * painted (none on the paving), every level crossing gets its deck, and the nature on each tile
+   * hides under its road; where a road it knew is gone, the ground is painted again without it.
+   */
+  setRoads(tiles: Iterable<{ x: number; y: number }>) {
+    const { w, h } = this.map,
+      old = this.roads;
+    this.roads = new Set();
+    for (const { x, y } of tiles)
+      if (Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < w && y < h)
+        this.roads.add(y * w + x);
+    const touched = new Set([...old, ...this.roads]);
+    for (const k of touched) {
+      this.roadShown(k % w, Math.floor(k / w));
+      this.wheat.near(k % w, Math.floor(k / w));
+    }
+    this.updateRoads(touched, touched);
+    this.refreshYards(() => true);
+  }
+  /** What stands on tile (x, y) follows its road: nature hides under it, a deck lies over track. */
+  private roadShown(x: number, y: number) {
+    this.showProps(idx(this.map, x, y));
+    this.refreshScatter(x, y, 0);
+    this.refreshDeck(x, y);
+  }
+  /** Is there a road on tile (x, y), as the renderer last heard? False off the map. */
+  private hasRoad(x: number, y: number) {
+    const { w, h } = this.map;
+    return x >= 0 && y >= 0 && x < w && y < h && this.roads.has(y * w + x);
+  }
+  /**
+   * The axis the road on tile (x, y) runs along where it is a level crossing: a road on a plain
+   * straight of regular or narrow track, square to it. Null for any other tile.
+   */
+  private crossingAt(x: number, y: number) {
+    if (!this.hasRoad(x, y)) return null;
+    const frame = this.trackFrames.get(idx(this.map, x, y));
+    return frame === undefined ? null : crossingAxis(frame);
+  }
+  /**
+   * The code of the road on tile (x, y) (`roadCode`, roadShape.ts), -1 for none: the sides it
+   * joins (its road neighbours and its street doors), the sides it meets in the middle (an edge it
+   * shares with a level crossing, and a door's), and whether it is a level crossing itself.
+   */
+  private roadCodeAt(x: number, y: number) {
+    if (!this.hasRoad(x, y)) return -1;
+    const doors = this.doorsByReach.get(idx(this.map, x, y)) ?? [],
+      sides = roadSides((rx, ry) => this.hasRoad(rx, ry), doors, x, y);
+    let pinned = doorSides(doors, x, y);
+    for (const d of DIRS)
+      if (sides & (1 << d) && this.crossingAt(x + DIR_DX[d], y + DIR_DY[d])) pinned |= 1 << d;
+    return roadCode(sides, pinned, this.crossingAt(x, y));
+  }
+  /**
+   * Work out again the codes of the road tiles among `tiles`; if any changed, the painter is handed
+   * the roads and repaints those tiles, and the tiles `also` lists.
+   */
+  private updateRoads(tiles: Iterable<number>, also: Iterable<number> = []) {
+    const { w } = this.map,
+      repaint = new Set(also);
+    for (const k of tiles) {
+      const code = this.roadCodeAt(k % w, Math.floor(k / w));
+      if ((code < 0 ? undefined : code) === this.roadCodes.get(k)) continue;
+      if (code < 0) this.roadCodes.delete(k);
+      else this.roadCodes.set(k, code);
+      repaint.add(k);
+    }
+    if (!repaint.size) return;
+    const list: number[] = [];
+    for (const [k, code] of this.roadCodes) list.push(k, code);
+    this.landscape.setRoads(list);
+    for (const k of repaint) this.landscape.repaint(k % w, Math.floor(k / w));
   }
   private groundFrame(x: number, y: number): string {
     if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
@@ -593,6 +717,7 @@ export class WorldRenderer {
         const s = this.propSprite(x, y, p);
         if (!s) continue;
         if (CUT_BY_TRACK.has(p.kind)) this.cutSprites.add(s);
+        if (p.kind === 'coal' || p.kind === 'oil') this.deposits.add(s);
         // a field shows its picture once it is painted (#444)
         if (p.kind === 'wheat' && !this.wheat.sprite(i)) this.wheat.set(i, s);
         sprites.push(s);
@@ -604,13 +729,15 @@ export class WorldRenderer {
     }
   }
   /**
-   * Show or hide the prop sprites of tile `i`: all of them are hidden on flattened ground, and
-   * those track cuts while track lies on the tile (`railed`, by default whether it has a sprite).
+   * Show or hide the prop sprites of tile `i`: all of them are hidden on flattened ground, those
+   * track cuts while track lies on the tile (`railed`, by default whether it has a sprite), and all
+   * but a deposit while a road does. The map's props stay as they are.
    */
   private showProps(i: number, railed = this.trackSprites.has(i)) {
-    const flat = this.flattened.has(i);
+    const flat = this.flattened.has(i),
+      road = this.roads.has(i);
     for (const s of this.propSprites.get(i) ?? [])
-      s.visible = !flat && !(railed && this.cutSprites.has(s));
+      s.visible = !flat && !(railed && this.cutSprites.has(s)) && !(road && !this.deposits.has(s));
   }
 
   private propSprite(x: number, y: number, p: PropInstance) {
@@ -636,7 +763,10 @@ export class WorldRenderer {
     this.scatterSprites.delete(i);
     if (!this.isBuilt(x, y)) return;
     const list = scatterFor(this.map, x, y, {
-      occupied: (xx, yy) => this.trackSprites.has(idx(this.map, xx, yy)) || this.occupied(xx, yy),
+      occupied: (xx, yy) =>
+        this.trackSprites.has(idx(this.map, xx, yy)) ||
+        this.roads.has(idx(this.map, xx, yy)) ||
+        this.occupied(xx, yy),
       city: (xx, yy) => this.city.has(idx(this.map, xx, yy)),
       // A stacked bank passes through: one neighbour a level up, another a level down.
       steep: (xx, yy) => {
@@ -880,7 +1010,7 @@ export class WorldRenderer {
       run = this.footprintRuns().get(i);
     if (run !== undefined) return { kind: CELL_BLOCKED, variant: 0, level, run };
     const wheat =
-      this.flattened.has(i) || this.trackSprites.has(i)
+      this.flattened.has(i) || this.trackSprites.has(i) || this.roads.has(i)
         ? undefined
         : this.map.props.get(i)?.find((p) => p.kind === 'wheat');
     if (wheat && (!this.isBuilt(x, y) || this.wheat.sprite(i)))
@@ -890,6 +1020,7 @@ export class WorldRenderer {
       this.city.has(i) ||
       this.map.terrain[i] === Terrain.Water ||
       this.roadAt(x, y) ||
+      this.roads.has(i) ||
       this.occupied(x, y)
     )
       return { kind: CELL_BLOCKED, variant: 0, level, run: 0 };
@@ -1043,10 +1174,13 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     if (color === 0xffffff) this.trackHighlight.delete(i);
     else this.trackHighlight.set(i, color);
-    const s = this.trackSprites.get(i);
-    if (s) s.tint = this.trackColour(i);
-    const m = this.trackMeshes.get(i);
-    if (m) m.tint = this.trackColour(i);
+    for (const s of [
+      this.trackSprites.get(i),
+      this.trackMeshes.get(i),
+      this.decks.get(i),
+      this.deckMeshes.get(i),
+    ])
+      if (s) s.tint = this.trackColour(i);
   }
   private trackColour(i: number) {
     const hl = this.trackHighlight.get(i);
@@ -1063,8 +1197,8 @@ export class WorldRenderer {
   setTrackNight(night: number) {
     if (Math.abs(night - this.trackNight) < 0.04) return;
     this.trackNight = night;
-    for (const [i, s] of this.trackSprites) s.tint = this.trackColour(i);
-    for (const [i, m] of this.trackMeshes) m.tint = this.trackColour(i);
+    for (const pieces of [this.trackSprites, this.trackMeshes, this.decks, this.deckMeshes])
+      for (const [i, s] of pieces) s.tint = this.trackColour(i);
   }
   /**
    * Piers for a bridge platform over land: each stands on the ground under it and reaches up to
@@ -1499,6 +1633,8 @@ export class WorldRenderer {
   setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);
     let s = this.trackSprites.get(i);
+    if (frame) this.trackFrames.set(i, frame);
+    else this.trackFrames.delete(i);
     if (!frame) {
       if (s) {
         s.destroy();
@@ -1509,6 +1645,7 @@ export class WorldRenderer {
       this.showProps(i);
       this.refreshScatter(x, y, 0);
       this.wheat.near(x, y);
+      this.trackUnderRoad(x, y);
       return;
     }
     const f = this.atlas.get(frame);
@@ -1524,6 +1661,56 @@ export class WorldRenderer {
     this.showProps(i);
     this.refreshScatter(x, y, 0);
     this.wheat.near(x, y);
+    this.trackUnderRoad(x, y);
+  }
+  /**
+   * The track on tile (x, y) changed: where a road lies on it, its level crossing's deck follows,
+   * and the road there and beside it is painted again where its shape changed (a level crossing's
+   * road runs straight through the middle, and so its neighbours meet it there).
+   */
+  private trackUnderRoad(x: number, y: number) {
+    this.refreshDeck(x, y);
+    if (!this.hasRoad(x, y)) return;
+    const { w, h } = this.map,
+      around = [y * w + x];
+    for (const d of DIRS) {
+      const nx = x + DIR_DX[d],
+        ny = y + DIR_DY[d];
+      if (nx >= 0 && ny >= 0 && nx < w && ny < h) around.push(ny * w + nx);
+    }
+    this.updateRoads(around);
+  }
+  /**
+   * The level-crossing deck on tile (x, y) (#309): its frame over a plain straight of regular or
+   * narrow track where a road lies on it, at the place and with the transform of the track piece
+   * under it, tinted as the piece is. None where the road or the track is gone, nor where the
+   * atlas lacks the frame.
+   */
+  private refreshDeck(x: number, y: number) {
+    const i = idx(this.map, x, y),
+      track = this.trackFrames.get(i),
+      frame =
+        this.roads.has(i) && track !== undefined && this.trackSprites.has(i)
+          ? levelCrossingFrame(track)
+          : null;
+    let s = this.decks.get(i);
+    if (!frame || !this.atlas.has(frame)) {
+      s?.destroy();
+      this.decks.delete(i);
+      this.deckMeshes.get(i)?.destroy();
+      this.deckMeshes.delete(i);
+      return;
+    }
+    const f = this.atlas.get(frame);
+    if (!s) {
+      s = new Sprite(f.texture);
+      s.cullable = true;
+      this.crossings.addChild(s);
+      this.decks.set(i, s);
+    } else s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
+    s.tint = this.trackColour(i);
+    this.seat(s, x, y, this.deckMeshes, this.crossings);
   }
   /**
    * New rail profile after a track or bridge change. Tiles whose bed changed repaint their ground
@@ -1573,15 +1760,28 @@ export class WorldRenderer {
     const bed = this.railBeds.get(idx(this.map, x, y));
     return bed?.bridge ? -this.railAt(x, y).dz + this.elevationOf(x, y) : 0;
   }
-  /** Track rests on the rail profile; a bending or climbing piece is a mesh following it. */
+  /**
+   * Track rests on the rail profile; a bending or climbing piece is a mesh following it. A level
+   * crossing's deck over it goes with it.
+   */
   private placeTrackSprite(s: Sprite, x: number, y: number) {
+    this.seat(s, x, y, this.trackMeshes, this.track);
+    const deck = this.decks.get(idx(this.map, x, y));
+    if (deck) this.seat(deck, x, y, this.deckMeshes, this.crossings);
+  }
+  /**
+   * Seat picture `s` of tile (x, y) on the rail profile: standing at the rail's height where the
+   * line runs level, else hidden behind a mesh of its texture (`meshes`, in `layer` just under it)
+   * whose vertices follow the profile.
+   */
+  private seat(s: Sprite, x: number, y: number, meshes: Map<number, Mesh>, layer: Container) {
     const i = idx(this.map, x, y),
       p = tileToWorld(x, y),
       bed = this.railBeds.get(i);
-    let mesh = this.trackMeshes.get(i);
+    let mesh = meshes.get(i);
     if (!bed || bed.flat || this.landscape.failed) {
       mesh?.destroy();
-      this.trackMeshes.delete(i);
+      meshes.delete(i);
       s.renderable = true;
       standOnGround(s, p.x, p.y, { ...LEVEL_GROUND, dz: this.railAt(x, y).dz });
       return;
@@ -1590,8 +1790,8 @@ export class WorldRenderer {
     if (!mesh) {
       mesh = new Mesh({ geometry, texture: s.texture });
       mesh.cullable = true;
-      this.track.addChildAt(mesh, this.track.getChildIndex(s));
-      this.trackMeshes.set(i, mesh);
+      layer.addChildAt(mesh, layer.getChildIndex(s));
+      meshes.set(i, mesh);
     } else {
       mesh.geometry.destroy();
       mesh.geometry = geometry;

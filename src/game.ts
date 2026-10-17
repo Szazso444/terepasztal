@@ -1294,6 +1294,7 @@ export class Game implements UiHost {
     this.builder.roads.load(j.roads);
     // a road on ground that can no longer hold one comes off, with no refund (`repairBuiltRoads`)
     for (const r of repairBuiltRoads(this.map, j)) this.builder.roads.remove(r.x, r.y);
+    this.world.setRoads(this.builder.roads.list());
     resetStationIds(1);
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);

@@ -124,6 +124,24 @@ function pictureOf(key: string, f: FrameInfo) {
 }
 
 /**
+ * What a world renderer built from its prototype needs to follow roads (`setRoads`,
+ * `roadChanged`, `setCity`): none yet, no track and no nature drawn.
+ */
+const noRoads = () => ({
+  roads: new Set(),
+  roadCodes: new Map(),
+  doorsByReach: new Map(),
+  trackFrames: new Map(),
+  decks: new Map(),
+  deckMeshes: new Map(),
+  crossings: new Container(),
+  propSprites: new Map(),
+  flattened: new Set(),
+  cutSprites: new WeakSet(),
+  deposits: new WeakSet(),
+});
+
+/**
  * A world renderer with only what placing a structure touches: the atlas above, a one-tile map,
  * its two layers, and surfaces that hand back textures without reading pixels (Node has no
  * canvas), the pictures from `PICTURES`. `families` records the window-light family each building
@@ -170,7 +188,14 @@ function renderer() {
         return { texture, anchorX: 0.5, anchorY: 0.5 };
       },
     },
-    landscape: { setCity: () => {}, invalidate: () => {}, setYards: () => {}, repaint: () => {} },
+    landscape: {
+      setCity: () => {},
+      invalidate: () => {},
+      setYards: () => {},
+      setRoads: () => {},
+      repaint: () => {},
+    },
+    ...noRoads(),
     footings: new Map(),
     doorsByTile: new Map(),
     trackSprites: new Map(),
@@ -533,6 +558,7 @@ describe("a building's yard and plinth", () => {
         setCity: () => {},
         invalidate: () => {},
         setYards: (yards: Yard[]) => handed.push(yards),
+        setRoads: () => {},
         repaint: (x: number, y: number) => repainted.add(y * 8 + x),
       },
     });
@@ -1985,6 +2011,7 @@ describe('the town paving handed to the painter', () => {
         setCity: (_tiles: Set<number>, steps: readonly number[]) => handed.push(steps),
         invalidate: (x: number, y: number) => repainted.push(`${x},${y}`),
       },
+      ...noRoads(),
       refreshScatter: () => {},
     });
     return { world, handed, repainted };
@@ -2118,6 +2145,7 @@ describe('the paving of a town the simulation raises, as the game hands it over'
           given.push({ tiles, steps }),
         invalidate: (x: number, y: number) => repainted.add(y * SIZE + x),
       },
+      ...noRoads(),
       refreshScatter: () => {},
     });
     const game = Object.create(GameClass.prototype) as Game;
