@@ -224,13 +224,16 @@ beforeAll(() => {
     const keys = add.mock.calls.map(([key]) => key);
     // the tile centre is where the generator anchors every frame; world pixels are texels / R
     const { ax, ay } = anchors[0];
-    drawn = keys.map((key, i) => ({
-      key,
-      sleepers: context.frames[i].map((s) =>
-        worldToTile(s.x - ax / resolution, s.y - ay / resolution),
-      ),
-      colors: context.frames[i].map((s) => s.color),
-    }));
+    // a level crossing's deck lies over a straight and lays no sleepers (levelCrossing.test.ts)
+    drawn = keys
+      .map((key, i) => ({
+        key,
+        sleepers: context.frames[i].map((s) =>
+          worldToTile(s.x - ax / resolution, s.y - ay / resolution),
+        ),
+        colors: context.frames[i].map((s) => s.color),
+      }))
+      .filter((f) => !f.key.startsWith('track/level_crossing_'));
   } finally {
     add.mockRestore();
     vi.unstubAllGlobals();

@@ -326,8 +326,16 @@ though they are not ordinary wagon cargo. Keep all 18 existing icon frames.
 - **People:** four current outfits, two walk frames, 6×12 buffers. Readable head/body/legs,
   subdued worker and resident clothing, consistent ground anchor. Further appearance variety
   is optional; preserve existing bounded population rendering and animation.
-- **Paths:** dirt paths, stone roads, and both crossing families in their current variants.
-  Shared seams and kerbs; crossings must not paint out railheads or invent a road transport mode.
+- **Paths:** roads are painted into the ground by the landscape painter along a centre line
+  (#329), so they have no atlas frames; `people/road_stone_*` stays as the road tool's icon, with
+  `people/path_dirt_*`. A level crossing is a deck drawn over the straight track a road crosses:
+  `track/level_crossing_<regular|narrow>_<rot>` in the track group (`src/art/trackIllustrated.ts`),
+  anchored exactly as `track/straight_<cls>_<rot>`. Regular track gets dressed stone setts, narrow
+  track packed earth with timber check planks along both sides of each rail, and high-speed track
+  none. The deck reaches 0.1 tile outside each rail, inside the ballast bed, and 0.16 tile either
+  way along the track, half the road's width (`LEVEL_CROSSING_ACROSS`, `LEVEL_CROSSING_ALONG`).
+  The rails' own strokes are cut out of it, so a crossing never paints out the railheads, and it
+  never invents a road transport mode.
 - **Weather:** rain is fine and low contrast; fog is translucent; smoke drifts in soft stepped
   clusters. Preserve frame anchors and avoid opaque rectangles on transparent backgrounds.
 - **Light:** light-tile, glow and small glow should blend with warm lamps without washing out
