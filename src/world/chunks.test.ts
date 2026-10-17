@@ -286,8 +286,7 @@ describe('a chunk text', () => {
   it('holds any value it allows, in tiles as odd as it allows', () => {
     // every terrain and biome id 0 to 15, every variant, long and single runs, props by the
     // dozen and with escaped kinds and variants, on a part of a chunk off the grid; variants
-    // emptyMap's own or any, of seeds version 5 guesses from and seeds it cannot (no integer, or
-    // too large)
+    // emptyMap's own or any, of seeds of every kind (integers small and large, and no integer)
     forAll(
       (rng) => {
         const w = rng.int(1, 32);
@@ -1246,7 +1245,9 @@ describe('stored chunks, over any generator, frame and text', () => {
       },
     );
     // both ways out were taken, a hand-written props section read and refused among them, and
-    // texts of today's version broken every way were refused
+    // texts of today's version broken each way were refused. Not every one is: a text with bytes
+    // changed, put in or taken out may read, to other planes (no version checks its bytes); only
+    // one cut short or run on never does (tested below)
     for (const way of [
       'bytes changed: read',
       'bytes changed: refused',
@@ -1568,6 +1569,30 @@ describe('chunk texts of every version (#392)', () => {
     }
   }, 60_000);
 
+  it("guesses a chunk's variants from its world's seed, whatever number the seed is", () => {
+    // the head spelled out: version 5 and the rectangle; the seed as a zigzagged varint (7412: E8
+    // 73), or as the varint 2^53 - 1 (FF seven times, 0F) and its float64, the lowest byte first
+    // (0.5: 00 six times, E0 3F); then cx and cy zigzagged (-3: 05, 2: 04)
+    const head = (seed: number) =>
+      bytesOf(encodeChunk(emptyMap(seed, 1, 1, Terrain.Grass, -3 * CHUNK_TILES, 64), -3, 2));
+    expect(head(7412).slice(0, 9)).toEqual([5, 0, 0, 1, 1, 0xe8, 0x73, 5, 4]);
+    const float = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f, 0, 0, 0, 0, 0, 0, 0xe0, 0x3f];
+    expect(head(0.5).slice(0, 23)).toEqual([5, 0, 0, 1, 1, ...float, 5, 4]);
+    // emptyMap's variants are map generation's: guessed from the seed, a chunk of them costs a bit
+    // a row; missed, two bits a tile, 256 bytes for the chunk
+    for (const seed of [...ANY_SEEDS, -0, -Infinity, NaN, Number.MAX_VALUE, -Number.MIN_VALUE])
+      for (const [cx, cy] of [
+        [0, 0],
+        [-3, 2],
+      ]) {
+        const m = emptyMap(seed, 32, 32, Terrain.Grass, cx * CHUNK_TILES, cy * CHUNK_TILES);
+        const text = encodeChunk(m, cx, cy);
+        const at = `seed ${seed}, chunk ${cx},${cy}`;
+        expect(bytesOf(text).length, at).toBeLessThanOrEqual(48);
+        expect(decodeChunk(text)!.variant, at).toEqual(m.variant);
+      }
+  });
+
   // a world of 49 chunks stored in every version, loaded twice and grown a ring: about 0.4 s alone
   it("loads a store holding chunks of every version unchanged, and grows it in today's", () => {
     const params = { w: 224, h: 224, originX: -96, originY: -96 };
@@ -1641,7 +1666,11 @@ describe('chunk texts of every version (#392)', () => {
 // short or run on; no text holds more props than its bytes pay for; and texts that the encoders of
 // versions 1 to 4 wrote read as they did.
 
-/** Seeds of every kind a map may carry: ones version 5 guesses from and ones it cannot. */
+/**
+ * Seeds of every kind a map may carry: integers version 5's head holds as a varint, the largest
+ * and smallest among them, and numbers it holds as their float64 (no integer, or 2^52 or more in
+ * size, as a player who types a long seed gets).
+ */
 const ANY_SEEDS = [
   0,
   1,
@@ -1655,7 +1684,13 @@ const ANY_SEEDS = [
   2 ** 40,
   -(2 ** 40),
   12345678901234,
+  2 ** 52 - 1,
+  -(2 ** 52 - 1),
+  2 ** 52,
+  -(2 ** 52),
+  2 ** 53 + 2,
   1e20,
+  Infinity,
 ];
 
 /**
@@ -1894,7 +1929,7 @@ describe('stored chunk texts, checked apart (#392)', () => {
   // about 1 s alone
   it('hold every plane at once, any value in any chunk of any seed, and read so in every version', () => {
     let far = 0;
-    let unguessed = 0;
+    let floats = 0;
     let huge = 0;
     forAll(
       genAnyPlanes,
@@ -1920,7 +1955,7 @@ describe('stored chunk texts, checked apart (#392)', () => {
           }
         else huge++;
         if (Math.abs(c.cx) >= 2 ** 40 || Math.abs(c.cy) >= 2 ** 40) far++;
-        if (!Number.isSafeInteger(c.seed) || Math.abs(c.seed) >= 2 ** 40) unguessed++;
+        if (!Number.isInteger(c.seed) || Math.abs(c.seed) >= 2 ** 52) floats++;
       },
       {
         seeds: Array.from({ length: 150 }, (_, i) => i + 1),
@@ -1929,9 +1964,10 @@ describe('stored chunk texts, checked apart (#392)', () => {
         shrinkBudget: 300,
       },
     );
-    // chunks and seeds version 5 has no guess for ran, and variants no older version holds
+    // chunks version 5 has no guess for ran, seeds its head holds as their float64, and variants
+    // no older version holds
     expect(far).toBeGreaterThan(0);
-    expect(unguessed).toBeGreaterThan(0);
+    expect(floats).toBeGreaterThan(0);
     expect(huge).toBeGreaterThan(0);
   }, 30_000);
 
@@ -2063,11 +2099,20 @@ describe('stored chunk texts, checked apart (#392)', () => {
     }
   });
 
-  // six worlds of 9 chunks, each stored in versions 4 and 5: about 2 s alone
-  it('store a world of any seed a game draws, or a player types up to 2^40, in half the text', () => {
-    // the largest seed Math.random draws for a new game, the largest hashSeed makes of a word, and
-    // the largest number version 5 still guesses from
-    for (const seed of [2 ** 31 - 1, 2 ** 32 - 1, 2 ** 40 - 1])
+  // fourteen worlds of 9 chunks, each stored in versions 4 and 5: about 2 s alone
+  it('store a world of any seed a game draws or a player types in half the text', () => {
+    // the largest seed Math.random draws for a new game and the largest hashSeed makes of a word;
+    // and seeds a player types as digits (parseSeed), of 13 digits and more, up to numbers the
+    // head holds as their float64
+    for (const seed of [
+      2 ** 31 - 1,
+      2 ** 32 - 1,
+      2 ** 40 - 1,
+      2 ** 40,
+      12345678901234,
+      1e20,
+      2 ** 53 + 2,
+    ])
       for (const chain of SUPPLY_MODES) {
         const params = { w: 96, h: 96, originX: -32, originY: -32 };
         const { chunks } = buildMap(seed, params, {}, generateChain(chain));

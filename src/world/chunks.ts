@@ -57,9 +57,11 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  *   chunk without a waterfall spends a byte on them, and a waterfall two or three more.
  *
  * Version 5 (#392) holds every plane of version 4, read back the same, in about a sixth of its
- * text for a generated world. After the rectangle come three varints, each zigzagged (2v for v of
- * 0 or more, -2v - 1 below): the seed its guesses are made from, the map's seed, or 0 where that
- * is no integer below 2^40 in size; and the chunk's cx and cy, the same way. The rest of the text
+ * text for a generated world. After the rectangle comes the seed its guesses are made from, the
+ * map's seed as it is, whatever number that is: an integer below 2^52 in size as a varint,
+ * zigzagged (2v for v of 0 or more, -2v - 1 below), and any other as the varint 2^53 - 1 followed
+ * by the eight bytes of its float64, the lowest first. Then the chunk's cx and cy, each a varint
+ * zigzagged the same way, or 0 where it is 2^40 or more in size. The rest of the text
  * is one stream of LZMA's range coder (RangeWriter) without its first byte, which is always 0;
  * a text that leaves bytes over, or runs out before its last plane, is not one encodeChunk wrote.
  * Every bit of the stream is coded at even odds ("raw") or under a context: two counts, of the 0s
@@ -193,8 +195,8 @@ export interface BuiltMap {
   /** keys of the chunks this call generated and stored, in rows */
   added: string[];
   /**
-   * keys whose stored text could not be read (corrupt, or of a newer CHUNK_VERSION): the map has
-   * them as generated now, and their text is kept, never replaced
+   * keys whose stored text decodeChunk refused (broken in a way it notices, or of a newer
+   * CHUNK_VERSION): the map has them as generated now, and their text is kept, never replaced
    */
   unreadable: string[];
 }
@@ -285,6 +287,12 @@ class Writer {
     }
     this.byte(v);
   }
+  /** The eight bytes of `v`'s float64, the lowest first. */
+  float64(v: number) {
+    const b = new Uint8Array(8);
+    new DataView(b.buffer).setFloat64(0, v, true);
+    for (let k = 0; k < 8; k++) this.byte(b[k]);
+  }
 }
 
 /** Thrown inside decodeChunk when the bytes run out or say something no chunk says. */
@@ -318,6 +326,12 @@ class Reader {
       return v;
     }
     throw new Corrupt();
+  }
+  /** A float64 of eight bytes, the lowest first (version 5's head). */
+  float64() {
+    const b = new Uint8Array(8);
+    for (let k = 0; k < 8; k++) b[k] = this.byte();
+    return new DataView(b.buffer).getFloat64(0, true);
   }
 }
 
@@ -435,9 +449,13 @@ interface Guess {
   wx: number;
   wy: number;
 }
-/** A seed or chunk coordinate version 5 guesses from; any other stands as 0. */
+/** A chunk coordinate version 5 guesses from; any other stands as 0. */
 const GUESS_LIMIT = 2 ** 40;
 const guessable = (v: number) => (Number.isSafeInteger(v) && Math.abs(v) < GUESS_LIMIT ? v : 0);
+/** The seeds version 5's head holds as a zigzagged varint: the integers below this in size. */
+const SEED_LIMIT = 2 ** 52;
+/** The varint after which the head holds the seed as its float64; no zigzagged seed is it. */
+const SEED_FLOAT = 2 ** 53 - 1;
 const zigzag = (v: number) => (v < 0 ? -2 * v - 1 : 2 * v);
 const unzigzag = (u: number) => (u % 2 ? -(u + 1) / 2 : u / 2);
 
@@ -1054,10 +1072,16 @@ function encodeWith(
   }
   const out = new Writer();
   for (const b of [CHUNK_VERSION, c.x0, c.y0, c.w, c.h]) out.byte(b);
-  const seed = guessable(map.seed);
+  // the seed as it is, so that the guesses are generation's for any seed a world may have
+  const seed = map.seed;
+  if (Number.isInteger(seed) && Math.abs(seed) < SEED_LIMIT) out.varint(zigzag(seed));
+  else {
+    out.varint(SEED_FLOAT);
+    out.float64(seed);
+  }
   const gx = guessable(cx);
   const gy = guessable(cy);
-  for (const k of [seed, gx, gy]) out.varint(zigzag(k));
+  for (const k of [gx, gy]) out.varint(zigzag(k));
   const coder = new RangeWriter(out);
   const g = { seed, wx: gx * CHUNK_TILES + c.x0, wy: gy * CHUNK_TILES + c.y0 };
   codeTiles(coder, t, c.w, c.h, g, lists);
@@ -1065,7 +1089,12 @@ function encodeWith(
   return toBase64(out.buf.subarray(0, out.n));
 }
 
-/** The planes of a chunk's text; null when the text is corrupt or of a newer encoding. */
+/**
+ * The planes of a chunk's text; null when it is of a newer encoding, or reading it runs out of
+ * bytes, leaves bytes over or meets a value no chunk holds, so a text cut short or run on is never
+ * read. No version holds a check of its bytes beyond that: a text with bytes changed, put in or
+ * taken out may still read, to other planes than were written.
+ */
 export function decodeChunk(text: string): ChunkPlanes | null {
   const bytes = fromBase64(text);
   if (!bytes) return null;
@@ -1082,7 +1111,8 @@ export function decodeChunk(text: string): ChunkPlanes | null {
     let t: Tiles | null;
     if (version < 5) t = readOldPlanes(r, version, n);
     else {
-      const seed = unzigzag(r.long());
+      const head = r.long();
+      const seed = head === SEED_FLOAT ? r.float64() : unzigzag(head);
       const gx = unzigzag(r.long());
       const gy = unzigzag(r.long());
       t = {
