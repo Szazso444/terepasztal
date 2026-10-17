@@ -157,5 +157,44 @@
     "cyanWaterPct": 0,
     "lumP99": 162.7374,
     "look": "checks/tree-willow-1-look.png"
+  },
+  "tree-willow-2.png": {
+    "returned": [
+      1254,
+      1254
+    ],
+    "edgePixels": 0,
+    "partialAlphaPct": 9.719265177588019,
+    "box": [
+      48,
+      42,
+      1203,
+      1200
+    ],
+    "footAuto": [
+      623.5,
+      1199
+    ],
+    "foot": [
+      623.5,
+      1199
+    ],
+    "anchor": [
+      623.5,
+      1070.4444444444443
+    ],
+    "kind": "willow",
+    "height": 48,
+    "k": 0.046672428694900604,
+    "drawn": {
+      "width": 64.74399308556612,
+      "footFromCentre": -0.11201382886776144,
+      "belowFoot": 0.046672428694900604
+    },
+    "overCursorWhite": 0,
+    "amberStrength": 0,
+    "cyanWaterPct": 0,
+    "lumP99": 164.0182,
+    "look": "checks/tree-willow-2-look.png"
   }
 }
