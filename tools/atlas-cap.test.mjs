@@ -668,6 +668,8 @@ describe('every packed atlas in public/assets', () => {
     for (const g of ['props', 'terrain', 'structures', 'icons', 'bridges', 'rolling'])
       expect(groups).toContain(g);
   });
+  // slow because every texel of a group's whole atlas is checked: 0.37 s alone for structures, the
+  // largest, so a limit of 30 s for each group
   it.each(groups)(
     '%s: no texel at or above the cursor white, none as strong as the amber, no alpha haze',
     (group) => {
@@ -682,6 +684,7 @@ describe('every packed atlas in public/assets', () => {
         amber: 0,
       });
     },
+    30_000,
   );
   it.each(groups)('%s: the frames of a lit set stay under the cursor white`s luma', (group) => {
     const png = PNG.sync.read(readFileSync(new URL(`${group}.png`, ASSETS)));

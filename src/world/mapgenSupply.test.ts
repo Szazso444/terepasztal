@@ -131,6 +131,8 @@ describe('generateMap takes the production chain as an argument', () => {
     );
   });
 
+  // each row builds two worlds of up to 96 x 96, and the first pays the generator's warm-up: about
+  // 0.35 s alone, so a limit of 30 s
   it.each(WORLDS.flatMap((w) => SUPPLY_MODES.map((chain) => ({ ...w, chain }))))(
     'seed $seed at $size x $size, $chain chain: the same map whether the global says simple or full',
     ({ seed, size, chain }) => {
@@ -142,6 +144,7 @@ describe('generateMap takes the production chain as an argument', () => {
       expect(propHash(asFull)).toBe(propHash(asSimple));
       expect(asFull.props.size).toBe(asSimple.props.size);
     },
+    30_000,
   );
 
   it.each(WORLDS)(

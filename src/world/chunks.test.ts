@@ -283,6 +283,8 @@ describe('a chunk text', () => {
     expect(oil).toBeGreaterThan(0);
   }, 90_000);
 
+  // slow because each of 100 maps up to 32 x 32 tiles is stored and built back whole: 0.4 s alone,
+  // so a limit of 30 s
   it('holds any value it allows, in tiles as odd as it allows', () => {
     // every terrain and biome id 0 to 15, every variant, long and single runs, props by the
     // dozen and with escaped kinds and variants, on a part of a chunk off the grid; variants
@@ -337,7 +339,7 @@ describe('a chunk text', () => {
       },
       { format: (m) => `${m.w} x ${m.h} at (${m.originX}, ${m.originY}), seed ${m.seed}` },
     );
-  });
+  }, 30_000);
 
   it('refuses a value it cannot hold rather than store another', () => {
     const map = emptyMap(1, 32, 32);
@@ -2412,6 +2414,8 @@ describe("the seed in a chunk text's head (#392)", () => {
     }
   }, 30_000);
 
+  // slow because 120 chunk parts under seeds of every kind are each written twice and read: 0.33 s
+  // alone, so a limit of 30 s
   it('holds the number a seed of another kind stands for, and reads back as written', () => {
     // a save's JSON may carry a world seed that is no number (a hand-edited or foreign save: the
     // load checks the save's own seed, not its world's), and groundOf hands it to buildMap. The
@@ -2477,7 +2481,7 @@ describe("the seed in a chunk text's head (#392)", () => {
       expect(read, `${w} x 1 refused`).not.toBeNull();
       expect(read!.props.get(0), `${w} x 1`).toEqual([{ kind: 'tree', variant: 0, ox: 0, oy: 0 }]);
     }
-  });
+  }, 30_000);
 
   // a world of 4 chunks generated and loaded: about 0.3 s alone
   it('builds and loads a world whose save carries its seed as a numeric string', () => {
