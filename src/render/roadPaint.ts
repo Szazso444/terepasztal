@@ -9,6 +9,7 @@ import {
   ROAD_RAG,
   ROAD_REACH,
   ROAD_STRIDE,
+  type RoadPiece,
 } from './roadShape';
 import { surfaceNoise } from './terrainMaterials';
 
@@ -78,6 +79,13 @@ export function pavingFade(pave: number) {
   return sstep((-pave - 0.03) / 0.14);
 }
 
+/** The axis a road piece runs along whole: 1 along x, 2 along y, 0 where it turns or branches. */
+function roadAxis(piece: RoadPiece) {
+  if (piece.kind === 'straight') return piece.rot === 0 ? 2 : 1;
+  if (piece.kind === 'end') return piece.rot % 2 === 0 ? 2 : 1;
+  return 0;
+}
+
 /** How far the ragged edge stands out at world point (wx, wy) (tiles, 0 to ROAD_RAG). */
 export function roadRag(wx: number, wy: number) {
   return (
@@ -98,6 +106,8 @@ export class RoadPaint {
   private readonly flags: Uint8Array;
   /** The road tiles' compiled centre lines (`compileRoad`). */
   private readonly table: Float64Array;
+  /** The axis each road tile's road runs along, by `at`: 1 along x, 2 along y, 0 for a junction. */
+  private readonly axes: Uint8Array;
   /** The last point read (`weigh`): the road's weight there and its distance from a centre line. */
   weight = 0;
   dist = Infinity;
@@ -118,13 +128,16 @@ export class RoadPaint {
     this.at = new Int32Array(w * h).fill(-1);
     this.flags = new Uint8Array(w * h);
     this.table = new Float64Array((roads.length >> 1) * ROAD_STRIDE);
+    this.axes = new Uint8Array(roads.length >> 1);
     let n = 0;
     for (let i = 0; i + 1 < roads.length; i += 2) {
       const k = roads[i];
       if (!(k >= 0 && k < w * h) || this.at[k] >= 0 || paved(k)) continue;
       const x = k % w,
         y = (k - x) / w;
-      compileRoad(roadShape(roads[i + 1], x + originX, y + originY), this.table, n * ROAD_STRIDE);
+      const shape = roadShape(roads[i + 1], x + originX, y + originY);
+      compileRoad(shape, this.table, n * ROAD_STRIDE);
+      this.axes[n] = roadAxis(shape.piece);
       this.at[k] = n++;
       this.flags[k] = 1;
       if (x > 0) this.flags[k - 1] = 1;
@@ -197,6 +210,25 @@ export class RoadPaint {
     }
     this.side = side;
     return d;
+  }
+  /**
+   * The distance from map point (x, y), on the tile with index `k`, to the nearest road's centre
+   * line (tiles), Infinity where no road can reach it: what `weigh` leaves in `dist`, without the
+   * weight. For the town paving, which lays its lane by it (#476).
+   */
+  centre(x: number, y: number, k: number) {
+    return this.flags[k] === 1 ? this.distance(x, y, k) : Infinity;
+  }
+  /**
+   * The axis the road runs along at map point (x, y) on the tile with index `k`: 1 along x, 2
+   * along y. A straight or an end runs along its own axis; at a curve, a tee or a cross it is the
+   * axis of the arm the point lies toward, the diagonals dividing them.
+   */
+  axis(x: number, y: number, k: number) {
+    const n = this.at[k];
+    if (n >= 0 && this.axes[n]) return this.axes[n];
+    const i = k % this.w;
+    return Math.abs(x - i) > Math.abs(y - (k - i) / this.w) ? 1 : 2;
   }
   /**
    * How much road there is at map point (x, y) on the tile with index `k`, into `weight` (0 to 1),

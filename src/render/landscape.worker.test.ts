@@ -5,7 +5,7 @@ import { Terrain } from '../world/tiles';
 import { BIOME_DEFS } from '../sim/biomes';
 import { buildRelief, reliefHeight, surfaceAlongRay, type TerrainRelief } from './terrainRelief';
 import { paintedWater } from './terrainMaterials';
-import { pavingDoorsteps, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
+import { LANE_REACH, pavingDoorsteps, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
 import { groundOf } from '../art/buildingGround';
 import { BuildingYards, buildingYard, yardTiles, type Yard } from './buildingYard';
 import { RoadPaint, pavingFade } from './roadPaint';
@@ -921,7 +921,16 @@ describe('the painter with roads', () => {
       painter = new RoadPaint(w.map.w, w.map.h, w.map.originX, w.map.originY, roads, (k) =>
         paving.paved(k),
       );
-    return { w, roads, paving, painter };
+    // the same roads read for the lanes they lay across the paving (#476)
+    const lanes = new RoadPaint(
+      w.map.w,
+      w.map.h,
+      w.map.originX,
+      w.map.originY,
+      roads,
+      (k) => !paving.paved(k),
+    );
+    return { w, roads, paving, painter, lanes };
   }
   const CHUNKS = [
     [8, 8],
@@ -932,11 +941,13 @@ describe('the painter with roads', () => {
 
   // Slow: paints four chunks twice and checks every pixel (about 2 s alone).
   it('paints the roads where they weigh, out of the water, under the paving, and nothing else', async () => {
-    const { w, roads, paving, painter } = roaded();
+    const { w, roads, paving, painter, lanes } = roaded();
     const { map } = w;
     let road = 0,
       faded = 0,
-      water = 0;
+      water = 0,
+      laid = 0,
+      changed = 0;
     for (const [x, y] of CHUNKS) {
       const a = await paint({ ...w, roads }, x, y),
         b = await paint(w, x, y);
@@ -953,7 +964,13 @@ describe('the painter with roads', () => {
             for (let c = 0; c < 3; c++)
               expect(a.pixels[k + c], `pixel ${px},${py} of ${x},${y}`).toBe(b.pixels[k + c]);
           };
-          if (weight === 0 || pavingFade(pave) === 0) same();
+          // a road across the paving is a lane of setts, not gravel: it changes the paving itself,
+          // by the lane's reach and no farther
+          const lane = pave > 0 && lanes.near(tile) ? lanes.centre(tx, ty, tile) : Infinity;
+          if (lane < LANE_REACH) {
+            laid++;
+            for (let c = 0; c < 3; c++) if (a.pixels[k + c] !== b.pixels[k + c]) changed++;
+          } else if (weight === 0 || pavingFade(pave) === 0) same();
           else if (wet >= 1 - 1e-9) {
             water++;
             same();
@@ -968,6 +985,54 @@ describe('the painter with roads', () => {
     expect(road).toBeGreaterThan(2000);
     expect(water).toBeGreaterThan(100);
     expect(faded).toBeGreaterThan(20);
+    expect(laid).toBeGreaterThan(300);
+    expect(changed).toBeGreaterThan(laid);
+  }, 30_000);
+
+  // Slow: paints four chunks and works out the paving at every pixel of the lane (about 1 s
+  // alone), so the limit is 30 s.
+  it('lays the lane of a road across the paving by its distance and axis, along x and along y alike', async () => {
+    // a road along x on row 7 and one along y on column 9, crossing in the middle of the town
+    const w = world(),
+      tiles: [number, number][] = [];
+    for (let x = 3; x <= 15; x++) tiles.push([x, 7]);
+    for (let y = 4; y <= 12; y++) if (y !== 7) tiles.push([9, y]);
+    const roads = roadList(w.map.w, w.map.h, tiles),
+      { map } = w,
+      paving = new TownPaving(map.w, map.h, map.originX, map.originY, w.city, w.doorsteps),
+      gravel = new RoadPaint(map.w, map.h, map.originX, map.originY, roads, (k) => paving.paved(k)),
+      lanes = new RoadPaint(map.w, map.h, map.originX, map.originY, roads, (k) => !paving.paved(k)),
+      out = [0, 0, 0],
+      onAxis = [0, 0, 0];
+    for (const [x, y] of CHUNKS) {
+      const a = await paint({ ...w, roads }, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          // the map is flat, so the pixel's point is the map point
+          const [tx, ty] = pointOf(a, px, py, 1),
+            tile = Math.round(ty) * map.w + Math.round(tx),
+            d = paving.near(tile) ? paving.distance(tx, ty) : -9;
+          if (d < PAVING_SOLID || !lanes.near(tile) || gravel.weigh(tx, ty, tile) > 0) continue;
+          const lane = lanes.centre(tx, ty, tile),
+            axis = lanes.axis(tx, ty, tile);
+          if (lane >= LANE_REACH) continue;
+          // on the paving, the pixel is the paving's colour at that point, with that lane
+          paving.paint(tx, ty, d, null, 1, out, lane, axis);
+          for (let c = 0; c < 3; c++)
+            if (Math.abs(a.pixels[k + c] - out[c]) > 0.51)
+              expect.fail(
+                `pixel ${px},${py} of chunk ${x},${y} at ${tx.toFixed(3)},${ty.toFixed(3)}, ` +
+                  `lane ${lane.toFixed(3)}, axis ${axis}: [${a.pixels.slice(k, k + 3).join()}], ` +
+                  `not [${out.map((v) => v.toFixed(1)).join()}]`,
+              );
+          if (lane < ROAD_HALF) onAxis[axis]++;
+        }
+    }
+    // lane pixels were checked, along both axes
+    expect(onAxis[1]).toBeGreaterThan(150);
+    expect(onAxis[2]).toBeGreaterThan(150);
   }, 30_000);
 
   it('grows no tuft and lays no loose stone on a road, and keeps those beside it', async () => {

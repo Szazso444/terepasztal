@@ -1,6 +1,8 @@
 import { hash2 } from '../engine/rng';
 import { DIR_DX, DIR_DY, type Dir } from '../engine/iso';
 import { surfaceNoise } from './terrainMaterials';
+import { roadRag, roadWeight } from './roadPaint';
+import { ROAD_HALF } from './roadShape';
 
 /**
  * Town paving (#443, the approved look of the art demo's v7, 2026-10-14): small setts about a
@@ -9,6 +11,12 @@ import { surfaceNoise } from './terrainMaterials';
  * gentle wobble and rounded convex corners, plus a doorstep in front of each street door on a
  * paved tile. Over its last quarter tile it wears out (grass in the joints, setts missing) and a
  * fringe of packed earth outside it fades into the ground.
+ *
+ * A road across the square (#476) runs on as a lane of setts: where the paving holds a road, the
+ * setts lie in straight courses along it (`courses`), a little darker, with dust that gathers toward
+ * the road's centre line (`laneWeight`). The painter hands `paint` its distance from that line
+ * (roadShape.ts, read by a `RoadPaint` of the paved road tiles); the demo's `streetAt` and
+ * `PW_ROAD` are the model.
  *
  * Everything here is a function of the map point and the paved tiles, never of the chunk being
  * painted, so neighbouring chunks agree pixel for pixel. Points are map tile coordinates (a tile's
@@ -74,6 +82,21 @@ export const PAVING_DEEP = 0.55;
  */
 export const PAVING_FAR = 9;
 
+/**
+ * The lane of a road across the paving (#476). Its dust is full within LANE_FULL of the road's
+ * centre line and gone LANE_FADE farther out, the edge moved by the paving's ragged line.
+ */
+export const LANE_FULL = 0.12,
+  LANE_FADE = 0.18;
+/** The farthest from a road's centre line (tiles) the lane changes the paving at all. */
+export const LANE_REACH = LANE_FULL + LANE_FADE + RAG;
+/** How much of the lane's weight is dust over the setts, how much the setts darken, how much wider the joints. */
+const LANE_DUST = 0.28,
+  LANE_DARKEN = 0.035,
+  LANE_JOINT = 0.004;
+/** The street's setts mix a little toward the dust of its traffic even on the road's line. */
+const STREET_DUST = 0.05;
+
 /** Seeds of the paving's noise. */
 const SEED_WOBBLE = 4431,
   SEED_RIPPLE = 4432,
@@ -89,6 +112,25 @@ const sstep = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const length = (x: number, y: number) => Math.sqrt(x * x + y * y);
 /** Length of the positive parts of (x, y): a box's outside distance. */
 const outside = (x: number, y: number) => length(x > 0 ? x : 0, y > 0 ? y : 0);
+
+/**
+ * How much of a road's lane there is `dist` tiles from its centre line (roadShape.ts), the ragged
+ * line moved it `rag` tiles (within RAG either way): 1 within LANE_FULL, 0 from LANE_FADE farther
+ * out, falling smoothly between. Not up to the lane's setts, which lie over the road's own width
+ * (`streetWeight`); this is the dust and the wear that spreads past them.
+ */
+export function laneWeight(dist: number, rag: number) {
+  return 1 - sstep((dist - LANE_FULL + rag) / LANE_FADE);
+}
+
+/**
+ * How much of the paving is laid in courses `dist` tiles from a road's centre line: the road's own
+ * width and soft edge (`roadWeight`), as the gravel road would have it, `rag` tiles out (0 to
+ * ROAD_RAG).
+ */
+export function streetWeight(dist: number, rag: number) {
+  return roadWeight(dist - ROAD_HALF, rag);
+}
 
 /** Tile flags: paved; the paving can reach it; doorsteps reach it. */
 const PAVED = 1,
@@ -267,6 +309,54 @@ function fan(u: number, v: number, centre: boolean) {
   settNormalV = across * rv - along * ru;
 }
 
+/** Depth of a course of setts along a road (tiles), the length of a sett, and how far it varies. */
+const COURSE = 0.1,
+  SETT_LONG = 0.13,
+  SETT_JITTER = 0.6;
+/**
+ * The laying of a lane at world point (u, v): straight courses 0.1 tile deep, along u (or along v,
+ * if `alongV`), their setts 0.09 to 0.17 long, each course offset from the next. Leaves what `fan`
+ * does.
+ */
+function courses(u: number, v: number, alongV: boolean) {
+  if (alongV) {
+    courses(v, u, false);
+    const c = settU;
+    settU = settV;
+    settV = c;
+    const n = settNormalU;
+    settNormalU = settNormalV;
+    settNormalV = n;
+    return;
+  }
+  const j = Math.floor(v / COURSE),
+    shift = hash2(j, 7, 811) * SETT_LONG,
+    uu = u - shift,
+    jit = (k: number) => (hash2(k, j, 812) - 0.5) * SETT_JITTER * SETT_LONG;
+  let k = Math.floor(uu / SETT_LONG),
+    a0 = k * SETT_LONG + jit(k),
+    a1 = (k + 1) * SETT_LONG + jit(k + 1);
+  if (uu < a0) {
+    k--;
+    a1 = a0;
+    a0 = k * SETT_LONG + jit(k);
+  } else if (uu >= a1) {
+    k++;
+    a0 = a1;
+    a1 = (k + 1) * SETT_LONG + jit(k + 1);
+  }
+  settId = hash2(k, j, 813);
+  settU = shift + (a0 + a1) / 2;
+  settV = (j + 0.5) * COURSE;
+  roundedRect(u - settU, v - settV, (a1 - a0) / 2, COURSE / 2, 0.022);
+}
+
+/** The course laying's sett at world point (u, v), for tests: its id, centre and inside distance. */
+export function courseAt(u: number, v: number, alongV = false) {
+  courses(u, v, alongV);
+  return { id: settId, u: settU, v: settV, inside: settInside };
+}
+
 /** The fan's sett at world point (u, v), for tests: its id and centre. */
 export function settAt(u: number, v: number) {
   fan(u, v, true);
@@ -427,11 +517,17 @@ export class TownPaving {
     const n = surfaceNoise((x + this.originX) * 7.1, (y + this.originY) * 7.1, SEED_FRINGE) - 0.5;
     return 0.75 * (1 - sstep((-d - 0.02 + n * 0.06) / 0.12));
   }
+  /** The street's colour while `paint` blends it over the plain paving. */
+  private readonly street = [0, 0, 0];
   /**
    * The paving's colour at map point (x, y), `d` inside its outline (`distance`, above 0), into
    * `out`, ready to show (no season tint). `ground` is the colour of the ground under it, which
    * worn joints and missing setts show; from `PAVING_SOLID` in it is never read, so it may be null
    * there. `scale` is raster pixels per world pixel: joints are softened to a pixel's width.
+   *
+   * `lane` is the point's distance from the centre line of a road across the paving (tiles; leave
+   * it out where none is near), and `axis` the way that road runs there, 1 along x and 2 along y:
+   * its setts lie in courses along it, darker and dustier toward the line.
    */
   paint(
     x: number,
@@ -440,10 +536,43 @@ export class TownPaving {
     ground: readonly number[] | null,
     scale: number,
     out: number[],
+    lane = Infinity,
+    axis = 1,
+  ) {
+    if (lane >= LANE_REACH) {
+      this.lay(x, y, d, ground, scale, out, 0, 0);
+      return;
+    }
+    const wx = x + this.originX,
+      wy = y + this.originY,
+      rag = (surfaceNoise(wx * 6.3, wy * 6.3, SEED_RAG) - 0.5) * 2 * RAG,
+      dusty = laneWeight(lane, rag),
+      street = lane < ROAD_HALF + 0.1 ? streetWeight(lane, roadRag(wx, wy)) : 0;
+    this.lay(x, y, d, ground, scale, out, 0, dusty);
+    if (street <= 0) return;
+    const alt = this.street;
+    this.lay(x, y, d, ground, scale, alt, axis, dusty, STREET_DUST);
+    for (let c = 0; c < 3; c++) out[c] += (alt[c] - out[c]) * street;
+  }
+  /**
+   * The paving at map point (x, y) laid in the fan (`axis` 0) or in courses along x (1) or y (2),
+   * `dusty` of the lane's weight there, `dust` more of the packed earth mixed in.
+   */
+  private lay(
+    x: number,
+    y: number,
+    d: number,
+    ground: readonly number[] | null,
+    scale: number,
+    out: number[],
+    axis: number,
+    dusty: number,
+    dust0 = 0,
   ) {
     const wx = x + this.originX,
       wy = y + this.originY;
-    fan(wx, wy, d < PAVING_DEEP);
+    if (axis) courses(wx, wy, axis === 2);
+    else fan(wx, wy, d < PAVING_DEEP);
     const id = settId,
       inside = settInside,
       nu = settNormalU,
@@ -473,15 +602,21 @@ export class TownPaving {
         fine * 0.015 +
         tile * 0.035;
     // the sett's rounded top: lit along its upper-left edges, shaded along the lower right
-    const joint = 0.008 + 0.012 * (1 - keep),
+    const joint = 0.008 + 0.012 * (1 - keep) + LANE_JOINT * dusty,
       soft = Math.max(0.007, 0.028 / scale),
       covered = sstep((inside - joint) / soft);
     const light = 1 + 0.04 * (1 - sstep((inside - joint) / 0.03)) * (nu * LIGHT_U + nv * LIGHT_V);
-    let r = (base[0] + warmth) * value * light,
-      g = base[1] * value * light,
-      b = (base[2] - warmth) * value * light;
-    // dust on worn setts
-    const dust = (1 - keep) * 0.5;
+    const dim = 1 - LANE_DARKEN * dusty;
+    let r = (base[0] + warmth) * value * light * dim,
+      g = base[1] * value * light * dim,
+      b = (base[2] - warmth) * value * light * dim;
+    // dust on worn setts, and in a road's lane
+    const dust = Math.min(1, (1 - keep) * 0.5 + LANE_DUST * dusty);
+    if (dust0) {
+      r += (DUST[0] - r) * dust0;
+      g += (DUST[1] - g) * dust0;
+      b += (DUST[2] - b) * dust0;
+    }
     r += (DUST[0] - r) * dust;
     g += (DUST[1] - g) * dust;
     b += (DUST[2] - b) * dust;
