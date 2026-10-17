@@ -591,6 +591,8 @@ describe('bridge meshes over the painted waterline', () => {
     }
   });
 
+  // slow because the water and the meshes of one bridge tile are read again with each tile round its
+  // window flipped between water and grass: 0.33 s alone, so a limit of 30 s
   it('reads the water of no tile outside WATER_TILES', () => {
     // Where a tile's faces read the ground (GROUND_BOX, and half a pixel below), the water painted
     // stays the same whatever lies on the tiles round its window, and so do its meshes: the mesh
@@ -634,7 +636,7 @@ describe('bridge meshes over the painted waterline', () => {
     // The window's own tiles do matter: a bank right in front of the near supports hides them.
     m.terrain[(site.y + 1) * W + site.x] = Terrain.Grass;
     expect(draw()).not.toBe(first[1]);
-  });
+  }, 30_000);
 
   // Properties over seeded cases (docs/process/verification.md): a few bridge tiles round (8, 8),
   // spans along either axis and pads, stone and timber, over water and land, level and graded,
@@ -787,6 +789,8 @@ describe('bridge meshes over the painted waterline', () => {
     ];
   };
 
+  // slow because 40 seeded crossings have the meshes of each tile built twice, with the ground
+  // watched: 0.33 s alone, so a limit of 30 s
   it('reads the ground only inside GROUND_BOX of each tile, whatever its parts', () => {
     // A tile's ground bound and its mesh key (worldRenderer.ts) cover GROUND_BOX: a face read
     // outside it could be cut to ground neither of them saw.
@@ -818,7 +822,7 @@ describe('bridge meshes over the painted waterline', () => {
       },
       { seeds: SEEDS.slice(0, 40), shrink: shrinkCrossing },
     );
-  });
+  }, 30_000);
 
   /** A half-pixel point (2 sx, 2 sy) as one number; the bridges here lie well inside 4096 px. */
   const HALF = 16384,

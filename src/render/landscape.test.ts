@@ -1183,6 +1183,8 @@ describe('landscape painter', () => {
     );
   });
 
+  // slow because every seeded case paints a 32-chunk world, loses its context and paints it all
+  // again: 0.33 s alone, so a limit of 30 s
   it('hands out every chunk in view before any out of it after a lost context, then paints all', () => {
     forAll(
       generateLostView,
@@ -1247,7 +1249,7 @@ describe('landscape painter', () => {
         },
       },
     );
-  });
+  }, 30_000);
 
   describe('the ground in view', () => {
     // The limit is real time; only the timers are faked, the clock the painter reads stays the test's.

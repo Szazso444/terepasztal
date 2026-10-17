@@ -65,6 +65,8 @@ function network(roads: ReadonlySet<number>, ox: number, oy: number) {
 const key = (x: number, y: number) => y * W + x;
 
 describe('a walker on a road piece', () => {
+  // slow because 40 seeds walk every pair of arms of every piece in 0.025-tile steps: 0.78 s alone,
+  // so a limit of 30 s
   it('stays within the road along every leg of every piece and turn, whichever way it goes', () => {
     let samples = 0,
       outside = 0,
@@ -119,7 +121,7 @@ describe('a walker on a road piece', () => {
     // the road's half width, and nowhere else
     expect(outside / samples).toBeLessThan(0.001);
     expect(worst).toBeLessThan(ROAD_HALF + 0.03);
-  }, 60_000);
+  }, 30_000);
 
   it('keeps its place along the road: it moves only across the way it faces', () => {
     forAll(
@@ -309,6 +311,8 @@ describe('the people renderer on roads', () => {
     return { roads: [...roads], way, ox: rng.int(-30, 30), oy: rng.int(-30, 30) };
   }
 
+  // slow because every seeded walk is drawn through the renderer in 0.004-tile steps, over 100 000
+  // steps in all: 6.1 s alone, so a limit of 120 s
   it('moves a walker along its way at most a pixel a short step, on the road and off it', () => {
     let steps = 0;
     forAll(walkOver, ({ roads, way, ox, oy }) => {
@@ -338,7 +342,7 @@ describe('the people renderer on roads', () => {
       }
     });
     expect(steps).toBeGreaterThan(100_000);
-  }, 60_000);
+  }, 120_000);
 
   it('never changes where the simulation has a walker', () => {
     forAll(walkOver, ({ roads, way, ox, oy }) => {
@@ -395,6 +399,8 @@ function editable() {
 }
 
 describe('a walker along a whole road network', () => {
+  // slow because every seeded road network is walked in 40 steps along each of up to 12 legs: 2.8 s
+  // alone, so a limit of 60 s
   it('stays within the road along every road a walk follows, tile to tile', () => {
     let samples = 0,
       outside = 0,
@@ -450,6 +456,8 @@ describe('a walker along a whole road network', () => {
     expect(worst).toBeLessThan(ROAD_HALF + 0.03);
   }, 60_000);
 
+  // slow because 100 seeds of 30 edits and 12 probes each are set against a fresh build: 0.52 s alone,
+  // so a limit of 30 s
   it('is the same on a walk that has seen roads laid, lifted and moved as on one built after', () => {
     // the cache of a tile's centre line must follow its code and its place in the world
     forAll(
@@ -485,8 +493,7 @@ describe('a walker along a whole road network', () => {
         }
       },
     );
-    // slow: 100 seeds of 30 edits and 12 probes each, 0.4 s alone; limit 10 s
-  }, 10_000);
+  }, 30_000);
 
   it('gives the same answer every time it is asked, whatever `out` held', () => {
     forAll(
@@ -615,6 +622,8 @@ describe('the people renderer on roads, beyond what it moves', () => {
   /** An L of road whose turn is the tile (4, 4): the pull to the centre line there is a few pixels. */
   const ell = () => network(new Set([key(4, 4), key(5, 4), key(4, 5)]), 7, -3);
 
+  // slow because 100 seeds of up to 175 frames each go through the renderer: 0.62 s alone, so a limit
+  // of 30 s
   it('draws a walker, its depth and its ground at the place the road walk gives', () => {
     // the oracle: the road walk run by hand, on the heading worked from the walker's displacements
     forAll(
@@ -660,8 +669,7 @@ describe('the people renderer on roads, beyond what it moves', () => {
         }
       },
     );
-    // slow: 100 seeds of up to 175 frames through the renderer, 0.5 s alone; limit 10 s
-  }, 10_000);
+  }, 30_000);
 
   it('finds the road walk registered for its layer when it is given none, and only for that layer', () => {
     const { walk } = ell(),
@@ -848,6 +856,8 @@ describe('a walker setting out from anywhere in a tile', () => {
     return { worst, where };
   }
 
+  // slow because 100 seeds of up to 350 steps each are drawn through the renderer: 0.29 s alone, so a
+  // limit of 30 s
   it('is drawn without a pop of more than a pixel between 0.004-tile steps, on the road or off it', () => {
     // Walkers set out from a door's front (up to 0.4 tile off a tile's middle) toward the middle of
     // the tile beside or across a corner, and are at a steady heading once they are under way.
@@ -894,8 +904,7 @@ describe('a walker setting out from anywhere in a tile', () => {
       },
     );
     expect(steps).toBeGreaterThan(10_000);
-    // slow: 100 seeds of up to 350 steps, 0.2 s alone; limit 10 s
-  }, 10_000);
+  }, 30_000);
 
   it('is drawn without a pop where the tile it leaves has fewer strokes than the one it enters', () => {
     // An end piece beside a turn (three primitives of one line) and beside a tee (two lines): the
