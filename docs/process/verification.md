@@ -16,11 +16,12 @@ the map of what they cover.
   what it takes alone and in practice twenty, with a comment above it on why it is slow, how long
   it takes alone and the limit; the repository default is not raised to cover it. (A third of a
   second is the shortest of the tests that timed out in the gate runs of #458.) A `beforeAll` or
-  `afterAll` has a default of its own, 10 s, and the same rule at the same size. To find a test or hook that lacks its limit, run
-  `npx vitest run --maxWorkers=1 --testTimeout=300 --hookTimeout=300` (all of it takes as long as a
-  quiet full run): each failure that reads "timed out" has no limit of its own and takes longer
-  than that alone. Cutting seeds or cases to be faster is allowed only where the property is still
-  covered.
+  `afterAll` has a default of its own, 10 s, and the same rule at the same size. To find a test or
+  hook that lacks its limit, run `npx vitest run --maxWorkers=1 --testTimeout=300 --hookTimeout=300`
+  on a quiet machine (all of it takes as long as a quiet full run): each failure that reads "timed
+  out" has no limit of its own. Run it alone again before adding one, since a busy machine pushes a
+  test of 0.25 s past 300 ms. Cutting seeds or cases to be faster is allowed only where the
+  property is still covered.
 - **Node only.** Tests run under vitest with no DOM, canvas or renderer. `pixi.js` imports under
   Node and its scene-graph classes construct, but logic is best tested through the pure functions
   it is built on; if there are none, the finding is that the logic should be pulled out, which is
