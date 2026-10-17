@@ -62,6 +62,7 @@ import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
 import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { generatorOf, groundOf, type GeneratedWorld } from './ground';
+import { expandSave } from './expand';
 import { PROP_KINDS, chunkKey, mapChunks, type MapGenerator } from '../world/chunks';
 
 // trains.ts plays sounds; the load-code oracles below build trains under Node
@@ -1862,6 +1863,295 @@ describe("the seed of a save's world (#470)", () => {
       },
     );
   });
+});
+
+// The same rule checked from the other side: each claim is the issue's (#470), stated over a
+// domain small enough to walk whole, and the ground a loaded world builds is compared with the
+// ground of the number it names, which is the harm the issue describes.
+describe("a save's world seed, from the outside (#470)", () => {
+  const small = { ...DEFAULT_MAP_PARAMS, w: 32, h: 32 };
+  const gen = generatorOf('simple');
+  /** The text of the full fixture whose own seed is `top` and whose generated world holds `held`. */
+  const withSeeds = (top: number, held: unknown) =>
+    JSON.stringify({
+      ...buildSave(fullParts()),
+      seed: top,
+      world: { kind: 'generated', seed: held, params: small },
+    });
+  const verdictOfText = (raw: string) => {
+    const read = readSaveText(raw);
+    return 'save' in read ? 'save' : read.error;
+  };
+  const loadedSeed = (raw: string) => {
+    const read = readSaveText(raw);
+    return 'save' in read ? read.save.world?.seed : undefined;
+  };
+
+  it('loads a world seed that reads as the file seed and refuses every other, at 777', () => {
+    // written by hand, not worked out: what names world 777, and what names another or none
+    const names: unknown[] = [777, '777', ' 777', '777 ', '\t777\n', '0777', '+777', '777.0'];
+    const others: unknown[] = [
+      ...[776, 778, -777, 0, 7770, 77, 777.5, 776.5, 777.25, 777.0000001],
+      ...['776', '778', '-777', '0', '7770', '77', '777.5', '777x', 'x777', '7 77', '77 7'],
+      ...['777,0', '', ' ', '\n', 'NaN', 'Infinity', '-Infinity', 'null', 'true', '1e999'],
+      ...[null, true, false, undefined, [], [777], ['777'], {}, { seed: 777 }],
+    ];
+    for (const held of names) {
+      expect(verdictOfText(withSeeds(777, held)), JSON.stringify(held)).toBe('save');
+      expect(loadedSeed(withSeeds(777, held)), JSON.stringify(held)).toBe(777);
+    }
+    for (const held of others)
+      expect(verdictOfText(withSeeds(777, held)), String(JSON.stringify(held))).toBe('damaged');
+  });
+
+  it('does the same at the seeds a game reaches, zero and the ends of the safe integers', () => {
+    const edge = 2 ** 53 - 1;
+    for (const top of [0, 1, -1, 65536, 2 ** 31 - 1, 2 ** 32, 2 ** 40 + 1, edge, -edge]) {
+      const cases: [unknown, boolean][] = [
+        [top, true],
+        [String(top), true],
+        [` ${top}\n`, true],
+        [top + 1, false],
+        [top - 1, false],
+        [String(top + 1), false],
+        [String(top - 1), false],
+        [top + 0.5, false],
+        [String(top + 0.5), false],
+        [null, false],
+        ['', false],
+        [[top], false],
+        [{}, false],
+        ...(top === 0
+          ? []
+          : ([
+              [-top, false],
+              [String(-top), false],
+            ] as [unknown, boolean][])),
+      ];
+      for (const [held, names] of cases) {
+        const raw = withSeeds(top, held);
+        expect(verdictOfText(raw), `${top} and ${JSON.stringify(held)}`).toBe(
+          names ? 'save' : 'damaged',
+        );
+        if (names) expect(loadedSeed(raw), `${top} and ${JSON.stringify(held)}`).toBe(top);
+      }
+    }
+  });
+
+  it('refuses a fraction as the world seed even where rounding it would give the file seed', () => {
+    // a rule that rounded, or cut a fraction off, would take each of these for the file's seed
+    for (const top of [-3, 0, 1, 777, 2 ** 31, 2 ** 40])
+      for (const d of [-0.75, -0.5, -0.25, -0.01, -1e-9, 1e-9, 0.01, 0.25, 0.5, 0.75]) {
+        const fraction = top + d;
+        if (fraction === top) continue; // too small for a double at this size
+        for (const held of [fraction, String(fraction)])
+          expect(verdictOfText(withSeeds(top, held)), `${top} and ${JSON.stringify(held)}`).toBe(
+            'damaged',
+          );
+      }
+  });
+
+  it('refuses a file seed that is not a safe integer, with a world or without one', () => {
+    const past = [0.5, -0.5, 777.25, 2 ** 53, -(2 ** 53), 2 ** 60, 1e21, 1e300, Number.MAX_VALUE];
+    for (const top of past) {
+      const file = { ...buildSave(fullParts()), seed: top };
+      const worlds: unknown[] = [undefined, null, { kind: 'generated', params: small }];
+      for (const seed of [top, String(top)])
+        worlds.push({ kind: 'generated', seed, params: small });
+      for (const world of worlds)
+        expect(
+          verdictOfText(JSON.stringify({ ...file, world })),
+          `${top} with ${JSON.stringify(world)}`,
+        ).toBe('damaged');
+    }
+  });
+
+  it('holds a level to the same rule, and a file with no world to the file seed alone', () => {
+    const level = (top: number, held: unknown) =>
+      JSON.stringify({
+        ...buildSave(fullParts()),
+        seed: top,
+        world: { ...levelWorldOf(32, 32, top), seed: held },
+      });
+    for (const top of [0, 777, -42, 2 ** 40 + 1, 2 ** 53 - 1]) {
+      for (const held of [top, String(top), ` ${top} `]) {
+        expect(loadedSeed(level(top, held)), `level ${top} and ${JSON.stringify(held)}`).toBe(top);
+      }
+      for (const held of [top + 1, String(top - 1), top + 0.5, 'x', '', null, [top], undefined])
+        expect(verdictOfText(level(top, held)), `level ${top} and ${JSON.stringify(held)}`).toBe(
+          'damaged',
+        );
+      // no world, or none given: whole as long as the file's seed names a world, and the step
+      // from v2 then makes the world of that seed
+      const file = (world: unknown) => JSON.stringify({ ...oldestSave(), seed: top, world });
+      for (const world of [undefined, null])
+        expect(verdictOfText(file(world)), `${top} and ${String(world)}`).toBe('save');
+      expect(loadedSeed(file(undefined)), String(top)).toBe(top);
+      const current = { ...buildSave(fullParts()), seed: top, world: undefined };
+      expect(verdictOfText(JSON.stringify(current)), String(top)).toBe('save');
+      expect(verdictOfText(JSON.stringify({ ...current, world: null })), String(top)).toBe('save');
+    }
+  });
+
+  // 9 seeds, a map generated for each of 3 forms of it: 1.7 s alone
+  it('builds the ground of the number a text seed names, for seeds a game reaches', () => {
+    // the map generator adds to the seed ('777' + 5 is '7775'): ground made for the text is
+    // another world's, so the loaded world must give the very chunks the number gives
+    const seeds = [-5, 0, 1, 777, 123456, 2 ** 31 - 1, 2 ** 32 - 1, 2 ** 40 + 3, 2 ** 53 - 1];
+    for (const seed of seeds) {
+      const world = (raw: string) => {
+        const read = readSaveText(raw);
+        if (!('save' in read)) throw new Error(`seed ${seed}: refused as ${read.error}`);
+        return read.save.world as GeneratedWorld;
+      };
+      const want = groundOf(world(withSeeds(seed, seed)), gen);
+      for (const held of [String(seed), ` ${seed} `]) {
+        const built = groundOf(world(withSeeds(seed, held)), gen);
+        expect(built.chunks, `seed ${seed} held as ${JSON.stringify(held)}`).toEqual(want.chunks);
+        expect(built.map.seed, `seed ${seed}`).toBe(seed);
+        expect(Buffer.from(built.map.terrain).equals(Buffer.from(want.map.terrain))).toBe(true);
+        expect(Buffer.from(built.map.variant).equals(Buffer.from(want.map.variant))).toBe(true);
+      }
+    }
+    // zero written as minus zero is zero's world, though not the same double
+    const zero = groundOf(
+      (readSaveText(withSeeds(0, '-0')) as { save: SaveGame }).save.world as GeneratedWorld,
+      gen,
+    );
+    expect(zero.chunks).toEqual(
+      groundOf(generatedWorldOf(32, 32, 0) as GeneratedWorld, gen).chunks,
+    );
+  }, 30_000);
+
+  it('grows a world of a text seed with the very ring a number gives, from stored ground', () => {
+    // the issue's own case: ground stored for the seed is read back, and the chunks generated
+    // when the map grows are made from the seed as the loaded world holds it
+    for (const seed of [0, 777, 2 ** 32 - 1]) {
+      const stored = (held: unknown) => {
+        const world: GeneratedWorld = { kind: 'generated', seed, params: { ...small } };
+        groundOf(world, gen);
+        const raw = JSON.stringify({
+          ...buildSave(fullParts()),
+          seed,
+          world: { ...world, seed: held },
+        });
+        const read = readSaveText(raw);
+        if (!('save' in read)) throw new Error(`seed ${seed}: refused as ${read.error}`);
+        return read.save;
+      };
+      const grow = (save: SaveGame) => {
+        const world = save.world as GeneratedWorld;
+        const before = groundOf(world, gen);
+        expect(before.added, `seed ${seed}: a load of stored ground`).toEqual([]);
+        expect(before.unreadable).toEqual([]);
+        expandSave(save);
+        return groundOf(save.world as GeneratedWorld, gen);
+      };
+      const want = grow(stored(seed));
+      expect(want.added, `seed ${seed}`).toHaveLength(8);
+      const got = grow(stored(String(seed)));
+      expect(got.added, `seed ${seed}`).toEqual(want.added);
+      expect(got.chunks, `seed ${seed}`).toEqual(want.chunks);
+      expect(got.map.seed).toBe(seed);
+    }
+  });
+
+  it('reads the world seed of a file of every version the same way', () => {
+    // the oldest shape the chain takes up to versions this build does not know yet
+    for (let version = SAVE_MIN_VERSION; version <= SAVE_VERSION + 3; version++) {
+      const file = (held: unknown) =>
+        JSON.stringify({
+          ...oldestSave(),
+          version,
+          seed: 12345,
+          world: { kind: 'generated', seed: held, params: small },
+        });
+      expect(loadedSeed(file('12345')), `v${version}`).toBe(12345);
+      expect(loadedSeed(file(12345)), `v${version}`).toBe(12345);
+      for (const held of ['12346', 12346, 12345.5, 'x', null])
+        expect(verdictOfText(file(held)), `v${version} and ${JSON.stringify(held)}`).toBe(
+          'damaged',
+        );
+    }
+  });
+
+  it('reads the seed of a save in a diagnostics bundle as it does in a plain one', () => {
+    const save = (top: number, held: unknown) => ({
+      ...buildSave(fullParts()),
+      seed: top,
+      world: { kind: 'generated', seed: held, params: small },
+    });
+    const bundle = (top: number, held: unknown) => JSON.stringify(bundled(save(top, held)));
+    expect(loadedSeed(bundle(777, '777'))).toBe(777);
+    for (const [top, held] of [
+      [777, '778'],
+      [777, 'x'],
+      [777, 777.5],
+      [777.5, 777.5],
+      [777, null],
+    ] as [number, unknown][]) {
+      expect(verdictOfText(bundle(top, held)), `${top} and ${JSON.stringify(held)}`).toBe(
+        'damaged',
+      );
+      expect(verdictOfText(JSON.stringify(save(top, held)))).toBe('damaged');
+    }
+  });
+
+  it('is read the same however often and in whatever order a text is read', () => {
+    const texts = [
+      withSeeds(777, '777'),
+      withSeeds(777, '778'),
+      withSeeds(777, 777),
+      withSeeds(-1, ' -1'),
+      withSeeds(777, 777.5),
+    ];
+    const first = texts.map((t) => readSaveText(t));
+    for (const t of [...texts].reverse()) readSaveText(t);
+    expect(texts.map((t) => readSaveText(t))).toEqual(first);
+    // and what loads is stable: written and read again it is the same save
+    for (const read of first)
+      if ('save' in read) expect(readSaveText(JSON.stringify(read.save))).toEqual(read);
+  });
+
+  it('reads back every save the game writes, for any seed it draws or a player types', () => {
+    // the seeds of a new game: a draw below 2^31 (Math.random), a hash below 2^32 (hashSeed), or
+    // the digits a player types (parseSeed makes Number of them), up to 15 digits and the largest
+    // safe integer; a generated world or a level, as game.ts takes spec.seed for the game's seed
+    type Case = { seed: number; level: boolean };
+    forAll<Case>(
+      (rng) => {
+        const kind = rng.int(0, 3);
+        const digits = Array.from({ length: rng.int(0, 14) }, () => rng.int(0, 9)).join('');
+        const seed =
+          kind === 0
+            ? rng.int(0, 2 ** 31 - 1)
+            : kind === 1
+              ? rng.int(0, 2 ** 32 - 1)
+              : kind === 2
+                ? Number(`${rng.int(1, 9)}${digits}`)
+                : 2 ** 53 - 1;
+        return { seed, level: rng.chance(0.3) };
+      },
+      ({ seed, level }) => {
+        const world = level ? levelWorldOf(32, 32, seed) : generatedWorldOf(32, 32, seed);
+        const save = buildSave({ ...fullParts(), seed, world });
+        const read = readSaveText(JSON.stringify(save));
+        expect(read).toEqual({ save });
+      },
+      { shrink: ({ seed, level }) => [...shrinkInt(seed)].map((s) => ({ seed: s, level })) },
+    );
+  });
+
+  // Found while writing these, and left for a decision (see the report): parseSeed makes
+  // Number(digits) of any seed a player types as digits, so 16 digits and more can pass 2^53 - 1
+  // (the smallest, '9007199254740992'), or 1e20 for twenty-one. The game plays such a world and
+  // writes it, and the rule above then refuses the save it wrote: Continue says it is damaged.
+  it.todo('reads back the save of a seed typed as 16 digits or more (past 2^53 - 1)');
+  // Also left for a decision: a level world carries the seed its map is built from a second time,
+  // in `world.level.seed` (`mapFromLevel` reads that one, not `world.seed`), and the rule does not
+  // look at it. A text, a number other than the world's, a fraction or none there loads, and the
+  // level's props are then another world's.
+  it.todo("holds a level's own seed (world.level.seed) to the seed of its world");
 });
 
 describe('storage', () => {
