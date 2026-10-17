@@ -5,7 +5,7 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
-import { applyTileRepairs, repairBuiltTiles } from './engine/loadRepair';
+import { applyTileRepairs, repairBuiltRoads, repairBuiltTiles } from './engine/loadRepair';
 import {
   BrokenNumberWarning,
   StorageRefusalWarning,
@@ -1290,6 +1290,8 @@ export class Game implements UiHost {
       }
     } else this.legacySupplyPending = true;
     this.builder.roads.load(j.roads);
+    // a road on ground that can no longer hold one comes off, with no refund (`repairBuiltRoads`)
+    for (const r of repairBuiltRoads(this.map, j)) this.builder.roads.remove(r.x, r.y);
     resetStationIds(1);
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);
