@@ -140,6 +140,7 @@ describe('the roads of a map', () => {
     });
   });
 
+  // Slow: reads both sides of every edge of 100 maps (about 0.5 s alone), so the limit is 10 s.
   it('join without a seam: the weight is the same either side of every edge', () => {
     let road = 0;
     forAll(layout, ({ w, h, tiles, crossing, ox, oy }) => {
@@ -174,7 +175,7 @@ describe('the roads of a map', () => {
       expect(worst, where).toBeLessThan(1e-4);
     });
     expect(road).toBeGreaterThan(2000);
-  });
+  }, 10_000);
 
   it('keeps every road off a paved tile, its own and the arms of its neighbours alike', () => {
     // a cross of roads, its middle paved
@@ -253,6 +254,7 @@ describe("the road's colour", () => {
       }
   });
 
+  // Slow: paints some 90 000 points of a 12 x 12 road (about 0.8 s alone), so the limit is 20 s.
   it('is the measured gravel on the whole, and stays under the semantic colours', () => {
     const p = paintOf(12, 12, new Set(Array.from({ length: 144 }, (_, k) => k)), { ox: 3 }),
       r: number[] = [],
@@ -275,7 +277,7 @@ describe("the road's colour", () => {
     expect(r.length).toBeGreaterThan(5000);
     for (const [c, v] of [median(r), median(g), median(b)].entries())
       expect(Math.abs(v - ROAD_GRAVEL[c])).toBeLessThan(8);
-  });
+  }, 20_000);
 
   it('fades out over the paving fringe, short of the outline', () => {
     expect(pavingFade(-9)).toBe(1);

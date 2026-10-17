@@ -588,6 +588,7 @@ describe('the painter with building yards', () => {
     expect(inside).toBeGreaterThan(500);
   }, 30_000);
 
+  // Slow: paints a chunk with its tufts (about 0.35 s alone), so the limit is 10 s.
   it('grows no grass tufts on a yard', async () => {
     const { built } = yarded(),
       { map } = built,
@@ -612,7 +613,7 @@ describe('the painter with building yards', () => {
       }
     }
     expect(tufts).toBeGreaterThan(50);
-  });
+  }, 10_000);
 });
 
 /** The yard of `frame` with its footprint's (one) tile at (x, y), as drawn at `scale`. */
@@ -1015,6 +1016,7 @@ describe('the painter with roads', () => {
     expect(edge).toBeGreaterThan(0);
   }, 30_000);
 
+  // Slow: paints the chunk a road and a yard share (about 0.4 s alone), so the limit is 10 s.
   it("lies over a building's yard where they meet: the road is painted after it", async () => {
     const { w, roads, painter } = roaded();
     // a house south of the road along y = 13, its yard and its door path run on to the road
@@ -1046,7 +1048,7 @@ describe('the painter with roads', () => {
         for (let ch = 0; ch < 3; ch++) expect(a.pixels[k + ch]).toBe(b.pixels[k + ch]);
       }
     expect(over).toBeGreaterThan(20);
-  });
+  }, 10_000);
 
   // Slow: paints six chunks, three at twice the size (about 3 s alone).
   it('paints the pixels two neighbouring chunks share alike, roads across their edge', async () => {

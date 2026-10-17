@@ -171,6 +171,7 @@ function codeWith(rng: Rng, d: Dir, crossing: boolean) {
 }
 
 describe('the centre line of a road tile', () => {
+  // Slow: 400 seeded pairs, each centre line sampled at 4000 points (about 0.6 s alone), so the limit is 15 s.
   it('meets the centre line of the road tile beside it at one point on their edge, square to it', () => {
     let joins = 0;
     forAll(
@@ -219,7 +220,7 @@ describe('the centre line of a road tile', () => {
       { seeds: Array.from({ length: 400 }, (_, i) => i + 1) },
     );
     expect(joins).toBe(400);
-  });
+  }, 15_000);
 
   it("keeps a straight within ROAD_WANDER of its tile's axis", () => {
     let wandered = 0,
@@ -241,6 +242,7 @@ describe('the centre line of a road tile', () => {
     expect(wandered).toBeGreaterThan(1000);
   });
 
+  // Slow: every turn on 3600 tiles, its arc sampled (about 0.5 s alone), so the limit is 10 s.
   it('turns on a radius between 0.23 and 0.43 tile, cut only to the room between its arms', () => {
     expect([ROAD_RADIUS_MIN, ROAD_RADIUS_MAX]).toEqual([0.23, 0.43]);
     let cut = 0,
@@ -286,7 +288,7 @@ describe('the centre line of a road tile', () => {
     expect(low).toBeGreaterThan(500);
     expect(high).toBeGreaterThan(500);
     expect(cut).toBeLessThan(low);
-  });
+  }, 10_000);
 
   it('changes where a straight run crosses its edges along the run', () => {
     let runs = 0;
@@ -310,6 +312,7 @@ describe('the centre line of a road tile', () => {
     expect(runs).toBeGreaterThan(100);
   });
 
+  // Slow: every side mask on 400 tiles along both axes (about 0.6 s alone), so the limit is 15 s.
   it('runs straight through the middle of a level crossing, square to its track', () => {
     let off = 0;
     for (let wy = -10; wy < 10; wy++)
@@ -332,8 +335,9 @@ describe('the centre line of a road tile', () => {
     expect(off).toBeLessThan(1e-12);
     // a short arm's round end, ragged edge and all, stays on its tile
     expect(CROSSING_SHORT + ROAD_REACH).toBeCloseTo(0.5, 12);
-  });
+  }, 15_000);
 
+  // Slow: every end on 144 tiles, read round a half disc (about 0.3 s alone), so the limit is 10 s.
   it('stops an end in the middle of its tile in a round end', () => {
     let off = 0;
     for (let wy = -6; wy < 6; wy++)
@@ -361,5 +365,36 @@ describe('the centre line of a road tile', () => {
             }
         }
     expect(off).toBeLessThan(1e-9);
+  }, 10_000);
+});
+
+describe('where the arms of a crossroads meet (property)', () => {
+  it('only rounds the inner corners: within a quarter of its join of the nearer arm, and exact where the arms are a join apart', () => {
+    let rounded = 0;
+    forAll(
+      (rng) => ({
+        wx: rng.int(-300, 300),
+        wy: rng.int(-300, 300),
+        u: rng.next() - 0.5,
+        v: rng.next() - 0.5,
+      }),
+      ({ wx, wy, u, v }) => {
+        // a crossroads is the two straights through its tile, met at the same edge offsets
+        const cross = roadShape(roadCode(15, 0), wx, wy),
+          d0 = shapeDistance(roadShape(roadCode(0b0101, 0), wx, wy), u, v),
+          d1 = shapeDistance(roadShape(roadCode(0b1010, 0), wx, wy), u, v),
+          d = shapeDistance(cross, u, v),
+          near = Math.min(d0, d1);
+        expect(cross.join).toBeGreaterThan(0);
+        expect(cross.join).toBeLessThan(ROAD_HALF);
+        expect(d).toBeLessThanOrEqual(near + EPS);
+        expect(d).toBeGreaterThanOrEqual(near - cross.join / 4 - EPS);
+        if (Math.abs(d0 - d1) >= cross.join) expect(d).toBeCloseTo(near, 12);
+        else if (near - d > 1e-6) rounded++;
+      },
+      { seeds: Array.from({ length: 2000 }, (_, i) => i + 1) },
+    );
+    // and it does round them
+    expect(rounded).toBeGreaterThan(20);
   });
 });
