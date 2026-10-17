@@ -4,18 +4,26 @@
   "box": [350, 20, 1119, 1003],
   "anchor": [857.9, 856.4],
   "hub": [691, 435],
-  "hubFromAnchor": [-166.89999999999998, -421.4],
+  "hubFromAnchor": [-166.9, -421.4],
   "hubFromAnchorWorld": [-12.247122, -25.696972],
   "door": [821, 982],
   "masterHub": [703, 444],
   "masterTips": [
-    [1119, 179],
-    [435, 22],
-    [443, 785],
-    [1024, 905]
+    [1118, 178],
+    [436, 22],
+    [444, 785],
+    [1026, 903]
   ],
   "readByEye": {
-    "master": "Plate centre (703,444); evergreen door aperture approximately x650–715, y821–982. Sail outer corners identified visually; alpha >64 farthest pixels confirmed within each sail, excluding stone on lower arms: UR (1119,179), UL (435,22), LL (443,785), LR (1024,905).",
-    "body": "Selected attempt 2 as closest after three. Shaft-end centre (691,435); door opening y821–982. No sails, stocks, square plate or sail shadows; continuous slate and stone. Cap and finial aligned; window approximately y599–669. Hub placement fails 8 px limit, camera check fails by 10.8 degrees; retained as instructed."
-  }
+    "master": "Plate centre (703,444); evergreen door aperture approximately x650–715, y821–982. Outer sail corners read visually then refined to farthest painted pixel with alpha >128, the master threshold; lower-arm search excludes tower stone. UR (1118,178), UL (436,22), LL (444,785), LR (1026,903).",
+    "body": "Selected attempt 2 as closest after three. Shaft-end centre (691,435); door opening y821–982. No sails, stocks, square plate or sail shadows; continuous slate and stone. Cap and finial aligned; window approximately y599–669. Hub placement fails 8 px limit, camera check fails by 10.8 degrees; retained as instructed. Additional palette measurement finds 6499 cursor-white pixels, failing the scenery highlight cap; no selection amber.",
+    "sails": "Closest attempt 3 retained after three. Narrow warm timber lattice and central square four-bolt plate, but arms are reflected/unequal rather than quarter-turn copies; plate is above canvas centre. Centroid and quarter-turn overlap fail. With fixed image-centre pivot the painted plate/arms wobble; affine fit misses master tips by up to 96.49 px. No independent sail is cropped in the padded checks; timber lattice reads at game size."
+  },
+  "sailAffine": [
+    [0.8016029882483533, -0.0821032073060374],
+    [0.2127919537804306, 0.8357493216258471]
+  ],
+  "sailScale": 1.2117538385699755,
+  "sailAngle": 32.65840360061068,
+  "fitMiss": 96.48983562951491
 }
