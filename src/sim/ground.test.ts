@@ -1464,6 +1464,8 @@ describe('a table of chunks that holds more than chunks', () => {
       '"__proto__":{"kept":true}',
     );
 
+  // slow because it generates a 64 x 64 world and takes its ground through a load and a write: 0.30
+  // s alone, so a limit of 30 s
   it('keeps every entry the build does not read through a load and the next write', () => {
     const fine = groundOf(worldOf(8, { w: 64, h: 64 }), generatorOf('simple'));
     // the strays first, between the chunks and last; the chunk of one corner missing
@@ -1494,7 +1496,7 @@ describe('a table of chunks that holds more than chunks', () => {
     expect(groundOf(read, never).added).toEqual([]);
     expect(JSON.stringify(read.chunks)).toBe(JSON.stringify(world.chunks));
     expect(JSON.stringify(buildSave(partsOf(read)).world)).toBe(JSON.stringify(world));
-  });
+  }, 30_000);
 
   it('gives way to a chunk where the map needs the key, and is replaced where it is no table', () => {
     const fine = groundOf(worldOf(8, { w: 64, h: 64 }), generatorOf('simple'));

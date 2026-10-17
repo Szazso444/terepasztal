@@ -356,6 +356,7 @@ describe('the biome rules', () => {
     for (const k of Object.keys(seen) as (keyof Seen)[]) expect(seen[k], k).toBeGreaterThan(0);
   }, 60_000);
 
+  // slow because it generates the planes of a 96 x 96 world twice: 0.30 s alone, so a limit of 30 s
   it('give the same planes for the same seed', () => {
     const a = generateMapPlanes(7412, { w: 96, h: 96 });
     const b = generateMapPlanes(7412, { w: 96, h: 96 });
@@ -364,7 +365,7 @@ describe('the biome rules', () => {
     expect(a.map.terrain).toEqual(b.map.terrain);
     expect(a.river).toEqual(b.river);
     expect(a.shore).toEqual(b.shore);
-  });
+  }, 30_000);
 });
 
 /** The four diagonal neighbours: sea there alone is no shore. */

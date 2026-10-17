@@ -17,6 +17,7 @@ import { DEFAULT_RULES, rules } from '../sim/rules';
 import { harvestBreakdown } from '../sim/stations';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, type SimWorld } from '../testing/simWorld';
+import { picture } from '../testing/townPaving';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
@@ -34,7 +35,7 @@ import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
 import { buildRelief, groundAllows } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
-import { PAVING_FRINGE, TownPaving } from './townPaving';
+import { TownPaving } from './townPaving';
 import { WATERLINE } from './bridgeMeshes';
 import { WorldRenderer } from './worldRenderer';
 
@@ -1623,13 +1624,4 @@ function paveChanged(was: TownPaving, is: TownPaving, i: number, j: number) {
       if (was.paved(y * was.w + x) !== is.paved(y * was.w + x)) return true;
     }
   return false;
-}
-/** What the painter takes from the paving at map point (x, y): its distance and colour there. */
-function picture(p: TownPaving, x: number, y: number) {
-  const d = p.near(Math.round(y) * p.w + Math.round(x)) ? p.distance(x, y) : -9;
-  if (d <= -PAVING_FRINGE) return [];
-  if (d <= 0) return [d, p.fringe(x, y, d)];
-  const out = [0, 0, 0];
-  p.paint(x, y, d, [70, 190, 60], 1, out);
-  return [d, ...out];
 }

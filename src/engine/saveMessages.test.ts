@@ -263,6 +263,8 @@ function lackingGround(seed: number, size = 64): string {
 describe('whether the start-up pass has work to do', () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  // slow because each of 48 combinations of pass state, Continue save, slots and storage runs the
+  // start-up pass over generated maps: 0.42 s alone, so a limit of 30 s
   it('is yes whenever the pass gives a save its ground, and no only when it gives none', () => {
     const lacking = lackingGround(5);
     const continued: (string | null)[] = [null, lacking, '{oops'];
@@ -306,7 +308,7 @@ describe('whether the start-up pass has work to do', () => {
     // both answers are reached, and a yes that finds nothing (text that holds no save) is allowed
     expect(seen.worked).toBeGreaterThan(0);
     expect(seen.idle).toBeGreaterThan(seen.idleYes);
-  });
+  }, 30_000);
 
   it('is no once the pass has run, with no game stored, and when storage cannot be read', () => {
     const store = new MemoryStorage();

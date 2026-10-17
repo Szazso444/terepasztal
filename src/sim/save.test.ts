@@ -460,6 +460,8 @@ describe('v4 to v5', () => {
     return regions.unlocked;
   };
 
+  // slow because it generates the default map and migrates two saves over it: 0.30 s alone, so a
+  // limit of 30 s
   it('owns what the load code gave the tier, on the default map', () => {
     const world = generatedWorld(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
     const map = generatedMap(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
@@ -469,7 +471,7 @@ describe('v4 to v5', () => {
     const zero = migrate(v4(world, 0)).regions!;
     expect(zero).toEqual(ownedOnLoad(map, 0));
     expect(zero).toEqual([false, false, false, false, true, false, false, false, false]);
-  });
+  }, 30_000);
 
   // four worlds of up to 224 tiles a side, each planning its rivers once (#341): about 0.8 s alone
   it('owns the rings of the tier the file stored, before the step from v8 caps it', () => {

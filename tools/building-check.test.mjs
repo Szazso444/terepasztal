@@ -668,6 +668,8 @@ describe('building check', () => {
     }
   }, 90_000);
 
+  // slow because every depot at every turn is painted and measured again, with a hairline and with
+  // specks: 0.39 s alone, so a limit of 30 s
   it('does not take a hairline or a speck for a floor', () => {
     // paint a pixel or two thick hides no rail: a line along the foot of the wall across the
     // open portals, and stray pixels in the open ground, as a generator leaves them
@@ -708,7 +710,7 @@ describe('building check', () => {
       });
       expect(checkPicture(specks, fpId, rot), `specks ${fpId} r${rot}`).toMatchObject(FINE);
     }
-  });
+  }, 30_000);
 
   // slow because the depot is painted and checked at each limit of a hole, each a full-size
   // picture: 1.6 s alone

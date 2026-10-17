@@ -4,6 +4,8 @@ import { Biome, Terrain } from '../world/tiles';
 import { scatterFor, type ScatterContext } from './scatter';
 
 describe('visual scatter', () => {
+  // slow because it generates a 96 x 96 map and scatters nature over all of it: 0.52 s alone, so a
+  // limit of 30 s
   it('puts nature only where it belongs and never on built or paved ground', () => {
     const map = generateMap(7412, { w: 96, h: 96 }),
       occupied = new Set<number>(),
@@ -59,5 +61,5 @@ describe('visual scatter', () => {
     // Lively but not sprinkled everywhere.
     expect(placed / eligible).toBeGreaterThan(0.03);
     expect(placed / eligible).toBeLessThan(0.4);
-  });
+  }, 30_000);
 });

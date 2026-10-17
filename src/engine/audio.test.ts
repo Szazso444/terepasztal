@@ -1038,14 +1038,20 @@ describe('audio in a browser', () => {
       }
     }
 
+    // slow because each seeded sequence of calls is played through a fake audio context: 0.44 s
+    // alone, so a limit of 30 s
     it('keeps the title silent, one track playing and the synth for the last resort, whatever the calls', () => {
       forAll((rng) => genCase(rng, false), run, { shrink: shrinkCase });
-    });
+    }, 30_000);
 
+    // slow because each seeded sequence of calls, age changes among them, is played through a fake
+    // audio context: 0.41 s alone, so a limit of 30 s
     it('keeps the same with age changes in the mix, and ends on the first file of the age selected last', () => {
       forAll((rng) => genCase(rng, true), run, { shrink: shrinkCase });
-    });
+    }, 30_000);
 
+    // slow because each seeded shuffle plays the playlist through three rounds: 0.33 s alone, so a
+    // limit of 30 s
     it('plays Pastoral Pulse first, then each variation once, then whole rounds, whatever the shuffle', () => {
       const ROUNDS = 3; // after the first round of Pastoral Pulse and the variations
       const sorted = (list: readonly string[]) => [...list].sort();
@@ -1103,7 +1109,7 @@ describe('audio in a browser', () => {
           }
         },
       );
-    });
+    }, 30_000);
   });
 
   it('mutes the ambience while the tab is hidden, with one visibility listener', () => {
