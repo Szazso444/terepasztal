@@ -417,6 +417,8 @@ describe('walkers and the street door', () => {
         expect(place.door, `${def.id} r${rot}`).toEqual(streetDoor(def, x, y, rot));
   });
 
+  // slow because each seeded town is run for 40 to 160 ticks at a turn: 0.35 s alone, so a limit of
+  // 30 s
   it('is where a walker stepping out idles, in front of it, at every rotation', () => {
     let idled = 0;
     forAll(
@@ -445,7 +447,7 @@ describe('walkers and the street door', () => {
       },
     );
     expect(idled).toBeGreaterThan(1000);
-  });
+  }, 30_000);
 
   it(
     'is where walks out of a place start and walks back end, a station’s too, at every rotation',

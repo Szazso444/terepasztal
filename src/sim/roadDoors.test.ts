@@ -732,6 +732,8 @@ function broken(w: World): string {
 }
 
 describe('every spur', () => {
+  // slow because each seeded site lays its spurs through the player's own build path and checks
+  // every tile of them: 0.72 s alone, so a limit of 30 s
   it('keeps every rule a road keeps, from the door to a road, off every platform', () => {
     /** spurs of more than one tile, spur tiles on track (level crossings), spurs a road brought */
     const seen = { spurs: 0, crossings: 0, near: 0 };
@@ -837,7 +839,7 @@ describe('every spur', () => {
     expect(seen.spurs).toBeGreaterThanOrEqual(50);
     expect(seen.crossings).toBeGreaterThanOrEqual(3);
     expect(seen.near).toBeGreaterThanOrEqual(10);
-  });
+  }, 30_000);
 });
 
 // ------------------------------------------------------------------ the spur against an exhaustive search
@@ -1126,6 +1128,8 @@ function boxWorld(c: Box): World {
 }
 
 describe('every spur, against an exhaustive search', () => {
+  // slow because each seeded box lays a spur that an exhaustive search then checks: 0.34 s alone,
+  // so a limit of 30 s
   it('is the fewest tiles a legal spur takes, or the reach tile alone where none is; only the price is paid', () => {
     /**
      * spurs of more than one tile, of SPUR_REACH tiles, over track, brought by a road laid; doors
@@ -1229,7 +1233,7 @@ describe('every spur, against an exhaustive search', () => {
     expect(seen.beyond).toBeGreaterThanOrEqual(5);
     expect(seen.crossings).toBeGreaterThanOrEqual(8);
     expect(seen.near).toBeGreaterThanOrEqual(25);
-  });
+  }, 30_000);
 
   it('is laid where the first of the shortest ways would run along a line the spur crosses', () => {
     // A line ends at (23, 7), a straight east to west; a water tower at (24, 8) faces north, so its

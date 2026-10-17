@@ -1689,9 +1689,12 @@ describe('the queue tool on the command line', () => {
   const tool = resolve('tools/building-queue.mjs');
   /** a copy of what the tool reads, in a folder of its own */
   const sandboxes = [];
+  // A hook has a limit of its own (10 s by default). This one removes every folder the tests copied
+  // src/data and the assets into: 0.06 s alone at most, 0.3 s beside three busy workers, so a
+  // limit of 60 s for the disk of a loaded machine
   afterAll(() => {
     for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
-  });
+  }, 60_000);
   const sandbox = () => {
     const root = mkdtempSync(join(tmpdir(), 'building-queue-'));
     sandboxes.push(root);

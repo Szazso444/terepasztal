@@ -1291,6 +1291,8 @@ describe('a train placed on the track (spawnAt)', () => {
     }
   });
 
+  // slow because a train is placed on each seeded straight line, saved and loaded: 0.34 s alone, so
+  // a limit of 30 s
   it('stands on straight track as it did: the head at the tile centre, the cars in line behind', () => {
     forAll(straightCase, (c) => {
       const { g, head } = straightLine(c);
@@ -1321,7 +1323,7 @@ describe('a train placed on the track (spawnAt)', () => {
         });
       }
     });
-  });
+  }, 30_000);
 
   it('lays on straight track the trail it laid before, out past the rear as far as it reached', () => {
     forAll(

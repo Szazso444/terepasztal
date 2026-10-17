@@ -698,6 +698,8 @@ describe('a walker at a level crossing', () => {
     );
   });
 
+  // slow because each seeded walk is walked twice, with the watch and without, up to 10 000 steps:
+  // 0.39 s alone, so a limit of 30 s
   it('goes exactly as it would with no crossing while no train comes', () => {
     // any walk through or past the crossing, at any step: a watch with no train changes nothing
     forAll(
@@ -724,7 +726,7 @@ describe('a walker at a level crossing', () => {
         expect(watched.persons).toEqual([]);
       },
     );
-  });
+  }, 30_000);
 
   it('draws no random number and keeps its state and timer while it waits, in every walking state', () => {
     forAll(
@@ -2122,6 +2124,8 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
     for (const s of DETOUR_STATES) expect(ROUTED[s], s).toBe(true);
   });
 
+  // slow because each seeded row of crossings and trains is read through the watch: 0.47 s alone,
+  // so a limit of 30 s
   it('is told apart by the watch, which also says the tiles cars stand on', () => {
     const y = 9;
     forAll(
@@ -2186,8 +2190,10 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
         },
       },
     );
-  });
+  }, 30_000);
 
+  // slow because each seeded walk is stepped over a crossing with cars and closed crossings round
+  // it: 1.1 s alone, so a limit of 60 s
   it('is walked round from the step a walker reaches its edge, on no closed crossing and no tile under a car, and the walker keeps to that walk', () => {
     // A walk straight over the crossing in any of the eight ways, the cars of a train along any line
     // through it or beside it, other crossings closed round it, walked round or not, in any walking
@@ -2324,7 +2330,7 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
     expect(seen.straight + seen.back).toBeGreaterThanOrEqual(90);
     expect(seen.straight).toBeGreaterThanOrEqual(10);
     expect(seen.back).toBeGreaterThanOrEqual(10);
-  });
+  }, 60_000);
 
   it('is walked round along the roads where a road goes round, as any walk keeps to them', () => {
     const { map, builder } = field();
@@ -2361,6 +2367,8 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
     expect(people.persons).toEqual([]);
   });
 
+  // slow because each seeded wait is stepped through several retries: 0.33 s alone, so a limit of
+  // 30 s
   it('with no way round, keeps a walker waiting on its edge as it was, trying again every DETOUR_RETRY game seconds', () => {
     // A lane of grass through water over the crossing, the walker on its edge bound north over it;
     // a tile beside the crossing turns to grass some steps on. It takes the way round at the first
@@ -2430,7 +2438,7 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
         expect(people.persons.includes(p) && p.state === c.state).toBe(false);
       },
     );
-  });
+  }, 30_000);
 
   it('keeps a walker waiting as before for a train passing, held at a signal or behind another, or standing in any other state', () => {
     // Plain trains on row CY of the walker field, read by a watch as the step reads them, stand
@@ -2514,6 +2522,8 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
     expect(rounds).toBe(2 + 2 + 1);
   });
 
+  // slow because each seeded wait is stepped until the train holding the crossing runs dry: 0.63 s
+  // alone, so a limit of 30 s
   it('is walked round in the step the train holding it runs out of fuel or power, by a walker waiting on its edge', () => {
     // A train held at a signal short of the crossing, or standing on it with its way set, keeps the
     // walker waiting (#404). At any step of that wait it runs dry: the watch says so in that step,
@@ -2582,7 +2592,7 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
         expect(round).toBe(edge + c.wait + 1);
       },
     );
-  });
+  }, 30_000);
 
   it('is walked round from the tile a walker stands at where that tile is kept off: a car on it, or a crossing it walked onto that dry trains alone hold since', () => {
     // The walkers found waiting for ever (#447): one bound east over a crossing only a dry train
@@ -3195,6 +3205,8 @@ describe('a walker among crossings that close, open and run dry at random', () =
 // ------------------------------------------------------------------ back on the crossing it walked off (#447)
 
 describe('a walker back on the crossing it walked off', () => {
+  // slow because each seeded walker is stepped over crossings that close among cars and water: 0.36
+  // s alone, so a limit of 30 s
   it('steps into it only while dry trains alone hold it, onto no other closed crossing, and no further than its middle and half a diagonal off it', () => {
     // A walker sets out over a crossing, from its middle as a walk does or from anywhere on it as
     // after a walk round, towards any of its eight neighbours, which a train that may still move
@@ -3336,7 +3348,7 @@ describe('a walker back on the crossing it walked off', () => {
     expect(furthest).toBeGreaterThan(1.21);
     expect(furthest).toBeCloseTo(Math.SQRT2, 9);
     expect(short).toBeLessThanOrEqual(1);
-  });
+  }, 30_000);
 
   it('is on it for √2 tiles from a corner, back to its middle and off by the opposite corner: CROSSING_WALK at the slowest pace', () => {
     // A walker with a home, off any road, bound from the crossing's middle north-east and then

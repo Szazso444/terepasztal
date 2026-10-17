@@ -300,6 +300,8 @@ describe('the shadow a building casts', () => {
     });
   });
 
+  // slow because each seeded building casts its shadow at several scales: 0.35 s alone, so a limit
+  // of 30 s
   it('reaches as far past the feet at any scale the building is drawn at', () => {
     forAll(building, (b) => {
       const p = pictureOf(b),
@@ -317,7 +319,7 @@ describe('the shadow a building casts', () => {
         };
       expect(Math.abs(reach(1) - reach(2))).toBeLessThanOrEqual(1.5);
     });
-  });
+  }, 30_000);
 });
 
 describe('a ground shadow baked into a picture', () => {
@@ -442,6 +444,8 @@ describe('the ground fit of any picture', () => {
     );
   });
 
+  // slow because each seeded building is fitted to the ground again with a blank margin added to
+  // its picture: 0.36 s alone, so a limit of 30 s
   it('lands in the same place on the ground whatever blank margin the picture has', () => {
     type Case = { b: Building; l: number; t: number; r: number; bottom: number };
     function* shrink(c: Case): Iterable<Case> {
@@ -506,7 +510,7 @@ describe('the ground fit of any picture', () => {
       },
       { shrink },
     );
-  });
+  }, 30_000);
 });
 
 describe('a ground shadow baked into a picture, told apart', () => {
