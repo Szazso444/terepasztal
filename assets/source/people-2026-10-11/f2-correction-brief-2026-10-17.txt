@@ -1,0 +1,87 @@
+Repaint one pose of the small figures of the isometric railway game in this repository, for issue
+#331: frame f2 of pump-hand-front-carry. Work on branch art/331-people, which exists: git fetch
+origin art/331-people, git switch art/331-people, git pull --ff-only (head 4dcd0544 or later). Touch
+nothing outside assets/source/people-2026-10-11/. Commit there and push the branch. Never push to
+main or develop. Commit subjects read "Art: <outcome>".
+
+WHERE THIS STANDS. Core reviewed the nine strips on 2026-10-17. Keep every file. Eight strips are
+accepted; Core finishes three of them itself (two colour clamps and one rescale), so paint nothing
+for them. In pump-hand-front-carry, f0 (attempt 2), f1 (attempt 2) and f3 (attempt 3) are accepted.
+Paint f2 only. Do not touch the other strips, the other poses, guides/, refs/, review/, game-scale/
+or inputs/. Do not run export-*.cjs, build-review.cjs or verify-exports.cjs.
+
+Correction: all three f2 attempts painted the near (right) leg leading, as in f0. The right thigh
+runs from the hips down to the screen-right knee, and the right boot is the forward one at the
+lower right, heel down. Lay f0 over any of them at 50% and the legs lie on top of each other instead
+of crossing. Every one of those calls attached poses/pump-hand-front-carry-f0.png, and the edit
+copied its legs whatever the words said. This time attach no painting whose right leg leads:
+neither f0 nor f1. Take the figure from f3 instead. Its left leg is already the planted one, and f2
+is the moment just before: that left leg reaching forward, the right leg trailing.
+
+THE POSE. Front view: he walks toward the lower right of the screen (tile +x). We see the face and
+the front-right side in 3/4, and the right leg is the near one.
+- The far (left) leg leads. From the hips it goes down toward the screen right, and its boot is the
+  forward one, at the lower right of the figure, heel down and toe up. It is the farther leg, so
+  where the legs cross at the knees the near leg covers part of it.
+- The near (right) leg trails. From the hips it goes down toward the screen left, knee slightly
+  bent. Its boot is behind at the lower left, heel lifted, toe on the ground, part of the sole
+  showing.
+- The right arm swings forward, as in the guide. The yoke, both buckets and the teal water stay as
+  in f3, with no spills.
+- The head is no more than 2% of the height higher or lower than in f3. Same man, clothes, load and
+  size.
+
+THE GUIDE. Use guides/pump-hand-front-carry-f2.png as it is; do not redraw it. Its darker leg is the
+near (right) one, and it trails to the screen left.
+
+REFERENCES, in this order, four images. Start an image edit, not a new image.
+1. guides/pump-hand-front-carry-f2.png: the pose authority. Follow its legs and arms.
+2. poses/pump-hand-front-carry-f3.png: the same man, clothes, yoke, buckets, size and style. Take
+   everything above the hips from it, never its legs.
+3. refs/pump-hand-front-walk.png: the identity. An older man with deep warm brown skin and grey hair
+   at the temples, a moss flat cap, rolled sleeves on a muted slate-blue shirt, charcoal trousers,
+   brown boots.
+4. reference-passenger.png: the style authority, not the person.
+Do not attach poses/pump-hand-front-carry-f0.png or poses/pump-hand-front-carry-f1.png.
+
+KEEP EVERY PICTURE. Ask for 1024x1536 px every time. Save every painting the image tool returns as
+raw/poses/pump-hand-front-carry-f2-attempt-<a>.png, starting at attempt 4, and keep it exactly as
+returned. Record each call in prompts.json under "redo-2026-10-11" as before: {id, strip, frame,
+file, prompt, references, returned, measured}. Make at most three new attempts: 4, 5 and 6.
+
+MEASURE BEFORE ACCEPTING (check-poses.mjs, as for the other poses).
+- The height and the 2:3 return rules stay as before. Record the sole row and the width.
+- The repeat test, new. Stand f0 and the new painting on the same point: the picture's centre
+  column (x 512 on a 1024-wide painting; scale the new one to f0's size first if it came back at
+  another size) and each one's lowest row with alpha above 128. Take the lowest 40% of each
+  figure's height, alpha above 128. The intersection over union of the two masks must be below
+  0.45. For comparison, the guides measure 0.39, the accepted back strips 0.31 to 0.47, and the
+  three rejected attempts 0.53 to 0.62. Record the number.
+- By eye: in the 50% overlay of f0 and the new f2 the thighs cross in an X, and the forward boot is
+  the far (left) one, partly hidden behind the near shin. The face, skin, cap, shirt, yoke, buckets
+  and water match f3. The water is teal #477B82, never cyan, and there is no outline round the
+  whole figure.
+Accept the first attempt that passes both. If none of the three passes, accept none. Record why in
+prompts.json and say so in your final message; Core then plays this strip as f1, f3.
+
+THE STRIP. Accept the painting with check-poses.mjs accept, so that it is copied to
+poses/pump-hand-front-carry-f2.png. Then run node assets/source/people-2026-10-11/assemble-strips.mjs
+pump-hand-front-carry. It keeps the 320 px columns and writes checks/pump-hand-front-carry-9px-6x.png
+and checks/pump-hand-front-carry-36px.png. Look at both: the leading leg must change from f0 to f2,
+and f1 and f3 must lift opposite feet. Update finish-report.json (repeatedFrames empty when the
+test passes) and redo-state.json. Before committing, run node --test
+assets/source/people-2026-10-11/pose-tools.test.mjs and node
+assets/source/people-2026-10-11/redo-protection.mjs check. Commit "Art: pump-hand-front-carry f2
+repainted with the left foot forward" and push.
+
+STYLE AND OUTPUT RULES. Smooth painted contours, broad colour clusters, three or four shades per
+material, selective dark contours on lower and side rims only: never a full outline round the
+figure. One light from the upper left. Subdued clothing from the game palette: forest #294638, moss
+#78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Skin and hair
+are warm and natural, and his skin is the same as in f3. Highlight cap: nothing at or above the
+game's cursor white #ECE4D0, and no yellow or orange as strong as its selection amber #E8AA48. A
+real RGBA PNG: alpha 0 background, opaque figure. Never: ground, floor, cast or ground shadow,
+text, labels, borders, frame numbers, glow, extra objects, extra people.
+
+End with a message that names the accepted attempt and its overlap number, or says that none passed
+and why.

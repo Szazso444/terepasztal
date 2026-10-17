@@ -1,0 +1,18 @@
+{
+  "id": "pump-hand-front-carry-f2-attempt-5",
+  "strip": "pump-hand-front-carry",
+  "frame": 2,
+  "prompt": "Use case: sketch-to-render. Repaint ONLY the first image grey mannequin as the person from image2, using the MANNEQUIN LEGS EXACTLY. ONE figure,1024x1536 RGBA transparent.\nMOST IMPORTANT LEG GEOMETRY: paint two trouser legs in an OPEN V, not crossed in the completed painting. The near RIGHT thigh starts at x480,y803 and runs DIAGONALLY DOWN-LEFT to knee419,1043 and ankle378,1190, with trailing boot toe445,1248, HEEL UP and sole visible. This near leg STAYS ENTIRELY IN SCREEN-LEFT HALF below hip. The far LEFT thigh starts at x547,y806 and runs DIAGONALLY DOWN-RIGHT to knee605,1043 and ankle643,1270, with leading boot heel620,1310 and raised toe726,1344. This far leg STAYS ENTIRELY IN SCREEN-RIGHT HALF. Small near-shin overlap at top only. Do not draw a near/right thigh running down-right across the other leg. Open triangular transparent gap between the lower legs. In this phase the LEFT foot steps forward to lower-right and RIGHT foot trails upper-left. Free RIGHT arm swings forward to guidehand499,781; other arm bracing yoke. Preserve upper-body orientation front-right3/4 walking toward lower-right, camera orthographic2:1 iso30degrees down.\nInput1 EDIT TARGET / pose authority, trace its two leg paths first. Input2 f3 ABOVE HIPS identity/outfit/head/load SIZE AND STYLE ONLY; NO legs from it. Input3 identity only, NO pose. Input4 painted style only. Ignore ALL painted-reference legs; draw pose exclusively from image1.\nSame older man as f3: deep warm brown skin754A32 light96633F shadow4D3026, grey temples, moss flatcap78804C, rolled-sleeve muted slate-blue shirt626B6C light7B858A shadow414D53, charcoal trousers, brown boots71503B light906C50. Broad WOODEN shoulder yoke,2 FULL wooden buckets matching f3, TEAL water477B82 no spills. Keep loads same scale. Body height1190px max1209: hatTOP183, lowestSOLE1372 likef3. Hipx512. Do NOT grow to fillcanvas. Keepcap-head dimensions fromf3 and margins. Realistic adult7to7.5heads.\nSmooth painted broad3or4 shade clusters, no all-around outline, selective dark lower/occluded side rims only. One upperLEFT light. Palette294638,78804C,E4D5B5,BCA98B,626B6C,477B82,A36B42. Warm natural skin/hair. Muted wood highlightsB89A6A, no yelloworangeE8AA48; no highlight at/aboveECE4D0. Alpha0 background, opaque figure. NO floor,ground,shadow,glow,haze,text,labels,borders,extraobjects,people. Exact1024x1536.",
+  "references": [
+    "guides/pump-hand-front-carry-f2.png",
+    "poses/pump-hand-front-carry-f3.png",
+    "refs/pump-hand-front-walk.png",
+    "reference-passenger.png"
+  ],
+  "revision": "2026-10-17-left-foot",
+  "acceptance": {
+    "repeatIoUBelow": 0.45,
+    "visualOppositeContactRequired": true,
+    "noKeepBestOverride": true
+  }
+}

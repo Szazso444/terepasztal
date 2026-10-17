@@ -1,7 +1,7 @@
 {
   "date": "2026-10-11",
   "baseCommit": "3f5a4f7f",
-  "status": "9 of 9 complete; offline9px/36px reviewed, retained exceptions documented",
+  "status": "2026-10-17 f2 correction finished: none of attempts4,5,6 passed; Core fallback1,3. Existing strip and poses unchanged.",
   "order": [
     "pump-hand-back-walk",
     "pump-hand-front-carry",
@@ -15,7 +15,6 @@
   ],
   "completed": [
     "pump-hand-back-walk",
-    "pump-hand-front-carry",
     "pump-hand-back-carry",
     "lumberjack-back-walk",
     "lumberjack-back-carry",
@@ -339,7 +338,7 @@
     "refs/stone-mason-front-walk.png": "c216ebf704b5c9c321077cdfdd3c248e57cd2ef7d2d9fd99edb521630dcab775",
     "pose-geometry.json": "c4af4a2097c75b9e8998b377032ff6c5f88639048b2613642ff7adb9ff3f182c"
   },
-  "lastUpdatedAt": "2026-10-13T00:41:30.035Z",
+  "lastUpdatedAt": "2026-10-17T15:01:41.967Z",
   "toolBlockHistory": [
     {
       "type": "usage_limit_reached",
@@ -364,11 +363,10 @@
       "acceptedFrames": [
         0,
         1,
-        2,
         3
       ],
-      "returnedPaintings": 11,
-      "cycleReview": "kept with two-phase fallback"
+      "returnedPaintings": 14,
+      "cycleReview": "failed correction; Core f1,f3 fallback"
     },
     {
       "strip": "pump-hand-back-carry",
@@ -458,6 +456,75 @@
       3
     ],
     "keepBestAfterThree": true,
-    "offlineChecksReplaceBrowser": true
+    "offlineChecksReplaceBrowser": true,
+    "f2Correction20261017": {
+      "maxNewAttempts": 3,
+      "attemptNumbers": [
+        4,
+        5,
+        6
+      ],
+      "acceptFirstPassingBoth": true,
+      "keepBestAfterThree": false,
+      "fallbackFrames": [
+        1,
+        3
+      ]
+    }
+  },
+  "updatedAt": "2026-10-17T15:01:41.967Z",
+  "f2Correction20261017": {
+    "date": "2026-10-17",
+    "strip": "pump-hand-front-carry",
+    "frame": 2,
+    "attempts": [
+      {
+        "id": "pump-hand-front-carry-f2-attempt-4",
+        "iou": 0.46575861560809245,
+        "heightError": 0.07118055555555558,
+        "oppositeContact": false,
+        "accepted": false,
+        "reasons": [
+          "IoU0.465759 is not below0.45",
+          "Near/right thigh still crosses toward screenright; does not follow guide near leg downleft",
+          "Body1234px7.12% oversized;44px grounded height difference from f3 exceeds23.04px",
+          "14 strong amber raw pixels"
+        ]
+      },
+      {
+        "id": "pump-hand-front-carry-f2-attempt-5",
+        "iou": 0.45645152269358763,
+        "heightError": 0.05121527777777768,
+        "oppositeContact": false,
+        "accepted": false,
+        "reasons": [
+          "IoU0.456452 is not below0.45",
+          "Near/right thigh still slopes downright, does not reverse f0 overlap",
+          "Height1211px5.12% exceeds5% allowance",
+          "1 raw strong amber pixel"
+        ]
+      },
+      {
+        "id": "pump-hand-front-carry-f2-attempt-6",
+        "iou": 0.4976475966102887,
+        "heightError": 0.05902777777777768,
+        "oppositeContact": false,
+        "accepted": false,
+        "reasons": [
+          "IoU0.497648 is not below0.45",
+          "Near/right thigh still points downright over the far thigh; no opposite X in overlay",
+          "Body1220px5.90% too tall; grounded height30px from f3 exceeds23.04px allowance",
+          "8 strong amber raw pixels"
+        ]
+      }
+    ],
+    "acceptedAttempt": null,
+    "outcome": "none passed",
+    "fallbackFrames": [
+      1,
+      3
+    ],
+    "canonicalStripRebuilt": false,
+    "note": "Exactly three new attempts4,5,6 made with mandated four references and no f0/f1 attachments. All failed strict IoU<0.45 and visual opposite leg test; no acceptance override. Existing PNG strip and all poses unchanged. Core should play f1,f3."
   }
 }

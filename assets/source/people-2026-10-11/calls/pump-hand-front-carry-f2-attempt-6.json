@@ -1,0 +1,18 @@
+{
+  "id": "pump-hand-front-carry-f2-attempt-6",
+  "strip": "pump-hand-front-carry",
+  "frame": 2,
+  "prompt": "EDIT IMAGE1 grey pose guide into a painted game sprite. Keep the guide leg geometry, not the painted reference legs. Exactly1024x1536 transparent RGBA.\nThe DARK GREY near RIGHT leg in image1 is the BACK leg, on SCREEN LEFT: dark trouser thigh from hip480,803 slopes DOWN LEFT to knee419,1043, then ankle378,1190. Its boot is upper-left, back heel lifted, toe445,1248 down, part of sole visible. The LIGHT GREY far LEFT leg is the FRONT leg, on SCREEN RIGHT: lighter trouser thigh slopes DOWN RIGHT from hip547,806 to knee605,1043 then ankle643,1270; leading boot at lower-right726,1344, heel down and toe up. Draw an open upside-down V between these legs. The NEAR RIGHT THIGH MUST NOT SLOPE DOWN RIGHT. Place each trouser knee exactly over the corresponding grey guide knee. Near shin occludes a little of the far leg at overlap. Right arm follows greyguide forward to hand499,781.\nIMAGE2 f3 is authority for SAME MAN and EVERYTHING ABOVE HIPS only: head, skin, moss cap, grey temples, slate-blue rolled shirt, shoulder yoke, both full wooden buckets with teal477B82 water. IMAGE3 identity only. IMAGE4 painterly style only. Do not take ANY leg shape from images2,3,4. Keep exactly f3 head/body/load dimensions: hat-to-lowestsole1180px, within23px of f3 height1190. Do not enlarge to fillcanvas.\nOlder deep warm brown man754A32/96633F/4D3026, moss78804C cap, dark slate-blue626B6C shirt, charcoal trousers, BROWN boots71503B. Front-right3/4 walking toward lower right, orthographic2:1 isometric30degrees down, realistic adult7to7.5heads. Broad smooth painted clusters,3or4 shades/material, single upper-left light, dark lower and occluded side rims only; no full outline. Muted woodB89A6A, teal water477B82, no bright cyan, no whiteECE4D0 or selectionamberE8AA48 highlights. Alpha0 background, opaque figure. No ground,floor,shadow,glow,haze,text,borders,extra people/objects. One yoke,two full buckets,no spills. Return1024x1536.",
+  "references": [
+    "guides/pump-hand-front-carry-f2.png",
+    "poses/pump-hand-front-carry-f3.png",
+    "refs/pump-hand-front-walk.png",
+    "reference-passenger.png"
+  ],
+  "revision": "2026-10-17-left-foot",
+  "acceptance": {
+    "repeatIoUBelow": 0.45,
+    "visualOppositeContactRequired": true,
+    "noKeepBestOverride": true
+  }
+}

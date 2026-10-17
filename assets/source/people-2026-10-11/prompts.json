@@ -1591,8 +1591,9 @@
       },
       "visualNote": "Best after three: near arm swings further forward and height within4.43%, but thigh overlap still repeats f0. Explicitly retain as a repeated contact pose; Core fallback0,1,0,1 is needed.",
       "keptDespiteFailedMeasurements": false,
-      "accepted": true,
-      "acceptedFile": "poses/pump-hand-front-carry-f2.png"
+      "accepted": false,
+      "acceptedFile": "poses/pump-hand-front-carry-f2.png",
+      "coreReview20261017": "Rejected repeated f0 overlap; file retained unchanged as legacy only. None of new4,5,6 accepted."
     },
     {
       "id": "pump-hand-front-carry-f3-attempt-3",
@@ -6792,12 +6793,330 @@
       "keptDespiteFailedMeasurements": true,
       "accepted": true,
       "acceptedFile": "poses/farmer-back-carry-f3.png"
+    },
+    {
+      "id": "pump-hand-front-carry-f2-attempt-4",
+      "strip": "pump-hand-front-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. EDIT image1 grey mannequin into ONE painted game person on exactly1024x1536 transparent RGBA canvas. Input1 is the POSE AUTHORITY. Input2 accepted f3 gives same man, head, clothes, yoke, TWO full buckets, size and palette ABOVE HIPS ONLY. Input3 identity only. Input4 painted style only. Do not copy legs from any painting. Paint only the mannequin leg paths.\nPOSE f2: FRONT RIGHT3/4 orthographic2:1 isometric camera30degrees down, walking toward LOWER RIGHT. Far LEFT leg LEADS at screenRIGHT, heel down toe up, extending hip(547,806) to knee(605,1043) to ankle(643,1270) to boot toe(726,1344). This is the FAR leg: its upper thigh is partly hidden by NEAR shin where crossing. Near RIGHT leg TRAILS at screenLEFT, hip(480,803) to knee(419,1043) to ankle(378,1190) to boot(445,1248): heel lifted, TOE touching behind, some sole visible. Strong open stepping silhouette, screenLEFT trailing boot higher and smaller, screenRIGHT forward boot lower, on far leg. Near thigh points downLEFT, NOT downRIGHT. Right arm swings forward from shoulder(422,467) toward guidehand(499,781). Keep other hand holding yoke. This is left-foot-leading contact, immediately BEFORE accepted f3 passing pose.\nKeep all above hips from f3: older man with DEEP warm brown skin(base754A32 light96633F shadow4D3026), GREY hair at temples, moss78804C flat cap, muted slate-blue rolled-sleeve shirt626B6C shadow414D53 light7B858A, charcoal trousers and subdued brown boots71503B light906C50. Broad wooden shoulder yoke, full wooden bucket at EACH END with thick supports, water subdued TEAL477B82 no spills. Opaque person and buckets. Same realistic adult7to7.5heads proportions, broad readable silhouette; head facing lower right like f3. Body HATTOP192 to lowestSOLE1344 nominal1152px, hipcenter512. Keep grounded cap-height within23px of f3 hat-to-sole1190px, hence body between1167 and1209px. Do not enlarge or recenter the load. Leave generous transparent margins. Whole load visible.\nSTYLE: smooth painted broad3or4 shade colour clusters, one upperLEFT light, selective dark occluded lower/side rims only, no full perimeter outline. Match f3 and passenger smooth restrained paint. Subdued forest294638,moss78804C,oatE4D5B5,limestoneBCA98B,slate626B6C,teal477B82,copperA36B42. No highlight at/aboveECE4D0 cursor white, no saturated yellow/orange as strong asE8AA48 amber. NO ground,floor,shadow,glow,haze,text,labels,borders,frame numbers,extraobjects,extraperson. Alpha0 empty background, opaque figure. Output exactly1024x1536.",
+      "references": [
+        "guides/pump-hand-front-carry-f2.png",
+        "poses/pump-hand-front-carry-f3.png",
+        "refs/pump-hand-front-walk.png",
+        "reference-passenger.png"
+      ],
+      "revision": "2026-10-17-left-foot",
+      "acceptance": {
+        "repeatIoUBelow": 0.45,
+        "visualOppositeContactRequired": true,
+        "noKeepBestOverride": true
+      },
+      "file": "raw/poses/pump-hand-front-carry-f2-attempt-4.png",
+      "rawSha256": "69b039e45cbcc611c3dc0f2b2e8244be5de087a1d967107120c09f7b490d3dc7",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 89,
+          "y": 155,
+          "width": 895,
+          "height": 1234
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 89,
+          "y": 155,
+          "width": 895,
+          "height": 1234
+        },
+        "hatTop": 155,
+        "soleRow": 1388,
+        "soleOffset": 44,
+        "figureHeight": 1234,
+        "heightError": 0.07118055555555558,
+        "totalWidth": 895,
+        "bodyWidthRatio": 1.1933333333333334,
+        "anatomyMethod": "Full alpha>128 silhouette; no load excluded",
+        "boxPass": false,
+        "repeatIoU": 0.46575861560809245,
+        "repeatPass": false
+      },
+      "repeatTest": {
+        "intersection": 66372,
+        "union": 142503,
+        "iou": 0.46575861560809245,
+        "threshold": 0.45,
+        "pass": false,
+        "resolutionScale": 1,
+        "reference": {
+          "soleRow": 1355,
+          "hatTop": 198,
+          "figureHeight": 1158,
+          "cropTop": 893,
+          "pixels": 95573
+        },
+        "candidate": {
+          "soleRow": 1388,
+          "hatTop": 155,
+          "figureHeight": 1234,
+          "cropTop": 896,
+          "pixels": 113302
+        },
+        "method": "Original alpha>128, lowest40% of each body height; candidate uniformly scaled to reference resolution, centre columns and measured soles aligned; no silhouette recentering or body-height normalization",
+        "overlay": "checks/pump-hand-front-carry-f2-attempt-4-f0-overlay.png"
+      },
+      "rawStyleCheck": {
+        "look": "checks/pump-hand-front-carry-f2-attempt-4-look.png",
+        "foreground": 488912,
+        "nearOpaqueFraction": 0.9836391825113722,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 14,
+        "nonzeroAlphaPixels": 520786
+      },
+      "rejected": true,
+      "rejectionReasons": [
+        "IoU0.465759 is not below0.45",
+        "Near/right thigh still crosses toward screenright; does not follow guide near leg downleft",
+        "Body1234px7.12% oversized;44px grounded height difference from f3 exceeds23.04px",
+        "14 strong amber raw pixels"
+      ],
+      "accepted": false,
+      "correctionVisualReview": {
+        "oppositeContact": false,
+        "identityMatchesF3": true,
+        "nearThighStillLeads": true,
+        "groundedHatDelta": 44,
+        "maxDelta": 23.04,
+        "note": "50% aligned overlay inspected; near thigh still descends towards screenright, same leading right leg as f0. Far/left leading leg requirement not met."
+      }
+    },
+    {
+      "id": "pump-hand-front-carry-f2-attempt-5",
+      "strip": "pump-hand-front-carry",
+      "frame": 2,
+      "prompt": "Use case: sketch-to-render. Repaint ONLY the first image grey mannequin as the person from image2, using the MANNEQUIN LEGS EXACTLY. ONE figure,1024x1536 RGBA transparent.\nMOST IMPORTANT LEG GEOMETRY: paint two trouser legs in an OPEN V, not crossed in the completed painting. The near RIGHT thigh starts at x480,y803 and runs DIAGONALLY DOWN-LEFT to knee419,1043 and ankle378,1190, with trailing boot toe445,1248, HEEL UP and sole visible. This near leg STAYS ENTIRELY IN SCREEN-LEFT HALF below hip. The far LEFT thigh starts at x547,y806 and runs DIAGONALLY DOWN-RIGHT to knee605,1043 and ankle643,1270, with leading boot heel620,1310 and raised toe726,1344. This far leg STAYS ENTIRELY IN SCREEN-RIGHT HALF. Small near-shin overlap at top only. Do not draw a near/right thigh running down-right across the other leg. Open triangular transparent gap between the lower legs. In this phase the LEFT foot steps forward to lower-right and RIGHT foot trails upper-left. Free RIGHT arm swings forward to guidehand499,781; other arm bracing yoke. Preserve upper-body orientation front-right3/4 walking toward lower-right, camera orthographic2:1 iso30degrees down.\nInput1 EDIT TARGET / pose authority, trace its two leg paths first. Input2 f3 ABOVE HIPS identity/outfit/head/load SIZE AND STYLE ONLY; NO legs from it. Input3 identity only, NO pose. Input4 painted style only. Ignore ALL painted-reference legs; draw pose exclusively from image1.\nSame older man as f3: deep warm brown skin754A32 light96633F shadow4D3026, grey temples, moss flatcap78804C, rolled-sleeve muted slate-blue shirt626B6C light7B858A shadow414D53, charcoal trousers, brown boots71503B light906C50. Broad WOODEN shoulder yoke,2 FULL wooden buckets matching f3, TEAL water477B82 no spills. Keep loads same scale. Body height1190px max1209: hatTOP183, lowestSOLE1372 likef3. Hipx512. Do NOT grow to fillcanvas. Keepcap-head dimensions fromf3 and margins. Realistic adult7to7.5heads.\nSmooth painted broad3or4 shade clusters, no all-around outline, selective dark lower/occluded side rims only. One upperLEFT light. Palette294638,78804C,E4D5B5,BCA98B,626B6C,477B82,A36B42. Warm natural skin/hair. Muted wood highlightsB89A6A, no yelloworangeE8AA48; no highlight at/aboveECE4D0. Alpha0 background, opaque figure. NO floor,ground,shadow,glow,haze,text,labels,borders,extraobjects,people. Exact1024x1536.",
+      "references": [
+        "guides/pump-hand-front-carry-f2.png",
+        "poses/pump-hand-front-carry-f3.png",
+        "refs/pump-hand-front-walk.png",
+        "reference-passenger.png"
+      ],
+      "revision": "2026-10-17-left-foot",
+      "acceptance": {
+        "repeatIoUBelow": 0.45,
+        "visualOppositeContactRequired": true,
+        "noKeepBestOverride": true
+      },
+      "file": "raw/poses/pump-hand-front-carry-f2-attempt-5.png",
+      "rawSha256": "96db8202a16664046df622f7443ca813069ec7595cde8e85345f5f0f94d4b03b",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 94,
+          "y": 167,
+          "width": 882,
+          "height": 1211
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 94,
+          "y": 167,
+          "width": 882,
+          "height": 1211
+        },
+        "hatTop": 167,
+        "soleRow": 1377,
+        "soleOffset": 33,
+        "figureHeight": 1211,
+        "heightError": 0.05121527777777768,
+        "totalWidth": 882,
+        "bodyWidthRatio": 1.176,
+        "anatomyMethod": "Full alpha>128 silhouette; no load excluded",
+        "boxPass": false,
+        "repeatIoU": 0.45645152269358763,
+        "repeatPass": false
+      },
+      "repeatTest": {
+        "intersection": 65289,
+        "union": 143036,
+        "iou": 0.45645152269358763,
+        "threshold": 0.45,
+        "pass": false,
+        "resolutionScale": 1,
+        "reference": {
+          "soleRow": 1355,
+          "hatTop": 198,
+          "figureHeight": 1158,
+          "cropTop": 893,
+          "pixels": 95573
+        },
+        "candidate": {
+          "soleRow": 1377,
+          "hatTop": 167,
+          "figureHeight": 1211,
+          "cropTop": 894,
+          "pixels": 112752
+        },
+        "method": "Original alpha>128, lowest40% of each body height; candidate uniformly scaled to reference resolution, centre columns and measured soles aligned; no silhouette recentering or body-height normalization",
+        "overlay": "checks/pump-hand-front-carry-f2-attempt-5-f0-overlay.png"
+      },
+      "rawStyleCheck": {
+        "look": "checks/pump-hand-front-carry-f2-attempt-5-look.png",
+        "foreground": 476726,
+        "nearOpaqueFraction": 0.9842781807579196,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 1,
+        "nonzeroAlphaPixels": 503806
+      },
+      "rejected": true,
+      "rejectionReasons": [
+        "IoU0.456452 is not below0.45",
+        "Near/right thigh still slopes downright, does not reverse f0 overlap",
+        "Height1211px5.12% exceeds5% allowance",
+        "1 raw strong amber pixel"
+      ],
+      "accepted": false,
+      "correctionVisualReview": {
+        "oppositeContact": false,
+        "identityMatchesF3": true,
+        "nearThighStillLeads": true,
+        "groundedHatDelta": 21,
+        "maxDelta": 23.04,
+        "note": "50% aligned overlay inspected; near thigh still descends towards screenright, same leading right leg as f0. Far/left leading leg requirement not met."
+      }
+    },
+    {
+      "id": "pump-hand-front-carry-f2-attempt-6",
+      "strip": "pump-hand-front-carry",
+      "frame": 2,
+      "prompt": "EDIT IMAGE1 grey pose guide into a painted game sprite. Keep the guide leg geometry, not the painted reference legs. Exactly1024x1536 transparent RGBA.\nThe DARK GREY near RIGHT leg in image1 is the BACK leg, on SCREEN LEFT: dark trouser thigh from hip480,803 slopes DOWN LEFT to knee419,1043, then ankle378,1190. Its boot is upper-left, back heel lifted, toe445,1248 down, part of sole visible. The LIGHT GREY far LEFT leg is the FRONT leg, on SCREEN RIGHT: lighter trouser thigh slopes DOWN RIGHT from hip547,806 to knee605,1043 then ankle643,1270; leading boot at lower-right726,1344, heel down and toe up. Draw an open upside-down V between these legs. The NEAR RIGHT THIGH MUST NOT SLOPE DOWN RIGHT. Place each trouser knee exactly over the corresponding grey guide knee. Near shin occludes a little of the far leg at overlap. Right arm follows greyguide forward to hand499,781.\nIMAGE2 f3 is authority for SAME MAN and EVERYTHING ABOVE HIPS only: head, skin, moss cap, grey temples, slate-blue rolled shirt, shoulder yoke, both full wooden buckets with teal477B82 water. IMAGE3 identity only. IMAGE4 painterly style only. Do not take ANY leg shape from images2,3,4. Keep exactly f3 head/body/load dimensions: hat-to-lowestsole1180px, within23px of f3 height1190. Do not enlarge to fillcanvas.\nOlder deep warm brown man754A32/96633F/4D3026, moss78804C cap, dark slate-blue626B6C shirt, charcoal trousers, BROWN boots71503B. Front-right3/4 walking toward lower right, orthographic2:1 isometric30degrees down, realistic adult7to7.5heads. Broad smooth painted clusters,3or4 shades/material, single upper-left light, dark lower and occluded side rims only; no full outline. Muted woodB89A6A, teal water477B82, no bright cyan, no whiteECE4D0 or selectionamberE8AA48 highlights. Alpha0 background, opaque figure. No ground,floor,shadow,glow,haze,text,borders,extra people/objects. One yoke,two full buckets,no spills. Return1024x1536.",
+      "references": [
+        "guides/pump-hand-front-carry-f2.png",
+        "poses/pump-hand-front-carry-f3.png",
+        "refs/pump-hand-front-walk.png",
+        "reference-passenger.png"
+      ],
+      "revision": "2026-10-17-left-foot",
+      "acceptance": {
+        "repeatIoUBelow": 0.45,
+        "visualOppositeContactRequired": true,
+        "noKeepBestOverride": true
+      },
+      "file": "raw/poses/pump-hand-front-carry-f2-attempt-6.png",
+      "rawSha256": "db8a02962b5db8f48e5c4f0938c4012ae919e6f902355434256d426331bfc0c0",
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "contractVersion": "finish-2026-10-12",
+        "ratioPass": true,
+        "s": 1,
+        "box": {
+          "x": 84,
+          "y": 168,
+          "width": 911,
+          "height": 1220
+        },
+        "guideBox": {
+          "x": 150,
+          "y": 192,
+          "width": 750,
+          "height": 1152
+        },
+        "bodyBox": {
+          "x": 84,
+          "y": 168,
+          "width": 911,
+          "height": 1220
+        },
+        "hatTop": 168,
+        "soleRow": 1387,
+        "soleOffset": 43,
+        "figureHeight": 1220,
+        "heightError": 0.05902777777777768,
+        "totalWidth": 911,
+        "bodyWidthRatio": 1.2146666666666666,
+        "anatomyMethod": "Full alpha>128 silhouette; no load excluded",
+        "boxPass": false,
+        "repeatIoU": 0.4976475966102887,
+        "repeatPass": false
+      },
+      "repeatTest": {
+        "intersection": 70763,
+        "union": 142195,
+        "iou": 0.4976475966102887,
+        "threshold": 0.45,
+        "pass": false,
+        "resolutionScale": 1,
+        "reference": {
+          "soleRow": 1355,
+          "hatTop": 198,
+          "figureHeight": 1158,
+          "cropTop": 893,
+          "pixels": 95573
+        },
+        "candidate": {
+          "soleRow": 1387,
+          "hatTop": 168,
+          "figureHeight": 1220,
+          "cropTop": 900,
+          "pixels": 117385
+        },
+        "method": "Original alpha>128, lowest40% of each body height; candidate uniformly scaled to reference resolution, centre columns and measured soles aligned; no silhouette recentering or body-height normalization",
+        "overlay": "checks/pump-hand-front-carry-f2-attempt-6-f0-overlay.png"
+      },
+      "rawStyleCheck": {
+        "look": "checks/pump-hand-front-carry-f2-attempt-6-look.png",
+        "foreground": 501923,
+        "nearOpaqueFraction": 0.9855854384038986,
+        "whiteCapViolations": 0,
+        "strongAmberPixels": 8,
+        "nonzeroAlphaPixels": 530941
+      },
+      "rejected": true,
+      "rejectionReasons": [
+        "IoU0.497648 is not below0.45",
+        "Near/right thigh still points downright over the far thigh; no opposite X in overlay",
+        "Body1220px5.90% too tall; grounded height30px from f3 exceeds23.04px allowance",
+        "8 strong amber raw pixels"
+      ],
+      "accepted": false,
+      "correctionVisualReview": {
+        "oppositeContact": false,
+        "identityMatchesF3": true,
+        "nearThighStillLeads": true,
+        "groundedHatDelta": 30,
+        "maxDelta": 23.04,
+        "note": "50% aligned overlay inspected; near thigh still descends towards screenright, same leading right leg as f0. Far/left leading leg requirement not met."
+      }
     }
   ],
   "redoStatus": {
     "requestedStripCount": 9,
-    "completedStripCount": 9,
-    "status": "9 of 9 complete; offline9px/36px reviewed, retained exceptions documented",
+    "completedStripCount": 8,
+    "status": "2026-10-17 f2 correction finished: none of attempts4,5,6 passed; Core fallback1,3. Existing strip and poses unchanged.",
     "geometry": "pose-geometry.json",
     "workflow": "redo-workflow.md",
     "protection": "redo-state.json",
@@ -6814,7 +7133,7 @@
     ],
     "imageTool": "built-in image_gen",
     "fallbackApiUsed": false,
-    "paintingCount": 94,
+    "paintingCount": 97,
     "diagnosticCandidate": "checks/pump-hand-back-walk-candidate.html",
     "resolvedBlockHistory": [
       {
@@ -6843,8 +7162,23 @@
         3
       ],
       "keepBestAfterThree": true,
-      "offlineChecksReplaceBrowser": true
-    }
+      "offlineChecksReplaceBrowser": true,
+      "f2Correction20261017": {
+        "maxNewAttempts": 3,
+        "attemptNumbers": [
+          4,
+          5,
+          6
+        ],
+        "keepBestAfterThree": false,
+        "acceptFirstPassingBoth": true,
+        "fallbackFrames": [
+          1,
+          3
+        ]
+      }
+    },
+    "updatedAt": "2026-10-17T15:01:41.967Z"
   },
   "redoStrips": {
     "pump-hand-back-walk": {
@@ -7151,7 +7485,7 @@
           }
         }
       ],
-      "visualCycleReview": "kept with two-phase fallback",
+      "visualCycleReview": "failed correction; Core f1,f3 fallback",
       "visualFindings": {
         "contactX": false,
         "oppositeLiftedFoot": true,
@@ -7160,7 +7494,7 @@
         "repeatedFrames": [
           "f2=f0"
         ],
-        "note": "Offline9px-6x and36px sheets inspected. Two buckets read clearly, feet alternate in passing f1/f3, but f2 keeps f0 thigh overlap after three corrections: use Core0,1,0,1 fallback. Accepted2,2,3,3. Grounded hat heights differ by14.06px (3.91% nominal body), beyond2% target, retained best after three. All frames retain warm brown skin/grey hair/slate shirt/teal water; columns320 prevent load clipping."
+        "note": "Exactly three new attempts4,5,6 made with mandated four references and no f0/f1 attachments. All failed strict IoU<0.45 and visual opposite leg test; no acceptance override. Existing PNG strip and all poses unchanged. Core should play f1,f3."
       },
       "groundedHatRows": [
         118.4375,
@@ -7178,6 +7512,60 @@
         "antialiasedPixels": 13039,
         "cursorWhitePixels": 0,
         "strongAmberPixels": 0
+      },
+      "f2Correction": {
+        "date": "2026-10-17",
+        "strip": "pump-hand-front-carry",
+        "frame": 2,
+        "attempts": [
+          {
+            "id": "pump-hand-front-carry-f2-attempt-4",
+            "iou": 0.46575861560809245,
+            "heightError": 0.07118055555555558,
+            "oppositeContact": false,
+            "accepted": false,
+            "reasons": [
+              "IoU0.465759 is not below0.45",
+              "Near/right thigh still crosses toward screenright; does not follow guide near leg downleft",
+              "Body1234px7.12% oversized;44px grounded height difference from f3 exceeds23.04px",
+              "14 strong amber raw pixels"
+            ]
+          },
+          {
+            "id": "pump-hand-front-carry-f2-attempt-5",
+            "iou": 0.45645152269358763,
+            "heightError": 0.05121527777777768,
+            "oppositeContact": false,
+            "accepted": false,
+            "reasons": [
+              "IoU0.456452 is not below0.45",
+              "Near/right thigh still slopes downright, does not reverse f0 overlap",
+              "Height1211px5.12% exceeds5% allowance",
+              "1 raw strong amber pixel"
+            ]
+          },
+          {
+            "id": "pump-hand-front-carry-f2-attempt-6",
+            "iou": 0.4976475966102887,
+            "heightError": 0.05902777777777768,
+            "oppositeContact": false,
+            "accepted": false,
+            "reasons": [
+              "IoU0.497648 is not below0.45",
+              "Near/right thigh still points downright over the far thigh; no opposite X in overlay",
+              "Body1220px5.90% too tall; grounded height30px from f3 exceeds23.04px allowance",
+              "8 strong amber raw pixels"
+            ]
+          }
+        ],
+        "acceptedAttempt": null,
+        "outcome": "none passed",
+        "fallbackFrames": [
+          1,
+          3
+        ],
+        "canonicalStripRebuilt": false,
+        "note": "Exactly three new attempts4,5,6 made with mandated four references and no f0/f1 attachments. All failed strict IoU<0.45 and visual opposite leg test; no acceptance override. Existing PNG strip and all poses unchanged. Core should play f1,f3."
       }
     },
     "pump-hand-back-carry": {
@@ -8342,5 +8730,59 @@
       "headBobFraction": 0.06076388888888889,
       "headBobWithinTwoPercent": false
     }
+  },
+  "f2Correction20261017": {
+    "date": "2026-10-17",
+    "strip": "pump-hand-front-carry",
+    "frame": 2,
+    "attempts": [
+      {
+        "id": "pump-hand-front-carry-f2-attempt-4",
+        "iou": 0.46575861560809245,
+        "heightError": 0.07118055555555558,
+        "oppositeContact": false,
+        "accepted": false,
+        "reasons": [
+          "IoU0.465759 is not below0.45",
+          "Near/right thigh still crosses toward screenright; does not follow guide near leg downleft",
+          "Body1234px7.12% oversized;44px grounded height difference from f3 exceeds23.04px",
+          "14 strong amber raw pixels"
+        ]
+      },
+      {
+        "id": "pump-hand-front-carry-f2-attempt-5",
+        "iou": 0.45645152269358763,
+        "heightError": 0.05121527777777768,
+        "oppositeContact": false,
+        "accepted": false,
+        "reasons": [
+          "IoU0.456452 is not below0.45",
+          "Near/right thigh still slopes downright, does not reverse f0 overlap",
+          "Height1211px5.12% exceeds5% allowance",
+          "1 raw strong amber pixel"
+        ]
+      },
+      {
+        "id": "pump-hand-front-carry-f2-attempt-6",
+        "iou": 0.4976475966102887,
+        "heightError": 0.05902777777777768,
+        "oppositeContact": false,
+        "accepted": false,
+        "reasons": [
+          "IoU0.497648 is not below0.45",
+          "Near/right thigh still points downright over the far thigh; no opposite X in overlay",
+          "Body1220px5.90% too tall; grounded height30px from f3 exceeds23.04px allowance",
+          "8 strong amber raw pixels"
+        ]
+      }
+    ],
+    "acceptedAttempt": null,
+    "outcome": "none passed",
+    "fallbackFrames": [
+      1,
+      3
+    ],
+    "canonicalStripRebuilt": false,
+    "note": "Exactly three new attempts4,5,6 made with mandated four references and no f0/f1 attachments. All failed strict IoU<0.45 and visual opposite leg test; no acceptance override. Existing PNG strip and all poses unchanged. Core should play f1,f3."
   }
 }

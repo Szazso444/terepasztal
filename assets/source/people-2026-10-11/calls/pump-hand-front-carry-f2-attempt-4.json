@@ -1,0 +1,18 @@
+{
+  "id": "pump-hand-front-carry-f2-attempt-4",
+  "strip": "pump-hand-front-carry",
+  "frame": 2,
+  "prompt": "Use case: sketch-to-render. EDIT image1 grey mannequin into ONE painted game person on exactly1024x1536 transparent RGBA canvas. Input1 is the POSE AUTHORITY. Input2 accepted f3 gives same man, head, clothes, yoke, TWO full buckets, size and palette ABOVE HIPS ONLY. Input3 identity only. Input4 painted style only. Do not copy legs from any painting. Paint only the mannequin leg paths.\nPOSE f2: FRONT RIGHT3/4 orthographic2:1 isometric camera30degrees down, walking toward LOWER RIGHT. Far LEFT leg LEADS at screenRIGHT, heel down toe up, extending hip(547,806) to knee(605,1043) to ankle(643,1270) to boot toe(726,1344). This is the FAR leg: its upper thigh is partly hidden by NEAR shin where crossing. Near RIGHT leg TRAILS at screenLEFT, hip(480,803) to knee(419,1043) to ankle(378,1190) to boot(445,1248): heel lifted, TOE touching behind, some sole visible. Strong open stepping silhouette, screenLEFT trailing boot higher and smaller, screenRIGHT forward boot lower, on far leg. Near thigh points downLEFT, NOT downRIGHT. Right arm swings forward from shoulder(422,467) toward guidehand(499,781). Keep other hand holding yoke. This is left-foot-leading contact, immediately BEFORE accepted f3 passing pose.\nKeep all above hips from f3: older man with DEEP warm brown skin(base754A32 light96633F shadow4D3026), GREY hair at temples, moss78804C flat cap, muted slate-blue rolled-sleeve shirt626B6C shadow414D53 light7B858A, charcoal trousers and subdued brown boots71503B light906C50. Broad wooden shoulder yoke, full wooden bucket at EACH END with thick supports, water subdued TEAL477B82 no spills. Opaque person and buckets. Same realistic adult7to7.5heads proportions, broad readable silhouette; head facing lower right like f3. Body HATTOP192 to lowestSOLE1344 nominal1152px, hipcenter512. Keep grounded cap-height within23px of f3 hat-to-sole1190px, hence body between1167 and1209px. Do not enlarge or recenter the load. Leave generous transparent margins. Whole load visible.\nSTYLE: smooth painted broad3or4 shade colour clusters, one upperLEFT light, selective dark occluded lower/side rims only, no full perimeter outline. Match f3 and passenger smooth restrained paint. Subdued forest294638,moss78804C,oatE4D5B5,limestoneBCA98B,slate626B6C,teal477B82,copperA36B42. No highlight at/aboveECE4D0 cursor white, no saturated yellow/orange as strong asE8AA48 amber. NO ground,floor,shadow,glow,haze,text,labels,borders,frame numbers,extraobjects,extraperson. Alpha0 empty background, opaque figure. Output exactly1024x1536.",
+  "references": [
+    "guides/pump-hand-front-carry-f2.png",
+    "poses/pump-hand-front-carry-f3.png",
+    "refs/pump-hand-front-walk.png",
+    "reference-passenger.png"
+  ],
+  "revision": "2026-10-17-left-foot",
+  "acceptance": {
+    "repeatIoUBelow": 0.45,
+    "visualOppositeContactRequired": true,
+    "noKeepBestOverride": true
+  }
+}

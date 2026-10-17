@@ -1,0 +1,24 @@
+{
+  "intersection": 65289,
+  "union": 143036,
+  "iou": 0.45645152269358763,
+  "threshold": 0.45,
+  "pass": false,
+  "resolutionScale": 1,
+  "reference": {
+    "soleRow": 1355,
+    "hatTop": 198,
+    "figureHeight": 1158,
+    "cropTop": 893,
+    "pixels": 95573
+  },
+  "candidate": {
+    "soleRow": 1377,
+    "hatTop": 167,
+    "figureHeight": 1211,
+    "cropTop": 894,
+    "pixels": 112752
+  },
+  "method": "Original alpha>128, lowest40% of each body height; candidate uniformly scaled to reference resolution, centre columns and measured soles aligned; no silhouette recentering or body-height normalization",
+  "overlay": "checks/pump-hand-front-carry-f2-attempt-5-f0-overlay.png"
+}

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { root, read, write, json, saveJson, box, resample, PNG } from './pose-png.mjs';
+import { contactOverlap } from './contact-overlap.mjs';
 const [command, id, ...args] = process.argv.slice(2),
   geometry = json('pose-geometry.json');
 const prompts = json('prompts.json');
@@ -48,6 +49,10 @@ function measure(e) {
     anatomyMethod: e.anatomy?.note ?? 'Full alpha>128 silhouette; no load excluded',
     boxPass: png.width * 3 === png.height * 2 && heightError <= 0.05 && bodyWidthRatio <= 1.25,
   };
+  if (e.repeatTest) {
+    e.measured.repeatIoU = e.repeatTest.iou;
+    e.measured.repeatPass = e.repeatTest.pass;
+  }
   return e.measured;
 }
 if (command === 'record') {
@@ -58,7 +63,13 @@ if (command === 'record') {
     throw Error('Painting already recorded; paintings are never overwritten');
   const e = json('calls/' + id + '.json'),
     a = Number(id.match(/-attempt-(\d+)$/)?.[1]);
-  if (!Number.isInteger(a) || a < 1 || a > 3)
+  const correction =
+    e.strip === 'pump-hand-front-carry' &&
+    e.frame === 2 &&
+    e.revision === '2026-10-17-left-foot' &&
+    a >= 4 &&
+    a <= 6;
+  if (!Number.isInteger(a) || a < 1 || (a > 3 && !correction))
     throw Error('At most three new painting attempts per pose');
   e.file = 'raw/poses/' + id + '.png';
   fs.mkdirSync(path.join(root, 'raw', 'poses'), { recursive: true });
@@ -98,6 +109,31 @@ if (command === 'record') {
 } else if (command === 'accept') {
   const e = entry();
   measure(e);
+  if (e.revision === '2026-10-17-left-foot') {
+    if (
+      !e.repeatTest?.pass ||
+      args.includes('--keep-best') ||
+      !args.includes('--opposite-contact') ||
+      args[args.indexOf('--opposite-contact') + 1] !== 'yes' ||
+      !args.includes('--identity-match') ||
+      args[args.indexOf('--identity-match') + 1] !== 'yes'
+    )
+      throw Error(
+        'Correction requires IoU<0.45, opposite contact and f3 identity; no keep-best override',
+      );
+    const f3 = calls.findLast((p) => p.strip === e.strip && p.frame === 3 && p.accepted);
+    const heightDelta = Math.abs(
+      e.measured.figureHeight / e.measured.s - f3.measured.figureHeight / f3.measured.s,
+    );
+    if (heightDelta > 1152 * 0.02)
+      throw Error('Grounded cap height differs from f3 by more than2%');
+    e.correctionVisualReview = {
+      oppositeContact: true,
+      identityMatchesF3: true,
+      groundedHatDelta: heightDelta,
+      maxDelta: 1152 * 0.02,
+    };
+  }
   const exhausted =
     calls.filter((p) => p.strip === e.strip && p.frame === e.frame && p.file).length >= 3;
   if (!e.measured.boxPass && !(args.includes('--keep-best') && exhausted))
@@ -128,6 +164,44 @@ if (command === 'record') {
   e.acceptedFile = target;
   save();
   console.log('Accepted ' + target);
+} else if (command === 'repeat') {
+  const e = entry();
+  measure(e);
+  const f0 = calls.findLast((p) => p.strip === e.strip && p.frame === 0 && p.accepted);
+  if (!f0) throw Error('Missing accepted f0');
+  e.repeatTest = contactOverlap(read(f0.acceptedFile), read(e.file), f0.measured, e.measured);
+  e.measured.repeatIoU = e.repeatTest.iou;
+  e.measured.repeatPass = e.repeatTest.pass;
+  const overlay = new PNG({ width: 640, height: 512 });
+  const layers = [f0, e].map((p) => {
+    const png = read(p.acceptedFile && p === f0 ? p.acceptedFile : p.file);
+    return resample(
+      png,
+      640,
+      512,
+      0.3125 / p.measured.s,
+      [png.width / 2, p.measured.soleRow],
+      [320, 480],
+      { cleanAlpha: false },
+    );
+  });
+  for (let p = 0; p < overlay.data.length; p += 4) {
+    const a = layers[0].data[p + 3] / 510,
+      b = layers[1].data[p + 3] / 255;
+    const alpha = a + b * (1 - a);
+    if (alpha)
+      for (let n = 0; n < 3; n++)
+        overlay.data[p + n] = Math.round(
+          (layers[0].data[p + n] * a + layers[1].data[p + n] * b * (1 - a)) / alpha,
+        );
+    overlay.data[p + 3] = Math.round(alpha * 255);
+  }
+  const file = 'checks/' + e.id + '-f0-overlay.png';
+  write(file, overlay);
+  e.repeatTest.overlay = file;
+  saveJson('checks/' + e.id + '-repeat.json', e.repeatTest);
+  save();
+  console.log(JSON.stringify(e.repeatTest));
 } else if (command === 'backup') {
   if (!geometry.strips[id]) throw Error('Strip outside redo scope');
   const target = 'raw/' + id + '-attempt-1.png';
@@ -245,4 +319,5 @@ if (command === 'record') {
       })),
     ),
   );
-} else throw Error('Commands: record, error, measure, accept, backup, compare, cycle, status');
+} else
+  throw Error('Commands: record, error, measure, accept, repeat, backup, compare, cycle, status');

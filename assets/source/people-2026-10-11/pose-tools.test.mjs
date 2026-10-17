@@ -1,6 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PNG, resample, box, json, read } from './pose-png.mjs';
+import { contactOverlap } from './contact-overlap.mjs';
+test('contact overlap aligns soles and centre columns while excluding the upper60percent', () => {
+  function figure(width, height, left, top, scale = 1) {
+    const png = new PNG({ width, height });
+    for (let y = top; y < top + 10 * scale; y++)
+      for (let x = left; x < left + 2 * scale; x++)
+        png.data.set([71, 123, 130, 255], (y * width + x) * 4);
+    return png;
+  }
+  const reference = figure(10, 20, 3, 2);
+  const translated = figure(10, 24, 3, 5);
+  assert.equal(contactOverlap(reference, translated).iou, 1);
+  const doubled = figure(20, 40, 6, 8, 2);
+  assert.equal(contactOverlap(reference, doubled).iou, 1);
+  const differentLegs = figure(10, 20, 6, 2);
+  assert.equal(contactOverlap(reference, differentLegs).iou, 0);
+  translated.data[(5 * 10 + 3) * 4 + 3] = 0;
+  const result = contactOverlap(
+    reference,
+    translated,
+    { hatTop: 2, soleRow: 11 },
+    { hatTop: 5, soleRow: 14 },
+  );
+  assert.equal(result.iou, 1);
+  assert.equal(result.reference.pixels, 8);
+  assert.equal(result.candidate.pixels, 8);
+});
 test('portrait cleanup removes faint specks and makes nearly opaque paint solid without changing RGB', () => {
   const source = new PNG({ width: 4, height: 1 });
   for (const [x, alpha] of [15, 16, 199, 200].entries())
