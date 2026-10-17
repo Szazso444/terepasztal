@@ -656,8 +656,9 @@ export function buildSave(
 /**
  * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
  * or it is a save without something every version since v1 holds, or one that would load holding
- * a number no save can store (`settle`); or it describes a generated map larger than the game
- * builds (`worldWithinBound`); or, for an import, storage refused to keep it (full or blocked).
+ * a number no save can store (`settle`), or seeds that name no one world (`settleSeeds`); or it
+ * describes a generated map larger than the game builds (`worldWithinBound`); or, for an import,
+ * storage refused to keep it (full or blocked).
  */
 export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'tooLarge' | 'storage';
 
@@ -747,14 +748,55 @@ function repairStationTurns(j: SaveGame) {
   for (const s of j.stations as unknown[]) if (isRecord(s)) s.rot = wrapRotation(s.rot);
 }
 /**
+ * The seed a world description names, as the one number its map is built from: a seed that is a
+ * number or the text of one, when that number is an integer (`Number.isInteger`); null for any
+ * other (a fraction, NaN, an infinity, a text that is not a number, no seed at all). An integer
+ * is not held to the safe ones: a player may type digits past 2^53 - 1 as a seed, the game makes
+ * `Number` of them (`parseSeed`), plays that world and writes it, and every such number is the one
+ * double its save holds and its chunks store (`chunks.ts` keeps a seed it cannot zigzag as a
+ * float64), so the save must load again. Text reads as the game reads typed digits. Text that is
+ * blank, and a value that is no number or text (null, a flag, a list), name no seed: `Number()`
+ * would read them as 0 or 1, and 0 is a world too. Map generation does arithmetic on the seed
+ * (`seed + 5`), which on text gives other text and so another world.
+ */
+function worldSeedOf(seed: unknown): number | null {
+  const n =
+    typeof seed === 'number'
+      ? seed
+      : typeof seed === 'string' && seed.trim() !== ''
+        ? Number(seed)
+        : NaN;
+  return Number.isInteger(n) ? n : null;
+}
+/**
+ * Whether the seeds of a file name one world, checked before any step runs: the file's own seed
+ * is an integer (`worldSeedOf`), because a file with no world (nothing, or null) has its world
+ * made from that seed on load, and a world's seed is the file's. A world that is there is a
+ * description whose seed, read as a number, is the file's seed: a save whose two seeds disagree
+ * cannot say which world it is, and neither wins. The world's seed is set on the description as
+ * that number. Any other value in place of a world holds no seed. False refuses the file as
+ * damaged, and then nothing has been changed.
+ */
+function settleSeeds(file: Record<string, unknown>): boolean {
+  if (worldSeedOf(file.seed) !== file.seed) return false;
+  const world = file.world;
+  if (world === undefined || world === null) return true;
+  if (!isRecord(world)) return false;
+  const seed = worldSeedOf(world.seed);
+  if (seed !== file.seed) return false;
+  world.seed = seed;
+  return true;
+}
+
+/**
  * A file that holds every v1 field, migrated to the current version with its station turns
- * repaired; null when it does not, and when what it gives would still hold a number no save can
- * store (`firstNonFinite`: only an overflowing literal such as `1e999` gives one), so that what
- * loads can be stored again.
+ * repaired; null when it does not, when its seeds name no one world (`settleSeeds`), and when what
+ * it gives would still hold a number no save can store (`firstNonFinite`: only an overflowing
+ * literal such as `1e999` gives one), so that what loads can be stored again.
  */
 function settle(file: Record<string, unknown>): SaveGame | null {
   // before any step runs: the step from v4 lays out a list with an entry for every chunk of the map
-  if (!worldWithinBound(file.world) || !holdsCore(file)) return null;
+  if (!worldWithinBound(file.world) || !holdsCore(file) || !settleSeeds(file)) return null;
   const j = file as SaveGame;
   // no version, or none the chain can count up from, is the oldest
   if (!Number.isInteger(j.version) || j.version < SAVE_MIN_VERSION) j.version = SAVE_MIN_VERSION;
@@ -772,10 +814,11 @@ function settle(file: Record<string, unknown>): SaveGame | null {
 /**
  * Read a save text: an exported save, a stored one or a diagnostics bundle. Never refuses on
  * version: older saves are upgraded step by step, newer ones are loaded as they are with a
- * warning. Station turns are repaired (`repairStationTurns`). Text that is not a whole save, or
- * whose save could not be stored again, or whose generated map is larger than the game builds
- * (`worldWithinBound`; refused before anything is migrated or generated), is refused, with the
- * reason.
+ * warning. Station turns are repaired (`repairStationTurns`), and a world seed held as text is
+ * read as the number it names (`settleSeeds`). Text that is not a whole save, or whose save could
+ * not be stored again, or whose seed is not an integer or is not the seed of its world, or
+ * whose generated map is larger than the game builds (`worldWithinBound`; refused before anything
+ * is migrated or generated), is refused, with the reason.
  */
 export function readSaveText(raw: string): { save: SaveGame } | { error: SaveRefusal } {
   const opened = openSave(raw);
