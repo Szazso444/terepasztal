@@ -74,6 +74,7 @@ import {
 } from './wheatField';
 import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
 import { doorSides, roadCode, roadSides } from './roadShape';
+import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
@@ -260,6 +261,18 @@ export class WorldRenderer {
   private roads = new Set<number>();
   /** The code of each road tile as the painter was last handed it (`roadCode`, roadShape.ts). */
   private roadCodes = new Map<number, number>();
+  /**
+   * Where walkers are drawn on the roads (#477), by the codes the painter was handed; the people
+   * renderer finds it by this renderer's object layer (`roadWalks`).
+   */
+  readonly roadWalk = new RoadWalk(
+    () => this.map,
+    (x, y) => {
+      const k = y * this.map.w + x;
+      // no road is painted on the town paving
+      return this.city.has(k) ? -1 : (this.roadCodes.get(k) ?? -1);
+    },
+  );
   private waterDetails = new Graphics();
   private waterClock = 0;
   private rippleRefresh = 0;
@@ -316,6 +329,7 @@ export class WorldRenderer {
       for (const fit of this.groundFits.values()) showWeeds(fit, null);
       this.wheat.destroy();
     });
+    roadWalks.set(this.objects, this.roadWalk);
     this.objects.sortableChildren = true;
     this.piers.sortableChildren = true;
     this.objects.cullableChildren = true;
