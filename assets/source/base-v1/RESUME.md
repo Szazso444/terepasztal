@@ -1,5 +1,21 @@
 # Asset generation checkpoint
 
+## Atlas cap pass and waterside trees — 2026-10-17 (latest)
+
+Issues #465 and #460, branch `art/465-packer-caps-and-waterside-trees`.
+
+- Every packer that writes `public/assets` runs `tools/atlas-cap.mjs` on each frame after
+  resampling: alpha under 16 dropped, 250 and over solid, nothing at or above the cursor white or
+  as strong as the selection amber. `LIT_FRAMES` (the Fuel Pump's `structures/fuel_pump` and
+  turns) compress luma instead. `tools/atlas-cap.test.mjs` checks every shipped atlas. Re-pack in
+  this order: `npm run art:illustrated`, `node tools/finish-fields.mjs`,
+  `node tools/bridge-kit.mjs`, `node tools/pack-atlas.mjs rolling`.
+- `trimSource(input, box)` packs a picture by a given box (for the windmill body, #461).
+- `props.mangrove` and `props.willow` in `coverage.json` take their six paintings from
+  `assets/source/waterside-trees-2026-10-16/` and its `trees.json` (`sourceDirectory`,
+  `measurements`): frames `props/mangrove_0..2` and `props/willow_0..2`. Not yet drawn as trees
+  by the renderer (`isTree`) nor placed on the map; those are Rendering's and World's tasks.
+
 ## Bridge kit v1 — 2026-09-27 (source kit complete)
 
 Working on `claude/charming-ramanujan-i16mhm` in the isolated worktree
@@ -346,7 +362,8 @@ still need visual cleanup review.
 - `docs/art-direction/images/02-nature-objects.png`: nature direction.
 - `docs/art-direction/images/03-theme-town-growth.png`: established shared style.
 - `generation-prompts.json`: prompts and original generation paths.
-- `coverage.json`: 147 base-family entries, including remaining variants.
+- `coverage.json`: 147 base-family entries, including remaining variants, plus
+  `props.mangrove` and `props.willow`, whose pictures are in their own folder.
 - `alpha-report.json` and `index.html`: validation and preview gallery.
 
 Generate with the built-in image tool, one asset per image. Preserve real alpha.

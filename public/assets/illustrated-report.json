@@ -166,6 +166,40 @@
       ]
     },
     {
+      "id": "props.mangrove",
+      "source": [
+        "tree-mangrove-1.png",
+        "tree-mangrove-2.png",
+        "tree-mangrove-3.png"
+      ],
+      "sourceDirectory": "assets/source/waterside-trees-2026-10-16",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/mangrove_0",
+        "props/mangrove_1",
+        "props/mangrove_2"
+      ]
+    },
+    {
+      "id": "props.willow",
+      "source": [
+        "tree-willow-1.png",
+        "tree-willow-2.png",
+        "tree-willow-3.png"
+      ],
+      "sourceDirectory": "assets/source/waterside-trees-2026-10-16",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/willow_0",
+        "props/willow_1",
+        "props/willow_2"
+      ]
+    },
+    {
       "id": "terrain.grass",
       "source": "terrain-grass.png",
       "widthScale": 1,
@@ -1222,28 +1256,60 @@
   ],
   "groups": {
     "props": {
-      "frames": 43,
-      "uniqueImages": 34,
-      "width": 3544,
-      "height": 199
+      "frames": 49,
+      "uniqueImages": 40,
+      "width": 4033,
+      "height": 253,
+      "capped": {
+        "texels": 188794,
+        "haze": 0,
+        "solid": 188794,
+        "white": 224,
+        "amber": 0,
+        "compressed": 0
+      }
     },
     "terrain": {
       "frames": 54,
       "uniqueImages": 47,
       "width": 4066,
-      "height": 615
+      "height": 615,
+      "capped": {
+        "texels": 160146,
+        "haze": 1464,
+        "solid": 158664,
+        "white": 4821,
+        "amber": 18,
+        "compressed": 0
+      }
     },
     "structures": {
       "frames": 92,
       "uniqueImages": 59,
       "width": 3993,
-      "height": 1142
+      "height": 1142,
+      "capped": {
+        "texels": 2982525,
+        "haze": 44267,
+        "solid": 2938155,
+        "white": 13774,
+        "amber": 966,
+        "compressed": 0
+      }
     },
     "icons": {
       "frames": 18,
       "uniqueImages": 18,
       "width": 1060,
-      "height": 84
+      "height": 84,
+      "capped": {
+        "texels": 28470,
+        "haze": 531,
+        "solid": 27939,
+        "white": 0,
+        "amber": 134,
+        "compressed": 0
+      }
     }
   }
 }

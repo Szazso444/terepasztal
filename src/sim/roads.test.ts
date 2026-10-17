@@ -742,8 +742,8 @@ function broken(w: ReturnType<typeof site>): string {
 }
 
 describe('roads, whatever is built in whatever order', () => {
-  // slow because each seeded run of build operations is checked after every operation: 0.38 s
-  // alone, so a limit of 30 s
+  // slow: seeded sites of builder steps, the roads judged after each, 0.6 s alone; the limit is
+  // room for a busy machine
   it('cross only plain straights of regular or narrow track at right angles, off every footprint', () => {
     forAll(
       genOps,
@@ -767,8 +767,8 @@ describe('roads, whatever is built in whatever order', () => {
     );
   }, 30_000);
 
-  // slow because each seeded run of build operations is checked after every operation: 0.41 s
-  // alone, so a limit of 30 s
+  // slow: seeded sites of builder steps, the roads compared after each, 0.8 s alone; the limit is
+  // room for a busy machine
   it('change only by a road laid or taken up, or by the spur of a place placed, which moves the version on and tells the game once a tile', () => {
     // A renderer keeps what it drew until `version` moves (#309, #329) and redraws the tile
     // `onRoadChanged` names: a change that moved neither would leave a stale picture, and one
@@ -1246,8 +1246,9 @@ describe('a walk with roads', () => {
     for (let y = 19; y > 16; y--) road.push([24, y]);
     for (let x = 24; x >= 10; x--) road.push([x, 16]);
     for (let y = 17; y <= 18; y++) road.push([10, y]);
-    // the tile above the station holds the road the station laid at its door already (#408)
-    expect(builder.roads.toJSON()).toEqual([[10, 18]]);
+    // no road was near the station when it was placed, so it laid none at its door (#455); the
+    // road laid up to its door brings the tile above the station, free
+    expect(builder.roads.toJSON()).toEqual([]);
     for (const [x, y] of road)
       expect(builder.roads.has(x, y) || builder.placeRoad(x, y), `${x},${y}`).toBe(true);
     const people = new PeopleSim(map, builder, new Rng(1));

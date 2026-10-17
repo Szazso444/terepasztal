@@ -4,6 +4,7 @@ import { hash2 } from '../engine/rng';
 import { field, fieldRow } from './industry';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
+import { lightX } from './view';
 
 /**
  * Natural props. Silhouette first, then two or three canopy masses, then material detail in
@@ -160,6 +161,207 @@ function birchTree(seed: number, v: number): PixelBuf {
   }
   b.outline(PAL.outline, 170);
   groundShadow(b, cx, base + 1, 5, 50);
+  return b;
+}
+
+// --- waterside trees ---------------------------------------------------------------------------
+
+/**
+ * The waterside trees' frames, w x h at the anchor (ax, ay), in world px: the packed paintings'
+ * (`props/mangrove_N`, `props/willow_N` in public/assets/props.json, listed in
+ * docs/art-direction/frame-inventory.json), so a fallback stands where its painting does. A
+ * mangrove's anchor is the middle of its ring of root tips, at the waterline; a willow's is its
+ * trunk foot, with the three shadow rows under it that every other tree has. `spread` is how far
+ * a mangrove's roots reach across.
+ */
+const MANGROVES = [
+  { w: 27, h: 22, ax: 14, ay: 20, spread: 14 },
+  { w: 36, h: 29, ax: 18, ay: 25, spread: 20 },
+  { w: 49, h: 34, ax: 25, ay: 31, spread: 29 },
+];
+const WILLOWS = [
+  { w: 35, h: 31, ax: 17 },
+  { w: 43, h: 36, ax: 22 },
+  { w: 49, h: 40, ax: 25 },
+];
+
+/** A point `t` of the way along the quadratic curve from `a` over `c` to `b`. */
+function curve(a: [number, number], c: [number, number], b: [number, number], t: number) {
+  const u = 1 - t;
+  return [
+    u * u * a[0] + 2 * u * t * c[0] + t * t * b[0],
+    u * u * a[1] + 2 * u * t * c[1] + t * t * b[1],
+  ];
+}
+
+/**
+ * Mangrove: a dark evergreen crown, wider than it is tall, on a short stem that splits into
+ * arched prop roots. The roots end in dark wet tips on a flat ring around the anchor, where the
+ * waterline is; no water is drawn, the tile's own water shows through between them. The old
+ * variant also lets thin aerial roots hang from its crown.
+ */
+function mangroveTree(seed: number, v: number): PixelBuf {
+  const { w, h, ax, ay, spread } = MANGROVES[v];
+  const b = new PixelBuf(w, h);
+  const LEAF: RGB[] = [
+    [52, 86, 62],
+    [66, 102, 72],
+    [40, 66, 50],
+    [86, 122, 86],
+  ];
+  const ROOT: RGB = [116, 96, 74];
+  const WET: RGB = [52, 46, 40];
+  // the frame's rows under the anchor row, the contour's included: the front tips stop over them
+  const below = h - 1 - ay;
+  const rx = spread / 2;
+  const top = 1;
+  const crownBottom = top + (ay - top) * 0.56;
+  const stemBase = top + (ay - top) * 0.7;
+  // the middle of the columns 1 to w - 2, which the crown spans inside its 1 px contour margin
+  const cx = w / 2;
+
+  // prop roots, the back ones first and darker, each arching out from the stem to its tip
+  const n = 7 + v * 2;
+  const tips = Array.from({ length: n }, (_, i) => {
+    const t = Math.PI + ((i + 0.5) / n) * Math.PI * 2 + (hash2(i, seed, 1) - 0.5) * 0.3;
+    const sin = Math.sin(t);
+    return {
+      x: ax + rx * Math.cos(t),
+      y: ay + (sin > 0 ? Math.max(0, below - 1) : Math.max(1, rx * 0.28)) * sin,
+      back: sin < 0,
+    };
+  }).sort((p, q) => Number(q.back) - Number(p.back) || p.y - q.y);
+  for (const tip of tips) {
+    const from: [number, number] = [ax + (tip.x - ax) * 0.12, stemBase];
+    const knee: [number, number] = [
+      ax + (tip.x - ax) * 0.9,
+      stemBase - 1.5 - Math.abs(tip.x - ax) * 0.18,
+    ];
+    const lit = tip.x < ax;
+    const tone = tip.back ? 0.72 : lit ? 1.12 : 0.86;
+    const steps = Math.ceil(Math.hypot(tip.x - ax, tip.y - stemBase) * 2.5);
+    for (let s = 0; s <= steps; s++) {
+      const [x, y] = curve(from, knee, [tip.x, tip.y], s / steps);
+      b.set(x, y, s > steps - 3 ? WET : shade(ROOT, tone));
+    }
+  }
+  // the stem, lit on its left
+  trunk(
+    b,
+    Math.round(ax) - 1,
+    Math.floor(crownBottom) - 1,
+    3,
+    Math.ceil(stemBase - crownBottom) + 2,
+  );
+  // a low wide crown: a dark underside the width of the frame, and leafy lobes along its top,
+  // each lit from the upper left; the middle one is the crown's top
+  const crownH = crownBottom - top;
+  const half = (w - 2) / 2;
+  mass(
+    b,
+    cx,
+    top + crownH * 0.66,
+    half,
+    crownH * 0.36,
+    LEAF.map((c) => shade(c, 0.9)),
+    seed,
+  );
+  const lobes = 4 + v;
+  for (let i = 0; i < lobes; i++) {
+    const t = (i + 0.5) / lobes - 0.5;
+    const middle = i === Math.floor(lobes / 2);
+    const lr = half * (0.34 - Math.abs(t) * 0.18);
+    const lry = crownH * (middle ? 0.36 : 0.3 - Math.abs(t) * 0.1);
+    const ly = middle ? top + lry : top + crownH * (0.4 + Math.abs(t) * 0.5) + hash2(i, seed, 2);
+    mass(b, cx + t * 2 * half * 0.78, ly, lr, lry, LEAF, seed + 1 + i, 1.1);
+  }
+  // aerial roots hanging from the old crown
+  if (v === 2)
+    for (let i = 0; i < 4; i++) {
+      const x = Math.round(cx + (i - 1.5) * (w - 2) * 0.17 + (hash2(i, seed, 5) - 0.5) * 2);
+      const from = Math.ceil(top + crownH * 0.95);
+      for (let y = from; y < from + 3 + Math.floor(hash2(i, seed, 6) * 3); y++)
+        if (!b.alpha(x, y)) b.set(x, y, shade(ROOT, 0.78));
+    }
+  b.outline(PAL.outline, 190);
+  // a faint shade on the water under the root ring, inside the frame
+  for (let y = Math.floor(ay - 1); y <= ay + Math.max(0, below - 1); y++)
+    for (let x = Math.ceil(ax - rx); x <= Math.floor(ax + rx); x++) {
+      const nx = (x + 0.5 - ax) / (rx + 0.5);
+      const ny = (y + 0.5 - ay) / 1.8;
+      const d = nx * nx + ny * ny;
+      if (d <= 1 && b.alpha(x, y) === 0) b.set(x, y, SHADOW, Math.round(44 * (1 - d * 0.6)));
+    }
+  return b;
+}
+
+/**
+ * Weeping willow: a short forked trunk under a dome of leaves, and from the dome's rim curtains of
+ * hanging silvery-olive strands down toward the bank, parted in the middle so the trunk shows. The
+ * strands catch the light on the left and fall into shade on the right and toward their hems.
+ */
+function willowTree(seed: number, v: number): PixelBuf {
+  const { w, h, ax } = WILLOWS[v];
+  const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
+  const LEAF: RGB[] = [
+    [112, 132, 82],
+    [130, 150, 94],
+    [88, 106, 66],
+    [154, 170, 112],
+  ];
+  const BARK: RGB = [104, 86, 64];
+  const top = 1;
+  const tall = base - top;
+  const cx = (w - 1) / 2;
+  const rx = (w - 2) / 2;
+  // trunk and the fork of its two boughs
+  const trunkW = 3 + (v > 0 ? 1 : 0);
+  const trunkTop = base - Math.round(tall * 0.45);
+  trunk(b, Math.round(ax - trunkW / 2), trunkTop, trunkW, base - trunkTop + 1, BARK);
+  b.set(Math.round(ax - trunkW / 2) - 1, base, PAL.trunkDark);
+  b.line(ax, trunkTop + 1, ax - 3 - v, trunkTop - 3 - v, shade(BARK, 1.1));
+  b.line(ax + 1, trunkTop + 1, ax + 4 + v, trunkTop - 2 - v, shade(BARK, 0.8));
+  // the curtains first: strands in locks of two or three columns, each hanging from under the
+  // crown's rim to its own ragged hem, shorter toward the sides so the outline droops round, and
+  // parted over the trunk
+  const rimY = top + tall * 0.3;
+  for (let x = 1; x <= w - 2; x++) {
+    const nx = (x + 0.5 - cx) / rx;
+    if (Math.abs(nx) > 1) continue;
+    const lock = Math.floor((x + Math.floor(hash2(seed, 4, 1) * 3)) / 3);
+    // a gap between two locks now and then, so the curtain reads as strands
+    if (x % 3 === 0 && x > 1 && x < w - 2 && hash2(lock, seed, 7) < 0.45) continue;
+    const from = Math.round(rimY + tall * 0.12 * nx * nx);
+    const parted = Math.abs(x + 0.5 - ax) < trunkW + 1;
+    const hem = parted
+      ? trunkTop - 1 - Math.floor(hash2(x, seed, 8) * 3)
+      : base -
+        2 -
+        Math.round(nx ** 4 * tall * 0.3) -
+        Math.floor(hash2(lock, seed, 8) * 4) -
+        (x % 3 === 1 ? 0 : Math.floor(hash2(x, seed, 10) * 2));
+    // a lock is lit on the left of the tree and shaded on the right, darker toward its hem
+    const lit = -lightX() * nx * 0.55 + 0.15 + (hash2(lock, seed, 11) - 0.5) * 0.3;
+    for (let y = from; y <= hem; y++) {
+      const down = (y - from) / Math.max(1, hem - from);
+      const l = lit - down * 0.75 + (x % 3 === 0 ? -0.12 : 0);
+      b.set(x, y, l > 0.35 ? LEAF[3] : l > 0 ? LEAF[1] : l > -0.4 ? LEAF[0] : LEAF[2]);
+    }
+  }
+  // the crown over them: a dome of lobes, the middle one its top
+  const domeRy = tall * 0.2;
+  mass(b, cx, rimY - domeRy * 0.2, rx * 0.92, domeRy, LEAF, seed, 0.8);
+  const lobes = 3 + v;
+  for (let i = 0; i < lobes; i++) {
+    const t = (i + 0.5) / lobes - 0.5;
+    const middle = i === Math.floor(lobes / 2);
+    const lry = domeRy * (middle ? 0.75 : 0.62);
+    const ly = middle ? top + lry : top + lry + Math.abs(t) * domeRy * 1.6 + hash2(i, seed, 3);
+    mass(b, cx + t * 2 * rx * 0.72, ly, rx * (0.36 - Math.abs(t) * 0.12), lry, LEAF, seed + 1 + i);
+  }
+  b.outline(PAL.outline, 180);
+  groundShadow(b, ax, base + 1, Math.min(rx * 0.55, 9), 58);
   return b;
 }
 
@@ -798,6 +1000,12 @@ export function generatePropsAtlas(): AtlasImage {
     add(`props/reeds_${v}`, reeds(120 + v, v));
   }
   for (let v = 0; v < 4; v++) add(`props/flowers_${v}`, flowers(110 + v, v));
+  // the waterside trees take the anchors of their paintings
+  for (let v = 0; v < 3; v++) {
+    const m = MANGROVES[v];
+    ab.add(`props/mangrove_${v}`, mangroveTree(170 + v, v).toImageData(), m.ax, m.ay);
+    add(`props/willow_${v}`, willowTree(180 + v, v), WILLOWS[v].ax);
+  }
   // a wheat field is anchored on the tile centre, which the patch is drawn around
   for (let v = 0; v < 3; v++)
     ab.add(`props/wheat_${v}`, wheatField(160 + v, v).toImageData(), WHEAT_CX, WHEAT_CY);
