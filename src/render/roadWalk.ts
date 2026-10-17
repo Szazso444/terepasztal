@@ -12,7 +12,7 @@ import { roadPath, roadShape } from './roadShape';
 /** How far to the right of the centre line, as the walker faces, it keeps (tiles): the demo's. */
 export const ROAD_SIDE = 0.035;
 /** A walker this near the centre line (tiles) is moved onto it whole ... */
-export const FOLLOW_FULL = 0.28;
+export const FOLLOW_FULL = 0.27;
 /**
  * ... and one this far from it is not moved at all (a walker crossing the road, or off it). A
  * tile's corner is never nearer than 0.4 tile to its centre line, so no walker is moved there,
@@ -29,8 +29,15 @@ export const EDGE_RAMP = 0.2;
 /** How much two strokes of a tee or a cross share a walker between them, as a distance (tiles). */
 const BLEND = 0.03;
 
-/** Over this much of a tile before a side (tiles), a stroke that does not reach it gives way. */
-const STROKE_RAMP = 0.15;
+/**
+ * A stroke this far from a walker (tiles) or farther has no say in where it is drawn, and one
+ * nearer than REACH_FULL has its whole say. The strokes of the tile a walker stands on and of the
+ * eight around it are heard, so a walker either side of a tile edge hears the same ones (a stroke
+ * further out is more than REACH_NONE away): the pull cannot jump at an edge for want of a stroke
+ * the tile beside it lacks.
+ */
+const REACH_FULL = 0.5;
+const REACH_NONE = 0.75;
 
 /** How far along a stroke (tiles) a stretch must lie from the nearest to rival it. */
 const RIVAL_APART = 0.2;
@@ -42,6 +49,8 @@ const smoothstep = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t)
 /** The point of segment `i` of a polyline nearest to (u, v), into `hitX`, `hitY`; its distance. */
 let hitX = 0,
   hitY = 0;
+/** The distance from the walker to each segment of the polyline being scanned. */
+let dist = new Float64Array(256);
 function reach(line: Float64Array, i: number, u: number, v: number) {
   const ax = line[2 * i],
     ay = line[2 * i + 1],
@@ -60,8 +69,7 @@ const JOINED = 1e-6;
 /**
  * The primitives of a centre line chained into the polylines they make: a turn's straight, arc and
  * straight are one line, and a walker is pulled to the nearest point of that line once, not once
- * per piece of it (a piece far down the line would otherwise add a pull its neighbour tile's one
- * stroke does not have, so the pull would jump at the tile's edge).
+ * per piece of it.
  */
 function chain(lines: [number, number][][]): [number, number][][] {
   const todo = lines.map((l) => l.slice()),
@@ -95,15 +103,7 @@ function stroke(line: [number, number][]): Stroke {
   const along = new Float64Array(line.length);
   for (let i = 1; i < line.length; i++)
     along[i] = along[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
-  // the sides of the tile its ends lie on: +u, -u, +v, -v
-  const touch = [false, false, false, false];
-  for (const [u, v] of [line[0], line[line.length - 1]]) {
-    if (u > 0.5 - JOINED) touch[0] = true;
-    if (u < JOINED - 0.5) touch[1] = true;
-    if (v > 0.5 - JOINED) touch[2] = true;
-    if (v < JOINED - 0.5) touch[3] = true;
-  }
-  return { pts: Float64Array.from(line.flat()), along, touch };
+  return { pts: Float64Array.from(line.flat()), along };
 }
 
 /** How far a walker travels (tiles) while its facing turns most of the way to a new heading. */
@@ -137,8 +137,6 @@ export interface RoadWalkMap {
 interface Stroke {
   pts: Float64Array;
   along: Float64Array;
-  /** Whether it ends on the tile's +u, -u, +v and -v side: where the next tile's line takes it up. */
-  touch: boolean[];
 }
 /** A road tile's centre line, as the polylines `roadPath` makes of it. */
 interface Lines {
@@ -204,45 +202,57 @@ export class RoadWalk {
     if (!at) return out;
     const u = x - tx,
       v = y - ty;
-    // the way to the nearest point of each stroke, shared between them by how near they are
+    // the way to the nearest point of each stroke, shared between them by how near they are; the
+    // strokes of the nine tiles around (tx, ty) are all heard, each in its own tile's frame
     let sw = 0,
       mx = 0,
       my = 0,
       near = Infinity;
-    const gaps = [0.5 - u, 0.5 + u, 0.5 - v, 0.5 + v];
-    for (const { pts: line, along, touch } of at.strokes) {
-      const n = along.length - 1;
-      let best = Infinity,
-        from = 0,
-        bx = 0,
-        by = 0;
-      for (let i = 0; i < n; i++) {
-        const d = reach(line, i, u, v);
-        if (d < best) {
-          best = d;
-          from = i;
-          bx = hitX;
-          by = hitY;
+    for (let cy = -1; cy <= 1; cy++)
+      for (let cx = -1; cx <= 1; cx++) {
+        const strokes = cx === 0 && cy === 0 ? at.strokes : this.lines(tx + cx, ty + cy)?.strokes;
+        if (!strokes) continue;
+        // a tile square this far from the walker holds no stroke that is heard
+        if (
+          Math.hypot(Math.max(0, Math.abs(u - cx) - 0.5), Math.max(0, Math.abs(v - cy) - 0.5)) >=
+          REACH_NONE
+        )
+          continue;
+        const pu = u - cx,
+          pv = v - cy;
+        for (const { pts: line, along } of strokes) {
+          const n = along.length - 1;
+          if (n > dist.length) dist = new Float64Array(2 * n);
+          let best = Infinity,
+            from = 0,
+            bx = 0,
+            by = 0;
+          for (let i = 0; i < n; i++) {
+            const d = reach(line, i, pu, pv);
+            dist[i] = d;
+            if (d < best) {
+              best = d;
+              from = i;
+              bx = hitX;
+              by = hitY;
+            }
+          }
+          if (best >= REACH_NONE) continue;
+          // Where the stroke has another stretch nearly as near as the nearest, far along it from
+          // there (the middle of a turn's circle), the nearest point is not to be trusted: it leaps
+          // as the walker moves, so the pull toward it gives way.
+          let rival = Infinity;
+          for (let i = 0; i < n; i++)
+            if (Math.abs(along[i] - along[from]) > RIVAL_APART) rival = Math.min(rival, dist[i]);
+          const sure = smoothstep((rival - best) / SURE_GAP);
+          const b2 = best * best + BLEND * BLEND;
+          const wt = (1 - smoothstep((best - REACH_FULL) / (REACH_NONE - REACH_FULL))) / (b2 * b2);
+          sw += wt;
+          mx += wt * (bx - pu) * sure;
+          my += wt * (by - pv) * sure;
+          near = Math.min(near, best);
         }
       }
-      // Where the stroke has another stretch nearly as near as the nearest, far along it from
-      // there (the middle of a turn's circle), the nearest point is not to be trusted: it leaps
-      // as the walker moves, so the pull toward it gives way.
-      let rival = Infinity;
-      for (let i = 0; i < n; i++)
-        if (Math.abs(along[i] - along[from]) > RIVAL_APART)
-          rival = Math.min(rival, reach(line, i, u, v));
-      const sure = smoothstep((rival - best) / SURE_GAP);
-      // A stroke that does not reach a side has no counterpart in the tile beside it, which has
-      // only the strokes that do, so near that side it gives way to the ones that do.
-      let reaches = 1;
-      for (let k = 0; k < 4; k++) if (!touch[k]) reaches *= smoothstep(gaps[k] / STROKE_RAMP);
-      const wt = reaches / ((best * best + BLEND * BLEND) * (best * best + BLEND * BLEND));
-      sw += wt;
-      mx += wt * (bx - u) * sure;
-      my += wt * (by - v) * sure;
-      near = Math.min(near, best);
-    }
     if (sw === 0) return out;
     let share = 1 - smoothstep((near - FOLLOW_FULL) / (FOLLOW_GONE - FOLLOW_FULL));
     if (share <= 0) return out;
