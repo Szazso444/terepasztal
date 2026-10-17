@@ -17,6 +17,7 @@ import {
 } from './terrainMaterials';
 import { FRINGE_EARTH, PAVING_FAR, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
 import { BuildingYards } from './buildingYard';
+import { pavingFade, RoadPaint } from './roadPaint';
 import { hash2 } from '../engine/rng';
 import { Terrain } from '../world/tiles';
 
@@ -31,6 +32,8 @@ let version = -1,
 let paving = new TownPaving(0, 0, 0, 0, []);
 /** The buildings' yards and door paths (buildingYard.ts). */
 let yards = new BuildingYards(0, 0, 0, 0, []);
+/** The roads (roadPaint.ts), none on the paving. */
+let roads = new RoadPaint(0, 0, 0, 0, []);
 // Where snow starts, by biome id: sent by the landscape, as this worker cannot read the content.
 let snowLevels: readonly number[] = [];
 self.onmessage = async (event: MessageEvent) => {
@@ -64,6 +67,10 @@ self.onmessage = async (event: MessageEvent) => {
         data.doorsteps ?? [],
       );
       yards = new BuildingYards(map.w, map.h, map.originX, map.originY, data.yards ?? []);
+      const town = paving;
+      roads = new RoadPaint(map.w, map.h, map.originX, map.originY, data.roads ?? [], (k) =>
+        town.paved(k),
+      );
       snowLevels = data.snowLevels;
       return;
     }
@@ -180,6 +187,11 @@ self.onmessage = async (event: MessageEvent) => {
             yards.paint(tx, ty, color, (1 - waterWeight) * (1 - bank), tint, source, part);
           }
         }
+        // A road is painted over the yards and under the paving (roadPaint.ts), out of the water;
+        // it fades out over the paving's fringe, short of its outline.
+        if (!solid && roads.near(tileIndex) && roads.weigh(tx, ty, tileIndex) > 0) {
+          roads.paint(tx, ty, color, (1 - waterWeight) * pavingFade(pave), tint);
+        }
         let shade = 1;
         if (raised && relief.style.faces) shade = faceShade(tx, ty);
         else if (raised) {
@@ -259,8 +271,9 @@ self.onmessage = async (event: MessageEvent) => {
         const tx = ix * 0.18 - ox + (hash2(ix, iy, 111) - 0.5) * 0.15,
           ty = iy * 0.18 - oy + (hash2(ix, iy, 114) - 0.5) * 0.15;
         if (tx < -0.5 || ty < -0.5 || tx >= map.w - 0.5 || ty >= map.h - 0.5) continue;
-        // none on the paving, nor on the packed earth round it, nor on a building's yard
-        if (onPaving(tx, ty, -0.1) || onYard(tx, ty)) continue;
+        // none on the paving, nor on the packed earth round it, nor on a building's yard, nor on a
+        // road's core (on its soft edge they may grow)
+        if (onPaving(tx, ty, -0.1) || onYard(tx, ty) || onRoad(tx, ty)) continue;
         const material = surfaceMaterial(map, tx, ty);
         if (![0, 1, 3, 4, 7].includes(material)) continue;
         if (material === 7 && rockExposure(tx + ox, ty + oy) > 0.45) continue;
@@ -282,7 +295,8 @@ self.onmessage = async (event: MessageEvent) => {
         const tx = ix * 0.4 - ox + (hash2(ix, iy, 819) - 0.5) * 0.3,
           ty = iy * 0.4 - oy + (hash2(ix, iy, 817) - 0.5) * 0.3;
         if (tx < -0.5 || ty < -0.5 || tx >= map.w - 0.5 || ty >= map.h - 0.5) continue;
-        if (surfaceMaterial(map, tx, ty) === 5 || onPaving(tx, ty, -0.05)) continue;
+        if (surfaceMaterial(map, tx, ty) === 5 || onPaving(tx, ty, -0.05) || onRoad(tx, ty))
+          continue;
         const sx = (tx - ty) * 32 - left,
           sy = (tx + ty) * 16 - reliefHeight(map, relief, tx, ty) - top;
         const size = 0.8 + hash2(ix, iy, 82) * 1.1;
@@ -348,6 +362,10 @@ function onPaving(x: number, y: number, margin: number) {
 function onYard(x: number, y: number) {
   const k = Math.round(y) * map.w + Math.round(x);
   return yards.near(k) && yards.weigh(x, y, k) > 0.5;
+}
+/** Is map point (x, y) on a road's core, inside its soft edge? */
+function onRoad(x: number, y: number) {
+  return roads.onCore(x, y, Math.round(y) * map.w + Math.round(x));
 }
 /**
  * The ground under the paving of the town's tile at (x, y) where its blend reads water: the tile's

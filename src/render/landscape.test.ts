@@ -254,6 +254,19 @@ describe('what the landscape hands the paint workers with the map', () => {
     expect(structuredClone(sent().yards)).toEqual(yards);
   });
 
+  it('carries the road tiles and their codes from the next hand-off, a fresh pool too', () => {
+    const { landscape, spawned } = setup();
+    // two road tiles, the second a level crossing (roadShape.ts)
+    const roads = [67, 0b1010, 68, 0b1010 | 0x100];
+    landscape.setRoads(roads);
+    landscape.repaint(3, 4);
+    landscape.flush();
+    const sent = () => lastMap(spawned[spawned.length - 1]) as unknown as { roads: number[] };
+    expect(sent().roads).toEqual(roads);
+    spawned[0].crash({ message: 'out of memory' });
+    expect(structuredClone(sent().roads)).toEqual(roads);
+  });
+
   it('sends a map message that survives the copy to a worker, with a level for every biome', () => {
     const { map, spawned } = setup();
     map.climate = new Uint8Array(map.w * map.h).fill(3);

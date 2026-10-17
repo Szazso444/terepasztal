@@ -8,6 +8,8 @@ import { paintedWater } from './terrainMaterials';
 import { pavingDoorsteps, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
 import { groundOf } from '../art/buildingGround';
 import { BuildingYards, buildingYard, yardTiles, type Yard } from './buildingYard';
+import { RoadPaint, pavingFade } from './roadPaint';
+import { ROAD_FEATHER, ROAD_HALF, roadCode, roadSides } from './roadShape';
 
 /** Side of one cell of the stand-in surface sheet: ten cells stacked, one per material. */
 const CELL = 64;
@@ -150,8 +152,9 @@ async function paint(
     city,
     doorsteps,
     yards = [],
+    roads = [],
     tint = 0xd8e8c0,
-  }: ReturnType<typeof world> & { yards?: Yard[]; tint?: number },
+  }: ReturnType<typeof world> & { yards?: Yard[]; roads?: number[]; tint?: number },
   x: number,
   y: number,
   scale = 1,
@@ -174,6 +177,7 @@ async function paint(
     city,
     doorsteps,
     yards,
+    roads,
     snowLevels,
   });
   replies = [];
@@ -890,4 +894,195 @@ describe('the painter with yards beside water, paving and chunk edges', () => {
     expect(seen[0], 'whole stone yard pixels').toBeGreaterThan(300);
     expect(seen[1], 'whole earth yard pixels').toBeGreaterThan(100);
   }, 10_000);
+});
+
+/** The road tiles of a map `w` wide and their codes, as the renderer hands them over. */
+function roadList(w: number, h: number, tiles: [number, number][]) {
+  const at = new Set(tiles.map(([x, y]) => y * w + x)),
+    has = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && at.has(y * w + x),
+    out: number[] = [];
+  for (const k of at) out.push(k, roadCode(roadSides(has, [], k % w, Math.floor(k / w)), 0));
+  return out;
+}
+
+describe('the painter with roads', () => {
+  /**
+   * The world() town and river with roads: one along y = 13 from the forest over the river, one
+   * along x = 9 from the middle of the town south to it, and a lone tile.
+   */
+  function roaded() {
+    const w = world(),
+      tiles: [number, number][] = [[20, 5]];
+    for (let x = 0; x < 22; x++) tiles.push([x, 13]);
+    for (let y = 5; y < 13; y++) tiles.push([9, y]);
+    const roads = roadList(w.map.w, w.map.h, tiles),
+      paving = new TownPaving(w.map.w, w.map.h, w.map.originX, w.map.originY, w.city, w.doorsteps),
+      painter = new RoadPaint(w.map.w, w.map.h, w.map.originX, w.map.originY, roads, (k) =>
+        paving.paved(k),
+      );
+    return { w, roads, paving, painter };
+  }
+  const CHUNKS = [
+    [8, 8],
+    [16, 8],
+    [0, 8],
+    [8, 0],
+  ];
+
+  // Slow: paints four chunks twice and checks every pixel (about 2 s alone).
+  it('paints the roads where they weigh, out of the water, under the paving, and nothing else', async () => {
+    const { w, roads, paving, painter } = roaded();
+    const { map } = w;
+    let road = 0,
+      faded = 0,
+      water = 0;
+    for (const [x, y] of CHUNKS) {
+      const a = await paint({ ...w, roads }, x, y),
+        b = await paint(w, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          const [tx, ty] = pointOf(a, px, py, 1),
+            tile = Math.round(ty) * map.w + Math.round(tx),
+            weight = painter.weigh(tx, ty, tile),
+            pave = paving.near(tile) ? paving.distance(tx, ty) : -9,
+            wet = paintedWater(map, tx, ty, paving.paved(tile));
+          const same = () => {
+            for (let c = 0; c < 3; c++)
+              expect(a.pixels[k + c], `pixel ${px},${py} of ${x},${y}`).toBe(b.pixels[k + c]);
+          };
+          if (weight === 0 || pavingFade(pave) === 0) same();
+          else if (wet >= 1 - 1e-9) {
+            water++;
+            same();
+          } else if (weight === 1 && pavingFade(pave) === 1 && wet === 0) {
+            road++;
+            // grass is green; gravel is warm, red over green over blue
+            expect(a.pixels[k] - a.pixels[k + 1], `pixel ${px},${py}`).toBeGreaterThan(0);
+            expect(a.pixels[k + 1] - a.pixels[k + 2], `pixel ${px},${py}`).toBeGreaterThan(5);
+          } else if (pave > -0.17) faded++;
+        }
+    }
+    expect(road).toBeGreaterThan(2000);
+    expect(water).toBeGreaterThan(100);
+    expect(faded).toBeGreaterThan(20);
+  }, 30_000);
+
+  it('grows no tuft and lays no loose stone on a road, and keeps those beside it', async () => {
+    const { w, roads, painter } = roaded();
+    const { map } = w;
+    let kept = 0,
+      taken = 0,
+      edge = 0;
+    for (const [x, y] of CHUNKS) {
+      const a = await paint({ ...w, roads }, x, y),
+        b = await paint(w, x, y);
+      const tufts = (r: Reply) => {
+        const out = new Map<string, [number, number]>();
+        for (let i = 0; i < r.grass.length; i += 4) {
+          const sx = r.grass[i] + r.left,
+            sy = r.grass[i + 1] + r.top;
+          out.set(r.grass.slice(i, i + 4).join(), [sx / 64 + sy / 32, sy / 32 - sx / 64]);
+        }
+        return out;
+      };
+      const on = tufts(a),
+        off = tufts(b);
+      for (const [key, [tx, ty]] of off) {
+        const tile = Math.round(ty) * map.w + Math.round(tx),
+          core = painter.onCore(tx, ty, tile);
+        expect(on.has(key), `tuft at ${tx}, ${ty}`).toBe(!core);
+        if (core) taken++;
+        else {
+          kept++;
+          painter.weigh(tx, ty, tile);
+          if (painter.dist > ROAD_HALF - ROAD_FEATHER / 2 && painter.dist < ROAD_HALF + 0.03)
+            edge++;
+        }
+      }
+      for (let i = 0; i + 1 < a.stones.length; i += 2) {
+        const sx = a.stones[i] + a.left,
+          sy = a.stones[i + 1] - 0.3 + a.top,
+          tx = sx / 64 + sy / 32,
+          ty = sy / 32 - sx / 64;
+        expect(painter.onCore(tx, ty, Math.round(ty) * map.w + Math.round(tx))).toBe(false);
+      }
+    }
+    expect(taken).toBeGreaterThan(20);
+    expect(kept).toBeGreaterThan(300);
+    // tufts may stand on the soft edge
+    expect(edge).toBeGreaterThan(0);
+  }, 30_000);
+
+  it("lies over a building's yard where they meet: the road is painted after it", async () => {
+    const { w, roads, painter } = roaded();
+    // a house south of the road along y = 13, its yard and its door path run on to the road
+    const yards = [
+      buildingYard(
+        'structures/townhouse',
+        groundOf('structures/townhouse')!,
+        { x: 5, y: 14, scale: 0.8, sandy: false },
+        // a street door on its N wall, on to the road's tile
+        [{ tile: { x: 5, y: 14 }, side: Dir.N }],
+        (x, y) => y === 13 && x >= 0 && x < 22,
+      ),
+    ];
+    const under = new BuildingYards(w.map.w, w.map.h, w.map.originX, w.map.originY, yards);
+    const a = await paint({ ...w, roads, yards }, 0, 8),
+      b = await paint({ ...w, roads }, 0, 8),
+      c = await paint({ ...w, yards }, 0, 8);
+    let over = 0;
+    for (let py = 0; py < a.height; py++)
+      for (let px = 0; px < a.width; px++) {
+        const k = (py * a.width + px) * 4;
+        if (a.pixels[k + 3] !== 255) continue;
+        const [tx, ty] = pointOf(a, px, py, 1),
+          tile = Math.round(ty) * w.map.w + Math.round(tx);
+        if (painter.weigh(tx, ty, tile) < 1 || under.weigh(tx, ty, tile) === 0) continue;
+        over++;
+        // the yard is there, and the road covers it whole
+        expect(c.pixels.slice(k, k + 3)).not.toEqual(b.pixels.slice(k, k + 3));
+        for (let ch = 0; ch < 3; ch++) expect(a.pixels[k + ch]).toBe(b.pixels[k + ch]);
+      }
+    expect(over).toBeGreaterThan(20);
+  });
+
+  // Slow: paints six chunks, three at twice the size (about 3 s alone).
+  it('paints the pixels two neighbouring chunks share alike, roads across their edge', async () => {
+    const { w, roads } = roaded();
+    for (const scale of [1, 2])
+      for (const [a, b] of [
+        [
+          [0, 8],
+          [8, 8],
+        ],
+        [
+          [8, 0],
+          [8, 8],
+        ],
+      ]) {
+        const ra = await paint({ ...w, roads }, a[0], a[1], scale),
+          rb = await paint({ ...w, roads }, b[0], b[1], scale);
+        const ox = (ra.left - rb.left) * scale,
+          oy = (ra.top - rb.top) * scale;
+        let shared = 0;
+        for (let py = 0; py < ra.height; py++)
+          for (let px = 0; px < ra.width; px++) {
+            const ka = (py * ra.width + px) * 4,
+              bx = px + ox,
+              by = py + oy;
+            if (ra.pixels[ka + 3] !== 255 || bx < 0 || by < 0 || bx >= rb.width || by >= rb.height)
+              continue;
+            const kb = (by * rb.width + bx) * 4;
+            if (rb.pixels[kb + 3] !== 255) continue;
+            shared++;
+            for (let c = 0; c < 3; c++)
+              expect(rb.pixels[kb + c], `scale ${scale}, pixel ${px},${py}`).toBe(
+                ra.pixels[ka + c],
+              );
+          }
+        expect(shared).toBeGreaterThan(50 * scale);
+      }
+  }, 60_000);
 });
