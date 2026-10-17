@@ -15,6 +15,8 @@ import { addCounts, capFrame } from './atlas-cap.mjs';
 
 const DENSITY = 4;
 const SOURCE = 'assets/source/base-v1';
+/** The approved station formula: every frame but icons and ground tiles is drawn 20% wider. */
+const WIDEN = 1.2;
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8').replace(/^\uFEFF/, ''));
 
 /**
@@ -87,6 +89,44 @@ export function inkBox(input) {
         bottom = Math.max(bottom, y);
       }
   return right < left ? null : [left, top, right, bottom];
+}
+
+/**
+ * The renderer's tree scale, `TREE_SCALE` in src/render/assetScale.ts, read from there rather than
+ * copied: a measured tree's `k` is drawn px per source px with it applied.
+ */
+export function readTreeScale(file = 'src/render/assetScale.ts') {
+  const m = /export const TREE_SCALE = ([\d.]+);/.exec(readFileSync(file, 'utf8'));
+  if (!m) throw new Error(`No TREE_SCALE in ${file}`);
+  return Number(m[1]);
+}
+
+/**
+ * A tree painted and measured on its own (issue #460): `record` is its entry in the folder's
+ * trees.json, which its check-tree.mjs writes: the alpha box, the anchor in source px, and `k`,
+ * drawn px per source px at zoom 1 with the renderer's tree scale. The frame is
+ * `k * density / treeScale` texels per source px, the anchor the record's, drawn 1.2 wider like
+ * every prop and rounded by smoothPng(2), so the anchor-to-top height is the record's `height`
+ * drawn px. A picture whose alpha box is not the measured one was changed since it was measured,
+ * and is refused.
+ */
+export function packMeasuredTree(input, record, name = 'picture', options = {}) {
+  const { density = DENSITY, treeScale = readTreeScale() } = options;
+  const box = inkBox(input);
+  if (String(box) !== String(record.box))
+    throw new Error(
+      `${name}: alpha box [${box}] is not the measured [${record.box}]; measure it again`,
+    );
+  const src = trimSource(input, record.box);
+  const s = (record.k * density) / treeScale;
+  const w0 = Math.max(1, Math.round(src.width * s));
+  const h = Math.max(1, Math.round(src.height * s));
+  const w = Math.round(w0 * WIDEN);
+  return {
+    png: smoothPng(resample(src, w, h), 2),
+    ax: ((record.anchor[0] - record.box[0]) * s * w) / w0,
+    ay: (record.anchor[1] - record.box[1]) * s,
+  };
 }
 
 /** Exact area resampling in premultiplied alpha; preserve partial pixel coverage. */
@@ -333,6 +373,32 @@ export function build(output = 'public/assets') {
       });
       continue;
     }
+    if (entry.sourceDirectory) {
+      // a set painted and measured in a folder of its own: one picture per variant
+      const records = readJson(join(entry.sourceDirectory, entry.measurements));
+      const names = [];
+      for (const f of matches) {
+        if (claimed.has(f.key)) throw new Error(`Conflicting source assignment: ${f.key}`);
+        claimed.add(f.key);
+        const file = entry.generated?.[Number(f.key.match(/_(\d+)$/)[1])];
+        if (!file || !records[file]) throw new Error(`No measured picture for ${f.key}`);
+        const input = PNG.sync.read(readFileSync(join(entry.sourceDirectory, file)));
+        const { png, ax, ay } = packMeasuredTree(input, records[file], `${f.key} (${file})`);
+        if (!groups.has(f.group)) groups.set(f.group, []);
+        groups.get(f.group).push({ key: f.key, png: capped(f, png), ax, ay });
+        names.push(f.key);
+      }
+      report.converted.push({
+        id: entry.id,
+        source: entry.generated,
+        sourceDirectory: entry.sourceDirectory,
+        measurements: entry.measurements,
+        widthScale: WIDEN,
+        projection: null,
+        frames: names,
+      });
+      continue;
+    }
     const filename = entry.generated?.[0];
     if (!filename) throw new Error(`Missing source: ${entry.id}`);
     let src = trimSource(PNG.sync.read(readFileSync(join(SOURCE, filename))));
@@ -406,7 +472,7 @@ export function build(output = 'public/assets') {
         }
         if (f.group !== 'icons') {
           // Approved station formula: screen width +20%, height and ground position unchanged.
-          const wider = Math.round(png.width * 1.2);
+          const wider = Math.round(png.width * WIDEN);
           ax *= wider / png.width;
           png = resample(png, wider, png.height);
         }
@@ -421,7 +487,7 @@ export function build(output = 'public/assets') {
     report.converted.push({
       id: entry.id,
       source: filename,
-      widthScale: matches[0].group === 'icons' || matches[0].group === 'terrain' ? 1 : 1.2,
+      widthScale: matches[0].group === 'icons' || matches[0].group === 'terrain' ? 1 : WIDEN,
       projection: projection
         ? {
             sourceSlopes: projection,

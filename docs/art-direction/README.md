@@ -132,8 +132,11 @@ before drawing individual twigs. Bare sprites should not acquire large square so
 | `coal`             | Dark stratified outcrop, distinguishable from ordinary grey rock.                        |
 | `oil`              | Small dark seep with restrained sheen; no bright rainbow pool.                           |
 | `wheat`            | Low raised tile of straw-gold rows, 2.6 to 3.5 px high, darker front, irregular edge.    |
+| `mangrove`         | Dark evergreen crown on arched prop roots ending in wet tips at the waterline; no water. |
+| `willow`           | Weeping crown of hanging silvery-olive curtains over a short, forked trunk on a bank.    |
 
-Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil/wheat;
+Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil/wheat/
+mangrove/willow;
 two for palm/deadtree/reeds; four for flowers. Change silhouette as well as shade. Check
 placement near curves and signals: clearing a prop must remove its entire visual, and trunk
 anchors must remain attached to the correct tile. Seasonal recolours are optional future work.

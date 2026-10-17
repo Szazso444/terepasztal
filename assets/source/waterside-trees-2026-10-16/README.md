@@ -17,6 +17,19 @@ Widths and root spreads include the packer's 1.2 widening and runtime tree scale
 
 Core's art review of 2026-10-17 read three more feet by eye (finish F1), and `record-eye-feet.mjs` re-records them. Mangrove 1 and mangrove 2 now stand on the centre of their root-tip ellipse, under the trunk: the automatic foot was the back root tip, because the root ring is flatter than 2:1, which put the anchor 1.9 and 1.6 drawn px too high. Willow 3 stands on its trunk axis: the automatic foot was a front root leaning left, 2.5 drawn px off the trunk. The script runs `check-tree.mjs --foot … --record` for each, copies the result into the selected attempt's `measured` record with the automatic one kept under `automaticMeasurement`, and runs `verify-set.mjs`; a second run changes nothing. No painting changed and `sha256.json` is the same.
 
+`tools/illustrated-sprites.mjs` packs the six pictures into `public/assets/props.{png,json}` (`assets/source/base-v1/coverage.json` names this folder and `trees.json` for `props.mangrove` and `props.willow`):
+
+| Frame              | Picture             | Frame (texels) | Anchor (texels) | Drawn height |
+| ------------------ | ------------------- | -------------- | --------------- | -----------: |
+| `props/mangrove_0` | tree-mangrove-1.png | 107 x 87       | 54.4, 80.0      |           30 |
+| `props/mangrove_1` | tree-mangrove-2.png | 144 x 114      | 72.4, 101.3     |           38 |
+| `props/mangrove_2` | tree-mangrove-3.png | 197 x 136      | 99.4, 122.7     |           46 |
+| `props/willow_0`   | tree-willow-1.png   | 140 x 123      | 69.3, 106.7     |           40 |
+| `props/willow_1`   | tree-willow-2.png   | 173 x 144      | 86.1, 128.0     |           48 |
+| `props/willow_2`   | tree-willow-3.png   | 197 x 160      | 101.9, 144.0    |           54 |
+
+Each is `k * 4 / TREE_SCALE` texels per source px (the atlas's resolution 4, the renderer's tree scale 1.5), anchored where `trees.json` puts the anchor, drawn 1.2 wider like every prop, rounded by `smoothPng(2)` and passed through the atlas cap pass. A picture whose alpha box no longer matches its `trees.json` entry is refused, so a repainted tree must be measured again before it is packed.
+
 Every selected painting has zero edge pixels, zero cursor-white pixels, zero selection-amber pixels, and zero cyan-water percentage. All widths, root spreads, center offsets and willow below-foot distances pass. The looks in `checks/` were inspected at zoom 1 and zoom 2 for species, placement, clusters, light, colour depth and absence of painted ground, water and shadows. Earlier attempts were retained because their highlights were too bright; young willow attempt 1 also failed the width range.
 
 Run from the repository root with the existing pngjs development dependency available:

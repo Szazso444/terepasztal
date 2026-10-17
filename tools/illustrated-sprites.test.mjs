@@ -1,12 +1,17 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
+import { TREE_SCALE } from '../src/render/assetScale';
+import { capFrame } from './atlas-cap.mjs';
 import {
   inkBox,
   trimSource,
   resample,
   groundTile,
   packFrames,
+  packMeasuredTree,
   projectionMatrix,
+  readTreeScale,
   rectifyProjection,
 } from './illustrated-sprites.mjs';
 
@@ -106,5 +111,95 @@ describe('illustrated atlas conversion', () => {
     expect(packed.frames.b.ax).toBe(7);
     const f = packed.frames.a;
     expect(packed.sheet.data[((f.y - 1) * packed.sheet.width + f.x - 1) * 4 + 3]).toBe(255);
+  });
+});
+
+const WATERSIDE = 'assets/source/waterside-trees-2026-10-16';
+/**
+ * The waterside trees of #460 and what Core's review of 2026-10-17 measured for them: the drawn
+ * height from the anchor to the top at zoom 1 (tree scale included, beside the 9 px person) and
+ * the packed frame, w x h at (ax, ay) texels.
+ */
+const WATERSIDE_FRAMES = [
+  ['props/mangrove_0', 'tree-mangrove-1.png', 30, 107, 87, 54.4, 80.0],
+  ['props/mangrove_1', 'tree-mangrove-2.png', 38, 144, 114, 72.4, 101.3],
+  ['props/mangrove_2', 'tree-mangrove-3.png', 46, 197, 136, 99.4, 122.7],
+  ['props/willow_0', 'tree-willow-1.png', 40, 140, 123, 69.3, 106.7],
+  ['props/willow_1', 'tree-willow-2.png', 48, 173, 144, 86.1, 128.0],
+  ['props/willow_2', 'tree-willow-3.png', 54, 197, 160, 101.9, 144.0],
+];
+
+describe('the waterside trees in the props atlas', () => {
+  const props = JSON.parse(readFileSync('public/assets/props.json', 'utf8'));
+  const trees = JSON.parse(readFileSync(`${WATERSIDE}/trees.json`, 'utf8'));
+  const inventory = JSON.parse(readFileSync('docs/art-direction/frame-inventory.json', 'utf8'));
+
+  it('read the renderer`s tree scale from src/render/assetScale.ts', () => {
+    expect(readTreeScale()).toBe(TREE_SCALE);
+  });
+  it('stand their measured height over the anchor, at the renderer`s tree scale', () => {
+    for (const [key, file, height] of WATERSIDE_FRAMES) {
+      const f = props.frames[key];
+      expect(f, key).toBeDefined();
+      expect(trees[file].height, `${file} in trees.json`).toBe(height);
+      expect(Math.abs((f.ay * TREE_SCALE) / props.resolution - height), key).toBeLessThanOrEqual(
+        0.5,
+      );
+    }
+  });
+  it('are the frames the review expects, anchored over the trunk or the root ring', () => {
+    for (const [key, file, , w, h, ax, ay] of WATERSIDE_FRAMES) {
+      const f = props.frames[key];
+      expect([f.w, f.h], key).toEqual([w, h]);
+      expect(Math.abs(f.ax - ax), `${key} ax`).toBeLessThanOrEqual(0.1);
+      expect(Math.abs(f.ay - ay), `${key} ay`).toBeLessThanOrEqual(0.1);
+      expect(f.ay, key).toBeLessThan(f.h);
+      // the anchor lies where the measured foot lies across the picture, within a texel
+      const r = trees[file];
+      const across = (r.anchor[0] - r.box[0]) / (r.box[2] - r.box[0] + 1);
+      expect(Math.abs(f.ax / f.w - across), key).toBeLessThan(1 / f.w);
+    }
+  });
+  it('are what the packer makes of the paintings and their trees.json entries', () => {
+    const atlas = PNG.sync.read(readFileSync('public/assets/props.png'));
+    for (const [key, file] of WATERSIDE_FRAMES) {
+      const input = PNG.sync.read(readFileSync(`${WATERSIDE}/${file}`));
+      const made = packMeasuredTree(input, trees[file], file);
+      const f = props.frames[key];
+      expect([f.w, f.h, f.ax, f.ay], key).toEqual([
+        made.png.width,
+        made.png.height,
+        made.ax,
+        made.ay,
+      ]);
+      const shipped = new PNG({ width: f.w, height: f.h });
+      PNG.bitblt(atlas, shipped, f.x, f.y, f.w, f.h, 0, 0);
+      const capped = capFrame(key, made.png).png;
+      expect(
+        shipped.data.equals(capped.data),
+        `${key}: run node tools/illustrated-sprites.mjs`,
+      ).toBe(true);
+    }
+  });
+  it('refuse a painting whose alpha box is not the measured one', () => {
+    const input = PNG.sync.read(readFileSync(`${WATERSIDE}/tree-willow-2.png`));
+    const record = { ...trees['tree-willow-2.png'], box: [0, 0, 10, 10] };
+    expect(() => packMeasuredTree(input, record, 'willow-2')).toThrow(/measure it again/);
+  });
+  it('are listed in the frame inventory at their packed size and anchor', () => {
+    for (const [key] of WATERSIDE_FRAMES) {
+      const f = props.frames[key];
+      expect(
+        inventory.find((e) => e.key === key),
+        key,
+      ).toEqual({
+        key,
+        group: 'props',
+        width: f.w / props.resolution,
+        height: f.h / props.resolution,
+        anchorX: Math.round(f.ax / props.resolution),
+        anchorY: Math.round(f.ay / props.resolution),
+      });
+    }
   });
 });
