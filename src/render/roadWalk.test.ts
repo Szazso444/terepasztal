@@ -917,4 +917,81 @@ describe('a walker setting out from anywhere in a tile', () => {
       expect(worst, `a ${worst.toFixed(2)} px pop at ${where}`).toBeLessThanOrEqual(1);
     }
   });
+
+  it('is drawn without a pop in the cases the default seeds miss (seeds 577 to 2846 of the setting-out property)', () => {
+    // The smallest failing case of each seed in 1 to 3000 that the 100 default seeds do not reach:
+    // a straight pair of road tiles ([57, 58], [31, 22]), an L of three, a U of four. Each is a walk
+    // along or across the edge of road tiles with different strokes, none a tee or a cross.
+    const cases: Setout[] = [
+      {
+        roads: [58, 57, 66, 67],
+        ox: -7,
+        oy: -10,
+        x0: 3.4413987684063616,
+        y0: 6.27988854907453,
+        tx: 4,
+        ty: 6,
+      },
+      {
+        roads: [64, 73, 72, 63],
+        ox: 11,
+        oy: -23,
+        x0: 1.1211179006844758,
+        y0: 7.369477455411107,
+        tx: 0,
+        ty: 8,
+      },
+      {
+        roads: [57, 58],
+        ox: 10,
+        oy: 1,
+        x0: 3.2672690398059787,
+        y0: 5.737952897045761,
+        tx: 4,
+        ty: 6,
+      },
+      { roads: [31, 22], ox: 0, oy: 0, x0: 4.002468342799694, y0: 2.563243911601603, tx: 5, ty: 4 },
+      {
+        roads: [19, 10, 9],
+        ox: -1,
+        oy: 4,
+        x0: 0.6530653115361928,
+        y0: 1.4489269059151413,
+        tx: 0,
+        ty: 1,
+      },
+      {
+        roads: [38, 29, 30],
+        ox: -10,
+        oy: -12,
+        x0: 2.7284072755835953,
+        y0: 2.9445528332144026,
+        tx: 2,
+        ty: 4,
+      },
+      {
+        roads: [46, 37, 38],
+        ox: 0,
+        oy: 0,
+        x0: 1.7331354040652514,
+        y0: 5.415239459555596,
+        tx: 1,
+        ty: 4,
+      },
+      {
+        roads: [67, 66, 57],
+        ox: 9,
+        oy: 27,
+        x0: 3.5602301165461543,
+        y0: 7.138918268959969,
+        tx: 3,
+        ty: 6,
+      },
+    ];
+    const popped = cases
+      .map((c) => ({ c, ...worstPop(c) }))
+      .filter((r) => r.worst > 1)
+      .map((r) => `${JSON.stringify(r.c)}: ${r.worst.toFixed(2)} px at ${r.where}`);
+    expect(popped).toEqual([]);
+  });
 });
