@@ -10,6 +10,7 @@ import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain } from '../world/tiles';
 import { TrackGraph } from '../world/track';
+import { Station, resetStationIds } from '../sim/stations';
 import { BuildController } from './buildController';
 
 type Tile = { x: number; y: number };
@@ -90,7 +91,15 @@ function harness(stone = 100) {
         out.set(`${s.position.x},${s.position.y}`, frames.get(s)!);
     return out;
   };
-  return { b, builder, stock, frame, marks, status };
+  /** The door markers shown now (the plain `terrain/select` diamonds), keyed `x,y`. */
+  const doorMarks = () => {
+    const out: string[] = [];
+    for (const s of sprites)
+      if (s.visible && frames.get(s) === 'terrain/select')
+        out.push(`${s.position.x},${s.position.y}`);
+    return out.sort();
+  };
+  return { b, builder, stock, frame, marks, doorMarks, status };
 }
 
 describe('the road tool', () => {
@@ -163,6 +172,129 @@ describe('the road tool', () => {
     expect(h.status[h.status.length - 1]).toContain(h.builder.checkRoad(40, 3).reason!);
     expect([...h.marks().values()]).toEqual(['terrain/ghost_bad']);
     expect(h.builder.roads.size).toBe(0);
+  });
+});
+
+/** Stand a station, as a save loads it: no rule is asked. */
+function standStation(h: ReturnType<typeof harness>, x: number, y: number) {
+  const s = new Station('station', x, y);
+  h.builder.stations.push(s);
+  return s;
+}
+/** The reach tiles of every street door the builder has, sorted, keyed `x,y`. */
+const reachKeys = (h: ReturnType<typeof harness>) =>
+  [...new Set(h.builder.streetDoors().map((d) => `${d.reach.x},${d.reach.y}`))].sort();
+
+describe('the street door marks', () => {
+  function town() {
+    resetStationIds(1);
+    const h = harness();
+    h.builder.free = true;
+    expect(h.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
+    expect(h.builder.placeBuilding(20, 10, 'windmill', 1)).not.toBeNull();
+    expect(h.builder.placeDecor(10, 20, 'fuel_stop', 2)).not.toBeNull();
+    standStation(h, 20, 20);
+    h.builder.free = false;
+    return h;
+  }
+
+  it('marks the reach tile of every street door with the road tool, beside the picture of the door', () => {
+    const h = town();
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: 40, y: 3 });
+    const want = reachKeys(h);
+    expect(want.length).toBeGreaterThanOrEqual(4);
+    expect(h.doorMarks()).toEqual(want);
+    // never the tile the door is in: that one is refused
+    for (const d of h.builder.streetDoors())
+      expect(h.builder.checkRoad(d.tile.x, d.tile.y).ok, `${d.tile.x},${d.tile.y}`).toBe(false);
+  });
+
+  it('keeps the marks apart from the stroke, so a stroke over a marked tile shows both', () => {
+    const h = town();
+    const [first] = h.builder.streetDoors().map((d) => d.reach);
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: first.x, y: first.y }, { press: true });
+    h.frame({ x: first.x, y: first.y + 3 });
+    expect(h.marks().get(`${first.x},${first.y}`)).toBe('terrain/ghost_ok');
+    expect(h.doorMarks()).toContain(`${first.x},${first.y}`);
+  });
+
+  it('shows none with another tool, after Escape, over a panel, or for a map without a place', () => {
+    const h = town();
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: 3, y: 3 });
+    expect(h.doorMarks().length).toBeGreaterThan(0);
+    // the pointer over a panel
+    h.frame({ x: 3, y: 3 }, { active: false });
+    expect(h.doorMarks()).toEqual([]);
+    h.frame({ x: 3, y: 3 });
+    expect(h.doorMarks().length).toBeGreaterThan(0);
+    // another tool
+    h.b.setTool({ kind: 'remove' });
+    h.frame({ x: 3, y: 3 });
+    expect(h.doorMarks()).toEqual([]);
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: 3, y: 3 });
+    expect(h.doorMarks().length).toBeGreaterThan(0);
+    // Escape (the key press, as the keymap reads it)
+    const keys = (h.b as unknown as { input: { wasPressed: (k: string) => boolean } }).input;
+    keys.wasPressed = (k) => k === 'Escape';
+    h.frame({ x: 3, y: 3 });
+    expect(h.b.tool.kind).toBe('none');
+    expect(h.doorMarks()).toEqual([]);
+    // no place, no mark
+    const bare = harness();
+    bare.b.setTool({ kind: 'road' });
+    bare.frame({ x: 3, y: 3 });
+    expect(bare.doorMarks()).toEqual([]);
+  });
+
+  it('follows a place built or taken up while the tool stays in hand', () => {
+    const h = harness();
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: 3, y: 3 });
+    expect(h.doorMarks()).toEqual([]);
+    h.builder.free = true;
+    expect(h.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
+    h.frame({ x: 3, y: 3 });
+    expect(h.doorMarks()).toEqual(reachKeys(h));
+    expect(h.doorMarks()).toHaveLength(1);
+  });
+});
+
+describe('a tile on a building', () => {
+  it('is refused, with the reason in the status line, hovered or dragged over', () => {
+    resetStationIds(1);
+    const h = harness();
+    h.builder.free = true;
+    expect(h.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
+    expect(h.builder.placeBuilding(20, 10, 'windmill', 1)).not.toBeNull();
+    expect(h.builder.placeDecor(10, 20, 'fuel_stop', 2)).not.toBeNull();
+    standStation(h, 20, 20);
+    h.builder.free = false;
+    h.b.setTool({ kind: 'road' });
+    for (const t of [
+      { x: 10, y: 10 },
+      { x: 20, y: 10 },
+      { x: 10, y: 20 },
+      { x: 20, y: 20 },
+    ]) {
+      h.frame(t);
+      expect(h.status[h.status.length - 1], `hover ${t.x},${t.y}`).toContain(
+        STR.build.roadOnBuilding,
+      );
+      expect(h.marks().get(`${t.x},${t.y}`)).toBe('terrain/ghost_bad');
+      // a drag that crosses it
+      h.frame({ x: t.x - 2, y: t.y }, { press: true });
+      h.frame({ x: t.x + 2, y: t.y });
+      expect(h.status[h.status.length - 1], `drag ${t.x},${t.y}`).toContain(
+        STR.build.roadOnBuilding,
+      );
+      expect(h.marks().get(`${t.x},${t.y}`)).toBe('terrain/ghost_bad');
+      h.frame({ x: t.x + 2, y: t.y }, { release: true });
+      expect(h.builder.roads.has(t.x, t.y)).toBe(false);
+    }
   });
 });
 

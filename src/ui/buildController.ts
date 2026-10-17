@@ -35,10 +35,15 @@ import {
   type RoadStep,
   type RoadStrokeCheck,
 } from './roadStroke';
+import { doorReachTiles } from './roadDoors';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
 const REPLACE_TINT = 0xffc860;
+/** the road tool's mark on a street door's reach tile: not the stroke's cyan or red */
+const DOOR_TINT = 0xfff08a;
+/** frames between two looks at the street doors while the road tool is in hand (#409) */
+const DOOR_MARK_FRAMES = 30;
 
 type Tile = { x: number; y: number };
 
@@ -65,6 +70,13 @@ export class BuildController {
   private ghostDiamond: Sprite;
   private lineGhosts: Sprite[] = [];
   private reachGhosts: Sprite[] = [];
+  /** the road tool's marks, one per distinct street-door reach tile; apart from `lineGhosts` */
+  private doorMarks: Sprite[] = [];
+  /** the reach tiles `doorMarks` stand on, as of the last look at the doors */
+  private doorTiles: Tile[] = [];
+  /** what the last look at the doors saw (counts of places) and how many frames ago it was */
+  private doorSeen = '';
+  private doorAge = 0;
   /** reach (Chebyshev tiles) highlighted around the cursor while placing; 0 = none */
   reach = 0;
   private dragStart: { x: number; y: number } | null = null;
@@ -151,6 +163,8 @@ export class BuildController {
 
   private clearGhost() {
     for (const g of this.reachGhosts) g.visible = false;
+    for (const g of this.doorMarks) g.visible = false;
+    this.doorSeen = '';
     if (this.ghost) {
       this.ghost.destroy();
       this.ghost = null;
@@ -231,6 +245,7 @@ export class BuildController {
       this.ghostDiamond.visible = false;
       for (const g of this.lineGhosts) g.visible = false;
       for (const g of this.reachGhosts) g.visible = false;
+      for (const g of this.doorMarks) g.visible = false;
     }
   }
   /** Faint diamonds on every tile within `r` of the cursor (what a service or pole would cover). */
@@ -610,6 +625,7 @@ export class BuildController {
     const inp = this.input;
     if (this.ghost) this.ghost.visible = false;
     this.ghostDiamond.visible = false;
+    this.showDoorMarks();
     // a press starts a stroke on the map, none off it
     if (inp.buttonPressed.has(0)) this.dragStart = inMap ? { x: t.x, y: t.y } : null;
     if (this.dragStart && inp.buttons.has(0)) {
@@ -638,8 +654,37 @@ export class BuildController {
   }
 
   /**
+   * A faint marker on the reach tile of each street door, so the player sees where a road meets a
+   * building. `streetDoors()` allocates, so the tiles are read again only when the tool was just
+   * taken up, the number of stations, works or decor changed, or DOOR_MARK_FRAMES passed (a place
+   * turned in place keeps its counts); the markers are the pool's own, never the stroke's.
+   */
+  private showDoorMarks() {
+    const b = this.builder;
+    const seen = `${b.stations.length},${b.buildings.size},${b.decor.size}`;
+    if (seen !== this.doorSeen || ++this.doorAge >= DOOR_MARK_FRAMES) {
+      this.doorSeen = seen;
+      this.doorAge = 0;
+      this.doorTiles = doorReachTiles(b.streetDoors(), (x, y) => inBounds(b.map, x, y));
+    }
+    while (this.doorMarks.length < this.doorTiles.length) {
+      const g = this.world.makeOverlaySprite('terrain/select');
+      g.alpha = 0.7;
+      g.tint = DOOR_TINT;
+      this.doorMarks.push(g);
+    }
+    this.doorMarks.forEach((g, i) => {
+      const t = this.doorTiles[i];
+      g.visible = !!t;
+      if (!t) return;
+      const p = this.world.surfacePoint(t.x, t.y);
+      g.position.set(p.x, p.y);
+    });
+  }
+
+  /**
    * The tile a road stroke ends on with the cursor on `t`: that tile, kept on the map. The one
-   * place a stroke's end is decided, so #409 can snap it to a street door's reach tile.
+   * place a stroke's end is decided.
    */
   private roadEnd(t: Tile): Tile {
     const { w, h } = this.builder.map;
