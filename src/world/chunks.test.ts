@@ -2411,4 +2411,94 @@ describe("the seed in a chunk text's head (#392)", () => {
       }
     }
   }, 30_000);
+
+  it('holds the number a seed of another kind stands for, and reads back as written', () => {
+    // a save's JSON may carry a world seed that is no number (a hand-edited or foreign save: the
+    // load checks the save's own seed, not its world's), and groundOf hands it to buildMap. The
+    // head holds Number(seed) and every guess is made from that number, so '7412' is not 7412 in
+    // the head and '74125' in the scatter hash's seed + 5
+    const OTHER_SEEDS: unknown[] = [
+      '1',
+      '7412',
+      '20260912',
+      '-3',
+      ' 7412 ',
+      '2.5',
+      '1e20',
+      '0x10',
+      '',
+      'abc',
+      null,
+      true,
+      false,
+      [7412],
+      [],
+      {},
+      undefined,
+    ];
+    const spelled = (v: unknown) => (v === undefined ? 'undefined' : JSON.stringify(v));
+    type OtherCase = AnyPlanes & { other: number };
+    const seen = new Set<number>();
+    forAll(
+      (rng): OtherCase => ({
+        ...genAnyPlanes(rng),
+        style: rng.int(1, 2),
+        other: rng.int(0, OTHER_SEEDS.length - 1),
+      }),
+      (c) => {
+        const seed = OTHER_SEEDS[c.other];
+        const map = anyPlanesMap({ ...c, seed: seed as number });
+        const text = encodeChunk(map, c.cx, c.cy);
+        const read = decodeChunk(text);
+        expect(read, 'refused its own text').not.toBeNull();
+        const lost = planesDiffer(read!, planesOfMap(map, c.x0, c.y0, CHUNK_VERSION));
+        if (lost) throw new Error(`read back otherwise: ${lost}`);
+        const asNumber = encodeChunk({ ...map, seed: Number(seed) }, c.cx, c.cy);
+        expect(text, 'the text of its number').toBe(asNumber);
+        if (map.props.size) seen.add(c.other);
+      },
+      {
+        seeds: Array.from({ length: 120 }, (_, i) => i + 1),
+        shrink: function* (c) {
+          for (const s of shrinkAnyPlanes(c)) yield { ...s, other: c.other };
+        },
+        format: (c) => JSON.stringify({ ...c, seed: spelled(OTHER_SEEDS[c.other]) }),
+        shrinkBudget: 300,
+      },
+    );
+    // most kinds ran on a chunk with props, whose guesses come from seed + 5 to seed + 9
+    expect(seen.size).toBeGreaterThan(OTHER_SEEDS.length / 2);
+
+    // the smallest case: one tree on one tile of a world of seed '1', and the two tiles beside it
+    for (const w of [1, 2]) {
+      const m = emptyMap('1' as unknown as number, w, 1);
+      m.props.set(0, [{ kind: 'tree', variant: 0, ox: 0, oy: 0 }]);
+      const read = decodeChunk(encodeChunk(m, 0, 0));
+      expect(read, `${w} x 1 refused`).not.toBeNull();
+      expect(read!.props.get(0), `${w} x 1`).toEqual([{ kind: 'tree', variant: 0, ox: 0, oy: 0 }]);
+    }
+  });
+
+  // a world of 4 chunks generated and loaded: about 0.3 s alone
+  it('builds and loads a world whose save carries its seed as a numeric string', () => {
+    const seed = '7412' as unknown as number;
+    const params = { w: 64, h: 64 };
+    const made = buildMap(seed, params, {});
+    expect(made.added).toHaveLength(4);
+    expect(made.unreadable).toEqual([]);
+    // the ground as generated, up to where props are stored
+    expect(firstDifference(made.map, generateMap(seed, params), { near: true })).toBeNull();
+    const world: GeneratedWorld = {
+      kind: 'generated',
+      seed,
+      params: { ...DEFAULT_MAP_PARAMS, ...params },
+      chunks: made.chunks,
+    };
+    const load = groundOf(JSON.parse(JSON.stringify(world)) as GeneratedWorld, never);
+    expect(load.added).toEqual([]);
+    expect(load.unreadable).toEqual([]);
+    expect(load.chunks).toEqual(made.chunks);
+    expect(firstDifference(load.map, made.map)).toBeNull();
+    expect(sameWater(load.map, made.map)).toBe(true);
+  }, 10_000);
 });

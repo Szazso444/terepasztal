@@ -58,7 +58,8 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  *
  * Version 5 (#392) holds every plane of version 4, read back the same, in about a sixth of its
  * text for a generated world. After the rectangle comes the seed its guesses are made from, the
- * map's seed as it is, whatever number that is: an integer below 2^52 in size as a varint,
+ * map's seed as it is, whatever number that is (one of another kind, which a save may carry, as
+ * Number(seed), in the head and every guess alike): an integer below 2^52 in size as a varint,
  * zigzagged (2v for v of 0 or more, -2v - 1 below), and any other as the varint 2^53 - 1 followed
  * by the eight bytes of its float64, the lowest first. Then the chunk's cx and cy, each a varint
  * zigzagged the same way, or 0 where it is 2^40 or more in size. The rest of the text
@@ -1072,8 +1073,10 @@ function encodeWith(
   }
   const out = new Writer();
   for (const b of [CHUNK_VERSION, c.x0, c.y0, c.w, c.h]) out.byte(b);
-  // the seed as it is, so that the guesses are generation's for any seed a world may have
-  const seed = map.seed;
+  // the seed as it is, so that the guesses are generation's for any seed a world may have; as a
+  // number, so that a seed of another kind a save may carry ('7412') is the one number in the head
+  // and in every guess (seed + 5 is 7417, not '74125'), as decodeChunk reads it
+  const seed = Number(map.seed);
   if (Number.isInteger(seed) && Math.abs(seed) < SEED_LIMIT) out.varint(zigzag(seed));
   else {
     out.varint(SEED_FLOAT);
