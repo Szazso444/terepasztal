@@ -17,6 +17,7 @@ import {
   encodeChunk,
   type ChunkStore,
 } from './chunks';
+import { oldChunkText } from './oldChunkTexts';
 import {
   DRY,
   FLOW_CAP,
@@ -588,14 +589,13 @@ describe('the water planes in stored chunks', () => {
   });
 
   it('read as level 0, no flow and no side from a chunk of version 2', () => {
-    // a version 2 text: the same bytes with the version byte 2 and without the water planes of
-    // version 3 and the features of version 4, which come last
+    // a version 2 text of the same planes (oldChunkTexts.ts): without the water planes of version
+    // 3 and the features of version 4
     const m = generateMap(7412, { w: 96, h: 96 });
     const text = encodeChunk(m, 1, 1);
     const now = decodeChunk(text)!;
-    const bytes = Array.from(atob(text), (ch) => ch.charCodeAt(0));
-    const tail = waterBytes(now) + featureBytes(now.feature);
-    const v2 = btoa(String.fromCharCode(2, ...bytes.slice(1, bytes.length - tail)));
+    expect(now.flowDir.some((d) => d)).toBe(true);
+    const v2 = oldChunkText(now, 2);
     const old = decodeChunk(v2)!;
     expect(old.version).toBe(2);
     expect([...old.terrain]).toEqual([...now.terrain]);
@@ -844,47 +844,6 @@ function stubChunk(c: Seam, like: GameMap): GameMap {
             : 0;
   }
   return m;
-}
-
-/** How many bytes varint `v` takes. */
-const varintBytes = (v: number) => {
-  let n = 1;
-  for (; v >= 128; v = Math.floor(v / 128)) n++;
-  return n;
-};
-/** How many bytes the water planes take at the end of a chunk text of version 3. */
-function waterBytes(c: {
-  waterSurface: Uint8Array;
-  flow: Uint16Array;
-  flowDir: Uint8Array;
-}): number {
-  let n = 0;
-  for (let i = 0; i < c.waterSurface.length;) {
-    let end = i + 1;
-    while (end < c.waterSurface.length && c.waterSurface[end] === c.waterSurface[i]) end++;
-    n += end - i >= 16 ? 1 + varintBytes(end - i - 16) : 1;
-    i = end;
-  }
-  let rivers = 0;
-  for (let i = 0, last = -1; i < c.flowDir.length; i++) {
-    if (!c.flowDir[i]) continue;
-    n += varintBytes(i - last - 1) + varintBytes(c.flow[i] * 4 + c.flowDir[i] - 1);
-    last = i;
-    rivers++;
-  }
-  return n + varintBytes(rivers);
-}
-/** How many bytes the water features take at the end of a chunk text of version 4. */
-function featureBytes(feature: Uint8Array): number {
-  let n = 0;
-  let tiles = 0;
-  for (let i = 0, last = -1; i < feature.length; i++) {
-    if (!feature[i]) continue;
-    n += varintBytes(i - last - 1) + 1;
-    last = i;
-    tiles++;
-  }
-  return n + varintBytes(tiles);
 }
 
 describe('the drainage', () => {
