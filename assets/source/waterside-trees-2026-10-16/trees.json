@@ -38,5 +38,45 @@
     "cyanWaterPct": 0,
     "lumP99": 158.6676,
     "look": "checks/tree-mangrove-1-look.png"
+  },
+  "tree-mangrove-2.png": {
+    "returned": [
+      1254,
+      1254
+    ],
+    "edgePixels": 0,
+    "partialAlphaPct": 4.8061832121262995,
+    "box": [
+      92,
+      111,
+      1185,
+      1143
+    ],
+    "footAuto": [
+      641,
+      994.5
+    ],
+    "foot": [
+      641,
+      994.5
+    ],
+    "anchor": [
+      641,
+      994.5
+    ],
+    "kind": "mangrove",
+    "height": 38,
+    "k": 0.043010752688172046,
+    "drawn": {
+      "width": 56.464516129032255,
+      "footFromCentre": 0.12903225806451615,
+      "belowFoot": 6.387096774193549,
+      "rootSpread": 30.658064516129034
+    },
+    "overCursorWhite": 0,
+    "amberStrength": 0,
+    "cyanWaterPct": 0,
+    "lumP99": 153.6636,
+    "look": "checks/tree-mangrove-2-look.png"
   }
 }
