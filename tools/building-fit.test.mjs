@@ -1,8 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROTATIONS, project, wallBase } from './building-kit.mjs';
-import { blockOf, boxFaces, fillPoly } from './building-guides.mjs';
-import { FIT, cameraOff, fitGroup, fitPicture, normalisePicture } from './building-fit.mjs';
+import { blockOf, boxFaces, drawWindmill, fillPoly } from './building-guides.mjs';
+import {
+  FIT,
+  cameraOff,
+  fitGroup,
+  fitPicture,
+  normalisePicture,
+  roundCamera,
+} from './building-fit.mjs';
 
 const SHADE = { top: [220, 210, 180], left: [160, 120, 90], right: [110, 80, 60] };
 
@@ -366,5 +373,39 @@ describe('building fit', () => {
 
   it('has nothing to say about an empty picture', () => {
     expect(fitPicture(new PNG({ width: 1024, height: 1024 }), 't1', 0)).toBeNull();
+  });
+
+  it("reads a round building's camera from the ellipse of its foot", () => {
+    // the windmill's tower seen as the game sees it: minor over major is sin 30 = 0.50, and a shaft
+    // and a hub standing out to one side do not move the foot's middle
+    const guide = drawWindmill({ plinth: false });
+    const at = (k) => {
+      const png = new PNG({ width: guide.width, height: guide.height });
+      for (let y = 0; y < png.height; y++) {
+        const sy = Math.round(800 + (y - 800) / k);
+        if (sy >= 0 && sy < png.height)
+          guide.data.copy(
+            png.data,
+            y * png.width * 4,
+            sy * png.width * 4,
+            (sy + 1) * png.width * 4,
+          );
+      }
+      return roundCamera(png);
+    };
+    expect(at(1)).toMatchObject({ off: false, turn: 0 });
+    expect(Math.abs(at(1).ratio - 0.5)).toBeLessThan(0.01);
+    expect(Math.abs(at(1).looking - 30)).toBeLessThan(0.7);
+    // the foot drawn flatter or steeper reads so: 0.5 x 0.64 = 0.32 is 18.7 degrees, 0.5 x 1.25 is 38.7
+    const flat = at(0.64);
+    expect(flat.off).toBe(true);
+    expect(Math.abs(flat.ratio - 0.32)).toBeLessThan(0.015);
+    expect(flat.elevation).toBeLessThan(-10);
+    expect(at(1.25).elevation).toBeGreaterThan(8);
+    // the limit is the wall-foot camera's own two degrees
+    expect(at(0.95).off).toBe(false);
+    expect(at(0.85).off).toBe(true);
+    // nothing to judge a camera by
+    expect(roundCamera(new PNG({ width: 64, height: 64 }))).toBeNull();
   });
 });

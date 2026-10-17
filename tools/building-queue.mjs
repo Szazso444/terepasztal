@@ -110,6 +110,14 @@ function checkFamilies(inventory, families) {
       throw new Error(
         `families.json: "${f.family}" has blockHeight ${JSON.stringify(h)}, which is not a number from 20 to 100 (game px)`,
       );
+    if (d.round !== undefined && typeof d.round !== 'boolean')
+      throw new Error(
+        `families.json: "${f.family}" has round ${JSON.stringify(d.round)}, not true or false`,
+      );
+    if (d.guideKind !== undefined && d.guideKind !== 'windmill')
+      throw new Error(
+        `families.json: "${f.family}" has guideKind ${JSON.stringify(d.guideKind)}; the only one is "windmill"`,
+      );
     for (let n = 0; n < f.ages; n++) {
       const tag = AGES[f.firstAge + n].tag;
       if (!d.ages?.[tag])

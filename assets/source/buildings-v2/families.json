@@ -206,6 +206,8 @@
       "what": "A mill that grinds grain.",
       "keep": "a tall mill tower with four sails or blades, a door at its base, grain sacks by the door; it stays recognisable as a mill",
       "front": "the wall with the door; the sails face the front",
+      "guideKind": "windmill",
+      "round": true,
       "base": "assets/source/base-v1/windmill.png",
       "ages": {
         "a0": "A cream-stone windmill tower with four timber lattice sails, a slate cap and an evergreen door.",

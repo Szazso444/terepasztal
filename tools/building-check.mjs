@@ -25,7 +25,7 @@ import {
   wallBase,
   writeWhole,
 } from './building-kit.mjs';
-import { FIT, cameraOff, fitPicture } from './building-fit.mjs';
+import { FIT, cameraOff, fitPicture, roundCamera } from './building-fit.mjs';
 import { openingsOf, portalWall } from './building-guides.mjs';
 
 export const REPORT_FILE = `${ROOT}/report.json`;
@@ -269,6 +269,23 @@ function cameraWords(fit, off) {
 }
 
 /**
+ * The camera of a round building that is off, in words (see `cameraWords`). A tower has no wall
+ * feet: the camera is read from the ellipse of its foot, whose minor over major is 0.50.
+ */
+function roundCameraWords(off) {
+  const shown =
+    'The reference shows it put right: paint it as the reference and the block-out are seen.';
+  return {
+    line: `camera off by ${off.by.toFixed(1)}°: it looks down from ${off.looking.toFixed(1)}° where the game looks down from 30° (the tower's foot is an ellipse ${off.ratio.toFixed(2)} minor over major, the game's 0.50)`,
+    was: `It was painted ${
+      off.elevation < 0
+        ? 'from too low a camera, so too little of its roof showed'
+        : 'from too high a camera, so too much of its roof showed'
+    }. ${shown}`,
+  };
+}
+
+/**
  * Check one decoded picture of a footprint at a rotation. `problems` fail the picture; `notes`
  * are for the person who reviews it; `fit` is how it is laid onto its footprint. A camera that
  * is off fails the picture, and `camera` then holds how far off it is (`by`) and what was wrong
@@ -276,9 +293,12 @@ function cameraWords(fit, off) {
  * passes with a note instead, `camera` still given: it is the closest of its attempts, kept for
  * the user to judge. For a depot, `ground` is how deep the ground is open inside each portal and
  * `through` how wide the portal is seen right through, left to right, and `hang` how far before
- * the wall its fitted foot ran, all as shares of the portal's width (`portalGround`).
+ * the wall its fitted foot ran, all as shares of the portal's width (`portalGround`). A round
+ * building (`round: true`, from the family's entry in families.json) has no wall feet to read
+ * the camera from: it is read from the ellipse of its foot instead (`roundCamera`), and its turn,
+ * which a round building does not show, is for eyes.
  */
-export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
+export function checkPicture(png, fpId, rot, { camera: wanted = true, round = false } = {}) {
   const fp = FOOTPRINTS[fpId];
   const { width: W, height: H, data } = png;
   if (Math.min(W, H) < LIMIT.side)
@@ -364,20 +384,20 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
   const far = (i) =>
     fit.sure[i] &&
     (Math.abs(fit.measured[i]) < LIMIT.slope[0] || Math.abs(fit.measured[i]) > LIMIT.slope[1]);
-  const wrongView = far(0) && far(1);
+  const wrongView = !round && far(0) && far(1);
   if (wrongView)
     fit.measured.forEach((s, i) =>
       problems.push(
         `not the game's view: the ${SIDES[i]} wall's ground line slopes ${s.toFixed(2)}, the game's ${(i ? -0.5 : 0.5).toFixed(2)}`,
       ),
     );
-  const off = wrongView ? null : cameraOff(fit);
+  const off = round ? roundCamera(png) : wrongView ? null : cameraOff(fit);
   let camera = null;
   if (off?.off) {
-    const words = cameraWords(fit, off);
+    const words = round ? roundCameraWords(off) : cameraWords(fit, off);
     camera = { by: off.by, was: words.was };
     // a slope outside what the fit uses is corrected only as far as that
-    const partly = fit.sure.some((sure, i) => sure && fit.measured[i] !== fit.slopes[i]);
+    const partly = !round && fit.sure.some((sure, i) => sure && fit.measured[i] !== fit.slopes[i]);
     if (wanted) problems.push(words.line);
     else
       notes.push(
@@ -495,8 +515,22 @@ export function checkPicture(png, fpId, rot, { camera: wanted = true } = {}) {
   };
 }
 
-/** Check a file on disk. */
-export function checkFile(path, fpId, rot, options) {
+/** The families that families.json marks `round`, read from the working directory. */
+function roundFamilies() {
+  const file = `${ROOT}/families.json`;
+  if (!existsSync(file)) return new Set();
+  const list = JSON.parse(readFileSync(file, 'utf8')).families ?? {};
+  return new Set(Object.keys(list).filter((name) => list[name].round === true));
+}
+
+/**
+ * Check a file on disk. A picture of a round family (see `checkPicture`) is checked as one unless
+ * `options.round` says otherwise.
+ */
+export function checkFile(path, fpId, rot, options = {}) {
+  // an earlier picture kept beside its successor (`<name>.before.png`) is of the same family
+  const family = pictureOf(path.replace(/\.before\.png$/, '.png'))?.family;
+  options = { round: roundFamilies().has(family), ...options };
   let png;
   try {
     png = PNG.sync.read(readFileSync(path));
