@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import { measureBase, fitPicture, cameraOff } from '../../../tools/building-fit.mjs';
 import { checkFile } from '../../../tools/building-check.mjs';
+import { checkLight } from './light-check.mjs';
 
 const [view, number, metadata] = process.argv.slice(2);
 if (!/^r[123]$/.test(view) || !Number.isInteger(Number(number)) || !metadata) {
@@ -44,6 +45,18 @@ const measured = {
   planPass: ratio >= 2 && ratio <= 2.8,
   camera: cameraOff(fitPicture(png, 't1', Number(view[1]))),
   check: checkFile(`${root}/${file}`, 't1', Number(view[1])),
+  height: info.height
+    ? {
+        ...info.height,
+        houseWidth: used.e[0] - used.w[0],
+        pixels: info.height.foot[1] - info.height.top[1],
+        ratio: (info.height.foot[1] - info.height.top[1]) / (used.e[0] - used.w[0]),
+        pass:
+          (info.height.foot[1] - info.height.top[1]) / (used.e[0] - used.w[0]) >= 0.4 &&
+          (info.height.foot[1] - info.height.top[1]) / (used.e[0] - used.w[0]) <= 0.5,
+      }
+    : null,
+  light: info.lightBoxes ? checkLight(png, info.lightBoxes) : null,
   observation: info.observation,
   grassReview: info.grassReview,
 };
