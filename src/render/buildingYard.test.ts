@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { groundFrames, groundOf, type FrameGround } from '../art/buildingGround';
 import { PAL } from '../art/palette';
 import { DIR_DX, DIR_DY, Dir } from '../engine/iso';
-import { forAll } from '../testing/property';
+import type { Rng } from '../engine/rng';
+import { forAll, shrinkArray } from '../testing/property';
+import { structureScale } from './assetScale';
 import {
   BuildingYards,
   KERB_OUT,
@@ -13,6 +15,7 @@ import {
   hasKerb,
   yardKind,
   yardTiles,
+  type Yard,
   type YardKind,
 } from './buildingYard';
 
@@ -153,7 +156,8 @@ describe('the yard a building wears into the ground', () => {
     }
   });
 
-  // Slow: reads about a thousand points round each of 100 buildings (about two seconds alone).
+  // Slow: reads about a thousand points round each of 100 buildings (about 0.35 s alone; the
+  // limit is 10 s).
   it('lies whole under its foot, and paints nothing off the tiles placing the building repaints', () => {
     forAll(site, (c) => {
       const { site: at, yard } = standing(c.frame, c.cx, c.cy, {
@@ -201,9 +205,10 @@ describe('the yard a building wears into the ground', () => {
               kb.y + kb.dy * (kb.at + e) + kb.dx * along,
             );
     });
-  });
+  }, 10_000);
 
-  // Slow: as above.
+  // Slow: reads 160 points round each of 100 buildings, and a ring round each (about 0.3 s
+  // alone; the limit is 10 s).
   it('reaches its margin, 0.1 to 0.2 tile past its foot, and fades out into the ground beyond', () => {
     let near = 0,
       nearWeight = 0;
@@ -243,7 +248,7 @@ describe('the yard a building wears into the ground', () => {
     // just past the foot most of the ground is yard, broken up here and there
     expect(near).toBeGreaterThan(500);
     expect(nearWeight / near).toBeGreaterThan(0.6);
-  });
+  }, 10_000);
 
   it('runs a worn path out of each door the picture shows, on to the road where one is next door', () => {
     let doors = 0;
@@ -446,5 +451,382 @@ describe('a yard from its ground data', () => {
         expect(yard.foot[i * 2 + 1]).toBeCloseTo(at.y + (py / 32 - px / 64) * scale, 9);
       });
     }
+  });
+});
+
+/** A point (map tile coordinates) the painter reads, on the tile it lies on. */
+type At = readonly [number, number];
+/** One building of `frame` standing with its footprint's corner on tile (cx, cy), and points. */
+interface Case {
+  frame: string;
+  cx: number;
+  cy: number;
+  scale: number;
+  sandy: boolean;
+  origin: At;
+  points: At[];
+}
+/** Shrinks a case by its points only: the building it is about stays as it failed. */
+const shrinkPoints = (c: Case) =>
+  [...shrinkArray(c.points)].map((points) => ({ ...c, points }) as Case);
+/** A case for a failure message, its numbers to four places. */
+const brief = (c: unknown) =>
+  JSON.stringify(c, (_k, v: unknown) => (typeof v === 'number' ? Math.round(v * 1e4) / 1e4 : v));
+/** The yard of a case's building. */
+const yardOf = (c: Case) =>
+  standing(c.frame, c.cx, c.cy, { scale: c.scale, sandy: c.sandy, road: () => c.sandy }).yard;
+
+describe('the share of the ground a yard is given', () => {
+  /**
+   * Any building, one with a platform's kerb half the time, and points round it: anywhere near
+   * it, and across its kerb, where the kerb's coping, face and foot line are painted.
+   */
+  function sharing(rng: Rng): Case {
+    const kerbed = FRAMES.filter(hasKerb),
+      rest = FRAMES.filter((f) => !hasKerb(f));
+    const c: Case = {
+      frame: rng.chance(0.5) ? rng.pick(kerbed) : rng.pick(rest),
+      cx: rng.int(6, 30),
+      cy: rng.int(6, 30),
+      scale: rng.range(0.6, 1.5),
+      sandy: rng.chance(0.3),
+      origin: [rng.int(-60, 60), rng.int(-60, 60)],
+      points: [],
+    };
+    for (let i = 0; i < 80; i++)
+      c.points.push([c.cx + rng.range(-1.5, 2.5), c.cy + rng.range(-1.5, 2.5)]);
+    const kb = yardOf(c).kerb;
+    if (kb)
+      for (let i = 0; i < 80; i++) {
+        const e = kb.at + rng.range(-0.1, 0.1),
+          along = rng.range(kb.from - 0.2, kb.to + 0.2);
+        c.points.push([kb.x + kb.dx * e - kb.dy * along, kb.y + kb.dy * e + kb.dx * along]);
+      }
+    return c;
+  }
+
+  // The painter gives a yard no share of a point that is all water, or on a steep bank
+  // (landscape.worker.ts: `(1 - waterWeight) * (1 - bank)`): it keeps out of them.
+  it('paints nothing where it is given no share of the ground: water, a steep bank', () => {
+    forAll(
+      sharing,
+      (c) => {
+        const painter = new BuildingYards(W, H, c.origin[0], c.origin[1], [yardOf(c)]);
+        for (const [x, y] of c.points) {
+          weigh(painter, x, y);
+          if (!painter.touched) continue;
+          const ground = [110, 125, 69];
+          painter.paint(x, y, ground, 0, 0xd8e8c0, SHEET, [0, 0, 0]);
+          expect(ground, `${c.frame} at ${x}, ${y}`).toEqual([110, 125, 69]);
+        }
+      },
+      { shrink: shrinkPoints, format: brief },
+    );
+  });
+});
+
+describe('yards that meet', () => {
+  /** Two or three buildings of any frame on neighbouring tiles, and points over all of them. */
+  function crowd(rng: Rng) {
+    const sites = Array.from({ length: rng.int(2, 3) }, () => ({
+      frame: rng.pick(FRAMES),
+      cx: rng.int(11, 13),
+      cy: rng.int(11, 13),
+      scale: rng.range(0.6, 1.5),
+      sandy: rng.chance(0.3),
+    }));
+    return {
+      sites,
+      origin: [rng.int(-60, 60), rng.int(-60, 60)] as At,
+      points: Array.from({ length: 120 }, () => [rng.range(10, 15), rng.range(10, 15)] as At),
+    };
+  }
+
+  // Slow: weighs 120 points with five painters for each of 100 crowds (about 0.25 s alone).
+  it('weigh as much as the strongest of them alone, in whatever order they are listed', () => {
+    forAll(
+      crowd,
+      ({ sites, origin, points }) => {
+        const yards = sites.map(
+          (s) => standing(s.frame, s.cx, s.cy, { scale: s.scale, sandy: s.sandy }).yard,
+        );
+        const all = new BuildingYards(W, H, origin[0], origin[1], yards),
+          reversed = new BuildingYards(W, H, origin[0], origin[1], [...yards].reverse()),
+          alone = yards.map((y) => new BuildingYards(W, H, origin[0], origin[1], [y]));
+        for (const [x, y] of points) {
+          const strongest = Math.max(...alone.map((p) => weigh(p, x, y)));
+          expect(weigh(all, x, y), `at ${x}, ${y}`).toBe(strongest);
+          expect(weigh(reversed, x, y), `at ${x}, ${y}, listed the other way`).toBe(strongest);
+        }
+      },
+      {
+        shrink: (c) => [...shrinkArray(c.points)].map((points) => ({ ...c, points })),
+        format: brief,
+      },
+    );
+  }, 30_000);
+});
+
+describe("a door's worn path", () => {
+  /** The scales a frame is tested at: its data's own, and the one the game draws it at. */
+  const scales = (frame: string) => [...new Set([1, structureScale(frame)])];
+  /** The yard's edge band begins this far (tiles) inside its margin (`EDGE` in buildingYard.ts). */
+  const EDGE_BAND = 0.07;
+
+  it("runs from each door out past the yard's edge, whole while the yard round it is", () => {
+    const short: string[] = [];
+    let paths = 0;
+    for (const frame of FRAMES) {
+      if (!groundOf(frame)!.doors.length) continue;
+      for (const scale of scales(frame)) {
+        const { yard } = standing(frame, 12, 12, { scale }),
+          painter = new BuildingYards(W, H, 7, -3, [yard]),
+          kb = yard.kerb;
+        for (const p of yard.paths) {
+          paths++;
+          const where = `${frame} at scale ${scale}, the path out of ${p.x}, ${p.y}`;
+          // it ends past the yard's margin (PATH_PAST past it), or (on a platform) on its kerb
+          const end = [p.x + p.dx * p.length, p.y + p.dy * p.length] as const,
+            onKerb = !!kb && (end[0] - kb.x) * kb.dx + (end[1] - kb.y) * kb.dy > kb.at - 0.1,
+            out = outside(yard.foot, ...end);
+          if (!onKerb && out <= yard.margin)
+            short.push(
+              `${where} (${-outside(yard.foot, p.x, p.y)} inside the foot) ends ${out} past ` +
+                `the foot, inside the yard's margin of ${yard.margin}`,
+            );
+          // and no gap in it while the yard round it is whole: outside the foot the yard breaks
+          // up into the ground, but its path does not
+          let least = 1,
+            at = 0;
+          for (let u = 0; u <= 1; u += 1 / 64) {
+            const x = p.x + p.dx * p.length * u,
+              y = p.y + p.dy * p.length * u;
+            if (outside(yard.foot, x, y) > yard.margin - EDGE_BAND) break;
+            if (kb && (x - kb.x) * kb.dx + (y - kb.y) * kb.dy > kb.at - 0.1) break;
+            const w = weigh(painter, x, y);
+            if (w < least) [least, at] = [w, u];
+          }
+          if (least < 0.95) short.push(`${where} is broken to ${least}, ${at} along it`);
+        }
+      }
+    }
+    expect(paths).toBeGreaterThan(120);
+    expect(short, `${short.length} door paths fall short`).toEqual([]);
+  });
+
+  /** A door path's half width at the door (tiles; `PATH_HALF` in buildingYard.ts). */
+  const MOUTH = 0.075;
+  /** The foot's corners (n, e, s, w) each side's wall runs between. */
+  const WALL = { N: [0, 1], E: [1, 2], S: [2, 3], W: [3, 0] } as const;
+
+  // A door the picture shows stands on its wall; its `point` is where its opening meets the
+  // ground in the picture, a step's height or more above the wall's foot line. The door's place
+  // on the ground is the foot of its wall straight below that point, in the picture.
+  it('comes out of the wall its door is on, with the door in its mouth', () => {
+    const off: string[] = [];
+    let doors = 0;
+    for (const frame of FRAMES) {
+      const ground = groundOf(frame)!;
+      for (const scale of scales(frame))
+        for (const road of [false, true]) {
+          const { site: at, yard } = standing(frame, 12, 12, { scale, road: () => road });
+          ground.doors.forEach((d, i) => {
+            doors++;
+            const [a, b] = WALL[d.side],
+              [ax, ay] = ground.foot[a],
+              [bx, by] = ground.foot[b],
+              t = (d.point[0] - ax) / (bx - ax);
+            // the door lies along its wall, between the wall's two corners
+            expect(t, `${frame} door ${i}`).toBeGreaterThanOrEqual(0);
+            expect(t, `${frame} door ${i}`).toBeLessThanOrEqual(1);
+            // world px on the ground from the anchor, to map tiles (2:1, 64 x 32 px a tile)
+            const sx = d.point[0] * scale,
+              sy = (ay + (by - ay) * t) * scale,
+              door = [at.x + sx / 64 + sy / 32, at.y + sy / 32 - sx / 64] as const,
+              p = yard.paths[i],
+              miss = toSegment(...door, p.x, p.y, p.x + p.dx * p.length, p.y + p.dy * p.length);
+            if (miss > MOUTH)
+              off.push(
+                `${frame} at scale ${scale}${road ? ', a road next door' : ''}, door ${i} on ` +
+                  `its ${d.side} wall at ${door.map((v) => v.toFixed(3))}: the path out of ` +
+                  `${p.x.toFixed(3)}, ${p.y.toFixed(3)} passes ${miss.toFixed(3)} tile from it`,
+              );
+          });
+        }
+    }
+    expect(doors).toBeGreaterThan(240);
+    expect(off, `${off.length} door paths miss their door`).toEqual([]);
+  });
+
+  it("runs whole on to the middle of the road's tile where one is next door", () => {
+    let paths = 0;
+    for (const frame of FRAMES) {
+      const ground = groundOf(frame)!;
+      for (const scale of scales(frame)) {
+        const { yard } = standing(frame, 12, 12, { scale, road: () => true }),
+          painter = new BuildingYards(W, H, 7, -3, [yard]),
+          kb = yard.kerb;
+        ground.doors.forEach((d, i) => {
+          const p = yard.paths[i];
+          paths++;
+          const where = `${frame} at ${scale}, door ${i}`;
+          expect(p.open, where).toBe(true);
+          // its end is on the road's tile, the one across the door's side, about its middle
+          const ex = p.x + p.dx * p.length,
+            ey = p.y + p.dy * p.length,
+            rx = 12 + d.reach[0],
+            ry = 12 + d.reach[1];
+          expect([Math.round(ex), Math.round(ey)], where).toEqual([rx, ry]);
+          expect(Math.abs((ex - rx) * p.dx + (ey - ry) * p.dy), where).toBeLessThan(0.1);
+          for (let u = 0; u <= 1; u += 1 / 32) {
+            const x = p.x + p.dx * p.length * u,
+              y = p.y + p.dy * p.length * u;
+            if (kb && (x - kb.x) * kb.dx + (y - kb.y) * kb.dy > kb.at - 0.1) break;
+            expect(weigh(painter, x, y), `${where}, ${u} along it`).toBe(1);
+          }
+        });
+      }
+    }
+    expect(paths).toBeGreaterThan(120);
+  });
+});
+
+describe("a platform's kerb", () => {
+  /** r + g + b of a colour. */
+  const tone = (c: readonly number[]) => c[0] + c[1] + c[2];
+  /** The colour painted over grass at `e` tiles past a yard's kerb line and `along` it. */
+  function painted(yard: Yard, e: number, along: number) {
+    const kb = yard.kerb!,
+      painter = new BuildingYards(W, H, 0, 0, [yard]),
+      x = kb.x + kb.dx * (kb.at + e) - kb.dy * along,
+      y = kb.y + kb.dy * (kb.at + e) + kb.dx * along,
+      ground = [110, 125, 69];
+    weigh(painter, x, y);
+    painter.paint(x, y, ground, 1, 0xffffff, SHEET, [0, 0, 0]);
+    return ground;
+  }
+
+  // Its coping is the 0.05 tile just inside its line: stones with a darker joint between each two.
+  // Slow: paints about 40 000 points along the 40 kerbs (about 0.3 s alone; the limit is 10 s).
+  it('lays its coping in stones, a darker joint between each two', () => {
+    let kerbs = 0;
+    for (const frame of FRAMES.filter(hasKerb)) {
+      const { yard } = standing(frame, 12, 12),
+        kb = yard.kerb!;
+      kerbs++;
+      // the coping's tone along its middle, a thousandth of a tile apart, off its faded ends
+      const tones: number[] = [];
+      for (let along = kb.from + 0.1; along <= kb.to - 0.1; along += 0.001)
+        tones.push(tone(painted(yard, -0.045, along)));
+      const light = Math.max(...tones),
+        joints: number[] = [];
+      tones.forEach((t, i) => {
+        if (t < light * 0.92 && !(i > 0 && tones[i - 1] < light * 0.92)) joints.push(i * 0.001);
+      });
+      const span = (tones.length - 1) * 0.001;
+      expect(joints.length, `${frame}: joints along ${span} tile`).toBeGreaterThanOrEqual(
+        Math.floor(span * 6),
+      );
+      for (let i = 1; i < joints.length; i++)
+        expect(joints[i] - joints[i - 1], `${frame}: a stone between joints`).toBeGreaterThan(0.1);
+    }
+    expect(kerbs).toBeGreaterThanOrEqual(40);
+  }, 10_000);
+
+  // The light comes from the upper left: a kerb toward S turns its face to it, one toward E has
+  // its face in its own shade, and one toward N or W shows none (the camera sees its back).
+  it('shows a lit face toward S, a shaded one toward E, and none toward N or W', () => {
+    /** Per side: the tone at the kerb's line over the platform's gravel, and over its coping. */
+    const faces: Record<string, { gravel: number; coping: number }[]> = {
+      S: [],
+      E: [],
+      N: [],
+      W: [],
+    };
+    for (const frame of FRAMES.filter(hasKerb)) {
+      const { ground, yard } = standing(frame, 12, 12),
+        kb = yard.kerb!,
+        side = ground.front.side;
+      expect(kb.face, frame).toBe(side === 'S' || side === 'E');
+      // along its middle half: the gravel behind it, its coping, and its face where there is one,
+      // the 0.03 tile about its line
+      let gravel = 0,
+        coping = 0,
+        face = 0;
+      for (let n = 0; n < 40; n++) {
+        const along = kb.from + ((kb.to - kb.from) * (n + 20)) / 80;
+        gravel += tone(painted(yard, -0.2, along));
+        coping += tone(painted(yard, -0.045, along));
+        face += tone(painted(yard, -0.003, along));
+      }
+      faces[side].push({ gravel: face / gravel, coping: face / coping });
+    }
+    for (const side of ['S', 'E', 'N', 'W']) expect(faces[side].length, side).toBeGreaterThan(5);
+    const lit = Math.min(...faces.S.map((f) => f.gravel));
+    // toward S, a face brighter than the platform behind it, and not its coping
+    expect(lit).toBeGreaterThan(1.05);
+    for (const f of faces.S) expect(f.coping).toBeLessThan(0.95);
+    // toward E, a face well darker than that
+    for (const f of faces.E) expect(f.gravel).toBeLessThan(lit * 0.9);
+    // toward N or W the coping runs on to the line: no face shows there
+    for (const f of [...faces.N, ...faces.W]) expect(f.coping).toBeCloseTo(1, 1);
+  });
+});
+
+describe("a yard's edge", () => {
+  /** A building with no kerb at any scale, its noise at any origin, and points along its foot. */
+  function rim(rng: Rng) {
+    return {
+      frame: rng.pick(FRAMES.filter((f) => !hasKerb(f))),
+      scale: rng.range(0.6, 1.5),
+      origin: [rng.int(-60, 60), rng.int(-60, 60)] as At,
+      along: Array.from({ length: 160 }, () => rng.range(0.1, 0.9)),
+    };
+  }
+
+  // A clean fade would weigh every point at its margin alike: half yard, half ground.
+  it('breaks up where it meets the ground: at its margin some of it is whole and some gone', () => {
+    let low = 0,
+      high = 0,
+      all = 0;
+    forAll(
+      rim,
+      ({ frame, scale, origin, along }) => {
+        const { yard } = standing(frame, 12, 12, { scale }),
+          painter = new BuildingYards(W, H, origin[0], origin[1], [yard]),
+          F = yard.foot,
+          mx = (F[0] + F[2] + F[4] + F[6]) / 4,
+          my = (F[1] + F[3] + F[5] + F[7]) / 4,
+          weights: number[] = [];
+        along.forEach((t, n) => {
+          // out from a point of one of its foot's walls, square to the wall, by the margin
+          const i = n % 4,
+            j = (i + 1) % 4,
+            ex = F[i * 2] + (F[j * 2] - F[i * 2]) * t,
+            ey = F[i * 2 + 1] + (F[j * 2 + 1] - F[i * 2 + 1]) * t;
+          let nx = F[j * 2 + 1] - F[i * 2 + 1],
+            ny = F[i * 2] - F[j * 2];
+          if ((ex - mx) * nx + (ey - my) * ny < 0) [nx, ny] = [-nx, -ny];
+          const l = Math.hypot(nx, ny),
+            x = ex + (nx / l) * yard.margin,
+            y = ey + (ny / l) * yard.margin;
+          // where that wall is the nearest of its foot, and off its door paths
+          if (Math.abs(outside(F, x, y) - yard.margin) > 1e-6) return;
+          const onPath = yard.paths.some(
+            (p) => toSegment(x, y, p.x, p.y, p.x + p.dx * p.length, p.y + p.dy * p.length) < 0.25,
+          );
+          if (!onPath) weights.push(weigh(painter, x, y));
+        });
+        all += weights.length;
+        low += weights.filter((w) => w < 0.25).length;
+        high += weights.filter((w) => w > 0.75).length;
+        // no yard's rim is even, as a clean fade's would be, or one that only breaks up
+        expect(Math.max(...weights) - Math.min(...weights), frame).toBeGreaterThan(0.3);
+      },
+      { format: brief },
+    );
+    expect(all).toBeGreaterThan(10_000);
+    expect(low / all, 'the share of the margin gone').toBeGreaterThan(0.1);
+    expect(high / all, 'the share of the margin whole').toBeGreaterThan(0.05);
   });
 });

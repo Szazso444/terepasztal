@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { groundFrames, groundOf } from '../art/buildingGround';
-import { PAL } from '../art/palette';
+import { PAL, type RGB } from '../art/palette';
+import type { Rng } from '../engine/rng';
 import { forAll } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { groundTiles } from './buildingYard';
-import { baseColour, footContour } from './groundFit';
-import { COURSE, PLINTH_FROM, plinthColour, plinthOf, plinthShapes } from './plinth';
+import { BASE_FROM, BASE_TO, baseColour, footContour } from './groundFit';
+import {
+  COURSE,
+  PLINTH_FROM,
+  plinthColour,
+  plinthOf,
+  plinthShapes,
+  type PlinthRun,
+  type PlinthShape,
+} from './plinth';
 import { buildRelief, reliefHeight } from './terrainRelief';
 
 /** The frames a plinth goes under: a straight base found in the picture. */
@@ -68,7 +77,8 @@ describe('the plinth under a building', () => {
       }
   });
 
-  // Slow: reads the ground at about two hundred points under each of 100 buildings.
+  // Slow: reads the ground at about two hundred points under each of 100 buildings (about 0.4 s
+  // alone; the limit is 10 s).
   it('fills from the foot of each wall the camera sees down to the ground, wherever that drops away', () => {
     forAll(
       (rng) => ({
@@ -121,7 +131,7 @@ describe('the plinth under a building', () => {
           }
       },
     );
-  });
+  }, 10_000);
 
   it('stands a house at the edge of a terrace on its own relief, its bank side on a plinth', () => {
     // a hill whose levels climb a level a tile in from its edges (src/world/elevation.ts)
@@ -226,5 +236,235 @@ describe("the colour of a building's base", () => {
       foot = footContour(picture);
     expect(baseColour(picture, foot)).toEqual([180, 160, 130]);
     expect(baseColour(picture, new Int32Array(w).fill(-1))).toBeNull();
+  });
+});
+
+/** The plinth's top tucks this far (world px) under the foot of the walls (`TUCK`, plinth.ts). */
+const TUCK = 0.4;
+/** A building of any walled frame at any scale on ground of any shape, with its walls' colour. */
+function standingOn(rng: Rng) {
+  return {
+    frame: rng.pick(WALLED),
+    scale: rng.range(0.6, 1.5),
+    base: rng.range(0, 30),
+    ground: terrain(rng),
+    wall: [rng.int(0, 255), rng.int(0, 255), rng.int(0, 255)] as RGB,
+  };
+}
+/** The plinth of a building `standingOn` gave, standing on the ground at its anchor (9, 9). */
+function plinthFor(c: ReturnType<typeof standingOn>) {
+  const foot = footOf(c.frame, c.scale),
+    height = heightOf(c.ground, 9, 9),
+    base = c.base + height(9, 9);
+  return {
+    foot,
+    base,
+    /** the ground's height under a point of the picture (world px from the anchor) */
+    at: (x: number, y: number) => {
+      const [tx, ty] = groundTiles(x, y);
+      return c.base + height(9 + tx, 9 + ty);
+    },
+    plinth: plinthOf(foot, 9, 9, base, (x, y) => c.base + height(x, y)),
+  };
+}
+/** The run's top and its ground at x, between its points, as its face is filled between them. */
+function faceAt(run: PlinthRun, x: number) {
+  const P = run.points;
+  for (let i = 0; i + 1 < P.length; i++) {
+    const a = P[i],
+      b = P[i + 1];
+    if ((x - a.x) * (x - b.x) > 1e-12) continue;
+    const t = b.x === a.x ? 0 : (x - a.x) / (b.x - a.x),
+      y = a.y + (b.y - a.y) * t;
+    return { top: y - TUCK, ground: y + a.drop + (b.drop - a.drop) * t, y };
+  }
+  return null;
+}
+const tone = (c: number) => (c >> 16) + ((c >> 8) & 255) + (c & 255);
+const isLine = (s: PlinthShape) => s.width !== undefined;
+/** A joint: one vertical stroke. */
+const isJoint = (s: PlinthShape) =>
+  isLine(s) && s.points.length === 4 && s.points[0] === s.points[2];
+
+describe("a plinth's drawing", () => {
+  // Slow: draws the plinth of each of 100 buildings and checks every point of it (about a second
+  // alone).
+  it('stays inside its face, from the tucked foot of the wall down to the ground', () => {
+    const seen = { runs: 0, courses: 0, joints: 0 };
+    forAll(standingOn, (c) => {
+      const { foot, plinth } = plinthFor(c),
+        [, e, s, w] = foot;
+      for (const run of plinth.runs) {
+        seen.runs++;
+        // on the wall it stands under: the lit one from w to s, the shaded one from s to e
+        const [a, b] = run.lit ? [w, s] : [s, e];
+        for (const q of run.points) {
+          const cross = (b[0] - a[0]) * (q.y - a[1]) - (b[1] - a[1]) * (q.x - a[0]);
+          expect(Math.abs(cross) / Math.hypot(b[0] - a[0], b[1] - a[1])).toBeLessThan(1e-9);
+          expect((q.x - a[0]) * (q.x - b[0])).toBeLessThanOrEqual(1e-9);
+        }
+        const shapes = plinthShapes({ lift: plinth.lift, runs: [run] }, plinthColour(c.wall));
+        for (const shape of shapes)
+          for (let i = 0; i < shape.points.length; i += 2) {
+            const [x, y] = [shape.points[i], shape.points[i + 1]],
+              face = faceAt(run, x);
+            expect(face, `${c.frame}: a point at x ${x} past the run's ends`).not.toBeNull();
+            expect(y, `${c.frame} at ${x}: above the tucked foot`).toBeGreaterThanOrEqual(
+              face!.top - 1e-9,
+            );
+            expect(y, `${c.frame} at ${x}: below the ground`).toBeLessThanOrEqual(
+              face!.ground + 1e-9,
+            );
+          }
+        // the courses: lines a whole number of courses under the foot, never as deep as the
+        // ground under them
+        const courses = shapes.filter((x) => isLine(x) && !isJoint(x)).slice(0, -2);
+        seen.courses += courses.length;
+        for (const line of courses)
+          for (let i = 0; i < line.points.length; i += 2) {
+            const q = run.points.find((p) => p.x === line.points[i])!,
+              depth = line.points[i + 1] - q.y;
+            expect(depth / COURSE, `${c.frame}: a course at ${depth}`).toBeCloseTo(
+              Math.round(depth / COURSE),
+              9,
+            );
+            expect(depth).toBeGreaterThan(0);
+            expect(depth).toBeLessThan(q.drop);
+          }
+        // the joints: within one course each, staggered from the course above
+        const joints = shapes.filter(isJoint).map((j) => {
+          const q = run.points.find((p) => p.x === j.points[0])!;
+          return { x: j.points[0], course: Math.round((j.points[1] - q.y) / COURSE) };
+        });
+        seen.joints += joints.length;
+        for (const j of shapes.filter(isJoint))
+          expect(j.points[3] - j.points[1]).toBeLessThanOrEqual(COURSE + 1e-9);
+        for (const j of joints)
+          expect(
+            joints.some((k) => k.x === j.x && k.course === j.course + 1),
+            `${c.frame}: joints over each other at x ${j.x}, courses ${j.course} and ${j.course + 1}`,
+          ).toBe(false);
+        // its last line is its foot, on the ground at every point
+        const footLine = shapes[shapes.length - 1];
+        expect(footLine.points).toEqual(run.points.flatMap((q) => [q.x, q.y + q.drop]));
+      }
+    });
+    // about 180 runs, 420 courses and 2100 joints
+    expect(seen.runs).toBeGreaterThan(100);
+    expect(seen.courses).toBeGreaterThan(200);
+    expect(seen.joints).toBeGreaterThan(1000);
+  }, 30_000);
+
+  it('is of its own stone, lit on the left, with a light top, darker joints and a dark foot', () => {
+    // a plinth deep enough for courses and joints on both walls
+    const deep = (lit: boolean, x0: number): PlinthRun => ({
+      lit,
+      points: Array.from({ length: 13 }, (_, i) => ({ x: x0 + i, y: 5 + i / 2, drop: 9 })),
+    });
+    const semantic = Math.min(PAL.amber[0], PAL.white[0]);
+    forAll(
+      (rng) =>
+        rng.chance(0.1) ? null : ([rng.int(0, 255), rng.int(0, 255), rng.int(0, 255)] as RGB),
+      (wall) => {
+        const colour = plinthColour(wall),
+          stone = PAL.stone[0];
+        for (let c = 0; c < 3; c++) {
+          expect(colour[c]).toBeGreaterThanOrEqual(Math.min(stone[c], (wall ?? stone)[c]) - 1e-9);
+          expect(colour[c]).toBeLessThanOrEqual(Math.max(stone[c], (wall ?? stone)[c]) + 1e-9);
+        }
+        const faces: number[] = [];
+        for (const run of [deep(true, -12), deep(false, 0)]) {
+          const shapes = plinthShapes({ lift: 0, runs: [run] }, colour),
+            face = shapes[0].colour,
+            top = shapes[shapes.length - 2].colour,
+            foot = shapes[shapes.length - 1].colour;
+          faces.push(face);
+          expect(shapes.filter(isJoint).length).toBeGreaterThan(0);
+          for (const s of shapes.slice(1, -2)) expect(tone(s.colour)).toBeLessThan(tone(face));
+          expect(tone(top)).toBeGreaterThan(tone(face));
+          expect(tone(foot)).toBeLessThan(tone(face));
+          // all of it below the semantic colours, the selection amber and the cursor white
+          for (const s of shapes)
+            expect(Math.max(s.colour >> 16, (s.colour >> 8) & 255, s.colour & 255)).toBeLessThan(
+              semantic,
+            );
+        }
+        // the left wall faces the light
+        expect(tone(faces[0])).toBeGreaterThan(tone(faces[1]));
+      },
+    );
+  });
+});
+
+describe('the lift onto the ground under a foot', () => {
+  it('is never more than the highest ground under the foot, nor any where none is high', () => {
+    forAll(standingOn, (c) => {
+      const { foot, base, at, plinth } = plinthFor(c),
+        [n, e, s, w] = foot;
+      // the highest ground under the foot, read at 33 x 33 points over it
+      let high = -Infinity;
+      for (let i = 0; i <= 32; i++)
+        for (let j = 0; j <= 32; j++) {
+          const u = i / 32,
+            v = j / 32;
+          high = Math.max(
+            high,
+            at(
+              n[0] * (1 - u) * (1 - v) + e[0] * u * (1 - v) + s[0] * u * v + w[0] * (1 - u) * v,
+              n[1] * (1 - u) * (1 - v) + e[1] * u * (1 - v) + s[1] * u * v + w[1] * (1 - u) * v,
+            ),
+          );
+        }
+      // to the half px it is rounded to
+      expect(plinth.lift, c.frame).toBeLessThanOrEqual(Math.max(0, high - base) + 0.25 + 1e-9);
+      if (high - base <= PLINTH_FROM) expect(plinth.lift, c.frame).toBe(0);
+    });
+  });
+});
+
+describe("the colour of a building's base, against a count", () => {
+  /** A picture of a few colours, some texels see-through, with a foot row for some columns. */
+  function picture(rng: Rng) {
+    const density = rng.int(1, 3),
+      width = rng.int(1, 12),
+      height = rng.int(4, 40),
+      colours = Array.from({ length: rng.int(1, 4) }, () => [
+        rng.int(0, 255),
+        rng.int(0, 255),
+        rng.int(0, 255),
+      ]),
+      data = new Uint8ClampedArray(width * height * 4);
+    for (let k = 0; k < width * height; k++)
+      data.set([...rng.pick(colours), rng.pick([0, 150, 200, 201, 255])], k * 4);
+    const foot = Int32Array.from({ length: width }, () =>
+      rng.chance(0.2) ? -1 : rng.int(0, height - 1),
+    );
+    return { picture: { data, width, height, density }, foot };
+  }
+
+  it('is the median of each channel of the opaque texels BASE_FROM to BASE_TO px over the foot', () => {
+    forAll(picture, ({ picture: p, foot }) => {
+      // every texel of the band, counted
+      const channels: number[][] = [[], [], []];
+      for (let x = 0; x < p.width; x++) {
+        if (foot[x] < 0) continue;
+        for (let y = 0; y < p.height; y++) {
+          const up = foot[x] - y,
+            k = (y * p.width + x) * 4;
+          if (up < BASE_FROM * p.density || up > BASE_TO * p.density || p.data[k + 3] <= 200)
+            continue;
+          for (let c = 0; c < 3; c++) channels[c].push(p.data[k + c]);
+        }
+      }
+      const got = baseColour(p, foot);
+      if (!channels[0].length) return expect(got).toBeNull();
+      // the median: the least value that more than half of the texels are at or below
+      const median = channels.map((list) => {
+        for (let v = 0; v <= 255; v++)
+          if (list.filter((x) => x <= v).length > list.length / 2) return v;
+        return 255;
+      });
+      expect(got).toEqual(median);
+    });
   });
 });

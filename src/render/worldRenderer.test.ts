@@ -629,6 +629,202 @@ describe("a building's yard and plinth", () => {
     // and its front, now over lower ground, stands on a plinth
     expect(footing.plinth).not.toBeNull();
   });
+
+  /** The frames these tests put up: buildings with ground data, and a frame that is none. */
+  const SHOWN = [
+    'structures/townhouse_s1',
+    'structures/townhouse_s1_r3',
+    'structures/station_1',
+    'structures/station_1_r1',
+    'structures/water_tower',
+    'structures/water_tower_r2',
+    'structures/power_line',
+  ];
+  /** A building put up (or shown anew) on a tile, moved off it as long footprints are, or taken down. */
+  type Step =
+    { put: string; frame: string; x: number; y: number; dx: number; dy: number } | { take: string };
+  const IDS = ['decor:a', 'decor:b', 'station:c', 'station:d'];
+  function put(rng: Rng): Step {
+    return {
+      put: rng.pick(IDS),
+      frame: rng.pick(SHOWN),
+      x: rng.int(1, 6),
+      y: rng.int(1, 6),
+      dx: rng.pick([0, 0, 16, -16]),
+      dy: rng.pick([0, 0, 8, -8]),
+    };
+  }
+  const run = (world: WorldRenderer, step: Step) =>
+    'take' in step
+      ? world.removeStructure(step.take)
+      : world.setStructure(step.put, step.x, step.y, step.frame, 20, step.dy, step.dx);
+  /** Each tile of the 8 x 8 map, with the yards that reach it (yardTiles), in a fixed order. */
+  function reach(yards: readonly Yard[]) {
+    const out: string[][] = Array.from({ length: 64 }, () => []);
+    for (const yard of yards)
+      for (const k of yardTiles(yard, 8, 8)) out[k].push(JSON.stringify(yard));
+    return out.map((list) => list.sort().join('|'));
+  }
+
+  // Slow: plays up to 16 steps on a fresh world for each of 100 seeds (about a third of a second
+  // alone).
+  it('after any run of placing, moving, replacing and removing, paints just the yards that stand', () => {
+    let plinthed = 0,
+      lifted = 0;
+    forAll(
+      (rng) => ({
+        // the ground drops 8 px east of x = fall: buildings beside it stand on plinths
+        fall: rng.range(1, 7),
+        steps: Array.from({ length: rng.int(1, 16) }, () =>
+          rng.chance(0.25) ? { take: rng.pick(IDS) } : put(rng),
+        ) as Step[],
+      }),
+      ({ fall, steps }) => {
+        const height = (x: number) => (x > fall ? -8 : 0),
+          { world, objects, handed, repainted } = yarded(height),
+          shown = new Map<string, string>(),
+          placed = new Map<string, Step & { put: string }>();
+        let before: Yard[] = [];
+        steps.forEach((step, i) => {
+          const where = `after step ${i + 1}, ${JSON.stringify(step)}`;
+          repainted.clear();
+          run(world, step);
+          if ('take' in step) {
+            shown.delete(step.take);
+            placed.delete(step.take);
+          } else {
+            shown.set(step.put, step.frame);
+            placed.set(step.put, step);
+          }
+          const footings = footingsOf(world),
+            after = handed.at(-1) ?? [];
+          // a footing for each building with ground data that stands, and the painter has its yard
+          expect([...footings.keys()].sort(), where).toEqual(
+            [...shown]
+              .filter(([, f]) => groundDataOf(f))
+              .map(([id]) => id)
+              .sort(),
+          );
+          expect(after, where).toEqual([...footings.values()].map((f) => f.yard));
+          // every tile some yard reaches differently is painted again; none when no yard changed
+          const was = reach(before),
+            now = reach(after);
+          for (let k = 0; k < 64; k++)
+            if (was[k] !== now[k]) expect(repainted.has(k), `${where}: tile ${k}`).toBe(true);
+          if (was.join() === now.join()) expect([...repainted], where).toEqual([]);
+          // each picture stands where its tile puts it, lifted once by its footing's lift, and
+          // its ground fit with it
+          for (const [id, f] of footings) {
+            const s = world.getStructure(id)!,
+              at = placed.get(id)! as Extract<Step, { put: string }>,
+              p = tileToWorld(at.x, at.y),
+              fit = fitsOf(world).get(id)!;
+            expect(f.lift, `${where}: ${id}`).toBeGreaterThanOrEqual(0);
+            if (f.lift > 0) lifted++;
+            expect([s.x, s.y], `${where}: ${id}`).toEqual([
+              p.x + at.dx,
+              p.y - height(at.x) + at.dy - f.lift,
+            ]);
+            for (const part of [fit.shadow, fit.foot, fit.weeds])
+              expect([part.x, part.y], `${where}: ${id}`).toEqual([s.x, s.y]);
+          }
+          // each plinth stands with its own building, under its picture; none is left behind
+          const plinths = [...footings].flatMap(([id, f]) => {
+            if (!f.plinth) return [];
+            const s = world.getStructure(id)!;
+            expect([f.plinth.x, f.plinth.y], where).toEqual([s.x, s.y]);
+            expect(f.plinth.zIndex, where).toBeLessThan(s.zIndex);
+            expect(f.plinth.destroyed, where).toBe(false);
+            return [f.plinth];
+          });
+          const drawn = objects.children.filter((c) => c instanceof Graphics);
+          expect(drawn.length, where).toBe(plinths.length);
+          for (const g of plinths) expect(drawn.includes(g), where).toBe(true);
+          plinthed += plinths.length;
+          before = after;
+        });
+      },
+      { shrink: (c) => [...shrinkArray(c.steps)].map((steps) => ({ ...c, steps })) },
+    );
+    // about 120 steps of the 785 leave a plinth standing, and about 60 a picture lifted
+    expect(plinthed).toBeGreaterThan(50);
+    expect(lifted).toBeGreaterThan(25);
+  }, 20_000);
+
+  /** A road laid on a tile or taken off it, or the street doors of every place anew. */
+  type Change =
+    | { road: readonly [number, number] }
+    | { doors: { tile: { x: number; y: number }; side: Dir }[] };
+
+  it('keeps each yard as it would be drawn afresh, however the roads and doors round it change', () => {
+    const seen = { open: 0, street: 0 };
+    forAll(
+      (rng) => {
+        // buildings on their own tiles; the roads and street doors mostly beside and on them
+        const buildings = Array.from({ length: rng.int(1, 4) }, (_, i) => ({
+          put: IDS[i],
+          frame: rng.pick(SHOWN),
+          x: rng.int(1, 6),
+          y: rng.int(1, 6),
+          dx: 0,
+          dy: 0,
+        }));
+        const near = (d: number) => {
+          const b = rng.pick(buildings);
+          return rng.chance(0.8)
+            ? { x: b.x + rng.int(-d, d), y: b.y + rng.int(-d, d) }
+            : { x: rng.int(0, 7), y: rng.int(0, 7) };
+        };
+        const changes = Array.from({ length: rng.int(1, 10) }, (): Change => {
+          if (rng.chance(0.7)) {
+            const { x, y } = near(1);
+            return { road: [x, y] as const };
+          }
+          return {
+            doors: Array.from({ length: rng.int(0, 4) }, () => ({
+              tile: near(0),
+              side: rng.pick([Dir.N, Dir.E, Dir.S, Dir.W]),
+            })),
+          };
+        });
+        return { buildings, changes };
+      },
+      ({ buildings, changes }) => {
+        const roads = new Set<number>();
+        let doors: { tile: { x: number; y: number }; side: Dir }[] = [];
+        const live = yarded();
+        live.world.roadAt = (x, y) => roads.has(y * 8 + x);
+        for (const b of buildings) run(live.world, b);
+        for (const change of changes)
+          if ('road' in change) {
+            const [x, y] = change.road;
+            if (!roads.delete(y * 8 + x)) roads.add(y * 8 + x);
+            live.world.roadChanged(x, y);
+          } else {
+            doors = change.doors;
+            live.world.setCity(new Set(), doors);
+          }
+        // the same buildings put up where those roads and doors already are
+        const fresh = yarded();
+        fresh.world.roadAt = (x, y) => roads.has(y * 8 + x);
+        fresh.world.setCity(new Set(), doors);
+        for (const b of buildings) run(fresh.world, b);
+        const yards = (r: ReturnType<typeof yarded>) =>
+          [...footingsOf(r.world)].map(([id, f]) => [id, f.yard] as const);
+        expect(yards(live)).toEqual(yards(fresh));
+        expect(live.handed.at(-1) ?? []).toEqual(fresh.handed.at(-1) ?? []);
+        for (const [id, yard] of yards(live)) {
+          const shown = groundDataOf(buildings.find((b) => b.put === id)!.frame)!.doors.length;
+          seen.open += yard.paths.filter((p) => p.open).length;
+          seen.street += yard.paths.length - shown;
+        }
+      },
+      { shrink: (c) => [...shrinkArray(c.changes)].map((changes) => ({ ...c, changes })) },
+    );
+    // paths on to roads, and paths from street doors the pictures do not show, both came and went
+    expect(seen.open).toBeGreaterThan(20);
+    expect(seen.street).toBeGreaterThan(20);
+  });
 });
 
 describe('a ghost sprite switching frames', () => {
