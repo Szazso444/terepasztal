@@ -749,11 +749,15 @@ function repairStationTurns(j: SaveGame) {
 }
 /**
  * The seed a world description names, as the one number its map is built from: a seed that is a
- * number or the text of one, when that number is a safe integer (`Number.isSafeInteger`); null for
- * any other (a fraction, a number past 2^53, NaN, a text that is not a number, no seed at all).
- * Text that is blank, and a value that is no number or text (null, a flag, a list), name no seed:
- * `Number()` would read them as 0 or 1, and 0 is a world too. Map generation does arithmetic on
- * the seed (`seed + 5`), which on text gives other text and so another world.
+ * number or the text of one, when that number is an integer (`Number.isInteger`); null for any
+ * other (a fraction, NaN, an infinity, a text that is not a number, no seed at all). An integer
+ * is not held to the safe ones: a player may type digits past 2^53 - 1 as a seed, the game makes
+ * `Number` of them (`parseSeed`), plays that world and writes it, and every such number is the one
+ * double its save holds and its chunks store (`chunks.ts` keeps a seed it cannot zigzag as a
+ * float64), so the save must load again. Text reads as the game reads typed digits. Text that is
+ * blank, and a value that is no number or text (null, a flag, a list), name no seed: `Number()`
+ * would read them as 0 or 1, and 0 is a world too. Map generation does arithmetic on the seed
+ * (`seed + 5`), which on text gives other text and so another world.
  */
 function worldSeedOf(seed: unknown): number | null {
   const n =
@@ -762,11 +766,11 @@ function worldSeedOf(seed: unknown): number | null {
       : typeof seed === 'string' && seed.trim() !== ''
         ? Number(seed)
         : NaN;
-  return Number.isSafeInteger(n) ? n : null;
+  return Number.isInteger(n) ? n : null;
 }
 /**
  * Whether the seeds of a file name one world, checked before any step runs: the file's own seed
- * is a safe integer (`worldSeedOf`), because a file with no world (nothing, or null) has its world
+ * is an integer (`worldSeedOf`), because a file with no world (nothing, or null) has its world
  * made from that seed on load, and a world's seed is the file's. A world that is there is a
  * description whose seed, read as a number, is the file's seed: a save whose two seeds disagree
  * cannot say which world it is, and neither wins. The world's seed is set on the description as
@@ -812,7 +816,7 @@ function settle(file: Record<string, unknown>): SaveGame | null {
  * version: older saves are upgraded step by step, newer ones are loaded as they are with a
  * warning. Station turns are repaired (`repairStationTurns`), and a world seed held as text is
  * read as the number it names (`settleSeeds`). Text that is not a whole save, or whose save could
- * not be stored again, or whose seed is not a safe integer or is not the seed of its world, or
+ * not be stored again, or whose seed is not an integer or is not the seed of its world, or
  * whose generated map is larger than the game builds (`worldWithinBound`; refused before anything
  * is migrated or generated), is refused, with the reason.
  */

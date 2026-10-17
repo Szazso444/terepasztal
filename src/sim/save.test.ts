@@ -1724,15 +1724,12 @@ describe("the seed of a save's world (#470)", () => {
     expect(verdict(textOf(777, { ...level, seed: 'x' }))).toBe('damaged');
   });
 
-  it('refuses a seed that is not a safe integer: a fraction, a number too large, NaN, text', () => {
+  it('refuses a seed that is not an integer: a fraction, NaN, an infinity, text', () => {
     // the top-level seed agrees in each, so the rule alone refuses
     const agreeing: [number, unknown][] = [
       [777.5, 777.5],
       [777.5, '777.5'],
-      [2 ** 53, 2 ** 53],
-      [2 ** 53, '9007199254740992'],
-      [-(2 ** 53), -(2 ** 53)],
-      [1e21, 1e21],
+      [-0.25, -0.25],
     ];
     for (const [top, seed] of agreeing)
       expect(verdict(textOf(top, generated(seed))), JSON.stringify(seed)).toBe('damaged');
@@ -1749,16 +1746,20 @@ describe("the seed of a save's world (#470)", () => {
     expect(verdict(textOf(777, generated('__NAN__')).replace('"__NAN__"', 'NaN'))).toBe('json');
   });
 
-  it('refuses a seed that is not a safe integer when no world says otherwise', () => {
+  it('refuses a seed that is not an integer when no world says otherwise', () => {
     // the world of a save with none is made from its seed (by the step from v2, or when the game
     // starts), and a save the game then writes would be refused on its next load
-    for (const top of [777.5, -0.25, 2 ** 53, 1e21])
+    for (const top of [777.5, -0.25, 1e-9])
       for (const world of [undefined, null]) {
         expect(verdict(textOf(top, world)), `${top} and ${String(world)}`).toBe('damaged');
         expect(verdict(JSON.stringify({ ...oldestSave(), seed: top, world }))).toBe('damaged');
       }
-    for (const top of [0, -1, 777, 2 ** 53 - 1])
-      expect(verdict(textOf(top, undefined)), String(top)).toBe('save');
+    // an integer past 2^53 - 1 is a seed a player types as digits: the world of it is made as any
+    for (const top of [0, -1, 777, 2 ** 53 - 1, 2 ** 53, 1e20, 1e21])
+      for (const world of [undefined, null]) {
+        expect(verdict(textOf(top, world)), `${top} and ${String(world)}`).toBe('save');
+        expect(verdict(JSON.stringify({ ...oldestSave(), seed: top, world }))).toBe('save');
+      }
   });
 
   it('refuses a world with no seed, and a seed that is not a number or text', () => {
@@ -1951,9 +1952,8 @@ describe("a save's world seed, from the outside (#470)", () => {
       }
   });
 
-  it('refuses a file seed that is not a safe integer, with a world or without one', () => {
-    const past = [0.5, -0.5, 777.25, 2 ** 53, -(2 ** 53), 2 ** 60, 1e21, 1e300, Number.MAX_VALUE];
-    for (const top of past) {
+  it('refuses a file seed that is not an integer, with a world or without one', () => {
+    for (const top of [0.5, -0.5, 777.25, 1e-9, -(2 ** 40) - 0.5]) {
       const file = { ...buildSave(fullParts()), seed: top };
       const worlds: unknown[] = [undefined, null, { kind: 'generated', params: small }];
       for (const seed of [top, String(top)])
@@ -1964,6 +1964,78 @@ describe("a save's world seed, from the outside (#470)", () => {
           `${top} with ${JSON.stringify(world)}`,
         ).toBe('damaged');
     }
+  });
+
+  // The game plays any seed a player types as digits (parseSeed makes Number of them, with no
+  // limit but Infinity, which the game does not store) and writes the save: past 2^53 - 1 that is
+  // an integer no more than the double it is, and the save must load again (found by the first
+  // version of this rule, which kept only the safe integers).
+  const typed = (digits: string) => Number(digits);
+  const past = [
+    typed('9007199254740991'), // the largest safe integer
+    typed('9007199254740992'), // 16 digits: the smallest past it
+    typed('9007199254740993'), // no double of its own; it is 2^53
+    typed('9007199254740994'),
+    typed('12345678901234567890'),
+    typed('100000000000000000000'),
+    typed('1'.padEnd(22, '0')),
+    typed('9'.repeat(30)),
+    typed('1'.padEnd(301, '0')),
+    typed('1'.padEnd(309, '0')), // 1e308, the last power of ten a double holds
+    2 ** 53 + 2,
+    2 ** 60,
+    Number.MAX_VALUE,
+  ];
+
+  it('loads the save of a seed typed as digits past 2^53 - 1, whatever world it holds', () => {
+    for (const seed of [...past, ...past.map((n) => -n)]) {
+      const level = levelWorldOf(32, 32, seed);
+      const worlds: unknown[] = [
+        undefined,
+        null,
+        { kind: 'generated', seed, params: small },
+        { kind: 'generated', seed: String(seed), params: small },
+        { kind: 'generated', seed: ` ${seed}\n`, params: small },
+        level,
+        { ...level, seed: String(seed) },
+      ];
+      for (const world of worlds) {
+        const raw = JSON.stringify({ ...buildSave(fullParts()), seed, world });
+        const read = readSaveText(raw);
+        const at = `${seed} with ${JSON.stringify(world)?.slice(0, 60)}`;
+        if (!('save' in read)) throw new Error(`${at}: refused as ${read.error}`);
+        expect(read.save.seed, at).toBe(seed);
+        // a world that was there is of the seed as a number; none given stays none
+        if (world) expect(read.save.world?.seed, at).toBe(seed);
+      }
+    }
+  });
+
+  it('reads the save the game wrote for such a seed back as the game wrote it', () => {
+    for (const seed of past) {
+      for (const world of [generatedWorldOf(32, 32, seed), levelWorldOf(32, 32, seed)]) {
+        const save = buildSave({ ...fullParts(), seed, world });
+        expect(readSaveText(JSON.stringify(save)), `${seed} in a ${world.kind}`).toEqual({ save });
+      }
+    }
+  });
+
+  it('still refuses a seed past 2^53 - 1 that is no integer or is not the seed of its world', () => {
+    for (const seed of past) {
+      // a double further up is another seed (the one after MAX_VALUE is Infinity, no seed), and so
+      // are zero and the seed's sign, as text as well as a number
+      const up = seed * (1 + Number.EPSILON);
+      expect(up).not.toBe(seed);
+      const numbers = [up, 0, -seed];
+      for (const held of [...numbers, ...numbers.map(String), null, 'x', '', [seed]]) {
+        expect(verdictOfText(withSeeds(seed, held)), `${seed} and ${JSON.stringify(held)}`).toBe(
+          'damaged',
+        );
+      }
+    }
+    // a number no save can store, or text of one that overflows, is no seed at all
+    for (const held of [Infinity, -Infinity, 'Infinity', '1e309', '-1e309', '1'.padEnd(310, '0')])
+      expect(verdictOfText(withSeeds(Number.MAX_VALUE, held)), String(held)).toBe('damaged');
   });
 
   it('holds a level to the same rule, and a file with no world to the file seed alone', () => {
@@ -1993,11 +2065,13 @@ describe("a save's world seed, from the outside (#470)", () => {
     }
   });
 
-  // 9 seeds, a map generated for each of 3 forms of it: 1.7 s alone
+  // 11 seeds, a map generated for each of 3 forms of it: 2 s alone
   it('builds the ground of the number a text seed names, for seeds a game reaches', () => {
     // the map generator adds to the seed ('777' + 5 is '7775'): ground made for the text is
-    // another world's, so the loaded world must give the very chunks the number gives
+    // another world's, so the loaded world must give the very chunks the number gives; the last
+    // two are seeds a player types as digits, past 2^53 - 1
     const seeds = [-5, 0, 1, 777, 123456, 2 ** 31 - 1, 2 ** 32 - 1, 2 ** 40 + 3, 2 ** 53 - 1];
+    seeds.push(2 ** 53 + 2, 1e20);
     for (const seed of seeds) {
       const world = (raw: string) => {
         const read = readSaveText(raw);
@@ -2115,21 +2189,25 @@ describe("a save's world seed, from the outside (#470)", () => {
 
   it('reads back every save the game writes, for any seed it draws or a player types', () => {
     // the seeds of a new game: a draw below 2^31 (Math.random), a hash below 2^32 (hashSeed), or
-    // the digits a player types (parseSeed makes Number of them), up to 15 digits and the largest
-    // safe integer; a generated world or a level, as game.ts takes spec.seed for the game's seed
+    // the digits a player types (parseSeed makes Number of them), of any length up to the 308
+    // digits a double holds, so past the largest safe integer as well; a generated world or a
+    // level, as game.ts takes spec.seed for the game's seed
     type Case = { seed: number; level: boolean };
     forAll<Case>(
       (rng) => {
-        const kind = rng.int(0, 3);
-        const digits = Array.from({ length: rng.int(0, 14) }, () => rng.int(0, 9)).join('');
+        const kind = rng.int(0, 4);
+        const typedDigits = (length: number) =>
+          Number(`${rng.int(1, 9)}${Array.from({ length }, () => rng.int(0, 9)).join('')}`);
         const seed =
           kind === 0
             ? rng.int(0, 2 ** 31 - 1)
             : kind === 1
               ? rng.int(0, 2 ** 32 - 1)
               : kind === 2
-                ? Number(`${rng.int(1, 9)}${digits}`)
-                : 2 ** 53 - 1;
+                ? typedDigits(rng.int(0, 14))
+                : kind === 3
+                  ? typedDigits(rng.int(15, 307))
+                  : 2 ** 53 - 1;
         return { seed, level: rng.chance(0.3) };
       },
       ({ seed, level }) => {
@@ -2142,15 +2220,10 @@ describe("a save's world seed, from the outside (#470)", () => {
     );
   });
 
-  // Found while writing these, and left for a decision (see the report): parseSeed makes
-  // Number(digits) of any seed a player types as digits, so 16 digits and more can pass 2^53 - 1
-  // (the smallest, '9007199254740992'), or 1e20 for twenty-one. The game plays such a world and
-  // writes it, and the rule above then refuses the save it wrote: Continue says it is damaged.
-  it.todo('reads back the save of a seed typed as 16 digits or more (past 2^53 - 1)');
-  // Also left for a decision: a level world carries the seed its map is built from a second time,
-  // in `world.level.seed` (`mapFromLevel` reads that one, not `world.seed`), and the rule does not
-  // look at it. A text, a number other than the world's, a fraction or none there loads, and the
-  // level's props are then another world's.
+  // Left for a decision (see the report): a level world carries the seed its map is built from a
+  // second time, in `world.level.seed` (`mapFromLevel` reads that one, not `world.seed`), and the
+  // rule does not look at it. A text, a number other than the world's, a fraction or none there
+  // loads, and the level's props are then another world's.
   it.todo("holds a level's own seed (world.level.seed) to the seed of its world");
 });
 
@@ -2748,7 +2821,7 @@ const bundled = (save: unknown) => ({
 /**
  * What a text is by the rules of issue #78, written from the issue and apart from the loader: not
  * JSON; not a save (no object with a numeric seed, once a diagnostics bundle is opened); damaged
- * (a field every version since v1 has is missing or of another type, the seed is not a safe
+ * (a field every version since v1 has is missing or of another type, the seed is not an
  * integer, or the world it describes is not of that seed: #470); else a save.
  */
 function verdictOf(raw: string): SaveRefusal | 'save' {
@@ -2779,10 +2852,8 @@ function verdictOf(raw: string): SaveRefusal | 'save' {
       ? Number(named)
       : NaN;
   const worldOk =
-    Number.isSafeInteger(j.seed) &&
-    (world === undefined ||
-      world === null ||
-      (Number.isSafeInteger(readable) && readable === j.seed));
+    Number.isInteger(j.seed) &&
+    (world === undefined || world === null || (Number.isInteger(readable) && readable === j.seed));
   return whole && worldOk ? 'save' : 'damaged';
 }
 /** The file in a text the way `verdictOf` finds it; only for a text it finds a file in. */
