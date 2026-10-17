@@ -118,5 +118,44 @@
     "cyanWaterPct": 0,
     "lumP99": 167.5112,
     "look": "checks/tree-mangrove-3-look.png"
+  },
+  "tree-willow-1.png": {
+    "returned": [
+      1254,
+      1254
+    ],
+    "edgePixels": 0,
+    "partialAlphaPct": 10.807839157121453,
+    "box": [
+      85,
+      41,
+      1183,
+      1199
+    ],
+    "footAuto": [
+      725,
+      1199
+    ],
+    "foot": [
+      630,
+      1195
+    ],
+    "anchor": [
+      630,
+      1044.4782608695652
+    ],
+    "kind": "willow",
+    "height": 40,
+    "k": 0.03986135181975736,
+    "drawn": {
+      "width": 52.569150779896006,
+      "footFromCentre": -0.19133448873483533,
+      "belowFoot": 0.15944540727902945
+    },
+    "overCursorWhite": 0,
+    "amberStrength": 0,
+    "cyanWaterPct": 0,
+    "lumP99": 162.7374,
+    "look": "checks/tree-willow-1-look.png"
   }
 }
