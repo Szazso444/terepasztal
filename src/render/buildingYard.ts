@@ -240,8 +240,13 @@ export function buildingYard(
   };
   const shown = new Set<string>();
   for (const d of ground.doors) {
-    const [px, py] = d.point,
-      [tx, ty] = groundTiles(px * k, py * k);
+    // the door's point is where its opening meets the ground in the picture, a step or more above
+    // its wall's foot line: the door stands on that line, straight below the point
+    const [a, b] = WALL[d.side],
+      [ax, ay] = ground.foot[a],
+      [bx, by] = ground.foot[b],
+      t = bx === ax ? 0.5 : Math.max(0, Math.min(1, (d.point[0] - ax) / (bx - ax))),
+      [tx, ty] = groundTiles((ax + (bx - ax) * t) * k, (ay + (by - ay) * t) * k);
     path(site.x + tx, site.y + ty, d.side, cx + d.reach[0], cy + d.reach[1]);
     shown.add(`${cx + d.tile[0]},${cy + d.tile[1]},${d.side}`);
   }
@@ -599,8 +604,9 @@ export class BuildingYards {
     source: Uint8ClampedArray,
     part: number[],
   ) {
+    // the kerb's foot line is the yard's paint too: it takes only the yard's share of the point
     const i = this.yard,
-      foot = this.foot;
+      foot = 1 - (1 - this.foot) * share;
     if (i < 0) {
       if (foot < 1) for (let c = 0; c < 3; c++) ground[c] *= foot;
       return;
