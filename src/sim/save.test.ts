@@ -13,6 +13,8 @@ import {
   readSaveText,
   parseSave,
   readSave,
+  storedRefusal,
+  slotRefusal,
   writeSave,
   importSave,
   listSlots,
@@ -2225,6 +2227,273 @@ describe("a save's world seed, from the outside (#470)", () => {
   // rule does not look at it. A text, a number other than the world's, a fraction or none there
   // loads, and the level's props are then another world's.
   it.todo("holds a level's own seed (world.level.seed) to the seed of its world");
+});
+
+// The rule of #470 checked once more, for what the two blocks above leave open: the digits a
+// player types held as text, the ground every path that builds a world gives a text seed, the
+// refusal the screens name, text read as Number() reads it (the conversion the issue names), a
+// file of any version read with a text seed as it is read with the number, and no new version.
+describe("a save's world seed: typed digits, the ground made from it, the version (#470)", () => {
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+  });
+  const small = { ...DEFAULT_MAP_PARAMS, w: 32, h: 32 };
+  const gen = generatorOf('simple');
+  const generated = (seed: unknown) => ({ kind: 'generated', seed, params: small });
+  /** The text of the full fixture whose own seed is `top` and whose world is `world`. */
+  const textOf = (top: unknown, world: unknown) =>
+    JSON.stringify({ ...buildSave(fullParts()), seed: top, world });
+  const verdict = (raw: string) => {
+    const read = readSaveText(raw);
+    return 'save' in read ? 'save' : read.error;
+  };
+  const loaded = (raw: string): SaveGame => {
+    const read = readSaveText(raw);
+    if (!('save' in read)) throw new Error(`refused as ${read.error}`);
+    return read.save;
+  };
+
+  /** Prefixes of a digit text, the shortest first, then the text without its last digit. */
+  function* shorterDigits(digits: string): Iterable<string> {
+    for (let n = 1; n < digits.length; n *= 2) yield digits.slice(0, n);
+    if (digits.length > 1) yield digits.slice(0, -1);
+  }
+
+  it('reads the digits a player typed, held as text, as the number the game made of them', () => {
+    // parseSeed makes Number of digits, however many, and the game saves that number; 1 to 308
+    // digits are always a finite one
+    forAll<string>(
+      (rng) => {
+        const count = rng.chance(0.4) ? rng.int(1, 15) : rng.int(16, 308);
+        const rest = Array.from({ length: count - 1 }, () => rng.int(0, 9)).join('');
+        return `${rng.int(1, 9)}${rest}`;
+      },
+      (digits) => {
+        const seed = Number(digits);
+        const save = loaded(textOf(seed, generated(digits)));
+        expect(save.seed).toBe(seed);
+        expect(save.world?.seed).toBe(seed);
+        // it is the number the game writes: read again, it is the same save
+        expect(readSaveText(JSON.stringify(save))).toEqual({ save });
+      },
+      { shrink: shorterDigits },
+    );
+  });
+
+  it('takes two digit texts that make one number for one world, and too many digits for none', () => {
+    // 2^53 + 1 has no double of its own: typed as digits it is played, and saved, as 2^53
+    const texts = ['9007199254740992', '9007199254740993'];
+    const seed = Number(texts[0]);
+    expect(texts.map(Number), 'the two texts make one number').toEqual([seed, seed]);
+    for (const digits of texts)
+      expect(loaded(textOf(seed, generated(digits))).world?.seed, digits).toBe(seed);
+    expect(verdict(textOf(seed, generated('9007199254740994')))).toBe('damaged');
+    // 1e308 has 309 digits and is a number; nine 309 times over is more than a double holds, and
+    // Infinity is no seed whatever the file's seed is
+    expect(loaded(textOf(1e308, generated(`1${'0'.repeat(308)}`))).world?.seed).toBe(1e308);
+    for (const count of [309, 310, 400])
+      for (const top of [Number.MAX_VALUE, 1e308, 0])
+        expect(verdict(textOf(top, generated('9'.repeat(count)))), `${count} nines, ${top}`).toBe(
+          'damaged',
+        );
+  });
+
+  it('reads text as Number() reads it, the conversion the issue names, and no more leniently', () => {
+    for (const v of [0, 7, 255, 777, 65536, 2 ** 31]) {
+      const forms = [
+        `${v}`,
+        `+${v}`,
+        `${v}.0`,
+        `${v}.`,
+        `${v}e0`,
+        `${v}E+0`,
+        `${v}000e-3`,
+        `00${v}`,
+        ` \t${v}\n`,
+        `0x${v.toString(16)}`,
+        `0b${v.toString(2)}`,
+        `0o${v.toString(8)}`,
+      ];
+      for (const held of forms)
+        expect(loaded(textOf(v, generated(held))).world?.seed, `${v} as ${held}`).toBe(v);
+      // the sign is part of the number
+      if (v !== 0) {
+        expect(verdict(textOf(v, generated(`-${v}`))), `-${v} for ${v}`).toBe('damaged');
+        expect(verdict(textOf(-v, generated(`${v}`))), `${v} for -${v}`).toBe('damaged');
+        expect(loaded(textOf(-v, generated(`-${v}`))).world?.seed, `-${v}`).toBe(-v);
+      }
+    }
+    // each is no number to Number(), though a parse that cuts the text short reads the seed at the
+    // top out of it
+    const notNumbers: [number, string][] = [
+      [1, '1_000'],
+      [1, '1,000'],
+      [1, '1 000'],
+      [12, '12px'],
+      [1, '1e'],
+      [0, '0x'],
+      [0, '0b2'],
+      [0, '0o8'],
+      [0, '.'],
+      [0, '+'],
+      [0, '-'],
+      [0, '-0x10'],
+      [1, '１'],
+      [1, '١'],
+    ];
+    for (const [top, held] of notNumbers)
+      expect(verdict(textOf(top, generated(held))), `${top} and ${JSON.stringify(held)}`).toBe(
+        'damaged',
+      );
+  });
+
+  it('refuses any value in place of a world that is no description, falsy or not', () => {
+    for (const world of [0, 1, -1, '', ' ', 'world', false, true, [], [0], [generated(777)]])
+      expect(verdict(textOf(777, world)), JSON.stringify(world)).toBe('damaged');
+    // a description with no seed to name a world, whatever else it holds
+    for (const world of [{}, { kind: 'generated' }, { params: small }])
+      expect(verdict(textOf(777, world)), JSON.stringify(world)).toBe('damaged');
+    // nothing and null are no world: the game makes it from the seed
+    for (const world of [null, undefined]) expect(verdict(textOf(777, world))).toBe('save');
+  });
+
+  it('does not read the seed of the file itself as text: that is no save at all', () => {
+    // the world cannot be asked which seed wins when the file's own is no number
+    for (const top of ['777', ' 777 ', '0', '', null, true, [], [777], {}])
+      for (const world of [generated(777), generated('777'), generated(top), null, undefined]) {
+        const at = `${JSON.stringify(top)} and ${JSON.stringify(world)}`;
+        expect(verdict(textOf(top, world)), at).toBe('notSave');
+        expect(verdict(JSON.stringify(bundled(JSON.parse(textOf(top, world))))), at).toBe(
+          'notSave',
+        );
+      }
+  });
+
+  it('adds no format version and no load note: a text seed reads as the file it is', () => {
+    const raw = textOf(777, generated('777'));
+    const save = loaded(raw);
+    expect(save.version).toBe(SAVE_VERSION);
+    expect(save.loadedFrom).toBeUndefined();
+    expect(save.migrationNotes).toBeUndefined();
+    // and no key the file did not have
+    expect(Object.keys(save).sort()).toEqual(Object.keys(JSON.parse(raw)).sort());
+    expect(KNOWN_SAVE_KEYS.has('seed')).toBe(true);
+    for (const key of Object.keys(save)) expect(KNOWN_SAVE_KEYS.has(key), key).toBe(true);
+  });
+
+  // 100 files of every version: about 0.2 s alone
+  it('loads a file of any version with its world seed as text as it loads with the number', () => {
+    let varied = 0;
+    forAll<Record<string, unknown>>(
+      genOldFile,
+      (file) => {
+        if (!isObject(file.world)) return;
+        varied++;
+        const seed = file.world.seed as number;
+        const want = readSaveText(JSON.stringify(file));
+        // the files are generated whole, so the comparison is of two saves and not of two refusals
+        if (file.seed === seed) expect('save' in want, 'the file loads').toBe(true);
+        for (const held of [String(seed), ` ${seed}\n`, `${seed}.0`, `${seed}e0`]) {
+          const got = readSaveText(
+            JSON.stringify({ ...file, world: { ...file.world, seed: held } }),
+          );
+          expect(got, `world seed ${JSON.stringify(held)}`).toEqual(want);
+        }
+      },
+      { shrink: shrinkOldFile, shrinkBudget: 300 },
+    );
+    expect(varied).toBeGreaterThan(0);
+  });
+
+  // 6 seeds, a map of 32 x 32 generated once each and read back from 3 texts: about 1 s alone
+  it('reads the ground stored for a seed past 2^53 - 1 back as stored, from any text of it', () => {
+    // the chunk heads hold such a seed as its float64 (chunks.ts); the world loaded from a text of
+    // it must be of that very number, or its stored ground is read under another seed
+    const seeds = [2 ** 53, 2 ** 53 + 2, Number('12345678901234567890'), 1e20, 2 ** 60, 1e100];
+    for (const seed of seeds) {
+      const world: GeneratedWorld = { kind: 'generated', seed, params: { ...small } };
+      const made = groundOf(world, gen);
+      expect(made.added.length, `seed ${seed}: ground made`).toBeGreaterThan(0);
+      for (const held of [seed, String(seed), ` ${seed}\n`]) {
+        const save = loaded(textOf(seed, { ...world, seed: held }));
+        const built = groundOf(save.world as GeneratedWorld, noGround);
+        const at = `seed ${seed} held as ${JSON.stringify(held)}`;
+        expect(built.added, at).toEqual([]);
+        expect(built.unreadable, at).toEqual([]);
+        expect(built.chunks, at).toEqual(made.chunks);
+        const where = firstPlaneDifference(built.map, made.map);
+        if (where) throw new Error(`${at}: ${where}`);
+      }
+    }
+  }, 30_000);
+
+  // 4 seeds, the ground of each made for the number and for the text, twice over: about 0.5 s alone
+  it('gives a stored save with a text seed the ground of the number, in the start-up pass', () => {
+    const store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+    try {
+      for (const seed of [0, 777, 2 ** 32 - 1, 2 ** 53 + 2]) {
+        const want = groundOf({ kind: 'generated', seed, params: { ...small } }, gen);
+        const raw = textOf(seed, generated(String(seed)));
+        const readsAsNumber = (world: unknown, at: string) => {
+          const built = groundOf(world as GeneratedWorld, noGround);
+          expect(built.added, at).toEqual([]);
+          expect(built.chunks, at).toEqual(want.chunks);
+          expect(built.map.seed, at).toBe(seed);
+        };
+        const out = withGround(raw, () => gen);
+        expect(out, `seed ${seed}: ground to add`).not.toBeNull();
+        readsAsNumber(loaded(out!).world, `seed ${seed}, withGround`);
+        store.items.clear();
+        store.items.set(SAVE_KEY, raw);
+        store.items.set(SLOTS_KEY, JSON.stringify({ a: raw }));
+        expect(
+          freezeStoredSaves(() => gen),
+          `seed ${seed}`,
+        ).toEqual({
+          ran: true,
+          frozen: 2,
+          refused: 0,
+          tooLarge: 0,
+        });
+        readsAsNumber(readSave()?.world, `seed ${seed}, Continue`);
+        readsAsNumber(readSlot('a')?.world, `seed ${seed}, a named save`);
+      }
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }, 30_000);
+
+  it('is refused as damaged where the screens ask why, and kept stored to be deleted', () => {
+    const store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+    try {
+      const good = textOf(777, generated('777'));
+      const refused = {
+        disagreeing: textOf(777, generated('778')),
+        fraction: textOf(777.5, generated(777.5)),
+        notNumber: textOf(777, generated('x')),
+        missing: textOf(777, { kind: 'generated', params: small }),
+      };
+      store.items.set(SAVE_KEY, good);
+      expect(storedRefusal()).toBeNull();
+      expect(readSave()?.world?.seed).toBe(777);
+      for (const [name, bad] of Object.entries(refused)) {
+        store.items.set(SAVE_KEY, bad);
+        expect(storedRefusal(), name).toBe('damaged');
+        expect(readSave(), name).toBeNull();
+        expect(continueMeta(), name).toBeNull();
+        expect(store.items.get(SAVE_KEY), `${name} stays stored`).toBe(bad);
+      }
+      const slots = { good, ...refused };
+      store.items.set(SLOTS_KEY, JSON.stringify(slots));
+      expect(slotRefusal('good')).toBeNull();
+      for (const name of Object.keys(refused)) expect(slotRefusal(name), name).toBe('damaged');
+      expect(JSON.parse(store.items.get(SLOTS_KEY)!)).toEqual(slots);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe('storage', () => {
