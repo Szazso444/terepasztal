@@ -58,6 +58,15 @@ Proposed palette seeds, to tune together in `src/art/palette.ts`: forest `#29463
 placement. These are suggested base colours, not an instruction to recolour all stock green.
 Use restrained oxblood, midnight blue, ochre and industrial orange for livery variety.
 
+Every packed atlas texel goes through one cap pass, `tools/atlas-cap.mjs`, after resampling: alpha
+under 16 is dropped and 250 and over made solid; a texel at or above the cursor white `#ECE4D0`
+(`PAL.white`) in all three channels is scaled to at most (235, 227, 207), and one as strong as
+the selection amber `#E8AA48` (`PAL.amber`; hue 25 to 50 degrees, saturation 0.62 and value
+0.85 or more) is toned to saturation 0.6 and value 0.88, both keeping their hue. A set with a
+large lit area over the cursor white's luma (the Fuel Pump, `LIT_FRAMES`) has its luma above 0.85
+compressed smoothly under that luma instead. `tools/atlas-cap.test.mjs` checks every atlas in
+`public/assets` against it. What a painting leaves over the caps is brought under them at packing.
+
 ## 2. Terrain, biomes and tile joins
 
 ![Proposed terrain and biome direction](images/01-land-biomes.png)

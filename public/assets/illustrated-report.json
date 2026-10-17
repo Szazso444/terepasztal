@@ -1225,25 +1225,57 @@
       "frames": 43,
       "uniqueImages": 34,
       "width": 3544,
-      "height": 199
+      "height": 199,
+      "capped": {
+        "texels": 126845,
+        "haze": 0,
+        "solid": 126845,
+        "white": 224,
+        "amber": 0,
+        "compressed": 0
+      }
     },
     "terrain": {
       "frames": 54,
       "uniqueImages": 47,
       "width": 4066,
-      "height": 615
+      "height": 615,
+      "capped": {
+        "texels": 160146,
+        "haze": 1464,
+        "solid": 158664,
+        "white": 4821,
+        "amber": 18,
+        "compressed": 0
+      }
     },
     "structures": {
       "frames": 92,
       "uniqueImages": 59,
       "width": 3993,
-      "height": 1142
+      "height": 1142,
+      "capped": {
+        "texels": 2982525,
+        "haze": 44267,
+        "solid": 2938155,
+        "white": 13774,
+        "amber": 966,
+        "compressed": 0
+      }
     },
     "icons": {
       "frames": 18,
       "uniqueImages": 18,
       "width": 1060,
-      "height": 84
+      "height": 84,
+      "capped": {
+        "texels": 28470,
+        "haze": 531,
+        "solid": 27939,
+        "white": 0,
+        "amber": 134,
+        "compressed": 0
+      }
     }
   }
 }

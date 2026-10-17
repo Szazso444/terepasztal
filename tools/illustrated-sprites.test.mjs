@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { PNG } from 'pngjs';
 import {
+  inkBox,
   trimSource,
   resample,
   groundTile,
@@ -48,6 +49,32 @@ describe('illustrated atlas conversion', () => {
     expect(clean.data[3]).toBeGreaterThan(0);
     expect(clean.data[3]).toBeLessThan(255);
     expect(p.data[3]).toBe(30);
+  });
+  it('trims by a given box instead of the picture`s own alpha box', () => {
+    // a 10x6 picture: a solid body at x 2..5, y 1..4, and a detached arm out to x 8
+    const p = new PNG({ width: 10, height: 6 });
+    for (let y = 1; y <= 4; y++)
+      for (let x = 2; x <= 5; x++) p.data.set([90, 80, 70, 255], (y * 10 + x) * 4);
+    p.data.set([90, 80, 70, 255], (2 * 10 + 8) * 4);
+    expect(inkBox(p)).toEqual([2, 1, 8, 4]);
+    const own = trimSource(p);
+    expect([own.width, own.height]).toEqual([7, 4]);
+    // the body's box leaves the arm out; the same box as the alpha box gives the same picture
+    const body = trimSource(p, [2, 1, 5, 4]);
+    expect([body.width, body.height]).toEqual([4, 4]);
+    expect(body.data.every((v, i) => (i % 4 === 3 ? v === 255 : true))).toBe(true);
+    expect(trimSource(p, inkBox(p)).data.equals(own.data)).toBe(true);
+    // a box may reach past the ink, into the transparent canvas
+    const wide = trimSource(p, [0, 0, 9, 5]);
+    expect([wide.width, wide.height]).toEqual([10, 6]);
+    expect(wide.data[3]).toBe(0);
+    for (const bad of [
+      [-1, 0, 5, 4],
+      [2, 1, 10, 4],
+      [5, 1, 2, 4],
+      [2, 1.5, 5, 4],
+    ])
+      expect(() => trimSource(p, bad), `${bad}`).toThrow(/not inside/);
   });
   it('projects a flat opaque diamond without copying source-border colors', () => {
     const p = new PNG({ width: 100, height: 100 });

@@ -1,5 +1,8 @@
 /** Build high-resolution, partial atlas overrides from the approved source library.
  * node tools/illustrated-sprites.mjs [output directory]
+ * Every frame goes through the atlas cap pass (tools/atlas-cap.mjs) after resampling, before it
+ * is packed; the report says per group what the pass changed. Run tools/finish-fields.mjs after
+ * it, which lays the wheat frames back into props.png.
  * Uses pngjs (existing dev dependency); no model call or runtime dependency.
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -8,13 +11,20 @@ import { createHash } from 'node:crypto';
 import { PNG } from 'pngjs';
 import { isMain } from './is-main.mjs';
 import { smoothPng } from './pixel-art.mjs';
+import { addCounts, capFrame } from './atlas-cap.mjs';
 
 const DENSITY = 4;
 const SOURCE = 'assets/source/base-v1';
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8').replace(/^\uFEFF/, ''));
 
-/** Remove only the low-alpha glow; keep coverage at the object's antialiased edge. */
-export function trimSource(input) {
+/**
+ * Remove only the low-alpha glow; keep coverage at the object's antialiased edge. The result is
+ * cropped to what is left (alpha above 64, `inkBox`), or to `box` when one is given:
+ * [left, top, right, bottom] in source pixels, inclusive, inside the picture. A box packs a
+ * picture by a measured frame instead of its own outline, for a picture whose ink reaches past
+ * the part the frame stands for (the windmill body's hub box, #461).
+ */
+export function trimSource(input, box) {
   const p = new PNG({ width: input.width, height: input.height });
   input.data.copy(p.data);
   let left = p.width,
@@ -37,6 +47,20 @@ export function trimSource(input) {
       bottom = Math.max(bottom, y);
     }
   if (right < left) throw new Error('Source is empty after glow removal');
+  if (box) {
+    const [l, t, r, b] = box;
+    if (
+      ![l, t, r, b].every(Number.isInteger) ||
+      l < 0 ||
+      t < 0 ||
+      r >= p.width ||
+      b >= p.height ||
+      r < l ||
+      b < t
+    )
+      throw new Error(`Trim box [${box}] is not inside the ${p.width}x${p.height} picture`);
+    [left, top, right, bottom] = [l, t, r, b];
+  }
   const out = new PNG({ width: right - left + 1, height: bottom - top + 1 });
   for (let y = 0; y < out.height; y++)
     p.data.copy(
@@ -46,6 +70,23 @@ export function trimSource(input) {
       ((y + top) * p.width + right + 1) * 4,
     );
   return out;
+}
+
+/** The box [left, top, right, bottom] (inclusive) `trimSource` crops to by itself: alpha above 64. */
+export function inkBox(input) {
+  let left = input.width,
+    top = input.height,
+    right = -1,
+    bottom = -1;
+  for (let y = 0; y < input.height; y++)
+    for (let x = 0; x < input.width; x++)
+      if (input.data[(y * input.width + x) * 4 + 3] > 64) {
+        left = Math.min(left, x);
+        top = Math.min(top, y);
+        right = Math.max(right, x);
+        bottom = Math.max(bottom, y);
+      }
+  return right < left ? null : [left, top, right, bottom];
 }
 
 /** Exact area resampling in premultiplied alpha; preserve partial pixel coverage. */
@@ -274,6 +315,14 @@ export function build(output = 'public/assets') {
       deferred: [],
       groups: {},
     };
+  // the cap pass (tools/atlas-cap.mjs) on every frame, after resampling; what it changed, by group
+  const caps = new Map();
+  const capped = (f, png) => {
+    const result = capFrame(f.key, png);
+    if (!caps.has(f.group)) caps.set(f.group, {});
+    addCounts(caps.get(f.group), result.counts);
+    return result.png;
+  };
   for (const entry of Object.values(coverage.categories).flat()) {
     const matches = targets(entry, inventory);
     if (!matches.length) {
@@ -364,6 +413,7 @@ export function build(output = 'public/assets') {
         // Nature is pixel art; round its steps into the painted style of trains and buildings.
         if (f.group === 'props') png = smoothPng(png, 2);
       }
+      png = capped(f, png);
       if (!groups.has(f.group)) groups.set(f.group, []);
       groups.get(f.group).push({ key: f.key, png, ax, ay });
       names.push(f.key);
@@ -395,6 +445,8 @@ export function build(output = 'public/assets') {
       uniqueImages: packed.unique,
       width: packed.sheet.width,
       height: packed.sheet.height,
+      // texels the cap pass changed, summed over the frames (a picture shared by two keys counts twice)
+      capped: caps.get(name),
     };
   }
   writeFileSync(join(output, 'illustrated-report.json'), JSON.stringify(report, null, 2) + '\n');
