@@ -1085,6 +1085,8 @@ describe('the harvest highlight in a whole world', () => {
     }
   });
 
+  // slow because a whole world is built for each of 12 seeds and run for up to 40 frames: 0.40 s
+  // alone, so a limit of 30 s
   it('follows the relief on the frames its landscape says it moved, and on no others', () => {
     forAll(
       (rng) => Array.from({ length: rng.int(1, 40) }, () => rng.chance(0.25)),
@@ -1112,10 +1114,10 @@ describe('the harvest highlight in a whole world', () => {
           expect(centres(world.harvest.layer), `frame ${f}`).toEqual(grounds(world, 4, 4, 'farm'));
         });
       },
-      // a whole world per case: twelve seeds, some 240 frames, keep it well inside the default limit
+      // a whole world per case: twelve seeds, some 240 frames, keep it well inside its limit
       { seeds: SEEDS.slice(0, 12), shrink: (moves) => shrinkArray(moves) },
     );
-  });
+  }, 30_000);
 });
 
 /** Prop pictures for the fields below: a field covers its tile, a tree stands on it. */

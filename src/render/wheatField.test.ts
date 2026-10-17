@@ -126,6 +126,8 @@ describe('a wheat field tile', () => {
     expect(siteKey(site(g, 5, 5))).not.toBe(before);
   });
 
+  // slow because two fields' tiles are painted texel by texel, alone, in reverse and a column at a
+  // time by turns: 2.8 s alone, so a limit of 60 s
   it('gives the same bytes for the same inputs, whatever was painted before or alongside it', () => {
     const g = field(ground(), 3, 3, 5, 5),
       other = field(ground(), 9, 9, 11, 10),
@@ -145,8 +147,10 @@ describe('a wheat field tile', () => {
     }
     expect(a.result).toEqual(alone.get(at(4, 4)));
     expect(b.result).toEqual(alone.get(at(5, 3)));
-  });
+  }, 60_000);
 
+  // slow because a field's tiles are painted and every texel of every picture is matched to its
+  // neighbours': 0.75 s alone, so a limit of 30 s
   it('divides a field with its neighbours texel by texel: no texel twice, no doubled alpha', () => {
     const g = field(ground(), 3, 3, 6, 5);
     g.fields.delete(at(6, 5));
@@ -184,7 +188,7 @@ describe('a wheat field tile', () => {
         }
     }
     expect(skirt).toBeGreaterThan(0);
-  });
+  }, 30_000);
 
   it('gives a point deep inside a field to exactly one tile, fully covered', () => {
     const g = field(ground(), 3, 3, 5, 5);
@@ -276,6 +280,8 @@ describe('a wheat field tile', () => {
       }
   });
 
+  // slow because a field is painted in three palettes and every texel of every picture is checked:
+  // 0.89 s alone, so a limit of 30 s
   it('keeps every texel under the cursor white and short of the selection amber', () => {
     for (const frames of [
       [frame(255, 255, 250), frame(240, 236, 220), frame(255, 250, 240)],
@@ -293,7 +299,7 @@ describe('a wheat field tile', () => {
         }
       }
     }
-  });
+  }, 30_000);
 });
 
 describe("a wheat field at a building's foot", () => {
