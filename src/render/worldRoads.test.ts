@@ -25,8 +25,10 @@ import {
   roadCode,
   roadPath,
   roadShape,
+  shapeDistance,
   type RoadShape,
 } from './roadShape';
+import { roadWalks } from './roadWalk';
 import type { PavingDoor } from './townPaving';
 import { WorldRenderer } from './worldRenderer';
 
@@ -979,4 +981,49 @@ describe('the roads of a scene the simulation allows (property)', () => {
     console.log('SEEN3', seamPoints);
     expect(seamPoints).toBeGreaterThan(20_000);
   }, 60_000);
+});
+
+describe('walkers on the roads the world draws (#477)', () => {
+  /** An L of road: tiles (2,3), (3,3) and (3,4); its turn is the tile (3,3). */
+  function turn() {
+    const w = roadWorld();
+    for (const [x, y] of [
+      [2, 3],
+      [3, 3],
+      [3, 4],
+    ])
+      w.lay(x, y);
+    return w;
+  }
+
+  it('hands the people renderer the road walk of the world, by its object layer', () => {
+    const w = roadWorld();
+    expect(roadWalks.get(w.world.objects)).toBe(w.world.roadWalk);
+  });
+
+  it('draws a walker at the turn on the centre line the painter was handed', () => {
+    const w = turn(),
+      code = w.codes().get(3 * 8 + 3)!,
+      shape = roadShape(code, 3 + w.map.originX, 3 + w.map.originY);
+    // the sim has it at the tile middle; it is drawn on the line, a hair to the right of it
+    const at = w.world.roadWalk.place(3, 3, 1, 0);
+    expect(shapeDistance(shape, at.x - 3, at.y - 3)).toBeLessThanOrEqual(0.04);
+  });
+
+  it('follows the roads laid and lifted, and leaves a walker where it is once the road is gone', () => {
+    const w = turn();
+    const on = w.world.roadWalk.place(3, 3, 1, 0);
+    expect(on.x !== 3 || on.y !== 3).toBe(true);
+    w.lift(3, 3);
+    expect(w.world.roadWalk.place(3, 3, 1, 0)).toEqual({ x: 3, y: 3 });
+    // a lone road tile's centre is the middle of the tile
+    const lone = w.world.roadWalk.place(3, 4, 0, 1);
+    expect(Math.hypot(lone.x - 3, lone.y - 4)).toBeLessThanOrEqual(0.04);
+  });
+
+  it('draws no road under the town paving: a walker there stays where it is', () => {
+    const w = turn();
+    w.world.setCity(new Set([3 * 8 + 3]));
+    expect(w.world.roadWalk.place(3, 3, 1, 0)).toEqual({ x: 3, y: 3 });
+  });
 });
