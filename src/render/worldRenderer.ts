@@ -31,7 +31,7 @@ import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, Material, materialAt } from './landscapeModel';
 import { scaleReference, TREE_SCALE, isTree, type ScaleReference } from './assetScale';
-import { SurfaceAssets, windowSprite } from './surfaceAssets';
+import { SurfaceAssets, fieldFrames, fieldTexture, windowSprite } from './surfaceAssets';
 import { footGround, footScatter, type Foot } from './groundFit';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
@@ -58,6 +58,18 @@ import { HarvestHighlight } from './harvestHighlight';
 import { groundOf as groundDataOf, type FrameGround } from '../art/buildingGround';
 import { buildingYard, footprintTiles, sameYard, yardTiles, type Yard } from './buildingYard';
 import { plinthColour, plinthOf, plinthShapes } from './plinth';
+import {
+  CELL_BLOCKED,
+  CELL_FIELD,
+  CELL_OPEN,
+  RUN_S,
+  RUN_W,
+  readSite,
+  type FieldCell,
+  type FieldFrame,
+  type FieldPicture,
+} from './wheatField';
+import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -229,6 +241,37 @@ export class WorldRenderer {
   private waterClock = 0;
   private rippleRefresh = 0;
   private view: { x: number; y: number; w: number; h: number } | null = null;
+  /** The wheat fields' pictures (#444), one per field tile's sprite. */
+  private wheat: WheatFields;
+  /** What the fields' pictures read of the world (`fieldSite`). */
+  private wheatHost: WheatHost;
+  /**
+   * The variants' pictures the fields are coloured from: undefined before they are asked for,
+   * 'wait' while they are read, null where none can be.
+   */
+  private fieldFrames: readonly (FieldFrame | null)[] | null | 'wait' | undefined = undefined;
+  /**
+   * The footprint tiles of the buildings with ground data, with the sides a field runs up to
+   * (RUN_W, RUN_S); worked out again after a building or its door paths change.
+   */
+  private fieldRuns: Map<number, number> | null = null;
+  /**
+   * How the fields' pictures read the variants' atlas frames (0 to 2, null for one the atlas lacks)
+   * and are made into textures: through a canvas, which Node has none of, so there the sprites
+   * keep their atlas frames. Tests hand in their own.
+   */
+  fieldArt: {
+    frames(
+      frames: readonly (FrameInfo | null)[],
+    ): Promise<(FieldFrame | null)[]> | (FieldFrame | null)[] | null;
+    texture(p: FieldPicture): Texture;
+  } = {
+    frames: (frames) =>
+      typeof document === 'undefined' || typeof createImageBitmap === 'undefined'
+        ? null
+        : fieldFrames(frames),
+    texture: (p) => fieldTexture(p),
+  };
 
   constructor(
     readonly atlas: AtlasRegistry,
@@ -237,10 +280,18 @@ export class WorldRenderer {
   ) {
     this.landscape = new Landscape(map, this.flattened, this.railBeds);
     this.harvest = new HarvestHighlight(map, (x, y) => this.surfacePoint(x, y));
+    this.wheat = new WheatFields(map.w, map.h);
+    this.wheatHost = {
+      site: (x, y) => this.fieldSite(x, y),
+      frames: () => this.readFieldFrames(),
+      texture: (p) => this.fieldArt.texture(p),
+      view: () => this.view,
+    };
     this.landscape.root.visible = false;
     this.root.on('destroyed', () => {
       this.surfaces.destroy();
       for (const fit of this.groundFits.values()) showWeeds(fit, null);
+      this.wheat.destroy();
     });
     this.objects.sortableChildren = true;
     this.piers.sortableChildren = true;
@@ -294,6 +345,8 @@ export class WorldRenderer {
         // the painter paves a town's tiles over their water too (refreshGround tells bridges)
         this.refreshGround(k % w, Math.floor(k / w));
         this.refreshScatter(k % w, Math.floor(k / w), 0);
+        // a field ends short of paving
+        this.wheat.near(k % w, Math.floor(k / w));
       }
     // a doorstep laid or taken up is painted again where it reaches
     for (const k of doorstepChanges(oldSteps, steps, w, h))
@@ -316,6 +369,8 @@ export class WorldRenderer {
    */
   roadChanged(x: number, y: number) {
     this.refreshYards((f) => Math.abs(f.x - x) < 3 && Math.abs(f.y - y) < 3);
+    // a field ends short of a road
+    this.wheat.near(x, y);
   }
   private groundFrame(x: number, y: number): string {
     if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
@@ -478,6 +533,7 @@ export class WorldRenderer {
     this.rebuildProps(x, y);
     // the track sprite follows this call: the tile counts as railed from here
     this.showProps(i, true);
+    this.wheat.near(x, y);
   }
   /** Re-create the prop sprites of one tile from the map data (after terrain edits). */
   rebuildProps(x: number, y: number) {
@@ -486,6 +542,7 @@ export class WorldRenderer {
     const list = this.map.props.get(i);
     if (list) this.buildPropsAt(i, list);
     else this.buildScatterAt(x, y);
+    this.wheat.near(x, y);
   }
 
   /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
@@ -504,6 +561,7 @@ export class WorldRenderer {
     else this.flattened.delete(i);
     this.refreshGround(x, y);
     this.showProps(i);
+    this.wheat.near(x, y);
   }
   isFlattened(x: number, y: number) {
     return this.flattened.has(idx(this.map, x, y));
@@ -535,6 +593,8 @@ export class WorldRenderer {
         const s = this.propSprite(x, y, p);
         if (!s) continue;
         if (CUT_BY_TRACK.has(p.kind)) this.cutSprites.add(s);
+        // a field shows its picture once it is painted (#444)
+        if (p.kind === 'wheat' && !this.wheat.sprite(i)) this.wheat.set(i, s);
         sprites.push(s);
       }
       if (sprites.length) {
@@ -612,6 +672,8 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     for (const s of this.propSprites.get(i) ?? []) s.destroy();
     this.propSprites.delete(i);
+    if (this.wheat.sprite(i)) this.wheat.set(i, null);
+    this.wheat.near(x, y);
   }
 
   /** One translucent diamond per revealed-but-unowned region; hidden regions draw nothing. */
@@ -748,6 +810,112 @@ export class WorldRenderer {
         w.s.texture = this.atlas.get(`${w.base}_f${this.waterFrame}`).texture;
       }
     }
+    this.updateFields();
+  }
+
+  /**
+   * Paint the wheat fields' pictures (#444) for at most `budget` ms, the tiles in view first; a
+   * picture that takes longer goes on in the next call, and is made into its texture in a call of
+   * its own. With no limit (`Infinity`), every picture there is to paint.
+   */
+  updateFields(budget = FIELD_BUDGET_MS) {
+    if (!this.wheat.busy) return;
+    const end = performance.now() + budget,
+      more = () => performance.now() < end;
+    do this.wheat.update(this.wheatHost, more);
+    while (budget === Infinity && this.wheat.busy && this.fieldFrames !== 'wait');
+  }
+  /** The variants' pictures, read once; 'wait' while they are read, null where none can be. */
+  private readFieldFrames() {
+    if (this.fieldFrames === undefined) {
+      const usable = (frames: readonly (FieldFrame | null)[] | null) =>
+        frames?.some((f) => f) ? frames : null;
+      let read: ReturnType<typeof this.fieldArt.frames> = null;
+      try {
+        read = this.fieldArt.frames(
+          [0, 1, 2].map((v) => {
+            const key = `props/wheat_${v}`;
+            return this.atlas.has(key) ? this.atlas.get(key) : null;
+          }),
+        );
+      } catch {
+        read = null;
+      }
+      if (read && 'then' in read) {
+        this.fieldFrames = 'wait';
+        read.then(
+          (frames) => (this.fieldFrames = usable(frames)),
+          () => (this.fieldFrames = null),
+        );
+      } else this.fieldFrames = usable(read);
+    }
+    return this.fieldFrames;
+  }
+  /**
+   * The site of the field tile at (x, y) (wheatField.ts), or null where its sprite shows no field:
+   * gone, hidden under track or on flattened ground, or on a tile that is no field to its
+   * neighbours either.
+   */
+  private fieldSite(x: number, y: number) {
+    const s = this.wheat.sprite(idx(this.map, x, y));
+    if (!s || s.destroyed || !s.visible || this.fieldCell(x, y).kind !== CELL_FIELD) return null;
+    const { originX, originY } = this.map;
+    return readSite(x + originX, y + originY, (wx, wy) =>
+      this.fieldCell(wx - originX, wy - originY),
+    );
+  }
+  /**
+   * What tile (x, y) is to a wheat field beside it: a building's footprint, and off the map, are
+   * blocked; a field where its wheat is drawn (not under track, not on flattened ground, its
+   * sprite not taken away, as under a station; in a region not built yet, where it will be drawn);
+   * blocked by track, a road, paving, water and anything standing there; otherwise open land. Each
+   * with its level. It reads the map and what stands on it, never which regions were built first.
+   */
+  private fieldCell(x: number, y: number): FieldCell {
+    const { w, h } = this.map;
+    if (x < 0 || y < 0 || x >= w || y >= h)
+      return { kind: CELL_BLOCKED, variant: 0, level: 0, run: 0 };
+    const i = y * w + x,
+      level = levelAt(this.map, x, y),
+      run = this.footprintRuns().get(i);
+    if (run !== undefined) return { kind: CELL_BLOCKED, variant: 0, level, run };
+    const wheat =
+      this.flattened.has(i) || this.trackSprites.has(i)
+        ? undefined
+        : this.map.props.get(i)?.find((p) => p.kind === 'wheat');
+    if (wheat && (!this.isBuilt(x, y) || this.wheat.sprite(i)))
+      return { kind: CELL_FIELD, variant: wheat.variant, level, run: 0 };
+    if (
+      this.trackSprites.has(i) ||
+      this.city.has(i) ||
+      this.map.terrain[i] === Terrain.Water ||
+      this.roadAt(x, y) ||
+      this.occupied(x, y)
+    )
+      return { kind: CELL_BLOCKED, variant: 0, level, run: 0 };
+    return { kind: CELL_OPEN, variant: 0, level, run: 0 };
+  }
+  /**
+   * The footprint tiles of the buildings with ground data (the ones with a yard, #436), each with
+   * the sides of it a wheat field runs up to: W and S (screen NW and SW), but not a side the
+   * building's yard has a door path on.
+   */
+  private footprintRuns() {
+    if (this.fieldRuns) return this.fieldRuns;
+    const { w, h } = this.map,
+      runs = new Map<number, number>();
+    for (const f of this.footings.values()) {
+      const open = (dx: number, dy: number) =>
+          !f.yard.paths.some((p) => p.dx === dx && p.dy === dy),
+        run = (open(-1, 0) ? RUN_W : 0) | (open(0, 1) ? RUN_S : 0);
+      for (const t of footprintTiles(f.ground, f.x, f.y))
+        if (t.x >= 0 && t.y >= 0 && t.x < w && t.y < h) {
+          const k = t.y * w + t.x;
+          runs.set(k, (runs.get(k) ?? RUN_W | RUN_S) & run);
+        }
+    }
+    this.fieldRuns = runs;
+    return runs;
   }
 
   /** Void ring outside the playable area so zooming out never shows raw background. */
@@ -1340,6 +1508,7 @@ export class WorldRenderer {
       this.trackMeshes.delete(i);
       this.showProps(i);
       this.refreshScatter(x, y, 0);
+      this.wheat.near(x, y);
       return;
     }
     const f = this.atlas.get(frame);
@@ -1354,6 +1523,7 @@ export class WorldRenderer {
     this.placeTrackSprite(s, x, y);
     this.showProps(i);
     this.refreshScatter(x, y, 0);
+    this.wheat.near(x, y);
   }
   /**
    * New rail profile after a track or bridge change. Tiles whose bed changed repaint their ground
@@ -1522,6 +1692,9 @@ export class WorldRenderer {
     }
     // Stations reach up to two tiles from their anchor; nature there clears away.
     this.refreshScatter(x, y, 2);
+    // and a field beside one ends short of it, or runs up to it
+    this.fieldRuns = null;
+    this.wheat.near(x - 2, y - 2, x + 2, y + 2);
     return s;
   }
   /**
@@ -1648,6 +1821,9 @@ export class WorldRenderer {
       const was = f.yard;
       f.yard = yard;
       this.yardsChanged(was, yard);
+      // a door path on its W or S side keeps a field there from running up to it
+      this.fieldRuns = null;
+      this.wheat.near(f.x - 2, f.y - 2, f.x + 2, f.y + 2);
     }
   }
   /** Hand the yards to the painter and repaint where yard `was` gave way to `now`. */
@@ -1770,7 +1946,11 @@ export class WorldRenderer {
       s.destroy();
       this.structures.delete(id);
     }
-    if (anchor) this.refreshScatter(anchor.x, anchor.y, 2);
+    if (anchor) {
+      this.refreshScatter(anchor.x, anchor.y, 2);
+      this.fieldRuns = null;
+      this.wheat.near(anchor.x - 2, anchor.y - 2, anchor.x + 2, anchor.y + 2);
+    }
   }
   getStructure(id: string) {
     return this.structures.get(id);

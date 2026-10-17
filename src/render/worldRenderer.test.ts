@@ -39,6 +39,18 @@ import { buildRelief, groundAllows } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
 import { TownPaving } from './townPaving';
 import { WATERLINE } from './bridgeMeshes';
+import {
+  CELL_BLOCKED,
+  CELL_FIELD,
+  CELL_OPEN,
+  RUN_S,
+  RUN_W,
+  fieldPicture,
+  readSite,
+  type FieldFrame,
+  type FieldPicture,
+} from './wheatField';
+import { WheatFields } from './wheatFields';
 import { WorldRenderer } from './worldRenderer';
 
 const SOURCE = new TextureSource({ width: 1024, height: 1024 });
@@ -167,6 +179,7 @@ function renderer() {
     groundSprites: [],
     elevationOf: () => 0,
     refreshScatter: () => {},
+    wheat: new WheatFields(1, 1),
   });
   const lights = () => objects.children.filter((c) => c.label === 'emissive').length;
   return {
@@ -1352,6 +1365,272 @@ function checkMixedTile(props: PropInstance[], piece: TrackPiece) {
 const named = ({ kind, cls, cls2, rot, unit }: TrackPiece) =>
   `${kind} ${cls}${cls2 ? `/${cls2}` : ''} rot ${rot}${unit ? ' (member)' : ''}`;
 
+/** The variants' pictures the fields are coloured from in these tests: rows of two shades. */
+const FIELD_FRAMES: FieldFrame[] = [
+  [190, 150, 70],
+  [176, 150, 64],
+  [200, 160, 80],
+].map(([r, g, b]) => {
+  const width = 216,
+    height = 120,
+    data = new Uint8ClampedArray(width * height * 4);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const k = (x + 2 * y) % 16 < 8 ? 1 : 0.8;
+      data.set([r * k, g * k, b * k, 255], (y * width + x) * 4);
+    }
+  return { data, width, height, density: 4, anchorX: 108, anchorY: 63 };
+});
+/** The farm halt's illustrated picture, rotation 0, the size of its atlas frame. */
+const FARM = 'structures/farm_1';
+const FIELD_ATLAS_FRAMES: Record<string, FrameInfo> = {
+  'props/wheat_0': frame(54, 29, 4),
+  'props/wheat_1': frame(54, 30, 4),
+  'props/wheat_2': frame(54, 30, 4),
+  [FARM]: frame(66, 65.5, 4),
+};
+const FIELD_ATLAS = {
+  has: (k: string) => k in FIELD_ATLAS_FRAMES || !k.startsWith('props/'),
+  get: (k: string) => FIELD_ATLAS_FRAMES[k] ?? ANY_FRAME,
+} as unknown as AtlasRegistry;
+
+/**
+ * A 12 x 12 world with wheat on `fields`, whose field pictures are painted from FIELD_FRAMES into
+ * textures that remember their pictures (`pictures`), and whose buildings take their ground fit
+ * from stand-ins, as `renderer` gives them (Node has no canvas). `building` says whether a tile is
+ * taken: the builder's `occupied`.
+ */
+function fieldWorld(fields: [number, number][]) {
+  const map = emptyMap(1, 12, 12);
+  for (const [x, y] of fields)
+    map.props.set(y * 12 + x, [{ kind: 'wheat', variant: (x * 7 + y * 5) % 3, ox: 0, oy: 0 }]);
+  const world = new WorldRenderer(FIELD_ATLAS, map, new RegionState(map)),
+    pictures = new Map<Texture, FieldPicture>(),
+    taken = new Set<string>();
+  world.fieldArt = {
+    frames: () => FIELD_FRAMES,
+    texture: (p) => {
+      const t = new Texture({ source: new TextureSource({ width: p.width, height: p.height }) });
+      pictures.set(t, p);
+      return t;
+    },
+  };
+  world.occupied = (x, y) => taken.has(`${x},${y}`);
+  Object.assign(world, {
+    surfaces: {
+      picture: pictureOf,
+      window: () => Texture.EMPTY,
+      groundFit: (key: string, _f: FrameInfo, scale: number) => {
+        const t = fitTextures(key, scale);
+        return {
+          foot: { texture: t.foot, anchorX: 0.5, anchorY: 0.8 },
+          shadow: { texture: t.shadow, anchorX: 0.3, anchorY: 0.2 },
+          feet: t.feet,
+          base: null,
+        };
+      },
+      weeds: () => null,
+      destroy: () => {},
+    },
+  });
+  /** The sprite each field tile is drawn with. */
+  const sprite = (x: number, y: number) =>
+    (world as unknown as { wheat: WheatFields }).wheat.sprite(y * 12 + x)!;
+  /** The picture each field tile shows now: null where it shows its atlas frame, or no sprite. */
+  const shown = () =>
+    new Map(
+      fields.map(([x, y]) => {
+        const s = sprite(x, y) as Sprite | undefined;
+        return [`${x},${y}`, (s && pictures.get(s.texture)) ?? null];
+      }),
+    );
+  return { world, map, pictures, taken, sprite, shown };
+}
+/** Every texture a field picture was made into that is still alive. */
+const alive = (pictures: Map<Texture, FieldPicture>) =>
+  [...pictures.keys()].filter((t) => !t.destroyed);
+
+/**
+ * A field round the farm halt's tile (5, 4), which holds none: on its W side (4, 4) and its S side
+ * (5, 5), and the tiles between them; and a field tile far off, beyond any picture's reach.
+ */
+const AROUND_FARM: [number, number][] = [
+  [3, 4],
+  [4, 4],
+  [3, 5],
+  [4, 5],
+  [5, 5],
+  [10, 10],
+];
+/** Painting a field's pictures over and over takes a while under Node. */
+const SLOW = 30_000;
+
+describe("a wheat field's picture (#444)", () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it(
+    'shows its atlas frame until it is painted, and wherever no picture can be read',
+    () => {
+      const { world, sprite, shown } = fieldWorld(AROUND_FARM);
+      expect(sprite(3, 4).texture).toBe(
+        FIELD_ATLAS_FRAMES['props/wheat_' + ((3 * 7 + 4 * 5) % 3)].texture,
+      );
+      world.updateFields(Infinity);
+      for (const [k, p] of shown()) expect(p, k).not.toBeNull();
+      // Node reads no atlas pixels: a world with the game's own art keeps the atlas frames
+      const plain = new WorldRenderer(FIELD_ATLAS, world.map, new RegionState(world.map));
+      plain.updateFields(Infinity);
+      const s = (plain as unknown as { wheat: WheatFields }).wheat.sprite(4 * 12 + 3)!;
+      expect(s.texture).toBe(FIELD_ATLAS_FRAMES['props/wheat_' + ((3 * 7 + 4 * 5) % 3)].texture);
+    },
+    SLOW,
+  );
+
+  it(
+    'paints a little each call, within its budget, and then the rest',
+    () => {
+      const { world, shown } = fieldWorld(AROUND_FARM);
+      world.updateFields(0);
+      expect([...shown().values()].filter((p) => p).length).toBeLessThan(AROUND_FARM.length);
+      world.updateFields(Infinity);
+      expect([...shown().values()].every((p) => p)).toBe(true);
+    },
+    SLOW,
+  );
+
+  it(
+    "is drawn after a building's picture, foot, weeds and plinth on its S side, and before it on its W",
+    () => {
+      const { world, taken, sprite } = fieldWorld(AROUND_FARM);
+      taken.add('5,4');
+      const s = world.setStructure('station:1', 5, 4, FARM),
+        fit = fitsOf(world).get('station:1')!;
+      world.updateFields(Infinity);
+      const south = sprite(5, 5),
+        west = sprite(4, 4);
+      // the plinth is drawn just under the picture (`fitPlinth`), so after the picture is after it
+      for (const part of [s, fit.foot, fit.weeds]) {
+        expect(south.zIndex).toBeGreaterThan(part.zIndex);
+        expect(west.zIndex).toBeLessThan(part.zIndex - 0.004);
+      }
+    },
+    SLOW,
+  );
+
+  it(
+    'runs up to a building placed beside it, and is as a fresh build paints it once it goes',
+    () => {
+      const fresh = fieldWorld(AROUND_FARM);
+      fresh.world.updateFields(Infinity);
+      const before = fresh.shown();
+      const { world, taken, shown, pictures } = fieldWorld(AROUND_FARM);
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(before);
+      taken.add('5,4');
+      world.setStructure('station:1', 5, 4, FARM);
+      world.updateFields(Infinity);
+      const beside = shown();
+      // each field round it is painted as the map reads with the farm halt's tile a footprint whose
+      // W and S sides it runs up to (it has no door path there)
+      const site = (x: number, y: number) =>
+        readSite(x, y, (cx, cy) =>
+          cx < 0 || cy < 0 || cx >= 12 || cy >= 12
+            ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: 0 }
+            : cx === 5 && cy === 4
+              ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: RUN_W | RUN_S }
+              : AROUND_FARM.some(([fx, fy]) => fx === cx && fy === cy)
+                ? { kind: CELL_FIELD, variant: (cx * 7 + cy * 5) % 3, level: 0, run: 0 }
+                : { kind: CELL_OPEN, variant: 0, level: 0, run: 0 },
+        );
+      for (const [x, y] of [
+        [4, 4],
+        [5, 5],
+        [4, 5],
+      ])
+        expect(beside.get(`${x},${y}`), `${x},${y}`).toEqual(
+          fieldPicture(site(x, y), FIELD_FRAMES),
+        );
+      expect(beside.get('4,4')).not.toEqual(before.get('4,4'));
+      // and a field out of its reach does not change
+      expect(beside.get('10,10')).toEqual(before.get('10,10'));
+      // every picture replaced was freed
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length);
+      taken.delete('5,4');
+      world.removeStructure('station:1');
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(before);
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length);
+      world.root.destroy({ children: true });
+      expect(alive(pictures)).toHaveLength(0);
+    },
+    SLOW,
+  );
+
+  it(
+    'is not drawn under track, and is painted as before when the track goes',
+    () => {
+      const fresh = fieldWorld(AROUND_FARM);
+      fresh.world.updateFields(Infinity);
+      const { world, shown, sprite, pictures } = fieldWorld(AROUND_FARM);
+      world.updateFields(Infinity);
+      world.displaceProps(3, 5, [[0, 2]]);
+      world.setTrack(3, 5, pieceFrame(makePiece('straight', 0)));
+      world.updateFields(Infinity);
+      // the railed tile shows no field, its picture freed; its neighbours end short of the track
+      expect(sprite(3, 5).visible).toBe(false);
+      expect(shown().get('3,5')).toBeNull();
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length - 1);
+      expect(shown().get('4,5')).not.toEqual(fresh.shown().get('4,5'));
+      world.setTrack(3, 5, null);
+      world.updateFields(Infinity);
+      expect(sprite(3, 5).visible).toBe(true);
+      expect(shown()).toEqual(fresh.shown());
+    },
+    SLOW,
+  );
+
+  it(
+    'counts a tile as field where its wheat is drawn: not where it was taken away, still under a signal',
+    () => {
+      const fresh = fieldWorld(AROUND_FARM);
+      fresh.world.updateFields(Infinity);
+      const { world, shown, taken, pictures } = fieldWorld(AROUND_FARM),
+        wheat = (world as unknown as { wheat: WheatFields }).wheat;
+      world.updateFields(Infinity);
+      // a station put up on it takes its sprite away (src/game.ts); the wheat stays in the map
+      taken.add('3,5');
+      world.removeProps(3, 5);
+      world.setStructure('station:9', 3, 5, 'structures/power_line', 14);
+      world.updateFields(Infinity);
+      expect(wheat.sprite(5 * 12 + 3)).toBeUndefined();
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length - 1);
+      const without = shown();
+      expect(without.get('4,5')).not.toEqual(fresh.shown().get('4,5'));
+      // gone, and its sprite not made again (as develop leaves it), it is open land: the field
+      // reaches on to it, as it would on to any open tile beside it
+      taken.delete('3,5');
+      world.removeStructure('station:9');
+      world.updateFields(Infinity);
+      expect(shown().get('4,5')).not.toEqual(without.get('4,5'));
+      expect(shown().get('4,5')).not.toEqual(fresh.shown().get('4,5'));
+      // made again, it is field once more
+      world.rebuildProps(3, 5);
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(fresh.shown());
+      // a signal or a power line stands in a field without cutting it
+      taken.add('4,5');
+      world.setStructure('decor:4,5', 4, 5, 'structures/power_line', 14);
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(fresh.shown());
+    },
+    SLOW,
+  );
+});
+
 describe('a tile of mixed props under track', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -1695,6 +1974,7 @@ describe('the town paving handed to the painter', () => {
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
       map: emptyMap(3, 4, 4),
+      wheat: new WheatFields(4, 4),
       city: new Set(),
       doorsteps: [],
       groundFits: new Map(),
@@ -1826,6 +2106,7 @@ describe('the paving of a town the simulation raises, as the game hands it over'
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
       map: w.map,
+      wheat: new WheatFields(w.map.w, w.map.h),
       city: new Set(),
       doorsteps: [],
       groundFits: new Map(),
