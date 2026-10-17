@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { FOOTPRINTS, ROTATIONS, project, diamond } from './building-kit.mjs';
-import { GREY, drawGuide, guideFile, blockOf, openingsOf, portalWall } from './building-guides.mjs';
+import { readFileSync } from 'node:fs';
+import { PNG } from 'pngjs';
+import { FOOTPRINTS, ROOT, ROTATIONS, project, diamond } from './building-kit.mjs';
+import {
+  GREY,
+  drawGuide,
+  guideFile,
+  blockOf,
+  familyBlocks,
+  openingsOf,
+  portalWall,
+} from './building-guides.mjs';
+import { loadInventory } from './building-kit.mjs';
 
 const at = (png, [x, y]) => {
   const o = (Math.round(y) * png.width + Math.round(x)) * 4;
@@ -118,5 +129,58 @@ describe('building guides', () => {
         expect(at(png, [s[0] + 8, s[1] - 12])).toEqual(solid(GREY.plinthRight));
         expect(at(png, [s[0], s[1] + 8])[3]).toBe(0);
       }
+  });
+
+  it('keeps the guide files the repository holds: every footprint, every view, pixel for pixel', () => {
+    for (const fp of Object.values(FOOTPRINTS))
+      for (const r of ROTATIONS) {
+        const kept = PNG.sync.read(readFileSync(guideFile(fp.id, r.index)));
+        const drawn = drawGuide(fp.id, r.index);
+        expect([drawn.width, drawn.height], `${fp.id}-r${r.index}`).toEqual([
+          kept.width,
+          kept.height,
+        ]);
+        expect(Buffer.compare(drawn.data, kept.data), `${fp.id}-r${r.index}`).toBe(0);
+      }
+  });
+
+  it('names a guide of its own for a family, and the footprint stays the default', () => {
+    expect(guideFile('t1', 2)).toBe(`${ROOT}/guides/t1-r2.png`);
+    expect(guideFile('t1', 2, 'fuel_stop')).toBe(`${ROOT}/guides/fuel_stop-r2.png`);
+    expect(blockOf('t1', 1, 62).z1 - blockOf('t1', 1).z0).toBe(62);
+    expect(blockOf('t1', 1)).toEqual(blockOf('t1', 1, 40));
+  });
+
+  it('gives the coaling stage the height its family asks for, and keeps the files drawn from it', () => {
+    const families = JSON.parse(readFileSync(`${ROOT}/families.json`, 'utf8'));
+    const blocks = familyBlocks(loadInventory(), families);
+    expect(blocks).toEqual([{ family: 'fuel_stop', footprint: 't1', height: 62 }]);
+    const { footprint, height } = blocks[0];
+    const fp = FOOTPRINTS[footprint];
+    for (const r of ROTATIONS) {
+      const png = drawGuide(footprint, r.index, height);
+      const b = blockOf(footprint, r.index, height);
+      expect(b.z1).toBe(b.z0 + 62);
+      // the top face is where the taller block puts it
+      expect(at(png, project(fp, 0, 0, b.z1))).toEqual(solid(GREY.top));
+      // walls up to that height, nothing above it
+      const near = (z) => [project(fp, b.x1 * 0.9, b.y1, z), project(fp, b.x1, b.y1 * 0.9, z)];
+      for (const z of [b.z0 + 45, b.z0 + 60]) {
+        expect(at(png, near(z)[0])).toEqual(solid(GREY.left));
+        expect(at(png, near(z)[1])).toEqual(solid(GREY.right));
+      }
+      // above the top edge the picture shows the top face, not a wall
+      for (const p of near(b.z1 + 6)) {
+        expect(at(png, p)).not.toEqual(solid(GREY.left));
+        expect(at(png, p)).not.toEqual(solid(GREY.right));
+      }
+      // the far top corner is on the canvas
+      const far = project(fp, b.x0, b.y0, b.z1);
+      expect(far[1]).toBeGreaterThan(0);
+      expect(far[0]).toBeGreaterThan(0);
+      // the committed file is this drawing
+      const kept = PNG.sync.read(readFileSync(guideFile(footprint, r.index, 'fuel_stop')));
+      expect(Buffer.compare(png.data, kept.data)).toBe(0);
+    }
   });
 });

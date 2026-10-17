@@ -3,9 +3,11 @@
  * A picture is painted as an edit of its guide, so every picture of a footprint comes out with the
  * same camera, scale and position. The footprint is a low plinth; on it stands a plain block whose
  * front carries a door, and whose end walls carry the portals when it is a depot. Faces are flat
- * greys by the way they look: top light, lower-left wall mid, lower-right wall dark.
+ * greys by the way they look: top light, lower-left wall mid, lower-right wall dark. The block's
+ * height is the footprint's, unless a family names its own (`blockHeight` in families.json): that
+ * family then has guides of its own, `guides/<family>-r<view>.png`.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { PNG } from 'pngjs';
 import { isMain } from './is-main.mjs';
@@ -15,6 +17,7 @@ import {
   ROTATIONS,
   WALL_INSET,
   footprintTiles,
+  loadInventory,
   project,
   wallRole,
 } from './building-kit.mjs';
@@ -49,16 +52,23 @@ const OPENINGS = {
   },
 };
 
-export function guideFile(fpId, rot) {
-  return `${ROOT}/guides/${fpId}-r${rot}.png`;
+/**
+ * Where a guide is kept: one per footprint and view. A family whose picture needs a taller block
+ * than its footprint's (`blockHeight` in families.json) has guides of its own, named by `family`.
+ */
+export function guideFile(fpId, rot, family = null) {
+  return `${ROOT}/guides/${family ?? fpId}-r${rot}.png`;
 }
 
-/** The block of a guide: tile offsets from the footprint centre, heights in game px. */
-export function blockOf(fpId, rot) {
+/**
+ * The block of a guide: tile offsets from the footprint centre, heights in game px. `height` is
+ * the block's own, above the plinth; a footprint's is the default.
+ */
+export function blockOf(fpId, rot, height = HEIGHT[fpId]) {
   const { w, h } = footprintTiles(FOOTPRINTS[fpId], rot);
   const x1 = w / 2 - WALL_INSET,
     y1 = h / 2 - WALL_INSET;
-  return { x0: -x1, y0: -y1, x1, y1, z0: PLINTH, z1: PLINTH + HEIGHT[fpId] };
+  return { x0: -x1, y0: -y1, x1, y1, z0: PLINTH, z1: PLINTH + height };
 }
 
 /** Fill a polygon given as canvas points (even-odd scanline, pixel centres). */
@@ -185,8 +195,11 @@ export function portalWall(fpId, rot) {
   return openingsOf(fpId, rot).find((o) => o.kind === 'side')?.wall ?? null;
 }
 
-/** One guide: plinth, block, and the openings of the walls the camera sees. */
-export function drawGuide(fpId, rot) {
+/**
+ * One guide: plinth, block, and the openings of the walls the camera sees. The openings stand on
+ * the plinth and have their own heights, so `height` (see `blockOf`) changes only the block's top.
+ */
+export function drawGuide(fpId, rot, height = HEIGHT[fpId]) {
   const fp = FOOTPRINTS[fpId];
   const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
   const { w, h } = footprintTiles(fp, rot);
@@ -196,7 +209,7 @@ export function drawGuide(fpId, rot) {
     { x0: -w / 2, y0: -h / 2, x1: w / 2, y1: h / 2, z0: 0, z1: PLINTH },
     { top: GREY.plinthTop, left: GREY.plinthLeft, right: GREY.plinthRight },
   );
-  const b = blockOf(fpId, rot);
+  const b = blockOf(fpId, rot, height);
   drawBox(png, fp, b, GREY);
   for (const o of openingsOf(fpId, rot)) {
     fillPoly(png, o.pts, GREY.opening);
@@ -205,16 +218,40 @@ export function drawGuide(fpId, rot) {
   return png;
 }
 
-/** Write a guide for every footprint and rotation. */
-export function writeGuides(root = '.') {
+/** The families that ask for a block of their own: `{ family, footprint, height }`. */
+export function familyBlocks(inventory, families) {
+  return inventory
+    .filter((f) => families.families[f.family]?.blockHeight !== undefined)
+    .map((f) => ({
+      family: f.family,
+      footprint: f.footprint,
+      height: families.families[f.family].blockHeight,
+    }));
+}
+
+/**
+ * Write a guide for every footprint and rotation, and a set for every family with a
+ * `blockHeight` (read from families.json and the game's data in the working directory).
+ */
+export function writeGuides(
+  root = '.',
+  blocks = familyBlocks(
+    loadInventory(),
+    JSON.parse(readFileSync(join(ROOT, 'families.json'), 'utf8')),
+  ),
+) {
   const out = [];
+  const write = (file, png) => {
+    file = join(root, file);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, PNG.sync.write(png));
+    out.push(file);
+  };
   for (const fpId of Object.keys(FOOTPRINTS))
-    for (const r of ROTATIONS) {
-      const file = join(root, guideFile(fpId, r.index));
-      mkdirSync(dirname(file), { recursive: true });
-      writeFileSync(file, PNG.sync.write(drawGuide(fpId, r.index)));
-      out.push(file);
-    }
+    for (const r of ROTATIONS) write(guideFile(fpId, r.index), drawGuide(fpId, r.index));
+  for (const b of blocks)
+    for (const r of ROTATIONS)
+      write(guideFile(b.footprint, r.index, b.family), drawGuide(b.footprint, r.index, b.height));
   return out;
 }
 
