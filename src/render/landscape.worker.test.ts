@@ -989,6 +989,52 @@ describe('the painter with roads', () => {
     expect(changed).toBeGreaterThan(laid);
   }, 30_000);
 
+  // Slow: paints four chunks and works out the paving at every pixel of the lane (about 1 s
+  // alone), so the limit is 30 s.
+  it('lays the lane of a road across the paving by its distance and axis, along x and along y alike', async () => {
+    // a road along x on row 7 and one along y on column 9, crossing in the middle of the town
+    const w = world(),
+      tiles: [number, number][] = [];
+    for (let x = 3; x <= 15; x++) tiles.push([x, 7]);
+    for (let y = 4; y <= 12; y++) if (y !== 7) tiles.push([9, y]);
+    const roads = roadList(w.map.w, w.map.h, tiles),
+      { map } = w,
+      paving = new TownPaving(map.w, map.h, map.originX, map.originY, w.city, w.doorsteps),
+      gravel = new RoadPaint(map.w, map.h, map.originX, map.originY, roads, (k) => paving.paved(k)),
+      lanes = new RoadPaint(map.w, map.h, map.originX, map.originY, roads, (k) => !paving.paved(k)),
+      out = [0, 0, 0],
+      onAxis = [0, 0, 0];
+    for (const [x, y] of CHUNKS) {
+      const a = await paint({ ...w, roads }, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          // the map is flat, so the pixel's point is the map point
+          const [tx, ty] = pointOf(a, px, py, 1),
+            tile = Math.round(ty) * map.w + Math.round(tx),
+            d = paving.near(tile) ? paving.distance(tx, ty) : -9;
+          if (d < PAVING_SOLID || !lanes.near(tile) || gravel.weigh(tx, ty, tile) > 0) continue;
+          const lane = lanes.centre(tx, ty, tile),
+            axis = lanes.axis(tx, ty, tile);
+          if (lane >= LANE_REACH) continue;
+          // on the paving, the pixel is the paving's colour at that point, with that lane
+          paving.paint(tx, ty, d, null, 1, out, lane, axis);
+          for (let c = 0; c < 3; c++)
+            if (Math.abs(a.pixels[k + c] - out[c]) > 0.51)
+              expect.fail(
+                `pixel ${px},${py} of chunk ${x},${y} at ${tx.toFixed(3)},${ty.toFixed(3)}, ` +
+                  `lane ${lane.toFixed(3)}, axis ${axis}: [${a.pixels.slice(k, k + 3).join()}], ` +
+                  `not [${out.map((v) => v.toFixed(1)).join()}]`,
+              );
+          if (lane < ROAD_HALF) onAxis[axis]++;
+        }
+    }
+    // lane pixels were checked, along both axes
+    expect(onAxis[1]).toBeGreaterThan(150);
+    expect(onAxis[2]).toBeGreaterThan(150);
+  }, 30_000);
+
   it('grows no tuft and lays no loose stone on a road, and keeps those beside it', async () => {
     const { w, roads, painter } = roaded();
     const { map } = w;

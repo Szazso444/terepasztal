@@ -18,6 +18,8 @@ import {
   ROAD_WANDER,
   ROAD_WIDTH,
   roadCode,
+  roadPath,
+  roadShape,
   roadSides,
 } from './roadShape';
 
@@ -318,4 +320,136 @@ describe('the road read for the town paving (#476)', () => {
     const far = paintOf(5, 5, new Set([0, 1]));
     expect(far.centre(4, 4, 24)).toBe(Infinity);
   });
+});
+
+describe('the centre line and axis the town paving lays its lane by, against an oracle (#476)', () => {
+  /**
+   * A random network of road tiles on a 6 x 6 map at a random world origin: its painter and, for
+   * the oracle, the tile-local polylines of every tile's centre line (`roadPath`, which samples
+   * the same primitives `compileRoad` compiles) with each tile's piece kind.
+   */
+  function network(rng: Rng) {
+    const w = 6,
+      h = 6,
+      ox = rng.int(-60, 60),
+      oy = rng.int(-60, 60),
+      tiles = new Set<number>();
+    for (let k = 0; k < w * h; k++) if (rng.chance(0.5)) tiles.add(k);
+    const has = (x: number, y: number) =>
+      x >= 0 && y >= 0 && x < w && y < h && tiles.has(y * w + x);
+    const list: number[] = [],
+      lines = new Map<number, [number, number][][]>(),
+      kinds = new Map<number, string>();
+    for (const k of tiles) {
+      const x = k % w,
+        y = Math.floor(k / w),
+        code = roadCode(roadSides(has, [], x, y), 0, null),
+        shape = roadShape(code, x + ox, y + oy);
+      list.push(k, code);
+      lines.set(k, roadPath(shape, 64));
+      kinds.set(k, shape.piece.kind);
+    }
+    return { w, h, p: new RoadPaint(w, h, ox, oy, list, () => false), lines, kinds };
+  }
+  /** The nearest the centre lines near map point (x, y) come to it, and the axis (1 x, 2 y) there. */
+  function nearest(lines: Map<number, [number, number][][]>, w: number, x: number, y: number) {
+    let best = Infinity,
+      axis = 0;
+    for (const [k, paths] of lines) {
+      const u = x - (k % w),
+        v = y - Math.floor(k / w);
+      if (Math.abs(u) > 1 || Math.abs(v) > 1) continue;
+      for (const line of paths)
+        for (let s = 0; s + 1 < line.length; s++) {
+          const [ax, ay] = line[s],
+            [bx, by] = line[s + 1],
+            ex = bx - ax,
+            ey = by - ay,
+            t = Math.max(
+              0,
+              Math.min(1, ((u - ax) * ex + (v - ay) * ey) / (ex * ex + ey * ey || 1)),
+            );
+          const d = Math.hypot(u - ax - ex * t, v - ay - ey * t);
+          if (d < best) {
+            best = d;
+            axis = Math.abs(ex) > Math.abs(ey) ? 1 : 2;
+          }
+        }
+    }
+    return { best, axis };
+  }
+  /** The most a tee's or a cross's smooth minimum takes off the distance: a quarter of its join. */
+  const SMOOTH = 0.12 / 4;
+
+  // Slow: reads 100 networks of 300 points against every line near them (about 0.5 s alone), so the
+  // limit is 10 s.
+  it('centre() is the distance to the nearest drawn centre line, junctions rounded in by a smooth minimum', () => {
+    let junction = 0,
+      plain = 0;
+    forAll(
+      (rng) => ({ rng, net: network(rng) }),
+      ({ rng, net: { w, h, p, lines, kinds } }) => {
+        for (let n = 0; n < 300; n++) {
+          const x = rng.range(0, w - 1),
+            y = rng.range(0, h - 1),
+            k = Math.round(y) * w + Math.round(x);
+          if (!p.near(k)) {
+            expect(p.centre(x, y, k), `off reach ${x}, ${y}`).toBe(Infinity);
+            continue;
+          }
+          const { best } = nearest(lines, w, x, y),
+            c = p.centre(x, y, k);
+          if (best >= 0.3) continue;
+          // are there junctions among the tiles the point can read
+          let near = false;
+          for (let j = Math.max(0, Math.round(y) - 1); j <= Math.min(h - 1, Math.round(y) + 1); j++)
+            for (
+              let i = Math.max(0, Math.round(x) - 1);
+              i <= Math.min(w - 1, Math.round(x) + 1);
+              i++
+            )
+              if (['tee', 'cross'].includes(kinds.get(j * w + i) ?? '')) near = true;
+          // a smooth minimum only takes away, by at most a quarter of the join (JOIN_MAX 0.12)
+          expect(c, `at ${x}, ${y}: oracle ${best}`).toBeLessThanOrEqual(best + 5e-3);
+          expect(c, `at ${x}, ${y}: oracle ${best}`).toBeGreaterThanOrEqual(best - SMOOTH - 5e-3);
+          if (near) junction++;
+          else {
+            plain++;
+            expect(c, `at ${x}, ${y}, no junction: oracle ${best}`).toBeCloseTo(best, 2);
+          }
+        }
+      },
+      { shrinkBudget: 0, format: () => 'a random 6 x 6 network of road tiles' },
+    );
+    // both kinds of neighbourhood were read, many times
+    expect(plain).toBeGreaterThan(2000);
+    expect(junction).toBeGreaterThan(1000);
+  }, 10_000);
+
+  // Slow: reads 100 networks of 400 points against every line near them (about 0.5 s alone), so the
+  // limit is 10 s.
+  it('axis() is the direction of the centre line the point is on, outside the middle of a junction', () => {
+    let read = 0;
+    forAll(
+      (rng) => ({ rng, net: network(rng) }),
+      ({ rng, net: { w, p, lines } }) => {
+        for (let n = 0; n < 400; n++) {
+          const x = rng.range(0, w - 1),
+            y = rng.range(0, w - 1),
+            k = Math.round(y) * w + Math.round(x);
+          if (!p.near(k)) continue;
+          const { best, axis } = nearest(lines, w, x, y),
+            i = k % w,
+            j = Math.floor(k / w);
+          // on the road, and out of the middle of the tile where wander and joins make the way
+          // ambiguous: the way the nearest line runs
+          if (best >= ROAD_HALF || Math.max(Math.abs(x - i), Math.abs(y - j)) <= 0.3) continue;
+          read++;
+          expect(p.axis(x, y, k), `at ${x}, ${y}`).toBe(axis);
+        }
+      },
+      { shrinkBudget: 0, format: () => 'a random 6 x 6 network of road tiles' },
+    );
+    expect(read).toBeGreaterThan(2000);
+  }, 10_000);
 });
