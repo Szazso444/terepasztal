@@ -90,13 +90,20 @@ and three hill/mountain/void variants present in the catalog.
   combinations; never introduce gaps or paint over the track clearance area.
 - **Water animation:** move a few highlights across four frames. No large pulsing brightness.
   Match the water hue used in submerged bridge shading.
-- **City tiles:** neutral paving and narrow connected streets. Preserve the current 3×3 visual
-  phase pattern and its continuous joins. The existing population-density trigger remains
+- **City tiles:** paving the landscape painter lays, not a tile frame (`src/render/townPaving.ts`,
+  run by the landscape worker; `terrain-production.md` has the detail). Small setts, about a tenth
+  of a tile, in a fan of arcs, lit from the upper left, in warm stone a value step below the house
+  walls and never brighter than the semantic colours. The outline wobbles slightly and rounds its
+  convex corners; over the last quarter tile the setts wear out into the ground, and a fringe of
+  packed earth fades into the ground outside. Each street door on the paving gets a doorstep. The
+  paving has no painted streets of its own. The 3×3 `terrain/city_*` frames (`src/art/terrain.ts`)
+  remain only as the fallback ground sprite when the landscape worker fails (and for a chunk not
+  painted yet), so their art is not to be removed. The existing population-density trigger remains
   gameplay-owned; art does not convert additional terrain or introduce roads with path rules.
 - **Void / locked fog:** subdued map-edge treatment distinct from ocean and buildable land.
 
 [Current terrain sheet](images/current-terrain.png) · Source: `src/art/terrain.ts`,
-`src/render/worldRenderer.ts`, `src/data/biomes.json`.
+`src/render/worldRenderer.ts`, `src/render/townPaving.ts`, `src/data/biomes.json`.
 
 ## 3. Trees, plants and natural objects
 
