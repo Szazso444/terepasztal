@@ -94,27 +94,69 @@
         ],
         "foot": [
           637,
-          950.5
+          1000
         ],
         "anchor": [
           637,
-          950.5
+          1000
         ],
         "kind": "mangrove",
         "height": 30,
-        "k": 0.037429819089207735,
+        "k": 0.03525264394829612,
         "drawn": {
-          "width": 42.580162195882714,
-          "footFromCentre": 0.3368683718028696,
-          "belowFoot": 4.772301933873986,
-          "rootSpread": 22.907049282595132
+          "width": 40.103407755581664,
+          "footFromCentre": 0.3172737955346651,
+          "belowFoot": 2.7497062279670974,
+          "rootSpread": 21.574618096357227
         },
         "overCursorWhite": 0,
         "amberStrength": 0,
         "cyanWaterPct": 0,
         "lumP99": 158.6676,
-        "look": "checks/tree-mangrove-1-attempt-2-look.png",
-        "footReadByEye": false,
+        "look": "checks/tree-mangrove-1-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 5.342902711323764,
+          "box": [
+            156,
+            149,
+            1103,
+            1078
+          ],
+          "footAuto": [
+            637,
+            950.5
+          ],
+          "foot": [
+            637,
+            950.5
+          ],
+          "anchor": [
+            637,
+            950.5
+          ],
+          "kind": "mangrove",
+          "height": 30,
+          "k": 0.037429819089207735,
+          "drawn": {
+            "width": 42.580162195882714,
+            "footFromCentre": 0.3368683718028696,
+            "belowFoot": 4.772301933873986,
+            "rootSpread": 22.907049282595132
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 158.6676,
+          "look": "checks/tree-mangrove-1-attempt-2-look.png"
+        },
+        "footReadByEye": true,
+        "footReadBy": "Core's art review of 2026-10-17 (finish F1)",
+        "footReason": "The automatic foot is the back root tip: the root ring is about 3.6:1, not 2:1, so the anchor sat about 50 px (1.9 drawn px) too high. The eye foot is the centre of the root-tip ellipse, under the trunk.",
         "lookReview": "Pass at zoom 1 and 2: dark clustered crown, upper-left light, visible arched roots, flat elliptical tip arrangement centered on water tile; no ground, water, or cast shadow; highlights subdued below the oak.",
         "failed": []
       }
@@ -213,28 +255,70 @@
           994.5
         ],
         "foot": [
-          641,
-          994.5
+          640,
+          1032
         ],
         "anchor": [
-          641,
-          994.5
+          640,
+          1032
         ],
         "kind": "mangrove",
         "height": 38,
-        "k": 0.043010752688172046,
+        "k": 0.04125950054288816,
         "drawn": {
-          "width": 56.464516129032255,
-          "footFromCentre": 0.12903225806451615,
-          "belowFoot": 6.387096774193549,
-          "rootSpread": 30.658064516129034
+          "width": 54.16547231270358,
+          "footFromCentre": 0.0742671009771987,
+          "belowFoot": 4.579804560260586,
+          "rootSpread": 29.409771986970682
         },
         "overCursorWhite": 0,
         "amberStrength": 0,
         "cyanWaterPct": 0,
         "lumP99": 153.6636,
-        "look": "checks/tree-mangrove-2-attempt-2-look.png",
-        "footReadByEye": false,
+        "look": "checks/tree-mangrove-2-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 4.8061832121262995,
+          "box": [
+            92,
+            111,
+            1185,
+            1143
+          ],
+          "footAuto": [
+            641,
+            994.5
+          ],
+          "foot": [
+            641,
+            994.5
+          ],
+          "anchor": [
+            641,
+            994.5
+          ],
+          "kind": "mangrove",
+          "height": 38,
+          "k": 0.043010752688172046,
+          "drawn": {
+            "width": 56.464516129032255,
+            "footFromCentre": 0.12903225806451615,
+            "belowFoot": 6.387096774193549,
+            "rootSpread": 30.658064516129034
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 153.6636,
+          "look": "checks/tree-mangrove-2-attempt-2-look.png"
+        },
+        "footReadByEye": true,
+        "footReadBy": "Core's art review of 2026-10-17 (finish F1)",
+        "footReason": "The automatic foot is the back root tip: the root ring is flatter than 2:1, so the anchor sat about 37 px (1.6 drawn px) too high. The eye foot is the centre of the root-tip ellipse, under the trunk.",
         "lookReview": "Pass at both zooms: broader clustered dark crown than variant 1, visible roots in depth on the waterline, centered anchor, muted highlights below the oak, no painted ground, water, or shadow.",
         "failed": []
       }
@@ -820,11 +904,11 @@
           1211
         ],
         "foot": [
-          611.5,
+          652,
           1211
         ],
         "anchor": [
-          611.5,
+          652,
           1094.2
         ],
         "kind": "willow",
@@ -832,15 +916,56 @@
         "k": 0.05136986301369863,
         "drawn": {
           "width": 73.72602739726027,
-          "footFromCentre": -1.1712328767123286,
+          "footFromCentre": 1.3253424657534245,
           "belowFoot": 0
         },
         "overCursorWhite": 0,
         "amberStrength": 0,
         "cyanWaterPct": 0,
         "lumP99": 170.3672,
-        "look": "checks/tree-willow-3-attempt-2-look.png",
-        "footReadByEye": false,
+        "look": "checks/tree-willow-3-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 8.471137972523014,
+          "box": [
+            33,
+            43,
+            1228,
+            1211
+          ],
+          "footAuto": [
+            611.5,
+            1211
+          ],
+          "foot": [
+            611.5,
+            1211
+          ],
+          "anchor": [
+            611.5,
+            1094.2
+          ],
+          "kind": "willow",
+          "height": 54,
+          "k": 0.05136986301369863,
+          "drawn": {
+            "width": 73.72602739726027,
+            "footFromCentre": -1.1712328767123286,
+            "belowFoot": 0
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 170.3672,
+          "look": "checks/tree-willow-3-attempt-2-look.png"
+        },
+        "footReadByEye": true,
+        "footReadBy": "Core's art review of 2026-10-17 (finish F1)",
+        "footReason": "The automatic foot is a front root leaning left, about 40 px (2.5 drawn px) left of the trunk, which stands at x 648 to 657. The eye foot is on the trunk axis.",
         "lookReview": "Pass at both zooms: thick gnarled trunk forks low, old spreading dome with long curtains and dark interior gaps, center foot clear, subdued moss highlights below oak cap, matching camera/light/depth; no painted ground, water or cast shadow.",
         "failed": []
       }
