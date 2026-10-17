@@ -1,23 +1,60 @@
 {
   "issue": 325,
   "branch": "art/325-buildings-v2",
-  "scope": "Only assets/source/buildings-v2/ changed by the art work; origin/develop was merged as PROMPT.md requests.",
+  "scope": "Only assets/source/buildings-v2/ changed in this repaint; no develop merge in this round.",
   "art": {
     "recorded": 8,
     "rejected": 0,
-    "attempts": 17,
+    "attempts": 26,
     "water_tower": "All four views pass the repository check and the five-percent square-plan test. Front spout appears only in r0 and r3.",
-    "fuel_stop": "All four views are recorded. R0 passes directly. R1, r2 and r3 were retained under the three-attempt rule with camera errors of 3.7, 2.8 and 9.9 degrees respectively. Their selected plan ratios pass the fifteen-percent turn test. Rear stage heights still vary from r0; the coaling stage remains a draft set.",
-    "corners": "Measured corners were used for all selected pictures. No eye correction was claimed.",
+    "fuel_stop": "Partial repaint. All four views recorded, no rejection. R0 unchanged. Every new attempt fails the height limit340. None has a camera within2 degrees; the tool retained attempt6 of each view, at2.6/3.4/3.9 degrees for r1/r3/r2. R3 front apparatus is on its short lower-right wall, chain/winch toward the near end; the long left side has two bays. Rear views have no front apparatus. The stage still changes height when turned.",
+    "corners": "R1 attempt5 uses an approximate eye reading for its outer west pier corner, with measured and used values both retained. Other new attempts use measured corners.",
     "cameraNote": "The queue tool replaces the supplied measurement note with its automatic kept-camera note when retaining a refused picture. Full selected and rejected-attempt measurements remain in raw/returns.json.",
-    "nativeFiles": "All 17 generated PNGs are preserved byte-for-byte at returned size 1254x1254. No painting was cropped, resized, recoloured or deleted. Only the repository tools fitted references and review pictures."
+    "nativeFiles": "All26 paintings in raw/returns.json are retained. Nine new PNGs are1254x1254 as returned, byte-identical to the built-in sources; no painting resized, cropped, recoloured or deleted.",
+    "newAttempts": 9,
+    "repaintOrder": ["r1", "r3", "r2"],
+    "selection": {
+      "r0": 3,
+      "r1": 6,
+      "r3": 6,
+      "r2": 6
+    },
+    "selectionReason": "No attempt passed all tests and no new attempt passed the strict camera check. After the maximum three per view the queue retained its closest camera attempts. These remain drafts, not height-approved artwork.",
+    "masterSha256": "49f701ce3e2bd4a3c4b0a2a6194fd1470a56390dda9f241dd7a82c9a2e6c6ce4",
+    "review": "review/fuel_stop.png"
   },
   "checks": {
-    "typecheck": "Passed app and tooling through a read-only host resolving the existing dependency directory; no config or dependency files changed.",
-    "lint": "Passed.",
-    "build": "Passed original Vite config with output and cache confined to .qa/.",
-    "format": "Passed the repository formatting check with --end-of-line auto for the Windows checkout, and scoped formatting of the raw records.",
-    "scope": "Passed the art role scope check; every authored change remains within assets/source/buildings-v2/.",
-    "tests": "Full run: 2752 passed, 2 failed, 2 skipped; 135 suites passed and 4 failed. The import-boundaries suite initially could not resolve eslint in this isolated checkout, and passed all 66 tests on rerun with the dependency alias. Combined: 2818 passed, 2 failed, 2 skipped. Remaining failures in unchanged origin/develop code: src/sim/ownLength.test.ts detects SIZE_LEN reads outside vehicleSpec; tools/asset-pipeline/handbuilt/run.test.mjs seed 19 loses a trailing-space path on Windows. tools/agents/ownership.test.mjs still fails to load with SyntaxError: Invalid or unexpected token. No out-of-scope fixes were made."
+    "typecheck": "Passed both app and tooling with zero diagnostics through the existing read-only dependency-resolving host.",
+    "lint": "Passed repository ESLint check.",
+    "build": "Passed original Vite configuration through the existing .qa wrapper; output/cache confined to this folder. Bundle-size warning only.",
+    "format": "Repository Prettier check passed with --end-of-line auto for Windows CRLF. Scoped raw/returns.json and raw/verification.json formatted and checked.",
+    "scope": "Art scope check against origin/develop passed; all18 paths in this repaint commit are under assets/source/buildings-v2/.",
+    "tests": "Full Node24/Vitest run:136 suites passed,3 failed.2818 tests passed,2 failed,2 skipped. Same unchanged baseline failures as the previous round: src/sim/ownLength.test.ts finds SIZE_LEN accesses outside vehicleSpec (positions1585 and1630); tools/asset-pipeline/handbuilt/run.test.mjs seed19 path consisting of a space is trimmed on Windows; tools/agents/ownership.test.mjs fails to load with SyntaxError: Invalid or unexpected token. No out-of-scope code fixes made.",
+    "buildingCheck": "fuel_stop family check:4 checked,0 failed with three camera-kept notes (r1 2.6,r2 3.9,r3 3.4 degrees). This tool result does not approve the explicit height test: every new view fails box.top<=340.",
+    "review": "Built and inspected review/fuel_stop.png; the new views remain visibly shorter than r0.",
+    "integrity": "Nine new raw files are byte-identical to built-in source outputs. All17 previous raw paintings, all4 water_tower pictures and the coaling r0 master are unchanged. Printed prompts and mandatory Correction paragraphs verified in every new prompt. Every camera repaint includes fitted r0 as its fourth image."
+  },
+  "previousRound": {
+    "issue": 325,
+    "branch": "art/325-buildings-v2",
+    "scope": "Only assets/source/buildings-v2/ changed by the art work; origin/develop was merged as PROMPT.md requests.",
+    "art": {
+      "recorded": 8,
+      "rejected": 0,
+      "attempts": 17,
+      "water_tower": "All four views pass the repository check and the five-percent square-plan test. Front spout appears only in r0 and r3.",
+      "fuel_stop": "All four views are recorded. R0 passes directly. R1, r2 and r3 were retained under the three-attempt rule with camera errors of 3.7, 2.8 and 9.9 degrees respectively. Their selected plan ratios pass the fifteen-percent turn test. Rear stage heights still vary from r0; the coaling stage remains a draft set.",
+      "corners": "Measured corners were used for all selected pictures. No eye correction was claimed.",
+      "cameraNote": "The queue tool replaces the supplied measurement note with its automatic kept-camera note when retaining a refused picture. Full selected and rejected-attempt measurements remain in raw/returns.json.",
+      "nativeFiles": "All 17 generated PNGs are preserved byte-for-byte at returned size 1254x1254. No painting was cropped, resized, recoloured or deleted. Only the repository tools fitted references and review pictures."
+    },
+    "checks": {
+      "typecheck": "Passed app and tooling through a read-only host resolving the existing dependency directory; no config or dependency files changed.",
+      "lint": "Passed.",
+      "build": "Passed original Vite config with output and cache confined to .qa/.",
+      "format": "Passed the repository formatting check with --end-of-line auto for the Windows checkout, and scoped formatting of the raw records.",
+      "scope": "Passed the art role scope check; every authored change remains within assets/source/buildings-v2/.",
+      "tests": "Full run: 2752 passed, 2 failed, 2 skipped; 135 suites passed and 4 failed. The import-boundaries suite initially could not resolve eslint in this isolated checkout, and passed all 66 tests on rerun with the dependency alias. Combined: 2818 passed, 2 failed, 2 skipped. Remaining failures in unchanged origin/develop code: src/sim/ownLength.test.ts detects SIZE_LEN reads outside vehicleSpec; tools/asset-pipeline/handbuilt/run.test.mjs seed 19 loses a trailing-space path on Windows. tools/agents/ownership.test.mjs still fails to load with SyntaxError: Invalid or unexpected token. No out-of-scope fixes were made."
+    }
   }
 }

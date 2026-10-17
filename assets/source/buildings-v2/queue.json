@@ -12,7 +12,7 @@
     }
   ],
   "accepted": [],
-  "mark": 1791847317761,
+  "mark": 1792249829831,
   "chat": "01a12c68-070c-7b91-9ff6-217c3f4318b1",
   "counts": {
     "pictures": 548,
@@ -5481,11 +5481,11 @@
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r1.png",
       "status": "generated",
       "attempts": 3,
-      "note": "kept with its camera off by 3.7° after 3 attempts: the closest the tool held",
-      "kept": 3.7,
+      "note": "kept with its camera off by 2.6° after 3 attempts",
+      "kept": 2.6,
       "repaint": {
-        "by": 3.7,
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 5.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     {
@@ -5496,12 +5496,12 @@
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png",
       "status": "generated",
       "attempts": 3,
-      "note": "kept with its camera off by 2.8° after 3 attempts",
+      "note": "kept with its camera off by 3.9° after 3 attempts",
       "repaint": {
-        "by": 3.2,
-        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 5.2,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       },
-      "kept": 2.8
+      "kept": 3.9
     },
     {
       "id": "fuel_stop-a0-r3",
@@ -5511,11 +5511,11 @@
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r3.png",
       "status": "generated",
       "attempts": 3,
-      "note": "kept with its camera off by 9.9° after 3 attempts",
-      "kept": 9.9,
+      "note": "kept with its camera off by 3.4° after 3 attempts",
+      "kept": 3.4,
       "repaint": {
-        "by": 13,
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 4.3,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     }
   ]

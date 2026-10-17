@@ -256,7 +256,7 @@
       "ok": true,
       "problems": [],
       "notes": [
-        "camera off by 9.9°: it looks down from 25.3° where the game looks down from 30° and the building is turned 9.9° towards its lower-right wall (the wall feet slope 0.61 and -0.30, the game's 0.50 and -0.50); kept, and corrected part of the way by the tools"
+        "camera off by 3.4°: it looks down from 33.0° where the game looks down from 30° and the building is turned 3.4° towards its lower-right wall (the wall feet slope 0.61 and -0.48, the game's 0.50 and -0.50); kept, and corrected by the tools"
       ],
       "fit": {
         "method": "base",
@@ -265,54 +265,54 @@
           true
         ],
         "measured": [
-          0.607,
-          -0.3
+          0.615,
+          -0.483
         ],
         "slopes": [
-          0.607,
-          -0.33
+          0.615,
+          -0.483
         ],
         "base": {
           "w": [
-            250,
-            875.6
+            299,
+            851.7
           ],
           "s": [
-            689.4,
-            1142.2
+            662.8,
+            1075.4
           ],
           "e": [
-            977,
-            1055.8
+            948,
+            937.6
           ]
         },
-        "scale": 0.6198,
-        "vertical": 1.0676,
-        "shear": -0.1477,
-        "cx": 613.5,
-        "cy": 940.4,
+        "scale": 0.6942,
+        "vertical": 0.9105,
+        "shear": -0.06,
+        "cx": 623.5,
+        "cy": 777.2,
         "box": {
           "left": 286.7,
-          "top": 333.4,
-          "right": 773.2,
-          "bottom": 942.6
+          "top": 420.2,
+          "right": 764.4,
+          "bottom": 944.3
         },
         "camera": {
-          "elevation": 25.3,
-          "turn": 9.9
+          "elevation": 33,
+          "turn": 3.4
         },
-        "area": 469237
+        "area": 359482
       },
       "camera": {
-        "by": 9.9,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 3.4,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     "fuel_stop-a0-r1": {
       "ok": true,
       "problems": [],
       "notes": [
-        "camera off by 3.7°: it looks down from 33.7° where the game looks down from 30° (the wall feet slope 0.58 and -0.53, the game's 0.50 and -0.50); kept, and corrected by the tools"
+        "camera off by 2.6°: it looks down from 32.3° where the game looks down from 30° and the building is turned 2.6° towards its lower-right wall (the wall feet slope 0.58 and -0.49, the game's 0.50 and -0.50); kept, and corrected by the tools"
       ],
       "fit": {
         "method": "base",
@@ -321,54 +321,54 @@
           true
         ],
         "measured": [
-          0.582,
-          -0.53
+          0.585,
+          -0.489
         ],
         "slopes": [
-          0.582,
-          -0.53
+          0.585,
+          -0.489
         ],
         "base": {
           "w": [
-            289,
-            871.4
+            278,
+            855
           ],
           "s": [
-            717.5,
-            1120.9
+            707,
+            1105.9
           ],
           "e": [
-            992,
-            975.4
+            980,
+            972.3
           ]
         },
-        "scale": 0.6409,
-        "vertical": 0.8991,
-        "shear": -0.0235,
-        "cx": 640.5,
-        "cy": 815.2,
+        "scale": 0.6418,
+        "vertical": 0.931,
+        "shear": -0.0445,
+        "cx": 629,
+        "cy": 822.6,
         "box": {
           "left": 286.7,
-          "top": 491.4,
+          "top": 445.2,
           "right": 737.3,
-          "bottom": 944.1
+          "bottom": 944.7
         },
         "camera": {
-          "elevation": 33.7,
-          "turn": 1.3
+          "elevation": 32.3,
+          "turn": 2.6
         },
-        "area": 325818
+        "area": 352695
       },
       "camera": {
-        "by": 3.7,
-        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        "by": 2.6,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },
     "fuel_stop-a0-r2": {
       "ok": true,
       "problems": [],
       "notes": [
-        "camera off by 2.8°: it looks down from 32.8° where the game looks down from 30° (the wall feet slope 0.56 and -0.52, the game's 0.50 and -0.50); kept, and corrected by the tools"
+        "camera off by 3.9°: it looks down from 33.9° where the game looks down from 30° (the wall feet slope 0.58 and -0.53, the game's 0.50 and -0.50); kept, and corrected by the tools"
       ],
       "fit": {
         "method": "base",
@@ -377,46 +377,46 @@
           true
         ],
         "measured": [
-          0.559,
-          -0.524
+          0.584,
+          -0.532
         ],
         "slopes": [
-          0.559,
-          -0.524
+          0.584,
+          -0.532
         ],
         "base": {
           "w": [
-            239,
-            977.5
+            272,
+            964.2
           ],
           "s": [
-            549.1,
-            1150.9
+            577.5,
+            1142.5
           ],
           "e": [
-            1039,
-            894.4
+            1032,
+            900.8
           ]
         },
-        "scale": 0.5632,
-        "vertical": 0.9236,
-        "shear": -0.0164,
-        "cx": 639,
-        "cy": 854,
+        "scale": 0.5928,
+        "vertical": 0.8964,
+        "shear": -0.0233,
+        "cx": 652,
+        "cy": 820.7,
         "box": {
           "left": 286.7,
-          "top": 454.3,
+          "top": 458.1,
           "right": 737.3,
-          "bottom": 944.7
+          "bottom": 944.4
         },
         "camera": {
-          "elevation": 32.8,
-          "turn": 0.9
+          "elevation": 33.9,
+          "turn": 1.3
         },
-        "area": 452477
+        "area": 418217
       },
       "camera": {
-        "by": 2.8,
+        "by": 3.9,
         "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     }
