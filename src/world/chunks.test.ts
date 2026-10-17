@@ -19,8 +19,8 @@ import {
 } from './chunks';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { levelAt, tileLevels } from './elevation';
-import { oldChunkText, textOf, type OldVersion } from './oldChunkTexts';
-import { fallFeature } from './waterfalls';
+import { bytesOf, oldChunkText, textOf, type OldVersion } from './oldChunkTexts';
+import { MAX_DROP, fallFeature } from './waterfalls';
 import { Dir } from '../engine/iso';
 import { generatorOf, groundOf, type GeneratedWorld } from '../sim/ground';
 import { Biome, Terrain, climateAtIndex, type GameMap, type PropInstance } from './tiles';
@@ -1633,4 +1633,447 @@ describe('chunk texts of every version (#392)', () => {
       expect(firstDifference(read.map, grown.map), `version ${version}`).toBeNull();
     }
   }, 15_000);
+});
+
+// Stored chunks checked apart from #392's own tests: version 5 holds any planes the encoding
+// allows, all of them at once, in any chunk of a world of any seed, as every older version reads
+// them; a chunk's text is a function of the chunk alone; no text of any version reads once cut
+// short or run on; no text holds more props than its bytes pay for; and texts that the encoders of
+// versions 1 to 4 wrote read as they did.
+
+/** Seeds of every kind a map may carry: ones version 5 guesses from and ones it cannot. */
+const ANY_SEEDS = [
+  0,
+  1,
+  7412,
+  2 ** 31 - 1,
+  2 ** 32 - 1,
+  -7,
+  -(2 ** 31),
+  0.5,
+  2 ** 40 - 1,
+  2 ** 40,
+  -(2 ** 40),
+  12345678901234,
+  1e20,
+];
+
+/**
+ * A chunk part of every plane, drawn by `Rng(salt)`: the `w` x `h` tiles from (`x0`, `y0`) of chunk
+ * (`cx`, `cy`) of a world of `seed`. A recipe, so a failure shrinks to a smaller part drawn alike.
+ */
+interface AnyPlanes {
+  w: number;
+  h: number;
+  x0: number;
+  y0: number;
+  cx: number;
+  cy: number;
+  seed: number;
+  /** 0: every value at random; 1: in patches and runs; 2: also variants and props as generated */
+  style: number;
+  salt: number;
+}
+const genAnyPlanes = (rng: Rng): AnyPlanes => {
+  const w = rng.int(1, 32);
+  const h = rng.int(1, 32);
+  // chunks near the start, and far enough out that version 5 has no guess for them
+  const far = () => rng.pick([2 ** 40 - 1, 2 ** 40, 2 ** 45]) * (rng.chance(0.5) ? 1 : -1);
+  return {
+    w,
+    h,
+    x0: rng.int(0, 32 - w),
+    y0: rng.int(0, 32 - h),
+    cx: rng.chance(0.85) ? rng.int(-40, 40) : far(),
+    cy: rng.chance(0.85) ? rng.int(-40, 40) : far(),
+    seed: rng.chance(0.4) ? rng.int(0, 2 ** 31 - 1) : rng.pick(ANY_SEEDS),
+    style: rng.int(0, 2),
+    salt: rng.int(1, 2 ** 31 - 1),
+  };
+};
+function* shrinkAnyPlanes(c: AnyPlanes): Iterable<AnyPlanes> {
+  for (const w of shrinkInt(c.w, 1)) yield { ...c, w };
+  for (const h of shrinkInt(c.h, 1)) yield { ...c, h };
+  for (const x0 of shrinkInt(c.x0)) yield { ...c, x0 };
+  for (const y0 of shrinkInt(c.y0)) yield { ...c, y0 };
+  for (const cx of shrinkInt(c.cx)) yield { ...c, cx };
+  for (const cy of shrinkInt(c.cy)) yield { ...c, cy };
+}
+const formatAnyPlanes = (c: AnyPlanes) => JSON.stringify(c);
+
+/** The variants versions 1 to 4 hold: a varint of seven bytes at most. */
+const OLD_VARIANTS = 2 ** 49;
+
+/** A prop list of any kinds, variants and offsets; with `style` 2, mostly as generation lays it. */
+function anyProps(rng: Rng, style: number, seed: number, wx: number, wy: number): PropInstance[] {
+  const list: PropInstance[] = [];
+  for (let k = 0, n = rng.chance(0.1) ? rng.int(4, 12) : rng.int(1, 3); k < n; k++) {
+    const kind = PROP_KINDS[rng.int(0, PROP_KINDS.length - 1)];
+    // decorateProps' variant and offsets of prop k (mapgen.ts)
+    const generated = style === 2 && k < 3 && rng.chance(0.7);
+    const variant = generated
+      ? Math.floor(hash2(wx + k, wy - k, seed + 9) * rng.pick([2, 3, 4]))
+      : rng.pick([
+          rng.int(0, 7),
+          rng.int(0, 7),
+          rng.int(8, 1000),
+          rng.int(2 ** 31, 2 ** 48),
+          rng.chance(0.2) ? Number.MAX_SAFE_INTEGER : rng.int(0, 3),
+        ]);
+    const offset = (guess: number) =>
+      generated && rng.chance(0.8)
+        ? guess
+        : rng.chance(0.2)
+          ? rng.range(-1, 1) // off the 256ths and past the tile, which a chunk rounds and clamps
+          : rng.int(-128, 127) / 256;
+    list.push({
+      kind,
+      variant,
+      ox: offset((hash2(wx * 3 + k, wy, seed + 7) - 0.5) * 0.7),
+      oy: offset((hash2(wx, wy * 3 + k, seed + 8) - 0.5) * 0.7),
+    });
+  }
+  return list;
+}
+
+/** The map of an AnyPlanes case: just its part of the chunk, with every plane drawn. */
+function anyPlanesMap(c: AnyPlanes): GameMap {
+  const rng = new Rng(c.salt);
+  const { w, h } = c;
+  const n = w * h;
+  const ox = c.cx * CHUNK_TILES + c.x0;
+  const oy = c.cy * CHUNK_TILES + c.y0;
+  const map = emptyMap(c.seed, w, h, Terrain.Grass, ox, oy);
+  const climate = (map.climate = new Uint8Array(n));
+  const surface = (map.waterSurface = new Uint8Array(n));
+  const flow = (map.flow = new Uint16Array(n));
+  const flowDir = (map.flowDir = new Uint8Array(n));
+  const feature = (map.feature = new Uint8Array(n));
+  // an id 0 to 15: at random, or in patches, mostly the tile's left or upper neighbour's
+  const id = (plane: Uint8Array, i: number) =>
+    c.style > 0 && i > 0 && rng.chance(0.85)
+      ? plane[i < w || rng.chance(0.7) ? i - 1 : i - w]
+      : rng.int(0, 15);
+  const rivers = rng.pick([0, 0.05, 0.3, 1]);
+  const falls = rng.pick([0, 0.1, 0.6]);
+  const props = rng.pick([0, 0.1, 0.5]);
+  for (let i = 0; i < n; i++) {
+    const x = i % w;
+    map.terrain[i] = id(map.terrain, i);
+    climate[i] = id(climate, i);
+    map.biome[i] = c.style > 0 && rng.chance(0.6) ? climate[i] : id(map.biome, i);
+    surface[i] = id(surface, i);
+    // with style 2 the variant stays emptyMap's, generation's own, on most tiles
+    if (c.style < 2 || rng.chance(0.05)) map.variant[i] = rng.int(0, 3);
+    if (rng.chance(rivers)) {
+      flowDir[i] = rng.int(1, 4);
+      // along a river the flow is near its neighbour's
+      const near =
+        x > 0 && flowDir[i - 1] ? flow[i - 1] : i >= w && flowDir[i - w] ? flow[i - w] : -1;
+      flow[i] =
+        near >= 0 && rng.chance(0.5)
+          ? Math.max(0, Math.min(FLOW_CAP, near + rng.int(-3, 3)))
+          : rng.pick([0, 1, FLOW_CAP, rng.int(0, FLOW_CAP)]);
+    }
+    // a waterfall over its river's side or any other edge, or on a tile with no side at all
+    if (rng.chance(falls)) {
+      const edge = flowDir[i] && rng.chance(0.6) ? flowDir[i] - 1 : rng.int(0, 3);
+      feature[i] = fallFeature(rng.int(1, MAX_DROP), edge as Dir);
+    }
+    if (rng.chance(props))
+      map.props.set(i, anyProps(rng, c.style, c.seed, ox + x, oy + (i - x) / w));
+  }
+  return map;
+}
+
+/** Chunk planes of `version` holding all of `map`, a map of one chunk part from (`x0`, `y0`). */
+function planesOfMap(map: GameMap, x0: number, y0: number, version: number): ChunkPlanes {
+  const n = map.w * map.h;
+  const props = new Map<number, PropInstance[]>();
+  for (const [i, list] of map.props)
+    if (list.length)
+      props.set(
+        i,
+        list.map((p) => ({ kind: p.kind, variant: p.variant, ox: stored(p.ox), oy: stored(p.oy) })),
+      );
+  return {
+    version,
+    x0,
+    y0,
+    w: map.w,
+    h: map.h,
+    terrain: map.terrain,
+    biome: map.biome,
+    climate: map.climate ?? map.biome,
+    variant: map.variant,
+    props,
+    waterSurface: map.waterSurface ?? new Uint8Array(n),
+    flow: map.flow ?? new Uint16Array(n),
+    flowDir: map.flowDir ?? new Uint8Array(n),
+    feature: map.feature ?? new Uint8Array(n),
+  };
+}
+/** Whether versions 1 to 4 can hold the variants of every prop of `map`. */
+const oldVersionsHold = (map: GameMap) =>
+  [...map.props.values()].every((list) => list.every((p) => p.variant < OLD_VARIANTS));
+
+/**
+ * A chunk part with something of everything, spelled out: forest, hills, rock, mountain, sand and
+ * a lake under a river; a climate apart from the biome; rivers running every way with a flow of 0,
+ * of a two-byte varint and FLOW_CAP; waterfalls over their river's side, over another edge and on a
+ * tile with no side; props by the one, three and five, an escaped variant, offsets at both ends.
+ * The 6 x 4 tiles from (5, 9) of chunk (-3, 2) of a world of seed 7412, ids in hex, in rows.
+ */
+function fixtureMap(): GameMap {
+  const plane = (s: string) => Uint8Array.from(s.replace(/ /g, ''), (ch) => parseInt(ch, 16));
+  const m = emptyMap(7412, 6, 4, Terrain.Grass, -3 * CHUNK_TILES + 5, 2 * CHUNK_TILES + 9);
+  m.terrain = plane('110033 100333 220335 644335');
+  m.biome = plane('110077 100776 330768 999768');
+  m.climate = plane('110000 110000 333002 333002');
+  m.variant = plane('012301 230123 333300 123012');
+  m.waterSurface = plane('000033 000322 000220 000110');
+  m.flowDir = new Uint8Array(24);
+  m.flow = new Uint16Array(24);
+  m.feature = new Uint8Array(24);
+  for (const [i, side, flow] of [
+    [4, Dir.S, 200],
+    [5, Dir.N, 1],
+    [9, Dir.S, 5],
+    [15, Dir.S, FLOW_CAP],
+    [21, Dir.W, 0],
+  ]) {
+    m.flowDir[i] = side + 1;
+    m.flow[i] = flow;
+  }
+  m.feature[4] = fallFeature(1, Dir.S);
+  m.feature[9] = fallFeature(4, Dir.E);
+  m.feature[18] = fallFeature(2, Dir.W);
+  const p = (kind: PropInstance['kind'], variant: number, ox: number, oy: number) => ({
+    kind,
+    variant,
+    ox: ox / 256,
+    oy: oy / 256,
+  });
+  m.props.set(0, [p('tree', 0, 64, -32)]);
+  m.props.set(1, [p('pine', 2, 0, 0), p('spruce', 7, -128, 127), p('oak', 8, 1, -1)]);
+  m.props.set(6, [
+    p('birch', 0, 10, 20),
+    p('flowers', 1, -10, -20),
+    p('reeds', 300, 90, -90),
+    p('boulder', 3, 0, 127),
+    p('wheat', 4, -128, 0),
+  ]);
+  m.props.set(13, [p('rock', 1, 33, 44)]);
+  m.props.set(18, [p('oil', 2, 0, 0)]);
+  m.props.set(23, [p('palm', 3, -77, 55)]);
+  return m;
+}
+
+/**
+ * fixtureMap's chunk as the encoders of versions 1 to 4 wrote it, each run from the commit that
+ * made it (32fdc93, version 1 with wheat; 37a0048; a588d0d; 3d24617, develop's before #392). The
+ * bytes of saves already made: never re-blessed.
+ */
+const WRITTEN: Record<OldVersion, string> = {
+  1:
+    'AQUJBgQRATEQATIhADFQYEExUBEBcRABcWAxAHBggJJwYIDk5OT/kJMGAABA4AJBAADlgH8fBggB/xMBBAoUKvbsHwus' +
+    'AlqmbAB/j4AAGCIhLBBOAAAQZ7M3',
+  2:
+    'AgUJBgQRATEQATIhADFQYEExUBEBcRABcWAxAHBggJJwYIARAxEDMgEgMgEg5OTk/5CTBgAAQOACQQAA5YB/HwYIAf8T' +
+    'AQQKFCr27B8LrAJapmwAf4+AABgiISwQTgAAEGezNw==',
+  3:
+    'AwUJBgQRATEQATIhADFQYEExUBEBcRABcWAxAHBggJJwYIARAxEDMgEgMgEg5OTk/5CTBgAAQOACQQAA5YB/HwYIAf8T' +
+    'AQQKFCr27B8LrAJapmwAf4+AABgiISwQTgAAEGezNwMxAjAhAiEDEQAFBKIGAAQDFgX+fwUD',
+  4:
+    'BAUJBgQRATEQATIhADFQYEExUBEBcRABcWAxAHBggJJwYIARAxEDMgEgMgEg5OTk/5CTBgAAQOACQQAA5YB/HwYIAf8T' +
+    'AQQKFCr27B8LrAJapmwAf4+AABgiISwQTgAAEGezNwMxAjAhAiEDEQAFBKIGAAQDFgX+fwUDAwQRBAwIGg==',
+};
+
+describe('stored chunk texts, checked apart (#392)', () => {
+  // 150 chunk parts, each written in version 5, read, written again and read in versions 1 to 4:
+  // about 1 s alone
+  it('hold every plane at once, any value in any chunk of any seed, and read so in every version', () => {
+    let far = 0;
+    let unguessed = 0;
+    let huge = 0;
+    forAll(
+      genAnyPlanes,
+      (c) => {
+        const map = anyPlanesMap(c);
+        const want = planesOfMap(map, c.x0, c.y0, CHUNK_VERSION);
+        const text = encodeChunk(map, c.cx, c.cy);
+        const read = decodeChunk(text);
+        expect(read, 'refused its own text').not.toBeNull();
+        const lost = planesDiffer(read!, want);
+        if (lost) throw new Error(`read back otherwise: ${lost}`);
+        // the planes read, on a map of the same world, are written to the same text again
+        const again = emptyMap(c.seed, c.w, c.h, Terrain.Water, map.originX, map.originY);
+        placeChunk(again, c.cx, c.cy, read!);
+        expect(encodeChunk(again, c.cx, c.cy), 'written again').toBe(text);
+        // and every older version, of what it holds, reads the same planes
+        if (oldVersionsHold(map))
+          for (const version of [1, 2, 3, 4] as const) {
+            const old = decodeChunk(oldChunkText(read!, version));
+            expect(old, `version ${version} refused`).not.toBeNull();
+            const differ = planesDiffer(old!, heldBy(read!, version));
+            if (differ) throw new Error(`version ${version} reads otherwise: ${differ}`);
+          }
+        else huge++;
+        if (Math.abs(c.cx) >= 2 ** 40 || Math.abs(c.cy) >= 2 ** 40) far++;
+        if (!Number.isSafeInteger(c.seed) || Math.abs(c.seed) >= 2 ** 40) unguessed++;
+      },
+      {
+        seeds: Array.from({ length: 150 }, (_, i) => i + 1),
+        shrink: shrinkAnyPlanes,
+        format: formatAnyPlanes,
+        shrinkBudget: 300,
+      },
+    );
+    // chunks and seeds version 5 has no guess for ran, and variants no older version holds
+    expect(far).toBeGreaterThan(0);
+    expect(unguessed).toBeGreaterThan(0);
+    expect(huge).toBeGreaterThan(0);
+  }, 30_000);
+
+  // four maps of up to 12 chunks, each written again around reads that fail: about 1 s alone
+  it('give a chunk the same text whatever was read or written before, and encodeMap the same', () => {
+    const maps = [
+      generateMap(7412, { w: 70, h: 45, originX: -40, originY: 9 }, 'full'),
+      generateMap(20260912, { w: 64, h: 64, originX: -32, originY: -32 }),
+      anyPlanesMap({ w: 32, h: 32, x0: 0, y0: 0, cx: 3, cy: -2, seed: 1, style: 2, salt: 5 }),
+      anyPlanesMap({ w: 20, h: 9, x0: 7, y0: 23, cx: -1, cy: 0, seed: 0.5, style: 0, salt: 6 }),
+    ];
+    // what a map's props may hold that no tile of it is: before, past and between its tiles, and
+    // an empty list on its last tile
+    for (const m of maps) {
+      for (const i of [-1, m.w * m.h, 0.5])
+        m.props.set(i, [{ kind: 'oak', variant: 0, ox: 0, oy: 0 }]);
+      m.props.set(m.w * m.h - 1, []);
+    }
+    const texts = maps.map((m) => mapChunks(m).map(({ cx, cy }) => encodeChunk(m, cx, cy)));
+    // texts cut short, whose reads stop part way through the planes or the props
+    const broken = texts.flat().flatMap((t) => {
+      const b = bytesOf(t);
+      return [0.3, 0.6, 0.95].map((share) => textOf(b.slice(0, Math.floor(b.length * share))));
+    });
+    // written again in the other order, after those reads and a whole one
+    for (let k = maps.length - 1; k >= 0; k--) {
+      const chunks = mapChunks(maps[k]);
+      for (let j = chunks.length - 1; j >= 0; j--) {
+        for (const t of broken.slice(j, j + 3)) expect(decodeChunk(t)).toBeNull();
+        expect(decodeChunk(texts[(k + 1) % maps.length][0])).not.toBeNull();
+        const { cx, cy } = chunks[j];
+        expect(encodeChunk(maps[k], cx, cy), `map ${k}, chunk ${cx},${cy}`).toBe(texts[k][j]);
+      }
+      const store = encodeMap(maps[k]);
+      expect(Object.keys(store)).toEqual(chunks.map(({ cx, cy }) => chunkKey(cx, cy)));
+      expect(Object.values(store), `map ${k}`).toEqual(texts[k]);
+    }
+  }, 20_000);
+
+  // texts of 5 chunks in up to 5 versions, read cut at every byte: about 1 s alone
+  it('of any version read as nothing cut short at any byte, or with a byte after them', () => {
+    const sources: [GameMap, number, number][] = [
+      [fixtureMap(), -3, 2],
+      [generateMap(7412, { w: 32, h: 32 }, 'full'), 0, 0],
+    ];
+    for (const salt of [1, 2, 3]) {
+      const c = genAnyPlanes(new Rng(salt));
+      const small = { ...c, w: Math.min(c.w, 12), h: Math.min(c.h, 12) };
+      sources.push([anyPlanesMap(small), c.cx, c.cy]);
+    }
+    let texts = 0;
+    for (const [map, cx, cy] of sources) {
+      const now = encodeChunk(map, cx, cy);
+      const planes = decodeChunk(now)!;
+      const all: [number, string][] = [[CHUNK_VERSION, now]];
+      if (oldVersionsHold(map))
+        for (const v of [1, 2, 3, 4] as const) all.push([v, oldChunkText(planes, v)]);
+      for (const [version, text] of all) {
+        const bytes = bytesOf(text);
+        const at = `version ${version}, chunk ${cx},${cy} of ${bytes.length} bytes`;
+        expect(decodeChunk(text), at).not.toBeNull();
+        for (let n = 0; n < bytes.length; n++)
+          if (decodeChunk(textOf(bytes.slice(0, n))))
+            throw new Error(`${at}: its first ${n} bytes read as a chunk`);
+        for (const b of [0, 1, 0x80, 0xff])
+          expect(decodeChunk(textOf([...bytes, b])), `${at}, then ${b}`).toBeNull();
+        texts++;
+      }
+    }
+    // every version of the fixture and the generated chunk ran, and today's of the rest
+    expect(texts).toBeGreaterThanOrEqual(2 * 5 + 3);
+  }, 20_000);
+
+  it('hold no more props past the third on a tile than 22 bits of text pay for each', () => {
+    // version 5 writes a tile's fourth prop and later at even odds, 22 bits or more each, so that
+    // a count no text backs cannot make a read go on: the cheapest props there are, all alike on
+    // one tile, still take that much text, and the text cut short anywhere in them reads as nothing
+    const past = (c: ChunkPlanes) =>
+      [...c.props.values()].reduce((sum, list) => sum + Math.max(0, list.length - 3), 0);
+    for (const n of [4, 40, 3000]) {
+      const m = emptyMap(1, 3, 2);
+      m.props.set(
+        4,
+        Array.from({ length: n }, () => ({ kind: 'tree' as const, variant: 0, ox: 0, oy: 0 })),
+      );
+      const text = encodeChunk(m, 0, 0);
+      const bytes = bytesOf(text);
+      const c = decodeChunk(text)!;
+      expect(c.props.get(4)).toHaveLength(n);
+      expect(past(c) * 22, `${n} props in ${bytes.length} bytes`).toBeLessThanOrEqual(
+        bytes.length * 8,
+      );
+      for (const cut of [bytes.length - 1, bytes.length >> 1, 12, 9])
+        expect(decodeChunk(textOf(bytes.slice(0, cut))), `${n} props cut at ${cut}`).toBeNull();
+    }
+    // and any other chunk's text, props by the dozen included
+    forAll(
+      genAnyPlanes,
+      (g) => {
+        const text = encodeChunk(anyPlanesMap(g), g.cx, g.cy);
+        expect(past(decodeChunk(text)!) * 22).toBeLessThanOrEqual(bytesOf(text).length * 8);
+      },
+      { seeds: Array.from({ length: 40 }, (_, i) => i + 1), format: formatAnyPlanes },
+    );
+  });
+
+  it('that the encoders of versions 1 to 4 wrote read as they did, and load unchanged', () => {
+    const m = fixtureMap();
+    const want = planesOfMap(m, 5, 9, CHUNK_VERSION);
+    expect(planesDiffer(decodeChunk(encodeChunk(m, -3, 2))!, want)).toBeNull();
+    const frame = { w: 6, h: 4, originX: m.originX, originY: m.originY };
+    for (const version of [1, 2, 3, 4] as const) {
+      const text = WRITTEN[version];
+      const read = decodeChunk(text);
+      expect(read, `version ${version}`).not.toBeNull();
+      const differ = planesDiffer(read!, heldBy(want, version));
+      if (differ) throw new Error(`version ${version}: ${differ}`);
+      // the oracle the other tests take older texts from writes these very bytes
+      expect(oldChunkText(want, version), `version ${version}`).toBe(text);
+      // a save holding it loads it as it reads, generates nothing and keeps the text
+      const store = { '-3,2': text };
+      const built = buildMap(7412, frame, store, never);
+      expect(built.chunks).toEqual(store);
+      expect(built.added).toEqual([]);
+      const placed = emptyMap(7412, 6, 4, Terrain.Water, m.originX, m.originY);
+      placeChunk(placed, -3, 2, heldBy(want, version));
+      expect(firstDifference(built.map, placed), `version ${version}`).toBeNull();
+      expect(sameWater(built.map, placed), `version ${version}`).toBe(true);
+    }
+  });
+
+  // six worlds of 9 chunks, each stored in versions 4 and 5: about 2 s alone
+  it('store a world of any seed a game draws, or a player types up to 2^40, in half the text', () => {
+    // the largest seed Math.random draws for a new game, the largest hashSeed makes of a word, and
+    // the largest number version 5 still guesses from
+    for (const seed of [2 ** 31 - 1, 2 ** 32 - 1, 2 ** 40 - 1])
+      for (const chain of SUPPLY_MODES) {
+        const params = { w: 96, h: 96, originX: -32, originY: -32 };
+        const { chunks } = buildMap(seed, params, {}, generateChain(chain));
+        const now = JSON.stringify(chunks).length;
+        const before = JSON.stringify(inVersion(chunks, 4)).length;
+        expect(now / before, `seed ${seed}, ${chain}`).toBeLessThanOrEqual(0.5);
+      }
+  }, 30_000);
 });
