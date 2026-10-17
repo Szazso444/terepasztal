@@ -2501,4 +2501,228 @@ describe("the seed in a chunk text's head (#392)", () => {
     expect(firstDifference(load.map, made.map)).toBeNull();
     expect(sameWater(load.map, made.map)).toBe(true);
   }, 10_000);
+
+  // 150 chunk parts, each written four times and read: about 0.6 s alone
+  it("holds Number(seed) for any value a save's JSON gives in a seed's place, read back as written", () => {
+    // checked apart from the fixed list above: values drawn at random of every kind JSON holds, and
+    // the head read as chunks.ts describes it, not by chunks.ts
+    const seen = new Set<string>();
+    forAll(
+      (rng): JsonSeedCase => ({ ...genAnyPlanes(rng), json: anyJsonSeed(rng) }),
+      (c) => {
+        const value = jsonSeed(c.json);
+        const number = Number(value);
+        const map = anyPlanesMap({ ...c, seed: value as number });
+        const text = encodeChunk(map, c.cx, c.cy);
+        // the head holds the number, in the form that number takes
+        const head = readHead(bytesOf(text));
+        expect(head.float, 'held as its float64').toBe(!heldAsVarint(number));
+        if (Number.isNaN(number)) expect(head.seed, 'the seed').toBeNaN();
+        else expect(head.seed, 'the seed').toBe(number === 0 ? 0 : number);
+        // the planes read back as written, are written again the same from a map of the same
+        // world, and are the text of the number itself
+        const read = decodeChunk(text);
+        expect(read, 'refused its own text').not.toBeNull();
+        const lost = planesDiffer(read!, planesOfMap(map, c.x0, c.y0, CHUNK_VERSION));
+        if (lost) throw new Error(`read back otherwise: ${lost}`);
+        const again = emptyMap(value as number, c.w, c.h, Terrain.Water, map.originX, map.originY);
+        placeChunk(again, c.cx, c.cy, read!);
+        expect(encodeChunk(again, c.cx, c.cy), 'written again').toBe(text);
+        expect(text, 'the text of its number').toBe(
+          encodeChunk({ ...map, seed: number }, c.cx, c.cy),
+        );
+        seen.add(jsonKind(c.json));
+        // the case of #392's finding: props, guessed from seed + 5 to + 9, of a value whose own
+        // seed + 5 is another number ('7412' + 5 is '74125')
+        if (map.props.size && !Object.is(Number((value as number) + 5), number + 5))
+          seen.add('props whose generation seed + 5 is not the number + 5');
+      },
+      {
+        seeds: Array.from({ length: 150 }, (_, i) => i + 1),
+        shrink: shrinkJsonSeedCase,
+        format: (c) => JSON.stringify({ ...c, seed: undefined }),
+        shrinkBudget: 300,
+      },
+    );
+    // every kind ran, and chunks with props whose seed + 5 a save's value spells otherwise
+    for (const kind of JSON_KINDS) expect(seen, kind).toContain(kind);
+    expect(seen).toContain('props whose generation seed + 5 is not the number + 5');
+  }, 30_000);
+
+  // ten worlds of 4 chunk parts generated, grown to 6 chunks and each loaded twice: about 2 s alone
+  it('builds, grows and loads a world whose save carries a seed of any other kind', () => {
+    // a world's seed as a hand-edited or foreign save may carry it (the load checks only the save's
+    // own seed), handed by groundOf to buildMap: the first build, the parts of chunks a growth
+    // writes again, and the loads of both all read and write the one number
+    const values: unknown[] = ['7412', ' 20260912 ', [7412], '1e20', '-3', null, true, 'abc', {}];
+    const small = { w: 20, h: 20, originX: -10, originY: -10 };
+    const big = { w: 60, h: 40, originX: -22, originY: -10 };
+    const saved = (w: GeneratedWorld) => JSON.parse(JSON.stringify(w)) as GeneratedWorld;
+    const keys = (p: Frame) => mapChunks(p).map(({ cx, cy }) => chunkKey(cx, cy));
+    for (const value of [...values, undefined]) {
+      const at = value === undefined ? 'no seed' : `seed ${JSON.stringify(value)}`;
+      const number = Number(value);
+      // a load of the world as its save's JSON gives it, the seed's value named if it throws
+      const load = (w: GeneratedWorld, generate: MapGenerator, what: string) => {
+        try {
+          return groundOf(saved(w), generate);
+        } catch (e) {
+          throw new Error(`${at}, ${what}: ${String(e)}`, { cause: e });
+        }
+      };
+      const world: GeneratedWorld = {
+        kind: 'generated',
+        seed: value as number,
+        params: { ...DEFAULT_MAP_PARAMS, ...small },
+        chunks: {},
+      };
+      const made = load(world, generatorOf('simple'), 'built');
+      expect(made.unreadable, at).toEqual([]);
+      expect(made.added, at).toEqual(keys(small));
+      for (const text of Object.values(made.chunks)) {
+        const head = readHead(bytesOf(text));
+        expect(decodeChunk(text)?.version, at).toBe(CHUNK_VERSION);
+        if (Number.isNaN(number)) expect(head.seed, `${at}: head`).toBeNaN();
+        else expect(head.seed, `${at}: head`).toBe(number);
+      }
+      // the ground as generated from the value as the save carries it, up to where props are
+      // stored
+      const generated = generateMap(value as number, small, 'simple');
+      expect(firstDifference(made.map, generated, { near: true }), at).toBeNull();
+      expect(sameWater(made.map, generated), at).toBe(true);
+      const loaded = load({ ...world, chunks: made.chunks }, never, 'loaded');
+      expect([loaded.added, loaded.unreadable], `${at}: loaded`).toEqual([[], []]);
+      expect(loaded.chunks, `${at}: loaded`).toEqual(made.chunks);
+      expect(firstDifference(loaded.map, made.map), `${at}: loaded`).toBeNull();
+      expect(sameWater(loaded.map, made.map), `${at}: loaded`).toBe(true);
+      // grown: each stored part is kept and written again whole, its rest generated, and the new
+      // chunks join, all of them as the generator made them but where the seam ends a river
+      const bigWorld = { ...world, params: { ...DEFAULT_MAP_PARAMS, ...big }, chunks: made.chunks };
+      const grown = load(bigWorld, generatorOf('simple'), 'grown');
+      expect(grown.unreadable, `${at}: grown`).toEqual([]);
+      expect(grown.added, `${at}: grown`).toEqual(keys(big));
+      expect(firstDifference(made.map, grown.map), `${at}: grown, the stored tiles`).toBeNull();
+      for (let y = 0; y < small.h; y++)
+        for (let x = 0; x < small.w; x++) {
+          const i = y * small.w + x;
+          const j = (y + small.originY - big.originY) * big.w + x + small.originX - big.originX;
+          const water = (m: GameMap, k: number) =>
+            [m.waterSurface![k], m.flow![k], m.flowDir![k], m.feature![k]].join();
+          if (water(made.map, i) !== water(grown.map, j))
+            throw new Error(`${at}: grown, the stored water at map tile (${x}, ${y})`);
+        }
+      const inside = (wx: number, wy: number) => wx >= -10 && wy >= -10 && wx < 10 && wy < 10;
+      const outside = (wx: number, wy: number) => !inside(wx, wy) && !besideStored(inside, wx, wy);
+      const rest = generateMap(value as number, big, 'simple');
+      const fresh = firstDifference(grown.map, rest, { near: true, only: outside });
+      expect(fresh, `${at}: grown, the tiles generated`).toBeNull();
+      const reload = load({ ...bigWorld, chunks: grown.chunks }, never, 'reloaded');
+      expect([reload.added, reload.unreadable], `${at}: reload`).toEqual([[], []]);
+      expect(reload.chunks, `${at}: reload`).toEqual(grown.chunks);
+      expect(firstDifference(reload.map, grown.map), `${at}: reload`).toBeNull();
+      expect(sameWater(reload.map, grown.map), `${at}: reload`).toBe(true);
+    }
+  }, 60_000);
 });
+
+/** A chunk part (AnyPlanes) of a world whose seed a save's JSON holds as `json`. */
+type JsonSeedCase = AnyPlanes & { json: string | null };
+/** The kinds anyJsonSeed draws, by jsonKind. */
+const JSON_KINDS = [
+  'number',
+  'string read as an integer',
+  'string read as another number',
+  'string read as NaN',
+  'null or a boolean',
+  'array',
+  'object',
+  'no seed',
+];
+/** The value a save's JSON text `json` gives a world's seed; null for a world without one. */
+const jsonSeed = (json: string | null): unknown => (json === null ? undefined : JSON.parse(json));
+/** What kind of value `json` holds (JSON_KINDS). */
+function jsonKind(json: string | null): string {
+  const v = jsonSeed(json);
+  if (v === undefined) return 'no seed';
+  if (v === null || typeof v === 'boolean') return 'null or a boolean';
+  if (Array.isArray(v)) return 'array';
+  if (typeof v === 'object') return 'object';
+  if (typeof v === 'number') return 'number';
+  const n = Number(v);
+  if (Number.isNaN(n)) return 'string read as NaN';
+  return heldAsVarint(n) ? 'string read as an integer' : 'string read as another number';
+}
+/**
+ * Any value a save's JSON may hold where a world's seed belongs, as its JSON text, or null for no
+ * seed at all: numbers (NaN and the infinities as JSON writes them, null); strings Number reads as
+ * a number, as String spells one, padded, signed, in another radix or cut at the point; strings it
+ * reads as NaN; null and booleans; arrays and objects of any of these. No object holds a key
+ * toString: Number throws on one whose toString is no function, and so does map generation, first.
+ */
+function anyJsonSeed(rng: Rng): string | null {
+  return rng.chance(0.05) ? null : JSON.stringify(anyJsonValue(rng, 0));
+}
+function anyJsonValue(rng: Rng, depth: number): unknown {
+  const n = rng.int(0, 2 ** 31 - 1);
+  switch (rng.int(0, depth < 2 ? 7 : 5)) {
+    case 0:
+      return anySeed(rng);
+    case 1:
+      return String(anySeed(rng));
+    case 2: {
+      const pad = () => rng.pick(['', ' ', '\t', '\n', '\r\n', ' ', '﻿', ' ']);
+      const body = rng.pick([
+        `${n}`,
+        `+${n}`,
+        `-${n}`,
+        `0x${n.toString(16)}`,
+        `0X${n.toString(16).toUpperCase()}`,
+        `0b${n.toString(2)}`,
+        `0o${n.toString(8)}`,
+        `${n}.`,
+        `.${n}`,
+        `${n}e0`,
+        `${n}E-3`,
+        `000${n}`,
+        '-0',
+        '+0',
+        '',
+        'Infinity',
+        '-Infinity',
+        `${n}${n}${n}`,
+      ]);
+      return pad() + body + pad();
+    }
+    case 3:
+      return rng.pick([
+        'abc',
+        `${n}abc`,
+        '1_000',
+        'NaN',
+        'infinity',
+        '1e',
+        '--1',
+        '0x',
+        `${n},${n}`,
+        `-0x${n.toString(16)}`,
+        `${n} ${n}`,
+        '١٢',
+      ]);
+    case 4:
+    case 5:
+      return rng.pick([null, true, false]);
+    case 6:
+      // of one element Number reads as that element's, of none as 0, of more as NaN
+      return Array.from({ length: rng.pick([0, 1, 1, 1, 2]) }, () => anyJsonValue(rng, depth + 1));
+    default:
+      return rng.chance(0.3)
+        ? {}
+        : { [rng.pick(['seed', 'valueOf', 'value', '0'])]: anyJsonValue(rng, depth + 1) };
+  }
+}
+/** Smaller cases: a smaller chunk part, then an array of one element as that element. */
+function* shrinkJsonSeedCase(c: JsonSeedCase): Iterable<JsonSeedCase> {
+  for (const s of shrinkAnyPlanes(c)) yield { ...s, json: c.json };
+  const v = jsonSeed(c.json);
+  if (Array.isArray(v) && v.length === 1) yield { ...c, json: JSON.stringify(v[0]) };
+}
