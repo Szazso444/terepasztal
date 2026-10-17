@@ -34,6 +34,8 @@ let paving = new TownPaving(0, 0, 0, 0, []);
 let yards = new BuildingYards(0, 0, 0, 0, []);
 /** The roads (roadPaint.ts), none on the paving. */
 let roads = new RoadPaint(0, 0, 0, 0, []);
+/** The roads on the paving alone: the lanes of setts laid along them (townPaving.ts). */
+let lanes = new RoadPaint(0, 0, 0, 0, []);
 // Where snow starts, by biome id: sent by the landscape, as this worker cannot read the content.
 let snowLevels: readonly number[] = [];
 self.onmessage = async (event: MessageEvent) => {
@@ -70,6 +72,14 @@ self.onmessage = async (event: MessageEvent) => {
       const town = paving;
       roads = new RoadPaint(map.w, map.h, map.originX, map.originY, data.roads ?? [], (k) =>
         town.paved(k),
+      );
+      lanes = new RoadPaint(
+        map.w,
+        map.h,
+        map.originX,
+        map.originY,
+        data.roads ?? [],
+        (k) => !town.paved(k),
       );
       snowLevels = data.snowLevels;
       return;
@@ -231,7 +241,11 @@ self.onmessage = async (event: MessageEvent) => {
           for (let c = 0; c < 3; c++)
             color[c] *= waterWeight + (land * ((tint >> (16 - c * 8)) & 255)) / 255;
           if (pave > 0) {
-            paving.paint(tx, ty, pave, color, scale, part);
+            // a road across the square runs on as a lane of setts laid along it
+            if (lanes.near(tileIndex)) {
+              const lane = lanes.centre(tx, ty, tileIndex);
+              paving.paint(tx, ty, pave, color, scale, part, lane, lanes.axis(tx, ty, tileIndex));
+            } else paving.paint(tx, ty, pave, color, scale, part);
             for (let c = 0; c < 3; c++) color[c] = (color[c] + (part[c] - color[c]) * land) * shade;
           } else {
             const earth = paving.fringe(tx, ty, pave) * land;

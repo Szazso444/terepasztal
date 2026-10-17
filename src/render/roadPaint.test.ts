@@ -288,3 +288,34 @@ describe("the road's colour", () => {
       expect(pavingFade(d)).toBeGreaterThan(pavingFade(d + 0.01));
   });
 });
+
+describe('the road read for the town paving (#476)', () => {
+  it("gives the distance to the centre line weigh leaves, and the axis a straight's road runs along", () => {
+    const w = 7,
+      // a straight along x on row 1
+      along = paintOf(w, 3, new Set([7, 8, 9, 10, 11, 12, 13]), { ox: 5, oy: 9 });
+    // the ends of a line are ends: the axis is that of their arm; the middle ones are straights
+    for (const k of [7, 8, 9, 10, 11, 12, 13]) expect(along.axis(k % w, 1, k), `${k}`).toBe(1);
+    // a straight along y down the middle column
+    const column = paintOf(3, 7, new Set([1, 4, 7, 10, 13, 16, 19]), { ox: -3, oy: 4 });
+    for (const k of [1, 4, 7, 10, 13, 16, 19]) expect(column.axis(1, Math.floor(k / 3), k)).toBe(2);
+    for (let x = 0.7; x < 5.8; x += 0.07)
+      for (let y = 0.6; y < 1.4; y += 0.05) {
+        const k = Math.round(y) * w + Math.round(x);
+        along.weigh(x, y, k);
+        expect(along.centre(x, y, k), `${x}, ${y}`).toBe(along.dist);
+      }
+  });
+
+  it('knows no distance off its reach, and at a junction runs toward the arm the point lies to', () => {
+    // a cross in the middle of a 3 x 3 map
+    const p = paintOf(3, 3, new Set([1, 3, 4, 5, 7]));
+    expect(p.axis(1.4, 1.1, 4)).toBe(1);
+    expect(p.axis(1.1, 1.4, 4)).toBe(2);
+    expect(p.axis(0.6, 0.95, 4)).toBe(1);
+    expect(p.axis(1.05, 0.6, 4)).toBe(2);
+    // a corner tile no road is beside
+    const far = paintOf(5, 5, new Set([0, 1]));
+    expect(far.centre(4, 4, 24)).toBe(Infinity);
+  });
+});
