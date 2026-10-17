@@ -1,0 +1,82 @@
+{
+  "tool": "built-in image_gen",
+  "bodyPrompt": "Edit this windmill picture for a pastoral isometric railway game. Remove the four sails and both crossed stocks completely, with the iron plate where they cross and every shadow they cast. Where they covered the tower and the cap, paint the tower and the cap: continue the cream-stone courses, the window, the slate cap and its eaves exactly as they are around them. On the front of the cap, where the stocks crossed, leave the hub: the short round iron end of the windshaft, standing a little out of the cap toward the lower left, with a dark iron collar. Change nothing else: the tower, the cap, the finial, the window and the door stay exactly as they are, the same size and in the same place. Keep the camera: orthographic 2:1 isometric, no perspective. Light from the upper left. A real RGBA PNG with a transparent background (alpha 0) and an opaque mill. Never: sails, blades, ground, grass, a plinth, a shadow outside the mill, people, sacks or anything standing apart, text, a border, a glow. References: the second picture is the game's style board: keep to its style.",
+  "sailsPrompt": "Paint the four sails of this windmill as one picture of their own, over the grey guide, seen face on, looking straight along the windshaft. Two crossed timber stocks make an X along the guide's grey bars, and the square iron plate with four bolts covers their crossing at the exact centre of the picture. On each arm a timber lattice sail as on the reference windmill: the same warm brown timber, the same long frame of rails and bars, beginning about a quarter of the way out from the centre and running to the tip, on the same side of its stock as there. All four sails are alike: each is the next one turned by a quarter turn about the centre, never mirrored. The tips end where the guide's bars end, with a clear margin to the picture's edge. Soft light from the upper left with little contrast: each timber a little lighter on its upper left face and a little darker on its lower and right rims, no shadow cast on another sail, no strong highlight, because the game turns this picture about its centre. A real RGBA PNG with a transparent background (alpha 0), opaque timber and iron. Never: the tower, the cap, the windshaft, ground, sky, a shadow, motion blur, text, a border, a glow. References: the second picture is the windmill whose sails these are: take their timber, lattice and plate, not their angle. The third is the same mill without its sails: the plate sits on its hub. The fourth is the game's style board.",
+  "registrationSelfTest": {
+    "sv": 1,
+    "sh": 1,
+    "shift": [-39, 0],
+    "overlap": 1,
+    "finialTop": 196
+  },
+  "masterSelfTest": "ok    windmill-a0-r0  (placed by its outline: no straight wall base was found)",
+  "attempts": [
+    {
+      "picture": "windmill-a0-r0.png",
+      "attempt": 1,
+      "selected": false,
+      "file": "raw/windmill-a0-r0-attempt-1.png",
+      "prompt": "Edit this windmill picture for a pastoral isometric railway game. Remove the four sails and both crossed stocks completely, with the iron plate where they cross and every shadow they cast. Where they covered the tower and the cap, paint the tower and the cap: continue the cream-stone courses, the window, the slate cap and its eaves exactly as they are around them. On the front of the cap, where the stocks crossed, leave the hub: the short round iron end of the windshaft, standing a little out of the cap toward the lower left, with a dark iron collar. Change nothing else: the tower, the cap, the finial, the window and the door stay exactly as they are, the same size and in the same place. Keep the camera: orthographic 2:1 isometric, no perspective. Light from the upper left. A real RGBA PNG with a transparent background (alpha 0) and an opaque mill. Never: sails, blades, ground, grass, a plinth, a shadow outside the mill, people, sacks or anything standing apart, text, a border, a glow. References: the second picture is the game's style board: keep to its style.\n\nOutput size: 1536x1024.",
+      "references": [
+        "edit-input.png",
+        "../../../docs/art-direction/images/03-theme-town-growth.png"
+      ],
+      "returned": [1536, 1024],
+      "measured": {
+        "sv": 0.9962962962962963,
+        "sh": 0.9703872437357631,
+        "shift": [-9, 40],
+        "overlap": 0.9699176029962547,
+        "finialTop": 196,
+        "buildingCheck": "FAIL  windmill-a0-r0: camera off by 11.3°: it looks down from 18.7° where the game looks down from 30° and the building is turned 4.3° towards its lower-left wall (the wall feet slope 0.28 and -0.37, the game's 0.50 and -0.50)",
+        "readByEye": "Sails, stocks, plate and their shadows removed; roof and stone continued. Door enlarged; shaft end too far left. Registration scale disagreement 2.67%."
+      }
+    },
+    {
+      "picture": "windmill-a0-r0.png",
+      "attempt": 2,
+      "selected": true,
+      "file": "raw/windmill-a0-r0-attempt-2.png",
+      "prompt": "Edit this windmill picture for a pastoral isometric railway game. Remove the four sails and both crossed stocks completely, with the iron plate where they cross and every shadow they cast. Where they covered the tower and the cap, paint the tower and the cap: continue the cream-stone courses, the window, the slate cap and its eaves exactly as they are around them. On the front of the cap, where the stocks crossed, leave the hub: the short round iron end of the windshaft, standing a little out of the cap toward the lower left, with a dark iron collar. Change nothing else: the tower, the cap, the finial, the window and the door stay exactly as they are, the same size and in the same place. Keep the camera: orthographic 2:1 isometric, no perspective. Light from the upper left. A real RGBA PNG with a transparent background (alpha 0) and an opaque mill. Never: sails, blades, ground, grass, a plinth, a shadow outside the mill, people, sacks or anything standing apart, text, a border, a glow. References: the second picture is the game's style board: keep to its style.\n\nCorrection: the last attempt changed the tower's shape and camera, made the door too tall, and put the windshaft end too far left. Preserve the original input's exact outline, finial, cap, stone courses, window and door outside the areas hidden by sails. Do not redraw or enlarge the tower. Its finial top to bottom is 807 input pixels, its stone width near the foot 426 input pixels, and its door opening 161 input pixels tall. Keep these proportions exactly. The hub end must be short, centred where the iron plate was at input (742, 444). Remove sails by reconstructing only the covered parts, with no other changes.\n\nOutput size: 1536x1024.",
+      "references": [
+        "edit-input.png",
+        "../../../docs/art-direction/images/03-theme-town-growth.png"
+      ],
+      "returned": [1536, 1024],
+      "measured": {
+        "sv": 1.021518987341772,
+        "sh": 1.0167064439140812,
+        "shift": [-34, 3],
+        "overlap": 0.985199817656891,
+        "finialTop": 196,
+        "buildingCheck": "FAIL  windmill-a0-r0: camera off by 10.8°: it looks down from 19.2° where the game looks down from 30° and the building is turned 2.9° towards its lower-left wall (the wall feet slope 0.30 and -0.36, the game's 0.50 and -0.50)",
+        "readByEye": "Closest of three, retained under the attempt limit. No sails, stocks, plate or sail shadows remain. Stone courses, window and slate cap reconstructed; left faces lighter. Door opening approximately y821–982, matching master. Visible shaft end approximately (691,435), 15 px from master hub, fails 8 px limit. Octagonal stonework is smoother and checker finds wrong camera.",
+        "failures": [
+          "building-check camera off 10.8 degrees",
+          "hub end approximately 15 px from master exceeds 8 px limit"
+        ]
+      }
+    },
+    {
+      "picture": "windmill-a0-r0.png",
+      "attempt": 3,
+      "selected": false,
+      "file": "raw/windmill-a0-r0-attempt-3.png",
+      "prompt": "Edit this windmill picture for a pastoral isometric railway game. Remove the four sails and both crossed stocks completely, with the iron plate where they cross and every shadow they cast. Where they covered the tower and the cap, paint the tower and the cap: continue the cream-stone courses, the window, the slate cap and its eaves exactly as they are around them. On the front of the cap, where the stocks crossed, leave the hub: the short round iron end of the windshaft, standing a little out of the cap toward the lower left, with a dark iron collar. Change nothing else: the tower, the cap, the finial, the window and the door stay exactly as they are, the same size and in the same place. Keep the camera: orthographic 2:1 isometric, no perspective. Light from the upper left. A real RGBA PNG with a transparent background (alpha 0) and an opaque mill. Never: sails, blades, ground, grass, a plinth, a shadow outside the mill, people, sacks or anything standing apart, text, a border, a glow. References: the second picture is the game's style board: keep to its style.\n\nCorrection: the last attempt changed the tower's shape and camera, made the door too tall, and put the windshaft end too far left. Preserve the original input's exact outline, finial, cap, stone courses, window and door outside the areas hidden by sails. Do not redraw or enlarge the tower. Its finial top to bottom is 807 input pixels, its stone width near the foot 426 input pixels, and its door opening 161 input pixels tall. Keep these proportions exactly. The hub end must be short, centred where the iron plate was at input (742, 444). Remove sails by reconstructing only the covered parts, with no other changes.\n\nCorrection: the second attempt rounded the stone tower's foot into smooth broad arcs; preserve the original eight distinct flat stone faces and their short, uneven polygonal foot edges exactly, including the original door recess and its height. Do not replace the octagonal mill by a round cone or alter the lower stonework at all. The visible circular END of the hub, not its rear collar, must be at the original iron plate centre (742,444) on the padded input. Keep it a very short stub. The original finial top is at y196, bottom y1003; the original door opening runs y821 to982. Preserve these original positions and the 807:426 height-to-width ratio.\n\nOutput size: 1536x1024.",
+      "references": [
+        "edit-input.png",
+        "../../../docs/art-direction/images/03-theme-town-growth.png"
+      ],
+      "returned": [1536, 1024],
+      "measured": {
+        "sv": 1.0241116751269035,
+        "sh": 1.0023529411764707,
+        "shift": [-32, 3],
+        "overlap": 0.9651875093381145,
+        "finialTop": 196,
+        "buildingCheck": "FAIL  windmill-a0-r0: camera off by 11.2°: it looks down from 18.8° where the game looks down from 30° and the building is turned 5.9° towards its lower-left wall (the wall feet slope 0.26 and -0.40, the game's 0.50 and -0.50)",
+        "readByEye": "Sails removed, but base remains smoother than master and shaft end still too far left. Registration scales disagree by 2.17%."
+      }
+    }
+  ]
+}
