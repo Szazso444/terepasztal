@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
+import { picture } from '../testing/townPaving';
 import { doorsOf as placeDoors, type PlaceDef } from '../sim/doors';
 import {
   doorstepChanges,
@@ -463,6 +464,8 @@ describe('the town paving outline, against the shape worked out piece by piece',
     );
   }, 20_000);
 
+  // slow because 150 points of each seeded town are set against the outline worked out piece by
+  // piece: 0.33 s alone, so a limit of 30 s
   it('wobbles both ways along a straight edge', () => {
     let least = 0,
       most = 0;
@@ -480,20 +483,12 @@ describe('the town paving outline, against the shape worked out piece by piece',
     });
     expect(least).toBeLessThan(-0.03);
     expect(most).toBeGreaterThan(0.03);
-  });
+  }, 30_000);
 });
 
-/** What the painter takes from the paving at map point (x, y): its distance and colour there. */
-function picture(p: TownPaving, x: number, y: number) {
-  const d = p.near(Math.round(y) * p.w + Math.round(x)) ? p.distance(x, y) : -9;
-  if (d <= -PAVING_FRINGE) return [];
-  if (d <= 0) return [d, p.fringe(x, y, d)];
-  const out = [0, 0, 0];
-  p.paint(x, y, d, [70, 190, 60], 1, out);
-  return [d, ...out];
-}
-
 describe('the town paving picture, wherever it is asked for', () => {
+  // slow because each seeded town's 200 points are painted forward and again backward on a paving
+  // of its own: 0.32 s alone, so a limit of 30 s
   it('is the same at a point whatever was painted before it, as in two chunks', () => {
     forAll(
       (rng) => town(rng),
@@ -510,8 +505,10 @@ describe('the town paving picture, wherever it is asked for', () => {
       },
       { shrink: shrinkTown },
     );
-  });
+  }, 30_000);
 
+  // slow because each seeded town is painted at 200 points before and after its doors come and go:
+  // 0.49 s alone, so a limit of 30 s
   it('changes, when doors come and go, only on the tiles doorstepChanges repaints', () => {
     forAll(
       (rng) => {
@@ -551,7 +548,7 @@ describe('the town paving picture, wherever it is asked for', () => {
         },
       },
     );
-  });
+  }, 30_000);
 });
 
 describe('doorsteps of the simulation doors', () => {

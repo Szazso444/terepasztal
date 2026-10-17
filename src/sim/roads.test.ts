@@ -1860,6 +1860,8 @@ describe('the spur search', () => {
     expect(seen.crossings).toBeGreaterThanOrEqual(20);
   });
 
+  // slow because each seeded patch and hook is searched for its spur and the search compared with
+  // the rule: 0.39 s alone, so a limit of 30 s
   it('gives, of the spurs with the fewest tiles, the first by its steps, a step’s side ranked N, E, S, W', () => {
     // each generator with what its cases must show at least, so the property is not vacuous: the
     // patches break ties, and the hooks often need the spur judged whole, at times to SPUR_REACH
@@ -1899,7 +1901,7 @@ describe('the spur search', () => {
       for (const [what, n] of Object.entries(least))
         expect(seen[what as keyof typeof seen], `${name}: ${what}`).toBeGreaterThanOrEqual(n);
     }
-  });
+  }, 30_000);
 
   it('gives the same spur every time it is asked, and leaves the roads as they were', () => {
     forAll(genPatch, (c) => {

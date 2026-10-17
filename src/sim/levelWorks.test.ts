@@ -169,7 +169,9 @@ function* shrinkOne(s: Stand): Iterable<Stand> {
 }
 
 describe('for any works, turn and position', () => {
-  // slow: it places every works definition at every rotation through the builder in one level
+  // slow because each seed stands every works at all four turns in a 32 x 32 world and takes the
+  // lot through the editor and back: 2.1 s alone (7 to 9 s on the author's machine in #458), so a
+  // limit of 120 s
   it('every works definition at every rotation comes back from the editor at the same tile and turn', () => {
     // each turning definition at each rotation in one level, each at a tile drawn from the seed
     expect(WORKS.length, 'works definitions to sweep').toBeGreaterThan(0);
@@ -198,7 +200,7 @@ describe('for any works, turn and position', () => {
       },
       { shrink: shrinkStands },
     );
-  }, 60_000);
+  }, 120_000);
 
   it('one works of any definition, bridge platforms included, comes back at its tile and turn', () => {
     forAll(
@@ -254,6 +256,8 @@ describe('a bridge platform and an unturned works', () => {
     for (const d of BRIDGES) expect(toolTurn(d.id, 3), d.id).toBe(0);
   });
 
+  // slow because each seed stands every works and bridge platform in a 32 x 32 world and takes the
+  // lot through the editor: 0.56 s alone, so a limit of 30 s
   it('come back at r0, however the player had the tool turned', () => {
     forAll(
       (rng) => {
@@ -284,7 +288,7 @@ describe('a bridge platform and an unturned works', () => {
         },
       },
     );
-  });
+  }, 30_000);
 });
 
 describe('a level written before works had a turn', () => {
@@ -480,6 +484,8 @@ describe('a turn in a level file', () => {
 });
 
 describe('stations and decor in a level', () => {
+  // slow because each seed stands works, a station and decor in a 32 x 32 world and takes them
+  // through the editor: 0.43 s alone, so a limit of 30 s
   it('keep their turn when the editor writes them beside turned works', () => {
     forAll(
       (rng) => {
@@ -528,7 +534,7 @@ describe('stations and decor in a level', () => {
         expect(lines(readWorks(file))).toEqual(lines(placedWorks));
       },
     );
-  });
+  }, 30_000);
 });
 
 describe('a level saved from the editor', () => {
@@ -546,6 +552,8 @@ describe('a level saved from the editor', () => {
     vi.unstubAllGlobals();
   });
 
+  // slow because each seed saves a level three ways and loads it from the stored list: 0.38 s
+  // alone, so a limit of 30 s
   it('keeps the turn through save, save as and the draft, and loads from the stored list', () => {
     forAll(
       (rng) => {
@@ -580,5 +588,5 @@ describe('a level saved from the editor', () => {
       },
       { shrink: shrinkStands },
     );
-  });
+  }, 30_000);
 });

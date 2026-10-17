@@ -71,13 +71,15 @@ function climateOfGenerated(map: GameMap) {
 }
 
 describe('climateAt on a generated map', () => {
+  // slow because the first case also pays the generator's warm-up: 0.3 s alone, 0.1 to 0.2 s each of
+  // the rest, so a limit of 30 s
   for (const seed of SEEDS)
     for (const size of SIZES)
       it(`is the climate plane, the biome but under a landform, on a ${size.w}x${size.h} map (seed ${seed})`, () => {
         const map = generateMap(seed, size);
         expect(map.climate).toHaveLength(map.w * map.h);
         expect(climateOfGenerated(map).wrong).toBe(0);
-      });
+      }, 30_000);
 
   // the maps above generated again, each world planning its rivers: about 1 s alone
   it('differs from the biome under some landform on those maps', () => {

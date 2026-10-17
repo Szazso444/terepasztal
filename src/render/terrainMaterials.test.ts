@@ -238,9 +238,11 @@ function agrees(c: Shore) {
 }
 
 describe('the painted waterline, on any shore', () => {
+  // slow because the painted waterline is read against the blend at every point of each seeded
+  // shore: 0.33 s alone, so a limit of 30 s
   it('agrees with the blend read at every point, however the rule skips it', () => {
     forAll((rng) => shore(rng), agrees, { shrink: shrinkShore });
-  });
+  }, 30_000);
 
   // 1500 points on each of 50 maps, read twice each: about a second alone
   it('agrees with the blend read as far from a lone water tile as its water is painted', () => {
@@ -277,6 +279,8 @@ describe('the painted waterline, on any shore', () => {
     );
   }, 20_000);
 
+  // slow because 50 points of each seeded shore are read paved and unpaved: 0.41 s alone, so a
+  // limit of 30 s
   it('is the water part of the very blend it leaves for the painter, and none where paved', () => {
     // The painter weighs its colours by the blend paintedWater leaves, so the share must be read
     // off that blend, paved or not.
@@ -300,5 +304,5 @@ describe('the painted waterline, on any shore', () => {
       },
       { shrink: shrinkShore },
     );
-  });
+  }, 30_000);
 });

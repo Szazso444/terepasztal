@@ -1178,6 +1178,8 @@ describe('the upgrade click', () => {
     }
   });
 
+  // slow because each seeded run of up to 20 clicks and removals is played against the sound: 0.34
+  // s alone, so a limit of 30 s
   it('plays once for every upgrade a click starts and never for one refused', () => {
     forAll(
       (rng: Rng): ClickCase => ({
@@ -1218,7 +1220,7 @@ describe('the upgrade click', () => {
         },
       },
     );
-  });
+  }, 30_000);
 });
 
 // ---------------------------------------------- a house's finished upgrade: its toast and notice

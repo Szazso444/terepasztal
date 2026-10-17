@@ -81,6 +81,8 @@ describe('a chunk text', () => {
   // Version 1 holding part of its chunk (a map whose edge was off the chunk grid): header
   // 01 02 01 03 02, the 3 x 2 tiles from (2, 1); terrain six grass (05), biome runs 3 3 5 5 1 4
   // (31 51 10 40), variant 00 00, no props (00).
+  // slow because it generates a world to fill the rest of the chunk: 0.31 s alone, so a limit
+  // of 30 s
   it('of version 1 holding part of its chunk keeps its climate its biome when the rest is generated', () => {
     const text = textOf([1, 2, 1, 3, 2, 0x05, 0x31, 0x51, 0x10, 0x40, 0, 0, 0]);
     const old = [3, 3, 5, 5, 1, 4];
@@ -110,7 +112,7 @@ describe('a chunk text', () => {
     const again = buildMap(1, { w: 32, h: 32 }, built.chunks, never);
     expect([...again.map.biome]).toEqual([...m.biome]);
     expect([...again.map.climate!]).toEqual([...m.climate!]);
-  });
+  }, 30_000);
 
   // 4 worlds, each with two start chunks (two river plans) and three maps: about 2 s alone
   it('holds the climate of a generated map, and a map built from it reads it back', () => {

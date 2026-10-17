@@ -852,15 +852,19 @@ function keepBooks(c: LedgerCase) {
 }
 
 describe('economy commands', () => {
+  // slow because each seeded ledger runs the economy commands and checks the books: 0.36 s alone,
+  // so a limit of 30 s
   it('move money, tickets, stock and fittings only by the quoted amounts, never below zero', () => {
     forAll(ledgerCase, (c) => void keepBooks(c), { shrink: shrinkLedger });
-  });
+  }, 30_000);
 
+  // slow because each seeded ledger runs the economy commands and watches the warnings: 0.32 s
+  // alone, so a limit of 30 s
   it('say why they refuse themselves, without the economy posting its own warning too', () => {
     forAll(ledgerCase, (c) => expect(keepBooks(c)).not.toHaveBeenCalled(), {
       shrink: shrinkLedger,
     });
-  });
+  }, 30_000);
 
   it('a buy then a sell of what was bought costs exactly the spread and leaves the stock', () => {
     forAll(

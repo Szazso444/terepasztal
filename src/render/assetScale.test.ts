@@ -220,6 +220,8 @@ describe('turned structure frames', () => {
   let names: Set<string>;
   const frames: FrameNames = { has: (key) => names.has(key) };
 
+  // slow because it generates the whole structures atlas: 0.9 s alone, and a hook has a default of
+  // its own (10 s) that a loaded machine can use up, so a limit of 60 s
   beforeAll(() => {
     vi.stubGlobal('ImageData', FakeImageData);
     vi.stubGlobal('document', {
@@ -233,7 +235,7 @@ describe('turned structure frames', () => {
       ...Object.keys(generateStructuresAtlas().frames),
       ...Object.keys(atlas.frames),
     ]);
-  });
+  }, 60_000);
   afterAll(() => {
     vi.unstubAllGlobals();
   });
