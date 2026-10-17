@@ -815,12 +815,15 @@ export class WorldRenderer {
 
   /**
    * Paint the wheat fields' pictures (#444) for at most `budget` ms, the tiles in view first; a
-   * picture that takes longer goes on in the next call.
+   * picture that takes longer goes on in the next call, and is made into its texture in a call of
+   * its own. With no limit (`Infinity`), every picture there is to paint.
    */
   updateFields(budget = FIELD_BUDGET_MS) {
     if (!this.wheat.busy) return;
-    const end = performance.now() + budget;
-    this.wheat.update(this.wheatHost, () => performance.now() < end);
+    const end = performance.now() + budget,
+      more = () => performance.now() < end;
+    do this.wheat.update(this.wheatHost, more);
+    while (budget === Infinity && this.wheat.busy && this.fieldFrames !== 'wait');
   }
   /** The variants' pictures, read once; 'wait' while they are read, null where none can be. */
   private readFieldFrames() {

@@ -14,7 +14,7 @@ import {
  * Most of a frame's time the fields' pictures may take (ms). A picture takes several frames' share;
  * its job stops between two columns or a few rows and goes on in the next frame.
  */
-export const FIELD_BUDGET_MS = 1.5;
+export const FIELD_BUDGET_MS = 1;
 
 /** What the fields' pictures are made from, as the world renderer has it. */
 export interface WheatHost {
@@ -107,8 +107,16 @@ export class WheatFields {
     return this.queue.size > 0 || !!this.job;
   }
 
-  /** Look at and paint pictures while `more()` says there is time; the tiles in view first. */
+  /**
+   * Look at and paint pictures while `more()` says there is time, the tiles in view first. A
+   * picture painted is made into its texture in a call of its own, the next: the canvas and its
+   * upload are never added to a call's painting.
+   */
   update(host: WheatHost, more: () => boolean) {
+    if (this.job?.job.done) {
+      this.complete(host);
+      return;
+    }
     while (more()) {
       if (!this.job) {
         const tile = this.next(host.view());
@@ -133,37 +141,40 @@ export class WheatFields {
         }
         this.job = { tile, key, job: new FieldModel(site).job(frames) };
       }
-      if (!this.job.job.run(more)) return;
-      // making its texture is a step of its own, in time left over or in the next call
-      if (!more()) return;
-      const { tile, key, job } = this.job;
-      this.job = null;
-      const entry = this.sprites.get(tile),
-        site = entry ? host.site(tile % this.w, (tile / this.w) | 0) : null;
-      // changed while it was painted: it is looked at again
-      if (site && siteKey(site) !== key) {
-        this.queue.add(tile);
-        continue;
-      }
-      this.queue.delete(tile);
-      const p = job.result;
-      if (!entry || !site || !p) {
-        this.drop(tile);
-        continue;
-      }
-      const old = this.shown.get(tile),
-        shown: Shown = {
-          key,
-          texture: host.texture(p),
-          left: p.left,
-          top: p.top,
-          width: p.width / FIELD_RES,
-          height: p.height / FIELD_RES,
-        };
-      this.shown.set(tile, shown);
-      show(entry.sprite, shown);
-      old?.texture.destroy(true);
+      this.job.job.run(more);
+      return;
     }
+  }
+
+  /** Show the picture just painted, made into its texture, unless its tile changed meanwhile. */
+  private complete(host: WheatHost) {
+    const { tile, key, job } = this.job!;
+    this.job = null;
+    const entry = this.sprites.get(tile),
+      site = entry ? host.site(tile % this.w, (tile / this.w) | 0) : null;
+    // changed while it was painted: it is looked at again
+    if (site && siteKey(site) !== key) {
+      this.queue.add(tile);
+      return;
+    }
+    this.queue.delete(tile);
+    const p = job.result;
+    if (!entry || !site || !p) {
+      this.drop(tile);
+      return;
+    }
+    const old = this.shown.get(tile),
+      shown: Shown = {
+        key,
+        texture: host.texture(p),
+        left: p.left,
+        top: p.top,
+        width: p.width / FIELD_RES,
+        height: p.height / FIELD_RES,
+      };
+    this.shown.set(tile, shown);
+    show(entry.sprite, shown);
+    old?.texture.destroy(true);
   }
 
   /** The next tile to look at: one in view first, then the nearest to the view's middle. */
