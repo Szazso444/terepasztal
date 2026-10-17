@@ -138,7 +138,8 @@ describe('a line of track', () => {
 
   it('places nothing when one piece is blocked, and leaves money and stock as they were', () => {
     for (const [block, at, reason] of [
-      [(w: World) => w.ground(7, 5, Terrain.Rock), 3, STR.build.rock],
+      // rock takes track only as the continuation of a line: the line starts on it, joining none
+      [(w: World) => w.ground(4, 5, Terrain.Rock), 0, STR.build.mountainLine],
       [(w: World) => w.ground(8, 5, Terrain.Water), 4, STR.build.needBridge],
       [(w: World) => w.builder.placeBuilding(5, 5, 'windmill'), 1, STR.build.occupied],
     ] as const) {
@@ -906,6 +907,8 @@ const GENERATORS: [string, (rng: Rng) => Scene, ForAllOptions<Scene>][] = [
 
 describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
   const options: ForAllOptions<Scene> = { shrink: shrinkScene, format: formatScene, ...seeds };
+  // slow because each seeded line is judged piece by piece against a twin world that lays it with
+  // the single-piece tools: 0.51 s alone, so a limit of 30 s
   it('judges every piece as the single-piece tools would after the passed pieces before it', () => {
     // The oracle walks the line on a twin world with ample stock and lays, with the single-piece
     // tools, only the pieces the line passes. Every verdict, refused pieces and those after them
@@ -1001,7 +1004,7 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
       },
       options,
     );
-  });
+  }, 30_000);
 
   it('lays an accepted line once: laying it again skips every piece, free and silent', () => {
     forAll(

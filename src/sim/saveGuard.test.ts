@@ -212,6 +212,7 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
     wires: w.catenary.toJSON(),
     houses: w.houses.toJSON(),
     people: w.people.toJSON(),
+    roads: w.builder.roads.toJSON(),
   };
 }
 
@@ -328,6 +329,8 @@ describe('firstNonFinite', () => {
     expect(firstNonFinite(save)).toBeNull();
   });
 
+  // slow because each seeded save is walked for numbers against the order JSON writes them in: 0.36
+  // s alone, so a limit of 30 s
   it('finds a non-finite number anywhere, by the path to the first in the order JSON writes', () => {
     forAll(
       genBroken,
@@ -350,7 +353,7 @@ describe('firstNonFinite', () => {
       },
       { shrink: shrinkBroken },
     );
-  });
+  }, 30_000);
 
   it('writes keys joined by dots and list positions in brackets, nested lists included', () => {
     const save = fullSaveOnce();
@@ -980,6 +983,8 @@ describe('station turns, repaired on read', () => {
     );
   });
 
+  // slow because three file versions, every station kind and 14 held turns are each read and
+  // repaired: 0.34 s alone, so a limit of 30 s
   it('cover what the station covers, for every kind and any turn a file holds', () => {
     // The issue's own list, each in a file of this version and of the oldest.
     const held: unknown[] = [0.5, '1', true, null, -1, 5, undefined, 0, 1, 2, 3, 1.5, '3', 4];
@@ -1009,7 +1014,7 @@ describe('station turns, repaired on read', () => {
           expect(record.rot, label).toBe(loaded.rot);
           expect(stationFootprint(def.id, 5, 6, record.rot!), label).toEqual(loaded.footprint());
         }
-  });
+  }, 30_000);
 });
 
 describe('a save the game wrote', () => {

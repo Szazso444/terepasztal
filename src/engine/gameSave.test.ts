@@ -2,14 +2,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Game } from '../game';
 import { AutosavePause } from './autosavePause';
 import { BrokenNumberWarning, StorageRefusalWarning } from './saveRefusal';
-import { SAVE_KEY, type SaveGame } from '../sim/save';
-import { CHUNK_TILES, ownsBorderChunk } from '../sim/expand';
+import { UNREADABLE_NOTICE_TTL } from './saveMessages';
+import { SAVE_KEY, SAVE_MIN_VERSION, SLOTS_KEY, readSaveText, type SaveGame } from '../sim/save';
+import { rules, DEFAULT_RULES } from '../sim/rules';
+import { setSupplyMode, DEFAULT_SUPPLY } from '../sim/supply';
+import { setSeasonOffset } from '../sim/weather';
+import { resetStationIds } from '../sim/stations';
+import { resetTrainIds } from '../sim/trains';
+import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
+import { unbuildable } from '../sim/build';
+import { INTENT_KEY, type Intent } from '../intent';
+import { bootPlan } from './boot';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
 import { RegionState } from '../world/regions';
 import { emptyMap } from '../world/mapgen';
-import { Terrain } from '../world/tiles';
+import { Terrain, type GameMap } from '../world/tiles';
 import { STR } from '../strings';
 import { forAll, shrinkArray } from '../testing/property';
+import { simWorld, line, station, mapParams, type SimWorld } from '../testing/simWorld';
 import type { Rng } from './rng';
 
 // a purchase plays a sound; the context that plays it is a browser's
@@ -20,18 +30,22 @@ vi.mock('./audio', async (original) => ({
 
 // What `Game.save` and `Game.saveSlot` make of an outcome: the toast, the console, the latch. The
 // rules themselves (`saveOutcome`, `BrokenNumberWarning`, `StorageRefusalWarning`) are pinned in
-// saveRefusal.test.ts; this file pins that the game calls them and shows what they say. A `Game` cannot be constructed under
-// Node (its `Toasts` build DOM), but its methods run on a stand-in that has the prototype and
-// only the fields they read, so the real `save`, `saveSlot` and their helpers are what is tested.
+// saveRefusal.test.ts, and what the end of a load and a purchase say in saveMessages.test.ts;
+// this file pins that the game calls them and shows what they say. A `Game` cannot be constructed
+// under Node (its `Toasts` build DOM), but its methods run on a stand-in that has the prototype
+// and only the fields they read, so the real `save`, `saveSlot` and their helpers are what is
+// tested.
 
 class MemoryStorage {
   items = new Map<string, string>();
   refuses = false;
+  /** the longest text it keeps: room for some saves and not for larger ones */
+  limit = Number.POSITIVE_INFINITY;
   getItem(k: string) {
     return this.items.has(k) ? this.items.get(k)! : null;
   }
   setItem(k: string, v: string) {
-    if (this.refuses) throw new Error('QuotaExceededError');
+    if (this.refuses || String(v).length > this.limit) throw new Error('QuotaExceededError');
     this.items.set(k, String(v));
   }
   removeItem(k: string) {
@@ -44,9 +58,19 @@ interface Toast {
   kind: string;
 }
 
+/** A notice the game pushed, with the lifetime it was given. */
+interface PushedNotice {
+  key: string;
+  kind: string;
+  text: string;
+  target: unknown;
+  ttl: number;
+}
+
 /** A Game with the prototype's methods and the fields save and saveSlot read, and no DOM. */
 function standIn() {
   const toasts: Toast[] = [];
+  const notices: PushedNotice[] = [];
   const pause = new AutosavePause();
   const host: Record<string, unknown> = Object.create(Game.prototype);
   let current: SaveGame = base(0);
@@ -57,12 +81,16 @@ function standIn() {
     storageRefusalWarning: new StorageRefusalWarning(),
     savedAt: null,
     toasts: { push: (text: string, kind: string) => toasts.push({ text, kind }) },
+    notices: {
+      push: (n: Omit<PushedNotice, 'ttl'>, ttl: number) => notices.push({ ...n, ttl }),
+    },
     snapshot: () => current,
   });
   return {
     game: host as unknown as Game,
     host,
     toasts,
+    notices,
     pause,
     /** The snapshot the game takes next. */
     take(snap: SaveGame) {
@@ -316,6 +344,63 @@ describe('Game.save and Game.saveSlot', () => {
   });
 });
 
+// ------------------------------------------------------------------ reloads into a stored save
+
+describe('Game.loadSlot, Game.loadSave and Game.importSave', () => {
+  /** A save in the oldest format a load still reads, as a slot or a file the player has. */
+  const SAVED = JSON.stringify({
+    version: SAVE_MIN_VERSION,
+    savedAt: 1700000000000,
+    seed: 12345,
+    clock: { time: 0, speedIndex: 1 },
+    economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
+    track: [],
+    stations: [],
+    trains: [],
+    contracts: { contracts: [] },
+    inventory: { items: [] },
+    gacha: {},
+    camera: { x: 0, y: 0, zoomIndex: 2 },
+    lastDay: 0,
+  });
+
+  it.each(['a save slot', 'the stored game', 'an imported save'] as const)(
+    'reload straight into play with %s',
+    (way) => {
+      const session = new MemoryStorage();
+      vi.stubGlobal('sessionStorage', session);
+      const reload = vi.fn();
+      vi.stubGlobal('location', { hash: '#from-before', reload });
+      const g = standIn();
+      const stop = vi.fn();
+      Object.assign(g.host, { loop: { stop }, tooltip: { stack: { closeAll: vi.fn() } } });
+      if (way === 'a save slot') {
+        store.setItem(SLOTS_KEY, JSON.stringify({ mine: SAVED }));
+        expect(g.game.loadSlot('mine')).toBe(true);
+      } else if (way === 'the stored game') {
+        store.setItem(SAVE_KEY, SAVED);
+        expect(g.game.loadSave()).toBe(true);
+      } else expect(g.game.importSave(SAVED)).toEqual({ ok: true });
+
+      // the game it reloads into is the stored one, and the game being left does not save over it
+      expect((JSON.parse(store.getItem(SAVE_KEY)!) as SaveGame).seed).toBe(12345);
+      expect(g.host.keepStoredSave).toBe(true);
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(reload).toHaveBeenCalledTimes(1);
+      // the boot carries the intent out: the stored game, the loading screen, then the reveal,
+      // with the music as loading finishes, since the player clicked to load
+      const intent = JSON.parse(session.getItem(INTENT_KEY)!) as Intent;
+      expect(intent).toEqual({ action: 'continue' });
+      expect(bootPlan(intent)).toEqual({
+        loading: true,
+        reveal: true,
+        clickToBegin: true,
+        music: 'loaded',
+      });
+    },
+  );
+});
+
 // ------------------------------------------------------------------ Game.buyChunk
 
 describe('Game.buyChunk', () => {
@@ -331,11 +416,13 @@ describe('Game.buyChunk', () => {
       mode?: 'play' | 'editor';
       kind?: 'generated' | 'level';
       size?: number;
+      /** a map of that size to share: a purchase reads its frame and never changes it */
+      map?: GameMap;
     } = {},
   ) {
     const g = standIn();
     const size = over.size ?? 160;
-    const map = emptyMap(1, size, size);
+    const map = over.map ?? emptyMap(1, size, size);
     const regions = new RegionState(map, 0);
     const economy = {
       money: MONEY,
@@ -454,7 +541,7 @@ describe('Game.buyChunk', () => {
 
   it('leaves a chunk on the grid edge to growing the map, which stores the game itself', () => {
     const b = buying();
-    // own a chunk one ring out, then buy the edge chunk beside it, with growing held by a loop error
+    // own a chunk one ring out, then buy the edge chunk beside it; a loop error holds growing
     b.regions.own(b.inner[0]);
     const edge = b.regions
       .neighbours(b.inner[0])
@@ -463,6 +550,32 @@ describe('Game.buyChunk', () => {
     expect(b.game.buyChunk(edge, true)).toBe(true);
     expect(b.toasts).toEqual([bought, { text: STR.overview.growHeld, kind: 'warn' }]);
     expect(store.items.size).toBe(0);
+  });
+
+  it('says a refused growth write did not grow the map, and writes nothing more for it', () => {
+    const refusals: [string, (b: ReturnType<typeof buying>) => void][] = [
+      ['storage', () => (store.refuses = true)],
+      [
+        'a broken number',
+        (b) => (b.host.snapshot = () => ({ ...base(1), economy: { money: Number.NaN } })),
+      ],
+    ];
+    for (const [why, refuse] of refusals) {
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+      const b = buying();
+      b.regions.own(b.inner[0]);
+      const edge = b.regions
+        .neighbours(b.inner[0])
+        .find((i) => !b.regions.unlocked[i] && !b.inner.includes(i))!;
+      refuse(b);
+      expect(b.game.buyChunk(edge, true), why).toBe(true);
+      expect(b.regions.unlocked[edge], why).toBe(true);
+      // one warning for the one refusal: no autosave follows the growth write to repeat it
+      expect(b.toasts, why).toEqual([{ text: STR.overview.growRefused, kind: 'warn' }, bought]);
+      expect(store.items.size, why).toBe(0);
+      expect(b.host.savedAt, why).toBe(null);
+    }
   });
 
   it('stores a purchase on the grid edge at once when the world cannot grow any more', () => {
@@ -484,6 +597,429 @@ describe('Game.buyChunk', () => {
     expect((save.regions as boolean[])[i]).toBe(true);
     expect((save.economy as { money: number }).money).toBe(money - price);
   });
+
+  // The oracle: what buyChunk did and said before its toasts moved into saveMessages.ts (#391),
+  // written out step by step from the code it replaced. The move was to change no purchase's
+  // outcome, #288's inner purchase stored at once and #390's last ring included.
+
+  /** One purchase: where the chunk lies, what the game is, and how a write of it ends. */
+  interface Purchase {
+    /** an inner chunk; a chunk on the grid's edge; the edge of a world with no ring left to add */
+    where: 'inner' | 'edge' | 'last ring';
+    kind: 'generated' | 'level';
+    autosave: boolean;
+    mode: 'play' | 'editor';
+    loopError: boolean;
+    /** the page reloads into a stored save (`keepStoredSave`) */
+    reloading: boolean;
+    /** how a write ends; `room for the game only`: storage keeps the game, not it grown a ring */
+    write: 'ok' | 'storage' | 'broken number' | 'room for the game only';
+  }
+  interface PurchaseEffects {
+    toasts: Toast[];
+    /** what the store holds after: nothing, the game as it stands, or that game grown by a ring */
+    stored: 'nothing' | 'game' | 'grown';
+    reload: boolean;
+    /** console lines naming a broken number */
+    logged: number;
+  }
+  const growing = { text: STR.overview.growing, kind: 'info' };
+  const growRefused = { text: STR.overview.growRefused, kind: 'warn' };
+  const growHeld = { text: STR.overview.growHeld, kind: 'warn' };
+  const autosaveFailed = { text: STR.settings.autosaveFailed, kind: 'warn' };
+  const autosaveBroken = { text: STR.settings.autosaveBroken, kind: 'warn' };
+
+  /** buyChunk before #391, on a game whose autosave latches are clear. */
+  function before391(c: Purchase): PurchaseEffects {
+    const edge = c.kind === 'generated' && c.where === 'edge';
+    const held = edge && c.loopError;
+    const toasts: Toast[] = [];
+    if (edge && !held) {
+      // writeSave(expandSave(snapshot)), then the reload into it; no latch, no console
+      if (c.write === 'ok') return { toasts: [growing], stored: 'grown', reload: true, logged: 0 };
+      // and nothing else is written for the purchase, even where the game ungrown would fit
+      toasts.push(growRefused);
+    }
+    toasts.push(bought);
+    if (held) toasts.push(growHeld);
+    let stored: PurchaseEffects['stored'] = 'nothing';
+    let logged = 0;
+    // `if (!edge && autosave && mode === 'play') this.save(true)`, and save(true) itself
+    if (!edge && c.autosave && c.mode === 'play' && !c.reloading && !c.loopError) {
+      if (c.write === 'ok' || c.write === 'room for the game only') stored = 'game';
+      else if (c.write === 'storage') toasts.push(autosaveFailed);
+      else {
+        toasts.push(autosaveBroken);
+        logged = 1;
+      }
+    }
+    return { toasts, stored, reload: false, logged };
+  }
+
+  it('does and says what it did before its decisions moved, for every purchase', () => {
+    const cases: Purchase[] = [];
+    for (const where of ['inner', 'edge', 'last ring'] as const)
+      for (const kind of ['generated', 'level'] as const)
+        for (const autosave of [true, false])
+          for (const mode of ['play', 'editor'] as const)
+            for (const loopError of [false, true])
+              for (const reloading of [false, true])
+                for (const write of [
+                  'ok',
+                  'storage',
+                  'broken number',
+                  'room for the game only',
+                ] as const)
+                  cases.push({ where, kind, autosave, mode, loopError, reloading, write });
+    // one map of each size for every case: the largest takes a while to build
+    const maps = {
+      160: emptyMap(1, 160, 160),
+      last: emptyMap(1, 32 * CHUNK_TILES, 32 * CHUNK_TILES),
+    };
+    const seen = new Set<string>();
+    for (const c of cases) {
+      const why = JSON.stringify(c);
+      store = new MemoryStorage();
+      vi.stubGlobal('localStorage', store);
+      const session = new MemoryStorage();
+      vi.stubGlobal('sessionStorage', session);
+      const reload = vi.fn();
+      vi.stubGlobal('location', { hash: '#from-before', reload });
+      warn.mockClear();
+
+      const last = c.where === 'last ring';
+      const b = buying({
+        kind: c.kind,
+        autosave: c.autosave,
+        mode: c.mode,
+        size: last ? 32 * CHUNK_TILES : undefined,
+        map: last ? maps.last : maps[160],
+      });
+      if (last) b.economy.money = MONEY * 1000;
+      const money = b.economy.money;
+      let i = b.inner[0];
+      if (c.where === 'edge') {
+        b.regions.own(b.inner[0]);
+        i = b.regions
+          .neighbours(b.inner[0])
+          .find((j) => !b.regions.unlocked[j] && !b.inner.includes(j))!;
+      } else if (last) {
+        b.regions.own(0);
+        i = 1;
+      }
+      const price = b.regions.price(i);
+      // the snapshot a write takes: the world, so growing has a frame to grow, and the purchase
+      const snap = () =>
+        ({
+          ...base(1),
+          stations: [],
+          trains: [],
+          track: [],
+          camera: { x: 0, y: 0, zoomIndex: 2 },
+          world:
+            c.kind === 'generated'
+              ? { kind: 'generated', seed: 1, params: { w: b.map.w, h: b.map.h } }
+              : { kind: 'level', seed: 1 },
+          regions: [...b.regions.unlocked],
+          economy: { money: c.write === 'broken number' ? Number.NaN : b.economy.money },
+        }) as unknown as SaveGame;
+      const rebuilt = { fog: 0, regions: 0, minimap: 0 };
+      Object.assign(b.host, {
+        snapshot: snap,
+        world: { rebuildFog: () => rebuilt.fog++ },
+        overview: { rebuildRegions: () => rebuilt.regions++ },
+        ui: { minimap: { rebuildBase: () => rebuilt.minimap++ } },
+      });
+      if (c.loopError) b.pause.trip();
+      if (c.reloading) b.host.keepStoredSave = true;
+      store.refuses = c.write === 'storage';
+      // the game grown a ring is longer by the ring's chunks: there is room for the game alone
+      if (c.write === 'room for the game only') store.limit = JSON.stringify(snap()).length + 16;
+
+      expect(b.game.buyChunk(i, true), why).toBe(true);
+
+      // what the case says of the grid holds: only the edge purchase leaves an edge chunk owned
+      expect(ownsBorderChunk(b.regions.unlocked, b.map.w, b.map.h), why).toBe(c.where === 'edge');
+      const want = before391(c);
+      // the purchase is made, whatever became of the writes
+      expect(b.regions.unlocked[i], why).toBe(true);
+      expect(b.economy.money, why).toBe(money - price);
+      expect(b.toasts, why).toEqual(want.toasts);
+      const text = store.items.get(SAVE_KEY);
+      const stored =
+        text === undefined
+          ? 'nothing'
+          : text === JSON.stringify(snap())
+            ? 'game'
+            : text === JSON.stringify(expandSave(snap(), 1))
+              ? 'grown'
+              : `something else: ${text.slice(0, 80)}`;
+      expect(stored, why).toBe(want.stored);
+      expect(
+        [...store.items.keys()].filter((k) => k !== SAVE_KEY),
+        why,
+      ).toEqual([]);
+      // the settings screen's "saved at" moves with the game's own save, not the grown one
+      expect(b.host.savedAt, why).toBe(want.stored === 'game' ? 1001 : null);
+      expect(warn.mock.calls.length, why).toBe(want.logged);
+      // a reload lands in the grown game, at the speed it ran; the map is not redrawn first
+      expect(reload.mock.calls.length, why).toBe(want.reload ? 1 : 0);
+      expect(session.items.get(INTENT_KEY), why).toBe(
+        want.reload ? JSON.stringify({ action: 'continue', keepSpeed: true }) : undefined,
+      );
+      const redrawn = want.reload ? 0 : 1;
+      expect(rebuilt, why).toEqual({ fog: redrawn, regions: redrawn, minimap: redrawn });
+      seen.add(want.reload ? 'reload' : `${want.stored} ${want.toasts.map((t) => t.text)}`);
+    }
+    // every outcome of a purchase is among the cases
+    for (const outcome of [
+      'reload',
+      `nothing ${[growRefused.text, bought.text]}`,
+      `nothing ${[bought.text, growHeld.text]}`,
+      `game ${[bought.text]}`,
+      `nothing ${[bought.text]}`,
+      `nothing ${[bought.text, autosaveFailed.text]}`,
+      `nothing ${[bought.text, autosaveBroken.text]}`,
+    ])
+      expect(seen, outcome).toContain(outcome);
+  });
+});
+
+// ------------------------------------------------------------------ the end of Game.applySave
+
+describe('the end of a load (Game.storeLoadedGround)', () => {
+  const settle = (g: ReturnType<typeof standIn>) =>
+    (g.game as unknown as { storeLoadedGround(): void }).storeLoadedGround();
+  /** What building the map did: `added` chunks generated, `unreadable` chunks unread. */
+  const ground = (added: number, unreadable: number) => ({
+    added: Array.from({ length: added }, (_, i) => `${i},0`),
+    unreadable: Array.from({ length: unreadable }, (_, i) => `${i},1`),
+  });
+  const unsaved = { text: STR.saves.groundUnsaved, kind: 'warn' };
+
+  it('stores the ground the load generated at once, and says nothing when it is stored', () => {
+    const g = standIn();
+    g.host.ground = ground(3, 0);
+    const snap = base(4);
+    g.take(snap);
+    settle(g);
+    expect(store.items.get(SAVE_KEY)).toBe(JSON.stringify(snap));
+    expect(g.host.savedAt).toBe(snap.savedAt);
+    expect(g.toasts).toEqual([]);
+    expect(g.notices).toEqual([]);
+  });
+
+  it('writes and says nothing for a level, or a load that generated no ground', () => {
+    for (const built of [null, ground(0, 0)]) {
+      const g = standIn();
+      g.host.ground = built;
+      settle(g);
+      expect(store.items.size).toBe(0);
+      expect(g.toasts).toEqual([]);
+      expect(g.notices).toEqual([]);
+    }
+  });
+
+  it('gives a write storage refuses one warning, worded for the ground', () => {
+    const g = standIn();
+    g.host.ground = ground(2, 0);
+    store.refuses = true;
+    settle(g);
+    expect(g.toasts).toEqual([unsaved]);
+    expect(store.items.size).toBe(0);
+    expect(g.host.savedAt).toBe(null);
+    // the ground's warning does not say progress is lost: the first autosave refused says so, once
+    expect(g.game.save(true)).toBe(false);
+    expect(g.game.save(true)).toBe(false);
+    expect(g.toasts).toEqual([unsaved, { text: STR.settings.autosaveFailed, kind: 'warn' }]);
+  });
+
+  it('gives a write refused for a broken number one warning, worded for the ground', () => {
+    const g = standIn();
+    g.host.ground = ground(1, 0);
+    g.host.snapshot = () => ({ ...base(1), economy: { money: Number.NaN } });
+    settle(g);
+    expect(g.toasts).toEqual([unsaved]);
+    expect(store.items.size).toBe(0);
+    // the console names the broken number, the toast does not
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('economy.money');
+    // and the first autosave refused after it tells of the broken value, once
+    expect(g.game.save(true)).toBe(false);
+    expect(g.game.save(true)).toBe(false);
+    expect(g.toasts).toEqual([unsaved, { text: STR.settings.autosaveBroken, kind: 'warn' }]);
+  });
+
+  it('gives a write held (a loop error, a reload into a stored save) the same one warning', () => {
+    const holds: [string, (g: ReturnType<typeof standIn>) => void][] = [
+      ['a loop error', (g) => g.pause.trip()],
+      ['a reload into a stored save', (g) => (g.host.keepStoredSave = true)],
+    ];
+    for (const [why, hold] of holds) {
+      const g = standIn();
+      g.host.ground = ground(2, 0);
+      hold(g);
+      settle(g);
+      expect(g.toasts, why).toEqual([unsaved]);
+      expect(store.items.size, why).toBe(0);
+    }
+  });
+
+  it('gives stored ground it could not read one toast and one notice, and no write', () => {
+    const g = standIn();
+    g.host.ground = ground(0, 2);
+    settle(g);
+    const text = STR.saves.groundUnreadable(2);
+    expect(g.toasts).toEqual([{ text, kind: 'warn' }]);
+    expect(g.notices).toEqual([
+      { key: 'save:ground', kind: 'warn', text, target: null, ttl: UNREADABLE_NOTICE_TTL },
+    ]);
+    expect(store.items.size).toBe(0);
+    // with ground generated as well, the write is made and its refusal follows the notice's toast
+    const h = standIn();
+    h.host.ground = ground(1, 2);
+    store.refuses = true;
+    settle(h);
+    expect(h.toasts).toEqual([{ text, kind: 'warn' }, unsaved]);
+    expect(h.notices).toHaveLength(1);
+  });
+
+  /** What building the map did, as a case: chunks generated and chunks unread, or a level. */
+  type Built = { added: number; unreadable: number } | null;
+  type Hold = 'none' | 'a loop error' | 'a reload into a stored save';
+  type LoadWrite = 'ok' | 'storage' | 'broken number';
+  const BUILT: Built[] = [null];
+  for (const added of [0, 3]) for (const unreadable of [0, 2]) BUILT.push({ added, unreadable });
+  const HOLDS: Hold[] = ['none', 'a loop error', 'a reload into a stored save'];
+  const LOAD_WRITES: LoadWrite[] = ['ok', 'storage', 'broken number'];
+
+  /** A stand-in at the end of a load: its ground, what holds a write, and how a write ends. */
+  function loaded(built: Built, hold: Hold, write: LoadWrite, storage: MemoryStorage) {
+    const g = standIn();
+    g.host.ground = built && ground(built.added, built.unreadable);
+    if (hold === 'a loop error') g.pause.trip();
+    if (hold === 'a reload into a stored save') g.host.keepStoredSave = true;
+    const snap = base(0);
+    if (write === 'broken number') SPOTS[1].set(snap, Number.NaN);
+    g.take(snap);
+    storage.refuses = write === 'storage';
+    return g;
+  }
+
+  /**
+   * The oracle: the end of `applySave` before #391 (`groundUnreadable` as a toast and a notice of
+   * 180 s, then `if (added && !this.save(true)) groundUnsaved`) on a game whose latches are clear,
+   * with the one change #391 asks for: `save(true)`'s own warning about the same refusal
+   * (`autosaveFailed`, `autosaveBroken`) is gone.
+   */
+  function loadBefore391(built: Built, hold: Hold, write: LoadWrite) {
+    const toasts: Toast[] = [];
+    const notices: PushedNotice[] = [];
+    const unreadable = built?.unreadable ?? 0;
+    if (unreadable > 0) {
+      const text = STR.saves.groundUnreadable(unreadable);
+      toasts.push({ text, kind: 'warn' });
+      notices.push({ key: 'save:ground', kind: 'warn', text, target: null, ttl: 180 });
+    }
+    const added = (built?.added ?? 0) > 0;
+    const writes = added && hold === 'none';
+    const stored = writes && write === 'ok';
+    if (added && !stored) toasts.push(unsaved);
+    return { toasts, notices, stored, logged: writes && write === 'broken number' ? 1 : 0 };
+  }
+
+  it('does and says what it did before, less the second warning, for every load', () => {
+    let refusedOnce = 0;
+    for (const built of BUILT)
+      for (const hold of HOLDS)
+        for (const write of LOAD_WRITES) {
+          const why = JSON.stringify({ built, hold, write });
+          store = new MemoryStorage();
+          vi.stubGlobal('localStorage', store);
+          warn.mockClear();
+          const g = loaded(built, hold, write, store);
+          settle(g);
+          const want = loadBefore391(built, hold, write);
+          expect(g.toasts, why).toEqual(want.toasts);
+          expect(g.notices, why).toEqual(want.notices);
+          expect([...store.items], why).toEqual(
+            want.stored ? [[SAVE_KEY, JSON.stringify(base(0))]] : [],
+          );
+          expect(g.host.savedAt, why).toBe(want.stored ? base(0).savedAt : null);
+          expect(warn.mock.calls.length, why).toBe(want.logged);
+          // one refusal, one warning: never the autosave's as well
+          const unread = STR.saves.groundUnreadable(built?.unreadable ?? 0);
+          const warnings = g.toasts.filter((t) => t.text !== unread);
+          expect(warnings.length, why).toBeLessThanOrEqual(1);
+          if (warnings.length) refusedOnce++;
+        }
+    expect(refusedOnce).toBeGreaterThan(0);
+  });
+
+  /** Run `steps` on `g` as the Game.save property above does: what each step returned and said. */
+  function transcript(g: ReturnType<typeof standIn>, steps: Step[], storage: MemoryStorage) {
+    return steps.map((step, i) => {
+      if (step.op === 'trip') {
+        g.pause.trip();
+        return 'trip';
+      }
+      const snap = base(i + 1);
+      if (step.spot !== null) SPOTS[step.spot].set(snap, step.to);
+      g.take(snap);
+      storage.refuses = step.full;
+      const shown = g.toasts.length;
+      const logged = warn.mock.calls.length;
+      const result =
+        step.op === 'slot' ? g.game.saveSlot('a name') : g.game.save(step.op === 'implicit');
+      return {
+        result,
+        toasts: g.toasts.slice(shown),
+        logged: warn.mock.calls.slice(logged).map((call: unknown[]) => String(call[0])),
+      };
+    });
+  }
+
+  it('leaves every later save saying what it says on a game whose load wrote nothing', () => {
+    const seen = { refusedThenWarned: 0, storedThenWarned: 0 };
+    forAll(
+      (rng: Rng) => ({
+        built: rng.pick(BUILT),
+        hold: rng.pick(HOLDS),
+        write: rng.pick(LOAD_WRITES),
+        steps: genSteps(rng),
+      }),
+      (c) => {
+        // the game after a load whose end ran, then the run of saves
+        const a = new MemoryStorage();
+        vi.stubGlobal('localStorage', a);
+        const g = loaded(c.built, c.hold, c.write, a);
+        settle(g);
+        const after = transcript(g, c.steps, a);
+        // the same game whose load made no write and said nothing: the same run of saves
+        const b = new MemoryStorage();
+        vi.stubGlobal('localStorage', b);
+        const plain = transcript(loaded(null, c.hold, c.write, b), c.steps, b);
+        expect(after, 'the saves after the load against the same saves without it').toEqual(plain);
+        const warned = after.some(
+          (s) =>
+            s !== 'trip' &&
+            s.toasts.some(
+              (t) =>
+                t.text === STR.settings.autosaveFailed || t.text === STR.settings.autosaveBroken,
+            ),
+        );
+        const want = loadBefore391(c.built, c.hold, c.write);
+        const refusedLoad = (c.built?.added ?? 0) > 0 && !want.stored;
+        if (warned && want.stored) seen.storedThenWarned++;
+        if (warned && refusedLoad) seen.refusedThenWarned++;
+      },
+      {
+        shrink: (c) => Array.from(shrinkArray(c.steps), (steps) => ({ ...c, steps })),
+      },
+    );
+    // the seeds reach a refused load write followed by a refused autosave, and a stored one too
+    for (const [branch, n] of Object.entries(seen)) expect(n, branch).toBeGreaterThan(0);
+  });
 });
 
 // ------------------------------------------------------------------ Game.fixBuiltTiles
@@ -493,7 +1029,8 @@ describe('Game.fixBuiltTiles', () => {
     const g = standIn();
     const map = emptyMap(1, 16, 16, Terrain.Grass);
     const idx = (x: number, y: number) => y * map.w + x;
-    map.terrain[idx(3, 5)] = Terrain.Rock; // under a platform: grass, a platform may not stand on rock
+    // under a platform: grass, a platform may not stand on rock
+    map.terrain[idx(3, 5)] = Terrain.Rock;
     map.terrain[idx(6, 2)] = Terrain.Water; // under a farm: grass
     map.terrain[idx(9, 10)] = Terrain.Water; // under a platform: the water it stands on
     map.terrain[idx(11, 3)] = Terrain.Hill; // under a platform across a dip: the land stays
@@ -526,4 +1063,318 @@ describe('Game.fixBuiltTiles', () => {
     // the rest of the map is as it was
     expect(map.terrain.filter((t) => t === Terrain.Grass).length).toBe(16 * 16 - 3);
   });
+});
+
+// ------------------------------------------------------------------ roads in a save and a load
+
+// `Game` cannot be constructed under Node, but its `snapshot` and `applySave` run on a stand-in that
+// has the prototype and, for fields, the real domains of a headless world (src/testing/simWorld.ts,
+// wired as `Game.init` wires them). The renderer and the panels are inert. What these tests pin is
+// that the game calls `Roads.toJSON` and `Roads.load`, and the load repair, on the way through: the
+// snapshot's `roads` field is a required one, but a dropped `roads.load` in `applySave` would lose
+// every road on load without a word.
+describe('roads through Game.snapshot and Game.applySave', () => {
+  const SEED = 11;
+  const SIZE = 64;
+  // a load applies the save's tuning; every test, and every case of a property, starts from the defaults
+  const reset = () => {
+    Object.assign(rules, DEFAULT_RULES);
+    setSupplyMode(DEFAULT_SUPPLY);
+    setSeasonOffset(0);
+    resetStationIds(1);
+    resetTrainIds(1);
+  };
+  beforeEach(reset);
+
+  /** What the renderer and the panels are to a headless game: all of it is itself, and calling it answers itself. */
+  const inert: object = new Proxy(function inert() {}, {
+    get: (_target, key) => (key === 'then' ? undefined : inert),
+    apply: () => inert,
+  });
+
+  /** A Game with the prototype's methods over the domains of `w`, and no renderer, panels or DOM. */
+  function gameOn(w: SimWorld): Game {
+    const host: Record<string, unknown> = Object.create(Game.prototype);
+    Object.assign(host, {
+      seed: w.seed,
+      spec: { kind: 'generated', seed: w.seed, params: mapParams(w.map.w) },
+      map: w.map,
+      regions: w.regions,
+      track: w.track,
+      builder: w.builder,
+      economy: w.economy,
+      stock: w.stock,
+      towns: w.towns,
+      houses: w.houses,
+      power: w.power,
+      catenary: w.catenary,
+      weather: w.weather,
+      inventory: w.inventory,
+      fleet: w.fleet,
+      people: w.people,
+      contracts: w.contracts,
+      gacha: w.gacha,
+      crafting: w.crafting,
+      contractJobs: w.contractJobs,
+      trade: w.trade,
+      clock: w.clock,
+      notices: w.notices,
+      camera: { x: 640, y: 320, zoomIndex: 2, zoom: 1, centerOn() {} },
+      sim: { lastDay: 0 },
+      settings: { weather: false },
+      saveExtra: {},
+      orphaned: new Set<number>(),
+      signalAspect: new Map<number, string>(),
+      ground: null,
+      season: null,
+      toasts: { push() {} },
+      atlas: { has: () => false },
+      world: inert,
+      overview: inert,
+      ui: inert,
+      powerLines: inert,
+    });
+    return host as unknown as Game;
+  }
+
+  const column = (x: number, y0: number, y1: number) =>
+    Array.from({ length: y1 - y0 + 1 }, (_, i) => [x, y0 + i] as [number, number]);
+  const row = (y: number, x0: number, x1: number) =>
+    Array.from({ length: x1 - x0 + 1 }, (_, i) => [x0 + i, y] as [number, number]);
+
+  /**
+   * A game with a line of track along row 20, two streets across it (level crossings at 16,20 and
+   * 24,20) joined by a road along row 23, a depot far from any road (its door gets its reach tile
+   * alone) and a house below the road, which gets its spur to it. `built` counts the roads the
+   * player laid; the spurs follow them in the list.
+   */
+  function scene() {
+    const w = simWorld({ seed: SEED, size: SIZE, terrain: 'grass' });
+    station(w, 'depot', 44, 44);
+    line(w, 10, 20, 30);
+    w.builder.free = true;
+    const laid = [...column(16, 17, 23), ...row(23, 17, 24), ...column(24, 17, 22)];
+    for (const [x, y] of laid) expect(w.builder.placeRoad(x, y), `road at ${x},${y}`).toBe(true);
+    const built = w.builder.roads.size;
+    expect(w.builder.placeDecor(20, 26, 'townhouse', 0), 'the house').not.toBeNull();
+    w.builder.free = false;
+    return { w, built };
+  }
+
+  /** The roads of a world as a save is to keep them: tiles, joins, what each joins of the places built, crossings. */
+  function roadsOf(w: SimWorld) {
+    const roads = w.builder.roads;
+    const doors = w.builder.streetDoors();
+    return {
+      tiles: roads.toJSON(),
+      joins: Array.from({ length: SIZE * SIZE }, (_, k) =>
+        roads.joins(k % SIZE, Math.floor(k / SIZE)),
+      ),
+      links: roads.list().map(({ x, y }) => w.builder.roadLinks(x, y, doors)),
+      crossings: [...roads.crossingKeys()].sort((a, b) => a - b),
+    };
+  }
+
+  /** A new world of the saved game's seed with `save` loaded into it, its ground first made as `spoil` says. */
+  function loaded(save: SaveGame, spoil: (map: GameMap) => void = () => {}) {
+    const w = simWorld({ seed: SEED, size: SIZE, terrain: 'grass' });
+    spoil(w.map);
+    gameOn(w).applySave(structuredClone(save));
+    return w;
+  }
+
+  it('come back through a save and a load: the roads, their joins and the level crossings', () => {
+    const { w, built } = scene();
+    const before = roadsOf(w);
+    // the scene holds what the test is about
+    expect(before.crossings).toEqual(
+      [w.track.key(16, 20), w.track.key(24, 20)].sort((a, b) => a - b),
+    );
+    expect(
+      before.tiles.length,
+      'a spur and a lone reach tile follow the laid roads',
+    ).toBeGreaterThan(built + 1);
+    expect(
+      before.links.some((l) => l.doors !== 0),
+      'a road that leads into a building',
+    ).toBe(true);
+
+    // the snapshot keeps them, and the stored game is read back as a load reads it
+    const saved = gameOn(w).snapshot();
+    expect(saved.roads).toEqual(before.tiles);
+    const read = readSaveText(JSON.stringify(saved));
+    if (!('save' in read)) throw new Error(read.error);
+
+    const back = loaded(read.save);
+    expect(roadsOf(back)).toEqual(before);
+    // and the track they cross is there to cross
+    expect([...back.track.pieces.keys()]).toEqual([...w.track.pieces.keys()]);
+  });
+
+  it('take off the roads a load made unfit for one, with no refund, and no others', () => {
+    const { w } = scene();
+    const saved = gameOn(w).snapshot();
+    const tiles = saved.roads ?? [];
+    expect(tiles.length, 'the roads the save keeps').toBeGreaterThan(20);
+    const spur = tiles[tiles.length - 1];
+    // a refund would show: the save's tuning pays all of a road back, and with no stockpile saved
+    // (a file from before there was one) the load puts nothing over what the stock holds by then
+    saved.rules = { ...saved.rules, refundRate: 1 };
+    saved.stockpile = undefined;
+
+    // the ground this load makes is not the one the roads were laid on: water under a street, rock
+    // under a level crossing, a mountain under the road between them, water under the last spur
+    const spoilt: [number, number, Terrain][] = [
+      [16, 22, Terrain.Water],
+      [16, 20, Terrain.Rock],
+      [24, 23, Terrain.Mountain],
+      [spur[0], spur[1], Terrain.Water],
+    ];
+    const treated = loaded(saved, (map) => {
+      for (const [x, y, t] of spoilt) map.terrain[y * map.w + x] = t;
+    });
+    const control = loaded(saved);
+
+    const gone = new Set(spoilt.map(([x, y]) => `${x},${y}`));
+    expect(control.builder.roads.toJSON(), 'on the ground they were laid on').toEqual(tiles);
+    expect(treated.builder.roads.toJSON()).toEqual(
+      tiles.filter(([x, y]) => !gone.has(`${x},${y}`)),
+    );
+    // the track the rock crossing was on stays, now with no road across it
+    expect(treated.track.get(16, 20)).toBeDefined();
+    expect([...treated.builder.roads.crossingKeys()]).toEqual([treated.track.key(24, 20)]);
+    // nothing was paid back: the money and the stock are the control's, which took nothing off
+    expect(treated.economy.money).toBe(control.economy.money);
+    expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
+    // ... where taking a road up by hand does pay back, under this tuning
+    const stone = control.stock.get('stone');
+    expect(control.builder.removeRoad(16, 22)).toBe(true);
+    expect(control.stock.get('stone')).toBeGreaterThan(stone);
+    // the repair took the roads off and bent no ground for them
+    for (const [x, y, t] of spoilt) expect(treated.map.terrain[y * treated.map.w + x]).toBe(t);
+  });
+
+  /** The scene's track, depot and house with the roads `laid` tried in that order, for free: the builder refuses what it must. */
+  function sceneOf(laid: readonly (readonly [number, number])[]) {
+    const w = simWorld({ seed: SEED, size: SIZE, terrain: 'grass' });
+    station(w, 'depot', 44, 44);
+    line(w, 10, 20, 30);
+    w.builder.free = true;
+    expect(w.builder.placeDecor(20, 26, 'townhouse', 0), 'the house').not.toBeNull();
+    for (const [x, y] of laid) w.builder.placeRoad(x, y);
+    w.builder.free = false;
+    return w;
+  }
+
+  /** Roads to try laying, and ground for a load to make: tiles round the track, the house and the depot. */
+  interface RoadCase {
+    laid: [number, number][];
+    spoil: [number, number, Terrain][];
+  }
+  // water, rock and a mountain twice each: ground that holds no road, six in ten
+  const GROUNDS = [
+    Terrain.Water,
+    Terrain.Rock,
+    Terrain.Mountain,
+    Terrain.Water,
+    Terrain.Rock,
+    Terrain.Mountain,
+    Terrain.Hill,
+    Terrain.Forest,
+    Terrain.Sand,
+    Terrain.Grass,
+  ];
+  function genRoadCase(rng: Rng): RoadCase {
+    // runs of road, a step at a time, with now and then a jump, often onto the track's row 20
+    const jump = (): [number, number] => [rng.int(12, 28), rng.chance(0.3) ? 20 : rng.int(17, 27)];
+    const laid: [number, number][] = [];
+    let at = jump();
+    for (let n = rng.int(0, 45); n > 0; n--) {
+      laid.push(at);
+      if (!rng.chance(0.8)) at = jump();
+      else {
+        const [dx, dy] = rng.pick([
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ]);
+        at = [Math.min(30, Math.max(10, at[0] + dx)), Math.min(28, Math.max(16, at[1] + dy))];
+      }
+    }
+    // ground a load makes: on a road laid, on a crossing of the track, or anywhere
+    const crossings = laid.filter(([, y]) => y === 20);
+    const spoil: [number, number, Terrain][] = Array.from({ length: rng.int(0, 12) }, () => {
+      const at =
+        rng.chance(0.4) && laid.length
+          ? laid
+          : rng.chance(0.5) && crossings.length
+            ? crossings
+            : null;
+      const [x, y] = at ? rng.pick(at) : [rng.int(10, 46), rng.int(16, 46)];
+      return [x, y, rng.pick(GROUNDS)];
+    });
+    return { laid, spoil };
+  }
+  function* shrinkRoadCase(c: RoadCase): Iterable<RoadCase> {
+    for (const laid of shrinkArray(c.laid)) yield { ...c, laid };
+    for (const spoil of shrinkArray(c.spoil)) yield { ...c, spoil };
+  }
+
+  // a second long: a hundred worlds, each saved and loaded three times
+  it('survive any roads and any ground a load makes: only the roads the ground cannot hold go, unpaid', () => {
+    const seen = { roads: 0, crossings: 0, gone: 0, goneCrossings: 0 };
+    forAll(
+      genRoadCase,
+      ({ laid, spoil }) => {
+        reset();
+        const w = sceneOf(laid);
+        const saved = gameOn(w).snapshot();
+        // a refund would show, as in the test above
+        saved.rules = { ...saved.rules, refundRate: 1 };
+        saved.stockpile = undefined;
+        const tiles = saved.roads ?? [];
+
+        // on the ground they were laid on, the roads come back as they were
+        const before = roadsOf(w);
+        const control = loaded(saved);
+        expect(roadsOf(control)).toEqual(before);
+
+        // on other ground, exactly the roads its repaired ground cannot hold are gone
+        const treated = loaded(saved, (map) => {
+          for (const [x, y, t] of spoil) map.terrain[y * map.w + x] = t;
+        });
+        const ground = (x: number, y: number) => treated.map.terrain[y * treated.map.w + x];
+        const kept = tiles.filter(([x, y]) => unbuildable(ground(x, y)) === null);
+        expect(treated.builder.roads.toJSON()).toEqual(kept);
+        // and no road stands where the builder would refuse one for the ground
+        for (const { x, y } of treated.builder.roads.list())
+          expect(unbuildable(ground(x, y)), `${x},${y}`).toBeNull();
+        // nothing was paid back
+        expect(treated.economy.money).toBe(control.economy.money);
+        expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
+        // the track under a level crossing stays; one the ground left no road on is no crossing
+        expect(treated.track.pieces.size).toBe(control.track.pieces.size);
+        const crossings = [...control.builder.roads.crossingKeys()];
+        expect([...treated.builder.roads.crossingKeys()]).toEqual(
+          crossings.filter((k) => treated.builder.roads.has(k % SIZE, Math.floor(k / SIZE))),
+        );
+
+        // the repaired game saves and loads again as it is: on its own ground, nothing more goes
+        const again = gameOn(treated).snapshot();
+        const read = readSaveText(JSON.stringify(again));
+        if (!('save' in read)) throw new Error(read.error);
+        const settled = loaded(read.save, (map) => map.terrain.set(treated.map.terrain));
+        expect(roadsOf(settled)).toEqual(roadsOf(treated));
+
+        seen.roads += tiles.length;
+        seen.crossings += crossings.length;
+        seen.gone += tiles.length - kept.length;
+        seen.goneCrossings += crossings.length - treated.builder.roads.crossingKeys().size;
+      },
+      { shrink: shrinkRoadCase },
+    );
+    // the seeds reach roads kept, roads taken off, and level crossings among both
+    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(20);
+  }, 20_000);
 });

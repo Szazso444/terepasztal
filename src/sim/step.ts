@@ -19,6 +19,8 @@ import type { ContractBoard } from './contracts';
 import type { TradeDesk } from './trade';
 import type { Economy } from './economy';
 import type { Catenary } from './catenary';
+import type { Roads } from './roads';
+import { CrossingWatch } from './crossings';
 import type { RegionState } from '../world/regions';
 
 /** Production multiplier of every station while the crews starve (`Stockpile.famine`). */
@@ -79,6 +81,7 @@ export interface StepDomains {
   readonly clock: GameClock;
   readonly stock: Stockpile;
   readonly houses: HouseRegistry;
+  /** what is built, the roads and their level crossings among it (`builder.roads`) */
   readonly builder: Builder;
   readonly fleet: Fleet;
   readonly people: PeopleSim;
@@ -155,11 +158,49 @@ export class SimStep {
   nextCityCheck = 0;
   /** game time at or after which the next step in play mode checks the age goals */
   nextAgeCheck = 0;
+  /**
+   * The level crossings of the builder's roads and which of them are closed to walkers, kept for
+   * the roads they were read from: read again when the roads or the track change (their
+   * `version`s), and a new watch for new roads. Not saved; null until the first step in play mode.
+   */
+  private crossingState: {
+    roads: Roads;
+    roadsVersion: number;
+    trackVersion: number;
+    keys: Set<number>;
+    watch: CrossingWatch;
+  } | null = null;
 
   constructor(
     readonly d: StepDomains,
     readonly hooks: StepHooks = {},
   ) {}
+
+  /** Which level crossings are closed to walkers, as of the last step in play mode. */
+  get crossings(): CrossingWatch | null {
+    return this.crossingState?.watch ?? null;
+  }
+
+  /** Move the crossing watch on by one step of `gdt` from where the trains stand now. */
+  private watchCrossings(gdt: number): CrossingWatch {
+    const roads = this.d.builder.roads;
+    let c = this.crossingState;
+    if (!c || c.roads !== roads)
+      c = this.crossingState = {
+        roads,
+        roadsVersion: NaN,
+        trackVersion: NaN,
+        keys: new Set(),
+        watch: new CrossingWatch(roads.w),
+      };
+    if (c.roadsVersion !== roads.version || c.trackVersion !== roads.track.version) {
+      c.keys = roads.crossingKeys();
+      c.roadsVersion = roads.version;
+      c.trackVersion = roads.track.version;
+    }
+    c.watch.update(this.d.fleet.trains, c.keys, gdt);
+    return c.watch;
+  }
 
   /** Run one step of `gdt` game seconds; the clock already stands at the step's end. */
   run(gdt: number, ctx: StepContext): void {
@@ -178,7 +219,19 @@ export class SimStep {
       this.nextCityCheck = clock.time + CITY_CHECK_SECONDS;
       this.hooks.refreshCity?.();
     }
-    if (play) people.tick(gdt, builder.crewTotal() + houses.residentsTotal(), clock.dayFraction);
+    // walkers wait at the level crossings the trains close, and walk round those only trains out
+    // of fuel or power close, read where the trains stood at the end of the last step: they move
+    // before the trains do
+    if (play) {
+      const crossings = this.watchCrossings(gdt);
+      people.tick(
+        gdt,
+        builder.crewTotal() + houses.residentsTotal(),
+        clock.dayFraction,
+        crossings.size ? crossings.closed : null,
+        crossings.size ? crossings : null,
+      );
+    }
     const famineMul = stock.famine ? FAMINE_PRODUCTION_MUL : 1;
     for (const s of builder.stations) {
       if (s.def.id === 'station') s.passengerPopulation = catchment(houses.houses.values(), s);

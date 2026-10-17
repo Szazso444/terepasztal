@@ -14,6 +14,7 @@ import { TrackGraph, pieceLinks } from './track';
 import { emptyMap } from './mapgen';
 import { Terrain } from './tiles';
 import { Dir } from '../engine/iso';
+import { forAll } from '../testing/property';
 
 const bed = (spans: RailBed['spans']): RailBed => ({ axis: 'x', spans, flat: false });
 /** The worked example from the incline rules: a climb, a bridged dip and a descent. */
@@ -111,6 +112,80 @@ describe('rail inclines', () => {
         pick = (b: RailBed) => (b.axis === 'x' ? b : b.cross!);
       expect(railLevel(pick(here), x + 0.5)).toBeCloseTo(railLevel(pick(next), x + 0.5));
     }
+  });
+
+  it('stands a deck over raised water at the water level, never below it', () => {
+    // abutments at level 0, the water under the bridge at level 1
+    const bridged = [false, false, true, false, false];
+    expect(lineSpans([0, 0, 1, 0, 0], bridged, 0, [], [0, 0, 1, 0, 0]).levels[2]).toBe(1);
+    // with no water under it the deck carries the abutments' level, as over a dip
+    expect(lineSpans([0, 0, 1, 0, 0], bridged).levels[2]).toBe(0);
+    // on a map: a river at level 1 between grass banks, bridged by a straight line along x
+    const m = emptyMap(5, 16, 16);
+    m.waterSurface = new Uint8Array(16 * 16);
+    for (let y = 0; y < 16; y++) {
+      m.terrain[y * 16 + 8] = Terrain.Water;
+      m.waterSurface[y * 16 + 8] = 1;
+    }
+    const track = new TrackGraph(16, 16);
+    for (let x = 4; x < 13; x++) track.place(x, 8, 'straight', 1, 'regular');
+    const beds = railProfile(m, track, (x, y) => x === 8 && y === 8);
+    const deck = beds.get(8 * 16 + 8)!;
+    expect(deck.bridge).toBe(true);
+    expect(railLevel(deck, 8)).toBeCloseTo(1);
+    // the rail climbs onto it from the banks at level 0
+    expect(railLevel(beds.get(8 * 16 + 4)!, 4)).toBeCloseTo(0);
+    // the same water at level 0 leaves the deck at the banks' level
+    m.waterSurface.fill(0);
+    expect(
+      railLevel(railProfile(m, track, (x, y) => x === 8 && y === 8).get(8 * 16 + 8)!, 8),
+    ).toBeCloseTo(0);
+  });
+
+  it('raises a deck to the water under it and changes nothing else, on any line', () => {
+    // Lines up to 16 tiles, levels a step apart at most, any bridge runs, any water levels under
+    // them. Water at level 0 everywhere is the line with no water given; a tile off a bridge keeps
+    // its level; a deck is level across its run and stands at the higher of what it stood at
+    // without the water and the highest water under it.
+    let raised = 0;
+    forAll(
+      (rng) => {
+        const n = rng.int(1, 16);
+        const terrain = [rng.int(0, 4)];
+        for (let i = 1; i < n; i++)
+          terrain.push(Math.max(0, Math.min(4, terrain[i - 1] + rng.int(-1, 1))));
+        const bridge = terrain.map(() => rng.chance(0.5));
+        const under = terrain.map(() => (rng.chance(0.5) ? 0 : rng.int(0, 4)));
+        return { terrain, bridge, under, start: rng.int(-3, 3) };
+      },
+      ({ terrain, bridge, under, start }) => {
+        const dry = lineSpans(terrain, bridge, start);
+        expect(
+          lineSpans(
+            terrain,
+            bridge,
+            start,
+            [],
+            terrain.map(() => 0),
+          ),
+        ).toEqual(dry);
+        const { levels } = lineSpans(terrain, bridge, start, [], under);
+        for (let i = 0; i < terrain.length;) {
+          if (!bridge[i]) {
+            expect(levels[i], `tile ${i}`).toBe(terrain[i]);
+            i++;
+            continue;
+          }
+          let j = i;
+          while (j + 1 < terrain.length && bridge[j + 1]) j++;
+          const deck = Math.max(dry.levels[i], ...under.slice(i, j + 1));
+          if (deck > dry.levels[i]) raised++;
+          for (let k = i; k <= j; k++) expect(levels[k], `deck tile ${k}`).toBe(deck);
+          i = j + 1;
+        }
+      },
+    );
+    expect(raised).toBeGreaterThan(0);
   });
 
   it('seats a supported curve at the level of the rails it meets, or refuses it', () => {

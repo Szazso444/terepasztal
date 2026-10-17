@@ -201,7 +201,7 @@ const defaultWorlds = () =>
   (densityWorlds ??= DENSITY_SEEDS.map((s) => generateMap(s, { w: 160, h: 160 }, 'simple')));
 
 describe('wheat fields', () => {
-  // 24 maps up to 128 tiles a side: about 0.4 s alone
+  // 24 maps up to 128 tiles a side: about 4 s alone
   it('grow on Grass in the Plains biome only, as the tile’s only prop, in variants 0 to 2', () => {
     let wheat = 0;
     let otherGrass = 0;
@@ -227,9 +227,9 @@ describe('wheat fields', () => {
     // fields grew, and grass of the other biomes was there to refuse them
     expect(wheat).toBeGreaterThan(0);
     expect(otherGrass).toBeGreaterThan(0);
-  }, 20_000);
+  }, 80_000);
 
-  // 20 maps of 160 x 160: about 0.6 s alone
+  // 20 maps of 160 x 160: about 2.5 s alone
   it('cover 0.5 to 1.5 % of plains grass over 20 worlds at 160 x 160, at most two fields a chunk', () => {
     let wheat = 0;
     let grass = 0;
@@ -240,9 +240,9 @@ describe('wheat fields', () => {
     }
     expect(wheat / grass).toBeGreaterThanOrEqual(0.005);
     expect(wheat / grass).toBeLessThanOrEqual(0.015);
-  }, 15_000);
+  }, 50_000);
 
-  // the 20 maps above, generated here when this test runs alone: about 0.6 s
+  // the 20 maps above, generated here when this test runs alone: about 2.5 s
   it('keep out of the start chunk’s centre, where the first buildings go', () => {
     let startWheat = 0;
     for (const [k, m] of defaultWorlds().entries()) {
@@ -261,9 +261,9 @@ describe('wheat fields', () => {
     }
     // the start chunk itself grows fields, away from its centre
     expect(startWheat).toBeGreaterThan(0);
-  }, 15_000);
+  }, 50_000);
 
-  // 16 pairs of maps up to 256 tiles a side: about 1 s alone
+  // 16 pairs of maps up to 256 tiles a side: about 2.5 s alone
   it('are the same wherever the map ends: a grown or wider map keeps every field', () => {
     let edge = 0;
     let wheat = 0;
@@ -308,14 +308,16 @@ describe('wheat fields', () => {
     // fields grew, some of them at the small map's edge, where a field can reach in from outside
     expect(wheat).toBeGreaterThan(0);
     expect(edge).toBeGreaterThan(0);
-  }, 30_000);
+  }, 60_000);
 
   // In these worlds a field reaches in across the small map's edge beside where an oil field
   // could lie, out beyond the tiles the small map generates oil on: the field must keep off it in
   // both maps. They are the pairs a search of random frames found where fields kept off only the
-  // oil a map generates. 3 pairs of maps: about 0.2 s alone.
+  // oil a map generates; the first, since the rivers of #341 changed the worlds, is one a search
+  // found with a field at the small map's edge and oil of the full chain within 2 tiles of it,
+  // outside the map. 3 pairs of maps: about 0.2 s alone.
   it.each([
-    { seed: 1111732493, w: 35, h: 38, ox: -87, oy: 90 },
+    { seed: 1637860701, w: 42, h: 71, ox: 36, oy: -2 },
     { seed: 1383765659, w: 78, h: 58, ox: 8, oy: -97 },
     { seed: 50341479, w: 67, h: 60, ox: 24, oy: 42 },
   ])(
@@ -398,7 +400,7 @@ describe('wheat fields and stored chunks', () => {
 });
 
 describe('wheat fields, more widely', () => {
-  // 24 maps up to 128 tiles a side, decorated a second time: about 1.1 s alone
+  // 24 maps up to 128 tiles a side, decorated a second time: about 3 s alone
   it('take the decoration off their own tiles only: every other tile keeps decorateProps’ or oil', () => {
     let wheat = 0;
     let replaced = 0;
@@ -423,9 +425,9 @@ describe('wheat fields, more widely', () => {
     // fields grew, some over a flower patch, a bush or an oak
     expect(wheat).toBeGreaterThan(0);
     expect(replaced).toBeGreaterThan(0);
-  }, 25_000);
+  }, 60_000);
 
-  // 24 maps up to 128 tiles a side: about 0.2 s alone
+  // 24 maps up to 128 tiles a side: about 2.5 s alone
   it('keep out of the start chunk’s centre on any map size, origin, sliders and chain', () => {
     let near = 0;
     forAll(
@@ -445,18 +447,18 @@ describe('wheat fields, more widely', () => {
     );
     // fields grew close to the clearance, where a misplaced centre would let them in
     expect(near).toBeGreaterThan(0);
-  }, 20_000);
+  }, 50_000);
 
-  // the 20 maps the density test reads, generated here when this test runs alone: about 0.5 s
+  // the 20 maps the density test reads, generated here when this test runs alone: about 2.5 s
   it('draw all three variants, each on a fifth of the wheat tiles or more', () => {
     const variants = [0, 0, 0];
     for (const m of defaultWorlds())
       for (const i of wheatOf(m)) variants[m.props.get(i)![0].variant]++;
     const all = variants[0] + variants[1] + variants[2];
     for (const n of variants) expect(n / all).toBeGreaterThanOrEqual(0.2);
-  }, 15_000);
+  }, 50_000);
 
-  // 20 maps of 160 x 160: about 0.4 s alone
+  // 20 maps of 160 x 160: about 2.5 s alone
   it('cover 0.5 to 1.5 % of plains grass in the full chain too, at most two whole fields a chunk', () => {
     let wheat = 0;
     let grass = 0;
@@ -473,9 +475,9 @@ describe('wheat fields, more widely', () => {
     expect(wheat / grass).toBeLessThanOrEqual(0.015);
     // oil lay right beside some fields, where it could have cut them
     expect(beside).toBeGreaterThan(0);
-  }, 15_000);
+  }, 50_000);
 
-  // 24 worlds up to 128 tiles a side, each in both chains: about 0.5 s alone
+  // 24 worlds up to 128 tiles a side, each in both chains: about 2.5 s alone
   it('never lie under oil: the full chain grows the simple chain’s fields, around its oil fields and start seeps', () => {
     let beside = 0;
     let besideStart = 0;
@@ -496,13 +498,13 @@ describe('wheat fields, more widely', () => {
     // oil lay right beside some fields, where it could have cut them, in a start chunk too
     expect(beside).toBeGreaterThan(0);
     expect(besideStart).toBeGreaterThan(0);
-  }, 20_000);
+  }, 50_000);
 
   // The oil is laid as if the wheat were not there: the oil fields of every centre that reaches
   // the map, worked out here on the world a ring of chunks wider (placeOilFields on its ground,
   // its props taken off), then the start seeps on the map (ensureStartDeposits). No field lies on
   // that oil in either chain, the fields laid by centres beyond the map's edge included.
-  // 24 worlds up to 128 tiles a side, each in both chains and a ring wider: about 1 s alone
+  // 24 worlds up to 128 tiles a side, each in both chains and a ring wider: about 3 s alone
   it('move no oil: the full chain lays the oil fields and start seeps of the world without wheat, and no field lies on them', () => {
     let outside = 0;
     let startFields = 0;
@@ -550,13 +552,13 @@ describe('wheat fields, more widely', () => {
     expect(outside).toBeGreaterThan(0);
     expect(startFields).toBeGreaterThan(0);
     expect(beside).toBeGreaterThan(0);
-  }, 20_000);
+  }, 60_000);
 
   // In these worlds the Water slider at its top leaves the start chunk's ring short of ground, so
   // the seeps reach out past it (#276) to where a field grows. 3 pairs of maps: about 0.1 s alone
   it.each([
     { seed: 14, size: 96 },
-    { seed: 214, size: 96 },
+    { seed: 132, size: 96 },
     { seed: 209, size: 160 },
   ])(
     'never lie under a start seep that reaches past the ring (seed $seed at $size x $size, Water at its top)',
@@ -572,7 +574,7 @@ describe('wheat fields, more widely', () => {
     },
   );
 
-  // 16 combinations of the Map sliders' ends, two worlds of 96 x 96 each: about 0.25 s alone
+  // 16 combinations of the Map sliders' ends, two worlds of 96 x 96 each: about 4 s alone
   it('grow on plains grass only, alone on their tiles, at every end of the Map sliders', () => {
     let wheat = 0;
     for (const sliders of sliderEnds())
@@ -586,5 +588,5 @@ describe('wheat fields, more widely', () => {
         }
       }
     expect(wheat).toBeGreaterThan(0);
-  }, 15_000);
+  }, 80_000);
 });

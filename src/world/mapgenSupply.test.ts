@@ -53,10 +53,12 @@ function planeDiffs(a: GameMap, b: GameMap) {
   return {
     terrain: firstDiff(a.terrain, b.terrain),
     biome: firstDiff(a.biome, b.biome),
+    // a map with no climate plane (a level's) has its biome for its climate
+    climate: firstDiff(a.climate ?? a.biome, b.climate ?? b.biome),
     variant: firstDiff(a.variant, b.variant),
   };
 }
-const SAME_PLANES = { terrain: -1, biome: -1, variant: -1 };
+const SAME_PLANES = { terrain: -1, biome: -1, climate: -1, variant: -1 };
 /** Tiles holding an oil prop; the indices, in tile order. */
 const oilTiles = (m: GameMap) =>
   [...m.props]
@@ -129,6 +131,8 @@ describe('generateMap takes the production chain as an argument', () => {
     );
   });
 
+  // each row builds two worlds of up to 96 x 96, and the first pays the generator's warm-up: about
+  // 0.35 s alone, so a limit of 30 s
   it.each(WORLDS.flatMap((w) => SUPPLY_MODES.map((chain) => ({ ...w, chain }))))(
     'seed $seed at $size x $size, $chain chain: the same map whether the global says simple or full',
     ({ seed, size, chain }) => {
@@ -140,6 +144,7 @@ describe('generateMap takes the production chain as an argument', () => {
       expect(propHash(asFull)).toBe(propHash(asSimple));
       expect(asFull.props.size).toBe(asSimple.props.size);
     },
+    30_000,
   );
 
   it.each(WORLDS)(
@@ -377,6 +382,7 @@ describe('the production chain, for any world', () => {
     expect(new Set(cases.map((c) => c.sliders.waterLevel)).size).toBeGreaterThan(8);
   });
 
+  // 24 worlds of up to 96 x 96, three maps each: about 3 s alone
   it('gives both chains the same world, oil on the full chain only, and the simple chain when none is named', () => {
     forAll(
       genWorld,
@@ -401,8 +407,9 @@ describe('the production chain, for any world', () => {
       },
       run,
     );
-  }, 20_000);
+  }, 60_000);
 
+  // 24 worlds of up to 96 x 96: about 2.5 s alone
   it('leaves an oil-free map as it is for the simple chain, whatever the global says', () => {
     forAll(
       genWorld,
@@ -419,12 +426,12 @@ describe('the production chain, for any world', () => {
       },
       run,
     );
-  }, 20_000);
+  }, 50_000);
 
   // The seeps go on every third grass or sand tile of a ring around the start chunk's centre where
   // the ring holds seven such tiles or more, and on the nearest of the whole chunk where it holds
   // fewer (a dense forest or a high Water level), so the claims hold on every slider value (#276).
-  // 24 worlds of up to 96 x 96, two maps each: about 0.45 s alone
+  // 24 worlds of up to 96 x 96, two maps each: about 2.5 s alone
   it('holds oil in the full chain, three seeps or more in the start chunk, seeded once, on any sliders', () => {
     let short = 0;
     forAll(
@@ -450,9 +457,9 @@ describe('the production chain, for any world', () => {
     );
     // some world's ring was short, so the fallback ran
     expect(short).toBeGreaterThan(0);
-  }, 20_000);
+  }, 50_000);
 
-  // 24 worlds of up to 96 x 96: about 0.4 s alone
+  // 24 worlds of up to 96 x 96: about 2.5 s alone
   it('lays the seeps on every third tile of the ring, or on the nearest of the chunk at the step where the ring is short', () => {
     let short = 0;
     forAll(
@@ -475,7 +482,7 @@ describe('the production chain, for any world', () => {
     // both rules ran: the ring's and, where it was short, the chunk's
     expect(short).toBeGreaterThan(0);
     expect(short).toBeLessThan(SEEDS.length);
-  }, 20_000);
+  }, 50_000);
 });
 
 describe('the start seeps where the ring is short (#276)', () => {
@@ -688,7 +695,7 @@ describe('the start seeps on any start chunk (#276)', () => {
   });
 
   // 16 combinations of the Map sliders' ends, two worlds each at 32 and 96 tiles, both chains:
-  // about 0.6 s alone
+  // about 3.5 s alone
   it('reach three at every end of the Map sliders, and a second call lays none', () => {
     const keys = ['waterLevel', 'hillLevel', 'rockLevel', 'forestDensity'] as const;
     const ends = keys.map((key) => {
@@ -717,5 +724,5 @@ describe('the start seeps on any start chunk (#276)', () => {
         }
       }
     }
-  }, 15_000);
+  }, 70_000);
 });

@@ -18,7 +18,25 @@ function ageLabel(t: number) {
 /** All user-facing strings. Keep flat so a Hungarian table can mirror this file later. */
 export const STR = {
   title: 'Terepasztal',
-  loading: 'Laying the first sleepers...',
+  /** the loading screen (`src/ui/loadingScreen.ts`): one tip is shown, picked at random */
+  loadingScreen: {
+    /** names the progress bar for a screen reader */
+    progress: 'Loading',
+    /** the prompt that ends the loading: the click starts the fade, the reveal and the music */
+    begin: 'Click to begin',
+    tips: [
+      'Only cargo unloaded at a Depot reaches your stockpile.',
+      'Crews eat wheat every day. Run out and production halves and trains slow.',
+      'Space pauses the game, and 1, 2 and 3 set the speed.',
+      'M switches between the field view and the overview map.',
+      'R rotates what you are placing, and Esc cancels it.',
+      'WASD, the arrow keys or a middle-button drag move the camera, and the wheel zooms.',
+      'Name a town when you place its station. You can rename it any time.',
+      'Hover Age in the top bar to see what the next age asks for.',
+      'A train never starts a leg it could not finish and still reach fuel from.',
+      'Single track is handed out in whole sections, so trains never meet head-on inside one.',
+    ],
+  },
   hud: {
     money: 'Funds',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
@@ -163,6 +181,35 @@ export const STR = {
     waterUse: "Steam engines' {res} use",
     speed: 'Train speed',
   },
+  /**
+   * The placing tooltip, the root of the tooltip stack while a harvest station's tool is in hand,
+   * and the rows a harvest station's panel shares with it (#336). A template's `{name}` is filled
+   * by the tooltip (`fill` in src/ui/tooltipDoc.ts): a bold number, or the ground a station counts
+   * (`STR.tile.phrase`).
+   */
+  placing: {
+    title: (station: string) => `${station} here`,
+    /** one row per distance with matching ground: how many tiles, of what, how far */
+    ring: '{n} {tiles} at {d}',
+    placement: 'Placement',
+    /** before a Placement held at its ceiling, or at its floor */
+    atMost: 'at most',
+    atLeast: 'at least',
+    /** the Season row, named after the season, shown only when the season changes the yield */
+    season: {
+      spring: 'Spring',
+      summer: 'Summer',
+      autumn: 'Autumn',
+      winter: 'Winter',
+    } as Record<string, string>,
+    /** the row of the tuning's production multiplier, shown only when it is not 1 */
+    tuning: 'Game tuning',
+    /** the total row's value */
+    perWeek: '{amount} a week',
+    click: 'Click to place.',
+    /** the yield label floating over the tile, in whole units a week */
+    label: (n: number) => `${n}/wk`,
+  },
   decorInfo: {
     reach: (r: number) => `Reach: ${r} tiles`,
     serves: (n: string) => `Serves: ${n}`,
@@ -268,6 +315,8 @@ export const STR = {
     offMap: 'Outside the map',
     locked: 'Uncharted region',
     rock: 'Cannot lay track on rock',
+    /** track tried on rock or a mountain where none of its ends joins a line already there */
+    mountainLine: 'Mountain track must continue an existing line',
     needBridge: 'Water needs a bridge',
     tooSteep: 'Too steep for rails: straight track climbs one level per tile at most',
     notLevel: 'Needs level ground: only straight track can climb a slope',
@@ -323,13 +372,35 @@ export const STR = {
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,
     needTrackHere: 'Signals stand on track',
+    /** a road tried on a tile that has one (src/sim/roads.ts) */
+    roadHere: 'There is a road here already',
+    /**
+     * a road tried on a tile of a station, a works, a bridge platform, a house or a service stop:
+     * a road meets a building only at its street door, from the tile outside it (#408)
+     */
+    roadOnBuilding: 'A road goes round a building and meets it only at its door',
+    /** a station, a works, a house or a service stop tried on a tile that holds a road (#408) */
+    roadInWay: 'A road is in the way: remove it first',
+    /**
+     * A road and track on one tile make a level crossing: the road crosses a plain straight of
+     * regular or narrow track at right angles (src/sim/roads.ts), whichever of the two is laid
+     * second.
+     */
+    crossingStraight:
+      'A road crosses only plain straight track: no curve, switch, crossing or transition',
+    crossingHighSpeed: 'No level crossings on high-speed track',
+    crossingAlong: 'A road crosses track at right angles, never along it',
+    /** the road tool's drag (#328): how many tiles its release lays, and `cost` (`fmtCost`) */
+    roadLine: (tiles: number, cost: string) =>
+      `${tiles} road ${tiles === 1 ? 'tile' : 'tiles'}: ${cost}`,
+    /** the road tool's drag: how many of its tiles are not laid, and each reason once */
+    roadNotLaid: (tiles: number, reasons: readonly string[]) =>
+      `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} not laid: ${reasons.join(' · ')}`,
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
     upgradingNow: 'Already being upgraded',
     cost: (v: string) => `Cost ${v}`,
-    harvest: (n: number, cargo: string, f: number) =>
-      `≈ ${n} ${cargo} / week here (${f >= 1 ? 'good' : f >= 0.5 ? 'thin' : 'poor'} ground ×${f.toFixed(2)})`,
     refund: (v: string) => `Refund ${v}`,
     free: 'free',
     rotate: 'R: rotate',
@@ -351,6 +422,11 @@ export const STR = {
     downgradeHint:
       'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
+    /** the toolbar category of roads, and the road tool in it (#328) */
+    roads: 'Roads',
+    road: 'Road',
+    roadDesc:
+      'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a run.',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
     typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
     bridges: 'Bridges',
@@ -361,6 +437,13 @@ export const STR = {
       bridgePlatform: 'On water. Lay track on the platform after building it.',
       station:
         'On grass, forest, sand or a level hill tile with track touching one side; that track becomes the platform.',
+      /**
+       * A station held to its own ground (`standOn`, `needsWater`), by `StationDef.id`; one
+       * without a line here says `station`.
+       */
+      stationOn: {
+        pump: 'On grass or forest with water right beside it, and track touching one side; that track becomes the platform.',
+      } as Record<string, string>,
       depot:
         'Two by two tiles, free. R rotates: the four gates lie on two opposite sides; lay track up to them. One depot per nine owned chunks.',
       town: 'On grass, forest, sand or a level hill tile with track touching one side, at least 25 tiles from any other Townhouse.',
@@ -375,6 +458,7 @@ export const STR = {
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
+      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight wide or narrow track at right angles, as a level crossing; never high-speed track.',
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
@@ -1462,7 +1546,6 @@ export const STR = {
     town: 'Town',
     level: (l: number) => `Level ${l}`,
     biome: 'Biome',
-    ground: 'Nearby resource',
     produces: 'Produces',
     accepts: 'Accepts',
     storage: 'Storage',

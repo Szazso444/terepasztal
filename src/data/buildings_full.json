@@ -20,7 +20,14 @@
       }
     },
     "terrain": "hill",
-    "perWeek": 40
+    "perWeek": 40,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "ironworks",
@@ -43,7 +50,14 @@
         "iron": 2
       }
     },
-    "perWeek": 30
+    "perWeek": 30,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "oil_derrick",
@@ -63,7 +77,14 @@
         "crude": 1
       }
     },
-    "perWeek": 30
+    "perWeek": 30,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "diesel_refinery",
@@ -86,7 +107,14 @@
         "diesel": 1
       }
     },
-    "perWeek": 30
+    "perWeek": 30,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "wire_mill",
@@ -109,6 +137,13 @@
         "wire": 1
       }
     },
-    "perWeek": 25
+    "perWeek": 25,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   }
 ]

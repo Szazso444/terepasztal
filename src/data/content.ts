@@ -30,6 +30,7 @@ import { PAST_SHIPPED } from './pastShipped';
 import type { SupplyMode } from '../sim/supply';
 import { OWN_LENGTH, type PartKind } from '../sim/body';
 import { MAX_LEVEL } from '../sim/levels';
+import { doorProblems } from '../sim/doors';
 export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
@@ -160,6 +161,24 @@ export interface CargoDef {
  */
 export const STAND_ON = ['grass', 'forest', 'hill', 'sand'] as const;
 export type StandOn = (typeof STAND_ON)[number];
+/**
+ * What a door is for: a street door is where walkers come and go and where a road to the place
+ * ends; a platform door gives on a station's platform track.
+ */
+export type DoorKind = 'street' | 'platform';
+/** The side of its tile a door faces, as `Dir` names it (src/engine/iso.ts). */
+export type DoorSide = 'N' | 'E' | 'S' | 'W';
+/**
+ * A door of a place (a station, a works, a house or a service stop) as its def holds it, for
+ * rotation 0; src/sim/doors.ts turns it with the place.
+ */
+export interface DoorDef {
+  kind: DoorKind;
+  /** the tile it is in, as [dx, dy] from the corner of the footprint at rotation 0 */
+  tile: [number, number];
+  /** the side of that tile it faces: an edge of the footprint, the tile beyond lies outside it */
+  side: DoorSide;
+}
 export interface StationDef {
   id: string;
   name: string;
@@ -202,6 +221,12 @@ export interface StationDef {
   water?: boolean;
   /** false: never a contract endpoint */
   contracts?: boolean;
+  /**
+   * its doors at rotation 0: a platform door on its front and a street door on the side away
+   * from it, a depot one street door on a side no track runs through (missing: those of its kind,
+   * `defDoors` in src/sim/doors.ts)
+   */
+  doors?: DoorDef[];
 }
 export interface BuildingDef {
   bridge?: { material: 'wood' | 'stone'; capacity: number };
@@ -231,6 +256,8 @@ export interface BuildingDef {
   terrain?: 'hill' | 'grass' | 'sand' | 'forest';
   /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
   substation?: { radius: number; throughput: number };
+  /** doors at rotation 0 (missing: a street door on its front, `defDoors` in src/sim/doors.ts) */
+  doors?: DoorDef[];
 }
 /**
  * Station tables with one value per level, levels 1 to `MAX_LEVEL` (src/sim/levels.ts). How
@@ -308,6 +335,8 @@ export interface DecorDef {
    * what a house from an old save starts with.
    */
   residents?: number;
+  /** doors at rotation 0 (missing: a street door on its front, `defDoors` in src/sim/doors.ts) */
+  doors?: DoorDef[];
 }
 /** Townhouse growth rules: capacity per level, how fast people arrive, when towns build more. */
 export interface HouseConfig {
@@ -354,6 +383,8 @@ export interface GachaConfig {
 export interface TrackConfig {
   pieces: Record<string, { name: string; cost: Cost; rotations: number }>;
   terrainCost: Record<string, number>;
+  /** a road tile the player lays (src/sim/roads.ts), before the build cost tuning */
+  road: { cost: Cost };
   refund: number;
   curveSpeed: number;
   switchSpeed: number;
@@ -763,6 +794,7 @@ const CHECKS: Record<ContentKey, Check> = {
         out.push(`station ${s.id}: standOn must list some of ${STAND_ON.join(', ')}`);
       if (s.needsWater !== undefined && typeof s.needsWater !== 'boolean')
         out.push(`station ${s.id}: needsWater must be true or false`);
+      for (const p of doorProblems(s)) out.push(`station ${s.id}: ${p}`);
     }
     const lv = t.levels;
     if (!isObj(lv)) {
@@ -799,8 +831,10 @@ const CHECKS: Record<ContentKey, Check> = {
   decor(t, _ref, out) {
     const decor = rows<DecorDef>(t, 'decor', out);
     checkIds(decor, 'decor', out);
-    for (const d of decor)
+    for (const d of decor) {
       if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
+      for (const p of doorProblems(d)) out.push(`decor ${d.id}: ${p}`);
+    }
   },
   buildings(t, ref, out) {
     const list = rows<BuildingDef>(t, 'buildings', out);
@@ -809,6 +843,7 @@ const CHECKS: Record<ContentKey, Check> = {
       if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
         out.push(`building ${bd.id}: perWeek must be non-negative`);
       if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
+      for (const p of doorProblems(bd)) out.push(`building ${bd.id}: ${p}`);
       const r: unknown = bd.recipe;
       if (!isObj(r) || !isObj(r.in) || !isObj(r.out)) {
         out.push(`building ${bd.id}: recipe needs in and out`);
@@ -856,6 +891,8 @@ const CHECKS: Record<ContentKey, Check> = {
       if (!isObj(p) || !isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
     for (const k of Object.keys(trackJson.pieces))
       if (!pieces[k]) out.push(`track: missing piece "${k}"`);
+    const road = isObj(t) ? t.road : undefined;
+    if (!isObj(road) || !isCost(road.cost)) out.push('track: road cost must be a resource map');
   },
   crafting(t, ref, out) {
     if (!isObj(t)) {

@@ -200,6 +200,8 @@ describe('a body with a length of its own', () => {
     );
   });
 
+  // slow because each seeded body is posed every 0.2 tile along the reference path of every track
+  // class: 0.47 s alone, so a limit of 30 s
   it('stays rigid through the curves of every track class, its bogies on the rails at their places', () => {
     forAll(
       (rng) => ({ body: genBody(rng), length: genLength(rng), reversed: rng.chance(0.5) }),
@@ -227,7 +229,7 @@ describe('a body with a length of its own', () => {
       },
       { seeds: Array.from({ length: 40 }, (_, i) => i + 1) },
     );
-  });
+  }, 30_000);
 });
 
 const ROW = 10;

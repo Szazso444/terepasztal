@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { Rng } from '../src/engine/rng';
+import { capFrame, capViolations } from './atlas-cap.mjs';
 
 const script = fileURLToPath(new URL('./pack-atlas.mjs', import.meta.url));
 let dir;
@@ -148,5 +150,104 @@ describe('pack-atlas', () => {
     const empty = join(dir, 'empty');
     mkdirSync(empty, { recursive: true });
     expect(() => run('rolling', '--src', empty, '--out', out())).toThrow();
+  });
+});
+
+describe('pack-atlas and the atlas cap pass', () => {
+  // renders drawn from fixed seeds: a body of edge-case texels (over the cursor white, as strong
+  // as the amber, light cream, near-solid alpha) with alpha haze scattered round it, out to the
+  // margins, so the trim box takes the haze in and the cap then clears it
+  const SEEDS = Array.from({ length: 12 }, (_, i) => i + 1);
+  const COLOURS = [
+    [255, 255, 255],
+    [250, 245, 236],
+    [240, 236, 224],
+    [232, 170, 72],
+    [247, 120, 24],
+    [226, 214, 190],
+    [90, 120, 60],
+  ];
+  /** The last seed's render is a Fuel Pump view, a lit set's frame. */
+  const LIT = 'structures/fuel_pump';
+  let capDir;
+  const renders = new Map();
+  /** One render, w x h, from its seed, its colours drawn from `colours`. */
+  function render(seed, colours = COLOURS) {
+    const rng = new Rng(seed);
+    const w = rng.int(6, 20);
+    const h = rng.int(6, 20);
+    const png = new PNG({ width: w, height: h });
+    png.data.fill(0);
+    const bx = rng.int(1, w - 3);
+    const by = rng.int(1, h - 3);
+    const bw = rng.int(1, w - bx - 1);
+    const bh = rng.int(1, h - by - 1);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const body = x >= bx && x < bx + bw && y >= by && y < by + bh;
+        if (!body && !rng.chance(0.15)) continue;
+        const a = body ? rng.pick([255, 255, rng.int(250, 254), rng.int(16, 249)]) : rng.int(1, 15);
+        png.data.set([...rng.pick(colours), a], (y * w + x) * 4);
+      }
+    return png;
+  }
+  /** The pixels of `box` as an image of their own. */
+  function crop(png, box) {
+    const out = new PNG({ width: box.w, height: box.h });
+    PNG.bitblt(png, out, box.x, box.y, box.w, box.h, 0, 0);
+    return out;
+  }
+  /** The box of the texels with any alpha, which the trim keeps. */
+  function inked(png) {
+    let [x0, y0, x1, y1] = [png.width, png.height, -1, -1];
+    for (let y = 0; y < png.height; y++)
+      for (let x = 0; x < png.width; x++)
+        if (png.data[(y * png.width + x) * 4 + 3]) {
+          [x0, y0] = [Math.min(x0, x), Math.min(y0, y)];
+          [x1, y1] = [Math.max(x1, x), Math.max(y1, y)];
+        }
+    return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  }
+  const trimmed = (png) => crop(png, inked(png));
+
+  beforeAll(() => {
+    capDir = mkdtempSync(join(tmpdir(), 'pack-atlas-cap-'));
+    mkdirSync(join(capDir, 'src'), { recursive: true });
+    for (const seed of SEEDS) {
+      const lit = seed === SEEDS.at(-1);
+      const key = lit ? LIT : `structures/piece_${seed}`;
+      // the Fuel Pump's render is all lit cream and white, over the knee of the compression
+      const png = render(seed, lit ? COLOURS.slice(0, 3) : COLOURS);
+      renders.set(key, png);
+      writeFileSync(join(capDir, 'src', `${key.split('/')[1]}.png`), PNG.sync.write(png));
+    }
+    run('structures', '--src', join(capDir, 'src'), '--out', join(capDir, 'out'));
+  });
+  afterAll(() => rmSync(capDir, { recursive: true, force: true }));
+
+  it('packs every frame as the cap pass of its trimmed render, keeping its size and anchor', () => {
+    const { frames } = JSON.parse(readFileSync(join(capDir, 'out', 'structures.json'), 'utf8'));
+    const sheet = PNG.sync.read(readFileSync(join(capDir, 'out', 'structures.png')));
+    expect(Object.keys(frames).sort()).toEqual([...renders.keys()].sort());
+    for (const [key, png] of renders) {
+      const box = inked(png);
+      const f = frames[key];
+      // the haze is trimmed with the frame, then cleared: the size and anchor do not move
+      expect([f.w, f.h, f.ax, f.ay], key).toEqual([
+        box.w,
+        box.h,
+        png.width / 2 - box.x,
+        png.height - box.y,
+      ]);
+      const want = capFrame(key, crop(png, box)).png;
+      expect(crop(sheet, f).data.equals(want.data), `${key} is its capped render`).toBe(true);
+    }
+    expect(capViolations(sheet)).toEqual({ haze: 0, solid: 0, white: 0, amber: 0 });
+  });
+
+  it('compresses the lit set`s frame and no other', () => {
+    expect(capFrame(LIT, trimmed(renders.get(LIT))).counts.compressed).toBeGreaterThan(0);
+    for (const [key, png] of renders)
+      if (key !== LIT) expect(capFrame(key, trimmed(png)).counts.compressed, key).toBe(0);
   });
 });

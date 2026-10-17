@@ -18,6 +18,12 @@ export const TERRAIN_NAMES = [
   'mountain',
 ] as const;
 
+/**
+ * Ids are stored in saves (src/world/chunks.ts), so they are appended and never renumbered. Plains
+ * to Ocean are climates: generation picks one for every tile. Lake, River, Beach and Mountain are
+ * landforms a tile's climate is relabelled to (generateMap's biome rules); the climate stays
+ * readable under them (climateAt).
+ */
 export const enum Biome {
   Plains = 0,
   Forest = 1,
@@ -25,8 +31,29 @@ export const enum Biome {
   Taiga = 3,
   Swamp = 4,
   Ocean = 5,
+  /** water that is neither sea nor river */
+  Lake = 6,
+  /** water the river pass made of land */
+  River = 7,
+  /** sand on the sea shore */
+  Beach = 8,
+  /** a mountain and the rock of its field */
+  Mountain = 9,
 }
-export const BIOME_NAMES = ['plains', 'forest', 'desert', 'taiga', 'swamp', 'ocean'] as const;
+export const BIOME_NAMES = [
+  'plains',
+  'forest',
+  'desert',
+  'taiga',
+  'swamp',
+  'ocean',
+  'lake',
+  'river',
+  'beach',
+  'mountain',
+] as const;
+/** The climates, ids 0 to CLIMATES - 1: the biomes generation picks before any landform rule. */
+export const CLIMATES = 6;
 
 export type PropKind =
   | 'tree'
@@ -68,10 +95,36 @@ export interface GameMap {
   biome: Uint8Array;
   /**
    * per-tile climate, as a biome id: the biome a tile had before any rule relabelled it by its
-   * landform. Missing: every tile's climate is its biome, which is true of every map today, so
-   * nothing fills it yet. Read it through climateAt or climateAtIndex.
+   * landform (Lake, River, Beach, Mountain). generateMap fills it with climates (ids below
+   * CLIMATES), and a map built from stored chunks has it as stored (a chunk stored before the
+   * plane holds its biome there). A map from a level or the editor's blank map has none, and there
+   * every tile's climate is its biome. Read it through climateAt or climateAtIndex.
    */
   climate?: Uint8Array;
+  /**
+   * per-tile water level of each Water tile, 0 to MAX_LEVEL: the level its surface stands at
+   * (levelTarget). Rivers on high ground stand above level 0 and never rise downstream. A map
+   * without the plane, a level or the editor's, and a chunk stored before it, has all its water at
+   * level 0, as has a tile whose terrain is not Water.
+   */
+  waterSurface?: Uint8Array;
+  /**
+   * per-tile flow of each river tile: the tiles of rain it gathers, 1 to FLOW_CAP (0 in a chunk
+   * stored before the plane), 0 elsewhere
+   */
+  flow?: Uint16Array;
+  /**
+   * per-tile downstream side of each river tile, as Dir + 1 (1 N, 2 E, 3 S, 4 W): the tile its
+   * water runs into, which is water or off the map. 0 elsewhere.
+   */
+  flowDir?: Uint8Array;
+  /**
+   * per-tile water features, a byte each, laid out in src/world/waterfalls.ts: a waterfall's drop
+   * and the edge it falls over, on the river tile the water falls from, with bits kept for the
+   * headwater kind (#356). Read a waterfall through waterfallAt. A map without the plane, a level
+   * or the editor's, and a chunk stored before it, has no waterfalls.
+   */
+  feature?: Uint8Array;
   /** per-tile decoration, sparse */
   props: Map<number, PropInstance[]>;
   /** region size in tiles (regions are square blocks) */

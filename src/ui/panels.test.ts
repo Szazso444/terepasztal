@@ -364,6 +364,8 @@ describe('what each action that replaces or leaves a game is wired to', () => {
     expect(newGames).toEqual([true]);
   });
 
+  // slow because it parses every source file of src/ui with the TypeScript compiler: 0.43 s alone,
+  // so a limit of 30 s
   it("stages a tuning only from the title screen's New game, after the question and nowhere else", () => {
     const uses = stagingUses().map((u) => `${u.file}: ${u.id}`);
     // the settings screen's New game, the debug panel's Regenerate and the level actions stage none
@@ -373,7 +375,7 @@ describe('what each action that replaces or leaves a game is wired to', () => {
     // what the title screen reads of the stored tuning is gone: nothing marks it as modified
     for (const f of ['panels.ts', 'menu.ts'])
       expect(source(f), f).not.toMatch(/\b(readRules|rulesDiffer)\b|custom\.rules/);
-  });
+  }, 30_000);
 
   it('sees a staging behind the question, one before it, and none at all', () => {
     const staged = (body: string) =>

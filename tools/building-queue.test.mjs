@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, loadInventory, pictureFile } from './building-kit.mjs';
+import { FOOTPRINTS, ROOT, loadInventory, pictureFile } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly, guideFile, openingsOf } from './building-guides.mjs';
 import { fitPicture } from './building-fit.mjs';
 import {
@@ -98,6 +98,34 @@ describe('building queue', () => {
     });
     expect(about('farm-a0-r2').guide).toBe(guideFile('t1', 2));
     expect(() => about('farm-a9-r0')).toThrow(/farm-a9-r0/);
+  });
+
+  it("points every picture at its footprint's guide, but the coaling stage at its own", () => {
+    for (const e of q.entries) {
+      const d = about(e.id);
+      expect(d.guide, e.id).toBe(
+        e.family === 'fuel_stop'
+          ? `${ROOT}/guides/fuel_stop-r${e.rot}.png`
+          : guideFile(d.footprint, e.rot),
+      );
+    }
+    expect(about('fuel_stop-a0-r1').guide).toBe(`${ROOT}/guides/fuel_stop-r1.png`);
+    expect(existsSync(about('fuel_stop-a0-r1').guide)).toBe(true);
+    expect(about('fuel_stop-a0-r1').footprint).toBe('t1');
+  });
+
+  it('wants a blockHeight that is a number from 20 to 100, or none', () => {
+    const withHeight = (blockHeight) => ({
+      ...fam,
+      families: { ...fam.families, fuel_stop: { ...fam.families.fuel_stop, blockHeight } },
+    });
+    for (const ok of [20, 62, 100]) expect(() => buildQueue(inv, withHeight(ok))).not.toThrow();
+    for (const bad of [19.9, 101, '62', null, NaN, Infinity, [62]])
+      expect(() => buildQueue(inv, withHeight(bad)), String(bad)).toThrow(/fuel_stop.*blockHeight/);
+    const without = { ...fam.families.fuel_stop };
+    delete without.blockHeight;
+    const plain = { ...fam, families: { ...fam.families, fuel_stop: without } };
+    expect(describeEntry('fuel_stop-a0-r1', inv, plain).guide).toBe(guideFile('t1', 1));
   });
 
   it('stops when a family has no description', () => {
@@ -1689,9 +1717,11 @@ describe('the queue tool on the command line', () => {
   const tool = resolve('tools/building-queue.mjs');
   /** a copy of what the tool reads, in a folder of its own */
   const sandboxes = [];
+  // A hook has a limit of its own (10 s by default). This one removes every folder the tests copied
+  // src/data and the assets into: 0.02 s alone, so a limit of 60 s for the disk of a loaded machine
   afterAll(() => {
     for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
-  });
+  }, 60_000);
   const sandbox = () => {
     const root = mkdtempSync(join(tmpdir(), 'building-queue-'));
     sandboxes.push(root);

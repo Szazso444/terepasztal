@@ -12,6 +12,7 @@ import { resetTrainIds } from '../sim/trains';
 import { resetStationIds } from '../sim/stations';
 import { PeopleSim } from '../sim/people';
 import { SIM_STEP } from '../sim/time';
+import { STR } from '../strings';
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -137,6 +138,7 @@ describe('simWorld from one seed', () => {
     20_000,
   );
 
+  // three new games' worlds, each planning its rivers once (#341): about 0.8 s alone
   it('another seed gives another map', () => {
     const worlds = SEEDS.map((seed) => simWorld({ seed }));
     for (let i = 0; i < worlds.length; i++)
@@ -146,7 +148,7 @@ describe('simWorld from one seed', () => {
         expect(firstDiff(a.map.terrain, b.map.terrain), `${pair}: terrain`).not.toBe(-1);
         expect(firstDiff(a.map.variant, b.map.variant), `${pair}: variant`).not.toBe(-1);
       }
-  });
+  }, 15_000);
 });
 
 describe('simWorld as Game builds it', () => {
@@ -294,9 +296,19 @@ describe('simWorld wiring', () => {
 
   it('line and station name the tile and the reason when the builder refuses', () => {
     const w = simWorld({ size: 32, terrain: 'grass' });
-    w.map.terrain[10 * 32 + 12] = Terrain.Rock;
-    expect(() => line(w, 5, 10, 20)).toThrow(/12,10/);
+    // water stops a line where it meets it, and the line laid up to it stays
+    w.map.terrain[10 * 32 + 12] = Terrain.Water;
+    expect(() => line(w, 5, 10, 20)).toThrow(`no straight at 12,10: ${STR.build.needBridge}`);
     expect(w.track.has(11, 10)).toBe(true);
+    expect(w.track.has(12, 10)).toBe(false);
+    // rock takes track only as the continuation of a line (#322): a line that starts on it is
+    // refused at its first tile, and one that runs onto it from the grass is not
+    w.map.terrain[14 * 32 + 5] = Terrain.Rock;
+    w.map.terrain[16 * 32 + 6] = Terrain.Rock;
+    expect(() => line(w, 5, 14, 9)).toThrow(`no straight at 5,14: ${STR.build.mountainLine}`);
+    expect(w.track.has(5, 14)).toBe(false);
+    line(w, 5, 16, 9);
+    expect(w.track.has(6, 16)).toBe(true);
     expect(() => station(w, 'quarry', 25, 25)).toThrow(/quarry at 25,25/);
     expect(w.builder.free).toBe(false);
   });

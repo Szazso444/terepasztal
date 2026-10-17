@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { generateMap, emptyMap } from './mapgen';
 import { levelFromMap, mapFromLevel } from './level';
-import { Biome, BIOME_NAMES, climateAt, climateAtIndex, type GameMap } from './tiles';
+import { Biome, BIOME_NAMES, CLIMATES, climateAt, climateAtIndex, type GameMap } from './tiles';
 import { biomeAt } from '../sim/biomes';
 import { setSupplyMode } from '../sim/supply';
 import { Rng } from '../engine/rng';
@@ -40,22 +40,64 @@ afterEach(() => {
   setSupplyMode('simple');
 });
 
-describe('climateAt on a map with no climate plane', () => {
+/** The biomes a landform relabels a tile's climate to (generateMap's biome rules). */
+const LANDFORMS: readonly number[] = [Biome.Lake, Biome.River, Biome.Beach, Biome.Mountain];
+
+/**
+ * On a generated map, counted over the map and a two-tile ring around it: `wrong`, tiles where
+ * climateAt is not the climate plane (plains off the map), its by-index form disagrees, it is no
+ * climate, or it differs from the biome where the biome is no landform; `relabelled`, tiles whose
+ * landform biome lies over another climate.
+ */
+function climateOfGenerated(map: GameMap) {
+  let wrong = 0;
+  let relabelled = 0;
+  for (let y = -2; y < map.h + 2; y++)
+    for (let x = -2; x < map.w + 2; x++) {
+      const c = climateAt(map, x, y);
+      if (x < 0 || y < 0 || x >= map.w || y >= map.h) {
+        if (c !== Biome.Plains) wrong++;
+        continue;
+      }
+      const i = y * map.w + x;
+      const b = map.biome[i];
+      if (c !== map.climate![i] || climateAtIndex(map, i) !== c || c >= CLIMATES) wrong++;
+      else if (c !== b) {
+        if (LANDFORMS.includes(b)) relabelled++;
+        else wrong++;
+      }
+    }
+  return { wrong, relabelled };
+}
+
+describe('climateAt on a generated map', () => {
+  // slow because the first case also pays the generator's warm-up: 0.3 s alone, 0.1 to 0.2 s each of
+  // the rest, so a limit of 30 s
   for (const seed of SEEDS)
     for (const size of SIZES)
-      it(`is the biome on every tile of a generated ${size.w}x${size.h} map (seed ${seed})`, () => {
+      it(`is the climate plane, the biome but under a landform, on a ${size.w}x${size.h} map (seed ${seed})`, () => {
         const map = generateMap(seed, size);
-        // nothing fills the plane yet; the Mountain biome task (#354) is the first to
-        expect(map.climate).toBeUndefined();
-        expect(climateVsBiome(map)).toEqual(AGREE);
-      });
+        expect(map.climate).toHaveLength(map.w * map.h);
+        expect(climateOfGenerated(map).wrong).toBe(0);
+      }, 30_000);
 
-  it('is the biome on every tile of a map grown around its start', () => {
+  // the maps above generated again, each world planning its rivers: about 1 s alone
+  it('differs from the biome under some landform on those maps', () => {
+    // without this the cases above could pass on maps whose climate is their biome throughout
+    let relabelled = 0;
+    for (const seed of SEEDS)
+      for (const size of SIZES)
+        relabelled += climateOfGenerated(generateMap(seed, size)).relabelled;
+    expect(relabelled).toBeGreaterThan(0);
+  }, 20_000);
+
+  it('is the climate plane on a map grown around its start', () => {
     const map = generateMap(SEEDS[0], { w: 96, h: 96, originX: -32, originY: -32 });
-    expect(map.climate).toBeUndefined();
-    expect(climateVsBiome(map)).toEqual(AGREE);
+    expect(climateOfGenerated(map).wrong).toBe(0);
   });
 
+  // two worlds of 48 tiles and the same grown by a ring, each world planning its rivers once
+  // (#341): about 0.5 s alone
   it('keeps the climate of every old tile when the map grows by a ring of chunks', () => {
     // grown as expandSave grows a game's map: a chunk more on every side, the old map in the middle
     for (const seed of [SEEDS[0], SEEDS[3]]) {
@@ -68,15 +110,16 @@ describe('climateAt on a map with no climate plane', () => {
           if (climateAt(map, x, y) !== climateAt(big, x + 32, y + 32)) moved++;
       expect(moved, `seed ${seed}`).toBe(0);
     }
-  });
+  }, 10_000);
 
-  it('is the biome on every tile of a generated map in the full production chain', () => {
+  it('is the climate plane on a generated map in the full production chain', () => {
     setSupplyMode('full');
     const map = generateMap(7412, { w: 96, h: 96 });
-    expect(map.climate).toBeUndefined();
-    expect(climateVsBiome(map)).toEqual(AGREE);
+    expect(climateOfGenerated(map).wrong).toBe(0);
   });
+});
 
+describe('climateAt on a map with no climate plane', () => {
   it('is the biome on every tile of a level map', () => {
     const source = generateMap(SEEDS[2], { w: 64, h: 48 });
     expect(biomeCount(source)).toBeGreaterThan(1);

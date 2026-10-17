@@ -58,18 +58,29 @@ Proposed palette seeds, to tune together in `src/art/palette.ts`: forest `#29463
 placement. These are suggested base colours, not an instruction to recolour all stock green.
 Use restrained oxblood, midnight blue, ochre and industrial orange for livery variety.
 
+Every packed atlas texel goes through one cap pass, `tools/atlas-cap.mjs`, after resampling: alpha
+under 16 is dropped and 250 and over made solid; a texel at or above the cursor white `#ECE4D0`
+(`PAL.white`) in all three channels is scaled to at most (235, 227, 207), and one as strong as
+the selection amber `#E8AA48` (`PAL.amber`; hue 25 to 50 degrees, saturation 0.62 and value
+0.85 or more) is toned to saturation 0.6 and value 0.88, both keeping their hue. A set with a
+large lit area over the cursor white's luma (the Fuel Pump, `LIT_FRAMES`) has its luma above 0.85
+compressed smoothly under that luma instead. `tools/atlas-cap.test.mjs` checks every atlas in
+`public/assets` against it. What a painting leaves over the caps is brought under them at packing.
+
 ## 2. Terrain, biomes and tile joins
 
 ![Proposed terrain and biome direction](images/01-land-biomes.png)
 
 The display-block thickness in this concept sheet is illustrative. Do not add raised edges to
 ordinary ground tiles. Snow patches and shoreline blends are proposed treatments; do not infer
-new snow mechanics or terrain types from them. Wheat remains a farm motif, not a decoration
-painted onto every plains tile. The ocean panel's railway is a bridge, not track laid on water.
+new snow mechanics or terrain types from them. Wheat fields are sparse patches on plains grass,
+grown by map generation about as rarely as oil fields, never a decoration painted onto every plains
+tile; each field tile is a low raised prop (section 3), not a raised edge on the ground, and a farm
+keeps its own plot in its picture. The ocean panel's railway is a bridge, not track laid on water.
 
 | Existing biome | Target appearance                                                                  | Readability constraint                                                                     |
 | -------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Plains         | Moss/meadow greens, broad quiet patches, sparse wildflowers.                       | Leave large open grass areas; fields only around farms.                                    |
+| Plains         | Moss/meadow greens, broad quiet patches, sparse wildflowers.                       | Leave large open grass areas; sparse wheat fields on plains grass, never on every tile.    |
 | Forest         | Dark leaf litter, rounded broadleaf clusters, clear trunk openings.                | Ballast must separate tracks from the dark ground; trees stand back from rail corridors.   |
 | Desert         | Oat/ochre sand, warm rock, sparse cactus and occasional oasis palm.                | Keep sand less bright than selection indicators; no continuous high-contrast dune stripes. |
 | Taiga          | Cooler blue-green conifers, subdued lichen ground. Optional cosmetic snow accents. | Distinguish pine and spruce by shape, not just colour.                                     |
@@ -88,13 +99,20 @@ and three hill/mountain/void variants present in the catalog.
   combinations; never introduce gaps or paint over the track clearance area.
 - **Water animation:** move a few highlights across four frames. No large pulsing brightness.
   Match the water hue used in submerged bridge shading.
-- **City tiles:** neutral paving and narrow connected streets. Preserve the current 3×3 visual
-  phase pattern and its continuous joins. The existing population-density trigger remains
+- **City tiles:** paving the landscape painter lays, not a tile frame (`src/render/townPaving.ts`,
+  run by the landscape worker; `terrain-production.md` has the detail). Small setts, about a tenth
+  of a tile, in a fan of arcs, lit from the upper left, in warm stone a value step below the house
+  walls and never brighter than the semantic colours. The outline wobbles slightly and rounds its
+  convex corners; over the last quarter tile the setts wear out into the ground, and a fringe of
+  packed earth fades into the ground outside. Each street door on the paving gets a doorstep. The
+  paving has no painted streets of its own. The 3×3 `terrain/city_*` frames (`src/art/terrain.ts`)
+  remain only as the fallback ground sprite when the landscape worker fails (and for a chunk not
+  painted yet), so their art is not to be removed. The existing population-density trigger remains
   gameplay-owned; art does not convert additional terrain or introduce roads with path rules.
 - **Void / locked fog:** subdued map-edge treatment distinct from ocean and buildable land.
 
 [Current terrain sheet](images/current-terrain.png) · Source: `src/art/terrain.ts`,
-`src/render/worldRenderer.ts`, `src/data/biomes.json`.
+`src/render/worldRenderer.ts`, `src/render/townPaving.ts`, `src/data/biomes.json`.
 
 ## 3. Trees, plants and natural objects
 
@@ -120,11 +138,20 @@ before drawing individual twigs. Bare sprites should not acquire large square so
 | `rock` / `boulder` | Small low stones versus larger angular masses; consistent stone lighting.                |
 | `coal`             | Dark stratified outcrop, distinguishable from ordinary grey rock.                        |
 | `oil`              | Small dark seep with restrained sheen; no bright rainbow pool.                           |
+| `wheat`            | Low raised tile of straw-gold rows, 2.6 to 3.5 px high, darker front, irregular edge.    |
+| `mangrove`         | Dark evergreen crown on arched prop roots ending in wet tips at the waterline; no water. |
+| `willow`           | Weeping crown of hanging silvery-olive curtains over a short, forked trunk on a bank.    |
 
-Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil;
+Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil/wheat/
+mangrove/willow;
 two for palm/deadtree/reeds; four for flowers. Change silhouette as well as shade. Check
 placement near curves and signals: clearing a prop must remove its entire visual, and trunk
 anchors must remain attached to the correct tile. Seasonal recolours are optional future work.
+
+The game multiplies every prop by the season tint (`SEASON_FX` in `src/sim/weather.ts`), so judge a
+prop's colour after it. Wheat in summer averages a straw gold, hue about 41 degrees and saturation
+about 0.6 (its lit pixels near 187, 149, 66), the wheat of the approved art demo: yellow-gold,
+never orange-rust. Its brightest red stays under the selection amber's 232 and the cursor white's 236.
 
 [Current props sheet](images/current-props.png) · Source: `src/art/props.ts`.
 
@@ -299,8 +326,16 @@ though they are not ordinary wagon cargo. Keep all 18 existing icon frames.
 - **People:** four current outfits, two walk frames, 6×12 buffers. Readable head/body/legs,
   subdued worker and resident clothing, consistent ground anchor. Further appearance variety
   is optional; preserve existing bounded population rendering and animation.
-- **Paths:** dirt paths, stone roads, and both crossing families in their current variants.
-  Shared seams and kerbs; crossings must not paint out railheads or invent a road transport mode.
+- **Paths:** roads are painted into the ground by the landscape painter along a centre line
+  (#329), so they have no atlas frames; `people/road_stone_*` stays as the road tool's icon, with
+  `people/path_dirt_*`. A level crossing is a deck drawn over the straight track a road crosses:
+  `track/level_crossing_<regular|narrow>_<rot>` in the track group (`src/art/trackIllustrated.ts`),
+  anchored exactly as `track/straight_<cls>_<rot>`. Regular track gets dressed stone setts, narrow
+  track packed earth with timber check planks along both sides of each rail, and high-speed track
+  none. The deck reaches 0.1 tile outside each rail, inside the ballast bed, and 0.16 tile either
+  way along the track, half the road's width (`LEVEL_CROSSING_ACROSS`, `LEVEL_CROSSING_ALONG`).
+  The rails' own strokes are cut out of it, so a crossing never paints out the railheads, and it
+  never invents a road transport mode.
 - **Weather:** rain is fine and low contrast; fog is translucent; smoke drifts in soft stepped
   clusters. Preserve frame anchors and avoid opaque rectangles on transparent backgrounds.
 - **Light:** light-tile, glow and small glow should blend with warm lamps without washing out
@@ -403,3 +438,91 @@ The rejected alternatives and zoom comparisons are kept in
 [building-production.md](building-production.md) describes how the 548 building pictures are
 made: the tools, the artist agent's brief, what the check enforces, what the image generator
 does wrong, and how to run the work again or extend it.
+
+## Building ground data
+
+Every building frame of the `structures` atlas, as the game builds it (the generators in
+`src/art`, with their placeholder turns `_r1` to `_r3`, and `public/assets/structures.*` laid
+over them), ships with data on where it stands on the ground: one file,
+`src/art/buildingGround.json`, written by `tools/building-ground.mjs` from the frames' own pixels
+and read through `src/art/buildingGround.ts` (`groundOf(frameKey)`; pure data, no DOM). Nothing
+in it is typed in, and the tool changes no pixel, size or anchor. It is for the renderer's yards,
+door paths, plinths and contact shadows, for walkers at doors (#406) and for roads that end at
+doors (#408, #409).
+
+```
+node tools/building-ground.mjs            # write the file, print the findings (--all lists every one)
+node tools/building-ground.mjs --check    # say whether the file is what the frames give now
+```
+
+Run it again after changing a generator, `public/assets/structures.*` or a place's `doors` in
+`src/data`. A run with nothing changed writes the same bytes. `tools/building-ground.test.mjs`
+fails when a building frame has no entry, when a corner of an entry's foot lies more than 1 world
+px off the frame's opaque pixels, when a door disagrees with `doorsOf` (`src/sim/doors.ts`), when
+the foot of a frame and of its mirror image are not mirror images, when the same picture declared
+at 2 or 3 times its resolution has a foot more than 1 world px away, when an illustrated picture's
+foot covers little of the base that `tools/building-fit.mjs` measures for it, and when the file is
+not what the tool writes now.
+
+An entry, keyed by frame (`structures/farm_1`, `structures/depot_r1_r3`). Every point is in
+**world px from the frame's anchor** (texels over the atlas's `resolution`, x right, y down),
+before the renderer's scale reference (`scaleReference`, `src/render/assetScale.ts`): a frame
+drawn at scale k puts a point at k times these numbers. The anchor is the footprint's centre on
+the ground. A tile is `[dx, dy]` from the footprint's corner tile (lowest x and y), the way
+`doorsOf` counts them.
+
+- `source`: `generated` (src/art) or `illustrated` (the shipped file pair); `rot`: the rotation
+  the frame shows, 0 to 3 (a depot's `_r<axis>` frame is rotation 0 or 1, `_r2`/`_r3` turn it).
+- `footprint`: the tiles it covers at that rotation.
+- `foot`: where its walls meet the ground, the corners n, e, s, w (far, right, near, left) of a
+  parallelogram. Its sides run on the picture's own ground lines: the game's 2:1 or near it (a
+  slope of 0.33 to 0.67, the range `tools/building-fit.mjs` trusts), because an image generator
+  keeps the camera only near the game's. It reaches as far along the base as the base goes,
+  across the gaps between the piers of a trestle (up to 20 world px), and no further. The camera
+  sees the S wall (w to s) and the E wall (s to e). Each corner lies on the picture's opaque
+  pixels, within 1 world px. Where a picture has stretches that are not walls (a conveyor, a
+  cage, steps), the foot is the walls' base and stops short of them, so it can be off the anchor
+  by what the picture is off its footprint. It is measured at the detail the picture has: a
+  picture enlarged without new detail (each texel copied m by m, at any offset, and declared at m
+  times the resolution) is measured on its own texels and has the same foot. A picture redrawn
+  with new detail is a new picture, and where two volumes fit its base nearly as well (the
+  generated `windmill_r3`, `warehouse_4`, `farm_2`), the redraw can stand on the other one.
+- `fit`: `walls` when a straight base was found (the two lines that most of the wall columns
+  stand on, columns counting for the height of their run, so that a bench, a lamp post or ground
+  paint in front is not taken for a wall; the near corner is the base's lowest point, so a column
+  that stands more than 1 world px and half a texel below it, such as a bench against the base, is
+  on neither line); `outline` when no base is long enough and the foot is
+  the silhouette's lowest stand on the game's 2:1 (machinery, heaps, a trestle). Treat `outline`
+  as approximate. A base whose near corner stands above the anchor, the footprint's centre on the
+  ground, is on stilts or a roof, and is passed over for what stands lower (the generated coal
+  stand `fuel_stop_r1` to `_r3` stands on its legs).
+- `baked`: world px squared of opaque pixels below the foot between its outer corners: ground
+  painted into the picture (a yard, a pond, a field) or what stands in front of the walls (a
+  conveyor, a cage, steps), counted below the foot as written in the entry. 0 for a clean
+  cut-out. A yard drawn by the renderer would double a baked one.
+- `front`: the wall the building's front faces (S, W, N, E for r0 to r3), its two foot corners in
+  tile order, and whether the camera sees it (`visible`).
+- `doors`: only the doors the picture shows. Kind, tile, side and `reach` come from `doorsOf`
+  (#406): a door of the data is the opening in the picture nearest the middle of its tile's share
+  of the wall, within 0.3 tile, on a wall the camera sees (S or E). `point` is where the opening
+  meets the ground (a step, if it has one), `width` the opening's width and `offset` its distance
+  from that middle in tiles, along the wall. A door on a wall the camera cannot see, or one the
+  picture does not show, has no entry: nothing is guessed, and a consumer fits a door by `reach`
+  and the foot's wall.
+
+The findings the tool prints are what the pictures do not give or disagree on: a door of the data
+that is not seen, a door that stands off the middle of its tile, a door-shaped opening where the
+data has no door, a foot that is `outline`, and ground baked into a picture. The illustrated
+frames are drawn as cut-outs, so ground painted into the picture is a mark of the generators; in
+an illustrated frame `baked` is what stands in front of the walls.
+A door is found as a run of columns on the wall that differ from the wall's own colour at that
+height, as tall and as wide as a door and standing near the foot. That is a heuristic: a door can
+go unseen (a canopy over it, a plinth under it), and where the door is hidden the opening nearest
+the middle of its tile can be a window or an arch of a door's size.
+
+`node tools/building-ground.mjs --sheets` draws what was measured over every frame (the foot's
+walls the camera sees in magenta, the two it does not in cyan, the front wall in orange, each
+door in green, the anchor in red) into `scratchpad/building-ground/`, which is where a listed
+door and a foot are checked by eye. `scratchpad/building-ground-findings.txt` is the full list of
+findings (`--all`) for the pictures and the measure as they stand with the data committed (#435);
+it is a snapshot, and the tool prints the current one.

@@ -422,6 +422,34 @@ body {
   opacity: 0.55;
 }
 
+/* ---- yield label (src/ui/yieldLabel.ts): its box 16 px above the tile's top corner ---- */
+#yield-label {
+  position: absolute;
+  height: 15px;
+  padding: 0 4px;
+  transform: translate(-50%, -16px);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 15px;
+  color: var(--amber);
+  background: rgba(26, 37, 29, 0.92);
+  white-space: nowrap;
+  pointer-events: none !important;
+}
+
+/* ---- a station panel's ground rows: the placing tooltip's rows in the panel's row look ---- */
+.station-ground .tt-row {
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--stone-light);
+}
+.station-ground .tt-row:not(.tt-good):not(.tt-bad) > span:first-child {
+  color: var(--text-dim);
+}
+.station-ground .tt-total {
+  margin-top: 0;
+}
+
 /* ---- overview banner ---- */
 #overview-banner {
   position: absolute;
@@ -460,6 +488,113 @@ body {
   font-size: 12px;
   letter-spacing: 0;
   color: var(--text-dim);
+}
+
+/*
+ * The loading screen (src/ui/loadingScreen.ts): a picture, a tip and a bar, then the black and the
+ * iris of the reveal. It sits on <body>, not in #ui-root, and above every other layer of the game:
+ * the toasts (600) are the highest of them, over the guide and preview overlays (500). It takes the
+ * pointer while it is up and never sets `cursor: none`.
+ */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: #0e150f;
+  color: var(--text);
+  font-family: var(--font-body);
+  cursor: default;
+}
+.ls-picture {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.ls-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  /* the top of the scrim fades into the picture; the bottom clears the bar */
+  padding: 72px 24px 24px;
+  background: linear-gradient(to top, rgba(14, 21, 15, 0.92) 30%, rgba(14, 21, 15, 0));
+}
+.ls-tip {
+  max-width: 720px;
+  min-height: 1.4em;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  text-shadow: 0 1px 2px #000;
+}
+.ls-begin {
+  visibility: hidden;
+  font-family: var(--font-title);
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: var(--amber);
+  text-shadow: 0 1px 3px #000;
+}
+.ls-ready .ls-begin {
+  visibility: visible;
+  animation: ls-pulse 1.6s ease-in-out infinite;
+}
+#loading-screen.ls-ready {
+  cursor: pointer;
+}
+.ls-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  background: var(--stone-dark);
+  border-top: 1px solid var(--border-dark);
+}
+.ls-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: var(--amber-dark);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.25s ease-out;
+}
+/* the black layer of the reveal: it fades in over the picture, then the iris is its mask */
+.ls-black {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+}
+/* the black covers everything: the picture, the tip and the bar leave, and the game shows through
+   the hole the iris opens */
+#loading-screen.ls-open {
+  background: transparent;
+}
+.ls-open .ls-picture,
+.ls-open .ls-footer,
+.ls-open .ls-bar {
+  visibility: hidden;
+}
+@keyframes ls-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ls-ready .ls-begin {
+    animation: none;
+  }
+  .ls-bar-fill {
+    transition: none;
+  }
 }
 
 /* ---- toolbar ---- */

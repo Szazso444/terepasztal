@@ -117,6 +117,8 @@ const PAST = {
   houses: () => clone(PRE_92_HOUSES),
   stations: () => {
     const defs = clone(shipped.DEFAULT_CONTENT.stations.defs);
+    // before stations had doors (#406)
+    for (const d of defs) delete d.doors;
     // the pump before it had ground rules of its own (#320)
     const pump = defs.find((d) => d.id === 'pump')!;
     delete pump.standOn;
@@ -126,6 +128,8 @@ const PAST = {
   },
   buildings: () => {
     const list = clone(shipped.DEFAULT_CONTENT.buildings);
+    // before works had doors (#406)
+    for (const b of list) delete b.doors;
     delete list.find((b) => b.id === 'kiln')!.lastTier;
     list.find((b) => b.id === 'windmill')!.flavor =
       'Mills wheat into food. One wheat makes 5 food, then 7, 9 and 11 with upgrades.';

@@ -1,13 +1,18 @@
 import { Rng, hash2 } from '../engine/rng';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import {
   Terrain,
   Biome,
+  CLIMATES,
+  climateAtIndex,
   startRegion,
   type GameMap,
   type PropInstance,
   type PropKind,
 } from './tiles';
+import { DRY, FLOW_CAP, KEEP_OUT, LAKE_CLEARANCE, LOW, WaterKind, drain } from './rivers';
+import { markWaterfalls } from './waterfalls';
 
 /** Smooth value noise built from the coordinate hash. */
 function valueNoise(x: number, y: number, seed: number): number {
@@ -158,28 +163,66 @@ const grow = (s: Span, d: number): Span => ({
   y1: s.y1 + d,
 });
 
-/** The longest river, in tiles of its course. Bounding it is what keeps `MARGIN` finite. */
+/**
+ * The longest stream beyond the river region, in tiles of its course. Bounding it is what keeps
+ * `MARGIN` finite.
+ */
 const RIVER_TILES = 64;
+/**
+ * The river region: the chunks this many chunks or fewer from the start chunk along either axis,
+ * a square of 11 x 11 chunks (352 tiles a side) with the start chunk in its middle: a new world of
+ * the default size (5 x 5 chunks) and three rings of growth, or a new world up to 352 tiles a
+ * side. Its rivers and lakes are planned once, tile by tile, over the whole square (riverPlan);
+ * beyond it rivers are short streams (riverWater). Planning costs time in proportion to its area,
+ * once a world.
+ */
+const REGION_CHUNKS = 5;
+/**
+ * The ground the plan generates around the region: the drainage reads two tiles around it, the
+ * lone-tile cleanup one more, and the ground is exact SMOOTH_REACH tiles inside a field's edge.
+ */
+const PLAN_MARGIN = 2 + 1 + 4;
+/**
+ * Nearer than this to the start chunk's centre, in tiles, no rain falls, no river rises or runs and
+ * no basin fills, so the start stays buildable (rivers stopped 12 tiles out before). The ground's
+ * own water there stays, a lake like any other, overflowing outwards.
+ */
+const START_KEEP_OUT = 13;
+/** River plans kept for the next maps of the same world (a growing map asks again). */
+const PLAN_CACHE = 4;
 /** How far biome smoothing reads: two passes of a 5x5 majority. */
 const SMOOTH_REACH = 4;
 /**
- * How far the passes after the rivers read: lone-tile cleanup 1, mountains 2, oil and wheat fields
- * 2 (WHEAT_REACH).
+ * How far a rock tile looks for the mountain of its field, in steps: a Rock tile is in the
+ * Mountain biome when a path of at most this many steps across tile sides, over Rock and Mountain
+ * only, reaches a Mountain tile. A field of rock has no bound of its own (at a low Rock level it
+ * runs on and on), so the whole field would make a tile's biome depend on how far the map
+ * reaches; this bound keeps it to the tiles near it. Over 20 worlds of 160 x 160 at the default
+ * sliders, 54 of the 3491 rock tiles of fields that hold a mountain lie further out and keep their
+ * climate. The terrain this reads lies within LATE_REACH of the map, and so the margin.
  */
-const LATE_REACH = 5;
+export const MOUNTAIN_REACH = 12;
+/** How far sand reads as Beach from the sea water it lies by, in tiles along either axis. */
+export const BEACH_REACH = 2;
+/**
+ * How far the passes after the rivers read: mountains 2 for the Mountain biome to find them
+ * MOUNTAIN_REACH steps out. The sea shore needs less: the shore 1, oil and wheat fields 4 (a
+ * centre 2 out, 2 more for the field, WHEAT_REACH).
+ */
+const LATE_REACH = 2 + MOUNTAIN_REACH;
 /**
  * Generation runs on a field this many tiles wider than the map on every side, and the map is
  * cropped out of it, so no pass ever sees the map's own edge: a tile comes out the same whatever
  * the map's size and origin, and a map that grows keeps every tile it had.
  *
- * Biomes, and so the ground, are exact more than SMOOTH_REACH tiles inside the field's edge. A
- * river that carves within LATE_REACH of the map lies wholly within LATE_REACH + RIVER_TILES of
- * it, on exact ground, so it is walked exactly as on an endless map; a river that strays onto
- * inexact ground is too far out to carve anywhere that matters. The margin also holds the 3x3
- * chunks around the start (the fallback river's ground) for a map only one or two chunks wide.
+ * Biomes, and so the ground, are exact more than SMOOTH_REACH tiles inside the field's edge. In
+ * the river region the water comes from its plan, which is the same for every map. Beyond it, a
+ * stream that runs within LATE_REACH of the map lies wholly within LATE_REACH + RIVER_TILES of it,
+ * on exact ground, so it is walked exactly as on an endless map; a stream that strays onto inexact
+ * ground is too far out to run anywhere that matters.
  *
  * Only the tiles a pass reads are generated (see Field): everything within LATE_REACH of the map,
- * and out in the margin the blocks along the rivers' courses.
+ * and out in the margin the blocks along the streams' courses.
  */
 const MARGIN = RIVER_TILES + LATE_REACH + SMOOTH_REACH;
 
@@ -252,6 +295,38 @@ class Field {
     this.once = new Uint8Array(w * h);
     this.biome = new Uint8Array(w * h);
     this.ground = new Uint8Array(w * h);
+  }
+
+  /**
+   * Takes from `src`, a field of the same world (seeds, params and start) generated in full at
+   * GROUND, every block of this field whose tiles lie more than SMOOTH_REACH inside `src`'s edge,
+   * where its values are exact: the same values this field would generate, copied instead.
+   */
+  adopt(src: Field) {
+    const b = BLOCK_BITS;
+    // this field's tile (x, y) is src's tile (x + dx, y + dy)
+    const dx = this.ox - src.ox;
+    const dy = this.oy - src.oy;
+    const bx0 = Math.max(0, (SMOOTH_REACH - dx + (1 << b) - 1) >> b);
+    const by0 = Math.max(0, (SMOOTH_REACH - dy + (1 << b) - 1) >> b);
+    const bx1 = Math.min(this.bw, (src.w - SMOOTH_REACH - dx) >> b);
+    const by1 = Math.min(this.bh, (src.h - SMOOTH_REACH - dy) >> b);
+    if (bx0 >= bx1 || by0 >= by1) return;
+    const x0 = bx0 << b;
+    const x1 = Math.min(this.w, bx1 << b);
+    for (let y = by0 << b; y < Math.min(this.h, by1 << b); y++) {
+      const to = y * this.w + x0;
+      const from = (y + dy) * src.w + x0 + dx;
+      const n = x1 - x0;
+      this.elev.set(src.elev.subarray(from, from + n), to);
+      this.moist.set(src.moist.subarray(from, from + n), to);
+      this.raw.set(src.raw.subarray(from, from + n), to);
+      this.once.set(src.once.subarray(from, from + n), to);
+      this.biome.set(src.biome.subarray(from, from + n), to);
+      this.ground.set(src.ground.subarray(from, from + n), to);
+    }
+    for (let by = by0; by < by1; by++)
+      this.stage.fill(GROUND, by * this.bw + bx0, by * this.bw + bx1);
   }
 
   /** Generates tile (`x`, `y`) up to `stage`. */
@@ -437,6 +512,56 @@ class Field {
         ground[i] = t;
       }
   }
+
+  /**
+   * The land a tile at GROUND would be with its water taken away (the river pass dries a pond too
+   * small to be a lake): genGround's own rules with every rule that makes water left out, and the
+   * ground below the water line read as the sand at its shore.
+   */
+  landAt(i: number): Terrain {
+    const { params } = this;
+    const e = this.elev[i];
+    const m = this.moist[i];
+    const b = this.biome[i] as Biome;
+    if (e < params.waterLevel + 0.025) return Terrain.Sand;
+    if (e > params.rockLevel) return Terrain.Rock;
+    if (e > params.hillLevel) return b === Biome.Swamp ? Terrain.Grass : Terrain.Hill;
+    switch (b) {
+      case Biome.Desert:
+        return Terrain.Sand;
+      case Biome.Forest:
+        return m > 0.42 ? Terrain.Forest : Terrain.Grass;
+      case Biome.Taiga:
+        return m > 0.55 ? Terrain.Forest : Terrain.Grass;
+      case Biome.Swamp:
+      case Biome.Ocean:
+        return Terrain.Grass;
+      default:
+        return m > params.forestDensity + 0.08 ? Terrain.Forest : Terrain.Grass;
+    }
+  }
+}
+
+/**
+ * The ground of `src` (`w` x `h`) with lone tiles cleaned up on the tiles of `s`: a tile with at
+ * most one of its eight neighbours of its own terrain takes the terrain of the tile below it. Reads
+ * the tiles 1 around `s`; a new plane, `src` outside `s`.
+ */
+function tidyGround(src: Uint8Array, w: number, h: number, s: Span): Uint8Array {
+  const out = new Uint8Array(src);
+  for (let y = Math.max(1, s.y0); y < Math.min(h - 1, s.y1); y++)
+    for (let x = Math.max(1, s.x0); x < Math.min(w - 1, s.x1); x++) {
+      const i = y * w + x;
+      const t = src[i];
+      let same = 0;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          if (src[(y + dy) * w + x + dx] === t) same++;
+        }
+      if (same <= 1) out[i] = src[i + w];
+    }
+  return out;
 }
 
 /** A flat map of one terrain type with no props (the editor's blank canvas). */
@@ -482,12 +607,15 @@ function startSpan(map: GameMap): Span {
 
 /**
  * Each tile of `s` (clipped to the `w` x `h` plane) gets the majority biome of its 5x5
- * neighbourhood in `src`, cut off at the plane's edge; a tie keeps the tile's own.
+ * neighbourhood in `src`, cut off at the plane's edge; a tie keeps the tile's own. The biomes are
+ * climates, ids 0 to CLIMATES - 1: the biome rules relabel tiles only after smoothing.
  */
 function smoothBiomes(src: Uint8Array, dst: Uint8Array, w: number, h: number, s: Span) {
   const x0 = Math.max(0, s.x0);
   const x1 = Math.min(w, s.x1);
-  const counts = new Int32Array(6);
+  // a local, not the import: an imported binding read in the loop below slows smoothing manifold
+  const kinds = CLIMATES;
+  const counts = new Int32Array(kinds);
   for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++) {
     const ya = Math.max(0, y - 2);
     const yb = Math.min(h - 1, y + 2);
@@ -500,23 +628,56 @@ function smoothBiomes(src: Uint8Array, dst: Uint8Array, w: number, h: number, s:
       if (x >= 3) for (let yy = ya; yy <= yb; yy++) counts[src[yy * w + x - 3]]--;
       const i = y * w + x;
       let best = src[i];
-      for (let k = 0; k < 6; k++) if (counts[k] > counts[best]) best = k;
+      for (let k = 0; k < kinds; k++) if (counts[k] > counts[best]) best = k;
       dst[i] = best;
     }
   }
 }
 
 /**
- * The world of `seed`. `supply` is the production chain the game will run: the terrain, biome and
- * variant planes and the decorations are the same for both, and only the full chain adds oil
- * fields and the start chunk's seeps over the props. It is an argument, not a map parameter, so
- * it never reaches the saved `MapGenParams`.
+ * The world of `seed`. `supply` is the production chain the game will run: the terrain, biome,
+ * climate and variant planes and the decorations are the same for both, and only the full chain
+ * adds oil fields and the start chunk's seeps over the props. It is an argument, not a map
+ * parameter, so it never reaches the saved `MapGenParams`.
  */
 export function generateMap(
   seed: number,
   p: Partial<MapGenParams> = {},
   supply: SupplyMode = DEFAULT_SUPPLY,
 ): GameMap {
+  return generateMapPlanes(seed, p, supply).map;
+}
+
+/**
+ * generateMap's map with planes its biome rules read, as tiles of the map, for tests. The river
+ * pass's own output is `river` and `lake` with the map's waterSurface, flow and flowDir planes;
+ * the map's feature plane holds the waterfalls read off them (waterfalls.ts).
+ */
+export interface MapPlanes {
+  map: GameMap;
+  /**
+   * 1 on each tile the river pass made river, 0 elsewhere. Only land is made river: a river's way
+   * over water that was there before (into a lake or the sea) stays that water. The start chunk's
+   * patches never paint over a river.
+   */
+  river: Uint8Array;
+  /**
+   * 1 on each tile the river pass made or kept a lake: in the river region every lake there is (a
+   * basin filled to its rim, the ground's own inland water, the start chunk's pond), beyond it the
+   * pond a stream ends in. The ground's water beyond the region is not marked, and neither is a
+   * lake's tile the start chunk's patches paint land over.
+   */
+  lake: Uint8Array;
+  /** the terrain before the sea shore turned to sand (seaShore) */
+  shore: Uint8Array;
+}
+
+/** generateMap, with the planes of MapPlanes. */
+export function generateMapPlanes(
+  seed: number,
+  p: Partial<MapGenParams> = {},
+  supply: SupplyMode = DEFAULT_SUPPLY,
+): MapPlanes {
   const params = { ...DEFAULT_MAP_PARAMS, ...p };
   const map = emptyMap(seed, params.w, params.h, Terrain.Grass, params.originX, params.originY);
   const { w: mw, h: mh, regionSize: rs } = map;
@@ -534,7 +695,7 @@ export function generateMap(
     y1: ss.y1 + MARGIN,
   };
   const rng = new Rng(seed);
-  // the order they are drawn in is part of every seed's world
+  // the order they are drawn in is part of every seed's world; a new seed is drawn after these
   const seeds: FieldSeeds = {
     elev: rng.int(1, 1e6),
     moist: rng.int(1, 1e6),
@@ -548,40 +709,29 @@ export function generateMap(
   const scy = start.y0 + rs / 2;
   const f = new Field(w, h, ox, oy, seeds, params, scx, scy, rs);
   // the passes after the rivers run on the map and the tiles around it they read, each on a band
-  // narrower than the one it reads: the terrain LATE_REACH tiles out, the cleanup a tile less,
-  // the mountains and the oil and wheat field centres 2 tiles out
+  // narrower than the one it reads: the terrain LATE_REACH tiles out, the mountains MOUNTAIN_REACH
+  // tiles out, the sea shore 4 and the oil and wheat field centres 2
   const inMap: Span = { x0: MARGIN, y0: MARGIN, x1: MARGIN + mw, y1: MARGIN + mh };
   const late = grow(inMap, LATE_REACH);
-  f.needSpan(late, GROUND);
-  // the 3x3 chunks around the start chunk get a river of their own if none rises in them
-  const near: Span = {
-    x0: Math.max(0, start.x0 - rs),
-    y0: Math.max(0, start.y0 - rs),
-    x1: Math.min(w, start.x0 + 2 * rs),
-    y1: Math.min(h, start.y0 + 2 * rs),
-  };
-  // a river tile can carve the one east of it too
-  const carved = carveRivers(f, seed, scx, scy, near, grow(late, 1));
+  const plan = riverPlan(seed, seeds, params, start.x0 + ox, start.y0 + oy, rs);
+  // the ground the plan generated, where it holds this field's, is taken rather than made again
+  if (plan.field) f.adopt(plan.field);
+  // the lone-tile cleanup reads a tile around: water and rock singletons take the tile below
+  f.needSpan(grow(late, 1), GROUND);
+  const ground = tidyGround(f.ground, w, h, late);
+  const water = riverWater(f, ground, plan, seed, late);
   const terrain = new Uint8Array(w * h);
+  const river = new Uint8Array(w * h);
+  const lake = new Uint8Array(w * h);
   for (let y = late.y0; y < late.y1; y++)
     for (let x = late.x0; x < late.x1; x++) {
       const i = y * w + x;
-      terrain[i] = carved[i] ? Terrain.Water : f.ground[i];
-    }
-  // clean up lone tiles: majority filter for water/rock singletons
-  const copy = new Uint8Array(terrain);
-  const tidy = grow(late, -1);
-  for (let y = tidy.y0; y < tidy.y1; y++)
-    for (let x = tidy.x0; x < tidy.x1; x++) {
-      const i = y * w + x;
-      const t = copy[i];
-      let same = 0;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          if (!dx && !dy) continue;
-          if (copy[(y + dy) * w + x + dx] === t) same++;
-        }
-      if (same <= 1) terrain[i] = copy[(y + 1) * w + x];
+      const k = water.kind[i];
+      if (k === WaterKind.River) river[i] = 1;
+      if (k === WaterKind.Lake) lake[i] = 1;
+      if (k === WaterKind.River || k === WaterKind.Lake) terrain[i] = Terrain.Water;
+      else if (k === WaterKind.Dry) terrain[i] = f.landAt(i);
+      else terrain[i] = ground[i];
     }
   const field: GameMap = {
     ...map,
@@ -591,21 +741,47 @@ export function generateMap(
     originY: oy,
     terrain,
     variant: new Uint8Array(w * h),
+    // the climate, until the biome rules relabel the map's tiles
     biome: f.biome,
+    climate: f.biome,
     props: new Map(),
     regionsX: Math.ceil(w / rs),
     regionsY: Math.ceil(h / rs),
   };
   // an oil field reaches 2 tiles from its centre and reads the terrain under it
   const oilCentres = grow(inMap, 2);
-  raiseMountains(field, oilCentres);
-  startResources(field, start);
+  raiseMountains(field, grow(inMap, MOUNTAIN_REACH));
+  startResources(field, start, { pond: plan.pond, river });
+  // a patch painted over a lake's tile leaves land there
+  for (let y = start.y0; y < start.y1; y++)
+    for (let x = start.x0; x < start.x1; x++)
+      if (terrain[y * w + x] !== Terrain.Water) lake[y * w + x] = 0;
+  const shore = cropPlane(terrain, w, mw, mh);
+  // After the start chunk's patches, which it never reaches: the Ocean climate lies at least 5
+  // tiles outside the start chunk (genRaw keeps the sea out of the start zone, and smoothing moves
+  // it 4 tiles at most), so no tile of the chunk or beside it has sea water on a side. The oil and
+  // wheat fields read the terrain 4 tiles out.
+  const shoreSpan = grow(oilCentres, 2);
+  const pass = river.map((r, i) => r | lake[i]);
+  const sea = seaWater(field, pass, grow(shoreSpan, 1));
+  seaShore(field, sea, shoreSpan);
+  field.biome = biomeRules(field, river, sea, inMap);
+  // the waterfalls of the map's tiles, read on the field, where a river tile at the map's edge has
+  // the tile it runs into
+  const feature = new Uint8Array(w * h);
+  markWaterfalls(
+    { w, h, terrain, waterSurface: water.surface, flowDir: water.dir },
+    feature,
+    inMap,
+  );
   // crop the map out of the field
-  for (let y = 0; y < mh; y++) {
-    const from = (y + MARGIN) * w + MARGIN;
-    map.terrain.set(terrain.subarray(from, from + mw), y * mw);
-    map.biome.set(f.biome.subarray(from, from + mw), y * mw);
-  }
+  map.terrain = cropPlane(terrain, w, mw, mh);
+  map.biome = cropPlane(field.biome, w, mw, mh);
+  map.climate = cropPlane(f.biome, w, mw, mh);
+  map.waterSurface = cropPlane(water.surface, w, mw, mh);
+  map.flow = cropPlane(water.flow, w, mw, mh);
+  map.flowDir = cropPlane(water.dir, w, mw, mh);
+  map.feature = cropPlane(feature, w, mw, mh);
   decorateProps(map, seed);
   // the fields and deposits read the field around the map; they go over the map's props, the
   // wheat fields, then the oil fields, then the start seeps, as if all four had been laid on the
@@ -622,7 +798,27 @@ export function generateMap(
     const y = Math.floor(i / w) - MARGIN;
     if (x >= 0 && y >= 0 && x < mw && y < mh) map.props.set(y * mw + x, list);
   }
-  return map;
+  return {
+    map,
+    river: cropPlane(river, w, mw, mh),
+    lake: cropPlane(lake, w, mw, mh),
+    shore,
+  };
+}
+
+/** The map's `mw` x `mh` tiles of a plane of the field (`w` tiles wide) around it. */
+function cropPlane<P extends Uint8Array | Uint16Array>(
+  plane: P,
+  w: number,
+  mw: number,
+  mh: number,
+): P {
+  const out = new (plane.constructor as new (n: number) => P)(mw * mh);
+  for (let y = 0; y < mh; y++) {
+    const from = (y + MARGIN) * w + MARGIN;
+    out.set(plane.subarray(from, from + mw), y * mw);
+  }
+  return out;
 }
 
 /** The places a world chunk has for a wheat field; each grows one field or none. */
@@ -725,7 +921,8 @@ function wheatFields(
 /**
  * Oil fields (full production chain only): rare clusters of puddles on low ground. A field centre
  * is picked by hash on plain grass, sand or swamp, then a blob of 4–9 tiles around it is covered.
- * Fields never touch the starting chunk's centre.
+ * Fields never touch the starting chunk's centre. Ground in the Ocean climate (an island, its
+ * beach included) takes no oil.
  */
 export function placeOilFields(map: GameMap, seed: number, supply: SupplyMode = DEFAULT_SUPPLY) {
   oilFields(map, seed, { x0: 0, y0: 0, x1: map.w, y1: map.h }, supply);
@@ -733,11 +930,10 @@ export function placeOilFields(map: GameMap, seed: number, supply: SupplyMode = 
 /** placeOilFields with the field centres limited to the tiles of `s`. */
 function oilFields(map: GameMap, seed: number, s: Span, supply: SupplyMode) {
   if (supply !== 'full') return;
-  const { w, h, terrain, biome, originX, originY } = map;
+  const { w, h, terrain, originX, originY } = map;
   const ok = (i: number) => {
     const t = terrain[i];
-    const b = biome[i];
-    return b !== Biome.Ocean && (t === Terrain.Grass || t === Terrain.Sand);
+    return climateAtIndex(map, i) !== Biome.Ocean && (t === Terrain.Grass || t === Terrain.Sand);
   };
   for (let y = Math.max(2, s.y0); y < Math.min(h - 2, s.y1); y++)
     for (let x = Math.max(2, s.x0); x < Math.min(w - 2, s.x1); x++) {
@@ -850,7 +1046,13 @@ function startDeposits(map: GameMap, s: Span, supply: SupplyMode) {
 export function ensureStartResources(map: GameMap) {
   startResources(map, startSpan(map));
 }
-function startResources(map: GameMap, s: Span) {
+/**
+ * startResources after the river pass (`pass`): where the pass laid the water patch already, as
+ * a lake that overflows (riverPlan), the patch's corner is taken, and no patch paints over a river
+ * (riverPlan keeps rivers off the patches' corners but for a lake's outlet). Without `pass`
+ * (ensureStartResources) the patches paint whatever lies there.
+ */
+function startResources(map: GameMap, s: Span, pass?: { pond: boolean; river: Uint8Array }) {
   const { x0, y0, x1, y1 } = s;
   const count = (pred: (t: Terrain) => boolean) => {
     let n = 0;
@@ -872,10 +1074,12 @@ function startResources(map: GameMap, s: Span) {
       for (let x = cx - r; x <= cx + r; x++) {
         if (x < x0 || y < y0 || x >= x1 || y >= y1) continue;
         if (Math.abs(x - cx) + Math.abs(y - cy) > r + 1) continue;
+        if (pass?.river[y * map.w + x]) continue;
         map.terrain[y * map.w + x] = t;
       }
   };
-  if (count((t) => t === Terrain.Water) < 4) paint(Terrain.Water, 1);
+  if (pass?.pond) ci++;
+  else if (count((t) => t === Terrain.Water) < 4) paint(Terrain.Water, 1);
   if (count((t) => t === Terrain.Forest) < 6) paint(Terrain.Forest, 2);
   if (count((t) => t === Terrain.Hill || t === Terrain.Rock) < 4) paint(Terrain.Hill, 1);
   if (count((t) => t === Terrain.Grass) < 20) paint(Terrain.Grass, 3);
@@ -929,136 +1133,324 @@ function startPump(map: GameMap, s: Span) {
   }
 }
 
-/**
- * Rivers: one candidate source per world chunk on high ground walks downhill (with a little
- * wander) for at most RIVER_TILES tiles, until it reaches water, carving water; the lower half
- * runs two tiles wide. Deserts dry a river out; the start basin is left alone so the first chunk
- * stays buildable. Every river reads the ground as it was before any river, so rivers never
- * depend on one another and a river that meets another simply follows it downhill. When no
- * river rises in `near`, one starts from the highest ground there away from the start.
- *
- * Returns the carved tiles as 1s on the field, exact within `reach` (where a carved tile can
- * matter): a river is carved only when its course comes within `reach`, and one that never does is
- * walked only as far as its answer needs. The rivers generate the field's blocks along their
- * courses as they walk them.
- */
-function carveRivers(
-  f: Field,
-  seed: number,
-  scx: number,
-  scy: number,
-  near: Span,
-  reach: Span,
-): Uint8Array {
-  const { w, h, ox: originX, oy: originY, rs, elev, biome, ground } = f;
-  const waterLevel = f.params.waterLevel;
-  const carved = new Uint8Array(w * h);
-  // tiles on the course being walked, marked with that walk's number
-  const onCourse = new Int32Array(w * h);
-  let walk = 0;
-  /** Tiles from (x, y) to `reach`, 0 inside it. */
-  const away = (x: number, y: number) =>
-    Math.max(reach.x0 - x, x - reach.x1 + 1, reach.y0 - y, y - reach.y1 + 1, 0);
-  const inNear = (x: number, y: number) =>
-    x >= near.x0 && y >= near.y0 && x < near.x1 && y < near.y1;
+/** The rivers and lakes of the river region, planned once (riverPlan). */
+interface RiverPlan {
+  /** world tile of the region's first tile, and its side in tiles */
+  x0: number;
+  y0: number;
+  size: number;
+  /** WaterKind, water level, flow and Dir + 1 of each of its tiles (rivers.ts, Drainage) */
+  kind: Uint8Array;
+  surface: Uint8Array;
+  flow: Uint16Array;
+  dir: Uint8Array;
+  /** world tiles at its edge whose water leaves it, the way it goes and the rain it carries */
+  exits: { x: number; y: number; dir: number; flow: number }[];
+  /** whether the start chunk's water patch is a lake of the plan */
+  pond: boolean;
   /**
-   * Walk downhill from a source and carve the water; true when a river of some length resulted.
-   * That answer is used only for a source in `near`, so a river that can no longer come within
-   * `reach` is left where it is: from any other source at once, from one in `near` once it is
-   * long enough to count.
+   * the ground the plan generated, kept with the latest plan only, for the map asked for with it
+   * (Field.adopt): the region and PLAN_MARGIN tiles around it
    */
-  const attempt = (x0: number, y0: number, minLen: number, keepOut: number): boolean => {
-    if (x0 < 1 || y0 < 1 || x0 >= w - 1 || y0 >= h - 1) return false;
-    if (Math.hypot(x0 - scx, y0 - scy) < keepOut) return false;
-    const settled = inNear(x0, y0) ? minLen : 0;
-    if (settled === 0 && away(x0, y0) >= RIVER_TILES) return false;
-    // a tile at GROUND has the elevation of every tile around it too
-    f.need(x0, y0, GROUND);
-    const i0 = y0 * w + x0;
-    if (biome[i0] === Biome.Ocean || biome[i0] === Biome.Desert) return false;
-    if (ground[i0] === Terrain.Water) return false;
-    walk++;
-    let x = x0;
-    let y = y0;
-    const path: number[] = [];
+  field?: Field;
+}
+
+/** The latest river plans, newest first, under their key. */
+const plans: { key: string; plan: RiverPlan }[] = [];
+
+/**
+ * The rivers and lakes of the river region of a world: the REGION_CHUNKS chunks around its start
+ * chunk, whose world corner is (`cx0`, `cy0`). They depend on the seed, the sliders and where the
+ * start chunk lies, never on the map asked for, so every map of a world that holds a tile of the
+ * region gets the same water there, generated before or after its neighbours.
+ *
+ * The plan generates the region's ground (and PLAN_MARGIN tiles around it), cleans up its lone
+ * tiles as generateMapPlanes does, and drains it (rivers.ts, `drain`). The start chunk is marked
+ * for it: no river and no basin lake within START_KEEP_OUT tiles of its centre, the land there
+ * draining away; its water at level 0 within 2 tiles of it, where the start patches and the pump
+ * tile change the ground after the pass (startResources); no basin lake within 3 tiles of a
+ * corner a hill patch may stand on; and its water patch laid as a lake when it would be painted.
+ * The ground's own water stays in all of these. The 3 x 3 chunks around it get a river if none
+ * runs there.
+ *
+ * Computed once for each world and kept (PLAN_CACHE), so a map that grows asks again for free.
+ */
+function riverPlan(
+  seed: number,
+  seeds: FieldSeeds,
+  params: MapGenParams,
+  cx0: number,
+  cy0: number,
+  rs: number,
+): RiverPlan {
+  const { waterLevel, hillLevel, rockLevel, forestDensity } = params;
+  const key = [seed, waterLevel, hillLevel, rockLevel, forestDensity, cx0, cy0, rs].join();
+  const at = plans.findIndex((p) => p.key === key);
+  if (at >= 0) {
+    const [hit] = plans.splice(at, 1);
+    plans.unshift(hit);
+    return hit.plan;
+  }
+  const size = (2 * REGION_CHUNKS + 1) * rs;
+  const x0 = cx0 - REGION_CHUNKS * rs;
+  const y0 = cy0 - REGION_CHUNKS * rs;
+  const M = PLAN_MARGIN;
+  const w = size + 2 * M;
+  // field tiles: the region's first tile is (M, M), the start chunk's (sx, sy)
+  const sx = M + REGION_CHUNKS * rs;
+  const sy = sx;
+  const scx = sx + rs / 2;
+  const scy = sy + rs / 2;
+  const f = new Field(w, w, x0 - M, y0 - M, seeds, params, scx, scy, rs);
+  const core: Span = { x0: M, y0: M, x1: M + size, y1: M + size };
+  const reads = grow(core, LAKE_CLEARANCE);
+  f.needSpan(grow(reads, 1), GROUND);
+  const ground = tidyGround(f.ground, w, w, reads);
+  const land = new Uint8Array(ground);
+  const sea = new Uint8Array(w * w);
+  const mark = new Uint8Array(w * w);
+  for (let y = reads.y0; y < reads.y1; y++)
+    for (let x = reads.x0; x < reads.x1; x++) {
+      const i = y * w + x;
+      if (ground[i] !== Terrain.Water) continue;
+      if (f.biome[i] === Biome.Ocean) sea[i] = 1;
+      else land[i] = f.landAt(i);
+    }
+  const chunk: Span = { x0: sx, y0: sy, x1: sx + rs, y1: sy + rs };
+  for (let y = chunk.y0 - 2; y < chunk.y1 + 2; y++)
+    for (let x = chunk.x0 - 2; x < chunk.x1 + 2; x++) {
+      const dx = x - scx;
+      const dy = y - scy;
+      mark[y * w + x] = dx * dx + dy * dy < START_KEEP_OUT * START_KEEP_OUT ? KEEP_OUT | LOW : LOW;
+    }
+  // startResources' corners, the first its water patch's
+  const corners = [
+    [sx + 4, sy + 4],
+    [sx + rs - 5, sy + 4],
+    [sx + 4, sy + rs - 5],
+    [sx + rs - 5, sy + rs - 5],
+  ];
+  // the patches startResources may paint there, 3 tiles or less from a corner, meet no river, and
+  // no lake lies within 2 tiles of where its hill patch would stand at level 2
+  for (const [cx, cy] of corners)
+    for (let y = cy - 3; y <= cy + 3; y++)
+      for (let x = cx - 3; x <= cx + 3; x++) {
+        const near = Math.abs(x - cx) <= 2 && Math.abs(y - cy) <= 2;
+        mark[y * w + x] |= near ? KEEP_OUT | DRY : KEEP_OUT;
+      }
+  const [px, py] = corners[Math.floor(hash2(seed, 3, 41) * 4) % 4];
+  const d = drain({
+    waterLevel,
+    hillLevel,
+    rockLevel,
+    w,
+    h: w,
+    core,
+    elev: f.elev,
+    ground,
+    land,
+    sea,
+    mark,
+    start: { chunk, pond: { x: px, y: py } },
+    near: grow(chunk, rs),
+  });
+  const crop = <P extends Uint8Array | Uint16Array>(src: P, out: P): P => {
+    for (let y = 0; y < size; y++)
+      out.set(src.subarray((y + M) * w + M, (y + M) * w + M + size), y * size);
+    return out;
+  };
+  const plan: RiverPlan = {
+    x0,
+    y0,
+    size,
+    kind: crop(d.kind, new Uint8Array(size * size)),
+    surface: crop(d.surface, new Uint8Array(size * size)),
+    flow: crop(d.flow, new Uint16Array(size * size)),
+    dir: crop(d.dir, new Uint8Array(size * size)),
+    exits: d.exits.map((e) => ({
+      x: (e.tile % w) - M + x0,
+      y: Math.floor(e.tile / w) - M + y0,
+      dir: e.dir,
+      flow: e.flow,
+    })),
+    pond: d.pond,
+  };
+  for (const kept of plans) kept.plan.field = undefined;
+  plan.field = f;
+  plans.unshift({ key, plan });
+  plans.length = Math.min(plans.length, PLAN_CACHE);
+  return plan;
+}
+
+/** What the river pass makes of the tiles of a field: rivers.ts's Drainage planes. */
+interface FieldWater {
+  kind: Uint8Array;
+  surface: Uint8Array;
+  flow: Uint16Array;
+  dir: Uint8Array;
+}
+
+/**
+ * The water of the field's tiles of `late`: the river region's from its plan, and beyond it short
+ * streams like the rivers before the plan, each walking downhill (with a little position-fixed
+ * wander) for at most RIVER_TILES tiles across tile sides:
+ *
+ * - from a source of its own, one candidate per world chunk outside the region, on high ground
+ *   off the sea and the desert, kept when it runs 12 tiles or more;
+ * - from where a river of the region leaves it (the plan's exits), carrying the rain it gathered.
+ *
+ * A stream ends where it meets water, the region's included; one that does not within its length,
+ * comes to a dead end, dries out after 12 desert tiles, or would enter the region onto land ends
+ * in a pond, its last tile. Streams read the ground as it is before any stream, so they never
+ * depend on one another: a tile two of them cross takes the fuller (a river before a pond, then the
+ * lower walk in a fixed order), and every tile of either is water, so neither ends on land. Their
+ * water is at level 0. A stream is walked only when it can come within `late`, and generates the
+ * field's blocks along its course as it goes.
+ */
+function riverWater(
+  f: Field,
+  ground: Uint8Array,
+  plan: RiverPlan,
+  seed: number,
+  late: Span,
+): FieldWater {
+  const { w, h, ox, oy, rs, elev, biome } = f;
+  const kind = new Uint8Array(w * h);
+  const surface = new Uint8Array(w * h);
+  const flow = new Uint16Array(w * h);
+  const dir = new Uint8Array(w * h);
+  // the region in field tiles
+  const reg: Span = {
+    x0: plan.x0 - ox,
+    y0: plan.y0 - oy,
+    x1: plan.x0 - ox + plan.size,
+    y1: plan.y0 - oy + plan.size,
+  };
+  const inReg = (x: number, y: number) => x >= reg.x0 && y >= reg.y0 && x < reg.x1 && y < reg.y1;
+  const planAt = (x: number, y: number) => (y - reg.y0) * plan.size + x - reg.x0;
+  for (let y = Math.max(late.y0, reg.y0); y < Math.min(late.y1, reg.y1); y++)
+    for (let x = Math.max(late.x0, reg.x0); x < Math.min(late.x1, reg.x1); x++) {
+      const i = y * w + x;
+      const j = planAt(x, y);
+      kind[i] = plan.kind[j];
+      surface[i] = plan.surface[j];
+      flow[i] = plan.flow[j];
+      dir[i] = plan.dir[j];
+    }
+  // the ground's water after the lone-tile cleanup, worked out where `ground` does not reach
+  const wet = (x: number, y: number) => {
+    if (x >= late.x0 && y >= late.y0 && x < late.x1 && y < late.y1)
+      return ground[y * w + x] === Terrain.Water;
+    f.need(x - 1, y - 1, GROUND);
+    f.need(x + 1, y - 1, GROUND);
+    f.need(x - 1, y + 1, GROUND);
+    f.need(x + 1, y + 1, GROUND);
+    const g = f.ground;
+    const i = y * w + x;
+    let same = 0;
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && g[i + dy * w + dx] === g[i]) same++;
+    return (same <= 1 ? g[i + w] : g[i]) === Terrain.Water;
+  };
+  const planWet = (x: number, y: number) => {
+    const k = plan.kind[planAt(x, y)];
+    return k === WaterKind.River || k === WaterKind.Lake || k === WaterKind.Sea;
+  };
+  /** Tiles from (x, y) to `late`, 0 inside it. */
+  const away = (x: number, y: number) =>
+    Math.max(late.x0 - x, x - late.x1 + 1, late.y0 - y, y - late.y1 + 1, 0);
+  // the walk that laid each tile, for a tile two walks lay
+  const owner = new Int32Array(w * h).fill(-1);
+  const onCourse = new Int32Array(w * h).fill(-1);
+  let walks = 0;
+  const walk = (x: number, y: number, carried: number, minLen: number) => {
+    const id = walks++;
+    if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1 || away(x, y) >= RIVER_TILES) return;
+    const course: number[] = [];
+    let into = -1;
     let dry = 0;
-    let matters = false;
-    for (let step = 0; step < RIVER_TILES; step++) {
-      path.push(y * w + x);
-      onCourse[y * w + x] = walk;
-      // the rest of the course is at most RIVER_TILES - 1 - step tiles long
-      const d = away(x, y);
-      if (d === 0) matters = true;
-      else if (!matters && d >= RIVER_TILES - step && path.length >= settled) return true;
-      if (ground[y * w + x] === Terrain.Water && step > 3) break;
-      let bx = x;
-      let by = y;
+    for (;;) {
+      if (inReg(x, y)) {
+        if (planWet(x, y)) into = y * w + x;
+        break;
+      }
+      if (wet(x, y)) {
+        into = y * w + x;
+        break;
+      }
+      const i = y * w + x;
+      course.push(i);
+      onCourse[i] = id;
+      if (course.length === RIVER_TILES) break;
+      if (biome[i] === Biome.Desert && ++dry > 12) break;
+      let bx = -1;
+      let by = -1;
       let be = Infinity;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          if (!dx && !dy) continue;
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
-          const ni = ny * w + nx;
-          if (onCourse[ni] === walk) continue;
-          // a little position-fixed noise so rivers meander the same way every time
-          const ev = elev[ni] + (hash2(nx + originX, ny + originY, seed + 80) - 0.5) * 0.02;
-          if (ev < be) {
-            be = ev;
-            bx = nx;
-            by = ny;
-          }
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DIR_DX[d];
+        const ny = y + DIR_DY[d];
+        if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
+        if (onCourse[ny * w + nx] === id) continue;
+        f.need(nx, ny, ELEV);
+        // a little position-fixed noise so streams wander the same way every time
+        const ev = elev[ny * w + nx] + (hash2(nx + ox, ny + oy, seed + 80) - 0.5) * 0.02;
+        if (ev < be) {
+          be = ev;
+          bx = nx;
+          by = ny;
         }
-      if (bx === x && by === y) break;
+      }
+      if (bx < 0) break;
       x = bx;
       y = by;
-      f.need(x, y, GROUND);
-      if (biome[y * w + x] === Biome.Desert && ++dry > 12) break;
-      if (Math.hypot(x - scx, y - scy) < 12) break;
     }
-    if (path.length < minLen) return false;
-    if (matters)
-      path.forEach((i, k) => {
-        const px = i % w;
-        const py = Math.floor(i / w);
-        carved[i] = 1;
-        if (k > path.length / 2) carved[py * w + Math.min(w - 1, px + 1)] = 1;
-      });
-    return true;
+    if (course.length === 0 || course.length < minLen) return;
+    const pond = into < 0;
+    course.forEach((i, k) => {
+      const last = k === course.length - 1;
+      const k2 = pond && last ? WaterKind.Lake : WaterKind.River;
+      const fl = Math.min(FLOW_CAP, carried + k + 1);
+      const o = owner[i];
+      // a river before a pond, then the fuller, then the walk laid first
+      if (o >= 0) {
+        if (kind[i] === WaterKind.River && k2 === WaterKind.Lake) return;
+        if (kind[i] === k2 && flow[i] >= fl) return;
+      }
+      const next = last ? into : course[k + 1];
+      kind[i] = k2;
+      flow[i] = k2 === WaterKind.River ? fl : 0;
+      dir[i] = k2 === WaterKind.River ? sideOf(next - i, w) + 1 : 0;
+      owner[i] = id;
+    });
   };
-  let nearby = 0;
+  // the region's rivers first, in the order of their world tiles
+  for (const e of plan.exits)
+    walk(e.x - ox + DIR_DX[e.dir - 1], e.y - oy + DIR_DY[e.dir - 1], e.flow, 0);
   // one candidate source per world chunk, fixed by the chunk's world coordinates, so the same
-  // rivers reappear wherever the map's edges happen to be
-  const cx0 = Math.floor(originX / rs);
-  const cy0 = Math.floor(originY / rs);
-  const cx1 = Math.floor((originX + w - 1) / rs);
-  const cy1 = Math.floor((originY + h - 1) / rs);
+  // streams reappear wherever the map's edges happen to be
+  const cx0 = Math.floor(ox / rs);
+  const cy0 = Math.floor(oy / rs);
+  const cx1 = Math.floor((ox + w - 1) / rs);
+  const cy1 = Math.floor((oy + h - 1) / rs);
   for (let cy = cy0; cy <= cy1; cy++)
     for (let cx = cx0; cx <= cx1; cx++) {
       if (hash2(cx, cy, seed + 77) > 0.75) continue;
-      const x0 = cx * rs + 4 + Math.floor(hash2(cx, cy, seed + 78) * (rs - 8)) - originX;
-      const y0 = cy * rs + 4 + Math.floor(hash2(cx, cy, seed + 79) * (rs - 8)) - originY;
-      if (x0 < 0 || y0 < 0 || x0 >= w || y0 >= h) continue;
-      f.need(x0, y0, ELEV);
-      if (elev[y0 * w + x0] < waterLevel + 0.12) continue;
-      if (attempt(x0, y0, 12, 20) && inNear(x0, y0)) nearby++;
+      const x = cx * rs + 4 + Math.floor(hash2(cx, cy, seed + 78) * (rs - 8)) - ox;
+      const y = cy * rs + 4 + Math.floor(hash2(cx, cy, seed + 79) * (rs - 8)) - oy;
+      if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1 || inReg(x, y)) continue;
+      if (away(x, y) >= RIVER_TILES) continue;
+      f.need(x, y, GROUND);
+      const i = y * w + x;
+      if (elev[i] < f.params.waterLevel + 0.12) continue;
+      if (biome[i] === Biome.Ocean || biome[i] === Biome.Desert) continue;
+      walk(x, y, 0, 12);
     }
-  // no river near the start: start one from the highest ground there, away from the start
-  if (nearby === 0) {
-    f.needSpan(near, ELEV);
-    const cands: { i: number; e: number }[] = [];
-    for (let y = near.y0 + 4; y < near.y1 - 4; y += 3)
-      for (let x = near.x0 + 4; x < near.x1 - 4; x += 3) {
-        const i = y * w + x;
-        if (Math.hypot(x - scx, y - scy) < 20) continue;
-        cands.push({ i, e: elev[i] });
-      }
-    cands.sort((a, b) => b.e - a.e);
-    for (const c of cands.slice(0, 40)) if (attempt(c.i % w, Math.floor(c.i / w), 8, 16)) break;
-  }
-  return carved;
+  return { kind, surface, flow, dir };
 }
+
+/** The Dir of the side a tile `delta` away (along a row of `w`) lies on. */
+const sideOf = (delta: number, w: number) =>
+  delta === -w ? Dir.N : delta === 1 ? Dir.E : delta === w ? Dir.S : Dir.W;
 
 /**
  * Large stone fields rise in the middle: rock tiles two deep inside a field become mountains, on
@@ -1095,6 +1487,126 @@ function raiseMountains(map: GameMap, s: Span) {
 }
 
 /**
+ * The sea water of the tiles of `s`, as 1s on the map's plane: Water in the Ocean climate that the
+ * river pass did not make river or lake (`pass`: a river or lake on an island). The Ocean climate
+ * is the generator's own sea (a broad noise of its own, Field.genRaw), and the rule reads the tile
+ * alone, so its reach is 0: water outside the Ocean climate is a lake even where it runs into the
+ * sea.
+ */
+function seaWater(map: GameMap, pass: Uint8Array, s: Span): Uint8Array {
+  const { w, h, terrain } = map;
+  const climate = map.climate ?? map.biome;
+  const sea = new Uint8Array(w * h);
+  for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
+    for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++)
+      if (terrain[i] === Terrain.Water && !pass[i] && climate[i] === Biome.Ocean) sea[i] = 1;
+  return sea;
+}
+
+/**
+ * The sea shore: every Grass, Forest or Sand tile of `s` with sea water (seaWater) on one of its 4
+ * sides becomes Sand, which biomeRules makes Beach. Hill, Rock and Mountain on the coast stay as
+ * they are (a cliff coast), and lakes and rivers get no shore. Reads the tiles 1 around `s`.
+ */
+function seaShore(map: GameMap, sea: Uint8Array, s: Span) {
+  const { w, h, terrain } = map;
+  for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
+    for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++) {
+      const t = terrain[i];
+      if (t !== Terrain.Grass && t !== Terrain.Forest && t !== Terrain.Sand) continue;
+      if (
+        (x > 0 && sea[i - 1]) ||
+        (x < w - 1 && sea[i + 1]) ||
+        (y > 0 && sea[i - w]) ||
+        (y < h - 1 && sea[i + w])
+      )
+        terrain[i] = Terrain.Sand;
+    }
+}
+
+/**
+ * The biomes of the tiles of `s`: the map's climate, with the tiles whose landform has a biome of
+ * its own relabelled to it.
+ *
+ * - River: Water the river pass made of land (`river`).
+ * - Lake: any other Water but the sea (`sea`, seaWater), which keeps the Ocean climate.
+ * - Beach: Sand within BEACH_REACH tiles of sea water, along either axis.
+ * - Mountain: Mountain terrain, and Rock that reaches it in MOUNTAIN_REACH steps or fewer across
+ *   tile sides over Rock and Mountain alone.
+ *
+ * Every other tile keeps its climate. Returns a new plane, the climate outside `s`. Reads the
+ * terrain up to MOUNTAIN_REACH tiles around `s` and the sea BEACH_REACH tiles around it.
+ */
+function biomeRules(map: GameMap, river: Uint8Array, sea: Uint8Array, s: Span): Uint8Array {
+  const { w, h, terrain } = map;
+  const biome = (map.climate ?? map.biome).slice();
+  const steps = stepsToMountain(map, grow(s, MOUNTAIN_REACH));
+  const r = BEACH_REACH;
+  for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
+    for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++) {
+      const t = terrain[i];
+      if (t === Terrain.Water) {
+        if (river[i]) biome[i] = Biome.River;
+        else if (!sea[i]) biome[i] = Biome.Lake;
+      } else if (t === Terrain.Mountain || t === Terrain.Rock) {
+        if (steps[i] <= MOUNTAIN_REACH) biome[i] = Biome.Mountain;
+      } else if (t === Terrain.Sand) {
+        let shore = false;
+        for (let ny = Math.max(0, y - r); ny <= Math.min(h - 1, y + r) && !shore; ny++)
+          for (let nx = Math.max(0, x - r); nx <= Math.min(w - 1, x + r); nx++)
+            if (sea[ny * w + nx]) {
+              shore = true;
+              break;
+            }
+        if (shore) biome[i] = Biome.Beach;
+      }
+    }
+  return biome;
+}
+
+/**
+ * For each tile of `s`, the fewest steps across tile sides, over Rock alone, to a Mountain tile of
+ * `s`, as a plane of the map; 255 where there are more than MOUNTAIN_REACH or none. Exact on the
+ * tiles MOUNTAIN_REACH or more inside `s`, as a path that long never leaves it.
+ */
+function stepsToMountain(map: GameMap, s: Span): Uint8Array {
+  const { w, h, terrain } = map;
+  const x0 = Math.max(0, s.x0);
+  const y0 = Math.max(0, s.y0);
+  const x1 = Math.min(w, s.x1);
+  const y1 = Math.min(h, s.y1);
+  const FAR = 255;
+  const steps = new Uint8Array(w * h).fill(FAR);
+  const queue = new Int32Array(Math.max(0, (x1 - x0) * (y1 - y0)));
+  let tail = 0;
+  for (let y = y0; y < y1; y++)
+    for (let x = x0, i = y * w + x; x < x1; x++, i++)
+      if (terrain[i] === Terrain.Mountain) {
+        steps[i] = 0;
+        queue[tail++] = i;
+      }
+  // breadth first, so each tile is reached by its fewest steps, and none beyond the reach
+  for (let head = 0; head < tail; head++) {
+    const i = queue[head];
+    const d = steps[i] + 1;
+    if (d > MOUNTAIN_REACH) break;
+    const x = i % w;
+    const y = (i - x) / w;
+    const go = (n: number) => {
+      if (steps[n] === FAR && terrain[n] === Terrain.Rock) {
+        steps[n] = d;
+        queue[tail++] = n;
+      }
+    };
+    if (x > x0) go(i - 1);
+    if (x < x1 - 1) go(i + 1);
+    if (y > y0) go(i - w);
+    if (y < y1 - 1) go(i + w);
+  }
+  return steps;
+}
+
+/**
  * The `k`th prop on world tile (`wx`, `wy`); `a` is the tile's hash2(wx * 3 + k, wy, seed + 7),
  * which also places the prop sideways.
  */
@@ -1116,7 +1628,8 @@ function prop(
 }
 
 /**
- * (Re)generate decorative props from the terrain. With a rectangle only those tiles are redone,
+ * (Re)generate decorative props from the terrain and the climate (climateAt: palms on a beach in
+ * the Ocean climate, cacti on one in the desert). With a rectangle only those tiles are redone,
  * which is what the editor needs after painting. Deterministic per tile and seed.
  */
 export function decorateProps(
@@ -1124,7 +1637,7 @@ export function decorateProps(
   seed: number,
   rect?: { x0: number; y0: number; x1: number; y1: number },
 ) {
-  const { w, h, terrain, biome } = map;
+  const { w, h, terrain } = map;
   const x0 = rect ? Math.max(0, rect.x0) : 0;
   const y0 = rect ? Math.max(0, rect.y0) : 0;
   const x1 = rect ? Math.min(w - 1, rect.x1) : w - 1;
@@ -1139,7 +1652,7 @@ export function decorateProps(
       if (t !== Terrain.Forest && t !== Terrain.Grass && t !== Terrain.Sand) continue;
       const wx = x + map.originX;
       const wy = y + map.originY;
-      const b = biome[i] as Biome;
+      const b = climateAtIndex(map, i);
       if (t === Terrain.Forest) {
         const n = 1 + Math.floor(hash2(wx, wy, seed + 6) * 2.5);
         const list: PropInstance[] = [];

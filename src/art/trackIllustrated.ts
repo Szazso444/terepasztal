@@ -18,6 +18,7 @@ import {
   type TrackClass,
   type TrackItem,
 } from '../world/track';
+import { PAL, css, mix, shade, type RGB } from './palette';
 
 const R = 4,
   W = 72,
@@ -88,6 +89,41 @@ const STYLE: Record<
   },
 };
 
+const perClass = <T>(pick: (style: (typeof STYLE)[TrackClass]) => T) => ({
+  regular: pick(STYLE.regular),
+  high_speed: pick(STYLE.high_speed),
+  narrow: pick(STYLE.narrow),
+});
+/** Each rail's offset from the centre line, per class, in tiles: half the gauge. */
+export const RAIL_OFFSET: Readonly<Record<TrackClass, number>> = perClass((s) => s.rail);
+/** How far the ballast bed reaches from the centre line, per class, in tiles. */
+export const BED_SHOULDER: Readonly<Record<TrackClass, number>> = perClass((s) => s.shoulder);
+
+/** The classes a road crosses on the level; never high speed (Q36 a). */
+export const LEVEL_CROSSING_CLASSES = [
+  'regular',
+  'narrow',
+] as const satisfies readonly TrackClass[];
+export type LevelCrossingClass = (typeof LEVEL_CROSSING_CLASSES)[number];
+/** How far a level crossing's deck reaches past each rail, in tiles (item 18). */
+export const LEVEL_CROSSING_MARGIN = 0.1;
+/**
+ * Half a level crossing deck's size across the track, in tiles from the centre line: 0.1 tile
+ * outside each rail (0.26 regular, 0.18 narrow), inside the class's ballast bed.
+ */
+export const LEVEL_CROSSING_ACROSS: Readonly<Record<LevelCrossingClass, number>> = {
+  regular: RAIL_OFFSET.regular + LEVEL_CROSSING_MARGIN,
+  narrow: RAIL_OFFSET.narrow + LEVEL_CROSSING_MARGIN,
+};
+/** Half a level crossing deck's size along the track, in tiles: half the road's 0.32 (#329). */
+export const LEVEL_CROSSING_ALONG = 0.16;
+/**
+ * The frame of the deck a road lays over `straight_<cls>_<rotation>`, anchored as that frame.
+ * (`track/crossing_*` already names the track diamonds.)
+ */
+export const levelCrossingFrame = (cls: LevelCrossingClass, rotation: number) =>
+  `track/level_crossing_${cls}_${rotation}`;
+
 /** Length of a polyline, summed segment by segment in order. */
 const pathLength = (points: Vec2[]) => {
   let sum = 0;
@@ -138,8 +174,21 @@ export function railSleepers(path: RailPath, scale = 1): number[] {
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
 const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.y * d });
 
-/** `scale` shrinks the rails, sleepers and bed with the path: an icon of a piece drawn small. */
-function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
+/**
+ * The three strokes of a rail, bottom to top: the dark foot dropped a little, the web, the lit
+ * head raised a little. `width` indexes the class's `widths`, `dy` is in world px.
+ */
+const RAIL_LINES: { color: string; width: 0 | 1 | 2; dy: number }[] = [
+  { color: '#4c4940', width: 0, dy: 0.35 },
+  { color: '#827d70', width: 1, dy: 0 },
+  { color: '#d1c7ac', width: 2, dy: -0.3 },
+];
+
+/**
+ * A canvas for one frame at R texels per world pixel, clipped to the tile's diamond, and helpers
+ * that fill a polygon and stroke a line given in tile coordinates (the tile centre is the origin).
+ */
+function tileCanvas() {
   const canvas = document.createElement('canvas');
   canvas.width = W * R;
   canvas.height = H * R;
@@ -175,6 +224,12 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
   c.lineTo(OX - 32.6, OY);
   c.closePath();
   c.clip();
+  return { c, polygon, line, image: () => c.getImageData(0, 0, W * R, H * R) };
+}
+
+/** `scale` shrinks the rails, sleepers and bed with the path: an icon of a piece drawn small. */
+function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
+  const { c, polygon, line, image } = tileCanvas();
   const rows = paths.map(({ points, cls, run }) => ({
     points,
     cls,
@@ -280,12 +335,10 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
     const widths = st.widths.map((w) => w * Math.max(scale, 0.75));
     for (const side of [-st.rail * scale, st.rail * scale]) {
       const rail = points.map((p, i) => offset(p, normals[i], side));
-      line(rail, '#4c4940', widths[0], 0.35);
-      line(rail, '#827d70', widths[1]);
-      line(rail, '#d1c7ac', widths[2], -0.3);
+      for (const { color, width, dy } of RAIL_LINES) line(rail, color, widths[width], dy);
     }
   }
-  return c.getImageData(0, 0, W * R, H * R);
+  return image();
 }
 
 /**
@@ -313,6 +366,205 @@ export function tilePaths(it: TrackItem, rotation: number): RailPath[] {
     ];
   }
   return paths;
+}
+
+/** Dressed limestone setts, a little greyer than the masonry: base, lit, shadow. */
+const SETT: RGB[] = PAL.stone.map((s) => shade(mix(s, PAL.rock[0], 0.4), 0.96));
+const SETT_JOINT = shade(SETT[2], 0.66);
+/** Packed earth, browner and darker than a dirt road: base, lit, shadow. */
+const EARTH: RGB[] = [mix(PAL.furrow, PAL.hill[0], 0.5), PAL.hill[0], shade(PAL.furrow, 0.85)];
+/** Weathered check planks, paler than the earth they lie in: base, lit, shadow. */
+const PLANK: RGB[] = [
+  mix(PAL.timber[1], PAL.stone[0], 0.4),
+  mix(PAL.timber[1], PAL.stone[1], 0.55),
+  shade(PAL.timber[2], 0.85),
+];
+/** The flangeway inside each rail, where the wheel flanges run: a narrow dark groove. */
+const FLANGEWAY = mix(PAL.outline, PAL.sleeperDark, 0.45);
+/** How much of the flangeway shows past the rail's own strokes, in tiles. */
+const FLANGE = 0.013;
+
+/** The screen direction, in world px, of a step `d` in tile coordinates. */
+const screen = (d: Vec2) => ({ x: (d.x - d.y) * 32, y: (d.x + d.y) * 16 });
+
+/**
+ * How squarely a face whose outward normal is `d` (tile coordinates) turns to the upper-left
+ * light, from 1 (straight at it) to -1 (straight away).
+ */
+function towardLight(d: Vec2) {
+  const s = screen(d);
+  return -(s.x + s.y) / (Math.hypot(s.x, s.y) * Math.SQRT2);
+}
+
+/**
+ * How far a straight rail of class `cls` running along `along` is painted from its centre line
+ * towards `side` (a unit tile vector across the track), in tiles: the farthest any of its
+ * strokes, `RAIL_LINES`, reaches once each is dropped or raised by its `dy`. The deck keeps clear
+ * of it.
+ */
+export function railReach(cls: TrackClass, along: Vec2, side: Vec2) {
+  const t = screen(along),
+    d = screen(side),
+    k = (d.x * t.x + d.y * t.y) / (t.x * t.x + t.y * t.y);
+  // the part of `side` square to the rail on screen: world px per tile, and how much of it is down
+  const p = { x: d.x - k * t.x, y: d.y - k * t.y },
+    perTile = Math.hypot(p.x, p.y),
+    down = p.y / perTile;
+  const px = Math.max(
+    ...RAIL_LINES.map(({ width, dy }) => STYLE[cls].widths[width] / 2 + dy * down),
+  );
+  return px / perTile;
+}
+
+/**
+ * The deck a road lays over straight track of class `cls` at `rotation`, drawn on the straight's
+ * own canvas so it lies exactly over that frame: `LEVEL_CROSSING_ACROSS` either side of the centre
+ * line and `LEVEL_CROSSING_ALONG` either way along it. Regular track gets dressed setts, narrow
+ * packed earth with timber check planks along both sides of each rail. Neither is laid within
+ * `railReach` of a rail, and last the rails' own strokes are cut out of the deck, so the track's
+ * railheads show through it.
+ */
+function drawLevelCrossing(cls: LevelCrossingClass, rotation: number, seed: number) {
+  const { c, polygon, line, image } = tileCanvas();
+  const [{ points }] = tilePaths({ kind: 'straight', cls }, rotation);
+  const a = points[0],
+    b = points[points.length - 1],
+    length = Math.hypot(b.x - a.x, b.y - a.y);
+  // along the track, and across it the way `draw` lays its rails
+  const t = { x: (b.x - a.x) / length, y: (b.y - a.y) / length },
+    n = { x: -t.y, y: t.x },
+    mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  const at = (u: number, v: number) => offset(offset(mid, n, u), t, v);
+  /** A block `u0..u1` across the track and `v0..v1` along it. */
+  const quad = (u0: number, u1: number, v0: number, v1: number, color: RGB, alpha = 1) => {
+    c.globalAlpha = alpha;
+    polygon([at(u0, v0), at(u1, v0), at(u1, v1), at(u0, v1)], css(color));
+    c.globalAlpha = 1;
+  };
+  /** A block's rims `w` deep: lit on the face to the light, dark on the face away and below. */
+  const rims = (
+    u0: number,
+    u1: number,
+    v0: number,
+    v1: number,
+    w: number,
+    lit: RGB,
+    dark: RGB,
+    alpha = 1,
+  ) => {
+    const faces: [Vec2, number, number, number, number][] = [
+      [n, u1 - w, u1, v0, v1],
+      [{ x: -n.x, y: -n.y }, u0, u0 + w, v0, v1],
+      [t, u0, u1, v1 - w, v1],
+      [{ x: -t.x, y: -t.y }, u0, u1, v0, v0 + w],
+    ];
+    for (const [d, ...band] of faces) {
+      const tone = towardLight(d);
+      if (tone > 0.5) quad(...band, lit, alpha);
+      else if (tone < -0.5) quad(...band, dark, alpha);
+      // the lower face turned from the light: a quieter rim
+      else if (screen(d).y > 0) quad(...band, dark, alpha * 0.5);
+    }
+  };
+  const across = LEVEL_CROSSING_ACROSS[cls],
+    along = LEVEL_CROSSING_ALONG,
+    rail = RAIL_OFFSET[cls];
+  /** The reach of the rail on side `s` (-1 or 1) towards the centre line, or away from it. */
+  const reach = (s: number, inward: boolean) => {
+    const d = inward ? -s : s;
+    return railReach(cls, t, { x: n.x * d, y: n.y * d });
+  };
+  c.beginPath();
+  [at(-across, -along), at(across, -along), at(across, along), at(-across, along)].forEach(
+    (p, i) => {
+      const q = project(p);
+      if (i) c.lineTo(q.x, q.y);
+      else c.moveTo(q.x, q.y);
+    },
+  );
+  c.closePath();
+  c.clip();
+  if (cls === 'regular') {
+    const joint = 0.006,
+      pitch = 0.1;
+    quad(-across, across, -along, along, SETT_JOINT);
+    // courses of setts run beside the rails, half a sett out of step with their neighbours: three
+    // between the flangeways, one of edge setts outside each rail
+    const zones: [number, number, number][] = [
+      [-across, -rail - reach(-1, false), 1],
+      [-rail + reach(-1, true) + FLANGE, rail - reach(1, true) - FLANGE, 3],
+      [rail + reach(1, false), across, 1],
+    ];
+    let course = 0;
+    for (const [from, to, count] of zones)
+      for (let i = 0; i < count; i++, course++) {
+        const u0 = from + ((to - from) * i) / count + joint,
+          u1 = from + ((to - from) * (i + 1)) / count - joint;
+        for (let k = -1; k * pitch < 2 * along; k++) {
+          const start = -along + (k + (course % 2) / 2) * pitch,
+            v0 = Math.max(-along, start) + joint,
+            v1 = Math.min(along, start + pitch) - joint;
+          if (v1 - v0 < 0.015) continue;
+          const pick = hash2(course, k, seed),
+            base = pick > 0.7 ? SETT[1] : pick < 0.25 ? SETT[2] : SETT[0];
+          quad(u0, u1, v0, v1, base);
+          rims(u0, u1, v0, v1, 0.011, shade(base, 1.07), shade(base, 0.8));
+        }
+      }
+    for (const s of [-1, 1])
+      quad(s * (rail - reach(s, true) - FLANGE), s * rail, -along, along, FLANGEWAY);
+  } else {
+    const plank = 0.026,
+      joint = 0.007;
+    quad(-across, across, -along, along, EARTH[0]);
+    // a few broad worn and darker patches, and two cart ruts along the road
+    for (let i = 0; i < 5; i++) {
+      const p = project(
+        at((hash2(i, 1, seed) - 0.5) * 2 * across, (hash2(i, 2, seed) - 0.5) * 2 * along),
+      );
+      const rx = 1.6 + hash2(i, 3, seed) * 1.8;
+      c.globalAlpha = 0.4;
+      c.fillStyle = css(i % 2 ? EARTH[2] : EARTH[1]);
+      c.beginPath();
+      c.ellipse(p.x, p.y, rx, rx / 2, 0, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.globalAlpha = 1;
+    for (const v of [-0.075, 0.075]) quad(-across, across, v - 0.016, v + 0.016, EARTH[2], 0.35);
+    // a check plank either side of each rail, each laid as two boards butted at a seeded joint
+    for (const s of [-1, 1]) {
+      const inner = rail - reach(s, true) - FLANGE,
+        outer = rail + reach(s, false) + joint;
+      quad(s * inner, s * rail, -along, along, FLANGEWAY);
+      [
+        [inner - plank, inner],
+        [outer, outer + plank],
+      ].forEach(([from, to], i) => {
+        const u0 = Math.min(s * from, s * to),
+          u1 = Math.max(s * from, s * to),
+          split = (hash2(s, i, seed) - 0.5) * 0.14;
+        for (const [v0, v1] of [
+          [-along + joint, split - joint / 2],
+          [split + joint / 2, along - joint],
+        ]) {
+          const grain = hash2(s * 3 + i, v0 > split ? 1 : 0, seed),
+            base = mix(PLANK[0], PLANK[2], grain * 0.3);
+          quad(u0, u1, v0, v1, base);
+          rims(u0, u1, v0, v1, 0.008, PLANK[1], PLANK[2]);
+        }
+      });
+    }
+  }
+  // the deck's own edge: lit to the light, darker on its lower rims
+  rims(-across, across, -along, along, 0.012, PAL.white, PAL.outline, 0.3);
+  // last, the rails' own strokes out of the deck, so the railheads under it show
+  c.globalCompositeOperation = 'destination-out';
+  for (const side of [-rail, rail]) {
+    const strokes = points.map((p) => offset(p, n, side));
+    for (const { width, dy } of RAIL_LINES) line(strokes, '#000', STYLE[cls].widths[width], dy);
+  }
+  c.globalCompositeOperation = 'source-over';
+  return image();
 }
 
 /** Source-inspired timber/steel materials on the real track polylines, in every orientation. */
@@ -361,5 +613,15 @@ export function generateIllustratedTrackAtlas(): AtlasImage {
         ab.add(key, draw(paths, rotation * 13, it.kind === 'bridge'), OX * R, OY * R);
       }
     }
+  // the deck a road lays over straight track, anchored as the straight it lies on (#309)
+  LEVEL_CROSSING_CLASSES.forEach((cls, i) => {
+    for (let rotation = 0; rotation < rotationCount('straight'); rotation++)
+      ab.add(
+        levelCrossingFrame(cls, rotation),
+        drawLevelCrossing(cls, rotation, 900 + i * 50 + rotation * 13),
+        OX * R,
+        OY * R,
+      );
+  });
   return { ...ab.build(2048), resolution: R };
 }

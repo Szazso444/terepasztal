@@ -1,16 +1,24 @@
 import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
+import type { BootProgressHook } from './engine/boot';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
-import { applyTileRepairs, repairBuiltTiles } from './engine/loadRepair';
+import { applyTileRepairs, repairBuiltRoads, repairBuiltTiles } from './engine/loadRepair';
 import {
   BrokenNumberWarning,
   StorageRefusalWarning,
   saveOutcome,
   type SaveOutcome,
 } from './engine/saveRefusal';
+import {
+  afterPurchase,
+  groundAfterLoad,
+  loadStoresGround,
+  purchaseGrows,
+  type Said,
+} from './engine/saveMessages';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { mapFromLevel, type LevelData } from './world/level';
@@ -382,6 +390,12 @@ export class Game implements UiHost {
   private namePrompt = new NamePrompt();
   private paused = false;
   private menuPausedSpeed = 0;
+  /**
+   * Set by the boot while the title screen it opened is up (`main.ts`): leaving that title for the
+   * game under it (its Continue) runs this once in place of starting the music, as the boot
+   * shows its loading screen over the game first and starts the music as that finishes.
+   */
+  onTitleContinue: (() => void) | null = null;
   /** The panels, screens, menus and hotkeys of the game (src/ui/panels.ts), built in `init`. */
   ui!: PlayUi;
   /** What the panels change trains, stations, signals, trade and pulls through; one per game. */
@@ -578,6 +592,11 @@ export class Game implements UiHost {
   }
   /** The clock runs again at the speed it had (in a game; the editor stays stopped). */
   resumeGame() {
+    const begin = this.onTitleContinue;
+    this.onTitleContinue = null;
+    // the title screen holds the music back; closing a menu lets it start, or the boot does
+    if (begin) begin();
+    else audio.startMusic();
     if (!this.paused) return;
     this.paused = false;
     if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed);
@@ -653,7 +672,7 @@ export class Game implements UiHost {
       this.toasts.push(STR.saves.refused.storage, 'warn');
       return true;
     }
-    this.reloadIntoStoredSave(j.seed);
+    this.reloadIntoStoredSave();
     return true;
   }
   deleteSlot(name: string) {
@@ -663,7 +682,7 @@ export class Game implements UiHost {
   loadSave() {
     const j = readSave();
     if (!j) return false;
-    this.reloadIntoStoredSave(j.seed);
+    this.reloadIntoStoredSave();
     return true;
   }
   /** The game as save text. */
@@ -677,21 +696,20 @@ export class Game implements UiHost {
   importSave(json: string): { ok: true } | { ok: false; error: SaveRefusal } {
     const read = importSaveText(json);
     if (!read.ok) return read;
-    this.reloadIntoStoredSave(read.save.seed);
+    this.reloadIntoStoredSave();
     return { ok: true };
   }
   /**
-   * The stored save was just replaced: reload into it. The running game must not save over it on
-   * its way out, neither in the unload handler nor in a frame of the minute autosave that runs
-   * while the page reloads.
+   * The stored save was just replaced: reload straight into it, as Continue does. The running game
+   * must not save over it on its way out, neither in the unload handler nor in a frame of the
+   * minute autosave that runs while the page reloads.
    */
-  private reloadIntoStoredSave(seed: number) {
+  private reloadIntoStoredSave() {
     this.keepStoredSave = true;
     this.loop.stop();
     // nothing of the game being left stays up, nor opens while the page reloads
     this.tooltip.stack.closeAll();
-    location.hash = `seed=${seed}`;
-    location.reload();
+    setIntentAndReload({ action: 'continue' });
   }
   /** Clear the stored game and play a level. */
   playLevel(id: string) {
@@ -834,7 +852,12 @@ export class Game implements UiHost {
     this.toasts.push(STR.editor.hint, 'info');
   }
 
-  async init() {
+  /**
+   * Build the game: the renderer, the pictures, the map and everything on it. `onProgress` hears
+   * how far each boot stage has got (`src/engine/boot.ts`) and is awaited at each stage's end, so
+   * a loading screen can paint its bar before the next stage holds the thread.
+   */
+  async init(onProgress?: BootProgressHook) {
     extensions.add(CullerPlugin);
     const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
     this.app = new Application();
@@ -854,8 +877,12 @@ export class Game implements UiHost {
       void import('@pixi/devtools').then((d) => d.initDevtools({ app: this.app }));
     canvas.tabIndex = 0;
     this.input = new Input(canvas);
-    await this.atlas.load(ATLAS_GROUPS);
+    await this.atlas.load(
+      ATLAS_GROUPS,
+      (settled, total) => void onProgress?.('pictures', settled / total),
+    );
     buildCompatTable();
+    await onProgress?.('pictures', 1);
 
     if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
     else {
@@ -863,6 +890,7 @@ export class Game implements UiHost {
       this.ground = groundOf(this.spec, generatorOf(this.supply));
       this.map = this.ground.map;
     }
+    await onProgress?.('map', 1);
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -1009,6 +1037,8 @@ export class Game implements UiHost {
         this.builder.buildingAt(x, y) ||
         this.builder.decorAt(x, y)
       );
+    this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
+    this.builder.onRoadChanged = (x, y) => this.world.roadChanged(x, y);
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
@@ -1120,6 +1150,7 @@ export class Game implements UiHost {
     window.addEventListener('beforeunload', () => {
       if (this.settings.autosave && this.mode === 'play') this.save(true);
     });
+    await onProgress?.('renderer', 1);
   }
 
   // ---------------------------------------------------------------- settings / save
@@ -1170,6 +1201,7 @@ export class Game implements UiHost {
         wires: this.catenary.toJSON(),
         houses: this.houses.toJSON(),
         people: this.people.toJSON(),
+        roads: this.builder.roads.toJSON(),
       },
       this.saveExtra,
     );
@@ -1183,17 +1215,33 @@ export class Game implements UiHost {
    * reason (a broken number, storage) until some save has gone through.
    */
   save(silent = false) {
-    if (this.keepStoredSave) return false;
-    if (!this.autosavePause.allows(silent ? 'implicit' : 'manual')) return false;
-    const snap = this.snapshot();
-    const out = this.storeSnapshot(snap, writeSave);
-    if (out.kind === 'stored') this.savedAt = snap.savedAt;
+    const out = this.writeGame(silent);
+    if (!out) return false;
     const broken = this.brokenNumberWarning.note(out.kind);
     const storage = this.storageRefusalWarning.note(out.kind);
     if (!silent) this.saveToast(out, STR.settings.saved);
     else if (broken) this.toasts.push(STR.settings.autosaveBroken, 'warn');
     else if (storage) this.toasts.push(STR.settings.autosaveFailed, 'warn');
     return out.kind === 'stored';
+  }
+  /**
+   * Write the game as Continue loads it, saying nothing and feeding no latch: what became of the
+   * write, or null when nothing is written now (a reload into a stored save; a write the player
+   * did not ask for after a loop error).
+   */
+  private writeGame(implicit: boolean): SaveOutcome | null {
+    if (this.keepStoredSave) return null;
+    if (!this.autosavePause.allows(implicit ? 'implicit' : 'manual')) return null;
+    const snap = this.snapshot();
+    const out = this.storeSnapshot(snap, writeSave);
+    if (out.kind === 'stored') this.savedAt = snap.savedAt;
+    return out;
+  }
+  /** Show what a decision about a write says (`src/engine/saveMessages.ts`). */
+  private say(said: Said) {
+    for (const t of said.toasts) this.toasts.push(t.text, t.kind);
+    for (const n of said.notices)
+      this.notices.push({ key: n.key, kind: 'warn', text: n.text, target: null }, n.ttl);
   }
 
   /**
@@ -1243,6 +1291,10 @@ export class Game implements UiHost {
         this.onSupplyChanged(x, y);
       }
     } else this.legacySupplyPending = true;
+    this.builder.roads.load(j.roads);
+    // a road on ground that can no longer hold one comes off, with no refund (`repairBuiltRoads`)
+    for (const r of repairBuiltRoads(this.map, j)) this.builder.roads.remove(r.x, r.y);
+    this.world.setRoads(this.builder.roads.list());
     resetStationIds(1);
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);
@@ -1293,14 +1345,16 @@ export class Game implements UiHost {
     this.restoringWorld = false;
     this.refreshBridges();
     audio.setAge(ageDef(this.economy.tier).id);
-    // ground generated as the save loaded is stored at once; stored ground unread is reported
-    if (this.ground?.unreadable.length) {
-      const text = STR.saves.groundUnreadable(this.ground.unreadable.length);
-      this.toasts.push(text, 'warn');
-      this.notices.push({ key: 'save:ground', kind: 'warn', text, target: null }, 180);
-    }
-    if (this.ground?.added.length && !this.save(true))
-      this.toasts.push(STR.saves.groundUnsaved, 'warn');
+    this.storeLoadedGround();
+  }
+  /**
+   * The end of a load: ground it generated is stored at once (`loadStoresGround`), and what became
+   * of the ground is said (`groundAfterLoad`). A refused write gets one warning, worded for the
+   * ground, and feeds no autosave latch.
+   */
+  private storeLoadedGround() {
+    const write = loadStoresGround(this.ground) ? (this.writeGame(true)?.kind ?? 'held') : null;
+    this.say(groundAfterLoad(this.ground, write));
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1792,30 +1846,29 @@ export class Game implements UiHost {
     this.economy.money -= price;
     this.regions.own(i);
     sfx('tier.up');
-    const edge =
-      this.spec.kind === 'generated' &&
-      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h);
-    // growing stores the game first, which a loop error forbids: the ring then waits for a save the
-    // player makes and the reload after it (`main.ts` grows such a save as it loads)
-    const held = edge && !this.autosavePause.allows('implicit');
-    if (edge && !held) {
-      // the grid needs another ring: persist, grow the world and come back into it
-      const snap = expandSave(this.snapshot(), 1);
-      if (writeSave(snap)) {
-        this.toasts.push(STR.overview.growing, 'info');
-        setIntentAndReload({ action: 'continue', keepSpeed: true });
-        return true;
-      }
-      this.toasts.push(STR.overview.growRefused, 'warn');
+    const facts = {
+      edge:
+        this.spec.kind === 'generated' &&
+        ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h),
+      implicitWrites: this.autosavePause.allows('implicit'),
+      autosaves: this.settings.autosave && this.mode === 'play',
+    };
+    // the grid needs another ring: persist, grow the world and come back into it. A loop error
+    // holds it until the player saves and reloads (`main.ts` grows such a save as it loads)
+    const grown = purchaseGrows(facts) ? writeSave(expandSave(this.snapshot(), 1)) : null;
+    const after = afterPurchase(facts, grown);
+    if (after.reload) {
+      this.say(after.said);
+      setIntentAndReload({ action: 'continue', keepSpeed: true });
+      return true;
     }
     this.world.rebuildFog();
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
-    this.toasts.push(STR.overview.bought, 'good');
-    if (held) this.toasts.push(STR.overview.growHeld, 'warn');
-    // an inner purchase is stored at once, as the autosave stores: every refusal of it applies
-    // (autosave off, a loop error, a reload into a stored save, storage); a ring was written above
-    if (!edge && this.settings.autosave && this.mode === 'play') this.save(true);
+    this.say(after.said);
+    // as the autosave stores: every refusal of it applies (autosave off, a loop error, a reload
+    // into a stored save, storage, a broken number) and warns as it does
+    if (after.store) this.save(true);
     return true;
   }
   private trackTilesForOverview() {
@@ -1844,6 +1897,7 @@ export class Game implements UiHost {
   private refreshCity() {
     this.world.setCity(
       cityTiles(this.map, this.houses.houses.values(), (x, y) => !!this.towns.townAt(x, y)),
+      this.builder.streetDoors(),
     );
   }
   // ---------------------------------------------------------------- sim
@@ -2237,6 +2291,7 @@ export class Game implements UiHost {
       fieldActive ? this.hoverTile : null,
       this.build,
       this.season ?? 'spring',
+      this.build.placingAt(fieldActive ? this.hoverTile : null),
     );
     // the hovered tile's outline takes the colour the harvest layer gives it (#335)
     this.cursor.tint = this.world.harvest.outline;

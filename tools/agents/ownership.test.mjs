@@ -68,13 +68,15 @@ describe('globToRegExp', () => {
 });
 
 describe('ownership', () => {
+  // slow because ownersOf compiles every owner pattern again for each tracked file, about 1500 of
+  // them: 0.36 s alone, so a limit of 30 s
   it('gives every tracked file exactly one owner', () => {
     const problems = tracked
       .map((p) => ({ p, owners: ownersOf(p, ownership) }))
       .filter((x) => x.owners.length !== 1)
       .map((x) => `${x.p}: ${x.owners.length ? x.owners.join(', ') : 'no owner'}`);
     expect(problems, 'add the path to one role in tools/agents/ownership.json').toEqual([]);
-  });
+  }, 30_000);
 
   it('names only known roles', () => {
     for (const role of [...Object.keys(ownership.owners), ...Object.keys(ownership.grants)]) {
@@ -196,6 +198,8 @@ describe('labels', () => {
 });
 
 describe('changedPaths', () => {
+  // slow when the machine is: it starts git six times in a repository it creates, 0.21 s alone and
+  // 2.65 s once in four runs on a loaded machine (#471), so a limit of 30 s
   it('reads names git would quote, so a non-ASCII path is judged by its real name', () => {
     const repo = mkdtempSync(join(tmpdir(), 'scope-'));
     const run = (...a) => execFileSync('git', a, { cwd: repo, encoding: 'utf8' });
@@ -210,7 +214,7 @@ describe('changedPaths', () => {
     const paths = changedPaths('base', 'HEAD', repo).sort();
     expect(paths).toEqual(['a "b".md', 'src/world/vasút.ts']);
     expect(ownersOf('src/world/vasút.ts', ownership)).toEqual(['world']);
-  });
+  }, 30_000);
 });
 
 describe('roleOfPullRequest', () => {

@@ -10,6 +10,7 @@ import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
+import { placeSpan } from './doors';
 
 export type { StationDef };
 export { MAX_LEVEL };
@@ -24,13 +25,13 @@ export function stationDef(id: string): StationDef {
   throw new Error(`unknown station ${id}`);
 }
 /**
- * Width (along x) and depth (along y) of a station turned to `rot`: the rotation's axis decides
- * it (`rotationAxis`), so `rot` and `rot + 2` give the same span.
+ * Width (along x) and depth (along y) of a station turned to `rot`: its span at rotation 0
+ * (`placeSpan`), swapped on the other axis (`rotationAxis`), so `rot` and `rot + 2` give the same
+ * span.
  */
 export function stationSpan(def: StationDef, rot: number): { w: number; h: number } {
-  if (def.long) return rot % 2 === 0 ? { w: 2, h: 1 } : { w: 1, h: 2 };
-  const n = def.size ?? 1;
-  return { w: n, h: n };
+  const { w, h } = placeSpan(def);
+  return rot % 2 === 0 ? { w, h } : { w: h, h: w };
 }
 /** Tiles a station of this kind covers with its corner at (x, y), turned to `rot`. */
 export function stationFootprint(defId: string, x: number, y: number, rot: number) {

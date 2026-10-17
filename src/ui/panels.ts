@@ -48,6 +48,9 @@ import type { Inventory } from '../gacha/inventory';
 import type { Screen, ScreenManager } from './modal';
 import type { Toasts } from './toast';
 import type { Tooltip } from './tooltip';
+import { renderTip } from './tooltipRender';
+import { YieldLabel } from './yieldLabel';
+import { seasonOf, type Season } from '../sim/weather';
 import type { NamePrompt } from './namePrompt';
 import type { BuildController } from './buildController';
 import type { KeyHost, KeyScreen } from './keymap';
@@ -309,6 +312,12 @@ export function confirmReplaceSave() {
 /** Build every panel, screen and menu of a game, wire them and put them in the UI root. */
 export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const toast = (m: string, k?: 'info' | 'warn' | 'good') => d.toasts.push(m, k);
+  /**
+   * The season production runs in, as `Game.applySeason` sets it on the stations: the calendar's
+   * with weather on, spring with it off. The placing tooltip and the station panel work their
+   * yield out for it.
+   */
+  const season = (): Season => (d.settings.weather ? seasonOf(d.clock.day) : 'spring');
 
   const hud = new Hud(d.clock, () => ageStatus(d.economy.tier, host.ageSnapshot()));
   const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas);
@@ -538,6 +547,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     (t) => host.renameTown(t),
     d.commands,
     toast,
+    {
+      season,
+      render: (doc) => renderTip(doc, d.atlas),
+      bindTerms: (scope) => d.tooltip.bindTerms(scope),
+    },
   );
   const townPanel = new TownPanel(d.towns, d.houses);
   townPanel.onGo = (t) => {
@@ -565,6 +579,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   d.build.onSelectDecor = (dec) =>
     dec ? decorPanel.open(dec) : decorPanel.decor && decorPanel.close();
   d.build.onStatus = (t) => toolbar.setStatus(t);
+  // a harvest station's tool: the placing tooltip is the stack's root, the label floats over the tile
+  const yieldLabel = new YieldLabel();
+  d.build.placing = {
+    stack: d.tooltip.stack,
+    content: (doc) => renderTip(doc, d.atlas),
+    label: (text, corner) => yieldLabel.show(text, corner),
+    season,
+  };
   d.build.barredTrains = () => withoutInCab(d.fleet.trains);
   d.build.onToolChanged = (t) => {
     toolbar.setActive(t);
@@ -772,6 +794,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       buildInfo.root,
     ),
     el('div', { class: 'vignette' }),
+    yieldLabel.root,
     hud.root,
     resourceBar.root,
     minimap.root,

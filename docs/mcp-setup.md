@@ -321,8 +321,10 @@ trimming cuts away, so you measure it once.
    npm run pack-atlas -- wagons --prefix rolling/
    ```
 
-   It trims each frame to its drawn pixels, shifts the anchor to match, shelf-packs the sheet and
-   writes `public/assets/<group>.png` + `.json`. The `--prefix` flag exists because frame keys are
+   It trims each frame to its drawn pixels, shifts the anchor to match, runs the atlas cap pass
+   (`tools/atlas-cap.mjs`: alpha under 16 dropped and 250 and over made solid, nothing left at or
+   above the cursor white or as strong as the selection amber), shelf-packs the sheet and writes
+   `public/assets/<group>.png` + `.json`. The `--prefix` flag exists because frame keys are
    global: the `wagons` group supplies keys named `rolling/wagon_*`. `--no-trim`, `--max`, `--pad`,
    `--src` and `--out` are there too; `--help` is the usage line you get from a bad invocation.
 

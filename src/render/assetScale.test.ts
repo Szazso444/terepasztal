@@ -4,9 +4,10 @@ import { structureFrame } from '../art/frames';
 import { generateStructuresAtlas } from '../art/structures';
 import {
   DOOR_FRACTION,
-  HUMAN_HEIGHT_PX,
-  HUMAN_HEIGHT_M,
-  DOOR_HEIGHT_M,
+  DOOR_PX,
+  DOOR_REFERENCE_PX,
+  EQUIPMENT_SCALE,
+  PERSON_PX,
   structureFamily,
   structureScale,
   hasScaleReference,
@@ -15,17 +16,187 @@ import {
   type FrameNames,
 } from './assetScale';
 
-it('keeps a common human-relative door height across packed building levels', () => {
+it('pins the two heights: a standard door is 13.2 px and a person 9 px', () => {
+  expect(DOOR_PX).toBe(13.2);
+  expect(PERSON_PX).toBe(9);
+});
+
+it('keeps a common door height across packed building levels', () => {
   let checked = 0;
   for (const [key, frame] of Object.entries(atlas.frames) as [string, { h: number }][]) {
     const family = structureFamily(key);
     if (!DOOR_FRACTION[family]) continue;
     const height = frame.h / atlas.resolution;
     const door = height * DOOR_FRACTION[family] * structureScale(key, height);
-    expect(door / HUMAN_HEIGHT_PX).toBeCloseTo(DOOR_HEIGHT_M / HUMAN_HEIGHT_M, 5);
+    expect(door, key).toBeCloseTo(DOOR_PX, 5);
     checked++;
   }
   expect(checked).toBeGreaterThan(20);
+});
+
+/**
+ * How each family was measured on develop before the person got its own height (#296, decision
+ * Q14 a: buildings stay as they are), as plain numbers. `before`, in the next block, reads the
+ * module's own tables, so editing a table moves it with the code; these cannot move. A family not
+ * named here is new, and its measure is Art's to give. Changing one named here changes every
+ * building of its family on screen: that is a question for the author, not a number to update. A
+ * family that has no frames left (the diesel refinery, once it is the Fuel Pump) may be taken out
+ * of the table and of this list together.
+ */
+const BASELINE = {
+  /** door height in the generated picture, px */
+  doors: {
+    station: 10.5,
+    town: 10,
+    townhouse: 18,
+    warehouse: 11,
+    farm: 12,
+    lumber: 12,
+    windmill: 13,
+    grinder: 12,
+  } as Record<string, number>,
+  /** door aperture / illustrated frame height */
+  fractions: {
+    station: 36 / 169,
+    town: 43 / 199,
+    townhouse: 68 / 251,
+    warehouse: 53 / 191,
+    farm: 47 / 262,
+    windmill: 38 / 240,
+  } as Record<string, number>,
+  /** declared scale of outdoor equipment with no door */
+  declared: {
+    water_tower: 0.7,
+    fuel_stop: 0.65,
+    kiln: 0.7,
+    refinery: 1.1,
+    power_plant: 1.1,
+    quarry: 1,
+    pump: 1,
+    substation: 1,
+    hydro_plant: 1,
+    colliery: 1,
+    ironworks: 1,
+    oil_derrick: 1,
+    diesel_refinery: 1,
+    wire_mill: 1,
+  } as Record<string, number>,
+};
+/** The scale a frame had, from the numbers above and the 2.1 m door beside the 11 px person. */
+const baselineScale = (frame: string, illustratedHeight?: number) => {
+  const family = structureFamily(frame);
+  const fraction = BASELINE.fractions[family];
+  const door =
+    illustratedHeight && fraction ? illustratedHeight * fraction : BASELINE.doors[family];
+  return door ? 13.2 / door : (BASELINE.declared[family] ?? 1);
+};
+
+describe('building scale', () => {
+  /**
+   * How a building was sized when the person and the door were one number: the door, 2.1 m beside
+   * a 1.75 m person drawn 11 px, over the frame's own door. Written out here so a change to either
+   * height cannot move it with them.
+   */
+  const before = (frame: string, illustratedHeight?: number) => {
+    const family = structureFamily(frame);
+    const door =
+      illustratedHeight && DOOR_FRACTION[family]
+        ? illustratedHeight * DOOR_FRACTION[family]
+        : DOOR_REFERENCE_PX[family];
+    return door ? ((2.1 / 1.75) * 11) / door : (EQUIPMENT_SCALE[family] ?? 1);
+  };
+
+  it('is unchanged for every packed illustrated frame', () => {
+    const frames = Object.entries(atlas.frames) as [string, { h: number }][];
+    for (const [key, frame] of frames) {
+      const height = frame.h / atlas.resolution;
+      expect(structureScale(key, height), key).toBe(before(key, height));
+      expect(structureScale(key), key).toBe(before(key));
+    }
+    expect(frames.length).toBeGreaterThan(50);
+  });
+
+  it('is unchanged for every family with a door or a declared estimate', () => {
+    const families = new Set([
+      ...Object.keys(DOOR_FRACTION),
+      ...Object.keys(DOOR_REFERENCE_PX),
+      ...Object.keys(EQUIPMENT_SCALE),
+    ]);
+    for (const family of families)
+      for (const frame of [`structures/${family}`, `structures/${family}_lv2`]) {
+        expect(structureScale(frame), frame).toBe(before(frame));
+        expect(structureScale(frame, 100), frame).toBe(before(frame, 100));
+      }
+    expect(families.size).toBeGreaterThan(20);
+  });
+
+  it('keeps every measure a building family had', () => {
+    // the tables may gain families, never lose or change one named in the baseline
+    expect(DOOR_REFERENCE_PX).toMatchObject(BASELINE.doors);
+    expect(DOOR_FRACTION).toMatchObject(BASELINE.fractions);
+    expect(EQUIPMENT_SCALE).toMatchObject(BASELINE.declared);
+    // and the door is the height it was derived as: a 2.1 m door beside a 1.75 m person of 11 px
+    expect(DOOR_PX).toBe((2.1 / 1.75) * 11);
+  });
+
+  it('sizes every family as it was, at every level, stage, height and picture', () => {
+    const families = new Set([
+      ...Object.keys(BASELINE.doors),
+      ...Object.keys(BASELINE.fractions),
+      ...Object.keys(BASELINE.declared),
+      'not_a_family',
+    ]);
+    for (const family of families)
+      for (const suffix of ['', '_lv2', '_lv3', '_s1', '_3'])
+        for (const height of [undefined, 40, 169, 199, 251, 262, 300]) {
+          const frame = `structures/${family}${suffix}`;
+          expect(structureScale(frame, height), `${frame} at ${height}`).toBe(
+            baselineScale(frame, height),
+          );
+        }
+    expect(families.size).toBeGreaterThan(20);
+  });
+
+  it('sizes every packed illustrated frame as it was', () => {
+    const packed = Object.entries(atlas.frames) as [string, { h: number }][];
+    for (const [key, frame] of packed) {
+      const height = frame.h / atlas.resolution;
+      expect(structureScale(key, height), key).toBe(baselineScale(key, height));
+    }
+    expect(packed.length).toBeGreaterThan(50);
+  });
+
+  it("is a door's height over the door in the picture, whoever stands beside it", () => {
+    expect(structureScale('structures/townhouse_s1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.townhouse);
+    expect(structureScale('structures/station_1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.station);
+    // a measured door: 36 of the station's 169 px
+    expect(structureScale('structures/station_1', 169)).toBeCloseTo(DOOR_PX / 36, 9);
+  });
+});
+
+describe('the Fuel Pump', () => {
+  const frames: FrameNames = {
+    has: (key) => ['structures/fuel_pump', 'structures/fuel_pump_lv2'].includes(key),
+  };
+
+  it('has a declared scale, in line with the equipment it stands beside', () => {
+    expect(EQUIPMENT_SCALE.fuel_pump).toBeGreaterThanOrEqual(EQUIPMENT_SCALE.fuel_stop);
+    expect(EQUIPMENT_SCALE.fuel_pump).toBeLessThanOrEqual(EQUIPMENT_SCALE.water_tower);
+  });
+
+  it('is drawn at that scale at every level and turn, before its art arrives', () => {
+    const own = { family: 'fuel_pump', scale: EQUIPMENT_SCALE.fuel_pump };
+    for (const frame of [
+      'structures/fuel_pump',
+      'structures/fuel_pump_lv2',
+      'structures/fuel_pump_lv2_r1',
+      'structures/fuel_pump_r3',
+    ]) {
+      expect(scaleReference(frames, frame), frame).toEqual(own);
+    }
+    expect(structureScale('structures/fuel_pump_lv2')).toBe(own.scale);
+    expect(hasScaleReference('structures/fuel_pump_lv3')).toBe(true);
+  });
 });
 
 it('requires an explicit calibration or declared estimate for every illustrated structure', () => {
@@ -49,6 +220,8 @@ describe('turned structure frames', () => {
   let names: Set<string>;
   const frames: FrameNames = { has: (key) => names.has(key) };
 
+  // slow because it generates the whole structures atlas: 0.9 s alone, and a hook has a default of
+  // its own (10 s) that a loaded machine can use up, so a limit of 60 s
   beforeAll(() => {
     vi.stubGlobal('ImageData', FakeImageData);
     vi.stubGlobal('document', {
@@ -62,7 +235,7 @@ describe('turned structure frames', () => {
       ...Object.keys(generateStructuresAtlas().frames),
       ...Object.keys(atlas.frames),
     ]);
-  });
+  }, 60_000);
   afterAll(() => {
     vi.unstubAllGlobals();
   });
@@ -76,7 +249,7 @@ describe('turned structure frames', () => {
         if (turned === key) continue;
         turns++;
         const where = `${key} at rotation ${rot} (${turned})`;
-        // family (window lights), reference (contact patches) and scale are the frame's own
+        // family (window lights), reference (ground fit) and scale are the frame's own
         const own = hasScaleReference(key)
           ? { family: structureFamily(key), scale: structureScale(key) }
           : null;
@@ -90,6 +263,27 @@ describe('turned structure frames', () => {
     // the walk reaches the turned pictures, buildings with a scale reference among them
     expect(turns).toBeGreaterThan(250);
     expect(buildings).toBeGreaterThan(200);
+  });
+
+  it('are sized as they were before the person had a height of its own', () => {
+    let sized = 0;
+    for (const key of names) {
+      const family = structureFamily(key);
+      if (!(
+        family in BASELINE.doors ||
+        family in BASELINE.fractions ||
+        family in BASELINE.declared
+      ))
+        continue;
+      // a generated picture is measured by its reference door, and so is each of its turns
+      for (const rot of [0, 1, 2, 3]) {
+        const drawn = rot ? structureFrame(frames, key, rot) : key;
+        const where = `${drawn} (${key} at rotation ${rot})`;
+        expect(scaleReference(frames, drawn)?.scale, where).toBe(baselineScale(key));
+        sized++;
+      }
+    }
+    expect(sized).toBeGreaterThan(200);
   });
 
   it("keep a wide station's axis frames as they were", () => {

@@ -117,6 +117,12 @@ export interface BridgePlan {
   trestles: number[];
   /** Arched masonry walls along a span (stone over water), at across offset `w`. */
   arches: number[];
+  /**
+   * The deck's end on its +x (`e`) and +y (`s`) edge rests on the bank's abutment, so its end face
+   * is not drawn: over water, where the track leaves the bridge for a tile it does not merge with.
+   * The line's bed carries on there, wherever the painted water reaches past the tile.
+   */
+  abutments: { e: boolean; s: boolean };
 }
 
 /** Inner face of a parapet, from the tile centre; its outer face is the deck edge. */
@@ -150,12 +156,14 @@ function spanRect(axis: 0 | 1, l0: number, l1: number, w0: number, w1: number): 
  */
 export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): BridgePlan {
   const deck = { x0: -0.5, x1: 0.5, y0: -0.5, y1: 0.5 },
-    stone = site.material === 'stone';
-  if (site.axis === null) return padPlan(site, joins, deck, stone);
+    stone = site.material === 'stone',
+    abutment = (d: number) => water && !joins[d] && !!site.open?.[d],
+    abutments = { e: abutment(E), s: abutment(S) };
+  if (site.axis === null) return padPlan(site, joins, deck, stone, abutments);
   const axis = site.axis,
     // The span's far and near sides: -y and +y along x, -x and +x along y.
     [far, near] = axis === 1 ? [N, S] : [W, E],
-    plan: BridgePlan = { deck, parapets: [], piers: [], trestles: [], arches: [] };
+    plan: BridgePlan = { deck, parapets: [], piers: [], trestles: [], arches: [], abutments };
   if (!joins[far])
     plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, -0.5, -PARAPET), near: false });
   if (!joins[near]) plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, PARAPET, 0.5), near: true });
@@ -177,7 +185,13 @@ export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): Brid
  * corner, moved under the seam where an edge merges. A seam corner belongs to the tile on its
  * -x / -y side, so a block of pads stands on one grid of piers.
  */
-function padPlan(site: BridgeSite, joins: Joins, deck: Rect, stone: boolean): BridgePlan {
+function padPlan(
+  site: BridgeSite,
+  joins: Joins,
+  deck: Rect,
+  stone: boolean,
+  abutments: BridgePlan['abutments'],
+): BridgePlan {
   const open = site.open ?? [false, false, false, false],
     walls = [0, 1, 2, 3].map((d) => !joins[d] && !open[d]),
     parapets: BridgePlan['parapets'] = [];
@@ -197,5 +211,5 @@ function padPlan(site: BridgeSite, joins: Joins, deck: Rect, stone: boolean): Br
         cy = sy > 0 && joins[S] ? 0.5 : sy * SUPPORT.pier;
       piers.push({ x0: cx - h, x1: cx + h, y0: cy - h, y1: cy + h });
     }
-  return { deck, parapets, piers, trestles: [], arches: [] };
+  return { deck, parapets, piers, trestles: [], arches: [], abutments };
 }

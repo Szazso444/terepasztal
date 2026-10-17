@@ -43,6 +43,8 @@ function stands(png) {
 const near = (p, q, by) => Math.hypot(p[0] - q[0], p[1] - q[1]) <= by;
 
 describe('building fit', () => {
+  // slow because every footprint at every turn is drawn and fitted: 0.34 s alone, so a limit
+  // of 30 s
   it('finds a building painted where the guide block stands, for every footprint and rotation', () => {
     for (const fp of Object.values(FOOTPRINTS))
       for (const r of ROTATIONS) {
@@ -57,7 +59,7 @@ describe('building fit', () => {
         expect(near(f.base.s, b.s, 4), label).toBe(true);
         expect(near(f.base.e, b.e, 4), label).toBe(true);
       }
-  });
+  }, 30_000);
 
   it('finds a building drawn larger, off centre and on another canvas', () => {
     // what the depot pilot returned: half as large again as its guide, and not where the guide is
