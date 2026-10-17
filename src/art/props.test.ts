@@ -157,6 +157,27 @@ describe('waterside tree fallbacks', () => {
       }
   });
 
+  it('keep every colour weaker than the selection amber by the packer`s measure too', () => {
+    // #465: as strong as the amber is hue 25 to 50 degrees, saturation 0.62 or more and value
+    // 0.85 or more; the packed paintings are held under it, so their fallbacks are as well
+    const strong = ([r, g, b]: readonly number[]) => {
+      const max = Math.max(r, g, b);
+      const d = max - Math.min(r, g, b);
+      if (!d) return false;
+      const h =
+        max === r
+          ? 60 * ((g - b) / d)
+          : max === g
+            ? 60 * (2 + (b - r) / d)
+            : 60 * (4 + (r - g) / d);
+      const hue = h < 0 ? h + 360 : h;
+      return hue >= 25 && hue <= 50 && d / max >= 0.62 && max / 255 >= 0.85;
+    };
+    expect(strong(PAL.amber), 'the amber itself').toBe(true);
+    for (const key of WATERSIDE)
+      for (const { rgba } of ink(key)) expect(strong(rgba), `${key} ${rgba}`).toBe(false);
+  });
+
   it('take the light from the upper left: the left half is lighter than the right', () => {
     for (const key of WATERSIDE) {
       const f = frames[key];

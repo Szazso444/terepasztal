@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import { TREE_SCALE } from '../src/render/assetScale';
 import { capFrame } from './atlas-cap.mjs';
+import { forAll, shrinkInt } from '../src/testing/property';
 import {
   inkBox,
   trimSource,
@@ -114,6 +115,211 @@ describe('illustrated atlas conversion', () => {
   });
 });
 
+// --- properties of the trim and of a measured tree's packing ------------------------------------
+
+/** A small picture: transparent canvas, glow (alpha 1 to 64), ink (65 to 255), often no ink. */
+function genPicture(rng) {
+  const w = rng.int(1, 12);
+  const h = rng.int(1, 12);
+  const ink = rng.chance(0.9);
+  const texels = Array.from({ length: w * h }, () => {
+    const alpha = rng.pick([0, 0, rng.int(1, 64), 64, 65, rng.int(65, 254), 255]);
+    const a = ink ? alpha : Math.min(alpha, 64);
+    return [rng.int(0, 255), rng.int(0, 255), rng.int(0, 255), a];
+  });
+  return { w, h, texels };
+}
+const picture = ({ w, h, texels }) => {
+  const p = new PNG({ width: w, height: h });
+  texels.forEach((t, i) => p.data.set(t, i * 4));
+  return p;
+};
+const at = (c, x, y) => c.texels[y * c.w + x];
+/** Fewer rows, then fewer columns, then one texel cleared. */
+function* shrinkPicture(c) {
+  for (const h of shrinkInt(c.h, 1)) yield { ...c, h, texels: c.texels.slice(0, c.w * h) };
+  for (const w of shrinkInt(c.w, 1))
+    yield {
+      ...c,
+      w,
+      texels: Array.from({ length: c.h }, (_, y) => c.texels.slice(y * c.w, y * c.w + w)).flat(),
+    };
+  for (let i = 0; i < c.texels.length; i++)
+    if (c.texels[i][3])
+      yield { ...c, texels: c.texels.map((t, j) => (j === i ? [0, 0, 0, 0] : t)) };
+}
+/** The box of the texels with alpha above 64, found the slow way, or null. */
+function slowInkBox(c) {
+  const xs = [];
+  const ys = [];
+  for (let y = 0; y < c.h; y++)
+    for (let x = 0; x < c.w; x++)
+      if (at(c, x, y)[3] > 64) {
+        xs.push(x);
+        ys.push(y);
+      }
+  return xs.length ? [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] : null;
+}
+/** The glow ramp trimSource documents: alpha 64 and under goes with its colour, the rest is
+ * stretched from 65..255 onto 1..255. */
+const unglow = ([r, g, b, a]) =>
+  a <= 64 ? [0, 0, 0, 0] : [r, g, b, Math.round((255 * (a - 64)) / 191)];
+
+describe('trimming a picture, as a property', () => {
+  it('finds the ink box: the texels with alpha above 64, or none', () => {
+    forAll(genPicture, (c) => expect(inkBox(picture(c))).toEqual(slowInkBox(c)), {
+      shrink: shrinkPicture,
+    });
+  });
+
+  it('trims by its own ink box when given no box, and refuses a picture with no ink', () => {
+    forAll(
+      genPicture,
+      (c) => {
+        const p = picture(c);
+        const box = slowInkBox(c);
+        if (!box) return void expect(() => trimSource(p)).toThrow(/empty/);
+        expect(trimSource(p).data.equals(trimSource(p, box).data)).toBe(true);
+      },
+      { shrink: shrinkPicture },
+    );
+  });
+
+  it('crops any box inside the picture to exactly its texels, glow removed, the input untouched', () => {
+    forAll(
+      (rng) => {
+        const c = genPicture(rng);
+        const l = rng.int(0, c.w - 1);
+        const t = rng.int(0, c.h - 1);
+        return { ...c, box: [l, t, rng.int(l, c.w - 1), rng.int(t, c.h - 1)] };
+      },
+      (c) => {
+        const p = picture(c);
+        const before = Buffer.from(p.data);
+        if (!slowInkBox(c)) return void expect(() => trimSource(p, c.box)).toThrow(/empty/);
+        const [l, t, r, b] = c.box;
+        const out = trimSource(p, c.box);
+        expect([out.width, out.height]).toEqual([r - l + 1, b - t + 1]);
+        for (let y = 0; y < out.height; y++)
+          for (let x = 0; x < out.width; x++) {
+            const i = (y * out.width + x) * 4;
+            expect([...out.data.subarray(i, i + 4)], `texel ${x},${y}`).toEqual(
+              unglow(at(c, l + x, t + y)),
+            );
+          }
+        expect(p.data.equals(before), 'the input is not changed').toBe(true);
+      },
+      // shrinking the picture can push the box out of it; keep the box where it still fits
+      {
+        shrink: (c) => [...shrinkPicture(c)].filter((s) => c.box[2] < s.w && c.box[3] < s.h),
+      },
+    );
+  });
+
+  it('refuses every box that is not inside the picture', () => {
+    forAll(
+      (rng) => {
+        const w = rng.int(1, 12);
+        const h = rng.int(1, 12);
+        const l = rng.int(0, w - 1);
+        const t = rng.int(0, h - 1);
+        const r = rng.int(l, w - 1);
+        const b = rng.int(t, h - 1);
+        const bad = rng.pick([
+          [-rng.int(1, 3), t, r, b],
+          [l, -rng.int(1, 3), r, b],
+          [l, t, w + rng.int(0, 2), b],
+          [l, t, r, h + rng.int(0, 2)],
+          [r + 1, t, l, b],
+          [l, b + 1, r, t],
+          [l + 0.5, t, r, b],
+          [l, t, r, b - 0.25],
+        ]);
+        return { w, h, bad };
+      },
+      ({ w, h, bad }) => {
+        // a solid picture, so the box is all that is wrong
+        const p = new PNG({ width: w, height: h });
+        p.data.fill(255);
+        expect(() => trimSource(p, bad), `[${bad}] in ${w}x${h}`).toThrow(/not inside/);
+      },
+    );
+  });
+});
+
+/**
+ * A measured picture, packed at an atlas density and a tree scale of its own: a solid body
+ * somewhere on a canvas with some glow around it, and its record. The body is at least two
+ * texels across and high once packed, as every real tree is many more.
+ */
+function genMeasured(rng) {
+  const opts = { density: rng.pick([2, 4]), treeScale: rng.pick([1, 1.25, 1.5, 2]) };
+  const k = rng.range(0.05, 0.3);
+  const least = Math.ceil(2 / ((k * opts.density) / opts.treeScale));
+  const bw = rng.int(least, least + 30);
+  const bh = rng.int(least, least + 30);
+  const w = bw + rng.int(0, 8);
+  const h = bh + rng.int(0, 8);
+  const bx = rng.int(0, w - bw);
+  const by = rng.int(0, h - bh);
+  const texels = Array.from({ length: w * h }, (_, i) => {
+    const x = i % w;
+    const y = Math.floor(i / w);
+    const body = x >= bx && x < bx + bw && y >= by && y < by + bh;
+    if (body) return [rng.int(40, 200), rng.int(40, 200), rng.int(40, 200), rng.int(65, 255)];
+    return rng.chance(0.2) ? [rng.int(0, 255), 255, 255, rng.int(1, 64)] : [0, 0, 0, 0];
+  });
+  const box = [bx, by, bx + bw - 1, by + bh - 1];
+  // the anchor anywhere across the body, and at or a little under its foot
+  const anchor = [rng.range(bx, bx + bw), rng.range(by + 0.5, by + bh + 2)];
+  return { w, h, texels, opts, record: { box, anchor, k } };
+}
+
+describe('packing a measured tree, as a property', () => {
+  it('stands the record`s height over the anchor and keeps the anchor on the painted foot', () => {
+    forAll(genMeasured, (c) => {
+      const { record, opts } = c;
+      const made = packMeasuredTree(picture(c), record, 'case', opts);
+      const [l, t, r, b] = record.box;
+      const s = (record.k * opts.density) / opts.treeScale;
+      const w0 = Math.max(1, Math.round((r - l + 1) * s));
+      const { width: w, height: h } = made.png;
+      // the frame: the box scaled by k * density / treeScale, then drawn 1.2 wider
+      expect([w, h]).toEqual([Math.round(w0 * 1.2), Math.max(1, Math.round((b - t + 1) * s))]);
+      // drawn px from the anchor to the top of the box, at the tree scale: the record's k times
+      // the source px between them, which is what check-tree.mjs writes as the height
+      const drawn = (made.ay * opts.treeScale) / opts.density;
+      expect(drawn).toBeCloseTo((record.anchor[1] - t) * record.k, 9);
+      // and where the painted foot lands in the resampled frame, within the rounding of its size
+      const footX = ((record.anchor[0] - l) * w) / (r - l + 1);
+      const footY = ((record.anchor[1] - t) * h) / (b - t + 1);
+      expect(Math.abs(made.ax - footX), `ax ${made.ax} for ${footX}`).toBeLessThanOrEqual(
+        (0.5 * w) / w0 + 1e-9,
+      );
+      expect(Math.abs(made.ay - footY), `ay ${made.ay} for ${footY}`).toBeLessThanOrEqual(
+        (0.5 * (record.anchor[1] - t)) / (b - t + 1) + 1e-9,
+      );
+    });
+  });
+
+  it('refuses a record whose box is not the picture`s ink box', () => {
+    forAll(
+      (rng) => {
+        const c = genMeasured(rng);
+        const box = [...c.record.box];
+        box[rng.int(0, 3)] += rng.pick([-1, 1]);
+        return { ...c, bad: box };
+      },
+      (c) => {
+        const record = { ...c.record, box: c.bad };
+        expect(() => packMeasuredTree(picture(c), record, 'case', c.opts)).toThrow(
+          /measure it again/,
+        );
+      },
+    );
+  });
+});
+
 const WATERSIDE = 'assets/source/waterside-trees-2026-10-16';
 /**
  * The waterside trees of #460 and what Core's review of 2026-10-17 measured for them: the drawn
@@ -136,6 +342,16 @@ describe('the waterside trees in the props atlas', () => {
 
   it('read the renderer`s tree scale from src/render/assetScale.ts', () => {
     expect(readTreeScale()).toBe(TREE_SCALE);
+  });
+  it('are measured consistently: k is the height over the source px from the anchor to the top', () => {
+    // check-tree.mjs: a mangrove stands on its foot, a willow 6 drawn px above it on the same
+    // column; k is drawn px per source px, so the packer's ay is the height whatever the scale
+    for (const [, file] of WATERSIDE_FRAMES) {
+      const r = trees[file];
+      expect(r.k * (r.anchor[1] - r.box[1]), file).toBeCloseTo(r.height, 9);
+      expect(r.anchor[0], file).toBe(r.foot[0]);
+      expect((r.foot[1] - r.anchor[1]) * r.k, file).toBeCloseTo(r.kind === 'willow' ? 6 : 0, 9);
+    }
   });
   it('stand their measured height over the anchor, at the renderer`s tree scale', () => {
     for (const [key, file, height] of WATERSIDE_FRAMES) {
@@ -160,6 +376,7 @@ describe('the waterside trees in the props atlas', () => {
       expect(Math.abs(f.ax / f.w - across), key).toBeLessThan(1 / f.w);
     }
   });
+  // slow: it decodes and resamples six 1254 px paintings, about a second alone
   it('are what the packer makes of the paintings and their trees.json entries', () => {
     const atlas = PNG.sync.read(readFileSync('public/assets/props.png'));
     for (const [key, file] of WATERSIDE_FRAMES) {
@@ -180,7 +397,7 @@ describe('the waterside trees in the props atlas', () => {
         `${key}: run node tools/illustrated-sprites.mjs`,
       ).toBe(true);
     }
-  });
+  }, 20_000);
   it('refuse a painting whose alpha box is not the measured one', () => {
     const input = PNG.sync.read(readFileSync(`${WATERSIDE}/tree-willow-2.png`));
     const record = { ...trees['tree-willow-2.png'], box: [0, 0, 10, 10] };
