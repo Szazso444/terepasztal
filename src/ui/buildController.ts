@@ -26,6 +26,15 @@ import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotati
 import { placingTip, yieldLabel } from './placingTooltip';
 import type { TipDoc } from './tooltipDoc';
 import { tipKey, type Point, type TooltipStack } from './tooltipStack';
+import {
+  builderJudge,
+  hoverStatus,
+  judgeStroke,
+  strokeStatus,
+  strokeTiles,
+  type RoadStep,
+  type RoadStrokeCheck,
+} from './roadStroke';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
@@ -204,6 +213,9 @@ export class BuildController {
         break;
       case 'reclass':
         this.updateReclassTool(t, inMap);
+        break;
+      case 'road':
+        this.updateRoadTool(t, inMap);
         break;
       case 'terrain':
         this.updateTerrainTool(t, inMap);
@@ -572,17 +584,85 @@ export class BuildController {
     this.ghostDiamond.tint = 0xffffff;
     const dec = this.builder.decorAt(t.x, t.y);
     const bld = this.builder.buildingAt(t.x, t.y);
+    // what removeAt takes off the tile first
     const refund = st
       ? scaleCost(st.def.cost, 0.5)
       : bld
         ? this.builder.buildingRefund(bld)
         : dec
           ? this.builder.decorRefund(dec)
-          : piece
-            ? this.builder.refundFor(piece)
-            : {};
+          : this.builder.roads.has(t.x, t.y)
+            ? this.builder.roadRefund()
+            : piece
+              ? this.builder.refundFor(piece)
+              : {};
     this.status(Object.keys(refund).length ? STR.build.refund(fmtCost(refund)) : '');
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
+  }
+
+  /**
+   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile (`placeRoad`). The
+   * drag shows the build preview's diamond on each tile, red where the release would not lay a
+   * road, with the total cost and every reason a tile is refused in the status line. Before the
+   * press the one tile under the cursor shows, priced or refused.
+   */
+  private updateRoadTool(t: Tile, inMap: boolean) {
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    // a press starts a stroke on the map, none off it
+    if (inp.buttonPressed.has(0)) this.dragStart = inMap ? { x: t.x, y: t.y } : null;
+    if (this.dragStart && inp.buttons.has(0)) {
+      const stroke = this.roadStroke(this.dragStart, t);
+      this.showRoadMarks(stroke.steps);
+      this.status(strokeStatus(stroke));
+      return;
+    }
+    if (this.dragStart && inp.buttonReleased.has(0)) {
+      const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
+      this.dragStart = null;
+      for (const g of this.lineGhosts) g.visible = false;
+      for (const r of tiles) this.builder.placeRoad(r.x, r.y);
+      return;
+    }
+    // the button is up: a stroke whose release fell over a panel lays nothing, and is over
+    this.dragStart = null;
+    if (!inMap) {
+      for (const g of this.lineGhosts) g.visible = false;
+      this.status('');
+      return;
+    }
+    const one = this.roadStroke(t, t);
+    this.showRoadMarks(one.steps);
+    this.status(hoverStatus(one.steps[0]));
+  }
+
+  /**
+   * The tile a road stroke ends on with the cursor on `t`: that tile, kept on the map. The one
+   * place a stroke's end is decided, so #409 can snap it to a street door's reach tile.
+   */
+  private roadEnd(t: Tile): Tile {
+    const { w, h } = this.builder.map;
+    return { x: Math.max(0, Math.min(w - 1, t.x)), y: Math.max(0, Math.min(h - 1, t.y)) };
+  }
+
+  /** The road stroke from `start` to the cursor on `t`, judged as its release would lay it. */
+  private roadStroke(start: Tile, t: Tile): RoadStrokeCheck {
+    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder));
+  }
+
+  /** The build preview's tile diamond on each tile of a road stroke: red where it is refused. */
+  private showRoadMarks(steps: readonly RoadStep[]) {
+    this.showGhosts(
+      steps.map((s) => ({
+        x: s.x,
+        y: s.y,
+        frame: s.state === 'refused' ? 'terrain/ghost_bad' : 'terrain/ghost_ok',
+      })),
+      true,
+    );
+    // the frame carries the colour, as the one-tile diamond's does
+    for (let i = 0; i < steps.length; i++) this.lineGhosts[i].tint = 0xffffff;
   }
 
   /**
@@ -716,6 +796,8 @@ export class BuildController {
       if (this.selectedDecor === dec) this.selectDecor(null);
       return this.builder.removeDecor(x, y);
     }
+    // a level crossing loses its road first, and stays plain track
+    if (this.builder.roads.has(x, y)) return this.builder.removeRoad(x, y);
     return this.builder.removeTrack(x, y);
   }
 
