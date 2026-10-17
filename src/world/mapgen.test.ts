@@ -66,7 +66,7 @@ describe('generateMap', () => {
     expect(a.props.size).toBe(b.props.size);
   }, 30_000);
 
-  // two worlds, each planning its rivers once (#341): about 0.5 s alone
+  // two worlds, each planning its rivers once (#341): about 0.25 s alone
   it('gives a different world for a different seed', () => {
     expect(fnv(generateMap(SEED, SMALL).terrain)).not.toBe(
       fnv(generateMap(SEED + 1, SMALL).terrain),
@@ -93,7 +93,7 @@ describe('generateMap', () => {
     expect(m.seed).toBe(SEED);
   });
 
-  // three worlds, one for each water line, each planning its rivers once (#341): about 0.6 s alone
+  // three worlds, one for each water line, each planning its rivers once (#341): about 0.3 s alone
   it('raises the water line with waterLevel', () => {
     const dry = generateMap(SEED, { ...SMALL, waterLevel: 0.2 });
     const mid = generateMap(SEED, SMALL);

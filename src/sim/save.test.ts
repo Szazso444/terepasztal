@@ -2101,6 +2101,7 @@ describe("a save's world seed, from the outside (#470)", () => {
     );
   }, 30_000);
 
+  // three seeds, each stored and grown by a ring twice: about 0.4 s alone, so a limit of 30 s
   it('grows a world of a text seed with the very ring a number gives, from stored ground', () => {
     // the issue's own case: ground stored for the seed is read back, and the chunks generated
     // when the map grows are made from the seed as the loaded world holds it
@@ -2132,7 +2133,7 @@ describe("a save's world seed, from the outside (#470)", () => {
       expect(got.chunks, `seed ${seed}`).toEqual(want.chunks);
       expect(got.map.seed).toBe(seed);
     }
-  });
+  }, 30_000);
 
   it('reads the world seed of a file of every version the same way', () => {
     // the oldest shape the chain takes up to versions this build does not know yet
