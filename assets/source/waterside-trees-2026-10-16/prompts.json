@@ -1,0 +1,974 @@
+{
+  "tool": "built-in image_gen",
+  "attempts": [
+    {
+      "file": "tree-mangrove-1.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nA young mangrove: a slim trunk, eight to ten prop roots, a compact crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 6.126869297355321,
+        "box": [
+          123,
+          91,
+          1130,
+          1170
+        ],
+        "footAuto": [
+          623.5,
+          1022.25
+        ],
+        "foot": [
+          623.5,
+          1022.25
+        ],
+        "anchor": [
+          623.5,
+          1022.25
+        ],
+        "kind": "mangrove",
+        "height": 30,
+        "k": 0.032214765100671144,
+        "drawn": {
+          "width": 38.96697986577182,
+          "footFromCentre": -0.11597315436241612,
+          "belowFoot": 4.759731543624161,
+          "rootSpread": 22.846711409395972
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 181.6958,
+        "look": "checks/tree-mangrove-1-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Recognizable arched prop roots and centered waterline at both zooms; smooth clusters agree with oak. Highlights are too bright for the requested species cap; retry with darker leaf palette.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-mangrove-1.png",
+      "attempt": 2,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nA young mangrove: a slim trunk, eight to ten prop roots, a compact crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt had yellow-green leaf highlights that were too bright. Use the red mangrove palette exactly: deep #1C2E28, mid #2F4A36, light #55703F, tiny lit tips capped at #8A9A4E. Keep the crown dark glossy forest green throughout. Preserve a crown slightly wider than its height and roots spread about 60 percent of the crown width, with the blunt dark tips evenly distributed on a flat 2:1 ellipse. No painted water or shadow.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 5.342902711323764,
+        "box": [
+          156,
+          149,
+          1103,
+          1078
+        ],
+        "footAuto": [
+          637,
+          950.5
+        ],
+        "foot": [
+          637,
+          1000
+        ],
+        "anchor": [
+          637,
+          1000
+        ],
+        "kind": "mangrove",
+        "height": 30,
+        "k": 0.03525264394829612,
+        "drawn": {
+          "width": 40.103407755581664,
+          "footFromCentre": 0.3172737955346651,
+          "belowFoot": 2.7497062279670974,
+          "rootSpread": 21.574618096357227
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 158.6676,
+        "look": "checks/tree-mangrove-1-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 5.342902711323764,
+          "box": [
+            156,
+            149,
+            1103,
+            1078
+          ],
+          "footAuto": [
+            637,
+            950.5
+          ],
+          "foot": [
+            637,
+            950.5
+          ],
+          "anchor": [
+            637,
+            950.5
+          ],
+          "kind": "mangrove",
+          "height": 30,
+          "k": 0.037429819089207735,
+          "drawn": {
+            "width": 42.580162195882714,
+            "footFromCentre": 0.3368683718028696,
+            "belowFoot": 4.772301933873986,
+            "rootSpread": 22.907049282595132
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 158.6676,
+          "look": "checks/tree-mangrove-1-attempt-2-look.png"
+        },
+        "footReadByEye": true,
+        "footReadBy": "Core's art review of 2026-10-17 (finish F1)",
+        "footReason": "The automatic foot is the back root tip: the root ring is about 3.6:1, not 2:1, so the anchor sat about 50 px (1.9 drawn px) too high. The eye foot is the centre of the root-tip ellipse, under the trunk.",
+        "lookReview": "Pass at zoom 1 and 2: dark clustered crown, upper-left light, visible arched roots, flat elliptical tip arrangement centered on water tile; no ground, water, or cast shadow; highlights subdued below the oak.",
+        "failed": []
+      }
+    },
+    {
+      "file": "tree-mangrove-2.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nA grown mangrove: about a dozen prop roots in two rings, the crown about one and a quarter times as wide as the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-mangrove-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 4.693688331311097,
+        "box": [
+          82,
+          79,
+          1180,
+          1171
+        ],
+        "footAuto": [
+          633.5,
+          1023.75
+        ],
+        "foot": [
+          633.5,
+          1023.75
+        ],
+        "anchor": [
+          633.5,
+          1023.75
+        ],
+        "kind": "mangrove",
+        "height": 38,
+        "k": 0.04022228102672665,
+        "drawn": {
+          "width": 53.0451442180471,
+          "footFromCentre": 0.12066684308017994,
+          "belowFoot": 5.922730881185498,
+          "rootSpread": 28.429108229690392
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 181.62879999999998,
+        "look": "checks/tree-mangrove-2-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Centered roots and broad crown read clearly at both zooms, no water or shadow. Leaves too yellow and bright against accepted variant 1; retry darker.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-mangrove-2.png",
+      "attempt": 2,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nA grown mangrove: about a dozen prop roots in two rings, the crown about one and a quarter times as wide as the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt had yellow-green leaf highlights that were too bright and yellow compared with the last reference. Match that last reference's dark restrained crown: deep #1C2E28, mid #2F4A36, light #55703F, tiny lit tips capped at #8A9A4E. No leaf should be a bright yellow. Preserve the grown mangrove's broader spreading silhouette with about twelve roots in two rings, the crown about one and a quarter times as wide as the tree is tall, root spread about 60 percent of crown width, dark blunt root tips on a flat 2:1 ellipse. No water or shadow.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-mangrove-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 4.8061832121262995,
+        "box": [
+          92,
+          111,
+          1185,
+          1143
+        ],
+        "footAuto": [
+          641,
+          994.5
+        ],
+        "foot": [
+          640,
+          1032
+        ],
+        "anchor": [
+          640,
+          1032
+        ],
+        "kind": "mangrove",
+        "height": 38,
+        "k": 0.04125950054288816,
+        "drawn": {
+          "width": 54.16547231270358,
+          "footFromCentre": 0.0742671009771987,
+          "belowFoot": 4.579804560260586,
+          "rootSpread": 29.409771986970682
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 153.6636,
+        "look": "checks/tree-mangrove-2-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 4.8061832121262995,
+          "box": [
+            92,
+            111,
+            1185,
+            1143
+          ],
+          "footAuto": [
+            641,
+            994.5
+          ],
+          "foot": [
+            641,
+            994.5
+          ],
+          "anchor": [
+            641,
+            994.5
+          ],
+          "kind": "mangrove",
+          "height": 38,
+          "k": 0.043010752688172046,
+          "drawn": {
+            "width": 56.464516129032255,
+            "footFromCentre": 0.12903225806451615,
+            "belowFoot": 6.387096774193549,
+            "rootSpread": 30.658064516129034
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 153.6636,
+          "look": "checks/tree-mangrove-2-attempt-2-look.png"
+        },
+        "footReadByEye": true,
+        "footReadBy": "Core's art review of 2026-10-17 (finish F1)",
+        "footReason": "The automatic foot is the back root tip: the root ring is flatter than 2:1, so the anchor sat about 37 px (1.6 drawn px) too high. The eye foot is the centre of the root-tip ellipse, under the trunk.",
+        "lookReview": "Pass at both zooms: broader clustered dark crown than variant 1, visible roots in depth on the waterline, centered anchor, muted highlights below the oak, no painted ground, water, or shadow.",
+        "failed": []
+      }
+    },
+    {
+      "file": "tree-mangrove-3.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nAn old mangrove: a thick trunk, many prop roots in a wide skirt, a broad spreading crown about one and a quarter times as wide as the tree is tall, and a few thin aerial roots hanging straight down from its lower limbs, stopping above the water line.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-mangrove-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 6.807053155579975,
+        "box": [
+          33,
+          80,
+          1220,
+          1163
+        ],
+        "footAuto": [
+          634.5,
+          1001.25
+        ],
+        "foot": [
+          634.5,
+          1001.25
+        ],
+        "anchor": [
+          634.5,
+          1001.25
+        ],
+        "kind": "mangrove",
+        "height": 46,
+        "k": 0.04993215739484396,
+        "drawn": {
+          "width": 71.18328358208954,
+          "footFromCentre": 0.479348710990502,
+          "belowFoot": 8.07652645861601,
+          "rootSpread": 38.76732700135685
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 184.4912,
+        "look": "checks/tree-mangrove-3-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Broad old crown, thicker roots, aerial roots, centered waterline and clear silhouette at both zooms. Crown highlights too bright against accepted variant 1.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-mangrove-3.png",
+      "attempt": 2,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a red mangrove of a tidal swamp. Its trunk divides low into many arched prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the trunk at about a third of the tree's height and curve out and down like the ribs of an upturned basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet (#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36, light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the root spread and overhanging it on every side.\n\nAn old mangrove: a thick trunk, many prop roots in a wide skirt, a broad spreading crown about one and a quarter times as wide as the tree is tall, and a few thin aerial roots hanging straight down from its lower limbs, stopping above the water line.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The third is a plant of wet ground from this game, painted with nothing at its foot: end the roots the same way, with no water. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt had yellow-green leaf highlights that were too bright and yellow compared with the last reference. Match that last reference's restrained crown: deep #1C2E28, mid #2F4A36, light #55703F, tiny lit tips capped at #8A9A4E. Make the foliage dark glossy forest green throughout. Preserve the old tree's many arched roots in a broad skirt and a few thin hanging aerial roots. Crown about one and a quarter times as wide as tall, root spread about 55 percent of crown width; all root tips on a flat 2:1 ellipse. No painted water or shadow.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/base-v1/props-reeds.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-mangrove-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 5.976282594262952,
+        "box": [
+          35,
+          146,
+          1230,
+          1133
+        ],
+        "footAuto": [
+          638,
+          956.5
+        ],
+        "foot": [
+          638,
+          1040
+        ],
+        "anchor": [
+          638,
+          1040
+        ],
+        "kind": "mangrove",
+        "height": 46,
+        "k": 0.05145413870246085,
+        "drawn": {
+          "width": 73.84697986577181,
+          "footFromCentre": 0.3395973154362416,
+          "belowFoot": 4.785234899328859,
+          "rootSpread": 43.59194630872483
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 167.5112,
+        "look": "checks/tree-mangrove-3-attempt-2-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 5.976282594262952,
+          "box": [
+            35,
+            146,
+            1230,
+            1133
+          ],
+          "footAuto": [
+            638,
+            956.5
+          ],
+          "foot": [
+            638,
+            956.5
+          ],
+          "anchor": [
+            638,
+            956.5
+          ],
+          "kind": "mangrove",
+          "height": 46,
+          "k": 0.0567550894509562,
+          "drawn": {
+            "width": 81.45490438001234,
+            "footFromCentre": 0.3745835903763109,
+            "belowFoot": 10.017273288093769,
+            "rootSpread": 48.08291178285009
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 167.5112,
+          "look": "checks/tree-mangrove-3-attempt-2-look.png"
+        },
+        "footReadByEye": true,
+        "footReason": "The automatic lowest-quarter bounds include the rising outer root arches. The visible tip ellipse runs from rear tips near y950 to front tips near y1130, with its center at y1040 under trunk x638.",
+        "lookReview": "Pass at both zooms with explicit foot: old broad dark crown, thick root skirt and thin aerial roots, same upper-left light and clustered depth as the oak; root ellipse stands centered on tile; no painted ground, water or shadow.",
+        "failed": []
+      }
+    },
+    {
+      "file": "tree-willow-1.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nA young weeping willow: a slender trunk and a crown a little narrower than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 8.63857665041246,
+        "box": [
+          143,
+          42,
+          1114,
+          1210
+        ],
+        "footAuto": [
+          709,
+          1209
+        ],
+        "foot": [
+          709,
+          1209
+        ],
+        "anchor": [
+          709,
+          1056.7826086956522
+        ],
+        "kind": "willow",
+        "height": 40,
+        "k": 0.03941730934018852,
+        "drawn": {
+          "width": 45.97634961439589,
+          "footFromCentre": 3.807712082262211,
+          "belowFoot": 0.03941730934018852
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 197.62239999999997,
+        "look": "checks/tree-willow-1-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Clear hanging curtains and exposed foot, no ground or shadow, but silhouette is too narrow (45.98 vs required 48–62) and leaf highlights too bright against oak.",
+        "failed": [
+          "drawn width",
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-willow-1.png",
+      "attempt": 2,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nA young weeping willow: a slender trunk and a crown a little narrower than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt's crown was too narrow and its foliage was too bright. Broaden the dome by about 18 percent relative to the tree's height: crown width should be almost exactly the total crown-top-to-trunk-foot height, while preserving the young slender trunk. Deepen the leaf palette to #2E4234 shade, #6E7A48 mid, #95A05A light, with sparse tips no brighter than #B4B87A. No pale cream or bright yellow leaves. Keep upper-left light but overall foliage darker than the oak's brightest clusters. Hang long narrow-leaf curtains to a ragged hem above the exposed lower trunk; the central trunk foot must be clearly lowest, centered under crown.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 10.314489645892316,
+        "box": [
+          72,
+          88,
+          1183,
+          1198
+        ],
+        "footAuto": [
+          644,
+          1198
+        ],
+        "foot": [
+          644,
+          1198
+        ],
+        "anchor": [
+          644,
+          1053.2173913043478
+        ],
+        "kind": "willow",
+        "height": 40,
+        "k": 0.04144144144144144,
+        "drawn": {
+          "width": 55.29945945945946,
+          "footFromCentre": 0.8205405405405405,
+          "belowFoot": 0
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 187.2148,
+        "look": "checks/tree-willow-1-attempt-2-look.png",
+        "footReadByEye": false,
+        "lookReview": "Width and centered exposed foot now pass. Curtains read well at both zooms but silvery upper-left leaves remain too pale compared with oak cap; retry darker.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-willow-1.png",
+      "attempt": 3,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nA young weeping willow: a slender trunk and a crown a little narrower than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt's crown was too narrow and its foliage was too bright. Broaden the dome by about 18 percent relative to the tree's height: crown width should be almost exactly the total crown-top-to-trunk-foot height, while preserving the young slender trunk. Deepen the leaf palette to #2E4234 shade, #6E7A48 mid, #95A05A light, with sparse tips no brighter than #B4B87A. No pale cream or bright yellow leaves. Keep upper-left light but overall foliage darker than the oak's brightest clusters. Hang long narrow-leaf curtains to a ragged hem above the exposed lower trunk; the central trunk foot must be clearly lowest, centered under crown.\n\nCorrection: the second attempt still painted the upper-left leaves too pale, with a 99th-percentile luminance of 187, above the oak's highlight cap. Paint this version substantially darker: the brightest foliage should be muted moss #95A05A (RGB 149,160,90), ordinary leaves #6E7A48, deep inside #2E4234. Do not use pale silvery, cream, yellow, or desaturated near-white highlights. Keep every foliage highlight below RGB 170,175,110. Preserve the corrected broad young willow proportions and long downward curtains, with trunk foot exposed and centered. This is subdued scenery.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 10.807839157121453,
+        "box": [
+          85,
+          41,
+          1183,
+          1199
+        ],
+        "footAuto": [
+          725,
+          1199
+        ],
+        "foot": [
+          630,
+          1195
+        ],
+        "anchor": [
+          630,
+          1044.4782608695652
+        ],
+        "kind": "willow",
+        "height": 40,
+        "k": 0.03986135181975736,
+        "drawn": {
+          "width": 52.569150779896006,
+          "footFromCentre": -0.19133448873483533,
+          "belowFoot": 0.15944540727902945
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 162.7374,
+        "look": "checks/tree-willow-1-attempt-3-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 10.807839157121453,
+          "box": [
+            85,
+            41,
+            1183,
+            1199
+          ],
+          "footAuto": [
+            725,
+            1199
+          ],
+          "foot": [
+            725,
+            1199
+          ],
+          "anchor": [
+            725,
+            1047.9565217391305
+          ],
+          "kind": "willow",
+          "height": 40,
+          "k": 0.039723661485319514,
+          "drawn": {
+            "width": 52.387564766839375,
+            "footFromCentre": 4.33782383419689,
+            "belowFoot": 0
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 162.7374,
+          "look": "checks/tree-willow-1-attempt-3-look.png"
+        },
+        "footReadByEye": true,
+        "footReason": "The lowest opaque run is the right-projecting surface root at x725. Read the central trunk foot at x630,y1195 to stand the trunk centrally on its placement point.",
+        "lookReview": "Pass at both zooms: narrow leaves in long drooping curtains, open dark gaps, exposed lower trunk, moss/silver-green restrained highlights below oak cap, centered placement, no painted ground, water or shadow.",
+        "failed": []
+      }
+    },
+    {
+      "file": "tree-willow-2.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nA grown weeping willow: the crown about as wide as the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-willow-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 9.603908640675199,
+        "box": [
+          60,
+          49,
+          1214,
+          1211
+        ],
+        "footAuto": [
+          637.5,
+          1211
+        ],
+        "foot": [
+          637.5,
+          1211
+        ],
+        "anchor": [
+          637.5,
+          1081.888888888889
+        ],
+        "kind": "willow",
+        "height": 48,
+        "k": 0.04647160068846816,
+        "drawn": {
+          "width": 64.40963855421687,
+          "footFromCentre": 0.027882960413080894,
+          "belowFoot": 0
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 194.21079999999998,
+        "look": "checks/tree-willow-2-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Broad grown willow silhouette, exposed central foot and hanging curtains read clearly at both zooms; width and placement pass, but upper-left leaf highlights too bright.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-willow-2.png",
+      "attempt": 2,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nA grown weeping willow: the crown about as wide as the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt painted pale bright foliage with 99th-percentile luminance 194, brighter than the oak's highlight cap. Paint this version substantially darker, matching the last reference's subdued willow leaves: brightest foliage muted moss #95A05A (RGB 149,160,90), ordinary leaves #6E7A48, deep inside #2E4234. Do not use pale silvery, cream, yellow, or desaturated near-white highlights. Keep every foliage highlight below RGB 170,175,110. Preserve the grown tree's crown about as wide as the total crown-top-to-foot height, broad downward curtains, visible dark gaps, and central exposed trunk foot. This is subdued scenery.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-willow-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 9.719265177588019,
+        "box": [
+          48,
+          42,
+          1203,
+          1200
+        ],
+        "footAuto": [
+          623.5,
+          1199
+        ],
+        "foot": [
+          623.5,
+          1199
+        ],
+        "anchor": [
+          623.5,
+          1070.4444444444443
+        ],
+        "kind": "willow",
+        "height": 48,
+        "k": 0.046672428694900604,
+        "drawn": {
+          "width": 64.74399308556612,
+          "footFromCentre": -0.11201382886776144,
+          "belowFoot": 0.046672428694900604
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 164.0182,
+        "look": "checks/tree-willow-2-attempt-2-look.png",
+        "footReadByEye": false,
+        "lookReview": "Pass at both zooms: broad grown dome with curtains and dark gaps, clear central trunk foot, subdued moss highlights below oak cap, matching light and depth; no painted ground, water or cast shadow.",
+        "failed": []
+      }
+    },
+    {
+      "file": "tree-willow-3.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nAn old weeping willow: a thick, gnarled trunk that forks low, and a crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-willow-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 7.486219536081032,
+        "box": [
+          51,
+          40,
+          1228,
+          1214
+        ],
+        "footAuto": [
+          641,
+          1214
+        ],
+        "foot": [
+          641,
+          1214
+        ],
+        "anchor": [
+          641,
+          1096.6
+        ],
+        "kind": "willow",
+        "height": 54,
+        "k": 0.05110732538330494,
+        "drawn": {
+          "width": 72.24531516183986,
+          "footFromCentre": 0.0919931856899489,
+          "belowFoot": 0
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 194.34719999999996,
+        "look": "checks/tree-willow-3-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Old willow reads at both zooms with thick low-forking trunk and hanging crown. Width and anchor pass; upper-left leaves too pale against oak highlight cap.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-willow-3.png",
+      "attempt": 2,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nAn old weeping willow: a thick, gnarled trunk that forks low, and a crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt painted pale bright foliage with 99th-percentile luminance 194, brighter than the oak's highlight cap. Paint this version substantially darker, matching the last reference's subdued willow leaves: brightest foliage muted moss #95A05A (RGB 149,160,90), ordinary leaves #6E7A48, deep inside #2E4234. Do not use pale silvery, cream, yellow, or desaturated near-white highlights. Keep every foliage highlight below RGB 170,175,110. Preserve the thick gnarled old trunk forking low into arching limbs, long hanging curtains, crown a little wider than the total crown-top-to-foot height, visible dark gaps, and central exposed trunk foot. This is subdued scenery.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-willow-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 8.471137972523014,
+        "box": [
+          33,
+          43,
+          1228,
+          1211
+        ],
+        "footAuto": [
+          611.5,
+          1211
+        ],
+        "foot": [
+          652,
+          1211
+        ],
+        "anchor": [
+          652,
+          1094.2
+        ],
+        "kind": "willow",
+        "height": 54,
+        "k": 0.05136986301369863,
+        "drawn": {
+          "width": 73.72602739726027,
+          "footFromCentre": 1.3253424657534245,
+          "belowFoot": 0
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 170.3672,
+        "look": "checks/tree-willow-3-look.png",
+        "automaticMeasurement": {
+          "returned": [
+            1254,
+            1254
+          ],
+          "edgePixels": 0,
+          "partialAlphaPct": 8.471137972523014,
+          "box": [
+            33,
+            43,
+            1228,
+            1211
+          ],
+          "footAuto": [
+            611.5,
+            1211
+          ],
+          "foot": [
+            611.5,
+            1211
+          ],
+          "anchor": [
+            611.5,
+            1094.2
+          ],
+          "kind": "willow",
+          "height": 54,
+          "k": 0.05136986301369863,
+          "drawn": {
+            "width": 73.72602739726027,
+            "footFromCentre": -1.1712328767123286,
+            "belowFoot": 0
+          },
+          "overCursorWhite": 0,
+          "amberStrength": 0,
+          "cyanWaterPct": 0,
+          "lumP99": 170.3672,
+          "look": "checks/tree-willow-3-attempt-2-look.png"
+        },
+        "footReadByEye": true,
+        "footReadBy": "Core's art review of 2026-10-17 (finish F1)",
+        "footReason": "The automatic foot is a front root leaning left, about 40 px (2.5 drawn px) left of the trunk, which stands at x 648 to 657. The eye foot is on the trunk axis.",
+        "lookReview": "Pass at both zooms: thick gnarled trunk forks low, old spreading dome with long curtains and dark interior gaps, center foot clear, subdued moss highlights below oak cap, matching camera/light/depth; no painted ground, water or cast shadow.",
+        "failed": []
+      }
+    }
+  ]
+}

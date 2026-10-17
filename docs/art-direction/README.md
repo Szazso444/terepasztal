@@ -58,6 +58,15 @@ Proposed palette seeds, to tune together in `src/art/palette.ts`: forest `#29463
 placement. These are suggested base colours, not an instruction to recolour all stock green.
 Use restrained oxblood, midnight blue, ochre and industrial orange for livery variety.
 
+Every packed atlas texel goes through one cap pass, `tools/atlas-cap.mjs`, after resampling: alpha
+under 16 is dropped and 250 and over made solid; a texel at or above the cursor white `#ECE4D0`
+(`PAL.white`) in all three channels is scaled to at most (235, 227, 207), and one as strong as
+the selection amber `#E8AA48` (`PAL.amber`; hue 25 to 50 degrees, saturation 0.62 and value
+0.85 or more) is toned to saturation 0.6 and value 0.88, both keeping their hue. A set with a
+large lit area over the cursor white's luma (the Fuel Pump, `LIT_FRAMES`) has its luma above 0.85
+compressed smoothly under that luma instead. `tools/atlas-cap.test.mjs` checks every atlas in
+`public/assets` against it. What a painting leaves over the caps is brought under them at packing.
+
 ## 2. Terrain, biomes and tile joins
 
 ![Proposed terrain and biome direction](images/01-land-biomes.png)
@@ -130,8 +139,11 @@ before drawing individual twigs. Bare sprites should not acquire large square so
 | `coal`             | Dark stratified outcrop, distinguishable from ordinary grey rock.                        |
 | `oil`              | Small dark seep with restrained sheen; no bright rainbow pool.                           |
 | `wheat`            | Low raised tile of straw-gold rows, 2.6 to 3.5 px high, darker front, irregular edge.    |
+| `mangrove`         | Dark evergreen crown on arched prop roots ending in wet tips at the waterline; no water. |
+| `willow`           | Weeping crown of hanging silvery-olive curtains over a short, forked trunk on a bank.    |
 
-Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil/wheat;
+Preserve three variants for tree/pine/rock/birch/spruce/oak/cactus/bush/boulder/coal/oil/wheat/
+mangrove/willow;
 two for palm/deadtree/reeds; four for flowers. Change silhouette as well as shade. Check
 placement near curves and signals: clearing a prop must remove its entire visual, and trunk
 anchors must remain attached to the correct tile. Seasonal recolours are optional future work.
