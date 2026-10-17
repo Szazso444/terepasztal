@@ -1,5 +1,6 @@
 import { hash2 } from '../engine/rng';
 import { Biome, Terrain, type GameMap, type PropInstance, type PropKind } from '../world/tiles';
+import { isTree } from './assetScale';
 import { surfaceNoise } from './terrainMaterials';
 
 /** What the renderer knows about a tile beyond the map planes. */
@@ -11,6 +12,23 @@ export interface ScatterContext {
   /** Ground too steep for rails: an exposed hill face. */
   steep(x: number, y: number): boolean;
 }
+
+/**
+ * What stays on paved ground besides trees: the wheat code ends fields short of paving already,
+ * and a deposit is the point of its tile.
+ */
+const KEPT_ON_PAVING: ReadonlySet<PropKind> = new Set<PropKind>(['wheat', 'coal', 'oil']);
+
+/** A prop of this kind gives way to town paving: bushes, flowers, reeds, rocks, cactus. */
+export const clearedByPaving = (kind: PropKind) => !isTree(kind) && !KEPT_ON_PAVING.has(kind);
+
+/**
+ * The props of a tile that show: all of them, unless the tile is paved, when those that give way
+ * to paving are left out. The list itself (the map's own, or `scatterFor`'s) is never changed, so
+ * the props are back when the paving goes.
+ */
+export const propsShown = <P extends { kind: PropKind }>(list: readonly P[], paved: boolean) =>
+  paved ? list.filter((p) => !clearedByPaving(p.kind)) : list;
 
 /** Offsets stay inside the tile, like generated props. */
 const clamp = (v: number) => Math.max(-0.42, Math.min(0.42, v));
