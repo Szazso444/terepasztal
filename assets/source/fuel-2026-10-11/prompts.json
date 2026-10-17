@@ -282,7 +282,7 @@
     {
       "view": "r1",
       "attempt": 5,
-      "selected": true,
+      "selected": false,
       "file": "raw/fuel_pump-a1-r1-attempt-5.png",
       "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\nWhat r0 shows; carry it round the building: a SQUARE red-brick pump house on cream limestone quoins and base; on it, a riveted forest-green steel tank with two oat-cream bands, lying on a dark steel frame, its long axis parallel to the front; a small slate-roofed gable over the door; the door, forest-green planks, in the middle of the front wall; a tall forest-green hose crane whose post stands at the front's left corner (in r0, the left corner of the picture), whose jib reaches out over the front, past its edge, high above train height, with a hose hanging from its end; pipes from the tank to the crane, with copper bands. Carry round the tank's manhole, top pipe, end vent, rivets and frame, as in the master. The square house has one front door only.\n\nr1: the front faces the upper left, out of sight. The lower-left wall is the right-hand side: r0's lower-right wall, copied as it stands. The lower-right wall is the BACK: plain brick and quoins, plainer than the front, no door. The tank's long axis runs parallel to the lower-right wall. The crane's post stands at the far (top) corner, behind the building. Its jib reaches away to the upper left, over the hidden front, high up.\n\nOutput and production: ask for 1024x1024 px, genuine RGBA with alpha-zero background and fully opaque painted surfaces, short side at least 768 pixels. Smooth painted contours, broad readable masses, three or four shades per material, restrained selective edges. Light from upper left: tops lightest, lower-left walls mid, lower-right walls darkest. Palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Highlight cap: nothing at or above cursor white #ECE4D0, and no yellow or orange as strong as selection amber #E8AA48. Never ground, plinth, grass, shadows outside the base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or loose objects. Keep clear margins. Only elevated crane jib overhangs; nothing leaves the footprint at ground level. The pump-house plan is SQUARE: both visible wall feet have equal horizontal spans, within 5%, and run two pixels across for each pixel down. The building tools will fit size and place; do not distort the square plan.\n\nInput 1 is the t1-r1 block-out EDIT TARGET, unchanged. Input 2 is the style board (materials and character only, no lettering or landscape). Input 3 is the fitted committed r0 master, never an earlier r0 attempt. Orthographic 2:1 isometric, 30 degrees down, building turned 45 degrees, no perspective. Footprint t1 at 8 canvas pixels per game pixel, ground centre anchor (512,832) in a 1024x1024 canvas. The block-out's two equal plinth-edge spans set the square plan; do not paint the plinth.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nIt is exactly as large as in the references: no taller, and with no storey more.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the door and the hose crane. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the last attempt left the tank's long axis parallel to the lower-left wall, as in r0, and made the lower-left wall foot 48% longer than the lower-right one. In r1 the tank must run along the lower-right wall, from lower-left toward upper-right, with its round end at the left/near end and its long riveted side running up to the right. The pump house is SQUARE: put its near quoin at the horizontal midpoint between the two outer quoins, so the two visible wall feet are equally long. Copy the square block-out camera and equal edge lengths exactly. The camera check found 5.1 degrees of error; follow the block-out's exact 2:1 slopes. Keep the mast at the far top corner and the jib reaching upper left; no door or front gable on either visible wall.",
       "references": [
@@ -568,7 +568,7 @@
     {
       "view": "r3",
       "attempt": 5,
-      "selected": true,
+      "selected": false,
       "file": "raw/fuel_pump-a1-r3-attempt-5.png",
       "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\nWhat r0 shows; carry it round the building: a SQUARE red-brick pump house on cream limestone quoins and base; on it, a riveted forest-green steel tank with two oat-cream bands, lying on a dark steel frame, its long axis parallel to the front; a small slate-roofed gable over the door; the door, forest-green planks, in the middle of the front wall; a tall forest-green hose crane whose post stands at the front's left corner (in r0, the left corner of the picture), whose jib reaches out over the front, past its edge, high above train height, with a hose hanging from its end; pipes from the tank to the crane, with copper bands. Carry round the tank's manhole, top pipe, end vent, rivets and frame, as in the master. The square house has one front door only.\n\nr3: the front faces the lower right. The lower-right wall is the FRONT: the door in its middle and the gable over it, as on r0's front. The lower-left wall is the left-hand side: plain brick and quoins like the right-hand side. The tank's long axis runs parallel to the lower-right wall. The crane's post stands at the near (bottom) corner, which is the front's left end. Its jib reaches out to the lower right, past the front edge, with the hose hanging from its end. It is r0 turned, not r0 mirrored.\n\nOutput and production: ask for 1024x1024 px, genuine RGBA with alpha-zero background and fully opaque painted surfaces, short side at least 768 pixels. Smooth painted contours, broad readable masses, three or four shades per material, restrained selective edges. Light from upper left: tops lightest, lower-left walls mid, lower-right walls darkest. Palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Highlight cap: nothing at or above cursor white #ECE4D0, and no yellow or orange as strong as selection amber #E8AA48. Never ground, plinth, grass, shadows outside the base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or loose objects. Keep clear margins. Only elevated crane jib overhangs; nothing leaves the footprint at ground level. The pump-house plan is SQUARE: both visible wall feet have equal horizontal spans, within 5%, and run two pixels across for each pixel down. The building tools will fit size and place; do not distort the square plan.\n\nInput 1 is the t1-r3 block-out EDIT TARGET, unchanged. Input 2 is the style board, materials and character only. Input 3 is the fitted committed r0 master. Keep its square pump-house plan with equally long wall feet. Orthographic 2:1 isometric, camera 30 degrees down, building turned 45 degrees, no perspective. Canvas 1024x1024, footprint t1, scale 8 canvas pixels per game pixel, ground-centre anchor (512,832). Keep the guide's two equal plinth edges as the plan; omit the plinth itself.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nCorrection: the last attempt mirrored r0: it put the crane at the far right corner and kept the tank axis parallel to the lower-left wall. In r3 the crane post stands at the NEAR/BOTTOM corner where the two visible walls meet, rising in the foreground from the front's left end. Its high jib projects to the LOWER RIGHT over the front wall, with the hose suspended there. The tank long axis runs parallel to the LOWER-RIGHT wall, diagonally from lower-left to upper-right, with its round end at the lower-left end. Keep the door and small slate gable in the MIDDLE of the lower-right FRONT wall. Square pump-house wall feet must have equal spans and exact 2:1 guide slopes; the last plan missed by 16% and its camera by 7.7 degrees. Copy the grey block-out's camera, not the earlier wrong angle.\n\nCorrection: the second attempt fixed the post and tank orientation, but the jib pointed almost sideways/up-right. From the near-corner mast top, project the elevated jib DOWN-RIGHT toward the track, at the ground direction of the front overhang: two pixels right for each pixel down. Its hanging hose must finish high, above the pump house's brick-wall top, far above its ground foot, so no crane part can be mistaken for an outer wall foot. Keep the post exactly on the near corner, door centred on the lower-right wall, tank axis along that wall, and same r0 parts and size. Make the masonry a SQUARE block: the two outer ground-level corners equally high, the near corner midway between them, two equally long visible wall feet at exact +0.5 and -0.5 slopes as in the grey guide. The last camera check reported 7 degrees off; copy the block-out's camera exactly.",
       "references": [
@@ -637,26 +637,630 @@
           "observation": "Near-corner post, central front door and corrected tank axis. Jib still points too far sideways; measured plan 41.7% out, camera 3 degrees off. The hose interferes with the outer-base measurement, but both feet are marked sure, so no eye override is claimed. Retained closest draft, not accepted."
         }
       }
+    },
+    {
+      "view": "r1",
+      "attempt": 7,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r1-attempt-7.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\n- a LONG, NARROW red-brick pump house on cream limestone quoins and base. Its front is about 2.4\n  times as long as its sides. Its walls are tall, about half the building's height under the tank;\n- the front in two bays, from its left end: the door bay, with forest-green plank door, a lamp over\n  it and a small slate-roofed porch gable standing a little forward of the wall; a downpipe; a\n  plain brick bay; a big quoined pier at the front's right end;\n- the sides and the back: plain brick between quoins, no door. A side is one bay wide;\n- on the house, a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\n  two oat-cream bands, a railing, a manhole and a vent. The tank lies along the front, as long as\n  the front and as wide as the house is deep, so it covers the whole roof;\n- a tall forest-green hose crane at the front's left end. Its jib stands high above train height,\n  with the hose hanging from its end. The crane slews: on r0 it is swung out past the front's left\n  end. In the views below, paint it square to the front, so the hose hangs over the track side;\n- pipes from the tank to the crane, with copper bands.\n\nView r1: the front faces the upper left, out of sight. The lower-left wall is the right-hand side: SHORT, one plain bay, as r0's lower-right wall. The lower-right wall is the BACK: LONG, plain brick and quoins, no door, no porch. The tank lies along the lower-right wall and is as long as it. The crane's post stands at the far (top) corner. Its jib reaches away, high up, square to the hidden front: in the picture it runs parallel to the lower-left wall's foot, rising to the upper left. Not level to the left.\n\nIn every view the house is r0's: the long wall about 2.4 times the short one, its walls as tall, the tank as long and as fat.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nIt is exactly as large as in the references: no taller, and with no storey more.\n\nCorrection: the pump house is long and narrow, not square. Its front, and its back, are about 2.4 times as long as its sides, and it is only as deep as the tank is wide. The grey block-out has exactly that plan: paint the building on it, its walls on the block's walls.\n\nSmooth painted contours. Highlight cap: nothing at or above #ECE4D0, no yellow or orange as strong as #E8AA48. Edit the first attached image, the grey guide; the following images are the references in the order described. Keep the narrow plan of the house block, not the square plinth; remove the plinth. Output 1024x1024 RGBA PNG, transparent background, opaque surfaces.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the door and the hose crane. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.",
+      "references": [
+        "assets/source/fuel-2026-10-11/guides/fuel_pump-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [253, 1039.080302164667],
+        "s": [429.21110157989375, 1128.3939275417165],
+        "e": [989, 879.9936818467278],
+        "sure": [true, true],
+        "slopes": [0.5068558369834317, -0.4437391423732223],
+        "lowerLeftSpan": 176.21110157989375,
+        "lowerRightSpan": 559.7888984201063,
+        "difference": 2.176808347493924,
+        "plan": {
+          "measured": {
+            "w": [253, 1039.080302164667],
+            "s": [429.21110157989375, 1128.3939275417165],
+            "e": [989, 879.9936818467278]
+          },
+          "used": {
+            "w": [253, 1039.080302164667],
+            "s": [429.21110157989375, 1128.3939275417165],
+            "e": [989, 879.9936818467278]
+          },
+          "readByEye": false,
+          "reason": "Measured points lie on the house base corners.",
+          "lowerLeftSpan": 176.21110157989375,
+          "lowerRightSpan": 559.7888984201063,
+          "longToShort": 3.176808347493924,
+          "required": [2, 2.8]
+        },
+        "planPass": false,
+        "camera": {
+          "off": false,
+          "by": 1.9,
+          "elevation": -1.7,
+          "turn": 1.9
+        },
+        "check": {
+          "ok": true,
+          "problems": [],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.507, -0.444],
+            "slopes": [0.507, -0.444],
+            "base": {
+              "w": [253, 1039.1],
+              "s": [429.2, 1128.4],
+              "e": [989, 880]
+            },
+            "scale": 0.6122,
+            "vertical": 1.052,
+            "shear": -0.0332,
+            "cx": 621,
+            "cy": 988.8,
+            "box": {
+              "left": 286.7,
+              "top": 341.5,
+              "right": 839.5,
+              "bottom": 946.3
+            },
+            "camera": {
+              "elevation": 28.3,
+              "turn": 1.9
+            },
+            "area": 434759
+          }
+        },
+        "observation": "Plain rear walls; tank axis correct. Plan 3.18:1 too narrow; crane at visible right end with wrong up-right jib. Clear margins.",
+        "grassReview": ".qa/look/fuel_pump-a1-r1.png inspected",
+        "surfaces": {
+          "alphaZero": 1112810,
+          "alpha255": 750,
+          "alphaBetween": 458956,
+          "atOrAboveCursorLuma": 7011,
+          "lumaMethod": "0.2126 R + 0.7152 G + 0.0722 B on alpha >=128 pixels; threshold is #ECE4D0"
+        }
+      },
+      "provenance": {
+        "tool": "built-in image_gen",
+        "date": "2026-10-16",
+        "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-055fd26c-0ffa-4891-b2e0-68f3a635ea48.png",
+        "sha256": "3168dbc9d7765c9e9101424bee56e197f724ebff5654fdf6b3c28b432daf22b5",
+        "retainedUnmodified": true
+      }
+    },
+    {
+      "view": "r1",
+      "attempt": 8,
+      "selected": true,
+      "file": "raw/fuel_pump-a1-r1-attempt-8.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\n- a LONG, NARROW red-brick pump house on cream limestone quoins and base. Its front is about 2.4\n  times as long as its sides. Its walls are tall, about half the building's height under the tank;\n- the front in two bays, from its left end: the door bay, with forest-green plank door, a lamp over\n  it and a small slate-roofed porch gable standing a little forward of the wall; a downpipe; a\n  plain brick bay; a big quoined pier at the front's right end;\n- the sides and the back: plain brick between quoins, no door. A side is one bay wide;\n- on the house, a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\n  two oat-cream bands, a railing, a manhole and a vent. The tank lies along the front, as long as\n  the front and as wide as the house is deep, so it covers the whole roof;\n- a tall forest-green hose crane at the front's left end. Its jib stands high above train height,\n  with the hose hanging from its end. The crane slews: on r0 it is swung out past the front's left\n  end. In the views below, paint it square to the front, so the hose hangs over the track side;\n- pipes from the tank to the crane, with copper bands.\n\nView r1: the front faces the upper left, out of sight. The lower-left wall is the right-hand side: SHORT, one plain bay, as r0's lower-right wall. The lower-right wall is the BACK: LONG, plain brick and quoins, no door, no porch. The tank lies along the lower-right wall and is as long as it. The crane's post stands at the far (top) corner. Its jib reaches away, high up, square to the hidden front: in the picture it runs parallel to the lower-left wall's foot, rising to the upper left. Not level to the left.\n\nIn every view the house is r0's: the long wall about 2.4 times the short one, its walls as tall, the tank as long and as fat.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nIt is exactly as large as in the references: no taller, and with no storey more.\n\nCorrection: the pump house is long and narrow, not square. Its front, and its back, are about 2.4 times as long as its sides, and it is only as deep as the tank is wide. The grey block-out has exactly that plan: paint the building on it, its walls on the block's walls.\n\nSmooth painted contours. Highlight cap: nothing at or above #ECE4D0, no yellow or orange as strong as #E8AA48. Edit the first attached image, the grey guide; the following images are the references in the order described. Keep the narrow plan of the house block, not the square plinth; remove the plinth. Output 1024x1024 RGBA PNG, transparent background, opaque surfaces.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the door and the hose crane. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the last attempt made the back 3.18 times the short side; keep the guide house plan at 2.4:1, with a wider one-bay end wall. It put the crane post at the visible right end and the jib up-right along the tank. The post belongs at the FAR/TOP corner, behind the house and tank, as in the grey guide. Its jib must project UPPER LEFT, square to the hidden front, parallel to the lower-left wall foot, never upper right along the tank. Keep the same tall brick walls, tank, plain rear walls and materials.",
+      "references": [
+        "assets/source/fuel-2026-10-11/guides/fuel_pump-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [350, 1049.480906844909],
+        "s": [493.4156822182697, 1136.35472373998],
+        "e": [949, 894.3001748304127],
+        "sure": [true, true],
+        "slopes": [0.6057483780808186, -0.5313057088710749],
+        "lowerLeftSpan": 143.4156822182697,
+        "lowerRightSpan": 455.5843177817303,
+        "difference": 2.176670157231198,
+        "plan": {
+          "measured": {
+            "w": [350, 1049.480906844909],
+            "s": [493.4156822182697, 1136.35472373998],
+            "e": [949, 894.3001748304127]
+          },
+          "used": {
+            "w": [298, 1025],
+            "s": [493, 1136],
+            "e": [976, 880]
+          },
+          "readByEye": true,
+          "reason": "Read by eye from the limestone outer quoin corners: measured w and e terminate inside the base, not at its outer corners.",
+          "lowerLeftSpan": 195,
+          "lowerRightSpan": 483,
+          "longToShort": 2.476923076923077,
+          "required": [2, 2.8]
+        },
+        "planPass": true,
+        "camera": {
+          "off": true,
+          "by": 4.6,
+          "elevation": 4.6,
+          "turn": 1.9
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 4.6°: it looks down from 34.6° where the game looks down from 30° (the wall feet slope 0.61 and -0.53, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.606, -0.531],
+            "slopes": [0.606, -0.531],
+            "base": {
+              "w": [350, 1049.5],
+              "s": [493.4, 1136.4],
+              "e": [949, 894.3]
+            },
+            "scale": 0.7522,
+            "vertical": 0.8795,
+            "shear": -0.0327,
+            "cx": 649.5,
+            "cy": 833.5,
+            "box": {
+              "left": 252.1,
+              "top": 282,
+              "right": 771.9,
+              "bottom": 946.3
+            },
+            "camera": {
+              "elevation": 34.6,
+              "turn": 1.9
+            },
+            "area": 378887
+          },
+          "camera": {
+            "by": 4.6,
+            "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "observation": "Plain visible back and side. Jib reaches upper left but post remains at right end, not far/top corner. Eye plan 2.48:1; camera fails at 4.6 degrees.",
+        "grassReview": ".qa/look/fuel_pump-a1-r1.png inspected",
+        "surfaces": {
+          "alphaZero": 1172718,
+          "alpha255": 970,
+          "alphaBetween": 398828,
+          "atOrAboveCursorLuma": 4733,
+          "lumaMethod": "0.2126 R + 0.7152 G + 0.0722 B on alpha >=128 pixels; threshold is #ECE4D0"
+        }
+      },
+      "provenance": {
+        "tool": "built-in image_gen",
+        "date": "2026-10-16",
+        "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-6a90d97a-e885-4702-a333-7c92aa2b935f.png",
+        "sha256": "0796df2c555945e86fb1a6f954ec7d18c7cc97875a83a213ecc119f22585f7ad",
+        "retainedUnmodified": true
+      }
+    },
+    {
+      "view": "r1",
+      "attempt": 9,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r1-attempt-9.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\n- a LONG, NARROW red-brick pump house on cream limestone quoins and base. Its front is about 2.4\n  times as long as its sides. Its walls are tall, about half the building's height under the tank;\n- the front in two bays, from its left end: the door bay, with forest-green plank door, a lamp over\n  it and a small slate-roofed porch gable standing a little forward of the wall; a downpipe; a\n  plain brick bay; a big quoined pier at the front's right end;\n- the sides and the back: plain brick between quoins, no door. A side is one bay wide;\n- on the house, a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\n  two oat-cream bands, a railing, a manhole and a vent. The tank lies along the front, as long as\n  the front and as wide as the house is deep, so it covers the whole roof;\n- a tall forest-green hose crane at the front's left end. Its jib stands high above train height,\n  with the hose hanging from its end. The crane slews: on r0 it is swung out past the front's left\n  end. In the views below, paint it square to the front, so the hose hangs over the track side;\n- pipes from the tank to the crane, with copper bands.\n\nView r1: the front faces the upper left, out of sight. The lower-left wall is the right-hand side: SHORT, one plain bay, as r0's lower-right wall. The lower-right wall is the BACK: LONG, plain brick and quoins, no door, no porch. The tank lies along the lower-right wall and is as long as it. The crane's post stands at the far (top) corner. Its jib reaches away, high up, square to the hidden front: in the picture it runs parallel to the lower-left wall's foot, rising to the upper left. Not level to the left.\n\nIn every view the house is r0's: the long wall about 2.4 times the short one, its walls as tall, the tank as long and as fat.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nIt is exactly as large as in the references: no taller, and with no storey more.\n\nCorrection: the pump house is long and narrow, not square. Its front, and its back, are about 2.4 times as long as its sides, and it is only as deep as the tank is wide. The grey block-out has exactly that plan: paint the building on it, its walls on the block's walls.\n\nSmooth painted contours. Highlight cap: nothing at or above #ECE4D0, no yellow or orange as strong as #E8AA48. Edit the first attached image, the grey guide; the following images are the references in the order described. Keep the narrow plan of the house block, not the square plinth; remove the plinth. Output 1024x1024 RGBA PNG, transparent background, opaque surfaces.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the side with the door and the hose crane. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nCorrection: the last attempt made the back 3.18 times the short side; keep the guide house plan at 2.4:1, with a wider one-bay end wall. It put the crane post at the visible right end and the jib up-right along the tank. The post belongs at the FAR/TOP corner, behind the house and tank, as in the grey guide. Its jib must project UPPER LEFT, square to the hidden front, parallel to the lower-left wall foot, never upper right along the tank. Keep the same tall brick walls, tank, plain rear walls and materials.\n\nCorrection: the previous attempt still had the crane on the right end of the tank, and its wall feet did not match the guide camera. Match the guide exactly: the post rises from the far TOP corner, behind the middle of the tank silhouette, not at the visible rightmost wall corner. Its jib reaches upper left. Copy the guide wall-foot directions exactly. Keep the long back 2.4 times the short side, measured between the actual house quoin corners. Plain visible walls, no entrance, no porch.",
+      "references": [
+        "assets/source/fuel-2026-10-11/guides/fuel_pump-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [371, 1043.1353346456692],
+        "s": [496.84475022432235, 1125.5189374183642],
+        "e": [886, 885.439242669489],
+        "sure": [true, true],
+        "slopes": [0.6546447319085115, -0.6169252371316215],
+        "lowerLeftSpan": 125.84475022432235,
+        "lowerRightSpan": 389.15524977567765,
+        "difference": 2.09234393236107,
+        "plan": {
+          "measured": {
+            "w": [371, 1043.1353346456692],
+            "s": [496.84475022432235, 1125.5189374183642],
+            "e": [886, 885.439242669489]
+          },
+          "used": {
+            "w": [320, 1026],
+            "s": [497, 1126],
+            "e": [918, 866]
+          },
+          "readByEye": true,
+          "reason": "Approximate outer limestone quoin corners read by eye; measured w and e sit inboard of the house's ends.",
+          "lowerLeftSpan": 177,
+          "lowerRightSpan": 421,
+          "longToShort": 2.378531073446328,
+          "required": [2, 2.8]
+        },
+        "planPass": true,
+        "camera": {
+          "off": true,
+          "by": 9.5,
+          "elevation": 9.5,
+          "turn": 0.8
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 9.5°: it looks down from 39.5° where the game looks down from 30° (the wall feet slope 0.66 and -0.62, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.655, -0.617],
+            "slopes": [0.655, -0.617],
+            "base": {
+              "w": [371, 1043.1],
+              "s": [496.8, 1125.5],
+              "e": [886, 885.4]
+            },
+            "scale": 0.8749,
+            "vertical": 0.7864,
+            "shear": -0.0148,
+            "cx": 628.5,
+            "cy": 749,
+            "box": {
+              "left": 248.2,
+              "top": 256.9,
+              "right": 778.4,
+              "bottom": 945
+            },
+            "camera": {
+              "elevation": 39.5,
+              "turn": 0.8
+            },
+            "area": 340438
+          },
+          "camera": {
+            "by": 9.5,
+            "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "observation": "Plain visible walls, no door or porch. Far post and upper-left jib improved. Tank and house axis correct. Plan passes by actual outer corners; camera fails at 9.5 degrees.",
+        "grassReview": ".qa/look/fuel_pump-a1-r1.png inspected",
+        "surfaces": {
+          "alphaZero": 1216033,
+          "alpha255": 573,
+          "alphaBetween": 355910,
+          "atOrAboveCursorLuma": 4889,
+          "lumaMethod": "0.2126 R + 0.7152 G + 0.0722 B on alpha >=128 pixels; threshold is #ECE4D0"
+        }
+      },
+      "provenance": {
+        "tool": "built-in image_gen",
+        "date": "2026-10-16",
+        "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-962e7d3a-aef1-462d-ad39-cf932e6dc547.png",
+        "sha256": "f3a5766f562a50ecb7966260a9a1b6cb08cbcb3c7f9b53658cb985cb4d63dfc7",
+        "retainedUnmodified": true
+      }
+    },
+    {
+      "view": "r3",
+      "attempt": 6,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-6.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\n- a LONG, NARROW red-brick pump house on cream limestone quoins and base. Its front is about 2.4\n  times as long as its sides. Its walls are tall, about half the building's height under the tank;\n- the front in two bays, from its left end: the door bay, with forest-green plank door, a lamp over\n  it and a small slate-roofed porch gable standing a little forward of the wall; a downpipe; a\n  plain brick bay; a big quoined pier at the front's right end;\n- the sides and the back: plain brick between quoins, no door. A side is one bay wide;\n- on the house, a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\n  two oat-cream bands, a railing, a manhole and a vent. The tank lies along the front, as long as\n  the front and as wide as the house is deep, so it covers the whole roof;\n- a tall forest-green hose crane at the front's left end. Its jib stands high above train height,\n  with the hose hanging from its end. The crane slews: on r0 it is swung out past the front's left\n  end. In the views below, paint it square to the front, so the hose hangs over the track side;\n- pipes from the tank to the crane, with copper bands.\n\nView r3: the front faces the lower right. The lower-right wall is the FRONT: LONG, in r0's two bays. From the near (bottom) corner: the crane's post, the door bay with its porch gable and lamp, the downpipe, the plain bay, and the big quoined pier at the right corner. The lower-left wall is the left-hand side: SHORT, one plain bay. The tank lies along the lower-right wall. The jib reaches out from the post, high up, square to the front: in the picture it runs parallel to the lower-left wall's foot, falling to the lower right. The hose hangs from its end in front of the door bay, its end at about door-top height, clear of the wall's foot. Never along the front toward the right corner. It is r0 turned, not r0 mirrored.\n\nIn every view the house is r0's: the long wall about 2.4 times the short one, its walls as tall, the tank as long and as fat.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nCorrection: the pump house is long and narrow, not square. Its front, and its back, are about 2.4 times as long as its sides, and it is only as deep as the tank is wide. The grey block-out has exactly that plan: paint the building on it, its walls on the block's walls.\n\nSmooth painted contours. Highlight cap: nothing at or above #ECE4D0, no yellow or orange as strong as #E8AA48. Edit the first attached image, the grey guide; the following images are the references in the order described. Keep the narrow plan of the house block, not the square plinth; remove the plinth. Output 1024x1024 RGBA PNG, transparent background, opaque surfaces.",
+      "references": [
+        "assets/source/fuel-2026-10-11/guides/fuel_pump-r3.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [209, 817.192740288182],
+        "s": [800.1547403463456, 1167.4506589530033],
+        "e": [1052, 1054.3184516280728],
+        "sure": [true, true],
+        "slopes": [0.5924978601366069, -0.4492131695490851],
+        "lowerLeftSpan": 591.1547403463456,
+        "lowerRightSpan": 251.84525965365435,
+        "difference": 1.3472934974409307,
+        "plan": {
+          "measured": {
+            "w": [209, 817.192740288182],
+            "s": [800.1547403463456, 1167.4506589530033],
+            "e": [1052, 1054.3184516280728]
+          },
+          "used": {
+            "w": [370, 917],
+            "s": [800, 1167],
+            "e": [1052, 1054]
+          },
+          "readByEye": true,
+          "reason": "Measured w lands below the hanging hose; actual house's left quoin read by eye.",
+          "lowerLeftSpan": 430,
+          "lowerRightSpan": 252,
+          "longToShort": 0.586046511627907,
+          "required": [2, 2.8]
+        },
+        "planPass": false,
+        "camera": {
+          "off": true,
+          "by": 4,
+          "elevation": 1.1,
+          "turn": 4
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 4.0°: the building is turned 4.0° towards its lower-right wall (the wall feet slope 0.59 and -0.45, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.592, -0.449],
+            "slopes": [0.592, -0.449],
+            "base": {
+              "w": [209, 817.2],
+              "s": [800.2, 1167.5],
+              "e": [1052, 1054.3]
+            },
+            "scale": 0.5345,
+            "vertical": 0.96,
+            "shear": -0.0688,
+            "cx": 630.5,
+            "cy": 854.9,
+            "box": {
+              "left": 265.9,
+              "top": 527,
+              "right": 737.3,
+              "bottom": 939.8
+            },
+            "camera": {
+              "elevation": 31.1,
+              "turn": 4
+            },
+            "area": 411618
+          },
+          "camera": {
+            "by": 4,
+            "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "observation": "Repeated r0: long front/door/porch lower left, short side lower right, wrong tank axis and left-edge crane. Camera 4 degrees off; plan inverted.",
+        "grassReview": ".qa/look/fuel_pump-a1-r3.png inspected",
+        "surfaces": {
+          "alphaZero": 1142299,
+          "alpha255": 555,
+          "alphaBetween": 429662,
+          "atOrAboveCursorLuma": 6200,
+          "lumaMethod": "0.2126 R + 0.7152 G + 0.0722 B on alpha >=128 pixels; threshold is #ECE4D0"
+        }
+      },
+      "provenance": {
+        "tool": "built-in image_gen",
+        "date": "2026-10-16",
+        "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-44028c58-5faa-4ea8-925d-5c01f477aea2.png",
+        "sha256": "1bffdd022f53a44c5fd4f19aa8245d61e95f7e80c80357e016ae6870651786aa",
+        "retainedUnmodified": true
+      }
+    },
+    {
+      "view": "r3",
+      "attempt": 7,
+      "selected": true,
+      "file": "raw/fuel_pump-a1-r3-attempt-7.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\n- a LONG, NARROW red-brick pump house on cream limestone quoins and base. Its front is about 2.4\n  times as long as its sides. Its walls are tall, about half the building's height under the tank;\n- the front in two bays, from its left end: the door bay, with forest-green plank door, a lamp over\n  it and a small slate-roofed porch gable standing a little forward of the wall; a downpipe; a\n  plain brick bay; a big quoined pier at the front's right end;\n- the sides and the back: plain brick between quoins, no door. A side is one bay wide;\n- on the house, a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\n  two oat-cream bands, a railing, a manhole and a vent. The tank lies along the front, as long as\n  the front and as wide as the house is deep, so it covers the whole roof;\n- a tall forest-green hose crane at the front's left end. Its jib stands high above train height,\n  with the hose hanging from its end. The crane slews: on r0 it is swung out past the front's left\n  end. In the views below, paint it square to the front, so the hose hangs over the track side;\n- pipes from the tank to the crane, with copper bands.\n\nView r3: the front faces the lower right. The lower-right wall is the FRONT: LONG, in r0's two bays. From the near (bottom) corner: the crane's post, the door bay with its porch gable and lamp, the downpipe, the plain bay, and the big quoined pier at the right corner. The lower-left wall is the left-hand side: SHORT, one plain bay. The tank lies along the lower-right wall. The jib reaches out from the post, high up, square to the front: in the picture it runs parallel to the lower-left wall's foot, falling to the lower right. The hose hangs from its end in front of the door bay, its end at about door-top height, clear of the wall's foot. Never along the front toward the right corner. It is r0 turned, not r0 mirrored.\n\nIn every view the house is r0's: the long wall about 2.4 times the short one, its walls as tall, the tank as long and as fat.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nCorrection: the pump house is long and narrow, not square. Its front, and its back, are about 2.4 times as long as its sides, and it is only as deep as the tank is wide. The grey block-out has exactly that plan: paint the building on it, its walls on the block's walls.\n\nSmooth painted contours. Highlight cap: nothing at or above #ECE4D0, no yellow or orange as strong as #E8AA48. Edit the first attached image, the grey guide; the following images are the references in the order described. Keep the narrow plan of the house block, not the square plinth; remove the plinth. Output 1024x1024 RGBA PNG, transparent background, opaque surfaces.\n\nCorrection: the last attempt simply repainted r0: it put the LONG FRONT, porch, door and tank on the LOWER-LEFT wall, with the crane at the left edge. That is the wrong view. Turn the entire building to match the FIRST GREY GUIDE: LOWER-LEFT wall SHORT and PLAIN, LOWER-RIGHT wall LONG with the door and porch in its near/bottom bay. Tank axis must rise from the near bottom corner toward the upper-right, along the LONG LOWER-RIGHT wall. Crane post at the NEAR/BOTTOM corner, beside the door; jib projects DOWN-RIGHT across the front, parallel to the short lower-left wall foot. Do not reproduce r0 or mirror it; show the named walls of the guide.",
+      "references": [
+        "assets/source/fuel-2026-10-11/guides/fuel_pump-r3.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [381, 1009.4913625628566],
+        "s": [561.6760691201359, 1106.9847777427033],
+        "e": [1057, 846.3013579789271],
+        "sure": [true, true],
+        "slopes": [0.5396033667027641, -0.5262887648103609],
+        "lowerLeftSpan": 180.67606912013594,
+        "lowerRightSpan": 495.32393087986406,
+        "difference": 1.7415026975736954,
+        "plan": {
+          "measured": {
+            "w": [381, 1009.4913625628566],
+            "s": [561.6760691201359, 1106.9847777427033],
+            "e": [1057, 846.3013579789271]
+          },
+          "used": {
+            "w": [381, 1009.4913625628566],
+            "s": [561.6760691201359, 1106.9847777427033],
+            "e": [1057, 846.3013579789271]
+          },
+          "readByEye": false,
+          "reason": "Measured points lie on the house base corners.",
+          "lowerLeftSpan": 180.67606912013594,
+          "lowerRightSpan": 495.32393087986406,
+          "longToShort": 2.7415026975736954,
+          "required": [2, 2.8]
+        },
+        "planPass": true,
+        "camera": {
+          "off": true,
+          "by": 2.2,
+          "elevation": 2.2,
+          "turn": 0.4
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 2.2°: it looks down from 32.2° where the game looks down from 30° (the wall feet slope 0.54 and -0.53, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.54, -0.526],
+            "slopes": [0.54, -0.526],
+            "base": {
+              "w": [381, 1009.5],
+              "s": [561.7, 1107],
+              "e": [1057, 846.3]
+            },
+            "scale": 0.6665,
+            "vertical": 0.9382,
+            "shear": -0.0062,
+            "cx": 719,
+            "cy": 866,
+            "box": {
+              "left": 286.1,
+              "top": 394.8,
+              "right": 737.3,
+              "bottom": 948.4
+            },
+            "camera": {
+              "elevation": 32.2,
+              "turn": 0.4
+            },
+            "area": 391754
+          },
+          "camera": {
+            "by": 2.2,
+            "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "observation": "Correct r3 turn: plain short lower-left side, long lower-right front with two bays, near door/porch, downpipe and plain bay. Tank axis correct; post at near corner, jib down-right. Crane too low; hose nearly reaches ground instead of door-top height. Camera misses by 2.2 degrees. Plan passes at 2.74:1.",
+        "grassReview": ".qa/look/fuel_pump-a1-r3.png inspected",
+        "surfaces": {
+          "alphaZero": 1165770,
+          "alpha255": 154,
+          "alphaBetween": 406592,
+          "atOrAboveCursorLuma": 5869,
+          "lumaMethod": "0.2126 R + 0.7152 G + 0.0722 B on alpha >=128 pixels; threshold is #ECE4D0"
+        }
+      },
+      "provenance": {
+        "tool": "built-in image_gen",
+        "date": "2026-10-16",
+        "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-0524112f-e79a-4569-8388-234013c8bf28.png",
+        "sha256": "29dffc6117e955e905501bf426507bbb74ddd39a014557955468fabd7bf3f51e",
+        "retainedUnmodified": true
+      }
+    },
+    {
+      "view": "r3",
+      "attempt": 8,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-8.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines.\n- a LONG, NARROW red-brick pump house on cream limestone quoins and base. Its front is about 2.4\n  times as long as its sides. Its walls are tall, about half the building's height under the tank;\n- the front in two bays, from its left end: the door bay, with forest-green plank door, a lamp over\n  it and a small slate-roofed porch gable standing a little forward of the wall; a downpipe; a\n  plain brick bay; a big quoined pier at the front's right end;\n- the sides and the back: plain brick between quoins, no door. A side is one bay wide;\n- on the house, a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\n  two oat-cream bands, a railing, a manhole and a vent. The tank lies along the front, as long as\n  the front and as wide as the house is deep, so it covers the whole roof;\n- a tall forest-green hose crane at the front's left end. Its jib stands high above train height,\n  with the hose hanging from its end. The crane slews: on r0 it is swung out past the front's left\n  end. In the views below, paint it square to the front, so the hose hangs over the track side;\n- pipes from the tank to the crane, with copper bands.\n\nView r3: the front faces the lower right. The lower-right wall is the FRONT: LONG, in r0's two bays. From the near (bottom) corner: the crane's post, the door bay with its porch gable and lamp, the downpipe, the plain bay, and the big quoined pier at the right corner. The lower-left wall is the left-hand side: SHORT, one plain bay. The tank lies along the lower-right wall. The jib reaches out from the post, high up, square to the front: in the picture it runs parallel to the lower-left wall's foot, falling to the lower right. The hose hangs from its end in front of the door bay, its end at about door-top height, clear of the wall's foot. Never along the front toward the right corner. It is r0 turned, not r0 mirrored.\n\nIn every view the house is r0's: the long wall about 2.4 times the short one, its walls as tall, the tank as long and as fat.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nCorrection: the pump house is long and narrow, not square. Its front, and its back, are about 2.4 times as long as its sides, and it is only as deep as the tank is wide. The grey block-out has exactly that plan: paint the building on it, its walls on the block's walls.\n\nSmooth painted contours. Highlight cap: nothing at or above #ECE4D0, no yellow or orange as strong as #E8AA48. Edit the first attached image, the grey guide; the following images are the references in the order described. Keep the narrow plan of the house block, not the square plinth; remove the plinth. Output 1024x1024 RGBA PNG, transparent background, opaque surfaces.\n\nCorrection: the last attempt simply repainted r0: it put the LONG FRONT, porch, door and tank on the LOWER-LEFT wall, with the crane at the left edge. That is the wrong view. Turn the entire building to match the FIRST GREY GUIDE: LOWER-LEFT wall SHORT and PLAIN, LOWER-RIGHT wall LONG with the door and porch in its near/bottom bay. Tank axis must rise from the near bottom corner toward the upper-right, along the LONG LOWER-RIGHT wall. Crane post at the NEAR/BOTTOM corner, beside the door; jib projects DOWN-RIGHT across the front, parallel to the short lower-left wall foot. Do not reproduce r0 or mirror it; show the named walls of the guide.\n\nCorrection: the second attempt put the long front, two bays, door, porch, downpipe and near-corner post on the correct lower-right wall, but the crane jib was too low and the hose nearly touched the ground. Keep that arrangement and plan. Extend the post above the TOP of the tank, as tall as the post in the guide, with its jib high above train height. The jib projects down-right perpendicular to the front, not along it. Shorten the hanging hose so its end stops at DOOR-TOP height, clear of the wall foot. Match the guide camera and its wall-foot lines exactly.",
+      "references": [
+        "assets/source/fuel-2026-10-11/guides/fuel_pump-r3.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [403, 1033.3622112836047],
+        "s": [576.2692668550293, 1136.8688930991864],
+        "e": [851, 997.8545748639449],
+        "sure": [true, true],
+        "slopes": [0.5973747317935125, -0.5060020647995208],
+        "lowerLeftSpan": 173.2692668550293,
+        "lowerRightSpan": 274.7307331449707,
+        "difference": 0.58557104864322,
+        "plan": {
+          "measured": {
+            "w": [403, 1033.3622112836047],
+            "s": [576.2692668550293, 1136.8688930991864],
+            "e": [851, 997.8545748639449]
+          },
+          "used": {
+            "w": [360, 1022],
+            "s": [576, 1137],
+            "e": [916, 969]
+          },
+          "readByEye": true,
+          "reason": "Outer limestone quoin corners read by eye; measured w sits inboard and e is near the hose, not the far right house corner.",
+          "lowerLeftSpan": 216,
+          "lowerRightSpan": 340,
+          "longToShort": 1.5740740740740742,
+          "required": [2, 2.8]
+        },
+        "planPass": false,
+        "camera": {
+          "off": true,
+          "by": 3.4,
+          "elevation": 3.4,
+          "turn": 2.4
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 3.4°: it looks down from 33.4° where the game looks down from 30° and the building is turned 2.4° towards its lower-right wall (the wall feet slope 0.60 and -0.51, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.597, -0.506],
+            "slopes": [0.597, -0.506],
+            "base": {
+              "w": [403, 1033.4],
+              "s": [576.3, 1136.9],
+              "e": [851, 997.9]
+            },
+            "scale": 1.0057,
+            "vertical": 0.9063,
+            "shear": -0.0414,
+            "cx": 627,
+            "cy": 894.5,
+            "box": {
+              "left": 252.5,
+              "top": 242.4,
+              "right": 818.7,
+              "bottom": 944.9
+            },
+            "camera": {
+              "elevation": 33.4,
+              "turn": 2.4
+            },
+            "area": 293178
+          },
+          "camera": {
+            "by": 3.4,
+            "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "observation": "Correct visible front wall, but house shortened to one front bay; actual plan about 1.57:1 fails. Post and jib still below tank top, hose still too long. Camera 3.4 degrees off. Retain earlier attempt 7 instead.",
+        "grassReview": ".qa/look/fuel_pump-a1-r3.png inspected",
+        "surfaces": {
+          "alphaZero": 1268842,
+          "alpha255": 287,
+          "alphaBetween": 303387,
+          "atOrAboveCursorLuma": 5038,
+          "lumaMethod": "0.2126 R + 0.7152 G + 0.0722 B on alpha >=128 pixels; threshold is #ECE4D0"
+        }
+      },
+      "provenance": {
+        "tool": "built-in image_gen",
+        "date": "2026-10-16",
+        "source": "C:/Users/Zso/.codex/generated_images/01a12c68-070c-7b91-9ff6-217c3f4318b1/exec-182ed75c-2a26-4de6-a5dc-fde8685a6c44.png",
+        "sha256": "8390c852861a1277211c20f349a83c43aec32268a4a21a525ed6ec65c2727454",
+        "retainedUnmodified": true
+      }
     }
   ],
   "selection": {
     "r0": 1,
-    "r1": 5,
-    "r3": 5,
+    "r1": 8,
+    "r3": 7,
     "r2": 2,
-    "policy": "After at most three new attempts per view, retained r1 attempt 5 (correct features and passing camera) and r3 attempt 5 (correct post/tank arrangement and closest camera). Neither meets acceptance. r0 stays the master, and r2 stays unchanged because accepted r1/r3 references were not obtained."
+    "policy": "Three new attempts each for r1 and r3. Retained r1 attempt 8 for its passing house plan and closer camera among plan-passing attempts; r3 attempt 7 for its correct turn and passing plan. Neither accepted. R2 unchanged: selected r1 is 4.6 degrees off, above the explicit 3-degree fallback prerequisite."
   },
   "referencePreparation": "Turntable references were made inside the fuel folder using the repository's fitPicture and normalisePicture functions at t1. Source deliverables remain the native imagegen PNGs: no resizing, cropping, moving, recolouring or alpha thresholding was applied.",
   "qa": {
-    "readiness": "Partial repaint: r1 and r3 are retained drafts, not accepted. R2 was not repainted because its reference prerequisite failed.",
+    "readiness": "Partial: retained narrow-plan r1/r3 drafts; neither accepted. R2 not repainted because the reference prerequisite failed.",
+    "masterUnchanged": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
     "images": {
       "r0": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r0.png",
         "dimensions": [1254, 1254],
         "sha256": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
-        "transparentPixels": 936212,
-        "opaquePixels": 815,
-        "antialiasedPixels": 635489,
         "check": {
           "ok": true,
           "problems": [],
@@ -690,40 +1294,43 @@
       "r1": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r1.png",
         "dimensions": [1254, 1254],
-        "sha256": "e61958af2368d193062179aeb247cea676e04ea8d5aed0362c2e39e7195287e1",
-        "transparentPixels": 1109055,
-        "opaquePixels": 983,
-        "antialiasedPixels": 462478,
+        "sha256": "0796df2c555945e86fb1a6f954ec7d18c7cc97875a83a213ecc119f22585f7ad",
         "check": {
-          "ok": true,
-          "problems": [],
+          "ok": false,
+          "problems": [
+            "camera off by 4.6°: it looks down from 34.6° where the game looks down from 30° (the wall feet slope 0.61 and -0.53, the game's 0.50 and -0.50)"
+          ],
           "notes": [],
           "fit": {
             "method": "base",
             "sure": [true, true],
-            "measured": [0.536, -0.492],
-            "slopes": [0.536, -0.492],
+            "measured": [0.606, -0.531],
+            "slopes": [0.606, -0.531],
             "base": {
-              "w": [334, 993.6],
-              "s": [612.5, 1142.8],
-              "e": [1026, 939.2]
+              "w": [350, 1049.5],
+              "s": [493.4, 1136.4],
+              "e": [949, 894.3]
             },
-            "scale": 0.6511,
-            "vertical": 0.9728,
-            "shear": -0.021,
-            "cx": 680,
-            "cy": 925.9,
+            "scale": 0.7522,
+            "vertical": 0.8795,
+            "shear": -0.0327,
+            "cx": 649.5,
+            "cy": 833.5,
             "box": {
-              "left": 280.2,
-              "top": 306.1,
-              "right": 737.3,
-              "bottom": 948.5
+              "left": 252.1,
+              "top": 282,
+              "right": 771.9,
+              "bottom": 946.3
             },
             "camera": {
-              "elevation": 30.9,
-              "turn": 1.2
+              "elevation": 34.6,
+              "turn": 1.9
             },
-            "area": 440437
+            "area": 378887
+          },
+          "camera": {
+            "by": 4.6,
+            "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
           }
         }
       },
@@ -731,9 +1338,6 @@
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r2.png",
         "dimensions": [1254, 1254],
         "sha256": "fb4c343628773ba6a9543ee922b99e0ed2c0dc0805dfc2eb0a8f9f3bf4afe52b",
-        "transparentPixels": 1061066,
-        "opaquePixels": 895,
-        "antialiasedPixels": 510555,
         "check": {
           "ok": false,
           "problems": [
@@ -776,95 +1380,101 @@
       "r3": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r3.png",
         "dimensions": [1254, 1254],
-        "sha256": "6437a461a475a31623557c755dcac860dad5e0070a94335c0e048b2ec2bb9f06",
-        "transparentPixels": 1072812,
-        "opaquePixels": 956,
-        "antialiasedPixels": 498748,
+        "sha256": "29dffc6117e955e905501bf426507bbb74ddd39a014557955468fabd7bf3f51e",
         "check": {
           "ok": false,
           "problems": [
-            "camera off by 3.0°: it looks down from 33.0° where the game looks down from 30° (the wall feet slope 0.56 and -0.53, the game's 0.50 and -0.50)"
+            "camera off by 2.2°: it looks down from 32.2° where the game looks down from 30° (the wall feet slope 0.54 and -0.53, the game's 0.50 and -0.50)"
           ],
           "notes": [],
           "fit": {
             "method": "base",
             "sure": [true, true],
-            "measured": [0.561, -0.53],
-            "slopes": [0.561, -0.53],
+            "measured": [0.54, -0.526],
+            "slopes": [0.54, -0.526],
             "base": {
-              "w": [262, 927.7],
-              "s": [605.4, 1120.3],
-              "e": [1092, 862.5]
+              "w": [381, 1009.5],
+              "s": [561.7, 1107],
+              "e": [1057, 846.3]
             },
-            "scale": 0.5428,
-            "vertical": 0.9171,
-            "shear": -0.0142,
-            "cx": 677,
-            "cy": 811.3,
+            "scale": 0.6665,
+            "vertical": 0.9382,
+            "shear": -0.0062,
+            "cx": 719,
+            "cy": 866,
             "box": {
-              "left": 286.7,
-              "top": 487.2,
-              "right": 754.1,
-              "bottom": 945.7
+              "left": 286.1,
+              "top": 394.8,
+              "right": 737.3,
+              "bottom": 948.4
             },
             "camera": {
-              "elevation": 33,
-              "turn": 0.8
+              "elevation": 32.2,
+              "turn": 0.4
             },
-            "area": 481728
+            "area": 391754
           },
           "camera": {
-            "by": 3,
+            "by": 2.2,
             "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
           }
         }
       }
     },
-    "grassReview": {
-      "command": "node tools/building-sheets.mjs --picture <file>",
-      "adapter": "Unmodified origin/develop tools invoked with a temporary Node registerHooks loader: added fuel_pump with t1 to main's in-memory inventory; redirected lookFile output to assets/source/fuel-2026-10-11/.qa. No queue, families, report or tool source was edited.",
-      "inspected": ["r1 attempts 4, 5, 6", "r3 attempts 3, 4, 5"],
-      "observations": [
-        "Wrong tank axis, rectangular plan, camera 5.1 degrees off; mast correctly at far corner.",
-        "Correct tank axis, plain rear walls and far-corner mast. Camera passes at 1.2 degrees. Plan differs by 48.4%; retained closest draft, not accepted.",
-        "Correct tank axis and far-corner mast; plan differs by 43.2%, camera 2.3 degrees off. Too tall once fitted compared with master.",
-        "Mirrored front arrangement: crane at far-right corner and wrong tank axis. Plan 15.9% out, camera 7.7 degrees off.",
-        "Crane at near corner and tank axis corrected. Jib reaches sideways/up-right, not down-right over front. Plan 53.8% out, camera 7 degrees off.",
-        "Near-corner post, central front door and corrected tank axis. Jib still points too far sideways; measured plan 41.7% out, camera 3 degrees off. The hose interferes with the outer-base measurement, but both feet are marked sure, so no eye override is claimed. Retained closest draft, not accepted."
-      ]
-    },
-    "remainingIssues": [
-      "Selected r1 attempt 5: plan spans 278.5 and 413.5 pixels, 48.4% difference against 5%; camera passes at 1.2 degrees.",
-      "Selected r3 attempt 5: measured spans 343.4 and 486.6 pixels, 41.7% difference; camera 3 degrees off against 2; jib direction still misses the requested front overhang.",
-      "R2 remains the previous selected attempt, with its rectangular plan and 3.5-degree camera failure; it was not built on unaccepted references.",
-      "Native generated canvases are 1254x1254. They were kept as returned, as requested, and fitted only for grass review. Painted surface alpha remains mostly 251-253 rather than uniformly 255.",
-      "No r1/r3 fitted turntable references were produced because neither view was accepted."
-    ],
-    "verification": {
-      "typecheck": "Passed app and tooling with existing dependency directory resolved through a read-only TypeScript host; no tsconfig or dependencies were changed.",
-      "lint": "Passed.",
-      "build": "Passed original Vite config; output and cache confined to .qa in this folder.",
-      "format": "Passed repository check with --end-of-line auto for Windows CRLF, and scoped Prettier check for prompts.json and helpers.",
-      "tests": "Full Node 24 run: 101 suites passed, 3 failed, 1902 tests passed and 21 failed. The 21 failures were subprocesses missing pngjs in this isolated checkout. Re-ran their two suites with the dependency loader inherited via NODE_OPTIONS: all 84 passed. Combined result: all 1923 executable tests pass across 103 suites; tools/agents/ownership.test.mjs still fails to load with SyntaxError: Invalid or unexpected token, as in the earlier baseline. No out-of-scope fix was made.",
-      "scope": "Passed; all tracked changes stay in assets/source/fuel-2026-10-11/.",
-      "art": "Every new attempt measured and inspected on grass. Selected r1 camera passes; selected r3 camera fails at 3 degrees. Both selected plans fail the five-percent square-plan test. No new view was approved."
-    },
     "repaint": {
-      "outcome": "partial",
+      "date": "2026-10-16",
       "newAttempts": {
-        "r1": [4, 5, 6],
-        "r3": [3, 4, 5],
+        "r1": [7, 8, 9],
+        "r3": [6, 7, 8],
         "r2": []
       },
       "accepted": {
         "r1": false,
         "r3": false,
         "r2": false
-      },
-      "r2": "Not painted: the brief requires accepted r1 and r3 first. Previous r2 attempt 2 remains selected.",
-      "masterUnchanged": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
-      "rawPolicy": "Every new PNG is stored byte-for-byte in raw/ and its native returned size is recorded. No painting was resized, recoloured, moved or deleted.",
-      "toolAdapter": "Unmodified camera and grass-review calculations were invoked through a Node loader in .qa: added fuel_pump/t1 to the in-memory CLI inventory, recognised raw attempt names, and redirected report/look output into this folder. No repository tool, queue or families file was edited."
+      }
+    },
+    "planTest": {
+      "r1": "lowerRight/lowerLeft in [2.0,2.8]",
+      "r3": "lowerRight/lowerLeft in [2.0,2.8]",
+      "r2": "lowerLeft/lowerRight in [2.0,2.8]",
+      "corners": "Both measured and used corners recorded per attempt. Eye readings are approximate outer house quoin corners, without changing the PNG or the tool camera verdict."
+    },
+    "remainingIssues": [
+      "R1 attempt 8: used house spans 195/483 px, ratio 2.48 passes; tool camera 4.6 degrees fails. Upper-left jib improved, post still at tank right end rather than far/top house corner.",
+      "R3 attempt 7: spans 180.68/495.32 px, ratio 2.74 passes; camera 2.2 degrees fails the 2-degree limit. Front has two bays in correct wall, but crane jib below tank top and hose too long, ending near ground.",
+      "R2 remains attempt 2. No new r2 call: the brief permits fallback only if closest r1/r3 pass plan and camera <=3 degrees; r1 fails this prerequisite.",
+      "Returned native canvases all 1254x1254 rather than requested 1024x1024, preserved unchanged. Painted surfaces retain the image tool alpha values rather than uniformly 255.",
+      "Luma audit found pixels at or above cursor-white brightness in the native outputs; counts are recorded per attempt. Generated alpha and highlights were preserved, not postprocessed."
+    ],
+    "grassReview": {
+      "command": "node tools/building-sheets.mjs --picture <file>",
+      "inspected": ["r1 attempts 7,8,9", "r3 attempts 6,7,8"],
+      "adapter": "Existing .qa/fuel-tools.mjs registers fuel_pump/t1 in CLI inventory, recognises raw attempt names and redirects report/look output inside this folder. Camera and grass drawing calculations are unmodified. No queue, families, repository tools or other folders changed.",
+      "saved": [
+        "review/fuel_pump-a1-r0-grass.png",
+        "review/fuel_pump-a1-r1-grass.png",
+        "review/fuel_pump-a1-r2-grass.png",
+        "review/fuel_pump-a1-r3-grass.png"
+      ]
+    },
+    "guides": {
+      "script": "make-guides.mjs",
+      "files": ["guides/fuel_pump-r1.png", "guides/fuel_pump-r3.png", "guides/fuel_pump-r2.png"],
+      "inspected": true,
+      "geometry": "Exact box bounds from the corrected pasted brief; transparent 1024x1024; FOOTPRINTS.t1 and repository project/boxFaces/fillPoly/strokePoly."
+    },
+    "rawPolicy": "All six new paintings kept byte-for-byte in raw/, with source paths and hashes. Earlier paintings preserved. Only fitted references and diagnostic grass views are transformed.",
+    "references": "No r1/r3 fitted references updated: neither view accepted; r2 was not made.",
+    "verification": {
+      "typecheck": "Passed app and tooling: zero diagnostics. Existing dependency directory resolved through a read-only TypeScript host; no project config or dependency files changed.",
+      "lint": "Passed repository ESLint check.",
+      "build": "Passed original Vite configuration through the existing .qa wrapper. Output/cache confined to this folder; bundle-size warning only.",
+      "format": "Repository Prettier check passed with --end-of-line auto for Windows CRLF; scoped make-guides.mjs, record-attempt.mjs and prompts.json formatted and checked.",
+      "tests": "Full Node 24/Vitest run: 100 suites passed, 4 failed; 1900 tests passed, 14 failed, 9 skipped. The 14 failures were subprocesses unable to resolve a relative dependency-loader path from temporary directories; reran their two suites with the absolute loader URL: 84/84 passed. The 9 skipped tests were a suite setup error because python was not on PATH; reran with the bundled PYTHON executable: 9/9 passed. Combined: all 1923 executable tests pass across 103 suites. tools/agents/ownership.test.mjs still fails to load with SyntaxError: Invalid or unexpected token, the previously observed unchanged baseline.",
+      "scope": "Passed art scope check against origin/develop. All 18 paths in this repaint commit stay under assets/source/fuel-2026-10-11/.",
+      "integrity": "Six new raw paintings byte-identical to built-in image tool source files; verbatim shared/view/age prompt texts verified. Selected PNGs are byte-exact raw copies. R0 and R2 identical to commit 4495697f; r0 master SHA256 matches the brief.",
+      "art": "Partial, not accepted: selected r1/r3 plans pass; cameras fail at 4.6 and 2.2 degrees. R3 crane/hose geometry still wrong. Surface luma exceeds cursor-white cap and native alpha is not uniformly opaque. No r2 generation because selected r1 exceeds the explicit 3-degree fallback prerequisite. All six attempts measured and inspected on grass."
     }
   },
   "repaintPreparation": {
@@ -907,5 +1517,230 @@
       "limit_window_minutes": 1440
     },
     "newAttemptLimitExhausted": ["r1", "r3"]
-  }
+  },
+  "qaHistory": [
+    {
+      "throughCommit": "4495697f",
+      "qa": {
+        "readiness": "Partial repaint: r1 and r3 are retained drafts, not accepted. R2 was not repainted because its reference prerequisite failed.",
+        "images": {
+          "r0": {
+            "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r0.png",
+            "dimensions": [1254, 1254],
+            "sha256": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
+            "transparentPixels": 936212,
+            "opaquePixels": 815,
+            "antialiasedPixels": 635489,
+            "check": {
+              "ok": true,
+              "problems": [],
+              "notes": ["placed by its outline: no straight wall base was found"],
+              "fit": {
+                "method": "outline",
+                "sure": [false, true],
+                "measured": [0.5, -0.506],
+                "slopes": [0.5, -0.506],
+                "base": {
+                  "w": [354, 922.5],
+                  "s": [795.3, 1143.1],
+                  "e": [1139, 969.2]
+                },
+                "scale": 0.574,
+                "vertical": 0.9942,
+                "shear": 0.0029,
+                "cx": 746.5,
+                "cy": 942.5,
+                "box": {
+                  "left": 149.5,
+                  "top": 366.7,
+                  "right": 737.3,
+                  "bottom": 951
+                },
+                "camera": null,
+                "area": 605219
+              }
+            }
+          },
+          "r1": {
+            "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r1.png",
+            "dimensions": [1254, 1254],
+            "sha256": "e61958af2368d193062179aeb247cea676e04ea8d5aed0362c2e39e7195287e1",
+            "transparentPixels": 1109055,
+            "opaquePixels": 983,
+            "antialiasedPixels": 462478,
+            "check": {
+              "ok": true,
+              "problems": [],
+              "notes": [],
+              "fit": {
+                "method": "base",
+                "sure": [true, true],
+                "measured": [0.536, -0.492],
+                "slopes": [0.536, -0.492],
+                "base": {
+                  "w": [334, 993.6],
+                  "s": [612.5, 1142.8],
+                  "e": [1026, 939.2]
+                },
+                "scale": 0.6511,
+                "vertical": 0.9728,
+                "shear": -0.021,
+                "cx": 680,
+                "cy": 925.9,
+                "box": {
+                  "left": 280.2,
+                  "top": 306.1,
+                  "right": 737.3,
+                  "bottom": 948.5
+                },
+                "camera": {
+                  "elevation": 30.9,
+                  "turn": 1.2
+                },
+                "area": 440437
+              }
+            }
+          },
+          "r2": {
+            "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r2.png",
+            "dimensions": [1254, 1254],
+            "sha256": "fb4c343628773ba6a9543ee922b99e0ed2c0dc0805dfc2eb0a8f9f3bf4afe52b",
+            "transparentPixels": 1061066,
+            "opaquePixels": 895,
+            "antialiasedPixels": 510555,
+            "check": {
+              "ok": false,
+              "problems": [
+                "camera off by 3.5°: the building is turned 3.5° towards its lower-right wall (the wall feet slope 0.53 and -0.42, the game's 0.50 and -0.50)"
+              ],
+              "notes": [],
+              "fit": {
+                "method": "base",
+                "sure": [true, true],
+                "measured": [0.533, -0.418],
+                "slopes": [0.533, -0.418],
+                "base": {
+                  "w": [227, 897.3],
+                  "s": [780.1, 1192],
+                  "e": [1065, 1072.9]
+                },
+                "scale": 0.5377,
+                "vertical": 1.052,
+                "shear": -0.0605,
+                "cx": 646,
+                "cy": 997.2,
+                "box": {
+                  "left": 258.8,
+                  "top": 396.9,
+                  "right": 804.5,
+                  "bottom": 947.8
+                },
+                "camera": {
+                  "elevation": 28.2,
+                  "turn": 3.5
+                },
+                "area": 497185
+              },
+              "camera": {
+                "by": 3.5,
+                "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+              }
+            }
+          },
+          "r3": {
+            "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r3.png",
+            "dimensions": [1254, 1254],
+            "sha256": "6437a461a475a31623557c755dcac860dad5e0070a94335c0e048b2ec2bb9f06",
+            "transparentPixels": 1072812,
+            "opaquePixels": 956,
+            "antialiasedPixels": 498748,
+            "check": {
+              "ok": false,
+              "problems": [
+                "camera off by 3.0°: it looks down from 33.0° where the game looks down from 30° (the wall feet slope 0.56 and -0.53, the game's 0.50 and -0.50)"
+              ],
+              "notes": [],
+              "fit": {
+                "method": "base",
+                "sure": [true, true],
+                "measured": [0.561, -0.53],
+                "slopes": [0.561, -0.53],
+                "base": {
+                  "w": [262, 927.7],
+                  "s": [605.4, 1120.3],
+                  "e": [1092, 862.5]
+                },
+                "scale": 0.5428,
+                "vertical": 0.9171,
+                "shear": -0.0142,
+                "cx": 677,
+                "cy": 811.3,
+                "box": {
+                  "left": 286.7,
+                  "top": 487.2,
+                  "right": 754.1,
+                  "bottom": 945.7
+                },
+                "camera": {
+                  "elevation": 33,
+                  "turn": 0.8
+                },
+                "area": 481728
+              },
+              "camera": {
+                "by": 3,
+                "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+              }
+            }
+          }
+        },
+        "grassReview": {
+          "command": "node tools/building-sheets.mjs --picture <file>",
+          "adapter": "Unmodified origin/develop tools invoked with a temporary Node registerHooks loader: added fuel_pump with t1 to main's in-memory inventory; redirected lookFile output to assets/source/fuel-2026-10-11/.qa. No queue, families, report or tool source was edited.",
+          "inspected": ["r1 attempts 4, 5, 6", "r3 attempts 3, 4, 5"],
+          "observations": [
+            "Wrong tank axis, rectangular plan, camera 5.1 degrees off; mast correctly at far corner.",
+            "Correct tank axis, plain rear walls and far-corner mast. Camera passes at 1.2 degrees. Plan differs by 48.4%; retained closest draft, not accepted.",
+            "Correct tank axis and far-corner mast; plan differs by 43.2%, camera 2.3 degrees off. Too tall once fitted compared with master.",
+            "Mirrored front arrangement: crane at far-right corner and wrong tank axis. Plan 15.9% out, camera 7.7 degrees off.",
+            "Crane at near corner and tank axis corrected. Jib reaches sideways/up-right, not down-right over front. Plan 53.8% out, camera 7 degrees off.",
+            "Near-corner post, central front door and corrected tank axis. Jib still points too far sideways; measured plan 41.7% out, camera 3 degrees off. The hose interferes with the outer-base measurement, but both feet are marked sure, so no eye override is claimed. Retained closest draft, not accepted."
+          ]
+        },
+        "remainingIssues": [
+          "Selected r1 attempt 5: plan spans 278.5 and 413.5 pixels, 48.4% difference against 5%; camera passes at 1.2 degrees.",
+          "Selected r3 attempt 5: measured spans 343.4 and 486.6 pixels, 41.7% difference; camera 3 degrees off against 2; jib direction still misses the requested front overhang.",
+          "R2 remains the previous selected attempt, with its rectangular plan and 3.5-degree camera failure; it was not built on unaccepted references.",
+          "Native generated canvases are 1254x1254. They were kept as returned, as requested, and fitted only for grass review. Painted surface alpha remains mostly 251-253 rather than uniformly 255.",
+          "No r1/r3 fitted turntable references were produced because neither view was accepted."
+        ],
+        "verification": {
+          "typecheck": "Passed app and tooling with existing dependency directory resolved through a read-only TypeScript host; no tsconfig or dependencies were changed.",
+          "lint": "Passed.",
+          "build": "Passed original Vite config; output and cache confined to .qa in this folder.",
+          "format": "Passed repository check with --end-of-line auto for Windows CRLF, and scoped Prettier check for prompts.json and helpers.",
+          "tests": "Full Node 24 run: 101 suites passed, 3 failed, 1902 tests passed and 21 failed. The 21 failures were subprocesses missing pngjs in this isolated checkout. Re-ran their two suites with the dependency loader inherited via NODE_OPTIONS: all 84 passed. Combined result: all 1923 executable tests pass across 103 suites; tools/agents/ownership.test.mjs still fails to load with SyntaxError: Invalid or unexpected token, as in the earlier baseline. No out-of-scope fix was made.",
+          "scope": "Passed; all tracked changes stay in assets/source/fuel-2026-10-11/.",
+          "art": "Every new attempt measured and inspected on grass. Selected r1 camera passes; selected r3 camera fails at 3 degrees. Both selected plans fail the five-percent square-plan test. No new view was approved."
+        },
+        "repaint": {
+          "outcome": "partial",
+          "newAttempts": {
+            "r1": [4, 5, 6],
+            "r3": [3, 4, 5],
+            "r2": []
+          },
+          "accepted": {
+            "r1": false,
+            "r3": false,
+            "r2": false
+          },
+          "r2": "Not painted: the brief requires accepted r1 and r3 first. Previous r2 attempt 2 remains selected.",
+          "masterUnchanged": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
+          "rawPolicy": "Every new PNG is stored byte-for-byte in raw/ and its native returned size is recorded. No painting was resized, recoloured, moved or deleted.",
+          "toolAdapter": "Unmodified camera and grass-review calculations were invoked through a Node loader in .qa: added fuel_pump/t1 to the in-memory CLI inventory, recognised raw attempt names, and redirected report/look output into this folder. No repository tool, queue or families file was edited."
+        }
+      }
+    }
+  ]
 }
