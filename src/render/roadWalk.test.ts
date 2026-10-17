@@ -896,4 +896,25 @@ describe('a walker setting out from anywhere in a tile', () => {
     expect(steps).toBeGreaterThan(10_000);
     // slow: 100 seeds of up to 350 steps, 0.2 s alone; limit 10 s
   }, 10_000);
+
+  it('is drawn without a pop where the tile it leaves has fewer strokes than the one it enters', () => {
+    // An end piece beside a turn (three primitives of one line) and beside a tee (two lines): the
+    // strokes the end piece lacks must not pull the walker on one side of their shared edge.
+    for (const roads of [
+      [44, 53, 52],
+      [44, 53, 62, 52],
+    ]) {
+      const c: Setout = {
+        roads,
+        ox: 16,
+        oy: -12,
+        x0: 7.255085933115334,
+        y0: 4.773050808813423,
+        tx: 8,
+        ty: 5,
+      };
+      const { worst, where } = worstPop(c);
+      expect(worst, `a ${worst.toFixed(2)} px pop at ${where}`).toBeLessThanOrEqual(1);
+    }
+  });
 });

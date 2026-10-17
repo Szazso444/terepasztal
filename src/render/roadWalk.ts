@@ -29,6 +29,9 @@ export const EDGE_RAMP = 0.2;
 /** How much two strokes of a tee or a cross share a walker between them, as a distance (tiles). */
 const BLEND = 0.03;
 
+/** Over this much of a tile before a side (tiles), a stroke that does not reach it gives way. */
+const STROKE_RAMP = 0.15;
+
 /** How far along a stroke (tiles) a stretch must lie from the nearest to rival it. */
 const RIVAL_APART = 0.2;
 /** How much nearer than its other stretches a stroke's nearest point must be to be followed (tiles). */
@@ -51,11 +54,56 @@ function reach(line: Float64Array, i: number, u: number, v: number) {
   return Math.hypot(u - hitX, v - hitY);
 }
 
+/** Two ends this near (tiles) are one point: where one primitive of a centre line meets the next. */
+const JOINED = 1e-6;
+
+/**
+ * The primitives of a centre line chained into the polylines they make: a turn's straight, arc and
+ * straight are one line, and a walker is pulled to the nearest point of that line once, not once
+ * per piece of it (a piece far down the line would otherwise add a pull its neighbour tile's one
+ * stroke does not have, so the pull would jump at the tile's edge).
+ */
+function chain(lines: [number, number][][]): [number, number][][] {
+  const todo = lines.map((l) => l.slice()),
+    out: [number, number][][] = [];
+  const same = (a: [number, number], b: [number, number]) =>
+    Math.abs(a[0] - b[0]) < JOINED && Math.abs(a[1] - b[1]) < JOINED;
+  while (todo.length) {
+    const run = todo.shift()!;
+    for (let grew = true; grew;) {
+      grew = false;
+      for (let i = 0; i < todo.length; i++) {
+        const o = todo[i],
+          head = run[0],
+          tail = run[run.length - 1];
+        if (same(tail, o[0])) run.push(...o.slice(1));
+        else if (same(tail, o[o.length - 1])) run.push(...o.slice(0, -1).reverse());
+        else if (same(head, o[o.length - 1])) run.unshift(...o.slice(0, -1));
+        else if (same(head, o[0])) run.unshift(...o.slice(1).reverse());
+        else continue;
+        todo.splice(i, 1);
+        grew = true;
+        break;
+      }
+    }
+    out.push(run);
+  }
+  return out;
+}
+
 function stroke(line: [number, number][]): Stroke {
   const along = new Float64Array(line.length);
   for (let i = 1; i < line.length; i++)
     along[i] = along[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
-  return { pts: Float64Array.from(line.flat()), along };
+  // the sides of the tile its ends lie on: +u, -u, +v, -v
+  const touch = [false, false, false, false];
+  for (const [u, v] of [line[0], line[line.length - 1]]) {
+    if (u > 0.5 - JOINED) touch[0] = true;
+    if (u < JOINED - 0.5) touch[1] = true;
+    if (v > 0.5 - JOINED) touch[2] = true;
+    if (v < JOINED - 0.5) touch[3] = true;
+  }
+  return { pts: Float64Array.from(line.flat()), along, touch };
 }
 
 /** How far a walker travels (tiles) while its facing turns most of the way to a new heading. */
@@ -89,6 +137,8 @@ export interface RoadWalkMap {
 interface Stroke {
   pts: Float64Array;
   along: Float64Array;
+  /** Whether it ends on the tile's +u, -u, +v and -v side: where the next tile's line takes it up. */
+  touch: boolean[];
 }
 /** A road tile's centre line, as the polylines `roadPath` makes of it. */
 interface Lines {
@@ -131,7 +181,7 @@ export class RoadWalk {
         code,
         wx,
         wy,
-        strokes: roadPath(roadShape(code, wx, wy)).map(stroke),
+        strokes: chain(roadPath(roadShape(code, wx, wy))).map(stroke),
       };
       this.cache.set(k, at);
     }
@@ -159,7 +209,8 @@ export class RoadWalk {
       mx = 0,
       my = 0,
       near = Infinity;
-    for (const { pts: line, along } of at.strokes) {
+    const gaps = [0.5 - u, 0.5 + u, 0.5 - v, 0.5 + v];
+    for (const { pts: line, along, touch } of at.strokes) {
       const n = along.length - 1;
       let best = Infinity,
         from = 0,
@@ -182,7 +233,11 @@ export class RoadWalk {
         if (Math.abs(along[i] - along[from]) > RIVAL_APART)
           rival = Math.min(rival, reach(line, i, u, v));
       const sure = smoothstep((rival - best) / SURE_GAP);
-      const wt = 1 / ((best * best + BLEND * BLEND) * (best * best + BLEND * BLEND));
+      // A stroke that does not reach a side has no counterpart in the tile beside it, which has
+      // only the strokes that do, so near that side it gives way to the ones that do.
+      let reaches = 1;
+      for (let k = 0; k < 4; k++) if (!touch[k]) reaches *= smoothstep(gaps[k] / STROKE_RAMP);
+      const wt = reaches / ((best * best + BLEND * BLEND) * (best * best + BLEND * BLEND));
       sw += wt;
       mx += wt * (bx - u) * sure;
       my += wt * (by - v) * sure;
