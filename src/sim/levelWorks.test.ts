@@ -169,6 +169,7 @@ function* shrinkOne(s: Stand): Iterable<Stand> {
 }
 
 describe('for any works, turn and position', () => {
+  // slow: it places every works definition at every rotation through the builder in one level
   it('every works definition at every rotation comes back from the editor at the same tile and turn', () => {
     // each turning definition at each rotation in one level, each at a tile drawn from the seed
     expect(WORKS.length, 'works definitions to sweep').toBeGreaterThan(0);
@@ -197,7 +198,7 @@ describe('for any works, turn and position', () => {
       },
       { shrink: shrinkStands },
     );
-  });
+  }, 60_000);
 
   it('one works of any definition, bridge platforms included, comes back at its tile and turn', () => {
     forAll(
