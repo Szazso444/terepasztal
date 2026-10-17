@@ -728,6 +728,122 @@
         "lookReview": "Pass at both zooms: broad grown dome with curtains and dark gaps, clear central trunk foot, subdued moss highlights below oak cap, matching light and depth; no painted ground, water or cast shadow.",
         "failed": []
       }
+    },
+    {
+      "file": "tree-willow-3.png",
+      "attempt": 1,
+      "selected": false,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nAn old weeping willow: a thick, gnarled trunk that forks low, and a crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-willow-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 7.486219536081032,
+        "box": [
+          51,
+          40,
+          1228,
+          1214
+        ],
+        "footAuto": [
+          641,
+          1214
+        ],
+        "foot": [
+          641,
+          1214
+        ],
+        "anchor": [
+          641,
+          1096.6
+        ],
+        "kind": "willow",
+        "height": 54,
+        "k": 0.05110732538330494,
+        "drawn": {
+          "width": 72.24531516183986,
+          "footFromCentre": 0.0919931856899489,
+          "belowFoot": 0
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 194.34719999999996,
+        "look": "checks/tree-willow-3-attempt-1-look.png",
+        "footReadByEye": false,
+        "lookReview": "Old willow reads at both zooms with thick low-forking trunk and hanging crown. Width and anchor pass; upper-left leaves too pale against oak highlight cap.",
+        "failed": [
+          "visual highlight cap"
+        ]
+      }
+    },
+    {
+      "file": "tree-willow-3.png",
+      "attempt": 2,
+      "selected": true,
+      "prompt": "One isolated tree for a pastoral isometric railway game, in the family of the attached reference trees: the same leaf clusters and broad readable masses, three or four shades per material. The references are drawn with stair-stepped pixel edges, which the game rounds off; paint this tree with smooth painted edges instead, not as pixel art. The same camera as the references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper left: the upper-left masses of the crown lightest, the lower right and the underside darkest, the trunk lit on its left. Colours: those given for the species below, as deep in the shade as the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference. Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all round, because the game sets the same picture on shores that face every way. The whole tree, centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background (alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples, reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.\n\nSpecies: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk (lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of the tree's height into a few big limbs that arch up and out. From them long thin branches hang straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid #6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The curtains fall to about a fifth of the tree's height above the ground and end there in a soft, ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark inside of the crown.\n\nAn old weeping willow: a thick, gnarled trunk that forks low, and a crown a little wider than the tree is tall.\n\nReferences: the first two are trees from this game: take their leaf clusters, camera, light and colour depth, not their species or their stepped edges. The last reference is the first tree of this species in this set: the same species, leaves, bark and colours, with a silhouette of its own.\n\nCanvas: 1024x1024 px, transparent background. Create a new image; attached images are style references only.\n\nCorrection: the last attempt painted pale bright foliage with 99th-percentile luminance 194, brighter than the oak's highlight cap. Paint this version substantially darker, matching the last reference's subdued willow leaves: brightest foliage muted moss #95A05A (RGB 149,160,90), ordinary leaves #6E7A48, deep inside #2E4234. Do not use pale silvery, cream, yellow, or desaturated near-white highlights. Keep every foliage highlight below RGB 170,175,110. Preserve the thick gnarled old trunk forking low into arching limbs, long hanging curtains, crown a little wider than the total crown-top-to-foot height, visible dark gaps, and central exposed trunk foot. This is subdued scenery.",
+      "references": [
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-oak-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/cozy-v3/tree-round-v2.png",
+        "G:/DEV/Terepasztal/terepasztal/.claude/worktrees/art-460-waterside-trees/assets/source/waterside-trees-2026-10-16/tree-willow-1.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "returned": [
+          1254,
+          1254
+        ],
+        "edgePixels": 0,
+        "partialAlphaPct": 8.471137972523014,
+        "box": [
+          33,
+          43,
+          1228,
+          1211
+        ],
+        "footAuto": [
+          611.5,
+          1211
+        ],
+        "foot": [
+          611.5,
+          1211
+        ],
+        "anchor": [
+          611.5,
+          1094.2
+        ],
+        "kind": "willow",
+        "height": 54,
+        "k": 0.05136986301369863,
+        "drawn": {
+          "width": 73.72602739726027,
+          "footFromCentre": -1.1712328767123286,
+          "belowFoot": 0
+        },
+        "overCursorWhite": 0,
+        "amberStrength": 0,
+        "cyanWaterPct": 0,
+        "lumP99": 170.3672,
+        "look": "checks/tree-willow-3-attempt-2-look.png",
+        "footReadByEye": false,
+        "lookReview": "Pass at both zooms: thick gnarled trunk forks low, old spreading dome with long curtains and dark interior gaps, center foot clear, subdued moss highlights below oak cap, matching camera/light/depth; no painted ground, water or cast shadow.",
+        "failed": []
+      }
     }
   ]
 }
