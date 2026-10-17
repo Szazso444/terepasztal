@@ -2122,3 +2122,293 @@ describe('stored chunk texts, checked apart (#392)', () => {
       }
   }, 30_000);
 });
+
+// The seed a text of version 5 holds, checked apart: its head is read here as chunks.ts describes
+// it, not by chunks.ts, so a head that holds another number than the map's seed, or holds it in
+// another form, fails even where its chunk still reads back.
+
+/** The varint after which version 5's head holds the seed as its float64. */
+const SEED_FLOAT = 2 ** 53 - 1;
+/** An integer as version 5's head zigzags it: 2v for v of 0 or more, -2v - 1 below. */
+const zigzagged = (v: number) => (v < 0 ? -2 * v - 1 : 2 * v);
+/** The bytes of `v` (a safe integer, 0 or more) as an unsigned LEB128 varint. */
+function varintBytes(v: number): number[] {
+  const out: number[] = [];
+  for (; v >= 0x80; v = Math.floor(v / 0x80)) out.push((v % 0x80) | 0x80);
+  out.push(v);
+  return out;
+}
+/** The eight bytes of `v`'s float64, the lowest first. */
+function float64Bytes(v: number): number[] {
+  const b = new Uint8Array(8);
+  new DataView(b.buffer).setFloat64(0, v, true);
+  return [...b];
+}
+
+/**
+ * Version 5's head, read as chunks.ts describes it: after the version and the rectangle, the seed
+ * as a zigzagged varint, or as the varint 2^53 - 1 and the eight bytes of its float64, the lowest
+ * first; then cx and cy, zigzagged. `seedEnd` is the byte after the seed, `stream` the first byte
+ * of the range coder's stream.
+ */
+function readHead(bytes: number[]) {
+  let at = 5;
+  const varint = () => {
+    let v = 0;
+    for (let scale = 1; ; scale *= 0x80) {
+      const b = bytes[at++];
+      v += (b & 0x7f) * scale;
+      if (b < 0x80) return v;
+    }
+  };
+  const unzigzag = (u: number) => (u % 2 ? -(u + 1) / 2 : u / 2);
+  const first = varint();
+  const float = first === SEED_FLOAT;
+  let seed = unzigzag(first);
+  if (float) {
+    seed = new DataView(Uint8Array.from(bytes.slice(at, at + 8)).buffer).getFloat64(0, true);
+    at += 8;
+  }
+  const seedEnd = at;
+  const cx = unzigzag(varint());
+  const cy = unzigzag(varint());
+  return { float, seed, seedEnd, cx, cy, stream: at };
+}
+
+/**
+ * Any number a map's seed may be: integers of any size below 2^52, those around 2^31, 2^32, 2^40,
+ * 2^52 and 2^53, numbers that are no integer, and any float64 at all from its 64 bits (infinities,
+ * NaNs and subnormals among them), each of either sign.
+ */
+function anySeed(rng: Rng): number {
+  const sign = rng.chance(0.5) ? 1 : -1;
+  switch (rng.int(0, 5)) {
+    case 0:
+      return sign * rng.int(0, 2 ** 31);
+    case 1:
+      return sign * (rng.int(0, 2 ** 20 - 1) * 2 ** 32 + rng.int(0, 2 ** 32 - 1));
+    case 2:
+      return sign * (rng.pick([2 ** 31, 2 ** 32, 2 ** 40, 2 ** 52, 2 ** 53]) + rng.int(-2, 2));
+    case 3:
+      return sign * rng.range(0, rng.pick([1, 1e6]));
+    case 4: {
+      const b = new DataView(new ArrayBuffer(8));
+      b.setUint32(0, rng.int(0, 2 ** 32 - 1));
+      b.setUint32(4, rng.int(0, 2 ** 32 - 1));
+      return b.getFloat64(0);
+    }
+    default:
+      return rng.pick([
+        0,
+        -0,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MIN_VALUE,
+        -Number.MAX_VALUE,
+        Number.MAX_SAFE_INTEGER,
+        -(2 ** 52 - 1),
+        2 ** 52 - 0.5,
+        1e20,
+        2 ** 53 + 2,
+      ]);
+  }
+}
+/** A seed as a failure message spells it, -0 and NaN included, exactly enough to replay. */
+const seedText = (s: number) => (Object.is(s, -0) ? '-0' : String(s));
+/** Whether version 5's head holds `seed` as a varint: an integer below 2^52 in size. */
+const heldAsVarint = (seed: number) => Number.isInteger(seed) && Math.abs(seed) < 2 ** 52;
+/** A chunk part of every plane (AnyPlanes) in a world of any seed at all. */
+const genSeedCase = (rng: Rng): AnyPlanes => ({ ...genAnyPlanes(rng), seed: anySeed(rng) });
+const formatSeedCase = (c: AnyPlanes) => JSON.stringify({ ...c, seed: seedText(c.seed) });
+
+describe("the seed in a chunk text's head (#392)", () => {
+  // 200 chunk parts, each written, read and written again, and a chunk of generation's variants
+  // written: about 1 s alone
+  it('is the map seed exactly, in the form its kind of number takes, and reads the same ground', () => {
+    const seen = { varint: 0, float: 0, special: 0, far: 0 };
+    forAll(
+      genSeedCase,
+      (c) => {
+        const map = anyPlanesMap(c);
+        const text = encodeChunk(map, c.cx, c.cy);
+        const bytes = bytesOf(text);
+        const head = readHead(bytes);
+        // an integer below 2^52 in size as its zigzagged varint (-0 as 0, which every hash takes
+        // alike), any other number as its float64: NaN as a NaN, the rest the very number
+        expect(head.float, 'held as its float64').toBe(!heldAsVarint(c.seed));
+        if (heldAsVarint(c.seed)) {
+          const seed = c.seed === 0 ? 0 : c.seed;
+          expect(head.seed, 'the seed').toBe(seed);
+          expect(bytes.slice(5, head.seedEnd), 'its varint').toEqual(varintBytes(zigzagged(seed)));
+        } else if (Number.isNaN(c.seed)) expect(head.seed, 'the seed').toBeNaN();
+        else expect(head.seed, 'the seed').toBe(c.seed);
+        // then the chunk's place, or 0 where it lies 2^40 or more out
+        const place = (v: number) => (Math.abs(v) < 2 ** 40 ? v : 0);
+        expect([head.cx, head.cy], 'cx and cy').toEqual([place(c.cx), place(c.cy)]);
+        // the planes read back as written, and are written again the same
+        const read = decodeChunk(text);
+        expect(read, 'refused its own text').not.toBeNull();
+        const lost = planesDiffer(read!, planesOfMap(map, c.x0, c.y0, CHUNK_VERSION));
+        if (lost) throw new Error(`read back otherwise: ${lost}`);
+        const again = emptyMap(c.seed, c.w, c.h, Terrain.Water, map.originX, map.originY);
+        placeChunk(again, c.cx, c.cy, read!);
+        expect(encodeChunk(again, c.cx, c.cy), 'written again').toBe(text);
+        // a whole chunk of generation's variants, guessed from the seed the head holds, takes a
+        // few bytes after the head; a missed guess takes two bits a tile, 256 bytes
+        if (place(c.cx) === c.cx && place(c.cy) === c.cy) {
+          const m = emptyMap(c.seed, 32, 32, Terrain.Grass, c.cx * CHUNK_TILES, c.cy * CHUNK_TILES);
+          const empty = bytesOf(encodeChunk(m, c.cx, c.cy));
+          expect(empty.length - readHead(empty).stream, 'guessed').toBeLessThanOrEqual(32);
+        } else seen.far++;
+        if (heldAsVarint(c.seed)) seen.varint++;
+        else seen.float++;
+        if (!Number.isFinite(c.seed) || Object.is(c.seed, -0)) seen.special++;
+      },
+      {
+        seeds: Array.from({ length: 200 }, (_, i) => i + 1),
+        shrink: shrinkAnyPlanes,
+        format: formatSeedCase,
+        shrinkBudget: 300,
+      },
+    );
+    // both forms ran, the infinities, NaNs or -0 among them, and chunks too far out to guess
+    expect(seen.varint).toBeGreaterThan(20);
+    expect(seen.float).toBeGreaterThan(20);
+    expect(seen.special).toBeGreaterThan(0);
+    expect(seen.far).toBeGreaterThan(0);
+  }, 30_000);
+
+  it('reads a seed spelled as its float64 as it reads the same seed as a varint', () => {
+    // a text whose head holds an integer seed below 2^52 as the escape and its float64, which
+    // encodeChunk never writes, reads to the planes of the text it wrote: the float64 is read as
+    // the very number, and the guesses are made from it alike
+    let cases = 0;
+    forAll(
+      (rng) => {
+        const c = genAnyPlanes(rng);
+        let seed = anySeed(rng);
+        if (!heldAsVarint(seed)) seed = rng.pick([0, -0, 2 ** 52 - 1, -(2 ** 52 - 1), 7412]);
+        return { ...c, seed };
+      },
+      (c) => {
+        const bytes = bytesOf(encodeChunk(anyPlanesMap(c), c.cx, c.cy));
+        const head = readHead(bytes);
+        expect(head.float).toBe(false);
+        const spelled = [
+          ...bytes.slice(0, 5),
+          ...varintBytes(SEED_FLOAT),
+          ...float64Bytes(c.seed),
+          ...bytes.slice(head.seedEnd),
+        ];
+        const want = decodeChunk(textOf(bytes))!;
+        const read = decodeChunk(textOf(spelled));
+        expect(read, 'refused').not.toBeNull();
+        const differ = planesDiffer(read!, want);
+        if (differ) throw new Error(`read otherwise: ${differ}`);
+        cases++;
+      },
+      {
+        seeds: Array.from({ length: 60 }, (_, i) => i + 1),
+        shrink: shrinkAnyPlanes,
+        format: formatSeedCase,
+        shrinkBudget: 300,
+      },
+    );
+    expect(cases).toBe(60);
+  });
+
+  it('reads any head as a chunk or as nothing, never throwing, and refuses one no chunk holds', () => {
+    // a real text's stream behind a head made up: a seed of any 64 bits, a varint at the limit, one
+    // of 2^53 or more (2^60 in nine bytes), or the escape and fewer than eight bytes, the text's end
+    const HEADS = ['any float64', 'at the limit', 'past the limit', 'cut short'];
+    const seen = new Set<string>();
+    forAll(
+      (rng) => {
+        const c = genAnyPlanes(rng);
+        const small = { ...c, w: Math.min(c.w, 8), h: Math.min(c.h, 8), seed: anySeed(rng) };
+        return { c: small, how: rng.pick(HEADS), edit: rng.int(1, 2 ** 31 - 1) };
+      },
+      ({ c, how, edit }) => {
+        const rng = new Rng(edit);
+        const bytes = bytesOf(encodeChunk(anyPlanesMap(c), c.cx, c.cy));
+        const rest = bytes.slice(readHead(bytes).seedEnd);
+        const seed =
+          how === 'any float64'
+            ? [...varintBytes(SEED_FLOAT), ...Array.from({ length: 8 }, () => rng.int(0, 255))]
+            : how === 'at the limit'
+              ? varintBytes(SEED_FLOAT - rng.int(1, 3))
+              : how === 'past the limit'
+                ? varintBytes(rng.pick([2 ** 53, 2 ** 53 + 2, 2 ** 55, 2 ** 56 - 1, 2 ** 60]))
+                : [...varintBytes(SEED_FLOAT), ...rest.slice(0, rng.int(0, 7))];
+        const text = textOf([...bytes.slice(0, 5), ...seed, ...(how === 'cut short' ? [] : rest)]);
+        const read = decodeChunk(text);
+        seen.add(`${how}: ${read ? 'read' : 'refused'}`);
+        // a head no chunk holds is refused: a seed's varint past 2^53 - 1, and a float64 the text
+        // ends inside
+        if (how === 'past the limit' || how === 'cut short') expect(read, how).toBeNull();
+        if (!read) return;
+        // what it reads is a chunk encodeChunk writes, and reads so again
+        const m = emptyMap(0, read.w, read.h, Terrain.Grass, read.x0, read.y0);
+        placeChunk(m, 0, 0, read);
+        expect(planesDiffer(decodeChunk(encodeChunk(m, 0, 0))!, read)).toBeNull();
+      },
+      {
+        seeds: Array.from({ length: 150 }, (_, i) => i + 1),
+        format: (g) => JSON.stringify({ ...g, c: { ...g.c, seed: seedText(g.c.seed) } }),
+      },
+    );
+    // every head ran: those of any 64 bits and at the limit were read, the others refused
+    for (const way of ['any float64', 'at the limit']) expect(seen).toContain(`${way}: read`);
+    for (const way of ['past the limit', 'cut short']) expect(seen).toContain(`${way}: refused`);
+  });
+
+  it('holding a float64 seed, reads as nothing cut short at any byte or with a byte after it', () => {
+    for (const seed of [0.5, 1e20, NaN, -Infinity, 2 ** 52, -(2 ** 53 + 2)]) {
+      const c = { w: 7, h: 5, x0: 3, y0: 20, cx: -2, cy: 5, seed, style: 2, salt: 11 };
+      const bytes = bytesOf(encodeChunk(anyPlanesMap(c), c.cx, c.cy));
+      const at = `seed ${seedText(seed)}, ${bytes.length} bytes`;
+      expect(readHead(bytes).float, at).toBe(true);
+      expect(decodeChunk(textOf(bytes)), at).not.toBeNull();
+      for (let n = 0; n < bytes.length; n++)
+        if (decodeChunk(textOf(bytes.slice(0, n))))
+          throw new Error(`${at}: its first ${n} bytes read as a chunk`);
+      for (const b of [0, 1, 0x80, 0xff])
+        expect(decodeChunk(textOf([...bytes, b])), `${at}, then ${b}`).toBeNull();
+    }
+  });
+
+  // five worlds of 4 chunks generated, each loaded eight ways: about 1.3 s alone
+  it("gives a stored world the ground its texts hold, whatever seed the world's save carries", () => {
+    // the text holds its own seed, so the ground of a stored chunk does not hang on the save's:
+    // not after a save's JSON writes an infinite seed as null, nor for any other seed
+    const params = { w: 64, h: 64, originX: -32, originY: -32 };
+    for (const seed of [1e20, 2 ** 53 + 2, 12345678901234, 0.5, Infinity]) {
+      const made = buildMap(seed, params, {});
+      const at = `seed ${seedText(seed)}`;
+      expect(made.added, at).toHaveLength(4);
+      const world: GeneratedWorld = {
+        kind: 'generated',
+        seed,
+        params: { ...DEFAULT_MAP_PARAMS, ...params },
+        chunks: made.chunks,
+      };
+      const saved = JSON.parse(JSON.stringify(world)) as GeneratedWorld;
+      const loads: [string, ReturnType<typeof buildMap>][] = [
+        [`${at}, saved`, groundOf(saved, never)],
+      ];
+      for (const other of [seed, 0, -0, NaN, Infinity, -1, 7412])
+        loads.push([
+          `${at}, read as ${seedText(other)}`,
+          buildMap(other, params, made.chunks, never),
+        ]);
+      for (const [where, load] of loads) {
+        expect(load.added, where).toEqual([]);
+        expect(load.unreadable, where).toEqual([]);
+        expect(load.chunks, where).toEqual(made.chunks);
+        expect(firstDifference(load.map, made.map), where).toBeNull();
+        expect(sameWater(load.map, made.map), where).toBe(true);
+      }
+    }
+  }, 30_000);
+});
