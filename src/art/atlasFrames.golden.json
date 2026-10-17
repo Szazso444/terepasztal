@@ -36,10 +36,6 @@
     "icons/wood": "14x11@6,5"
   },
   "people": {
-    "people/crossing_dirt_0": "44x22@22,11",
-    "people/crossing_dirt_1": "44x22@22,11",
-    "people/crossing_stone_0": "44x22@22,11",
-    "people/crossing_stone_1": "44x22@22,11",
     "people/path_dirt_0": "61x32@30,16",
     "people/path_dirt_1": "62x30@31,15",
     "people/path_dirt_2": "62x31@31,15",
@@ -2640,6 +2636,10 @@
     "track/curve_regular_3_m1",
     "track/curve_regular_3_m2",
     "track/curve_regular_3_m3",
+    "track/level_crossing_narrow_0",
+    "track/level_crossing_narrow_1",
+    "track/level_crossing_regular_0",
+    "track/level_crossing_regular_1",
     "track/straight_high_speed_0",
     "track/straight_high_speed_1",
     "track/straight_narrow_0",
