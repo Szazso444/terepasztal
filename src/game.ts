@@ -1037,6 +1037,8 @@ export class Game implements UiHost {
         this.builder.buildingAt(x, y) ||
         this.builder.decorAt(x, y)
       );
+    this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
+    this.builder.onRoadChanged = (x, y) => this.world.roadChanged(x, y);
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;

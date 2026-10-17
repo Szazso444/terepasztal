@@ -6,6 +6,8 @@ import { BIOME_DEFS } from '../sim/biomes';
 import { buildRelief, reliefHeight, surfaceAlongRay, type TerrainRelief } from './terrainRelief';
 import { paintedWater } from './terrainMaterials';
 import { pavingDoorsteps, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
+import { groundOf } from '../art/buildingGround';
+import { BuildingYards, buildingYard, yardTiles, type Yard } from './buildingYard';
 
 /** Side of one cell of the stand-in surface sheet: ten cells stacked, one per material. */
 const CELL = 64;
@@ -138,9 +140,18 @@ function onHill(w: ReturnType<typeof world>) {
     for (let x = 3; x <= 14; x++) w.map.terrain[y * w.map.w + x] = Terrain.Hill;
   return w;
 }
-/** Paints the 8 x 8 chunk at (x, y); `snowLevels` by climate, the content's by default. */
+/**
+ * Paints the 8 x 8 chunk at (x, y), with the buildings' `yards` if the world has them, under the
+ * season's `tint` if it has one; `snowLevels` by climate, the content's by default.
+ */
 async function paint(
-  { map, city, doorsteps }: ReturnType<typeof world>,
+  {
+    map,
+    city,
+    doorsteps,
+    yards = [],
+    tint = 0xd8e8c0,
+  }: ReturnType<typeof world> & { yards?: Yard[]; tint?: number },
   x: number,
   y: number,
   scale = 1,
@@ -159,9 +170,10 @@ async function paint(
     },
     relief: buildRelief(map, new Set()),
     version: 1,
-    tint: 0xd8e8c0,
+    tint,
     city,
     doorsteps,
+    yards,
     snowLevels,
   });
   replies = [];
@@ -514,4 +526,368 @@ describe('the painter with a town on the flat, on a hill and above the snow line
     expect(kept.tuft, 'tufts beyond the fringe').toBeGreaterThan(500);
     expect(kept.stone, 'stones beyond the fringe').toBeGreaterThan(20);
   });
+});
+
+describe('the painter with building yards', () => {
+  /** Buildings on the grass south of the town, west of the river: a station, a farm and a house. */
+  function yarded() {
+    const w = world(),
+      bare = { ...w, city: [], doorsteps: [] };
+    const yards = (
+      [
+        ['structures/station_2', 5, 14],
+        ['structures/farm_1', 9, 14],
+        ['structures/townhouse', 12, 15],
+      ] as const
+    ).map(([frame, x, y]) =>
+      buildingYard(frame, groundOf(frame)!, { x, y, scale: 0.8, sandy: false }, [], () => false),
+    );
+    return { bare, built: { ...bare, yards } };
+  }
+
+  // Slow: paints four chunks twice and checks every pixel (about 2 s alone).
+  it('wears each yard into the ground on the tiles it lists, and changes nothing elsewhere', async () => {
+    const { bare, built } = yarded(),
+      { map } = bare,
+      listed = new Set(built.yards.flatMap((y) => yardTiles(y, map.w, map.h))),
+      yards = new BuildingYards(map.w, map.h, map.originX, map.originY, built.yards);
+    let off = 0,
+      inside = 0;
+    for (const [x, y] of [
+      [0, 8],
+      [8, 8],
+      [0, 16],
+      [8, 16],
+    ]) {
+      const a = await paint(built, x, y),
+        b = await paint(bare, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          const [tx, ty] = pointOf(a, px, py, 1),
+            tile = Math.round(ty) * map.w + Math.round(tx);
+          if (!listed.has(tile)) {
+            off++;
+            for (let c = 0; c < 3; c++)
+              expect(a.pixels[k + c], `pixel ${px},${py} of ${x},${y}`).toBe(b.pixels[k + c]);
+          } else if (yards.weigh(tx, ty, tile) === 1) {
+            inside++;
+            // grass is green; a whole yard is the grey or brown of its ground
+            expect(a.pixels[k + 1] - a.pixels[k + 2], `pixel ${px},${py}`).toBeLessThan(
+              b.pixels[k + 1] - b.pixels[k + 2],
+            );
+          }
+        }
+    }
+    expect(off).toBeGreaterThan(5000);
+    expect(inside).toBeGreaterThan(500);
+  }, 30_000);
+
+  it('grows no grass tufts on a yard', async () => {
+    const { built } = yarded(),
+      { map } = built,
+      yards = new BuildingYards(map.w, map.h, map.originX, map.originY, built.yards);
+    let tufts = 0;
+    for (const [x, y] of [
+      [0, 8],
+      [8, 8],
+    ]) {
+      const r = await paint(built, x, y);
+      for (let i = 0; i < r.grass.length; i += 4) {
+        // a tuft stands at its map point on flat ground (pointOf at one pixel per world pixel)
+        const sx = r.grass[i] + r.left,
+          sy = r.grass[i + 1] + r.top,
+          tx = sx / 64 + sy / 32,
+          ty = sy / 32 - sx / 64;
+        tufts++;
+        expect(
+          yards.weigh(tx, ty, Math.round(ty) * map.w + Math.round(tx)),
+          `tuft at ${tx}, ${ty}`,
+        ).toBeLessThanOrEqual(0.5);
+      }
+    }
+    expect(tufts).toBeGreaterThan(50);
+  });
+});
+
+/** The yard of `frame` with its footprint's (one) tile at (x, y), as drawn at `scale`. */
+const yardAt = (frame: string, x: number, y: number, scale = 1) =>
+  buildingYard(frame, groundOf(frame)!, { x, y, scale, sandy: false }, [], () => false);
+
+describe('the painter with yards beside water, paving and chunk edges', () => {
+  // Slow: paints three chunks of a hill twice and checks every pixel (about 2 s alone).
+  it('keeps every yard off a steep bank', async () => {
+    const w = onHill(world()),
+      bare = { ...w, city: [], doorsteps: [] },
+      { map } = w,
+      relief = buildRelief(map, new Set()),
+      // a house, a farm and a water tower astride the hill's west, south and east banks
+      yards = [
+        yardAt('structures/townhouse', 3, 7),
+        yardAt('structures/farm_1', 7, 13),
+        yardAt('structures/water_tower', 14, 4),
+      ],
+      painter = new BuildingYards(map.w, map.h, map.originX, map.originY, yards);
+    expect(relief.tiles).toBeDefined();
+    let steep = 0,
+      level = 0;
+    const touched: string[] = [];
+    for (const [x, y] of [
+      [0, 0],
+      [0, 8],
+      [8, 0],
+    ]) {
+      const a = await paint({ ...bare, yards }, x, y),
+        b = await paint(bare, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          // the map point the painter reads here, raised as it raises it
+          const [bx, by] = pointOf(a, px, py, 1),
+            z = surfaceAlongRay(map, relief, bx, by, 10),
+            tx = bx + z / 32,
+            ty = by + z / 32,
+            tile = Math.round(ty) * map.w + Math.round(tx);
+          if (!painter.near(tile) || !painter.weigh(tx, ty, tile)) continue;
+          // the levels the surface climbs per tile here, as the painter measures a terrace's slope
+          const d = 0.05,
+            gx =
+              (reliefHeight(map, relief, tx + d, ty) - reliefHeight(map, relief, tx - d, ty)) / 0.1,
+            gy =
+              (reliefHeight(map, relief, tx, ty + d) - reliefHeight(map, relief, tx, ty - d)) / 0.1,
+            levels = Math.hypot(gx, gy) / relief.style.step;
+          if (levels < 0.6) {
+            if (levels < 0.25) level++;
+            continue;
+          }
+          steep++;
+          const was = [...b.pixels.subarray(k, k + 3)],
+            now = [...a.pixels.subarray(k, k + 3)];
+          if (now.some((c, i) => c !== was[i]))
+            touched.push(
+              `${levels.toFixed(2)} levels a tile at ${tx.toFixed(3)}, ${ty.toFixed(3)} ` +
+                `(chunk ${x},${y} pixel ${px},${py}): ${was} painted ${now}`,
+            );
+        }
+    }
+    // the yards reach well over the banks, and over the level ground beside them
+    expect(steep).toBeGreaterThan(200);
+    expect(level).toBeGreaterThan(1000);
+    expect(touched.slice(0, 5), `${touched.length} pixels painted`).toEqual([]);
+  }, 40_000);
+
+  // The kerb's dark foot line lies past the platform, on whatever ground is there: on a steep
+  // bank it is given no share of the point, like the rest of the yard. Slow: paints four chunks of
+  // a hill twice and checks every pixel (about 3.5 s alone; the limit is 60 s).
+  it("keeps a platform's kerb and the dark line at its foot off a steep bank", async () => {
+    const w = onHill(world()),
+      bare = { ...w, city: [], doorsteps: [] },
+      { map } = w,
+      relief = buildRelief(map, new Set()),
+      // stations on the hill's edges, two to a side, their platforms facing out over its banks
+      yards = (
+        [
+          ['structures/station_2', 8, 13],
+          ['structures/station_1', 5, 12],
+          ['structures/station_1_r3', 14, 5],
+          ['structures/station_3_r3', 13, 9],
+          ['structures/station_1_r2', 9, 1],
+          ['structures/station_2_r2', 11, 2],
+          ['structures/station_1_r1', 3, 4],
+          ['structures/station_2_r1', 4, 10],
+        ] as const
+      ).map(([frame, x, y]) => yardAt(frame, x, y)),
+      painter = new BuildingYards(map.w, map.h, map.originX, map.originY, yards);
+    expect(relief.tiles).toBeDefined();
+    const seen = { foot: 0, platform: 0 },
+      touched: string[] = [];
+    for (const [x, y] of [
+      [0, 0],
+      [8, 0],
+      [0, 8],
+      [8, 8],
+    ]) {
+      const a = await paint({ ...bare, yards }, x, y),
+        b = await paint(bare, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          // the map point the painter reads here, raised as it raises it
+          const [bx, by] = pointOf(a, px, py, 1),
+            z = surfaceAlongRay(map, relief, bx, by, 10),
+            tx = bx + z / 32,
+            ty = by + z / 32,
+            tile = Math.round(ty) * map.w + Math.round(tx);
+          if (!painter.near(tile)) continue;
+          painter.weigh(tx, ty, tile);
+          if (!painter.touched) continue;
+          // the levels the surface climbs per tile here, as the painter measures a terrace's slope
+          const d = 0.05,
+            gx =
+              (reliefHeight(map, relief, tx + d, ty) - reliefHeight(map, relief, tx - d, ty)) / 0.1,
+            gy =
+              (reliefHeight(map, relief, tx, ty + d) - reliefHeight(map, relief, tx, ty - d)) / 0.1;
+          if (Math.hypot(gx, gy) / relief.style.step < 0.6) continue;
+          if (painter.weight > 0) seen.platform++;
+          else seen.foot++;
+          const was = [...b.pixels.subarray(k, k + 3)],
+            now = [...a.pixels.subarray(k, k + 3)];
+          if (now.some((c, i) => c !== was[i]))
+            touched.push(
+              `${painter.weight > 0 ? 'platform' : 'foot line'} at ${tx.toFixed(3)}, ` +
+                `${ty.toFixed(3)} (chunk ${x},${y} pixel ${px},${py}): ${was} painted ${now}`,
+            );
+        }
+    }
+    // the kerbs' foot lines and their platforms both reach over the banks
+    expect(seen.foot, 'foot line pixels on a steep bank').toBeGreaterThan(60);
+    expect(seen.platform, 'platform pixels on a steep bank').toBeGreaterThan(2000);
+    expect(touched.slice(0, 5), `${touched.length} pixels painted`).toEqual([]);
+  }, 60_000);
+
+  // Slow: paints two chunks twice and checks every pixel (about a second alone).
+  it('keeps every yard out of the water and off the solid paving', async () => {
+    const w = world(),
+      { map } = w,
+      paved = new Set(w.city),
+      paving = new TownPaving(map.w, map.h, map.originX, map.originY, w.city, w.doorsteps);
+    // stations whose platforms face the river, a house by the river, and two yards in the town
+    const yards = [
+      yardAt('structures/station_2_r3', 14, 14),
+      yardAt('structures/station_2_r1', 17, 13),
+      yardAt('structures/townhouse', 14, 13),
+      yardAt('structures/townhouse', 10, 8),
+      yardAt('structures/farm_1', 12, 10),
+    ];
+    let water = 0,
+      solid = 0;
+    const touched: string[] = [];
+    for (const [x, y] of [
+      [8, 8],
+      [16, 8],
+    ]) {
+      const a = await paint({ ...w, yards }, x, y),
+        b = await paint(w, x, y);
+      for (let py = 0; py < a.height; py++)
+        for (let px = 0; px < a.width; px++) {
+          const k = (py * a.width + px) * 4;
+          if (a.pixels[k + 3] !== 255) continue;
+          const [tx, ty] = pointOf(a, px, py, 1),
+            tile = Math.round(ty) * map.w + Math.round(tx),
+            onPaving = paving.near(tile) && paving.distance(tx, ty) >= PAVING_SOLID,
+            inWater = !paved.has(tile) && paintedWater(map, tx, ty) >= 1 - 1e-9;
+          if (!onPaving && !inWater) continue;
+          if (onPaving) solid++;
+          else water++;
+          const was = [...b.pixels.subarray(k, k + 3)],
+            now = [...a.pixels.subarray(k, k + 3)];
+          if (now.some((c, i) => c !== was[i]))
+            touched.push(
+              `${onPaving ? 'paving' : 'water'} at ${tx.toFixed(3)}, ${ty.toFixed(3)} ` +
+                `(chunk ${x},${y} pixel ${px},${py}): ${was} painted ${now}`,
+            );
+        }
+    }
+    expect(water).toBeGreaterThan(1000);
+    expect(solid).toBeGreaterThan(1000);
+    expect(touched.slice(0, 5), `${touched.length} pixels painted`).toEqual([]);
+  }, 30_000);
+
+  // Slow: paints four pairs of chunks, two at twice the size (about 3 s alone).
+  it('paints the pixels two neighbouring chunks share alike, yards and kerbs across their edge', async () => {
+    const w = world(),
+      bare = { ...w, city: [], doorsteps: [] },
+      yards = [
+        // a platform's kerb across x = 7.5, a house's yard and a farm's across y = 7.5
+        yardAt('structures/station_2_r1', 8, 12),
+        yardAt('structures/townhouse', 7, 10),
+        yardAt('structures/farm_1', 10, 7),
+        yardAt('structures/water_tower', 8, 8),
+      ],
+      painter = new BuildingYards(w.map.w, w.map.h, w.map.originX, w.map.originY, yards);
+    for (const scale of [1, 2])
+      for (const [a, b] of [
+        [
+          [0, 8],
+          [8, 8],
+        ],
+        [
+          [8, 0],
+          [8, 8],
+        ],
+      ]) {
+        const ra = await paint({ ...bare, yards }, a[0], a[1], scale),
+          rb = await paint({ ...bare, yards }, b[0], b[1], scale);
+        const ox = (ra.left - rb.left) * scale,
+          oy = (ra.top - rb.top) * scale;
+        let shared = 0,
+          yard = 0;
+        for (let py = 0; py < ra.height; py++)
+          for (let px = 0; px < ra.width; px++) {
+            const ka = (py * ra.width + px) * 4,
+              bx = px + ox,
+              by = py + oy;
+            if (ra.pixels[ka + 3] !== 255 || bx < 0 || by < 0 || bx >= rb.width || by >= rb.height)
+              continue;
+            const kb = (by * rb.width + bx) * 4;
+            if (rb.pixels[kb + 3] !== 255) continue;
+            shared++;
+            const [tx, ty] = pointOf(ra, px, py, scale),
+              tile = Math.round(ty) * w.map.w + Math.round(tx);
+            if (painter.near(tile)) {
+              painter.weigh(tx, ty, tile);
+              if (painter.touched) yard++;
+            }
+            for (let c = 0; c < 3; c++)
+              expect(rb.pixels[kb + c], `scale ${scale}, pixel ${px},${py}`).toBe(
+                ra.pixels[ka + c],
+              );
+          }
+        expect(shared).toBeGreaterThan(50 * scale);
+        expect(yard, `chunks ${a} and ${b} at ${scale}`).toBeGreaterThan(10 * scale);
+      }
+  }, 80_000);
+
+  // Slow: paints one chunk twice and reads every pixel (about 0.35 s alone; the limit is 10 s).
+  it("keeps a stone yard's colour under any season's tint, and tints an earth yard with the ground", async () => {
+    const w = world(),
+      bare = { ...w, city: [], doorsteps: [] },
+      { map } = w,
+      sites = [
+        ['structures/station_2', 10, 12, true],
+        ['structures/water_tower', 12, 10, true],
+        ['structures/quarry_2', 10, 14, true],
+        ['structures/farm_1', 13, 13, false],
+      ] as const,
+      yards = sites.map(([frame, x, y]) => yardAt(frame, x, y)),
+      alone = yards.map((y) => new BuildingYards(map.w, map.h, map.originX, map.originY, [y]));
+    const summer = await paint({ ...bare, yards, tint: 0xd8e8c0 }, 8, 8),
+      autumn = await paint({ ...bare, yards, tint: 0xe8b878 }, 8, 8);
+    const seen = [0, 0];
+    for (let py = 0; py < summer.height; py++)
+      for (let px = 0; px < summer.width; px++) {
+        const k = (py * summer.width + px) * 4;
+        if (summer.pixels[k + 3] !== 255) continue;
+        const [tx, ty] = pointOf(summer, px, py, 1),
+          tile = Math.round(ty) * map.w + Math.round(tx);
+        // inside one building's yard, wholly
+        const whole = alone.findIndex((p) => p.near(tile) && p.weigh(tx, ty, tile) === 1);
+        if (whole < 0 || alone.some((p, i) => i !== whole && p.near(tile) && p.weigh(tx, ty, tile)))
+          continue;
+        const stone = sites[whole][3],
+          a = [...summer.pixels.subarray(k, k + 3)],
+          b = [...autumn.pixels.subarray(k, k + 3)],
+          where = `${sites[whole][0]} at ${tx}, ${ty}`;
+        seen[stone ? 0 : 1]++;
+        if (stone)
+          for (let c = 0; c < 3; c++) expect(Math.abs(a[c] - b[c]), where).toBeLessThanOrEqual(1);
+        // the autumn tint is redder and far less blue than the summer one
+        else expect(b[2] - a[2], where).toBeLessThan(-10);
+      }
+    expect(seen[0], 'whole stone yard pixels').toBeGreaterThan(300);
+    expect(seen[1], 'whole earth yard pixels').toBeGreaterThan(100);
+  }, 10_000);
 });
