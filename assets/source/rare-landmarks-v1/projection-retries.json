@@ -1,0 +1,23 @@
+{
+  "status": "guided retries; angle validation pending",
+  "exact_ground_slopes": [
+    0.5,
+    -0.5
+  ],
+  "correct_mathematical_camera_elevation_degrees": 30,
+  "first_test": "Edit target Image 1: Bellkeeper's Refuge architecture. Supporting Image 2: mathematically exact game projection and human scale blockout.\nReproject the building so its architectural ground axes and every horizontal floor edge follow Image 2 EXACTLY: screen slopes +0.5 and -0.5, both axes 26.565 degrees from horizontal, verticals vertical, orthographic no perspective convergence. Image 2 is the authoritative camera, footprint and height envelope. Azimuth45 degrees, camera elevation26.565 degrees; DO NOT use true30-degree isometric axes.\nKeep Image 1's limestone tower, bronze bell, small attached timber keeper room, slate spire, weather vane, warm illustrated materials and upper-left light. Reconstruct appropriate surfaces for new camera rather than tilting whole picture. Fit all architecture into Image2's envelope except small eaves and narrow spire, with ordinary2m door matching guide door. One4m-square tile base and fourteen metre height. No grey proxy visible, no guide lines, no pedestal or environment.\nGenuine transparent alpha background including gaps, no RGB halo or vignette, no painted backdrop. All content with clear transparent margins. One final building only.",
+  "guide_as_target": [
+    {
+      "id": "01-merchants-last-stop"
+    },
+    {
+      "id": "02-overgrown-bathhouse"
+    },
+    {
+      "id": "03-bellkeepers-refuge"
+    },
+    {
+      "id": "04-flooded-archive"
+    }
+  ]
+}
