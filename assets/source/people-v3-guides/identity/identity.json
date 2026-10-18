@@ -1,0 +1,151 @@
+{
+ "hipLine": 0.52,
+ "fade": 0.06,
+ "canvas": [
+  512,
+  768
+ ],
+ "shrink": 2,
+ "crops": [
+  {
+   "strip": "farmer-back-carry",
+   "frame": 2,
+   "columns": 256
+  },
+  {
+   "strip": "farmer-back-walk",
+   "frame": 2,
+   "columns": 256
+  },
+  {
+   "strip": "farmer-front-carry",
+   "frame": 0,
+   "columns": 192
+  },
+  {
+   "strip": "farmer-front-walk",
+   "frame": 3,
+   "columns": 192
+  },
+  {
+   "strip": "lumberjack-back-carry",
+   "frame": 3,
+   "columns": 256
+  },
+  {
+   "strip": "lumberjack-back-walk",
+   "frame": 0,
+   "columns": 256
+  },
+  {
+   "strip": "lumberjack-front-carry",
+   "frame": 1,
+   "columns": 192
+  },
+  {
+   "strip": "lumberjack-front-walk",
+   "frame": 1,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-back-walk",
+   "frame": 0,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-front-walk",
+   "frame": 3,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-01-back-walk",
+   "frame": 1,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-01-front-walk",
+   "frame": 0,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-02-back-walk",
+   "frame": 1,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-02-front-walk",
+   "frame": 2,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-03-back-walk",
+   "frame": 2,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-03-front-walk",
+   "frame": 1,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-04-back-walk",
+   "frame": 0,
+   "columns": 192
+  },
+  {
+   "strip": "passenger-variant-04-front-walk",
+   "frame": 3,
+   "columns": 192
+  },
+  {
+   "strip": "pump-hand-back-carry",
+   "frame": 0,
+   "columns": 320
+  },
+  {
+   "strip": "pump-hand-back-walk",
+   "frame": 3,
+   "columns": 192
+  },
+  {
+   "strip": "pump-hand-front-carry",
+   "frame": 1,
+   "columns": 320
+  },
+  {
+   "strip": "pump-hand-front-walk",
+   "frame": 1,
+   "columns": 192
+  },
+  {
+   "strip": "railway-worker-back-walk",
+   "frame": 3,
+   "columns": 192
+  },
+  {
+   "strip": "railway-worker-front-walk",
+   "frame": 3,
+   "columns": 192
+  },
+  {
+   "strip": "stone-mason-back-carry",
+   "frame": 3,
+   "columns": 256
+  },
+  {
+   "strip": "stone-mason-back-walk",
+   "frame": 1,
+   "columns": 256
+  },
+  {
+   "strip": "stone-mason-front-carry",
+   "frame": 3,
+   "columns": 192
+  },
+  {
+   "strip": "stone-mason-front-walk",
+   "frame": 1,
+   "columns": 192
+  }
+ ]
+}
