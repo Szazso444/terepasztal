@@ -7,8 +7,11 @@
  * height is the footprint's, unless a family names its own (`blockHeight` in families.json): that
  * family then has guides of its own, `guides/<family>-r<view>.png`.
  * The windmill has a guide kind of its own (`guideKind: "windmill"` in families.json): a round
- * tower with its windshaft stub on the lower-left face, a hub file that says where the sails
- * turn, and the sail cross seen face on (`windmillFiles`).
+ * tower with its windshaft stub on the face the building's front turns to, in each of the four
+ * views, a hub file per view that says where the sails turn, and the sail cross seen face on
+ * (`windmillFiles`).
+ * The coaling stage (the `fuel_stop` family) has an oblong guide of its own for its three turned
+ * views, with pier stubs, in the plan the painting must hold (`oblongGuide`, `oblongFiles`).
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -283,13 +286,40 @@ const PLATE = [84, 84, 84];
 export const WINDMILL_GREY = { tower: TOWER_BANDS, cap: CAP_BANDS, stub: STUB, plate: PLATE };
 
 /**
- * The map of the plane of tile x and the vertical (the plane square to the shaft) onto the
- * screen, for a cross of unit scale: (u right, v down) to (screen x, screen y).
+ * The windmill's four views. The windshaft, the hub plate and the door are on the building's front
+ * (`WALLS[rot]` of building-kit.mjs: S, W, N, E), which is tile direction `shaft`: +y, -x, -y, +x.
+ * The first two walls the camera sees are S and E, so the front is on the lower left in `r0`, away
+ * from the camera on the upper left in `r1` and on the upper right in `r2` (the shaft, the plate
+ * and the sails are then behind the tower), and on the lower right in `r3`. `across` is the tile
+ * direction the cross's own u axis lies along: the shaft's, turned with the building.
  */
-export const CROSS_AFFINE = [
-  [Math.SQRT1_2, 0],
-  [Math.SQRT1_2 / 2, Math.sqrt(3) / 2],
+export const WINDMILL_TURNS = [
+  { rot: 0, front: 'S', shaft: [0, 1], across: [1, 0], tileAxis: '+y', face: 'lower left' },
+  { rot: 1, front: 'W', shaft: [-1, 0], across: [0, 1], tileAxis: '-x', face: 'upper left' },
+  { rot: 2, front: 'N', shaft: [0, -1], across: [-1, 0], tileAxis: '-y', face: 'upper right' },
+  { rot: 3, front: 'E', shaft: [1, 0], across: [0, -1], tileAxis: '+x', face: 'lower right' },
 ];
+/** True where the front, and with it the shaft, the plate and the door, is away from the camera. */
+export const frontHidden = (rot) => rot === 1 || rot === 2;
+
+/**
+ * The map of the plane the cross turns in (the shaft's tile axis stands square to it: the plane of
+ * the other tile axis and the vertical) onto the screen, for a cross of unit scale: (u right, v
+ * down in the cross's own picture) to (screen x, screen y). u runs along the tile direction
+ * `across` of the view, v along the vertical. A view whose front is away from the camera (`r1`,
+ * `r2`) sees the cross from behind: the map then reverses the cross's handedness (negative
+ * determinant), which a cross that a quarter turn maps onto itself shows only in the order its
+ * arms are numbered.
+ */
+export function crossAffine(rot = 0) {
+  const [tx, ty] = WINDMILL_TURNS[rot].across;
+  return [
+    [(tx - ty) * Math.SQRT1_2, 0],
+    [((tx + ty) * Math.SQRT1_2) / 2, Math.sqrt(3) / 2],
+  ];
+}
+/** The view `r0`'s map: the plane of tile x and the vertical. */
+export const CROSS_AFFINE = crossAffine(0);
 
 /** The sail cross picture: a square, the hub at its middle, arms at 45 degrees. */
 export const SAILS_FACE = {
@@ -328,30 +358,40 @@ const towerRadius = (z) =>
   WINDMILL.baseRadius +
   ((WINDMILL.topRadius - WINDMILL.baseRadius) * (z - PLINTH)) / WINDMILL.towerHeight;
 
-/** Where the windmill's parts stand on its canvas. */
-export function windmillGeometry() {
+/** Where the windmill's parts stand on its canvas, for the view `rot`. */
+export function windmillGeometry(rot = 0) {
   const fp = FOOTPRINTS[WINDMILL.footprint];
+  const [sx, sy] = WINDMILL_TURNS[rot].shaft;
   const eave = PLINTH + WINDMILL.towerHeight;
   const hubZ = eave + WINDMILL.hubAboveEave;
   const doorZ = PLINTH + WINDMILL.doorHeight / 2;
+  const R = towerRadius(PLINTH);
   return {
     fp,
+    rot,
     eave,
     apex: eave + WINDMILL.capHeight,
     hubZ,
-    hub: project(fp, 0, WINDMILL.shaftLength, hubZ),
+    hub: project(fp, sx * WINDMILL.shaftLength, sy * WINDMILL.shaftLength, hubZ),
     axis: project(fp, 0, 0, hubZ),
-    door: project(fp, 0, towerRadius(PLINTH), doorZ),
+    door: project(fp, sx * R, sy * R, doorZ),
     /** a canvas point in game px from the anchor */
     inGame: (p) => [(p[0] - fp.centre[0]) / fp.scale, (p[1] - fp.centre[1]) / fp.scale],
   };
 }
 
-/** The windmill's guide: plinth, tower, door, cap, windshaft stub and the hub plate. */
-export function drawWindmill({ plinth = true } = {}) {
-  const g = windmillGeometry();
+/**
+ * The windmill's guide for the view `rot`: plinth, tower, door, cap, windshaft stub and the hub
+ * plate. Where the front is away from the camera (`r1`, `r2`) there is no door in the picture,
+ * and the stub and the plate stand behind the tower and its cap.
+ */
+export function drawWindmill({ plinth = true, rot = 0 } = {}) {
+  const g = windmillGeometry(rot);
   const { fp } = g;
   const W = WINDMILL;
+  const turn = WINDMILL_TURNS[rot];
+  const hidden = frontHidden(rot);
+  const A = crossAffine(rot);
   const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
   // the plinth is the footprint, as for every guide (`plinth: false` for a stand-in picture)
   if (plinth)
@@ -361,6 +401,35 @@ export function drawWindmill({ plinth = true } = {}) {
       { x0: -0.5, y0: -0.5, x1: 0.5, y1: 0.5, z0: 0, z1: PLINTH },
       { top: GREY.plinthTop, left: GREY.plinthLeft, right: GREY.plinthRight },
     );
+  // the windshaft stub, a cylinder along the shaft from the cap to the hub, and the hub plate
+  const shaft = () => {
+    const [dx, dy] = [g.hub[0] - g.axis[0], g.hub[1] - g.axis[1]];
+    const len = Math.hypot(dx, dy);
+    const nx = (-dy / len) * W.stubRadius * fp.scale,
+      ny = (dx / len) * W.stubRadius * fp.scale;
+    // the stub comes out of the cap's surface, at the shaft's height
+    const out = (W.capRadius * (g.apex - g.hubZ)) / W.capHeight / W.shaftLength;
+    const start = [g.axis[0] + dx * out, g.axis[1] + dy * out];
+    const stub = [
+      [start[0] + nx, start[1] + ny],
+      [g.hub[0] + nx, g.hub[1] + ny],
+      [g.hub[0] - nx, g.hub[1] - ny],
+      [start[0] - nx, start[1] - ny],
+    ];
+    fillPoly(png, stub, STUB);
+    strokePoly(png, stub, GREY.line);
+    const plate = [];
+    for (let i = 0; i < 72; i++) {
+      const t = (2 * Math.PI * i) / 72;
+      const u = W.plateRadius * Math.cos(t) * fp.scale,
+        v = W.plateRadius * Math.sin(t) * fp.scale;
+      plate.push([g.hub[0] + A[0][0] * u + A[0][1] * v, g.hub[1] + A[1][0] * u + A[1][1] * v]);
+    }
+    fillPoly(png, plate, PLATE);
+    strokePoly(png, plate, GREY.line);
+  };
+  // away from the camera, the shaft and the plate are behind the tower: drawn first
+  if (hidden) shaft();
   // slices, the far ones first: a slice's grey is how far its normal turns to the screen's left
   const order = [...Array(SLICES).keys()].sort(
     (i, j) => Math.cos(azimuth(i) - Math.PI / 4) - Math.cos(azimuth(j) - Math.PI / 4),
@@ -391,16 +460,24 @@ export function drawWindmill({ plinth = true } = {}) {
       ring(fp, azimuth(i), W.topRadius, g.eave),
     );
   strokePoly(png, hull(body), GREY.line);
-  // the door: on the +y face at the foot, plumb as a door hangs (the wall leans back from it by
-  // a pixel and a half at its head), its sides on the tower's surface at the sill
-  const door = [
-    [-W.doorWidth / 2, PLINTH],
-    [W.doorWidth / 2, PLINTH],
-    [W.doorWidth / 2, PLINTH + W.doorHeight],
-    [-W.doorWidth / 2, PLINTH + W.doorHeight],
-  ].map(([x, z]) => project(fp, x, Math.sqrt(towerRadius(PLINTH) ** 2 - x * x), z));
-  fillPoly(png, door, GREY.opening);
-  strokePoly(png, door, GREY.line);
+  // the door: on the front's face at the foot, plumb as a door hangs (the wall leans back from it
+  // by a pixel and a half at its head), its sides on the tower's surface at the sill. Not in the
+  // views whose front is away from the camera.
+  if (!hidden) {
+    const [dx, dy] = turn.shaft,
+      [tx, ty] = turn.across;
+    const door = [
+      [-W.doorWidth / 2, PLINTH],
+      [W.doorWidth / 2, PLINTH],
+      [W.doorWidth / 2, PLINTH + W.doorHeight],
+      [-W.doorWidth / 2, PLINTH + W.doorHeight],
+    ].map(([a, z]) => {
+      const out = Math.sqrt(towerRadius(PLINTH) ** 2 - a * a);
+      return project(fp, dx * out + tx * a, dy * out + ty * a, z);
+    });
+    fillPoly(png, door, GREY.opening);
+    strokePoly(png, door, GREY.line);
+  }
   // the cap
   const apex = project(fp, 0, 0, g.apex);
   for (const i of order) {
@@ -420,34 +497,7 @@ export function drawWindmill({ plinth = true } = {}) {
   for (let i = 0; i <= SLICES / 2; i++)
     near.push(ring(fp, -Math.PI / 4 + azimuth(i), W.capRadius, g.eave));
   for (let i = 0; i + 1 < near.length; i++) strokePoly(png, [near[i], near[i + 1]], GREY.line);
-  // the windshaft stub, a cylinder along +y from the cap to the hub, and the hub plate
-  const [dx, dy] = [g.hub[0] - g.axis[0], g.hub[1] - g.axis[1]];
-  const len = Math.hypot(dx, dy);
-  const nx = (-dy / len) * W.stubRadius * fp.scale,
-    ny = (dx / len) * W.stubRadius * fp.scale;
-  // the stub comes out of the cap's surface, at the shaft's height
-  const out = (W.capRadius * (g.apex - g.hubZ)) / W.capHeight / W.shaftLength;
-  const start = [g.axis[0] + dx * out, g.axis[1] + dy * out];
-  const stub = [
-    [start[0] + nx, start[1] + ny],
-    [g.hub[0] + nx, g.hub[1] + ny],
-    [g.hub[0] - nx, g.hub[1] - ny],
-    [start[0] - nx, start[1] - ny],
-  ];
-  fillPoly(png, stub, STUB);
-  strokePoly(png, stub, GREY.line);
-  const plate = [];
-  for (let i = 0; i < 72; i++) {
-    const t = (2 * Math.PI * i) / 72;
-    const u = W.plateRadius * Math.cos(t) * fp.scale,
-      v = W.plateRadius * Math.sin(t) * fp.scale;
-    plate.push([
-      g.hub[0] + CROSS_AFFINE[0][0] * u + CROSS_AFFINE[0][1] * v,
-      g.hub[1] + CROSS_AFFINE[1][0] * u + CROSS_AFFINE[1][1] * v,
-    ]);
-  }
-  fillPoly(png, plate, PLATE);
-  strokePoly(png, plate, GREY.line);
+  if (!hidden) shaft();
   return png;
 }
 
@@ -489,21 +539,45 @@ export function drawSailsFace() {
 const round4 = (v) => Math.round(v * 1e4) / 1e4;
 const pair = (p) => p.map(round4);
 
-/** The hub file: where the sails turn, which way the shaft points, how the cross is seen. */
-export function windmillHub() {
-  const g = windmillGeometry();
+/**
+ * The hub file of the view `rot`: where the sails turn, which way the shaft points, how the cross
+ * is seen.
+ */
+export function windmillHub(rot = 0) {
+  const g = windmillGeometry(rot);
   const W = WINDMILL;
+  const turn = WINDMILL_TURNS[rot];
+  const hidden = frontHidden(rot);
   const [dx, dy] = [g.hub[0] - g.axis[0], g.hub[1] - g.axis[1]];
   const len = Math.hypot(dx, dy);
-  const A = CROSS_AFFINE;
+  const A = crossAffine(rot);
   // the ellipse a circle of the cross becomes: the singular values of the map
   const p = A[0][0] ** 2 + A[1][0] ** 2,
     q = A[0][0] * A[0][1] + A[1][0] * A[1][1],
     r = A[0][1] ** 2 + A[1][1] ** 2;
   const mean = (p + r) / 2,
     spread = Math.hypot((p - r) / 2, q);
+  const letter = (v) => (v[0] !== 0 ? 'x' : 'y');
+  const sign = (v) => (v[0] + v[1] > 0 ? '+' : '-');
+  const det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+  const door = {
+    visible: !hidden,
+    tileAxis: turn.tileAxis,
+    canvas: hidden ? null : pair(g.door),
+    fromAnchorGame: hidden ? null : pair(g.inGame(g.door)),
+    widthTiles: round4(W.doorWidth),
+    heightPx: round4(W.doorHeight),
+    heightMetres: 2.1,
+    widthMetres: 1,
+    note: hidden
+      ? 'the front is away from the camera: there is no door in this view, on either visible wall'
+      : 'the person is 9 px for 1.75 m, so a metre stands 5.1429 px upright; the sill is the top of the plinth, the tower foot',
+  };
   return {
-    guide: 'windmill-r0.png',
+    guide: `windmill-r${rot}.png`,
+    view: `r${rot}`,
+    rotation: rot,
+    front: turn.front,
     note: 'Written by tools/building-guides.mjs: do not edit by hand.',
     canvas: g.fp.canvas,
     scale: g.fp.scale,
@@ -513,27 +587,20 @@ export function windmillHub() {
     hub: {
       canvas: pair(g.hub),
       fromAnchorGame: pair(g.inGame(g.hub)),
-      tile: [0, W.shaftLength],
+      tile: [turn.shaft[0] * W.shaftLength + 0, turn.shaft[1] * W.shaftLength + 0],
       heightAbovePlinth: g.hubZ - PLINTH,
       heightAboveGround: g.hubZ,
     },
     shaft: {
-      tileAxis: '+y',
-      face: 'lower left',
+      tileAxis: turn.tileAxis,
+      face: turn.face,
       lengthTiles: W.shaftLength,
       from: { canvas: pair(g.axis), tile: [0, 0] },
       screenDirection: pair([dx / len, dy / len]),
       screenSlope: round4(Math.abs(dy / dx)),
+      behindTower: hidden,
     },
-    door: {
-      canvas: pair(g.door),
-      fromAnchorGame: pair(g.inGame(g.door)),
-      widthTiles: round4(W.doorWidth),
-      heightPx: round4(W.doorHeight),
-      heightMetres: 2.1,
-      widthMetres: 1.0,
-      note: 'the person is 9 px for 1.75 m, so a metre stands 5.1429 px upright; the sill is the top of the plinth, the tower foot',
-    },
+    door,
     tower: {
       baseRadiusTiles: W.baseRadius,
       topRadiusTiles: W.topRadius,
@@ -548,10 +615,12 @@ export function windmillHub() {
       },
     },
     cross: {
-      plane: 'the plane of tile x and the vertical, to which the shaft (tile y) stands square',
+      plane: `the plane of tile ${letter(turn.across)} and the vertical, to which the shaft (tile ${letter(turn.shaft)}) stands square`,
+      uTileAxis: `${sign(turn.across)}${letter(turn.across)}`,
+      seenFrom: hidden ? 'behind (the front is away from the camera)' : 'the front',
+      determinantSign: det > 0 ? '+' : '-',
       affine: A.map((row) => row.map(round4)),
-      formula:
-        "screen = s * [[0.7071, 0], [0.3536, 0.866]] * (u, v), u to the right and v down in the cross's own px, s game px per cross px",
+      formula: `screen = s * [[${A[0].map(round4).join(', ')}], [${A[1].map(round4).join(', ')}]] * (u, v), u to the right and v down in the cross's own px, s game px per cross px`,
       ellipseMinorOverMajor: round4(Math.sqrt((mean - spread) / (mean + spread))),
       sails: {
         radiusGamePx: W.sailRadius,
@@ -573,14 +642,316 @@ export function windmillHub() {
   };
 }
 
-/** The windmill's three files, as `[path, bytes]`. */
+/**
+ * The windmill's files, as `[path, bytes]`: each view's guide and hub file, the sail cross after
+ * the first view's.
+ */
 export function windmillFiles() {
   const dir = `${ROOT}/guides`;
-  return [
-    [`${dir}/windmill-r0.png`, PNG.sync.write(drawWindmill())],
-    [`${dir}/windmill-r0-hub.json`, Buffer.from(JSON.stringify(windmillHub(), null, 2) + '\n')],
-    [`${dir}/windmill-sails-face.png`, PNG.sync.write(drawSailsFace())],
+  const view = (rot) => [
+    [`${dir}/windmill-r${rot}.png`, PNG.sync.write(drawWindmill({ rot }))],
+    [
+      `${dir}/windmill-r${rot}-hub.json`,
+      Buffer.from(JSON.stringify(windmillHub(rot), null, 2) + '\n'),
+    ],
   ];
+  return [
+    ...view(0),
+    [`${dir}/windmill-sails-face.png`, PNG.sync.write(drawSailsFace())],
+    ...view(1),
+    ...view(2),
+    ...view(3),
+  ];
+}
+
+/**
+ * The coaling stage's oblong guide. The square block of the family's own guides (`blockHeight`) let
+ * the painter spread the stage 15 to 26 per cent wider than its plinth (the review of the fourth
+ * round, 2026-10-18: the pier feet spanned 794, 737 and 725 px of a 1254 px picture where the
+ * plinth spans 631), and the fit, which scales a picture by that span, then shrank it low. This
+ * guide has the stage's own plan instead: an oblong plinth of the footprint's width, six pier
+ * stubs on it, and the oblong block above, the height the family asks for. The views are `r1`,
+ * `r2` and `r3`: `r0` is painted and stays.
+ *
+ * The plan is the finished front view's (r0): the walls' two visible feet stand 0.423 : 0.577 of
+ * their span (the short side on the lower left in r0), the long side carries three piers and the
+ * short side two. The walls' two sides add up to what the square guide's do, so that the near
+ * corner's row, the walls' span and the height the fit measures keep the square guide's numbers;
+ * the plinth stands WALL_INSET outside the walls, as the footprint's does, so its width is the
+ * footprint's, 64 game px.
+ */
+export const OBLONG = {
+  family: 'fuel_stop',
+  views: [1, 2, 3],
+  /** the long and the short wall's share of the walls' span (r0's plan, 1 : 1.364) */
+  longShare: 0.577,
+  shortShare: 0.423,
+  /** a pier stub's side in tiles, and its height above the plinth in game px */
+  pier: { side: 0.12, height: 10 },
+  /** the winch's opening on the front wall: width in tiles, height in game px */
+  winch: { width: 0.16, height: 20 },
+  /**
+   * What the review measured of the painter, and what the painting may be: the stage's foot over
+   * the plinth's width, 1.15 to 1.26, and the largest overshoot a painting may have to be
+   * measured at all.
+   */
+  painted: { overshoot: [0.15, 0.26], tolerance: 0.05 },
+  /** the size the painter's pictures came back in, and the guide's own */
+  returnSize: 1254,
+};
+
+/** The pier stubs' own greys, apart from every other grey of the guides, so that a check can find them. */
+export const PIER_GREY = { top: [200, 200, 200], left: [150, 150, 150], right: [104, 104, 104] };
+
+/**
+ * The coaling stage's plan for the view `rot`, in tiles from the footprint's centre: the plinth
+ * (`slab`: its extent along x and along y), the block's half extents (the walls stand
+ * WALL_INSET inside the plinth's edge), and the six pier centres, on the walls' lines. The long
+ * side runs along y where the lower-left wall is the short one (`r0`, `r2`) and along x where it
+ * is the long one (`r1`, `r3`).
+ */
+export function oblongPlan(rot) {
+  const longX = rot % 2 === 1;
+  // the walls' two sides add up to what the square guide's do: 2 * (1 - 2 * WALL_INSET) tiles
+  const total = 2 * (1 - 2 * WALL_INSET);
+  const long = total * OBLONG.longShare,
+    short = total * OBLONG.shortShare;
+  const [x1, y1] = (longX ? [long, short] : [short, long]).map((v) => v / 2);
+  const slab = { x: 2 * (x1 + WALL_INSET), y: 2 * (y1 + WALL_INSET) };
+  const piers = [];
+  for (const y of longX ? [-y1, y1] : [-y1, 0, y1])
+    for (const x of longX ? [-x1, 0, x1] : [-x1, x1]) piers.push([x, y]);
+  return { longX, slab, block: { x1, y1 }, piers };
+}
+
+/** The oblong guide of the view `rot`; `height` is the family's blockHeight (game px above the plinth). */
+export function drawOblong(rot, height) {
+  const fp = FOOTPRINTS.t1;
+  const plan = oblongPlan(rot);
+  const { slab, block } = plan;
+  const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
+  drawBox(
+    png,
+    fp,
+    { x0: -slab.x / 2, y0: -slab.y / 2, x1: slab.x / 2, y1: slab.y / 2, z0: 0, z1: PLINTH },
+    { top: GREY.plinthTop, left: GREY.plinthLeft, right: GREY.plinthRight },
+  );
+  const pier = ([x, y]) => {
+    const h = OBLONG.pier.side / 2;
+    drawBox(
+      png,
+      fp,
+      { x0: x - h, y0: y - h, x1: x + h, y1: y + h, z0: PLINTH, z1: PLINTH + OBLONG.pier.height },
+      PIER_GREY,
+    );
+  };
+  // the piers on the two far walls are behind the block, the rest stand in front of its walls
+  const onNear = ([x, y]) => x === block.x1 || y === block.y1;
+  const order = (a, b) => a[0] + a[1] - (b[0] + b[1]);
+  plan.piers
+    .filter((q) => !onNear(q))
+    .sort(order)
+    .forEach(pier);
+  drawBox(
+    png,
+    fp,
+    { x0: -block.x1, y0: -block.y1, x1: block.x1, y1: block.y1, z0: PLINTH, z1: PLINTH + height },
+    GREY,
+  );
+  const winch = winchOpening(rot, plan);
+  if (winch) {
+    fillPoly(png, winch, GREY.opening);
+    strokePoly(png, winch, GREY.line);
+  }
+  plan.piers.filter(onNear).sort(order).forEach(pier);
+  return png;
+}
+
+/**
+ * The opening that marks where the winch drum and its chain go, on the front wall when the camera
+ * sees it: at the front's left end, seen from outside (the stage's own layout, r0's). That is the
+ * west end of the lower-left wall in `r0` and the near end of the lower-right wall in `r3`.
+ * Null where the front is away from the camera. A canvas outline.
+ */
+export function winchOpening(rot, plan = oblongPlan(rot)) {
+  const fp = FOOTPRINTS.t1;
+  const { x1, y1 } = plan.block;
+  const { width, height } = OBLONG.winch;
+  // the end pier takes half its side, and a gap of 0.05 tile stands between it and the opening
+  const edge = OBLONG.pier.side / 2 + 0.05;
+  const z0 = PLINTH,
+    z1 = PLINTH + height;
+  if (rot === 0) {
+    const a = -x1 + edge,
+      c = a + width;
+    return [
+      project(fp, a, y1, z0),
+      project(fp, c, y1, z0),
+      project(fp, c, y1, z1),
+      project(fp, a, y1, z1),
+    ];
+  }
+  if (rot === 3) {
+    const c = y1 - edge,
+      a = c - width;
+    return [
+      project(fp, x1, a, z0),
+      project(fp, x1, c, z0),
+      project(fp, x1, c, z1),
+      project(fp, x1, a, z1),
+    ];
+  }
+  return null;
+}
+
+/** The columns and rows that hold an opaque pixel: the first and the last of each. */
+function drawnExtent(png) {
+  let x0 = png.width,
+    x1 = -1,
+    y0 = png.height,
+    y1 = -1;
+  for (let y = 0; y < png.height; y++)
+    for (let x = 0; x < png.width; x++)
+      if (png.data[(y * png.width + x) * 4 + 3] > 0) {
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
+      }
+  return { x0, x1, y0, y1 };
+}
+
+/**
+ * The plan file of the view `rot`: the numbers a prompt quotes, in canvas px of the guide (and for
+ * the picture the painter returns, at `returnSize`). The plinth's width is what the painting
+ * must hold: the piers stand on its corners, so the stage's own foot spans the same.
+ */
+export function oblongPlanFile(rot, height) {
+  const fp = FOOTPRINTS.t1;
+  const plan = oblongPlan(rot);
+  const { slab, block } = plan;
+  const toReturn = OBLONG.returnSize / fp.canvas[0];
+  const corner = (x, y) => project(fp, x, y);
+  const [w, n, e, sc] = [
+    corner(-slab.x / 2, slab.y / 2),
+    corner(-slab.x / 2, -slab.y / 2),
+    corner(slab.x / 2, -slab.y / 2),
+    corner(slab.x / 2, slab.y / 2),
+  ];
+  const span = e[0] - w[0];
+  // the opaque width of the drawn plinth, outline included: the picture's own width
+  const ext = drawnExtent(drawOblong(rot, height));
+  const drawn = ext.x1 - ext.x0 + 1;
+  const lowerLeft = sc[0] - w[0],
+    lowerRight = e[0] - sc[0];
+  // the walls' own feet, which the fit measures
+  const [ww, wn, we, ws] = [
+    corner(-block.x1, block.y1),
+    corner(-block.x1, -block.y1),
+    corner(block.x1, -block.y1),
+    corner(block.x1, block.y1),
+  ];
+  const wallLeft = ws[0] - ww[0],
+    wallRight = we[0] - ws[0];
+  const [lo, hi] = [1 - OBLONG.painted.tolerance, 1 + OBLONG.painted.tolerance];
+  const at = (v) => [round4(v), round4(v * toReturn)];
+  const top = project(fp, -block.x1, -block.y1, PLINTH + height);
+  const nearRow = project(fp, block.x1, block.y1)[1];
+  const wallSpan = (block.x1 + block.y1) * 2 * 32 * fp.scale;
+  const winch = winchOpening(rot, plan);
+  const words = `Keep the plinth's width: the grey plinth is ${Math.round(drawn)} px wide in the guide (${Math.round(drawn * toReturn)} px in a ${OBLONG.returnSize} px picture), the stage's piers stand at its corners and on it, and the painted stage is no wider than ${Math.round(drawn * hi)} px of the guide (${Math.round(drawn * hi * toReturn)} px of ${OBLONG.returnSize}): the painter has made it ${Math.round(OBLONG.painted.overshoot[0] * 100)} to ${Math.round(OBLONG.painted.overshoot[1] * 100)} per cent wider before, and the fit then shrinks the whole stage.`;
+  return {
+    guide: `fuel_stop-oblong-r${rot}.png`,
+    view: `r${rot}`,
+    rotation: rot,
+    family: OBLONG.family,
+    note: 'Written by tools/building-guides.mjs: do not edit by hand.',
+    canvas: fp.canvas,
+    scale: fp.scale,
+    anchor: fp.centre,
+    units:
+      "canvas px are the guide picture's; the picture the painter returns is `returnSize` px square, `toReturn` times as large",
+    returnSize: OBLONG.returnSize,
+    toReturn: round4(toReturn),
+    plan: {
+      longSide: plan.longX ? 'lower left' : 'lower right',
+      shortSide: plan.longX ? 'lower right' : 'lower left',
+      /** the walls' feet, as the fit measures them: the lower-left over the lower-right foot */
+      lowerLeftOverLowerRight: round4(wallLeft / wallRight),
+      lowerLeftShare: round4(wallLeft / (wallLeft + wallRight)),
+      lowerRightShare: round4(wallRight / (wallLeft + wallRight)),
+      slabTiles: [round4(slab.x), round4(slab.y)],
+      blockTiles: [round4(2 * block.x1), round4(2 * block.y1)],
+      pierSide: OBLONG.pier.side,
+      pierHeightPx: OBLONG.pier.height,
+    },
+    walls: {
+      corners: { w: pair(ww), s: pair(ws), e: pair(we), n: pair(wn) },
+      spanPx: round4(we[0] - ww[0]),
+      lowerLeftFootPx: round4(wallLeft),
+      lowerRightFootPx: round4(wallRight),
+    },
+    plinth: {
+      corners: { w: pair(w), s: pair(sc), e: pair(e), n: pair(n) },
+      /** the corners' span: the width the fit measures */
+      spanPx: round4(span),
+      /** the opaque width of the drawn plinth, its 3 px outline included, as a painted stage is measured */
+      drawnWidthPx: at(drawn),
+      lowerLeftFootPx: round4(lowerLeft),
+      lowerRightFootPx: round4(lowerRight),
+    },
+    paintedWidth: {
+      mustHoldPx: at(drawn),
+      minPx: at(drawn * lo),
+      maxPx: at(drawn * hi),
+      tolerance: OBLONG.painted.tolerance,
+      measuredOvershoot: OBLONG.painted.overshoot,
+      note: 'the painter kept the block-out height but painted the stage 15 to 26 per cent wider than the plinth (review 2026-10-18): the numbers are [guide px, returned-picture px]',
+      words,
+    },
+    piers: plan.piers.map(([x, y], i) => ({
+      id: i + 1,
+      tile: [round4(x), round4(y)],
+      foot: pair(project(fp, x, y, PLINTH)),
+      wall:
+        y === block.y1 && x === block.x1
+          ? 'both: the near corner'
+          : y === block.y1
+            ? 'lower left'
+            : x === block.x1
+              ? 'lower right'
+              : 'hidden',
+    })),
+    block: {
+      heightPx: height,
+      topFarCornerRow: round4(top[1]),
+      nearCornerRow: round4(nearRow),
+      wallSpanPx: round4(wallSpan),
+      note: 'the fit measures height as (nearCornerRow - box.top) / wallSpanPx: the same rows and span as the square guide, since the two sides of the walls add up to the same two tiles',
+    },
+    winch: winch
+      ? {
+          visible: true,
+          outline: winch.map(pair),
+          note: 'where the winch drum and its chain stand: the front wall, at its left end seen from outside',
+        }
+      : {
+          visible: false,
+          note: 'the front is away from the camera: no winch, chain or chute in this view',
+        },
+  };
+}
+
+/** The oblong guide's files, as `[path, bytes]`: for each view the picture, then its plan file. */
+export function oblongFiles(height) {
+  const dir = `${ROOT}/guides`;
+  return OBLONG.views.flatMap((rot) => [
+    [`${dir}/${OBLONG.family}-oblong-r${rot}.png`, PNG.sync.write(drawOblong(rot, height))],
+    [
+      `${dir}/${OBLONG.family}-oblong-r${rot}-plan.json`,
+      Buffer.from(JSON.stringify(oblongPlanFile(rot, height), null, 2) + '\n'),
+    ],
+  ]);
 }
 
 /** The families that ask for a block of their own: `{ family, footprint, height }`. */
@@ -602,8 +973,9 @@ export const windmillFamilies = (families) =>
 
 /**
  * Write a guide for every footprint and rotation, a set for every family with a `blockHeight`
- * (read from families.json and the game's data in the working directory), and the windmill's three
- * files when a family asks for that guide kind (`blocks` and `windmill` stand in for them).
+ * (read from families.json and the game's data in the working directory), the windmill's files
+ * when a family asks for that guide kind, and the coaling stage's oblong guides (`blocks` and
+ * `windmill` stand in for them).
  */
 export function writeGuides(root = '.', blocks = null, windmill = null) {
   const families = JSON.parse(readFileSync(join(ROOT, 'families.json'), 'utf8'));
@@ -626,6 +998,9 @@ export function writeGuides(root = '.', blocks = null, windmill = null) {
         PNG.sync.write(drawGuide(b.footprint, r.index, b.height)),
       );
   if (windmill) for (const [file, bytes] of windmillFiles()) write(file, bytes);
+  for (const b of blocks)
+    if (b.family === OBLONG.family)
+      for (const [file, bytes] of oblongFiles(b.height)) write(file, bytes);
   return out;
 }
 

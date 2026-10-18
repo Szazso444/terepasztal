@@ -1,5 +1,8 @@
 {
   "guide": "windmill-r0.png",
+  "view": "r0",
+  "rotation": 0,
+  "front": "S",
   "note": "Written by tools/building-guides.mjs: do not edit by hand.",
   "canvas": [
     1024,
@@ -45,9 +48,12 @@
       -0.8944,
       0.4472
     ],
-    "screenSlope": 0.5
+    "screenSlope": 0.5,
+    "behindTower": false
   },
   "door": {
+    "visible": true,
+    "tileAxis": "+y",
     "canvas": [
       390.4,
       817.6
@@ -80,6 +86,9 @@
   },
   "cross": {
     "plane": "the plane of tile x and the vertical, to which the shaft (tile y) stands square",
+    "uTileAxis": "+x",
+    "seenFrom": "the front",
+    "determinantSign": "+",
     "affine": [
       [
         0.7071,
