@@ -1,0 +1,247 @@
+{
+  "status": "first-pass drafts superseded by final/manifest.json",
+  "tool": "built-in image_gen",
+  "scale_note": "4m per tile is a proposed art convention, not an existing game unit contract. Source images require anchor calibration before runtime use.",
+  "assets": [
+    {
+      "id": "01-merchants-last-stop",
+      "name": "Merchant's Last Stop",
+      "file": "01-merchants-last-stop.png",
+      "footprint_tiles": [
+        3,
+        2
+      ],
+      "chance_per_9_chunks_percent": 6,
+      "proposed_size_metres": [
+        12,
+        8,
+        8
+      ],
+      "logical_ground_span_pixels": [
+        160,
+        80
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Merchant's Last Stop. Footprint 3 by 2 tiles, approximately 12 by 8 metres; height approximately 8 metres.\nA weathered two-storey timber roadside inn physically incorporating a huge abandoned covered trading wagon, wagon canopy tucked into one side, slate roof, chimney, timber balcony, realistically sized crates and wheels. Wagon is large enough for cargo but smaller than inn. No signs with writing."
+    },
+    {
+      "id": "02-overgrown-bathhouse",
+      "name": "Overgrown Bathhouse",
+      "file": "02-overgrown-bathhouse.png",
+      "footprint_tiles": [
+        4,
+        3
+      ],
+      "chance_per_9_chunks_percent": 5,
+      "proposed_size_metres": [
+        16,
+        12,
+        7
+      ],
+      "logical_ground_span_pixels": [
+        224,
+        112
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Overgrown Bathhouse. Footprint 4 by 3 tiles, approximately 16 by 12 metres; height approximately 7 metres.\nA roofless limestone bathhouse ruin with elegant arches and a partially broken glass barrel vault, turquoise shallow pools inside actual stone pool basins, vines through glazing, intact doorway. Water confined to masonry basins, no surrounding terrain."
+    },
+    {
+      "id": "03-bellkeepers-refuge",
+      "name": "Bellkeeper's Refuge",
+      "file": "03-bellkeepers-refuge.png",
+      "footprint_tiles": [
+        1,
+        1
+      ],
+      "chance_per_9_chunks_percent": 4,
+      "proposed_size_metres": [
+        4,
+        4,
+        14
+      ],
+      "logical_ground_span_pixels": [
+        64,
+        32
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Bellkeeper's Refuge. Footprint 1 by 1 tiles, approximately 4 by 4 metres; height approximately 14 metres.\nA slender tall limestone bell tower with one very large bronze bell in open upper arches, a tiny timber keeper's room integrated below, small slate spire and weather vane. Base only four metres square, doorway two metres high, overall fourteen metres tall. Do not enlarge door or widen tower into church."
+    },
+    {
+      "id": "04-flooded-archive",
+      "name": "Flooded Archive",
+      "file": "04-flooded-archive.png",
+      "footprint_tiles": [
+        4,
+        4
+      ],
+      "chance_per_9_chunks_percent": 3,
+      "proposed_size_metres": [
+        16,
+        16,
+        10
+      ],
+      "logical_ground_span_pixels": [
+        256,
+        128
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Flooded Archive. Footprint 4 by 4 tiles, approximately 16 by 16 metres; height approximately 10 metres.\nAn abandoned two-storey partly collapsed limestone library standing on stone foundations, exposed bookshelves visible through broken front wall, shattered glass roof, shallow translucent teal floodwater ONLY inside the ruined building footprint, a few reeds caught along foundation. No lake or ground tile slab."
+    },
+    {
+      "id": "05-rootbound-workshop",
+      "name": "Rootbound Workshop",
+      "file": "05-rootbound-workshop.png",
+      "footprint_tiles": [
+        2,
+        2
+      ],
+      "chance_per_9_chunks_percent": 3,
+      "proposed_size_metres": [
+        8,
+        8,
+        8
+      ],
+      "logical_ground_span_pixels": [
+        128,
+        64
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Rootbound Workshop. Footprint 2 by 2 tiles, approximately 8 by 8 metres; height approximately 8 metres.\nA modest one-storey timber craftsman's workshop elevated above ground by massive intertwined roots, weathered red clay roof, small wooden stair and deck, visible workbench, tree growing through back corner. All root tips and steps fully visible, ordinary two-metre door."
+    },
+    {
+      "id": "06-cliffside-cable-station",
+      "name": "Cliffside Cable Station",
+      "file": "06-cliffside-cable-station.png",
+      "footprint_tiles": [
+        3,
+        2
+      ],
+      "chance_per_9_chunks_percent": 2.5,
+      "proposed_size_metres": [
+        12,
+        8,
+        7
+      ],
+      "logical_ground_span_pixels": [
+        160,
+        80
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Cliffside Cable Station. Footprint 3 by 2 tiles, approximately 12 by 8 metres; height approximately 7 metres.\nA weathered timber cable winch station with slate roof, exposed winding drum and gears, anchored elevated timber deck with integrated trestle supports, one short cable arm projecting to right with hanging cargo basket. A standalone architecture asset for placement on existing cliff terrain: include structural supports but NO cliff, rock mountain, terrain chunk, remote station, long disconnected cable or backdrop. Cable and basket fully inside image."
+    },
+    {
+      "id": "07-stormglass-observatory",
+      "name": "Stormglass Observatory",
+      "file": "07-stormglass-observatory.png",
+      "footprint_tiles": [
+        2,
+        2
+      ],
+      "chance_per_9_chunks_percent": 2,
+      "proposed_size_metres": [
+        8,
+        8,
+        11
+      ],
+      "logical_ground_span_pixels": [
+        128,
+        64
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Stormglass Observatory. Footprint 2 by 2 tiles, approximately 8 by 8 metres; height approximately 11 metres.\nA round limestone observatory, weathered copper dome partly opened around brass telescope, narrow small balcony, modest pale blue stormglass instrument on parapet, ordinary human doorway. Three storeys at realistic architectural proportions. No floating magic particles."
+    },
+    {
+      "id": "08-ashen-conservatory",
+      "name": "Ashen Conservatory",
+      "file": "08-ashen-conservatory.png",
+      "footprint_tiles": [
+        4,
+        2
+      ],
+      "chance_per_9_chunks_percent": 1.5,
+      "proposed_size_metres": [
+        16,
+        8,
+        6
+      ],
+      "logical_ground_span_pixels": [
+        192,
+        96
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Ashen Conservatory. Footprint 4 by 2 tiles, approximately 16 by 8 metres; height approximately 6 metres.\nA long low Victorian greenhouse with blackened wrought iron ribs, smoke-stained stone plinth, some shattered glazing, vivid surviving plants growing inside, modest entry door at near gable. Mostly abandoned and visibly fire damaged, no external garden ground."
+    },
+    {
+      "id": "09-inverted-manor",
+      "name": "Inverted Manor",
+      "file": "09-inverted-manor.png",
+      "footprint_tiles": [
+        3,
+        3
+      ],
+      "chance_per_9_chunks_percent": 1,
+      "proposed_size_metres": [
+        12,
+        12,
+        9
+      ],
+      "logical_ground_span_pixels": [
+        192,
+        96
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Inverted Manor. Footprint 3 by 3 tiles, approximately 12 by 12 metres; height approximately 9 metres.\nA clearly UPSIDE-DOWN two-storey timber-and-stone manor: the roof ridge points downward and is embedded in a shallow irregular ring of broken earth and small stones; the square foundation and cellar floor face upward to sky. Windows, entrance doorway, balcony and chimney all visibly upside down. No upright roof on top. Minimal thin broken-earth contact rim only, no square terrain slab. Preserve physical inverted house, no generic right-way-up ruins."
+    },
+    {
+      "id": "10-sleeping-foundry",
+      "name": "Sleeping Foundry",
+      "file": "10-sleeping-foundry.png",
+      "footprint_tiles": [
+        5,
+        4
+      ],
+      "chance_per_9_chunks_percent": 0.75,
+      "proposed_size_metres": [
+        20,
+        16,
+        14
+      ],
+      "logical_ground_span_pixels": [
+        288,
+        144
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Sleeping Foundry. Footprint 5 by 4 tiles, approximately 20 by 16 metres; height approximately 14 metres.\nA broad abandoned brick foundry with cold furnaces, four tall chimneys, weathered slate roof, modest yard crane and metalworking apparatus, wide dark factory doorway containing a dormant brass mechanical guardian approximately three metres tall. Building twenty by sixteen metres, ordinary pedestrian doors two metres tall and factory entrance five metres. No rails extending outside footprint, no ground landscape."
+    },
+    {
+      "id": "11-moonwell-pavilion",
+      "name": "Moonwell Pavilion",
+      "file": "11-moonwell-pavilion.png",
+      "footprint_tiles": [
+        2,
+        2
+      ],
+      "chance_per_9_chunks_percent": 0.5,
+      "proposed_size_metres": [
+        8,
+        8,
+        7
+      ],
+      "logical_ground_span_pixels": [
+        128,
+        64
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: Moonwell Pavilion. Footprint 2 by 2 tiles, approximately 8 by 8 metres; height approximately 7 metres.\nAn elegant circular limestone pavilion on a thin architectural stone plinth with six slender columns and a slate blue shallow dome, surrounding a perfectly still reflective pool within a real round stone basin. Faint silver crescent reflected INSIDE water, sparse flowering vines around columns. Human-proportioned steps and columns. No external glow or magical particles against transparency."
+    },
+    {
+      "id": "12-house-between-seasons",
+      "name": "House Between Seasons",
+      "file": "12-house-between-seasons.png",
+      "footprint_tiles": [
+        4,
+        4
+      ],
+      "chance_per_9_chunks_percent": 0.25,
+      "proposed_size_metres": [
+        16,
+        16,
+        10
+      ],
+      "logical_ground_span_pixels": [
+        256,
+        128
+      ],
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: House Between Seasons. Footprint 4 by 4 tiles, approximately 16 by 16 metres; height approximately 10 metres.\nOne coherent four-wing timber manor around a small central architectural courtyard. Each attached wing expresses a different season: snow-covered slate roof, delicate pink blossoms, lush green climbing plants, copper autumn leaves. All vegetation integrated with building, no four separate houses and no diorama terrain slab. Windows and two-storey floor heights consistent throughout. Small central stone basin."
+    }
+  ]
+}
