@@ -333,3 +333,64 @@ describe('removing a road', () => {
     expect(h.builder.track.has(8, 8)).toBe(false);
   });
 });
+
+describe('a road on a bridge platform', () => {
+  /** A river tile with a platform on it, and the road tool's hover and bulldozer over it. */
+  function bridge() {
+    const h = harness();
+    h.builder.map.terrain[6 * W + 6] = Terrain.Water;
+    h.builder.free = true;
+    expect(h.builder.placeBuilding(6, 6, 'bridge_wood')).not.toBeNull();
+    h.builder.free = false;
+    return h;
+  }
+  const STRAIGHT = { kind: 'straight', cls: 'regular' } as const;
+
+  it('shows the ghost, the price and a line for the bridge on a platform with no rail', () => {
+    const h = bridge();
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: 6, y: 6 });
+    expect([...h.marks().values()]).toEqual(['terrain/ghost_ok']);
+    const shown = h.status[h.status.length - 1];
+    expect(shown).toContain(STR.build.cost(fmtCost(h.builder.checkRoad(6, 6).cost)));
+    expect(shown).toContain(STR.build.roadOnBridge);
+    // a plain tile says nothing of a bridge
+    h.frame({ x: 3, y: 3 });
+    expect(h.status[h.status.length - 1]).not.toContain(STR.build.roadOnBridge);
+  });
+
+  it('is refused with the bridge reason where the platform carries rail', () => {
+    const h = bridge();
+    h.builder.free = true;
+    expect(h.builder.placeTrack(6, 6, STRAIGHT, 1)).toBe(true);
+    h.builder.free = false;
+    h.b.setTool({ kind: 'road' });
+    h.frame({ x: 6, y: 6 });
+    expect([...h.marks().values()]).toEqual(['terrain/ghost_bad']);
+    expect(h.status[h.status.length - 1]).toContain(STR.build.bridgeCarriesRail);
+    expect(h.status[h.status.length - 1]).not.toContain(STR.build.roadOnBridge);
+  });
+
+  it('refuses rail on a platform that carries a road, with the bridge reason', () => {
+    const h = bridge();
+    expect(h.builder.placeRoad(6, 6)).toBe(true);
+    const c = h.builder.checkTrack(6, 6, STRAIGHT, 1);
+    expect(c.ok).toBe(false);
+    expect(c.reason).toBe(STR.build.bridgeCarriesRoad);
+  });
+
+  it('comes off road first with the bulldozer, the platform on the second use', () => {
+    const h = bridge();
+    expect(h.builder.placeRoad(6, 6)).toBe(true);
+    h.b.setTool({ kind: 'remove' });
+    h.frame({ x: 6, y: 6 });
+    expect(h.status[h.status.length - 1]).toBe(STR.build.refund(fmtCost(h.builder.roadRefund())));
+    const stone = h.stock.get('stone');
+    h.frame({ x: 6, y: 6 }, { click: 0 });
+    expect(h.builder.roads.has(6, 6)).toBe(false);
+    expect(h.builder.bridgeAt(6, 6)).toBeTruthy();
+    expect(h.stock.get('stone')).toBe(stone + (h.builder.roadRefund().stone ?? 0));
+    h.frame({ x: 6, y: 6 }, { click: 0 });
+    expect(h.builder.bridgeAt(6, 6)).toBeUndefined();
+  });
+});

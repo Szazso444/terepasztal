@@ -599,11 +599,19 @@ export class BuildController {
     this.ghostDiamond.tint = 0xffffff;
     const dec = this.builder.decorAt(t.x, t.y);
     const bld = this.builder.buildingAt(t.x, t.y);
+    // a bridge platform loses its rail or its road first, as removeAt does
+    const bridge = !!bld && !!buildingDef(bld.id).bridge;
+    const bridgeRail = bridge && !!piece;
+    const bridgeRoad = bridge && !bridgeRail && this.builder.roads.has(t.x, t.y);
     // what removeAt takes off the tile first
     const refund = st
       ? scaleCost(st.def.cost, 0.5)
       : bld
-        ? this.builder.buildingRefund(bld)
+        ? bridgeRoad
+          ? this.builder.roadRefund()
+          : bridgeRail
+            ? this.builder.refundFor(piece!)
+            : this.builder.buildingRefund(bld)
         : dec
           ? this.builder.decorRefund(dec)
           : this.builder.roads.has(t.x, t.y)
@@ -650,7 +658,7 @@ export class BuildController {
     }
     const one = this.roadStroke(t, t);
     this.showRoadMarks(one.steps);
-    this.status(hoverStatus(one.steps[0]));
+    this.status(hoverStatus(one.steps[0], !!this.builder.bridgeAt(t.x, t.y)));
   }
 
   /**
@@ -830,8 +838,11 @@ export class BuildController {
       return this.builder.removeStation(st);
     }
     const bld = this.builder.buildingAt(x, y);
+    // a platform comes down only bare: its rail or its road comes off first, the next use takes it
     if (bld && buildingDef(bld.id).bridge && this.builder.track.has(x, y))
       return this.builder.removeTrack(x, y);
+    if (bld && buildingDef(bld.id).bridge && this.builder.roads.has(x, y))
+      return this.builder.removeRoad(x, y);
     if (bld) {
       if (this.selectedBuilding === bld) this.selectBuilding(null);
       return this.builder.removeBuilding(x, y);

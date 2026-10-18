@@ -464,7 +464,7 @@ export class Builder {
     if ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
       return STR.build.occupied;
     // a platform carries rail or a road, never both: no level crossing on a bridge (#493)
-    if (this.bridgeAt(x, y) && this.roads.has(x, y)) return STR.build.roadInWay;
+    if (this.bridgeAt(x, y) && this.roads.has(x, y)) return STR.build.bridgeCarriesRoad;
     const dec = this.decorAt(x, y);
     if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
@@ -1196,7 +1196,7 @@ export class Builder {
     const bad = unbuildable(terrainAt(this.map, x, y));
     // a platform stands on water or on land, never on rock or a mountain (`buildingRules`)
     if (bad && !deck) return bad;
-    if (deck && this.track.has(x, y)) return STR.build.trackInWay;
+    if (deck && this.track.has(x, y)) return STR.build.bridgeCarriesRail;
     const dec = this.decorAt(x, y);
     if (
       this.stationAt(x, y) ||

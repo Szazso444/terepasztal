@@ -159,11 +159,16 @@ export function strokeStatus(c: RoadStrokeCheck): string {
   return parts.join('   ');
 }
 
-/** The status line over one tile before a drag: its price or its refusal, and the drag hint. */
-export function hoverStatus(step: RoadStep): string {
+/**
+ * The status line over one tile before a drag: its price or its refusal, and the drag hint. A tile
+ * laid on a bridge platform (`onBridge`) says so beside its price.
+ */
+export function hoverStatus(step: RoadStep, onBridge = false): string {
   const what =
     step.state === 'lay'
-      ? STR.build.cost(fmtCost(step.cost))
+      ? [onBridge ? STR.build.roadOnBridge : '', STR.build.cost(fmtCost(step.cost))]
+          .filter(Boolean)
+          .join(' · ')
       : step.state === 'have'
         ? STR.build.roadHere
         : (step.reason ?? '');
