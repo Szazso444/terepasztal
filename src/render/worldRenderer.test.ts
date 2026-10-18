@@ -38,6 +38,7 @@ import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
 import { buildRelief, groundAllows } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
+import { ROAD_ON_DECK } from './roadShape';
 import { TownPaving } from './townPaving';
 import { WATERLINE } from './bridgeMeshes';
 import {
@@ -136,6 +137,7 @@ function pictureOf(key: string, f: FrameInfo) {
 const noRoads = () => ({
   roads: new Set(),
   roadCodes: new Map(),
+  bridgeDecks: new Set(),
   doorsByReach: new Map(),
   trackFrames: new Map(),
   decks: new Map(),
@@ -1938,6 +1940,66 @@ describe('textured bridges over the painted water', () => {
       expect(parapets(road.under).length, `road ${x}`).toBe(0);
       expect(parapets(road.near).length, `road ${x}`).toBeGreaterThan(0);
     }
+  });
+
+  it('hand the painter a road on a road deck as the deck, whichever comes first (#506)', () => {
+    const { world, tiles } = bridged(),
+      // a road along y = 7 over the first river, on platforms at x = 10 and 11
+      roads = new Set([8, 9, 10, 11, 12, 13].map((x) => 7 * 32 + x)),
+      decks = [10, 11].map((x) => ({ ...tiles[0], x, y: 7, carries: 'road' as const })),
+      handed = () => {
+        const list = world.landscape['roads'] as readonly number[],
+          all = new Set<number>(),
+          on = new Set<number>();
+        for (let i = 0; i + 1 < list.length; i += 2) {
+          all.add(list[i]);
+          if (list[i + 1] & ROAD_ON_DECK) on.add(list[i]);
+        }
+        return { all, on };
+      },
+      repaint = vi.spyOn(world.landscape, 'repaint'),
+      painted = () => new Set(repaint.mock.calls.map(([x, y]) => y * 32 + x));
+    world.roadAt = (x, y) => roads.has(y * 32 + x);
+    // the roads first, as a load lays them, and the decks drawn after
+    world.setRoads([...roads].map((k) => ({ x: k % 32, y: Math.floor(k / 32) })));
+    expect(handed()).toEqual({ all: roads, on: new Set() });
+    repaint.mockClear();
+    world.setTexturedBridges([...tiles, ...decks]);
+    expect(handed()).toEqual({ all: roads, on: new Set([at(10) + 32, at(11) + 32]) });
+    // the decks' tiles and the road on the banks beside them are painted again
+    for (const x of [9, 10, 11, 12]) expect(painted().has(at(x) + 32), `x ${x}`).toBe(true);
+    // drawn again as they are, nothing changes
+    repaint.mockClear();
+    world.setTexturedBridges([...tiles, ...decks]);
+    expect(repaint).not.toHaveBeenCalled();
+    // a road laid on to a deck already drawn is the deck's at once
+    roads.add(7 * 32 + 14);
+    world.roadChanged(14, 7);
+    expect(handed().on).toEqual(new Set([at(10) + 32, at(11) + 32]));
+    // the platforms go: the road is painted there again
+    world.setTexturedBridges(tiles);
+    expect(handed()).toEqual({ all: roads, on: new Set() });
+    for (const x of [10, 11]) expect(painted().has(at(x) + 32), `x ${x}`).toBe(true);
+  });
+
+  it("rest a road deck's ends over water on the banks it runs on to, level with them (#506)", () => {
+    const { world, tiles } = bridged(),
+      roads = new Set([8, 9, 10, 11, 12, 13].map((x) => 7 * 32 + x)),
+      decks = [10, 11].map((x) => ({ ...tiles[0], x, y: 7, carries: 'road' as const }));
+    world.roadAt = (x, y) => roads.has(y * 32 + x);
+    world.setRoads([...roads].map((k) => ({ x: k % 32, y: Math.floor(k / 32) })));
+    const ends = (t: (typeof decks)[number]) =>
+      (world['roadDeckEnds'] as (t: object) => boolean[]).call(world, t);
+    // the road runs on along x through both ends of each deck; never out through its sides
+    for (const t of decks) expect(ends(t)).toEqual([false, true, false, true]);
+    roads.delete(7 * 32 + 12);
+    world.setRoads([...roads].map((k) => ({ x: k % 32, y: Math.floor(k / 32) })));
+    expect(ends(decks[1])).toEqual([false, false, false, true]);
+    // on level banks the deck is level with them, at the waterline's deck
+    const profile = world['roadDeckProfile'] as (t: object, d: Map<number, object>) => number[],
+      run = new Map(decks.map((t) => [7 * 32 + t.x, t]));
+    for (const t of decks)
+      for (const z of profile.call(world, t, run)) expect(Math.abs(z)).toBeLessThan(0.5);
   });
 
   type Edit = { kind: 'pave' | 'water' | 'fail'; x: number; y: number };

@@ -7,10 +7,11 @@ import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { PAL } from '../art/palette';
 import { forAll } from '../testing/property';
-import { ROAD_GRAVEL, RoadPaint, pavingFade, roadRag, roadWeight } from './roadPaint';
+import { ROAD_GRAVEL, RoadPaint, paintedRoads, pavingFade, roadRag, roadWeight } from './roadPaint';
 import {
   ROAD_FEATHER,
   ROAD_HALF,
+  ROAD_ON_DECK,
   ROAD_RADIUS_MAX,
   ROAD_RADIUS_MIN,
   ROAD_RAG,
@@ -24,26 +25,40 @@ import {
 } from './roadShape';
 
 /**
- * The roads on `tiles` of a `w` x `h` map at world origin (ox, oy), with the codes the renderer
- * hands over: their sides, and a level crossing on the tiles `crossing` names (its road along x).
+ * The codes the renderer works out for the roads on `tiles` of a `w` x `h` map: their sides, and a
+ * level crossing on the tiles `crossing` names (its road along x).
  */
-function paintOf(
-  w: number,
-  h: number,
-  tiles: Set<number>,
-  { ox = 0, oy = 0, crossing = new Set<number>(), paved = new Set<number>() } = {},
-) {
+function codesOf(w: number, h: number, tiles: Set<number>, crossing = new Set<number>()) {
   const has = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && tiles.has(y * w + x);
   const isCrossing = (x: number, y: number) => has(x, y) && crossing.has(y * w + x);
-  const list: number[] = [];
+  const codes = new Map<number, number>();
   for (const k of tiles) {
     const x = k % w,
       y = Math.floor(k / w),
       sides = roadSides(has, [], x, y);
     let pinned = 0;
     for (const d of DIRS) if (isCrossing(x + DIR_DX[d], y + DIR_DY[d])) pinned |= 1 << d;
-    list.push(k, roadCode(sides, pinned, isCrossing(x, y) ? 'x' : null));
+    codes.set(k, roadCode(sides, pinned, isCrossing(x, y) ? 'x' : null));
   }
+  return codes;
+}
+/**
+ * The roads on `tiles` of a `w` x `h` map at world origin (ox, oy), as the renderer hands them
+ * over (`paintedRoads`): those on the tiles `decks` names stand on bridge platforms.
+ */
+function paintOf(
+  w: number,
+  h: number,
+  tiles: Set<number>,
+  {
+    ox = 0,
+    oy = 0,
+    crossing = new Set<number>(),
+    paved = new Set<number>(),
+    decks = new Set<number>(),
+  } = {},
+) {
+  const list = paintedRoads(codesOf(w, h, tiles, crossing), (k) => decks.has(k));
   return new RoadPaint(w, h, ox, oy, list, (k) => paved.has(k));
 }
 const weightAt = (p: RoadPaint, x: number, y: number) =>
@@ -452,4 +467,156 @@ describe('the centre line and axis the town paving lays its lane by, against an 
     );
     expect(read).toBeGreaterThan(2000);
   }, 10_000);
+});
+
+describe('a road on a bridge deck (#506)', () => {
+  /** A random road layout with some of its tiles on bridge platforms. */
+  function decked(rng: Rng) {
+    const l = layout(rng),
+      decks = new Set<number>();
+    for (const k of l.tiles) if (rng.chance(0.3)) decks.add(k);
+    return { ...l, decks };
+  }
+  /** The tile beside tile `k` of a `w` x `h` map across side `d`, -1 off the map. */
+  const beside = (w: number, h: number, k: number, d: number) => {
+    const x = (k % w) + DIR_DX[d],
+      y = Math.floor(k / w) + DIR_DY[d];
+    return x >= 0 && y >= 0 && x < w && y < h ? y * w + x : -1;
+  };
+
+  it('is handed over marked as a deck, and every road keeps its tile and its code', () => {
+    forAll(decked, ({ w, h, tiles, crossing, decks }) => {
+      const codes = codesOf(w, h, tiles, crossing),
+        list = paintedRoads(codes, (k) => decks.has(k));
+      expect(list.length).toBe(2 * codes.size);
+      const order = [...codes];
+      for (let i = 0; i < order.length; i++) {
+        const [k, code] = order[i];
+        expect(list[2 * i]).toBe(k);
+        expect(list[2 * i + 1] & ~ROAD_ON_DECK).toBe(code);
+        expect((list[2 * i + 1] & ROAD_ON_DECK) !== 0, `tile ${k}`).toBe(decks.has(k));
+      }
+    });
+  });
+
+  it('is a bit no road code carries of its own', () => {
+    for (let sides = 0; sides < 16; sides++)
+      for (let pinned = 0; pinned < 16; pinned++)
+        for (const crossing of ['x', 'y', null] as const)
+          expect(roadCode(sides, pinned, crossing) & ROAD_ON_DECK).toBe(0);
+  });
+
+  it('is not painted, and no road beside it reaches over the edge on to it', () => {
+    forAll(decked, ({ w, h, tiles, crossing, ox, oy, decks }) => {
+      const p = paintOf(w, h, tiles, { ox, oy, crossing, decks });
+      for (const k of decks) {
+        expect(p.near(k), `tile ${k}`).toBe(false);
+        const x = k % w,
+          y = Math.floor(k / w);
+        for (let v = -0.49; v <= 0.49; v += 0.07)
+          for (let u = -0.49; u <= 0.49; u += 0.07) {
+            expect(weightAt(p, x + u, y + v)).toBe(0);
+            expect(p.onCore(x + u, y + v, k)).toBe(false);
+          }
+      }
+    });
+  });
+
+  it('leaves the roads off the decks as they were, less what the decks reached over to paint', () => {
+    forAll(decked, ({ w, h, tiles, crossing, ox, oy, decks }) => {
+      const p = paintOf(w, h, tiles, { ox, oy, crossing, decks }),
+        bare = paintOf(w, h, tiles, { ox, oy, crossing });
+      for (let y = 0; y < h; y++)
+        for (let x = 0; x < w; x++) {
+          if (decks.has(y * w + x)) continue;
+          for (let v = -0.48; v <= 0.48; v += 0.08)
+            for (let u = -0.48; u <= 0.48; u += 0.08)
+              expect(weightAt(p, x + u, y + v)).toBeLessThanOrEqual(
+                weightAt(bare, x + u, y + v) + 1e-12,
+              );
+        }
+    });
+  });
+
+  it('meets the road beside it whole at their shared edge', () => {
+    let met = 0;
+    forAll(decked, ({ w, h, tiles, crossing, ox, oy, decks }) => {
+      const p = paintOf(w, h, tiles, { ox, oy, crossing, decks }),
+        codes = codesOf(w, h, tiles, crossing);
+      for (const [k, code] of codes) {
+        if (decks.has(k)) continue;
+        const x = k % w,
+          y = Math.floor(k / w),
+          shape = roadShape(code, x + ox, y + oy);
+        for (const d of DIRS) {
+          const n = beside(w, h, k, d);
+          // (a level crossing runs no arm out to a side along its track)
+          if (n < 0 || !decks.has(n) || shape.ends[d] !== 0.5) continue;
+          // where its arm crosses the edge, just inside its own tile: the whole road, to the edge
+          const along = 0.5 - 1e-6,
+            u = DIR_DX[d] ? DIR_DX[d] * along : shape.offsets[d],
+            v = DIR_DY[d] ? DIR_DY[d] * along : shape.offsets[d];
+          expect(weightAt(p, x + u, y + v), `${x},${y} side ${d}`).toBe(1);
+          met++;
+        }
+      }
+    });
+    expect(met).toBeGreaterThan(100);
+  });
+
+  it('has the road beside it cover the painted bank toward it, and nowhere else', () => {
+    let toward = 0;
+    forAll(decked, ({ w, h, tiles, crossing, ox, oy, decks }) => {
+      const p = paintOf(w, h, tiles, { ox, oy, crossing, decks });
+      for (let k = 0; k < w * h; k++) {
+        const x = k % w,
+          y = Math.floor(k / w),
+          sides = DIRS.filter((d) => {
+            const n = beside(w, h, k, d);
+            return tiles.has(k) && !decks.has(k) && n >= 0 && decks.has(n);
+          });
+        // none in the middle of any tile, none on a tile that is no road beside a deck
+        expect(p.abutment(x, y, k)).toBe(0);
+        if (!sides.length)
+          for (let v = -0.49; v <= 0.49; v += 0.07)
+            for (let u = -0.49; u <= 0.49; u += 0.07) expect(p.abutment(x + u, y + v, k)).toBe(0);
+        for (const d of sides) {
+          // more and more on the way out to the edge, and all of it there
+          let last = 0;
+          for (let a = 0; a <= 0.5; a += 0.02) {
+            const now = p.abutment(x + DIR_DX[d] * a, y + DIR_DY[d] * a, k);
+            expect(now).toBeGreaterThanOrEqual(last);
+            last = now;
+          }
+          expect(p.abutment(x + DIR_DX[d] * 0.499, y + DIR_DY[d] * 0.499, k)).toBe(1);
+          toward++;
+        }
+      }
+    });
+    expect(toward).toBeGreaterThan(100);
+  });
+
+  it("keeps the gravel's colour where it covers painted water, under any season's tint", () => {
+    const p = paintOf(6, 3, new Set([6, 7, 8, 9, 10, 11]), { ox: 3, oy: -2, decks: new Set([9]) });
+    let painted = 0;
+    for (const tint of [0xd8e8c0, 0xc0d0e8, 0xffe0b0, 0x909090])
+      for (const water of [0, 0.3, 0.8, 1])
+        for (let x = 0.5; x < 2.5; x += 0.07) {
+          if (weightAt(p, x, 1) < 1) continue;
+          const shown = (t: number) => {
+            const out = [40, 90, 120];
+            p.weigh(x, 1, 6 + Math.round(x));
+            p.paint(x, 1, out, 1, t, water);
+            // the painter keeps the season's tint off the water's share of the point
+            return out.map(
+              (c, i) => c * (water + ((1 - water) * ((t >> (16 - i * 8)) & 255)) / 255),
+            );
+          };
+          const white = shown(0xffffff),
+            tinted = shown(tint);
+          for (let c = 0; c < 3; c++) expect(tinted[c]).toBeCloseTo(white[c], 6);
+          painted++;
+        }
+    expect(painted).toBeGreaterThan(50);
+  });
 });

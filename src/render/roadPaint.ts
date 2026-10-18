@@ -6,6 +6,7 @@ import {
   roadSide,
   ROAD_FEATHER,
   ROAD_HALF,
+  ROAD_ON_DECK,
   ROAD_RAG,
   ROAD_REACH,
   ROAD_STRIDE,
@@ -20,6 +21,10 @@ import { surfaceNoise } from './terrainMaterials';
  * B, the author's pick on the art demo, 2026-10-12). The landscape painter lays it after the
  * buildings' yards and under the town paving, the way it paints both (buildingYard.ts,
  * townPaving.ts).
+ *
+ * A road on a bridge platform is not painted: the bridge's deck is the road there, over water and
+ * over land alike, and the road on each tile beside it runs up to the deck's end at their shared
+ * edge, over the painted bank where the water reaches into its tile (#506, `paintedRoads`).
  *
  * Everything here is a function of the map point and the road tiles, never of the chunk being
  * painted, so neighbouring chunks agree pixel for pixel; the noise runs on world coordinates (map
@@ -51,6 +56,12 @@ const PEBBLE_CELL = 0.08,
   PEBBLE_SHARE = 0.06;
 /** How far in from the edge the road's core starts, where tufts and loose stones never lie. */
 const CORE = ROAD_HALF - ROAD_FEATHER / 2;
+/**
+ * Toward a bridge deck's end, how far from the middle of the road tile beside it (tiles) the road
+ * starts to run out over the painted water, and from where it covers it whole (`abutment`).
+ */
+const ABUT_FROM = 0.1,
+  ABUT_FULL = 0.35;
 
 /** Seeds of the road's noise. */
 const SEED_RAG = 4481,
@@ -86,6 +97,22 @@ function roadAxis(piece: RoadPiece) {
   return 0;
 }
 
+/**
+ * The roads as the painter is handed them: two numbers a road tile, its index (`y * w + x`) and its
+ * code (`codes`, index to `roadCode`), the code of a tile on a bridge platform (`onDeck`) marked
+ * ROAD_ON_DECK. The painter paints no road on a marked tile, and runs the road on each tile beside
+ * it up to its edge (`RoadPaint`). The codes themselves are kept, so the tiles beside a deck still
+ * run their arms to it.
+ */
+export function paintedRoads(
+  codes: Iterable<readonly [number, number]>,
+  onDeck: (tile: number) => boolean,
+): number[] {
+  const list: number[] = [];
+  for (const [k, code] of codes) list.push(k, onDeck(k) ? code | ROAD_ON_DECK : code);
+  return list;
+}
+
 /** How far the ragged edge stands out at world point (wx, wy) (tiles, 0 to ROAD_RAG). */
 export function roadRag(wx: number, wy: number) {
   return (
@@ -108,14 +135,20 @@ export class RoadPaint {
   private readonly table: Float64Array;
   /** The axis each road tile's road runs along, by `at`: 1 along x, 2 along y, 0 for a junction. */
   private readonly axes: Uint8Array;
+  /** 1 on each road tile on a bridge platform (ROAD_ON_DECK): nothing is painted there. */
+  private readonly decks: Uint8Array;
+  /** Each road tile's sides (`1 << Dir`, N E S W) toward a tile in `decks`, by `at`. */
+  private readonly toDeck: Uint8Array;
   /** The last point read (`weigh`): the road's weight there and its distance from a centre line. */
   weight = 0;
   dist = Infinity;
   /** And which side of that centre line it lies on, as the screen sees it (`roadSide`). */
   side = 0;
   /**
-   * `roads` holds two numbers a road tile: its index (`y * w + x`) and its code (`roadCode`). A
-   * tile `paved` says the town paving covers is left out: no road shows on the paving.
+   * `roads` holds two numbers a road tile: its index (`y * w + x`) and its code (`roadCode`), as
+   * `paintedRoads` makes them. A tile `paved` says the town paving covers is left out: no road
+   * shows on the paving. A tile marked ROAD_ON_DECK is left out too, and no road beside it reaches
+   * over its edge.
    */
   constructor(
     readonly w: number,
@@ -129,10 +162,21 @@ export class RoadPaint {
     this.flags = new Uint8Array(w * h);
     this.table = new Float64Array((roads.length >> 1) * ROAD_STRIDE);
     this.axes = new Uint8Array(roads.length >> 1);
+    this.decks = new Uint8Array(w * h);
+    this.toDeck = new Uint8Array(roads.length >> 1);
+    const placed: number[] = [],
+      decked: number[] = [];
     let n = 0;
     for (let i = 0; i + 1 < roads.length; i += 2) {
       const k = roads[i];
-      if (!(k >= 0 && k < w * h) || this.at[k] >= 0 || paved(k)) continue;
+      if (!(k >= 0 && k < w * h) || this.at[k] >= 0 || this.decks[k]) continue;
+      if (roads[i + 1] & ROAD_ON_DECK) {
+        this.decks[k] = 1;
+        decked.push(k);
+        continue;
+      }
+      if (paved(k)) continue;
+      placed.push(k);
       const x = k % w,
         y = (k - x) / w;
       const shape = roadShape(roads[i + 1], x + originX, y + originY);
@@ -144,6 +188,18 @@ export class RoadPaint {
       if (x + 1 < w) this.flags[k + 1] = 1;
       if (y > 0) this.flags[k - w] = 1;
       if (y + 1 < h) this.flags[k + w] = 1;
+    }
+    if (!decked.length) return;
+    // a deck's tile takes no paint, its own or a neighbour's reaching over the edge
+    for (const k of decked) this.flags[k] = 0;
+    const decks = this.decks;
+    for (const k of placed) {
+      const x = k % w;
+      this.toDeck[this.at[k]] =
+        (k >= w && decks[k - w] ? 1 : 0) |
+        (x + 1 < w && decks[k + 1] ? 2 : 0) |
+        (k + w < w * h && decks[k + w] ? 4 : 0) |
+        (x > 0 && decks[k - 1] ? 8 : 0);
     }
   }
   /** Can a road change the picture anywhere on the tile with index `k` (`y * w + x`)? */
@@ -246,6 +302,26 @@ export class RoadPaint {
     return (this.weight = roadWeight(e, rag));
   }
   /**
+   * How much of the water painted at map point (x, y), on the tile with index `k`, the road covers
+   * (0 to 1): none, except toward the edge of a tile beside it whose road is a bridge's deck. There
+   * it runs out over the painted bank, from ABUT_FROM tile out of its tile's middle and whole from
+   * ABUT_FULL, so the gravel reaches the deck's end at the edge they share.
+   */
+  abutment(x: number, y: number, k: number) {
+    const n = this.at[k],
+      sides = n >= 0 ? this.toDeck[n] : 0;
+    if (!sides) return 0;
+    const i = k % this.w,
+      u = x - i,
+      v = y - (k - i) / this.w;
+    let out = -Infinity;
+    if (sides & 1) out = Math.max(out, -v);
+    if (sides & 2) out = Math.max(out, u);
+    if (sides & 4) out = Math.max(out, v);
+    if (sides & 8) out = Math.max(out, -u);
+    return sstep((out - ABUT_FROM) / (ABUT_FULL - ABUT_FROM));
+  }
+  /**
    * Is map point (x, y), on the tile with index `k`, on a road's core, inside its soft edge? Grass
    * tufts and loose stones keep off it; they may stand on the edge.
    */
@@ -257,9 +333,10 @@ export class RoadPaint {
    * Paints the road read last (`weigh`) at map point (x, y) over `ground`, the ground's colour
    * before the season's tint, in place. `share` scales its weight there (the land's share of the
    * point, less where the road fades out at the paving); `tint` is the season's tint the painter
-   * puts on the ground after, which the gravel is kept out of.
+   * puts on the ground after, which the gravel is kept out of; `water`, the water's share of the
+   * point, which the painter keeps that tint off.
    */
-  paint(x: number, y: number, ground: number[], share: number, tint: number) {
+  paint(x: number, y: number, ground: number[], share: number, tint: number, water = 0) {
     const wt = this.weight * share;
     if (wt <= 0) return;
     const d = this.dist,
@@ -315,9 +392,10 @@ export class RoadPaint {
       }
     }
     // gravel takes no tint: undo the one the painter puts on the ground after this
-    r /= Math.max(1, (tint >> 16) & 255) / 255;
-    g /= Math.max(1, (tint >> 8) & 255) / 255;
-    b /= Math.max(1, tint & 255) / 255;
+    const dry = 1 - water;
+    r /= water + (dry * Math.max(1, (tint >> 16) & 255)) / 255;
+    g /= water + (dry * Math.max(1, (tint >> 8) & 255)) / 255;
+    b /= water + (dry * Math.max(1, tint & 255)) / 255;
     ground[0] += (r - ground[0]) * wt;
     ground[1] += (g - ground[1]) * wt;
     ground[2] += (b - ground[2]) * wt;

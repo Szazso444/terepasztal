@@ -197,10 +197,12 @@ self.onmessage = async (event: MessageEvent) => {
             yards.paint(tx, ty, color, (1 - waterWeight) * (1 - bank), tint, source, part);
           }
         }
-        // A road is painted over the yards and under the paving (roadPaint.ts), out of the water;
-        // it fades out over the paving's fringe, short of its outline.
+        // A road is painted over the yards and under the paving (roadPaint.ts), out of the water
+        // but over the bank up to a bridge deck's end; it fades out over the paving's fringe,
+        // short of its outline.
         if (!solid && roads.near(tileIndex) && roads.weigh(tx, ty, tileIndex) > 0) {
-          roads.paint(tx, ty, color, (1 - waterWeight) * pavingFade(pave), tint);
+          const wet = waterWeight * (1 - roads.abutment(tx, ty, tileIndex));
+          roads.paint(tx, ty, color, (1 - wet) * pavingFade(pave), tint, waterWeight);
         }
         let shade = 1;
         if (raised && relief.style.faces) shade = faceShade(tx, ty);
