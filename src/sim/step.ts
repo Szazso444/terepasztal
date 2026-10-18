@@ -246,6 +246,7 @@ export class SimStep {
       builder.depotCount(),
     );
     if (ctx.weather) weather.tick(clock.time, clock.day, gdt);
+    else weather.updateWind(clock.time, false);
     this.hooks.season?.();
     const speed = (ctx.weather ? weather.speedFactor() : 1) * (stock.famine ? FAMINE_SPEED_MUL : 1);
     fleet.tick(gdt, clock.time, speed);
