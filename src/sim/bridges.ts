@@ -107,3 +107,27 @@ function roadSpan(builder: Builder, b: Building, material: BridgeMaterial) {
   while (joins(b.x + (after + 1) * dx, b.y + (after + 1) * dy)) after++;
   return { material, axis, index: before, length: before + after + 1 };
 }
+
+/**
+ * What a walk reads of the road bridges (#502): the platforms that carry a road and no rail, the
+ * only bridge tiles a walker sets foot on (`walkable`, `findWalk` in people.ts).
+ */
+export interface RoadDecks {
+  /** the axis of the road deck on (x, y), as `roadDeckAxis` reads it; null where there is none */
+  axis(x: number, y: number): 0 | 1 | null;
+  /** the length of the span of the road deck on (x, y) (`bridgeSpan`); 0 where there is none */
+  length(x: number, y: number): number;
+}
+
+/** The road decks of what `builder` has built, read as it stands at each call. */
+export function roadDecks(builder: Builder): RoadDecks {
+  const deck = (x: number, y: number) =>
+    builder.roads.has(x, y) && !builder.track.has(x, y) ? builder.bridgeAt(x, y) : undefined;
+  return {
+    axis: (x, y) => (deck(x, y) ? roadDeckAxis(builder, x, y) : null),
+    length: (x, y) => {
+      const b = deck(x, y);
+      return b ? bridgeSpan(builder, b).length : 0;
+    },
+  };
+}
