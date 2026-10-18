@@ -56,7 +56,13 @@ import {
   WATERLINE,
   type BridgeSurfaces,
 } from './bridgeMeshes';
-import { bridgeJoins, bridgePlan, deckSamples, type BridgeSite } from './bridgeLayout';
+import {
+  bridgeJoins,
+  bridgePlan,
+  deckSamples,
+  type BridgeCarries,
+  type BridgeSite,
+} from './bridgeLayout';
 import { HarvestHighlight } from './harvestHighlight';
 import { groundOf as groundDataOf, type FrameGround } from '../art/buildingGround';
 import { buildingYard, footprintTiles, sameYard, yardTiles, type Yard } from './buildingYard';
@@ -80,6 +86,8 @@ import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
 export type TexturedBridge = Omit<BridgeSite, 'deck'> & {
+  /** Rail, or a road where the platform has a road and no rail (bridgeSpan's road case). */
+  carries: BridgeCarries;
   /** Over water: supports stand in it, and the deck never sinks below the waterline's. */
   water: boolean;
   /** The bridge's upgrade level. */
@@ -1406,6 +1414,7 @@ export class WorldRenderer {
         // there is given by what it is painted from.
         key = JSON.stringify([
           site.material,
+          site.carries,
           site.axis,
           site.water,
           site.level,
