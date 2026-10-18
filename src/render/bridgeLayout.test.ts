@@ -1639,4 +1639,114 @@ describe('road decks beside rail decks (#503)', () => {
       { shrink: shrinkRow },
     );
   });
+
+  it('walls a span on exactly the long sides it merges across nothing, in any layout', () => {
+    forAll(
+      (rng) => layout(rng, () => rng.pick(['rail', 'road', undefined] as const)),
+      (sites) => {
+        for (const t of plans(sites)) {
+          if (t.site.axis === null) continue;
+          const [far, near] = longSides(t.site.axis),
+            [df, dn] = t.site.axis === 1 ? [N, S] : [3, E],
+            free = [...(t.joins[df] ? [] : [far]), ...(t.joins[dn] ? [] : [near])];
+          // Never a parapet on a merged seam or across a span's ends, always one on a free side.
+          expect(parapetSides(t.site, t.plan), `${t.site.x},${t.site.y}`).toEqual(free);
+        }
+      },
+      { shrink: (s) => shrinkArray(s) },
+    );
+  });
+
+  it('keeps every merged bridge of one material, and its spans of one axis where no pad joins', () => {
+    forAll(
+      (rng) => layout(rng, () => rng.pick(['rail', 'road', undefined] as const)),
+      (sites) => {
+        const joins = bridgeJoins(sites, W),
+          key = (s: Site) => s.y * W + s.x,
+          seen = new Set<number>();
+        for (const start of sites) {
+          if (seen.has(key(start))) continue;
+          // One merged bridge: every tile its joins reach from `start`.
+          const bridge: Site[] = [start];
+          seen.add(key(start));
+          for (let i = 0; i < bridge.length; i++)
+            neighbours(sites, bridge[i]).forEach((n, d) => {
+              if (n && joins.get(key(bridge[i]))![d] && !seen.has(key(n))) {
+                seen.add(key(n));
+                bridge.push(n);
+              }
+            });
+          const at = bridge.map((s) => `${s.x},${s.y}`).join(' ');
+          expect(new Set(bridge.map((s) => s.material)).size, at).toBe(1);
+          if (bridge.every((s) => s.axis !== null))
+            expect(new Set(bridge.map((s) => s.axis)).size, at).toBe(1);
+          // A road deck reaches pads only through rail; its own seams join spans of its axis.
+          for (const s of bridge.filter((s) => s.carries === 'road'))
+            neighbours(sites, s).forEach((n, d) => {
+              if (n && joins.get(key(s))![d]) expect(n.axis, at).toBe(s.axis);
+            });
+        }
+      },
+      { shrink: (s) => shrinkArray(s) },
+    );
+  });
+
+  type Mixed = {
+    axis: 0 | 1;
+    decks: { material: 'stone' | 'wood'; axis: 0 | 1; road: boolean }[];
+  };
+  function* shrinkMixed(r: Mixed): Iterable<Mixed> {
+    for (const decks of shrinkArray(r.decks)) if (decks.length >= 2) yield { ...r, decks };
+  }
+
+  it('breaks a row of side-by-side decks exactly where material or axis changes', () => {
+    forAll(
+      (rng): Mixed => {
+        const axis = rng.pick([0, 1] as const),
+          material = rng.pick(['stone', 'wood'] as const);
+        return {
+          axis,
+          decks: Array.from({ length: rng.int(2, 7) }, () => ({
+            material: rng.chance(0.75) ? material : rng.pick(['stone', 'wood'] as const),
+            axis: rng.chance(0.75) ? axis : rng.pick([0, 1] as const),
+            road: rng.chance(0.5),
+          })),
+        };
+      },
+      ({ axis, decks }) => {
+        const sites = decks.map((k, i) => {
+            const [x, y] = across(axis, i);
+            return span(x, y, k.axis, 20, {
+              material: k.material,
+              carries: k.road ? 'road' : 'rail',
+            });
+          }),
+          ts = plans(sites),
+          alike = (i: number, j: number) =>
+            decks[i].material === decks[j].material && decks[i].axis === decks[j].axis,
+          // Across the row is +y along x and +x along y: S or E of a tile, N or W of the next.
+          [back, fwd] = axis === 1 ? [N, S] : [3, E];
+        // Tile i and i + 1 merge, from both sides, exactly when they are alike, so two tiles are
+        // one bridge exactly when every tile between them is alike: the bridges are the runs.
+        for (let i = 0; i + 1 < sites.length; i++) {
+          expect(ts[i].joins[fwd], `seam ${i}`).toBe(alike(i, i + 1));
+          expect(ts[i + 1].joins[back], `seam ${i}`).toBe(alike(i, i + 1));
+        }
+        expect(ts[0].joins[back]).toBe(false);
+        expect(ts[sites.length - 1].joins[fwd]).toBe(false);
+        // A run along the row's axis is walled on its two outer long edges only.
+        for (let i = 0; i < sites.length; i++) {
+          if (decks[i].axis !== axis) continue;
+          const [far, near] = longSides(axis),
+            first = i === 0 || !alike(i - 1, i),
+            last = i === sites.length - 1 || !alike(i, i + 1);
+          expect(parapetSides(ts[i].site, ts[i].plan), `deck ${i}`).toEqual([
+            ...(first ? [far] : []),
+            ...(last ? [near] : []),
+          ]);
+        }
+      },
+      { shrink: shrinkMixed },
+    );
+  });
 });
