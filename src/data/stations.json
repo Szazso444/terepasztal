@@ -27,10 +27,14 @@
       "accepts": [],
       "art": "farm",
       "terrain": "grass",
+      "span": {
+        "w": 1,
+        "h": 2
+      },
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [0, 1],
           "side": "S"
         },
         {
@@ -163,6 +167,10 @@
         "food"
       ],
       "art": "town",
+      "span": {
+        "w": 2,
+        "h": 1
+      },
       "doors": [
         {
           "kind": "platform",
@@ -207,6 +215,10 @@
       "fuel": true,
       "water": true,
       "contracts": false,
+      "span": {
+        "w": 2,
+        "h": 1
+      },
       "doors": [
         {
           "kind": "platform",

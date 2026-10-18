@@ -1207,7 +1207,7 @@ function crossingWorld(loco: string | null, seed: number): { w: SimWorld; train:
   station(w, 'depot', 4, ROW);
   line(w, 6, ROW, 60);
   const quarry = station(w, 'quarry', 10, ROW - 1);
-  const warehouse = station(w, 'warehouse', 56, ROW - 1);
+  const warehouse = station(w, 'warehouse', 53, ROW - 1);
   station(w, 'station', CROSS_X + 1, ROW + 1, 2);
   w.builder.free = true;
   for (let y = 8; y <= ROW + 1; y++)

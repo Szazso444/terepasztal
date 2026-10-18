@@ -99,7 +99,7 @@ const holdings = (w: SimWorld) => JSON.stringify(w.stock.toJSON());
 /** A farm, a windmill and a house, each one level 1. */
 function three(w: SimWorld) {
   return {
-    farm: station(w, 'farm', 6, 29),
+    farm: station(w, 'farm', 6, 28),
     mill: works(w, 'windmill', 4, 10),
     home: house(w, 20, 25),
   };
@@ -195,7 +195,7 @@ describe('how long an upgrade takes', () => {
     expect([farm.level, buildingLevel(mill), home.level]).toEqual([1, 1, 1]);
     expect(farm.closed).toBe(true);
     expect([...w.builder.works(), ...w.houses.works()]).toEqual([
-      { x: 6, y: 29, w: 1, h: 1, progress: 0.5 },
+      { x: 6, y: 28, w: 1, h: 2, progress: 0.5 },
       { x: 4, y: 10, w: 1, h: 1, progress: 0.5 },
       { x: 20, y: 25, w: 1, h: 1, progress: 0.5 },
     ]);
@@ -220,7 +220,7 @@ describe('how long an upgrade takes', () => {
       'upgraded house to 2',
     ]);
     expect(w.ups).toEqual([
-      { kind: 'station', x: 6, y: 29, w: 1, h: 1, name: farm.name, level: 2 },
+      { kind: 'station', x: 6, y: 28, w: 1, h: 2, name: farm.name, level: 2 },
       { kind: 'works', x: 4, y: 10, w: 1, h: 1, name: buildingDef('windmill').name, level: 2 },
       { kind: 'house', x: 20, y: 25, w: 1, h: 1, name: 'House', level: 2 },
     ]);
@@ -288,7 +288,7 @@ describe('how long an upgrade takes', () => {
 describe('a building being upgraded', () => {
   it('closes a station while it is upgraded', () => {
     const w = world(1);
-    const farm = station(w, 'farm', 6, 29);
+    const farm = station(w, 'farm', 6, 28);
     const crew = w.builder.crewTotal();
     w.builder.upgradeStation(farm);
     expect(farm.crew).toBe(0);
@@ -311,7 +311,7 @@ describe('a building being upgraded', () => {
 
   it('gives out what it holds and takes nothing in', () => {
     const w = world(1);
-    station(w, 'farm', 6, 29);
+    station(w, 'farm', 6, 28);
     const store = station(w, 'warehouse', 10, 29);
     const town = station(w, 'town', 20, 29);
     /** What contracts could bring to the town. */
@@ -642,7 +642,7 @@ type Kind = Upgraded['kind'];
 const KINDS: readonly Kind[] = ['station', 'works', 'house'];
 /** Where `site` puts the farm, the windmill and the house, and their footprints. */
 const AT: Record<Kind, { x: number; y: number; w: number; h: number }> = {
-  station: { x: 6, y: 29, w: 1, h: 1 },
+  station: { x: 6, y: 28, w: 1, h: 2 },
   works: { x: 4, y: 10, w: 1, h: 1 },
   house: { x: 20, y: 25, w: 1, h: 1 },
 };

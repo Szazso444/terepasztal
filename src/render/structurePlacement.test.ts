@@ -101,11 +101,11 @@ describe('where a station stands', () => {
   });
 
   it('stands a one-tile station on its tile, borrowing the plain station when it has no family', () => {
-    const farm = new Station('farm', 7, 9);
-    const p = stationPlacement(everything, farm);
+    const lumber = new Station('lumber', 7, 9);
+    const p = stationPlacement(everything, lumber);
     expect([p.x, p.y, p.dx, p.dy]).toEqual([7, 9, 0, 0]);
     const bare = { has: (k: string) => k === 'structures/station_1' };
-    expect(stationPlacement(bare, farm).frame).toBe('structures/station_1');
+    expect(stationPlacement(bare, lumber).frame).toBe('structures/station_1');
   });
 });
 

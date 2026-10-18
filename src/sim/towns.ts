@@ -120,9 +120,30 @@ export class TownRegistry {
     }
     return best;
   }
+  /**
+   * Town whose reach covers any of `tiles`, the one a tile of them is nearest to (`townAt` for the
+   * tiles of a footprint): the distance of a town to a footprint is that to its nearest tile.
+   */
+  townAtTiles(tiles: readonly { x: number; y: number }[]): Town | null {
+    let best: Town | null = null;
+    let bd = Infinity;
+    for (const t of this.towns) {
+      const s = this.station(t);
+      if (!s) continue;
+      for (const c of tiles) {
+        const d = s.distTo(c.x, c.y);
+        if (d <= TOWN_RADIUS && d < bd) {
+          bd = d;
+          best = t;
+        }
+      }
+    }
+    return best;
+  }
+  /** The town a station belongs to: its own for a hall, else the one its footprint is nearest to. */
   townOfStation(s: Station): Town | null {
     if (s.def.id === 'town') return this.byStation(s.id) ?? null;
-    return this.townAt(s.x, s.y);
+    return this.townAtTiles(s.footprint());
   }
   members(t: Town): TownMembers {
     const s0 = this.station(t);
@@ -135,7 +156,7 @@ export class TownRegistry {
         out.stations.push(s);
         continue;
       }
-      if (s.def.id === 'town' || !inside(s.x, s.y)) continue;
+      if (s.def.id === 'town' || this.townAtTiles(s.footprint())?.id !== t.id) continue;
       out.stations.push(s);
       if (s.def.stockpile) out.warehouses++;
     }

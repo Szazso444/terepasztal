@@ -3,9 +3,9 @@ import type { StationDef } from '../data/content';
 import type { Builder } from './build';
 import type { Station } from './stations';
 import { decorDef } from './build';
-import { buildingDef } from './buildings';
+import { buildingDef, buildingFootprint } from './buildings';
 import type { RoadTiles } from './roads';
-import { streetDoor, type Door } from './doors';
+import { doorsOf, streetDoor, type Door } from './doors';
 import { Rng } from '../engine/rng';
 import { DIR_DX, DIR_DY } from '../engine/iso';
 import type { RoadDecks } from './bridges';
@@ -42,8 +42,11 @@ export function stationProfession(def: Pick<StationDef, 'id' | 'accepts'>): Prof
 }
 
 export interface Place {
+  /** the footprint's corner, its lowest x and y */
   x: number;
   y: number;
+  /** every tile of its footprint, the corner among them */
+  tiles: readonly { x: number; y: number }[];
   key: string;
   /** what the crew here goes out to gather */
   gathers: Terrain | null;
@@ -485,12 +488,29 @@ function nearestPlace(places: readonly Place[], x: number, y: number): Place | n
   let best: Place | null = null;
   let bestD = Infinity;
   for (const pl of places) {
-    const d = Math.abs(pl.x - x) + Math.abs(pl.y - y);
+    const d = tileGap(pl.tiles, x, y);
     if (d < bestD) {
       best = pl;
       bestD = d;
     }
   }
+  return best;
+}
+
+/** Steps on foot, along x and y, from (x, y) to the nearest of `tiles`. */
+function tileGap(tiles: readonly { x: number; y: number }[], x: number, y: number): number {
+  let best = Infinity;
+  for (const t of tiles) best = Math.min(best, Math.abs(t.x - x) + Math.abs(t.y - y));
+  return best;
+}
+
+/** Steps on foot, along x and y, between the nearest two tiles of two footprints. */
+function footprintGap(
+  a: readonly { x: number; y: number }[],
+  b: readonly { x: number; y: number }[],
+): number {
+  let best = Infinity;
+  for (const t of a) best = Math.min(best, tileGap(b, t.x, t.y));
   return best;
 }
 
@@ -574,6 +594,7 @@ export class PeopleSim {
         out.push({
           x: s.x,
           y: s.y,
+          tiles: s.footprint(),
           key: stationKey(s.id),
           gathers: this.gatherTerrain[s.def.id] ?? null,
           profession: stationProfession(s.def),
@@ -584,6 +605,7 @@ export class PeopleSim {
         out.push({
           x: b.x,
           y: b.y,
+          tiles: buildingFootprint(b.id, b.x, b.y, b.rot ?? 0),
           key: `b${b.x},${b.y}`,
           gathers: null,
           profession: 'railway_worker',
@@ -594,6 +616,7 @@ export class PeopleSim {
         out.push({
           x: d.x,
           y: d.y,
+          tiles: [{ x: d.x, y: d.y }],
           key: `d${d.x},${d.y}`,
           gathers: null,
           // a house is lived in; any other service stop is a railway worker's post
@@ -621,24 +644,53 @@ export class PeopleSim {
       if (i >= 0) this.persons.splice(i, 1);
     }
     // the rest of the load is abstract cargo; show a couple of extra figures stepping aboard
-    const plat = this.builder.platformTiles(st)[0];
-    if (plat)
-      for (let k = take; k < Math.min(3, Math.round(n)); k++) this.spawnTransient(st, plat, true);
+    const spot = this.platformSpot(st);
+    if (spot)
+      for (let k = take; k < Math.min(3, Math.round(n)); k++) this.spawnTransient(spot, true);
   }
   /** Passengers alighted: a few figures walk from the platform to a nearby building and settle. */
   alight(st: Station, n: number) {
-    const plat = this.builder.platformTiles(st)[0];
-    if (!plat) return;
+    const spot = this.platformSpot(st);
+    if (!spot) return;
     const count = Math.min(3, Math.max(1, Math.round(n)));
-    for (let k = 0; k < count; k++) this.spawnTransient(st, plat, false);
+    for (let k = 0; k < count; k++) this.spawnTransient(spot, false);
+  }
+  /**
+   * Where a train's passengers step on and off at a station: a tile of its footprint, the one its
+   * platform door is on (its street door for a station with no platform door), and the track tile
+   * that serves it nearest to where that door opens. A station with track on several sides is
+   * served from the one its platform door faces; null when no track serves it.
+   */
+  private platformSpot(
+    st: Station,
+  ): { door: { x: number; y: number }; plat: { x: number; y: number } } | null {
+    const platforms = this.builder.platformTiles(st);
+    if (!platforms.length) return null;
+    const doors = doorsOf(st.def, st.x, st.y, st.rot);
+    const door = doors.find((d) => d.kind === 'platform') ?? doors.find((d) => d.kind === 'street');
+    if (!door) return { door: st, plat: platforms[0] };
+    let plat = platforms[0];
+    let near = Infinity;
+    for (const p of platforms) {
+      const d = Math.abs(p.x - door.reach.x) + Math.abs(p.y - door.reach.y);
+      if (d < near) {
+        near = d;
+        plat = p;
+      }
+    }
+    return { door: door.tile, plat };
   }
   /**
    * A figure stepping off a train onto the platform, or out of the station to board one. One set
    * down on a level crossing (a platform a road crosses) stands on its edge, on its way off it.
    */
-  private spawnTransient(st: Station, plat: { x: number; y: number }, boarding: boolean) {
-    const from = boarding ? st : plat;
-    const to = boarding ? plat : st;
+  private spawnTransient(
+    spot: { door: { x: number; y: number }; plat: { x: number; y: number } },
+    boarding: boolean,
+  ) {
+    const { plat } = spot;
+    const from = boarding ? spot.door : plat;
+    const to = boarding ? plat : spot.door;
     const path = findWalk(this.map, from, to, this.builder.roads, null, this.decks) ?? [from, to];
     const at = {
       x: from.x + (this.rnd() - 0.5) * 0.4,
@@ -664,14 +716,17 @@ export class PeopleSim {
 
   private nearestTile(from: Place, t: Terrain): { x: number; y: number } | null {
     let best: { x: number; y: number; d: number } | null = null;
-    for (let dy = -ROAM; dy <= ROAM; dy++)
-      for (let dx = -ROAM; dx <= ROAM; dx++) {
-        const x = from.x + dx;
-        const y = from.y + dy;
+    // within ROAM of the footprint, the nearer the better
+    const x0 = Math.min(...from.tiles.map((c) => c.x)) - ROAM;
+    const x1 = Math.max(...from.tiles.map((c) => c.x)) + ROAM;
+    const y0 = Math.min(...from.tiles.map((c) => c.y)) - ROAM;
+    const y1 = Math.max(...from.tiles.map((c) => c.y)) + ROAM;
+    for (let y = y0; y <= y1; y++)
+      for (let x = x0; x <= x1; x++) {
         if (x < 0 || y < 0 || x >= this.map.w || y >= this.map.h) continue;
         const tt = this.map.terrain[y * this.map.w + x];
         if (tt !== t && !(t === Terrain.Hill && tt === Terrain.Rock)) continue;
-        const d = Math.abs(dx) + Math.abs(dy) + this.rnd() * 2;
+        const d = tileGap(from.tiles, x, y) + this.rnd() * 2;
         if (!best || d < best.d) best = { x, y, d };
       }
     if (!best) return null;
@@ -808,9 +863,9 @@ export class PeopleSim {
             p.timer = 6 + this.rnd() * 14;
           } else if (r < 0.92 && home.gathers !== null) {
             const spot = this.nearestTile(home, home.gathers);
-            // a gather tile under its own home is none: it stays in, as it always has. One on its
-            // doorstep is a walk of no length: it gathers there
-            const under = spot && spot.x === home.x && spot.y === home.y;
+            // a gather tile under its own home, any tile of its footprint, is none: it stays in, as
+            // it always has. One on its doorstep is a walk of no length: it gathers there
+            const under = spot && home.tiles.some((c) => c.x === spot.x && c.y === spot.y);
             if (
               !spot ||
               under ||
@@ -822,13 +877,11 @@ export class PeopleSim {
               .filter(
                 (s) =>
                   s.accepts('passengers') &&
-                  Math.abs(s.x - home.x) + Math.abs(s.y - home.y) <= STATION_REACH,
+                  footprintGap(home.tiles, s.footprint()) <= STATION_REACH,
               )
               .sort(
                 (a, b) =>
-                  Math.abs(a.x - home.x) +
-                  Math.abs(a.y - home.y) -
-                  (Math.abs(b.x - home.x) + Math.abs(b.y - home.y)),
+                  footprintGap(home.tiles, a.footprint()) - footprintGap(home.tiles, b.footprint()),
               )[0];
             // a station whose street door faces the tile its own door faces is there at once; its
             // own station is none, as it always was

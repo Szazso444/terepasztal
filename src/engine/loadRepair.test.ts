@@ -192,7 +192,7 @@ describe('the ground under everything else a load repairs', () => {
       const repairs = repaired(
         m,
         only({
-          // a depot covers 2 x 2 tiles, from its corner
+          // a depot covers 2 x 2 tiles, from its corner, and a farm halt 1 x 2
           stations: [station('depot', 2, 0), station('farm', 5, 0)],
           // a signal with no track under it, a power pole, which asks the ground even on track,
           // and a house
@@ -210,6 +210,7 @@ describe('the ground under everything else a load repairs', () => {
         [2, 1],
         [3, 1],
         [5, 0],
+        [5, 1],
         [0, 3],
         [7, 3],
         [7, 7],
@@ -1232,6 +1233,8 @@ describe('a load with repairs', () => {
     const rock = find(m, (t) => NO_PLATFORM.includes(t));
     const water = find(m, (t) => t === Terrain.Water);
     if (!grass || !rock || !water) throw new Error('the world lacks grass, rock or water');
+    // the halt covers two tiles, the second one south of the first
+    const secondBad = NO_LAND.includes(at(m, water[0], water[1] + 1));
     const repairs = repaired(
       m,
       only({
@@ -1242,8 +1245,9 @@ describe('a load with repairs', () => {
         ],
       }),
     );
-    // the repair was done: the platform on grass kept its grass, the others were given ground
-    expect(repairs.length).toBe(2);
+    // the repair was done: the platform on grass kept its grass, the others were given ground (the
+    // halt's second tile too, when it stood on water, rock or mountain as well)
+    expect(repairs.length).toBe(secondBad ? 3 : 2);
     expect(at(m, grass[0], grass[1])).toBe(Terrain.Grass);
     expect(at(m, rock[0], rock[1])).toBe(Terrain.Grass);
     expect(at(m, water[0], water[1])).toBe(Terrain.Grass);

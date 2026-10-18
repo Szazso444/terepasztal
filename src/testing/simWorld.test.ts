@@ -288,7 +288,7 @@ describe('simWorld wiring', () => {
     setSeasonOffset(3);
     const w = simWorld({ size: 64, terrain: 'grass' });
     line(w, 5, 20, 20);
-    const farm = station(w, 'farm', 10, 19);
+    const farm = station(w, 'farm', 10, 19, 1);
     const biome = biomeDef(biomeAt(w.map, 10, 19)).production.farm ?? 1;
     // day 1 falls in winter with this offset, when farms yield half
     expect(farm.productionMul).toBeCloseTo(0.5 * biome, 12);

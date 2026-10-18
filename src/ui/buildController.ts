@@ -959,7 +959,7 @@ export class BuildController {
       name: def.name,
       refusal: check.ok ? null : (check.reason ?? ''),
       breakdown: check.ok
-        ? harvestBreakdown(this.builder.map, x, y, defId, 1, season, rules)
+        ? harvestBreakdown(this.builder.map, x, y, defId, 1, season, rules, undefined, this.rot)
         : null,
       cargo: def.produces.filter((p) => p.level <= 1).map((p) => p.cargo),
       weeklyAtLevel1: weeklyOutput(1, 1),
@@ -969,7 +969,17 @@ export class BuildController {
   /** Units a week a level 1 `defId` would make on (x, y), null where it cannot stand. */
   private placingYield(x: number, y: number, defId: string, season: Season): number | null {
     if (!this.builder.checkStation(x, y, defId, this.rot).ok) return null;
-    const b = harvestBreakdown(this.builder.map, x, y, defId, 1, season, rules, this.placingCells);
+    const b = harvestBreakdown(
+      this.builder.map,
+      x,
+      y,
+      defId,
+      1,
+      season,
+      rules,
+      this.placingCells,
+      this.rot,
+    );
     return b?.perWeek ?? null;
   }
 

@@ -45,6 +45,8 @@ export interface HarvestFocus {
     readonly x: number;
     readonly y: number;
     readonly def: { readonly id: string };
+    /** the station's turn; 0 where it is not given */
+    readonly rot?: number;
   } | null;
 }
 
@@ -52,8 +54,8 @@ type Tile = { readonly x: number; readonly y: number };
 
 /**
  * The tiles a harvest station counts, lit on the map: one Graphics of flat diamonds, each on its
- * own tile's top face, cyan and brighter the nearer it lies. The station's own tile never counts,
- * so it is never lit. The layer sits between the night overlay and the objects, so the night does
+ * own tile's top face, cyan and brighter the nearer it lies to the station's footprint. None of
+ * the footprint's tiles counts, so none is lit. The layer sits between the night overlay and the objects, so the night does
  * not darken it and objects, trains, stations and the hover outline draw over it. It is drawn
  * again only when the tile it lights changes.
  */
@@ -71,6 +73,7 @@ export class HarvestHighlight {
   private litId: string | null = null;
   private litX = 0;
   private litY = 0;
+  private litRot = 0;
   private litSeason: Season = 'spring';
 
   constructor(
@@ -96,23 +99,35 @@ export class HarvestHighlight {
       this.outline = fits ? OUTLINE.fits : OUTLINE.refused;
       const lit =
         placing === hover ? fits : !!placing && this.canStand(placing.x, placing.y, id, focus.rot);
-      if (lit && placing) this.light(placing.x, placing.y, id, season);
+      if (lit && placing) this.light(placing.x, placing.y, id, season, focus.rot);
       else this.clear();
       return;
     }
     this.outline = OUTLINE.plain;
     const s = focus.selected;
-    if (s) this.light(s.x, s.y, s.def.id, season);
+    if (s) this.light(s.x, s.y, s.def.id, season, s.rot ?? 0);
     else this.clear();
   }
 
-  /** Light what a `defId` on (x, y) counts; nothing is drawn when that is already lit. */
-  light(x: number, y: number, defId: string, season: Season) {
-    if (this.litId === defId && this.litX === x && this.litY === y && this.litSeason === season)
+  /**
+   * Light what a `defId` with its corner on (x, y), turned to `turn`, counts; nothing is drawn when
+   * that is already lit.
+   */
+  light(x: number, y: number, defId: string, season: Season, turn = 0) {
+    // a turn and the one opposite cover the same tiles: only the axis matters
+    const rot = turn % 2 === 0 ? 0 : 1;
+    if (
+      this.litId === defId &&
+      this.litX === x &&
+      this.litY === y &&
+      this.litRot === rot &&
+      this.litSeason === season
+    )
       return;
     this.litId = defId;
     this.litX = x;
     this.litY = y;
+    this.litRot = rot;
     this.litSeason = season;
     this.draw();
   }
@@ -144,6 +159,7 @@ export class HarvestHighlight {
             this.litSeason,
             rules,
             this.cells,
+            this.litRot,
           ),
     );
     for (const t of tiles) {

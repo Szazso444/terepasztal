@@ -53,9 +53,12 @@ function world() {
 }
 type World = ReturnType<typeof world>;
 
-/** A station on the line: its gate on row 30 is its platform. */
+/**
+ * A station on the line: its gate on row 30 is its platform. The farm halt is two tiles deep, so
+ * its corner is one row higher.
+ */
 function station(w: World, id: string, x: number) {
-  const s = new Station(id, x, ROW - 1);
+  const s = new Station(id, x, id === 'farm' ? ROW - 2 : ROW - 1);
   w.builder.stations.push(s);
   return s;
 }

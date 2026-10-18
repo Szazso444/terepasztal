@@ -743,26 +743,146 @@ describe(`the ground data of the ${GROUP} frames`, () => {
    * placeholders (`_r1` to `_r3`) are no better. They are repainted to the footprint with the
    * rest of the work on how a picture sits in it (F3, #510); the entry goes with its repaint.
    */
-  const NOT_THE_FOOTPRINTS_SHAPE = [
-    'structures/colliery_lv2_r1',
-    'structures/colliery_lv2_r2',
-    'structures/colliery_lv2_r3',
-    'structures/colliery_r1',
-    'structures/colliery_r2',
-    'structures/colliery_r3',
-    'structures/grinder_r1',
-    'structures/grinder_r2',
-    'structures/grinder_r3',
-    'structures/oil_derrick_r1',
-    'structures/oil_derrick_r2',
-    'structures/oil_derrick_r3',
-  ];
+  const NOT_THE_FOOTPRINTS_SHAPE = new Map([
+    [
+      'structures/colliery_lv2_r1',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/colliery_lv2_r2',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/colliery_lv2_r3',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/colliery_r1',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/colliery_r2',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/colliery_r3',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/grinder_r1',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/grinder_r2',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/grinder_r3',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/oil_derrick_r1',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/oil_derrick_r2',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/oil_derrick_r3',
+      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+    ],
+    [
+      'structures/town_1_r1',
+      'turned placeholder of the town hall, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/town_1_r2',
+      'turned placeholder of the town hall, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/town_1_r3',
+      'turned placeholder of the town hall, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/farm_1_r1',
+      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/farm_1_r2',
+      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/farm_1_r3',
+      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/farm_3_r1',
+      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/farm_3_r2',
+      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/farm_3_r3',
+      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_2_r1',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_2_r2',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_2_r3',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_3_r1',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_3_r2',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_3_r3',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_4_r1',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_4_r2',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_4_r3',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_5_r1',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_5_r2',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+    [
+      'structures/warehouse_5_r3',
+      'turned placeholder of the goods shed, now 2 x 1 (F2, #509); repaint pending',
+    ],
+  ]);
 
   it('draws the longer side of a footprint as the longer wall of the foot', () => {
     // an oracle for the footprint's orientation that does not share the tool's arithmetic: the S
     // wall runs along x, so a footprint wider than it is deep has the longer S wall, at every turn
     let unequal = 0;
-    const stale = new Set(NOT_THE_FOOTPRINTS_SHAPE);
+    const stale = new Set(NOT_THE_FOOTPRINTS_SHAPE.keys());
     for (const [key, e] of Object.entries(data)) {
       const w = Math.max(...e.footprint.map((t) => t[0])) + 1;
       const h = Math.max(...e.footprint.map((t) => t[1])) + 1;

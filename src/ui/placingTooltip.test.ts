@@ -203,14 +203,15 @@ describe('the yield rows', () => {
   });
 
   it('name a single tile in the singular and several in the plural', () => {
-    // one grass tile beside the farm, three two away
+    // one grass tile beside the farm halt (it stands on the middle tile and the one below), three
+    // two away from its two tiles
     const b = breakdown(
       mapWith(
         Terrain.Water,
         [
           [1, 0],
           [2, 0],
-          [0, 2],
+          [0, 3],
           [-2, -2],
         ],
         Terrain.Grass,

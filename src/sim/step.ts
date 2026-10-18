@@ -134,15 +134,11 @@ export interface StepHooks {
   dailyTicket?: () => void;
 }
 
-/** Residents of finished houses within PASSENGER_CATCHMENT of the station's anchor. */
+/** Residents of finished houses within PASSENGER_CATCHMENT of the station's footprint. */
 function catchment(houses: Iterable<House>, s: Station): number {
   let n = 0;
   for (const h of houses)
-    if (
-      h.progress >= 1 &&
-      Math.max(Math.abs(h.x - s.x), Math.abs(h.y - s.y)) <= PASSENGER_CATCHMENT
-    )
-      n += h.residents;
+    if (h.progress >= 1 && s.distTo(h.x, h.y) <= PASSENGER_CATCHMENT) n += h.residents;
   return n;
 }
 

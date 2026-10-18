@@ -26,7 +26,7 @@ function town() {
   const w = simWorld({ terrain: 'grass', size: 64 });
   line(w, 2, 30, 40);
   const hall = station(w, 'town', 20, 29);
-  const farms = [station(w, 'farm', 16, 29), station(w, 'farm', 24, 31)];
+  const farms = [station(w, 'farm', 16, 29, 1), station(w, 'farm', 24, 31)];
   const works = freely(w, () => [
     w.builder.placeBuilding(18, 26, 'windmill')!,
     w.builder.placeBuilding(22, 26, 'kiln')!,

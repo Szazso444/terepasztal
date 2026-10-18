@@ -16,7 +16,7 @@ import { rules, DEFAULT_RULES } from './rules';
 import { setSeasonOffset } from './weather';
 import { content } from '../data/content';
 import { SUPPLY_KINDS, collectorCeiling } from './catenary';
-import type { Station } from './stations';
+import { stationFootprint, type Station } from './stations';
 import type { PathSegment } from '../world/pathfinding';
 import {
   TrackGraph,
@@ -458,8 +458,23 @@ function plan(line: Line) {
   return {
     puts,
     steps,
-    warehouse: { x: stop.x + DIR_DX[away], y: stop.y + DIR_DY[away] },
-    home: { x: DIR_DX[back], y: DIR_DY[back] },
+    warehouse: beyond(stop, away),
+    home: beyond({ x: 0, y: 0 }, back),
+  };
+}
+
+/**
+ * The warehouse (two tiles) standing beside tile `t` on side `d`, its pair running on away from
+ * `t`: along x for east and west, along y for north and south.
+ */
+function beyond(t: { x: number; y: number }, d: Dir): Spot {
+  const x = t.x + DIR_DX[d];
+  const y = t.y + DIR_DY[d];
+  const behind = d === Dir.W || d === Dir.N;
+  return {
+    x: behind ? x + DIR_DX[d] : x,
+    y: behind ? y + DIR_DY[d] : y,
+    rot: d === Dir.E || d === Dir.W ? 0 : 1,
   };
 }
 
@@ -467,9 +482,18 @@ function plan(line: Line) {
 interface Plan {
   puts: Put[];
   steps: Step[];
-  warehouse: { x: number; y: number };
-  home?: { x: number; y: number };
+  warehouse: Spot;
+  home?: Spot;
 }
+/** Where a warehouse stands: its corner and its rotation (r0 lies along x, r1 along y). */
+interface Spot {
+  x: number;
+  y: number;
+  rot?: number;
+}
+
+/** The tiles a warehouse at `s` covers. */
+const coverOf = (s: Spot) => stationFootprint('warehouse', s.x, s.y, s.rot ?? 0);
 
 /**
  * A grass world with the pieces laid through the builder, as a player lays them, two tiles in
@@ -478,8 +502,8 @@ interface Plan {
 function layDown(cls: TrackClass, p: Plan) {
   const tiles = [
     ...p.puts.flatMap((q) => footprintOf(q.x, q.y, q.kind, q.rot, cls)),
-    p.warehouse,
-    ...(p.home ? [p.home] : []),
+    ...coverOf(p.warehouse),
+    ...(p.home ? coverOf(p.home) : []),
   ];
   const dx = 2 - Math.min(...tiles.map((t) => t.x));
   const dy = 2 - Math.min(...tiles.map((t) => t.y));
@@ -493,8 +517,8 @@ function layDown(cls: TrackClass, p: Plan) {
         `no ${q.kind} at ${q.x + dx},${q.y + dy}: ${w.builder.checkTrack(q.x + dx, q.y + dy, item, q.rot).reason}`,
       );
   }
-  const stop = station(w, 'warehouse', p.warehouse.x + dx, p.warehouse.y + dy);
-  const home = p.home && station(w, 'warehouse', p.home.x + dx, p.home.y + dy);
+  const stop = station(w, 'warehouse', p.warehouse.x + dx, p.warehouse.y + dy, p.warehouse.rot);
+  const home = p.home && station(w, 'warehouse', p.home.x + dx, p.home.y + dy, p.home.rot);
   return { w, stop, home, steps: p.steps.map((s) => ({ ...s, x: s.x + dx, y: s.y + dy })) };
 }
 

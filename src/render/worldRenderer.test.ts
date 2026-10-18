@@ -1516,15 +1516,16 @@ const alive = (pictures: Map<Texture, FieldPicture>) =>
   [...pictures.keys()].filter((t) => !t.destroyed);
 
 /**
- * A field round the farm halt's tile (5, 4), which holds none: on its W side (4, 4) and its S side
- * (5, 5), and the tiles between them; and a field tile far off, beyond any picture's reach.
+ * A field round the farm halt's two tiles (5, 4) and (5, 5), which hold none: on its W side (4, 4)
+ * and (4, 5), its S side (5, 6), and the tiles between them; and a field tile far off, beyond any
+ * picture's reach.
  */
 const AROUND_FARM: [number, number][] = [
   [3, 4],
   [4, 4],
   [3, 5],
   [4, 5],
-  [5, 5],
+  [5, 6],
   [10, 10],
 ];
 /** Painting a field's pictures over and over takes a while under Node. */
@@ -1572,10 +1573,11 @@ describe("a wheat field's picture (#444)", () => {
     () => {
       const { world, taken, sprite } = fieldWorld(AROUND_FARM);
       taken.add('5,4');
+      taken.add('5,5');
       const s = world.setStructure('station:1', 5, 4, FARM),
         fit = fitsOf(world).get('station:1')!;
       world.updateFields(Infinity);
-      const south = sprite(5, 5),
+      const south = sprite(5, 6),
         west = sprite(4, 4);
       // the plinth is drawn just under the picture (`fitPlinth`), so after the picture is after it
       for (const part of [s, fit.foot, fit.weeds]) {
@@ -1596,16 +1598,17 @@ describe("a wheat field's picture (#444)", () => {
       world.updateFields(Infinity);
       expect(shown()).toEqual(before);
       taken.add('5,4');
+      taken.add('5,5');
       world.setStructure('station:1', 5, 4, FARM);
       world.updateFields(Infinity);
       const beside = shown();
-      // each field round it is painted as the map reads with the farm halt's tile a footprint whose
-      // W and S sides it runs up to (it has no door path there)
+      // each field round it is painted as the map reads with the farm halt's two tiles a footprint
+      // whose W and S sides it runs up to (it has no door path there)
       const site = (x: number, y: number) =>
         readSite(x, y, (cx, cy) =>
           cx < 0 || cy < 0 || cx >= 12 || cy >= 12
             ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: 0 }
-            : cx === 5 && cy === 4
+            : cx === 5 && (cy === 4 || cy === 5)
               ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: RUN_W | RUN_S }
               : AROUND_FARM.some(([fx, fy]) => fx === cx && fy === cy)
                 ? { kind: CELL_FIELD, variant: (cx * 7 + cy * 5) % 3, level: 0, run: 0 }
@@ -1613,7 +1616,7 @@ describe("a wheat field's picture (#444)", () => {
         );
       for (const [x, y] of [
         [4, 4],
-        [5, 5],
+        [5, 6],
         [4, 5],
       ])
         expect(beside.get(`${x},${y}`), `${x},${y}`).toEqual(
@@ -1625,6 +1628,7 @@ describe("a wheat field's picture (#444)", () => {
       // every picture replaced was freed
       expect(alive(pictures)).toHaveLength(AROUND_FARM.length);
       taken.delete('5,4');
+      taken.delete('5,5');
       world.removeStructure('station:1');
       world.updateFields(Infinity);
       expect(shown()).toEqual(before);

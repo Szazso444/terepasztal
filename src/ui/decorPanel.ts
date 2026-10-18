@@ -89,9 +89,7 @@ export class DecorPanel {
     const def = decorDef(d.id);
     const out: string[] = [];
     if (def.radius) {
-      const served = builder.stations.filter(
-        (s) => Math.max(Math.abs(s.x - d.x), Math.abs(s.y - d.y)) <= def.radius!,
-      );
+      const served = builder.stations.filter((s) => s.distTo(d.x, d.y) <= def.radius!);
       out.push(STR.decorInfo.reach(def.radius));
       out.push(
         served.length

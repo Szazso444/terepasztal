@@ -11,6 +11,7 @@ import {
   stationDef,
   stationFootprint,
 } from '../sim/stations';
+import { rules } from '../sim/rules';
 import { SEASONS, type Season } from '../sim/weather';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
@@ -44,10 +45,10 @@ const farmTool = (rot = 0): HarvestFocus => ({
   rot,
   selected: null,
 });
-const selecting = (x: number, y: number, id = 'farm'): HarvestFocus => ({
+const selecting = (x: number, y: number, id = 'farm', rot = 0): HarvestFocus => ({
   tool: { kind: 'none' },
   rot: 0,
-  selected: { x, y, def: { id } },
+  selected: { x, y, def: { id }, rot },
 });
 
 /** A layer over `map` whose surface lifts every third column, recording each tile it is asked. */
@@ -98,7 +99,9 @@ describe('litTiles', () => {
       expect(lit.length).toBe(b.cells.count);
       expect(new Set(lit.map(key)).size).toBe(lit.length);
       expect(lit.map(key)).not.toContain(key(s));
-      const at = (t: LitTile) => Math.max(Math.abs(t.x - s.x), Math.abs(t.y - s.y));
+      // the farm halt takes two tiles (1 x 2): its corner and the one below it
+      const at = (t: LitTile) =>
+        Math.max(Math.abs(t.x - s.x), Math.max(0, s.y - t.y, t.y - (s.y + 1)));
       for (const t of lit) {
         expect(at(t)).toBeGreaterThanOrEqual(1);
         expect(at(t)).toBeLessThanOrEqual(HARVEST_RADIUS);
@@ -120,15 +123,22 @@ describe('the harvest highlight layer', () => {
     expect(draws()).toBe(1);
     for (let f = 0; f < 30; f++) h.follow({ x: 7, y: 6 }, farmTool(), 'spring');
     expect(draws()).toBe(2);
-    // a turn of the tool alone moves nothing that is lit
-    h.follow({ x: 7, y: 6 }, farmTool(1), 'spring');
-    expect(draws()).toBe(2);
+    // the farm halt takes two tiles: a quarter turn changes what it counts, so it is drawn again
+    for (let f = 0; f < 30; f++) h.follow({ x: 7, y: 6 }, farmTool(1), 'spring');
+    expect(draws()).toBe(3);
+    // a half turn covers the same tiles, and moves nothing that is lit
+    h.follow({ x: 7, y: 6 }, farmTool(3), 'spring');
+    expect(draws()).toBe(3);
     for (let f = 0; f < 30; f++) h.follow(null, selecting(3, 3), 'spring');
-    expect(draws()).toBe(3);
-    for (let f = 0; f < 30; f++) h.follow({ x: f % 24, y: 2 }, selecting(3, 3), 'spring');
-    expect(draws()).toBe(3);
-    for (let f = 0; f < 30; f++) h.follow({ x: 1, y: 1 }, NONE, 'spring');
     expect(draws()).toBe(4);
+    // a selected halt is lit as it is turned
+    for (let f = 0; f < 30; f++) h.follow(null, selecting(3, 3, 'farm', 1), 'spring');
+    expect(draws()).toBe(5);
+    for (let f = 0; f < 30; f++)
+      h.follow({ x: f % 24, y: 2 }, selecting(3, 3, 'farm', 1), 'spring');
+    expect(draws()).toBe(5);
+    for (let f = 0; f < 30; f++) h.follow({ x: 1, y: 1 }, NONE, 'spring');
+    expect(draws()).toBe(6);
     expect(h.layer.visible).toBe(false);
   });
 
@@ -149,7 +159,9 @@ describe('the harvest highlight layer', () => {
     h.follow({ x: 8, y: 8 }, farmTool(3), 'summer');
     expect(h.layer.visible).toBe(true);
     expect(h.outline).toBe(OUTLINE.fits);
-    const want = litTiles(harvestBreakdown(emptyMap(1, 24, 24), 8, 8, 'farm', 1, 'summer'));
+    const want = litTiles(
+      harvestBreakdown(emptyMap(1, 24, 24), 8, 8, 'farm', 1, 'summer', rules, undefined, 3),
+    );
     expect(asked.map(key).sort()).toEqual(want.map(key).sort());
     // off the field the tool lights nothing
     h.follow(null, farmTool(3), 'summer');
@@ -251,16 +263,19 @@ const COUNTS: Record<string, readonly number[]> = {
 };
 
 /**
- * The obvious picture: every tile of the map within HARVEST_RADIUS of (x, y), but that one, whose
- * ground a `defId` counts, lit at 0.18 + 0.6 / (1 + d); nothing for a kind that harvests nothing.
+ * The obvious picture: every tile of the map within HARVEST_RADIUS of the footprint of a `defId`
+ * with its corner on (x, y) turned to `rot`, but the footprint's own, whose ground the kind
+ * counts, lit at 0.18 + 0.6 / (1 + d), d being the distance to the footprint's nearest tile;
+ * nothing for a kind that harvests nothing.
  */
-function oracle(map: GameMap, x: number, y: number, defId: string): LitTile[] {
+function oracle(map: GameMap, x: number, y: number, defId: string, rot = 0): LitTile[] {
   const want = stationDef(defId).terrain;
   const out: LitTile[] = [];
   if (!want) return out;
+  const feet = stationFootprint(defId, x, y, rot);
   for (let ty = 0; ty < map.h; ty++)
     for (let tx = 0; tx < map.w; tx++) {
-      const d = Math.max(Math.abs(tx - x), Math.abs(ty - y));
+      const d = Math.min(...feet.map((t) => Math.max(Math.abs(tx - t.x), Math.abs(ty - t.y))));
       if (d === 0 || d > HARVEST_RADIUS || !COUNTS[want].includes(map.terrain[ty * map.w + tx]))
         continue;
       out.push({ x: tx, y: ty, alpha: 0.18 + 0.6 / (1 + d) });
@@ -367,7 +382,7 @@ interface Frame {
   tool: HarvestFocus['tool'];
   rot: number;
   /** the selected station; only with no tool in hand, as BuildController keeps it */
-  sel: { x: number; y: number; id: string } | null;
+  sel: { x: number; y: number; id: string; rot: number } | null;
   season: Season;
   /** a placing root something holds (#336); absent, the hovered tile is the one placed on */
   placing?: Tile | null;
@@ -434,7 +449,7 @@ function scene(rng: Rng): Scene {
     if (f.tool.kind === 'none' && rng.chance(0.2))
       f.sel = rng.chance(0.3)
         ? null
-        : { x: rng.int(0, g.w - 1), y: rng.int(0, g.h - 1), id: pickKind(rng) };
+        : { x: rng.int(0, g.w - 1), y: rng.int(0, g.h - 1), id: pickKind(rng), rot: rng.int(0, 3) };
     if (rng.chance(0.05)) f.season = rng.pick(SEASONS);
     if (rng.chance(0.15)) {
       if ('placing' in f) delete f.placing;
@@ -470,23 +485,23 @@ function plays(s: Scene) {
     const focus: HarvestFocus = {
       tool: f.tool,
       rot: f.rot,
-      selected: f.sel && { x: f.sel.x, y: f.sel.y, def: { id: f.sel.id } },
+      selected: f.sel && { x: f.sel.x, y: f.sel.y, def: { id: f.sel.id }, rot: f.sel.rot },
     };
     const n = clears.mock.calls.length;
     if ('placing' in f) h.follow(f.hover, focus, f.season, f.placing);
     else h.follow(f.hover, focus, f.season);
     const draws = clears.mock.calls.length - n;
 
-    let lit: { id: string; x: number; y: number } | null = null;
+    let lit: { id: string; x: number; y: number; rot: number } | null = null;
     let outline = CREAM;
     if (f.tool.kind === 'station' && f.tool.defId) {
       const id = f.tool.defId;
       const root = 'placing' in f ? f.placing : f.hover;
       outline = f.hover && can(f.hover.x, f.hover.y, id, f.rot) ? AMBER : RED;
-      if (root && can(root.x, root.y, id, f.rot)) lit = { id, x: root.x, y: root.y };
+      if (root && can(root.x, root.y, id, f.rot)) lit = { id, x: root.x, y: root.y, rot: f.rot };
     } else if (f.sel) lit = { ...f.sel };
-    const want = lit ? oracle(map, lit.x, lit.y, lit.id) : [];
-    const now = lit && `${lit.id} at ${lit.x},${lit.y} in ${f.season}`;
+    const want = lit ? oracle(map, lit.x, lit.y, lit.id, lit.rot) : [];
+    const now = lit && `${lit.id} at ${lit.x},${lit.y} turned ${lit.rot} in ${f.season}`;
 
     const at = `frame ${i}`;
     expect(h.outline, `${at}: the outline`).toBe(outline);
@@ -510,20 +525,26 @@ describe('the harvest highlight, for any map, tool, selection and pointer', () =
     forAll(
       (rng) => {
         const g = ground(rng, 16);
-        return { ...g, x: rng.int(0, g.w - 1), y: rng.int(0, g.h - 1), id: rng.pick(STATION_IDS) };
+        return {
+          ...g,
+          x: rng.int(0, g.w - 1),
+          y: rng.int(0, g.h - 1),
+          id: rng.pick(STATION_IDS),
+          rot: rng.int(0, 3),
+        };
       },
       (c) => {
         const map = mapOf(c);
         const surface = surfaceOf(c);
         const h = new HarvestHighlight(map, surface);
-        h.follow(null, selecting(c.x, c.y, c.id), 'spring');
-        const want = oracle(map, c.x, c.y, c.id);
+        h.follow(null, selecting(c.x, c.y, c.id, c.rot), 'spring');
+        const want = oracle(map, c.x, c.y, c.id, c.rot);
         expect(h.layer.visible).toBe(want.length > 0);
         expect(h.layer.visible ? drawn(h.layer) : []).toEqual(diamonds(want, surface));
         const lit = new Set(want.map(key));
-        for (let rot = 0; rot < 4; rot++)
-          for (const t of stationFootprint(c.id, c.x, c.y, rot))
-            expect(lit.has(key(t)), `${key(t)} under it, turned ${rot}`).toBe(false);
+        // none of the footprint, turned as the station is, counts as ground round it
+        for (const t of stationFootprint(c.id, c.x, c.y, c.rot))
+          expect(lit.has(key(t)), `${key(t)} under it, turned ${c.rot}`).toBe(false);
       },
       {
         seeds: SEEDS_300,

@@ -399,6 +399,8 @@ describe("the water pump's check, against a plain station's and the ground aroun
     const wide: StationDef = {
       ...stationDef('farm'),
       id: 'test_wide_pump',
+      // the farm halt's own span would be read before `size`
+      span: undefined,
       size: 2,
       standOn: ['grass', 'forest'],
       needsWater: true,

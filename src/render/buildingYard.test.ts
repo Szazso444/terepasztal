@@ -1103,7 +1103,8 @@ describe('a footprint of another shape than the frame records (a two-tile statio
       { x: 10, y: 11 },
     ]);
     expect(footprintTiles(town, 10, 10, { w: 1, h: 1 })).toEqual([{ x: 10, y: 10 }]);
-    expect(footprintTiles(town, 10, 10)).toEqual([{ x: 10, y: 10 }]);
+    // with no span the frame's recorded shape stands: the hall's picture records its two tiles
+    expect(footprintTiles(town, 10.5, 10)).toEqual(footprintTiles(town, 10.5, 10, { w: 2, h: 1 }));
   });
 
   it('leaves a footprint of the recorded shape as the ground data has it', () => {

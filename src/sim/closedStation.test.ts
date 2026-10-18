@@ -176,7 +176,7 @@ interface Call {
  */
 function callAt(c: Call) {
   const w = railway();
-  const farm = station(w, 'farm', 30, ROW - 1);
+  const farm = station(w, 'farm', 30, ROW - 1, 1);
   const store = station(w, 'warehouse', 50, ROW - 1);
   if (c.pile > 0) farm.storage.set('wheat', c.pile);
   if (c.closed) farm.work = startWork(2);
@@ -283,7 +283,8 @@ function dispatchScene(c: Dispatch) {
   const w = railway();
   const placed: { s: Station; p: Producer }[] = [];
   for (const p of c.producers) {
-    const s = new Station(p.kind, p.x, ROW - 1);
+    // the farm halt is two tiles deep: its corner is a row higher, to stand beside the line
+    const s = new Station(p.kind, p.x, p.kind === 'farm' ? ROW - 2 : ROW - 1);
     s.storage.set(s.producedCargo()[0], p.pile);
     w.builder.stations.push(s);
     placed.push({ s, p });

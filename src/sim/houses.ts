@@ -320,9 +320,12 @@ export class HouseRegistry {
     }
     return n - left;
   }
-  /** A producing station or works was built: newcomers for the town it stands in. */
-  industryPlaced(x: number, y: number) {
-    const t = this.towns.townAt(x, y);
+  /**
+   * A producing station or works was built: newcomers for the town it stands in, the town its
+   * footprint is nearest to (`tiles`; the corner (x, y) alone where they are not given).
+   */
+  industryPlaced(x: number, y: number, tiles: readonly { x: number; y: number }[] = [{ x, y }]) {
+    const t = this.towns.townAtTiles(tiles);
     if (!t) return;
     const n = this.welcome(t, this.cfg.bonusIndustry);
     if (n > 0) this.onMessage?.(STR.town.newcomers(t.name, n), 'good');
