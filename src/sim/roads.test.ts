@@ -346,7 +346,7 @@ describe('a road on a bridge platform (#493)', () => {
         { kind: 'track', x: 13, y: 10, item: STRAIGHT, rot: NS },
       ]),
     ).toBe(true);
-    expect(refusal(w, 13, 10)).toBe(STR.build.trackInWay);
+    expect(refusal(w, 13, 10)).toBe(STR.build.bridgeCarriesRail);
     expect(w.builder.placeRoad(13, 10)).toBe(false);
     // a road first: the platform carries the road, and rail is refused there, alone or in a line
     expect(w.builder.placeBuilding(15, 10, 'bridge_stone')).not.toBeNull();
@@ -354,10 +354,10 @@ describe('a road on a bridge platform (#493)', () => {
     const track = trackOf(w.track);
     for (const item of [STRAIGHT, NARROW])
       for (const rot of [NS, EW]) {
-        expect(w.builder.checkTrack(15, 10, item, rot).reason).toBe(STR.build.roadInWay);
+        expect(w.builder.checkTrack(15, 10, item, rot).reason).toBe(STR.build.bridgeCarriesRoad);
         expect(w.builder.placeTrack(15, 10, item, rot)).toBe(false);
         const c = w.builder.checkLine([{ kind: 'track', x: 15, y: 10, item, rot }]);
-        expect(c.reason).toBe(STR.build.roadInWay);
+        expect(c.reason).toBe(STR.build.bridgeCarriesRoad);
       }
     expect(trackOf(w.track)).toBe(track);
     // and a road on land still makes a level crossing with track laid after it
@@ -424,7 +424,7 @@ describe('a road on a bridge platform (#493)', () => {
     for (let x = 12; x <= 16; x++) {
       expect(back.builder.bridgeAt(x, 10), `${x}`).toBeTruthy();
       // the loaded platform keeps the rule: no rail on it, and it stays while its road does
-      expect(back.builder.checkTrack(x, 10, STRAIGHT, EW).reason).toBe(STR.build.roadInWay);
+      expect(back.builder.checkTrack(x, 10, STRAIGHT, EW).reason).toBe(STR.build.bridgeCarriesRoad);
       expect(back.builder.removeBuilding(x, 10)).toBe(false);
     }
   });
@@ -1126,11 +1126,11 @@ describe('roads and bridge platforms, whatever is built in whatever order (#493)
               for (const item of [STRAIGHT, NARROW])
                 for (const rot of [NS, EW])
                   expect(w.builder.checkTrack(x, y, item, rot).reason, at).toBe(
-                    STR.build.roadInWay,
+                    STR.build.bridgeCarriesRoad,
                   );
             } else if (deck && rail) {
               seen.railDecks++;
-              expect(w.builder.checkRoad(x, y).reason, at).toBe(STR.build.trackInWay);
+              expect(w.builder.checkRoad(x, y).reason, at).toBe(STR.build.bridgeCarriesRail);
             }
             if (deck && (rail || road)) {
               const piece = w.track.get(x, y);
@@ -1195,7 +1195,7 @@ describe('roads and bridge platforms, whatever is built in whatever order (#493)
           // the loaded platform keeps the rule: it refuses rail, it stays while its road does,
           // and its span is the span it had
           expect(back.builder.checkTrack(b.x, b.y, STRAIGHT, EW).reason, at).toBe(
-            STR.build.roadInWay,
+            STR.build.bridgeCarriesRoad,
           );
           expect(bridgeSpan(back.builder, back.builder.bridgeAt(b.x, b.y)!), at).toEqual(
             bridgeSpan(w.builder, b),
