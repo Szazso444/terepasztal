@@ -37,7 +37,8 @@ import {
 } from './people';
 import { SAVE_VERSION, migrate, readSaveText, type SaveGame } from './save';
 import { buildingFromJSON, buildingToJSON } from './buildings';
-import { repairBuiltRoads } from '../engine/loadRepair';
+import { repairBuiltRoads, repairBuiltTiles } from '../engine/loadRepair';
+import { bridgeSpan } from './bridges';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, line, station } from '../testing/simWorld';
 
@@ -946,6 +947,266 @@ describe('roads, whatever is built in whatever order', () => {
       { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
     );
   }, 30_000);
+});
+
+// ------------------------------------------------------------------ roads and platforms, any order
+
+/** One thing done on a site with a river, where bridge platforms carry rail or a road (#493). */
+type DeckOp =
+  | { op: 'deck'; x: number; y: number; id: string }
+  | { op: 'road' | 'unroad' | 'untrack' | 'unbuild'; x: number; y: number }
+  | { op: 'track'; x: number; y: number; item: TrackItem; rot: number }
+  // a bridge dragged as a line: a platform under each tile, and on each a straight (`rail`) or,
+  // once the line stands, a road (`road`), or nothing (`bare`)
+  | {
+      op: 'bridge';
+      x: number;
+      y: number;
+      n: number;
+      rot: number;
+      id: string;
+      carries: 'rail' | 'road' | 'bare';
+      cls: TrackItem['cls'];
+    }
+  | { op: 'house' | 'pole' | 'signal'; x: number; y: number };
+interface DeckCase {
+  /** water tiles besides the river, then rock or a mountain by turns */
+  ground: number[];
+  ops: DeckOp[];
+}
+/** The river runs down the map at these columns, water from top to bottom. */
+const RIVER = [5, 6, 7];
+const DECKS = ['bridge_wood', 'bridge_stone'];
+function genDeckOps(rng: Rng): DeckCase {
+  const ground = Array.from({ length: rng.int(0, 8) }, () => rng.int(0, SIDE * SIDE - 1));
+  // most things go where a platform may be: in the river or on its banks
+  const at = () => ({
+    x: rng.chance(0.65) ? rng.int(RIVER[0] - 1, RIVER[RIVER.length - 1] + 1) : rng.int(0, SIDE - 1),
+    y: rng.int(0, SIDE - 1),
+  });
+  const ops = Array.from({ length: rng.int(10, 70) }, (): DeckOp => {
+    const p = at();
+    const r = rng.next();
+    if (r < 0.2) return { op: 'deck', ...p, id: rng.pick(DECKS) };
+    if (r < 0.42) return { op: 'road', ...p };
+    if (r < 0.57) return { op: 'track', ...p, item: rng.pick(ITEMS), rot: rng.int(0, 7) };
+    if (r < 0.7) {
+      const rot = rng.int(0, 1);
+      // across the river (turn 1) from its west bank, or down it (turn 0)
+      const start = rot === EW ? { x: rng.int(2, RIVER[0]), y: p.y } : p;
+      const n = Math.min(rng.int(1, 6), SIDE - (rot === EW ? start.x : start.y));
+      const cls = rng.pick(['regular', 'regular', 'narrow'] as const);
+      const carries = rng.pick(['rail', 'rail', 'road', 'road', 'bare'] as const);
+      return { op: 'bridge', ...start, n, rot, id: rng.pick(DECKS), carries, cls };
+    }
+    if (r < 0.77) return { op: 'unroad', ...p };
+    if (r < 0.84) return { op: 'untrack', ...p };
+    if (r < 0.92) return { op: 'unbuild', ...p };
+    return { op: rng.pick(['house', 'pole', 'signal'] as const), ...p };
+  });
+  return { ground, ops };
+}
+/** A grass site with the river down it and `ground` tiles of other ground, in the editor's way. */
+function deckSite(c: DeckCase) {
+  const map = emptyMap(3, SIDE, SIDE, Terrain.Grass);
+  for (let y = 0; y < SIDE; y++) for (const x of RIVER) map.terrain[y * SIDE + x] = Terrain.Water;
+  c.ground.forEach((i, n) => {
+    map.terrain[i] = [Terrain.Water, Terrain.Rock, Terrain.Mountain][n % 3];
+  });
+  const track = new TrackGraph(SIDE, SIDE);
+  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  builder.free = true;
+  return { map, track, builder, roads: builder.roads };
+}
+type DeckSite = ReturnType<typeof deckSite>;
+/** The track as a save holds it: each piece by its anchor. */
+function anchorsOf(track: TrackGraph): SaveGame['track'] {
+  const out: SaveGame['track'] = [];
+  for (const a of track.anchors())
+    out.push([a.x, a.y, a.piece.kind, a.piece.rot, a.piece.cls, a.piece.cls2]);
+  return out;
+}
+/** Do what `o` asks; '' when it kept to the rule for a platform's removal, else what it broke. */
+function performDeck(w: DeckSite, o: DeckOp): string {
+  const b = w.builder;
+  switch (o.op) {
+    case 'deck':
+      b.placeBuilding(o.x, o.y, o.id);
+      return '';
+    case 'road':
+      b.placeRoad(o.x, o.y);
+      return '';
+    case 'unroad':
+      b.removeRoad(o.x, o.y);
+      return '';
+    case 'track':
+      b.placeTrack(o.x, o.y, o.item, o.rot);
+      return '';
+    case 'untrack':
+      b.removeTrack(o.x, o.y);
+      return '';
+    case 'bridge': {
+      const pieces: LinePiece[] = [];
+      for (let i = 0; i < o.n; i++) {
+        const x = o.rot === EW ? o.x + i : o.x,
+          y = o.rot === EW ? o.y : o.y + i;
+        pieces.push({ kind: 'platform', x, y, defId: o.id });
+        if (o.carries === 'rail')
+          pieces.push({ kind: 'track', x, y, item: { kind: 'straight', cls: o.cls }, rot: o.rot });
+      }
+      if (b.placeLine(pieces) && o.carries === 'road')
+        for (const p of pieces) b.placeRoad(p.x, p.y);
+      return '';
+    }
+    case 'unbuild': {
+      // a platform with rail or a road on it stays, and what is on it stays with it
+      const deck = b.bridgeAt(o.x, o.y);
+      const loaded = w.track.has(o.x, o.y) || w.roads.has(o.x, o.y);
+      const done = b.removeBuilding(o.x, o.y);
+      if (deck && loaded && (done || b.bridgeAt(o.x, o.y) !== deck))
+        return `the platform at ${o.x},${o.y} came up with something on it`;
+      return '';
+    }
+    case 'house':
+      b.placeDecor(o.x, o.y, 'townhouse', 0);
+      return '';
+    case 'pole':
+      b.placeDecor(o.x, o.y, 'power_line', 0);
+      return '';
+    case 'signal':
+      b.placeDecor(o.x, o.y, 'signal', 0);
+      return '';
+  }
+}
+/** The ground no road stands on unless a platform carries it, kept apart from `unbuildable`. */
+const NO_ROAD_GROUND: readonly number[] = [Terrain.Water, Terrain.Rock, Terrain.Mountain];
+/** What every platform and road keeps to, whatever was built in whatever order; '' when they do. */
+function deckBroken(w: DeckSite): string {
+  const { map, track, builder, roads } = w;
+  for (let y = 0; y < SIDE; y++)
+    for (let x = 0; x < SIDE; x++) {
+      const at = `${x},${y}`;
+      const deck = builder.bridgeAt(x, y);
+      const rail = !!track.get(x, y);
+      const road = roads.has(x, y);
+      const ground = map.terrain[y * SIDE + x];
+      if (deck && rail && road) return `a platform at ${at} carries rail and a road`;
+      if (road && NO_ROAD_GROUND.includes(ground) && !(deck && !rail))
+        return `a road at ${at} on ${TERRAIN_NAMES[ground]} with no bare platform under it`;
+      if (road && builder.buildingAt(x, y) && !deck) return `a road at ${at} on a works`;
+    }
+  return '';
+}
+
+describe('roads and bridge platforms, whatever is built in whatever order (#493)', () => {
+  // slow: seeded sites of builder steps, every tile judged after each step, 0.3 s alone; the limit
+  // is room for a busy machine
+  it('never put rail and a road on one platform, nor a road on water off a bare platform', () => {
+    const seen = { roadDecks: 0, railDecks: 0, bareDecks: 0 };
+    forAll(
+      genDeckOps,
+      (c) => {
+        const w = deckSite(c);
+        c.ops.forEach((o, i) => {
+          const at = `after op ${i} ${JSON.stringify(o)}`;
+          expect(performDeck(w, o), at).toBe('');
+          expect(deckBroken(w), at).toBe('');
+        });
+        // and every platform answers both tools by what it carries: a road refuses rail and rail
+        // a road, and a bare platform takes a road; water with no platform takes none. A platform
+        // with either on it does not come up, and what is on it stays
+        for (let y = 0; y < SIDE; y++)
+          for (let x = 0; x < SIDE; x++) {
+            const at = `${x},${y}`;
+            const deck = w.builder.bridgeAt(x, y);
+            const rail = !!w.track.get(x, y);
+            const road = w.roads.has(x, y);
+            if (deck && road) {
+              seen.roadDecks++;
+              for (const item of [STRAIGHT, NARROW])
+                for (const rot of [NS, EW])
+                  expect(w.builder.checkTrack(x, y, item, rot).reason, at).toBe(
+                    STR.build.roadInWay,
+                  );
+            } else if (deck && rail) {
+              seen.railDecks++;
+              expect(w.builder.checkRoad(x, y).reason, at).toBe(STR.build.trackInWay);
+            }
+            if (deck && (rail || road)) {
+              const piece = w.track.get(x, y);
+              expect(w.builder.removeBuilding(x, y), at).toBe(false);
+              expect(w.builder.bridgeAt(x, y), at).toBe(deck);
+              expect(w.track.get(x, y), at).toBe(piece);
+              expect(w.roads.has(x, y), at).toBe(road);
+            } else if (deck) {
+              const dec = w.builder.decorAt(x, y);
+              if (!dec || decorDef(dec.id).onTrack) {
+                expect(w.builder.checkRoad(x, y).reason, at).toBeUndefined();
+                seen.bareDecks++;
+              }
+            } else if (w.map.terrain[y * SIDE + x] === Terrain.Water)
+              expect(w.builder.checkRoad(x, y).reason, at).toBe(STR.build.nothingOn.water);
+          }
+      },
+      { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
+    );
+    // the seeds reach platforms with a road, platforms with rail, and bare ones open to a road
+    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(200);
+  }, 10_000);
+
+  it('come back through a save and a load as they were, and the load repair takes nothing off', () => {
+    let kept = 0;
+    forAll(
+      genDeckOps,
+      (c) => {
+        const w = deckSite(c);
+        for (const o of c.ops) performDeck(w, o);
+        const track = anchorsOf(w.track);
+        const read = readSaveText(
+          JSON.stringify({
+            ...oldSave(SAVE_VERSION),
+            track,
+            buildings: [...w.builder.buildings.values()].map(buildingToJSON),
+            roads: w.roads.toJSON(),
+          }),
+        );
+        if (!('save' in read)) throw new Error(read.error);
+        const save = read.save;
+        // what the builder let stand, the repair leaves: no ground bent, no road taken off
+        expect(repairBuiltTiles(w.map, save)).toEqual([]);
+        expect(repairBuiltRoads(w.map, save)).toEqual([]);
+        // loaded into a fresh site, the platforms, rail and roads stand where they stood
+        const back = deckSite(c);
+        for (const [x, y, kind, rot, cls, cls2] of save.track)
+          back.track.place(x, y, kind, rot, cls, cls2);
+        for (const j of save.buildings ?? []) {
+          const b = buildingFromJSON(j);
+          back.builder.buildings.set(back.track.key(b.x, b.y), b);
+        }
+        back.roads.load(save.roads);
+        expect(back.roads.toJSON()).toEqual(w.roads.toJSON());
+        expect(anchorsOf(back.track)).toEqual(track);
+        expect(deckBroken(back)).toBe('');
+        for (const b of w.builder.buildings.values()) {
+          const at = `${b.x},${b.y}`;
+          expect(back.builder.bridgeAt(b.x, b.y)?.id, at).toBe(w.builder.bridgeAt(b.x, b.y)?.id);
+          if (!w.builder.bridgeAt(b.x, b.y) || !w.roads.has(b.x, b.y)) continue;
+          kept++;
+          // the loaded platform keeps the rule: it refuses rail, it stays while its road does,
+          // and its span is the span it had
+          expect(back.builder.checkTrack(b.x, b.y, STRAIGHT, EW).reason, at).toBe(
+            STR.build.roadInWay,
+          );
+          expect(bridgeSpan(back.builder, back.builder.bridgeAt(b.x, b.y)!), at).toEqual(
+            bridgeSpan(w.builder, b),
+          );
+          expect(back.builder.removeBuilding(b.x, b.y), at).toBe(false);
+        }
+      },
+      { shrink: (c) => [...shrinkArray(c.ops)].map((ops) => ({ ...c, ops })) },
+    );
+    expect(kept, 'roads on platforms saved').toBeGreaterThan(200);
+  });
 });
 
 // ------------------------------------------------------------------ the save
