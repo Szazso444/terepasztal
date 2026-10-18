@@ -1,0 +1,746 @@
+<title>Codex art prompts</title>
+<style>
+  /* Layout: a reading column of prompt cards, a jump list on top. Game panel palette. */
+  :root {
+    --bg: #f3efe4; --card: #fbf8f0; --ink: #23302a; --dim: #66705f; --line: #d5cdb8; --accent: #8a5a2f; --code: #efe9da;
+    --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    --font-body: Verdana, Tahoma, 'DejaVu Sans', sans-serif;
+    --font-mono: 'Lucida Console', Monaco, 'DejaVu Sans Mono', monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141c17; --card: #1d2820; --ink: #e4d5b5; --dim: #a49b80; --line: #33463a; --accent: #e8aa48; --code: #17211b; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #141c17; --card: #1d2820; --ink: #e4d5b5; --dim: #a49b80; --line: #33463a; --accent: #e8aa48; --code: #17211b; color-scheme: dark; }
+  body { background: var(--bg); color: var(--ink); font: 13px/1.55 var(--font-body); padding-inline: 16px; padding-block: 20px; }
+  .wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 14px; }
+  h1 { font-family: var(--font-title); font-weight: normal; font-size: 24px; margin: 0; color: var(--accent); text-wrap: balance; }
+  .lead { margin: 0; color: var(--dim); max-width: 70ch; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  nav a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+  .card header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+  .cid { font-family: var(--font-mono); color: var(--accent); }
+  h2 { font-family: var(--font-title); font-weight: normal; font-size: 17px; margin: 0; flex: 1 1 auto; }
+  .note { margin: 0; color: var(--dim); }
+  pre { margin: 0; background: var(--code); border: 1px solid var(--line); padding: 10px 12px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; }
+  .copy { font: inherit; cursor: pointer; background: var(--accent); color: var(--card); border: 0; padding: 5px 12px; }
+  .copy:focus-visible, pre:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card ol, .card ul { margin: 0; padding-left: 22px; }
+  .card li + li { margin-top: 4px; }
+</style>
+<div class="wrap">
+  <h1>Codex art prompts</h1>
+  <p class="lead">Updated 2026-10-16 (v7). Only the prompts still to paste are here, in the order to paste them. Lanes run in parallel; inside a lane paste one at a time, each after the previous one is pushed.</p>
+  <nav><a href="#next">Paste next</a><a href="#r8b">R8b &middot; Fuel Pump r1, r3 and r2 on r0&#x27;s plan (3 pictures)</a><a href="#c16">C16 &middot; Waterside trees: three mangroves and three weeping willows (6 pictures)</a><a href="#c17">C17 &middot; Windmill without its sails, and the sail cross on its own (2 pictures)</a><a href="#delivered">Delivered, waiting for Core&#x27;s review</a><a href="#done">Done or no longer needed</a></nav>
+<section class="card" id="next">
+  <header><h2>Paste next</h2></header>
+  <ol>
+    <li><b>Buildings lane</b>, one at a time:
+      <ol>
+        <li><b>R8b</b> first: branch <span class="cid">art/325-fuel-pump</span>, issue #325. It is short, at most nine calls, and C17 waits for it.</li>
+        <li><b>C17</b> only after R8b is pushed: new branch <span class="cid">art/461-windmill-sails</span>, issue #461.</li>
+      </ol>
+    </li>
+    <li><b>Trees lane</b>: <b>C16</b>, new branch <span class="cid">art/460-waterside-trees</span>, issue #460. It can run in a separate Codex window beside R8b. If the usage quota is short, R8b goes first: three calls in an earlier round ended in HTTP 429, the usage limit.</li>
+  </ol>
+  <p class="note">R7 (people) and C4b (water tower and coaling stage) are delivered and wait for Core&#x27;s review, below; nothing to paste for them. The water, mountain, loading and bridges lanes need nothing more from Codex.</p>
+</section>
+<section class="card" id="r8b">
+  <header><span class="cid">R8b</span><h2>Fuel Pump r1, r3 and r2 on r0&#x27;s plan (3 pictures)</h2><button class="copy" type="button" data-for="p-r8b">Copy prompt</button></header>
+  <p class="note"><b>Buildings lane, 1st. Branch art/325-fuel-pump.</b> Issue #325. Replaces R8: R8 described the kept r0 as a square pump house, but r0&#x27;s house is long and narrow (about 2.4:1). R8&#x27;s attempts therefore came back near 1:1.4 and show a different building. R8b keeps the delivered r0 (C3 option a, Core decision 2026-10-11).</p>
+  <p class="note"><b>Before pasting: the camera step.</b> Step 2 of MEASURE BEFORE COMMITTING, node tools/building-check.mjs &lt;file&gt;, cannot measure a fuel pump picture: fuel_pump is not a family in src/data, on develop or on art/325-fuel-pump, so the tool prints &quot;not a building picture&#x27;s name&quot;, exits 1 and writes nothing to report.json. The prompt stays word for word. If Codex stops or asks there, answer: record the refusal as the camera in measured, do not retry for it, and let the plan test and the look decide, for r2&#x27;s fallback too.</p>
+  <pre id="p-r8b" tabindex="0">Repaint three views of the Fuel Pump (fuel_pump, Diesel age a1) for the isometric railway game in
+this repository, for issue #325. Paint r1, then r3, then r2, each from the r0 view that is already
+committed. Work on branch art/325-fuel-pump, which exists: git fetch origin, git switch
+art/325-fuel-pump, git pull --ff-only (head 4495697f or later). Touch nothing outside
+assets/source/fuel-2026-10-11/. Commit there and push the branch. Never push to main or develop.
+Commit subjects read &quot;Art: &lt;outcome&gt;&quot;.
+
+WHY AGAIN. The last prompt was wrong about r0: it called the pump house square. It is not. On
+fuel_pump-a1-r0.png the front (the lower-left wall, with the door and the porch) spans x 360 to 915
+and the side (the lower-right wall) x 915 to 1135; the steel frame on top spans x 450 to 910 along
+the front and 910 to 1110 along the side. The wall feet slope 0.5 and -0.5, so those spans are the
+plan: the front is about 2.4 times as long as the side. Your six attempts on the square block-out
+came back between 1:1.2 and 1:1.5, between the square you were told to paint and r0&#x27;s 2.4:1. r1
+attempt 5 has a house about 1.7 times as deep as r0&#x27;s. r3 attempt 5 is nearly a cube, with one bay
+on its front where r0 has two. Both are good paintings of the wrong building. This time the plan
+is r0&#x27;s, and the block-out you edit has that plan.
+
+READ FIRST, on this branch: docs/art-direction/README.md (sections 1, 4 and 6),
+docs/art-direction/building-production.md, and assets/source/buildings-v2/GUIDE.md sections 2, 5,
+6 and 7. The rules there apply to this picture as to every building. In this folder: prompts.json
+(its &quot;verbatim&quot; texts and &quot;attempts&quot;).
+
+THE MASTER. fuel_pump-a1-r0.png, 1254x1254, sha256
+c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0. Check the hash first; if it
+differs, stop and say so. Its fitted copy refs/fuel_pump-a1-r0-fitted.png stays the reference.
+What r0 shows; carry it round the building:
+- a LONG, NARROW red-brick pump house on cream limestone quoins and base. Its front is about 2.4
+  times as long as its sides. Its walls are tall, about half the building&#x27;s height under the tank;
+- the front in two bays, from its left end: the door bay, with forest-green plank door, a lamp over
+  it and a small slate-roofed porch gable standing a little forward of the wall; a downpipe; a
+  plain brick bay; a big quoined pier at the front&#x27;s right end;
+- the sides and the back: plain brick between quoins, no door. A side is one bay wide;
+- on the house, a dark steel frame with X bracing, and on it a riveted forest-green steel tank with
+  two oat-cream bands, a railing, a manhole and a vent. The tank lies along the front, as long as
+  the front and as wide as the house is deep, so it covers the whole roof;
+- a tall forest-green hose crane at the front&#x27;s left end. Its jib stands high above train height,
+  with the hose hanging from its end. The crane slews: on r0 it is swung out past the front&#x27;s left
+  end. In the views below, paint it square to the front, so the hose hangs over the track side;
+- pipes from the tank to the crane, with copper bands.
+
+THE VIEWS (GUIDE.md section 2: the camera never moves; turning the building changes which walls
+it sees).
+r1: the front faces the upper left, out of sight. The lower-left wall is the right-hand side:
+  SHORT, one plain bay, as r0&#x27;s lower-right wall. The lower-right wall is the BACK: LONG, plain
+  brick and quoins, no door, no porch. The tank lies along the lower-right wall and is as long as
+  it. The crane&#x27;s post stands at the far (top) corner. Its jib reaches away, high up, square to the
+  hidden front: in the picture it runs parallel to the lower-left wall&#x27;s foot, rising to the upper
+  left. Not level to the left.
+r3: the front faces the lower right. The lower-right wall is the FRONT: LONG, in r0&#x27;s two bays.
+  From the near (bottom) corner: the crane&#x27;s post, the door bay with its porch gable and lamp, the
+  downpipe, the plain bay, and the big quoined pier at the right corner. The lower-left wall is the
+  left-hand side: SHORT, one plain bay. The tank lies along the lower-right wall. The jib reaches
+  out from the post, high up, square to the front: in the picture it runs parallel to the
+  lower-left wall&#x27;s foot, falling to the lower right. The hose hangs from its end in front of the
+  door bay, its end at about door-top height, clear of the wall&#x27;s foot. Never along the front
+  toward the right corner. It is r0 turned, not r0 mirrored.
+r2: the front faces the upper right, out of sight. The lower-left wall is the BACK: LONG, plain,
+  as on r1&#x27;s lower-right wall. The lower-right wall is the left-hand side: SHORT, one plain bay, as
+  on r3&#x27;s lower-left wall. The tank lies along the lower-left wall. The crane&#x27;s post stands at the
+  right corner. Its jib reaches away, high up, square to the hidden front: in the picture it runs
+  parallel to the lower-right wall&#x27;s foot, rising to the upper right.
+In every view the house is r0&#x27;s: the long wall about 2.4 times the short one, its walls as tall,
+the tank as long and as fat.
+
+GEOMETRY. Footprint t1 (tools/building-kit.mjs): canvas 1024x1024, scale 8 canvas px per game px,
+footprint centre on the ground at canvas (512,832), which is the anchor. Orthographic 2:1
+isometric, 30 degrees down, building turned 45 degrees, no perspective.
+
+THE GUIDES. The repository&#x27;s square block-outs (assets/source/buildings-v2/guides/t1-r*.png) pull
+the plan toward square, so for this building only you draw block-outs with r0&#x27;s plan, in this
+folder. Do not change the repository&#x27;s block-outs. Write make-guides.mjs here (Node, pngjs only).
+Import FOOTPRINTS and project from ../../../tools/building-kit.mjs, and GREY, boxFaces, fillPoly
+and strokePoly from ../../../tools/building-guides.mjs. Draw on a transparent 1024x1024 canvas
+with fp = FOOTPRINTS.t1. Draw each box as the guides do: fill its top, left and right faces from
+boxFaces(fp, box), then stroke each face with GREY.line. Boxes are { x0, x1, y0, y1 } in tiles
+from the footprint centre (x along the lower-left wall, y along the lower-right wall) and
+{ z0, z1 } in game px:
+1. the plinth: x and y -0.5 to 0.5, z 0 to 4, colours GREY.plinthTop, plinthLeft, plinthRight;
+2. the house: for r1 and r3, x -0.18 to 0.18 and y -0.44 to 0.44; for r2, x -0.44 to 0.44 and
+   y -0.18 to 0.18; z 4 to 21; colours GREY.top, left, right;
+3. the frame and tank: the house&#x27;s plan set in by 0.02 on every side, z 21 to 44;
+4. the crane post: 0.06 x 0.06 tiles, z 4 to 50, centred at (-0.18, -0.47) for r1, (0.18, 0.47)
+   for r3 and (0.47, -0.18) for r2. Draw r1&#x27;s post before the house, because it stands behind.
+   Draw r3&#x27;s and r2&#x27;s after;
+5. r3 only: the door on the lower-right wall at x = 0.18, from y 0.06 to 0.22, z 4 to 18, filled
+   with GREY.opening and stroked.
+Save guides/fuel_pump-r1.png, guides/fuel_pump-r3.png and guides/fuel_pump-r2.png. The plinth
+spans canvas x 254 to 769 as on t1. Look at them before you use them: each is a narrow tall block
+on the tile, its long side on the wall named under THE VIEWS.
+Size and place: GUIDE.md says the tools measure where a building stands and how large it is. A
+picture&#x27;s place and size are therefore no reason to paint it again. r0 came back 1254x1254 with
+its building 82% of the width, centred. The plan test below takes the place of the 5% box test.
+
+REFERENCES. At most five images per call, the guide included. Start an image edit, not a new
+image.
+- r1: guides/fuel_pump-r1.png (the image to edit), docs/art-direction/images/03-theme-town-growth.png
+  (the style board), refs/fuel_pump-a1-r0-fitted.png.
+- r3: guides/fuel_pump-r3.png, the style board, refs/fuel_pump-a1-r0-fitted.png.
+- r2: guides/fuel_pump-r2.png, the style board, refs/fuel_pump-a1-r0-fitted.png,
+  refs/fuel_pump-a1-r1-fitted.png, refs/fuel_pump-a1-r3-fitted.png.
+After you accept r1 and r3, make refs/fuel_pump-a1-r1-fitted.png and refs/fuel_pump-a1-r3-fitted.png
+with fit-refs.mjs (rotations 1 and 3).
+
+THE PROMPT. Use the &quot;shared&quot; text, the view&#x27;s line from &quot;views&quot; and &quot;ages.a1&quot; of
+assets/source/buildings-v2/families.json word for word (they are in this folder&#x27;s prompts.json
+under &quot;verbatim&quot;). Then write the building: &quot;Fuel Pump. A railway refuelling point for diesel
+engines&quot;, followed by what r0 shows, above. Then add the view&#x27;s paragraph above and the GUIDE&#x27;s
+reference paragraphs:
+- r1, r3 and r2: &quot;References: the first is the style board. The second is this same building in
+  view r0, seen from the front, laid onto its footprint at exactly the block-out&#x27;s camera and
+  scale. Paint the SAME building at the same size, turned on a turntable while the camera stays
+  where it is. It is not a mirror image: show the walls named under View, and carry the same
+  materials, roof, colours and details round the building.&quot;
+- r1 and r2: &quot;It is exactly as large as in the references: no taller, and with no storey more.&quot;
+- r1 and r2 end with: &quot;Do not paint the reference again. There, in view r0, the lower-left wall
+  is the front: the side with the door and the hose crane. In this picture the front faces away,
+  hidden behind the building: neither visible wall is the front, and what the front has does not
+  show on them.&quot;
+- r2: &quot;The third reference is this building in view r1: its lower-right wall is the BACK, and
+  that wall is the lower-left wall of this picture. The fourth is view r3: its lower-left wall is
+  the left-hand side, and that wall is the lower-right wall of this picture.&quot;
+- every first call of this round: &quot;Correction: the pump house is long and narrow, not square. Its
+  front, and its back, are about 2.4 times as long as its sides, and it is only as deep as the
+  tank is wide. The grey block-out has exactly that plan: paint the building on it, its walls on
+  the block&#x27;s walls.&quot;
+
+KEEP EVERY EARLIER PICTURE. The committed fuel_pump-a1-r1.png and fuel_pump-a1-r3.png are already
+raw/fuel_pump-a1-r1-attempt-5.png and raw/fuel_pump-a1-r3-attempt-5.png byte for byte, and
+fuel_pump-a1-r2.png is raw/fuel_pump-a1-r2-attempt-2.png. Do not copy them again. Number new
+attempts on from the records: r1 from 7, r3 from 6, r2 from 4. Save every attempt as
+raw/fuel_pump-a1-r&lt;v&gt;-attempt-&lt;k&gt;.png, and copy the accepted one to fuel_pump-a1-r&lt;v&gt;.png. Never
+delete a painting. Do not touch fuel_pump-a1-r0.png.
+
+CANVAS SIZE. Ask for 1024x1024 px. Keep the picture exactly as returned and record &quot;returned&quot;:
+[w, h] for every attempt.
+
+MEASURE BEFORE COMMITTING, for every attempt:
+1. Plan: run measure-plan.mjs on the picture. It prints measureBase&#x27;s w, s and e. Look at where
+   those three points sit on the picture. Where one falls on the hose, the crane post, the downpipe
+   or the porch instead of the house&#x27;s quoin corner, read that corner off the picture by eye, and
+   record both values and which one you used. On r3 attempt 5, e at x 1092 was the end of the hose;
+   the house&#x27;s right corner is near x 965. With the corners, the lower-left foot spans s.x - w.x
+   and the lower-right foot e.x - s.x. Pass: for r1 and r3 the lower-right foot is 2.0 to 2.8 times
+   the lower-left foot; for r2 the lower-left foot is 2.0 to 2.8 times the lower-right foot.
+2. Camera: run node tools/building-check.mjs &lt;file&gt;. Retry when the camera is more than 2 degrees
+   off.
+3. Look: run node tools/building-sheets.mjs --picture &lt;file&gt;. Check that the front, door, porch,
+   crane and jib are where THE VIEWS says, that nothing touches the picture&#x27;s edge, and that set
+   beside r0 it is r0&#x27;s building: the same narrow tall house, the same tank.
+Make at most three new attempts per view. After an attempt that failed for what it shows, add a
+paragraph that begins &quot;Correction:&quot; and says what was wrong (GUIDE.md section 7). If none passes,
+keep the closest and say which test failed. Paint r2 once r1 and r3 are accepted. If they are not,
+paint it anyway when their closest attempts pass the plan test and are within 3 degrees of camera,
+and use those as its references.
+
+STYLE AND OUTPUT RULES. Smooth painted contours, broad readable masses, three or four shades per
+material. Light from the upper left: tops lightest, lower-left walls mid, lower-right walls
+darkest. Palette: forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal
+#477B82, copper #A36B42.
+Highlight cap: nothing at or above the game&#x27;s cursor white #ECE4D0, and no yellow or orange as
+strong as its selection amber #E8AA48.
+Transparent background (alpha 0), opaque surfaces, a short side of at least 768 px. Never: ground,
+plinth, grass, shadows outside the base, rails, trains, people, vehicles, smoke, lettering, signs
+with text, borders, glow, loose objects.
+
+Record every attempt in this folder&#x27;s prompts.json &quot;attempts&quot; list as {view, attempt, selected,
+file, prompt, references, returned, measured}. In measured, record the plan with the corners you
+used and whether any was read by eye, plus the camera and what you saw. Commit make-guides.mjs and
+the three guides with the pictures. Update &quot;selection&quot; and &quot;qa&quot;. Then commit (&quot;Art: Fuel Pump r1,
+r3 and r2 repainted on r0&#x27;s plan&quot;) and push.</pre>
+</section>
+<section class="card" id="c16">
+  <header><span class="cid">C16</span><h2>Waterside trees: three mangroves and three weeping willows (6 pictures)</h2><button class="copy" type="button" data-for="p-c16">Copy prompt</button></header>
+  <p class="note"><b>Trees lane, 1st, its own lane: paste it beside R8b. Branch art/460-waterside-trees (new).</b> Issue #460. Six pictures in the family of the game&#x27;s painted trees, for the props atlas: three mangroves of growing size that stand at the waterline on arched prop roots, and three weeping willows for a bank. No water is painted: the game&#x27;s trees, and even its reeds, are painted with nothing at their foot, and the game draws its own water. Codex writes one check, tests it on two of the game&#x27;s pictures against the values given, and runs it on every attempt; it records each tree&#x27;s foot and anchor in trees.json.</p>
+  <pre id="p-c16" tabindex="0">Paint six waterside trees for the isometric railway game in this repository, for issue #460: three
+mangroves that stand at the waterline on arched prop roots, and three weeping willows that stand
+on a bank beside water. Work on branch art/460-waterside-trees. It does not exist yet: git fetch
+origin, then git switch -c art/460-waterside-trees origin/develop. If origin already has it, git
+switch art/460-waterside-trees and git pull --ff-only. Touch nothing outside
+assets/source/waterside-trees-2026-10-16/. Commit there and push the branch. Never push to main
+or develop. Commit subjects read &quot;Art: &lt;outcome&gt;&quot;.
+
+WHY. The author wants waterside forests. In the demo the forest biome meets the sea; some of that
+forest can become a mangrove or swamp forest, with these trees directly on the waterfront, where
+map generation puts them. The game&#x27;s trees today (round, oak, birch, pine, spruce, palm, dead)
+all stand on dry ground. Placing and drawing the new trees are later tasks; this round is the
+pictures.
+
+READ FIRST, on this branch: docs/art-direction/README.md (section 1, section 3 &quot;Trees, plants and
+natural objects&quot;, and &quot;Style consistency: both smooth&quot;), docs/art-direction/cozy-v3.md
+(&quot;Generated variants&quot; and &quot;Scale contract&quot;), assets/source/cozy-v3/README.md and prompts.json
+(how the game&#x27;s newest trees were made), and in tools/illustrated-sprites.mjs the functions
+trimSource and resample and the part of build() that scales, widens and rounds props. The Scale
+contract counts a person as 11 px: that is the person the buildings were sized against. The
+walker the game draws is smaller, PERSON_PX 9 in src/render/assetScale.ts, and that 9 px person
+is the one the look below stands beside the tree.
+
+HOW THE GAME&#x27;S TREES ARE MADE. Match this family:
+- Each tree is one picture from the image tool: one whole tree, centred, on a transparent
+  background, with no ground, grass, shadow or water under it (assets/source/base-v1/tree-*.png,
+  assets/source/cozy-v3/tree-*-v2.png). The reeds, which grow in water, are painted the same way:
+  assets/source/base-v1/props-reeds.png stands on nothing.
+- tools/illustrated-sprites.mjs trims each picture (alpha 64 and below becomes 0), scales it into
+  the props atlas (public/assets/props.png, 4 texels per world px), widens it by 1.2 (every frame
+  but the icons: wider = round(width * 1.2), the anchor&#x27;s x moving with it, the height kept) and
+  rounds its edges with tools/pixel-art.mjs (radius 2). The game draws every tree 1.5 times
+  larger (TREE_SCALE in src/render/assetScale.ts). So every width in this prompt is widened, as
+  the game draws it, and the check widens the same way. A kind of tree has three variants, keys
+  props/&lt;kind&gt;_0 to _2 (the palm and the dead tree have two).
+- The game&#x27;s tree pictures are pixel art: blocky clusters with stair-stepped edges. The packer
+  rounds those steps (smoothPng), and README &quot;Style consistency: both smooth&quot; asks for new nature
+  art to be painted smooth. So the new trees are painted smooth, and the references are taken for
+  their clusters, masses, camera, light and colour, not for their stepped edges. The image prompt
+  below tells the image tool so.
+- At zoom 1 a tile is 64x32 px and a person is 9 px tall (PERSON_PX). The trees there, as drawn,
+  from the anchor to the top of the crown: round tree 32 to 42 px, oak 39 to 60, birch 48 to 67,
+  pine 40 to 50, spruce 35 to 41. Across, widened: round tree 43 to 54 px, oak 61 to 68.
+- A tree stands on its anchor, the trunk foot, which the game sets on the point where the tree
+  stands: in the middle of the trunk, 4 world px (6 drawn px) above the trunk&#x27;s lowest row for the
+  round tree and the oak, 3 (4.5 drawn px) for the birch, pine and spruce (in
+  public/assets/props.json, h - ay is 16 or 12 texels). So the trunk&#x27;s lowest pixels show a little
+  below that point.
+- One light from the upper left. The family&#x27;s greens, measured on tree-oak-v2.png and
+  tree-round-v2.png: deep shade #22332E, mid #3E4630 and #565D31, light #7B7D34 and #7F913B, lit
+  #ADA841, and the brightest tips, about 5% of the leaves, #C6B74E on the oak and #E4DD52 on the
+  round tree; bark #413026. The new trees keep to the oak&#x27;s: no lit tip brighter than #C6B74E.
+
+NO WATER IN THE PICTURE. The mangrove&#x27;s water is not painted. The game draws the water of the
+tile and the shore itself, animated and tinted by the season. Water painted into a picture would
+stand still on top of it, and would lie on the wrong side wherever a shore runs another way. The
+roots end where the water&#x27;s surface is; the game&#x27;s water does the rest.
+
+THE PICTURES (6), in this order, in assets/source/waterside-trees-2026-10-16/. &quot;Height&quot; is the
+drawn height at zoom 1 from the anchor to the top of the crown: the size the game will give the
+tree. The picture&#x27;s own size does not matter; its proportions do. &quot;Width&quot; and &quot;root spread&quot; are
+drawn px at that height, widened as the game draws them.
+1. tree-mangrove-1.png: a young mangrove. Height 30; width 38 to 48; root spread 19 to 29.
+2. tree-mangrove-2.png: a grown mangrove. Height 38; width 48 to 60; root spread 24 to 36.
+3. tree-mangrove-3.png: an old mangrove. Height 46; width 60 to 74; root spread 31 to 46.
+4. tree-willow-1.png: a young weeping willow. Height 40; width 48 to 62.
+5. tree-willow-2.png: a grown weeping willow. Height 48; width 60 to 74.
+6. tree-willow-3.png: an old weeping willow. Height 54; width 70 to 82.
+So an old willow stands nearly as tall as the game&#x27;s large oak, six people high, and a young
+mangrove about three people high, its roots taller than a person. The widths are the crowns each
+picture&#x27;s line below asks for, widened.
+
+THE ANCHOR, which the check reads:
+- Willow: as on the game&#x27;s round trees and oaks, in the middle of the trunk, 6 drawn px above the
+  trunk&#x27;s lowest row. The middle of that lowest row is the foot. The hanging branches stop above
+  the ground, so the trunk&#x27;s foot is the lowest thing in the picture, or nearly.
+- Mangrove: the point on the waterline straight under the trunk, the centre of the flat ellipse
+  the root tips stand on. The front root tips lie below it in the picture and the back ones above
+  it. The root spread is that ellipse&#x27;s width.
+
+THE CHECK. Write check-tree.mjs in the folder (Node, pngjs only, no new dependency). It imports
+trimSource and resample from ../../../tools/illustrated-sprites.mjs and smoothPng from
+../../../tools/pixel-art.mjs, finds the folder&#x27;s files and the props atlas by its own location,
+and reads the picture you name from where you run it, the repository root:
+node assets/source/waterside-trees-2026-10-16/check-tree.mjs &lt;file&gt; --kind mangrove|willow
+  --height &lt;px&gt; [--foot x,y] [--record]
+1. Read the picture. Print &quot;returned&quot;: [w, h]; &quot;edgePixels&quot;, the pixels with alpha above 64 within
+   8 px of any edge; and &quot;partialAlphaPct&quot;, the share of pixels with alpha 1 to 250.
+2. The box: the extent of the pixels with alpha above 64 (left, top, right, bottom), as
+   trimSource cuts it.
+3. The foot, unless --foot is given. Willow: go up from the box&#x27;s bottom to the first row that
+   has a pixel with alpha above 128; the foot is the middle of the longest run of such pixels in
+   that row. Mangrove: in the lowest 25% of the box (the side tips of the root ellipse stand a
+   quarter of its width above the bottom), take the leftmost x0 and the rightmost x1 of the
+   pixels with alpha above 128; the foot is ((x0 + x1) / 2, bottom - (x1 - x0) / 4). Print the
+   estimate as &quot;footAuto&quot; and the foot used as &quot;foot&quot;.
+4. Scale and anchor. Willow: k = (height + 6) / (foot.y - top), drawn px per picture px, and the
+   anchor is (foot.x, foot.y - 6 / k), 6 drawn px above the foot. Mangrove: k = height /
+   (foot.y - top), and the anchor is the foot. Print &quot;anchor&quot;, and &quot;drawn&quot;: width
+   (right - left + 1) * k * 1.2; footFromCentre (anchor.x - (left + right) / 2) * k * 1.2;
+   belowFoot (bottom - foot.y) * k; for a mangrove rootSpread (x1 - x0) * k * 1.2. The 1.2 is
+   the packer&#x27;s widening.
+5. Colours, over the pixels with alpha above 128. &quot;overCursorWhite&quot;: those with R &gt;= 236,
+   G &gt;= 228 and B &gt;= 208 (the cursor white #ECE4D0). &quot;amberStrength&quot;: those with a hue of 25 to
+   50 degrees, saturation at least 0.62 and value at least 0.85 (as strong as the selection amber
+   #E8AA48). &quot;cyanWaterPct&quot;: the percentage with a hue of 165 to 215 degrees, saturation at
+   least 0.25 and value at least 0.35 (painted water, or the valid-placement cyan #66CCD6).
+   &quot;lumP99&quot;: the 99th percentile of 0.2126 R + 0.7152 G + 0.0722 B. Saturation is
+   (max - min) / max, value is max / 255.
+6. The look, checks/&lt;name&gt;-look.png. Trim the picture with trimSource; resample it to the atlas,
+   width round(trimmedWidth * k * 4 / 1.5 * 1.2) and height round(trimmedHeight * k * 4 / 1.5);
+   and round it with smoothPng(png, 2), as the packer does. Draw a scene 220 x 120 px on grass
+   (124, 143, 60) with 64x32 tile diamonds. For a mangrove: a water tile (71, 123, 130) centred
+   on (90, 90), a bank tile (98, 116, 48) up and to the left of it, and another water tile down
+   and to the right. For a willow: a bank tile at (90, 90), a water tile down and to the right
+   and a bank tile down and to the left. Stand the tree on (90, 90) by its anchor (its x widened
+   with the picture), resampled by 1.5 / 4, so it is at its drawn size. Beside it stand a person,
+   a 3 x 9 px slate block (98, 107, 108) with its foot at (30, 90), and the game&#x27;s large oak,
+   props/oak_2 cut from public/assets/props.png by its frame in public/assets/props.json, on its
+   anchor at (170, 90), resampled by 1.5 / 4. Write that scene magnified 4 times (nearest
+   neighbour), and beside it the same scene built at twice the size (zoom 2) magnified 2 times.
+7. With --record, write the result into trees.json in the folder, under the file&#x27;s name. The
+   packing will take each tree&#x27;s anchor from there.
+Print one line of JSON with all the values above.
+Test it first on two of the game&#x27;s pictures; their looks may stay in checks/:
+- node assets/source/waterside-trees-2026-10-16/check-tree.mjs
+  assets/source/cozy-v3/tree-round-v2.png --kind willow --height 42
+  must print returned [1536, 1024], box [371, 85, 1166, 936], foot [800, 935], anchor [800, 829],
+  drawn width 53.9, footFromCentre 2.1, edgePixels 0, overCursorWhite 0, amberStrength about 57,
+  lumP99 223. That is the game&#x27;s own props/tree_2, which is packed from this picture: 42 drawn px
+  from its anchor to its top and 54.0 wide, its anchor at about y 830 of the picture;
+- node assets/source/waterside-trees-2026-10-16/check-tree.mjs
+  assets/source/base-v1/props-reeds.png --kind mangrove --height 21
+  must print foot [898, 795], drawn width 15.9, rootSpread 9.6.
+If your values differ by more than a pixel or two, put the script right before you paint. Commit
+check-tree.mjs with the first picture.
+
+MEASURE BEFORE COMMITTING. Run the check on every attempt
+(assets/source/waterside-trees-2026-10-16/raw/&lt;name&gt;-attempt-&lt;k&gt;.png) with the picture&#x27;s
+height. It passes when:
+- edgePixels is 0;
+- the drawn width, and a mangrove&#x27;s rootSpread, lie inside the picture&#x27;s ranges above;
+- footFromCentre is at most 15% of the drawn width either way;
+- a willow&#x27;s belowFoot is at most 6 px (with the automatic foot, the lowest row, it is about 0;
+  it bites when the foot is read by eye);
+- overCursorWhite and amberStrength are 0 and cyanWaterPct is below 0.5 (per cent);
+- in the look, at zoom 1 and at zoom 2, it reads as a mangrove (or a willow) at a glance; it
+  stands on the tile&#x27;s centre as the oak stands on its point; it belongs with the oak beside it
+  (the same kind of leaf clusters, the same light, the same depth of colour, no lit tip brighter
+  than #C6B74E, the oak&#x27;s brightest); and no ground, water or shadow came with it.
+Where the foot estimate is off (a willow&#x27;s hem hanging below its trunk foot, a mangrove&#x27;s front
+root reaching far forward), read the foot off the picture by eye, run the check again with
+--foot x,y, and record both and which one you used.
+Make at most three attempts per picture. After an attempt that failed for what it shows, add a
+paragraph to the prompt that begins &quot;Correction:&quot; and says what was wrong and what is wanted
+(&quot;Correction: the last attempt stood the roots in painted water. Paint no water: each root ends
+in a blunt dark tip in empty, transparent space.&quot;). If none passes, keep the closest, record
+which test failed, and go on.
+
+REFERENCES. A new image, not an edit; at most five images per call. Attach in this order:
+1. assets/source/cozy-v3/tree-oak-v2.png: the style, camera and light authority;
+2. assets/source/cozy-v3/tree-round-v2.png: the family&#x27;s leaf clusters and greens;
+3. for the mangroves, assets/source/base-v1/props-reeds.png: a plant of wet ground, painted with
+   nothing at its foot;
+4. for variants 2 and 3, the accepted variant 1 of the same species (tree-mangrove-1.png or
+   tree-willow-1.png).
+Do not attach docs/art-direction/images/02-nature-objects.png: its reeds stand in painted
+puddles, which the game&#x27;s pictures do not.
+
+THE PROMPT. Each call is the shared text, then the species&#x27; text, then the picture&#x27;s line, then
+the references paragraph, all word for word.
+Shared: &quot;One isolated tree for a pastoral isometric railway game, in the family of the attached
+reference trees: the same leaf clusters and broad readable masses, three or four shades per
+material. The references are drawn with stair-stepped pixel edges, which the game rounds off;
+paint this tree with smooth painted edges instead, not as pixel art. The same camera as the
+references: orthographic, seen from 30 degrees above the horizon, no perspective; the ground
+under the tree would be a flat ellipse twice as wide as it is deep. One light from the upper
+left: the upper-left masses of the crown lightest, the lower right and the underside darkest,
+the trunk lit on its left. Colours: those given for the species below, as deep in the shade as
+the references; no lit tip brighter than #C6B74E, the brightest leaves of the first reference.
+Nothing near white, no strong yellow or orange, no cyan. The tree stands upright and is even all
+round, because the game sets the same picture on shores that face every way. The whole tree,
+centred, with a clear transparent margin all round. A real RGBA PNG with a transparent background
+(alpha 0) and opaque leaves and wood. Never: ground, grass, soil, mud, water, ripples,
+reflections, a shadow, a slab, other plants, people, animals, birds, text, a border, a glow.&quot;
+Mangroves: &quot;Species: a red mangrove of a tidal swamp. Its trunk divides low into many arched
+prop roots: grey-brown stilt roots (lit #8A7C66, mid #6E604E, shade #4A3F35) that leave the
+trunk at about a third of the tree&#x27;s height and curve out and down like the ribs of an upturned
+basket, standing evenly all round the trunk on a flat ellipse, the front roots lowest in the
+picture. The lowest fifth of every root, where it stands in shallow water, is darker and wet
+(#3A3530) under a faint pale tide line, and each root ends in a blunt tip, as if it dips into
+water. No water is drawn. Dark shade shows between the roots, so they read as arches. Above them
+a short trunk and a dense rounded crown of dark glossy oval leaves (shade #1C2E28, mid #2F4A36,
+light #55703F, lit tips no brighter than #8A9A4E) in two or three broad masses, wider than the
+root spread and overhanging it on every side.&quot;
+Willows: &quot;Species: a weeping willow on a riverbank. A stout, slightly twisted grey-brown trunk
+(lit #8A7E6A, mid #6B5E4C, shade #45392E) with deeply furrowed bark divides at about a third of
+the tree&#x27;s height into a few big limbs that arch up and out. From them long thin branches hang
+straight down in soft curtains of narrow leaves, a silvery yellow-green (shade #2E4234, mid
+#6E7A48, light #95A05A, lit tips no brighter than #B4B87A). The crown is a broad dome. The
+curtains fall to about a fifth of the tree&#x27;s height above the ground and end there in a soft,
+ragged hem, so the lower trunk and its foot stand clear. Gaps between the curtains show the dark
+inside of the crown.&quot;
+The pictures&#x27; lines:
+- tree-mangrove-1: &quot;A young mangrove: a slim trunk, eight to ten prop roots, a compact crown a
+  little wider than the tree is tall.&quot;
+- tree-mangrove-2: &quot;A grown mangrove: about a dozen prop roots in two rings, the crown about one
+  and a quarter times as wide as the tree is tall.&quot;
+- tree-mangrove-3: &quot;An old mangrove: a thick trunk, many prop roots in a wide skirt, a broad
+  spreading crown about one and a quarter times as wide as the tree is tall, and a few thin
+  aerial roots hanging straight down from its lower limbs, stopping above the water line.&quot;
+- tree-willow-1: &quot;A young weeping willow: a slender trunk and a crown a little narrower than the
+  tree is tall.&quot;
+- tree-willow-2: &quot;A grown weeping willow: the crown about as wide as the tree is tall.&quot;
+- tree-willow-3: &quot;An old weeping willow: a thick, gnarled trunk that forks low, and a crown a
+  little wider than the tree is tall.&quot;
+References paragraph:
+- mangroves: &quot;References: the first two are trees from this game: take their leaf clusters,
+  camera, light and colour depth, not their species or their stepped edges. The third is a plant
+  of wet ground from this game, painted with nothing at its foot: end the roots the same way, with
+  no water.&quot;
+- willows: &quot;References: the first two are trees from this game: take their leaf clusters,
+  camera, light and colour depth, not their species or their stepped edges.&quot;
+- variants 2 and 3 add: &quot;The last reference is the first tree of this species in this set: the
+  same species, leaves, bark and colours, with a silhouette of its own.&quot;
+
+KEEP EVERY PICTURE. Save every picture the image tool returns as raw/&lt;name&gt;-attempt-&lt;k&gt;.png, k
+from 1, byte for byte. Copy the accepted one to &lt;name&gt;.png. Never delete a painting.
+
+CANVAS SIZE. Ask for 1024x1024 px with a transparent background. Keep each picture exactly as
+returned and record &quot;returned&quot;: [w, h]. Do not crop, scale or move it: the check, and later the
+packer, measure it where it stands.
+
+STYLE AND OUTPUT RULES. Smooth painted contours, broad colour clusters, three or four shades per
+material, selective dark contours on the lower and side rims only, never an outline round the
+whole tree. One light from the upper left. Palette seeds: forest #294638, moss #78804C, oat
+#E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.
+Highlight cap: nothing at or above the game&#x27;s cursor white #ECE4D0, and no yellow or orange as
+strong as its selection amber #E8AA48. The game multiplies props by a season tint, white in
+spring, so the look shows them as in spring.
+A real RGBA PNG: alpha 0 background, opaque leaves and wood. Never: ground, grass, soil, water,
+reflections, cast or ground shadow, other plants, people, animals, text, labels, borders, glow.
+
+Record every call in prompts.json in the folder, under &quot;attempts&quot;, as {file, attempt, selected,
+prompt, references, returned, measured}; measured is the check&#x27;s line, the foot and the anchor
+you used and whether you read the foot by eye, and what you saw in the look. After each accepted
+picture, run the check on &lt;name&gt;.png with --record, then commit the picture, its raw attempts,
+its looks, prompts.json and trees.json (&quot;Art: &lt;name&gt;, &lt;what it is&gt;&quot;, for example &quot;Art:
+tree-mangrove-1, a young mangrove on prop roots&quot;) and push. End with a message that lists, per
+picture, the accepted attempt, its drawn width (and root spread), its foot and anchor, and any
+test it failed.</pre>
+</section>
+<section class="card" id="c17">
+  <header><span class="cid">C17</span><h2>Windmill without its sails, and the sail cross on its own (2 pictures)</h2><button class="copy" type="button" data-for="p-c17">Copy prompt</button></header>
+  <p class="note"><b>Buildings lane, 2nd, only after R8b is pushed. Branch art/461-windmill-sails (new).</b> Issue #461. The windmill has one painted view, base-v1/windmill.png (r0, Steam age), which the game draws at every level. Its other views are drawn by the game&#x27;s code, and its 24 buildings-v2 pictures are still pending. So this asks for that view without its sails, registered on the master&#x27;s canvas, with the master&#x27;s painted box recorded so that packing the body by it keeps the game&#x27;s anchor and door scale, and for the one sail facing r0 shows: face on, square, hub at the centre. The hub is recorded against the game&#x27;s anchor in hub.json. The queue tools do not apply to this picture; the prompt names what to run instead.</p>
+  <pre id="p-c17" tabindex="0">Repaint the windmill of the isometric railway game in this repository without its sails, and
+paint its sails as a picture of their own, for issue #461. Work on branch art/461-windmill-sails.
+It does not exist yet: git fetch origin, then git switch -c art/461-windmill-sails
+origin/develop. If origin already has it, git switch art/461-windmill-sails and git pull
+--ff-only. Touch nothing outside assets/source/windmill-2026-10-16/. Commit there and push the
+branch. Never push to main or develop. Commit subjects read &quot;Art: &lt;outcome&gt;&quot;.
+
+WHY. The author wants the windmill&#x27;s sails to turn. They are painted into the windmill&#x27;s picture,
+so nothing can turn them. The game needs two pictures: the mill without its sails, with the hub
+they turn on showing, and the sail cross on its own, centred on its hub, which the game lays over
+the mill at the hub and turns.
+
+WHAT EXISTS. Paint only what is asked here:
+- The windmill has one painted picture, assets/source/base-v1/windmill.png: the front view (r0)
+  of the Steam-age mill. An eight-sided cream-stone tower with a slate cap and an iron finial, an
+  evergreen door on the lower-left face, and four timber lattice sails on two crossed stocks with
+  a square iron plate where they cross. The game draws it for every level of the windmill
+  (structures/windmill, _lv2, _lv3 and _lv4), packed by tools/illustrated-sprites.mjs.
+- Its turned views r1 to r3 are drawn by the game&#x27;s code (src/art/civic.ts), not painted. The 24
+  windmill pictures of assets/source/buildings-v2/ are still pending in its queue. Do not paint
+  them, and do not run building-queue.mjs next, show, take or set: this picture is not in the
+  queue, and the queue&#x27;s prompt asks for sails.
+- The sails face the front (assets/source/buildings-v2/families.json, windmill: &quot;the sails face
+  the front&quot;). In r0 the front faces the lower left, toward the viewer, so the sails show their
+  front face. That is the one facing to paint.
+So: two pictures, windmill-a0-r0.png (the body) and windmill-sails-front.png (the sail cross),
+and hub.json.
+
+READ FIRST, on this branch: docs/art-direction/README.md (section 1, the Windmill row of section
+5, and &quot;Style consistency: both smooth&quot;), assets/source/buildings-v2/GUIDE.md sections 2, 6 and 7
+(the rules every building picture follows), and src/render/assetScale.ts (the windmill is sized
+by its door: DOOR_FRACTION 38/240 of its picture&#x27;s height).
+
+THE MASTER. assets/source/base-v1/windmill.png, 1498x1050, sha256
+2f3b3d8ce6748cd3563049470aa6473e34a8f976efe4bec9447b03e4601e6d56. Check the hash first; if it
+differs, stop and say so. Never change it. Measured on it, with alpha above 128 unless said:
+- the painted box (alpha above 64): x 350 to 1119, y 20 to 1003. The sails make its top, left and
+  right;
+- the bottom row is y 1003. In the row 5 above it (y 998) the tower spans x 715 to 853, centre
+  784. The topmost row within 60 px of that centre (x 724 to 844) is y 196, the finial&#x27;s top. In
+  the row 90% of the way from there to the bottom (y 922) the tower spans x 559 to 985, centre
+  772;
+- the door&#x27;s opening: about x 650 to 715, y 821 to 982;
+- the hub, the centre of the square iron plate where the stocks cross: about (703, 444);
+- the game&#x27;s anchor for this picture: (857.9, 856.4). tools/illustrated-sprites.mjs trims the
+  picture to the painted box above, scales it into the frame structures/windmill
+  (docs/art-direction/frame-inventory.json: 47x63, anchor 31,54) and widens it by 1.2, so one
+  picture px is 0.07338 world px across and 0.06098 world px down. In the game, at zoom 1, the
+  door scale makes that 0.1020 px across and 0.0847 px down.
+Read the door, the hub and the four sail tips yourself, and record what you read. A sail tip is
+the painted pixel of that arm&#x27;s sail farthest from the hub, the outer corner of its frame, the
+way the sails&#x27; reach is measured below; on the two lower arms, a pixel of the sail, not of the
+tower.
+
+THE BODY, windmill-a0-r0.png. Run every script from the repository root. A script reads the
+file you name from there, and writes what it makes into its own folder, whose files it finds by
+its own location.
+1. Write pad-master.mjs (Node, pngjs only). It copies the master onto a transparent 1576x1050
+   canvas, 39 px from the left, as edit-input.png. The image tool returns 3:2 pictures; on a 3:2
+   canvas it has no reason to stretch the mill.
+2. Edit edit-input.png with the image tool (an edit, not a new image), with the references and
+   the prompt below. Ask for 1536x1024.
+3. Write register-body.mjs (Node, pngjs only; import resample from
+   ../../../tools/illustrated-sprites.mjs) and run
+   node assets/source/windmill-2026-10-16/register-body.mjs
+   assets/source/windmill-2026-10-16/raw/windmill-a0-r0-attempt-&lt;k&gt;.png
+   On the edit, find what was measured on the master, by the same
+   rules: the bottom row; the tower&#x27;s centre in the row 5 above it; the topmost row within 60 px
+   of that centre (the finial&#x27;s top); and the longest run in the row 90% of the way from the
+   finial&#x27;s top to the bottom. Then:
+   - sv = (1003 - 196) / (the edit&#x27;s bottom - its finial top), sh = (985 - 559) / (the edit&#x27;s run
+     length). They must agree within 2%; otherwise the edit has changed the mill&#x27;s shape: paint
+     it again, with a Correction;
+   - scale the edit by sv with resample, and shift it so its bottom lands on y 1003 and its run&#x27;s
+     centre on x 772. Write registered/&lt;k&gt;/windmill-a0-r0.png, k the attempt&#x27;s number (for any
+     other input, such as the self-test below, registered/test/windmill-a0-r0.png, which is not
+     committed): 1498x1050, transparent wherever the edit does not reach, cut where it reaches
+     past the canvas. The name matters: building-check reads which picture a file is from its
+     name, &lt;family&gt;-a&lt;age&gt;-r&lt;rot&gt;.png, and refuses any other;
+   - compare it with the master in the rows 905 to 1003, where the master has no sails: the
+     pixels with alpha above 128, intersection over union, must be at least 0.90;
+   - print sv, sh, the shift, that overlap and the registered finial&#x27;s top (196, within 3 px).
+   Test it first on assets/source/windmill-2026-10-16/edit-input.png itself: it must print sv
+   and sh 1.000, the shift (-39, 0) and the overlap 1.000.
+4. Check the registered picture:
+   - node tools/building-check.mjs assets/source/windmill-2026-10-16/registered/&lt;k&gt;/windmill-a0-r0.png
+     must print ok. It says &quot;placed by its outline&quot;: the tower has no straight wall foot, which is
+     expected. It refuses a shadow or a glow. It also writes its result into
+     assets/source/buildings-v2/report.json, the buildings queue&#x27;s report, where this picture does
+     not belong: copy the printed line into prompts.json, then put the report back with git restore
+     assets/source/buildings-v2/report.json;
+   - node tools/building-sheets.mjs --picture &lt;that file&gt; lays it on grass as
+     assets/source/buildings-v2/.look/windmill-a0-r0.png, under the file&#x27;s own name, so each
+     attempt&#x27;s look replaces the last one. Git ignores that folder; leave the file there. Look at
+     it before the next attempt;
+   - by eye: no sail, stock, plate or sail shadow is left. The stone courses, the window and the
+     slate cap go on where the sails were. The hub shows: the round iron end of the windshaft on
+     the front of the cap, at the master&#x27;s hub within 8 px. The door, the window, the cap and the
+     finial are where the master has them, and the door&#x27;s opening is as tall as the master&#x27;s
+     within 3% (the game sizes the mill by it). The lower-left faces are lighter than the
+     lower-right ones.
+5. Write hub.json: {&quot;picture&quot;: &quot;windmill-a0-r0.png&quot;, &quot;size&quot;: [1498, 1050], &quot;box&quot;: [350, 20,
+   1119, 1003], &quot;anchor&quot;: [857.9, 856.4], &quot;hub&quot;: [x, y], &quot;hubFromAnchor&quot;: [x - 857.9,
+   y - 856.4], &quot;hubFromAnchorWorld&quot;: [that x * 0.07338, that y * 0.06098], &quot;door&quot;: [top,
+   bottom], &quot;masterHub&quot;: [x, y], &quot;masterTips&quot;: the four sail tips you read on the master (upper
+   right, upper left, lower left, lower right), &quot;sailScale&quot;, &quot;sailAngle&quot;, &quot;sailAffine&quot; and
+   &quot;fitMiss&quot;, which check-sails.mjs adds, &quot;readByEye&quot;: what you read by eye}. Every point is in
+   the body picture&#x27;s own px, which are the master&#x27;s. &quot;box&quot; is the master&#x27;s painted box: the
+   game&#x27;s anchor and door scale hold only when the body is packed by that box (CANVAS SIZE
+   below).
+
+THE SAIL CROSS, windmill-sails-front.png.
+1. Write make-sail-guide.mjs (Node, pngjs only). On a transparent 1024x1024 canvas it draws, in
+   mid grey (150, 150, 150), two crossed stocks 24 px wide through the centre (512, 512) at 45 and
+   135 degrees, each reaching 470 px from the centre on both sides, and over their crossing a
+   darker grey (110, 110, 110) square 84 px across, its sides parallel to the stocks. Save
+   guides/sails-front.png and look at it: an X with four equal arms, the square at the exact
+   centre.
+2. Edit the guide with the image tool (an edit, not a new image), with the references and the
+   prompt below. Ask for 1024x1024.
+3. Write check-sails.mjs (Node, pngjs only) and run
+   node assets/source/windmill-2026-10-16/check-sails.mjs
+   assets/source/windmill-2026-10-16/raw/windmill-sails-front-attempt-&lt;k&gt;.png
+   It prints, and the attempt passes when:
+   - the picture is square;
+   - the reach, the largest distance of a pixel with alpha above 64 from the centre, is at most
+     0.49 of the side (the cross turns without clipping) and at least 0.40 of it;
+   - the centroid of the alpha lies within 1% of the side from the centre (it turns on its hub
+     without wobbling);
+   - turned by a quarter turn about the centre, (x, y) to (side - 1 - y, x), its pixels with
+     alpha above 128 overlap the unturned ones by at least 0.80, intersection over union (four
+     alike arms);
+   - over the pixels with alpha above 128, none has R &gt;= 236, G &gt;= 228 and B &gt;= 208 (the cursor
+     white), and none has a hue of 25 to 50 degrees with saturation at least 0.62 and value at
+     least 0.85 (the selection amber). Saturation is (max - min) / max, value is max / 255.
+   It reads the master&#x27;s hub and tips and the body&#x27;s hub from hub.json. On the sail picture it
+   finds the four tips the same way: in each quarter about the centre (upper right, upper left,
+   lower left, lower right), the pixel with alpha above 64 farthest from the centre. It writes
+   back into hub.json: sailScale, the reach divided by the mean length of the master&#x27;s four arms
+   (hub to tip): sail px per master px; sailAngle, the angle of the master&#x27;s upper-right arm, hub
+   to tip, in degrees above the horizontal; and sailAffine, [[a, b], [c, d]], the 2x2 matrix
+   that takes the sail picture&#x27;s tips, from its centre, closest to the master&#x27;s tips of the same
+   arms, from its hub (least squares, the hub fixed): master px per sail px, x across and y down,
+   x&#x27; = a x + b y and y&#x27; = c x + d y. The master&#x27;s sails lie in a plane that faces the lower
+   left, so they are no square cross: their arms point at about 33, 122, 233 and 305 to 311
+   degrees, counted as sailAngle is, and are 430 to 560 px long. sailAffine is that plane,
+   recorded for Rendering. It also writes fitMiss, the largest distance in master px from a
+   mapped tip to the master&#x27;s. The master&#x27;s cross is not quite regular, so fitMiss is not 0; it
+   is recorded, not a pass test.
+   It writes checks/sails-overlay.png: the master, and beside it the accepted body with the
+   cross laid on by sailAffine, its centre on the body&#x27;s hub; both at a third of their size.
+   And checks/sails-turn.png: seven cells at the game&#x27;s size at zoom 1, each magnified 3 times.
+   The first six are the body with the cross turned by 0, 15, 30, 45, 60 and 75 degrees, each
+   made in this order: turn the face-on cross about its centre by the angle, lay it on the body
+   by sailAffine with its centre on the hub, then scale the cell by 0.1020 across and 0.0847
+   down (bilinear). The seventh is the master, scaled the same way.
+   By eye, in the overlay: the cross has the master&#x27;s timber, lattice and plate, at the master&#x27;s
+   size, its plate on the hub and its arms along the master&#x27;s, within fitMiss at the tips. In
+   the turn sheet: the hub stays put, no arm is cut off, the arms sweep round in the master&#x27;s
+   slanted plane, and the sails read as timber lattice at the game&#x27;s size.
+
+MAKE AT MOST THREE ATTEMPTS per picture. After an attempt that failed for what it shows, keep
+the prompt whole and add a paragraph that begins &quot;Correction:&quot; and says what was wrong and what
+is wanted (GUIDE.md section 7). If none passes, keep the closest, record which test failed, and
+go on. Paint the sails after the body is accepted.
+
+REFERENCES. At most five images per call, the edited image included.
+- The body: edit-input.png (the image you edit), then docs/art-direction/images/03-theme-town-growth.png
+  (the style board).
+- The sails: guides/sails-front.png (the image you edit: follow its bars, not a reference&#x27;s
+  angles), assets/source/base-v1/windmill.png (the sails to paint), the accepted
+  windmill-a0-r0.png (the hub they sit on), and the style board.
+
+THE PROMPTS, word for word.
+The body: &quot;Edit this windmill picture for a pastoral isometric railway game. Remove the four
+sails and both crossed stocks completely, with the iron plate where they cross and every shadow
+they cast. Where they covered the tower and the cap, paint the tower and the cap: continue the
+cream-stone courses, the window, the slate cap and its eaves exactly as they are around them. On
+the front of the cap, where the stocks crossed, leave the hub: the short round iron end of the
+windshaft, standing a little out of the cap toward the lower left, with a dark iron collar.
+Change nothing else: the tower, the cap, the finial, the window and the door stay exactly as
+they are, the same size and in the same place. Keep the camera: orthographic 2:1 isometric, no
+perspective. Light from the upper left. A real RGBA PNG with a transparent background (alpha 0)
+and an opaque mill. Never: sails, blades, ground, grass, a plinth, a shadow outside the mill,
+people, sacks or anything standing apart, text, a border, a glow. References: the second picture
+is the game&#x27;s style board: keep to its style.&quot;
+The sails: &quot;Paint the four sails of this windmill as one picture of their own, over the grey
+guide, seen face on, looking straight along the windshaft. Two crossed timber stocks make an X
+along the guide&#x27;s grey bars, and the square iron plate with four bolts covers their crossing at
+the exact centre of the picture. On each arm a timber lattice sail as on the reference windmill:
+the same warm brown timber, the same long frame of rails and bars, beginning about a quarter of
+the way out from the centre and running to the tip, on the same side of its stock as there. All
+four sails are alike: each is the next one turned by a quarter turn about the centre, never
+mirrored. The tips end where the guide&#x27;s bars end, with a clear margin to the picture&#x27;s edge.
+Soft light from the upper left with little contrast: each timber a little lighter on its upper
+left face and a little darker on its lower and right rims, no shadow cast on another sail, no
+strong highlight, because the game turns this picture about its centre. A real RGBA PNG with a
+transparent background (alpha 0), opaque timber and iron. Never: the tower, the cap, the
+windshaft, ground, sky, a shadow, motion blur, text, a border, a glow. References: the second
+picture is the windmill whose sails these are: take their timber, lattice and plate, not their
+angle. The third is the same mill without its sails: the plate sits on its hub. The fourth is
+the game&#x27;s style board.&quot;
+
+KEEP EVERY PICTURE. Save every picture the image tool returns, byte for byte, as
+raw/windmill-a0-r0-attempt-&lt;k&gt;.png or raw/windmill-sails-front-attempt-&lt;k&gt;.png, k from 1. The
+registered bodies stay in registered/&lt;k&gt;/. Copy the accepted registered body to
+windmill-a0-r0.png and the accepted sail picture, as returned, to windmill-sails-front.png. Never
+delete a painting. Do not touch the master.
+
+CANVAS SIZE. The body: ask for 1536x1024. The sails: ask for 1024x1024. Record &quot;returned&quot;: [w, h]
+for every attempt. The body is only ever used registered, on the master&#x27;s 1498x1050 canvas. The
+game&#x27;s anchor, frame and door scale stay as they are only if the body is packed by the master&#x27;s
+painted box, x 350 to 1119, y 20 to 1003, which hub.json records as &quot;box&quot;: the packer trims each
+picture to its own alpha box, and without its sails the body&#x27;s box shrinks to about the tower&#x27;s,
+x 559 to 988, which would pack the mill about 1.7 times larger. Packing is a later task; do not
+change the packer.
+
+STYLE AND OUTPUT RULES. Smooth painted contours, broad readable masses, three or four shades per
+material. Light from the upper left: tops lightest, lower-left faces mid, lower-right faces
+darkest. Palette: forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C,
+teal #477B82, copper #A36B42.
+Highlight cap: nothing at or above the game&#x27;s cursor white #ECE4D0, and no yellow or orange as
+strong as its selection amber #E8AA48.
+Transparent background (alpha 0), opaque surfaces. Never: ground, plinth, grass, shadows outside
+the mill, rails, trains, people, vehicles, smoke, lettering, borders, glow, loose objects.
+
+Record every call in prompts.json in the folder, under &quot;attempts&quot;, as {picture, attempt,
+selected, file, prompt, references, returned, measured}; measured is what the scripts printed,
+what you read by eye, and what you saw. Commit pad-master.mjs, register-body.mjs, edit-input.png,
+the body&#x27;s attempts, registered/&lt;k&gt;/ for each attempt (not registered/test/), the accepted body,
+prompts.json and hub.json (&quot;Art: windmill body without its sails, hub showing&quot;) and push. Then
+commit make-sail-guide.mjs, the guide, check-sails.mjs, the sails&#x27; attempts, the accepted sails,
+the checks, prompts.json and the completed hub.json (&quot;Art: windmill sail cross on its own,
+centred on its hub&quot;) and push. End with a message that gives hub.json&#x27;s values, sv, sh
+and the overlap of the accepted body, the sails&#x27; reach, centroid, quarter-turn overlap,
+sailScale, sailAffine and fitMiss, the paths of the two checks, and any test that failed.</pre>
+</section>
+<section class="card" id="delivered">
+  <header><h2>Delivered, waiting for Core&#x27;s review</h2></header>
+  <ul>
+    <li><b>R7</b> (resumed) people strips, issue #331: branch <span class="cid">art/331-people</span>, head <span class="cid">4dcd0544</span> (2026-10-13 00:41 UTC). All nine strips arrived, one commit each from <span class="cid">470a20a2</span> to <span class="cid">4dcd0544</span>: pump-hand-back-walk (assembled from the accepted paintings), pump-hand-front-carry, pump-hand-back-carry, lumberjack-back-walk and -back-carry, stone-mason-back-walk and -back-carry, farmer-back-walk and -back-carry. Each has its four poses, every raw attempt, its calls, the 9 px and 36 px playback sheets and a pose report; redo-state.json says 9 of 9 complete. For the review: in pump-hand-front-carry f2 repeats f0, and Codex suggests the 0, 1, 0, 1 fallback; finish-report.json counts 45, 10 and 1 strong-amber pixels in lumberjack-back-walk, stone-mason-back-carry and farmer-back-carry; several poses are the best of three. Not yet in the game or the demo.</li>
+    <li><b>C4b</b> water tower and coaling stage, issue #325: branch <span class="cid">art/325-buildings-v2</span>, head <span class="cid">8bf01c45</span> (2026-10-12 23:23 UTC). Both families arrived, four views each: <span class="cid">d2be8c39</span> &quot;Buildings: water_tower, 4 of 4 pictures&quot; and <span class="cid">8bf01c45</span> &quot;Buildings: fuel_stop, 4 of 4 pictures&quot;, with 17 raw attempts in raw/ and raw/returns.json, the eight queue entries set to generated, and review/water_tower.png and review/fuel_stop.png. For the review: the water tower&#x27;s four views are within the camera mark. Three coaling-stage views were kept with the camera off after three attempts: r1 by 3.7&deg;, r2 by 2.8&deg; and r3 by 9.9&deg;. Two of four over 3&deg; is more than the quarter GUIDE.md section 8 allows, so that family stands at a stop until it is accepted or put back.</li>
+  </ul>
+</section>
+<section class="card" id="done">
+  <header><h2>Done or no longer needed (2026-10-16)</h2></header>
+  <ul>
+    <li><b>R1</b> river mouths: dropped, the game draws mouths from the river strip.</li>
+    <li><b>R2</b> plunge foam: dropped, the falls paint their own foam.</li>
+    <li><b>R3</b> wet sand: delivered, usable.</li>
+    <li><b>R4</b> glacier ice swatch: not needed; the approved Ice channel uses the existing swatch. It can come back on request.</li>
+    <li><b>R5</b> glacier strip: dropped.</li>
+    <li><b>R6</b> springs: delivered; Core finishes.</li>
+    <li><b>R9</b> loading screen 2: delivered; Core composites.</li>
+    <li><b>R10</b> narrow stone deck: delivered; Core finishes.</li>
+    <li><b>R8</b> and <b>C4</b> (the originals): replaced by R8b and C4b.</li>
+  </ul>
+  <p class="note">Earlier rounds: C1-C3 and C5-C15 were delivered and reviewed, and are not listed here.</p>
+</section>
+</div>
+<script>
+  for (const b of document.querySelectorAll('.copy')) b.addEventListener('click', async () => {
+    const pre = document.getElementById(b.dataset.for);
+    try { await navigator.clipboard.writeText(pre.textContent); b.textContent = 'Copied'; }
+    catch { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected: press Ctrl+C'; }
+    setTimeout(() => (b.textContent = 'Copy prompt'), 2200);
+  });
+</script>

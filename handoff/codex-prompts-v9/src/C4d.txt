@@ -1,0 +1,113 @@
+Paint three views of the coaling stage (fuel_stop, Steam age a0) again for the isometric railway
+game in this repository, for issue #325: r1, then r3, then r2. r0 is finished and is not painted
+again. Work on branch art/325-buildings-v2, which exists: git fetch origin art/325-buildings-v2
+develop, git switch art/325-buildings-v2, git pull --ff-only (head c25368a or later), then
+git merge origin/develop once, so that the stage's own guides arrive as new files; if the merge
+conflicts, stop and say where. Touch nothing outside assets/source/buildings-v2/. Commit there,
+never stash pictures, push the branch. Never push to main or develop. Commit subjects read
+"Art: <outcome>". Keep every picture your image tool returns, byte for byte, as
+raw/<id>-attempt-<k>.png, k going on from 7, and add {id, attempt, file, returned, spans, top,
+height, kept} to raw/returns.json for each call.
+
+WHY AGAIN. Last round's r1, r3 and r2 came back as the right building too low: laid onto the tile
+their box.top was 445.2 (r1), 420.2 (r3) and 458.1 (r2) where r0's is 284.8, about three quarters
+of r0's height, and all nine attempts failed. The cause was the grey block-out, not your painting:
+it was only 40 game px high and you filled it. Now the coaling stage has its own block-outs, 62
+game px high: assets/source/buildings-v2/guides/fuel_stop-r0.png to fuel_stop-r3.png (families.json
+blockHeight 62). Their top face is about where r0's coal heap and post tops stand. Check that the four
+files exist after the merge; if not, stop and say so. Edit the guide of the view you paint, never
+t1-r*.png. The stage must fill it, no lower and no higher.
+
+READ FIRST: assets/source/buildings-v2/GUIDE.md sections 5 to 8 again.
+
+THE MASTER. assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png, sha256
+49f701ce3e2bd4a3c4b0a2a6194fd1470a56390dda9f241dd7a82c9a2e6c6ce4. Check the hash first; if it
+differs, stop and say so. It is r0, the finished front view, and the only picture of the stage you
+are shown: use it for the stage's colours and materials (planks, iron straps, stone piers, coal),
+for its details and for the building's size. Do not attach any earlier r1, r2 or r3 of yours, nor
+a .rejected, .before or .fitted file of one: they are low. What r0 shows, to carry round: a raised
+timber stage on six stone piers, a coal bunker of planks with iron straps and corner posts,
+heaped with coal, on tall X-braced timber legs. The legs, from the pier caps up to the bunker's
+floor, are longer than the bunker's plank wall is deep. The front (lower-left in r0) is the SHORT
+side, two piers and one bay, with the chute sloping out from it and the winch drum and chain at
+its left end. The right-hand side (lower-right in r0) is the LONG side, three piers and two
+braced bays.
+
+PUT THE VIEWS BACK, afresh:
+  node tools/building-queue.mjs redo fuel_stop-a0-r1 --yes
+  node tools/building-queue.mjs redo fuel_stop-a0-r3 --yes
+Run node tools/building-queue.mjs status and check that r1, r2 and r3 are pending and r0
+generated. Do not run "next"; use show and take with each id: r1, then r3, then r2.
+
+EACH VIEW. show <id>: its "edit this" line is the stage's own guide; paint as an edit of it, with
+the references show lists, in its order; ask for the size it prints, transparent background. Take
+it with take <id> --from <file>, look at .look/<id>.png, measure (below), then set <id> generated
+--note "<measurements>". Paste the printed prompt whole, then the view's Correction below, on
+EVERY attempt, the first included. Put nothing else in the picture: no ground, shadow, text,
+border, glow or extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as
+strong as selection amber #E8AA48 on the timber.
+
+For r1:
+Correction: the earlier r1 came back a low, long bin (box.top 445.2 where r0's is 284.8), not
+this coaling stage turned. Paint the stage to the full height of this grey block: the post tops and
+the coal heap reach its top face, and the legs are as tall as r0's, from the pier caps to the
+bunker's floor longer than the bunker's plank wall is deep. Stand the six piers on the plinth:
+the outer piers on its left, near and right corners, nothing outside it. The bunker is r0's, the
+same size, no longer and no deeper. The lower-left wall is the right-hand side, the long side:
+three piers and two X-braced bays. The lower-right wall is the back, the short side: two piers
+and one bay. The chute, the winch and the chain are on the front, out of sight: none of them
+shows.
+
+For r3:
+Correction: the earlier r3 was turned right but came back low (box.top 420.2 where r0's is 284.8).
+This view is the front view turned on a turntable, not flipped. The lower-right wall is the front,
+the short side: two piers and one bay, with the chute sloping out from it, and the winch drum and
+chain at the front's left end, which in this picture is the near (bottom) end, by the dark opening
+the guide has on that wall. The lower-left wall is the left-hand side, the long side: three piers
+and two X-braced bays. Paint the stage to the full height of the grey block: the post tops and
+the coal heap reach its top face, on legs as tall as r0's. Stand the six piers on the plinth, the
+outer piers on its left, near and right corners, nothing outside it.
+
+For r2:
+Correction: the earlier r2 came back a low, long bin (box.top 458.1 where r0's is 284.8). Paint
+the stage to the full height of this grey block: the post tops and the coal heap reach its top
+face, on legs as tall as r0's. Stand the six piers on the plinth, the outer piers on its left,
+near and right corners, nothing outside it. The bunker is r0's, the same size. The lower-left wall
+is the back, the short side, two piers and one bay, as r1 shows it. The lower-right wall is the
+left-hand side, the long side, three piers and two X-braced bays, as r3 shows it. The chute, the
+winch and the chain are on the front, out of sight: none of them shows. Attach r1 and r3 only if
+they passed; r2 then copies their walls. If one failed, record it (below) and show lists r2
+from r0 alone.
+
+MEASURE BEFORE YOU RECORD (after take, before set): node tools/building-fit.mjs <id>. Its base
+corners w, s and e give the lower-left foot s.x - w.x and the lower-right foot e.x - s.x. A
+picture passes when:
+- height: (944.64 - box.top) / 450.56 is within 10% of r0's 1.464 (r0's box.top 284.8; the
+  numbers come from wallBase in tools/building-kit.mjs: the near corner's row and the house width).
+  That is 1.318 to 1.611, box.top 219 to 351. Last round's views were 1.11, 1.16 and 1.08;
+- plan: lower-left foot / lower-right foot, r1 and r3 between 1.16 and 1.57 (r0's 1.364 turned
+  over), r2 between 0.62 and 0.84 (r0's 0.733), each within 15%;
+- camera: at most 2 degrees off the game's (checkFile(file, 't1', rot) in tools/building-check.mjs
+  and cameraOff in tools/building-fit.mjs, which set runs; node tools/building-check.mjs <file>
+  prints it). Measure height first: if the picture is low, do not set it, paint it again;
+- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12
+  (RGB distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may
+  exceed r0's (Art caps the rest at packing);
+- by eye: r3 turned, not mirrored (winch, chain and chute at the lower-right wall's near end);
+  no chute, winch or chain on a hidden wall; six piers, three along the long side; the same
+  bunker, coal, straps and legs as r0; lower-left wall lighter than lower-right.
+A picture refused for its camera alone, that passes the other tests, is handled by the tool
+(GUIDE.md section 7: `next` hands it out to paint again from its own earlier self; also attach
+.fitted/fuel_stop-a0-r0.png). A picture that fails the height or the plan is made again from the
+printed prompt: keep every Correction paragraph and add one that begins "Correction:" and names the
+number it missed, as "your last r1 stood at box.top 410, height 1.19, where r0's is 284.8, 1.464".
+Never attach a low picture to paint again from. At most three attempts a view, nine calls in all.
+If none passes, keep the closest in raw/, run set <id> rejected --note "<the test it failed and
+its number>" (the tool sets the file aside), and say so in your message; never accept it quietly.
+
+CLOSE THE FAMILY. node tools/building-check.mjs --family fuel_stop; node
+tools/building-sheets.mjs --family fuel_stop, then look at review/fuel_stop.png: all four views
+should be one stage of one height. Commit "Art: fuel_stop, r1, r3 and r2 at r0's height, r3
+turned", push the branch and stop. In your message give the review sheet's path and, for each
+attempt, its spans, ratio, box.top, height, camera and highlight counts, and which attempt was
+kept.

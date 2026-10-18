@@ -1,0 +1,395 @@
+<title>Codex art prompts</title>
+<style>
+  /* Layout: a reading column of prompt cards, a jump list on top. Game panel palette. */
+  :root {
+    --bg: #f3efe4; --card: #fbf8f0; --ink: #23302a; --dim: #66705f; --line: #d5cdb8; --accent: #8a5a2f; --code: #efe9da;
+    --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    --font-body: Verdana, Tahoma, 'DejaVu Sans', sans-serif;
+    --font-mono: 'Lucida Console', Monaco, 'DejaVu Sans Mono', monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141c17; --card: #1d2820; --ink: #e4d5b5; --dim: #a49b80; --line: #33463a; --accent: #e8aa48; --code: #17211b; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #141c17; --card: #1d2820; --ink: #e4d5b5; --dim: #a49b80; --line: #33463a; --accent: #e8aa48; --code: #17211b; color-scheme: dark; }
+  body { background: var(--bg); color: var(--ink); font: 13px/1.55 var(--font-body); padding-inline: 16px; padding-block: 20px; }
+  .wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 14px; }
+  h1 { font-family: var(--font-title); font-weight: normal; font-size: 24px; margin: 0; color: var(--accent); text-wrap: balance; }
+  .lead { margin: 0; color: var(--dim); max-width: 70ch; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  nav a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+  .card header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+  .cid { font-family: var(--font-mono); color: var(--accent); }
+  h2 { font-family: var(--font-title); font-weight: normal; font-size: 17px; margin: 0; flex: 1 1 auto; }
+  .note { margin: 0; color: var(--dim); }
+  pre { margin: 0; background: var(--code); border: 1px solid var(--line); padding: 10px 12px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; }
+  .copy { font: inherit; cursor: pointer; background: var(--accent); color: var(--card); border: 0; padding: 5px 12px; }
+  .copy:focus-visible, pre:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card ol, .card ul { margin: 0; padding-left: 22px; }
+  .card li + li { margin-top: 4px; }
+</style>
+<div class="wrap">
+  <h1>Codex art prompts</h1>
+  <p class="lead">Updated 2026-10-18 (v9). Only what Codex still has to paint is here. Three prompts can be pasted now, two in the buildings lane and one in the people lane; the others are added here, ready to copy, as soon as the guides they need are on develop.</p>
+  <nav><a href="#next">Paste next</a><a href="#r8d">R8d &middot; Fuel Pump r2 painted now, then r3&#x27;s crane and hose, then its light (r1 accepted)</a><a href="#c17c">C17c &middot; Windmill body without sails, in the game&#x27;s camera, on the new block-out (1 picture)</a><a href="#r7c1">R7c-1 &middot; People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)</a><a href="#coming">Coming next</a></nav>
+<section class="card" id="next">
+  <header><h2>Paste next</h2></header>
+  <ol>
+    <li><b>Buildings lane: R8d</b>, Fuel Pump r2, then r3 in two steps, branch <span class="cid">art/325-fuel-pump</span>, issue #325. Each part commits and pushes on its own; at most three attempts a part.</li>
+    <li><b>Buildings lane, after R8d: C17c</b>, the windmill&#x27;s tower without sails, branch <span class="cid">art/461-windmill-sails</span>, issue #461. One picture, at most three attempts.</li>
+    <li><b>People lane</b>, in its own Codex window beside the buildings lane: <b>R7c-1</b>, the lumberjack walking away, branch <span class="cid">art/331-people</span>, issue #331. Four pictures, at most twelve calls. The other strips wait for this trial&#x27;s result.</li>
+  </ol>
+</section>
+<section class="card" id="r8d">
+  <header><span class="cid">R8d</span><h2>Fuel Pump r2 painted now, then r3&#x27;s crane and hose, then its light (r1 accepted)</h2><button class="copy" type="button" data-for="p-r8d">Copy prompt</button></header>
+  <p class="note"><b>Buildings lane. Branch art/325-fuel-pump (exists, head 25ba21e2 or later).</b> Issue #325. Follows R8c, reviewed on 18 October: r1 attempt 12 passes every test and is accepted. r3 attempt 9 got the light right but came back squat with a two-post crane, because one edit was asked to change three things at once. r2 was never painted, because R8c held it back until r3 passed. So R8d paints r2 now, on r0 and the accepted r1, then fixes r3 from attempt 7 in two steps with one change each: the crane and the hose first, with the house locked in pixels, then the light, with attempt 9 as the light reference.</p>
+  <pre id="p-r8d" tabindex="0">Finish the Fuel Pump (fuel_pump, Diesel age a1) for the isometric railway game in this repository,
+for issue #325: paint r2, then fix r3&#x27;s crane and hose, then fix r3&#x27;s light. r0 is the master and r1
+is accepted; neither is touched. Work on branch art/325-fuel-pump, which exists: git fetch origin
+art/325-fuel-pump, git switch art/325-fuel-pump, git pull --ff-only (head 25ba21e2 or later). Touch
+nothing outside assets/source/fuel-2026-10-11/. Commit there and push the branch. Never push to
+main or develop. Commit subjects read &quot;Art: &lt;outcome&gt;&quot;. Keep every picture your image tool returns,
+byte for byte, as raw/fuel_pump-a1-r&lt;v&gt;-attempt-&lt;k&gt;.png: r2 from 4, r3 from 12 (if prompts.json
+holds a higher number for a view, go on from that), and never delete or overwrite a painting. Ask
+the tool for 1024x1024 and record the size it returns in &quot;returned&quot; (the earlier pictures came
+back 1254x1254).
+
+THE STATE. fuel_pump-a1-r1.png is attempt 12 of r1, accepted (plan 2.39, height 0.43, camera 1.2,
+light 137/76). Check it is byte-identical to raw/fuel_pump-a1-r1-attempt-12.png and leave it alone.
+r0, fuel_pump-a1-r0.png, sha256 c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0:
+check the hash first; if it differs, stop and say so. r3 attempt 9 (fuel_pump-a1-r3.png) has the
+right light but a squat house and a wrong crane; it stays where it is and is used below only as a
+light reference. r2 is still the old wrong building (raw attempt 2).
+
+THE BUILDING (r0). A LONG, NARROW red-brick pump house on cream limestone quoins and base; its
+long side is about 2.4 times its short side; walls tall, about 0.45 of the house&#x27;s width. The long
+side has two bays: the door bay (forest-green plank door, lamp over it, a small slate-roofed porch
+gable a little forward of the wall), a downpipe, a plain bay, and a big quoined pier at the end.
+The short side and the back are plain brick between quoins: no door, no window, no porch, no lamp.
+On the house a dark steel frame with X bracing, and on it a riveted forest-green steel tank with
+two oat-cream bands, a railing, a manhole and a vent, as long as the long side and as deep as the
+house, covering the whole roof. At one end of the long side a tall forest-green hose crane: ONE
+post with one diagonal brace and ONE jib, about 0.43 tile long (the width of the short side), the
+hose hanging from the jib&#x27;s end. Pipes with copper bands run from the tank to the crane.
+THE LIGHT never turns with the building. It comes from the upper left: tops lightest, the
+lower-left wall mid (r0&#x27;s front, luma 112), the lower-right wall darkest (r0&#x27;s short side, 67).
+Camera: orthographic 2:1 isometric, 30 degrees down, no perspective; both wall feet fall one pixel
+for every two across.
+
+================ PART 1: r2 (paint now; it does not depend on r3) ================
+
+Before painting: make the r1 reference with
+node assets/source/fuel-2026-10-11/fit-refs.mjs assets/source/fuel-2026-10-11/fuel_pump-a1-r1.png 1 assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r1-fitted.png
+and commit it. Do not make an r3 reference.
+
+Attach, in this order: (1) guides/fuel_pump-r2.png, the image to edit; (2) the style board
+docs/art-direction/images/03-theme-town-growth.png; (3) refs/fuel_pump-a1-r0-fitted.png;
+(4) refs/fuel_pump-a1-r1-fitted.png. Start an image edit.
+
+Prompt: the &quot;shared&quot; text, the &quot;views.r2&quot; line and &quot;age&quot; of prompts.json &quot;verbatim&quot;, word for
+word; then &quot;Fuel Pump. A railway refuelling point for diesel engines&quot;, followed by THE BUILDING and
+THE LIGHT above; then these paragraphs.
+
+&quot;View r2. The front faces the upper right, hidden: nothing of the front shows on either visible
+wall. The lower-left wall is the BACK: LONG, plain brick between quoins, no door, no porch, two
+bays wide, as the lower-right wall of the fourth picture. The lower-right wall is the left-hand
+side: SHORT and plain, one bay wide, brick between limestone quoins with a quoined pier at each
+end, no door, no window, no porch, no lamp. The tank lies along the lower-left wall and is as long
+as it. The crane&#x27;s post stands at the right corner, where the guide&#x27;s thin post is, with one
+diagonal brace and one jib that rises to the upper right, parallel to the lower-right wall&#x27;s foot;
+the jib is about as long as the short side is wide (about 92 px on the guide), not longer, and the
+hose hangs from its end. The post&#x27;s top stands above the tank&#x27;s top.&quot;
+
+&quot;References: the first is the guide, the second the style board. The third is this same building
+in view r0, seen from the front, laid onto its footprint at the guide&#x27;s camera and scale. The
+fourth is this building in view r1: its lower-right wall is the BACK and is the lower-left wall of
+this picture; take its walls, tank and colours from it, but not its crane, whose jib is too long.
+Paint the SAME building at the same size, turned on a turntable while the camera stays where it is.
+It is not a mirror image and not a copy of any reference. The light stays where it is. It is
+exactly as large as in the references: no taller, no lower, no storey more. Do not paint the
+reference again.&quot;
+
+&quot;Footprint, in pixels on the guide&#x27;s 1024x1024 canvas (if your tool returns another size, scale
+every number by its width / 1024 and keep the same places): the house&#x27;s three outer corners at
+ground level are w (353, 799), s (579, 911) and e (671, 865). The lower-left foot from w to s is
+225 px long, the lower-right foot from s to e is 92 px, and the house is 317 px wide from w to e.
+Nothing at ground level goes outside that diamond. The brick wall, foot to the top of its quoins
+at the near corner s, is 136 to 149 px tall (the quoin top at about y 762 to 775 there); the steel
+frame and the tank stand above it, the tank&#x27;s top rim reaching about y 560 at s. Do not widen,
+lengthen or lower the house.&quot;
+
+Then the output rules: &quot;Output: 1024x1024 RGBA PNG, transparent background, opaque surfaces.
+Smooth painted contours, broad masses, three or four shades per material. Nothing at or above
+#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside
+the base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or
+loose objects.&quot;
+
+Measure each attempt (node assets/source/fuel-2026-10-11/record-attempt.mjs r2 &lt;k&gt; &lt;metadata.json&gt;
+writes prompts.json; give it the corners you used, the height points and the light boxes):
+- Plan: lower-left foot / lower-right foot (s.x - w.x over e.x - s.x) between 2.0 and 2.8. If
+  measureBase&#x27;s w, s or e falls on the crane, a pipe or inside a quoin step, read the outer quoin
+  corner by eye, and record both values.
+- Height: the brick wall at the near corner s, foot to quoin top, divided by e.x - w.x: 0.43 to
+  0.47 (r0 and r1: 0.43).
+- Camera: record-attempt.mjs runs checkFile for t1 and rotation 2: at most 2 degrees.
+- Light: light-check.mjs with a box on plain brick of the lower-left wall, then one of the
+  lower-right wall, clear of quoins and the crane. The lower-right median is at most 0.75 times the
+  lower-left&#x27;s, the lower-left between 100 and 150 and the lower-right between 60 and 85.
+- Look, on grass as in review/: the long plain back on the lower left and the short plain side on
+  the lower right, no door, porch or lamp anywhere, one crane post at the right corner with a
+  jib about as long as the short side, set beside r0 and r1 it is the same building. Record the
+  house&#x27;s width as a fraction of the picture, but it is not a pass test.
+At most three attempts. After an attempt that fails, repaint on guides/fuel_pump-r2.png again with
+the same attachments (never attach a failed picture) and add exactly one paragraph that begins
+&quot;Correction:&quot; and names the number it missed, as &quot;your last r2 had height 0.37 where 0.43 to 0.47
+is wanted&quot;; it replaces the earlier Correction, so that no prompt has more than one. A picture
+refused for camera alone, passing the rest, may be kept if it is within 3 degrees (record that). If
+none passes, keep the closest, say which test failed with its number, and do not copy anything to
+fuel_pump-a1-r2.png. If one passes, copy it to fuel_pump-a1-r2.png.
+Commit &quot;Art: Fuel Pump r2 repainted on r0&#x27;s plan&quot; and push.
+
+================ PART 2: r3 step 1, crane and hose only ================
+
+Attempt 12 onward. Attach, in this order: (1) raw/fuel_pump-a1-r3-attempt-7.png, the image to edit;
+(2) refs/fuel_pump-a1-r0-fitted.png, for the crane&#x27;s look only. This is not a copy of r0: in the
+edit&#x27;s picture the long wall is on the lower right and the short plain wall on the lower left, and
+they stay so. Start an image edit. Every coordinate below is in attempt 7&#x27;s 1254x1254 frame. Do not
+use the bare guide in this step.
+
+Prompt (write it yourself in these words, one change only):
+&quot;Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at
+ground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;
+the house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,
+the downpipe, the tank and the frame as they are. Change only the crane and the hose:
+1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)
+   and the long green beam that runs from it down-right over the tank.
+2. Make the thick green riser at the near corner (x about 520 to 575) the crane&#x27;s ONE post: it
+   stands on the ground at the near corner, x about 562, and rises well above the tank, its top
+   about 40 px above the tank&#x27;s top outline there. One diagonal brace from the post up to the jib.
+3. ONE jib from the post&#x27;s top, falling to the lower right and parallel to the lower-left wall&#x27;s
+   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.
+   The second picture shows the crane to copy, nothing else.
+4. The hose hangs from the jib&#x27;s end, in front of the door bay, and ends at the top of the door
+   frame, near y 840: about 140 px shorter than the present one.
+Transparent background, nothing else added; output rules as in Part 1.&quot;
+
+Measure: plan by measure-plan.mjs and record-attempt.mjs r3.
+- Footprint: w, s and e each within 10 px of (381, 1009), (562, 1107) and (1057, 846), and e.x - w.x
+  within 10 px of 676. If one is not, this attempt failed.
+- Crane: exactly one green post and one jib, no beam over the tank; post top above the tank&#x27;s top
+  outline; jib horizontal reach 150 to 210 px; the hose end between x 700 and 790 and y 800 and
+  880, over the door bay.
+- Height: near corner foot to quoin top over e.x - w.x, 0.39 to 0.47: no lower than attempt 7&#x27;s
+  (about 0.40); the walls are not to change in this step.
+- Plan 2.0 to 2.8; camera at most 3 degrees and no worse than 2.5 (attempt 7 is 2.2).
+- Light unchanged: light-check.mjs on attempt 7&#x27;s boxes 400,880,530,1000 and 850,760,1000,860:
+  each median within 8 of attempt 7&#x27;s (119 and 121). If a box no longer lies on plain brick, move it
+  and say so.
+At most three attempts; each starts again from attempt 7 with the same attachments, plus one
+&quot;Correction:&quot; paragraph naming the number it missed (as &quot;your last picture&#x27;s hose ended at y 1010
+where y 800 to 880 is wanted&quot;). One Correction at a time. If none passes, keep the closest, say
+which test it failed with its number, run no step 2 and stop after the commit. If one passes, keep
+it (call it S1).
+Commit &quot;Art: Fuel Pump r3 crane and hose&quot; and push.
+
+================ PART 3: r3 step 2, light only ================
+
+Only if S1 passed. Attach, in this order: (1) S1, the image to edit; (2) raw/fuel_pump-a1-r3-attempt-9.png,
+for the light only. Prompt: &quot;Edit the first picture and change only the light. Take the light from
+the second picture and the geometry from the first. The house, the crane, the hose and every edge
+stay exactly where they are. Make the long lower-right wall dark (its brick median luma near 72),
+with its quoins, door, porch side and pier as dark as r0&#x27;s short side, and the short lower-left
+wall mid (near 112 to 146). The tank&#x27;s long side, which faces the lower right, is dark, and its end
+facing the lower left is mid green. Transparent background, nothing else added; output rules as in
+Part 1.&quot;
+Measure: light-check.mjs with the boxes of Part 2: the lower-right median 60 to 85, the
+lower-left 112 to 146, ratio at most 0.75. Geometry: w, s and e each within 10 px of S1&#x27;s and
+e.x - w.x within 10 px of S1&#x27;s, the wall top, post top, jib end and hose end each within 15 px of
+S1&#x27;s, camera no worse than S1&#x27;s by more than 0.5. If any attempt WIDENS the house (any corner moves
+more than 10 px or the width grows by more than 10 px), stop step 2 at once and say so: Art will
+relight S1 deterministically. Otherwise at most three attempts; each starts again from S1 with the
+same attachments, plus one &quot;Correction:&quot; paragraph naming the number it missed. If a picture passes
+both light and geometry, copy it to fuel_pump-a1-r3.png; if none does, leave fuel_pump-a1-r3.png
+(attempt 9) as it is and record S1 as the geometry to keep.
+Commit &quot;Art: Fuel Pump r3 relit on the new crane&quot; and push.
+
+RECORDS. Add every attempt to prompts.json &quot;attempts&quot; as {view, attempt, selected, file, prompt,
+references, returned, measured} (record-attempt.mjs does it; put &quot;r3 step 1&quot; or &quot;r3 step 2&quot; first
+in &quot;observation&quot;), with the plan corners and whether any were read by eye, the height, camera, the
+light values with their boxes, and what you saw. Update &quot;selection&quot; and &quot;qa&quot;. Put a grass sheet of
+each kept picture in review/.
+
+END. In your message give, for each attempt: the view and step, plan ratio, height, camera, the
+light values, the corner positions for r3, and which attempt was kept and why; and say plainly
+whether r2 was accepted, whether r3 step 1 and step 2 passed, and whether step 2 widened the house.</pre>
+</section>
+<section class="card" id="c17c">
+  <header><span class="cid">C17c</span><h2>Windmill body without sails, in the game&#x27;s camera, on the new block-out (1 picture)</h2><button class="copy" type="button" data-for="p-c17c">Copy prompt</button></header>
+  <p class="note"><b>Buildings lane, after R8d. Branch art/461-windmill-sails (exists, head beed486 or later).</b> Issue #461. The author found the demo&#x27;s windmill wonky and asked for a repaint so it can be animated. The accepted body was seen from 19&deg; down instead of the game&#x27;s 30&deg;, with its door and shaft turned about 27&deg; off, so the sails could not sit on it. C17c paints the tower again, without sails, as an edit of Art&#x27;s block-out in the game&#x27;s own projection (on develop, assets/source/buildings-v2/guides/, PR #490), and records the hub point. The sail cross from C17b is kept. Every number is measured from the foot&#x27;s width: camera, height, shaft slope, hub, door. Near-white pixels alone do not fail a picture; Art caps them at packing.</p>
+  <pre id="p-c17c" tabindex="0">Paint the windmill&#x27;s tower again, without its sails, for the isometric railway game in this
+repository, for issue #461. The first body was drawn in the wrong camera, so the sails could not be
+animated on it; this one is an edit of a block-out drawn by the game&#x27;s own projection. Work on
+branch art/461-windmill-sails, which exists: git fetch origin art/461-windmill-sails develop, git
+switch art/461-windmill-sails, git pull --ff-only (head beed486 or later), then git merge
+origin/develop once, so that the guide arrives as new files; if the merge conflicts, stop and say
+where. Touch nothing outside the new folder assets/source/windmill-2026-10-17/ (nothing in
+windmill-2026-10-16/ is edited, and the sail cross there stays as it is: you paint no sails).
+Commit there and push the branch. Never push to main or develop. Commit subjects read &quot;Art:
+&lt;outcome&gt;&quot;. Keep every picture your image tool returns, byte for byte, as
+raw/windmill-a0-r0-attempt-&lt;k&gt;.png, k from 1, and record each call in prompts.json: {attempt,
+file, prompt, references, returned (the size it came back), numbers (below), kept}. Never delete
+or overwrite a picture.
+
+WHY AGAIN. The accepted body was seen from a camera 19.2 degrees down where the game&#x27;s is 30 (its
+foot was an ellipse 0.31 minor over major, the game&#x27;s is 0.50), and its door, window and windshaft
+faced 25 to 29 degrees left of the view axis instead of straight out of the lower-left face; its
+door was 2.5 m high where the game&#x27;s is 2.1 m; it carried 6,499 near-white pixels. The new guide
+is drawn by the game&#x27;s own projection: the foot is the 0.50 ellipse, and the door and the shaft
+stand on the tower&#x27;s lower-left face (tile +y).
+
+THE FILES, after the merge (check they exist; if not, stop and say so):
+- assets/source/buildings-v2/guides/windmill-r0.png, 1024 x 1024, the grey block-out: the picture
+  you edit, every attempt. A round tapered tower on a square grey slab (the slab is the ground:
+  never paint it), a cone cap, a short stub pointing down-left out of the cap ending at a dark
+  oval plate, and a dark door on the lower-left face. Its shape is law.
+- assets/source/buildings-v2/guides/windmill-r0-hub.json: the numbers of that block-out: hub
+  (canvas 384,560; from the footprint centre -16,-34 game px), the foot ellipse (centre 512,800,
+  semi-axes 171.97 and 85.98, ratio 0.50), the door (2.1 m, 10.8 game px high), the shaft&#x27;s
+  screen direction (-0.894, 0.447), slope 0.5. A game px is 8 canvas px.
+- assets/source/buildings-v2/guides/windmill-sails-face.png: not used here.
+Read GUIDE.md (assets/source/buildings-v2/) section 2, and the bullet of section 3 that names
+&quot;The windmill&#x27;s guide&quot;, and the bullet of docs/art-direction/building-production.md that begins
+&#x27;The windmill (`guideKind: &quot;windmill&quot;`)&#x27;. The building queue does not handle the windmill: do not
+run tools/building-queue.mjs.
+
+REFERENCES (never attach more than these four, in this order; never an attempt of yours, never a
+.rejected file):
+(1) the guide, the image to edit; (2) docs/art-direction/images/03-theme-town-growth.png, the
+style board; (3) assets/source/base-v1/windmill.png, the windmill the game shows today (its
+shipped sprite structures/windmill is this picture scaled down): take its stone, slate and door,
+not its sails and not its pose; (4) assets/source/windmill-2026-10-16/windmill-a0-r0.png, the
+first body: take its stone courses, window and slate cap, nothing of its camera. Pictures 3 and 4
+were painted from a lower camera and a different turn; their foot, their door&#x27;s slant and their
+shaft are wrong. Do not copy them, only their colours and materials. Ask for 1024 x 1024,
+transparent background. Do not fix a returned picture by resizing, cropping or repainting it.
+
+THE PROMPT, word for word, every attempt (then any Correction paragraphs below it):
+
+&quot;Edit this grey block-out into ONE finished stone tower windmill WITHOUT SAILS, for a pastoral
+isometric railway game. Style: the attached style board; crisp clustered shading, broad readable
+masses, three or four shades per material. Materials as the third and fourth pictures: cream
+limestone courses with a few grey stones, a dark slate cone cap, an evergreen plank door with
+iron straps. Light from the upper left: the cap&#x27;s left side and the tower&#x27;s upper left lightest,
+the lower-left face mid-tone, the lower-right face darkest. Nothing brighter than a soft cream: no
+pure-white highlights, nothing orange.
+
+Camera: keep the block-out&#x27;s camera and turn exactly. Orthographic 2:1 isometric, 30 degrees
+down. The tower is round and smooth, no facets: its foot is an ellipse half as tall as it is
+wide, and every stone course curves like that foot (down in the middle of the face), not as a
+straight line. Keep the tower&#x27;s size, taper and place, and the cone cap&#x27;s height: the cone&#x27;s tip
+stands where the block-out&#x27;s does, with a plain tip, no finial, no ball. The dark door stays on
+the LOWER-LEFT face where the block-out has it, at ground level on the tower&#x27;s foot, as tall as the
+block-out&#x27;s door (about a quarter of the tower&#x27;s foot width), an evergreen plank door with iron
+straps and a plain stone frame; no step, no sack, nothing in front. One narrow window may sit
+above it on the same face, on the same centre line. The windshaft: keep the block-out&#x27;s stub, a
+short round shaft of dark iron-banded timber coming out of the cap&#x27;s lower-left slope and pointing
+down and to the left along the lower-left face, two pixels across for each pixel down, and
+ending in the block-out&#x27;s dark iron hub plate, the same oval at the same place; the plate is bare,
+with nothing on it.
+
+Do not paint the grey slab: the tower stands straight on the ground, its foot plain and clean. No
+sails, no stocks, no timber lattice, no square iron plate, no shadow, ground, grass, sacks, people,
+text, border or glow. A real RGBA PNG with a transparent background (alpha 0) and an opaque
+building. References: the first is the block-out to edit; the second the style board; the third
+the game&#x27;s present windmill, for stone, slate and door only (not its sails); the fourth an earlier
+body, for stone, slate and window only, drawn from a camera that is wrong: do not copy its angle.&quot;
+
+MEASURE EVERY PICTURE BEFORE YOU GO ON. Write check-body.mjs once in the folder; it reads the
+picture and prints each number below with PASS or FAIL. Only the foot is read by machine:
+- camera: from tools/building-fit.mjs, roundCamera(png) (ratio, and degrees off), and from
+  tools/building-check.mjs, checkFile(path, &#x27;t1&#x27;, 0, { round: true }), which must list no
+  problem (background, edge, shadow). Do not run it through the command line form: that writes
+  assets/source/buildings-v2/report.json, which is not yours. The foot columns are those whose
+  lowest pixel is within 0.4 of the building&#x27;s width of the lowest pixel of all; W is their span,
+  xc their middle, yc = lowest pixel - 0.25 W (the ellipse&#x27;s centre), s = W / 42.99 picture px per
+  game px.
+Everything else you read off a zoomed crop of the picture and pass to the script as coordinates.
+A picture passes when:
+- foot ellipse: minor over major 0.50 +-0.04, at most 2 degrees off (a picture 2 to 3 degrees
+  off that passes the rest is a near keeper: kept and reported; if the best attempt is still more
+  than 3 degrees off, stop, do not paint again);
+- tower: (yc - the topmost opaque pixel) / W within 5% of the block-out&#x27;s 1.105 (1.05 to 1.16);
+  W over the shorter side of the picture between 0.25 and 0.45;
+- stub: two points on the top edge of the stub, one near the cap, one near the plate; the edge
+  goes down to the left at slope 0.50 +-0.08;
+- hub: the plate&#x27;s centre, ((x - xc) / s, (y - yc) / s - 4), is within 2 game px of (-16, -34);
+- door: its centre column is (x - xc) / W = -0.354 +-0.04; its height over W is 0.251 +-0.03
+  (a 2.5 m door reads 0.30);
+- clean: pixels with hue 8 to 48 degrees, saturation 0.45 or more and value 0.60 or less (the sail
+  timber; the stone&#x27;s own warmth is not counted) outside the door and the hub plate: at most 25;
+  opaque pixels (alpha above 128) with red, green and blue all at or above #ECE4D0: 0; within 12
+  (RGB distance) of selection amber #E8AA48: 0. A picture whose only miss is the near-white count
+  is a keeper all the same: record the count, and Art caps those pixels when it packs the sprite;
+  name it in a Correction only while another test also failed;
+- by eye, on your own look at the zoomed picture: a round smooth tower, no sails or stocks or
+  lattice, no plinth, no finial, nothing standing at the foot, nothing orange, the lower-left face
+  lighter than the lower-right, the door and the shaft on the lower-left face, the cap slate.
+
+A picture that fails: keep the prompt whole, add under it one paragraph beginning &quot;Correction:&quot;
+that names the number it missed, as &quot;your last body&#x27;s foot read 0.41 where the block-out&#x27;s is
+0.50&quot;, and keep every earlier Correction paragraph. Always edit the guide, never an attempt. At
+most three attempts. If none passes, keep the closest in raw/, copy it to the kept file all the
+same, mark it kept: false with the test it failed in prompts.json, and say so in your message:
+never accept it quietly.
+
+THE KEPT PICTURE. Copy the passing (or closest) raw file, byte for byte, to
+assets/source/windmill-2026-10-17/windmill-a0-r0.png and write hub.json beside it: {picture,
+size, box [left, top, right, bottom of the pixels above alpha 128], footCentre [xc, yc],
+footWidth W, hub [x, y] of the plate&#x27;s centre as you read it, hubFromAnchorWorld [dx, dy] in game
+px as the hub test computes it, door [left, top, right, bottom], apexTop (the topmost pixel&#x27;s y),
+numbers (every test&#x27;s value)}. Commit &quot;Art: windmill body without sails in the game&#x27;s camera&quot;,
+push the branch and stop. In your message give, for each attempt: the returned size, the foot
+ratio and degrees, apex over W, the stub slope, the hub offset from (-16, -34), the door&#x27;s
+position and height numbers, the three pixel counts, and which attempt was kept; and the path of
+hub.json. Do not paste pictures.</pre>
+</section>
+<section class="card" id="r7c1">
+  <header><span class="cid">R7c-1</span><h2>People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)</h2><button class="copy" type="button" data-for="p-r7c1">Copy prompt</button></header>
+  <p class="note"><b>People lane. Branch art/331-people (exists, head 8005c80 or later).</b> Issue #331. The author chose to repaint whole figures, not only legs. Earlier rounds failed because Codex copies the legs of any painting attached to it, so each pose is now an edit of Art&#x27;s grey pose mannequin (on develop, assets/source/people-v3-guides/, PR #491: the game&#x27;s camera and gait, turned 45 degrees), with only the lumberjack&#x27;s upper body attached for his look. The lumberjack keeps his axe on his shoulder. Every pose is measured: height, soles, the planted foot&#x27;s slide, the turn, and that P1 and P3 differ. If this trial passes, R7c-2 onward repaint the other back strips and the limping front strips the same way.</p>
+  <pre id="p-r7c1" tabindex="0">Paint one walking strip of the lumberjack again for the isometric railway game in this repository, for issue #331, by a new method: the whole figure is repainted, one picture per pose, as an edit of a grey pose guide. This is a trial on one strip only (lumberjack-back-walk, four pictures); the other strips wait for its result. Work on branch art/331-people, which exists: git fetch origin art/331-people develop, git switch art/331-people, git pull --ff-only (head 8005c80 or later), then git merge origin/develop once, so the guides arrive as new files in assets/source/people-v3-guides/ and tools/people-guides.mjs; if the merge conflicts, stop and say where. Touch nothing outside the new folder assets/source/people-2026-10-11/v3/ (make raw/, poses/, strips/, checks/ and prompts.json there). Everything else in people-2026-10-11 stays as it is: do not run or edit its scripts, do not overwrite any strip in it. Never push to main or develop. Commit subjects read &quot;Art: &lt;outcome&gt;&quot;. Keep every picture your image tool returns, byte for byte, as v3/raw/lumberjack-back-walk-f&lt;k&gt;-attempt-&lt;n&gt;.png (k = 0..3), and record each call, its whole prompt and its measured numbers in v3/prompts.json.
+
+THE METHOD, AND WHAT YOU MAY ATTACH. Frame k is pose P(k+1) of the walk cycle in time order. Each picture is an edit of ONE guide, assets/source/people-v3-guides/back-shoulder-p&lt;k+1&gt;.png (1024 x 1536, a grey mannequin in the game&#x27;s own camera and gait, walking up and to the right, turned 45 degrees: we see the back and the right side), with ONE identity picture, assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png (the man above the hips, 512 x 768, half the guide&#x27;s scale, legs cut off). Read assets/source/people-v3-guides/README.md in full first. Attach those two and nothing else. Never attach a painting that has legs: no old strip or frame in people-2026-10-11, no earlier attempt of yours, no kept picture of a neighbouring pose. Earlier rounds failed because you copy the legs of any painting attached to you, whatever the words say. Edit the guide; do not generate fresh.
+
+THE PICTURE PROMPT. Send this to the image tool as it stands, with the pose line of the pose in place of &lt;POSE&gt;. Ask for 1024 x 1536.
+&quot;EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. &lt;POSE&gt; IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide&#x27;s size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide&#x27;s hand is, the head behind his shoulder; his left arm swings as the guide&#x27;s does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.&quot;
+POSE lines. P1: &quot;Pose 1 of 4, contact: his right leg, on the picture&#x27;s right, leads with the heel down and the toe up; his left leg trails on the picture&#x27;s left, toe down and heel lifted; left arm forward, right arm back.&quot; P2: &quot;Pose 2 of 4, passing: his right leg is planted flat and standing; his left leg swings, thigh forward, knee bent, the foot clear of the ground; both arms near the body.&quot; P3: &quot;Pose 3 of 4, contact: his left leg leads with the heel down and the toe up; his right leg trails, toe down and heel lifted; right arm forward, left arm back.&quot; P4: &quot;Pose 4 of 4, passing: his left leg is planted flat and standing; his right leg swings, thigh forward, knee bent, the foot clear of the ground; both arms near the body.&quot;
+
+THE TOOL FOR THE NUMBERS. Write v3/measure-v3.mjs. Copy people-2026-10-11/pose-png.mjs and contact-overlap.mjs into v3/ (their paths then stay in v3/); take isOverWhite and isAmberStrong from tools/atlas-cap.mjs, and the guide joints and groundPoint from assets/source/people-v3-guides/manifest.json (guides entry back-shoulder-p&lt;n&gt;.png). Measure on the picture as returned; if it is another 2:3 size, scale columns and rows by width / 1024 first; any other shape fails. &quot;Opaque&quot; is alpha above 128. Tests per picture (guide numbers in brackets, P1, P2, P3, P4):
+1. Height: box() height of the picture within 3% of the same on the guide (measure each back-shoulder guide with your tool; the axe may stand above the head, so measure the figure without anything above the cap&#x27;s top).
+2. Soles: the lowest opaque row within 8 px of row 1440, the guide&#x27;s (a quarter of a texel at the game&#x27;s zoom 4).
+3. Planted foot. For a foot (right at P1, P2, P3; left at P3, P4) take the opaque pixels inside the window x from the least to the most of that foot&#x27;s heel, toe and ankle canvas x in the manifest, minus and plus 30; y from 145 above the lowest of those joints&#x27; y, to 30 below it. Let ylow be the lowest opaque row in the window; the foot&#x27;s point (cx, cy) is the mean of the opaque pixels of the window in rows ylow - 40 to ylow; f = ((cx - 512) - 2 * (cy - gy)) / 1717.6, gy the guide&#x27;s groundPoint row. Slide of a pair of poses (1,2), (2,3), (3,4) is f of the earlier minus f of the later, on the same foot. The back-swing guides give f 0.1106, -0.0068, -0.0403 (right, P1 to P3) and 0.0769, 0.0148 (left, P3, P4), slides 0.1173, 0.0335, 0.0621; the back-shoulder guides have the same legs, so your tool should give the same on them; use the values it gives on the back-shoulder guides. The gait&#x27;s step is 0.123 of the height per pose; the test is that each slide of the picture is within 0.01 of the guide&#x27;s. A pair is checked when its later pose is painted, against the kept earlier picture; a miss belongs to the later pose.
+4. Repeat: contactOverlap() of the kept P1 with P3 below 0.45 (hatTop and soleRow taken from each picture&#x27;s box); the back-swing guides give 0.221. Report the P2 with P4 figure too (the guide&#x27;s is 0.504); it is not a pass rule.
+5. Turned: the topmost opaque row in columns 352 to 412 (L) and in columns 614 to 668 (R); (R - L) / 960 within 0.03 of the same measure on the back-shoulder guide of the pose (the back-swing guides give 0.070; a figure straight away from the camera gives under 0); if the axe&#x27;s head lies in those columns, take the shoulder&#x27;s top under it. By eye also: the back of the head and the right side, no face from the front.
+6. Caps: no pixel with alpha 16 or more for which isOverWhite or isAmberStrong is true.
+7. Real RGBA: PNG colour type 6, all four corners alpha 0.
+Before any call, run the tool on the four back-swing guides and check it gives the numbers above (they are Art&#x27;s, from the same code); if it does not, fix your tool, or if the words are ambiguous stop and say what differs. Then run it on the four back-shoulder guides and record their numbers in prompts.json: they are the targets. Make it print every number for every picture.
+
+PROCEDURE. Paint P1, P2, P3, P4 in that order, one call each, then measure. A picture is accepted only when every test passes. After a failed attempt, send the same prompt whole, from the guide and the identity picture again (never from the failed picture), with one added paragraph beginning &quot;Correction:&quot; that names the number it missed in plain words (&quot;your last picture&#x27;s lowest sole was on row 1411, the guide&#x27;s is 1440&quot;, &quot;the shoulders were level, the guide&#x27;s right shoulder stands 67 px lower than the left&quot;). At most three attempts a pose and twelve calls in all. If the same test fails on the same pose twice, stop there and report; the guide is then to be changed, not the prompt. If a pose uses its three attempts without passing, keep the closest, record the failed test, stop and say so. Do not paint on after a failed pose.
+
+IF ALL FOUR PASS. Assemble the strip with a copy of the branch&#x27;s tool: copy assemble-strips.mjs to v3/assemble-v3.mjs and change it so that it reads the four kept pictures from v3/prompts.json, divides by 960 where it divided by 1152 (one uniform scale, 360 / 960 = 0.375), puts each frame&#x27;s guide groundPoint (the exact anchor, not the measured sole row) on the column&#x27;s anchor (centre column, row 480), keeps its rule for the column width (192, 256 or 320), and writes v3/strips/lumberjack-back-walk.png and its 9 px, 9 px at 6x and 36 px sheets in v3/checks/; it must not back up, overwrite or read anything outside v3/. Then look, and say in the report what you see, at: the 50% overlay of P1 over P3 (thighs crossing in an X); the 9 px and 36 px strips (the leading leg changes between frames 0 and 2; frames 1 and 3 lift opposite feet; the figure reads as a walk, not as sliding); and whether the four frames show one man (cap, shirt, trousers, boots). Commit (&quot;Art: lumberjack-back-walk repainted whole on the pose guides&quot;) and push the branch. If a pose failed, still commit the raw pictures, prompts.json and the tool as &quot;Art: R7c-1 trial attempts recorded&quot;, and push.
+
+REPORT. The branch head, then for every attempt: pose, attempt, the numbers of tests 1 to 7, pass or fail, and which attempt is kept; the calls used of twelve; the paths of the strip, the checks and the overlay; the by-eye findings; and anything in this prompt you could not do as written. Paths only for pictures; do not paste images or base64.</pre>
+</section>
+<section class="card" id="coming">
+  <header><h2>Coming next (not pasteable yet)</h2></header>
+  <ul>
+    <li><b>Coaling stage r1 and r3</b>, issue #325: C4d failed again (Codex paints the stage wider than its plinth). The next step waits for the author&#x27;s answer on the board card &quot;Coaling stage turned views&quot;: Art builds them from r0, or another Codex round on a new guide.</li>
+  </ul>
+</section>
+</div>
+<script>
+  for (const b of document.querySelectorAll('.copy')) b.addEventListener('click', async () => {
+    const pre = document.getElementById(b.dataset.for);
+    try { await navigator.clipboard.writeText(pre.textContent); b.textContent = 'Copied'; }
+    catch { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected: press Ctrl+C'; }
+    setTimeout(() => (b.textContent = 'Copy prompt'), 2200);
+  });
+</script>

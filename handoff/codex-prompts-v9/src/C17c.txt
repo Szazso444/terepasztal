@@ -1,0 +1,126 @@
+Paint the windmill's tower again, without its sails, for the isometric railway game in this
+repository, for issue #461. The first body was drawn in the wrong camera, so the sails could not be
+animated on it; this one is an edit of a block-out drawn by the game's own projection. Work on
+branch art/461-windmill-sails, which exists: git fetch origin art/461-windmill-sails develop, git
+switch art/461-windmill-sails, git pull --ff-only (head beed486 or later), then git merge
+origin/develop once, so that the guide arrives as new files; if the merge conflicts, stop and say
+where. Touch nothing outside the new folder assets/source/windmill-2026-10-17/ (nothing in
+windmill-2026-10-16/ is edited, and the sail cross there stays as it is: you paint no sails).
+Commit there and push the branch. Never push to main or develop. Commit subjects read "Art:
+<outcome>". Keep every picture your image tool returns, byte for byte, as
+raw/windmill-a0-r0-attempt-<k>.png, k from 1, and record each call in prompts.json: {attempt,
+file, prompt, references, returned (the size it came back), numbers (below), kept}. Never delete
+or overwrite a picture.
+
+WHY AGAIN. The accepted body was seen from a camera 19.2 degrees down where the game's is 30 (its
+foot was an ellipse 0.31 minor over major, the game's is 0.50), and its door, window and windshaft
+faced 25 to 29 degrees left of the view axis instead of straight out of the lower-left face; its
+door was 2.5 m high where the game's is 2.1 m; it carried 6,499 near-white pixels. The new guide
+is drawn by the game's own projection: the foot is the 0.50 ellipse, and the door and the shaft
+stand on the tower's lower-left face (tile +y).
+
+THE FILES, after the merge (check they exist; if not, stop and say so):
+- assets/source/buildings-v2/guides/windmill-r0.png, 1024 x 1024, the grey block-out: the picture
+  you edit, every attempt. A round tapered tower on a square grey slab (the slab is the ground:
+  never paint it), a cone cap, a short stub pointing down-left out of the cap ending at a dark
+  oval plate, and a dark door on the lower-left face. Its shape is law.
+- assets/source/buildings-v2/guides/windmill-r0-hub.json: the numbers of that block-out: hub
+  (canvas 384,560; from the footprint centre -16,-34 game px), the foot ellipse (centre 512,800,
+  semi-axes 171.97 and 85.98, ratio 0.50), the door (2.1 m, 10.8 game px high), the shaft's
+  screen direction (-0.894, 0.447), slope 0.5. A game px is 8 canvas px.
+- assets/source/buildings-v2/guides/windmill-sails-face.png: not used here.
+Read GUIDE.md (assets/source/buildings-v2/) section 2, and the bullet of section 3 that names
+"The windmill's guide", and the bullet of docs/art-direction/building-production.md that begins
+'The windmill (`guideKind: "windmill"`)'. The building queue does not handle the windmill: do not
+run tools/building-queue.mjs.
+
+REFERENCES (never attach more than these four, in this order; never an attempt of yours, never a
+.rejected file):
+(1) the guide, the image to edit; (2) docs/art-direction/images/03-theme-town-growth.png, the
+style board; (3) assets/source/base-v1/windmill.png, the windmill the game shows today (its
+shipped sprite structures/windmill is this picture scaled down): take its stone, slate and door,
+not its sails and not its pose; (4) assets/source/windmill-2026-10-16/windmill-a0-r0.png, the
+first body: take its stone courses, window and slate cap, nothing of its camera. Pictures 3 and 4
+were painted from a lower camera and a different turn; their foot, their door's slant and their
+shaft are wrong. Do not copy them, only their colours and materials. Ask for 1024 x 1024,
+transparent background. Do not fix a returned picture by resizing, cropping or repainting it.
+
+THE PROMPT, word for word, every attempt (then any Correction paragraphs below it):
+
+"Edit this grey block-out into ONE finished stone tower windmill WITHOUT SAILS, for a pastoral
+isometric railway game. Style: the attached style board; crisp clustered shading, broad readable
+masses, three or four shades per material. Materials as the third and fourth pictures: cream
+limestone courses with a few grey stones, a dark slate cone cap, an evergreen plank door with
+iron straps. Light from the upper left: the cap's left side and the tower's upper left lightest,
+the lower-left face mid-tone, the lower-right face darkest. Nothing brighter than a soft cream: no
+pure-white highlights, nothing orange.
+
+Camera: keep the block-out's camera and turn exactly. Orthographic 2:1 isometric, 30 degrees
+down. The tower is round and smooth, no facets: its foot is an ellipse half as tall as it is
+wide, and every stone course curves like that foot (down in the middle of the face), not as a
+straight line. Keep the tower's size, taper and place, and the cone cap's height: the cone's tip
+stands where the block-out's does, with a plain tip, no finial, no ball. The dark door stays on
+the LOWER-LEFT face where the block-out has it, at ground level on the tower's foot, as tall as the
+block-out's door (about a quarter of the tower's foot width), an evergreen plank door with iron
+straps and a plain stone frame; no step, no sack, nothing in front. One narrow window may sit
+above it on the same face, on the same centre line. The windshaft: keep the block-out's stub, a
+short round shaft of dark iron-banded timber coming out of the cap's lower-left slope and pointing
+down and to the left along the lower-left face, two pixels across for each pixel down, and
+ending in the block-out's dark iron hub plate, the same oval at the same place; the plate is bare,
+with nothing on it.
+
+Do not paint the grey slab: the tower stands straight on the ground, its foot plain and clean. No
+sails, no stocks, no timber lattice, no square iron plate, no shadow, ground, grass, sacks, people,
+text, border or glow. A real RGBA PNG with a transparent background (alpha 0) and an opaque
+building. References: the first is the block-out to edit; the second the style board; the third
+the game's present windmill, for stone, slate and door only (not its sails); the fourth an earlier
+body, for stone, slate and window only, drawn from a camera that is wrong: do not copy its angle."
+
+MEASURE EVERY PICTURE BEFORE YOU GO ON. Write check-body.mjs once in the folder; it reads the
+picture and prints each number below with PASS or FAIL. Only the foot is read by machine:
+- camera: from tools/building-fit.mjs, roundCamera(png) (ratio, and degrees off), and from
+  tools/building-check.mjs, checkFile(path, 't1', 0, { round: true }), which must list no
+  problem (background, edge, shadow). Do not run it through the command line form: that writes
+  assets/source/buildings-v2/report.json, which is not yours. The foot columns are those whose
+  lowest pixel is within 0.4 of the building's width of the lowest pixel of all; W is their span,
+  xc their middle, yc = lowest pixel - 0.25 W (the ellipse's centre), s = W / 42.99 picture px per
+  game px.
+Everything else you read off a zoomed crop of the picture and pass to the script as coordinates.
+A picture passes when:
+- foot ellipse: minor over major 0.50 +-0.04, at most 2 degrees off (a picture 2 to 3 degrees
+  off that passes the rest is a near keeper: kept and reported; if the best attempt is still more
+  than 3 degrees off, stop, do not paint again);
+- tower: (yc - the topmost opaque pixel) / W within 5% of the block-out's 1.105 (1.05 to 1.16);
+  W over the shorter side of the picture between 0.25 and 0.45;
+- stub: two points on the top edge of the stub, one near the cap, one near the plate; the edge
+  goes down to the left at slope 0.50 +-0.08;
+- hub: the plate's centre, ((x - xc) / s, (y - yc) / s - 4), is within 2 game px of (-16, -34);
+- door: its centre column is (x - xc) / W = -0.354 +-0.04; its height over W is 0.251 +-0.03
+  (a 2.5 m door reads 0.30);
+- clean: pixels with hue 8 to 48 degrees, saturation 0.45 or more and value 0.60 or less (the sail
+  timber; the stone's own warmth is not counted) outside the door and the hub plate: at most 25;
+  opaque pixels (alpha above 128) with red, green and blue all at or above #ECE4D0: 0; within 12
+  (RGB distance) of selection amber #E8AA48: 0. A picture whose only miss is the near-white count
+  is a keeper all the same: record the count, and Art caps those pixels when it packs the sprite;
+  name it in a Correction only while another test also failed;
+- by eye, on your own look at the zoomed picture: a round smooth tower, no sails or stocks or
+  lattice, no plinth, no finial, nothing standing at the foot, nothing orange, the lower-left face
+  lighter than the lower-right, the door and the shaft on the lower-left face, the cap slate.
+
+A picture that fails: keep the prompt whole, add under it one paragraph beginning "Correction:"
+that names the number it missed, as "your last body's foot read 0.41 where the block-out's is
+0.50", and keep every earlier Correction paragraph. Always edit the guide, never an attempt. At
+most three attempts. If none passes, keep the closest in raw/, copy it to the kept file all the
+same, mark it kept: false with the test it failed in prompts.json, and say so in your message:
+never accept it quietly.
+
+THE KEPT PICTURE. Copy the passing (or closest) raw file, byte for byte, to
+assets/source/windmill-2026-10-17/windmill-a0-r0.png and write hub.json beside it: {picture,
+size, box [left, top, right, bottom of the pixels above alpha 128], footCentre [xc, yc],
+footWidth W, hub [x, y] of the plate's centre as you read it, hubFromAnchorWorld [dx, dy] in game
+px as the hub test computes it, door [left, top, right, bottom], apexTop (the topmost pixel's y),
+numbers (every test's value)}. Commit "Art: windmill body without sails in the game's camera",
+push the branch and stop. In your message give, for each attempt: the returned size, the foot
+ratio and degrees, apex over W, the stub slope, the hub offset from (-16, -34), the door's
+position and height numbers, the three pixel counts, and which attempt was kept; and the path of
+hub.json. Do not paste pictures.

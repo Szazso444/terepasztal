@@ -1,0 +1,347 @@
+<meta charset="utf-8">
+<title>Codex Art in Game</title>
+<style>
+  /* Layout: the game's own screen. Toolbar on top, the painted map with its tooltips, a side panel
+     listing every Codex picture. One look: the pastoral dark panels of src/ui/style.css. */
+  :root {
+    --stone: #253429;
+    --stone-dark: #1a251d;
+    --stone-light: #33463a;
+    --border-light: #6c7f60;
+    --border-dark: #0e150f;
+    --text: #e4d5b5;
+    --text-dim: #a49b80;
+    --amber: #e8aa48;
+    --cyan: #66ccd6;
+    --red: #e0675b;
+    --orange: #e8913a;
+    --green: #9cc06a;
+    --ground: #0e150f;
+    --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    --font-body: Verdana, Tahoma, 'DejaVu Sans', sans-serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background: var(--ground); color: var(--text); font: 12px/1.45 var(--font-body);
+    padding-inline: 16px; padding-block: 12px; box-sizing: border-box;
+  }
+  .wrap { max-width: 1480px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  header { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+  h1 {
+    font-family: var(--font-title); color: var(--amber); font-size: 19px; letter-spacing: 1px;
+    text-transform: uppercase; margin: 0; font-weight: normal; text-wrap: balance;
+  }
+  header p { margin: 0; color: var(--text-dim); max-width: 92ch; }
+  .panel {
+    background: var(--stone); border: 1px solid var(--border-dark);
+    box-shadow: inset 1px 1px 0 var(--border-light), inset -1px -1px 0 var(--border-dark), 0 2px 6px rgba(0,0,0,.6);
+  }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 6px 8px; align-items: center; }
+  .toolbar .set { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; }
+  /* v9: the sets in groups (what shows; the weather; the water; the land; buildings and people; track and roads) */
+  .toolbar .cluster { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; max-width: 100%; box-sizing: border-box; padding: 3px 8px; background: var(--stone-dark); border: 1px solid var(--border-dark); box-shadow: inset 1px 1px 0 rgba(108,127,96,.25); }
+  .toolbar .label { color: var(--text-dim); }
+  .group { display: inline-flex; flex-wrap: wrap; gap: 0; max-width: 100%; }
+  .btn {
+    font: inherit; color: var(--text); background: var(--stone-light); cursor: pointer;
+    border: 1px solid var(--border-dark); padding: 4px 8px; box-shadow: inset 1px 1px 0 var(--border-light);
+  }
+  .group .btn + .btn { border-left: 0; }
+  .btn[aria-pressed="true"] { background: #4a5f3e; color: #fff4d8; outline: 1px solid var(--amber); outline-offset: -1px; position: relative; }
+  .btn:focus-visible, .show:focus-visible, .thumb:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+  .btn .n { color: var(--red); font-weight: bold; }
+  .hintline { color: var(--text-dim); font-style: italic; line-height: 1.45; min-height: 4.35em; } /* room for three lines: switching options never moves the map */
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 10px; }
+  @media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+  .stage { position: relative; overflow: hidden; height: min(74vh, 780px); min-height: 360px; touch-action: none; }
+  #view { display: block; width: 100%; height: 100%; cursor: grab; background: #0b110c; }
+  #view.drag { cursor: grabbing; }
+  .zoom { position: absolute; right: 8px; top: 8px; display: flex; gap: 4px; align-items: center; }
+  .zoom .btn { min-width: 28px; }
+  .zoom output { background: rgba(26,37,29,.85); padding: 3px 7px; border: 1px solid var(--border-dark); font-variant-numeric: tabular-nums; }
+  /* the loading-screen thumbnail sits in the side panel's corner, off the map, so every tile can be hovered */
+  .thumb {
+    width: 100%; padding: 0; border: 1px solid var(--border-dark); background: var(--stone-dark); cursor: pointer;
+    display: grid; grid-template-columns: 136px minmax(0, 1fr); text-align: left; color: var(--text); font: inherit;
+    box-shadow: inset 1px 1px 0 var(--border-light), 0 2px 6px rgba(0,0,0,.6);
+  }
+  .thumb:hover { background: var(--stone-light); }
+  .thumb img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .thumb > span { padding: 5px 8px; font-size: 10.5px; display: grid; align-content: center; justify-items: start; gap: 4px; }
+  .overlay { position: absolute; inset: 0; z-index: 20; display: grid; background: #0b110c; }
+  .overlay img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .overlay .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 24px 22px; display: grid; gap: 8px; justify-items: center; background: linear-gradient(rgba(8,12,9,0), rgba(8,12,9,.78) 55%); }
+  .bar { width: min(520px, 80%); height: 12px; background: rgba(14,21,15,.85); border: 1px solid var(--border-light); }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(#f0c068, #c88a2c); }
+  .overlay .tip { color: var(--text); text-shadow: 0 1px 2px #000; margin: 0; text-align: center; }
+  .overlay .cap { position: absolute; top: 10px; left: 12px; background: rgba(26,37,29,.88); padding: 3px 8px; border: 1px solid var(--border-dark); }
+  .go {
+    font-family: var(--font-title); font-size: 17px; letter-spacing: 2px; text-transform: uppercase; color: #fff4d8;
+    background: #4a5f3e; border: 1px solid var(--border-dark); padding: 6px 30px; cursor: pointer;
+    box-shadow: inset 1px 1px 0 var(--border-light), 0 2px 8px rgba(0,0,0,.7);
+  }
+  .go:disabled { opacity: .55; cursor: progress; }
+  .go:focus-visible { outline: 2px solid var(--cyan); }
+  .side { padding: 10px 12px; display: grid; gap: 10px; align-content: start; min-width: 0; max-height: min(74vh, 780px); overflow: auto; }
+  @media (max-width: 900px) { .side { max-height: none; } }
+  .side h2 {
+    font-family: var(--font-title); color: var(--amber); font-size: 13px; letter-spacing: 1px;
+    text-transform: uppercase; margin: 0; font-weight: normal;
+  }
+  .side p { margin: 0; }
+  .dim { color: var(--text-dim); }
+  details { border-top: 1px solid var(--border-dark); padding-top: 4px; }
+  summary { cursor: pointer; display: flex; justify-content: space-between; gap: 8px; color: var(--text); }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '▸'; color: var(--amber); width: 10px; flex: none; }
+  details[open] > summary::before { content: '▾'; }
+  summary .t { flex: 1; }
+  summary .c { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .rows { display: grid; gap: 2px; padding: 4px 0 4px 10px; }
+  .r { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; align-items: center; }
+  .r .k { overflow-wrap: anywhere; }
+  .r .why { grid-column: 1 / -1; color: var(--text-dim); font-size: 10.5px; margin: -1px 0 3px; }
+  .chip { font-size: 10px; padding: 0 5px; border: 1px solid currentColor; white-space: nowrap; }
+  .v-use { color: var(--green); }
+  .v-after { color: var(--cyan); }
+  .v-redo { color: var(--red); }
+  .v-extra { color: var(--orange); }
+  .v-game { color: var(--text-dim); }
+  .v-none { color: var(--text-dim); border-style: dashed; }
+  .show {
+    font: inherit; font-size: 10.5px; color: var(--amber); background: none; border: 1px solid var(--border-light);
+    padding: 0 5px; cursor: pointer;
+  }
+  .show:hover { background: var(--stone-light); }
+  .notes { display: grid; gap: 4px; margin: 0; padding-left: 16px; }
+
+  /* tooltips, as the game's #tooltip */
+  .tt { position: fixed; z-index: 50; padding: 5px 9px 7px; max-width: 320px; font-size: 11px; pointer-events: none; display: grid; gap: 2px; }
+  .tt.locked { pointer-events: auto; outline: 1px solid var(--amber); }
+  .tt .tt-title { font-family: var(--font-title); color: var(--amber); font-size: 13px; padding-right: 22px; }
+  .tt .row { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+  .tt .row > span:last-child { text-align: right; }
+  .tt b { color: #fff1d0; }
+  .tt .good b, .tt .good { color: var(--green); }
+  .tt .bad b, .tt .bad { color: var(--red); }
+  .tt .sec { border-top: 1px solid var(--border-dark); padding-top: 3px; margin-top: 2px; color: var(--text-dim); font-size: 10px; letter-spacing: .5px; text-transform: uppercase; }
+  .tt .pic { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+  .tt .pic code { font-family: inherit; color: #fff1d0; overflow-wrap: anywhere; }
+  .tt .pic small { grid-column: 1 / -1; color: var(--text-dim); margin-top: -2px; }
+  .term { color: var(--cyan); border-bottom: 1px dotted var(--cyan); cursor: help; }
+  .res { white-space: nowrap; }
+  .res u { text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  .res svg { width: 12px; height: 12px; vertical-align: -2px; margin-right: 3px; }
+  .ring { position: absolute; top: 5px; right: 6px; width: 14px; height: 14px; }
+  .ring circle { fill: none; stroke-width: 2.4; }
+  .ring .bg { stroke: var(--stone-light); }
+  .ring .fg { stroke: var(--amber); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+  .hint { color: var(--text-dim); font-style: italic; }
+  .err { color: var(--red); }
+  @media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Codex art in the game</h1>
+    <p>Every finished Codex picture laid into the approved tile tooltip map, painted the way the game paints its ground: its own swatches blended with soft, irregular borders, banks shaded, the game's trees, track and buildings on top. Version 2 answers the author's feedback of 12 October: waterfalls in the river's line, shores without tile cuts, relief and glacier options, one bridge, people on smooth paths, organic roads, raised wheat, one look for still water, working switches. Version 2.1 fixes what a check of it found: rivers open onto still water without banks, falls clear of trees, the game's relief by default, wandering glacier edges, roads that meander, Show me that frames every place. Version 3 answers the feedback of 12 October afternoon, and its fix round what a check of it found: the mountain’s flank is one slope painted as ground instead of stone walls (reliefs Game v2 and Smooth v2), waterfalls lie along their slope as wide as the river with white, broken spray off both sides over dark wet rock and moss, and a plunge pool of foam where they land, the glacier (an ice channel by default) ends in a rounded ice front with a near-black cave its melt runs out of, the plateau’s snow lies opaque with angular rocks poking through it, the town square is paved with small warm setts that the roads stop at, the wheat in front of the farm halt covers its foot, and river banks fade into the ground beside them. Version 8 answers the author’s notes of 14 October. <b>Water</b>: all of it moves now, the new default (<i>Animated</i>); <i>Still</i> brings back v7’s still water. <b>Towns</b>: hover over a town hall to see its town’s border, click to pin it, click again or press Escape to let it go; Show me <i>Town borders</i> goes to two small towns whose borders meet. Drag to pan, scroll or use + and − to zoom. Hover a tile for its tooltip, which names the Codex picture on it and its review verdict.</p>
+    <p>Version 9 answers the author’s notes of 16 October. <b>Relief</b>: only your two are left, <i>Game v2</i> (the default) and <i>Smooth v2</i>; on the mountain’s right side, its faces turned to the lower right and the upper right, each level step now reads as a ledge (Game v2’s of its rock, Smooth v2’s a soft lip over a grassy riser), and the left side and everything off the mountain are as in v8. New is the wind: <b>Weather</b> (<i>Breeze</i> by default) and <b>Wind from</b> (<i>W</i> by default) move everything in it. The trees sway, gusts rolling over the forest; in the desert tumbleweeds roll and sand drifts; with Animated water, <b>Waves</b> (<i>Swell</i> by default, or <i>Ripples</i> and <i>Chop</i>) move the sea and the lakes and break on the shores the wind blows toward. <b>Building life</b> turns the windmill’s sails, lets the chimneys smoke and swings the quarry crane’s load. <b>Coast</b>: part of the peninsula west of the bay is a mangrove swamp. <b>People</b>: <i>Fixed walk</i> plants their feet (each pose stands where its foot came down, and the body steps on between poses), with Codex’s new back views; the pump hand’s back views (walking and carrying), the farmer’s back view carrying and the extra passengers 3 and 4 still slide a little until Codex repaints them. <b>Building scale</b>: <i>True to people</i> draws each building at the size its door and walls ask beside a 1.75 m person. <b>Sleepers</b>: <i>Even</i> spaces the narrow line’s sleepers evenly across its joins and onto the bridge. <b>Version 9.1</b>: the open water is gentler (<b>Wave strength</b>, <i>Gentle</i> by default, or <i>v9</i> for v9’s), the windmill’s sails follow the wind and its gusts and turn in the plane of the face the cap points along, and a fifth as many dead trees stand in the desert. <b>Version 9.2</b>: chimney smoke climbs two to three storeys and is sparser (<b>Smoke</b>, <i>Tall</i> or <i>v9.1</i>), and <b>Building scale</b> adds <i>Smaller</i> (the default, each building at the size a 1.75 m person asks) and <i>People larger</i>, with <b>Figures</b> standing a person at each door; <b>Road bridges</b> (<i>On</i> by default): a road may cross water on a bridge of its own and people cross on it, one over the creek by the farm and one over the river by the pump, right beside the narrow line’s bridge, so the two are one wider bridge, the rail on one half and the road on the other; and a <b>Storm</b> brings more weather (<b>Storm effects</b>, <i>On</i> by default: an overcast, rain slanted by the wind, rings on the water, a darker, wetter ground and lightning now and then) while <b>Fog</b> is a switch of its own (<i>Off</i>, <i>Valley mist</i> or <i>Thick</i>).</p>
+    <p>To compare with v8, pick each new switch’s v8 setting: Weather <i>Calm</i>, Waves <i>v8</i>, Building life <i>Off</i>, Coast <i>Forest</i>, People <i>v8</i>, Building scale <i>As before</i>, Sleepers <i>v8</i>; the scene is then v8’s but for the mountain’s right side. Road bridges <i>Off</i>, Storm effects <i>Off</i> and Fog <i>Off</i> are v9.1’s scene. Placeholders until Codex delivers them: the mangroves and the weeping willows (#460), and the windmill’s sails, which the demo cuts out of its picture to turn them (#461). In the side panel, Show me goes to each new place.</p>
+  </header>
+
+  <div class="toolbar panel" role="toolbar" aria-label="Display">
+    <span class="cluster" role="group" aria-label="What shows">
+      <span class="set"><span class="label">Show</span>
+        <span class="group">
+          <button class="btn" id="t-redo" aria-pressed="false">Redo pieces <span class="n" id="redo-n"></span></button>
+          <button class="btn" id="t-extra" aria-pressed="false">Extras</button>
+          <button class="btn" id="t-biome" aria-pressed="false">Biome colours</button>
+        </span></span>
+    </span>
+    <span class="cluster" role="group" aria-label="Weather">
+      <span class="set"><span class="label">Weather</span>
+        <span class="group" title="New in v9: how hard the wind blows, and everything that moves in it follows. Calm: nothing moves in the wind (the water keeps its own motion)">
+          <button class="btn" data-weather="calm" aria-pressed="false" title="No wind: nothing moves in it">Calm</button>
+          <button class="btn" data-weather="breeze" aria-pressed="true" title="A light wind (default)">Breeze</button>
+          <button class="btn" data-weather="windy" aria-pressed="false" title="A strong wind">Windy</button>
+          <button class="btn" data-weather="storm" aria-pressed="false" title="A storm, the strongest wind">Storm</button>
+        </span></span>
+      <span class="set"><span class="label">Storm effects</span>
+        <span class="group" title="New in v9.2 (the author: more weather in a Storm): what a Weather Storm adds to its wind: an overcast, a darker and wetter ground, rain slanted by the wind, rings on the water and lightning now and then. Breeze, Windy and Calm are the same with either choice">
+          <button class="btn" data-stormfx="on" aria-pressed="true" title="Default. With Weather Storm: rain in fine streaks slanted by the wind (fewer at low zoom), rings on the water with Animated water, the whole view darker and cooler, the ground darker and wetter, and a thin bolt far off at the map’s edge with a short, gentle brightening every 6 to 15 seconds (none when the system asks for reduced motion)">On</button>
+          <button class="btn" data-stormfx="off" aria-pressed="false" title="Storm as v9.1 had it: the strongest wind and nothing else">Off</button>
+        </span></span>
+      <span class="set"><span class="label">Fog</span>
+        <span class="group" title="New in v9.2 (the author: fog among the weather effects): a switch of its own, at every weather. It drifts slowly with the wind">
+          <button class="btn" data-fog="off" aria-pressed="true" title="Default: no fog, as in v9.1">Off</button>
+          <button class="btn" data-fog="mist" aria-pressed="false" title="Low, soft mist pooling over the water and in the valleys, thinning with height, in drifting patches">Valley mist</button>
+          <button class="btn" data-fog="thick" aria-pressed="false" title="Most of the map softened: a haze that grows toward the top of the screen, buildings and trees fading with distance, mist still thicker over the water">Thick</button>
+        </span></span>
+      <span class="set"><span class="label">Wind from</span>
+        <span class="group" title="Where the wind comes from, with north at the top of the screen and east to the right">
+          <button class="btn" data-wind="N" aria-pressed="false" title="From the north: from the top of the screen">N</button>
+          <button class="btn" data-wind="NE" aria-pressed="false" title="From the north-east: from the top right">NE</button>
+          <button class="btn" data-wind="E" aria-pressed="false" title="From the east: from the right">E</button>
+          <button class="btn" data-wind="SE" aria-pressed="false" title="From the south-east: from the bottom right">SE</button>
+          <button class="btn" data-wind="S" aria-pressed="false" title="From the south: from the bottom">S</button>
+          <button class="btn" data-wind="SW" aria-pressed="false" title="From the south-west: from the bottom left">SW</button>
+          <button class="btn" data-wind="W" aria-pressed="true" title="From the west: from the left (default)">W</button>
+          <button class="btn" data-wind="NW" aria-pressed="false" title="From the north-west: from the top left">NW</button>
+        </span></span>
+    </span>
+    <span class="cluster" role="group" aria-label="Water">
+      <span class="set"><span class="label">Water</span>
+        <span class="group" title="Animated (new in v8, the default): the sea and the lakes ripple, rivers run downstream into the still water, the falls run down their slopes. Still: the water as v7 had it">
+          <button class="btn" data-water="anim" aria-pressed="true" title="Every water moves: ripples on the sea and the lakes, streaks running down the rivers, the falls and their foam (default)">Animated</button>
+          <button class="btn" data-water="still" aria-pressed="false" title="The water as in v7: painted, not moving">Still</button>
+        </span></span>
+      <span class="set"><span class="label">Waves</span>
+        <span class="group" title="New in v9: how the sea and the lakes move in the wind (rivers, falls and the meltwater keep their own motion), and the waves breaking on the shores the wind blows toward. With Calm every choice is v8’s still water">
+          <button class="btn" data-waves="v8" aria-pressed="false" title="The sea and the lakes as in v8, whatever the wind">v8</button>
+          <button class="btn" data-waves="ripples" aria-pressed="false" title="Fine ripples across the wind drifting downwind, denser and longer as it blows harder, in patches that run downwind with the gusts over glassy water; small waves lapping the shores the wind blows toward">Ripples</button>
+          <button class="btn" data-waves="swell" aria-pressed="true" title="Default. A few long, slow crests lit on their windward side, bunching up and turning to meet the shore in the shallows; on the shores the wind blows toward they break and run up the beach, wetting the sand">Swell</button>
+          <button class="btn" data-waves="chop" aria-pressed="false" title="Short broken crests crossing each other, white caps from Windy up; quick, uneven breakers on the shores the wind blows toward">Chop</button>
+        </span></span>
+      <span class="set"><span class="label">Wave strength</span>
+        <span class="group" title="New in v9.1: how strong the open water’s waves are, at every weather level. The waves breaking on the shores are the same in both">
+          <button class="btn" data-wstr="gentle" aria-pressed="true" title="Default. The open water’s crests about half as strong and two thirds the size of v9’s (Storm still rougher than Breeze); the chop’s white caps from Windy, fewer and smaller. The shores’ waves, the wet sand and the wind’s other effects are as before">Gentle</button>
+          <button class="btn" data-wstr="v9" aria-pressed="false" title="The open water exactly as v9 published it">v9</button>
+        </span></span>
+    </span>
+    <span class="cluster" role="group" aria-label="Land">
+      <span class="set"><span class="label">Relief</span>
+        <span class="group" title="Your two: on the mountain the stacked levels are one slope, and on its faces turned to the right of the screen (south-east and north-east) each level step is marked (v9); off it, banks that look away keep only a soft lip">
+          <button class="btn" data-relief="game2" aria-pressed="true" title="Default. Game’s banks, the dressed stone ending in rubble and grass; on the mountain one rocky slope, and on its right-hand faces each level step a crisp ledge of its rock: a lit top edge over a shaded, cooler riser, a grassy tread above it, a shadow at its foot">Game v2</button>
+          <button class="btn" data-relief="smooth2" aria-pressed="false" title="Smooth (v1) with soft lips on banks that look away; on the mountain one alpine slope with a few outcrops, and on its right-hand faces each level step a soft lit lip over a shaded grassy riser with a few outcrops">Smooth v2</button>
+        </span></span>
+      <span class="set"><span class="label">Glacier</span>
+        <span class="group">
+          <button class="btn" data-glacier="channel" aria-pressed="true" title="Flat ice between moraine banks: the author's choice (default)">Ice channel</button>
+          <button class="btn" data-glacier="tongue" aria-pressed="false" title="The ice raised as a tongue that steps down, ice cliffs">Ice tongue</button>
+          <button class="btn" data-glacier="demo" aria-pressed="false" title="The glacier as v2 had it">As now</button>
+        </span></span>
+      <span class="set"><span class="label">Coast</span>
+        <span class="group" title="New in v9: on the peninsula west of the bay, where the forest meets the sea, part of the coast turns into a mangrove swamp. Its mangroves and willows are the demo's placeholders until Codex delivers them (#460)">
+          <button class="btn" data-coast="swamp" aria-pressed="true" title="A mangrove swamp: dark wet earth, moss and pools, reeds and cattails, a ragged muddy waterline; mangroves on arched roots in the shallows, weeping willows on the banks behind them (default)">Swamp</button>
+          <button class="btn" data-coast="forest" aria-pressed="false" title="The forest's sandy coast, as in v8">Forest</button>
+        </span></span>
+    </span>
+    <span class="cluster" role="group" aria-label="Buildings and people">
+      <span class="set"><span class="label">Building life</span>
+        <span class="group" title="New in v9: parts of buildings that move with the wind or with their work: the windmill's sails turn with the wind, smoke rises from the chimneys and bends downwind, the quarry crane's load swings on its rope. Off: the buildings as in v8">
+          <button class="btn" data-life="on" aria-pressed="true" title="The windmill turns, the chimneys smoke, the crane's load swings (default)">On</button>
+          <button class="btn" data-life="off" aria-pressed="false" title="The buildings as in v8: nothing on them moves">Off</button>
+        </span></span>
+      <span class="set"><span class="label">Smoke</span>
+        <span class="group" title="New in v9.2: the chimney smoke of Building life. Tall: a thin plume that climbs two to three storeys above its roof, bending downwind more as it rises; about one house chimney in three is lit, the works chimneys always. v9.1: the shorter, denser smoke as before. Shows with Building life On">
+          <button class="btn" data-smoke="tall" aria-pressed="true" title="Default. Fewer chimneys lit and a thin, soft plume of overlapping puffs rooted at the pot that rises about 42 px (2.7 storeys, 48 px at the works), bends downwind more with height and fades as it spreads; in a Storm it still lies down torn and short">Tall</button>
+          <button class="btn" data-smoke="v91" aria-pressed="false" title="The smoke exactly as v9.1 had it: about two house chimneys in three lit, fourteen puffs a plume rising 11 to 17 px">v9.1</button>
+        </span></span>
+      <span class="set"><span class="label">Building scale</span>
+        <span class="group" title="New in v9, four settings in v9.2: the buildings against the people (a person is 9 px, 1.75 m). Compare them at the same place; Show me ‘Building scale’ stands a person at each door">
+          <button class="btn" data-bscale="v8" aria-pressed="false" title="Every building as in v8, the people as before">As before</button>
+          <button class="btn" data-bscale="true" aria-pressed="false" title="v9’s: the farm, windmill and water pump at 0.9, the quarry and the Fuel Pump at 0.8, the water tower at 1.75; the rest as in v8">True v9</button>
+          <button class="btn" data-bscale="smaller" aria-pressed="true" title="Default. Every building at the size a 1.75 m person asks, read strictly (a door 2.0 to 2.2 m, a storey about 3 m, not limited to its tile): the houses at 0.95, the warehouse 0.95, the station 0.9, the pump house 0.85, the lumber yard 0.8, the farm and the quarry 0.75, the Fuel Pump 0.7, the windmill 0.85; the town hall at 1.2 and the water tower at 1.85 grow, the coaling stage stays">Smaller</button>
+          <button class="btn" data-bscale="people" aria-pressed="false" title="The v8 buildings and the people drawn 1.25 times larger, their walk speed and stride 1.25 times larger too, in case the people are what is off">People larger</button>
+        </span></span>
+      <span class="set"><span class="label">Figures</span>
+        <span class="group" title="New in v9.2: a person standing at each building’s door, to compare its size with Building scale. Show me ‘Building scale’ turns them on">
+          <button class="btn" data-bsfig="off" aria-pressed="true" title="No figures (default)">Off</button>
+          <button class="btn" data-bsfig="on" aria-pressed="false" title="A passenger standing 0.06 tile out from each door of every building, at the size of the people in the current Building scale">At the doors</button>
+        </span></span>
+      <span class="set"><span class="label">People</span>
+        <span class="group" title="New in v9: how the people walk. Fixed walk: the planted foot stays where it came down, each strip’s poses in walking order, Codex’s R7 back views, a small bob; the pump hand’s back views (walking and carrying), the farmer’s back view carrying and the extra passengers 3 and 4 still slide a little until Codex repaints them. v8: as before">
+          <button class="btn" data-people="v8" aria-pressed="false" title="As in v8: a pose every 0.0825 tile at 0.4 tile a second (the feet slide), the back views Codex must redo hidden">v8</button>
+          <button class="btn" data-people="fixed" aria-pressed="true" title="The planted foot stays where it came down: each pose shows where its pose began, moved so its foot meets the last one’s, the person stepping on as far as its painted feet do; Codex’s R7 back views; a small bob; the pump hand’s back views (walking and carrying), the farmer’s back view carrying and the extra passengers 3 and 4 still slide a little until Codex repaints them (default)">Fixed walk</button>
+        </span></span>
+      <span class="set"><span class="label">Ground fit</span>
+        <span class="group" title="How the buildings meet the ground: v2 as before; shadow adds a contact shadow and occlusion at the walls' foot; yard adds worn aprons, door paths and a platform kerb; full adds weeds over the base and plinths where the ground drops away (only at the Ground fit test placements in Show me: no building of this map stands on a bank)">
+          <button class="btn" data-gfit="v2" aria-pressed="false">v2</button>
+          <button class="btn" data-gfit="shadow" aria-pressed="false">Shadow</button>
+          <button class="btn" data-gfit="yard" aria-pressed="false">Yard</button>
+          <button class="btn" data-gfit="full" aria-pressed="true">Full</button>
+        </span></span>
+      <span class="set"><span class="label">Paving</span>
+        <span class="group" title="The town's paving, new in v3: small setts about a tenth of a tile. Old (v2) is the game's painted cell, as before">
+          <button class="btn" data-paving="fan" aria-pressed="true" title="Small setts laid in arcs, as in an old town square (default)">Fan</button>
+          <button class="btn" data-paving="setts" aria-pressed="false" title="Small setts in straight courses">Setts</button>
+          <button class="btn" data-paving="flags" aria-pressed="false" title="The game's flagstones at a fifth of their size">Flags</button>
+          <button class="btn" data-paving="v2" aria-pressed="false" title="The game's painted paving, as in v2">Old (v2)</button>
+        </span></span>
+    </span>
+    <span class="cluster" role="group" aria-label="Track and roads">
+      <span class="set"><span class="label">Sleepers</span>
+        <span class="group" title="New in v9: the narrow line’s sleepers at the tile joins. Even: the game’s track as it draws it now (#405), one pitch across every join. v8: as before (a tight pair at every join)">
+          <button class="btn" data-sleepers="v8" aria-pressed="false" title="The track as v8 had it, exported before the game’s fix: 70% of the pitch at every narrow join">v8</button>
+          <button class="btn" data-sleepers="even" aria-pressed="true" title="The game’s develop frames: one pitch across every join (default)">Even</button>
+        </span></span>
+      <span class="set"><span class="label">Bridge deck</span>
+        <span class="group" data-set="deck">
+          <button class="btn" data-v="wood" aria-pressed="true">Wood</button>
+          <button class="btn" data-v="stone" aria-pressed="false">Stone</button>
+        </span></span>
+      <span class="set"><span class="label">Road bridges</span>
+        <span class="group" title="New in v9.2 (the author’s yes to road bridges): a road may cross water on a bridge without rail, and people cross on it. Two in the demo: one on its own over the creek into the lake, on a loop off the farm lane, and one right beside the narrow line’s bridge by the pump, so the two are one wider bridge. Bridge deck picks wood or stone for every bridge">
+          <button class="btn" data-rbridge="on" aria-pressed="true" title="Default. The creek bridge by the farm and the wider bridge by the pump, with their roads and the people who cross them">On</button>
+          <button class="btn" data-rbridge="off" aria-pressed="false" title="The scene as v9.1 had it: no road crosses the water, the narrow line’s bridge stands alone">Off</button>
+        </span></span>
+      <span class="set"><span class="label">Roads</span>
+        <span class="group" data-set="roads">
+          <button class="btn" data-v="organic" aria-pressed="true">Organic</button>
+          <button class="btn" data-v="measured" aria-pressed="false">Measured</button>
+        </span></span>
+      <span class="set"><span class="label">Road width</span>
+        <span class="group" data-set="width" title="The organic set is 0.32 wide; another width shows the measured set">
+          <button class="btn" data-v="0.25" aria-pressed="false">0.25</button>
+          <button class="btn" data-v="0.32" aria-pressed="true">0.32</button>
+          <button class="btn" data-v="0.4" aria-pressed="false">0.4</button>
+        </span></span>
+      <span class="set"><span class="label">Edge</span>
+        <span class="group" data-set="edge" title="The organic set has the soft edge; the crisp edge shows the measured set">
+          <button class="btn" data-v="A" aria-pressed="false">A crisp</button>
+          <button class="btn" data-v="B" aria-pressed="true">B soft</button>
+        </span></span>
+      <span class="set"><span class="label">Crossing</span>
+        <span class="group" data-set="crossing" title="The organic set has stone crossings on regular track (dirt on narrow); timber shows the measured set">
+          <button class="btn" data-v="timber" aria-pressed="false">Timber</button>
+          <button class="btn" data-v="stone" aria-pressed="true">Stone</button>
+        </span></span>
+      <span class="set"><span class="group"><button class="btn" id="t-raw" aria-pressed="false">#319 strips</button></span></span>
+    </span>
+  </div>
+  <div class="hintline" id="hintline" aria-live="polite"></div>
+
+  <div class="main">
+    <div class="stage panel" id="stage">
+      <canvas id="view" aria-label="Map"></canvas>
+      <div class="zoom">
+        <button class="btn" id="z-out" aria-label="Zoom out">−</button>
+        <output id="z-val">1×</output>
+        <button class="btn" id="z-in" aria-label="Zoom in">+</button>
+        <button class="btn" id="z-fit">Whole map</button>
+      </div>
+      <div class="overlay" id="start">
+        <img id="start-img" alt="Loading screen 1: a spring morning, a green engine on a stone arch bridge">
+        <div class="cap" id="start-cap">Loading screen 1 · <span class="chip v-after">Use after finishing</span></div>
+        <div class="foot">
+          <div class="bar" role="progressbar" aria-label="Painting the ground" aria-valuemin="0" aria-valuemax="100"><i id="bar"></i></div>
+          <p class="tip" id="tip">Loading the pictures…</p>
+          <button class="go" id="go" disabled>Start</button>
+        </div>
+      </div>
+    </div>
+    <aside class="side panel" id="side">
+      <h2>Loading screens</h2>
+      <button class="thumb" id="thumb" aria-label="Open the loading screen"><img id="thumb-img" alt=""><span><span id="thumb-t">Loading screen 1</span><span class="chip v-after" id="thumb-v">Use after finishing</span><span class="dim">Click to see it full size</span></span></button>
+      <h2>Codex pictures</h2>
+      <p class="dim" id="counts"></p>
+      <div id="legend"></div>
+      <h2>Game art</h2>
+      <div id="legend-game"></div>
+      <h2>Notes</h2>
+      <ul class="notes dim" id="notes"></ul>
+    </aside>
+  </div>
+</div>
