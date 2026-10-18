@@ -120,10 +120,14 @@
       }
     },
     "perWeek": 30,
+    "span": {
+      "w": 2,
+      "h": 2
+    },
     "doors": [
       {
         "kind": "street",
-        "tile": [0, 0],
+        "tile": [1, 1],
         "side": "S"
       }
     ]

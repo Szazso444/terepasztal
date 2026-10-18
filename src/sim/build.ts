@@ -36,6 +36,7 @@ import {
   buildingUpgradeCost,
   worksMaxLevel,
   buildingFootprint,
+  buildingSpan,
   BuildingMap,
   BUILDING_DEFS,
   type Building,
@@ -427,7 +428,11 @@ export class Builder {
     for (const s of this.stations)
       if (s.work) out.push({ x: s.x, y: s.y, w: s.w, h: s.h, progress: workProgress(s.work) });
     for (const b of this.buildings.values())
-      if (b.work) out.push({ x: b.x, y: b.y, w: 1, h: 1, progress: workProgress(b.work) });
+      if (b.work) {
+        // the whole footprint, as turned: the progress overlay covers every tile, not the corner
+        const { w, h } = buildingSpan(buildingDef(b.id), b.rot ?? 0);
+        out.push({ x: b.x, y: b.y, w, h, progress: workProgress(b.work) });
+      }
     return out;
   }
 

@@ -1160,7 +1160,12 @@
     "structures/diesel_refinery": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [5.5, -2.38],
         [26.17, 6.72],
@@ -1182,7 +1187,12 @@
     "structures/diesel_refinery_lv2": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [6.93, -2.74],
         [27.31, 7.04],
@@ -1199,12 +1209,27 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 1],
+          "side": "S",
+          "reach": [1, 2],
+          "point": [7.31, 7.94],
+          "width": 2.5,
+          "offset": 0.19
+        }
+      ]
     },
     "structures/diesel_refinery_lv2_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [7.02, -11.6],
         [24, -0.4],
@@ -1226,7 +1251,12 @@
     "structures/diesel_refinery_lv2_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [-7.02, -11.6],
         [18, 0.91],
@@ -1248,7 +1278,12 @@
     "structures/diesel_refinery_lv2_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [7.02, -11.6],
         [24, -0.4],
@@ -1270,7 +1305,12 @@
     "structures/diesel_refinery_lv3": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [6.93, -2.74],
         [27.31, 7.04],
@@ -1287,12 +1327,27 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 1],
+          "side": "S",
+          "reach": [1, 2],
+          "point": [7.31, 7.94],
+          "width": 2.5,
+          "offset": 0.19
+        }
+      ]
     },
     "structures/diesel_refinery_lv3_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [15.86, -3.47],
         [24, -0.38],
@@ -1314,7 +1369,12 @@
     "structures/diesel_refinery_lv3_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [-15.86, -3.47],
         [11, 9.96],
@@ -1336,7 +1396,12 @@
     "structures/diesel_refinery_lv3_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [16.49, -4.12],
         [24, -0.36],
@@ -1358,7 +1423,12 @@
     "structures/diesel_refinery_lv4": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [6.93, -2.74],
         [27.31, 7.04],
@@ -1375,12 +1445,27 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 1],
+          "side": "S",
+          "reach": [1, 2],
+          "point": [7.31, 7.94],
+          "width": 2.5,
+          "offset": 0.19
+        }
+      ]
     },
     "structures/diesel_refinery_lv4_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [16.7, -4.03],
         [24, -0.38],
@@ -1402,7 +1487,12 @@
     "structures/diesel_refinery_lv4_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [-16.7, -4.03],
         [11, 9.82],
@@ -1424,7 +1514,12 @@
     "structures/diesel_refinery_lv4_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [16.65, -4],
         [24, -0.33],
@@ -1446,7 +1541,12 @@
     "structures/diesel_refinery_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [7.85, -9.97],
         [24, 0.2],
@@ -1468,7 +1568,12 @@
     "structures/diesel_refinery_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [-7.85, -9.97],
         [18, 0.88],
@@ -1490,7 +1595,12 @@
     "structures/diesel_refinery_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]
+      ],
       "foot": [
         [7.85, -9.97],
         [24, 0.2],

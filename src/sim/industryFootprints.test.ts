@@ -12,7 +12,7 @@ import { PowerGrid } from './power';
 
 // Industries take the footprint the author chose (2026-10-18, F6): tiles are where it may stand,
 // how much room it takes and where it sits in that room, not how big its model is. At rotation 0 a
-// footprint's long axis is the picture's, which is x for every one of the eight (the foot of each
+// footprint's long axis is the picture's, which is x for every one of the nine (the foot of each
 // r0 frame in src/art/buildingGround.json), so the author's "1 x 2", "2 x 3" are w 2 x h 1 and
 // w 3 x h 2 here. A size class is named by its tiles, long side first.
 interface Case {
@@ -27,6 +27,7 @@ const CASES: Case[] = [
   { id: 'grinder', size: '1x2', w: 2, h: 1 },
   { id: 'oil_derrick', size: '1x2', w: 2, h: 1 },
   { id: 'refinery', size: '2x2', w: 2, h: 2 },
+  { id: 'diesel_refinery', size: '2x2', w: 2, h: 2 },
   { id: 'substation', size: '2x2', w: 2, h: 2 },
   { id: 'wire_mill', size: '2x2', w: 2, h: 2 },
   { id: 'power_plant', size: '2x3', w: 3, h: 2 },
@@ -76,7 +77,7 @@ beforeEach(() => {
 });
 
 describe('the footprints the author chose', () => {
-  it('lists the eight, with the long side along x as the pictures have it', () => {
+  it('lists the nine, with the long side along x as the pictures have it', () => {
     for (const c of CASES) {
       expect(placeSpan(buildingDef(c.id)), c.id).toEqual({ w: c.w, h: c.h });
     }
@@ -415,6 +416,26 @@ describe('power and the wire reach the whole footprint', () => {
       expect(w.catenary.isLive(last, row), `r${rot} east edge`).toBe(true);
       expect(w.catenary.isLive(first - 1, row), `r${rot} past west`).toBe(false);
       expect(w.catenary.isLive(last + 1, row), `r${rot} past east`).toBe(false);
+    }
+  });
+});
+
+describe('a works under upgrade reports its footprint', () => {
+  it('lists the footprint for the rotation the works stands in, not its corner tile', () => {
+    for (const rot of ROTS) {
+      const w = world();
+      const b = w.builder.placeBuilding(X, Y, 'power_plant', rot)!;
+      b.work = { to: 2, left: 10, total: 10 };
+      const sites = w.builder.works();
+      expect(sites, `r${rot}`).toHaveLength(1);
+      const span = buildingSpan(buildingDef('power_plant'), rot);
+      expect([span.w, span.h], `r${rot} span`).toEqual(rot % 2 === 1 ? [2, 3] : [3, 2]);
+      expect([sites[0].x, sites[0].y, sites[0].w, sites[0].h], `r${rot}`).toEqual([
+        X,
+        Y,
+        span.w,
+        span.h,
+      ]);
     }
   });
 });
