@@ -8,20 +8,30 @@ import {
   CROSS_AFFINE,
   GREY,
   METRE_PX,
+  OBLONG,
+  PIER_GREY,
   SAILS_FACE,
   WINDMILL,
   WINDMILL_GREY,
+  WINDMILL_TURNS,
   blockOf,
+  crossAffine,
   drawGuide,
+  drawOblong,
   drawWindmill,
   familyBlocks,
+  frontHidden,
   guideFile,
+  oblongFiles,
+  oblongPlan,
+  oblongPlanFile,
   openingsOf,
   portalWall,
   windmillFamilies,
   windmillFiles,
   windmillGeometry,
   windmillHub,
+  winchOpening,
   writeGuides,
 } from './building-guides.mjs';
 import { loadInventory } from './building-kit.mjs';
@@ -199,6 +209,217 @@ describe('building guides', () => {
   });
 });
 
+describe("the coaling stage's oblong guides", { timeout: 30_000 }, () => {
+  const dir = `${ROOT}/guides`;
+  const fp = FOOTPRINTS.t1;
+  const families = JSON.parse(readFileSync(`${ROOT}/families.json`, 'utf8'));
+  const height = families.families.fuel_stop.blockHeight;
+  const png = (rot) => PNG.sync.read(readFileSync(`${dir}/fuel_stop-oblong-r${rot}.png`));
+  const plan = (rot) =>
+    JSON.parse(readFileSync(`${dir}/fuel_stop-oblong-r${rot}-plan.json`, 'utf8'));
+  const opaque = (img, x, y) => img.data[(y * img.width + x) * 4 + 3] > 0;
+  /** The pixels of one grey, as [x, y]. */
+  const pixelsOf = (img, rgb) => {
+    const out = [];
+    for (let y = 0; y < img.height; y++)
+      for (let x = 0; x < img.width; x++) {
+        const o = (y * img.width + x) * 4;
+        if (img.data[o + 3] && rgb.every((v, i) => img.data[o + i] === v)) out.push([x, y]);
+      }
+    return out;
+  };
+  /** The columns, and the rows, that hold an opaque pixel: [first, last]. */
+  const extent = (img) => {
+    let x0 = img.width,
+      x1 = -1,
+      y0 = img.height,
+      y1 = -1;
+    for (let y = 0; y < img.height; y++)
+      for (let x = 0; x < img.width; x++)
+        if (opaque(img, x, y)) {
+          x0 = Math.min(x0, x);
+          x1 = Math.max(x1, x);
+          y0 = Math.min(y0, y);
+          y1 = Math.max(y1, y);
+        }
+    return { x0, x1, y0, y1 };
+  };
+
+  it('is asked for the three turned views of the coaling stage, at the height its family asks for', () => {
+    expect(OBLONG.family).toBe('fuel_stop');
+    expect(OBLONG.views).toEqual([1, 2, 3]);
+    expect(familyBlocks(loadInventory(), families).map((b) => b.family)).toContain(OBLONG.family);
+    expect(height).toBe(62);
+  });
+
+  it('keeps the files the repository holds: a picture and a plan file per view, as the tool draws them', () => {
+    const drawn = oblongFiles(height);
+    expect(drawn.map(([file]) => file)).toEqual(
+      OBLONG.views.flatMap((r) => [
+        `${dir}/fuel_stop-oblong-r${r}.png`,
+        `${dir}/fuel_stop-oblong-r${r}-plan.json`,
+      ]),
+    );
+    for (const [file, bytes] of drawn)
+      expect(Buffer.compare(bytes, readFileSync(file)), file).toBe(0);
+    const root = mkdtempSync(join(tmpdir(), 'oblong-'));
+    try {
+      const written = writeGuides(root, [{ family: 'fuel_stop', footprint: 't1', height }], false);
+      // the footprints' 16, the family's own 4, and the oblong guides' six files
+      expect(written).toHaveLength(16 + 4 + 6);
+      const names = written.slice(20).map((f) => f.slice(root.length + 1).replaceAll('\\', '/'));
+      expect(names).toEqual(oblongFiles(height).map(([f]) => f));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("has the finished front view's plan: the walls' feet 0.423 : 0.577, the long side lower left in r1 and r3", () => {
+    for (const r of OBLONG.views) {
+      const j = plan(r);
+      expect(j.plan.lowerLeftShare + j.plan.lowerRightShare).toBeCloseTo(1, 3);
+      const long = r % 2 === 1 ? 'lowerLeftShare' : 'lowerRightShare';
+      expect(j.plan[long], `r${r}`).toBeCloseTo(0.577, 3);
+      // r0's plan, 1 : 1.364, turned over where the long side is on the left
+      expect(j.plan.lowerLeftOverLowerRight, `r${r}`).toBeCloseTo(
+        r % 2 === 1 ? 1.364 : 1 / 1.364,
+        2,
+      );
+      expect(j.plan.longSide).toBe(r % 2 === 1 ? 'lower left' : 'lower right');
+      // the measured feet agree with the plan file: the near corner splits the walls' span
+      const { w, s, e } = j.walls.corners;
+      expect((s[0] - w[0]) / (e[0] - w[0])).toBeCloseTo(j.plan.lowerLeftShare, 3);
+      // the 2:1 lines: the near corner is below both ends
+      expect(s[1]).toBeGreaterThan(Math.max(w[1], e[1]));
+    }
+  });
+
+  it("keeps the footprint's width and the square guide's rows, so that the fit's height is the same number", () => {
+    const square = drawGuide('t1', 1, height);
+    const sq = extent(square);
+    for (const r of OBLONG.views) {
+      const j = plan(r);
+      const img = png(r);
+      const { block } = oblongPlan(r);
+      // the walls' span and the near corner's row are the square guide's: (x + y) is the same
+      expect(2 * (block.x1 + block.y1)).toBeCloseTo(2 * 2 * (0.5 - 0.06), 9);
+      expect(j.walls.spanPx).toBeCloseTo(450.56, 6);
+      expect(j.block.wallSpanPx).toBeCloseTo(450.56, 6);
+      expect(j.block.nearCornerRow).toBeCloseTo(944.64, 6);
+      // the highest painted pixel is the block's far corner, as in the square guide (3 px outline)
+      expect(extent(img).y0).toBe(sq.y0);
+      expect(Math.abs(j.block.topFarCornerRow - (sq.y0 + 1.5))).toBeLessThan(1);
+      expect(j.block.heightPx).toBe(62);
+      expect(extent(img).y1).toBe(sq.y1);
+      // the plinth is as wide as the footprint's: the corners' span is 64 game px
+      expect(j.plinth.spanPx).toBe(64 * fp.scale);
+      expect(j.plinth.spanPx).toBe(512);
+    }
+  });
+
+  it("states the plinth's width that the painting must hold, measured on the drawn picture", () => {
+    for (const r of OBLONG.views) {
+      const j = plan(r);
+      const img = png(r);
+      // the opaque width of the plinth (its corners w and e, the 3 px outline included): the
+      // picture's own width, since nothing stands wider, and the piers are inside it
+      const e = extent(img);
+      const width = e.x1 - e.x0 + 1;
+      expect(j.paintedWidth.mustHoldPx[0]).toBe(width);
+      expect(width).toBe(516);
+      // in a 1254 px return: 632 px (the review of 2026-10-18 took 631 for it)
+      expect(j.toReturn).toBeCloseTo(1254 / 1024, 4);
+      expect(Math.round(j.paintedWidth.mustHoldPx[1])).toBe(632);
+      // the painted stage may be 5% wider at most; the painter's 15 to 26% is far outside that
+      const { minPx, maxPx, tolerance } = j.paintedWidth;
+      expect(tolerance).toBe(0.05);
+      expect(maxPx[0] / width).toBeCloseTo(1.05, 4);
+      expect(minPx[0] / width).toBeCloseTo(0.95, 4);
+      expect(maxPx[1] / j.paintedWidth.mustHoldPx[1]).toBeCloseTo(1.05, 4);
+      for (const over of OBLONG.painted.overshoot) expect(1 + over).toBeGreaterThan(1.05);
+      expect(OBLONG.painted.overshoot).toEqual([0.15, 0.26]);
+      // the words a prompt quotes carry the same numbers
+      for (const n of [width, 632, Math.round(maxPx[0]), Math.round(maxPx[1])])
+        expect(j.paintedWidth.words, `r${r} ${n}`).toContain(`${n} px`);
+    }
+  });
+
+  it('stands six pier stubs on the plinth, three along the long side, in the stub greys, nothing outside it', () => {
+    for (const r of OBLONG.views) {
+      const j = plan(r);
+      const img = png(r);
+      const p = oblongPlan(r);
+      expect(p.piers).toHaveLength(6);
+      expect(j.piers).toHaveLength(6);
+      // three along the long side, two along the short one
+      const along = p.longX ? 0 : 1;
+      const across = 1 - along;
+      for (const side of [-1, 1]) {
+        const row = p.piers.filter((q) => Math.sign(q[across]) === side);
+        expect(row.map((q) => q[along]).sort((a, b) => a - b)).toEqual([
+          -Math.max(...row.map((q) => q[along])),
+          0,
+          Math.max(...row.map((q) => q[along])),
+        ]);
+      }
+      expect(new Set(p.piers.map((q) => q[across])).size).toBe(2);
+      // a stub stands at every visible pier's foot: its stub grey is just above the foot
+      const stub = new Set(
+        [PIER_GREY.top, PIER_GREY.left, PIER_GREY.right].map((c) => c.join(',')),
+      );
+      for (const q of j.piers) {
+        if (q.wall === 'hidden') continue;
+        const [fx, fy] = q.foot;
+        const o = (Math.round(fy - 16) * img.width + Math.round(fx - 10)) * 4;
+        expect(stub.has([...img.data.subarray(o, o + 3)].join(',')), `r${r} pier ${q.id}`).toBe(
+          true,
+        );
+      }
+      // four stand where the camera sees them: the near corner's, the two walls' and the far ends'
+      expect(j.piers.filter((q) => q.wall !== 'hidden').length).toBe(4);
+      // the stubs are inside the plinth's width: its corners w and e are the picture's extremes
+      const { w, e, s } = j.plinth.corners;
+      for (const [x, y] of pixelsOf(img, PIER_GREY.top)) {
+        expect(x).toBeGreaterThanOrEqual(w[0]);
+        expect(x).toBeLessThanOrEqual(e[0]);
+        expect(y).toBeLessThanOrEqual(s[1]);
+      }
+    }
+  });
+
+  it('shades the stage as the other guides do, and marks the winch where the front is seen', () => {
+    for (const r of OBLONG.views) {
+      const img = png(r);
+      const j = plan(r);
+      const b = oblongPlan(r).block;
+      const top = project(fp, 0, 0, 4 + 62);
+      expect(at(img, top)).toEqual(solid(GREY.top));
+      expect(at(img, project(fp, b.x1 * 0.5, b.y1, 4 + 30))).toEqual(solid(GREY.left));
+      expect(at(img, project(fp, b.x1, b.y1 * 0.5, 4 + 30))).toEqual(solid(GREY.right));
+      expect(j.winch.visible).toBe(r === 3);
+      expect(winchOpening(r) !== null).toBe(r === 3);
+    }
+    // r3: the winch opening is on the lower-right wall, at its near (bottom) end, 20 px high
+    const img = png(3);
+    const pts = plan(3).winch.outline;
+    const mid = [
+      pts.reduce((sum, q) => sum + q[0], 0) / 4,
+      pts.reduce((sum, q) => sum + q[1], 0) / 4,
+    ];
+    expect(at(img, mid)).toEqual(solid(GREY.opening));
+    const b = oblongPlan(3).block;
+    const nearEnd = project(fp, b.x1, b.y1, 4);
+    const farEnd = project(fp, b.x1, -b.y1, 4);
+    expect(Math.hypot(mid[0] - nearEnd[0], mid[1] - nearEnd[1])).toBeLessThan(
+      Math.hypot(mid[0] - farEnd[0], mid[1] - farEnd[1]),
+    );
+    expect(mid[0]).toBeGreaterThan(fp.centre[0]);
+    // the plan file and the drawing say the same of every view
+    for (const r of OBLONG.views) expect(plan(r)).toEqual(oblongPlanFile(r, height));
+    expect(Buffer.compare(drawOblong(3, height).data, png(3).data)).toBe(0);
+  });
+});
+
 describe('the windmill guides', { timeout: 30_000 }, () => {
   const dir = `${ROOT}/guides`;
   const kept = (name) => readFileSync(`${dir}/${name}`);
@@ -237,12 +458,13 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     WINDMILL.baseRadius +
     ((WINDMILL.topRadius - WINDMILL.baseRadius) * (z - 4)) / WINDMILL.towerHeight;
 
-  it('keeps the files the repository holds: all three, as the tool draws them', () => {
+  it('keeps the files the repository holds: every view and the sail cross, as the tool draws them', () => {
     const drawn = windmillFiles();
     expect(drawn.map(([file]) => file)).toEqual([
       `${dir}/windmill-r0.png`,
       `${dir}/windmill-r0-hub.json`,
       `${dir}/windmill-sails-face.png`,
+      ...[1, 2, 3].flatMap((r) => [`${dir}/windmill-r${r}.png`, `${dir}/windmill-r${r}-hub.json`]),
     ]);
     for (const [file, bytes] of drawn)
       expect(Buffer.compare(bytes, readFileSync(file)), file).toBe(0);
@@ -255,9 +477,9 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     expect(families.families.windmill.round).toBe(true);
     const root = mkdtempSync(join(tmpdir(), 'guides-'));
     try {
-      // the footprints' guides (16) and then the windmill's three, as written to disk
+      // the footprints' guides (16) and then the windmill's nine, as written to disk
       const written = writeGuides(root, [], true);
-      expect(written).toHaveLength(16 + 3);
+      expect(written).toHaveLength(16 + 9);
       const names = written.slice(16).map((f) => f.slice(root.length + 1));
       expect(names.map((f) => f.replaceAll('\\', '/'))).toEqual(windmillFiles().map(([f]) => f));
       for (const [file, bytes] of windmillFiles())
@@ -608,5 +830,201 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     const plate = pixelsOf(img, WINDMILL_GREY.plate);
     const far = Math.max(...plate.map(([x, y]) => Math.hypot(x - 0.5 - cx, y - 0.5 - cy)));
     expect(Math.abs(far - 80)).toBeLessThan(4);
+  });
+
+  describe('in each of its four views', () => {
+    const views = [0, 1, 2, 3];
+    const hubOf = (r) => JSON.parse(kept(`windmill-r${r}-hub.json`));
+    const tower = (r) => png(`windmill-r${r}.png`);
+    /** The slope of the stub's middle line, over the columns that hold its full width. */
+    const stubSlope = (stub) => {
+      const columns = new Map();
+      for (const [x, y] of stub) columns.set(x, [...(columns.get(x) ?? []), y]);
+      const spans = [...columns].map(([x, ys]) => ({
+        x,
+        mid: (Math.min(...ys) + Math.max(...ys)) / 2,
+        n: ys.length,
+      }));
+      const widest = Math.max(...spans.map((c) => c.n));
+      const full = spans.filter((c) => c.n >= widest - 1);
+      const mx = full.reduce((sum, c) => sum + c.x, 0) / full.length,
+        my = full.reduce((sum, c) => sum + c.mid, 0) / full.length;
+      return (
+        full.reduce((sum, c) => sum + (c.x - mx) * (c.mid - my), 0) /
+        full.reduce((sum, c) => sum + (c.x - mx) ** 2, 0)
+      );
+    };
+
+    it('has a hub file and a picture for every view, and the hub file names its own picture', () => {
+      for (const r of views) {
+        const h = hubOf(r);
+        expect(h.guide).toBe(`windmill-r${r}.png`);
+        expect([h.view, h.rotation, h.front]).toEqual([`r${r}`, r, 'SWNE'[r]]);
+        expect(h).toEqual(windmillHub(r));
+        expect([tower(r).width, tower(r).height]).toEqual(fp.canvas);
+      }
+      // the front turns S, W, N, E as the building's does (WALLS in building-kit.mjs)
+      expect(WINDMILL_TURNS.map((t) => t.front)).toEqual(ROTATIONS.map((t) => t.front));
+    });
+
+    it('turns the shaft with the front: +y, -x, -y, +x, so the hub is on the lower left, upper left, upper right, lower right', () => {
+      const want = [
+        { tile: [0, 0.5], game: [-16, -34], face: 'lower left' },
+        { tile: [-0.5, 0], game: [-16, -50], face: 'upper left' },
+        { tile: [0, -0.5], game: [16, -50], face: 'upper right' },
+        { tile: [0.5, 0], game: [16, -34], face: 'lower right' },
+      ];
+      for (const r of views) {
+        const h = hubOf(r);
+        expect(h.hub.tile).toEqual(want[r].tile);
+        expect(h.hub.fromAnchorGame).toEqual(want[r].game);
+        expect(h.shaft.face).toBe(want[r].face);
+        expect(h.hub.canvas).toEqual([
+          fp.centre[0] + want[r].game[0] * fp.scale,
+          fp.centre[1] + want[r].game[1] * fp.scale,
+        ]);
+        // the shaft's screen direction: the same 2:1 slope, the way the hub lies from the axis
+        expect(h.shaft.screenSlope).toBeCloseTo(0.5, 3);
+        const [dx, dy] = h.shaft.screenDirection;
+        expect(Math.sign(dx)).toBe(Math.sign(want[r].game[0]));
+        expect(Math.sign(dy)).toBe(r === 0 || r === 3 ? 1 : -1);
+        // the height is the same in every view: at the cap
+        expect(h.hub.heightAboveGround).toBe(g.hubZ);
+      }
+    });
+
+    it("draws the hub plate at the hub file's position in every view, to a pixel", () => {
+      for (const r of views) {
+        const h = hubOf(r);
+        const plate = pixelsOf(tower(r), WINDMILL_GREY.plate);
+        expect(plate.length, `r${r}`).toBeGreaterThan(1000);
+        const [px, py] = centroid(plate);
+        expect(Math.abs(px - h.hub.canvas[0]), `r${r}`).toBeLessThan(1);
+        expect(Math.abs(py - h.hub.canvas[1]), `r${r}`).toBeLessThan(1);
+        // the plate's size is the cross plane's circle, seen as the view's own affine has it
+        const R = WINDMILL.plateRadius * fp.scale;
+        const [A, B] = h.cross.affine;
+        expect(Math.abs(extent(plate, 0) + 3 - 2 * R * Math.hypot(A[0], A[1]))).toBeLessThan(3);
+        expect(Math.abs(extent(plate, 1) + 3 - 2 * R * Math.hypot(B[0], B[1]))).toBeLessThan(3);
+        // the stub's own line meets the hub within a game px
+        const stub = pixelsOf(tower(r), WINDMILL_GREY.stub);
+        expect(stub.length, `r${r}`).toBeGreaterThan(200);
+        const slope = stubSlope(stub);
+        const mx = stub.reduce((sum, q) => sum + q[0], 0) / stub.length,
+          my = stub.reduce((sum, q) => sum + q[1], 0) / stub.length;
+        expect(Math.abs(Math.abs(slope) - 0.5), `r${r}`).toBeLessThan(0.03);
+        // down to the left (r0), up to the left (r1), up to the right (r2), down to the right (r3)
+        expect(Math.sign(slope)).toBe(r === 0 || r === 2 ? -1 : 1);
+        const yAtHub = my + slope * (h.hub.canvas[0] - mx);
+        expect(Math.abs(yAtHub - h.hub.canvas[1]), `r${r}`).toBeLessThan(fp.scale);
+      }
+    });
+
+    it('puts the shaft and the plate behind the tower where the front is away from the camera', () => {
+      expect(views.map(frontHidden)).toEqual([false, true, true, false]);
+      for (const r of views) {
+        const h = hubOf(r);
+        expect(h.shaft.behindTower).toBe(frontHidden(r));
+        // the hidden stub starts behind the cap: its root is covered, so fewer of its pixels show
+        // than where it is in front
+        const stub = pixelsOf(tower(r), WINDMILL_GREY.stub).length;
+        expect(stub, `r${r}`).toBeGreaterThan(200);
+        // the cap's colours, not the stub's, are at the shaft's root on the axis side
+        const [ax, ay] = h.shaft.from.canvas;
+        const rootX = ax + (h.hub.canvas[0] - ax) * 0.25,
+          rootY = ay + (h.hub.canvas[1] - ay) * 0.25;
+        const root = at(tower(r), [rootX, rootY]);
+        if (frontHidden(r)) expect(root).not.toEqual(solid(WINDMILL_GREY.stub));
+      }
+      // behind the cap the stub is covered at its root: less of it shows than the stub in front
+      const shown = (r) => pixelsOf(tower(r), WINDMILL_GREY.stub).length;
+      expect(shown(1)).toBeLessThan(shown(0));
+      expect(shown(2)).toBeLessThan(shown(3));
+    });
+
+    it('has a door only where the front can be seen: r0 on the lower left, r3 on the lower right', () => {
+      for (const r of views) {
+        const h = hubOf(r);
+        const dark = pixelsOf(tower(r), GREY.opening);
+        expect(h.door.visible).toBe(!frontHidden(r));
+        if (frontHidden(r)) {
+          expect(dark.length, `r${r}`).toBe(0);
+          expect(h.door.canvas).toBeNull();
+          continue;
+        }
+        expect(dark.length, `r${r}`).toBeGreaterThan(300);
+        const [dx, dy] = h.door.canvas;
+        expect(at(tower(r), [dx, dy]), `r${r}`).toEqual(solid(GREY.opening));
+        expect(r === 0 ? dx < fp.centre[0] - 40 : dx > fp.centre[0] + 40).toBe(true);
+        // 2.1 m high up its middle column, the same in both views
+        const column = dark.filter(([x]) => Math.abs(x + 0.5 - dx) < 1);
+        expect(Math.abs((extent(column, 1) + 3) / fp.scale - 10.8)).toBeLessThan(0.7);
+      }
+    });
+
+    it('is one tower in four views: the tower and its cap are the same pixels, whichever way the front turns', () => {
+      const grey = new Set([...WINDMILL_GREY.tower, ...WINDMILL_GREY.cap].map((c) => c[0]));
+      const count = (r) => {
+        const img = tower(r);
+        let n = 0;
+        for (let i = 0; i < img.data.length; i += 4)
+          if (img.data[i + 3] && img.data[i] === img.data[i + 1] && grey.has(img.data[i])) n++;
+        return n;
+      };
+      // the door takes a few hundred pixels of the tower's grey where it is drawn
+      const base = count(1);
+      expect(Math.abs(count(2) - base)).toBeLessThan(5);
+      expect(base - count(0)).toBeGreaterThan(300);
+      expect(Math.abs(count(0) - count(3))).toBeLessThan(60);
+      // the foot's ellipse: the same in every view
+      const foot = views.map((r) => hubOf(r).tower.footEllipse);
+      for (const f of foot) expect(f).toEqual(foot[0]);
+    });
+
+    it("gives each view's affine of the cross: the plane square to its shaft, the same 0.612 ellipse", () => {
+      expect(crossAffine(0)).toEqual(CROSS_AFFINE);
+      for (const r of views) {
+        const h = hubOf(r);
+        const A = crossAffine(r);
+        expect(h.cross.affine).toEqual(A.map((row) => row.map((v) => Math.round(v * 1e4) / 1e4)));
+        expect(A[0][1]).toBe(0);
+        // u runs along the tile axis the file names, which the camera draws at the slope 0.5,
+        // and v along the vertical
+        const [tx, ty] = WINDMILL_TURNS[r].across;
+        const u = project(fp, tx, ty);
+        expect((u[0] - fp.centre[0]) / (fp.scale * 32 * Math.SQRT2)).toBeCloseTo(A[0][0], 6);
+        expect((u[1] - fp.centre[1]) / (fp.scale * 32 * Math.SQRT2)).toBeCloseTo(A[1][0], 6);
+        expect(A[1][1]).toBeCloseTo(Math.sqrt(3) / 2, 9);
+        // the shaft is square to the plane: u is across the shaft's tile direction
+        const [sx, sy] = WINDMILL_TURNS[r].shaft;
+        expect(sx * tx + sy * ty + 0).toBe(0);
+        // a circle becomes the 0.612 ellipse, in every view
+        expect(h.cross.ellipseMinorOverMajor).toBeCloseTo(0.612, 3);
+        // seen from the front where the front is in view, from behind where it is not: the
+        // determinant's sign says which
+        const det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+        expect(Math.sign(det)).toBe(h.cross.determinantSign === '+' ? 1 : -1);
+        expect(h.cross.determinantSign).toBe(r === 0 || r === 3 ? '+' : '-');
+        expect(h.cross.seenFrom.startsWith('behind')).toBe(frontHidden(r));
+        expect(Math.abs(Math.abs(det) - ((Math.SQRT1_2 * Math.sqrt(3)) / 2) * 1)).toBeLessThan(
+          1e-9,
+        );
+        // the sails clear the ground by the same metre and a bit in every view
+        expect(h.cross.sails.lowestTipAboveGroundMetres).toBeGreaterThanOrEqual(1);
+      }
+      // the view's affine is the first's turned with the building: a quarter turn of the cross's
+      // axis along the tiles (+x, +y, -x, -y)
+      expect(WINDMILL_TURNS.map((t) => t.across)).toEqual([
+        [1, 0],
+        [0, 1],
+        [-1, 0],
+        [0, -1],
+      ]);
+    });
+
+    it('keeps the sail cross picture, one for all four views, and says so in each hub file', () => {
+      for (const r of views) expect(hubOf(r).cross.sailsFace).toEqual(hub.cross.sailsFace);
+      expect(WINDMILL_TURNS).toHaveLength(4);
+    });
   });
 });
