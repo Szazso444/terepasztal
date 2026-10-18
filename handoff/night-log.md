@@ -488,3 +488,5 @@ Launched from the author's branch list: #148 #149 #150 #151 #152 #153 #154 #155.
 - Codex prompts page v14: new C17d (windmill r1-r3) and C4e (coaling r1-r3 on branch art/325-buildings-v2), C4d removed. Order R8d, C4e, C17c, C17d, R7c-1.
 - 8-hour board-check cron: refused by the auto-mode classifier (merge step); not scheduled.
 - To do once gh works: record decisions on #325, #331, #461, #494/#507; file F1-F5, W1, W2, X1 and the guides issue; open the three PRs; gate.
+- gh logged in later. Filed #508 F1, #509 F2, #510 F3, #511 F4, #512 F5, #513 W1, #514 W2, #515 W3, #516 W4, #517 W9, #518 W10, #519 X1, #520 guides, #521 plank seam. Decisions commented on #325, #331, #461, #493/#494, #506/#507. Core decision on #509/#511: a two-tile footprint at r0 follows the picture's long axis (farm halt 1x2 at r0).
+- PRs: #522 F1 (verification FAIL on contentForm span, fixed in d9b879af, now passes), #523 W1, #524 guides. All wait for the author's gate:approved, then the combined gate.
