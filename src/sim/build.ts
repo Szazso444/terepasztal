@@ -389,6 +389,8 @@ export class Builder {
   /** The building's level rises by one: it opens again, and the change is reported. */
   private finishBuilding(b: Building) {
     const def = buildingDef(b.id);
+    // the halo stands over the whole footprint, as turned
+    const { w, h } = buildingSpan(def, b.rot ?? 0);
     b.level = Math.min(worksMaxLevel(b), buildingLevel(b) + 1);
     delete b.work;
     if (def.bridge) {
@@ -400,8 +402,8 @@ export class Builder {
       kind: 'works',
       x: b.x,
       y: b.y,
-      w: 1,
-      h: 1,
+      w,
+      h,
       name: def.name,
       level: b.level,
     });

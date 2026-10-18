@@ -93,7 +93,8 @@ export class Glows {
         s = this.make('fx/glow');
         this.stationGlows.set(st.id, s);
       }
-      const p = this.surface(st.x, st.y);
+      // the lantern hangs at the middle of the footprint, whatever its shape
+      const p = this.surface(st.cx, st.cy);
       s.position.set(p.x + 10, p.y - 6);
       s.alpha = night * 0.4;
       s.visible = night > 0.02;

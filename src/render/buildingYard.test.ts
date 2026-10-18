@@ -1088,3 +1088,65 @@ describe('the tiles a yard repaints, with street doors and roads round it', () =
     expect(beyond).toBeGreaterThan(2000);
   }, 10_000);
 });
+
+describe('a footprint of another shape than the frame records (a two-tile station)', () => {
+  const town = groundOf('structures/town_2')!;
+  const warehouse = groundOf('structures/warehouse_2')!;
+
+  it('covers every tile of the span, from the corner its centre implies', () => {
+    expect(footprintTiles(town, 10.5, 10, { w: 2, h: 1 })).toEqual([
+      { x: 10, y: 10 },
+      { x: 11, y: 10 },
+    ]);
+    expect(footprintTiles(town, 10, 10.5, { w: 1, h: 2 })).toEqual([
+      { x: 10, y: 10 },
+      { x: 10, y: 11 },
+    ]);
+    expect(footprintTiles(town, 10, 10, { w: 1, h: 1 })).toEqual([{ x: 10, y: 10 }]);
+    expect(footprintTiles(town, 10, 10)).toEqual([{ x: 10, y: 10 }]);
+  });
+
+  it('leaves a footprint of the recorded shape as the ground data has it', () => {
+    const colliery = groundOf('structures/colliery')!;
+    expect(footprintTiles(colliery, 10, 9.5, { w: 3, h: 2 })).toEqual(
+      footprintTiles(colliery, 10, 9.5),
+    );
+    const site = { x: 10, y: 9.5, scale: 1.2, sandy: false };
+    expect(
+      buildingYard(
+        'structures/colliery',
+        colliery,
+        { ...site, span: { w: 3, h: 2 } },
+        [],
+        () => false,
+      ),
+    ).toEqual(buildingYard('structures/colliery', colliery, site, [], () => false));
+  });
+
+  it('puts the kerb at the span edge toward the track, not the picture tile', () => {
+    // a goods shed on two tiles along y, front toward the camera (S): its kerb stands past the
+    // far end of the pair, half a tile beyond the picture's own tile
+    const one = { x: 10, y: 10, scale: 1, sandy: false };
+    const base = buildingYard('structures/warehouse_2', warehouse, one, [], () => false);
+    const pair = buildingYard(
+      'structures/warehouse_2',
+      warehouse,
+      { ...one, y: 10.5, span: { w: 1, h: 2 } },
+      [],
+      () => false,
+    );
+    expect(base.kerb!.at).toBeCloseTo(0.5 + KERB_OUT, 9);
+    expect(pair.kerb!.at).toBeCloseTo(1 + KERB_OUT, 9);
+  });
+
+  it("gives the picture's door one path, not one more on its tile of the span", () => {
+    const site = { x: 10.5, y: 10, scale: 1, sandy: false, span: { w: 2, h: 1 } };
+    const alone = buildingYard('structures/town_2', town, site, [], () => false);
+    expect(alone.paths).toHaveLength(1);
+    // the picture's door is on the south wall (S: +y); a street door on each tile of the pair
+    const door = (x: number) => ({ tile: { x, y: 10 }, side: Dir.S });
+    const both = buildingYard('structures/town_2', town, site, [door(10), door(11)], () => false);
+    // one of the two is the picture's own door; only the other gets a path of its own
+    expect(both.paths).toHaveLength(2);
+  });
+});

@@ -38,4 +38,18 @@ describe('work bars', () => {
     // a bigger footprint is taken to be a taller building
     expect(centre.y - big.y).toBeGreaterThan(ground.y - small.y);
   });
+
+  it('stand over the middle of a footprint of several tiles, turned either way', () => {
+    const layer = new Container();
+    const bars = new WorkBars(layer, flat);
+    bars.sync([
+      { x: 10, y: 10, w: 3, h: 2, progress: 0.5 },
+      { x: 20, y: 10, w: 2, h: 3, progress: 0.5 },
+    ]);
+    const [wide, deep] = layer.children;
+    expect(wide.x).toBe(flat(11, 10.5).x);
+    expect(deep.x).toBe(flat(20.5, 11).x);
+    // the bar is as high above the middle of the footprint's ground for either turn
+    expect(flat(11, 10.5).y - wide.y).toBe(flat(20.5, 11).y - deep.y);
+  });
 });

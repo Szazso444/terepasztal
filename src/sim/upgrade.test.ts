@@ -544,6 +544,29 @@ describe('what may be upgraded', () => {
     expect(w.houses.upgrade(home)).toBe(false);
   });
 
+  it('reports a works of several tiles over its whole footprint, as turned', () => {
+    const w = world(2);
+    const turned = (rot: number, x: number) => {
+      const b = freely(w, () => w.builder.placeBuilding(x, 10, 'power_plant', rot));
+      if (!b) throw new Error(`no power plant at ${x},10 turned ${rot}`);
+      return b;
+    };
+    const flat = turned(0, 10);
+    const side = turned(1, 20);
+    for (const b of [flat, side]) expect(w.builder.upgradeBuilding(b)).toBe(true);
+    // the bar over each covers the footprint it stands on
+    expect(w.builder.works().map(({ x, y, w, h }) => ({ x, y, w, h }))).toEqual([
+      { x: 10, y: 10, w: 3, h: 2 },
+      { x: 20, y: 10, w: 2, h: 3 },
+    ]);
+    w.builder.tickWorks(upgradeSeconds(2) * 2);
+    // and so does the halo of each when it is done
+    expect(w.ups.map(({ x, y, w, h }) => ({ x, y, w, h }))).toEqual([
+      { x: 10, y: 10, w: 3, h: 2 },
+      { x: 20, y: 10, w: 2, h: 3 },
+    ]);
+  });
+
   it('carries a work under way through a save', () => {
     const w = world(1);
     const { farm, mill, home } = three(w);

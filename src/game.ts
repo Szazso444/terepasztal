@@ -20,7 +20,7 @@ import {
   purchaseGrows,
   type Said,
 } from './engine/saveMessages';
-import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
+import { worldToTileInt, tileToWorld } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
 import { mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
@@ -130,7 +130,7 @@ import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
 import {
   buildingDef,
-  buildingFrame,
+  buildingFootprint,
   buildingFromJSON,
   buildingFromLevel,
   buildingRecipe,
@@ -149,6 +149,8 @@ import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
 import type { Tip } from './ui/advisor';
 import { locoFrame, structureFrame } from './art/frames';
+import { footprintReachRadius } from './render/footprintAnchor';
+import { buildingPlacement, stationPlacement } from './render/structurePlacement';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
 import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
@@ -328,9 +330,10 @@ export class Game implements UiHost {
           const m = this.towns.members(t);
           return {
             id: t.id,
-            x: st.x,
-            y: st.y,
-            radius: TOWN_RADIUS,
+            // the reach is measured from the footprint's edge: centred on the footprint
+            x: st.cx,
+            y: st.cy,
+            radius: footprintReachRadius(st.w, st.h, TOWN_RADIUS),
             name: t.name,
             color: TOWN_COLORS[t.color % TOWN_COLORS.length],
             founded: m.houses > 0 && m.warehouses > 0,
@@ -1571,19 +1574,20 @@ export class Game implements UiHost {
       return;
     }
     this.towns?.refresh();
-    const t = terrainAt(this.map, b.x, b.y);
+    // a works with a span stands on every tile of it, as turned
+    const rot = b.rot ?? 0;
     if (removed) {
       this.world.removeStructure(id);
-      if (t === Terrain.Hill && !this.track.has(b.x, b.y)) this.world.setFlattened(b.x, b.y, false);
+      for (const f of buildingFootprint(b.id, b.x, b.y, rot))
+        if (terrainAt(this.map, f.x, f.y) === Terrain.Hill && !this.track.has(f.x, f.y))
+          this.world.setFlattened(f.x, f.y, false);
     } else {
-      if (t === Terrain.Hill) this.world.setFlattened(b.x, b.y, true);
-      this.world.removeProps(b.x, b.y);
-      this.world.setStructure(
-        id,
-        b.x,
-        b.y,
-        structureFrame(this.atlas, buildingFrame(b), b.rot ?? 0),
-      );
+      for (const f of buildingFootprint(b.id, b.x, b.y, rot)) {
+        if (terrainAt(this.map, f.x, f.y) === Terrain.Hill) this.world.setFlattened(f.x, f.y, true);
+        this.world.removeProps(f.x, f.y);
+      }
+      const p = buildingPlacement(this.atlas, b);
+      this.world.setStructure(id, p.x, p.y, p.frame, p.layer, p.dy, p.dx, p.span);
     }
     if (buildingDef(b.id).power || buildingDef(b.id).substation) this.rebuildPower();
   }
@@ -1699,46 +1703,8 @@ export class Game implements UiHost {
         if (terrainAt(this.map, f.x, f.y) === Terrain.Hill) this.world.setFlattened(f.x, f.y, true);
         this.world.removeProps(f.x, f.y);
       }
-      if (s.def.long) {
-        // anchored between its two tiles, sorted with the one nearer the camera
-        const front = s.rot % 2 === 0 ? { x: s.x + 1, y: s.y } : { x: s.x, y: s.y + 1 };
-        const off = s.rot % 2 === 0 ? tileToWorld(-0.5, 0) : tileToWorld(0, -0.5);
-        this.world.setStructure(
-          id,
-          front.x,
-          front.y,
-          structureFrame(this.atlas, `structures/${s.def.art}_r${s.rot % 2}`, s.rot),
-          20,
-          off.y,
-          off.x,
-        );
-      } else if (s.size === 2) {
-        // the sprite is anchored at the footprint centre; sort it with its front tile
-        this.world.setStructure(
-          id,
-          s.x + 1,
-          s.y + 1,
-          structureFrame(
-            this.atlas,
-            `structures/${s.def.art}_r${s.rot % 2}${s.spriteLevel > 1 ? '_lv' + s.spriteLevel : ''}`,
-            s.rot,
-          ),
-          20,
-          -HALF_H_PX,
-        );
-      } else {
-        const fam = `structures/${s.def.art}_${s.spriteLevel}`;
-        this.world.setStructure(
-          id,
-          s.x,
-          s.y,
-          structureFrame(
-            this.atlas,
-            this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
-            s.rot,
-          ),
-        );
-      }
+      const p = stationPlacement(this.atlas, s);
+      this.world.setStructure(id, p.x, p.y, p.frame, p.layer, p.dy, p.dx, p.span);
       if (this.stationPanel.station === s) this.stationPanel.render();
     }
     this.towns?.refresh();
