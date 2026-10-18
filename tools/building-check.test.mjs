@@ -917,9 +917,12 @@ describe('building check of a round building', { timeout: 30_000 }, () => {
 
   it("reads a tower's camera from its foot, not from wall feet it does not have", () => {
     // seen as the game sees it, the tower's foot is an ellipse 0.50 minor over major; its curve
-    // has no straight wall base, and read as if it had, the camera comes out 18 degrees off
+    // has no straight wall base, and read as if it had, the camera comes out badly off (as an
+    // angle, or as the foot of one wall sloping -0.20 where the game's slopes -0.50)
     const right = tower();
-    expect(cameraProblem(checkPicture(right, 't1', 0))).toMatch(/camera off by 1[5-9]\.\d°/);
+    expect(cameraProblem(checkPicture(right, 't1', 0))).toMatch(
+      /camera off(?: by 1[5-9]\.\d°|: the lower-right wall's foot slopes -0\.[12]\d where)/,
+    );
     const round = checkPicture(right, 't1', 0, { round: true });
     expect(cameraProblem(round)).toBeUndefined();
     expect(round.camera).toBeUndefined();
@@ -952,7 +955,7 @@ describe('building check of a round building', { timeout: 30_000 }, () => {
       writeFileSync(before, PNG.sync.write(tower(1)));
       expect(cameraProblem(checkFile(before, 't1', 0))).toBeUndefined();
       // a family that is not round keeps the wall-feet measure
-      expect(cameraProblem(checkFile(same, 't1', 0))).toMatch(/wall feet slope/);
+      expect(cameraProblem(checkFile(same, 't1', 0))).toMatch(/wall feet slope|wall's foot slopes/);
       // and the caller can say which it is
       expect(cameraProblem(checkFile(same, 't1', 0, { round: true }))).toBeUndefined();
     } finally {

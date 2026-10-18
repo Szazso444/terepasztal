@@ -7,6 +7,7 @@ import { FOOTPRINTS, ROOT, ROTATIONS, project, diamond } from './building-kit.mj
 import {
   CROSS_AFFINE,
   GREY,
+  METRE_PX,
   SAILS_FACE,
   WINDMILL,
   WINDMILL_GREY,
@@ -24,6 +25,7 @@ import {
   writeGuides,
 } from './building-guides.mjs';
 import { loadInventory } from './building-kit.mjs';
+import { structureScale } from '../src/render/assetScale';
 
 const at = (png, [x, y]) => {
   const o = (Math.round(y) * png.width + Math.round(x)) * 4;
@@ -299,11 +301,79 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     expect(hub.tower.footEllipse.semiMinor / hub.tower.footEllipse.semiMajor).toBeCloseTo(0.5, 4);
   });
 
-  it('stands the tower 52 px under a cap of 18, on the footprint plinth the others have', () => {
+  /**
+   * The windmill picture the game draws today, measured on the shipped atlas from its anchor (the
+   * tile's centre on the ground), in game px as the renderer scales it: `structureScale` of the
+   * frame's own height, which is its texels over the atlas's resolution; the texel is that scale
+   * over the resolution.
+   */
+  const current = () => {
+    const atlas = JSON.parse(readFileSync('public/assets/structures.json', 'utf8'));
+    const f = atlas.frames['structures/windmill'];
+    const sheet = PNG.sync.read(readFileSync('public/assets/structures.png'));
+    const solidAt = (x, y) => sheet.data[((f.y + y) * sheet.width + f.x + x) * 4 + 3] > 127;
+    const perTexel =
+      structureScale('structures/windmill', f.h / atlas.resolution) / atlas.resolution;
+    // the run of opaque texels through column x of a row, as [from, to]
+    const run = (y, x) => {
+      if (!solidAt(x, y)) return null;
+      let from = x,
+        to = x;
+      while (from > 0 && solidAt(from - 1, y)) from--;
+      while (to < f.w - 1 && solidAt(to + 1, y)) to++;
+      return [from, to];
+    };
+    const width = (y, x) => {
+      const r = run(y, x);
+      return r ? r[1] - r[0] + 1 : 0;
+    };
+    // the tower's axis runs through its finial: the highest painted texels in the middle of the
+    // frame's width (the sails reach higher, but out at the sides)
+    const middle = Array.from(
+      { length: Math.round(f.w * 0.16) },
+      (_, i) => Math.round(f.w * 0.42) + i,
+    );
+    let top = 0;
+    while (!middle.some((x) => solidAt(x, top))) top++;
+    const finial = middle.filter((x) => solidAt(x, top + 4));
+    const axis = Math.round(finial.reduce((sum, x) => sum + x, 0) / finial.length);
+    // the cone proper starts where the run through the axis is wider than the finial's ball
+    let cone = top;
+    while (width(cone, axis) <= 20) cone++;
+    // the foot: the tower's widest rows a little below the anchor, where no sail reaches
+    const foot = [];
+    for (let y = Math.round(f.ay) + 13; y <= Math.round(f.ay) + 19; y++)
+      foot.push(width(y, axis) * perTexel);
+    return {
+      capTop: (f.ay - cone) * perTexel,
+      footWidth: foot.reduce((sum, w) => sum + w, 0) / foot.length,
+    };
+  };
+
+  it("is the size of the game's own windmill: the cap's top and the foot's width within 5%", () => {
+    const now = current();
+    // the reference itself: about 50 px to the cone cap, 43 px across the foot
+    expect(now.capTop).toBeGreaterThan(48);
+    expect(now.capTop).toBeLessThan(54);
+    expect(now.footWidth).toBeGreaterThan(41);
+    expect(now.footWidth).toBeLessThan(46);
+    // the guide's apex above the ground, and the foot's width at the plinth's top
+    expect(Math.abs(g.apex / now.capTop - 1)).toBeLessThan(0.05);
+    const width = 2 * WINDMILL.baseRadius * 32 * Math.SQRT2;
+    expect(Math.abs(width / now.footWidth - 1)).toBeLessThan(0.05);
+    expect(g.apex).toBeCloseTo(51.4, 6);
+    // and the drawn picture agrees: its highest painted point is the apex
+    const img = png('windmill-r0.png');
+    let first = 0;
+    while (![...Array(img.width).keys()].some((x) => opaque(img, x, first))) first++;
+    expect(Math.abs((fp.centre[1] - first) / fp.scale / now.capTop - 1)).toBeLessThan(0.05);
+  });
+
+  it('keeps the shape of a tower mill: a truncated cone under a cone cap, as the picture has it', () => {
     const img = png('windmill-r0.png');
     expect([img.width, img.height]).toEqual(fp.canvas);
-    expect(g.eave).toBe(4 + 52);
-    expect(g.apex).toBe(4 + 52 + 18);
+    expect(g.eave).toBeCloseTo(4 + WINDMILL.towerHeight, 6);
+    expect(g.apex).toBeCloseTo(4 + WINDMILL.towerHeight + WINDMILL.capHeight, 6);
     // the cap's apex is the highest painted point
     let first = 0;
     while (![...Array(img.width).keys()].some((x) => opaque(img, x, first))) first++;
@@ -311,9 +381,16 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     const s = diamond(fp, 0).s;
     expect(at(img, [s[0] - 8, s[1] - 12])).toEqual(solid(GREY.plinthLeft));
     expect(at(img, [s[0] + 8, s[1] - 12])).toEqual(solid(GREY.plinthRight));
-    // the tower's top is a little narrower than its foot, and the cap's eave a little wider
-    expect(WINDMILL.topRadius).toBeLessThan(WINDMILL.baseRadius);
+    // the tower narrows by about a third towards the cap (the picture's 124 texels at the foot,
+    // 86 under the cap), the eave stands a little proud, the cap is about half the tower's height,
+    // and it is no lighthouse: the foot is wider than three quarters of the height to the apex
+    const ratio = WINDMILL.topRadius / WINDMILL.baseRadius;
+    expect(ratio).toBeGreaterThan(0.6);
+    expect(ratio).toBeLessThan(0.8);
     expect(WINDMILL.capRadius).toBeGreaterThan(WINDMILL.topRadius);
+    expect(WINDMILL.capHeight / WINDMILL.towerHeight).toBeGreaterThan(0.4);
+    expect(WINDMILL.capHeight / WINDMILL.towerHeight).toBeLessThan(0.6);
+    expect((2 * WINDMILL.baseRadius * 32 * Math.SQRT2) / g.apex).toBeGreaterThan(0.75);
   });
 
   it('shades the tower and its cap by the way they face: the lower left lighter than the lower right', () => {
@@ -367,8 +444,8 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     expect(hub.hub.canvas[0]).toBeLessThan(ax);
     expect(hub.hub.canvas[1]).toBeGreaterThan(ay);
     expect(hub.hub.tile).toEqual([0, WINDMILL.shaftLength]);
-    expect(WINDMILL.shaftLength).toBe(0.38);
-    const end = project(fp, 0, 0.38, g.hubZ);
+    expect(WINDMILL.shaftLength).toBe(0.5);
+    const end = project(fp, 0, WINDMILL.shaftLength, g.hubZ);
     expect(hub.hub.canvas.map((v) => Math.round(v * 100))).toEqual(
       end.map((v) => Math.round(v * 100)),
     );
@@ -385,6 +462,19 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     expect(Math.abs(hub.hub.fromAnchorGame[0] - (px - fp.centre[0]) / fp.scale)).toBeLessThan(0.2);
     expect(Math.abs(hub.hub.fromAnchorGame[1] - (py - fp.centre[1]) / fp.scale)).toBeLessThan(0.2);
     expect(hub.anchor).toEqual(fp.centre);
+    // the stub's own line, carried to the hub's column, meets the hub within 1 game px
+    const stub = pixelsOf(img, WINDMILL_GREY.stub);
+    const mx = stub.reduce((sum, q) => sum + q[0], 0) / stub.length,
+      my = stub.reduce((sum, q) => sum + q[1], 0) / stub.length;
+    const slope =
+      stub.reduce((sum, q) => sum + (q[0] - mx) * (q[1] - my), 0) /
+      stub.reduce((sum, q) => sum + (q[0] - mx) ** 2, 0);
+    const yAtHub = my + slope * (hub.hub.canvas[0] - mx);
+    expect(Math.abs(yAtHub - hub.hub.canvas[1])).toBeLessThan(fp.scale);
+    // the hub is at the cap: above the eave and below the apex
+    expect(hub.hub.heightAboveGround).toBeGreaterThan(g.eave);
+    expect(hub.hub.heightAboveGround).toBeLessThan(g.apex);
+    expect(hub.hub.heightAboveGround).toBeCloseTo(g.hubZ, 6);
     // the plate is a circle of the cross: its width and height are the affine's, less the outline
     const R = WINDMILL.plateRadius * fp.scale;
     const [A, B] = CROSS_AFFINE;
@@ -392,18 +482,28 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     expect(Math.abs(extent(plate, 1) + 3 - 2 * R * Math.hypot(B[0], B[1]))).toBeLessThan(3);
   });
 
-  it('puts the door on the +y face at the foot, 0.12 tile wide and 14 px high', () => {
+  it('puts a true door on the +y face at the foot: 2.1 m by 1.0 m, 10.8 px beside the 9 px person', () => {
     const img = png('windmill-r0.png');
     const [dx, dy] = hub.door.canvas;
     expect(at(img, [dx, dy])).toEqual(solid(GREY.opening));
     // lower left of the tower's axis
     expect(dx).toBeLessThan(fp.centre[0] - 40);
-    // the opening's height up its middle column
+    // 2.1 m is 2.1 / 1.75 of the person's 9 px
+    expect(METRE_PX).toBeCloseTo(9 / 1.75, 9);
+    expect(Math.abs(WINDMILL.doorHeight - 10.8)).toBeLessThan(0.5);
+    expect(hub.door.heightPx).toBeCloseTo(10.8, 3);
+    expect([hub.door.heightMetres, hub.door.widthMetres]).toEqual([2.1, 1]);
+    // the opening's height up its middle column, in game px (the outline takes 1.5 px off each end)
     const fill = pixelsOf(img, GREY.opening);
     const column = fill.filter(([x]) => Math.abs(x - dx) < 1);
-    expect(Math.abs(extent(column, 1) - WINDMILL.doorHeight * fp.scale)).toBeLessThan(8);
-    expect([hub.door.heightPx, hub.door.widthTiles]).toEqual([14, 0.12]);
-    // its width on the middle row, outline included: 0.12 tile along x is 0.12 * 8 * 32 = 30.7 px
+    expect(Math.abs((extent(column, 1) + 3) / fp.scale - 10.8)).toBeLessThan(0.5);
+    // a metre along tile x: an upright metre is METRE_PX, which is sqrt(3) / 2 of the camera's
+    // unit length, and a tile is 32 * sqrt(2) of those
+    const oneMetre = METRE_PX / (Math.sqrt(3) / 2);
+    expect(Math.abs(WINDMILL.doorWidth * 32 * Math.SQRT2 - oneMetre)).toBeLessThan(1e-9);
+    expect(hub.door.widthTiles).toBeCloseTo(WINDMILL.doorWidth, 4);
+    // its width on the middle row, outline included: the metre's run along x on the screen is
+    // 1/sqrt(2) of its length
     let from = Math.round(dx - 0.5),
       to = from;
     const dark = (x) => {
@@ -412,7 +512,23 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     };
     while (dark(from - 1)) from--;
     while (dark(to + 1)) to++;
-    expect(Math.abs(to - from + 1 - WINDMILL.doorWidth * fp.scale * 32)).toBeLessThan(6);
+    expect(Math.abs(to - from + 1 - oneMetre * Math.SQRT1_2 * fp.scale)).toBeLessThan(8);
+  });
+
+  it('turns the sails at a radius that clears the ground by a metre at the lowest tip', () => {
+    const sails = hub.cross.sails;
+    expect(sails.radiusGamePx).toBe(WINDMILL.sailRadius);
+    // a cross turning in its plane: the lowest tip hangs R * sqrt(3) / 2 below the hub, whatever the phase
+    const drop = WINDMILL.sailRadius * CROSS_AFFINE[1][1];
+    expect(sails.lowestTipDropPx).toBeCloseTo(drop, 3);
+    expect(hub.hub.heightAboveGround - drop).toBeGreaterThanOrEqual(METRE_PX);
+    expect(sails.lowestTipAboveGroundMetres).toBeGreaterThanOrEqual(1);
+    expect(sails.lowestTipAboveGroundMetres).toBeCloseTo((g.hubZ - drop) / METRE_PX, 3);
+    // the sails picture's farthest painted point is that radius at the scale the file gives
+    expect(sails.gamePxPerCrossPx * SAILS_FACE.reach * SAILS_FACE.size).toBeCloseTo(
+      WINDMILL.sailRadius,
+      3,
+    );
   });
 
   it('says how the cross is seen: the plane of tile x and the vertical, an ellipse of 0.612', () => {

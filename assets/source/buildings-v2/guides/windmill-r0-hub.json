@@ -13,28 +13,28 @@
   "units": "canvas px are the guide picture's; game px are canvas px over `scale`, from the anchor (the footprint's centre at ground level), x to the right and y down",
   "hub": {
     "canvas": [
-      414.72,
-      376.64
+      384,
+      560
     ],
     "fromAnchorGame": [
-      -12.16,
-      -56.92
+      -16,
+      -34
     ],
     "tile": [
       0,
-      0.38
+      0.5
     ],
-    "heightAbovePlinth": 59,
-    "heightAboveGround": 63
+    "heightAbovePlinth": 38,
+    "heightAboveGround": 42
   },
   "shaft": {
     "tileAxis": "+y",
     "face": "lower left",
-    "lengthTiles": 0.38,
+    "lengthTiles": 0.5,
     "from": {
       "canvas": [
         512,
-        328
+        496
       ],
       "tile": [
         0,
@@ -49,29 +49,32 @@
   },
   "door": {
     "canvas": [
-      438.6462,
-      780.6769
+      390.4,
+      817.6
     ],
     "fromAnchorGame": [
-      -9.1692,
-      -6.4154
+      -15.2,
+      -1.8
     ],
-    "widthTiles": 0.12,
-    "heightPx": 14
+    "widthTiles": 0.1312,
+    "heightPx": 10.8,
+    "heightMetres": 2.1,
+    "widthMetres": 1,
+    "note": "the person is 9 px for 1.75 m, so a metre stands 5.1429 px upright; the sill is the top of the plinth, the tower foot"
   },
   "tower": {
-    "baseRadiusTiles": 0.3,
-    "topRadiusTiles": 0.2,
-    "heightPx": 52,
-    "capHeightPx": 18,
-    "capRadiusTiles": 0.23,
+    "baseRadiusTiles": 0.475,
+    "topRadiusTiles": 0.33,
+    "heightPx": 32,
+    "capHeightPx": 15.4,
+    "capRadiusTiles": 0.375,
     "footEllipse": {
       "centre": [
         512,
         800
       ],
-      "semiMajor": 108.6116,
-      "semiMinor": 54.3058,
+      "semiMajor": 171.9684,
+      "semiMinor": 85.9842,
       "minorOverMajor": 0.5
     }
   },
@@ -89,6 +92,14 @@
     ],
     "formula": "screen = s * [[0.7071, 0], [0.3536, 0.866]] * (u, v), u to the right and v down in the cross's own px, s game px per cross px",
     "ellipseMinorOverMajor": 0.6124,
+    "sails": {
+      "radiusGamePx": 40,
+      "gamePxPerCrossPx": 0.069343,
+      "lowestTipDropPx": 34.641,
+      "lowestTipAboveGroundPx": 7.359,
+      "lowestTipAboveGroundMetres": 1.4309,
+      "note": "the radius is in the cross plane, hub to tip of the longest painted point; the lowest tip of a turning cross hangs sqrt(3)/2 of it below the hub"
+    },
     "sailsFace": {
       "picture": "windmill-sails-face.png",
       "size": [

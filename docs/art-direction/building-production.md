@@ -273,7 +273,10 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   only: `guides/windmill-r0.png`, a round tower under a cone cap with its windshaft stub along tile
   +y; `windmill-r0-hub.json`, the hub, the shaft's direction, the door and the affine of the sail
   cross into the camera; and `windmill-sails-face.png`, the cross seen face on. The queue does not
-  name them: they are handed to the painter by hand.
+  name them: they are handed to the painter by hand. The tower is the size of the windmill the game
+  draws today (a cone cap 51 px above the ground, 43 px across the foot), the door is 2.1 m by 1.0 m
+  (10.8 px beside the 9 px, 1.75 m person) and the sails' radius is 40 px, so that the lowest tip
+  clears the ground by more than a metre.
 - The prompts: only in `families.json`. `shared` is the same for every picture; `references`
   says what each attached picture is for; `views` names the walls of each view.
 - The camera limit: `FIT.camera`. Then `recheck`.

@@ -222,29 +222,53 @@ export function drawGuide(fpId, rot, height = HEIGHT[fpId]) {
 }
 
 /**
+ * A metre on screen, upright: the 1.75 m person is drawn 9 game px tall (PERSON_PX in
+ * src/render/assetScale.ts), so 2.1 m is 10.8 px.
+ */
+export const METRE_PX = 9 / 1.75;
+
+/**
  * The windmill: a round tower (a truncated cone) under a cone cap, on the footprint's plinth, with
  * its windshaft stub pointing along tile +y, which is the lower-left face, and a door at the foot
  * of the same face. Lengths in tiles; heights and radii of small parts in game px, heights above
  * the plinth (the `blockHeight` sense of the other guides).
+ *
+ * The size is the game's own windmill picture (`structures/windmill` in the shipped atlas, scaled
+ * as src/render/assetScale.ts scales it), measured from the tile centre on the ground: the cone cap
+ * reaches 50 px, the tower is 43 px wide at its foot and about 30 px under the cap (radii of 0.475
+ * and 0.33 tile: a tile is 64 px wide), and the cap is about 15 px high with an eave of 0.375
+ * tile. The apex stands PLINTH + towerHeight + capHeight = 51.4 px above the ground.
  */
 export const WINDMILL = {
   footprint: 't1',
   /** from the plinth to where the cap begins */
-  towerHeight: 52,
-  baseRadius: 0.3,
-  topRadius: 0.2,
-  capHeight: 18,
+  towerHeight: 32,
+  baseRadius: 0.475,
+  topRadius: 0.33,
+  capHeight: 15.4,
   /** the eave stands a little proud of the tower's top */
-  capRadius: 0.23,
+  capRadius: 0.375,
   /** the shaft runs from the tower's axis along +y, and the hub is at its end */
-  shaftLength: 0.38,
+  shaftLength: 0.5,
   /** the hub's height above the eave: on the lower part of the cap */
-  hubAboveEave: 7,
-  doorWidth: 0.12,
-  doorHeight: 14,
+  hubAboveEave: 6,
+  /** 2.1 m: 10.8 px beside the 9 px person */
+  doorHeight: 2.1 * METRE_PX,
+  /**
+   * 1.0 m along the face (tile x): a metre is METRE_PX / (sqrt(3) / 2) in the camera's own length
+   * unit (an upright length shrinks to sqrt(3) / 2 of it, see CROSS_AFFINE), and a tile is
+   * 32 * sqrt(2) of them.
+   */
+  doorWidth: METRE_PX / (Math.sqrt(3) / 2) / (32 * Math.SQRT2),
   /** the stub's radius and the hub plate's, which faces +y */
   stubRadius: 1.5,
   plateRadius: 5,
+  /**
+   * The sails' radius, hub to tip, in the cross's own px (CROSS_AFFINE's unit, game px of the
+   * plane the cross turns in): the lowest tip hangs sqrt(3) / 2 of it below the hub, 34.6 px,
+   * which leaves 7.4 px (1.4 m) to the ground.
+   */
+  sailRadius: 40,
 };
 
 /**
@@ -317,7 +341,7 @@ export function windmillGeometry() {
     hubZ,
     hub: project(fp, 0, WINDMILL.shaftLength, hubZ),
     axis: project(fp, 0, 0, hubZ),
-    door: project(fp, 0, towerRadius(doorZ), doorZ),
+    door: project(fp, 0, towerRadius(PLINTH), doorZ),
     /** a canvas point in game px from the anchor */
     inGame: (p) => [(p[0] - fp.centre[0]) / fp.scale, (p[1] - fp.centre[1]) / fp.scale],
   };
@@ -367,13 +391,14 @@ export function drawWindmill({ plinth = true } = {}) {
       ring(fp, azimuth(i), W.topRadius, g.eave),
     );
   strokePoly(png, hull(body), GREY.line);
-  // the door: on the +y face at the foot, its sides on the tower's surface
+  // the door: on the +y face at the foot, plumb as a door hangs (the wall leans back from it by
+  // a pixel and a half at its head), its sides on the tower's surface at the sill
   const door = [
     [-W.doorWidth / 2, PLINTH],
     [W.doorWidth / 2, PLINTH],
     [W.doorWidth / 2, PLINTH + W.doorHeight],
     [-W.doorWidth / 2, PLINTH + W.doorHeight],
-  ].map(([x, z]) => project(fp, x, Math.sqrt(towerRadius(z) ** 2 - x * x), z));
+  ].map(([x, z]) => project(fp, x, Math.sqrt(towerRadius(PLINTH) ** 2 - x * x), z));
   fillPoly(png, door, GREY.opening);
   strokePoly(png, door, GREY.line);
   // the cap
@@ -503,8 +528,11 @@ export function windmillHub() {
     door: {
       canvas: pair(g.door),
       fromAnchorGame: pair(g.inGame(g.door)),
-      widthTiles: W.doorWidth,
-      heightPx: W.doorHeight,
+      widthTiles: round4(W.doorWidth),
+      heightPx: round4(W.doorHeight),
+      heightMetres: 2.1,
+      widthMetres: 1.0,
+      note: 'the person is 9 px for 1.75 m, so a metre stands 5.1429 px upright; the sill is the top of the plinth, the tower foot',
     },
     tower: {
       baseRadiusTiles: W.baseRadius,
@@ -525,6 +553,15 @@ export function windmillHub() {
       formula:
         "screen = s * [[0.7071, 0], [0.3536, 0.866]] * (u, v), u to the right and v down in the cross's own px, s game px per cross px",
       ellipseMinorOverMajor: round4(Math.sqrt((mean - spread) / (mean + spread))),
+      sails: {
+        radiusGamePx: W.sailRadius,
+        gamePxPerCrossPx:
+          Math.round((W.sailRadius / (SAILS_FACE.reach * SAILS_FACE.size)) * 1e6) / 1e6,
+        lowestTipDropPx: round4(W.sailRadius * A[1][1]),
+        lowestTipAboveGroundPx: round4(g.hubZ - W.sailRadius * A[1][1]),
+        lowestTipAboveGroundMetres: round4((g.hubZ - W.sailRadius * A[1][1]) / METRE_PX),
+        note: 'the radius is in the cross plane, hub to tip of the longest painted point; the lowest tip of a turning cross hangs sqrt(3)/2 of it below the hub',
+      },
       sailsFace: {
         picture: 'windmill-sails-face.png',
         size: [SAILS_FACE.size, SAILS_FACE.size],
