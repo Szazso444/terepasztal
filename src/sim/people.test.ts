@@ -574,9 +574,13 @@ function setClosed(x: Station | Building, closed: boolean) {
   else delete x.work;
 }
 
-/** The rule's oracle: of the places, the first listed of those nearest (x, y) by |dx| + |dy|. */
+/**
+ * The rule's oracle: of the places, the first listed of those nearest (x, y) by |dx| + |dy| to a
+ * tile of the footprint.
+ */
 function nearestOf(places: readonly Place[], x: number, y: number): Place | undefined {
-  const dist = (pl: Place) => Math.abs(pl.x - x) + Math.abs(pl.y - y);
+  const dist = (pl: Place) =>
+    Math.min(...pl.tiles.map((t) => Math.abs(t.x - x) + Math.abs(t.y - y)));
   const least = Math.min(...places.map(dist));
   return places.find((pl) => dist(pl) === least);
 }
@@ -807,6 +811,9 @@ describe('PeopleSim.places(), over seeded layouts', () => {
             f.builder.stations.find((s) => stationKey(s) === pl.key) ??
             things.find((x) => worksKey(x) === pl.key || decorKey(x) === pl.key);
           expect(at && [at.x, at.y], pl.key).toEqual([pl.x, pl.y]);
+          // and over the tiles it covers, the corner among them
+          expect(pl.tiles, pl.key).toContainEqual({ x: pl.x, y: pl.y });
+          if (at instanceof Station) expect(pl.tiles, pl.key).toEqual(at.footprint());
         }
         closed += all.filter((x) => (x instanceof Station ? x.closed : !!x.work)).length;
         if (f.builder.stations.some((s) => s.def.depot && !s.closed)) depots++;

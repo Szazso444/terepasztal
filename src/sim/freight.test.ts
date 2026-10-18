@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
@@ -8,7 +8,7 @@ import type { Rng } from '../engine/rng';
 import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
-import { Station, resetStationIds } from './stations';
+import { Station, resetStationIds, stationDef } from './stations';
 import { Train, DYNAMIC_MODES, defaultStop, resetTrainIds, type WagonSlot } from './trains';
 import { Fleet } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
@@ -33,6 +33,19 @@ beforeEach(() => {
   resetTrainIds();
   resetStationIds();
 });
+
+afterEach(() => {
+  delete stationDef('quarry').span;
+});
+
+/**
+ * A quarry as wide as the warehouse (2 x 1), for a test that wants the two the same distance from
+ * a tile: a warehouse's centre is half a tile past its corner, a one-tile quarry's is on it.
+ * `afterEach` takes the span off again.
+ */
+function wideQuarry() {
+  stationDef('quarry').span = { w: 2, h: 1 };
+}
 
 const SIZE = 96;
 const ROW = 30;
@@ -138,14 +151,16 @@ describe('an empty freight train choosing a stop', () => {
   function pair(capacityMul: number, warehouseCap: number, mirror: boolean) {
     rules.capacityMul = capacityMul;
     rules.warehouseCap = warehouseCap;
+    wideQuarry();
     const w = world();
     const t = train(w, 30);
     const hx = t.poses[0].x;
     const s = mirror ? -1 : 1;
-    const q = put(w, 'quarry', Math.round(hx - s * 14), { stone: 40 });
-    const house = put(w, 'warehouse', Math.round(hx + s * 14), { stone: 40 });
-    put(w, 'depot', q.x + (s > 0 ? 3 : -4));
-    put(w, 'depot', house.x + (s > 0 ? -4 : 3));
+    // both two tiles wide: the one west of the train starts 15 tiles from it, the other 14
+    const q = put(w, 'quarry', Math.round(s > 0 ? hx - 15 : hx + 14), { stone: 40 });
+    const house = put(w, 'warehouse', Math.round(s > 0 ? hx + 14 : hx - 15), { stone: 40 });
+    put(w, 'depot', q.x + (s > 0 ? 4 : -4));
+    put(w, 'depot', house.x + (s > 0 ? -4 : 4));
     // the premise: equally far, and as far again to the depot that takes the load
     expect(Math.abs(q.cx - hx)).toBe(Math.abs(house.cx - hx));
     const [d1, d2] = w.builder.stations.filter((x) => x.def.pool);
@@ -855,14 +870,15 @@ describe('an empty freight train ranking a producer and a warehouse, over genera
     rules.capacityMul = c.mul;
     rules.warehouseCap = c.cap;
     rules.collectMin = c.pickup;
+    wideQuarry();
     const w = world();
     const t = train(w, 30);
     const hx = t.poses[0].x;
     const s = c.mirror ? -1 : 1;
-    const q = put(w, 'quarry', Math.round(hx - s * 14), { stone: c.stored });
-    const house = put(w, 'warehouse', Math.round(hx + s * 14), { stone: c.stored });
-    put(w, 'depot', q.x + (s > 0 ? 3 : -4));
-    put(w, 'depot', house.x + (s > 0 ? -4 : 3));
+    const q = put(w, 'quarry', Math.round(s > 0 ? hx - 15 : hx + 14), { stone: c.stored });
+    const house = put(w, 'warehouse', Math.round(s > 0 ? hx + 14 : hx - 15), { stone: c.stored });
+    put(w, 'depot', q.x + (s > 0 ? 4 : -4));
+    put(w, 'depot', house.x + (s > 0 ? -4 : 4));
     const [d1, d2] = w.builder.stations.filter((x) => x.def.pool);
     expect(Math.abs(q.cx - hx), 'premise: equally far').toBe(Math.abs(house.cx - hx));
     expect(reach(d1, q), 'premise: as far on').toBe(reach(d2, house));

@@ -4,7 +4,13 @@ import { HALF_H, tileToWorld } from '../engine/iso';
 import { DECOR_DEFS } from '../sim/build';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { DEFAULT_RULES, rules } from '../sim/rules';
-import { STATION_DEFS, harvestBreakdown, type Station } from '../sim/stations';
+import {
+  STATION_DEFS,
+  harvestBreakdown,
+  stationDef,
+  stationSpan,
+  type Station,
+} from '../sim/stations';
 import { fmtCost } from '../sim/stockpile';
 import { seasonOf, setSeasonOffset } from '../sim/weather';
 import { line, simWorld, station as placeStation, type SimWorld } from '../testing/simWorld';
@@ -134,7 +140,7 @@ function sites(w: SimWorld, defId: string, want = 4): Tile[] {
   for (const at of tiles()) {
     if (out.length === want) break;
     try {
-      line(w, at.x, at.y + 1, at.x);
+      line(w, at.x, at.y + stationSpan(stationDef(defId), 0).h, at.x);
     } catch {
       continue;
     }

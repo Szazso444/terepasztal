@@ -18,7 +18,14 @@ import { Builder, decorDef } from './build';
 import { buildingDef } from './buildings';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
-import { Station, resetStationIds, stationDef, stationGates, stationSpan } from './stations';
+import {
+  Station,
+  resetStationIds,
+  stationDef,
+  stationFootprint,
+  stationGates,
+  stationSpan,
+} from './stations';
 import { rules, DEFAULT_RULES } from './rules';
 import { BUILDING_ROTATIONS, rotationAxis } from './rotation';
 import {
@@ -1526,17 +1533,18 @@ function yardTown(c: YardCase) {
 
 /**
  * The tile a gatherer at YARD goes to, as it has always been chosen: of the tiles of its ground,
- * all in reach here, the nearest by |dx| + |dy| plus up to 2 drawn at random, one draw for each in
- * rows from the top, the first among equals; for ground nobody stands on, the first of its
- * neighbours E, W, S and N that a walker stands on, or none.
+ * all in reach here, the nearest to a tile of the yard's footprint (`yard`) by |dx| + |dy| plus up
+ * to 2 drawn at random, one draw for each in rows from the top, the first among equals; for ground
+ * nobody stands on, the first of its neighbours E, W, S and N that a walker stands on, or none.
  */
-function nearestGround(map: GameMap, ground: readonly Terrain[], twin: Rng) {
+function nearestGround(map: GameMap, ground: readonly Terrain[], twin: Rng, yard: readonly Tile[]) {
   let best: (Tile & { d: number }) | null = null;
   let draws = 0;
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       if (!ground.includes(map.terrain[y * map.w + x])) continue;
-      const d = Math.abs(x - YARD.x) + Math.abs(y - YARD.y) + twin.next() * 2;
+      const near = Math.min(...yard.map((c) => Math.abs(x - c.x) + Math.abs(y - c.y)));
+      const d = near + twin.next() * 2;
       draws++;
       if (!best || d < best.d) best = { x, y, d };
     }
@@ -1731,14 +1739,17 @@ describe('a walk between two doorsteps, however short', () => {
         const twin = new Rng(0);
         twin.state = rng;
         twin.next();
-        const { spot, draws } = nearestGround(map, GROUND[c.id], twin);
+        const yard = stationFootprint(c.id, YARD.x, YARD.y, c.rot);
+        const { spot, draws } = nearestGround(map, GROUND[c.id], twin, yard);
         const from = doorstep(map, door, crossingAt);
         sim.tick(DT, 1, MIDDAY);
         expect(drawsBetween(rng, sim.toJSON().rng, 1000), 'stepping out').toBe(1 + draws);
-        // no spot, the spot under its own yard, or no walk to it: it stays in, as it always has
-        if (!spot || same(spot, YARD) || !joined(map, from, spot)) {
+        // no spot, the spot under its own yard (any tile of it), or no walk to it: it stays in, as
+        // it always has
+        const under = !!spot && yard.some((c) => same(c, spot));
+        if (!spot || under || !joined(map, from, spot)) {
           expect([p.state, p.timer]).toEqual(['inside', 10]);
-          if (spot && same(spot, YARD)) seen.underYard++;
+          if (under) seen.underYard++;
           return;
         }
         expect(p.state).toBe('gather');

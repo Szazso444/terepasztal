@@ -316,12 +316,14 @@ const CORNER = { x: 14, y: 12 };
 const FRONT: Dir[] = [Dir.S, Dir.W, Dir.N, Dir.E];
 
 /**
- * Track a station turned to `rot` at CORNER (or at `corner`) needs beside it: a straight on the
- * tile in front of it, along its front, where its platform is.
+ * Track a station `e` turned to `rot` at CORNER (or at `corner`) needs beside it: a straight on a
+ * tile in front of its footprint, along its front, where its platform is.
  */
-function platformFor(w: World, rot: number, corner: Tile = CORNER) {
+function platformFor(w: World, e: Entry, rot: number, corner: Tile = CORNER) {
   const d = FRONT[wrapRotation(rot)];
-  const t = { x: corner.x + DIR_DX[d], y: corner.y + DIR_DY[d] };
+  const cover = tilesOf({ def: e.def, x: corner.x, y: corner.y, rot });
+  const step = (c: Tile) => ({ x: c.x + DIR_DX[d], y: c.y + DIR_DY[d] });
+  const t = step(cover.find((c) => !cover.some((o) => same(o, step(c))))!);
   if (!w.track.has(t.x, t.y)) w.track.place(t.x, t.y, 'straight', d % 2 === 0 ? EW : NS, 'regular');
 }
 /** What placing `e` turned to `rot` at CORNER would cost and whether the rules let it. */
@@ -335,7 +337,7 @@ function check(w: World, e: Entry, rot: number) {
 function place(w: World, e: Entry, rot: number): PlaceAt {
   const { x, y } = CORNER;
   const b = w.builder;
-  if (wantsTrack(e)) platformFor(w, rot);
+  if (wantsTrack(e)) platformFor(w, e, rot);
   const why = check(w, e, rot).reason;
   const p =
     e.kind === 'station'
@@ -421,7 +423,7 @@ describe('placing a place near a road', () => {
         const w = world();
         roadRow(w);
         const before = roadsOf(w);
-        if (wantsTrack(e)) platformFor(w, rot);
+        if (wantsTrack(e)) platformFor(w, e, rot);
         // the price and seven stone more
         const price = check(w, e, rot).cost;
         for (const [k, v] of Object.entries(price)) w.stock.add(k, v);
@@ -430,7 +432,7 @@ describe('placing a place near a road', () => {
         // what it stands on decides the shortest spur: worked out on a twin with no spur
         const twin = world();
         roadRow(twin);
-        if (wantsTrack(e)) platformFor(twin, rot);
+        if (wantsTrack(e)) platformFor(twin, e, rot);
         const ghost = stand(twin, e, CORNER.x, CORNER.y, rot);
         const [door] = streetOf(ghost);
         const fewest = fewestTiles(twin, door.reach, before);
@@ -469,8 +471,8 @@ describe('placing a place near a road', () => {
         roadRow(w);
         // the station's platforms for both turns, laid first: the spur keeps off them
         if (wantsTrack(e)) {
-          platformFor(w, rot);
-          platformFor(w, rot + 1);
+          platformFor(w, e, rot);
+          platformFor(w, e, rot + 1);
         }
         const first = place(w, e, rot);
         const [was] = streetOf(first);
@@ -1438,7 +1440,7 @@ function pairWorld(c: Pair): World {
           l.across ? EW : NS,
         );
   });
-  if (wantsTrack(entryOf(c.id))) platformFor(w, c.rot, c);
+  if (wantsTrack(entryOf(c.id))) platformFor(w, entryOf(c.id), c.rot, c);
   stockUp(w);
   w.builder.free = c.free;
   return w;
@@ -1467,7 +1469,7 @@ function inOrder(c: Pair, roadFirst: boolean) {
  * its footprint, the one furthest from its street door.
  */
 function groundFor(w: World, e: Entry, rot: number, corner: Tile) {
-  if (wantsTrack(e)) platformFor(w, rot, corner);
+  if (wantsTrack(e)) platformFor(w, e, rot, corner);
   const wants = e.def as { terrain?: string; deposit?: string; needsWater?: boolean };
   const k = corner.y * W + corner.x;
   if (wants.terrain === 'hill') w.map.terrain[k] = Terrain.Hill;
@@ -1502,7 +1504,7 @@ describe('a place and a road, with no stub between them (#455)', () => {
           const step = `op ${i} ${JSON.stringify(o)}`;
           if (o.op === 'place') {
             const e = entryOf(o.id);
-            if (wantsTrack(e)) platformFor(w, o.rot, o);
+            if (wantsTrack(e)) platformFor(w, e, o.rot, o);
             if (placeAt(w, e, o.x, o.y, o.rot)) seen.placed++;
           } else if (o.op === 'depot') {
             if (ensureStartDepot(w.builder, o.id, o)) seen.depots++;

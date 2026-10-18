@@ -292,7 +292,8 @@ const sorted = (tiles: { x: number; y: number }[]) =>
 /**
  * The tiles a station stands on and is served from with its corner at (x, y) on `axis`, worked
  * out from what it is rather than from `stationSpan`: a long station lies two tiles along its
- * axis (x for axis 0, y for axis 1) and any other is `size` by `size`; a shed (a long station or a
+ * axis (x for axis 0, y for axis 1), one with a `span` is that many tiles along x and y at axis 0
+ * and the other way round at axis 1, and any other is `size` by `size`; a shed (a long station or a
  * two-tile depot) is served one step on from either end along its axis, where its tracks leave
  * it, and any other station from every tile beside it.
  */
@@ -300,7 +301,11 @@ function expectedTiles(def: StationDef, x: number, y: number, axis: number) {
   const [ax, ay] = axis === 0 ? [1, 0] : [0, 1];
   const n = def.size ?? 1;
   const cover: { x: number; y: number }[] = [];
-  if (def.long) for (let i = 0; i < 2; i++) cover.push({ x: x + ax * i, y: y + ay * i });
+  if (def.span) {
+    const [w, h] = axis === 0 ? [def.span.w, def.span.h] : [def.span.h, def.span.w];
+    for (let dy = 0; dy < h; dy++)
+      for (let dx = 0; dx < w; dx++) cover.push({ x: x + dx, y: y + dy });
+  } else if (def.long) for (let i = 0; i < 2; i++) cover.push({ x: x + ax * i, y: y + ay * i });
   else
     for (let dy = 0; dy < n; dy++)
       for (let dx = 0; dx < n; dx++) cover.push({ x: x + dx, y: y + dy });

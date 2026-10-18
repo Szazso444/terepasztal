@@ -8,7 +8,7 @@ import { rules, DEFAULT_RULES, daySeconds } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { setSeasonOffset, seasonOf, productionMul, type Season, type WeatherKind } from './weather';
 import { resetTrainIds, type Train } from './trains';
-import { resetStationIds, type Station } from './stations';
+import { resetStationIds, stationDef, type Station } from './stations';
 import { biomeAt, biomeDef } from './biomes';
 import { buildingDef, tickBuildings } from './buildings';
 import { SIM_STEP } from './time';
@@ -138,6 +138,85 @@ describe('SimStep: passenger catchment', () => {
     expect(farm.passengerPopulation, 'farm').toBe(0);
     // the unfinished house is still unfinished, so the count was not luck of the step
     expect(w.houses.at(s.x, s.y + 2)!.progress).toBeLessThan(1);
+  });
+});
+
+describe('SimStep: passenger catchment of a station on two tiles', () => {
+  // no shipped passenger station covers two tiles yet, so this gives it a span for the test; the
+  // count is taken from the footprint, as the town's reach is, whatever def stands on it
+  function withSpan<T>(span: { w: number; h: number }, test: () => T): T {
+    const def = stationDef('station');
+    def.span = span;
+    try {
+      return test();
+    } finally {
+      delete def.span;
+    }
+  }
+
+  it('counts the finished houses within 7 tiles of either tile of it, at any turn', () => {
+    withSpan({ w: 2, h: 1 }, () => {
+      for (const rot of [0, 1, 2, 3]) {
+        const w = grass();
+        const s = station(w, 'station', 20, 21, rot);
+        const cover = s.footprint();
+        expect(cover, `r${rot}`).toHaveLength(2);
+        // one house on each side of the pair, 7 tiles from its nearest tile and 8, each with
+        // residents of its own so the total says which were counted
+        const at = (dx: number, dy: number) => ({ x: 20 + dx, y: 21 + dy });
+        const east = cover.map((c) => c.x).reduce((a, b) => Math.max(a, b));
+        const south = cover.map((c) => c.y).reduce((a, b) => Math.max(a, b));
+        const houses = [
+          { ...at(east - 20 + 7, 0), residents: 1 }, // 7 beyond the east end: in
+          { ...at(east - 20 + 8, 0), residents: 2 }, // 8: out
+          { ...at(0, south - 21 + 7), residents: 4 }, // 7 beyond the south end: in
+          { ...at(0, south - 21 + 8), residents: 8 }, // 8: out
+          { ...at(-7, -7), residents: 16 }, // 7 from the corner both ways: in
+          { ...at(-8, 0), residents: 32 }, // 8 west of the corner: out
+        ];
+        for (const h of houses) {
+          w.houses.sync({ id: 'townhouse', x: h.x, y: h.y, rot: 0 }, false);
+          Object.assign(w.houses.at(h.x, h.y)!, { progress: 1, residents: h.residents });
+        }
+        run(w, new SimStep(w), context(w, true), 1);
+        expect(s.passengerPopulation, `r${rot}`).toBe(1 + 4 + 16);
+      }
+    });
+  });
+
+  it('is the count tile by tile over the footprint, for any houses and any turn', () => {
+    withSpan({ w: 1, h: 2 }, () => {
+      forAll(
+        (rng) => ({
+          rot: rng.int(0, 3),
+          houses: Array.from({ length: rng.int(0, 30) }, () => ({
+            x: rng.int(5, 36),
+            y: rng.int(5, 36),
+            residents: rng.int(1, 20),
+          })),
+        }),
+        (c) => {
+          const w = grass();
+          const s = station(w, 'station', 20, 21, c.rot);
+          const cover = s.footprint();
+          let want = 0;
+          for (const h of c.houses) {
+            w.houses.sync({ id: 'townhouse', x: h.x, y: h.y, rot: 0 }, false);
+            Object.assign(w.houses.at(h.x, h.y)!, { progress: 1, residents: h.residents });
+          }
+          // the houses the world holds, each counted once if any tile of the footprint is within 7
+          for (let y = 0; y < 48; y++)
+            for (let x = 0; x < 48; x++) {
+              const house = w.houses.at(x, y);
+              if (house && cover.some((t) => Math.max(Math.abs(x - t.x), Math.abs(y - t.y)) <= 7))
+                want += house.residents;
+            }
+          run(w, new SimStep(w), context(w, true), 1);
+          expect(s.passengerPopulation).toBe(want);
+        },
+        { shrink: (c) => [...shrinkArray(c.houses)].map((houses) => ({ ...c, houses })) },
+      );
+    });
   });
 });
 

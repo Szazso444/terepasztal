@@ -1,5 +1,6 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONTENT, validateContent } from '../data/content';
+import { groundOf } from '../art/buildingGround';
 import { Dir } from '../engine/iso';
 import { Terrain } from '../world/tiles';
 import { STR } from '../strings';
@@ -14,21 +15,16 @@ import {
   stationFootprint,
   stationGates,
   stationSpan,
+  STATION_DEFS,
 } from './stations';
+import { STATION_REACH } from './people';
 import { TOWN_RADIUS } from './towns';
 
-// No shipped def has a span yet (the data flips later), so these tests give three of them one for
-// the length of this file: the town hall and the goods shed lie along x, the farm halt along y,
-// as the data will have them. Each test file has its own copy of the content.
+// The town hall and the goods shed lie along x at rotation 0 and the farm halt along y, as their
+// pictures do (the author's decision of 2026-10-18, #509): the span of each shipped def.
 const SPANS = { town: { w: 2, h: 1 }, warehouse: { w: 2, h: 1 }, farm: { w: 1, h: 2 } } as const;
 const WIDE = Object.keys(SPANS) as (keyof typeof SPANS)[];
 
-beforeAll(() => {
-  for (const id of WIDE) stationDef(id).span = { ...SPANS[id] };
-});
-afterAll(() => {
-  for (const id of WIDE) delete stationDef(id).span;
-});
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
   resetStationIds(1);
@@ -67,6 +63,34 @@ function world(): SimWorld {
   line(w, 2, 30, 50);
   return w;
 }
+
+describe('the shipped town hall, goods shed and farm halt', () => {
+  it('span the tiles their pictures lie along: x for the hall and the shed, y for the halt', () => {
+    for (const id of WIDE) {
+      const def = stationDef(id);
+      expect(def.span, id).toEqual(SPANS[id]);
+      expect(placeSpan(def), id).toEqual(SPANS[id]);
+      // the footprint follows the picture's long axis, measured on its ground data at rotation 0:
+      // the near-right edge of the foot lies along x, the near-left one along y
+      const foot = groundOf(`structures/${def.art}_1`)!.foot;
+      const [n, e, s] = foot;
+      const alongX = Math.hypot(e[0] - n[0], e[1] - n[1]);
+      const alongY = Math.hypot(s[0] - e[0], s[1] - e[1]);
+      expect(alongX > alongY, `${id}: the picture's long axis is x`).toBe(
+        SPANS[id].w > SPANS[id].h,
+      );
+    }
+  });
+
+  it('keep every other station on one tile or its size', () => {
+    for (const def of STATION_DEFS)
+      if (!WIDE.includes(def.id as (typeof WIDE)[number])) expect(def.span, def.id).toBeUndefined();
+  });
+
+  it('pass the content check with the doors they ship', () => {
+    expect(validateContent(structuredClone(DEFAULT_CONTENT))).toEqual([]);
+  });
+});
 
 describe('a station that spans two tiles', () => {
   it('reads its span from the def, first, and turns it on the odd rotations', () => {
@@ -182,7 +206,7 @@ describe('the content check of a span', () => {
     const of = (span: unknown) => {
       const b = structuredClone(DEFAULT_CONTENT);
       const def = b.stations.defs[0] as unknown as Record<string, unknown>;
-      // the doors of the shipped def are for its one tile (the data flip gives it its own)
+      // the doors of the shipped def are for its own footprint
       delete def.doors;
       def.span = span;
       return validateContent(b);
@@ -371,8 +395,8 @@ describe('the doors of a station of two tiles', () => {
     const opposite = (d: Dir) => (d + 2) % 4;
     for (const id of WIDE)
       for (const rot of [0, 1, 2, 3]) {
-        // the doors of its kind: the data flip gives the three their own, now one tile's
-        const def = { ...stationDef(id), doors: undefined };
+        // the doors the def ships with, rewritten for its footprint
+        const def = stationDef(id);
         const cover = stationFootprint(id, 10, 7, rot);
         const inside = new Set(keys(cover));
         const gates = new Set(keys(stationGates(id, 10, 7, rot)));
@@ -453,6 +477,7 @@ describe('a town hall of two tiles', () => {
 
   it('answers as it did for a hall of one tile', () => {
     const w = world();
+    const shipped = stationDef('town').span;
     stationDef('town').span = { w: 1, h: 1 };
     try {
       const s = station(w, 'town', 20, 29);
@@ -464,7 +489,7 @@ describe('a town hall of two tiles', () => {
           expect(w.towns.townAt(20 + dx, 29 + dy)?.id === t.id, `${dx},${dy}`).toBe(want);
         }
     } finally {
-      stationDef('town').span = { ...SPANS.town };
+      stationDef('town').span = shipped;
     }
   });
 
@@ -486,5 +511,183 @@ describe('a town hall of two tiles', () => {
     // and the registry, counting a house in reach, never counts one that is not there
     w.houses.finishAll();
     expect(w.towns.members(w.towns.towns[0]).houses).toBe(0);
+  });
+});
+
+describe('the stations of a town, a pair of tiles each', () => {
+  /** A hall at (20, 29), covering (20, 29) and (21, 29), with a house in reach. */
+  function hallWithHouse() {
+    const w = world();
+    const hall = station(w, 'town', 20, 29);
+    expect(w.builder.spawnDecor(20, 25, 'townhouse', 0)).not.toBeNull();
+    w.towns.refresh();
+    return { w, hall, t: w.towns.byStation(hall.id)! };
+  }
+
+  it('counts a shed whose far tile is in reach, though its corner is not', () => {
+    const { w, hall, t } = hallWithHouse();
+    // corner 8 from the hall's footprint, second tile 7
+    const shed = station(w, 'warehouse', 12, 29);
+    expect(hall.distTo(shed.x, shed.y), 'the corner').toBe(8);
+    expect(hall.distTo(shed.x + 1, shed.y), 'the far tile').toBe(7);
+    expect(w.towns.members(t).stations).toContain(shed);
+    expect(w.towns.townOfStation(shed)?.id).toBe(t.id);
+    expect(w.towns.members(t).warehouses).toBe(1);
+    expect(w.towns.founded(t)).toBe(true);
+  });
+
+  it('leaves out a shed with both tiles out of reach', () => {
+    const { w, hall, t } = hallWithHouse();
+    const shed = station(w, 'warehouse', 11, 29);
+    expect(hall.distTo(shed.x + 1, shed.y), 'the far tile').toBe(8);
+    expect(w.towns.members(t).stations).not.toContain(shed);
+    expect(w.towns.townOfStation(shed)).toBeNull();
+    expect(w.towns.members(t).warehouses).toBe(0);
+    expect(w.towns.founded(t)).toBe(false);
+  });
+
+  it('counts a halt along y by its nearer tile, and leaves it out when neither is in reach', () => {
+    const { w, hall, t } = hallWithHouse();
+    line(w, 15, 20, 26);
+    line(w, 15, 17, 26);
+    // above the hall: its lower tile, on row 22, is 7 rows from the hall's row, its corner 8
+    const near = station(w, 'farm', 20, 21);
+    expect(near.footprint().map((c) => c.y)).toEqual([21, 22]);
+    expect(hall.distTo(near.x, near.y), 'its corner').toBe(8);
+    expect(hall.distTo(near.x, near.y + 1), 'its lower tile').toBe(7);
+    // and three rows up: 10 and 11 rows
+    const far = station(w, 'farm', 20, 18);
+    expect(hall.distTo(far.x, far.y + 1)).toBe(10);
+    const m = w.towns.members(t);
+    expect(m.stations).toContain(near);
+    expect(m.stations).not.toContain(far);
+    expect(w.towns.townOfStation(near)?.id).toBe(t.id);
+    expect(w.towns.townOfStation(far)).toBeNull();
+  });
+
+  it('names a station of a founded town after it by the same count', () => {
+    const { w, t } = hallWithHouse();
+    const shed = station(w, 'warehouse', 12, 29);
+    w.towns.refresh();
+    expect(shed.name).toBe(`${t.name} ${shed.def.name}`);
+  });
+});
+
+describe('the walkers of a station of two tiles', () => {
+  const DT = 1;
+  const POPULATION = 12;
+  const MIDDAY = 0.5;
+
+  it('step off a train onto the platform nearest the platform door, and walk to that door', () => {
+    // a halt at (20, 28) covering (20, 28) and (20, 29): its platform door is on the second tile,
+    // facing the line along y = 30; the line along y = 27 runs behind the first tile, and one more
+    // track tile stands beside the first tile. The first of its platform tiles is not the one
+    // its door faces.
+    const w = world();
+    line(w, 15, 28, 19);
+    const halt = station(w, 'farm', 20, 28);
+    const door = doorsOf(halt.def, halt.x, halt.y, halt.rot).find((d) => d.kind === 'platform')!;
+    expect(key(door.tile)).toBe('20,29');
+    const platforms = w.builder.platformTiles(halt);
+    expect(platforms.length).toBeGreaterThan(2);
+    expect(key(platforms[0]), 'the first platform tile').not.toBe(key(door.reach));
+    expect(keys(platforms)).toContain(key(door.reach));
+
+    w.people.alight(halt, 3);
+    const off = w.people.persons.filter((p) => p.transient);
+    expect(off).toHaveLength(3);
+    for (const p of off) {
+      expect(key(p.path[0]), 'alighting: starts on the platform at the door').toBe(key(door.reach));
+      expect(key(p.path.at(-1)!), 'alighting: ends at the door').toBe(key(door.tile));
+    }
+    w.people.persons.length = 0;
+    w.people.board(halt, 3);
+    const on = w.people.persons.filter((p) => p.transient);
+    expect(on).toHaveLength(3);
+    for (const p of on) {
+      expect(key(p.path[0]), 'boarding: starts at the door').toBe(key(door.tile));
+      expect(key(p.path.at(-1)!), 'boarding: ends on the platform at the door').toBe(
+        key(door.reach),
+      );
+    }
+  });
+
+  it('use the one platform tile there is, beside either tile, and start at the door tile', () => {
+    for (const id of WIDE)
+      for (const rot of [0, 1, 2, 3]) {
+        const w = simWorld({ terrain: 'grass', size: 64 });
+        w.builder.free = true;
+        const cover = stationFootprint(id, 20, 20, rot);
+        const outside = sides(cover);
+        // a lone piece of track beside each tile of the pair in turn
+        for (const [i, tile] of cover.entries()) {
+          const other = cover[1 - i];
+          const near = outside.filter(
+            (k) => !sides([other]).includes(k) && sides([tile]).includes(k) && k !== key(other),
+          );
+          const v = simWorld({ terrain: 'grass', size: 64 });
+          v.builder.free = true;
+          const [nx, ny] = near[0].split(',').map(Number);
+          line(v, nx, ny, nx);
+          const s = station(v, id, 20, 20, rot);
+          const door = doorsOf(s.def, s.x, s.y, s.rot).find((d) => d.kind === 'platform')!;
+          const label = `${id} r${rot} track beside tile ${i}`;
+          v.people.alight(s, 1);
+          const p = v.people.persons.find((q) => q.transient)!;
+          expect(key(p.path[0]), label).toBe(near[0]);
+          expect(key(p.path.at(-1)!), label).toBe(key(door.tile));
+          expect(keys(s.footprint()), label).toContain(key(door.tile));
+        }
+        expect(w.people.persons).toHaveLength(0);
+      }
+  });
+
+  it('never gather on the tiles under their own halt', () => {
+    const w = world();
+    const halt = station(w, 'farm', 20, 28);
+    const under = new Set(keys(halt.footprint()));
+    let gathered = 0;
+    for (let i = 0; i < 2500; i++) {
+      w.people.tick(DT, POPULATION, MIDDAY);
+      for (const p of w.people.persons)
+        if (p.state === 'gather' && p.path.length) {
+          gathered++;
+          expect(under.has(key(p.path.at(-1)!)), `tick ${i}: walker ${p.id} gathers under it`).toBe(
+            false,
+          );
+        }
+    }
+    expect(gathered, 'ticks spent on the way to gather').toBeGreaterThan(0);
+  });
+
+  it('set out for a passenger station by the distance to its nearest tile, not its corner', () => {
+    // no shipped passenger station covers two tiles yet, so this one gets a span for the test
+    const def = stationDef('station');
+    def.span = { w: 2, h: 1 };
+    try {
+      /** The ticks it takes someone from a house `gap` tiles past the far tile to set out for it. */
+      const setOut = (gap: number) => {
+        const w = world();
+        const stop = station(w, 'station', 20, 29);
+        expect(keys(stop.footprint())).toEqual(['20,29', '21,29']);
+        const home = { x: 21 + gap, y: 29 };
+        expect(w.builder.spawnDecor(home.x, home.y, 'townhouse', 0)).not.toBeNull();
+        for (let i = 0; i < 6000; i++) {
+          w.people.tick(DT, POPULATION, MIDDAY);
+          if (
+            w.people.persons.some(
+              (p) => p.home === `d${home.x},${home.y}` && p.stationId === stop.id,
+            )
+          )
+            return i;
+        }
+        return null;
+      };
+      // the corner is one further than the far tile: the walk is 15 from it and 14 from the tile
+      expect(setOut(STATION_REACH), 'a house in reach of the far tile').not.toBeNull();
+      expect(setOut(STATION_REACH + 1), 'a house just out of reach of it').toBeNull();
+    } finally {
+      delete def.span;
+    }
   });
 });

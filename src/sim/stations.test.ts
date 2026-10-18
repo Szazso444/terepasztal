@@ -22,6 +22,7 @@ import type { LevelStation } from '../world/level';
 import { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
 import { simWorld, mapParams, line, station as placeStation } from '../testing/simWorld';
+import { placeSpan } from './doors';
 
 /** A value as it reads back from JSON. */
 const asStored = (v: unknown): unknown => JSON.parse(JSON.stringify(v));
@@ -722,7 +723,7 @@ describe('a harvest breakdown', () => {
               const before = harvestBreakdown(w.map, t.x, t.y, def.id, 1, season, rules);
               expectBreakdown(before, w.map, at, `${label}, before`);
               try {
-                line(w, t.x, t.y + 1, t.x);
+                line(w, t.x, t.y + placeSpan(def).h, t.x);
                 placeStation(w, def.id, t.x, t.y);
               } catch {
                 continue;
