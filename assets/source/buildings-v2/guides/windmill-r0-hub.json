@@ -1,0 +1,106 @@
+{
+  "guide": "windmill-r0.png",
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1024
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    832
+  ],
+  "units": "canvas px are the guide picture's; game px are canvas px over `scale`, from the anchor (the footprint's centre at ground level), x to the right and y down",
+  "hub": {
+    "canvas": [
+      414.72,
+      376.64
+    ],
+    "fromAnchorGame": [
+      -12.16,
+      -56.92
+    ],
+    "tile": [
+      0,
+      0.38
+    ],
+    "heightAbovePlinth": 59,
+    "heightAboveGround": 63
+  },
+  "shaft": {
+    "tileAxis": "+y",
+    "face": "lower left",
+    "lengthTiles": 0.38,
+    "from": {
+      "canvas": [
+        512,
+        328
+      ],
+      "tile": [
+        0,
+        0
+      ]
+    },
+    "screenDirection": [
+      -0.8944,
+      0.4472
+    ],
+    "screenSlope": 0.5
+  },
+  "door": {
+    "canvas": [
+      438.6462,
+      780.6769
+    ],
+    "fromAnchorGame": [
+      -9.1692,
+      -6.4154
+    ],
+    "widthTiles": 0.12,
+    "heightPx": 14
+  },
+  "tower": {
+    "baseRadiusTiles": 0.3,
+    "topRadiusTiles": 0.2,
+    "heightPx": 52,
+    "capHeightPx": 18,
+    "capRadiusTiles": 0.23,
+    "footEllipse": {
+      "centre": [
+        512,
+        800
+      ],
+      "semiMajor": 108.6116,
+      "semiMinor": 54.3058,
+      "minorOverMajor": 0.5
+    }
+  },
+  "cross": {
+    "plane": "the plane of tile x and the vertical, to which the shaft (tile y) stands square",
+    "affine": [
+      [
+        0.7071,
+        0
+      ],
+      [
+        0.3536,
+        0.866
+      ]
+    ],
+    "formula": "screen = s * [[0.7071, 0], [0.3536, 0.866]] * (u, v), u to the right and v down in the cross's own px, s game px per cross px",
+    "ellipseMinorOverMajor": 0.6124,
+    "sailsFace": {
+      "picture": "windmill-sails-face.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "pivot": [
+        626.5,
+        626.5
+      ],
+      "reachShare": 0.46,
+      "armsDegrees": 45
+    }
+  }
+}

@@ -128,6 +128,22 @@ describe('building queue', () => {
     expect(describeEntry('fuel_stop-a0-r1', inv, plain).guide).toBe(guideFile('t1', 1));
   });
 
+  it('wants round to be true or false and a guideKind it knows, or none', () => {
+    const with_ = (extra) => ({
+      ...fam,
+      families: { ...fam.families, windmill: { ...fam.families.windmill, ...extra } },
+    });
+    expect(fam.families.windmill).toMatchObject({ round: true, guideKind: 'windmill' });
+    expect(() => buildQueue(inv, fam)).not.toThrow();
+    expect(() => buildQueue(inv, with_({ round: false }))).not.toThrow();
+    for (const bad of ['yes', 1, null])
+      expect(() => buildQueue(inv, with_({ round: bad })), String(bad)).toThrow(/windmill.*round/);
+    for (const bad of ['tower', '', null])
+      expect(() => buildQueue(inv, with_({ guideKind: bad })), String(bad)).toThrow(
+        /windmill.*guideKind/,
+      );
+  });
+
   it('stops when a family has no description', () => {
     const rest = { ...fam.families };
     delete rest.depot;

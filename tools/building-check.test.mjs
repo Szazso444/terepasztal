@@ -1,8 +1,18 @@
 import { describe, it, expect } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROTATIONS, project } from './building-kit.mjs';
-import { blockOf, boxFaces, fillPoly, drawGuide, openingsOf } from './building-guides.mjs';
-import { checkPicture, pictureOf, summarise } from './building-check.mjs';
+import {
+  blockOf,
+  boxFaces,
+  fillPoly,
+  drawGuide,
+  drawWindmill,
+  openingsOf,
+} from './building-guides.mjs';
+import { checkFile, checkPicture, pictureOf, summarise } from './building-check.mjs';
 
 /**
  * A stand-in picture: the guide's block as a painted building. By default it stands on the ground
@@ -880,5 +890,73 @@ describe('building check', () => {
     const after = summarise({ 'depot-a0-r1': { ok: false, problems: ['too small'] } }, before);
     expect(after).toMatchObject({ checked: 2, failed: 1 });
     expect(Object.keys(after.pictures)).toEqual(['depot-a0-r0', 'depot-a0-r1']);
+  });
+});
+
+describe('building check of a round building', { timeout: 30_000 }, () => {
+  /**
+   * The windmill's tower as a painting: the guide without its plinth, tinted so that it is not
+   * grey, its height scaled about its foot by `k` (a camera that looks down less or more).
+   */
+  function tower(k = 1) {
+    const guide = drawWindmill({ plinth: false });
+    const png = new PNG({ width: guide.width, height: guide.height });
+    for (let y = 0; y < png.height; y++) {
+      const sy = Math.round(800 + (y - 800) / k);
+      if (sy < 0 || sy >= png.height) continue;
+      for (let x = 0; x < png.width; x++) {
+        const from = (sy * png.width + x) * 4,
+          to = (y * png.width + x) * 4;
+        for (let c = 0; c < 4; c++) png.data[to + c] = guide.data[from + c];
+        if (png.data[to + 3]) png.data[to + 2] = Math.min(255, png.data[to + 2] + 40);
+      }
+    }
+    return png;
+  }
+  const cameraProblem = (r) => r.problems.find((p) => p.startsWith('camera off'));
+
+  it("reads a tower's camera from its foot, not from wall feet it does not have", () => {
+    // seen as the game sees it, the tower's foot is an ellipse 0.50 minor over major; its curve
+    // has no straight wall base, and read as if it had, the camera comes out 18 degrees off
+    const right = tower();
+    expect(cameraProblem(checkPicture(right, 't1', 0))).toMatch(/camera off by 1[5-9]\.\d°/);
+    const round = checkPicture(right, 't1', 0, { round: true });
+    expect(cameraProblem(round)).toBeUndefined();
+    expect(round.camera).toBeUndefined();
+    // a tower painted from a lower camera is still off, in the words of its foot
+    const low = checkPicture(tower(0.64), 't1', 0, { round: true });
+    expect(cameraProblem(low)).toMatch(
+      /camera off by 11\.\d°: it looks down from 18\.\d° where the game looks down from 30° \(the tower's foot is an ellipse 0\.32 minor over major/,
+    );
+    expect(low.camera.was).toMatch(/too low a camera/);
+    const high = checkPicture(tower(1.25), 't1', 0, { round: true });
+    expect(cameraProblem(high)).toMatch(/from 38\.\d°/);
+    expect(high.camera.was).toMatch(/too high a camera/);
+    // a picture kept as the closest of its attempts passes with a note
+    const kept = checkPicture(tower(0.64), 't1', 0, { round: true, camera: false });
+    expect(cameraProblem(kept)).toBeUndefined();
+    expect(kept.notes.some((n) => n.startsWith('camera off by 11.'))).toBe(true);
+  });
+
+  it('takes a family as round from its entry in families.json', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'round-'));
+    try {
+      const flat = join(dir, 'windmill-a0-r0.png');
+      writeFileSync(flat, PNG.sync.write(tower(0.64)));
+      const same = join(dir, 'fuel_stop-a0-r0.png');
+      writeFileSync(same, PNG.sync.write(tower(1)));
+      // the windmill is round: the foot says it is off, and an earlier picture of it is read so too
+      const off = checkFile(flat, 't1', 0);
+      expect(off.problems.some((p) => /tower's foot is an ellipse/.test(p))).toBe(true);
+      const before = join(dir, 'windmill-a0-r0.before.png');
+      writeFileSync(before, PNG.sync.write(tower(1)));
+      expect(cameraProblem(checkFile(before, 't1', 0))).toBeUndefined();
+      // a family that is not round keeps the wall-feet measure
+      expect(cameraProblem(checkFile(same, 't1', 0))).toMatch(/wall feet slope/);
+      // and the caller can say which it is
+      expect(cameraProblem(checkFile(same, 't1', 0, { round: true }))).toBeUndefined();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
