@@ -46,6 +46,34 @@ export const EQUIPMENT_SCALE: Record<string, number> = {
   diesel_refinery: 1,
   wire_mill: 1,
 };
+/**
+ * The author's per-family size pick (2026-10-18, judged on the building scale review page): a
+ * multiplier on the size a family is drawn at by the door reference and the equipment table
+ * above, for every level, age and turn of the family. It is the one place to tune a family's
+ * size by eye; a family not named here is drawn as the references give it. Pictures are only ever
+ * scaled uniformly. Footprints and where a picture stands on them are not decided here.
+ */
+export const AUTHOR_SCALE: Record<string, number> = {
+  /** Town Hall */
+  town: 1.2,
+  station: 0.9,
+  warehouse: 1.25,
+  /** Farm Halt */
+  farm: 0.75,
+  lumber: 0.9,
+  /** Quarry, shared by the Iron Mine, Sand Pit and Copper Mine */
+  quarry: 0.8,
+  grinder: 0.8,
+  power_plant: 1.2,
+  /** the Battery once it is renamed; the id stays */
+  substation: 0.9,
+  colliery: 1.2,
+  ironworks: 1.2,
+  /** proposal: "taller, increase its size" came with no number */
+  water_tower: 1.3,
+  /** the Coaling Stage; proposal: "also bigger" came with no number */
+  fuel_stop: 1.25,
+};
 /** What can say whether a frame exists: the atlas registry, or a set of frame names in a test. */
 export interface FrameNames {
   has(key: string): boolean;
@@ -77,15 +105,18 @@ export function hasScaleReference(frame: string) {
   const name = structureFamily(frame);
   return name in DOOR_FRACTION || name in DOOR_REFERENCE_PX || name in EQUIPMENT_SCALE;
 }
-/** Source measurements are visual estimates; new art must supply a measured reference. */
+/**
+ * Source measurements are visual estimates; new art must supply a measured reference. The size
+ * the reference gives is then multiplied by the author's pick for the family (`AUTHOR_SCALE`).
+ */
 export function structureScale(frame: string, illustratedHeight?: number) {
   const name = structureFamily(frame);
   const door =
     illustratedHeight && DOOR_FRACTION[name]
       ? illustratedHeight * DOOR_FRACTION[name]
       : DOOR_REFERENCE_PX[name];
-  if (door) return DOOR_PX / door;
-  return EQUIPMENT_SCALE[name] ?? 1;
+  const own = door ? DOOR_PX / door : (EQUIPMENT_SCALE[name] ?? 1);
+  return own * (AUTHOR_SCALE[name] ?? 1);
 }
 /** How a building frame is sized: the family it is measured by and the scale that gives. */
 export interface ScaleReference {

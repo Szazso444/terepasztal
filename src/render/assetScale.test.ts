@@ -3,6 +3,7 @@ import atlas from '../../public/assets/structures.json';
 import { structureFrame } from '../art/frames';
 import { generateStructuresAtlas } from '../art/structures';
 import {
+  AUTHOR_SCALE,
   DOOR_FRACTION,
   DOOR_PX,
   DOOR_REFERENCE_PX,
@@ -21,13 +22,14 @@ it('pins the two heights: a standard door is 13.2 px and a person 9 px', () => {
   expect(PERSON_PX).toBe(9);
 });
 
-it('keeps a common door height across packed building levels', () => {
+it("keeps a common door height across packed building levels, before the author's pick", () => {
   let checked = 0;
   for (const [key, frame] of Object.entries(atlas.frames) as [string, { h: number }][]) {
     const family = structureFamily(key);
     if (!DOOR_FRACTION[family]) continue;
     const height = frame.h / atlas.resolution;
-    const door = height * DOOR_FRACTION[family] * structureScale(key, height);
+    const door =
+      (height * DOOR_FRACTION[family] * structureScale(key, height)) / (AUTHOR_SCALE[family] ?? 1);
     expect(door, key).toBeCloseTo(DOOR_PX, 5);
     checked++;
   }
@@ -82,14 +84,39 @@ const BASELINE = {
     wire_mill: 1,
   } as Record<string, number>,
 };
-/** The scale a frame had, from the numbers above and the 2.1 m door beside the 11 px person. */
-const baselineScale = (frame: string, illustratedHeight?: number) => {
+/**
+ * The author's size pick of 2026-10-18 as plain numbers, pinned apart from `AUTHOR_SCALE` so that
+ * editing the table cannot move them. A family not named here is drawn as the references give it.
+ */
+const PICK: Record<string, number> = {
+  town: 1.2,
+  station: 0.9,
+  warehouse: 1.25,
+  farm: 0.75,
+  lumber: 0.9,
+  quarry: 0.8,
+  grinder: 0.8,
+  power_plant: 1.2,
+  substation: 0.9,
+  colliery: 1.2,
+  ironworks: 1.2,
+  water_tower: 1.3,
+  fuel_stop: 1.25,
+};
+/**
+ * The scale a frame had before the pick, from the numbers above and the 2.1 m door beside the
+ * 11 px person.
+ */
+const referenceScale = (frame: string, illustratedHeight?: number) => {
   const family = structureFamily(frame);
   const fraction = BASELINE.fractions[family];
   const door =
     illustratedHeight && fraction ? illustratedHeight * fraction : BASELINE.doors[family];
   return door ? 13.2 / door : (BASELINE.declared[family] ?? 1);
 };
+/** The scale a frame has: what the references give, times the author's pick for its family. */
+const baselineScale = (frame: string, illustratedHeight?: number) =>
+  referenceScale(frame, illustratedHeight) * (PICK[structureFamily(frame)] ?? 1);
 
 describe('building scale', () => {
   /**
@@ -103,7 +130,8 @@ describe('building scale', () => {
       illustratedHeight && DOOR_FRACTION[family]
         ? illustratedHeight * DOOR_FRACTION[family]
         : DOOR_REFERENCE_PX[family];
-    return door ? ((2.1 / 1.75) * 11) / door : (EQUIPMENT_SCALE[family] ?? 1);
+    const own = door ? ((2.1 / 1.75) * 11) / door : (EQUIPMENT_SCALE[family] ?? 1);
+    return own * (AUTHOR_SCALE[family] ?? 1);
   };
 
   it('is unchanged for every packed illustrated frame', () => {
@@ -168,9 +196,90 @@ describe('building scale', () => {
 
   it("is a door's height over the door in the picture, whoever stands beside it", () => {
     expect(structureScale('structures/townhouse_s1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.townhouse);
-    expect(structureScale('structures/station_1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.station);
-    // a measured door: 36 of the station's 169 px
-    expect(structureScale('structures/station_1', 169)).toBeCloseTo(DOOR_PX / 36, 9);
+    expect(structureScale('structures/station_1')).toBe(
+      (DOOR_PX / DOOR_REFERENCE_PX.station) * AUTHOR_SCALE.station,
+    );
+    // a measured door: 36 of the station's 169 px, then the author's pick
+    expect(structureScale('structures/station_1', 169)).toBeCloseTo(
+      (DOOR_PX / 36) * AUTHOR_SCALE.station,
+      9,
+    );
+  });
+});
+
+describe("the author's size pick", () => {
+  const frames: FrameNames = { has: () => false };
+  /** One representative frame per listed family; the sizes are measured the way the game does. */
+  const REPRESENTATIVE: Record<string, string> = {
+    town: 'structures/town_1',
+    station: 'structures/station_2',
+    warehouse: 'structures/warehouse_3',
+    farm: 'structures/farm_1',
+    lumber: 'structures/lumber_4',
+    quarry: 'structures/quarry_2',
+    grinder: 'structures/grinder_lv2',
+    power_plant: 'structures/power_plant',
+    substation: 'structures/substation_lv3',
+    colliery: 'structures/colliery',
+    ironworks: 'structures/ironworks_lv4',
+    water_tower: 'structures/water_tower',
+    fuel_stop: 'structures/fuel_stop',
+  };
+
+  it("pins the author's multipliers, family by family", () => {
+    expect(AUTHOR_SCALE).toEqual(PICK);
+    expect(Object.keys(REPRESENTATIVE).sort()).toEqual(Object.keys(PICK).sort());
+  });
+
+  it("is today's size times the multiplier for a frame of each listed family", () => {
+    for (const [family, frame] of Object.entries(REPRESENTATIVE)) {
+      const today = referenceScale(frame);
+      expect(structureFamily(frame), frame).toBe(family);
+      expect(structureScale(frame), frame).toBeCloseTo(today * PICK[family], 12);
+      expect(scaleReference(frames, frame), frame).toEqual({
+        family,
+        scale: structureScale(frame),
+      });
+      expect(scaleReference(frames, frame)?.scale, frame).toBeCloseTo(today * PICK[family], 12);
+    }
+  });
+
+  it('reaches every level, stage and turn of a family, and a picture measured by its door', () => {
+    for (const [family, multiplier] of Object.entries(PICK))
+      for (const suffix of ['', '_lv2', '_lv4', '_s1', '_3'])
+        for (const height of [undefined, 169, 262]) {
+          const frame = `structures/${family}${suffix}`;
+          expect(structureScale(frame, height), `${frame} at ${height}`).toBeCloseTo(
+            referenceScale(frame, height) * multiplier,
+            12,
+          );
+        }
+    // a turn is sized by the frame it was turned from
+    const turned: FrameNames = { has: (k) => k === 'structures/town_2' };
+    expect(scaleReference(turned, 'structures/town_2_r1')?.scale).toBe(
+      structureScale('structures/town_2'),
+    );
+  });
+
+  it('leaves a family it does not name as the references give it', () => {
+    for (const family of [
+      'townhouse',
+      'windmill',
+      'kiln',
+      'refinery',
+      'pump',
+      'hydro_plant',
+      'oil_derrick',
+      'diesel_refinery',
+      'wire_mill',
+    ]) {
+      expect(AUTHOR_SCALE[family], family).toBeUndefined();
+      const frame = `structures/${family}_lv2`;
+      expect(structureScale(frame), frame).toBe(referenceScale(frame));
+      expect(structureScale(frame, 200), frame).toBe(referenceScale(frame, 200));
+    }
+    expect(structureScale('structures/not_a_family')).toBe(1);
+    expect(scaleReference(frames, 'structures/not_a_family')).toBeNull();
   });
 });
 
