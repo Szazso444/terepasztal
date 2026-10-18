@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { STR } from '../strings';
@@ -186,7 +186,7 @@ function questionOf(arg: ts.Expression, scope: ts.Node, sf: ts.SourceFile): stri
   return found;
 }
 
-function guardOf(call: ts.CallExpression, sf: ts.SourceFile): Guard {
+function guardOf(call: ts.Node, sf: ts.SourceFile): Guard {
   for (let c: ts.Node = call, p = call.parent; p; c = p, p = p.parent) {
     if (ts.isIfStatement(p) && p.thenStatement === c) {
       const kind = confirmKind(p.expression, sf);
@@ -271,6 +271,32 @@ function presetLoadsAsk(sf: ts.SourceFile): boolean[] {
   return out;
 }
 
+interface Staging extends Site {
+  file: string;
+}
+
+/** Every use of `stageNewGameTuning` in `sf`, bar its import, with what holds it back. */
+function stagingIn(sf: ts.SourceFile, file: string): Staging[] {
+  const found: Staging[] = [];
+  const visit = (n: ts.Node) => {
+    if (ts.isIdentifier(n) && n.text === 'stageNewGameTuning' && !ts.isImportSpecifier(n.parent)) {
+      const { owner, action } = ownerOf(n);
+      found.push({ file, id: `${owner}.${action}`, guard: guardOf(n, sf) });
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+/** Every use of `stageNewGameTuning` in a panel, menu or screen of `src/ui`. */
+function stagingUses(): Staging[] {
+  const dir = new URL('./', import.meta.url);
+  return readdirSync(dir)
+    .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+    .flatMap((f) => stagingIn(parse(f, source(f)), f));
+}
+
 describe('what each action that replaces or leaves a game is wired to', () => {
   const OVERWRITE: Guard = { by: 'if', kind: 'overwrite' };
   const LEAVE: Guard = { by: 'if', kind: 'leave' };
@@ -338,6 +364,39 @@ describe('what each action that replaces or leaves a game is wired to', () => {
     expect(newGames).toEqual([true]);
   });
 
+  // slow because it parses every source file of src/ui with the TypeScript compiler: 0.43 s alone,
+  // so a limit of 30 s
+  it("stages a tuning only from the title screen's New game, after the question and nowhere else", () => {
+    const uses = stagingUses().map((u) => `${u.file}: ${u.id}`);
+    // the settings screen's New game, the debug panel's Regenerate and the level actions stage none
+    expect(uses).toEqual(['panels.ts: MainMenu.newGame']);
+    const [use] = stagingUses();
+    expect(use.guard).toEqual(OVERWRITE);
+    // what the title screen reads of the stored tuning is gone: nothing marks it as modified
+    for (const f of ['panels.ts', 'menu.ts'])
+      expect(source(f), f).not.toMatch(/\b(readRules|rulesDiffer)\b|custom\.rules/);
+  }, 30_000);
+
+  it('sees a staging behind the question, one before it, and none at all', () => {
+    const staged = (body: string) =>
+      stagingIn(
+        parse(
+          'sample.ts',
+          `function f() { const m = new MainMenu({ newGame: (seed) => { ${body} } }); }`,
+        ),
+        'sample.ts',
+      );
+    expect(
+      staged(
+        "if (!confirmReplacement('overwrite')) return; startNewGame(t, stageNewGameTuning, go);",
+      ),
+    ).toEqual([{ file: 'sample.ts', id: 'MainMenu.newGame', guard: OVERWRITE }]);
+    expect(
+      staged("startNewGame(t, stageNewGameTuning, go); if (confirmReplacement('overwrite')) go();"),
+    ).toEqual([{ file: 'sample.ts', id: 'MainMenu.newGame', guard: { by: 'none' } }]);
+    expect(staged('go();')).toEqual([]);
+  });
+
   it('asks before loading a tuning preset, and returns before anything is applied on a no', () => {
     const loads = presetLoadsAsk(parse('tuningScreen.ts', source('tuningScreen.ts')));
     expect(loads).toEqual([true]);
@@ -386,5 +445,157 @@ describe('what each action that replaces or leaves a game is wired to', () => {
       const d = () => { if (!confirm(STR.tuning.confirmDeletePreset(p.name))) return; applyRulePreset(p.name); };
       const e = () => { if (confirm(STR.tuning.confirmLoadPreset(p.name))) applyRulePreset(p.name); };`;
     expect(presetLoadsAsk(parse('sample.ts', presets))).toEqual([true, false, false, false, false]);
+  });
+});
+
+// -------------------------------------------------------- what the Tuning choice is wired to
+//
+// The title screen's New game choice is built from DOM nodes, so what is built in `MainMenu`,
+// `TuningScreen` and `createPlayUi` is read from the source here; the choice's entries, pick and
+// start are tested in `newGameTuning.test.ts`.
+
+/** The initializer of `<action>:` in the `new <owner>({..})` of `sf`. */
+function actionOf(sf: ts.SourceFile, owner: string, action: string): ts.Node | undefined {
+  let found: ts.Node | undefined;
+  const visit = (n: ts.Node) => {
+    if (
+      ts.isPropertyAssignment(n) &&
+      ts.isIdentifier(n.name) &&
+      n.name.text === action &&
+      ownerOf(n.initializer).owner === owner
+    )
+      found = n.initializer;
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+/** The body of method `name` of class `cls`. */
+function methodOf(sf: ts.SourceFile, cls: string, name: string): ts.Block | undefined {
+  let found: ts.Block | undefined;
+  const visit = (n: ts.Node) => {
+    if (ts.isClassDeclaration(n) && n.name?.text === cls)
+      for (const m of n.members)
+        if (ts.isMethodDeclaration(m) && m.name.getText(sf) === name) found = m.body;
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+/** How each `this.tuningPick` in `sf` is used: `write`, `read`, or the call it is an argument of. */
+function pickUses(sf: ts.SourceFile): string[] {
+  const uses: string[] = [];
+  const visit = (n: ts.Node) => {
+    if (
+      ts.isPropertyAccessExpression(n) &&
+      n.expression.kind === ts.SyntaxKind.ThisKeyword &&
+      n.name.text === 'tuningPick'
+    ) {
+      const p = n.parent;
+      if (
+        ts.isBinaryExpression(p) &&
+        p.left === n &&
+        p.operatorToken.kind === ts.SyntaxKind.EqualsToken
+      )
+        uses.push('write');
+      else if (ts.isCallExpression(p) && p.arguments.includes(n))
+        uses.push(`argument of ${p.expression.getText(sf)}`);
+      else uses.push(`read in ${p.getText(sf)}`);
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return uses;
+}
+
+describe("what the title screen's Tuning choice is wired to", () => {
+  const menu = () => parse('menu.ts', source('menu.ts'));
+  const panels = () => parse('panels.ts', source('panels.ts'));
+  const statements = (b: ts.Block | undefined, sf: ts.SourceFile) =>
+    (b?.statements ?? []).map((s) => s.getText(sf));
+
+  it('hands the pick to New game and to nothing else: Play level, Edit level and Continue ignore it', () => {
+    const reads = pickUses(menu()).filter((u) => u !== 'write');
+    expect(reads).not.toEqual([]);
+    expect(new Set(reads)).toEqual(
+      new Set([
+        'argument of keepPick',
+        'argument of pickIndex',
+        'argument of this.actions.newGame',
+      ]),
+    );
+  });
+
+  it('starts the pick over each time the title screen is drawn, before the choice is built', () => {
+    const sf = menu();
+    const draw = statements(methodOf(sf, 'MainMenu', 'render'), sf);
+    const reset = draw.indexOf('this.tuningPick = null;');
+    const build = draw.indexOf('this.refreshTunings();');
+    expect(reset).toBeGreaterThanOrEqual(0);
+    expect(build).toBeGreaterThan(reset);
+  });
+
+  it('refreshes the choice alone: not the seed, the production chain or the rest of the screen', () => {
+    const sf = menu();
+    const refresh = methodOf(sf, 'MainMenu', 'refreshTunings');
+    expect(refresh).toBeDefined();
+    const text = refresh!.getText(sf);
+    expect(text).not.toMatch(/this\.(render|show|left|right)\b|\bseedInput\b|\bsupply\b/);
+    // it is not the drawing of the title screen, which would start the pick over
+    expect(text).not.toContain('this.tuningPick = null');
+  });
+
+  it("refreshes the choice when the Game tuning screen closes, from the screen's own close", () => {
+    const sf = panels();
+    let made: ts.NewExpression | undefined;
+    const visit = (n: ts.Node) => {
+      if (ts.isNewExpression(n) && n.expression.getText(sf) === 'TuningScreen') made = n;
+      ts.forEachChild(n, visit);
+    };
+    visit(sf);
+    expect(made?.arguments).toHaveLength(2);
+    expect(made!.arguments![1].getText(sf)).toMatch(/\bmainMenu\.refreshTunings\(\)/);
+    // and the screen runs it when it is closed, or replaced by another screen
+    const screen = parse('tuningScreen.ts', source('tuningScreen.ts'));
+    const closing = statements(methodOf(screen, 'TuningScreen', 'onClose'), screen);
+    expect(closing).toEqual(['this.onClosed();']);
+  });
+
+  it('lists the tunings saved in Game tuning', () => {
+    const sf = panels();
+    expect(actionOf(sf, 'MainMenu', 'tunings')?.getText(sf)).toMatch(/\blistRulePresets\(\)/);
+  });
+
+  it('toasts what startNewGame says when the pick could not be used', () => {
+    const sf = panels();
+    const action = actionOf(sf, 'MainMenu', 'newGame');
+    expect(action).toBeDefined();
+    const text = action!.getText(sf);
+    const said = /\bconst (\w+) = startNewGame\(/.exec(text)?.[1];
+    expect(said, 'the result of startNewGame is kept').toBeDefined();
+    expect(text).toMatch(new RegExp(`if \\(${said}\\) [\\w.]*toasts\\.push\\(${said}\\b`));
+  });
+
+  it('sees a pick handed to Play level, a choice built by drawing the screen again, and a close that does not refresh', () => {
+    const sample = `
+      class MainMenu {
+        render() { this.refreshTunings(); this.tuningPick = null; this.actions.playLevel(this.tuningPick); }
+        refreshTunings() { this.render(); }
+      }
+      class TuningScreen { onClose() { this.onChanged(); } }
+      const t = new TuningScreen(() => {}, () => {});`;
+    const sf = parse('sample.ts', sample);
+    expect(pickUses(sf)).toContain('argument of this.actions.playLevel');
+    const draw = statements(methodOf(sf, 'MainMenu', 'render'), sf);
+    expect(draw.indexOf('this.refreshTunings();')).toBeLessThan(
+      draw.indexOf('this.tuningPick = null;'),
+    );
+    expect(methodOf(sf, 'MainMenu', 'refreshTunings')!.getText(sf)).toMatch(/this\.render\b/);
+    expect(statements(methodOf(sf, 'TuningScreen', 'onClose'), sf)).not.toEqual([
+      'this.onClosed();',
+    ]);
+    expect(methodOf(sf, 'MainMenu', 'missing')).toBeUndefined();
   });
 });

@@ -9,16 +9,29 @@ import type { HousesJSON } from './houses';
 import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
+import type { RoadJSON } from './roads';
 import type { BuildingJSON } from './buildings';
+import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { CHUNK_TILES } from './expand';
+import { generatorOf, groundOf, lacksGround, worldWithinBound } from './ground';
 import { wrapRotation } from './rotation';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
-  | { kind: 'generated'; seed: number; params: MapGenParams }
+  | {
+      kind: 'generated';
+      seed: number;
+      params: MapGenParams;
+      /**
+       * v19: the ground of every chunk generated so far, as it was generated, under its world
+       * chunk key (src/world/chunks.ts). A load reads these and generates only the chunks missing
+       * here; absent or empty, every chunk is generated and stored on load.
+       */
+      chunks?: ChunkStore;
+    }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 20;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -64,7 +77,9 @@ export interface SaveParts {
    * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
    * idle train making way (`aside`), the way it runs (`way`), what a waiting train waits for
    * (`blockedBy`, `want`), its note (`note`) and when it may next look for a way aside and a jam
-   * it is in be searched again (`asideRetry`, `recoveryRetry`)
+   * it is in be searched again (`asideRetry`, `recoveryRetry`); v18: whether a freight train has
+   * put goods down at the stop it stands at (`dropped`), and its `mode` is `freight` where it was
+   * `production` or `collection`
    */
   trains: unknown[];
   contracts: unknown;
@@ -78,7 +93,7 @@ export interface SaveParts {
   wires: [number, number, string][];
   /** v2: weather generator state */
   weather: unknown;
-  /** v3: how the map was built */
+  /** v3: how the map was built; v19: a generated world with the ground of its chunks */
   world: WorldSpec;
   /** v3: the rules the game was played with */
   rules: Partial<Rules>;
@@ -111,6 +126,8 @@ export interface SaveParts {
    * the map. The persons themselves are not saved and start over on load.
    */
   people: PeopleJSON;
+  /** v20: road tiles [x, y], level crossings included (`Roads.toJSON`) */
+  roads: RoadJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =
@@ -543,6 +560,31 @@ export const MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    from: 17,
+    note: 'Production and Collection became one Freight route mode: a train on either now runs as Freight, which heads for the fullest producer or warehouse and takes producer goods to a warehouse or depot and warehouse goods to a depot; no freight train had put goods down at the stop it stands at; from now on a save keeps that',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        if (t.mode === 'production' || t.mode === 'collection') t.mode = 'freight';
+        t.dropped = t.dropped ?? false;
+      }
+    },
+  },
+  {
+    from: 18,
+    note: 'a generated map whose ground was not stored yet has it generated as before, then stored chunk by chunk and the save written at once (applied on load); from now on a save keeps the ground of every chunk, so a change to map generation reaches only land generated after it',
+    run: (j) => {
+      // a level carries its own ground; a world no build wrote is left as it is
+      const world: unknown = j.world;
+      if (isRecord(world) && world.kind === 'generated') world.chunks = world.chunks ?? {};
+    },
+  },
+  {
+    from: 19,
+    note: 'no road had been built: the road list started empty',
+    run: (j) => (j.roads = j.roads ?? []),
+  },
 ];
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
 const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
@@ -572,6 +614,7 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   houses: true,
   supply: true,
   people: true,
+  roads: true,
 };
 /** The names a type declares, without the `string` and `number` of an index signature. */
 type DeclaredKey<T> = keyof {
@@ -613,10 +656,11 @@ export function buildSave(
 /**
  * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
  * or it is a save without something every version since v1 holds, or one that would load holding
- * a number no save can store (`settle`); or, for an import, storage refused to keep it (full or
- * blocked).
+ * a number no save can store (`settle`), or seeds that name no one world (`settleSeeds`); or it
+ * describes a generated map larger than the game builds (`worldWithinBound`); or, for an import,
+ * storage refused to keep it (full or blocked).
  */
-export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'storage';
+export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'tooLarge' | 'storage';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -704,13 +748,55 @@ function repairStationTurns(j: SaveGame) {
   for (const s of j.stations as unknown[]) if (isRecord(s)) s.rot = wrapRotation(s.rot);
 }
 /**
+ * The seed a world description names, as the one number its map is built from: a seed that is a
+ * number or the text of one, when that number is an integer (`Number.isInteger`); null for any
+ * other (a fraction, NaN, an infinity, a text that is not a number, no seed at all). An integer
+ * is not held to the safe ones: a player may type digits past 2^53 - 1 as a seed, the game makes
+ * `Number` of them (`parseSeed`), plays that world and writes it, and every such number is the one
+ * double its save holds and its chunks store (`chunks.ts` keeps a seed it cannot zigzag as a
+ * float64), so the save must load again. Text reads as the game reads typed digits. Text that is
+ * blank, and a value that is no number or text (null, a flag, a list), name no seed: `Number()`
+ * would read them as 0 or 1, and 0 is a world too. Map generation does arithmetic on the seed
+ * (`seed + 5`), which on text gives other text and so another world.
+ */
+function worldSeedOf(seed: unknown): number | null {
+  const n =
+    typeof seed === 'number'
+      ? seed
+      : typeof seed === 'string' && seed.trim() !== ''
+        ? Number(seed)
+        : NaN;
+  return Number.isInteger(n) ? n : null;
+}
+/**
+ * Whether the seeds of a file name one world, checked before any step runs: the file's own seed
+ * is an integer (`worldSeedOf`), because a file with no world (nothing, or null) has its world
+ * made from that seed on load, and a world's seed is the file's. A world that is there is a
+ * description whose seed, read as a number, is the file's seed: a save whose two seeds disagree
+ * cannot say which world it is, and neither wins. The world's seed is set on the description as
+ * that number. Any other value in place of a world holds no seed. False refuses the file as
+ * damaged, and then nothing has been changed.
+ */
+function settleSeeds(file: Record<string, unknown>): boolean {
+  if (worldSeedOf(file.seed) !== file.seed) return false;
+  const world = file.world;
+  if (world === undefined || world === null) return true;
+  if (!isRecord(world)) return false;
+  const seed = worldSeedOf(world.seed);
+  if (seed !== file.seed) return false;
+  world.seed = seed;
+  return true;
+}
+
+/**
  * A file that holds every v1 field, migrated to the current version with its station turns
- * repaired; null when it does not, and when what it gives would still hold a number no save can
- * store (`firstNonFinite`: only an overflowing literal such as `1e999` gives one), so that what
- * loads can be stored again.
+ * repaired; null when it does not, when its seeds name no one world (`settleSeeds`), and when what
+ * it gives would still hold a number no save can store (`firstNonFinite`: only an overflowing
+ * literal such as `1e999` gives one), so that what loads can be stored again.
  */
 function settle(file: Record<string, unknown>): SaveGame | null {
-  if (!holdsCore(file)) return null;
+  // before any step runs: the step from v4 lays out a list with an entry for every chunk of the map
+  if (!worldWithinBound(file.world) || !holdsCore(file) || !settleSeeds(file)) return null;
   const j = file as SaveGame;
   // no version, or none the chain can count up from, is the oldest
   if (!Number.isInteger(j.version) || j.version < SAVE_MIN_VERSION) j.version = SAVE_MIN_VERSION;
@@ -728,12 +814,16 @@ function settle(file: Record<string, unknown>): SaveGame | null {
 /**
  * Read a save text: an exported save, a stored one or a diagnostics bundle. Never refuses on
  * version: older saves are upgraded step by step, newer ones are loaded as they are with a
- * warning. Station turns are repaired (`repairStationTurns`). Text that is not a whole save, or
- * whose save could not be stored again, is refused, with the reason.
+ * warning. Station turns are repaired (`repairStationTurns`), and a world seed held as text is
+ * read as the number it names (`settleSeeds`). Text that is not a whole save, or whose save could
+ * not be stored again, or whose seed is not an integer or is not the seed of its world, or
+ * whose generated map is larger than the game builds (`worldWithinBound`; refused before anything
+ * is migrated or generated), is refused, with the reason.
  */
 export function readSaveText(raw: string): { save: SaveGame } | { error: SaveRefusal } {
   const opened = openSave(raw);
   if ('error' in opened) return opened;
+  if (!worldWithinBound(opened.file.world)) return { error: 'tooLarge' };
   const save = settle(opened.file);
   return save ? { save } : { error: 'damaged' };
 }
@@ -748,6 +838,20 @@ export function readSave(): SaveGame | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     return parseSave(raw);
+  } catch {
+    return null;
+  }
+}
+/**
+ * Why the stored game Continue loads is refused (`readSaveText`); null when there is none or it
+ * loads. A refused save stays stored.
+ */
+export function storedRefusal(): SaveRefusal | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const read = readSaveText(raw);
+    return 'error' in read ? read.error : null;
   } catch {
     return null;
   }
@@ -937,8 +1041,130 @@ export function readSlot(name: string): SaveGame | null {
   const raw: unknown = readSlots()[name];
   return typeof raw === 'string' ? parseSave(raw) : null;
 }
+/** Why a named save is refused (`readSaveText`); null when there is none by that name or it loads. */
+export function slotRefusal(name: string): SaveRefusal | null {
+  const raw: unknown = readSlots()[name];
+  if (typeof raw !== 'string') return null;
+  const read = readSaveText(raw);
+  return 'error' in read ? read.error : null;
+}
 export function deleteSlot(name: string) {
   const slots = readSlots();
   delete slots[name];
   return writeSlots(slots);
+}
+
+// ------------------------------------------------------------------ stored ground
+/**
+ * Set once the saves stored before saves kept their ground (v19) have been given it
+ * (`freezeStoredSaves`); it holds the format version the pass ran under.
+ */
+export const GROUND_KEY = 'terepasztal.ground';
+
+/**
+ * A stored save text with the ground of its map added (`groundOf`, with `generate` for the save),
+ * or null when there is none to add: the text holds no save the game loads, its world is a level
+ * or stores every chunk its map covers already, or the file holds a number JSON cannot write.
+ * Only the ground is added. The file keeps its version, time stamp and everything else as they
+ * were, so it lists, loads and upgrades as before; the step from v18 keeps the store it finds.
+ * A save whose map is larger than the game builds (`worldWithinBound`) gets none: it is left as it
+ * is, and a load refuses it.
+ */
+export function withGround(raw: string, generate: (save: SaveGame) => MapGenerator): string | null {
+  const grounded = grounding(raw, generate);
+  return grounded !== null && 'text' in grounded ? grounded.text : null;
+}
+
+/** `withGround`, telling a save left as it is for the size of its map from the other reasons. */
+function grounding(
+  raw: string,
+  generate: (save: SaveGame) => MapGenerator,
+): { text: string } | { tooLarge: true } | null {
+  const read = readSaveText(raw);
+  if (!('save' in read)) return read.error === 'tooLarge' ? { tooLarge: true } : null;
+  const { world } = read.save;
+  if (world?.kind !== 'generated' || !lacksGround(world)) return null;
+  groundOf(world, generate(read.save));
+  const parsed = JSON.parse(raw) as unknown;
+  // the save inside a diagnostics bundle, as `openSave` reads it
+  const file =
+    isRecord(parsed) && parsed.diagnostics === 1 && isRecord(parsed.save) ? parsed.save : parsed;
+  if (!isRecord(file)) return null;
+  // a file from before v3 has no world of its own: it gets the one the step from v2 builds for it
+  file.world = isRecord(file.world) ? { ...file.world, chunks: world.chunks } : world;
+  return firstNonFinite(parsed) === null ? { text: JSON.stringify(parsed) } : null;
+}
+
+/** What `freezeStoredSaves` did. */
+export interface FreezeReport {
+  /** false when the pass had run before, or storage could not be read */
+  ran: boolean;
+  /** stored saves given their ground, Continue's and the named ones */
+  frozen: number;
+  /** stored saves that lack it still: storage would not keep them with it (full or blocked) */
+  refused: number;
+  /**
+   * stored saves whose map is larger than the game builds (`worldWithinBound`): left byte for
+   * byte, and refused when loaded
+   */
+  tooLarge: number;
+}
+
+/**
+ * Give every stored save that lacks the ground of its map that ground (`withGround`), as the
+ * generator of this build makes it: the save Continue loads and every named save, each once.
+ * Runs once (`GROUND_KEY`): saves written since keep their ground, and a save that comes in later
+ * without it (an import) gets it when it is loaded. A save storage will not keep with its ground
+ * stays stored as it was, is counted in `refused`, and gets its ground when it is next loaded.
+ * A save whose map is larger than the game builds (`worldWithinBound`) stays stored as it was
+ * without a map made for it, is counted in `tooLarge`, and is refused when loaded. Named saves are
+ * written one at a time, so a full storage keeps every one it can.
+ */
+export function freezeStoredSaves(
+  generate: (save: SaveGame) => MapGenerator = (s) => generatorOf(s.supply),
+): FreezeReport {
+  const report: FreezeReport = { ran: false, frozen: 0, refused: 0, tooLarge: 0 };
+  let continued: string | null;
+  try {
+    if (localStorage.getItem(GROUND_KEY) !== null) return report;
+    continued = localStorage.getItem(SAVE_KEY);
+  } catch {
+    return report;
+  }
+  report.ran = true;
+  const tally = (stored: boolean) => (stored ? report.frozen++ : report.refused++);
+  // a save whose map cannot be made is left as it was: its load says what is wrong with it. One
+  // whose map is too large is counted, and nothing of it is generated
+  const grounded = (raw: unknown) => {
+    try {
+      const done = typeof raw === 'string' ? grounding(raw, generate) : null;
+      if (done !== null && 'tooLarge' in done) report.tooLarge++;
+      return done !== null && 'text' in done ? done.text : null;
+    } catch {
+      return null;
+    }
+  };
+  const text = grounded(continued);
+  if (text !== null)
+    try {
+      localStorage.setItem(SAVE_KEY, text);
+      tally(true);
+    } catch {
+      tally(false);
+    }
+  let slots = readSlots();
+  for (const [name, raw] of Object.entries(slots)) {
+    const next = grounded(raw);
+    if (next === null) continue;
+    const table = { ...slots, [name]: next };
+    const stored = writeSlots(table);
+    if (stored) slots = table;
+    tally(stored);
+  }
+  try {
+    localStorage.setItem(GROUND_KEY, String(SAVE_VERSION));
+  } catch {
+    /* the pass runs again next time, and finds the saves it gave their ground to have it */
+  }
+  return report;
 }

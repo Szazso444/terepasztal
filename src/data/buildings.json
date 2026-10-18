@@ -17,7 +17,14 @@
         "food": 5
       }
     },
-    "perWeek": 60
+    "perWeek": 60,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "kiln",
@@ -38,7 +45,14 @@
         "coal": 1
       }
     },
-    "perWeek": 40
+    "perWeek": 40,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "grinder",
@@ -58,7 +72,18 @@
         "iron": 1
       }
     },
-    "perWeek": 20
+    "perWeek": 20,
+    "span": {
+      "w": 2,
+      "h": 1
+    },
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [1, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "refinery",
@@ -82,7 +107,18 @@
         "oil": 1
       }
     },
-    "perWeek": 15
+    "perWeek": 15,
+    "span": {
+      "w": 2,
+      "h": 2
+    },
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 1],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "power_plant",
@@ -111,11 +147,22 @@
       "water": 1
     },
     "power": true,
-    "perWeek": 60
+    "perWeek": 60,
+    "span": {
+      "w": 3,
+      "h": 2
+    },
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [1, 1],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "substation",
-    "name": "Substation",
+    "name": "Battery",
     "flavor": "Taps the pole grid and feeds the wires within six tiles. Too many trains under one and they all slow together.",
     "cost": {
       "iron": 24,
@@ -132,7 +179,18 @@
       "radius": 6,
       "throughput": 3
     },
-    "perWeek": 0
+    "perWeek": 0,
+    "span": {
+      "w": 2,
+      "h": 2
+    },
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 1],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "hydro_plant",
@@ -153,7 +211,14 @@
     },
     "power": true,
     "needsWater": true,
-    "perWeek": 120
+    "perWeek": 120,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "bridge_wood",

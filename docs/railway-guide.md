@@ -21,7 +21,7 @@ An upgrade is paid when it starts and takes game time: 6, 9, 12, 18 and 24 game 
 2 to 6, from a quarter of a day to a whole one (the **Upgrade time** tuning value scales them; at
 0 every upgrade is instant). The building is closed until the work is done and keeps its old
 level meanwhile: a station or works makes nothing and has no crew to feed, a Power Plant gives
-no power and a Substation feeds no wire, and a House takes no newcomers but keeps its residents.
+no power and a Battery feeds no wire, and a House takes no newcomers but keeps its residents.
 Nobody lives at a closed station or works, and nobody sets out from one to gather: the people
 who lived there move to the open place nearest to where they stand. Trains still stop at a
 closed station and load what it holds, but deliver nothing there, and a train set to wait for a
@@ -126,6 +126,9 @@ track on them. Straight rails on consecutive platforms of the same material join
 into timber trusses or masonry arches with supports. Regular and high-speed rails can both
 use a platform; normal class transitions are still required where classes meet.
 
+A platform that carries no rail can carry a road instead, and townsfolk walk over a road bridge,
+keeping to the road along the deck. They never walk on a bare platform or on one with rails.
+
 | Platform      | Base material cost | Capacity | Half speed above |
 | ------------- | ------------------ | -------- | ---------------- |
 | Wooden Bridge | 24 wood            | 180 t    | 144 t            |
@@ -140,6 +143,25 @@ base capacity, up to level 4, and adds visible reinforcement once the work is do
 crossing at the old limit while it runs. Upgrade every platform in the crossing for heavier
 traffic: its weakest platform remains the limiting one. Remove track before demolishing its
 platform. The removal tool removes the rails first on an occupied deck.
+
+## Mountain track
+
+Track can be laid on **Rock** and **Mountain**, but only as the continuation of a line: every
+piece there needs one of its ends joined to the end of a line already standing. Draw a line up
+from the foot of the mountain, or on from track already on it; drawn from the far end, it is
+refused with "Mountain track must continue an existing line". Track beside the tile that runs
+past it does not count. The editor keeps the same rule. The rule is for drawing: a piece stays
+where it stands when the track around it is removed, and a saved game comes back with the rock
+and mountain under its track, signals included.
+
+The slope rules are those of any hill. Straights, crossings and transitions climb at most a level
+per tile; curves and switches need a level tile, which on a mountain means its flat top. Bridge
+platforms, stations, works, decor and power poles do not stand on rock or mountain, but signals
+and electrification on mountain track work as on any track.
+
+Track costs 1.35× on rock and 1.65× on a mountain, times the biome's track cost: in the Mountain
+biome (×1.5), about 2.0× and 2.5×. A train whose head is in the Mountain biome runs at 0.9 of its
+speed, and climbing halves that, to 0.45.
 
 ## Crafting and old saves
 

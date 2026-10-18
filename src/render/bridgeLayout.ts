@@ -4,14 +4,21 @@
  *
  * Every deck covers its whole tile, so decks of neighbouring bridge tiles always meet at the tile
  * seam. Two bridge tiles that share an edge merge into one bridge when they are of one material,
- * their decks meet at the same height all along the edge and, when both carry straight rail, the
- * rail runs the same way: parallel tracks on adjacent bridge tiles make one wide bridge. A merged
- * edge has no parapet, and the supports under it are shared: one pier wall, post line or arched
- * wall stands under the seam instead of one under each tile.
+ * their decks meet at the same height all along the edge and, when both are spans (straight rail
+ * or a road), they run the same way: parallel lines on adjacent bridge tiles make one wide
+ * bridge. A merged edge has no parapet, and the supports under it are shared: one pier wall, post
+ * line or arched wall stands under the seam instead of one under each tile.
+ *
+ * A deck carries rail or a road, and spans merge whatever each carries: a road deck beside a rail
+ * deck of one material, on the same axis and at the same height, makes one wide bridge with the
+ * rail on one half and the road on the other, its parapets on the two outer long edges only. A
+ * pad under curved or switched rail has no axis of its own, so it merges with rail only.
  */
 import { railLevel, type RailBed } from '../world/railProfile';
 
 export type BridgeMaterial = 'wood' | 'stone';
+/** What a deck carries: `road` is a platform with a road and no rail on it. */
+export type BridgeCarries = 'rail' | 'road';
 
 /** Along offsets (tile units from the tile centre) at which a deck's height is sampled. */
 export const DECK_SAMPLES = [-0.5, -0.25, 0, 0.25, 0.5] as const;
@@ -22,14 +29,19 @@ export interface BridgeSite {
   x: number;
   y: number;
   material: BridgeMaterial;
+  /** Rail when absent, as every deck was before roads went on bridges. */
+  carries?: BridgeCarries;
   /** 1 along x, 0 along y, null a square pad under a curve, switch or crossing. */
   axis: 0 | 1 | null;
   /**
-   * Deck top (the rail level) in world px up at each of DECK_SAMPLES along the axis. A pad's
-   * deck is level: its first sample stands for all.
+   * Deck top (the rail level, or a road deck's `roadDeckSamples`) in world px up at each of
+   * DECK_SAMPLES along the axis. A pad's deck is level: its first sample stands for all.
    */
   deck: readonly number[];
-  /** Per edge (N, E, S, W), whether a track crosses it: a pad keeps those free of parapets. */
+  /**
+   * Per edge (N, E, S, W), whether a track crosses it, or on a road deck the road runs on through
+   * it: a pad keeps those free of parapets, and over water a deck's end there rests on the bank.
+   */
   open?: readonly boolean[];
 }
 
@@ -49,6 +61,27 @@ const DX = [0, 1, 0, -1],
  */
 export function deckSamples(bed: RailBed, centre: number, step: number): number[] {
   return DECK_SAMPLES.map((l) => railLevel(bed, centre + l) * step);
+}
+
+/**
+ * A road deck's samples (#506), in world px up: a road has no rail profile, so its deck runs
+ * straight from the ground `from` where its run of road decks leaves one bank, at along coordinate
+ * `start`, to the ground `to` where it reaches the other, at `end`, and the road on each bank runs
+ * on to it at its own height. Read at DECK_SAMPLES about the tile centre `centre`, never below
+ * `floor` (over water, the waterline's deck).
+ */
+export function roadDeckSamples(
+  centre: number,
+  start: number,
+  from: number,
+  end: number,
+  to: number,
+  floor = -Infinity,
+): number[] {
+  return DECK_SAMPLES.map((l) => {
+    const t = end > start ? Math.max(0, Math.min(1, (centre + l - start) / (end - start))) : 0.5;
+    return Math.max(floor, from + (to - from) * t);
+  });
 }
 
 /** Deck height (world px up) at along offset `l` in [-0.5, 0.5]. */
@@ -76,6 +109,8 @@ function edgeHeights(s: BridgeSite, d: number): number[] {
 /** Whether tile `a` merges with tile `b` across `a`'s edge `d`. */
 export function merges(a: BridgeSite, b: BridgeSite, d: number): boolean {
   if (a.material !== b.material) return false;
+  const road = a.carries === 'road' || b.carries === 'road';
+  if (road && (a.axis === null || b.axis === null)) return false;
   if (a.axis !== null && b.axis !== null && a.axis !== b.axis) return false;
   const ha = edgeHeights(a, d),
     hb = edgeHeights(b, (d + 2) % 4);
@@ -117,6 +152,12 @@ export interface BridgePlan {
   trestles: number[];
   /** Arched masonry walls along a span (stone over water), at across offset `w`. */
   arches: number[];
+  /**
+   * The deck's end on its +x (`e`) and +y (`s`) edge rests on the bank's abutment, so its end face
+   * is not drawn: over water, where the track leaves the bridge for a tile it does not merge with.
+   * The line's bed carries on there, wherever the painted water reaches past the tile.
+   */
+  abutments: { e: boolean; s: boolean };
 }
 
 /** Inner face of a parapet, from the tile centre; its outer face is the deck edge. */
@@ -150,12 +191,14 @@ function spanRect(axis: 0 | 1, l0: number, l1: number, w0: number, w1: number): 
  */
 export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): BridgePlan {
   const deck = { x0: -0.5, x1: 0.5, y0: -0.5, y1: 0.5 },
-    stone = site.material === 'stone';
-  if (site.axis === null) return padPlan(site, joins, deck, stone);
+    stone = site.material === 'stone',
+    abutment = (d: number) => water && !joins[d] && !!site.open?.[d],
+    abutments = { e: abutment(E), s: abutment(S) };
+  if (site.axis === null) return padPlan(site, joins, deck, stone, abutments);
   const axis = site.axis,
     // The span's far and near sides: -y and +y along x, -x and +x along y.
     [far, near] = axis === 1 ? [N, S] : [W, E],
-    plan: BridgePlan = { deck, parapets: [], piers: [], trestles: [], arches: [] };
+    plan: BridgePlan = { deck, parapets: [], piers: [], trestles: [], arches: [], abutments };
   if (!joins[far])
     plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, -0.5, -PARAPET), near: false });
   if (!joins[near]) plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, PARAPET, 0.5), near: true });
@@ -177,7 +220,13 @@ export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): Brid
  * corner, moved under the seam where an edge merges. A seam corner belongs to the tile on its
  * -x / -y side, so a block of pads stands on one grid of piers.
  */
-function padPlan(site: BridgeSite, joins: Joins, deck: Rect, stone: boolean): BridgePlan {
+function padPlan(
+  site: BridgeSite,
+  joins: Joins,
+  deck: Rect,
+  stone: boolean,
+  abutments: BridgePlan['abutments'],
+): BridgePlan {
   const open = site.open ?? [false, false, false, false],
     walls = [0, 1, 2, 3].map((d) => !joins[d] && !open[d]),
     parapets: BridgePlan['parapets'] = [];
@@ -197,5 +246,5 @@ function padPlan(site: BridgeSite, joins: Joins, deck: Rect, stone: boolean): Br
         cy = sy > 0 && joins[S] ? 0.5 : sy * SUPPORT.pier;
       piers.push({ x0: cx - h, x1: cx + h, y0: cy - h, y1: cy + h });
     }
-  return { deck, parapets, piers, trestles: [], arches: [] };
+  return { deck, parapets, piers, trestles: [], arches: [], abutments };
 }

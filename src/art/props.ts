@@ -1,7 +1,10 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
+import { HALF_W, HALF_H } from '../engine/iso';
 import { hash2 } from '../engine/rng';
+import { field, fieldRow } from './industry';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf } from './pixels';
+import { lightX } from './view';
 
 /**
  * Natural props. Silhouette first, then two or three canopy masses, then material detail in
@@ -158,6 +161,207 @@ function birchTree(seed: number, v: number): PixelBuf {
   }
   b.outline(PAL.outline, 170);
   groundShadow(b, cx, base + 1, 5, 50);
+  return b;
+}
+
+// --- waterside trees ---------------------------------------------------------------------------
+
+/**
+ * The waterside trees' frames, w x h at the anchor (ax, ay), in world px: the packed paintings'
+ * (`props/mangrove_N`, `props/willow_N` in public/assets/props.json, listed in
+ * docs/art-direction/frame-inventory.json), so a fallback stands where its painting does. A
+ * mangrove's anchor is the middle of its ring of root tips, at the waterline; a willow's is its
+ * trunk foot, with the three shadow rows under it that every other tree has. `spread` is how far
+ * a mangrove's roots reach across.
+ */
+const MANGROVES = [
+  { w: 27, h: 22, ax: 14, ay: 20, spread: 14 },
+  { w: 36, h: 29, ax: 18, ay: 25, spread: 20 },
+  { w: 49, h: 34, ax: 25, ay: 31, spread: 29 },
+];
+const WILLOWS = [
+  { w: 35, h: 31, ax: 17 },
+  { w: 43, h: 36, ax: 22 },
+  { w: 49, h: 40, ax: 25 },
+];
+
+/** A point `t` of the way along the quadratic curve from `a` over `c` to `b`. */
+function curve(a: [number, number], c: [number, number], b: [number, number], t: number) {
+  const u = 1 - t;
+  return [
+    u * u * a[0] + 2 * u * t * c[0] + t * t * b[0],
+    u * u * a[1] + 2 * u * t * c[1] + t * t * b[1],
+  ];
+}
+
+/**
+ * Mangrove: a dark evergreen crown, wider than it is tall, on a short stem that splits into
+ * arched prop roots. The roots end in dark wet tips on a flat ring around the anchor, where the
+ * waterline is; no water is drawn, the tile's own water shows through between them. The old
+ * variant also lets thin aerial roots hang from its crown.
+ */
+function mangroveTree(seed: number, v: number): PixelBuf {
+  const { w, h, ax, ay, spread } = MANGROVES[v];
+  const b = new PixelBuf(w, h);
+  const LEAF: RGB[] = [
+    [52, 86, 62],
+    [66, 102, 72],
+    [40, 66, 50],
+    [86, 122, 86],
+  ];
+  const ROOT: RGB = [116, 96, 74];
+  const WET: RGB = [52, 46, 40];
+  // the frame's rows under the anchor row, the contour's included: the front tips stop over them
+  const below = h - 1 - ay;
+  const rx = spread / 2;
+  const top = 1;
+  const crownBottom = top + (ay - top) * 0.56;
+  const stemBase = top + (ay - top) * 0.7;
+  // the middle of the columns 1 to w - 2, which the crown spans inside its 1 px contour margin
+  const cx = w / 2;
+
+  // prop roots, the back ones first and darker, each arching out from the stem to its tip
+  const n = 7 + v * 2;
+  const tips = Array.from({ length: n }, (_, i) => {
+    const t = Math.PI + ((i + 0.5) / n) * Math.PI * 2 + (hash2(i, seed, 1) - 0.5) * 0.3;
+    const sin = Math.sin(t);
+    return {
+      x: ax + rx * Math.cos(t),
+      y: ay + (sin > 0 ? Math.max(0, below - 1) : Math.max(1, rx * 0.28)) * sin,
+      back: sin < 0,
+    };
+  }).sort((p, q) => Number(q.back) - Number(p.back) || p.y - q.y);
+  for (const tip of tips) {
+    const from: [number, number] = [ax + (tip.x - ax) * 0.12, stemBase];
+    const knee: [number, number] = [
+      ax + (tip.x - ax) * 0.9,
+      stemBase - 1.5 - Math.abs(tip.x - ax) * 0.18,
+    ];
+    const lit = tip.x < ax;
+    const tone = tip.back ? 0.72 : lit ? 1.12 : 0.86;
+    const steps = Math.ceil(Math.hypot(tip.x - ax, tip.y - stemBase) * 2.5);
+    for (let s = 0; s <= steps; s++) {
+      const [x, y] = curve(from, knee, [tip.x, tip.y], s / steps);
+      b.set(x, y, s > steps - 3 ? WET : shade(ROOT, tone));
+    }
+  }
+  // the stem, lit on its left
+  trunk(
+    b,
+    Math.round(ax) - 1,
+    Math.floor(crownBottom) - 1,
+    3,
+    Math.ceil(stemBase - crownBottom) + 2,
+  );
+  // a low wide crown: a dark underside the width of the frame, and leafy lobes along its top,
+  // each lit from the upper left; the middle one is the crown's top
+  const crownH = crownBottom - top;
+  const half = (w - 2) / 2;
+  mass(
+    b,
+    cx,
+    top + crownH * 0.66,
+    half,
+    crownH * 0.36,
+    LEAF.map((c) => shade(c, 0.9)),
+    seed,
+  );
+  const lobes = 4 + v;
+  for (let i = 0; i < lobes; i++) {
+    const t = (i + 0.5) / lobes - 0.5;
+    const middle = i === Math.floor(lobes / 2);
+    const lr = half * (0.34 - Math.abs(t) * 0.18);
+    const lry = crownH * (middle ? 0.36 : 0.3 - Math.abs(t) * 0.1);
+    const ly = middle ? top + lry : top + crownH * (0.4 + Math.abs(t) * 0.5) + hash2(i, seed, 2);
+    mass(b, cx + t * 2 * half * 0.78, ly, lr, lry, LEAF, seed + 1 + i, 1.1);
+  }
+  // aerial roots hanging from the old crown
+  if (v === 2)
+    for (let i = 0; i < 4; i++) {
+      const x = Math.round(cx + (i - 1.5) * (w - 2) * 0.17 + (hash2(i, seed, 5) - 0.5) * 2);
+      const from = Math.ceil(top + crownH * 0.95);
+      for (let y = from; y < from + 3 + Math.floor(hash2(i, seed, 6) * 3); y++)
+        if (!b.alpha(x, y)) b.set(x, y, shade(ROOT, 0.78));
+    }
+  b.outline(PAL.outline, 190);
+  // a faint shade on the water under the root ring, inside the frame
+  for (let y = Math.floor(ay - 1); y <= ay + Math.max(0, below - 1); y++)
+    for (let x = Math.ceil(ax - rx); x <= Math.floor(ax + rx); x++) {
+      const nx = (x + 0.5 - ax) / (rx + 0.5);
+      const ny = (y + 0.5 - ay) / 1.8;
+      const d = nx * nx + ny * ny;
+      if (d <= 1 && b.alpha(x, y) === 0) b.set(x, y, SHADOW, Math.round(44 * (1 - d * 0.6)));
+    }
+  return b;
+}
+
+/**
+ * Weeping willow: a short forked trunk under a dome of leaves, and from the dome's rim curtains of
+ * hanging silvery-olive strands down toward the bank, parted in the middle so the trunk shows. The
+ * strands catch the light on the left and fall into shade on the right and toward their hems.
+ */
+function willowTree(seed: number, v: number): PixelBuf {
+  const { w, h, ax } = WILLOWS[v];
+  const b = new PixelBuf(w, h);
+  const base = h - 1 - SHADOW_ROWS;
+  const LEAF: RGB[] = [
+    [112, 132, 82],
+    [130, 150, 94],
+    [88, 106, 66],
+    [154, 170, 112],
+  ];
+  const BARK: RGB = [104, 86, 64];
+  const top = 1;
+  const tall = base - top;
+  const cx = (w - 1) / 2;
+  const rx = (w - 2) / 2;
+  // trunk and the fork of its two boughs
+  const trunkW = 3 + (v > 0 ? 1 : 0);
+  const trunkTop = base - Math.round(tall * 0.45);
+  trunk(b, Math.round(ax - trunkW / 2), trunkTop, trunkW, base - trunkTop + 1, BARK);
+  b.set(Math.round(ax - trunkW / 2) - 1, base, PAL.trunkDark);
+  b.line(ax, trunkTop + 1, ax - 3 - v, trunkTop - 3 - v, shade(BARK, 1.1));
+  b.line(ax + 1, trunkTop + 1, ax + 4 + v, trunkTop - 2 - v, shade(BARK, 0.8));
+  // the curtains first: strands in locks of two or three columns, each hanging from under the
+  // crown's rim to its own ragged hem, shorter toward the sides so the outline droops round, and
+  // parted over the trunk
+  const rimY = top + tall * 0.3;
+  for (let x = 1; x <= w - 2; x++) {
+    const nx = (x + 0.5 - cx) / rx;
+    if (Math.abs(nx) > 1) continue;
+    const lock = Math.floor((x + Math.floor(hash2(seed, 4, 1) * 3)) / 3);
+    // a gap between two locks now and then, so the curtain reads as strands
+    if (x % 3 === 0 && x > 1 && x < w - 2 && hash2(lock, seed, 7) < 0.45) continue;
+    const from = Math.round(rimY + tall * 0.12 * nx * nx);
+    const parted = Math.abs(x + 0.5 - ax) < trunkW + 1;
+    const hem = parted
+      ? trunkTop - 1 - Math.floor(hash2(x, seed, 8) * 3)
+      : base -
+        2 -
+        Math.round(nx ** 4 * tall * 0.3) -
+        Math.floor(hash2(lock, seed, 8) * 4) -
+        (x % 3 === 1 ? 0 : Math.floor(hash2(x, seed, 10) * 2));
+    // a lock is lit on the left of the tree and shaded on the right, darker toward its hem
+    const lit = -lightX() * nx * 0.55 + 0.15 + (hash2(lock, seed, 11) - 0.5) * 0.3;
+    for (let y = from; y <= hem; y++) {
+      const down = (y - from) / Math.max(1, hem - from);
+      const l = lit - down * 0.75 + (x % 3 === 0 ? -0.12 : 0);
+      b.set(x, y, l > 0.35 ? LEAF[3] : l > 0 ? LEAF[1] : l > -0.4 ? LEAF[0] : LEAF[2]);
+    }
+  }
+  // the crown over them: a dome of lobes, the middle one its top
+  const domeRy = tall * 0.2;
+  mass(b, cx, rimY - domeRy * 0.2, rx * 0.92, domeRy, LEAF, seed, 0.8);
+  const lobes = 3 + v;
+  for (let i = 0; i < lobes; i++) {
+    const t = (i + 0.5) / lobes - 0.5;
+    const middle = i === Math.floor(lobes / 2);
+    const lry = domeRy * (middle ? 0.75 : 0.62);
+    const ly = middle ? top + lry : top + lry + Math.abs(t) * domeRy * 1.6 + hash2(i, seed, 3);
+    mass(b, cx + t * 2 * rx * 0.72, ly, rx * (0.36 - Math.abs(t) * 0.12), lry, LEAF, seed + 1 + i);
+  }
+  b.outline(PAL.outline, 180);
+  groundShadow(b, ax, base + 1, Math.min(rx * 0.55, 9), 58);
   return b;
 }
 
@@ -601,6 +805,177 @@ function oilSeep(seed: number, v: number): PixelBuf {
   return b;
 }
 
+// --- wheat fields ------------------------------------------------------------------------------
+
+/**
+ * Canvas of a wheat patch. The anchor is the tile centre, not a base row: the patch is one whole
+ * tile of ground cover, the diamond of 64x32 px (rows 0.42 tile from the centre, an irregular
+ * edge to 0.46 at most), and the stalks stand over it, so there is room above the centre for them.
+ */
+const WHEAT_W = 64;
+const WHEAT_H = 48;
+const WHEAT_CX = 32;
+const WHEAT_CY = 30;
+/** Stalks stand 2.6 to 3.5 px over the ground, in slow swells, a little lower at the edge. */
+const STALK_MIN = 2.6;
+const STALK_SWELL = 0.9;
+
+/** Smooth value noise on a lattice `cell` tile units wide, in [0, 1). */
+function swell(tx: number, ty: number, cell: number, seed: number): number {
+  const x = tx / cell;
+  const y = ty / cell;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const fx = x - x0;
+  const fy = y - y0;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const a = hash2(x0, y0, seed);
+  const b = hash2(x0 + 1, y0, seed);
+  const c = hash2(x0, y0 + 1, seed);
+  const d = hash2(x0 + 1, y0 + 1, seed);
+  return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+}
+
+/** Where one variant's patch sits and how far it reaches, in tile units: centre x, y, length x, y. */
+const WHEAT_SHAPES: [number, number, number, number][] = [
+  [0, 0, 0.84, 0.84],
+  [0.015, -0.015, 0.82, 0.82],
+  [-0.01, 0.01, 0.84, 0.82],
+];
+
+/**
+ * A wheat field: a low raised patch of one tile, golden rows standing a little over the ground
+ * with the light from the upper left, and a darker front and side rim where the stalks end.
+ * Footprint and rows are the farm's (`field`, `fieldRow`), so a field and a farm's own plot read
+ * as the same crop. Variant 0 is ripe all over, 1 is still green toward its upper-right end
+ * (the rows' far end), 2 has a few flattened patches laid down in it and a ragged lower-left
+ * corner.
+ */
+function wheatField(seed: number, v: number): PixelBuf {
+  const b = new PixelBuf(WHEAT_W, WHEAT_H);
+  const [sx, sy, lx, ly] = WHEAT_SHAPES[v];
+  const footprint = field(sx, sy, lx, ly, 1, seed);
+  // flattened patches of variant 2: tile x, y and radius
+  const laid: [number, number, number][] =
+    v === 2
+      ? [
+          [0.1, 0.06, 0.14],
+          [-0.2, -0.1, 0.1],
+          [0.2, -0.26, 0.09],
+        ]
+      : [];
+  const n = WHEAT_W * WHEAT_H;
+  const tileX = new Float32Array(n);
+  const tileY = new Float32Array(n);
+  const inside = new Uint8Array(n);
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      const px = (gx + 0.5 - WHEAT_CX) / HALF_W;
+      const py = (gy + 0.5 - WHEAT_CY) / HALF_H;
+      const tx = (px + py) / 2;
+      const ty = (py - px) / 2;
+      const i = gy * WHEAT_W + gx;
+      tileX[i] = tx;
+      tileY[i] = ty;
+      if (!footprint(tx, ty, gx, gy)) continue;
+      // the ragged corner: the left corner of the diamond crumbles away
+      if (v === 2 && ty - tx > 0.62 + 0.12 * hash2(gx >> 1, gy >> 1, seed + 6)) continue;
+      inside[i] = 1;
+    }
+  // The farm's edge is ragged to the pixel; one pass of a majority filter takes the stray pixels
+  // and chips off it, which would stand as thin dark drips, and keeps its irregular outline.
+  const ragged = inside.slice();
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      let k = 0;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const x = gx + dx;
+          const y = gy + dy;
+          if (x >= 0 && y >= 0 && x < WHEAT_W && y < WHEAT_H) k += ragged[y * WHEAT_W + x];
+        }
+      inside[gy * WHEAT_W + gx] = k >= 5 ? 1 : 0;
+    }
+  // How much of the 5x5 around a ground pixel is field. The stalks stand shorter where it is less,
+  // so a stray pixel at the edge is a low ear and the edge a ragged shoulder, not a wall of drips.
+  const cover = new Float32Array(n);
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      let k = 0;
+      for (let dy = -2; dy <= 2; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const x = gx + dx;
+          const y = gy + dy;
+          if (x >= 0 && y >= 0 && x < WHEAT_W && y < WHEAT_H) k += inside[y * WHEAT_W + x];
+        }
+      cover[gy * WHEAT_W + gx] = k / 25;
+    }
+
+  // Back to front, each ground pixel stands a stalk-high column: its head on top, its front
+  // below it. A nearer pixel covers the front of the one behind, so the fronts that stay are the
+  // ones at the field's lower edges, and where the stalks step down.
+  for (let gy = 0; gy < WHEAT_H; gy++)
+    for (let gx = 0; gx < WHEAT_W; gx++) {
+      const i = gy * WHEAT_W + gx;
+      if (!inside[i]) continue;
+      const tx = tileX[i];
+      const ty = tileY[i];
+      const flat = laid.some(([lx0, ly0, r]) => Math.hypot(tx - lx0, ty - ly0) < r);
+      const row = fieldRow(gx, gy);
+      const gap = row > 3 && !flat;
+      const shoulder = Math.max(0, Math.min(1, (cover[i] - 0.15) / 0.4));
+      let height =
+        (STALK_MIN + STALK_SWELL * swell(tx, ty, 0.37, seed + 7)) *
+        shoulder *
+        shoulder *
+        (3 - 2 * shoulder);
+      if (flat) height *= 0.4;
+      // the furrows lie lower than the ridges
+      if (gap) height *= 0.6;
+      const rise = Math.max(1, Math.round(height));
+
+      // the crop's shades: ripe gold, green toward the far end of variant 1
+      const greenness =
+        v === 1
+          ? Math.max(0, Math.min(1, (-0.04 - ty) / 0.26 + (swell(tx, ty, 0.2, seed + 8) - 0.5)))
+          : 0;
+      const crop = hash2(gx >> 1, gy >> 1, seed + 9) < greenness ? PAL.wheatGreen : PAL.wheat;
+      // light from the upper left, then clusters of heads a little lighter or darker
+      const light = -((gx - WHEAT_CX) / 32) * 0.28 - ((gy - WHEAT_CY) / 16) * 0.4;
+      const tone = (swell(tx, ty, 0.16, seed + 4) - 0.5) * 0.6 + light * 0.6;
+      // a ridge is lit along its upper edge and shaded along its lower; between two ridges the
+      // furrow shows its earth in the shade of the stalks
+      const level = flat ? tone + 0.5 : tone + (row === 0 ? 1 : row === 3 ? -1 : 0);
+      const head: RGB = gap
+        ? shade(PAL.furrow, tone > 0.15 ? 1.12 : 0.96)
+        : level >= 1.15
+          ? crop[3]
+          : level >= 0.45
+            ? crop[1]
+            : level >= -0.55
+              ? crop[0]
+              : crop[2];
+
+      // the stalks' front, in the shade of their own heads and darker toward the ground; the
+      // lower-left front takes the light, the lower-right one is turned away from it
+      const stalk = gap ? PAL.furrow : crop[0];
+      const turned = gx >= WHEAT_CX;
+      const top = Math.round(gy - rise);
+      for (let y = top; y <= gy; y++) {
+        const d = y - top;
+        if (d === 0) {
+          b.set(gx, y, head);
+          continue;
+        }
+        const f = (turned ? [0.7, 0.58, 0.46] : [0.82, 0.68, 0.56])[Math.min(2, d - 1)];
+        b.set(gx, y, [stalk[0] * f, stalk[1] * f * 0.97, stalk[2] * f * 0.88]);
+      }
+    }
+  b.outline(PAL.outline, 150);
+  return b;
+}
+
 export function generatePropsAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   // anchor: horizontal centre, on the row just above the shadow rows
@@ -625,5 +1000,14 @@ export function generatePropsAtlas(): AtlasImage {
     add(`props/reeds_${v}`, reeds(120 + v, v));
   }
   for (let v = 0; v < 4; v++) add(`props/flowers_${v}`, flowers(110 + v, v));
+  // the waterside trees take the anchors of their paintings
+  for (let v = 0; v < 3; v++) {
+    const m = MANGROVES[v];
+    ab.add(`props/mangrove_${v}`, mangroveTree(170 + v, v).toImageData(), m.ax, m.ay);
+    add(`props/willow_${v}`, willowTree(180 + v, v), WILLOWS[v].ax);
+  }
+  // a wheat field is anchored on the tile centre, which the patch is drawn around
+  for (let v = 0; v < 3; v++)
+    ab.add(`props/wheat_${v}`, wheatField(160 + v, v).toImageData(), WHEAT_CX, WHEAT_CY);
   return ab.build(512);
 }

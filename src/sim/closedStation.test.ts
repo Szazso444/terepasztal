@@ -30,6 +30,8 @@ beforeEach(() => {
 // ------------------------------------------------------------------ production
 
 describe('a station closed for its upgrade, of every kind and level', () => {
+  // slow because every station kind at every level a work starts from is run under 100 seeded rules
+  // and holdings: 0.6 s alone
   it('makes nothing until the work is done, then its normal rate, its store untouched', () => {
     // Every kind at every level a work starts from, under any production rule, ground and
     // catchment, holding any goods: closed, its weekly rate is 0 however long it waits; the step
@@ -107,7 +109,7 @@ describe('a station closed for its upgrade, of every kind and level', () => {
         },
       },
     );
-  });
+  }, 30_000);
 });
 
 // ------------------------------------------------------------------ trains at a closed station
@@ -253,7 +255,7 @@ describe('a train set to wait for a full load', () => {
 
 // ------------------------------------------------------------------ dispatch
 
-/** Producers a production train fetches from; a farm and a lumber camp make bulk goods. */
+/** Producers a freight train fetches from; a farm and a lumber camp make bulk goods. */
 const PRODUCERS = ['farm', 'lumber', 'quarry', 'pump', 'mine', 'sand_pit', 'copper_mine'] as const;
 /** Wagons for every kind of goods, the brake van's six units of bulk the smallest. */
 const WAGONS = ['brake_van', 'flatbed', 'boxcar', 'wood_hopper', 'dump_hopper', 'water_cart'];
@@ -276,7 +278,7 @@ interface Dispatch {
   trainX: number;
 }
 
-/** A production train on the main line, the producers and any warehouse beside it. */
+/** A freight train on the main line, the producers and any warehouse beside it. */
 function dispatchScene(c: Dispatch) {
   const w = railway();
   const placed: { s: Station; p: Producer }[] = [];
@@ -288,7 +290,7 @@ function dispatchScene(c: Dispatch) {
   }
   if (c.warehouse !== null) w.builder.stations.push(new Station('warehouse', c.warehouse, ROW - 1));
   const t = train(w, c.trainX, c.wagons);
-  t.mode = 'production';
+  t.mode = 'freight';
   return { w, t, placed };
 }
 
@@ -329,6 +331,8 @@ describe('dispatch to a closed producer', () => {
     expect(closed).toBe(idle);
   });
 
+  // slow because 100 seeded layouts each dispatch a train among producers, some of them closed:
+  // 0.6 s alone
   it('weighs a closed producer as one whose rate is zero, over layouts', () => {
     let credited = 0;
     forAll(
@@ -379,5 +383,5 @@ describe('dispatch to a closed producer', () => {
     );
     // the layouts are worth comparing: in some the credit would change the pick
     expect(credited).toBeGreaterThan(0);
-  });
+  }, 30_000);
 });

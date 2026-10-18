@@ -2,14 +2,16 @@
  * node tools/bridge-kit.mjs [source directory] [output directory]
  * A source directory with a guides/ folder (bridges-v2 and later) is fitted to its guides.
  * Each source is trimmed, measured against the tile it stands for, and resampled to the
- * illustrated density. Geometry the renderer needs (deck thickness, wall heights, shaft
- * lengths) goes to src/render/bridgeKit.json. Uses pngjs (dev dependency) only.
+ * illustrated density, then goes through the atlas cap pass (tools/atlas-cap.mjs). Geometry the
+ * renderer needs (deck thickness, wall heights, shaft lengths) goes to src/render/bridgeKit.json.
+ * Uses pngjs (dev dependency) only.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PNG } from 'pngjs';
 import { trimSource, resample, packFrames } from './illustrated-sprites.mjs';
 import * as GUIDES from './bridge-kit-guides.mjs';
+import { capFrame } from './atlas-cap.mjs';
 
 const DENSITY = 4;
 const SOURCE = 'assets/source/bridges-v1';
@@ -174,7 +176,8 @@ export function build(output = 'public/assets', dir = SOURCE) {
 }
 
 function write(output, frames, geometry) {
-  const packed = packFrames(frames);
+  // the atlas cap pass on every resampled piece; sizes, anchors and geometry stay
+  const packed = packFrames(frames.map((f) => ({ ...f, png: capFrame(f.key, f.png).png })));
   writeFileSync(join(output, 'bridges.png'), PNG.sync.write(packed.sheet));
   writeFileSync(
     join(output, 'bridges.json'),

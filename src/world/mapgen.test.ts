@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { generateMap, emptyMap, DEFAULT_MAP_PARAMS, type MapGenParams } from './mapgen';
 import { Terrain, type GameMap, type PropInstance } from './tiles';
 import { Rng, hash2, hashString } from '../engine/rng';
-import { setSupplyMode } from '../sim/supply';
+import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import { forAll, shrinkInt } from '../testing/property';
 
 /** Stable FNV-1a over a tile plane, so a generation change shows up as one number. */
@@ -48,13 +48,15 @@ function overlapDiff(small: GameMap, big: GameMap) {
 }
 const SAME = { terrain: 0, biome: 0, variant: 0, props: 0 };
 /** A generated map of `w` x `w` grown by one ring of 32-tile chunks, as `expandSave` grows it. */
-const grown = (seed: number, w: number) =>
-  generateMap(seed, { w: w + 64, h: w + 64, originX: -32, originY: -32 });
+const grown = (seed: number, w: number, supply: SupplyMode = DEFAULT_SUPPLY) =>
+  generateMap(seed, { w: w + 64, h: w + 64, originX: -32, originY: -32 }, supply);
 
 const SEED = 20260912;
 const SMALL = { w: 48, h: 48 };
 
 describe('generateMap', () => {
+  // the first test of the file to generate, so it pays the generator's warm-up and the rivers'
+  // plan: 0.3 s alone, so a limit of 30 s
   it('gives the same world for the same seed', () => {
     const a = generateMap(SEED, SMALL);
     const b = generateMap(SEED, SMALL);
@@ -62,22 +64,23 @@ describe('generateMap', () => {
     expect(fnv(a.biome)).toBe(fnv(b.biome));
     expect(fnv(a.variant)).toBe(fnv(b.variant));
     expect(a.props.size).toBe(b.props.size);
-  });
+  }, 30_000);
 
+  // two worlds, each planning its rivers once (#341): about 0.25 s alone
   it('gives a different world for a different seed', () => {
     expect(fnv(generateMap(SEED, SMALL).terrain)).not.toBe(
       fnv(generateMap(SEED + 1, SMALL).terrain),
     );
-  });
+  }, 10_000);
 
   it('generates the world these numbers describe', () => {
     // A tripwire, not a specification: any deliberate change to map generation invalidates
     // every existing seed, so re-bless these numbers on purpose or not at all.
     const m = generateMap(SEED, SMALL);
-    expect(fnv(m.terrain)).toBe(2330203531);
-    expect(fnv(m.biome)).toBe(4076181840);
+    expect(fnv(m.terrain)).toBe(2819169333);
+    expect(fnv(m.biome)).toBe(1415484685);
     expect(fnv(m.variant)).toBe(417171169);
-    expect(m.props.size).toBe(361);
+    expect(m.props.size).toBe(344);
   });
 
   it('fills the plane it was asked for', () => {
@@ -90,14 +93,17 @@ describe('generateMap', () => {
     expect(m.seed).toBe(SEED);
   });
 
+  // three worlds, one for each water line, each planning its rivers once (#341): about 0.3 s alone
   it('raises the water line with waterLevel', () => {
     const dry = generateMap(SEED, { ...SMALL, waterLevel: 0.2 });
     const mid = generateMap(SEED, SMALL);
     const wet = generateMap(SEED, { ...SMALL, waterLevel: 0.5 });
     expect(count(dry.terrain, Terrain.Water)).toBeLessThan(count(mid.terrain, Terrain.Water));
     expect(count(mid.terrain, Terrain.Water)).toBeLessThan(count(wet.terrain, Terrain.Water));
-  });
+  }, 15_000);
 
+  // seven worlds, one for each forest density, each planning its rivers once (#341), since the
+  // sliders are part of what a plan is kept under: about 1 s alone
   it('thins the forest as forestDensity rises', () => {
     // Despite the name it is a moisture threshold, as the tuning slider says: lower = more
     // forest. Above the default the threshold stops biting and only the forest biome is left,
@@ -107,7 +113,7 @@ describe('generateMap', () => {
     const sweep = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9].map(at);
     for (let i = 1; i < sweep.length; i++) expect(sweep[i]).toBeLessThanOrEqual(sweep[i - 1]);
     expect(sweep[0]).toBeGreaterThan(sweep[sweep.length - 1]);
-  });
+  }, 20_000);
 
   it('defaults to the documented parameters', () => {
     const m = generateMap(SEED);
@@ -123,9 +129,15 @@ describe('a grown map', () => {
     expect(overlapDiff(generateMap(seed, { w: 96, h: 96 }), grown(seed, 96))).toEqual(SAME);
   });
 
-  it.each(SEEDS)('keeps every old tile when 160 grows to 224 (seed %i)', (seed) => {
-    expect(overlapDiff(generateMap(seed, { w: 160, h: 160 }), grown(seed, 160))).toEqual(SAME);
-  });
+  // a world of 160 tiles and the same grown by a ring, its rivers planned once (#341): up to about
+  // 0.6 s alone
+  it.each(SEEDS)(
+    'keeps every old tile when 160 grows to 224 (seed %i)',
+    (seed) => {
+      expect(overlapDiff(generateMap(seed, { w: 160, h: 160 }), grown(seed, 160))).toEqual(SAME);
+    },
+    15_000,
+  );
 
   it.each([32, 64, 128])('keeps every old tile when %i grows by a ring', (w) => {
     expect(overlapDiff(generateMap(SEED, { w, h: w }), grown(SEED, w))).toEqual(SAME);
@@ -137,28 +149,27 @@ describe('a grown map', () => {
     expect(overlapDiff(generateMap(seed, { w: 32, h: 32 }), grown(seed, 32))).toEqual(SAME);
   });
 
+  // four maps of the full chain, their start chunk in two places, so two river plans (#341):
+  // about 0.7 s alone
   it('keeps every old tile, oil fields and start seeps included, in the full production chain', () => {
-    setSupplyMode('full');
-    try {
-      const seed = 7412;
-      const small = generateMap(seed, { w: 96, h: 96 });
-      expect([...small.props.values()].some((l) => l[0].kind === 'oil')).toBe(true);
-      expect(overlapDiff(small, grown(seed, 96))).toEqual(SAME);
-      expect(overlapDiff(generateMap(seed, { w: 160, h: 160 }), grown(seed, 160))).toEqual(SAME);
-    } finally {
-      setSupplyMode('simple');
-    }
-  });
+    const seed = 7412;
+    const small = generateMap(seed, { w: 96, h: 96 }, 'full');
+    expect([...small.props.values()].some((l) => l[0].kind === 'oil')).toBe(true);
+    expect(overlapDiff(small, grown(seed, 96, 'full'))).toEqual(SAME);
+    expect(
+      overlapDiff(generateMap(seed, { w: 160, h: 160 }, 'full'), grown(seed, 160, 'full')),
+    ).toEqual(SAME);
+  }, 15_000);
 
   it('generates the worlds these numbers describe', () => {
     // Tripwires like the one above, at the default map size and that map grown by one ring.
     const m = generateMap(SEED, { w: 160, h: 160 });
     expect([fnv(m.terrain), fnv(m.biome), fnv(m.variant), propHash(m)]).toEqual([
-      2688962428, 1335671557, 1813736059, 4170314098,
+      1815774099, 3612118115, 1813736059, 1080511039,
     ]);
     const g = grown(SEED, 160);
     expect([fnv(g.terrain), fnv(g.biome), fnv(g.variant), propHash(g)]).toEqual([
-      814356426, 211014301, 1107381422, 3078554006,
+      3055034070, 107203715, 1107381422, 904992078,
     ]);
   });
 });
@@ -279,26 +290,24 @@ function* shrinkPair(p: Pair): Iterable<Pair> {
 
 /** The pair's two maps, generated in its production chain. */
 function pairMaps(c: Pair) {
-  setSupplyMode(c.full ? 'full' : 'simple');
-  try {
-    const small = generateMap(c.seed, {
-      ...c.params,
-      w: c.x.len,
-      h: c.y.len,
-      originX: c.ox,
-      originY: c.oy,
-    });
-    const big = generateMap(c.seed, {
+  const supply = c.full ? 'full' : 'simple';
+  const small = generateMap(
+    c.seed,
+    { ...c.params, w: c.x.len, h: c.y.len, originX: c.ox, originY: c.oy },
+    supply,
+  );
+  const big = generateMap(
+    c.seed,
+    {
       ...c.params,
       w: c.x.big,
       h: c.y.big,
       originX: c.ox - CHUNK * c.x.before,
       originY: c.oy - CHUNK * c.y.before,
-    });
-    return { small, big };
-  } finally {
-    setSupplyMode('simple');
-  }
+    },
+    supply,
+  );
+  return { small, big };
 }
 
 /** Whether two tiles' props have the same text; field by field first, so text is rarely built. */
@@ -345,9 +354,6 @@ function firstDifference(small: GameMap, big: GameMap): string | null {
 const PAIR_SEEDS = Array.from({ length: 16 }, (_, i) => i + 1);
 
 describe('generation in world space', () => {
-  beforeEach(() => setSupplyMode('simple'));
-  afterEach(() => setSupplyMode('simple'));
-
   it('draws pairs of every kind the property claims', () => {
     // The generator, checked: without this a narrowed generator would pass the property vacuously.
     const cases = PAIR_SEEDS.map((s) => genPair(new Rng(s)));
@@ -420,6 +426,7 @@ describe('emptyMap', () => {
     );
   });
 
+  // eight worlds, each planning its rivers once (#341): about 1.4 s alone
   it('is the variant plane generateMap keeps', () => {
     forAll(
       (rng) => ({
@@ -435,7 +442,7 @@ describe('emptyMap', () => {
       },
       { seeds: PAIR_SEEDS.slice(0, 8) },
     );
-  });
+  }, 30_000);
 
   it('is one terrain, no props, and remembers where it starts', () => {
     const m = emptyMap(7, 10, 12, Terrain.Sand, -4, 5);

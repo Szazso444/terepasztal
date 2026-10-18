@@ -8,7 +8,7 @@
 import type { GameMap } from '../world/tiles';
 import type { Cost, Collector } from '../data/content';
 import type { Building } from './buildings';
-import { buildingDef } from './buildings';
+import { buildingDef, buildingFootprint, buildingSpan } from './buildings';
 import type { PowerGrid } from './power';
 
 export type SupplyKind = 'third_rail' | 'catenary' | 'hv_catenary';
@@ -50,8 +50,12 @@ export function collectorCeiling(
 }
 
 export interface Substation {
+  /** the corner of its footprint */
   x: number;
   y: number;
+  /** tiles along x and y (a battery of more than one tile reaches `radius` from its edge) */
+  w: number;
+  h: number;
   radius: number;
   /** power units per second it can pass */
   throughput: number;
@@ -102,12 +106,17 @@ export class Catenary {
     for (const b of buildings) {
       const def = buildingDef(b.id);
       if (!def.substation) continue;
+      const { w, h } = buildingSpan(def, b.rot ?? 0);
       this.substations.push({
         x: b.x,
         y: b.y,
+        w,
+        h,
         radius: def.substation.radius,
         throughput: def.substation.throughput,
-        powered: !b.work && power.isPowered(b.x, b.y),
+        powered:
+          !b.work &&
+          buildingFootprint(b.id, b.x, b.y, b.rot ?? 0).some((t) => power.isPowered(t.x, t.y)),
         load: 0,
         private_acc: 0,
       });
@@ -116,8 +125,8 @@ export class Catenary {
     this.legacyPowered = (x, y) => power.isPowered(x, y);
     this.substations.forEach((s, i) => {
       if (!s.powered) return;
-      for (let dy = -s.radius; dy <= s.radius; dy++)
-        for (let dx = -s.radius; dx <= s.radius; dx++) {
+      for (let dy = -s.radius; dy < s.h + s.radius; dy++)
+        for (let dx = -s.radius; dx < s.w + s.radius; dx++) {
           const x = s.x + dx;
           const y = s.y + dy;
           if (x < 0 || y < 0 || x >= this.map.w || y >= this.map.h) continue;

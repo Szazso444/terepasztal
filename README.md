@@ -104,7 +104,7 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 - **Crafting**: unlock a recipe with money (three cards, keep one), craft copies with iron, wood,
   stone and coal; failure chance grows with quality. Unlimited copies; spares level a model.
 - **Electrification**: third rail, catenary and HV catenary over track, live within reach of a
-  substation on a powered pole grid; substations have a throughput the trains under them share.
+  battery on a powered pole grid; batteries have a throughput the trains under them share.
 - **Towns grow**: townhouses build in stages, hold 10 / 25 / 50 residents by level, fill slowly
   while fed and spawn near track and other houses as traffic grows.
 - **Semaphores**: home and distant arms on a post, animated between danger, caution and clear.
@@ -168,9 +168,11 @@ is the default set and `AGE_MUSIC` holds each age's set, keyed by the age ids in
 
 ## Modelling tools
 
-`.mcp.json` wires Claude Code up to MCP for Blender, MCP for Unity and Chrome DevTools MCP;
-`docs/mcp-setup.md` covers the same for Codex, the Blender addon and the Unity package, and the
-camera, facing and anchor rules that make a Blender render drop straight into `public/assets`.
+`.mcp.json` wires Claude Code up to MCP for Blender and Chrome DevTools MCP. MCP for Unity is not in
+the shared files: Unity's own setup registers it on each machine, since it only answers where Unity
+runs. `docs/mcp-setup.md` covers the same for Codex, the Blender addon, the Unity package and its
+per-machine registration, and the camera, facing and anchor rules that make a Blender render drop
+straight into `public/assets`.
 
 `npm run pack-atlas -- <group>` packs a folder of rendered frames (`art-src/<group>/*.png`, with
 one `atlas.json` carrying the group's anchor) into `public/assets/<group>.png` + `.json`. It trims

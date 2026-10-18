@@ -23,7 +23,14 @@
     "rotations": 4,
     "radius": 2,
     "loadBoost": 0.25,
-    "water": true
+    "water": true,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "fuel_stop",
@@ -37,7 +44,14 @@
     "onTrack": false,
     "rotations": 4,
     "radius": 2,
-    "fuel": true
+    "fuel": true,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "power_line",
@@ -64,6 +78,13 @@
     "crew": 0,
     "onTrack": false,
     "rotations": 4,
-    "residents": 6
+    "residents": 6,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   }
 ]

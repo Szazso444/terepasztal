@@ -189,6 +189,38 @@
         "generated": [
           "props-flowers.png"
         ]
+      },
+      {
+        "id": "props.mangrove",
+        "sourceDefinition": "src/art/props.ts:mangroveTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/waterside-trees-2026-10-16",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-mangrove-1.png",
+          "tree-mangrove-2.png",
+          "tree-mangrove-3.png"
+        ]
+      },
+      {
+        "id": "props.willow",
+        "sourceDefinition": "src/art/props.ts:willowTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/waterside-trees-2026-10-16",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-willow-1.png",
+          "tree-willow-2.png",
+          "tree-willow-3.png"
+        ]
       }
     ],
     "terrain": [
@@ -1924,14 +1956,14 @@
   "integratedFiles": [],
   "summary": {
     "categories": 10,
-    "requiredEntries": 147,
+    "requiredEntries": 149,
     "generatedSourceFiles": 147,
     "integratedSourceFiles": 0,
     "statusCounts": {
-      "generatedBase": 147,
+      "generatedBase": 149,
       "pending": 0
     },
-    "notes": "Generated files cover a base family image only; required level, rotation, palette, and frame variants remain pending. Runtime atlas integration remains false for every entry."
+    "notes": "Generated files cover a base family image only; required level, rotation, palette, and frame variants remain pending. Runtime atlas integration remains false for every entry. An entry with a sourceDirectory (props.mangrove, props.willow) takes one picture per variant from that folder, measured in its measurements file; generatedSourceFiles counts this folder's pictures only."
   },
   "unmappedGeneratedFiles": []
 }

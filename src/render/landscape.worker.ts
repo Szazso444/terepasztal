@@ -1,24 +1,43 @@
-import { type LandscapeMap } from './landscapeModel';
+import {
+  Material,
+  materialAt,
+  snowLineAt,
+  stoneGroundAt,
+  type LandscapeMap,
+} from './landscapeModel';
 import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
+  paintedWater,
   rockExposure,
   shareSurfaceDetail,
   surfaceNoise,
-  surfaceBlend,
   surfaceColor,
   surfaceMaterial,
 } from './terrainMaterials';
+import { FRINGE_EARTH, PAVING_FAR, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
+import { BuildingYards } from './buildingYard';
+import { pavingFade, RoadPaint } from './roadPaint';
 import { hash2 } from '../engine/rng';
-import { Biome, Terrain } from '../world/tiles';
+import { Terrain } from '../world/tiles';
 
 let map: LandscapeMap,
   relief: TerrainRelief,
   samples: Uint8ClampedArray,
   reduced: Uint8ClampedArray;
-let version = 0,
+// No map yet: every job is turned away until the first one arrives.
+let version = -1,
   tint = 0xffffff;
-let city = new Set<number>();
+/** The towns' paving: the paved tiles and the doorsteps, with the outline drawn from them. */
+let paving = new TownPaving(0, 0, 0, 0, []);
+/** The buildings' yards and door paths (buildingYard.ts). */
+let yards = new BuildingYards(0, 0, 0, 0, []);
+/** The roads (roadPaint.ts), none on the paving. */
+let roads = new RoadPaint(0, 0, 0, 0, []);
+/** The roads on the paving alone: the lanes of setts laid along them (townPaving.ts). */
+let lanes = new RoadPaint(0, 0, 0, 0, []);
+// Where snow starts, by biome id: sent by the landscape, as this worker cannot read the content.
+let snowLevels: readonly number[] = [];
 self.onmessage = async (event: MessageEvent) => {
   const data = event.data;
   try {
@@ -41,13 +60,39 @@ self.onmessage = async (event: MessageEvent) => {
       relief = data.relief;
       version = data.version;
       tint = data.tint;
-      city = new Set<number>(data.city);
+      paving = new TownPaving(
+        map.w,
+        map.h,
+        map.originX,
+        map.originY,
+        data.city,
+        data.doorsteps ?? [],
+      );
+      yards = new BuildingYards(map.w, map.h, map.originX, map.originY, data.yards ?? []);
+      const town = paving;
+      roads = new RoadPaint(map.w, map.h, map.originX, map.originY, data.roads ?? [], (k) =>
+        town.paved(k),
+      );
+      lanes = new RoadPaint(
+        map.w,
+        map.h,
+        map.originX,
+        map.originY,
+        data.roads ?? [],
+        (k) => !town.paved(k),
+      );
+      snowLevels = data.snowLevels;
       return;
     }
-    if (data.version !== version) return;
+    const { x, y, w, h, id } = data,
+      scale: number = data.scale ?? 1;
+    // A job for a map this worker does not have is answered, never dropped: the landscape waits
+    // for an answer before it hands the chunk out again.
+    if (data.version !== version) {
+      self.postMessage({ stale: true, id, scale, version: data.version });
+      return;
+    }
     const started = performance.now(),
-      { x, y, w, h, id } = data,
-      scale: number = data.scale ?? 1,
       // Chunks drawn at one pixel per world pixel read a half-size copy, so they stay filtered.
       source = scale > 1 ? samples : reduced;
     const left = (x - y - h) * 32 - 4,
@@ -80,17 +125,28 @@ self.onmessage = async (event: MessageEvent) => {
         if (tx < x - 0.57 || ty < y - 0.57 || tx >= x + w - 0.43 || ty >= y + h - 0.43) continue;
         const wx = tx + map.originX,
           wy = ty + map.originY;
-        surfaceBlend(map, tx, ty, blend);
         const tileIndex = Math.round(ty) * map.w + Math.round(tx),
-          terrain = map.terrain[tileIndex];
+          terrain = map.terrain[tileIndex],
+          paved = paving.paved(tileIndex),
+          // How far inside the towns' paving this lies (tiles, townPaving.ts); well inside it the
+          // paving alone shows and the ground under it is not painted.
+          pave = paving.near(tileIndex) ? paving.distance(tx, ty) : -PAVING_FAR,
+          solid = pave >= PAVING_SOLID;
+        // Pilot: the climate's own ground between the stones (desert sand, taiga moss...).
+        const stoneGround = relief.style.biomeTops ? stoneGroundAt(map, tileIndex) : 0;
         color[0] = color[1] = color[2] = 0;
-        let waterWeight = 0;
+        // Water keeps its colours under the season's tint, and so does the paving (below). The
+        // water's share is the waterline bridges cut their supports to (paintedWater): none on a
+        // town's tile, which is paved over its water too.
+        const waterWeight = solid ? 0 : paintedWater(map, tx, ty, paved, blend);
         // Tile-face style: rock shows where the slope is steep, not in random islands.
         let steep: number | undefined,
-          slope = 0;
-        if (relief.style.faces && relief.style.rockFaces !== false && raised) {
+          slope = 0,
+          // levels the surface climbs per tile here, once read
+          levels = -1;
+        if (!solid && relief.style.faces && relief.style.rockFaces !== false && raised) {
           faceGradient(tx, ty);
-          const levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
+          levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
           if (relief.tiles && !relief.style.everyBankRock) {
             // Terraces: a one-level bank stays grassy with the odd outcrop; banks stacked two
             // levels within about a tile, or on mountains, are rock.
@@ -110,11 +166,12 @@ self.onmessage = async (event: MessageEvent) => {
           } else
             steep = unit((levels - 1.4 + (surfaceNoise(wx * 3, wy * 3, 617) - 0.5) * 0.6) / 0.4);
         }
-        for (let m = 0; m < 4; m++) {
+        for (let m = 0; m < 4 && !solid; m++) {
           const weight = blend[m + 4];
           if (!weight) continue;
           let material = blend[m];
-          if (city.has(tileIndex)) material = 8;
+          // Under a town's paving its water is its own ground, which worn setts show.
+          if (paved && material === Material.Water) material = pavedGround(tx, ty);
           if (z > 2 && terrain === Terrain.Mountain && material === 7) material = 9;
           surfaceColor(
             source,
@@ -123,13 +180,29 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             part,
             EXPOSED[material] ? steep : undefined,
-            // Pilot: the biome's own ground between the stones (desert sand, taiga moss...).
-            relief.style.biomeTops && map.biome[tileIndex] !== Biome.Ocean
-              ? map.biome[tileIndex]
-              : 0,
+            stoneGround,
           );
-          if (material === 5 || material === 8) waterWeight += weight;
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
+        }
+        // A building's yard and its door paths are worn into its ground (buildingYard.ts), under
+        // the paving; they keep out of the water and off a steep bank, as a yard is level ground.
+        if (!solid && yards.near(tileIndex)) {
+          yards.weigh(tx, ty, tileIndex);
+          if (yards.touched) {
+            if (raised && levels < 0) {
+              faceGradient(tx, ty);
+              levels = Math.hypot(gradient[0], gradient[1]) / relief.style.step;
+            }
+            const bank = raised ? unit((levels - 0.25) / 0.35) : 0;
+            yards.paint(tx, ty, color, (1 - waterWeight) * (1 - bank), tint, source, part);
+          }
+        }
+        // A road is painted over the yards and under the paving (roadPaint.ts), out of the water
+        // but over the bank up to a bridge deck's end; it fades out over the paving's fringe,
+        // short of its outline.
+        if (!solid && roads.near(tileIndex) && roads.weigh(tx, ty, tileIndex) > 0) {
+          const wet = waterWeight * (1 - roads.abutment(tx, ty, tileIndex));
+          roads.paint(tx, ty, color, (1 - wet) * pavingFade(pave), tint, waterWeight);
         }
         let shade = 1;
         if (raised && relief.style.faces) shade = faceShade(tx, ty);
@@ -142,6 +215,8 @@ self.onmessage = async (event: MessageEvent) => {
             1.3;
           shade = Math.max(0.83, Math.min(1.12, 1 + dx * 0.012 - dy * 0.015));
         }
+        // The paving is lit by its level like the ground, the solid middle too, so the line from
+        // which the ground under it is not painted shows no step; snow goes on painted ground only.
         if (raised && waterWeight < 1) {
           // Grass on a slope reads a shade apart from grass on the flat.
           const bankGrass = relief.style.bankGrass;
@@ -150,11 +225,39 @@ self.onmessage = async (event: MessageEvent) => {
               tone = BANK_TONES[bankGrass.tone];
             for (let c = 0; c < 3; c++) color[c] *= 1 + (tone[c] - 1) * k;
           }
-          shade *= previewLooks(tx, ty, z, wx, wy, map.biome[tileIndex], steep ?? 0, color);
+          shade *= previewLooks(
+            tx,
+            ty,
+            z,
+            wx,
+            wy,
+            snowLineAt(map, snowLevels, tileIndex),
+            steep ?? 0,
+            solid ? null : color,
+          );
         }
-        for (let c = 0; c < 3; c++)
-          color[c] *=
-            shade * (waterWeight + ((1 - waterWeight) * ((tint >> (16 - c * 8)) & 255)) / 255);
+        if (pave > -PAVING_FRINGE) {
+          // The ground under the season's tint, then the paving, or the packed earth just outside
+          // it, over its land: neither reaches into water.
+          const land = 1 - waterWeight;
+          for (let c = 0; c < 3; c++)
+            color[c] *= waterWeight + (land * ((tint >> (16 - c * 8)) & 255)) / 255;
+          if (pave > 0) {
+            // a road across the square runs on as a lane of setts laid along it
+            if (lanes.near(tileIndex)) {
+              const lane = lanes.centre(tx, ty, tileIndex);
+              paving.paint(tx, ty, pave, color, scale, part, lane, lanes.axis(tx, ty, tileIndex));
+            } else paving.paint(tx, ty, pave, color, scale, part);
+            for (let c = 0; c < 3; c++) color[c] = (color[c] + (part[c] - color[c]) * land) * shade;
+          } else {
+            const earth = paving.fringe(tx, ty, pave) * land;
+            for (let c = 0; c < 3; c++)
+              color[c] = (color[c] + (FRINGE_EARTH[c] - color[c]) * earth) * shade;
+          }
+        } else
+          for (let c = 0; c < 3; c++)
+            color[c] *=
+              shade * (waterWeight + ((1 - waterWeight) * ((tint >> (16 - c * 8)) & 255)) / 255);
         const k = (py * width + px) * 4;
         pixels[k] = color[0];
         pixels[k + 1] = color[1];
@@ -184,7 +287,9 @@ self.onmessage = async (event: MessageEvent) => {
         const tx = ix * 0.18 - ox + (hash2(ix, iy, 111) - 0.5) * 0.15,
           ty = iy * 0.18 - oy + (hash2(ix, iy, 114) - 0.5) * 0.15;
         if (tx < -0.5 || ty < -0.5 || tx >= map.w - 0.5 || ty >= map.h - 0.5) continue;
-        if (city.has(Math.round(ty) * map.w + Math.round(tx))) continue;
+        // none on the paving, nor on the packed earth round it, nor on a building's yard, nor on a
+        // road's core (on its soft edge they may grow)
+        if (onPaving(tx, ty, -0.1) || onYard(tx, ty) || onRoad(tx, ty)) continue;
         const material = surfaceMaterial(map, tx, ty);
         if (![0, 1, 3, 4, 7].includes(material)) continue;
         if (material === 7 && rockExposure(tx + ox, ty + oy) > 0.45) continue;
@@ -206,7 +311,8 @@ self.onmessage = async (event: MessageEvent) => {
         const tx = ix * 0.4 - ox + (hash2(ix, iy, 819) - 0.5) * 0.3,
           ty = iy * 0.4 - oy + (hash2(ix, iy, 817) - 0.5) * 0.3;
         if (tx < -0.5 || ty < -0.5 || tx >= map.w - 0.5 || ty >= map.h - 0.5) continue;
-        if (surfaceMaterial(map, tx, ty) === 5) continue;
+        if (surfaceMaterial(map, tx, ty) === 5 || onPaving(tx, ty, -0.05) || onRoad(tx, ty))
+          continue;
         const sx = (tx - ty) * 32 - left,
           sy = (tx + ty) * 16 - reliefHeight(map, relief, tx, ty) - top;
         const size = 0.8 + hash2(ix, iy, 82) * 1.1;
@@ -263,6 +369,27 @@ function halve(pixels: Uint8ClampedArray, width: number, height: number) {
           (pixels[k] + pixels[k + 4] + pixels[k + width * 4] + pixels[k + width * 4 + 4] + 2) >> 2;
       }
   return out;
+}
+/** Does the towns' paving reach map point (x, y) on the map, to within `margin` tiles outside it? */
+function onPaving(x: number, y: number, margin: number) {
+  return paving.near(Math.round(y) * map.w + Math.round(x)) && paving.distance(x, y) > margin;
+}
+/** Is map point (x, y) well inside a building's yard or on a door path? */
+function onYard(x: number, y: number) {
+  const k = Math.round(y) * map.w + Math.round(x);
+  return yards.near(k) && yards.weigh(x, y, k) > 0.5;
+}
+/** Is map point (x, y) on a road's core, inside its soft edge? */
+function onRoad(x: number, y: number) {
+  return roads.onCore(x, y, Math.round(y) * map.w + Math.round(x));
+}
+/**
+ * The ground under the paving of the town's tile at (x, y) where its blend reads water: the tile's
+ * own land (a town's tile is never water; grass if the map says otherwise).
+ */
+function pavedGround(x: number, y: number) {
+  const own = materialAt(map, Math.round(x), Math.round(y));
+  return own === Material.Water ? Material.Grass : own;
 }
 /** Materials whose rock exposure follows the slope (materials 0, 1, 3, 4, 7 and 9), by index. */
 const EXPOSED = [1, 1, 0, 1, 1, 0, 0, 1, 0, 1];
@@ -339,16 +466,13 @@ const BANK_TONES = {
   dark: [0.88, 0.92, 0.95],
   lush: [0.9, 1.02, 0.86],
 };
-/** The level where snow starts to show, by biome: taiga a level lower, desert a level higher. */
-function snowLine(biome: number) {
-  return biome === Biome.Taiga ? 3 : biome === Biome.Desert ? 5 : 4;
-}
 const SNOW = [234, 239, 246];
 /**
- * Preview looks from the relief style (all off in the shipped style): higher levels paint lighter
- * (ground level unchanged), snow patches from the biome's snow line and full snow a level above,
- * and a cast shadow darkens ground that a higher tile hides from the upper-left light. Returns
- * the shading factor.
+ * Looks from the relief style (the shipped style has the height light and snow): higher levels
+ * paint lighter (ground level unchanged), snow patches from the tile's snow line and full snow a
+ * level above, and a cast shadow darkens ground that a higher tile hides from the upper-left light.
+ * Snow goes on `color`, the ground's colour, which is null where the ground is not painted (under
+ * solid paving). Returns the shading factor.
  */
 function previewLooks(
   x: number,
@@ -356,16 +480,16 @@ function previewLooks(
   z: number,
   wx: number,
   wy: number,
-  biome: number,
+  snowLine: number,
   steep: number,
-  color: number[],
+  color: number[] | null,
 ) {
   const style = relief.style,
     level = Math.max(0, z / style.step);
   let factor = 1;
   if (style.heightLight) factor *= 1 + style.heightLight * level;
-  if (style.snow) {
-    const above = level - snowLine(biome),
+  if (style.snow && color) {
+    const above = level - snowLine,
       // Half cover (patches) on the snow line's level, full cover from the level above.
       cover = 0.5 * unit((above + 0.25) / 0.25) + 0.5 * unit((above - 0.75) / 0.25);
     if (cover > 0) {

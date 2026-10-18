@@ -1,8 +1,18 @@
 import { describe, it, expect } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PNG } from 'pngjs';
 import { FOOTPRINTS, ROTATIONS, project } from './building-kit.mjs';
-import { blockOf, boxFaces, fillPoly, drawGuide, openingsOf } from './building-guides.mjs';
-import { checkPicture, pictureOf, summarise } from './building-check.mjs';
+import {
+  blockOf,
+  boxFaces,
+  fillPoly,
+  drawGuide,
+  drawWindmill,
+  openingsOf,
+} from './building-guides.mjs';
+import { checkFile, checkPicture, pictureOf, summarise } from './building-check.mjs';
 
 /**
  * A stand-in picture: the guide's block as a painted building. By default it stands on the ground
@@ -63,6 +73,7 @@ describe('building check', () => {
         ).toMatchObject({ ok: true, problems: [], notes: [] });
   }, 20_000);
 
+  // slow because every footprint at every rotation is painted at full size and checked: 0.6 s alone
   it("passes the guide's own block, painted where the guide draws it", () => {
     // on the plinth, as every guide shows it: a picture that keeps its guide's place must pass
     for (const fp of Object.values(FOOTPRINTS))
@@ -73,7 +84,7 @@ describe('building check', () => {
           problems: [],
         });
       }
-  });
+  }, 30_000);
 
   it('passes a building drawn larger, off centre and on a canvas of its own', () => {
     // the pilot: generators fill the canvas and choose its size themselves
@@ -440,6 +451,8 @@ describe('building check', () => {
   /** a camera 6.4 degrees too low: every height four fifths of what the game's camera draws */
   const tooLow = ([x, y]) => [x, 760 + (y - 760) * 0.8];
 
+  // slow because every wall of the depot is painted and checked a dozen ways, each a full-size
+  // picture: 2 s alone
   it("wants the ground inside a depot's portals left open, for the game's rails", () => {
     // the game lays its rails under the picture, through the portals. Four of the first depot's
     // pictures had a floor painted in the portals, and the rails did not show running in
@@ -511,8 +524,10 @@ describe('building check', () => {
     expect(checkPicture(portals('t2x2', 0, 0, { floor: true }), 't2x2', 0).problems).toEqual([
       'the portals are in the lower-left wall; they belong in the lower-right wall, where the block-out has them',
     ]);
-  }, 30000);
+  }, 90_000);
 
+  // slow because both depots on both walls are painted and checked at each limit, each a full-size
+  // picture: 1.9 s alone
   it("measures a portal's open ground by the portal's own width: how deep, how wide", () => {
     // the limits, on both depots and both walls. Measured on the first depot's pictures: those
     // whose rails did not show were open 0.18 of a portal's width at most, the others 0.50 and
@@ -563,8 +578,10 @@ describe('building check', () => {
       // so a portal half as wide as the block-out's is too narrow for the track
       told(seen({ from: 0.25, to: 0.75, deep: 0.5, wedge: true }), said, at);
     }
-  }, 30000);
+  }, 90_000);
 
+  // slow because each wall is painted with each apron, rail and gap and checked, each a full-size
+  // picture: 1.3 s alone
   it('takes the lowest thing painted in a column: an apron, a rail, a gap in the building', () => {
     const fp = FOOTPRINTS.t2x2;
     for (const [rot, wall] of END_WALLS) {
@@ -659,8 +676,10 @@ describe('building check', () => {
       expect(turreted, `turret r${rot}`).toMatchObject({ ok: true, problems: [] });
       for (const share of turreted.ground) expect(share, `turret r${rot}`).toBeCloseTo(0.7, 1);
     }
-  }, 30000);
+  }, 90_000);
 
+  // slow because every depot at every turn is painted and measured again, with a hairline and with
+  // specks: 0.39 s alone, so a limit of 30 s
   it('does not take a hairline or a speck for a floor', () => {
     // paint a pixel or two thick hides no rail: a line along the foot of the wall across the
     // open portals, and stray pixels in the open ground, as a generator leaves them
@@ -701,8 +720,10 @@ describe('building check', () => {
       });
       expect(checkPicture(specks, fpId, rot), `specks ${fpId} r${rot}`).toMatchObject(FINE);
     }
-  });
+  }, 30_000);
 
+  // slow because the depot is painted and checked at each limit of a hole, each a full-size
+  // picture: 1.6 s alone
   it('refuses a portal of the depot that is a hole right through the building', () => {
     // told to leave the ground "transparent from the foot of the wall upwards", the generator
     // emptied the whole portal: the rails showed, and the hall's inner walls were gone. The
@@ -758,7 +779,7 @@ describe('building check', () => {
           `r${rot} portal ${n} and one seen far through`,
         );
       }
-  }, 30000);
+  }, 90_000);
 
   it("only says so of the narrow depot's portal, until its pictures have been measured", () => {
     // the limit was found on the depot's pictures. A narrow hall behind a wide portal shows a
@@ -869,5 +890,76 @@ describe('building check', () => {
     const after = summarise({ 'depot-a0-r1': { ok: false, problems: ['too small'] } }, before);
     expect(after).toMatchObject({ checked: 2, failed: 1 });
     expect(Object.keys(after.pictures)).toEqual(['depot-a0-r0', 'depot-a0-r1']);
+  });
+});
+
+describe('building check of a round building', { timeout: 30_000 }, () => {
+  /**
+   * The windmill's tower as a painting: the guide without its plinth, tinted so that it is not
+   * grey, its height scaled about its foot by `k` (a camera that looks down less or more).
+   */
+  function tower(k = 1) {
+    const guide = drawWindmill({ plinth: false });
+    const png = new PNG({ width: guide.width, height: guide.height });
+    for (let y = 0; y < png.height; y++) {
+      const sy = Math.round(800 + (y - 800) / k);
+      if (sy < 0 || sy >= png.height) continue;
+      for (let x = 0; x < png.width; x++) {
+        const from = (sy * png.width + x) * 4,
+          to = (y * png.width + x) * 4;
+        for (let c = 0; c < 4; c++) png.data[to + c] = guide.data[from + c];
+        if (png.data[to + 3]) png.data[to + 2] = Math.min(255, png.data[to + 2] + 40);
+      }
+    }
+    return png;
+  }
+  const cameraProblem = (r) => r.problems.find((p) => p.startsWith('camera off'));
+
+  it("reads a tower's camera from its foot, not from wall feet it does not have", () => {
+    // seen as the game sees it, the tower's foot is an ellipse 0.50 minor over major; its curve
+    // has no straight wall base, and read as if it had, the camera comes out badly off (as an
+    // angle, or as the foot of one wall sloping -0.20 where the game's slopes -0.50)
+    const right = tower();
+    expect(cameraProblem(checkPicture(right, 't1', 0))).toMatch(
+      /camera off(?: by 1[5-9]\.\d°|: the lower-right wall's foot slopes -0\.[12]\d where)/,
+    );
+    const round = checkPicture(right, 't1', 0, { round: true });
+    expect(cameraProblem(round)).toBeUndefined();
+    expect(round.camera).toBeUndefined();
+    // a tower painted from a lower camera is still off, in the words of its foot
+    const low = checkPicture(tower(0.64), 't1', 0, { round: true });
+    expect(cameraProblem(low)).toMatch(
+      /camera off by 11\.\d°: it looks down from 18\.\d° where the game looks down from 30° \(the tower's foot is an ellipse 0\.32 minor over major/,
+    );
+    expect(low.camera.was).toMatch(/too low a camera/);
+    const high = checkPicture(tower(1.25), 't1', 0, { round: true });
+    expect(cameraProblem(high)).toMatch(/from 38\.\d°/);
+    expect(high.camera.was).toMatch(/too high a camera/);
+    // a picture kept as the closest of its attempts passes with a note
+    const kept = checkPicture(tower(0.64), 't1', 0, { round: true, camera: false });
+    expect(cameraProblem(kept)).toBeUndefined();
+    expect(kept.notes.some((n) => n.startsWith('camera off by 11.'))).toBe(true);
+  });
+
+  it('takes a family as round from its entry in families.json', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'round-'));
+    try {
+      const flat = join(dir, 'windmill-a0-r0.png');
+      writeFileSync(flat, PNG.sync.write(tower(0.64)));
+      const same = join(dir, 'fuel_stop-a0-r0.png');
+      writeFileSync(same, PNG.sync.write(tower(1)));
+      // the windmill is round: the foot says it is off, and an earlier picture of it is read so too
+      const off = checkFile(flat, 't1', 0);
+      expect(off.problems.some((p) => /tower's foot is an ellipse/.test(p))).toBe(true);
+      const before = join(dir, 'windmill-a0-r0.before.png');
+      writeFileSync(before, PNG.sync.write(tower(1)));
+      expect(cameraProblem(checkFile(before, 't1', 0))).toBeUndefined();
+      // a family that is not round keeps the wall-feet measure
+      expect(cameraProblem(checkFile(same, 't1', 0))).toMatch(/wall feet slope|wall's foot slopes/);
+      // and the caller can say which it is
+      expect(cameraProblem(checkFile(same, 't1', 0, { round: true }))).toBeUndefined();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

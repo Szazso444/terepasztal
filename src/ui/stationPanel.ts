@@ -1,22 +1,47 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
-import type { Station } from '../sim/stations';
+import { harvestBreakdown, weeklyOutput, type Station } from '../sim/stations';
 import type { Builder } from '../sim/build';
 import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { inSupplyMode } from '../sim/supply';
 import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
+import { rules } from '../sim/rules';
+import type { Season } from '../sim/weather';
 import { fmtDuration } from './contractsScreen';
-import { biomeSummary, biomeAt } from '../sim/biomes';
+import { biomeAt } from '../sim/biomes';
 import type { TownRegistry, Town } from '../sim/towns';
 import { upgradeView } from './upgradeView';
 import { upgradeRow } from './upgradeRow';
+import { groundRows } from './placingTooltip';
+import { blockText, type TipDoc } from './tooltipDoc';
+import type { TipContent } from './tooltip';
+
+/** How the panel draws its ground rows, and the season their yield is worked out for (#336). */
+export interface GroundView {
+  /** the season production runs in */
+  season(): Season;
+  /** the nodes of a tooltip document's rows */
+  render(doc: TipDoc): TipContent;
+  /** wire the terms under `scope`: resting on one opens its tooltip (`Tooltip.bindTerms`) */
+  bindTerms(scope: ParentNode): void;
+}
 
 /** Side panel for a selected station. */
 export class StationPanel {
   readonly root: HTMLElement;
   private body = el('div', { class: 'panel-body' });
+  /** the rows above the ground rows, and the rows below them, drawn again at every render */
+  private head = el('div');
+  private tail = el('div');
+  /**
+   * The ground rows: the biome as a term, or a harvest station's yield rows. Drawn again only when
+   * what they say changes, so the term the pointer rests on stays the same element and its
+   * tooltip can fill its ring and lock.
+   */
+  private ground = el('div', { class: 'station-ground' });
+  private groundSaid = '';
   private title = el('span');
   station: Station | null = null;
 
@@ -29,7 +54,9 @@ export class StationPanel {
     private readonly onRenameTown: (t: Town) => void,
     private readonly commands: Commands,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+    private readonly view: GroundView,
   ) {
+    this.body.append(this.head, this.ground, this.tail);
     this.root = el(
       'div',
       { id: 'station-panel', class: 'panel' },
@@ -52,6 +79,8 @@ export class StationPanel {
   close() {
     this.station = null;
     this.root.style.display = 'none';
+    this.ground.replaceChildren();
+    this.groundSaid = '';
     this.onClose();
   }
 
@@ -59,8 +88,9 @@ export class StationPanel {
     const s = this.station;
     if (!s) return;
     this.title.textContent = `${s.name}`;
-    const b = this.body;
-    b.innerHTML = '';
+    let b = this.head;
+    b.replaceChildren();
+    this.tail.replaceChildren();
     const row = (k: string, v: string, cls = '') =>
       el(
         'div',
@@ -73,15 +103,18 @@ export class StationPanel {
     if (s.closed) b.append(el('div', { class: 'amber', text: STR.upgrade.closed }));
     const town = this.towns.townOfStation(s);
     if (town) b.append(row(STR.station.town, town.name));
-    b.append(row(STR.station.biome, biomeSummary(biomeAt(this.builder.map, s.x, s.y))));
-    if (s.def.terrain) b.append(row(STR.station.ground, `×${s.terrainFactor.toFixed(2)}`));
+    const perWeek = this.drawGround(s);
+    b = this.tail;
     const produced =
       s
         .producedCargo()
         .map((c) => cargoDef(c).name)
         .join(', ') || '-';
     b.append(
-      row(STR.station.produces, `${produced} (${STR.station.perWeek(s.productionPerWeek)})`),
+      row(
+        STR.station.produces,
+        `${produced} (${STR.station.perWeek(Math.round(perWeek * 10) / 10)})`,
+      ),
     );
     b.append(
       row(
@@ -232,5 +265,34 @@ export class StationPanel {
         ),
       ),
     );
+  }
+
+  /**
+   * The ground rows (#336): a harvest station's yield rows, from its breakdown at its level, in
+   * this season and under the tuning (the tiles they count are lit while it is selected, which
+   * is while this panel is open); any other station's biome as a term. Returns what it makes a
+   * week: a harvest station's breakdown figure, none while it is closed.
+   */
+  private drawGround(s: Station): number {
+    const map = this.builder.map;
+    const b = s.def.terrain
+      ? harvestBreakdown(map, s.x, s.y, s.def.id, s.level, this.view.season(), rules)
+      : null;
+    const weeklyAtLevel1 = weeklyOutput(1, 1);
+    const doc = groundRows({
+      biome: biomeAt(map, s.x, s.y),
+      breakdown: b,
+      cargo: s.producedCargo(),
+      weeklyAtLevel1,
+    });
+    // the station, what the rows say, and what the biome's nested tooltips will print
+    const said = [s.id, weeklyAtLevel1, ...doc.map(blockText)].join('\n');
+    if (said !== this.groundSaid) {
+      this.groundSaid = said;
+      this.ground.replaceChildren(...this.view.render(doc));
+      this.view.bindTerms(this.ground);
+    }
+    if (!b) return s.productionPerWeek;
+    return s.closed ? 0 : b.perWeek;
   }
 }

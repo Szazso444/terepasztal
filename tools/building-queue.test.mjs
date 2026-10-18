@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PNG } from 'pngjs';
-import { FOOTPRINTS, loadInventory, pictureFile } from './building-kit.mjs';
+import { FOOTPRINTS, ROOT, loadInventory, pictureFile } from './building-kit.mjs';
 import { blockOf, boxFaces, fillPoly, guideFile, openingsOf } from './building-guides.mjs';
 import { fitPicture } from './building-fit.mjs';
 import {
@@ -98,6 +98,50 @@ describe('building queue', () => {
     });
     expect(about('farm-a0-r2').guide).toBe(guideFile('t1', 2));
     expect(() => about('farm-a9-r0')).toThrow(/farm-a9-r0/);
+  });
+
+  it("points every picture at its footprint's guide, but the coaling stage at its own", () => {
+    for (const e of q.entries) {
+      const d = about(e.id);
+      expect(d.guide, e.id).toBe(
+        e.family === 'fuel_stop'
+          ? `${ROOT}/guides/fuel_stop-r${e.rot}.png`
+          : guideFile(d.footprint, e.rot),
+      );
+    }
+    expect(about('fuel_stop-a0-r1').guide).toBe(`${ROOT}/guides/fuel_stop-r1.png`);
+    expect(existsSync(about('fuel_stop-a0-r1').guide)).toBe(true);
+    expect(about('fuel_stop-a0-r1').footprint).toBe('t1');
+  });
+
+  it('wants a blockHeight that is a number from 20 to 100, or none', () => {
+    const withHeight = (blockHeight) => ({
+      ...fam,
+      families: { ...fam.families, fuel_stop: { ...fam.families.fuel_stop, blockHeight } },
+    });
+    for (const ok of [20, 62, 100]) expect(() => buildQueue(inv, withHeight(ok))).not.toThrow();
+    for (const bad of [19.9, 101, '62', null, NaN, Infinity, [62]])
+      expect(() => buildQueue(inv, withHeight(bad)), String(bad)).toThrow(/fuel_stop.*blockHeight/);
+    const without = { ...fam.families.fuel_stop };
+    delete without.blockHeight;
+    const plain = { ...fam, families: { ...fam.families, fuel_stop: without } };
+    expect(describeEntry('fuel_stop-a0-r1', inv, plain).guide).toBe(guideFile('t1', 1));
+  });
+
+  it('wants round to be true or false and a guideKind it knows, or none', () => {
+    const with_ = (extra) => ({
+      ...fam,
+      families: { ...fam.families, windmill: { ...fam.families.windmill, ...extra } },
+    });
+    expect(fam.families.windmill).toMatchObject({ round: true, guideKind: 'windmill' });
+    expect(() => buildQueue(inv, fam)).not.toThrow();
+    expect(() => buildQueue(inv, with_({ round: false }))).not.toThrow();
+    for (const bad of ['yes', 1, null])
+      expect(() => buildQueue(inv, with_({ round: bad })), String(bad)).toThrow(/windmill.*round/);
+    for (const bad of ['tower', '', null])
+      expect(() => buildQueue(inv, with_({ guideKind: bad })), String(bad)).toThrow(
+        /windmill.*guideKind/,
+      );
   });
 
   it('stops when a family has no description', () => {
@@ -1689,9 +1733,11 @@ describe('the queue tool on the command line', () => {
   const tool = resolve('tools/building-queue.mjs');
   /** a copy of what the tool reads, in a folder of its own */
   const sandboxes = [];
+  // A hook has a limit of its own (10 s by default). This one removes every folder the tests copied
+  // src/data and the assets into: 0.02 s alone, so a limit of 60 s for the disk of a loaded machine
   afterAll(() => {
     for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
-  });
+  }, 60_000);
   const sandbox = () => {
     const root = mkdtempSync(join(tmpdir(), 'building-queue-'));
     sandboxes.push(root);
@@ -1806,6 +1852,7 @@ syncBuiltinESMExports();
     };
   };
 
+  // slow because each command it gives the tool starts a node process of its own: 2 s alone
   it('hands out a picture, records it only when it passes, and holds the gate', () => {
     const root = sandbox();
     expect(run(root).out).toMatch(/548 pictures, 27 families/);
@@ -1860,8 +1907,9 @@ syncBuiltinESMExports();
       /2 pictures back in the queue: depot-a0-r1, depot-a0-r2/,
     );
     expect(run(root, 'next').out).toMatch(/^picture: +depot-a0-r1$/m);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 8.9 s alone
   it('refuses a camera that is off, keeps the closest attempt, and repaints what was made', () => {
     const root = sandbox();
     run(root);
@@ -2040,8 +2088,9 @@ syncBuiltinESMExports();
     expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(true);
     expect(run(root, 'redo', 'depot-a0-r0', '--yes').out).toMatch(/48 pictures back in the queue/);
     expect(existsSync(at(pictureFile('depot', 0, 0)))).toBe(false);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1 s alone
   it('answers with the exit code for a gate, a stop and the end', () => {
     const root = sandbox();
     run(root);
@@ -2082,8 +2131,9 @@ syncBuiltinESMExports();
     expect(done.code).toBe(3);
     expect(done.out).toMatch(/DONE/);
     expect(run(root, 'frobnicate').code).toBe(1);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 2.3 s alone
   it('keeps the attempt it holds for a picture that would be given up', () => {
     const root = sandbox();
     run(root);
@@ -2120,8 +2170,9 @@ syncBuiltinESMExports();
     expect(run(root, 'keep').out).toMatch(
       /say which picture: node tools\/building-queue\.mjs keep <id>/,
     );
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 10 s alone
   it('takes the picture the image tool just wrote, and lays it out to look at', () => {
     // an agent that had lost its way of saving moved each picture through the shell as text, a
     // hundred commands a picture: the way is the tool's, and `next` names it every time
@@ -2316,8 +2367,9 @@ syncBuiltinESMExports();
     expect(run(root, 'take', 'nothing-a0-r0', '--from', chat).out).toMatch(
       /no picture is called "nothing-a0-r0"/,
     );
-  }, 180000);
+  }, 300000);
 
+  // slow because each command it gives the tool starts a node process of its own: 5.1 s alone
   it('does not guess between the chats of an image tool', () => {
     // an image tool keeps a folder for each chat, and other chats paint other things meanwhile
     const root = sandbox();
@@ -2410,6 +2462,7 @@ syncBuiltinESMExports();
     expect(JSON.parse(readFileSync(file, 'utf8')).mark).toBeLessThanOrEqual(Date.now());
   }, 120000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1.9 s alone
   it('starts from the pictures saved by hand in a list that has no mark yet', () => {
     // as the work stood before `take`: pictures copied by hand, the list written by an older tool
     const root = sandbox();
@@ -2462,8 +2515,9 @@ syncBuiltinESMExports();
     const after = run(root);
     expect(after.out).toMatch(/548 pictures, 27 families/);
     expect(after.out).not.toMatch(/no longer in it/);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 2.3 s alone
   it('lays a reference onto its footprint again when the one on disk is not a whole picture', () => {
     // a write that a full disk cut short left an empty file, newer than its picture: it was
     // handed out as the reference, and the generator was shown nothing
@@ -2487,8 +2541,9 @@ syncBuiltinESMExports();
     const stamp = statSync(fitted).mtimeMs;
     run(root, 'next');
     expect(statSync(fitted).mtimeMs).toBe(stamp);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1 s alone
   it('on a full disk says what to do, keeps the list whole, and writes it last', () => {
     const root = sandbox();
     run(root);
@@ -2517,8 +2572,9 @@ syncBuiltinESMExports();
     expect(ok.code).toBe(0);
     expect(ok.out).toMatch(/depot-a0-r0: generated, 1 attempt/);
     expect(readdirSync(dirname(file)).filter((f) => f.endsWith('.part'))).toEqual([]);
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 1.1 s alone
   it('on a full disk at the report, a recheck has still recorded what it put back', () => {
     // `recheck` moves the pictures aside before it writes anything, so the list follows at once:
     // with the report first, a full disk there left pictures gone and the list saying made
@@ -2539,8 +2595,9 @@ syncBuiltinESMExports();
     expect(run(root, 'next').out).toMatch(
       /^picture: +depot-a0-r0 \(to paint again: the same building\)$/m,
     );
-  }, 60000);
+  }, 180000);
 
+  // slow because each command it gives the tool starts a node process of its own: 3.6 s alone
   it('hands a rear view out with the views it copies, and says so when one of them is taken back', () => {
     const root = sandbox();
     run(root);
@@ -2576,5 +2633,5 @@ syncBuiltinESMExports();
     expect(again.out).toMatch(
       /^note: +depot-a0-r2 shares a wall with depot-a0-r1 and stays as it is\./m,
     );
-  }, 60000);
+  }, 180000);
 });

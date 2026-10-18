@@ -76,8 +76,21 @@ export class AtlasRegistry {
     private readonly base: string = import.meta.env.BASE_URL,
   ) {}
 
-  async load(groups: { name: string; generate: AtlasGenerator }[]) {
-    await Promise.all(groups.map((g) => this.loadGroup(g.name, g.generate)));
+  /**
+   * Load every group, all at once. `onSettled` hears each group as it settles, from its file or its
+   * generator: how many have, out of all of them (the boot's progress bar).
+   */
+  async load(
+    groups: { name: string; generate: AtlasGenerator }[],
+    onSettled?: (settled: number, total: number) => void,
+  ) {
+    let settled = 0;
+    await Promise.all(
+      groups.map(async (g) => {
+        await this.loadGroup(g.name, g.generate);
+        onSettled?.(++settled, groups.length);
+      }),
+    );
   }
 
   private async loadGroup(name: string, generate: AtlasGenerator) {

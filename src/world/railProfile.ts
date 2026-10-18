@@ -1,5 +1,5 @@
-import { levelAt } from './elevation';
-import type { GameMap } from './tiles';
+import { levelAt, type Elevated } from './elevation';
+import { Terrain } from './tiles';
 import type { TrackGraph } from './track';
 import { Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 
@@ -26,7 +26,8 @@ export interface RailBed {
   cross?: RailBed;
 }
 
-type Levels = Pick<GameMap, 'w' | 'h' | 'terrain'>;
+/** What a profile reads levels from: the terrain, and the water levels where the map has them. */
+type Levels = Elevated;
 
 /** Rail height in levels at position `t` along the bed's axis. */
 export function railLevel(bed: RailBed, t: number): number {
@@ -164,12 +165,12 @@ function lineProfile(
     bridge = tiles.map(([x, y]) => bridgeAt(x, y)),
     // A crossing holds both lines level at its centre, so the two rails meet.
     pinned = tiles.map(([x, y]) => (track.get(x, y)?.links.length ?? 0) > 1),
-    { spans, levels } = lineSpans(
-      tiles.map(([x, y]) => levelAt(map, x, y)),
-      bridge,
-      start,
-      pinned,
-    );
+    terrain = tiles.map(([x, y]) => levelAt(map, x, y)),
+    // A deck over water is never below the water's level.
+    under = tiles.map(([x, y], i) =>
+      map.terrain[y * map.w + x] === Terrain.Water ? terrain[i] : 0,
+    ),
+    { spans, levels } = lineSpans(terrain, bridge, start, pinned, under);
   tiles.forEach(([x, y], i) => {
     const c = start + i,
       k = y * map.w + x,
@@ -191,18 +192,22 @@ function lineProfile(
 
 /**
  * Profile spans of one straight line whose tiles have the given terrain levels, the first tile
- * centred at `start` along the axis. Returns the spans and the rail level of each tile.
+ * centred at `start` along the axis. `under` is the least a bridge deck may stand at over each
+ * tile: the level of the water under it (raised water), 0 where none is given. Returns the spans
+ * and the rail level of each tile.
  */
 export function lineSpans(
   terrain: readonly number[],
   bridge: readonly boolean[] = [],
   start = 0,
   pinned: readonly boolean[] = [],
+  under: readonly number[] = [],
 ) {
   const n = terrain.length,
     r = [...terrain],
     along = (i: number) => start + i;
-  // A bridge deck carries the rail level from its higher abutment across the dip.
+  // A bridge deck carries the rail level from its higher abutment across the dip, and stands no
+  // lower than the water it crosses.
   for (let i = 0; i < n; i++) {
     if (!bridge[i]) continue;
     let j = i;
@@ -210,7 +215,10 @@ export function lineSpans(
     const ends = [i > 0 ? r[i - 1] : null, j + 1 < n ? r[j + 1] : null].filter(
       (v): v is number => v !== null,
     );
-    const deck = ends.length ? Math.max(...ends) : Math.max(...r.slice(i, j + 1));
+    const deck = Math.max(
+      ends.length ? Math.max(...ends) : Math.max(...r.slice(i, j + 1)),
+      ...under.slice(i, j + 1),
+    );
     for (let k = i; k <= j; k++) r[k] = deck;
     i = j;
   }

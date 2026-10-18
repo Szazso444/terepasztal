@@ -112,7 +112,7 @@ export class TownRegistry {
     for (const t of this.towns) {
       const s = this.station(t);
       if (!s) continue;
-      const d = Math.max(Math.abs(s.x - x), Math.abs(s.y - y));
+      const d = s.distTo(x, y);
       if (d <= TOWN_RADIUS && d < bd) {
         bd = d;
         best = t;
@@ -129,8 +129,7 @@ export class TownRegistry {
     const out: TownMembers = { stations: [], buildings: [], decor: [], houses: 0, warehouses: 0 };
     if (!s0) return out;
     const inside = (x: number, y: number) =>
-      Math.max(Math.abs(s0.x - x), Math.abs(s0.y - y)) <= TOWN_RADIUS &&
-      this.townAt(x, y)?.id === t.id;
+      s0.distTo(x, y) <= TOWN_RADIUS && this.townAt(x, y)?.id === t.id;
     for (const s of this.builder.stations) {
       if (s === s0) {
         out.stations.push(s);

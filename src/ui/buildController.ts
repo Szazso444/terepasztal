@@ -12,19 +12,55 @@ import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
 import { buildingDef, type Building } from '../sim/buildings';
-import { stationSpan, stationDef, LEVELS } from '../sim/stations';
+import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';
-import { rules } from '../sim/rules';
-import { cargoDef } from '../sim/cargo';
 import { decorDef, decorOffset } from '../sim/build';
 import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
 import { structureFrame } from '../art/frames';
+import { HALF_H } from '../engine/iso';
+import { rules } from '../sim/rules';
+import { HarvestCells, harvestBreakdown, weeklyOutput } from '../sim/stations';
+import type { Season } from '../sim/weather';
 import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
+import { placingTip, yieldLabel } from './placingTooltip';
+import type { TipDoc } from './tooltipDoc';
+import { tipKey, type Point, type TooltipStack } from './tooltipStack';
+import {
+  builderJudge,
+  hoverStatus,
+  judgeStroke,
+  strokeStatus,
+  strokeTiles,
+  type RoadStep,
+  type RoadStrokeCheck,
+} from './roadStroke';
+import { doorReachTiles } from './roadDoors';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
 const REPLACE_TINT = 0xffc860;
+/** the road tool's mark on a street door's reach tile: not the stroke's cyan or red */
+const DOOR_TINT = 0xfff08a;
+/** frames between two looks at the street doors while the road tool is in hand (#409) */
+const DOOR_MARK_FRAMES = 30;
+
+type Tile = { x: number; y: number };
+
+/**
+ * Where a harvest station's tool shows what it would make (#336): the placing tooltip as the root
+ * of the tooltip stack, and the yield label over the tile. createPlayUi sets it; without it the
+ * tool shows neither. `C` is what the stack draws, opaque here.
+ */
+export interface PlacingOut<C = unknown> {
+  readonly stack: TooltipStack<C>;
+  /** what the stack shows for a tooltip document */
+  content(doc: TipDoc): C;
+  /** the label's text over the screen point of a tile's top corner; null hides it */
+  label(text: string | null, corner: Point | null): void;
+  /** the season the yield is worked out for: the one production runs in */
+  season(): Season;
+}
 
 /** Interactive placement: ghost previews, rotation, drag-laying, removal, selection. */
 export class BuildController {
@@ -34,6 +70,13 @@ export class BuildController {
   private ghostDiamond: Sprite;
   private lineGhosts: Sprite[] = [];
   private reachGhosts: Sprite[] = [];
+  /** the road tool's marks, one per distinct street-door reach tile; apart from `lineGhosts` */
+  private doorMarks: Sprite[] = [];
+  /** the reach tiles `doorMarks` stand on, as of the last look at the doors */
+  private doorTiles: Tile[] = [];
+  /** what the last look at the doors saw (counts of places) and how many frames ago it was */
+  private doorSeen = '';
+  private doorAge = 0;
   /** reach (Chebyshev tiles) highlighted around the cursor while placing; 0 = none */
   reach = 0;
   private dragStart: { x: number; y: number } | null = null;
@@ -57,6 +100,16 @@ export class BuildController {
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
+  /** this frame's Escape closed the tooltip stack (the keymap reads it first): it does nothing here */
+  private escapeSpent = false;
+  /** the placing tooltip and the yield label's way out, set by createPlayUi */
+  placing: PlacingOut | null = null;
+  /** the tile the placing root stands for, as of the last frame it was not locked */
+  private placingRoot: (Tile & { key: string }) | null = null;
+  /** the tile of a locked placing root: its label and lit tiles stay there */
+  private placingHeld: Tile | null = null;
+  /** the counted tiles of the label's breakdown, kept from frame to frame */
+  private readonly placingCells = new HarvestCells();
 
   constructor(
     private readonly input: Input,
@@ -79,8 +132,22 @@ export class BuildController {
     this.stroke.stop();
     this.dragStart = null;
     this.clearGhost();
+    this.dropPlacing();
     if (t.kind !== 'none') this.select(null);
     this.onToolChanged?.(t);
+  }
+
+  /**
+   * The tile the tool in hand places on, for the harvest layer (`HarvestHighlight.follow`'s
+   * `placing`): a locked placing tooltip's tile, else `hover`.
+   */
+  placingAt(hover: Tile | null): Tile | null {
+    return this.placingHeld ?? hover;
+  }
+
+  /** This frame's Escape is spent: it closed the tooltips, so the tool and the selection stay. */
+  takeEscape() {
+    this.escapeSpent = true;
   }
 
   select(s: Station | null) {
@@ -96,6 +163,8 @@ export class BuildController {
 
   private clearGhost() {
     for (const g of this.reachGhosts) g.visible = false;
+    for (const g of this.doorMarks) g.visible = false;
+    this.doorSeen = '';
     if (this.ghost) {
       this.ghost.destroy();
       this.ghost = null;
@@ -112,13 +181,16 @@ export class BuildController {
     const inMap = inBounds(this.builder.map, t.x, t.y);
     this.hoverStation = inMap ? (this.builder.stationAt(t.x, t.y) ?? null) : null;
     this.hoverBuilding = inMap ? (this.builder.buildingAt(t.x, t.y) ?? null) : null;
-    if (inp.wasPressed('Escape')) {
+    const escape = inp.wasPressed('Escape') && !this.escapeSpent;
+    this.escapeSpent = false;
+    if (escape) {
       if (this.tool.kind !== 'none') this.setTool({ kind: 'none' });
       else this.select(null);
     }
     // track, decor, stations and works turn; anything else keeps its rotation
     if (inp.wasPressed('KeyR') && this.turns()) this.rot = nextToolRotation(this.tool, this.rot);
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
+    this.updatePlacing(active, t, inMap);
     if (!active) {
       // over a panel or outside the field: a stroke does not carry on to where the cursor returns
       this.stroke.stop();
@@ -156,6 +228,9 @@ export class BuildController {
       case 'reclass':
         this.updateReclassTool(t, inMap);
         break;
+      case 'road':
+        this.updateRoadTool(t, inMap);
+        break;
       case 'terrain':
         this.updateTerrainTool(t, inMap);
         break;
@@ -170,6 +245,7 @@ export class BuildController {
       this.ghostDiamond.visible = false;
       for (const g of this.lineGhosts) g.visible = false;
       for (const g of this.reachGhosts) g.visible = false;
+      for (const g of this.doorMarks) g.visible = false;
     }
   }
   /** Faint diamonds on every tile within `r` of the cursor (what a service or pole would cover). */
@@ -370,14 +446,9 @@ export class BuildController {
     this.ghostDiamond.tint = 0xffffff;
     // the tile diamond shows under a one-tile station only; a wider one's picture covers its tiles
     this.ghostDiamond.visible = span.w === 1 && span.h === 1;
+    // what a harvest station would make is the placing tooltip's (updatePlacing), not the line's
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
     if (this.turns()) parts.push(STR.build.rotate);
-    if (def.terrain) {
-      const f = this.builder.harvestFactor(t.x, t.y, tool.defId);
-      const perWeek = LEVELS.production[0] * rules.productionMul * f * 7;
-      const cargo = def.produces[0]?.cargo;
-      parts.push(STR.build.harvest(Math.round(perWeek), cargo ? cargoDef(cargo).name : '', f));
-    }
     this.status(parts.join('   '));
     for (const c of this.input.clicks) {
       if (c.button === 0) {
@@ -528,17 +599,123 @@ export class BuildController {
     this.ghostDiamond.tint = 0xffffff;
     const dec = this.builder.decorAt(t.x, t.y);
     const bld = this.builder.buildingAt(t.x, t.y);
+    // a bridge platform loses its rail or its road first, as removeAt does
+    const bridge = !!bld && !!buildingDef(bld.id).bridge;
+    const bridgeRail = bridge && !!piece;
+    const bridgeRoad = bridge && !bridgeRail && this.builder.roads.has(t.x, t.y);
+    // what removeAt takes off the tile first
     const refund = st
       ? scaleCost(st.def.cost, 0.5)
       : bld
-        ? this.builder.buildingRefund(bld)
+        ? bridgeRoad
+          ? this.builder.roadRefund()
+          : bridgeRail
+            ? this.builder.refundFor(piece!)
+            : this.builder.buildingRefund(bld)
         : dec
           ? this.builder.decorRefund(dec)
-          : piece
-            ? this.builder.refundFor(piece)
-            : {};
+          : this.builder.roads.has(t.x, t.y)
+            ? this.builder.roadRefund()
+            : piece
+              ? this.builder.refundFor(piece)
+              : {};
     this.status(Object.keys(refund).length ? STR.build.refund(fmtCost(refund)) : '');
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
+  }
+
+  /**
+   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile (`placeRoad`). The
+   * drag shows the build preview's diamond on each tile, red where the release would not lay a
+   * road, with the total cost and every reason a tile is refused in the status line. Before the
+   * press the one tile under the cursor shows, priced or refused.
+   */
+  private updateRoadTool(t: Tile, inMap: boolean) {
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    this.showDoorMarks();
+    // a press starts a stroke on the map, none off it
+    if (inp.buttonPressed.has(0)) this.dragStart = inMap ? { x: t.x, y: t.y } : null;
+    if (this.dragStart && inp.buttons.has(0)) {
+      const stroke = this.roadStroke(this.dragStart, t);
+      this.showRoadMarks(stroke.steps);
+      this.status(strokeStatus(stroke));
+      return;
+    }
+    if (this.dragStart && inp.buttonReleased.has(0)) {
+      const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
+      this.dragStart = null;
+      for (const g of this.lineGhosts) g.visible = false;
+      for (const r of tiles) this.builder.placeRoad(r.x, r.y);
+      return;
+    }
+    // the button is up: a stroke whose release fell over a panel lays nothing, and is over
+    this.dragStart = null;
+    if (!inMap) {
+      for (const g of this.lineGhosts) g.visible = false;
+      this.status('');
+      return;
+    }
+    const one = this.roadStroke(t, t);
+    this.showRoadMarks(one.steps);
+    this.status(hoverStatus(one.steps[0], !!this.builder.bridgeAt(t.x, t.y)));
+  }
+
+  /**
+   * A faint marker on the reach tile of each street door, so the player sees where a road meets a
+   * building. `streetDoors()` allocates, so the tiles are read again only when the tool was just
+   * taken up, the number of stations, works or decor changed, or DOOR_MARK_FRAMES passed (a place
+   * turned in place keeps its counts); the markers are the pool's own, never the stroke's.
+   */
+  private showDoorMarks() {
+    const b = this.builder;
+    const seen = `${b.stations.length},${b.buildings.size},${b.decor.size}`;
+    if (seen !== this.doorSeen || ++this.doorAge >= DOOR_MARK_FRAMES) {
+      this.doorSeen = seen;
+      this.doorAge = 0;
+      this.doorTiles = doorReachTiles(b.streetDoors(), (x, y) => inBounds(b.map, x, y));
+    }
+    while (this.doorMarks.length < this.doorTiles.length) {
+      const g = this.world.makeOverlaySprite('terrain/select');
+      g.alpha = 0.7;
+      g.tint = DOOR_TINT;
+      this.doorMarks.push(g);
+    }
+    this.doorMarks.forEach((g, i) => {
+      const t = this.doorTiles[i];
+      g.visible = !!t;
+      if (!t) return;
+      const p = this.world.surfacePoint(t.x, t.y);
+      g.position.set(p.x, p.y);
+    });
+  }
+
+  /**
+   * The tile a road stroke ends on with the cursor on `t`: that tile, kept on the map. The one
+   * place a stroke's end is decided.
+   */
+  private roadEnd(t: Tile): Tile {
+    const { w, h } = this.builder.map;
+    return { x: Math.max(0, Math.min(w - 1, t.x)), y: Math.max(0, Math.min(h - 1, t.y)) };
+  }
+
+  /** The road stroke from `start` to the cursor on `t`, judged as its release would lay it. */
+  private roadStroke(start: Tile, t: Tile): RoadStrokeCheck {
+    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder));
+  }
+
+  /** The build preview's tile diamond on each tile of a road stroke: red where it is refused. */
+  private showRoadMarks(steps: readonly RoadStep[]) {
+    this.showGhosts(
+      steps.map((s) => ({
+        x: s.x,
+        y: s.y,
+        frame: s.state === 'refused' ? 'terrain/ghost_bad' : 'terrain/ghost_ok',
+      })),
+      true,
+    );
+    // the frame carries the colour, as the one-tile diamond's does
+    for (let i = 0; i < steps.length; i++) this.lineGhosts[i].tint = 0xffffff;
   }
 
   /**
@@ -661,8 +838,11 @@ export class BuildController {
       return this.builder.removeStation(st);
     }
     const bld = this.builder.buildingAt(x, y);
+    // a platform comes down only bare: its rail or its road comes off first, the next use takes it
     if (bld && buildingDef(bld.id).bridge && this.builder.track.has(x, y))
       return this.builder.removeTrack(x, y);
+    if (bld && buildingDef(bld.id).bridge && this.builder.roads.has(x, y))
+      return this.builder.removeRoad(x, y);
     if (bld) {
       if (this.selectedBuilding === bld) this.selectBuilding(null);
       return this.builder.removeBuilding(x, y);
@@ -672,10 +852,110 @@ export class BuildController {
       if (this.selectedDecor === dec) this.selectDecor(null);
       return this.builder.removeDecor(x, y);
     }
+    // a level crossing loses its road first, and stays plain track
+    if (this.builder.roads.has(x, y)) return this.builder.removeRoad(x, y);
     return this.builder.removeTrack(x, y);
   }
 
   private status(s: string) {
     this.onStatus?.(s);
+  }
+
+  // ---------------------------------------------------------------- the placing tooltip (#336)
+
+  /** The station kind of a harvest station's tool in hand (one with a `terrain`), else null. */
+  private harvestTool(): string | null {
+    const t = this.tool;
+    return t.kind === 'station' && stationDef(t.defId).terrain ? t.defId : null;
+  }
+
+  /**
+   * With a harvest station's tool in hand, the placing tooltip is the tooltip stack's root: for
+   * the hovered tile, or for the tile it locked on, which keeps it while the pointer moves on. The
+   * yield label floats over that tile where the station can stand. Over a panel or out of the
+   * window the pointer has left the field: an open root closes and its label goes, a locked one
+   * after its time. The game leaves the stack
+   * alone while a tool is in hand (`Game.updateRtsTooltip`), and any other tool shows no root.
+   */
+  private updatePlacing(active: boolean, t: Tile, inMap: boolean) {
+    const out = this.placing;
+    const defId = this.harvestTool();
+    this.placingHeld = null;
+    if (!out || defId === null) {
+      out?.label(null, null);
+      return;
+    }
+    const inp = this.input;
+    // as Game.hoverTip tells the stack where the pointer is: out of the window it has left the
+    // field like over a panel, though the field stays active and its last place is still a tile
+    const onField = active && inp.mouseInside;
+    const here =
+      onField && inMap
+        ? {
+            x: t.x,
+            y: t.y,
+            key: tipKey({ kind: 'tile', x: t.x, y: t.y, tool: `station:${defId}` }),
+          }
+        : null;
+    const season = out.season();
+    const build = (at: Tile) => () => out.content(this.placingDoc(at.x, at.y, defId, season));
+    if (onField)
+      out.stack.hover(
+        here?.key ?? null,
+        inp.mouseX,
+        inp.mouseY,
+        here ? build(here) : () => out.content([]),
+      );
+    else if (!inp.overTips) out.stack.leave();
+    const root = out.stack.fieldRoot;
+    const kept = this.placingRoot;
+    if (kept && root === kept.key && out.stack.isLocked(0)) this.placingHeld = kept;
+    else this.placingRoot = here;
+    const at = this.placingHeld ? kept : here;
+    if (!at) {
+      out.label(null, null);
+      return;
+    }
+    // what it says follows the funds, the season and the tuning, a few times a second
+    out.stack.update(at.key, build(at));
+    const b = this.placingYield(at.x, at.y, defId, season);
+    out.label(b === null ? null : yieldLabel(b), b === null ? null : this.cornerOnScreen(at));
+  }
+
+  /** The placing tooltip of a `defId` on (x, y) in `season`. */
+  private placingDoc(x: number, y: number, defId: string, season: Season): TipDoc {
+    const def = stationDef(defId);
+    const check = this.builder.checkStation(x, y, defId, this.rot);
+    return placingTip({
+      name: def.name,
+      refusal: check.ok ? null : (check.reason ?? ''),
+      breakdown: check.ok
+        ? harvestBreakdown(this.builder.map, x, y, defId, 1, season, rules)
+        : null,
+      cargo: def.produces.filter((p) => p.level <= 1).map((p) => p.cargo),
+      weeklyAtLevel1: weeklyOutput(1, 1),
+    });
+  }
+
+  /** Units a week a level 1 `defId` would make on (x, y), null where it cannot stand. */
+  private placingYield(x: number, y: number, defId: string, season: Season): number | null {
+    if (!this.builder.checkStation(x, y, defId, this.rot).ok) return null;
+    const b = harvestBreakdown(this.builder.map, x, y, defId, 1, season, rules, this.placingCells);
+    return b?.perWeek ?? null;
+  }
+
+  /** Where a tile's top corner is on the screen, in the canvas's pixels. */
+  private cornerOnScreen(t: Tile): Point {
+    const p = this.world.surfacePoint(t.x, t.y);
+    const r = this.world.root;
+    return { x: r.x + p.x * r.scale.x, y: r.y + (p.y - HALF_H) * r.scale.y };
+  }
+
+  /** A tool put down: the placing tooltip goes with it, and so does the label. */
+  private dropPlacing() {
+    if (this.placingRoot || this.placingHeld) this.placing?.stack.closeAll();
+    this.placingRoot = null;
+    this.placingHeld = null;
+    this.placing?.label(null, null);
   }
 }

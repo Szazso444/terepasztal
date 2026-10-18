@@ -313,6 +313,33 @@ describe('biomeShade against an oracle', () => {
   });
 });
 
+describe('biomeShade for the biome ids after swamp', () => {
+  /** Ocean, then the lake, river, beach and mountain ids that #340 and #354 add. */
+  const AFTER_SWAMP = [5, 6, 7, 8, 9];
+
+  it('returns the input colour on grass and forest for ids 5 to 9', () => {
+    for (const terrain of SHADED_TERRAINS)
+      for (const biome of AFTER_SWAMP)
+        for (const css of COLORS)
+          expect(biomeShade(css, biome, terrain), `${css} biome ${biome}`).toBe(css);
+  });
+
+  it('returns the input colour on every other terrain for ids 5 to 9', () => {
+    for (const terrain of TERRAINS.filter((t) => !SHADED_TERRAINS.includes(t)))
+      for (const biome of AFTER_SWAMP)
+        for (const css of COLORS) expect(biomeShade(css, biome, terrain)).toBe(css);
+  });
+
+  it('tints plains, desert, taiga and swamp only, of every id a byte can hold', () => {
+    // A mid grey, so a tint on any channel shows and nothing clamps.
+    for (const terrain of SHADED_TERRAINS)
+      for (let biome = 0; biome <= 255; biome++)
+        expect(biomeShade('#808080', biome, terrain) === '#808080', `biome ${biome}`).toBe(
+          !TINTED_BIOMES.includes(biome),
+        );
+  });
+});
+
 describe('biomeShade on the colours the overview and the minimap draw', () => {
   // Worked out by hand from the tint table above (plains +18 +14 +0, desert +40 +24 +0, taiga
   // -10 +0 +22, swamp +10 -14 -10), so a change to a tint shows as a changed pixel colour.

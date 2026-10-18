@@ -13,6 +13,7 @@ import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
 import { content, type SupplyMode } from '../data/content';
 import { inSupplyMode } from '../sim/supply';
+import { roadCost } from '../sim/roads';
 import {
   TRACK_GROUPS,
   trackGroupOf,
@@ -32,6 +33,8 @@ export type Tool =
   | { kind: 'building'; defId: string }
   /** convert track under the cursor to a class: an upgrade to high speed or a downgrade to wide */
   | { kind: 'reclass'; target: WideClass }
+  /** lay roads by dragging (#328) */
+  | { kind: 'road' }
   | { kind: 'remove' };
 
 /** One placeable thing: what the toolbar shows and what the info panel describes. */
@@ -62,12 +65,14 @@ export interface ToolItem {
   /** the name on its button when the type is shown above it */
   label?: string;
 }
-export type CategoryId = 'track' | 'stations' | 'decor' | 'utility' | 'works' | 'terrain';
+export type CategoryId = 'track' | 'roads' | 'stations' | 'decor' | 'utility' | 'works' | 'terrain';
 interface Category {
   id: CategoryId;
   label: string;
   items: ToolItem[];
   editorOnly?: boolean;
+  /** not offered in the level editor: a level keeps none of what it lays (roads) */
+  playOnly?: boolean;
   /** types the items are listed by; one is open at a time */
   groups?: { id: string; label: string }[];
 }
@@ -88,6 +93,8 @@ function toolKey(t: Tool): string {
       return `building:${t.defId}`;
     case 'reclass':
       return `reclass:${t.target}`;
+    case 'road':
+      return 'road';
     case 'remove':
       return 'remove';
     default:
@@ -126,8 +133,10 @@ export class Toolbar {
   }
 
   setEditor(on: boolean) {
-    for (const c of this.categories)
+    for (const c of this.categories) {
       if (c.editorOnly) this.catButtons.get(c.id)!.style.display = on ? '' : 'none';
+      if (c.playOnly) this.catButtons.get(c.id)!.style.display = on ? 'none' : '';
+    }
   }
 
   constructor(
@@ -175,7 +184,7 @@ export class Toolbar {
         ? STR.toolbar.place.depot
         : d.id === 'town'
           ? STR.toolbar.place.town
-          : STR.toolbar.place.station,
+          : (STR.toolbar.place.stationOn[d.id] ?? STR.toolbar.place.station),
     }));
     const decorItem = (d: (typeof DECOR_DEFS)[number]): ToolItem => ({
       key: `decor:${d.id}`,
@@ -238,6 +247,19 @@ export class Toolbar {
         place: STR.toolbar.place.bridgePlatform,
       })),
     );
+    // roads have no picture of their own yet (#329): the icon is the cobbled road tile
+    const roads: ToolItem[] = [
+      {
+        key: 'road',
+        tool: { kind: 'road' },
+        name: STR.toolbar.road,
+        cost: roadCost(),
+        frame: 'people/road_stone_0',
+        desc: STR.toolbar.roadDesc,
+        tier: 0,
+        place: STR.toolbar.place.road,
+      },
+    ];
     const terrain: ToolItem[] = [
       Terrain.Grass,
       Terrain.Forest,
@@ -267,6 +289,7 @@ export class Toolbar {
           label: id === 'bridges' ? STR.toolbar.bridges : STR.toolbar.trackClass[id],
         })),
       },
+      { id: 'roads', label: STR.toolbar.roads, items: roads, playOnly: true },
       { id: 'stations', label: STR.toolbar.stations, items: stations },
       { id: 'works', label: STR.toolbar.buildings, items: works },
       { id: 'decor', label: STR.toolbar.services, items: services },
@@ -496,7 +519,9 @@ export class Toolbar {
                 : 'works'
               : t.kind === 'terrain'
                 ? 'terrain'
-                : null;
+                : t.kind === 'road'
+                  ? 'roads'
+                  : null;
     if (cat && this.open !== cat) this.openCategory(cat, false);
     // a piece picked some other way (Tab, a click on the map) brings its type with it
     const group = this.item(t)?.group;

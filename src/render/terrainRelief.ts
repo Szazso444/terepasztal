@@ -35,9 +35,9 @@ export interface ReliefStyle {
   bankGrass?: { tone: 'dry' | 'dark' | 'lush'; amount: number };
   /** Each level above ground paints this much lighter; ground level is unchanged (shipped 6%). */
   heightLight?: number;
-  /** Snow patches on the tile biome's snow line level, full snow from the level above. */
+  /** Snow patches on the snow line level of the tile's climate, full snow from the level above. */
   snow?: boolean;
-  /** Mountain and rock ground between stones is the biome's own ground, not grass (shipped). */
+  /** Mountain and rock ground between stones is the climate's own ground, not grass (shipped). */
   biomeTops?: boolean;
   /** Summit sprites recoloured toward the terrain's rock and snow, 0..1 (shipped: 1). */
   summitMatch?: number;
@@ -444,6 +444,39 @@ function terraceCaps(map: LandscapeMap, relief: TerrainRelief) {
     }
   capCache.set(relief, caps);
   return caps;
+}
+
+/**
+ * A height (world px) the surface never exceeds anywhere in the box from (x0, y0) to (x1, y1):
+ * for terraces the highest cap (terraceCaps) of the cells it touches; otherwise (corner slopes,
+ * painted peaks), or where it reaches the map's edge cells, the relief's own top.
+ */
+export function reliefTop(
+  map: LandscapeMap,
+  relief: TerrainRelief,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+) {
+  const fx0 = Math.floor(x0),
+    fy0 = Math.floor(y0),
+    fx1 = Math.floor(x1),
+    fy1 = Math.floor(y1);
+  if (
+    !relief.tiles ||
+    relief.peaks?.size ||
+    fx0 < 0 ||
+    fy0 < 0 ||
+    fx1 >= map.w - 1 ||
+    fy1 >= map.h - 1
+  )
+    return relief.top;
+  const caps = terraceCaps(map, relief);
+  let top = 0;
+  for (let fy = fy0; fy <= fy1; fy++)
+    for (let fx = fx0; fx <= fx1; fx++) top = Math.max(top, caps[fy * map.w + fx]);
+  return top;
 }
 
 /** Corner levels of tile (x, y), lowest and highest. */

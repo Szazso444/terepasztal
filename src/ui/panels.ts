@@ -25,7 +25,7 @@ import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { resourceStats } from '../sim/stats';
 import { withoutInCab } from '../sim/compat';
-import { readRules, rulesDiffer } from '../sim/rules';
+import { listRulePresets, stageNewGameTuning } from '../sim/rules';
 import { supplyMode, type SupplyMode } from '../sim/supply';
 import {
   SAVE_VERSION,
@@ -48,6 +48,9 @@ import type { Inventory } from '../gacha/inventory';
 import type { Screen, ScreenManager } from './modal';
 import type { Toasts } from './toast';
 import type { Tooltip } from './tooltip';
+import { renderTip } from './tooltipRender';
+import { YieldLabel } from './yieldLabel';
+import { seasonOf, type Season } from '../sim/weather';
 import type { NamePrompt } from './namePrompt';
 import type { BuildController } from './buildController';
 import type { KeyHost, KeyScreen } from './keymap';
@@ -91,6 +94,7 @@ import {
   type ReplaceSituation,
   type Replacement,
 } from './saveSlots';
+import { startNewGame } from './newGameTuning';
 
 /**
  * The play UI: every panel, screen and menu of a game, built and wired in one place. The game
@@ -308,6 +312,12 @@ export function confirmReplaceSave() {
 /** Build every panel, screen and menu of a game, wire them and put them in the UI root. */
 export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const toast = (m: string, k?: 'info' | 'warn' | 'good') => d.toasts.push(m, k);
+  /**
+   * The season production runs in, as `Game.applySeason` sets it on the stations: the calendar's
+   * with weather on, spring with it off. The placing tooltip and the station panel work their
+   * yield out for it.
+   */
+  const season = (): Season => (d.settings.weather ? seasonOf(d.clock.day) : 'spring');
 
   const hud = new Hud(d.clock, () => ageStatus(d.economy.tier, host.ageSnapshot()));
   const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas);
@@ -358,10 +368,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   });
   resourceBar.right.append(hud.funds);
   resourceBar.stats = () => resourceStats(d.stock, RESOURCE_IDS);
-  const tuningScreen = new TuningScreen(() => {
-    host.applySeason(true);
-    toolbar.refresh();
-  });
+  const tuningScreen = new TuningScreen(
+    () => {
+      host.applySeason(true);
+      toolbar.refresh();
+    },
+    // a tuning saved or deleted there changes the title screen's New game choice, in place
+    () => mainMenu.refreshTunings(),
+  );
   const contentScreen = new ContentScreen(() => {
     if (host.mode === 'play' && !menuOpen()) host.save(true);
     host.reloadToMenu();
@@ -533,6 +547,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     (t) => host.renameTown(t),
     d.commands,
     toast,
+    {
+      season,
+      render: (doc) => renderTip(doc, d.atlas),
+      bindTerms: (scope) => d.tooltip.bindTerms(scope),
+    },
   );
   const townPanel = new TownPanel(d.towns, d.houses);
   townPanel.onGo = (t) => {
@@ -560,6 +579,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   d.build.onSelectDecor = (dec) =>
     dec ? decorPanel.open(dec) : decorPanel.decor && decorPanel.close();
   d.build.onStatus = (t) => toolbar.setStatus(t);
+  // a harvest station's tool: the placing tooltip is the stack's root, the label floats over the tile
+  const yieldLabel = new YieldLabel();
+  d.build.placing = {
+    stack: d.tooltip.stack,
+    content: (doc) => renderTip(doc, d.atlas),
+    label: (text, corner) => yieldLabel.show(text, corner),
+    season,
+  };
   d.build.barredTrains = () => withoutInCab(d.fleet.trains);
   d.build.onToolChanged = (t) => {
     toolbar.setActive(t);
@@ -600,11 +627,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.screens.close();
     pauseMenu.hide();
     d.build.setTool({ kind: 'none' });
-    mainMenu.show(continueTarget(overGame), listLevels(), {
-      // the tuning a new game starts from, not the loaded game's own
-      rules: rulesDiffer(readRules()).length > 0,
-      content: contentIsCustom(),
-    });
+    mainMenu.show(continueTarget(overGame), listLevels(), { content: contentIsCustom() });
   }
   function openMainMenu() {
     showMainMenu(false);
@@ -700,8 +723,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ...slotActions(),
       ...audioActions(),
       continue: () => closeMenus(),
-      newGame: (seed, supply) => {
-        if (confirmReplacement('overwrite')) host.newGame(seed, supply);
+      tunings: () => listRulePresets(),
+      // the pick is staged only once every question is answered yes, and a refused staging starts nothing
+      newGame: (seed, supply, tuning) => {
+        if (!confirmReplacement('overwrite')) return;
+        const unusable = startNewGame(tuning, stageNewGameTuning, () => host.newGame(seed, supply));
+        if (unusable) d.toasts.push(unusable, 'warn');
       },
       playLevel: (id) => {
         if (confirmReplacement('overwrite')) host.playLevel(id);
@@ -767,6 +794,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       buildInfo.root,
     ),
     el('div', { class: 'vignette' }),
+    yieldLabel.root,
     hud.root,
     resourceBar.root,
     minimap.root,
@@ -781,6 +809,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     decorPanel.root,
     d.toasts.root,
     d.tooltip.root,
+    d.tooltip.stackRoot,
   );
 
   // ---------------------------------------------------------------- keys
@@ -822,7 +851,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     get overviewTrain() {
       return host.overviewTrainId !== null;
     },
+    get tooltipsOpen() {
+      return d.tooltip.stack.open;
+    },
     toggleDebug: () => debug.toggle(),
+    closeTooltips: () => {
+      // the build controller reads Escape later in the same frame: this one is spent
+      if (d.tooltip.stack.escape()) d.build.takeEscape();
+    },
     closeScreen: () => d.screens.close(),
     closeMenus,
     openPauseMenu,

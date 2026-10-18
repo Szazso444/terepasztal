@@ -1,6 +1,6 @@
 import type { GameMap } from './tiles';
 import type { TrackClass, TrackKind } from './track';
-import type { SupplyMode } from '../sim/supply';
+import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import { decorateProps, placeOilFields, emptyMap } from './mapgen';
 
 /** A station in a level; `rot` is the turn of a multi-tile one (missing: the default way). */
@@ -73,14 +73,17 @@ export function newLevelId() {
   return `lvl_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
-/** Terrain and props of a level as a GameMap. */
-export function mapFromLevel(level: LevelData): GameMap {
+/**
+ * Terrain and props of a level as a GameMap. `supply` is the production chain the game will run;
+ * only the full chain gets oil fields.
+ */
+export function mapFromLevel(level: LevelData, supply: SupplyMode = DEFAULT_SUPPLY): GameMap {
   const map = emptyMap(level.seed, level.w, level.h);
   map.terrain.set(unpackBytes(level.terrain, level.w * level.h));
   map.variant.set(unpackBytes(level.variant, level.w * level.h));
   if (level.biome) map.biome.set(unpackBytes(level.biome, level.w * level.h));
   decorateProps(map, level.seed);
-  placeOilFields(map, level.seed);
+  placeOilFields(map, level.seed, supply);
   return map;
 }
 

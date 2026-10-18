@@ -1,5 +1,6 @@
 import { hash2 } from '../engine/rng';
-import { materialAt, type LandscapeMap } from './landscapeModel';
+import { Terrain } from '../world/tiles';
+import { Material, materialAt, type LandscapeMap } from './landscapeModel';
 
 /** Slow world-space variation, so light/balanced/rich areas never form tile-sized squares. */
 export function grassDetail(x: number, y: number) {
@@ -43,13 +44,16 @@ function surfaceLocation(map: LandscapeMap, x: number, y: number) {
   ];
 }
 
+/** Where between two tile centres (tile units from the first) the blend's seam starts, and how wide it is. */
+const SEAM = 0.47,
+  SEAM_WIDTH = 0.06;
 /** Feather only a 0.06-tile strip following the irregular interlock. */
 export function surfaceBlend(map: LandscapeMap, x: number, y: number, out: number[]) {
   const [u, v] = surfaceLocation(map, x, y),
     ix = Math.floor(u),
     iy = Math.floor(v);
-  const fx = smooth((u - ix - 0.47) / 0.06),
-    fy = smooth((v - iy - 0.47) / 0.06);
+  const fx = smooth((u - ix - SEAM) / SEAM_WIDTH),
+    fy = smooth((v - iy - SEAM) / SEAM_WIDTH);
   out[0] = materialAt(map, ix, iy);
   out[1] = materialAt(map, ix + 1, iy);
   out[2] = materialAt(map, ix, iy + 1);
@@ -58,6 +62,82 @@ export function surfaceBlend(map: LandscapeMap, x: number, y: number, out: numbe
   out[5] = fx * (1 - fy);
   out[6] = (1 - fx) * fy;
   out[7] = fx * fy;
+}
+
+const blendAt: number[] = new Array(8);
+/**
+ * The landscape painter's water at map point (x, y): the share of the water material in the blend
+ * it paints there (`surfaceBlend`, left in `blend`), from 0 (none) to 1 (water alone). The edge
+ * of the water is where this falls from 1, inside a tile wherever the blend puts it. A paved tile
+ * (a town's, `paved`) has none: the painter paves it over its water, and where the paving wears
+ * out at its edge it shows the tile's own land (townPaving.ts). The painter
+ * (landscape.worker.ts) weighs its colours by this, and bridges cut what stands in the water to it
+ * (`underPaintedWater`), so the two can never disagree.
+ */
+export function paintedWater(
+  map: LandscapeMap,
+  x: number,
+  y: number,
+  paved = false,
+  blend: number[] = blendAt,
+): number {
+  surfaceBlend(map, x, y, blend);
+  if (paved) return 0;
+  let water = 0;
+  for (let m = 0; m < 4; m++) if (blend[m] === Material.Water) water += blend[m + 4];
+  return water;
+}
+
+/** The share of water at or above which a point is water alone (blend weights sum inexactly). */
+const ALL_WATER = 1 - 1e-6;
+/**
+ * Farther than `surfaceLocation` moves a point (tile units, along either axis): the land's warp of
+ * 0.29 and its tufts of 0.11 at most (the coast's warp is 0.12).
+ */
+const REACH = 0.4;
+/**
+ * Whether the tiles the blend at (x, y) gives any weight are all water (1), none (0) or some (-1).
+ * Tile T has weight where the moved point lies between 1 - SEAM before it and SEAM + SEAM_WIDTH
+ * after it, and the moved point lies within REACH of (x, y).
+ */
+function waterReach(map: LandscapeMap, x: number, y: number) {
+  const before = REACH + SEAM + SEAM_WIDTH,
+    after = REACH + 1 - SEAM,
+    x0 = Math.max(0, Math.floor(x - before) + 1),
+    x1 = Math.min(map.w - 1, Math.ceil(x + after) - 1),
+    y0 = Math.max(0, Math.floor(y - before) + 1),
+    y1 = Math.min(map.h - 1, Math.ceil(y + after) - 1);
+  let water = 0;
+  // Read off the map, a tile is its edge tile (materialAt), so the clamped box holds them all.
+  for (let ty = y0; ty <= y1; ty++)
+    for (let tx = x0; tx <= x1; tx++) if (map.terrain[ty * map.w + tx] === Terrain.Water) water++;
+  return water === (x1 - x0 + 1) * (y1 - y0 + 1) ? 1 : water ? -1 : 0;
+}
+/** Map offset along both axes of the point half a world pixel lower on screen. */
+const HALF_PIXEL_DOWN = 1 / 64;
+/**
+ * Does the landscape paint map point (x, y) as water, for what stands in it (bridge supports)? Only
+ * where it paints water alone (`paintedWater`): the soft shore, where the blend mixes water with
+ * the bank, counts as bank, and so does a point whose picture blends into bank just below it (the
+ * point half a world pixel lower on screen must be water too). The glints and foam in the water are
+ * the water's own picture, not another material, so they count as water. Off the map nothing is
+ * painted. `paved` tells a town's tiles by index (`y * w + x`), as the painter is told them.
+ */
+export function underPaintedWater(
+  map: LandscapeMap,
+  x: number,
+  y: number,
+  paved: (tile: number) => boolean = () => false,
+): boolean {
+  const water = (u: number, v: number) => {
+    if (u < -0.5 || v < -0.5 || u >= map.w - 0.5 || v >= map.h - 0.5) return false;
+    // Where the blend can read only land, or only water, it is known without blending.
+    const reach = waterReach(map, u, v),
+      tilePaved = reach !== 0 && paved(Math.round(v) * map.w + Math.round(u));
+    if (reach === 0 || (reach === 1 && !tilePaved)) return reach === 1;
+    return paintedWater(map, u, v, tilePaved) >= ALL_WATER;
+  };
+  return water(x, y) && water(x + HALF_PIXEL_DOWN, y + HALF_PIXEL_DOWN);
 }
 
 /** Centre window of each illustrated tile, as packed by tools/terrain-surfaces.mjs. */

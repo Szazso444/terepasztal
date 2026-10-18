@@ -741,6 +741,8 @@ function refugeSearch(c: RefugeCase) {
 
 /** Cheap cases, many of which hold no refuge at all: three times the usual seeds. */
 const MANY_SEEDS = Array.from({ length: 300 }, (_, i) => i + 1);
+/** A property over MANY_SEEDS or the comb seeds: 0.5 to 1 s alone, much longer under load. */
+const MANY_SLOW = { timeout: 30_000 };
 
 describe('findRefugePath on generated trees', () => {
   // the oracle: every way to a refuge, by exhaustive search; on a tree the search loses none
@@ -1036,39 +1038,43 @@ describe('findShuntPath on generated track', () => {
     expect(astride, 'trees a shunt was found on from astride a switch').toBeGreaterThan(20);
   });
 
-  it('on combs of sidings, tries no more than the SHUNT_TURNS nearest places to turn', () => {
-    let shunts = 0;
-    let bounded = 0;
-    forAll(
-      combCase,
-      (c) => {
-        const g = layMain(c);
-        const blockedSet = new Set(c.blocked.map((t) => g.key(t.x, t.y)));
-        const inSiding = new Set(c.sidings.flatMap(sidingTiles).map((t) => g.key(t.x, t.y)));
-        const takes = (p: readonly PathSegment[]) => {
-          const last = p[p.length - 1];
-          return hash2(last.x * 4 + last.in, last.y * 4 + last.out, c.salt) < c.cut;
-        };
-        const start = c.west ? { x: c.end, y: MAIN, in: Dir.E } : { x: 1, y: MAIN, in: Dir.W };
-        const got = shuntHolds(
-          g,
-          start,
-          c.length / 10,
-          (x, y) => blockedSet.has(g.key(x, y)),
-          (x, y) => inSiding.has(g.key(x, y)),
-          () => true,
-          takes,
-        );
-        if (got.shunt) shunts++;
-        if (got.bounded) bounded++;
-      },
-      { seeds: COMB_SEEDS, shrink: shrinkComb },
-    );
-    // the property is not vacuous: shunts are found, and on some combs only a place to turn past
-    // those the search may try has a refuge, so that it must find none
-    expect(shunts, 'combs a shunt was found on').toBeGreaterThan(100);
-    expect(bounded, 'combs only a place past the first SHUNT_TURNS clears').toBeGreaterThan(10);
-  });
+  it(
+    'on combs of sidings, tries no more than the SHUNT_TURNS nearest places to turn',
+    MANY_SLOW,
+    () => {
+      let shunts = 0;
+      let bounded = 0;
+      forAll(
+        combCase,
+        (c) => {
+          const g = layMain(c);
+          const blockedSet = new Set(c.blocked.map((t) => g.key(t.x, t.y)));
+          const inSiding = new Set(c.sidings.flatMap(sidingTiles).map((t) => g.key(t.x, t.y)));
+          const takes = (p: readonly PathSegment[]) => {
+            const last = p[p.length - 1];
+            return hash2(last.x * 4 + last.in, last.y * 4 + last.out, c.salt) < c.cut;
+          };
+          const start = c.west ? { x: c.end, y: MAIN, in: Dir.E } : { x: 1, y: MAIN, in: Dir.W };
+          const got = shuntHolds(
+            g,
+            start,
+            c.length / 10,
+            (x, y) => blockedSet.has(g.key(x, y)),
+            (x, y) => inSiding.has(g.key(x, y)),
+            () => true,
+            takes,
+          );
+          if (got.shunt) shunts++;
+          if (got.bounded) bounded++;
+        },
+        { seeds: COMB_SEEDS, shrink: shrinkComb },
+      );
+      // the property is not vacuous: shunts are found, and on some combs only a place to turn past
+      // those the search may try has a refuge, so that it must find none
+      expect(shunts, 'combs a shunt was found on').toBeGreaterThan(100);
+      expect(bounded, 'combs only a place past the first SHUNT_TURNS clears').toBeGreaterThan(10);
+    },
+  );
 });
 
 // ------------------------------------------------------------ a refuge with a way on
@@ -1328,19 +1334,27 @@ function retreatHolds(c: RetreatCase) {
 }
 
 describe('planRetreat on generated lines with sidings', () => {
-  it('backs a train only into a refuge it can go on to its stop from, and into one if there is one', () => {
-    forAll(retreatCase, retreatHolds, { seeds: MANY_SEEDS, shrink: shrinkRetreat });
-  });
+  it(
+    'backs a train only into a refuge it can go on to its stop from, and into one if there is one',
+    MANY_SLOW,
+    () => {
+      forAll(retreatCase, retreatHolds, { seeds: MANY_SEEDS, shrink: shrinkRetreat });
+    },
+  );
 });
 
 describe('planRetreat on mine lines', () => {
   // every platform is barred to a refuge, so none lies under the cars where a retreat ends
-  it('backs a mine train only into a refuge it can go on to its stop from, its rear on a tile edge too', () => {
-    forAll((rng) => retreatCase(rng, true), retreatHolds, {
-      seeds: MANY_SEEDS,
-      shrink: shrinkRetreat,
-    });
-  });
+  it(
+    'backs a mine train only into a refuge it can go on to its stop from, its rear on a tile edge too',
+    MANY_SLOW,
+    () => {
+      forAll((rng) => retreatCase(rng, true), retreatHolds, {
+        seeds: MANY_SEEDS,
+        shrink: shrinkRetreat,
+      });
+    },
+  );
 });
 
 /**
@@ -1424,9 +1438,13 @@ function* shrinkAside(a: AsideCase): Iterable<AsideCase> {
 }
 
 describe('planAside on generated lines with sidings', () => {
-  it('moves an idle train only where it can get back to its station from, into a siding first', () => {
-    forAll(asideCase(false), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
-  });
+  it(
+    'moves an idle train only where it can get back to its station from, into a siding first',
+    MANY_SLOW,
+    () => {
+      forAll(asideCase(false), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
+    },
+  );
 });
 
 /**
@@ -1539,9 +1557,11 @@ describe('planRetreat and planAside with shunting on generated lines with siding
 describe('planAside on mine lines', () => {
   // the station's platform may lie under the cars where the way aside ends, the rear end on its
   // edge: the train sets off rear first from the tile beyond that edge, which the stop is not on
+  // slow because every one of MANY_SEEDS mine lines is planned aside and checked: 0.34 s alone, so
+  // a limit of 30 s
   it('moves an idle mine train only where it can get back to its station from, its rear on a tile edge too', () => {
     forAll(asideCase(true), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
-  });
+  }, 30_000);
   it('does not leave a Muki and five tubs with its stop under the last tub', () => {
     // four and a half tiles, its head at x 13 and its rear end on the edge of x 8 and 9; the other
     // train's route takes x 9 to 16, the stop is at x 7. Backed off to x 3, its rear end would lie
@@ -1923,11 +1943,17 @@ function edgeCase(rng: Rng, seen?: Set<string>): RearCase {
 }
 
 describe("the tile a refuge's way on is counted from, rear first", () => {
-  it('is the one the train sets off from reversing, for any stock, on curves and on a tile edge', () => {
-    forAll(rearCase, rearHolds, { seeds: MANY_SEEDS, shrink: shrinkRear });
-  });
+  // slow because each of the 300 seeds lays a line and puts a stop on every tile behind the head in
+  // turn: 2 to 5 s alone, several times that on a loaded runner
+  const SLOW = { timeout: 120_000 };
+  it(
+    'is the one the train sets off from reversing, for any stock, on curves and on a tile edge',
+    SLOW,
+    () => {
+      forAll(rearCase, rearHolds, { seeds: MANY_SEEDS, shrink: shrinkRear });
+    },
+  );
 
-  const SLOW = { timeout: 60_000 };
   it(
     'is the one the train sets off from with its rear end a hair either side of an edge, on curves',
     SLOW,
@@ -2017,7 +2043,7 @@ const RUN_GDT = 0.05;
 const RUN_FOR = 120;
 /** Cheap cases, of which about one in seven holds a shunt to run. */
 const RUN_SEEDS = Array.from({ length: 1500 }, (_, i) => i + 1);
-const RUN_SLOW = { timeout: 120_000 };
+const RUN_SLOW = { timeout: 300_000 };
 
 /** The 1×1 piece of `kind` with exactly these links. */
 const oneTile = (kind: OneTile, links: [Dir, Dir][]) =>
@@ -2241,8 +2267,7 @@ describe('a shunt run by a train on generated track', () => {
 
   // the plan is the oracle's (`findShuntPath on generated track`); here the train runs it, on
   // curves and over 1×1 and 2×2 switches, its rear end on a tile edge at times, and must turn
-  // exactly where the plan turns. A thousand short runs: a few seconds alone, longer on a loaded
-  // runner
+  // exactly where the plan turns. A thousand short runs: 14 s alone, longer on a loaded runner
   it(
     'turns once at rest, clear of every switch, where the plan turns, and parks where it ends',
     RUN_SLOW,

@@ -13,6 +13,8 @@ import {
   readSaveText,
   parseSave,
   readSave,
+  storedRefusal,
+  slotRefusal,
   writeSave,
   importSave,
   listSlots,
@@ -28,6 +30,9 @@ import {
   CONTRACT_POLICY_VERSION,
   convertOneTileRegular,
   CONTRACT_RARITIES,
+  GROUND_KEY,
+  freezeStoredSaves,
+  withGround,
   type SaveGame,
   type SaveParts,
   type SaveRefusal,
@@ -55,9 +60,12 @@ import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
 import { levelFromMap, mapFromLevel } from '../world/level';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
-import type { GameMap } from '../world/tiles';
-import type { Rng } from '../engine/rng';
+import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
+import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { generatorOf, groundOf, type GeneratedWorld } from './ground';
+import { expandSave } from './expand';
+import { PROP_KINDS, chunkKey, mapChunks, type MapGenerator } from '../world/chunks';
 
 // trains.ts plays sounds; the load-code oracles below build trains under Node
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -116,6 +124,10 @@ function fullParts(): SaveParts {
     houses: { list: [], arrivals: [], visited: [] },
     supply: 'simple',
     people: { rng: 31337 },
+    roads: [
+      [4, 7],
+      [4, 8],
+    ],
   };
 }
 
@@ -141,11 +153,13 @@ describe('the migration registry', () => {
     // offer values the step from v10 rewrites (1.5 days, three offers) and the ones the step from
     // v11 rewrites (six days, two offers), a train with nothing but its id for the steps that
     // fill a train's fields, a station with no turn and no work for the steps that fill a
-    // station's, and past the step that starts the works list, a works with no level, no work
-    // and no rotation for the steps that fill a works'.
+    // station's, past the step that starts the works list, a works with no level, no work and no
+    // rotation for the steps that fill a works', and past the step that builds the world
+    // description, a generated world with no ground stored for the step that starts its store.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
+        ...(m.from > 2 ? { world: generatedWorldOf(96, 96) } : {}),
         version: m.from,
         rules:
           m.from === 11
@@ -176,6 +190,7 @@ describe('the migration registry', () => {
       [8, 'houses', block],
       [8, 'supply', (v) => typeof v === 'string'],
       [9, 'crafting', block],
+      [19, 'roads', list],
     ];
     for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
       const j = migrate({ ...oldestSave(), version });
@@ -244,6 +259,7 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   houses: true,
   supply: true,
   people: true,
+  roads: true,
   loadedFrom: true,
   migrationNotes: true,
 };
@@ -313,13 +329,19 @@ describe('migrate', () => {
     // Nothing may be left undone by the steps that promise a default.
     expect(j.decor).toEqual([]);
     expect(j.buildings).toEqual([]);
-    expect(j.world).toEqual({ kind: 'generated', seed: 12345, params: expect.any(Object) });
+    expect(j.world).toEqual({
+      kind: 'generated',
+      seed: 12345,
+      params: expect.any(Object),
+      chunks: {},
+    });
     expect(j.regions).toEqual(expect.any(Array));
     expect(j.regions!.filter((owned) => owned === true)).toHaveLength(1);
     expect(j.seasonOffset).toBe(0);
     expect(j.towns).toEqual([]);
     expect(j.trade).toEqual(expect.any(Object));
     expect(j.supply).toBe('simple');
+    expect(j.roads).toEqual([]);
   });
 
   it('leaves a current save alone', () => {
@@ -441,6 +463,8 @@ describe('v4 to v5', () => {
     return regions.unlocked;
   };
 
+  // slow because it generates the default map and migrates two saves over it: 0.30 s alone, so a
+  // limit of 30 s
   it('owns what the load code gave the tier, on the default map', () => {
     const world = generatedWorld(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
     const map = generatedMap(DEFAULT_MAP_PARAMS.w, DEFAULT_MAP_PARAMS.h);
@@ -450,8 +474,9 @@ describe('v4 to v5', () => {
     const zero = migrate(v4(world, 0)).regions!;
     expect(zero).toEqual(ownedOnLoad(map, 0));
     expect(zero).toEqual([false, false, false, false, true, false, false, false, false]);
-  });
+  }, 30_000);
 
+  // four worlds of up to 224 tiles a side, each planning its rivers once (#341): about 0.8 s alone
   it('owns the rings of the tier the file stored, before the step from v8 caps it', () => {
     // On a grid with a middle chunk, regionTierMap's rings are whole chunks from the start, so
     // the load code's result holds for every tier, the ones past the Electric Age included.
@@ -468,7 +493,7 @@ describe('v4 to v5', () => {
           ownedOnLoad(map, tier),
         );
     }
-  });
+  }, 15_000);
 
   it('reads a missing or unusable tier as 0', () => {
     const world = generatedWorld(160, 160);
@@ -479,6 +504,7 @@ describe('v4 to v5', () => {
     expect(runStep(4, noEconomy).regions).toEqual(startOnly);
   });
 
+  // three generated worlds, each planning its rivers once (#341), and two levels: about 0.7 s alone
   it('owns only the chunk map generation starts in at tier 0, on the grid the world builds', () => {
     for (const world of [
       generatedWorld(96, 96),
@@ -500,7 +526,7 @@ describe('v4 to v5', () => {
       const startY = (Math.floor((map.regionsY - 1) / 2) + 0.5) * map.regionSize;
       expect(regions.isTileUnlocked(startX, startY), label).toBe(true);
     }
-  });
+  }, 15_000);
 
   it('keeps the chunks a save already owns', () => {
     const regions = [false, true, true, false];
@@ -528,7 +554,7 @@ describe('v6 to v7', () => {
   });
 
   it('maps route modes to their new names the way a train loads them', () => {
-    const j = migrate({
+    const file = (): SaveGame => ({
       ...oldestSave(),
       version: 6,
       trains: [
@@ -544,11 +570,24 @@ describe('v6 to v7', () => {
         { id: 8, mode: 'transport' },
       ],
     });
-    expect((j.trains as { mode: unknown }[]).map((t) => t.mode)).toEqual([
+    const modes = (j: SaveGame) => (j.trains as { mode: unknown }[]).map((t) => t.mode);
+    // the step names them as they were named when it was written: production and collection...
+    expect(modes(runStep(6, file()))).toEqual([
       'schedule',
       'collection',
       'production',
       'production',
+      'schedule',
+      'schedule',
+      'schedule',
+      'transport',
+    ]);
+    // ...and the steps after it make both freight
+    expect(modes(migrate(file()))).toEqual([
+      'schedule',
+      'freight',
+      'freight',
+      'freight',
       'schedule',
       'schedule',
       'schedule',
@@ -583,7 +622,10 @@ describe('v7 to v8', () => {
     expect([...OLD_MODE_TO_NEW.keys()]).toEqual(['fixed', 'dynamic', 'collect']);
     for (const [old, now] of OLD_MODE_TO_NEW) {
       const file = { ...oldestSave(), version: 7, trains: [withOld(savedTrain(), { mode: old })] };
-      expect((runStep(7, asStored(file) as SaveGame).trains[0] as OldTrain).mode, old).toBe(now);
+      // the step maps it to the name of its day, the later steps to the name it has now
+      expect((runStep(7, asStored(file) as SaveGame).trains[0] as OldTrain).mode, old).toBe(
+        MODE_RENAMED_IN_V7.get(old),
+      );
       const train = migrate(file).trains[0];
       expect(Train.fromJSON(asStored(train) as TrainJSON, track).mode, old).toBe(now);
     }
@@ -1447,10 +1489,13 @@ describe('v16 to v17', () => {
   it('records its note, and leaves a v17 file as it was', () => {
     const step = MIGRATIONS.find((m) => m.from === 16)!;
     const v16 = migrate({ ...oldestSave(), version: 16, trains: [{ id: 1 }] });
-    expect(v16.migrationNotes).toEqual([`v16→v17: ${step.note}`]);
-    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS }]);
+    expect(v16.migrationNotes?.[0]).toBe(`v16→v17: ${step.note}`);
+    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS, ...V18_DEFAULTS }]);
+    // a v17 file is only given what the later steps fill, and keeps the train making way
     const v17 = { ...oldestSave(), version: 17, trains: [{ id: 1 }, { id: 2, aside: true }] };
-    expect(migrate(asStored(v17) as SaveGame).trains).toEqual(v17.trains);
+    expect(migrate(asStored(v17) as SaveGame).trains).toEqual(
+      v17.trains.map((t) => ({ ...t, ...V18_DEFAULTS })),
+    );
   });
 
   it('loads every train as a load before v17 did, and keeps a train making way from now on', () => {
@@ -1483,6 +1528,138 @@ describe('v16 to v17', () => {
   });
 });
 
+describe('v17 to v18', () => {
+  beforeEach(() => {
+    resetTrainIds(1);
+    resetStationIds(1);
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  /**
+   * A v17 file, as it reads from disk: trains of the shapes old builds wrote, with every mode a
+   * file could hold, some holding the field the step fills already, and now and then an item no
+   * build wrote in the train list.
+   */
+  function genV17(rng: Rng): SaveGame {
+    const file: Record<string, unknown> = { ...genOldFile(rng), version: 17 };
+    const trains = file.trains as unknown[];
+    if (rng.chance(0.2)) trains.splice(rng.int(0, trains.length), 0, rng.pick([null, 3, 'x', []]));
+    return asStored(file) as SaveGame;
+  }
+  /** Smaller v17 files: what `shrinkOldFile` drops, the train list included. */
+  function* shrinkV17(file: SaveGame): Iterable<SaveGame> {
+    for (const smaller of shrinkOldFile(file as unknown as Record<string, unknown>))
+      if (smaller.version === 17) yield smaller as unknown as SaveGame;
+  }
+  /**
+   * The step as stated: a train in production or collection mode is in freight mode, any other
+   * mode (or none) stays as the file has it, and a train has put no goods down at its stop unless
+   * it says it has.
+   */
+  const stepped = (t: unknown) => {
+    if (!isObject(t)) return t;
+    const out: Record<string, unknown> = { ...t };
+    if (RETIRED_MODES.includes(t.mode)) out.mode = 'freight';
+    for (const [key, value] of Object.entries(V18_DEFAULTS)) if (!(key in t)) out[key] = value;
+    return out;
+  };
+
+  it('makes production and collection freight, fills what a load before v18 left, nothing else', () => {
+    forAll(
+      genV17,
+      (file) => {
+        const before = asStored(file) as SaveGame;
+        const once = asStored(runStep(17, asStored(file) as SaveGame)) as SaveGame;
+        expect(asStored(runStep(17, asStored(once) as SaveGame)), 'run again').toEqual(once);
+        const { trains: after, ...restAfter } = once;
+        const { trains: was, ...restBefore } = before;
+        expect(restAfter, 'beside the trains').toEqual(restBefore);
+        expect(after, 'the trains').toEqual(was.map(stepped));
+      },
+      { shrink: shrinkV17 },
+    );
+  });
+
+  it('leaves every other mode as the file has it', () => {
+    // schedule, transport, contract and freight itself stay, and so does a value no build wrote;
+    // a train without a mode is still without one for the load code to read
+    const kept: unknown[] = [
+      'schedule',
+      'transport',
+      'contract',
+      'freight',
+      'fixed',
+      'dynamic',
+      'collect',
+      'bogus',
+      7,
+      null,
+      '',
+    ];
+    const trains = [...kept.map((mode, id) => ({ id, mode })), { id: 99 }];
+    const j = runStep(17, { ...oldestSave(), version: 17, trains: asStored(trains) as unknown[] });
+    expect(j.trains.map((t) => (t as { mode?: unknown }).mode)).toEqual([...kept, undefined]);
+    expect('mode' in (j.trains.at(-1) as object)).toBe(false);
+    const retired = runStep(17, {
+      ...oldestSave(),
+      version: 17,
+      trains: RETIRED_MODES.map((mode, id) => ({ id, mode })),
+    });
+    expect(retired.trains.map((t) => (t as { mode?: unknown }).mode)).toEqual([
+      'freight',
+      'freight',
+    ]);
+  });
+
+  it('records its note, and leaves a v18 file as it was', () => {
+    const step = MIGRATIONS.find((m) => m.from === 17)!;
+    const v17 = migrate({
+      ...oldestSave(),
+      version: 17,
+      trains: [{ id: 1, mode: 'collection' }, { id: 2, mode: 'transport' }, { id: 3 }],
+    });
+    expect(v17.migrationNotes?.[0]).toBe(`v17→v18: ${step.note}`);
+    expect(v17.trains).toEqual([
+      { id: 1, mode: 'freight', ...V18_DEFAULTS },
+      { id: 2, mode: 'transport', ...V18_DEFAULTS },
+      { id: 3, ...V18_DEFAULTS },
+    ]);
+    // a file of the current version is not stepped: it holds what it holds
+    const v18 = { ...oldestSave(), version: SAVE_VERSION, trains: [{ id: 1, mode: 'production' }] };
+    expect(migrate(asStored(v18) as SaveGame).trains).toEqual(v18.trains);
+  });
+
+  it('loads a train saved in production or collection as a roaming freight train', () => {
+    // Train.fromJSON turns a mode it does not know into a schedule, so without the step a train
+    // saved in either mode would stop roaming on the first load.
+    const track = new TrackGraph(8, 8);
+    for (const mode of RETIRED_MODES) {
+      const saved: Record<string, unknown> = { ...savedTrain(), mode };
+      delete saved.dropped;
+      const j = migrate({ ...oldestSave(), version: 17, trains: [asStored(saved)] });
+      const t = Train.fromJSON(asStored(j.trains[0]) as TrainJSON, track);
+      expect(t.mode, String(mode)).toBe('freight');
+      expect(t.dynamic, String(mode)).toBe(true);
+      expect(t.toJSON().dropped, String(mode)).toBe(false);
+    }
+  });
+
+  it('keeps that a freight train has put goods down at its stop, through a save and a load', () => {
+    const track = new TrackGraph(8, 8);
+    const base = savedTrain();
+    expect(base.dropped, 'a train written by this build says whether it has').toBe(false);
+    for (const dropped of [false, true]) {
+      const saved = { ...base, mode: 'freight', dropped };
+      const read = readSaveText(
+        JSON.stringify({ ...oldestSave(), version: SAVE_VERSION, trains: [saved] }),
+      );
+      if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
+      const back = Train.fromJSON(asStored(read.save.trains[0]) as TrainJSON, track);
+      expect(asStored(back.toJSON()), `dropped ${dropped}`).toEqual(saved);
+    }
+  });
+});
+
 /** An in-memory `localStorage` that counts its writes, so a test can see nothing was written. */
 class MemoryStorage {
   items = new Map<string, string>();
@@ -1499,6 +1676,828 @@ class MemoryStorage {
     this.items.delete(k);
   }
 }
+
+describe("the seed of a save's world (#470)", () => {
+  const params = { ...DEFAULT_MAP_PARAMS, w: 32, h: 32 };
+  const generated = (seed: unknown) => ({ kind: 'generated', seed, params });
+  /** The text of a save of the full fixture whose top-level seed and world are as given. */
+  const textOf = (top: unknown, world: unknown) =>
+    JSON.stringify({ ...buildSave(fullParts()), seed: top, world });
+  /** Why a text is refused, or 'save' when it loads. */
+  const verdict = (raw: string) => {
+    const read = readSaveText(raw);
+    return 'save' in read ? 'save' : read.error;
+  };
+  const worldOf = (raw: string) => {
+    const read = readSaveText(raw);
+    if (!('save' in read)) throw new Error(`refused as ${read.error}`);
+    return read.save.world as GeneratedWorld;
+  };
+
+  it('loads a good save unchanged, a generated world and a level alike', () => {
+    for (const world of [generated(777), levelWorldOf(32, 32, 777)]) {
+      const save = { ...buildSave(fullParts()), world: world as WorldSpec };
+      expect(readSaveText(JSON.stringify(save))).toEqual({ save });
+    }
+    const save = buildSave(fullParts());
+    expect(readSaveText(JSON.stringify(save))).toEqual({ save });
+    expect(save.world).toEqual({ kind: 'generated', seed: 777, params: DEFAULT_MAP_PARAMS });
+  });
+
+  it('reads a seed held as text as the number it names, and the world of that number', () => {
+    for (const held of ['777', ' 777 ', '0777']) {
+      const world = worldOf(textOf(777, generated(held)));
+      expect(world.seed, JSON.stringify(held)).toBe(777);
+      // nothing else of the world changes
+      expect(world, JSON.stringify(held)).toEqual(generated(777));
+    }
+    // the point of it: map generation adds to the seed ('777' + 5 is '7775', not 782), so ground
+    // generated for the text would be another world's, at the edges and where the map grows
+    const generate = generatorOf('simple');
+    const fromText = groundOf(worldOf(textOf(777, generated('777'))), generate);
+    const fromNumber = groundOf(generated(777) as GeneratedWorld, generate);
+    expect(fromText.chunks).toEqual(fromNumber.chunks);
+    expect(fromText.map.seed).toBe(777);
+    expect(fromText.map.terrain).toEqual(fromNumber.map.terrain);
+  });
+
+  it('reads the seed of a level the same way', () => {
+    const level = levelWorldOf(32, 32, 777);
+    expect(worldOf(textOf(777, { ...level, seed: '777' })).seed).toBe(777);
+    expect(verdict(textOf(777, { ...level, seed: '778' }))).toBe('damaged');
+    expect(verdict(textOf(777, { ...level, seed: 'x' }))).toBe('damaged');
+  });
+
+  it('refuses a seed that is not an integer: a fraction, NaN, an infinity, text', () => {
+    // the top-level seed agrees in each, so the rule alone refuses
+    const agreeing: [number, unknown][] = [
+      [777.5, 777.5],
+      [777.5, '777.5'],
+      [-0.25, -0.25],
+    ];
+    for (const [top, seed] of agreeing)
+      expect(verdict(textOf(top, generated(seed))), JSON.stringify(seed)).toBe('damaged');
+    // the rest cannot agree with the number at the top
+    for (const seed of ['x', 'NaN', 'Infinity', '777 777', '1,5', '0x', '7e'])
+      expect(verdict(textOf(777, generated(seed))), JSON.stringify(seed)).toBe('damaged');
+    // NaN and Infinity are written as null by JSON.stringify, and a literal past the range of a
+    // number reads back as Infinity
+    expect(verdict(textOf(777, generated(Number.NaN)))).toBe('damaged');
+    expect(verdict(textOf(777, generated(Infinity)))).toBe('damaged');
+    expect(verdict(textOf(777, generated('__BIG__')).replace('"__BIG__"', '1e999'))).toBe(
+      'damaged',
+    );
+    expect(verdict(textOf(777, generated('__NAN__')).replace('"__NAN__"', 'NaN'))).toBe('json');
+  });
+
+  it('refuses a seed that is not an integer when no world says otherwise', () => {
+    // the world of a save with none is made from its seed (by the step from v2, or when the game
+    // starts), and a save the game then writes would be refused on its next load
+    for (const top of [777.5, -0.25, 1e-9])
+      for (const world of [undefined, null]) {
+        expect(verdict(textOf(top, world)), `${top} and ${String(world)}`).toBe('damaged');
+        expect(verdict(JSON.stringify({ ...oldestSave(), seed: top, world }))).toBe('damaged');
+      }
+    // an integer past 2^53 - 1 is a seed a player types as digits: the world of it is made as any
+    for (const top of [0, -1, 777, 2 ** 53 - 1, 2 ** 53, 1e20, 1e21])
+      for (const world of [undefined, null]) {
+        expect(verdict(textOf(top, world)), `${top} and ${String(world)}`).toBe('save');
+        expect(verdict(JSON.stringify({ ...oldestSave(), seed: top, world }))).toBe('save');
+      }
+  });
+
+  it('refuses a world with no seed, and a seed that is not a number or text', () => {
+    const noSeed = { kind: 'generated', params };
+    expect(verdict(textOf(777, noSeed))).toBe('damaged');
+    expect(verdict(textOf(777, { ...noSeed, seed: undefined }))).toBe('damaged');
+    // Number() reads each of these as a seed (0, 1, 777) that the file never named
+    for (const seed of [null, true, false, '', '  ', [], [777], {}])
+      for (const top of [0, 1, 777])
+        expect(verdict(textOf(top, generated(seed))), `${top} and ${JSON.stringify(seed)}`).toBe(
+          'damaged',
+        );
+  });
+
+  it('refuses a save whose two seeds disagree, whichever of them looks right', () => {
+    // neither wins: the save cannot say which world it is
+    for (const [top, world] of [
+      [777, 778],
+      [777, '778'],
+      [778, 777],
+      [778, '777'],
+      [0, 777],
+      [-777, 777],
+      [777, -777],
+    ])
+      expect(verdict(textOf(top, generated(world))), `${top} and ${String(world)}`).toBe('damaged');
+    // the top-level seed is not made to follow the world's, or the other way round
+    expect(verdict(textOf(777, generated('777')))).toBe('save');
+  });
+
+  it('refuses a world that is no description, and loads a save with none', () => {
+    for (const world of [5, 'world', true, [], [generated(777)]])
+      expect(verdict(textOf(777, world)), JSON.stringify(world)).toBe('damaged');
+    // no world: it is made from the seed (by the step from v2) or taken from it when the game
+    // starts, and null is none
+    expect(verdict(JSON.stringify(oldestSave()))).toBe('save');
+    expect(verdict(textOf(777, null))).toBe('save');
+    const bare = JSON.parse(textOf(777, null)) as Record<string, unknown>;
+    delete bare.world;
+    expect(verdict(JSON.stringify(bare))).toBe('save');
+  });
+
+  it('refuses the same text in every way a save is read, and keeps what is stored', () => {
+    const store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+    try {
+      const held = textOf(777, generated('777'));
+      const refused = textOf(777, generated('778'));
+      // an import of the text held as text stores the number
+      const imported = importSave(held);
+      expect(imported.ok).toBe(true);
+      expect(JSON.parse(store.items.get(SAVE_KEY)!).world.seed).toBe(777);
+      expect(readSave()?.world?.seed).toBe(777);
+      // a refused one stores nothing, and the save stored before it stays
+      const before = store.items.get(SAVE_KEY);
+      const writes = store.writes;
+      expect(importSave(refused)).toEqual({ ok: false, error: 'damaged' });
+      expect(store.writes).toBe(writes);
+      expect(store.items.get(SAVE_KEY)).toBe(before);
+      // a stored text that is refused is not Continue's, and a named one is listed to delete
+      store.items.set(SAVE_KEY, refused);
+      expect(readSave()).toBeNull();
+      expect(continueMeta()).toBeNull();
+      store.items.set(SLOTS_KEY, JSON.stringify({ held, refused }));
+      expect(readSlot('held')?.world?.seed).toBe(777);
+      expect(readSlot('refused')).toBeNull();
+      expect(
+        listSlots()
+          .map((m) => m.name)
+          .sort(),
+      ).toEqual(['held', 'refused']);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("holds for any file: a world that loads is of the save's seed, as a number", () => {
+    // the property tests below make the same claim of every generated text; this one varies
+    // only the world's seed over the kinds a file may hold it as
+    forAll(
+      (rng) => {
+        const top = rng.int(-1e6, 1e6);
+        const kinds: unknown[] = [
+          top,
+          String(top),
+          ` ${top}`,
+          top + 1,
+          String(top + 1),
+          top + 0.5,
+          null,
+          '',
+          [top],
+        ];
+        return { top, seed: rng.pick(kinds) };
+      },
+      ({ top, seed }) => {
+        const raw = textOf(top, generated(seed));
+        const agrees = seed === top || seed === String(top) || seed === ` ${top}`;
+        const read = readSaveText(raw);
+        expect('save' in read, JSON.stringify(seed)).toBe(agrees);
+        if ('save' in read) expect(read.save.world?.seed).toBe(top);
+      },
+    );
+  });
+});
+
+// The same rule checked from the other side: each claim is the issue's (#470), stated over a
+// domain small enough to walk whole, and the ground a loaded world builds is compared with the
+// ground of the number it names, which is the harm the issue describes.
+describe("a save's world seed, from the outside (#470)", () => {
+  const small = { ...DEFAULT_MAP_PARAMS, w: 32, h: 32 };
+  const gen = generatorOf('simple');
+  /** The text of the full fixture whose own seed is `top` and whose generated world holds `held`. */
+  const withSeeds = (top: number, held: unknown) =>
+    JSON.stringify({
+      ...buildSave(fullParts()),
+      seed: top,
+      world: { kind: 'generated', seed: held, params: small },
+    });
+  const verdictOfText = (raw: string) => {
+    const read = readSaveText(raw);
+    return 'save' in read ? 'save' : read.error;
+  };
+  const loadedSeed = (raw: string) => {
+    const read = readSaveText(raw);
+    return 'save' in read ? read.save.world?.seed : undefined;
+  };
+
+  it('loads a world seed that reads as the file seed and refuses every other, at 777', () => {
+    // written by hand, not worked out: what names world 777, and what names another or none
+    const names: unknown[] = [777, '777', ' 777', '777 ', '\t777\n', '0777', '+777', '777.0'];
+    const others: unknown[] = [
+      ...[776, 778, -777, 0, 7770, 77, 777.5, 776.5, 777.25, 777.0000001],
+      ...['776', '778', '-777', '0', '7770', '77', '777.5', '777x', 'x777', '7 77', '77 7'],
+      ...['777,0', '', ' ', '\n', 'NaN', 'Infinity', '-Infinity', 'null', 'true', '1e999'],
+      ...[null, true, false, undefined, [], [777], ['777'], {}, { seed: 777 }],
+    ];
+    for (const held of names) {
+      expect(verdictOfText(withSeeds(777, held)), JSON.stringify(held)).toBe('save');
+      expect(loadedSeed(withSeeds(777, held)), JSON.stringify(held)).toBe(777);
+    }
+    for (const held of others)
+      expect(verdictOfText(withSeeds(777, held)), String(JSON.stringify(held))).toBe('damaged');
+  });
+
+  it('does the same at the seeds a game reaches, zero and the ends of the safe integers', () => {
+    const edge = 2 ** 53 - 1;
+    for (const top of [0, 1, -1, 65536, 2 ** 31 - 1, 2 ** 32, 2 ** 40 + 1, edge, -edge]) {
+      const cases: [unknown, boolean][] = [
+        [top, true],
+        [String(top), true],
+        [` ${top}\n`, true],
+        [top + 1, false],
+        [top - 1, false],
+        [String(top + 1), false],
+        [String(top - 1), false],
+        [top + 0.5, false],
+        [String(top + 0.5), false],
+        [null, false],
+        ['', false],
+        [[top], false],
+        [{}, false],
+        ...(top === 0
+          ? []
+          : ([
+              [-top, false],
+              [String(-top), false],
+            ] as [unknown, boolean][])),
+      ];
+      for (const [held, names] of cases) {
+        const raw = withSeeds(top, held);
+        expect(verdictOfText(raw), `${top} and ${JSON.stringify(held)}`).toBe(
+          names ? 'save' : 'damaged',
+        );
+        if (names) expect(loadedSeed(raw), `${top} and ${JSON.stringify(held)}`).toBe(top);
+      }
+    }
+  });
+
+  it('refuses a fraction as the world seed even where rounding it would give the file seed', () => {
+    // a rule that rounded, or cut a fraction off, would take each of these for the file's seed
+    for (const top of [-3, 0, 1, 777, 2 ** 31, 2 ** 40])
+      for (const d of [-0.75, -0.5, -0.25, -0.01, -1e-9, 1e-9, 0.01, 0.25, 0.5, 0.75]) {
+        const fraction = top + d;
+        if (fraction === top) continue; // too small for a double at this size
+        for (const held of [fraction, String(fraction)])
+          expect(verdictOfText(withSeeds(top, held)), `${top} and ${JSON.stringify(held)}`).toBe(
+            'damaged',
+          );
+      }
+  });
+
+  it('refuses a file seed that is not an integer, with a world or without one', () => {
+    for (const top of [0.5, -0.5, 777.25, 1e-9, -(2 ** 40) - 0.5]) {
+      const file = { ...buildSave(fullParts()), seed: top };
+      const worlds: unknown[] = [undefined, null, { kind: 'generated', params: small }];
+      for (const seed of [top, String(top)])
+        worlds.push({ kind: 'generated', seed, params: small });
+      for (const world of worlds)
+        expect(
+          verdictOfText(JSON.stringify({ ...file, world })),
+          `${top} with ${JSON.stringify(world)}`,
+        ).toBe('damaged');
+    }
+  });
+
+  // The game plays any seed a player types as digits (parseSeed makes Number of them, with no
+  // limit but Infinity, which the game does not store) and writes the save: past 2^53 - 1 that is
+  // an integer no more than the double it is, and the save must load again (found by the first
+  // version of this rule, which kept only the safe integers).
+  const typed = (digits: string) => Number(digits);
+  const past = [
+    typed('9007199254740991'), // the largest safe integer
+    typed('9007199254740992'), // 16 digits: the smallest past it
+    typed('9007199254740993'), // no double of its own; it is 2^53
+    typed('9007199254740994'),
+    typed('12345678901234567890'),
+    typed('100000000000000000000'),
+    typed('1'.padEnd(22, '0')),
+    typed('9'.repeat(30)),
+    typed('1'.padEnd(301, '0')),
+    typed('1'.padEnd(309, '0')), // 1e308, the last power of ten a double holds
+    2 ** 53 + 2,
+    2 ** 60,
+    Number.MAX_VALUE,
+  ];
+
+  it('loads the save of a seed typed as digits past 2^53 - 1, whatever world it holds', () => {
+    for (const seed of [...past, ...past.map((n) => -n)]) {
+      const level = levelWorldOf(32, 32, seed);
+      const worlds: unknown[] = [
+        undefined,
+        null,
+        { kind: 'generated', seed, params: small },
+        { kind: 'generated', seed: String(seed), params: small },
+        { kind: 'generated', seed: ` ${seed}\n`, params: small },
+        level,
+        { ...level, seed: String(seed) },
+      ];
+      for (const world of worlds) {
+        const raw = JSON.stringify({ ...buildSave(fullParts()), seed, world });
+        const read = readSaveText(raw);
+        const at = `${seed} with ${JSON.stringify(world)?.slice(0, 60)}`;
+        if (!('save' in read)) throw new Error(`${at}: refused as ${read.error}`);
+        expect(read.save.seed, at).toBe(seed);
+        // a world that was there is of the seed as a number; none given stays none
+        if (world) expect(read.save.world?.seed, at).toBe(seed);
+      }
+    }
+  });
+
+  it('reads the save the game wrote for such a seed back as the game wrote it', () => {
+    for (const seed of past) {
+      for (const world of [generatedWorldOf(32, 32, seed), levelWorldOf(32, 32, seed)]) {
+        const save = buildSave({ ...fullParts(), seed, world });
+        expect(readSaveText(JSON.stringify(save)), `${seed} in a ${world.kind}`).toEqual({ save });
+      }
+    }
+  });
+
+  it('still refuses a seed past 2^53 - 1 that is no integer or is not the seed of its world', () => {
+    for (const seed of past) {
+      // a double further up is another seed (the one after MAX_VALUE is Infinity, no seed), and so
+      // are zero and the seed's sign, as text as well as a number
+      const up = seed * (1 + Number.EPSILON);
+      expect(up).not.toBe(seed);
+      const numbers = [up, 0, -seed];
+      for (const held of [...numbers, ...numbers.map(String), null, 'x', '', [seed]]) {
+        expect(verdictOfText(withSeeds(seed, held)), `${seed} and ${JSON.stringify(held)}`).toBe(
+          'damaged',
+        );
+      }
+    }
+    // a number no save can store, or text of one that overflows, is no seed at all
+    for (const held of [Infinity, -Infinity, 'Infinity', '1e309', '-1e309', '1'.padEnd(310, '0')])
+      expect(verdictOfText(withSeeds(Number.MAX_VALUE, held)), String(held)).toBe('damaged');
+  });
+
+  it('holds a level to the same rule, and a file with no world to the file seed alone', () => {
+    const level = (top: number, held: unknown) =>
+      JSON.stringify({
+        ...buildSave(fullParts()),
+        seed: top,
+        world: { ...levelWorldOf(32, 32, top), seed: held },
+      });
+    for (const top of [0, 777, -42, 2 ** 40 + 1, 2 ** 53 - 1]) {
+      for (const held of [top, String(top), ` ${top} `]) {
+        expect(loadedSeed(level(top, held)), `level ${top} and ${JSON.stringify(held)}`).toBe(top);
+      }
+      for (const held of [top + 1, String(top - 1), top + 0.5, 'x', '', null, [top], undefined])
+        expect(verdictOfText(level(top, held)), `level ${top} and ${JSON.stringify(held)}`).toBe(
+          'damaged',
+        );
+      // no world, or none given: whole as long as the file's seed names a world, and the step
+      // from v2 then makes the world of that seed
+      const file = (world: unknown) => JSON.stringify({ ...oldestSave(), seed: top, world });
+      for (const world of [undefined, null])
+        expect(verdictOfText(file(world)), `${top} and ${String(world)}`).toBe('save');
+      expect(loadedSeed(file(undefined)), String(top)).toBe(top);
+      const current = { ...buildSave(fullParts()), seed: top, world: undefined };
+      expect(verdictOfText(JSON.stringify(current)), String(top)).toBe('save');
+      expect(verdictOfText(JSON.stringify({ ...current, world: null })), String(top)).toBe('save');
+    }
+  });
+
+  // 11 seeds, a map generated for each of 3 forms of it: 2 s alone
+  it('builds the ground of the number a text seed names, for seeds a game reaches', () => {
+    // the map generator adds to the seed ('777' + 5 is '7775'): ground made for the text is
+    // another world's, so the loaded world must give the very chunks the number gives; the last
+    // two are seeds a player types as digits, past 2^53 - 1
+    const seeds = [-5, 0, 1, 777, 123456, 2 ** 31 - 1, 2 ** 32 - 1, 2 ** 40 + 3, 2 ** 53 - 1];
+    seeds.push(2 ** 53 + 2, 1e20);
+    for (const seed of seeds) {
+      const world = (raw: string) => {
+        const read = readSaveText(raw);
+        if (!('save' in read)) throw new Error(`seed ${seed}: refused as ${read.error}`);
+        return read.save.world as GeneratedWorld;
+      };
+      const want = groundOf(world(withSeeds(seed, seed)), gen);
+      for (const held of [String(seed), ` ${seed} `]) {
+        const built = groundOf(world(withSeeds(seed, held)), gen);
+        expect(built.chunks, `seed ${seed} held as ${JSON.stringify(held)}`).toEqual(want.chunks);
+        expect(built.map.seed, `seed ${seed}`).toBe(seed);
+        expect(Buffer.from(built.map.terrain).equals(Buffer.from(want.map.terrain))).toBe(true);
+        expect(Buffer.from(built.map.variant).equals(Buffer.from(want.map.variant))).toBe(true);
+      }
+    }
+    // zero written as minus zero is zero's world, though not the same double
+    const zero = groundOf(
+      (readSaveText(withSeeds(0, '-0')) as { save: SaveGame }).save.world as GeneratedWorld,
+      gen,
+    );
+    expect(zero.chunks).toEqual(
+      groundOf(generatedWorldOf(32, 32, 0) as GeneratedWorld, gen).chunks,
+    );
+  }, 30_000);
+
+  // three seeds, each stored and grown by a ring twice: about 0.4 s alone, so a limit of 30 s
+  it('grows a world of a text seed with the very ring a number gives, from stored ground', () => {
+    // the issue's own case: ground stored for the seed is read back, and the chunks generated
+    // when the map grows are made from the seed as the loaded world holds it
+    for (const seed of [0, 777, 2 ** 32 - 1]) {
+      const stored = (held: unknown) => {
+        const world: GeneratedWorld = { kind: 'generated', seed, params: { ...small } };
+        groundOf(world, gen);
+        const raw = JSON.stringify({
+          ...buildSave(fullParts()),
+          seed,
+          world: { ...world, seed: held },
+        });
+        const read = readSaveText(raw);
+        if (!('save' in read)) throw new Error(`seed ${seed}: refused as ${read.error}`);
+        return read.save;
+      };
+      const grow = (save: SaveGame) => {
+        const world = save.world as GeneratedWorld;
+        const before = groundOf(world, gen);
+        expect(before.added, `seed ${seed}: a load of stored ground`).toEqual([]);
+        expect(before.unreadable).toEqual([]);
+        expandSave(save);
+        return groundOf(save.world as GeneratedWorld, gen);
+      };
+      const want = grow(stored(seed));
+      expect(want.added, `seed ${seed}`).toHaveLength(8);
+      const got = grow(stored(String(seed)));
+      expect(got.added, `seed ${seed}`).toEqual(want.added);
+      expect(got.chunks, `seed ${seed}`).toEqual(want.chunks);
+      expect(got.map.seed).toBe(seed);
+    }
+  }, 30_000);
+
+  it('reads the world seed of a file of every version the same way', () => {
+    // the oldest shape the chain takes up to versions this build does not know yet
+    for (let version = SAVE_MIN_VERSION; version <= SAVE_VERSION + 3; version++) {
+      const file = (held: unknown) =>
+        JSON.stringify({
+          ...oldestSave(),
+          version,
+          seed: 12345,
+          world: { kind: 'generated', seed: held, params: small },
+        });
+      expect(loadedSeed(file('12345')), `v${version}`).toBe(12345);
+      expect(loadedSeed(file(12345)), `v${version}`).toBe(12345);
+      for (const held of ['12346', 12346, 12345.5, 'x', null])
+        expect(verdictOfText(file(held)), `v${version} and ${JSON.stringify(held)}`).toBe(
+          'damaged',
+        );
+    }
+  });
+
+  it('reads the seed of a save in a diagnostics bundle as it does in a plain one', () => {
+    const save = (top: number, held: unknown) => ({
+      ...buildSave(fullParts()),
+      seed: top,
+      world: { kind: 'generated', seed: held, params: small },
+    });
+    const bundle = (top: number, held: unknown) => JSON.stringify(bundled(save(top, held)));
+    expect(loadedSeed(bundle(777, '777'))).toBe(777);
+    for (const [top, held] of [
+      [777, '778'],
+      [777, 'x'],
+      [777, 777.5],
+      [777.5, 777.5],
+      [777, null],
+    ] as [number, unknown][]) {
+      expect(verdictOfText(bundle(top, held)), `${top} and ${JSON.stringify(held)}`).toBe(
+        'damaged',
+      );
+      expect(verdictOfText(JSON.stringify(save(top, held)))).toBe('damaged');
+    }
+  });
+
+  it('is read the same however often and in whatever order a text is read', () => {
+    const texts = [
+      withSeeds(777, '777'),
+      withSeeds(777, '778'),
+      withSeeds(777, 777),
+      withSeeds(-1, ' -1'),
+      withSeeds(777, 777.5),
+    ];
+    const first = texts.map((t) => readSaveText(t));
+    for (const t of [...texts].reverse()) readSaveText(t);
+    expect(texts.map((t) => readSaveText(t))).toEqual(first);
+    // and what loads is stable: written and read again it is the same save
+    for (const read of first)
+      if ('save' in read) expect(readSaveText(JSON.stringify(read.save))).toEqual(read);
+  });
+
+  it('reads back every save the game writes, for any seed it draws or a player types', () => {
+    // the seeds of a new game: a draw below 2^31 (Math.random), a hash below 2^32 (hashSeed), or
+    // the digits a player types (parseSeed makes Number of them), of any length up to the 308
+    // digits a double holds, so past the largest safe integer as well; a generated world or a
+    // level, as game.ts takes spec.seed for the game's seed
+    type Case = { seed: number; level: boolean };
+    forAll<Case>(
+      (rng) => {
+        const kind = rng.int(0, 4);
+        const typedDigits = (length: number) =>
+          Number(`${rng.int(1, 9)}${Array.from({ length }, () => rng.int(0, 9)).join('')}`);
+        const seed =
+          kind === 0
+            ? rng.int(0, 2 ** 31 - 1)
+            : kind === 1
+              ? rng.int(0, 2 ** 32 - 1)
+              : kind === 2
+                ? typedDigits(rng.int(0, 14))
+                : kind === 3
+                  ? typedDigits(rng.int(15, 307))
+                  : 2 ** 53 - 1;
+        return { seed, level: rng.chance(0.3) };
+      },
+      ({ seed, level }) => {
+        const world = level ? levelWorldOf(32, 32, seed) : generatedWorldOf(32, 32, seed);
+        const save = buildSave({ ...fullParts(), seed, world });
+        const read = readSaveText(JSON.stringify(save));
+        expect(read).toEqual({ save });
+      },
+      { shrink: ({ seed, level }) => [...shrinkInt(seed)].map((s) => ({ seed: s, level })) },
+    );
+  });
+
+  // Left for a decision (see the report): a level world carries the seed its map is built from a
+  // second time, in `world.level.seed` (`mapFromLevel` reads that one, not `world.seed`), and the
+  // rule does not look at it. A text, a number other than the world's, a fraction or none there
+  // loads, and the level's props are then another world's.
+  it.todo("holds a level's own seed (world.level.seed) to the seed of its world");
+});
+
+// The rule of #470 checked once more, for what the two blocks above leave open: the digits a
+// player types held as text, the ground every path that builds a world gives a text seed, the
+// refusal the screens name, text read as Number() reads it (the conversion the issue names), a
+// file of any version read with a text seed as it is read with the number, and no new version.
+describe("a save's world seed: typed digits, the ground made from it, the version (#470)", () => {
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+  });
+  const small = { ...DEFAULT_MAP_PARAMS, w: 32, h: 32 };
+  const gen = generatorOf('simple');
+  const generated = (seed: unknown) => ({ kind: 'generated', seed, params: small });
+  /** The text of the full fixture whose own seed is `top` and whose world is `world`. */
+  const textOf = (top: unknown, world: unknown) =>
+    JSON.stringify({ ...buildSave(fullParts()), seed: top, world });
+  const verdict = (raw: string) => {
+    const read = readSaveText(raw);
+    return 'save' in read ? 'save' : read.error;
+  };
+  const loaded = (raw: string): SaveGame => {
+    const read = readSaveText(raw);
+    if (!('save' in read)) throw new Error(`refused as ${read.error}`);
+    return read.save;
+  };
+
+  /** Prefixes of a digit text, the shortest first, then the text without its last digit. */
+  function* shorterDigits(digits: string): Iterable<string> {
+    for (let n = 1; n < digits.length; n *= 2) yield digits.slice(0, n);
+    if (digits.length > 1) yield digits.slice(0, -1);
+  }
+
+  it('reads the digits a player typed, held as text, as the number the game made of them', () => {
+    // parseSeed makes Number of digits, however many, and the game saves that number; 1 to 308
+    // digits are always a finite one
+    forAll<string>(
+      (rng) => {
+        const count = rng.chance(0.4) ? rng.int(1, 15) : rng.int(16, 308);
+        const rest = Array.from({ length: count - 1 }, () => rng.int(0, 9)).join('');
+        return `${rng.int(1, 9)}${rest}`;
+      },
+      (digits) => {
+        const seed = Number(digits);
+        const save = loaded(textOf(seed, generated(digits)));
+        expect(save.seed).toBe(seed);
+        expect(save.world?.seed).toBe(seed);
+        // it is the number the game writes: read again, it is the same save
+        expect(readSaveText(JSON.stringify(save))).toEqual({ save });
+      },
+      { shrink: shorterDigits },
+    );
+  });
+
+  it('takes two digit texts that make one number for one world, and too many digits for none', () => {
+    // 2^53 + 1 has no double of its own: typed as digits it is played, and saved, as 2^53
+    const texts = ['9007199254740992', '9007199254740993'];
+    const seed = Number(texts[0]);
+    expect(texts.map(Number), 'the two texts make one number').toEqual([seed, seed]);
+    for (const digits of texts)
+      expect(loaded(textOf(seed, generated(digits))).world?.seed, digits).toBe(seed);
+    expect(verdict(textOf(seed, generated('9007199254740994')))).toBe('damaged');
+    // 1e308 has 309 digits and is a number; nine 309 times over is more than a double holds, and
+    // Infinity is no seed whatever the file's seed is
+    expect(loaded(textOf(1e308, generated(`1${'0'.repeat(308)}`))).world?.seed).toBe(1e308);
+    for (const count of [309, 310, 400])
+      for (const top of [Number.MAX_VALUE, 1e308, 0])
+        expect(verdict(textOf(top, generated('9'.repeat(count)))), `${count} nines, ${top}`).toBe(
+          'damaged',
+        );
+  });
+
+  it('reads text as Number() reads it, the conversion the issue names, and no more leniently', () => {
+    for (const v of [0, 7, 255, 777, 65536, 2 ** 31]) {
+      const forms = [
+        `${v}`,
+        `+${v}`,
+        `${v}.0`,
+        `${v}.`,
+        `${v}e0`,
+        `${v}E+0`,
+        `${v}000e-3`,
+        `00${v}`,
+        ` \t${v}\n`,
+        `0x${v.toString(16)}`,
+        `0b${v.toString(2)}`,
+        `0o${v.toString(8)}`,
+      ];
+      for (const held of forms)
+        expect(loaded(textOf(v, generated(held))).world?.seed, `${v} as ${held}`).toBe(v);
+      // the sign is part of the number
+      if (v !== 0) {
+        expect(verdict(textOf(v, generated(`-${v}`))), `-${v} for ${v}`).toBe('damaged');
+        expect(verdict(textOf(-v, generated(`${v}`))), `${v} for -${v}`).toBe('damaged');
+        expect(loaded(textOf(-v, generated(`-${v}`))).world?.seed, `-${v}`).toBe(-v);
+      }
+    }
+    // each is no number to Number(), though a parse that cuts the text short reads the seed at the
+    // top out of it
+    const notNumbers: [number, string][] = [
+      [1, '1_000'],
+      [1, '1,000'],
+      [1, '1 000'],
+      [12, '12px'],
+      [1, '1e'],
+      [0, '0x'],
+      [0, '0b2'],
+      [0, '0o8'],
+      [0, '.'],
+      [0, '+'],
+      [0, '-'],
+      [0, '-0x10'],
+      [1, '１'],
+      [1, '١'],
+    ];
+    for (const [top, held] of notNumbers)
+      expect(verdict(textOf(top, generated(held))), `${top} and ${JSON.stringify(held)}`).toBe(
+        'damaged',
+      );
+  });
+
+  it('refuses any value in place of a world that is no description, falsy or not', () => {
+    for (const world of [0, 1, -1, '', ' ', 'world', false, true, [], [0], [generated(777)]])
+      expect(verdict(textOf(777, world)), JSON.stringify(world)).toBe('damaged');
+    // a description with no seed to name a world, whatever else it holds
+    for (const world of [{}, { kind: 'generated' }, { params: small }])
+      expect(verdict(textOf(777, world)), JSON.stringify(world)).toBe('damaged');
+    // nothing and null are no world: the game makes it from the seed
+    for (const world of [null, undefined]) expect(verdict(textOf(777, world))).toBe('save');
+  });
+
+  it('does not read the seed of the file itself as text: that is no save at all', () => {
+    // the world cannot be asked which seed wins when the file's own is no number
+    for (const top of ['777', ' 777 ', '0', '', null, true, [], [777], {}])
+      for (const world of [generated(777), generated('777'), generated(top), null, undefined]) {
+        const at = `${JSON.stringify(top)} and ${JSON.stringify(world)}`;
+        expect(verdict(textOf(top, world)), at).toBe('notSave');
+        expect(verdict(JSON.stringify(bundled(JSON.parse(textOf(top, world))))), at).toBe(
+          'notSave',
+        );
+      }
+  });
+
+  it('adds no format version and no load note: a text seed reads as the file it is', () => {
+    const raw = textOf(777, generated('777'));
+    const save = loaded(raw);
+    expect(save.version).toBe(SAVE_VERSION);
+    expect(save.loadedFrom).toBeUndefined();
+    expect(save.migrationNotes).toBeUndefined();
+    // and no key the file did not have
+    expect(Object.keys(save).sort()).toEqual(Object.keys(JSON.parse(raw)).sort());
+    expect(KNOWN_SAVE_KEYS.has('seed')).toBe(true);
+    for (const key of Object.keys(save)) expect(KNOWN_SAVE_KEYS.has(key), key).toBe(true);
+  });
+
+  // 100 files of every version: about 0.2 s alone
+  it('loads a file of any version with its world seed as text as it loads with the number', () => {
+    let varied = 0;
+    forAll<Record<string, unknown>>(
+      genOldFile,
+      (file) => {
+        if (!isObject(file.world)) return;
+        varied++;
+        const seed = file.world.seed as number;
+        const want = readSaveText(JSON.stringify(file));
+        // the files are generated whole, so the comparison is of two saves and not of two refusals
+        if (file.seed === seed) expect('save' in want, 'the file loads').toBe(true);
+        for (const held of [String(seed), ` ${seed}\n`, `${seed}.0`, `${seed}e0`]) {
+          const got = readSaveText(
+            JSON.stringify({ ...file, world: { ...file.world, seed: held } }),
+          );
+          expect(got, `world seed ${JSON.stringify(held)}`).toEqual(want);
+        }
+      },
+      { shrink: shrinkOldFile, shrinkBudget: 300 },
+    );
+    expect(varied).toBeGreaterThan(0);
+  });
+
+  // 6 seeds, a map of 32 x 32 generated once each and read back from 3 texts: about 1 s alone
+  it('reads the ground stored for a seed past 2^53 - 1 back as stored, from any text of it', () => {
+    // the chunk heads hold such a seed as its float64 (chunks.ts); the world loaded from a text of
+    // it must be of that very number, or its stored ground is read under another seed
+    const seeds = [2 ** 53, 2 ** 53 + 2, Number('12345678901234567890'), 1e20, 2 ** 60, 1e100];
+    for (const seed of seeds) {
+      const world: GeneratedWorld = { kind: 'generated', seed, params: { ...small } };
+      const made = groundOf(world, gen);
+      expect(made.added.length, `seed ${seed}: ground made`).toBeGreaterThan(0);
+      for (const held of [seed, String(seed), ` ${seed}\n`]) {
+        const save = loaded(textOf(seed, { ...world, seed: held }));
+        const built = groundOf(save.world as GeneratedWorld, noGround);
+        const at = `seed ${seed} held as ${JSON.stringify(held)}`;
+        expect(built.added, at).toEqual([]);
+        expect(built.unreadable, at).toEqual([]);
+        expect(built.chunks, at).toEqual(made.chunks);
+        const where = firstPlaneDifference(built.map, made.map);
+        if (where) throw new Error(`${at}: ${where}`);
+      }
+    }
+  }, 30_000);
+
+  // 4 seeds, the ground of each made for the number and for the text, twice over: about 0.5 s alone
+  it('gives a stored save with a text seed the ground of the number, in the start-up pass', () => {
+    const store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+    try {
+      for (const seed of [0, 777, 2 ** 32 - 1, 2 ** 53 + 2]) {
+        const want = groundOf({ kind: 'generated', seed, params: { ...small } }, gen);
+        const raw = textOf(seed, generated(String(seed)));
+        const readsAsNumber = (world: unknown, at: string) => {
+          const built = groundOf(world as GeneratedWorld, noGround);
+          expect(built.added, at).toEqual([]);
+          expect(built.chunks, at).toEqual(want.chunks);
+          expect(built.map.seed, at).toBe(seed);
+        };
+        const out = withGround(raw, () => gen);
+        expect(out, `seed ${seed}: ground to add`).not.toBeNull();
+        readsAsNumber(loaded(out!).world, `seed ${seed}, withGround`);
+        store.items.clear();
+        store.items.set(SAVE_KEY, raw);
+        store.items.set(SLOTS_KEY, JSON.stringify({ a: raw }));
+        expect(
+          freezeStoredSaves(() => gen),
+          `seed ${seed}`,
+        ).toEqual({
+          ran: true,
+          frozen: 2,
+          refused: 0,
+          tooLarge: 0,
+        });
+        readsAsNumber(readSave()?.world, `seed ${seed}, Continue`);
+        readsAsNumber(readSlot('a')?.world, `seed ${seed}, a named save`);
+      }
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }, 30_000);
+
+  it('is refused as damaged where the screens ask why, and kept stored to be deleted', () => {
+    const store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+    try {
+      const good = textOf(777, generated('777'));
+      const refused = {
+        disagreeing: textOf(777, generated('778')),
+        fraction: textOf(777.5, generated(777.5)),
+        notNumber: textOf(777, generated('x')),
+        missing: textOf(777, { kind: 'generated', params: small }),
+      };
+      store.items.set(SAVE_KEY, good);
+      expect(storedRefusal()).toBeNull();
+      expect(readSave()?.world?.seed).toBe(777);
+      for (const [name, bad] of Object.entries(refused)) {
+        store.items.set(SAVE_KEY, bad);
+        expect(storedRefusal(), name).toBe('damaged');
+        expect(readSave(), name).toBeNull();
+        expect(continueMeta(), name).toBeNull();
+        expect(store.items.get(SAVE_KEY), `${name} stays stored`).toBe(bad);
+      }
+      const slots = { good, ...refused };
+      store.items.set(SLOTS_KEY, JSON.stringify(slots));
+      expect(slotRefusal('good')).toBeNull();
+      for (const name of Object.keys(refused)) expect(slotRefusal(name), name).toBe('damaged');
+      expect(JSON.parse(store.items.get(SLOTS_KEY)!)).toEqual(slots);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
 
 describe('storage', () => {
   let store: MemoryStorage;
@@ -1907,6 +2906,20 @@ function anyNumber(rng: Rng): number {
   }
 }
 
+/** A seed where a file keeps one: zero, whole, negative or past 2^32; a fraction names no world. */
+function anySeed(rng: Rng): number {
+  switch (rng.int(0, 3)) {
+    case 0:
+      return 0;
+    case 1:
+      return rng.int(1, 500);
+    case 2:
+      return -rng.int(1, 500);
+    default:
+      return rng.int(0, 2 ** 31) * 4096;
+  }
+}
+
 /**
  * A file some build could have written: every v1 field well formed, deeper data included so no
  * migration step trips on it; each later field there or not; a version from the oldest to a newer
@@ -1917,7 +2930,7 @@ function genFile(rng: Rng): Record<string, unknown> {
     Array.from({ length: rng.int(0, max) }, (_, i) => item(i));
   const tile = () => rng.int(0, 63);
   const file: Record<string, unknown> = {
-    seed: anyNumber(rng),
+    seed: anySeed(rng),
     savedAt: rng.int(0, 2 ** 41),
     clock: { time: Math.abs(anyNumber(rng)), speedIndex: rng.int(0, 4) },
     economy: {
@@ -1990,10 +3003,13 @@ function genFile(rng: Rng): Record<string, unknown> {
     houses: () => ({ list: [], arrivals: [], visited: [] }),
     supply: () => rng.pick(['simple', 'full']),
     people: () => ({ rng: rng.int(0, 0xffffffff) }),
+    roads: () => list(3, () => [tile(), tile()]),
     settings: () => ({ ...DEFAULT_SETTINGS, music: rng.next() }),
     somethingNewer: () => ({ a: rng.int(0, 9) }),
   };
   for (const [key, make] of Object.entries(later)) if (rng.chance(0.5)) file[key] = make();
+  // a world is of the seed its file is of
+  if (isObject(file.world)) file.world.seed = file.seed;
   return file;
 }
 
@@ -2035,6 +3051,36 @@ function genCoreEdit(rng: Rng): Edit {
   return { path, to: rng.pick(kind === 'number' ? NOT_NUMBERS : NOT_LISTS) };
 }
 
+/**
+ * The seed of a file's world taken out, or given the file's own seed as text, another number or
+ * text, a fraction or a number past 2^53, or a value that is neither a number nor text. A file
+ * with no world is left as it is.
+ */
+function genWorldSeedEdit(rng: Rng, seed: unknown): Edit {
+  const path = ['world', 'seed'];
+  if (rng.chance(0.2)) return { path };
+  const n = typeof seed === 'number' ? seed : 0;
+  const to = rng.pick<unknown>([
+    String(n),
+    ` ${n} `,
+    n + 1,
+    String(n + 1),
+    n + 0.5,
+    String(n + 0.5),
+    2 ** 53,
+    '',
+    ' ',
+    'x',
+    'NaN',
+    null,
+    true,
+    [],
+    [n],
+    {},
+  ]);
+  return { path, to };
+}
+
 /** A diagnostics bundle as the game exports it, carrying `save`. */
 const bundled = (save: unknown) => ({
   diagnostics: 1,
@@ -2047,7 +3093,8 @@ const bundled = (save: unknown) => ({
 /**
  * What a text is by the rules of issue #78, written from the issue and apart from the loader: not
  * JSON; not a save (no object with a numeric seed, once a diagnostics bundle is opened); damaged
- * (a field every version since v1 has is missing or of another type); else a save.
+ * (a field every version since v1 has is missing or of another type, the seed is not an
+ * integer, or the world it describes is not of that seed: #470); else a save.
  */
 function verdictOf(raw: string): SaveRefusal | 'save' {
   let j: unknown;
@@ -2068,7 +3115,18 @@ function verdictOf(raw: string): SaveRefusal | 'save' {
     Array.isArray(j.stations) &&
     Array.isArray(j.trains) &&
     typeof j.lastDay === 'number';
-  return whole ? 'save' : 'damaged';
+  // the save's seed names a world (a whole number), and a world that is there is of that seed,
+  // held as a number or as text that reads as one
+  const world = j.world;
+  const named = isObject(world) ? world.seed : undefined;
+  const readable =
+    typeof named === 'number' || (typeof named === 'string' && named.trim() !== '')
+      ? Number(named)
+      : NaN;
+  const worldOk =
+    Number.isInteger(j.seed) &&
+    (world === undefined || world === null || (Number.isInteger(readable) && readable === j.seed));
+  return whole && worldOk ? 'save' : 'damaged';
 }
 /** The file in a text the way `verdictOf` finds it; only for a text it finds a file in. */
 function fileIn(raw: string): Record<string, unknown> {
@@ -2097,11 +3155,13 @@ function genValue(rng: Rng, depth = 0): unknown {
       for (let n = rng.int(1, 2); n > 0; n--) {
         const r = rng.next();
         const edit: Edit =
-          r < 0.4
+          r < 0.35
             ? genCoreEdit(rng)
-            : r < 0.8
+            : r < 0.7
               ? { path: [rng.pick(Object.keys(file as object))] }
-              : { path: ['seed'], to: rng.pick(['1', null, [], {}]) };
+              : r < 0.85
+                ? { path: ['seed'], to: rng.pick(['1', null, [], {}]) }
+                : genWorldSeedEdit(rng, (file as Record<string, unknown>).seed);
         file = edited(file, edit);
       }
       return file;
@@ -2218,6 +3278,8 @@ describe('readSaveText, for any text', () => {
         const from = fromVersion(file.version);
         expect(save.version).toBe(Math.max(from, SAVE_VERSION));
         expect(save.loadedFrom).toBe(from === SAVE_VERSION ? undefined : from);
+        // the world a save describes is of the save's own seed, and the seed is a number
+        if (save.world) expect(save.world.seed).toBe(save.seed);
         if (from < SAVE_VERSION) {
           expect(save.migrationNotes).toHaveLength(SAVE_VERSION - from);
           save.migrationNotes!.forEach((note, i) =>
@@ -2256,6 +3318,8 @@ function genParts(rng: Rng): SaveParts {
   const parts = fullParts() as unknown as Record<string, unknown>;
   for (const key of Object.keys(parts)) if (key in file) parts[key] = file[key];
   parts.stations = (parts.stations as StationJSON[]).map((s) => ({ ...s, rot: rng.int(0, 3) }));
+  // a game's world is of the game's seed
+  parts.world = { ...(parts.world as object), seed: parts.seed };
   return parts as unknown as SaveParts;
 }
 const FULL_PARTS = JSON.stringify(fullParts());
@@ -2539,12 +3603,23 @@ describe('storage, from any state it is in', () => {
 
 /** Every route mode a train has today. */
 const ROUTE_MODES: readonly unknown[] = ['schedule', ...DYNAMIC_MODES];
-/** The names route modes had before the renaming in v7, and the names they have now. */
-const OLD_MODE_TO_NEW: ReadonlyMap<string, RouteMode> = new Map([
+/**
+ * The names route modes had before the renaming in v7, and the names the steps from v6 and v7 gave
+ * them: `production` and `collection`, which the step from v17 made `freight`.
+ */
+const MODE_RENAMED_IN_V7: ReadonlyMap<string, string> = new Map([
   ['fixed', 'schedule'],
   ['dynamic', 'production'],
   ['collect', 'collection'],
 ]);
+/** The names route modes had before the renaming in v7, and the names they have now. */
+const OLD_MODE_TO_NEW: ReadonlyMap<string, RouteMode> = new Map([
+  ['fixed', 'schedule'],
+  ['dynamic', 'freight'],
+  ['collect', 'freight'],
+]);
+/** Modes of v6 to v17 that Freight replaced: the step from v17 makes them `freight`. */
+const RETIRED_MODES: readonly unknown[] = ['production', 'collection'];
 /** The names route modes had before the renaming in v7. */
 const OLD_MODE_NAMES: readonly unknown[] = [...OLD_MODE_TO_NEW.keys()];
 /** Modes no build wrote: the step keeps them, and the load code turns them into a schedule. */
@@ -2555,6 +3630,7 @@ const MODE_VALUES: unknown[] = [
   null,
   '',
   ...OLD_MODE_NAMES,
+  ...RETIRED_MODES,
   ...ROUTE_MODES,
   ...ODD_MODES,
 ];
@@ -2633,10 +3709,18 @@ const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
   asideRetry: [2, 42.3],
   recoveryRetry: [4, 97.15],
 };
+/**
+ * The field the step from v17 gives every train, with what a load before v18 left in it: a train
+ * had put no goods down at the stop it stands at.
+ */
+const V18_DEFAULTS: Readonly<Record<string, unknown>> = { dropped: false };
+/** Values a file may already hold in the field the step from v17 fills, none the default. */
+const V18_HELD: Readonly<Record<string, readonly unknown[]>> = { dropped: [true] };
 /** The fields a step fills on every train, by the version the step upgrades from. */
 const TRAIN_DEFAULTS: readonly [from: number, defaults: Readonly<Record<string, unknown>>][] = [
   [13, RESUME_DEFAULTS],
   [16, V17_DEFAULTS],
+  [17, V18_DEFAULTS],
 ];
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
@@ -2651,7 +3735,7 @@ interface OldTrain {
   mode?: unknown;
   dynamic?: boolean;
   battery?: number;
-  /** some of the fields the steps from v13 and v16 fill, already held (RESUME_HELD, V17_HELD) */
+  /** some of the fields the steps from v13, v16 and v17 fill, already held (RESUME_HELD, ...) */
   held?: Record<string, unknown>;
 }
 function genOldTrain(rng: Rng): OldTrain {
@@ -2662,7 +3746,7 @@ function genOldTrain(rng: Rng): OldTrain {
   if (rng.chance(0.6)) t.battery = rng.pick([0, rng.int(1, 60), rng.range(0, 60), 90]);
   if (rng.chance(0.3)) {
     t.held = {};
-    for (const [key, values] of Object.entries({ ...RESUME_HELD, ...V17_HELD }))
+    for (const [key, values] of Object.entries({ ...RESUME_HELD, ...V17_HELD, ...V18_HELD }))
       if (rng.chance(0.5)) t.held[key] = rng.pick(values);
   }
   return t;
@@ -2759,7 +3843,8 @@ function ownedByGrowth(map: GameMap, tier: number): boolean[] {
 function v4File(world: WorldSpec, tier: unknown): SaveGame {
   const economy: Record<string, unknown> = { money: 1000, tickets: 0, granted: [] };
   if (tier !== undefined) economy.tier = tier;
-  return { ...oldestSave(), version: 4, world, economy: economy as SaveGame['economy'] };
+  const seed = world.seed;
+  return { ...oldestSave(), seed, version: 4, world, economy: economy as SaveGame['economy'] };
 }
 /** What a trade desk holds once it has loaded `trade`. */
 function deskOf(trade: unknown) {
@@ -2782,7 +3867,11 @@ function genOldFile(rng: Rng): Record<string, unknown> {
     const rot = rng.pick(ROT_VALUES);
     if (rot !== undefined) s.rot = rot;
   }
-  if (rng.chance(0.5)) file.world = genWorld(rng);
+  if (rng.chance(0.5)) {
+    const world = genWorld(rng);
+    file.world = world;
+    file.seed = world.seed;
+  }
   return file;
 }
 /** Smaller old files: fewer fields and items, as `shrinkFile`, then shorter train and station lists. */
@@ -2805,11 +3894,13 @@ function withoutFilled(from: number, file: unknown): unknown {
     6: ['towns'],
     7: ['trade'],
     9: ['crafting'],
+    19: ['roads'],
   };
   for (const key of top[from] ?? []) delete copy[key];
   if (from === 6) for (const s of (copy.stations as unknown[]).filter(isObject)) delete s.rot;
-  // the modes were renamed while saves were v7: the steps from v6 and v7 both map them
-  if (from === 6 || from === 7) for (const t of trains) delete t.mode;
+  // the modes were renamed while saves were v7: the steps from v6 and v7 both map them; the step
+  // from v17 makes production and collection freight
+  if (from === 6 || from === 7 || from === 17) for (const t of trains) delete t.mode;
   if (from === 9) for (const t of trains) if (isObject(t.tanks)) delete t.tanks.battery;
   for (const [step, defaults] of TRAIN_DEFAULTS)
     if (from === step) for (const t of trains) for (const key in defaults) delete t[key];
@@ -2820,6 +3911,8 @@ function withoutFilled(from: number, file: unknown): unknown {
     const list = isObject(copy.houses) ? copy.houses.list : undefined;
     if (Array.isArray(list)) for (const h of list.filter(isObject)) delete h.work;
   }
+  // the step from v18 starts a generated world's store of ground
+  if (from === 18 && isObject(copy.world)) delete copy.world.chunks;
   if (from === 15)
     for (const b of Array.isArray(copy.buildings) ? copy.buildings : []) {
       if (!Array.isArray(b) || b.length < 4) continue;
@@ -2845,27 +3938,32 @@ describe('the defaults the steps fill', () => {
     // the old route modes and filled the battery, Station.fromJSON the turn. Moving the defaults
     // into the steps may not change what loads. Train.fromJSON no longer maps or fills, so what
     // it did is written out here (`loadedBefore`) and every shape a build of a version wrote is
-    // held to it: old mode names and a missing mode up to v7, where the modes were renamed, and a
-    // missing battery up to v9, before the battery came. Station.fromJSON still fills the turn and
-    // is its own oracle. The shapes are few, so every one is tried from every version, each
-    // failure naming the one train or station.
+    // held to it: old mode names and a missing mode up to v7, where the modes were renamed, the
+    // production and collection modes up to v17, where Freight replaced them, and a missing
+    // battery up to v9, before the battery came. Station.fromJSON still fills the turn and is its
+    // own oracle. The shapes are few, so every one is tried from every version, each failure
+    // naming the one train or station.
     const track = new TrackGraph(8, 8);
     const base = savedTrain();
     const cap = Train.fromJSON(asStored(base) as TrainJSON, track).batteryCap;
-    /** The mode and battery the load code gave a stored train before the steps filled them. */
+    /** The mode and battery a stored train loads with once the steps have filled them. */
     const loadedBefore = (t: OldTrain) => {
       const m = t.mode;
       const old = typeof m === 'string' ? OLD_MODE_TO_NEW.get(m) : undefined;
       const mode = m
-        ? (old ?? (ROUTE_MODES.includes(m) ? m : 'schedule'))
+        ? (old ??
+          (RETIRED_MODES.includes(m) ? 'freight' : ROUTE_MODES.includes(m) ? m : 'schedule'))
         : t.dynamic
-          ? 'production'
+          ? 'freight'
           : 'schedule';
       return { mode, battery: Math.min(cap, t.battery ?? 0) };
     };
     /** Could a build of `version` have written the train: modes and battery as it named them. */
     const wrote = (version: number, t: OldTrain) =>
-      (version <= 7 || ROUTE_MODES.includes(t.mode) || ODD_MODES.includes(t.mode)) &&
+      (version <= 7 ||
+        ROUTE_MODES.includes(t.mode) ||
+        (version <= 17 && RETIRED_MODES.includes(t.mode)) ||
+        ODD_MODES.includes(t.mode)) &&
       (version <= 9 || t.battery !== undefined);
     const trains: OldTrain[] = [];
     for (const mode of MODE_VALUES)
@@ -2897,7 +3995,10 @@ describe('the defaults the steps fill', () => {
         expect(now.mode, `${label}: the mode it loads with`).toBe(was.mode);
         expect(now.battery, `${label}: the battery it loads with`).toBe(was.battery);
         const stored = after as { mode?: unknown; tanks: { battery?: unknown } };
-        if (version <= 7 && !ODD_MODES.includes(written[i].mode))
+        if (
+          (version <= 7 && !ODD_MODES.includes(written[i].mode)) ||
+          RETIRED_MODES.includes(written[i].mode)
+        )
           expect(stored.mode, `${label}: the mode the file now holds`).toBe(was.mode);
         if (version <= 9) expect(typeof stored.tanks.battery, label).toBe('number');
       });
@@ -2937,6 +4038,7 @@ describe('the defaults the steps fill', () => {
         field('regions', 4, (v) => expect(v, 'regions').toEqual(owned));
         field('seasonOffset', 5, (v) => expect(v, 'seasonOffset').toBe(0));
         field('towns', 6, (v) => expect(v, 'towns').toEqual([]));
+        field('roads', 19, (v) => expect(v, 'roads').toEqual([]));
         // the step to v12 restarts a desk's cycle: the rest of a desk the file had is kept
         const besideCycle = (desk: unknown) =>
           Object.entries(desk as object).filter(([k]) => k !== 'nextAt' && k !== 'driftDay');
@@ -2958,7 +4060,9 @@ describe('the defaults the steps fill', () => {
           const was = trains[i];
           const mode = 'mode' in t ? t.mode : 'absent';
           const wasMode = 'mode' in was ? was.mode : 'absent';
-          if (from > 7 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
+          if (RETIRED_MODES.includes(was.mode) && from <= 17)
+            expect(mode, `train ${i}: mode`).toBe('freight');
+          else if (from > 7 || ROUTE_MODES.includes(was.mode) || ODD_MODES.includes(was.mode))
             expect(mode, `train ${i}: mode`).toBe(wasMode);
           else expect(ROUTE_MODES, `train ${i}: mode`).toContain(mode);
           for (const [step, defaults] of TRAIN_DEFAULTS)
@@ -2988,7 +4092,7 @@ describe('the defaults the steps fill', () => {
     // fill when it runs again; a step that rewrote a value it should keep would not.
     forAll(
       (rng) => {
-        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16]);
+        const from = rng.pick([1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17, 18, 19]);
         const file: Record<string, unknown> = { ...genOldFile(rng), version: from };
         return { from, file };
       },
@@ -3009,6 +4113,8 @@ describe('the defaults the steps fill', () => {
     );
   });
 
+  // five generated maps of up to 160 tiles a side, their start chunk in three places, so three
+  // river plans (#341), and five levels: about 0.8 s alone
   it('own, on every map a v4 build made, what the load code owned for the tier the file stored', () => {
     // v4 builds made square maps of 32 to 160 tiles in steps of 32 (`rules.mapSize`), generated or
     // drawn as a level, so a v4 file meets rings 0 to 2 only. Before the step filled the chunks,
@@ -3038,7 +4144,7 @@ describe('the defaults the steps fill', () => {
           expect(j.regions, `${label}: what applySave owned`).toEqual(onLoad.unlocked);
         }
       }
-  });
+  }, 15_000);
 
   it('own the start chunk and the rings of the stored tier, on a world of any size', () => {
     // Past the sizes v4 builds made, the step follows its own rule: the tier the file stored,
@@ -3066,4 +4172,251 @@ describe('the defaults the steps fill', () => {
       },
     );
   });
+});
+
+// ------------------------------------------------------------------ the ground a save stores
+/**
+ * A generator unlike generateMap and unlike every other salt: each plane is hashed from the world
+ * tile, terrain and biome in patches of 8 tiles a side. Prop offsets are whole 256ths of a tile,
+ * so a chunk stores them exactly.
+ */
+function hashedGround(salt: number): MapGenerator {
+  return (seed, params) => {
+    const p = { ...DEFAULT_MAP_PARAMS, ...params };
+    const m = emptyMap(seed, p.w, p.h, Terrain.Grass, p.originX ?? 0, p.originY ?? 0);
+    for (let y = 0; y < m.h; y++)
+      for (let x = 0; x < m.w; x++) {
+        const wx = x + m.originX;
+        const wy = y + m.originY;
+        const at = (k: number) => hash2(wx, wy, salt * 8 + k);
+        const i = y * m.w + x;
+        m.terrain[i] = Math.floor(hash2(wx >> 3, wy >> 3, salt * 8) * 16);
+        m.biome[i] = Math.floor(hash2(wx >> 3, wy >> 3, salt * 8 + 1) * 16);
+        m.variant[i] = Math.floor(at(2) * 4);
+        if (at(3) < 0.05)
+          m.props.set(i, [
+            {
+              kind: PROP_KINDS[Math.floor(at(4) * PROP_KINDS.length)],
+              variant: Math.floor(at(5) * 8),
+              ox: Math.floor(at(6) * 200 - 100) / 256,
+              oy: Math.floor(at(7) * 200 - 100) / 256,
+            },
+          ]);
+      }
+    return m;
+  };
+}
+/** A generator that must not run: every chunk the map covers is stored. */
+const noGround: MapGenerator = () => {
+  throw new Error('generated a chunk that is stored');
+};
+/** The keys of every chunk a generated world's map covers, in rows. */
+const groundKeys = (w: GeneratedWorld) =>
+  mapChunks({ ...DEFAULT_MAP_PARAMS, ...w.params }).map(({ cx, cy }) => chunkKey(cx, cy));
+/** Where two maps of one frame first differ, every plane exactly; null when they do not. */
+function firstPlaneDifference(a: GameMap, b: GameMap): string | null {
+  const frame = (m: GameMap) => [m.w, m.h, m.originX, m.originY].join(' ');
+  if (frame(a) !== frame(b)) return `frame ${frame(a)} against ${frame(b)}`;
+  const same = (p: PropInstance, q: PropInstance) =>
+    p.kind === q.kind && p.variant === q.variant && p.ox === q.ox && p.oy === q.oy;
+  for (let i = 0; i < a.w * a.h; i++) {
+    const where = () => `tile (${i % a.w}, ${Math.floor(i / a.w)})`;
+    if (a.terrain[i] !== b.terrain[i]) return `terrain at ${where()}`;
+    if (a.biome[i] !== b.biome[i]) return `biome at ${where()}`;
+    if (a.variant[i] !== b.variant[i]) return `variant at ${where()}`;
+    const pa = a.props.get(i) ?? [];
+    const pb = b.props.get(i) ?? [];
+    if (pa.length !== pb.length || pa.some((p, k) => !same(p, pb[k])))
+      return `props at ${where()}: ${JSON.stringify(pa)} against ${JSON.stringify(pb)}`;
+  }
+  return null;
+}
+/** The save text the game writes from a loaded save: its parts at this version, no load notes. */
+function writtenBack(save: SaveGame): string {
+  const parts: Partial<SaveGame> = { ...save };
+  delete parts.loadedFrom;
+  delete parts.migrationNotes;
+  return JSON.stringify(buildSave(parts as SaveParts, {}, 0));
+}
+/** A value as stored, with a generated world's ground taken out. */
+function withoutGround(v: unknown): unknown {
+  const copy = asStored(v) as Record<string, unknown>;
+  if (isObject(copy.world)) delete copy.world.chunks;
+  return copy;
+}
+/**
+ * What the start-up pass may make of a stored text: the file as it was, its ground added; a file
+ * from before world descriptions given the world its load builds.
+ */
+function fileWithWorld(raw: string): unknown {
+  const was = JSON.parse(raw) as Record<string, unknown>;
+  return { ...was, world: isObject(was.world) ? was.world : parseSave(raw)!.world };
+}
+
+describe('the ground of a file of any version', () => {
+  let store: MemoryStorage;
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+    store = new MemoryStorage();
+    vi.stubGlobal('localStorage', store);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  // 100 files of every version, maps up to 416 tiles a side built twice: about 1.1 s alone
+  it('is generated once on its first load, and read from the store alone once the save is written', () => {
+    let generated = 0;
+    forAll(
+      genOldFile,
+      (file) => {
+        const from = fromVersion(file.version);
+        const save = parseSave(JSON.stringify(file))!;
+        const world = save.world;
+        if (world?.kind !== 'generated') {
+          expect(world && 'chunks' in world, 'a level stores no chunks').toBeFalsy();
+          return;
+        }
+        // the step from v18 starts the store empty; a file of a later version without one has none
+        if (from <= 18) expect(world.chunks, `from v${from}`).toEqual({});
+        const calls: unknown[] = [];
+        const first = groundOf(world, (s, p) => {
+          calls.push(p);
+          return hashedGround(1)(s, p);
+        });
+        expect(calls).toHaveLength(1);
+        expect(first.added).toEqual(groundKeys(world));
+        expect(first.unreadable).toEqual([]);
+        generated++;
+        // the game writes the save at once; its next load reads the same texts and nothing else
+        const again = parseSave(writtenBack(save))!;
+        expect(again.loadedFrom).toBeUndefined();
+        const stored = again.world as GeneratedWorld;
+        expect(JSON.stringify(stored.chunks)).toBe(JSON.stringify(world.chunks));
+        const second = groundOf(stored, noGround);
+        expect(second.added).toEqual([]);
+        expect(second.unreadable).toEqual([]);
+        const where = firstPlaneDifference(second.map, first.map);
+        if (where) throw new Error(`the second load differs: ${where}`);
+      },
+      { shrink: shrinkOldFile, shrinkBudget: 300 },
+    );
+    expect(generated).toBeGreaterThan(0);
+  }, 25_000);
+
+  // 100 files of every version, maps up to 416 tiles a side given their ground and read back:
+  // about 1.2 s alone
+  it('is added by the start-up pass to a stored file of any version, and nothing else of it changes', () => {
+    let grounded = 0;
+    forAll(
+      genOldFile,
+      (file) => {
+        const raw = JSON.stringify(file);
+        const save = parseSave(raw)!;
+        const chains: unknown[] = [];
+        const out = withGround(raw, (s) => {
+          chains.push(s.supply);
+          return hashedGround(2);
+        });
+        const world = save.world;
+        if (world?.kind !== 'generated') {
+          expect(out).toBeNull();
+          expect(chains).toEqual([]);
+          return;
+        }
+        expect(out, 'a generated world with no ground stored is given it').not.toBeNull();
+        grounded++;
+        // the generator is the one of the save's own chain
+        expect(chains).toEqual([save.supply]);
+        // only the ground is new: the version, the time stamp and every other field stay
+        const now = JSON.parse(out!) as { world?: GeneratedWorld };
+        expect(withoutGround(now)).toEqual(withoutGround(fileWithWorld(raw)));
+        expect(isObject(now.world?.chunks), 'the file holds its ground').toBe(true);
+        const ground = now.world!.chunks!;
+        expect(Object.keys(ground)).toEqual(groundKeys(world));
+        // run again, the pass finds nothing to add and generates nothing
+        expect(withGround(out!, () => noGround)).toBeNull();
+        // the file loads as it did, from the same version with the same notes, now with its ground
+        const loaded = parseSave(out!)!;
+        expect(withoutGround(loaded)).toEqual(withoutGround(save));
+        expect((loaded.world as GeneratedWorld).chunks).toEqual(ground);
+        // read from the store alone, as the generator the pass was given made it
+        const built = groundOf(loaded.world as GeneratedWorld, noGround);
+        expect(built.added).toEqual([]);
+        const made = hashedGround(2)(world.seed, { ...DEFAULT_MAP_PARAMS, ...world.params });
+        const where = firstPlaneDifference(built.map, made);
+        if (where) throw new Error(`the stored ground differs: ${where}`);
+        // and the lists of saves show it as they showed the file before
+        const listed = () => [continueMeta(), listSlots()];
+        store.items.set(SAVE_KEY, raw);
+        store.items.set(SLOTS_KEY, JSON.stringify({ a: raw }));
+        const shown = listed();
+        store.items.set(SAVE_KEY, out!);
+        store.items.set(SLOTS_KEY, JSON.stringify({ a: out }));
+        expect(listed()).toEqual(shown);
+      },
+      { shrink: shrinkOldFile, shrinkBudget: 300 },
+    );
+    expect(grounded).toBeGreaterThan(0);
+  }, 25_000);
+
+  // 40 storages of up to four saves of every version: about 0.6 s alone
+  it('is given at start-up to Continue and every named save that lacks it, each once', () => {
+    let frozenAll = 0;
+    forAll(
+      (rng) => ({
+        continued: rng.chance(0.7) ? genOldFile(rng) : null,
+        slots: Array.from({ length: rng.int(0, 3) }, () => genOldFile(rng)),
+        junk: rng.chance(0.3),
+      }),
+      (c) => {
+        store.items.clear();
+        const slots: Record<string, string> = {};
+        c.slots.forEach((f, i) => (slots[`save ${i + 1}`] = JSON.stringify(f)));
+        if (c.junk) slots.junk = '{oops';
+        store.items.set(SLOTS_KEY, JSON.stringify(slots));
+        const continued = c.continued ? JSON.stringify(c.continued) : null;
+        if (continued !== null) store.items.set(SAVE_KEY, continued);
+        /** whether the pass has ground to add to a stored text: a whole save of a generated world */
+        const lacking = (raw: string) => parseSave(raw)?.world?.kind === 'generated';
+        const texts = [...(continued === null ? [] : [continued]), ...Object.values(slots)];
+        const frozen = texts.filter(lacking).length;
+        expect(freezeStoredSaves(() => hashedGround(3))).toEqual({
+          ran: true,
+          frozen,
+          refused: 0,
+          tooLarge: 0,
+        });
+        frozenAll += frozen;
+        expect(store.items.get(GROUND_KEY)).toBe(String(SAVE_VERSION));
+        // each text the pass had ground for holds it now and nothing else new; the rest as they were
+        const after = JSON.parse(store.items.get(SLOTS_KEY)!) as Record<string, string>;
+        expect(Object.keys(after)).toEqual(Object.keys(slots));
+        const pairs: [string, string, string][] = Object.entries(slots).map(([n, raw]) => [
+          n,
+          raw,
+          after[n],
+        ]);
+        if (continued !== null) pairs.push(['Continue', continued, store.items.get(SAVE_KEY)!]);
+        for (const [name, raw, now] of pairs) {
+          if (!lacking(raw)) {
+            expect(now, name).toBe(raw);
+            continue;
+          }
+          expect(withoutGround(JSON.parse(now)), name).toEqual(withoutGround(fileWithWorld(raw)));
+          const world = parseSave(now)!.world as GeneratedWorld;
+          expect(Object.keys(world.chunks!), name).toEqual(groundKeys(world));
+        }
+        // once only: the next start generates nothing and writes nothing
+        const writes = store.writes;
+        expect(freezeStoredSaves(() => noGround)).toEqual({
+          ran: false,
+          frozen: 0,
+          refused: 0,
+          tooLarge: 0,
+        });
+        expect(store.writes).toBe(writes);
+      },
+      { seeds: Array.from({ length: 40 }, (_, i) => i + 1) },
+    );
+    expect(frozenAll).toBeGreaterThan(0);
+  }, 15_000);
 });

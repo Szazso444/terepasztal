@@ -43,7 +43,7 @@ Repository snapshot; includes both production-chain modes. IDs are implementatio
 | grinder      | Stone Grinder | —          | tier 0             |
 | refinery     | Oil Refinery  | —          | tier 1             |
 | power_plant  | Power Plant   | —          | tier 1             |
-| substation   | Substation    | —          | tier 2             |
+| substation   | Battery       | —          | tier 2             |
 | hydro_plant  | Hydro Plant   | —          | tier 2             |
 | bridge_wood  | Wooden Bridge | —          | tier 0             |
 | bridge_stone | Stone Bridge  | —          | tier 0             |

@@ -33,7 +33,11 @@ export interface KeyHost {
   readonly recording: boolean;
   /** a train is picked in the overview */
   readonly overviewTrain: boolean;
+  /** a tooltip is open: Escape closes the stack and does nothing else */
+  readonly tooltipsOpen: boolean;
   toggleDebug(): void;
+  /** close every tooltip */
+  closeTooltips(): void;
   closeScreen(): void;
   closeMenus(): void;
   openPauseMenu(): void;
@@ -97,7 +101,8 @@ const digitOf = (code: string) => Number(code.slice('Digit'.length));
 
 /**
  * Each action returns true when the rest of the frame's input is left alone: Escape opened or
- * closed something.
+ * closed something. In every context Escape closes an open tooltip stack first, and then nothing
+ * else.
  */
 const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   debug: (h) => {
@@ -106,19 +111,25 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   },
   // over a menu: a screen opened from it closes first, then the pause menu
   menuBack: (h) => {
-    if (h.screenOpen) h.closeScreen();
+    if (h.tooltipsOpen) h.closeTooltips();
+    else if (h.screenOpen) h.closeScreen();
     else if (h.pauseMenuOpen) h.closeMenus();
     return true;
   },
   // the field view: a screen closes; with nothing in hand the pause menu opens
   pauseOrClose: (h) => {
-    if (h.screenOpen) h.closeScreen();
+    if (h.tooltipsOpen) h.closeTooltips();
+    else if (h.screenOpen) h.closeScreen();
     else if (!h.building) h.openPauseMenu();
     else return false;
     return true;
   },
   // the overview: a screen closes; else a recording stops, the picked train goes, the view leaves
   overviewBack: (h) => {
+    if (h.tooltipsOpen) {
+      h.closeTooltips();
+      return true;
+    }
     if (h.screenOpen) {
       h.closeScreen();
       return true;

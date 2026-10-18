@@ -5,6 +5,7 @@ import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import type { SlotMeta } from '../sim/save';
 import type { NamePrompt } from './namePrompt';
 import { continueText, slotText, type SlotText } from './saveSlots';
+import { keepPick, pickIndex, tuningEntries } from './newGameTuning';
 
 /** Shared by both menus: music and effects volume, so the player can set them from the menu. */
 export interface AudioActions {
@@ -125,7 +126,10 @@ export interface ContinueTarget {
 
 export interface MainMenuActions extends SlotActions, AudioActions {
   continue(): void;
-  newGame(seed: string, supply: SupplyMode): void;
+  /** `tuning` is the saved tuning picked under New game, null for the shipped rules */
+  newGame(seed: string, supply: SupplyMode, tuning: string | null): void;
+  /** the tunings saved in Game tuning, newest first */
+  tunings(): { name: string }[];
   playLevel(id: string): void;
   editLevel(id: string): void;
   newLevel(size: number, generated: boolean, seed: string): void;
@@ -142,6 +146,13 @@ export class MainMenu {
   readonly root = el('div', { id: 'menu-root', class: 'menu-root' });
   private left = el('div', { class: 'menu-col' });
   private right = el('div', { class: 'menu-col levels' });
+  /** The Tuning choice of the New game block; `refreshTunings` fills it. */
+  private tuningRow = el('div', { class: 'menu-row' });
+  /**
+   * The saved tuning picked for the next New game, null for the shipped rules. Every drawing of
+   * the title screen starts it over; nothing is remembered between drawings.
+   */
+  private tuningPick: string | null = null;
   visible = false;
 
   constructor(
@@ -166,11 +177,7 @@ export class MainMenu {
   }
 
   /** `save` is what Continue goes back to, null when there is nothing to continue. */
-  show(
-    save: ContinueTarget | null,
-    levels: LevelData[],
-    custom: { rules: boolean; content: boolean },
-  ) {
+  show(save: ContinueTarget | null, levels: LevelData[], custom: { content: boolean }) {
     this.visible = true;
     this.root.style.display = 'flex';
     this.render(save, levels, custom);
@@ -180,13 +187,38 @@ export class MainMenu {
     this.root.style.display = 'none';
   }
 
-  private render(
-    save: ContinueTarget | null,
-    levels: LevelData[],
-    custom: { rules: boolean; content: boolean },
-  ) {
+  /**
+   * Draw the Tuning choice again from the tunings saved now, and nothing else of the title
+   * screen, so a typed seed and the production chain stay. The pick stays on a tuning that still
+   * exists and falls back to the shipped rules when its tuning is gone; with no tuning saved the
+   * choice is not shown.
+   */
+  refreshTunings() {
+    const row = this.tuningRow;
+    const entries = tuningEntries(this.actions.tunings());
+    this.tuningPick = keepPick(entries, this.tuningPick);
+    row.innerHTML = '';
+    row.style.display = entries.length ? '' : 'none';
+    if (!entries.length) return;
+    const choice = el('select', {
+      class: 'text',
+      title: STR.menu.newGameTuningHint,
+      style: 'flex:1;min-width:0',
+    }) as HTMLSelectElement;
+    // the option is its place in the list: a name is never read back from a label
+    entries.forEach((e, i) => choice.append(el('option', { value: String(i), text: e.label })));
+    choice.value = String(pickIndex(entries, this.tuningPick));
+    choice.addEventListener('change', () => {
+      this.tuningPick = entries[Number(choice.value)]?.name ?? null;
+    });
+    row.append(el('span', { class: 'dim', text: STR.menu.newGameTuning }), choice);
+  }
+
+  private render(save: ContinueTarget | null, levels: LevelData[], custom: { content: boolean }) {
     const l = this.left;
     l.innerHTML = '';
+    this.tuningPick = null;
+    this.refreshTunings();
     const seedInput = el('input', {
       class: 'text',
       type: 'text',
@@ -218,18 +250,20 @@ export class MainMenu {
         { class: 'menu-row' },
         btn(
           STR.menu.newGame,
-          () => this.actions.newGame(seedInput.value.trim(), supply.value as SupplyMode),
+          () =>
+            this.actions.newGame(
+              seedInput.value.trim(),
+              supply.value as SupplyMode,
+              this.tuningPick,
+            ),
           'menu-btn',
         ),
         seedInput,
       ),
       el('div', { class: 'menu-row' }, el('span', { class: 'dim', text: STR.menu.supply }), supply),
       supplyHint,
-      btn(
-        STR.menu.tuning + (custom.rules ? ` ${STR.menu.modified}` : ''),
-        () => this.actions.tuning(),
-        'menu-btn',
-      ),
+      this.tuningRow,
+      btn(STR.menu.tuning, () => this.actions.tuning(), 'menu-btn'),
       btn(
         STR.menu.content + (custom.content ? ` ${STR.menu.modified}` : ''),
         () => this.actions.content(),

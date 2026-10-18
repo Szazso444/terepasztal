@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BrokenNumberWarning, saveOutcome, type SaveOutcome } from './saveRefusal';
+import {
+  BrokenNumberWarning,
+  StorageRefusalWarning,
+  saveOutcome,
+  type SaveOutcome,
+} from './saveRefusal';
 import { firstNonFinite, writeSave, writeSlot, type SaveGame } from '../sim/save';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import type { Rng } from './rng';
@@ -210,17 +215,21 @@ function genOutcomes(rng: Rng): Kind[] {
   return Array.from({ length: rng.int(0, 40) }, () => rng.pick(bag));
 }
 
-/** The warnings the rule gives, read from the sequence alone. */
-function oracle(outcomes: readonly Kind[]): boolean[] {
+/** The warnings a latch for `reason` gives, read from the sequence alone. */
+function oracleFor(reason: Exclude<Kind, 'stored'>, outcomes: readonly Kind[]): boolean[] {
   return outcomes.map((k, i) => {
-    if (k !== 'broken number') return false;
-    // a break is warned about unless an earlier one in the same stretch (since the last stored
-    // save) already was
+    if (k !== reason) return false;
+    // a refusal is warned about unless an earlier one for the same reason in the same stretch
+    // (since the last stored save) already was
     const stretch = outcomes.slice(outcomes.slice(0, i).lastIndexOf('stored') + 1, i);
-    return !stretch.includes('broken number');
+    return !stretch.includes(reason);
   });
 }
-function run(latch: BrokenNumberWarning, outcomes: readonly Kind[]): boolean[] {
+/** The warnings the broken-number rule gives. */
+function oracle(outcomes: readonly Kind[]): boolean[] {
+  return oracleFor('broken number', outcomes);
+}
+function run(latch: { note(k: Kind): boolean }, outcomes: readonly Kind[]): boolean[] {
   return outcomes.map((k) => latch.note(k));
 }
 
@@ -316,6 +325,102 @@ describe('BrokenNumberWarning', () => {
   });
 });
 
+// ------------------------------------------------------------------ StorageRefusalWarning
+
+describe('StorageRefusalWarning', () => {
+  it('warns exactly when a save is refused by storage and none was warned since a stored save', () => {
+    const seen = { warned: 0, repeatSilenced: 0, rewarned: 0, brokenBetween: 0, noRefusal: 0 };
+    forAll(
+      genOutcomes,
+      (outcomes) => {
+        const got = run(new StorageRefusalWarning(), outcomes);
+        const want = oracleFor('storage', outcomes);
+        got.forEach((w, i) => expect(w, `save ${i}, ${outcomes[i]}`).toBe(want[i]));
+
+        // never for a stored save or a refusal for a broken number
+        got.forEach((w, i) => {
+          if (w) expect(outcomes[i], `warned at ${i}`).toBe('storage');
+        });
+        // one warning per stretch of saves between stored ones that holds a storage refusal
+        const stretches = outcomes
+          .join(',')
+          .split('stored')
+          .filter((s) => s.includes('storage')).length;
+        expect(got.filter(Boolean).length, 'warnings').toBe(stretches);
+
+        if (got.some(Boolean)) seen.warned++;
+        else if (!outcomes.includes('storage')) seen.noRefusal++;
+        if (stretches >= 2) seen.rewarned++;
+        outcomes.forEach((k, i) => {
+          if (k === 'storage' && !got[i]) seen.repeatSilenced++;
+          if (
+            k === 'broken number' &&
+            outcomes.slice(0, i).includes('storage') &&
+            outcomes.slice(i).includes('storage')
+          )
+            seen.brokenBetween++;
+        });
+      },
+      { shrink: (outcomes) => shrinkArray(outcomes) },
+    );
+    // the seeds reach every branch, including a refusal repeated after its warning, a stored save
+    // lifting the latch, and broken numbers inside a stretch (they must not lift it)
+    for (const [branch, n] of Object.entries(seen)) expect(n, branch).toBeGreaterThan(0);
+  });
+
+  it('is silent for broken numbers and stored saves from the start, and warns on the first refusal', () => {
+    const latch = new StorageRefusalWarning();
+    expect(run(latch, ['stored', 'broken number', 'broken number', 'stored'])).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(latch.note('storage')).toBe(true);
+  });
+
+  it('keeps quiet through broken numbers and repeats, until some save is stored', () => {
+    const latch = new StorageRefusalWarning();
+    expect(run(latch, ['storage', 'storage', 'broken number', 'storage', 'broken number'])).toEqual(
+      [true, false, false, false, false],
+    );
+    expect(run(latch, ['stored', 'storage', 'storage'])).toEqual([false, true, false]);
+  });
+
+  it('is its own latch: beside the broken-number one, each follows its rule and they never both warn', () => {
+    // the game feeds every outcome to both; neither one's warning silences or sets off the other
+    const seen = { both: 0, storageAfterBroken: 0, brokenAfterStorage: 0 };
+    forAll(
+      genOutcomes,
+      (outcomes) => {
+        const broken = new BrokenNumberWarning();
+        const storage = new StorageRefusalWarning();
+        const got = outcomes.map((k) => [broken.note(k), storage.note(k)] as const);
+        const wantBroken = oracle(outcomes);
+        const wantStorage = oracleFor('storage', outcomes);
+        got.forEach(([b, st], i) => {
+          expect(b, `save ${i}, ${outcomes[i]}: broken number`).toBe(wantBroken[i]);
+          expect(st, `save ${i}, ${outcomes[i]}: storage`).toBe(wantStorage[i]);
+          expect(b && st, `save ${i}: one warning at most`).toBe(false);
+        });
+        const firstB = got.findIndex(([b]) => b);
+        const firstS = got.findIndex(([, st]) => st);
+        if (firstB >= 0 && firstS >= 0) seen.both++;
+        if (firstB >= 0 && firstS > firstB) seen.storageAfterBroken++;
+        if (firstS >= 0 && firstB > firstS) seen.brokenAfterStorage++;
+      },
+      { shrink: (outcomes) => shrinkArray(outcomes) },
+    );
+    for (const [branch, n] of Object.entries(seen)) expect(n, branch).toBeGreaterThan(0);
+  });
+
+  it('is one latch per instance: a fresh one, as after a reload, starts unwarned', () => {
+    const latch = new StorageRefusalWarning();
+    expect(run(latch, ['storage', 'storage'])).toEqual([true, false]);
+    expect(run(new StorageRefusalWarning(), ['storage', 'storage'])).toEqual([true, false]);
+  });
+});
+
 // ------------------------------------------------------------------ the two together
 
 describe('a refused save through the real writers', () => {
@@ -356,5 +461,43 @@ describe('a refused save through the real writers', () => {
       { shrink: (minutes) => shrinkArray(minutes) },
     );
     expect(warnings).toBeGreaterThan(0);
+  });
+
+  it('warns once per stretch of autosaves refused by storage, whatever the numbers hold', () => {
+    // A stored game that outgrows storage is refused every minute: the player hears it once, and
+    // again only after some save has gone through. The outcome is the real `writeSave`'s.
+    interface Minute {
+      broken: boolean;
+      full: boolean;
+    }
+    const seen = { warned: 0, silenced: 0, brokenWhileFull: 0 };
+    forAll(
+      (rng): Minute[] => {
+        const pBroken = rng.pick([0, 0.2, 0.6]);
+        const pFull = rng.pick([0.3, 0.7, 1]);
+        return Array.from({ length: rng.int(0, 30) }, () => ({
+          broken: rng.chance(pBroken),
+          full: rng.chance(pFull),
+        }));
+      },
+      (minutes) => {
+        const latch = new StorageRefusalWarning();
+        const kinds: Kind[] = [];
+        const shown = minutes.map(({ broken, full }) => {
+          stubStorage(full);
+          const snap = { savedAt: broken ? Number.NaN : 1, economy: { money: 5 } } as SaveGame;
+          const out = saveOutcome(writeSave(snap), () => firstNonFinite(snap));
+          kinds.push(out.kind);
+          return latch.note(out.kind);
+        });
+        expect(shown).toEqual(oracleFor('storage', kinds));
+        seen.warned += shown.filter(Boolean).length;
+        seen.silenced += kinds.filter((k, i) => k === 'storage' && !shown[i]).length;
+        // a broken number in full storage is a broken number, and leaves the storage latch alone
+        seen.brokenWhileFull += minutes.filter((m) => m.broken && m.full).length;
+      },
+      { shrink: (minutes) => shrinkArray(minutes) },
+    );
+    for (const [branch, n] of Object.entries(seen)) expect(n, branch).toBeGreaterThan(0);
   });
 });

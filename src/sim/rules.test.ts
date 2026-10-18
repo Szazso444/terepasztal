@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Rng } from '../engine/rng';
 import { SEEDS, forAll } from '../testing/property';
 import type { RuleMeta, Rules } from './rules';
+import { STR } from '../strings';
 
 type RulesModule = typeof import('./rules');
 
@@ -102,6 +103,24 @@ describe('the two tables', () => {
     const noDefault = meta.filter((k) => !defaults.includes(k));
     expect(noMeta, `in DEFAULT_RULES, not in RULE_META: ${noMeta.join(', ')}`).toEqual([]);
     expect(noDefault, `in RULE_META, not in DEFAULT_RULES: ${noDefault.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('the warehouse pile before pickup', () => {
+  it('is labelled with the name of the Freight mode, its key and range as they were', async () => {
+    // an empty freight train picks a warehouse once it holds this much: the saved key is the same
+    // `collectMin`, so a game saved before the Collection mode went keeps the player's setting
+    const m = await load();
+    const meta = m.RULE_META.find((x) => x.key === 'collectMin')!;
+    expect(meta.label.startsWith(STR.train.mode.freight)).toBe(true);
+    expect(meta.label).not.toMatch(/collection|production/i);
+    expect({
+      min: meta.min,
+      max: meta.max,
+      step: meta.step,
+      default: m.DEFAULT_RULES.collectMin,
+    }).toEqual({ min: 0, max: 1000, step: 10, default: 100 });
+    expect(m.rulesFrom({ collectMin: 250 }).collectMin).toBe(250);
   });
 });
 
@@ -716,6 +735,22 @@ describe('rule presets', () => {
     expect(raw.presets.Rich.savedAt).toBe(1000);
   });
 
+  it('stores a name cut just after a space in the form a lookup finds, for every cut', async () => {
+    const m = await load();
+    for (let len = 1; len <= m.RULE_PRESET_NAME_MAX + 2; len++) {
+      // a space falls exactly on the last character the cut keeps when len = MAX
+      const typed = `${'a'.repeat(m.RULE_PRESET_NAME_MAX - 1)} ${'b'.repeat(len)}`;
+      expect(m.saveRulePreset(typed, m.rulesFrom({ payoutMul: 2 }))).toBe(true);
+      for (const { name } of m.listRulePresets()) {
+        expect(name).toBe(name.trim());
+        expect(m.readRulePreset(name)).not.toBeNull();
+      }
+      expect(m.readRulePreset(typed)).not.toBeNull();
+      expect(m.deleteRulePreset(typed)).toBe(true);
+      expect(m.listRulePresets()).toEqual([]);
+    }
+  });
+
   it('saves the live rules when no set is given, and writes no tuning key', async () => {
     const m = await load();
     m.applyGameRules({ deadlineMul: 2 });
@@ -1001,7 +1036,8 @@ function expectAsWritten(s: Shipped, raw: Json, got: Rules, at: string) {
 }
 
 const JUNK = ['{bad', '42', '[]', 'null', '""', 'true', ''];
-const CANON = (n: string) => Array.from(n.trim()).slice(0, 32).join('');
+// A preset name as stored: trimmed, cut to 32 characters, trimmed again (a cut can end in a space).
+const CANON = (n: string) => Array.from(n.trim()).slice(0, 32).join('').trim();
 
 type Op =
   | { op: 'set'; patch: Record<string, number> }
@@ -1210,6 +1246,8 @@ describe('properties over generated inputs', () => {
     );
   });
 
+  // slow because the rules module is imported afresh at the start of each seeded sequence and at
+  // every reload in it: half a second alone
   it('any sequence of operations and reloads follows the model and stores only what it owns', async () => {
     const s = await load();
     at(1000);
@@ -1333,7 +1371,7 @@ describe('properties over generated inputs', () => {
         }
       },
     );
-  });
+  }, 30_000);
 });
 
 describe('the import-time read over every way storage can fail', () => {

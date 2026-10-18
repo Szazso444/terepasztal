@@ -3,11 +3,14 @@ import type { LevelStation } from '../world/level';
 import { scaleCost } from './stockpile';
 import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
-import { rules } from './rules';
+import { rules, type Rules } from './rules';
+import { productionMul as seasonProductionMul, type Season } from './weather';
+import { biomeAt, biomeDef } from './biomes';
 import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
+import { placeSpan } from './doors';
 
 export type { StationDef };
 export { MAX_LEVEL };
@@ -15,19 +18,20 @@ export const STATION_DEFS: StationDef[] = content.stations.defs;
 /** Per-level tables, one value for each level 1..MAX_LEVEL. */
 export const LEVELS = content.stations.levels;
 
+/** The definition of a station kind; a plain loop, as a placing preview asks every frame. */
 export function stationDef(id: string): StationDef {
-  const d = STATION_DEFS.find((s) => s.id === id);
-  if (!d) throw new Error(`unknown station ${id}`);
-  return d;
+  for (let i = 0; i < STATION_DEFS.length; i++)
+    if (STATION_DEFS[i].id === id) return STATION_DEFS[i];
+  throw new Error(`unknown station ${id}`);
 }
 /**
- * Width (along x) and depth (along y) of a station turned to `rot`: the rotation's axis decides
- * it (`rotationAxis`), so `rot` and `rot + 2` give the same span.
+ * Width (along x) and depth (along y) of a station turned to `rot`: its span at rotation 0
+ * (`placeSpan`), swapped on the other axis (`rotationAxis`), so `rot` and `rot + 2` give the same
+ * span.
  */
 export function stationSpan(def: StationDef, rot: number): { w: number; h: number } {
-  if (def.long) return rot % 2 === 0 ? { w: 2, h: 1 } : { w: 1, h: 2 };
-  const n = def.size ?? 1;
-  return { w: n, h: n };
+  const { w, h } = placeSpan(def);
+  return rot % 2 === 0 ? { w, h } : { w: h, h: w };
 }
 /** Tiles a station of this kind covers with its corner at (x, y), turned to `rot`. */
 export function stationFootprint(defId: string, x: number, y: number, rot: number) {
@@ -39,8 +43,8 @@ export function stationFootprint(defId: string, x: number, y: number, rot: numbe
 /**
  * Tiles where track may serve a station of this kind with its corner at (x, y), turned to `rot`:
  * a shed (a depot) has one gate at each end of every track through it, west then east (rot 0 and
- * 2) or north then south (rot 1 and 3); any other station every orthogonal neighbour of its
- * footprint.
+ * 2) or north then south (rot 1 and 3); any other station, one of two tiles included, every
+ * orthogonal neighbour of its footprint.
  */
 export function stationGates(defId: string, x: number, y: number, rot: number) {
   return gatesOf(stationDef(defId), x, y, rot);
@@ -48,8 +52,9 @@ export function stationGates(defId: string, x: number, y: number, rot: number) {
 function gatesOf(def: StationDef, x: number, y: number, rot: number) {
   const { w, h } = stationSpan(def, rot);
   const out: { x: number; y: number }[] = [];
-  // a narrow shed is one track through, in at one end and out at the other; a wide depot two
-  if (def.long || (def.depot && (def.size ?? 1) === 2)) {
+  // a narrow shed is one track through, in at one end and out at the other; a wide depot two. The
+  // shed rule is the depot's, not the footprint's: a station of two tiles is served from all sides
+  if (def.depot && (def.long || (def.size ?? 1) === 2)) {
     if (rot % 2 === 0) {
       for (let dy = 0; dy < h; dy++) out.push({ x: x - 1, y: y + dy });
       for (let dy = 0; dy < h; dy++) out.push({ x: x + w, y: y + dy });
@@ -108,39 +113,195 @@ function wholeLevel(v: unknown): number {
   return Math.max(1, Math.min(MAX_LEVEL, Math.floor(v)));
 }
 
-/** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */
 /** Radius within which harvested terrain counts, and the weighted sum that means "plenty". */
 export const HARVEST_RADIUS = 4;
-const HARVEST_FULL = 12;
+export const HARVEST_FULL = 12;
+/** The ground factor's floor (a bare site) and ceiling (a dense patch). */
+export const HARVEST_FLOOR = 0.15;
+export const HARVEST_CEIL = 1.6;
+/** Most tiles a harvest counts: every tile within the radius but the station's own. */
+export const HARVEST_CELLS_MAX = (2 * HARVEST_RADIUS + 1) ** 2 - 1;
+
+/** The kind of ground a harvesting station counts. */
+export type HarvestTerrain = NonNullable<StationDef['terrain']>;
+
 /**
- * How well a harvesting station is placed: matching tiles within the radius count with weight
- * 1/(1+distance). 1 = plenty; sparse surroundings drop towards 0.15, a dense patch reaches 1.6.
+ * The tiles a harvest counted, in the order it counted them (rows north to south, each west to
+ * east): tile `i < count` is (x[i], y[i]), at Chebyshev distance d[i] from the station, and adds
+ * weight[i] = 1 / (1 + d[i]). Entries from `count` on are left over from earlier use. A breakdown
+ * given one overwrites it, so a caller that asks every frame keeps one and allocates nothing for
+ * the tiles.
  */
-export function terrainFactorAt(map: GameMap, x: number, y: number, defId: string): number {
+export class HarvestCells {
+  count = 0;
+  readonly x = new Int32Array(HARVEST_CELLS_MAX);
+  readonly y = new Int32Array(HARVEST_CELLS_MAX);
+  readonly d = new Uint8Array(HARVEST_CELLS_MAX);
+  readonly weight = new Float64Array(HARVEST_CELLS_MAX);
+}
+
+/** The matching tiles at one distance: `n` of them, adding `contribution` = n / (1 + d). */
+export interface HarvestRing {
+  d: number;
+  n: number;
+  contribution: number;
+}
+
+/**
+ * What a harvesting station of a level makes a week on a tile, and why. The rings are the raw
+ * weighted sum split by distance, so they add up to `sum` (bar float rounding), not to `factor`.
+ */
+export interface HarvestBreakdown {
+  defId: string;
+  terrain: HarvestTerrain;
+  /** the level the yield is for, whole and within 1 to MAX_LEVEL */
+  level: number;
+  /** every tile counted, with its distance and weight */
+  cells: HarvestCells;
+  /** one row per distance, 1 to HARVEST_RADIUS, nearest first */
+  rings: HarvestRing[];
+  /** the weighted sum of the counted tiles, added in `cells` order */
+  sum: number;
+  /** sum / HARVEST_FULL */
+  raw: number;
+  /** raw kept within HARVEST_FLOOR and HARVEST_CEIL: the station's `terrainFactor` */
+  factor: number;
+  /** which bound `factor` was held at, null when raw lies within them */
+  clamped: 'floor' | 'ceil' | null;
+  /** the biome of the station's own tile (`BiomeDef.id`), and its multiplier for this kind */
+  biome: string;
+  biomeMul: number;
+  season: Season;
+  seasonMul: number;
+  /** the tuning's `productionMul` */
+  rulesMul: number;
+  /** the level's production before any multiplier (`LEVELS.production`) */
+  base: number;
+  /**
+   * units a week: base × rulesMul × factor × seasonMul × biomeMul, grouped as a placed station
+   * multiplies them (`productionPerWeek` × `productionMul`), so the two agree to the last bit
+   */
+  perWeek: number;
+}
+
+/** Whether ground of terrain `t` counts for a station that harvests `want`. */
+function harvests(want: HarvestTerrain, t: Terrain): boolean {
+  switch (want) {
+    case 'grass':
+      return t === Terrain.Grass;
+    case 'forest':
+      return t === Terrain.Forest;
+    case 'rock':
+      return t === Terrain.Rock || t === Terrain.Hill;
+    case 'sand':
+      return t === Terrain.Sand;
+    default:
+      return t === Terrain.Water;
+  }
+}
+
+/**
+ * Units a week a station of `level` makes on ground of `factor` under the tuning, before the
+ * season and biome multiplier (`Station.productionMul`): what `Station.productionPerWeek` and a
+ * harvest breakdown both read, so the number shown is the number produced.
+ */
+export function weeklyOutput(
+  level: number,
+  factor: number,
+  tuning: Pick<Rules, 'productionMul'> = rules,
+): number {
+  return LEVELS.production[level - 1] * tuning.productionMul * factor;
+}
+
+/**
+ * Why a harvesting station of `defId` at `level` on (x, y) makes what it does, in `season` and
+ * under `tuning`: matching tiles within HARVEST_RADIUS each add 1 / (1 + distance), the sum over
+ * HARVEST_FULL is held within HARVEST_FLOOR and HARVEST_CEIL, and the yield multiplies that factor
+ * with the level's base, the tuning, the season and the biome of the station's own tile. Null for
+ * a station that harvests nothing. Whether a station may stand there is not asked, so a preview
+ * can show the yield of a tile it cannot be placed on. The counted tiles go into `cells`, which is
+ * overwritten (emptied for a null), so a caller that asks every frame passes the same one.
+ */
+export function harvestBreakdown(
+  map: GameMap,
+  x: number,
+  y: number,
+  defId: string,
+  level: number,
+  season: Season,
+  tuning: Pick<Rules, 'productionMul'> = rules,
+  cells: HarvestCells = new HarvestCells(),
+): HarvestBreakdown | null {
+  cells.count = 0;
   const want = stationDef(defId).terrain;
-  if (!want) return 1;
-  const match = (t: Terrain) =>
-    want === 'grass'
-      ? t === Terrain.Grass
-      : want === 'forest'
-        ? t === Terrain.Forest
-        : want === 'rock'
-          ? t === Terrain.Rock || t === Terrain.Hill
-          : want === 'sand'
-            ? t === Terrain.Sand
-            : t === Terrain.Water;
+  if (!want) return null;
+  let n1 = 0;
+  let n2 = 0;
+  let n3 = 0;
+  let n4 = 0;
   let sum = 0;
+  // dy outer, dx inner, adding as it goes: the float sum every placed station's factor came from
   for (let dy = -HARVEST_RADIUS; dy <= HARVEST_RADIUS; dy++)
     for (let dx = -HARVEST_RADIUS; dx <= HARVEST_RADIUS; dx++) {
       if (!dx && !dy) continue;
       if (!inBounds(map, x + dx, y + dy)) continue;
-      if (!match(terrainAt(map, x + dx, y + dy))) continue;
+      if (!harvests(want, terrainAt(map, x + dx, y + dy))) continue;
       const d = Math.max(Math.abs(dx), Math.abs(dy));
-      sum += 1 / (1 + d);
+      const w = 1 / (1 + d);
+      sum += w;
+      const i = cells.count++;
+      cells.x[i] = x + dx;
+      cells.y[i] = y + dy;
+      cells.d[i] = d;
+      cells.weight[i] = w;
+      if (d === 1) n1++;
+      else if (d === 2) n2++;
+      else if (d === 3) n3++;
+      else n4++;
     }
-  return Math.max(0.15, Math.min(1.6, sum / HARVEST_FULL));
+  const raw = sum / HARVEST_FULL;
+  const factor = Math.max(HARVEST_FLOOR, Math.min(HARVEST_CEIL, raw));
+  const whole = wholeLevel(level);
+  const biome = biomeDef(biomeAt(map, x, y));
+  const biomeMul = biome.production[defId] ?? 1;
+  const seasonMul = seasonProductionMul(defId, season);
+  return {
+    defId,
+    terrain: want,
+    level: whole,
+    cells,
+    rings: [
+      { d: 1, n: n1, contribution: n1 / 2 },
+      { d: 2, n: n2, contribution: n2 / 3 },
+      { d: 3, n: n3, contribution: n3 / 4 },
+      { d: 4, n: n4, contribution: n4 / 5 },
+    ],
+    sum,
+    raw,
+    factor,
+    clamped: raw < HARVEST_FLOOR ? 'floor' : raw > HARVEST_CEIL ? 'ceil' : null,
+    biome: biome.id,
+    biomeMul,
+    season,
+    seasonMul,
+    rulesMul: tuning.productionMul,
+    base: LEVELS.production[whole - 1],
+    // grouped as the station multiplies them: productionPerWeek × (season × biome)
+    perWeek: weeklyOutput(whole, factor, tuning) * (seasonMul * biomeMul),
+  };
 }
 
+/** Shared by terrainFactorAt, which reads the factor alone. */
+const FACTOR_CELLS = new HarvestCells();
+/**
+ * How well a harvesting station is placed (`harvestBreakdown`'s factor): 1 = plenty; sparse
+ * surroundings drop towards 0.15, a dense patch reaches 1.6. 1 for a station that harvests nothing.
+ */
+export function terrainFactorAt(map: GameMap, x: number, y: number, defId: string): number {
+  return harvestBreakdown(map, x, y, defId, 1, 'spring', rules, FACTOR_CELLS)?.factor ?? 1;
+}
+
+/** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */
 export class Station {
   readonly id: number;
   readonly def: StationDef;
@@ -276,7 +437,7 @@ export class Station {
    */
   get productionPerWeek() {
     if (this.closed) return 0;
-    const rate = LEVELS.production[this.level - 1] * rules.productionMul * this.terrainFactor;
+    const rate = weeklyOutput(this.level, this.terrainFactor);
     return this.def.id === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
   }
   /** Picture of the level (`spriteByLevel`): levels above the highest picture repeat it. */

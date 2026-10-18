@@ -28,8 +28,9 @@ import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
 import { PAST_SHIPPED } from './pastShipped';
 import type { SupplyMode } from '../sim/supply';
-import type { PartKind } from '../sim/body';
+import { OWN_LENGTH, type PartKind } from '../sim/body';
 import { MAX_LEVEL } from '../sim/levels';
+import { doorProblems, spanProblems } from '../sim/doors';
 export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
@@ -79,8 +80,16 @@ export interface LocoDef {
    * stays in the table so copies a player already owns keep loading and running.
    */
   retired?: boolean;
-  /** body length class: 1, 2 or 3 tiles (default small) */
+  /**
+   * body class: 0.5, 1, 2 or 3 tiles long (default small). It also sets the plans the body may
+   * take, its default pivots and bogies, and its craft cost.
+   */
   size?: VehicleSize;
+  /**
+   * the engine's own length over the buffers, as its model is built: 0.3 to 3.5 tiles. Without
+   * it the engine is as long as its size.
+   */
+  length?: number;
   /** rigid body, engine + tender, Garratt (engine, cradle, engine) or Meyer (frame on two engine units) */
   plan?: BodyPlan;
   /** pivot spacing as a fraction of body length (default 0.7) */
@@ -146,6 +155,30 @@ export interface CargoDef {
   /** only exists in this production-chain mode (missing: both) */
   supply?: SupplyMode;
 }
+/**
+ * The ground a station may be held to (`StationDef.standOn`): the terrains something can be
+ * built on, by their `TERRAIN_NAMES`.
+ */
+export const STAND_ON = ['grass', 'forest', 'hill', 'sand'] as const;
+export type StandOn = (typeof STAND_ON)[number];
+/**
+ * What a door is for: a street door is where walkers come and go and where a road to the place
+ * ends; a platform door gives on a station's platform track.
+ */
+export type DoorKind = 'street' | 'platform';
+/** The side of its tile a door faces, as `Dir` names it (src/engine/iso.ts). */
+export type DoorSide = 'N' | 'E' | 'S' | 'W';
+/**
+ * A door of a place (a station, a works, a house or a service stop) as its def holds it, for
+ * rotation 0; src/sim/doors.ts turns it with the place.
+ */
+export interface DoorDef {
+  kind: DoorKind;
+  /** the tile it is in, as [dx, dy] from the corner of the footprint at rotation 0 */
+  tile: [number, number];
+  /** the side of that tile it faces: an edge of the footprint, the tile beyond lies outside it */
+  side: DoorSide;
+}
 export interface StationDef {
   id: string;
   name: string;
@@ -163,6 +196,13 @@ export interface StationDef {
   art?: string;
   /** terrain the station harvests; output scales with how much of it lies nearby */
   terrain?: 'grass' | 'forest' | 'rock' | 'water' | 'sand';
+  /**
+   * the only terrains it is placed on (missing: any ground something can be built on); where it
+   * stands, not what it harvests, which is `terrain`
+   */
+  standOn?: StandOn[];
+  /** placed only with water on one of its four sides, of any biome (pumps) */
+  needsWater?: boolean;
   /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
   /** deliveries here enter the player's stockpile (depots) */
@@ -173,6 +213,12 @@ export interface StationDef {
   size?: number;
   /** 1×2 footprint along its axis (rotation 0: x, rotation 1: y) */
   long?: boolean;
+  /**
+   * footprint in tiles at rotation 0, width along x and depth along y, whole tiles, 1 to 3 each
+   * (missing: `long`, then `size`; `placeSpan` in src/sim/doors.ts). A turn of an odd rotation
+   * swaps them. Unlike `long` it makes no shed: its gates are every side of the footprint.
+   */
+  span?: { w: number; h: number };
   /** depot of this gauge: builds and serves only trains of it (default regular) */
   gauge?: Gauge;
   /** trains refuel coal / wood / oil here */
@@ -181,6 +227,12 @@ export interface StationDef {
   water?: boolean;
   /** false: never a contract endpoint */
   contracts?: boolean;
+  /**
+   * its doors at rotation 0: a platform door on its front and a street door on the side away
+   * from it, a depot one street door on a side no track runs through (missing: those of its kind,
+   * `defDoors` in src/sim/doors.ts)
+   */
+  doors?: DoorDef[];
 }
 export interface BuildingDef {
   bridge?: { material: 'wood' | 'stone'; capacity: number };
@@ -210,6 +262,15 @@ export interface BuildingDef {
   terrain?: 'hill' | 'grass' | 'sand' | 'forest';
   /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
   substation?: { radius: number; throughput: number };
+  /**
+   * footprint in tiles at rotation 0, width along x and depth along y, whole tiles, 1 to 3 each
+   * (missing: one tile; `placeSpan` in src/sim/doors.ts). A turn of an odd rotation swaps them. It
+   * is the room the works takes on the map, not the size of its model. Its site rules (`terrain`,
+   * `deposit`, `needsWater`) are met by any tile of it (`Builder.checkBuilding`).
+   */
+  span?: { w: number; h: number };
+  /** doors at rotation 0 (missing: a street door on its front, `defDoors` in src/sim/doors.ts) */
+  doors?: DoorDef[];
 }
 /**
  * Station tables with one value per level, levels 1 to `MAX_LEVEL` (src/sim/levels.ts). How
@@ -287,6 +348,8 @@ export interface DecorDef {
    * what a house from an old save starts with.
    */
   residents?: number;
+  /** doors at rotation 0 (missing: a street door on its front, `defDoors` in src/sim/doors.ts) */
+  doors?: DoorDef[];
 }
 /** Townhouse growth rules: capacity per level, how fast people arrive, when towns build more. */
 export interface HouseConfig {
@@ -333,6 +396,8 @@ export interface GachaConfig {
 export interface TrackConfig {
   pieces: Record<string, { name: string; cost: Cost; rotations: number }>;
   terrainCost: Record<string, number>;
+  /** a road tile the player lays (src/sim/roads.ts), before the build cost tuning */
+  road: { cost: Cost };
   refund: number;
   curveSpeed: number;
   switchSpeed: number;
@@ -630,6 +695,19 @@ function rows<T>(v: unknown, what: string, out: string[]): T[] {
   if (ok.length < v.length) out.push(`${what}: every entry must be an object`);
   return ok as T[];
 }
+/**
+ * A vehicle's own length, which `vehicleSpec` takes over its size's: absent, or a number of tiles
+ * within `OWN_LENGTH`.
+ */
+function checkLength(v: { id: unknown; length?: unknown }, what: string, out: string[]) {
+  const n = v.length;
+  if (n === undefined || (typeof n === 'number' && n >= OWN_LENGTH.min && n <= OWN_LENGTH.max))
+    return;
+  const got = typeof n === 'number' ? String(n) : JSON.stringify(n);
+  out.push(
+    `${what} ${String(v.id)}: length must be between ${OWN_LENGTH.min} and ${OWN_LENGTH.max} tiles, not ${got}`,
+  );
+}
 function checkIds(list: { id: unknown }[], what: string, out: string[]) {
   const seen = new Set<unknown>();
   for (const x of list) {
@@ -679,6 +757,7 @@ const CHECKS: Record<ContentKey, Check> = {
         out.push(`locomotive ${l.id}: needs waterCap and waterPerTile`);
       if (l.type === 'electric' && !l.powerPerTile)
         out.push(`locomotive ${l.id}: needs powerPerTile`);
+      checkLength(l, 'locomotive', out);
     }
     // a retired model is never handed out, so it cannot be the one a new game starts with
     if (!locos.some((l) => l.starter && l.retired !== true)) out.push('no starter locomotive');
@@ -686,8 +765,11 @@ const CHECKS: Record<ContentKey, Check> = {
   wagons(t, _ref, out) {
     const wagons = rows<WagonDef>(t, 'wagons', out);
     checkIds(wagons, 'wagon', out);
-    for (const w of wagons)
+    for (const w of wagons) {
       if (!CARGO_CLASSES.includes(w.carries)) out.push(`wagon ${w.id}: bad class "${w.carries}"`);
+      // the body geometry is shared, so a wagon that carries a length is held to the same range
+      checkLength(w, 'wagon', out);
+    }
     if (!wagons.some((w) => w.starter && w.retired !== true)) out.push('no starter wagon');
   },
   cargo(t, _ref, out) {
@@ -713,6 +795,20 @@ const CHECKS: Record<ContentKey, Check> = {
           if (typeof c !== 'string' || !ref.cargo.has(c))
             out.push(`station ${s.id}: unknown cargo "${String(c)}"`);
         }
+      const ground: unknown = s.standOn;
+      if (
+        ground !== undefined &&
+        !(
+          Array.isArray(ground) &&
+          ground.length &&
+          ground.every((t) => (STAND_ON as readonly unknown[]).includes(t))
+        )
+      )
+        out.push(`station ${s.id}: standOn must list some of ${STAND_ON.join(', ')}`);
+      if (s.needsWater !== undefined && typeof s.needsWater !== 'boolean')
+        out.push(`station ${s.id}: needsWater must be true or false`);
+      for (const p of spanProblems(s)) out.push(`station ${s.id}: ${p}`);
+      for (const p of doorProblems(s)) out.push(`station ${s.id}: ${p}`);
     }
     const lv = t.levels;
     if (!isObj(lv)) {
@@ -749,8 +845,10 @@ const CHECKS: Record<ContentKey, Check> = {
   decor(t, _ref, out) {
     const decor = rows<DecorDef>(t, 'decor', out);
     checkIds(decor, 'decor', out);
-    for (const d of decor)
+    for (const d of decor) {
       if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
+      for (const p of doorProblems(d)) out.push(`decor ${d.id}: ${p}`);
+    }
   },
   buildings(t, ref, out) {
     const list = rows<BuildingDef>(t, 'buildings', out);
@@ -759,6 +857,8 @@ const CHECKS: Record<ContentKey, Check> = {
       if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
         out.push(`building ${bd.id}: perWeek must be non-negative`);
       if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
+      for (const p of spanProblems(bd)) out.push(`building ${bd.id}: ${p}`);
+      for (const p of doorProblems(bd)) out.push(`building ${bd.id}: ${p}`);
       const r: unknown = bd.recipe;
       if (!isObj(r) || !isObj(r.in) || !isObj(r.out)) {
         out.push(`building ${bd.id}: recipe needs in and out`);
@@ -806,6 +906,8 @@ const CHECKS: Record<ContentKey, Check> = {
       if (!isObj(p) || !isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
     for (const k of Object.keys(trackJson.pieces))
       if (!pieces[k]) out.push(`track: missing piece "${k}"`);
+    const road = isObj(t) ? t.road : undefined;
+    if (!isObj(road) || !isCost(road.cost)) out.push('track: road cost must be a resource map');
   },
   crafting(t, ref, out) {
     if (!isObj(t)) {

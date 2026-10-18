@@ -1,7 +1,12 @@
-/** The existing miniature game uses a compressed metre, independent of rail gauge. */
-export const HUMAN_HEIGHT_PX = 11;
-export const HUMAN_HEIGHT_M = 1.75;
-export const DOOR_HEIGHT_M = 2.1;
+/** A walker's height on screen (peopleRenderer.ts); no building is sized by it. */
+export const PERSON_PX = 9;
+/**
+ * A standard door's height on screen: a building is scaled so its door is this tall. It is the
+ * 2.1 m door beside the 1.75 m, 11 px person the buildings were calibrated against, and it stays
+ * when a walker is drawn smaller. The miniature game uses a compressed metre, independent of rail
+ * gauge.
+ */
+export const DOOR_PX = 13.2;
 export const TREE_SCALE = 1.5;
 export const DOOR_REFERENCE_PX: Record<string, number> = {
   station: 10.5,
@@ -26,6 +31,8 @@ export const DOOR_FRACTION: Record<string, number> = {
 export const EQUIPMENT_SCALE: Record<string, number> = {
   water_tower: 0.7,
   fuel_stop: 0.65,
+  // the Fuel Pump: an estimate beside its neighbours until its art brings a measured reference
+  fuel_pump: 0.65,
   kiln: 0.7,
   refinery: 1.1,
   power_plant: 1.1,
@@ -38,6 +45,37 @@ export const EQUIPMENT_SCALE: Record<string, number> = {
   oil_derrick: 1,
   diesel_refinery: 1,
   wire_mill: 1,
+};
+/**
+ * The author's per-family size pick (2026-10-18, judged on the building scale review page): a
+ * multiplier on the size a family is drawn at by the door reference and the equipment table
+ * above, for every level, age and turn of the family. It is the one place to tune a family's
+ * size by eye; a family not named here is drawn as the references give it. A key that is a whole
+ * frame name (`town_1`) overrides its family's multiplier for that frame. Pictures are only ever
+ * scaled uniformly. Footprints and where a picture stands on them are not decided here.
+ */
+export const AUTHOR_SCALE: Record<string, number> = {
+  /** Town Hall */
+  town: 1.2,
+  /** Town Hall L1 is sized by another path and already lands near 1.36 doors: exempt from the town pick */
+  town_1: 1,
+  station: 0.9,
+  warehouse: 1.25,
+  /** Farm Halt */
+  farm: 0.75,
+  lumber: 0.9,
+  /** Quarry, shared by the Iron Mine, Sand Pit and Copper Mine */
+  quarry: 0.8,
+  grinder: 0.8,
+  power_plant: 1.2,
+  /** the Battery once it is renamed; the id stays */
+  substation: 0.9,
+  colliery: 1.2,
+  ironworks: 1.2,
+  /** proposal: "taller, increase its size" came with no number */
+  water_tower: 1.3,
+  /** the Coaling Stage; proposal: "also bigger" came with no number */
+  fuel_stop: 1.25,
 };
 /** What can say whether a frame exists: the atlas registry, or a set of frame names in a test. */
 export interface FrameNames {
@@ -70,15 +108,18 @@ export function hasScaleReference(frame: string) {
   const name = structureFamily(frame);
   return name in DOOR_FRACTION || name in DOOR_REFERENCE_PX || name in EQUIPMENT_SCALE;
 }
-/** Source measurements are visual estimates; new art must supply a measured reference. */
+/**
+ * Source measurements are visual estimates; new art must supply a measured reference. The size
+ * the reference gives is then multiplied by the author's pick for the family (`AUTHOR_SCALE`).
+ */
 export function structureScale(frame: string, illustratedHeight?: number) {
   const name = structureFamily(frame);
   const door =
     illustratedHeight && DOOR_FRACTION[name]
       ? illustratedHeight * DOOR_FRACTION[name]
       : DOOR_REFERENCE_PX[name];
-  if (door) return ((DOOR_HEIGHT_M / HUMAN_HEIGHT_M) * HUMAN_HEIGHT_PX) / door;
-  return EQUIPMENT_SCALE[name] ?? 1;
+  const own = door ? DOOR_PX / door : (EQUIPMENT_SCALE[name] ?? 1);
+  return own * (AUTHOR_SCALE[frame.replace('structures/', '')] ?? AUTHOR_SCALE[name] ?? 1);
 }
 /** How a building frame is sized: the family it is measured by and the scale that gives. */
 export interface ScaleReference {
@@ -87,8 +128,8 @@ export interface ScaleReference {
 }
 /**
  * The scale reference of a frame as the renderer draws it, or null when it has none: it then
- * draws at its own size, with no contact patches and no window lights. A turned frame is
- * measured by its unturned frame's family, so it keeps that frame's size, patches and lights.
+ * draws at its own size, with no ground fit (groundFit.ts) and no window lights. A turned frame
+ * is measured by its unturned frame's family, so it keeps that frame's size and lights.
  * `illustratedHeight` is the drawn picture's own height when it is illustrated (resolution above
  * 1): a door fraction is measured on the picture that is drawn.
  */

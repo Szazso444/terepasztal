@@ -15,6 +15,12 @@ export class Input {
   mouseInside = false;
   /** Pointer currently over a DOM overlay element (panels swallow world interaction). */
   overUi = false;
+  /**
+   * Pointer over the tooltip stack (`#tooltip-stack`, src/ui/tooltip.ts). That is over the UI too,
+   * so nothing is built there, but it is not leaving the tooltips: the stack follows the pointer in
+   * them itself, and a locked tooltip can be entered.
+   */
+  overTips = false;
   readonly buttons = new Set<number>();
   /** buttons that went down this frame (on the canvas) */
   readonly buttonPressed = new Set<number>();
@@ -52,7 +58,9 @@ export class Input {
       this.lastX = this.mouseX;
       this.lastY = this.mouseY;
       this.mouseInside = true;
-      this.overUi = !!(e.target as HTMLElement | null)?.closest?.('#ui-root > *');
+      const over = e.target as HTMLElement | null;
+      this.overUi = !!over?.closest?.('#ui-root > *');
+      this.overTips = !!over?.closest?.('#tooltip-stack');
     });
     document.addEventListener('mouseleave', () => (this.mouseInside = false));
 

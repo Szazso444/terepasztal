@@ -71,7 +71,14 @@ Everything is in `assets/source/buildings-v2/`.
   queue tool. A picture's status is `pending`, `generated`, `approved` or `rejected`.
 - `families.json`: what each building is, age by age, and the shared prompt text. Read it if you
   want to see a whole building's story; do not change it.
-- `guides/`: the grey block-outs you paint over, one per footprint and view.
+- `guides/`: the grey block-outs you paint over, one per footprint and view; a family whose
+  picture needs a taller block (`blockHeight` in `families.json`, the coaling stage) has its own,
+  `<family>-r<view>.png`. The queue names the right one. The windmill's guides are
+  `windmill-r0.png` to `windmill-r3.png`, each with its `windmill-r<view>-hub.json`, and
+  `windmill-sails-face.png` beside them. The coaling stage's turned views have an oblong guide
+  with pier stubs, `fuel_stop-oblong-r1.png` to `-r3.png`, each with a `-plan.json` that gives
+  the plinth's width the painting must hold. Both are handed out by hand: the queue does not name
+  them.
 - `<family>/<family>-a<age>-r<view>.png`: the pictures you make.
 - `<family>/<family>-a<age>-r<view>.rejected.png`: a picture that was given up, set aside by the
   tool for the user to look at. Never use one as a reference, and do not commit them.
