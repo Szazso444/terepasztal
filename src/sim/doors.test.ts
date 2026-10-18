@@ -36,6 +36,7 @@ import {
   doorProblems,
   doorsOf,
   placeSpan,
+  spanProblems,
   streetDoor,
   type Door,
   type PlaceDef,
@@ -259,6 +260,8 @@ describe('a def without doors', () => {
       { ...station, id: 'wide', size: 2 },
       { ...station, id: 'wider', size: 3 },
       { ...station, id: 'long', long: true },
+      { ...station, id: 'span 2 x 1', span: { w: 2, h: 1 } },
+      { ...station, id: 'span 1 x 2', span: { w: 1, h: 2 } },
       { ...depot, id: 'shed', size: 3 },
     ];
   }
@@ -336,6 +339,31 @@ describe('the content check of doors', () => {
     expect(validateContent(bundle).join('; ')).toMatch(
       new RegExp(`station depot: .*${problem.source}`),
     );
+  });
+
+  it('checks the doors of a station against its span, and refuses a span of three tiles or more', () => {
+    const base = { ...depot(), id: 'spanned' } as StationDef;
+    const doors = (tile: [number, number], side: 'N' | 'S' | 'E' | 'W') => [
+      { kind: 'street' as const, tile, side },
+    ];
+    const span21 = { ...base, span: { w: 2, h: 1 } };
+    // a door on the second tile of the pair, off its end, is on the footprint and faces out
+    expect(doorProblems({ ...span21, doors: doors([1, 0], 'E') })).toEqual([]);
+    expect(doorProblems({ ...span21, doors: doors([0, 0], 'S') })).toEqual([]);
+    // the tile below it is off the 2 x 1 footprint, and a door facing along it faces into it
+    expect(doorProblems({ ...span21, doors: doors([0, 1], 'S') }).join('; ')).toMatch(/tile/);
+    expect(doorProblems({ ...span21, doors: doors([0, 0], 'E') }).join('; ')).toMatch(/into/);
+    const span12 = { ...base, span: { w: 1, h: 2 } };
+    expect(doorProblems({ ...span12, doors: doors([0, 1], 'S') })).toEqual([]);
+    expect(doorProblems({ ...span12, doors: doors([0, 0], 'S') }).join('; ')).toMatch(/into/);
+    expect(spanProblems(span21)).toEqual([]);
+    expect(spanProblems(span12)).toEqual([]);
+    expect(spanProblems(base)).toEqual([]);
+    for (const span of [{ w: 2, h: 2 }, { w: 3, h: 1 }, { w: 0.5, h: 1 }, { w: 1 }, 'x'])
+      expect(
+        spanProblems({ ...base, span } as unknown as StationDef).join('; '),
+        JSON.stringify(span),
+      ).toMatch(/span/);
   });
 
   it('checks the doors of works and decor against their one tile', () => {
@@ -650,6 +678,17 @@ describe('the footprint a door is checked against', () => {
     const literal = (def: PlaceDef, rot: number) => {
       const odd = Math.abs(rot) % 2 === 1;
       if (!isStation(def)) return { w: 1, h: 1 };
+      // a span comes first, then `long`, then the `size` square
+      const sp = def.span;
+      if (
+        sp &&
+        sp.w >= 1 &&
+        sp.h >= 1 &&
+        Number.isInteger(sp.w) &&
+        Number.isInteger(sp.h) &&
+        sp.w * sp.h <= 2
+      )
+        return odd ? { w: sp.h, h: sp.w } : { w: sp.w, h: sp.h };
       if (def.long) return odd ? { w: 1, h: 2 } : { w: 2, h: 1 };
       const n = def.size ?? 1;
       return { w: n, h: n };
@@ -661,6 +700,13 @@ describe('the footprint a door is checked against', () => {
       ...placeDefs(),
       ...[1, 2, 3].map((n) => ({ ...plain, id: `size ${n}`, size: n })),
       { ...plain, id: 'long', long: true },
+      { ...plain, id: 'span 2 x 1', span: { w: 2, h: 1 } },
+      { ...plain, id: 'span 1 x 2', span: { w: 1, h: 2 } },
+      { ...plain, id: 'span before long', span: { w: 1, h: 2 }, long: true },
+      { ...plain, id: 'span before size', span: { w: 2, h: 1 }, size: 3 },
+      // a span the content check refuses is not read: the footprint the def had
+      { ...plain, id: 'span too big', span: { w: 2, h: 2 }, size: 3 },
+      { ...plain, id: 'span odd', span: { w: 1.5, h: 1 }, long: true },
     ];
     for (const def of defs) {
       expect(placeSpan(def), def.id).toEqual(literal(def, 0));

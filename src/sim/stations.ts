@@ -43,8 +43,8 @@ export function stationFootprint(defId: string, x: number, y: number, rot: numbe
 /**
  * Tiles where track may serve a station of this kind with its corner at (x, y), turned to `rot`:
  * a shed (a depot) has one gate at each end of every track through it, west then east (rot 0 and
- * 2) or north then south (rot 1 and 3); any other station every orthogonal neighbour of its
- * footprint.
+ * 2) or north then south (rot 1 and 3); any other station, one of two tiles included, every
+ * orthogonal neighbour of its footprint.
  */
 export function stationGates(defId: string, x: number, y: number, rot: number) {
   return gatesOf(stationDef(defId), x, y, rot);
@@ -52,8 +52,9 @@ export function stationGates(defId: string, x: number, y: number, rot: number) {
 function gatesOf(def: StationDef, x: number, y: number, rot: number) {
   const { w, h } = stationSpan(def, rot);
   const out: { x: number; y: number }[] = [];
-  // a narrow shed is one track through, in at one end and out at the other; a wide depot two
-  if (def.long || (def.depot && (def.size ?? 1) === 2)) {
+  // a narrow shed is one track through, in at one end and out at the other; a wide depot two. The
+  // shed rule is the depot's, not the footprint's: a station of two tiles is served from all sides
+  if (def.depot && (def.long || (def.size ?? 1) === 2)) {
     if (rot % 2 === 0) {
       for (let dy = 0; dy < h; dy++) out.push({ x: x - 1, y: y + dy });
       for (let dy = 0; dy < h; dy++) out.push({ x: x + w, y: y + dy });

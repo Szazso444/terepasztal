@@ -18,7 +18,14 @@ import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
 import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
 import { rules } from './rules';
-import { Station, terrainFactorAt, stationDef, stationFootprint, MAX_LEVEL } from './stations';
+import {
+  Station,
+  terrainFactorAt,
+  stationDef,
+  stationFootprint,
+  stationGates,
+  MAX_LEVEL,
+} from './stations';
 import { ageOfLevel, levelCap } from './levels';
 import { ageDef, LAST_AGE } from './ages';
 import type { Economy } from './economy';
@@ -279,7 +286,13 @@ export class Builder {
   private unlocked(x: number, y: number) {
     return this.free || this.regions.isTileUnlocked(x, y);
   }
-  hasAdjacentTrack(x: number, y: number) {
+  /**
+   * Track beside (x, y); with a station kind given, beside its footprint turned to `rot` (beside
+   * any of its tiles, so a station of two tiles is served from either).
+   */
+  hasAdjacentTrack(x: number, y: number, defId?: string, rot = 0) {
+    if (defId !== undefined)
+      return stationGates(defId, x, y, rot).some((g) => this.track.has(g.x, g.y));
     return DIRS.some((d) => this.track.has(x + DIR_DX[d], y + DIR_DY[d]));
   }
   /** Track tiles serving a station: its platforms (a depot's gates with track on them). */
@@ -824,14 +837,12 @@ export class Builder {
     }
     if (defId === 'town') {
       const near = this.stations.find(
-        (s) =>
-          s.def.id === 'town' &&
-          Math.max(Math.abs(s.x - x), Math.abs(s.y - y)) < Builder.TOWN_SPACING,
+        (s) => s.def.id === 'town' && s.distTo(x, y) < Builder.TOWN_SPACING,
       );
       if (near)
         return { ok: false, cost: {}, reason: STR.build.townTooClose(Builder.TOWN_SPACING) };
     }
-    if (!def.depot && !this.hasAdjacentTrack(x, y))
+    if (!def.depot && !this.hasAdjacentTrack(x, y, defId, rot))
       return { ok: false, cost: {}, reason: STR.build.needTrack };
     const own = this.stationGround(def, stationFootprint(defId, x, y, rot));
     if (own) return { ok: false, cost: {}, reason: own };

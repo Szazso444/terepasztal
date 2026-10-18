@@ -30,7 +30,7 @@ import { PAST_SHIPPED } from './pastShipped';
 import type { SupplyMode } from '../sim/supply';
 import { OWN_LENGTH, type PartKind } from '../sim/body';
 import { MAX_LEVEL } from '../sim/levels';
-import { doorProblems } from '../sim/doors';
+import { doorProblems, spanProblems } from '../sim/doors';
 export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
@@ -213,6 +213,12 @@ export interface StationDef {
   size?: number;
   /** 1×2 footprint along its axis (rotation 0: x, rotation 1: y) */
   long?: boolean;
+  /**
+   * footprint in tiles at rotation 0, width along x and depth along y: 1 x 1, 2 x 1 or 1 x 2
+   * (missing: `long`, then `size`; `placeSpan` in src/sim/doors.ts). A turn of an odd rotation
+   * swaps them. Unlike `long` it makes no shed: its gates are every side of the footprint.
+   */
+  span?: { w: number; h: number };
   /** depot of this gauge: builds and serves only trains of it (default regular) */
   gauge?: Gauge;
   /** trains refuel coal / wood / oil here */
@@ -794,6 +800,7 @@ const CHECKS: Record<ContentKey, Check> = {
         out.push(`station ${s.id}: standOn must list some of ${STAND_ON.join(', ')}`);
       if (s.needsWater !== undefined && typeof s.needsWater !== 'boolean')
         out.push(`station ${s.id}: needsWater must be true or false`);
+      for (const p of spanProblems(s)) out.push(`station ${s.id}: ${p}`);
       for (const p of doorProblems(s)) out.push(`station ${s.id}: ${p}`);
     }
     const lv = t.levels;
