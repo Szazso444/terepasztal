@@ -1,0 +1,367 @@
+{
+  "calibrationPass": true,
+  "swing": {
+    "entries": [
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-swing-p1.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 290,
+          "y": 472,
+          "width": 516,
+          "height": 969
+        },
+        "height": 969,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [613, 1281, 807, 1456],
+            "ylow": 1440,
+            "cx": 665.4211915535445,
+            "cy": 1413.7349170437406,
+            "f": 0.11059114896720042
+          },
+          "left": {
+            "window": [290, 1270, 480, 1445],
+            "ylow": 1429,
+            "cx": 389.7393072044235,
+            "cy": 1405.471621401854,
+            "f": -0.040291066371264866
+          }
+        },
+        "turned": {
+          "L": 550,
+          "R": 617,
+          "value": 0.06979166666666667
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      },
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-swing-p2.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 349,
+          "y": 419,
+          "width": 366,
+          "height": 1022
+        },
+        "height": 1022,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [507, 1281, 706, 1456],
+            "ylow": 1440,
+            "cx": 569.7104860898808,
+            "cy": 1413.6533170284317,
+            "f": -0.0067513670045311475
+          },
+          "left": {
+            "window": [385, 1167, 583, 1342],
+            "ylow": 1342,
+            "cx": 515.2507978723404,
+            "cy": 1317.6257978723404,
+            "f": 0.07335770966910783
+          }
+        },
+        "turned": {
+          "L": 497,
+          "R": 564,
+          "value": 0.06979166666666667
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      },
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-swing-p3.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 268,
+          "y": 423,
+          "width": 592,
+          "height": 1018
+        },
+        "height": 1018,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [410, 1281, 600, 1456],
+            "ylow": 1440,
+            "cx": 509.867900032457,
+            "cy": 1416.522070756248,
+            "f": -0.040274942640917
+          },
+          "left": {
+            "window": [493, 1172, 686, 1347],
+            "ylow": 1347,
+            "cx": 530.9699392388872,
+            "cy": 1326.4502718260314,
+            "f": 0.07689182323406164
+          }
+        },
+        "turned": {
+          "L": 501,
+          "R": 568,
+          "value": 0.06979166666666667
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      },
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-swing-p4.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 349,
+          "y": 473,
+          "width": 384,
+          "height": 968
+        },
+        "height": 968,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [505, 1281, 703, 1456],
+            "ylow": 1440,
+            "cx": 572.713135240211,
+            "cy": 1413.6120522077201,
+            "f": 0.057923282967379364
+          },
+          "left": {
+            "window": [387, 1275, 585, 1450],
+            "ylow": 1440,
+            "cx": 498.265306122449,
+            "cy": 1413.4054281506417,
+            "f": 0.01481977749252772
+          }
+        },
+        "turned": {
+          "L": 551,
+          "R": 618,
+          "value": 0.06979166666666667
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      }
+    ],
+    "slides": [0.11734251597173156, 0.033523575636385854, 0.062072045741533924],
+    "overlaps": [0.22078216705940898, 0.5042659319045636]
+  },
+  "shoulder": {
+    "entries": [
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-shoulder-p1.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 290,
+          "y": 472,
+          "width": 560,
+          "height": 969
+        },
+        "height": 969,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [613, 1281, 807, 1456],
+            "ylow": 1440,
+            "cx": 665.4211915535445,
+            "cy": 1413.7349170437406,
+            "f": 0.11059114896720042
+          },
+          "left": {
+            "window": [290, 1270, 480, 1445],
+            "ylow": 1429,
+            "cx": 389.7393072044235,
+            "cy": 1405.471621401854,
+            "f": -0.040291066371264866
+          }
+        },
+        "turned": {
+          "L": 550,
+          "R": 553,
+          "value": 0.003125
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      },
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-shoulder-p2.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 349,
+          "y": 419,
+          "width": 501,
+          "height": 1022
+        },
+        "height": 1022,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [507, 1281, 706, 1456],
+            "ylow": 1440,
+            "cx": 569.7104860898808,
+            "cy": 1413.6533170284317,
+            "f": -0.0067513670045311475
+          },
+          "left": {
+            "window": [385, 1167, 583, 1342],
+            "ylow": 1342,
+            "cx": 515.2507978723404,
+            "cy": 1317.6257978723404,
+            "f": 0.07335770966910783
+          }
+        },
+        "turned": {
+          "L": 497,
+          "R": 500,
+          "value": 0.003125
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      },
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-shoulder-p3.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 268,
+          "y": 423,
+          "width": 582,
+          "height": 1018
+        },
+        "height": 1018,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [410, 1281, 600, 1456],
+            "ylow": 1440,
+            "cx": 509.867900032457,
+            "cy": 1416.522070756248,
+            "f": -0.040274942640917
+          },
+          "left": {
+            "window": [493, 1172, 686, 1347],
+            "ylow": 1347,
+            "cx": 530.9699392388872,
+            "cy": 1326.4502718260314,
+            "f": 0.07689182323406164
+          }
+        },
+        "turned": {
+          "L": 501,
+          "R": 504,
+          "value": 0.003125
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      },
+      {
+        "file": "G:\\DEV\\Terepasztal\\people-331\\assets\\source\\people-v3-guides\\back-shoulder-p4.png",
+        "returned": [1024, 1536],
+        "shapePass": true,
+        "box": {
+          "x": 349,
+          "y": 473,
+          "width": 501,
+          "height": 968
+        },
+        "height": 968,
+        "soleRow": 1440,
+        "feet": {
+          "right": {
+            "window": [505, 1281, 703, 1456],
+            "ylow": 1440,
+            "cx": 572.713135240211,
+            "cy": 1413.6120522077201,
+            "f": 0.057923282967379364
+          },
+          "left": {
+            "window": [387, 1275, 585, 1450],
+            "ylow": 1440,
+            "cx": 498.265306122449,
+            "cy": 1413.4054281506417,
+            "f": 0.01481977749252772
+          }
+        },
+        "turned": {
+          "L": 551,
+          "R": 554,
+          "value": 0.003125
+        },
+        "caps": {
+          "white": 0,
+          "amber": 0,
+          "pass": true
+        },
+        "rgba": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true
+        }
+      }
+    ],
+    "slides": [0.11734251597173156, 0.033523575636385854, 0.062072045741533924],
+    "overlaps": [0.2115685786631149, 0.5043955264883643]
+  }
+}

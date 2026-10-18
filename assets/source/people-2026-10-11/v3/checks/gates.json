@@ -1,0 +1,25 @@
+{
+  "calibration": "passed",
+  "rawHashes": "passed",
+  "trialFormatting": "passed",
+  "typecheck": "passed",
+  "lint": "passed",
+  "build": "passed",
+  "scope": "passed",
+  "repositoryFormatting": {
+    "status": "failed",
+    "files": 509
+  },
+  "tests": {
+    "status": "failed",
+    "filesFailed": 15,
+    "filesPassed": 177,
+    "failed": 24,
+    "passed": 4127,
+    "skipped": 11,
+    "todo": 1,
+    "total": 4163,
+    "durationSeconds": 392.29,
+    "scope": "outside v3"
+  }
+}
