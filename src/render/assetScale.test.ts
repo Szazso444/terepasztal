@@ -29,7 +29,8 @@ it("keeps a common door height across packed building levels, before the author'
     if (!DOOR_FRACTION[family]) continue;
     const height = frame.h / atlas.resolution;
     const door =
-      (height * DOOR_FRACTION[family] * structureScale(key, height)) / (AUTHOR_SCALE[family] ?? 1);
+      (height * DOOR_FRACTION[family] * structureScale(key, height)) /
+      (AUTHOR_SCALE[key.replace('structures/', '')] ?? AUTHOR_SCALE[family] ?? 1);
     expect(door, key).toBeCloseTo(DOOR_PX, 5);
     checked++;
   }
@@ -103,6 +104,11 @@ const PICK: Record<string, number> = {
   water_tower: 1.3,
   fuel_stop: 1.25,
 };
+/** Frames exempt from their family's pick: Town Hall L1 is sized by another path (about 1.36 doors). */
+const EXEMPT: Record<string, number> = { town_1: 1 };
+/** The pick a frame has: its own exemption, else its family's multiplier, else none. */
+const pickOf = (frame: string) =>
+  EXEMPT[frame.replace('structures/', '')] ?? PICK[structureFamily(frame)] ?? 1;
 /**
  * The scale a frame had before the pick, from the numbers above and the 2.1 m door beside the
  * 11 px person.
@@ -116,7 +122,7 @@ const referenceScale = (frame: string, illustratedHeight?: number) => {
 };
 /** The scale a frame has: what the references give, times the author's pick for its family. */
 const baselineScale = (frame: string, illustratedHeight?: number) =>
-  referenceScale(frame, illustratedHeight) * (PICK[structureFamily(frame)] ?? 1);
+  referenceScale(frame, illustratedHeight) * pickOf(frame);
 
 describe('building scale', () => {
   /**
@@ -131,7 +137,7 @@ describe('building scale', () => {
         ? illustratedHeight * DOOR_FRACTION[family]
         : DOOR_REFERENCE_PX[family];
     const own = door ? ((2.1 / 1.75) * 11) / door : (EQUIPMENT_SCALE[family] ?? 1);
-    return own * (AUTHOR_SCALE[family] ?? 1);
+    return own * pickOf(frame);
   };
 
   it('is unchanged for every packed illustrated frame', () => {
@@ -211,7 +217,7 @@ describe("the author's size pick", () => {
   const frames: FrameNames = { has: () => false };
   /** One representative frame per listed family; the sizes are measured the way the game does. */
   const REPRESENTATIVE: Record<string, string> = {
-    town: 'structures/town_1',
+    town: 'structures/town_2',
     station: 'structures/station_2',
     warehouse: 'structures/warehouse_3',
     farm: 'structures/farm_1',
@@ -226,9 +232,27 @@ describe("the author's size pick", () => {
     fuel_stop: 'structures/fuel_stop',
   };
 
-  it("pins the author's multipliers, family by family", () => {
-    expect(AUTHOR_SCALE).toEqual(PICK);
+  it("pins the author's multipliers, family by family, and the frames exempt from them", () => {
+    expect(AUTHOR_SCALE).toEqual({ ...PICK, ...EXEMPT });
     expect(Object.keys(REPRESENTATIVE).sort()).toEqual(Object.keys(PICK).sort());
+  });
+
+  it('exempts Town Hall L1 from the town pick, at every measure and turn, and no other town frame', () => {
+    for (const height of [undefined, 199, 250]) {
+      expect(structureScale('structures/town_1', height), `town_1 at ${height}`).toBe(
+        referenceScale('structures/town_1', height),
+      );
+      for (const n of [2, 3, 4, 5])
+        expect(
+          structureScale(`structures/town_${n}`, height),
+          `town_${n} at ${height}`,
+        ).toBeCloseTo(referenceScale(`structures/town_${n}`, height) * 1.2, 12);
+    }
+    const turned: FrameNames = { has: (k) => k === 'structures/town_1' };
+    expect(scaleReference(turned, 'structures/town_1_r2')).toEqual({
+      family: 'town',
+      scale: referenceScale('structures/town_1'),
+    });
   });
 
   it("is today's size times the multiplier for a frame of each listed family", () => {
