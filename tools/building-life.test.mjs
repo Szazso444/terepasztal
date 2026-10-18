@@ -52,10 +52,11 @@ const visible = (f, x, y) =>
   x >= 0 && y >= 0 && x < f.w && y < f.h && f.data[(y * f.w + x) * 4 + 3] > 0;
 
 describe('the building life file', () => {
+  // measures every frame again: 0.36 s alone, so a limit of 20 s
   it('is what the frames give now', async () => {
     const text = await serialise(buildLife(frames));
     expect(readFileSync(LIFE_FILE, 'utf8') === text).toBe(true);
-  });
+  }, 20_000);
 
   it('is the same every time it is made', () => {
     expect(buildLife(frames)).toEqual(buildLife(frames));
