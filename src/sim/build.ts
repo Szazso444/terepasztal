@@ -837,9 +837,7 @@ export class Builder {
     }
     if (defId === 'town') {
       const near = this.stations.find(
-        (s) =>
-          s.def.id === 'town' &&
-          Math.max(Math.abs(s.x - x), Math.abs(s.y - y)) < Builder.TOWN_SPACING,
+        (s) => s.def.id === 'town' && s.distTo(x, y) < Builder.TOWN_SPACING,
       );
       if (near)
         return { ok: false, cost: {}, reason: STR.build.townTooClose(Builder.TOWN_SPACING) };

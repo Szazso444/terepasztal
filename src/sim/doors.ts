@@ -163,11 +163,6 @@ export function spanProblems(def: PlaceDef): string[] {
  * street or a platform door on a tile of the footprint at rotation 0 (`placeSpan`), facing out of
  * it, and one of them is a street door.
  */
-/**
- * What is wrong with a def's doors, for the content check; nothing when it has none. Each is a
- * street or a platform door on a tile of the footprint at rotation 0 (`placeSpan`), facing out of
- * it, and one of them is a street door.
- */
 export function doorProblems(def: PlaceDef): string[] {
   const doors: unknown = def.doors;
   if (doors === undefined) return [];

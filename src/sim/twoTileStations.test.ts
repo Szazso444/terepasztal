@@ -5,6 +5,7 @@ import { Terrain } from '../world/tiles';
 import { STR } from '../strings';
 import { forAll, shrinkInt } from '../testing/property';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
+import { Builder } from './build';
 import { doorsOf, placeSpan } from './doors';
 import { DEFAULT_RULES, rules } from './rules';
 import {
@@ -432,6 +433,19 @@ describe('a town hall of two tiles', () => {
     const m = w.towns.members(t);
     expect(m.decor.map((d) => d.x)).toEqual([far]);
     expect(m.houses).toBe(1);
+  });
+
+  it('keeps a new town hall TOWN_SPACING from its footprint, not its corner', () => {
+    const { w } = hall();
+    // 24 beyond the second tile, 25 from the corner: far enough from the corner, too close to the pair
+    const x = 21 + Builder.TOWN_SPACING - 1;
+    expect(w.builder.checkStation(x, 29, 'town', 0)).toMatchObject({
+      ok: false,
+      reason: STR.build.townTooClose(Builder.TOWN_SPACING),
+    });
+    expect(w.builder.checkStation(x + 1, 29, 'town', 0).reason).not.toBe(
+      STR.build.townTooClose(Builder.TOWN_SPACING),
+    );
   });
 
   it('answers as it did for a hall of one tile', () => {
