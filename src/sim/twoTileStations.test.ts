@@ -475,6 +475,42 @@ describe('a town hall of two tiles', () => {
     );
   });
 
+  it('keeps the same gap to a hall on every side of it, turned either way', () => {
+    // room all round the hall, and no track in the way of the new one
+    const w = simWorld({ terrain: 'grass', size: 100 });
+    w.builder.free = true;
+    line(w, 30, 44, 50);
+    station(w, 'town', 40, 45);
+    const tooClose = STR.build.townTooClose(Builder.TOWN_SPACING);
+    const reason = (x: number, y: number, rot: number) =>
+      w.builder.checkStation(x, y, 'town', rot).reason;
+    // the tile gap between the footprints: the new hall's far edge and the hall's near one
+    for (const rot of [0, 1]) {
+      const { w: nw, h: nh } = stationSpan(stationDef('town'), rot);
+      const gaps = {
+        east: (x: number) => x - 41,
+        west: (x: number) => 40 - (x + nw - 1),
+        south: (y: number) => y - 45,
+        north: (y: number) => 45 - (y + nh - 1),
+      };
+      const at = {
+        east: (g: number) => [41 + g, 45],
+        west: (g: number) => [40 - g - nw + 1, 45],
+        south: (g: number) => [40, 45 + g],
+        north: (g: number) => [40, 45 - g - nh + 1],
+      } as const;
+      for (const side of Object.keys(at) as (keyof typeof at)[]) {
+        const [x, y] = at[side](Builder.TOWN_SPACING);
+        expect(reason(x, y, rot), `${side} r${rot} at the spacing`).not.toBe(tooClose);
+        const [cx, cy] = at[side](Builder.TOWN_SPACING - 1);
+        expect(reason(cx, cy, rot), `${side} r${rot} one short`).toBe(tooClose);
+        expect(gaps[side](side === 'east' || side === 'west' ? cx : cy)).toBe(
+          Builder.TOWN_SPACING - 1,
+        );
+      }
+    }
+  });
+
   it('answers as it did for a hall of one tile', () => {
     const w = world();
     const shipped = stationDef('town').span;

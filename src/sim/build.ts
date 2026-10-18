@@ -24,6 +24,7 @@ import {
   stationDef,
   stationFootprint,
   stationGates,
+  stationSpan,
   MAX_LEVEL,
 } from './stations';
 import { ageOfLevel, levelCap } from './levels';
@@ -855,8 +856,10 @@ export class Builder {
         return { ok: false, cost: {}, reason: STR.build.depotLocked(allowed * 9) };
     }
     if (defId === 'town') {
+      // footprint to footprint, so the gap is the same on every side of a hall of two tiles
+      const { w, h } = stationSpan(def, rot);
       const near = this.stations.find(
-        (s) => s.def.id === 'town' && s.distTo(x, y) < Builder.TOWN_SPACING,
+        (s) => s.def.id === 'town' && s.distToArea(x, y, w, h) < Builder.TOWN_SPACING,
       );
       if (near)
         return { ok: false, cost: {}, reason: STR.build.townTooClose(Builder.TOWN_SPACING) };

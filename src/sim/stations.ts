@@ -414,8 +414,12 @@ export class Station {
   }
   /** Chebyshev distance from the footprint to a tile. */
   distTo(x: number, y: number) {
-    const dx = Math.max(this.x - x, 0, x - (this.x + this.w - 1));
-    const dy = Math.max(this.y - y, 0, y - (this.y + this.h - 1));
+    return this.distToArea(x, y, 1, 1);
+  }
+  /** Chebyshev distance from the footprint to a w x h area with its corner at (x, y). */
+  distToArea(x: number, y: number, w: number, h: number) {
+    const dx = Math.max(this.x - (x + w - 1), 0, x - (this.x + this.w - 1));
+    const dy = Math.max(this.y - (y + h - 1), 0, y - (this.y + this.h - 1));
     return Math.max(dx, dy);
   }
   /** Storage: produced goods for pickup; a warehouse holds whatever trains bring, per level. */
