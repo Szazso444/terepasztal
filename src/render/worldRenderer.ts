@@ -66,6 +66,7 @@ import {
 } from './bridgeLayout';
 import { HarvestHighlight } from './harvestHighlight';
 import { groundOf as groundDataOf, type FrameGround } from '../art/buildingGround';
+import type { Span } from './footprintAnchor';
 import { buildingYard, footprintTiles, sameYard, yardTiles, type Yard } from './buildingYard';
 import { plinthColour, plinthOf, plinthShapes } from './plinth';
 import {
@@ -168,6 +169,8 @@ interface Footing {
   /** the tile it was placed on (`setStructure`), whose ground height its picture stands at */
   tx: number;
   ty: number;
+  /** the footprint it stands on, where that is not the shape its frame's ground data records */
+  span: Span | undefined;
   yard: Yard;
   /** the colour of its walls' base (`baseColour`), which its plinth is built in */
   wall: RGB | null;
@@ -1108,7 +1111,7 @@ export class WorldRenderer {
       const open = (dx: number, dy: number) =>
           !f.yard.paths.some((p) => p.dx === dx && p.dy === dy),
         run = (open(-1, 0) ? RUN_W : 0) | (open(0, 1) ? RUN_S : 0);
-      for (const t of footprintTiles(f.ground, f.x, f.y))
+      for (const t of footprintTiles(f.ground, f.x, f.y, f.span))
         if (t.x >= 0 && t.y >= 0 && t.x < w && t.y < h) {
           const k = t.y * w + t.x;
           runs.set(k, (runs.get(k) ?? RUN_W | RUN_S) & run);
@@ -1979,8 +1982,23 @@ export class WorldRenderer {
     return this.landscape.groundAllows(x, y, need);
   }
 
-  /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
-  setStructure(id: string, x: number, y: number, frame: string, layer = 20, dy = 0, dx = 0) {
+  /**
+   * Place or update a tall structure sprite keyed by id in the depth-sorted object layer. A
+   * building of more than one tile is placed with `footprintAnchor` (footprintAnchor.ts): its
+   * picture's anchor on the footprint's centre, sorted with the footprint's front tile (x, y),
+   * moved (dx, dy) world px back to the centre. `span` is its footprint's width and depth when
+   * the game places it on a shape other than its frame's ground data (a station of two tiles).
+   */
+  setStructure(
+    id: string,
+    x: number,
+    y: number,
+    frame: string,
+    layer = 20,
+    dy = 0,
+    dx = 0,
+    span?: Span,
+  ) {
     const f = this.atlas.get(frame);
     this.structureAnchors.set(id, { x, y, dx, dy });
     let s = this.structures.get(id);
@@ -2001,7 +2019,7 @@ export class WorldRenderer {
       // a copy of its atlas frame, texel for texel, sampled without mipmaps (surfaceAssets.ts)
       s.texture = this.surfaces.picture(frame, f);
       const art = this.fitToGround(id, s, frame, f, building.scale, x, y);
-      this.setFooting(id, s, frame, building.scale, x, y, dx, dy, art.base ?? null);
+      this.setFooting(id, s, frame, building.scale, x, y, dx, dy, art.base ?? null, span);
       let light = this.windowLights.get(id);
       if (!light) {
         light = windowSprite();
@@ -2086,6 +2104,7 @@ export class WorldRenderer {
     dx: number,
     dy: number,
     wall: RGB | null,
+    span?: Span,
   ) {
     const ground = groundDataOf(frame);
     if (!ground) {
@@ -2095,7 +2114,7 @@ export class WorldRenderer {
     const off = worldToTile(dx, dy);
     let footing = this.footings.get(id);
     const was = footing?.yard ?? null;
-    const site = { frame, ground, scale, x: x + off.x, y: y + off.y, tx: x, ty: y, wall };
+    const site = { frame, ground, scale, x: x + off.x, y: y + off.y, tx: x, ty: y, span, wall };
     if (footing) Object.assign(footing, site);
     else {
       footing = { ...site, yard: null as unknown as Yard, lift: 0, plinth: null, drawn: '' };
@@ -2113,7 +2132,7 @@ export class WorldRenderer {
     const { w, h } = this.map,
       material = materialAt(this.map, f.tx, f.ty),
       doors: PavingDoor[] = [];
-    for (const t of footprintTiles(f.ground, f.x, f.y))
+    for (const t of footprintTiles(f.ground, f.x, f.y, f.span))
       if (t.x >= 0 && t.y >= 0 && t.x < w && t.y < h)
         doors.push(...(this.doorsByTile.get(t.y * w + t.x) ?? []));
     return buildingYard(
@@ -2123,6 +2142,7 @@ export class WorldRenderer {
         x: f.x,
         y: f.y,
         scale: f.scale,
+        span: f.span,
         sandy: material === Material.Sand || material === Material.Desert,
       },
       doors,

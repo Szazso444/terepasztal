@@ -11,7 +11,7 @@ import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
 import { STR } from '../strings';
 import { fmtCost, scaleCost } from '../sim/stockpile';
-import { buildingDef, type Building } from '../sim/buildings';
+import { buildingDef, buildingFootprint, buildingSpan, type Building } from '../sim/buildings';
 import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';
 import { decorDef, decorOffset } from '../sim/build';
@@ -22,7 +22,13 @@ import { HALF_H } from '../engine/iso';
 import { rules } from '../sim/rules';
 import { HarvestCells, harvestBreakdown, weeklyOutput } from '../sim/stations';
 import type { Season } from '../sim/weather';
-import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
+import {
+  nextToolRotation,
+  reachTiles,
+  stationGhostFrame,
+  toolFootprint,
+  toolRotations,
+} from './toolRotation';
 import { placingTip, yieldLabel } from './placingTooltip';
 import type { TipDoc } from './tooltipDoc';
 import { tipKey, type Point, type TooltipStack } from './tooltipStack';
@@ -70,6 +76,8 @@ export class BuildController {
   private ghostDiamond: Sprite;
   private lineGhosts: Sprite[] = [];
   private reachGhosts: Sprite[] = [];
+  /** one diamond per tile of the footprint a station or works would cover, when it has several */
+  private footMarks: Sprite[] = [];
   /** the road tool's marks, one per distinct street-door reach tile; apart from `lineGhosts` */
   private doorMarks: Sprite[] = [];
   /** the reach tiles `doorMarks` stand on, as of the last look at the doors */
@@ -163,6 +171,7 @@ export class BuildController {
 
   private clearGhost() {
     for (const g of this.reachGhosts) g.visible = false;
+    for (const g of this.footMarks) g.visible = false;
     for (const g of this.doorMarks) g.visible = false;
     this.doorSeen = '';
     if (this.ghost) {
@@ -245,33 +254,61 @@ export class BuildController {
       this.ghostDiamond.visible = false;
       for (const g of this.lineGhosts) g.visible = false;
       for (const g of this.reachGhosts) g.visible = false;
+      for (const g of this.footMarks) g.visible = false;
       for (const g of this.doorMarks) g.visible = false;
     }
   }
-  /** Faint diamonds on every tile within `r` of the cursor (what a service or pole would cover). */
-  private showReach(t: { x: number; y: number }, r: number) {
-    const need = r > 0 ? (2 * r + 1) * (2 * r + 1) - 1 : 0;
-    while (this.reachGhosts.length < need) {
+  /**
+   * Faint diamonds on every tile within `r` of the footprint under the cursor (what a service or
+   * a power line would cover, from the edge of what it stands on).
+   */
+  private showReach(footprint: readonly Tile[], r: number) {
+    const tiles = reachTiles(footprint, r);
+    while (this.reachGhosts.length < tiles.length) {
       const g = this.world.makeOverlaySprite('terrain/select');
       g.alpha = 0.35;
       this.reachGhosts.push(g);
     }
     let k = 0;
-    for (let dy = -r; dy <= r; dy++)
-      for (let dx = -r; dx <= r; dx++) {
-        if (!dx && !dy) continue;
-        const g = this.reachGhosts[k++];
-        const x = t.x + dx;
-        const y = t.y + dy;
-        if (!inBounds(this.builder.map, x, y)) {
-          g.visible = false;
-          continue;
-        }
-        const p = this.world.surfacePoint(x, y);
-        g.position.set(p.x, p.y);
-        g.visible = true;
+    for (const { x, y } of tiles) {
+      const g = this.reachGhosts[k++];
+      if (!inBounds(this.builder.map, x, y)) {
+        g.visible = false;
+        continue;
       }
+      const p = this.world.surfacePoint(x, y);
+      g.position.set(p.x, p.y);
+      g.visible = true;
+    }
     for (; k < this.reachGhosts.length; k++) this.reachGhosts[k].visible = false;
+  }
+
+  /**
+   * The tiles a station or a works would cover, each marked with a diamond green or red as it can
+   * go: the tile diamond of a one-tile footprint, one per tile of a larger one. The picture of a
+   * larger footprint need not cover all of its tiles, so the tiles say how much room it takes.
+   */
+  private showFootprint(footprint: readonly Tile[], ok: boolean) {
+    const frame = ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad';
+    const marks = footprint.length === 1 ? [this.ghostDiamond] : this.footMarks;
+    if (footprint.length === 1) for (const g of this.footMarks) g.visible = false;
+    else {
+      const grew = this.footMarks.length < footprint.length;
+      while (this.footMarks.length < footprint.length)
+        this.footMarks.push(this.world.makeOverlaySprite(frame));
+      // the picture's ghost stays over the diamonds
+      if (grew && this.ghost?.parent) this.ghost.parent.addChild(this.ghost);
+      this.ghostDiamond.visible = false;
+    }
+    marks.forEach((g, i) => {
+      if (i >= footprint.length) {
+        g.visible = false;
+        return;
+      }
+      this.world.setSpriteFrame(g, frame);
+      this.placeGhostAt(g, footprint[i].x, footprint[i].y, true);
+      g.tint = 0xffffff;
+    });
   }
 
   private ensureGhost(frame: string): Sprite {
@@ -438,14 +475,8 @@ export class BuildController {
     // a sprite of more than one tile is anchored at its footprint centre
     const span = stationSpan(def, this.rot);
     this.placeGhostAt(g, t.x + (span.w - 1) / 2, t.y + (span.h - 1) / 2, check.ok);
-    this.world.setSpriteFrame(
-      this.ghostDiamond,
-      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
-    );
-    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
-    this.ghostDiamond.tint = 0xffffff;
-    // the tile diamond shows under a one-tile station only; a wider one's picture covers its tiles
-    this.ghostDiamond.visible = span.w === 1 && span.h === 1;
+    // and every tile of its span says whether it can go
+    this.showFootprint(toolFootprint(tool, t.x, t.y, this.rot) ?? [], check.ok);
     // what a harvest station would make is the placing tooltip's (updatePlacing), not the line's
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
     if (this.turns()) parts.push(STR.build.rotate);
@@ -533,7 +564,7 @@ export class BuildController {
       return;
     }
     const def = decorDef(tool.defId);
-    this.showReach(t, def.power ? 2 : (def.radius ?? 0));
+    this.showReach([t], def.power ? 2 : (def.radius ?? 0));
     const check = this.builder.checkDecor(t.x, t.y, tool.defId);
     const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, this.rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);
@@ -562,18 +593,16 @@ export class BuildController {
       return;
     }
     const def = buildingDef(tool.defId);
-    this.showReach(t, def.power ? 2 : 0);
     // a bridge platform does not turn: it stays at rotation 0
     const rot = this.turns() ? this.rot : 0;
+    const foot = buildingFootprint(def.id, t.x, t.y, rot);
+    this.showReach(foot, def.power ? 2 : 0);
     const check = this.builder.checkBuilding(t.x, t.y, tool.defId, rot);
     const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, rot));
-    this.placeGhostAt(g, t.x, t.y, check.ok);
-    this.world.setSpriteFrame(
-      this.ghostDiamond,
-      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
-    );
-    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
-    this.ghostDiamond.tint = 0xffffff;
+    // a works of several tiles is anchored at its footprint's centre, every tile marked
+    const span = buildingSpan(def, rot);
+    this.placeGhostAt(g, t.x + (span.w - 1) / 2, t.y + (span.h - 1) / 2, check.ok);
+    this.showFootprint(foot, check.ok);
     const parts = [check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? '')];
     if (this.turns()) parts.push(STR.build.rotate);
     this.status(parts.join('   '));

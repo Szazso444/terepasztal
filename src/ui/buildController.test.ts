@@ -3,7 +3,10 @@ import { Sprite } from 'pixi.js';
 import type { Rng } from '../engine/rng';
 import type { Station } from '../sim/stations';
 import { forAll, shrinkArray } from '../testing/property';
+import { BUILDING_DEFS } from '../sim/buildings';
+import { STATION_DEFS } from '../sim/stations';
 import { BuildController } from './buildController';
+import type { Tool } from './toolbar';
 
 /**
  * One frame of the game: something picked up before it, whether Escape went down in it, and
@@ -74,5 +77,94 @@ describe('Escape between the tooltips and the build controller', () => {
       },
       { shrink: (frames) => shrinkArray(frames) },
     );
+  });
+});
+
+describe('the placing ghost of a footprint of several tiles', () => {
+  /** A controller whose world records where the sprites go; every spot is free to build on. */
+  function placing(tool: Tool, tile: { x: number; y: number }) {
+    const input = {
+      wasPressed: () => false,
+      clicks: [],
+      buttons: new Set(),
+      buttonPressed: new Set(),
+    };
+    const builder = {
+      map: { w: 40, h: 40 },
+      stationAt: () => undefined,
+      buildingAt: () => undefined,
+      checkStation: () => ({ ok: true, cost: {} }),
+      checkBuilding: () => ({ ok: true, cost: {} }),
+    };
+    const sprites: Sprite[] = [];
+    const world = {
+      atlas: { has: () => true },
+      makeOverlaySprite: () => {
+        const s = new Sprite();
+        sprites.push(s);
+        return s;
+      },
+      setSpriteFrame: () => null,
+      // the tile's own world px, which is all these tests read
+      surfacePoint: (x: number, y: number) => ({ x: (x - y) * 32, y: (x + y) * 16 }),
+    };
+    const b = new BuildController(input as never, builder as never, world as never, () => tile);
+    (b as unknown as { status: () => void }).status = () => {};
+    b.setTool(tool);
+    return { b, sprites };
+  }
+  const at = (x: number, y: number) => ({ x: (x - y) * 32, y: (x + y) * 16 });
+  /** The diamonds on the tiles, among the sprites the controller made: the visible ones, by place. */
+  const spots = (sprites: Sprite[]) =>
+    sprites
+      .filter((s) => s.visible && s.alpha === 1)
+      .map((s) => `${s.x},${s.y}`)
+      .sort();
+
+  it('marks each tile of a works and stands the picture on the middle of them', () => {
+    const { b, sprites } = placing({ kind: 'building', defId: 'power_plant' }, { x: 10, y: 10 });
+    b.update(true);
+    const tiles = [];
+    for (let y = 10; y < 12; y++)
+      for (let x = 10; x < 13; x++) tiles.push(`${at(x, y).x},${at(x, y).y}`);
+    expect(spots(sprites)).toEqual(tiles.sort());
+    // the picture, at 0.75 alpha, on the middle of the 3 x 2 footprint
+    const ghost = sprites.find((s) => s.alpha === 0.75)!;
+    expect({ x: ghost.x, y: ghost.y }).toEqual(at(11, 10.5));
+  });
+
+  it('turns the footprint with the rotation', () => {
+    const { b, sprites } = placing({ kind: 'building', defId: 'power_plant' }, { x: 10, y: 10 });
+    b.rot = 1;
+    b.update(true);
+    const tiles = [];
+    for (let y = 10; y < 13; y++)
+      for (let x = 10; x < 12; x++) tiles.push(`${at(x, y).x},${at(x, y).y}`);
+    expect(spots(sprites)).toEqual(tiles.sort());
+    const ghost = sprites.find((s) => s.alpha === 0.75)!;
+    expect({ x: ghost.x, y: ghost.y }).toEqual(at(10.5, 11));
+  });
+
+  it('keeps the one tile diamond for a one-tile works', () => {
+    const one = BUILDING_DEFS.find((d) => !d.bridge && !d.span)!;
+    const { b, sprites } = placing({ kind: 'building', defId: one.id }, { x: 5, y: 6 });
+    b.update(true);
+    expect(spots(sprites)).toEqual([`${at(5, 6).x},${at(5, 6).y}`]);
+  });
+
+  it('marks both tiles of a station of a two-tile span, in either axis', () => {
+    const town = STATION_DEFS.find((d) => d.id === 'town')!;
+    const kept = town.span;
+    town.span = { w: 2, h: 1 };
+    try {
+      const { b, sprites } = placing({ kind: 'station', defId: 'town' }, { x: 7, y: 7 });
+      b.update(true);
+      expect(spots(sprites)).toEqual([at(7, 7), at(8, 7)].map((p) => `${p.x},${p.y}`).sort());
+      b.rot = 1;
+      b.update(true);
+      expect(spots(sprites)).toEqual([at(7, 7), at(7, 8)].map((p) => `${p.x},${p.y}`).sort());
+    } finally {
+      town.span = kept;
+    }
   });
 });
