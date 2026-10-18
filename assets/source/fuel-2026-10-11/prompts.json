@@ -12,13 +12,27 @@
   "tool": "built-in image_gen",
   "geometry": {
     "footprint": "t1",
-    "requestedCanvas": [1024, 1024],
+    "requestedCanvas": [
+      1024,
+      1024
+    ],
     "scale": 8,
-    "tileCanvas": [512, 256],
-    "anchor": [512, 832],
+    "tileCanvas": [
+      512,
+      256
+    ],
+    "anchor": [
+      512,
+      832
+    ],
     "projection": "orthographic 2:1 isometric, 30 degrees down, 45 degrees turn"
   },
-  "order": ["r0", "r1", "r3", "r2"],
+  "order": [
+    "r0",
+    "r1",
+    "r3",
+    "r2"
+  ],
   "verbatim": {
     "shared": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.",
     "views": {
@@ -101,15 +115,37 @@
       "selected": false,
       "prompt": "Use case: sketch-to-render. Asset: Fuel Pump, id fuel_pump, a1, for issue #325. One finished individual 1024x1024 RGBA sprite.\nRepaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nAdditional binding production directions: Smooth painted contours, no stair-stepped pixel edges. Treat the two sibling images as a style board ONLY for material and character, never their angle, composition, lighting artifacts or background.\nGEOMETRY: Edit image 1, the t1 block-out. Orthographic 2:1 isometric, camera 30 degrees down, object turned 45 degrees, no perspective. Canvas 1024x1024. Scale 8 canvas pixels per game pixel; one 64x32 tile projects to 512x256 canvas pixels. Footprint centre at canvas (512,832), the anchor. The ground footprint diamond corners are (512,704), (768,832), (512,960), (256,832). Ground-level construction stays inside this diamond. Wall feet straight corner-to-corner, two horizontal pixels per vertical pixel. Remove the guide's plinth entirely; cream stone belongs to the actual structural walls/stand, not a slab or apron.\nBUILDING: A diesel railway refuelling point. A riveted cylindrical steel fuel tank on a warm brick and cream-stone stand, integrated with a small pump house with ONE door on the FRONT wall. Forest-green painted tank with oat-cream bands, small slate pitched roof on pump house. On the FRONT side a tall fixed hose-crane post with braced jib holding a hose high ABOVE train height. The jib reaches past the front footprint edge about one third of a tile. Pipes connect tank to crane. The crane mast foot and all pipe feet remain within the footprint; only the crane's jib overhangs high up. Keep hose suspended high, do not let it touch ground. One compact coherent structure, no ground base. The tank, pump-house and crane have fixed proportions in all views.\nSTYLE: Smooth painted contours; broad readable masses, only three or four shades per material, sparse large readable rivets and brick joints. Upper-left lighting. Palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained selective occlusion edges, no uniform black outline.\nOUTPUT: Genuine transparent background alpha 0; opaque building surfaces; 1024x1024. Whole building with clear margins. No ground, plinth, grass, shadows outside base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, loose objects.\nVIEW (verbatim): The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\nINPUTS: Image 1 t1-r1 block-out is the edit target. Image 2 is the ALREADY ROTATED r1 of this Fuel Pump, now fitted and camera-corrected by the repository tools. Image 3 r0 only identifies the SAME BUILDING, do not copy its front. CORRECTION: The last r1 had the correct turn and invisible entrance, but its camera was too high, 36 degrees down instead of 30 degrees. Image 2 shows that r1 put right. Paint it as the reference and the block-out are seen. Preserve all of image 2's walls, roof, tank, two cream bands, pipe routing, crane position and dimensions. Do NOT turn it again. Tank long axis lower-left to upper-right, circular tank end lower-left, plain back lower-right, high jib upper-left, no visible door, lamp, front roof or dangling front hose. Straight flush wall feet. Exact 1024x1024 and anchor(512,832).",
       "generationOutput": "Generated images are saved to C:\\Users\\Zso\\.codex\\generated_images\\01a12c68-070c-7b91-9ff6-217c3f4318b1 as C:\\Users\\Zso\\.codex\\generated_images\\01a12c68-070c-7b91-9ff6-217c3f4318b1\\exec-3a63f811-3062-46f4-8862-2716ac23f4c9.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
-      "references": ["guides/t1-r1.png", "r1 attempt 2 (fitted)", "r0 attempt 3 (fitted)"],
+      "references": [
+        "guides/t1-r1.png",
+        "r1 attempt 2 (fitted)",
+        "r0 attempt 3 (fitted)"
+      ],
       "file": "raw/fuel_pump-a1-r1-attempt-3.png",
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [257, 1074.0042509228563],
-        "s": [477.3241349091371, 1190.238001562309],
-        "e": [1049, 907.3741473641011],
-        "sure": [true, true],
-        "slopes": [0.5275579576762579, -0.4947976142971316],
+        "w": [
+          257,
+          1074.0042509228563
+        ],
+        "s": [
+          477.3241349091371,
+          1190.238001562309
+        ],
+        "e": [
+          1049,
+          907.3741473641011
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5275579576762579,
+          -0.4947976142971316
+        ],
         "lowerLeftSpan": 220.32413490913711,
         "lowerRightSpan": 571.6758650908629,
         "difference": 1.5947037773534212,
@@ -136,15 +172,37 @@
       "selected": false,
       "prompt": "Use case: sketch-to-render. Asset: Fuel Pump, id fuel_pump, a1, for issue #325. One finished individual 1024x1024 RGBA sprite.\nRepaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nAdditional binding production directions: Smooth painted contours, no stair-stepped pixel edges. Treat the two sibling images as a style board ONLY for material and character, never their angle, composition, lighting artifacts or background.\nGEOMETRY: Edit image 1, the t1 block-out. Orthographic 2:1 isometric, camera 30 degrees down, object turned 45 degrees, no perspective. Canvas 1024x1024. Scale 8 canvas pixels per game pixel; one 64x32 tile projects to 512x256 canvas pixels. Footprint centre at canvas (512,832), the anchor. The ground footprint diamond corners are (512,704), (768,832), (512,960), (256,832). Ground-level construction stays inside this diamond. Wall feet straight corner-to-corner, two horizontal pixels per vertical pixel. Remove the guide's plinth entirely; cream stone belongs to the actual structural walls/stand, not a slab or apron.\nBUILDING: A diesel railway refuelling point. A riveted cylindrical steel fuel tank on a warm brick and cream-stone stand, integrated with a small pump house with ONE door on the FRONT wall. Forest-green painted tank with oat-cream bands, small slate pitched roof on pump house. On the FRONT side a tall fixed hose-crane post with braced jib holding a hose high ABOVE train height. The jib reaches past the front footprint edge about one third of a tile. Pipes connect tank to crane. The crane mast foot and all pipe feet remain within the footprint; only the crane's jib overhangs high up. Keep hose suspended high, do not let it touch ground. One compact coherent structure, no ground base. The tank, pump-house and crane have fixed proportions in all views.\nSTYLE: Smooth painted contours; broad readable masses, only three or four shades per material, sparse large readable rivets and brick joints. Upper-left lighting. Palette forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Restrained selective occlusion edges, no uniform black outline.\nOUTPUT: Genuine transparent background alpha 0; opaque building surfaces; 1024x1024. Whole building with clear margins. No ground, plinth, grass, shadows outside base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, loose objects.\nVIEW (verbatim): The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\nINPUTS: Image 1 is t1-r3 edit target. Image 2 is r3 of this building already rotated correctly, fitted to the correct camera. Image 3 r0 is identity reference only. Keep the same building and r3 orientation: tank axis lower-left to upper-right, front door on lower-right wall, plain left-hand side on lower-left. CORRECTION: The first r3 showed the crane too low and hose almost reaching the ground. Raise the FRONT mast so that the JIB sits just above the TANK TOP, at the same absolute height as r0's jib; its braced arm reaches lower-right from the mast at the near SOUTH corner. Make the hanging hose shorter: its nozzle ends at the level of the pump-house slate ROOF, well above train height, never near wall feet. Keep tank and masonry and pump-house proportions, same two cream bands. No ground-level footprint overhang. The previous camera looked from too high,33.6degrees: image2 has been corrected. Paint it as the reference and the block-out are seen, preserving corrected straight base edges and flush corner stones. Exact1024square output.",
       "generationOutput": "Generated images are saved to C:\\Users\\Zso\\.codex\\generated_images\\01a12c68-070c-7b91-9ff6-217c3f4318b1 as C:\\Users\\Zso\\.codex\\generated_images\\01a12c68-070c-7b91-9ff6-217c3f4318b1\\exec-b29bf8e3-a229-458f-a14a-0995afdb60f8.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
-      "references": ["guides/t1-r3.png", "r3 attempt 1 (fitted)", "r0 attempt 3 (fitted)"],
+      "references": [
+        "guides/t1-r3.png",
+        "r3 attempt 1 (fitted)",
+        "r0 attempt 3 (fitted)"
+      ],
       "file": "raw/fuel_pump-a1-r3-attempt-2.png",
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [231, 1012.4314056563951],
-        "s": [544.9683092002447, 1175.0158453998777],
-        "e": [983, 956],
-        "sure": [true, false],
-        "slopes": [0.5178371032338437, -0.5],
+        "w": [
+          231,
+          1012.4314056563951
+        ],
+        "s": [
+          544.9683092002447,
+          1175.0158453998777
+        ],
+        "e": [
+          983,
+          956
+        ],
+        "sure": [
+          true,
+          false
+        ],
+        "slopes": [
+          0.5178371032338437,
+          -0.5
+        ],
         "lowerLeftSpan": 313.9683092002447,
         "lowerRightSpan": 438.0316907997553,
         "difference": 0.3951461913959753,
@@ -179,13 +237,31 @@
         "r3 attempt 2 (fitted)"
       ],
       "file": "raw/fuel_pump-a1-r2-attempt-2.png",
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [227, 897.2888505174601],
-        "s": [780.0603798518048, 1191.9826741622705],
-        "e": [1065, 1072.946059025308],
-        "sure": [true, true],
-        "slopes": [0.5328420447036453, -0.4177608402617098],
+        "w": [
+          227,
+          897.2888505174601
+        ],
+        "s": [
+          780.0603798518048,
+          1191.9826741622705
+        ],
+        "e": [
+          1065,
+          1072.946059025308
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5328420447036453,
+          -0.4177608402617098
+        ],
         "lowerLeftSpan": 553.0603798518048,
         "lowerRightSpan": 284.9396201481952,
         "difference": 0.9409739493727187,
@@ -217,13 +293,31 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [316, 927.4860064552756],
-        "s": [696.4712902325202, 1167.4657677556888],
-        "e": [954, 1032.6145389149897],
-        "sure": [true, true],
-        "slopes": [0.630743416024249, -0.5236357102183099],
+        "w": [
+          316,
+          927.4860064552756
+        ],
+        "s": [
+          696.4712902325202,
+          1167.4657677556888
+        ],
+        "e": [
+          954,
+          1032.6145389149897
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.630743416024249,
+          -0.5236357102183099
+        ],
         "lowerLeftSpan": 380.47129023252023,
         "lowerRightSpan": 257.52870976747977,
         "difference": 0.4773936877796816,
@@ -242,13 +336,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.631, -0.524],
-            "slopes": [0.631, -0.524],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.631,
+              -0.524
+            ],
+            "slopes": [
+              0.631,
+              -0.524
+            ],
             "base": {
-              "w": [316, 927.5],
-              "s": [696.5, 1167.5],
-              "e": [954, 1032.6]
+              "w": [
+                316,
+                927.5
+              ],
+              "s": [
+                696.5,
+                1167.5
+              ],
+              "e": [
+                954,
+                1032.6
+              ]
             },
             "scale": 0.7062,
             "vertical": 0.8663,
@@ -290,13 +402,31 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [334, 993.6065526798272],
-        "s": [612.5439740746907, 1142.783470511679],
-        "e": [1026, 939.2094457153689],
-        "sure": [true, true],
-        "slopes": [0.5355596663952621, -0.49237164784504966],
+        "w": [
+          334,
+          993.6065526798272
+        ],
+        "s": [
+          612.5439740746907,
+          1142.783470511679
+        ],
+        "e": [
+          1026,
+          939.2094457153689
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5355596663952621,
+          -0.49237164784504966
+        ],
         "lowerLeftSpan": 278.5439740746907,
         "lowerRightSpan": 413.4560259253093,
         "difference": 0.4843474079767467,
@@ -313,13 +443,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.536, -0.492],
-            "slopes": [0.536, -0.492],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.536,
+              -0.492
+            ],
+            "slopes": [
+              0.536,
+              -0.492
+            ],
             "base": {
-              "w": [334, 993.6],
-              "s": [612.5, 1142.8],
-              "e": [1026, 939.2]
+              "w": [
+                334,
+                993.6
+              ],
+              "s": [
+                612.5,
+                1142.8
+              ],
+              "e": [
+                1026,
+                939.2
+              ]
             },
             "scale": 0.6511,
             "vertical": 0.9728,
@@ -357,13 +505,31 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [339, 997.4489565163987],
-        "s": [607.5135581762482, 1140.7903586986458],
-        "e": [992, 966.2227017235409],
-        "sure": [true, true],
-        "slopes": [0.5338330144512107, -0.4540281216343293],
+        "w": [
+          339,
+          997.4489565163987
+        ],
+        "s": [
+          607.5135581762482,
+          1140.7903586986458
+        ],
+        "e": [
+          992,
+          966.2227017235409
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5338330144512107,
+          -0.4540281216343293
+        ],
         "lowerLeftSpan": 268.51355817624824,
         "lowerRightSpan": 384.48644182375176,
         "difference": 0.43190699358049045,
@@ -382,13 +548,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.534, -0.454],
-            "slopes": [0.534, -0.454],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.534,
+              -0.454
+            ],
+            "slopes": [
+              0.534,
+              -0.454
+            ],
             "base": {
-              "w": [339, 997.4],
-              "s": [607.5, 1140.8],
-              "e": [992, 966.2]
+              "w": [
+                339,
+                997.4
+              ],
+              "s": [
+                607.5,
+                1140.8
+              ],
+              "e": [
+                992,
+                966.2
+              ]
             },
             "scale": 0.69,
             "vertical": 1.0123,
@@ -430,13 +614,31 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [261, 886.6458290289468],
-        "s": [632.868943638361, 1158.7246843615844],
-        "e": [1064, 975.7531863774332],
-        "sure": [true, true],
-        "slopes": [0.7316525350856716, -0.42439878845255824],
+        "w": [
+          261,
+          886.6458290289468
+        ],
+        "s": [
+          632.868943638361,
+          1158.7246843615844
+        ],
+        "e": [
+          1064,
+          975.7531863774332
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.7316525350856716,
+          -0.42439878845255824
+        ],
         "lowerLeftSpan": 371.868943638361,
         "lowerRightSpan": 431.131056361639,
         "difference": 0.15936289850789453,
@@ -455,13 +657,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.732, -0.424],
-            "slopes": [0.67, -0.424],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.732,
+              -0.424
+            ],
+            "slopes": [
+              0.67,
+              -0.424
+            ],
             "base": {
-              "w": [261, 886.6],
-              "s": [632.9, 1158.7],
-              "e": [1064, 975.8]
+              "w": [
+                261,
+                886.6
+              ],
+              "s": [
+                632.9,
+                1158.7
+              ],
+              "e": [
+                1064,
+                975.8
+              ]
             },
             "scale": 0.5611,
             "vertical": 0.9137,
@@ -503,13 +723,31 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [307, 954.7297944773672],
-        "s": [614.3109382992535, 1135.5310629664027],
-        "e": [1087, 844.7119319228331],
-        "sure": [true, true],
-        "slopes": [0.5883333326488192, -0.6152440464714697],
+        "w": [
+          307,
+          954.7297944773672
+        ],
+        "s": [
+          614.3109382992535,
+          1135.5310629664027
+        ],
+        "e": [
+          1087,
+          844.7119319228331
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5883333326488192,
+          -0.6152440464714697
+        ],
         "lowerLeftSpan": 307.3109382992535,
         "lowerRightSpan": 472.6890617007465,
         "difference": 0.5381459062822258,
@@ -528,13 +766,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.588, -0.615],
-            "slopes": [0.588, -0.615],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.588,
+              -0.615
+            ],
+            "slopes": [
+              0.588,
+              -0.615
+            ],
             "base": {
-              "w": [307, 954.7],
-              "s": [614.3, 1135.5],
-              "e": [1087, 844.7]
+              "w": [
+                307,
+                954.7
+              ],
+              "s": [
+                614.3,
+                1135.5
+              ],
+              "e": [
+                1087,
+                844.7
+              ]
             },
             "scale": 0.5776,
             "vertical": 0.8309,
@@ -576,13 +832,31 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [262, 927.7029284410764],
-        "s": [605.4318835053989, 1120.2735261844705],
-        "e": [1092, 862.5308748600291],
-        "sure": [true, true],
-        "slopes": [0.5607242862189491, -0.5297154552199296],
+        "w": [
+          262,
+          927.7029284410764
+        ],
+        "s": [
+          605.4318835053989,
+          1120.2735261844705
+        ],
+        "e": [
+          1092,
+          862.5308748600291
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5607242862189491,
+          -0.5297154552199296
+        ],
         "lowerLeftSpan": 343.4318835053989,
         "lowerRightSpan": 486.5681164946011,
         "difference": 0.41678201664975,
@@ -601,13 +875,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.561, -0.53],
-            "slopes": [0.561, -0.53],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.561,
+              -0.53
+            ],
+            "slopes": [
+              0.561,
+              -0.53
+            ],
             "base": {
-              "w": [262, 927.7],
-              "s": [605.4, 1120.3],
-              "e": [1092, 862.5]
+              "w": [
+                262,
+                927.7
+              ],
+              "s": [
+                605.4,
+                1120.3
+              ],
+              "e": [
+                1092,
+                862.5
+              ]
             },
             "scale": 0.5428,
             "vertical": 0.9171,
@@ -649,33 +941,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [253, 1039.080302164667],
-        "s": [429.21110157989375, 1128.3939275417165],
-        "e": [989, 879.9936818467278],
-        "sure": [true, true],
-        "slopes": [0.5068558369834317, -0.4437391423732223],
+        "w": [
+          253,
+          1039.080302164667
+        ],
+        "s": [
+          429.21110157989375,
+          1128.3939275417165
+        ],
+        "e": [
+          989,
+          879.9936818467278
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5068558369834317,
+          -0.4437391423732223
+        ],
         "lowerLeftSpan": 176.21110157989375,
         "lowerRightSpan": 559.7888984201063,
         "difference": 2.176808347493924,
         "plan": {
           "measured": {
-            "w": [253, 1039.080302164667],
-            "s": [429.21110157989375, 1128.3939275417165],
-            "e": [989, 879.9936818467278]
+            "w": [
+              253,
+              1039.080302164667
+            ],
+            "s": [
+              429.21110157989375,
+              1128.3939275417165
+            ],
+            "e": [
+              989,
+              879.9936818467278
+            ]
           },
           "used": {
-            "w": [253, 1039.080302164667],
-            "s": [429.21110157989375, 1128.3939275417165],
-            "e": [989, 879.9936818467278]
+            "w": [
+              253,
+              1039.080302164667
+            ],
+            "s": [
+              429.21110157989375,
+              1128.3939275417165
+            ],
+            "e": [
+              989,
+              879.9936818467278
+            ]
           },
           "readByEye": false,
           "reason": "Measured points lie on the house base corners.",
           "lowerLeftSpan": 176.21110157989375,
           "lowerRightSpan": 559.7888984201063,
           "longToShort": 3.176808347493924,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": false,
         "camera": {
@@ -690,13 +1021,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.507, -0.444],
-            "slopes": [0.507, -0.444],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.507,
+              -0.444
+            ],
+            "slopes": [
+              0.507,
+              -0.444
+            ],
             "base": {
-              "w": [253, 1039.1],
-              "s": [429.2, 1128.4],
-              "e": [989, 880]
+              "w": [
+                253,
+                1039.1
+              ],
+              "s": [
+                429.2,
+                1128.4
+              ],
+              "e": [
+                989,
+                880
+              ]
             },
             "scale": 0.6122,
             "vertical": 1.052,
@@ -745,33 +1094,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [350, 1049.480906844909],
-        "s": [493.4156822182697, 1136.35472373998],
-        "e": [949, 894.3001748304127],
-        "sure": [true, true],
-        "slopes": [0.6057483780808186, -0.5313057088710749],
+        "w": [
+          350,
+          1049.480906844909
+        ],
+        "s": [
+          493.4156822182697,
+          1136.35472373998
+        ],
+        "e": [
+          949,
+          894.3001748304127
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.6057483780808186,
+          -0.5313057088710749
+        ],
         "lowerLeftSpan": 143.4156822182697,
         "lowerRightSpan": 455.5843177817303,
         "difference": 2.176670157231198,
         "plan": {
           "measured": {
-            "w": [350, 1049.480906844909],
-            "s": [493.4156822182697, 1136.35472373998],
-            "e": [949, 894.3001748304127]
+            "w": [
+              350,
+              1049.480906844909
+            ],
+            "s": [
+              493.4156822182697,
+              1136.35472373998
+            ],
+            "e": [
+              949,
+              894.3001748304127
+            ]
           },
           "used": {
-            "w": [298, 1025],
-            "s": [493, 1136],
-            "e": [976, 880]
+            "w": [
+              298,
+              1025
+            ],
+            "s": [
+              493,
+              1136
+            ],
+            "e": [
+              976,
+              880
+            ]
           },
           "readByEye": true,
           "reason": "Read by eye from the limestone outer quoin corners: measured w and e terminate inside the base, not at its outer corners.",
           "lowerLeftSpan": 195,
           "lowerRightSpan": 483,
           "longToShort": 2.476923076923077,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -788,13 +1176,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.606, -0.531],
-            "slopes": [0.606, -0.531],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.606,
+              -0.531
+            ],
+            "slopes": [
+              0.606,
+              -0.531
+            ],
             "base": {
-              "w": [350, 1049.5],
-              "s": [493.4, 1136.4],
-              "e": [949, 894.3]
+              "w": [
+                350,
+                1049.5
+              ],
+              "s": [
+                493.4,
+                1136.4
+              ],
+              "e": [
+                949,
+                894.3
+              ]
             },
             "scale": 0.7522,
             "vertical": 0.8795,
@@ -847,33 +1253,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [371, 1043.1353346456692],
-        "s": [496.84475022432235, 1125.5189374183642],
-        "e": [886, 885.439242669489],
-        "sure": [true, true],
-        "slopes": [0.6546447319085115, -0.6169252371316215],
+        "w": [
+          371,
+          1043.1353346456692
+        ],
+        "s": [
+          496.84475022432235,
+          1125.5189374183642
+        ],
+        "e": [
+          886,
+          885.439242669489
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.6546447319085115,
+          -0.6169252371316215
+        ],
         "lowerLeftSpan": 125.84475022432235,
         "lowerRightSpan": 389.15524977567765,
         "difference": 2.09234393236107,
         "plan": {
           "measured": {
-            "w": [371, 1043.1353346456692],
-            "s": [496.84475022432235, 1125.5189374183642],
-            "e": [886, 885.439242669489]
+            "w": [
+              371,
+              1043.1353346456692
+            ],
+            "s": [
+              496.84475022432235,
+              1125.5189374183642
+            ],
+            "e": [
+              886,
+              885.439242669489
+            ]
           },
           "used": {
-            "w": [320, 1026],
-            "s": [497, 1126],
-            "e": [918, 866]
+            "w": [
+              320,
+              1026
+            ],
+            "s": [
+              497,
+              1126
+            ],
+            "e": [
+              918,
+              866
+            ]
           },
           "readByEye": true,
           "reason": "Approximate outer limestone quoin corners read by eye; measured w and e sit inboard of the house's ends.",
           "lowerLeftSpan": 177,
           "lowerRightSpan": 421,
           "longToShort": 2.378531073446328,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -890,13 +1335,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.655, -0.617],
-            "slopes": [0.655, -0.617],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.655,
+              -0.617
+            ],
+            "slopes": [
+              0.655,
+              -0.617
+            ],
             "base": {
-              "w": [371, 1043.1],
-              "s": [496.8, 1125.5],
-              "e": [886, 885.4]
+              "w": [
+                371,
+                1043.1
+              ],
+              "s": [
+                496.8,
+                1125.5
+              ],
+              "e": [
+                886,
+                885.4
+              ]
             },
             "scale": 0.8749,
             "vertical": 0.7864,
@@ -949,33 +1412,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [209, 817.192740288182],
-        "s": [800.1547403463456, 1167.4506589530033],
-        "e": [1052, 1054.3184516280728],
-        "sure": [true, true],
-        "slopes": [0.5924978601366069, -0.4492131695490851],
+        "w": [
+          209,
+          817.192740288182
+        ],
+        "s": [
+          800.1547403463456,
+          1167.4506589530033
+        ],
+        "e": [
+          1052,
+          1054.3184516280728
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5924978601366069,
+          -0.4492131695490851
+        ],
         "lowerLeftSpan": 591.1547403463456,
         "lowerRightSpan": 251.84525965365435,
         "difference": 1.3472934974409307,
         "plan": {
           "measured": {
-            "w": [209, 817.192740288182],
-            "s": [800.1547403463456, 1167.4506589530033],
-            "e": [1052, 1054.3184516280728]
+            "w": [
+              209,
+              817.192740288182
+            ],
+            "s": [
+              800.1547403463456,
+              1167.4506589530033
+            ],
+            "e": [
+              1052,
+              1054.3184516280728
+            ]
           },
           "used": {
-            "w": [370, 917],
-            "s": [800, 1167],
-            "e": [1052, 1054]
+            "w": [
+              370,
+              917
+            ],
+            "s": [
+              800,
+              1167
+            ],
+            "e": [
+              1052,
+              1054
+            ]
           },
           "readByEye": true,
           "reason": "Measured w lands below the hanging hose; actual house's left quoin read by eye.",
           "lowerLeftSpan": 430,
           "lowerRightSpan": 252,
           "longToShort": 0.586046511627907,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": false,
         "camera": {
@@ -992,13 +1494,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.592, -0.449],
-            "slopes": [0.592, -0.449],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.592,
+              -0.449
+            ],
+            "slopes": [
+              0.592,
+              -0.449
+            ],
             "base": {
-              "w": [209, 817.2],
-              "s": [800.2, 1167.5],
-              "e": [1052, 1054.3]
+              "w": [
+                209,
+                817.2
+              ],
+              "s": [
+                800.2,
+                1167.5
+              ],
+              "e": [
+                1052,
+                1054.3
+              ]
             },
             "scale": 0.5345,
             "vertical": 0.96,
@@ -1051,33 +1571,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [381, 1009.4913625628566],
-        "s": [561.6760691201359, 1106.9847777427033],
-        "e": [1057, 846.3013579789271],
-        "sure": [true, true],
-        "slopes": [0.5396033667027641, -0.5262887648103609],
+        "w": [
+          381,
+          1009.4913625628566
+        ],
+        "s": [
+          561.6760691201359,
+          1106.9847777427033
+        ],
+        "e": [
+          1057,
+          846.3013579789271
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5396033667027641,
+          -0.5262887648103609
+        ],
         "lowerLeftSpan": 180.67606912013594,
         "lowerRightSpan": 495.32393087986406,
         "difference": 1.7415026975736954,
         "plan": {
           "measured": {
-            "w": [381, 1009.4913625628566],
-            "s": [561.6760691201359, 1106.9847777427033],
-            "e": [1057, 846.3013579789271]
+            "w": [
+              381,
+              1009.4913625628566
+            ],
+            "s": [
+              561.6760691201359,
+              1106.9847777427033
+            ],
+            "e": [
+              1057,
+              846.3013579789271
+            ]
           },
           "used": {
-            "w": [381, 1009.4913625628566],
-            "s": [561.6760691201359, 1106.9847777427033],
-            "e": [1057, 846.3013579789271]
+            "w": [
+              381,
+              1009.4913625628566
+            ],
+            "s": [
+              561.6760691201359,
+              1106.9847777427033
+            ],
+            "e": [
+              1057,
+              846.3013579789271
+            ]
           },
           "readByEye": false,
           "reason": "Measured points lie on the house base corners.",
           "lowerLeftSpan": 180.67606912013594,
           "lowerRightSpan": 495.32393087986406,
           "longToShort": 2.7415026975736954,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -1094,13 +1653,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.54, -0.526],
-            "slopes": [0.54, -0.526],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.54,
+              -0.526
+            ],
+            "slopes": [
+              0.54,
+              -0.526
+            ],
             "base": {
-              "w": [381, 1009.5],
-              "s": [561.7, 1107],
-              "e": [1057, 846.3]
+              "w": [
+                381,
+                1009.5
+              ],
+              "s": [
+                561.7,
+                1107
+              ],
+              "e": [
+                1057,
+                846.3
+              ]
             },
             "scale": 0.6665,
             "vertical": 0.9382,
@@ -1153,33 +1730,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [403, 1033.3622112836047],
-        "s": [576.2692668550293, 1136.8688930991864],
-        "e": [851, 997.8545748639449],
-        "sure": [true, true],
-        "slopes": [0.5973747317935125, -0.5060020647995208],
+        "w": [
+          403,
+          1033.3622112836047
+        ],
+        "s": [
+          576.2692668550293,
+          1136.8688930991864
+        ],
+        "e": [
+          851,
+          997.8545748639449
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5973747317935125,
+          -0.5060020647995208
+        ],
         "lowerLeftSpan": 173.2692668550293,
         "lowerRightSpan": 274.7307331449707,
         "difference": 0.58557104864322,
         "plan": {
           "measured": {
-            "w": [403, 1033.3622112836047],
-            "s": [576.2692668550293, 1136.8688930991864],
-            "e": [851, 997.8545748639449]
+            "w": [
+              403,
+              1033.3622112836047
+            ],
+            "s": [
+              576.2692668550293,
+              1136.8688930991864
+            ],
+            "e": [
+              851,
+              997.8545748639449
+            ]
           },
           "used": {
-            "w": [360, 1022],
-            "s": [576, 1137],
-            "e": [916, 969]
+            "w": [
+              360,
+              1022
+            ],
+            "s": [
+              576,
+              1137
+            ],
+            "e": [
+              916,
+              969
+            ]
           },
           "readByEye": true,
           "reason": "Outer limestone quoin corners read by eye; measured w sits inboard and e is near the hose, not the far right house corner.",
           "lowerLeftSpan": 216,
           "lowerRightSpan": 340,
           "longToShort": 1.5740740740740742,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": false,
         "camera": {
@@ -1196,13 +1812,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.597, -0.506],
-            "slopes": [0.597, -0.506],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.597,
+              -0.506
+            ],
+            "slopes": [
+              0.597,
+              -0.506
+            ],
             "base": {
-              "w": [403, 1033.4],
-              "s": [576.3, 1136.9],
-              "e": [851, 997.9]
+              "w": [
+                403,
+                1033.4
+              ],
+              "s": [
+                576.3,
+                1136.9
+              ],
+              "e": [
+                851,
+                997.9
+              ]
             },
             "scale": 1.0057,
             "vertical": 0.9063,
@@ -1255,33 +1889,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [298, 1069.9383873700951],
-        "s": [510.78318685860785, 1190.1477282226],
-        "e": [1084, 903.8491313434863],
-        "sure": [true, true],
-        "slopes": [0.5649381543118954, -0.4994595244164521],
+        "w": [
+          298,
+          1069.9383873700951
+        ],
+        "s": [
+          510.78318685860785,
+          1190.1477282226
+        ],
+        "e": [
+          1084,
+          903.8491313434863
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5649381543118954,
+          -0.4994595244164521
+        ],
         "lowerLeftSpan": 212.78318685860785,
         "lowerRightSpan": 573.2168131413921,
         "difference": 1.693900874425236,
         "plan": {
           "measured": {
-            "w": [298, 1069.9383873700951],
-            "s": [510.78318685860785, 1190.1477282226],
-            "e": [1084, 903.8491313434863]
+            "w": [
+              298,
+              1069.9383873700951
+            ],
+            "s": [
+              510.78318685860785,
+              1190.1477282226
+            ],
+            "e": [
+              1084,
+              903.8491313434863
+            ]
           },
           "used": {
-            "w": [298, 1069.9383873700951],
-            "s": [510.78318685860785, 1190.1477282226],
-            "e": [1084, 903.8491313434863]
+            "w": [
+              298,
+              1069.9383873700951
+            ],
+            "s": [
+              510.78318685860785,
+              1190.1477282226
+            ],
+            "e": [
+              1084,
+              903.8491313434863
+            ]
           },
           "readByEye": false,
           "reason": "Measured points lie on the house base corners.",
           "lowerLeftSpan": 212.78318685860785,
           "lowerRightSpan": 573.2168131413921,
           "longToShort": 2.693900874425236,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -1298,13 +1971,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.565, -0.499],
-            "slopes": [0.565, -0.499],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.565,
+              -0.499
+            ],
+            "slopes": [
+              0.565,
+              -0.499
+            ],
             "base": {
-              "w": [298, 1069.9],
-              "s": [510.8, 1190.1],
-              "e": [1084, 903.8]
+              "w": [
+                298,
+                1069.9
+              ],
+              "s": [
+                510.8,
+                1190.1
+              ],
+              "e": [
+                1084,
+                903.8
+              ]
             },
             "scale": 0.5732,
             "vertical": 0.9395,
@@ -1329,25 +2020,44 @@
           }
         },
         "height": {
-          "foot": [511, 1190],
-          "top": [511, 900],
+          "foot": [
+            511,
+            1190
+          ],
+          "top": [
+            511,
+            900
+          ],
           "readByEye": true,
           "reason": "Refined on coordinate grid after calibrating the top edge of r0 quoin cap at y815 (r0 foot y1155, width775, ratio0.439). Initial reading used the bottom edge of the projecting cap.",
           "houseWidth": 786,
           "pixels": 290,
           "ratio": 0.36895674300254455,
           "pass": false,
-          "initialTop": [511, 940]
+          "initialTop": [
+            511,
+            940
+          ]
         },
         "light": {
           "walls": [
             {
-              "box": [325, 925, 430, 1015],
+              "box": [
+                325,
+                925,
+                430,
+                1015
+              ],
               "pixels": 9051,
               "median": 145.457
             },
             {
-              "box": [860, 765, 980, 845],
+              "box": [
+                860,
+                765,
+                980,
+                845
+              ],
               "pixels": 9600,
               "median": 72.40379999999999
             }
@@ -1387,33 +2097,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [388, 978.5],
-        "s": [806.7623631477418, 1187.881181573871],
-        "e": [1032, 1079.86647316103],
-        "sure": [false, true],
-        "slopes": [0.5, -0.4795588780026666],
+        "w": [
+          388,
+          978.5
+        ],
+        "s": [
+          806.7623631477418,
+          1187.881181573871
+        ],
+        "e": [
+          1032,
+          1079.86647316103
+        ],
+        "sure": [
+          false,
+          true
+        ],
+        "slopes": [
+          0.5,
+          -0.4795588780026666
+        ],
         "lowerLeftSpan": 418.7623631477418,
         "lowerRightSpan": 225.23763685225822,
         "difference": 0.8592024361471331,
         "plan": {
           "measured": {
-            "w": [388, 978.5],
-            "s": [806.7623631477418, 1187.881181573871],
-            "e": [1032, 1079.86647316103]
+            "w": [
+              388,
+              978.5
+            ],
+            "s": [
+              806.7623631477418,
+              1187.881181573871
+            ],
+            "e": [
+              1032,
+              1079.86647316103
+            ]
           },
           "used": {
-            "w": [388, 979],
-            "s": [828, 1188],
-            "e": [1032, 1080]
+            "w": [
+              388,
+              979
+            ],
+            "s": [
+              828,
+              1188
+            ],
+            "e": [
+              1032,
+              1080
+            ]
           },
           "readByEye": true,
           "reason": "Measured near point sits inboard of the limestone quoin step; outer near corner read by eye on grid.",
           "lowerLeftSpan": 440,
           "lowerRightSpan": 204,
           "longToShort": 0.4636363636363636,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": false,
         "camera": {
@@ -1425,16 +2174,36 @@
         "check": {
           "ok": true,
           "problems": [],
-          "notes": ["placed by its outline: no straight wall base was found"],
+          "notes": [
+            "placed by its outline: no straight wall base was found"
+          ],
           "fit": {
             "method": "outline",
-            "sure": [false, true],
-            "measured": [0.5, -0.48],
-            "slopes": [0.5, -0.48],
+            "sure": [
+              false,
+              true
+            ],
+            "measured": [
+              0.5,
+              -0.48
+            ],
+            "slopes": [
+              0.5,
+              -0.48
+            ],
             "base": {
-              "w": [388, 978.5],
-              "s": [806.8, 1187.9],
-              "e": [1032, 1079.9]
+              "w": [
+                388,
+                978.5
+              ],
+              "s": [
+                806.8,
+                1187.9
+              ],
+              "e": [
+                1032,
+                1079.9
+              ]
             },
             "scale": 0.6996,
             "vertical": 1.0209,
@@ -1452,8 +2221,14 @@
           }
         },
         "height": {
-          "foot": [828, 1188],
-          "top": [828, 934],
+          "foot": [
+            828,
+            1188
+          ],
+          "top": [
+            828,
+            934
+          ],
           "readByEye": true,
           "reason": "Top of near house quoin cap at frame-to-wall junction.",
           "houseWidth": 644,
@@ -1464,12 +2239,22 @@
         "light": {
           "walls": [
             {
-              "box": [435, 850, 475, 925],
+              "box": [
+                435,
+                850,
+                475,
+                925
+              ],
               "pixels": 2871,
               "median": 123.7028
             },
             {
-              "box": [900, 975, 970, 1040],
+              "box": [
+                900,
+                975,
+                970,
+                1040
+              ],
               "pixels": 4527,
               "median": 63.638799999999996
             }
@@ -1509,33 +2294,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [254, 988.5143237360833],
-        "s": [482.4732397780732, 1133.9577700216068],
-        "e": [1094, 901.5744402198438],
-        "sure": [true, true],
-        "slopes": [0.6365885406395939, -0.380005168894702],
+        "w": [
+          254,
+          988.5143237360833
+        ],
+        "s": [
+          482.4732397780732,
+          1133.9577700216068
+        ],
+        "e": [
+          1094,
+          901.5744402198438
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.6365885406395939,
+          -0.380005168894702
+        ],
         "lowerLeftSpan": 228.4732397780732,
         "lowerRightSpan": 611.5267602219268,
         "difference": 1.6765793701526337,
         "plan": {
           "measured": {
-            "w": [254, 988.5143237360833],
-            "s": [482.4732397780732, 1133.9577700216068],
-            "e": [1094, 901.5744402198438]
+            "w": [
+              254,
+              988.5143237360833
+            ],
+            "s": [
+              482.4732397780732,
+              1133.9577700216068
+            ],
+            "e": [
+              1094,
+              901.5744402198438
+            ]
           },
           "used": {
-            "w": [254, 988.5143237360833],
-            "s": [482.4732397780732, 1133.9577700216068],
-            "e": [1094, 901.5744402198438]
+            "w": [
+              254,
+              988.5143237360833
+            ],
+            "s": [
+              482.4732397780732,
+              1133.9577700216068
+            ],
+            "e": [
+              1094,
+              901.5744402198438
+            ]
           },
           "readByEye": false,
           "reason": "Measured points lie on the house base corners.",
           "lowerLeftSpan": 228.4732397780732,
           "lowerRightSpan": 611.5267602219268,
           "longToShort": 2.6765793701526337,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -1552,13 +2376,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.637, -0.38],
-            "slopes": [0.637, -0.38],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.637,
+              -0.38
+            ],
+            "slopes": [
+              0.637,
+              -0.38
+            ],
             "base": {
-              "w": [254, 988.5],
-              "s": [482.5, 1134],
-              "e": [1094, 901.6]
+              "w": [
+                254,
+                988.5
+              ],
+              "s": [
+                482.5,
+                1134
+              ],
+              "e": [
+                1094,
+                901.6
+              ]
             },
             "scale": 0.5364,
             "vertical": 0.9837,
@@ -1583,25 +2425,44 @@
           }
         },
         "height": {
-          "foot": [482, 1134],
-          "top": [482, 850],
+          "foot": [
+            482,
+            1134
+          ],
+          "top": [
+            482,
+            850
+          ],
           "readByEye": true,
           "reason": "Refined on coordinate grid after calibrating the top edge of r0 quoin cap at y815 (r0 foot y1155, width775, ratio0.439). Initial reading used the bottom edge of the projecting cap.",
           "houseWidth": 840,
           "pixels": 284,
           "ratio": 0.3380952380952381,
           "pass": false,
-          "initialTop": [482, 900]
+          "initialTop": [
+            482,
+            900
+          ]
         },
         "light": {
           "walls": [
             {
-              "box": [310, 810, 380, 900],
+              "box": [
+                310,
+                810,
+                380,
+                900
+              ],
               "pixels": 6042,
               "median": 127.4152
             },
             {
-              "box": [920, 740, 1000, 820],
+              "box": [
+                920,
+                740,
+                1000,
+                820
+              ],
               "pixels": 6400,
               "median": 78.93329999999999
             }
@@ -1641,33 +2502,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [339, 1057.9722941442428],
-        "s": [530.4286799530158, 1144.0165515879798],
-        "e": [998, 911.5813886265045],
-        "sure": [true, true],
-        "slopes": [0.44948467212361104, -0.4971116768627278],
+        "w": [
+          339,
+          1057.9722941442428
+        ],
+        "s": [
+          530.4286799530158,
+          1144.0165515879798
+        ],
+        "e": [
+          998,
+          911.5813886265045
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.44948467212361104,
+          -0.4971116768627278
+        ],
         "lowerLeftSpan": 191.42867995301583,
         "lowerRightSpan": 467.57132004698417,
         "difference": 1.442535361795028,
         "plan": {
           "measured": {
-            "w": [339, 1057.9722941442428],
-            "s": [530.4286799530158, 1144.0165515879798],
-            "e": [998, 911.5813886265045]
+            "w": [
+              339,
+              1057.9722941442428
+            ],
+            "s": [
+              530.4286799530158,
+              1144.0165515879798
+            ],
+            "e": [
+              998,
+              911.5813886265045
+            ]
           },
           "used": {
-            "w": [339, 1057.9722941442428],
-            "s": [530.4286799530158, 1144.0165515879798],
-            "e": [998, 911.5813886265045]
+            "w": [
+              339,
+              1057.9722941442428
+            ],
+            "s": [
+              530.4286799530158,
+              1144.0165515879798
+            ],
+            "e": [
+              998,
+              911.5813886265045
+            ]
           },
           "readByEye": false,
           "reason": "Measured points lie on the house base corners.",
           "lowerLeftSpan": 191.42867995301583,
           "lowerRightSpan": 467.57132004698417,
           "longToShort": 2.442535361795028,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -1682,13 +2582,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.449, -0.497],
-            "slopes": [0.449, -0.497],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.449,
+              -0.497
+            ],
+            "slopes": [
+              0.449,
+              -0.497
+            ],
             "base": {
-              "w": [339, 1058],
-              "s": [530.4, 1144],
-              "e": [998, 911.6]
+              "w": [
+                339,
+                1058
+              ],
+              "s": [
+                530.4,
+                1144
+              ],
+              "e": [
+                998,
+                911.6
+              ]
             },
             "scale": 0.6837,
             "vertical": 1.0564,
@@ -1709,8 +2627,14 @@
           }
         },
         "height": {
-          "foot": [530, 1144],
-          "top": [530, 900],
+          "foot": [
+            530,
+            1144
+          ],
+          "top": [
+            530,
+            900
+          ],
           "readByEye": true,
           "reason": "Top edge of the near quoin cap, using the same reading as r0's cap top (not the cap bottom).",
           "houseWidth": 659,
@@ -1721,12 +2645,22 @@
         "light": {
           "walls": [
             {
-              "box": [405, 930, 465, 1000],
+              "box": [
+                405,
+                930,
+                465,
+                1000
+              ],
               "pixels": 4200,
               "median": 129.40800000000002
             },
             {
-              "box": [740, 840, 880, 900],
+              "box": [
+                740,
+                840,
+                880,
+                900
+              ],
               "pixels": 8400,
               "median": 79.25019999999999
             }
@@ -1766,33 +2700,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [335, 1044.2420042621252],
-        "s": [528.5988873949594, 1129.3471624129882],
-        "e": [946, 922.8549685310996],
-        "sure": [true, true],
-        "slopes": [0.43959528536566866, -0.4947092560274957],
+        "w": [
+          335,
+          1044.2420042621252
+        ],
+        "s": [
+          528.5988873949594,
+          1129.3471624129882
+        ],
+        "e": [
+          946,
+          922.8549685310996
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.43959528536566866,
+          -0.4947092560274957
+        ],
         "lowerLeftSpan": 193.59888739495943,
         "lowerRightSpan": 417.40111260504057,
         "difference": 1.156009872895107,
         "plan": {
           "measured": {
-            "w": [335, 1044.2420042621252],
-            "s": [528.5988873949594, 1129.3471624129882],
-            "e": [946, 922.8549685310996]
+            "w": [
+              335,
+              1044.2420042621252
+            ],
+            "s": [
+              528.5988873949594,
+              1129.3471624129882
+            ],
+            "e": [
+              946,
+              922.8549685310996
+            ]
           },
           "used": {
-            "w": [335, 1044],
-            "s": [511, 1134],
-            "e": [946, 923]
+            "w": [
+              335,
+              1044
+            ],
+            "s": [
+              511,
+              1134
+            ],
+            "e": [
+              946,
+              923
+            ]
           },
           "readByEye": true,
           "reason": "Near point from measureBase lies on the inboard quoin step; outer near base corner read at x511 on coordinate grid.",
           "lowerLeftSpan": 176,
           "lowerRightSpan": 435,
           "longToShort": 2.471590909090909,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -1809,13 +2782,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.44, -0.495],
-            "slopes": [0.44, -0.495],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.44,
+              -0.495
+            ],
+            "slopes": [
+              0.44,
+              -0.495
+            ],
             "base": {
-              "w": [335, 1044.2],
-              "s": [528.6, 1129.3],
-              "e": [946, 922.9]
+              "w": [
+                335,
+                1044.2
+              ],
+              "s": [
+                528.6,
+                1129.3
+              ],
+              "e": [
+                946,
+                922.9
+              ]
             },
             "scale": 0.7374,
             "vertical": 1.0703,
@@ -1840,8 +2831,14 @@
           }
         },
         "height": {
-          "foot": [511, 1134],
-          "top": [511, 908],
+          "foot": [
+            511,
+            1134
+          ],
+          "top": [
+            511,
+            908
+          ],
           "readByEye": true,
           "reason": "Upper edge of near quoin cap at the frame foot, calibrated against r0.",
           "houseWidth": 611,
@@ -1852,12 +2849,22 @@
         "light": {
           "walls": [
             {
-              "box": [400, 935, 450, 1010],
+              "box": [
+                400,
+                935,
+                450,
+                1010
+              ],
               "pixels": 3750,
               "median": 127.74719999999999
             },
             {
-              "box": [650, 880, 800, 940],
+              "box": [
+                650,
+                880,
+                800,
+                940
+              ],
               "pixels": 9000,
               "median": 77.7568
             }
@@ -1897,33 +2904,72 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
-        "w": [299, 1078.381016692718],
-        "s": [485.8484424325248, 1168.1970150107622],
-        "e": [933, 952.3525938779883],
-        "sure": [true, true],
-        "slopes": [0.4806890394629795, -0.48270976021413686],
+        "w": [
+          299,
+          1078.381016692718
+        ],
+        "s": [
+          485.8484424325248,
+          1168.1970150107622
+        ],
+        "e": [
+          933,
+          952.3525938779883
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.4806890394629795,
+          -0.48270976021413686
+        ],
         "lowerLeftSpan": 186.8484424325248,
         "lowerRightSpan": 447.1515575674752,
         "difference": 1.3931243511914837,
         "plan": {
           "measured": {
-            "w": [299, 1078.381016692718],
-            "s": [485.8484424325248, 1168.1970150107622],
-            "e": [933, 952.3525938779883]
+            "w": [
+              299,
+              1078.381016692718
+            ],
+            "s": [
+              485.8484424325248,
+              1168.1970150107622
+            ],
+            "e": [
+              933,
+              952.3525938779883
+            ]
           },
           "used": {
-            "w": [299, 1078.381016692718],
-            "s": [485.8484424325248, 1168.1970150107622],
-            "e": [933, 952.3525938779883]
+            "w": [
+              299,
+              1078.381016692718
+            ],
+            "s": [
+              485.8484424325248,
+              1168.1970150107622
+            ],
+            "e": [
+              933,
+              952.3525938779883
+            ]
           },
           "readByEye": false,
           "reason": "Measured points lie on the house base corners.",
           "lowerLeftSpan": 186.8484424325248,
           "lowerRightSpan": 447.1515575674752,
           "longToShort": 2.3931243511914837,
-          "required": [2, 2.8]
+          "required": [
+            2,
+            2.8
+          ]
         },
         "planPass": true,
         "camera": {
@@ -1938,13 +2984,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.481, -0.483],
-            "slopes": [0.481, -0.483],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.481,
+              -0.483
+            ],
+            "slopes": [
+              0.481,
+              -0.483
+            ],
             "base": {
-              "w": [299, 1078.4],
-              "s": [485.8, 1168.2],
-              "e": [933, 952.4]
+              "w": [
+                299,
+                1078.4
+              ],
+              "s": [
+                485.8,
+                1168.2
+              ],
+              "e": [
+                933,
+                952.4
+              ]
             },
             "scale": 0.7107,
             "vertical": 1.038,
@@ -1965,8 +3029,14 @@
           }
         },
         "height": {
-          "foot": [486, 1168],
-          "top": [486, 900],
+          "foot": [
+            486,
+            1168
+          ],
+          "top": [
+            486,
+            900
+          ],
           "readByEye": true,
           "reason": "Top edge of the near quoin cap at the steel-frame foot, calibrated against r0 cap top.",
           "houseWidth": 634,
@@ -1977,12 +3047,22 @@
         "light": {
           "walls": [
             {
-              "box": [365, 945, 420, 1020],
+              "box": [
+                365,
+                945,
+                420,
+                1020
+              ],
               "pixels": 4125,
               "median": 137.5464
             },
             {
-              "box": [650, 860, 780, 930],
+              "box": [
+                650,
+                860,
+                780,
+                930
+              ],
               "pixels": 9100,
               "median": 76.54419999999999
             }
@@ -2010,6 +3090,579 @@
         "editMode": "guide",
         "requiredCorrection": "Correction: the last picture of this view was painted from too high a camera. Too much of the tank's top showed, the wall feet sloped 0.61 and -0.53 instead of 0.5 and -0.5, and the brick walls came out lower than r0's. Keep the block-out's camera exactly: both wall feet fall one pixel for every two across, as the block's do. The brick walls are as tall as the block-out's lower box, and the frame and tank as tall as its upper box. The crane's post stands at the far (top) corner, behind the house, where the block-out's thin post is, not at the right end."
       }
+    },
+    {
+      "view": "r2",
+      "attempt": 4,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r2-attempt-4.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines\n\nA LONG, NARROW red-brick pump house on cream limestone quoins and base; its\nlong side is about 2.4 times its short side; walls tall, about 0.45 of the house's width. The long\nside has two bays: the door bay (forest-green plank door, lamp over it, a small slate-roofed porch\ngable a little forward of the wall), a downpipe, a plain bay, and a big quoined pier at the end.\nThe short side and the back are plain brick between quoins: no door, no window, no porch, no lamp.\nOn the house a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\ntwo oat-cream bands, a railing, a manhole and a vent, as long as the long side and as deep as the\nhouse, covering the whole roof. At one end of the long side a tall forest-green hose crane: ONE\npost with one diagonal brace and ONE jib, about 0.43 tile long (the width of the short side), the\nhose hanging from the jib's end. Pipes with copper bands run from the tank to the crane.\nTHE LIGHT never turns with the building. It comes from the upper left: tops lightest, the\nlower-left wall mid (r0's front, luma 112), the lower-right wall darkest (r0's short side, 67).\nCamera: orthographic 2:1 isometric, 30 degrees down, no perspective; both wall feet fall one pixel\nfor every two across.\n\nView r2. The front faces the upper right, hidden: nothing of the front shows on either visible\nwall. The lower-left wall is the BACK: LONG, plain brick between quoins, no door, no porch, two\nbays wide, as the lower-right wall of the fourth picture. The lower-right wall is the left-hand\nside: SHORT and plain, one bay wide, brick between limestone quoins with a quoined pier at each\nend, no door, no window, no porch, no lamp. The tank lies along the lower-left wall and is as long\nas it. The crane's post stands at the right corner, where the guide's thin post is, with one\ndiagonal brace and one jib that rises to the upper right, parallel to the lower-right wall's foot;\nthe jib is about as long as the short side is wide (about 92 px on the guide), not longer, and the\nhose hangs from its end. The post's top stands above the tank's top.\n\nReferences: the first is the guide, the second the style board. The third is this same building\nin view r0, seen from the front, laid onto its footprint at the guide's camera and scale. The\nfourth is this building in view r1: its lower-right wall is the BACK and is the lower-left wall of\nthis picture; take its walls, tank and colours from it, but not its crane, whose jib is too long.\nPaint the SAME building at the same size, turned on a turntable while the camera stays where it is.\nIt is not a mirror image and not a copy of any reference. The light stays where it is. It is\nexactly as large as in the references: no taller, no lower, no storey more. Do not paint the\nreference again.\n\nFootprint, in pixels on the guide's 1024x1024 canvas (if your tool returns another size, scale\nevery number by its width / 1024 and keep the same places): the house's three outer corners at\nground level are w (353, 799), s (579, 911) and e (671, 865). The lower-left foot from w to s is\n225 px long, the lower-right foot from s to e is 92 px, and the house is 317 px wide from w to e.\nNothing at ground level goes outside that diamond. The brick wall, foot to the top of its quoins\nat the near corner s, is 136 to 149 px tall (the quoin top at about y 762 to 775 there); the steel\nframe and the tank stand above it, the tank's top rim reaching about y 560 at s. Do not widen,\nlengthen or lower the house.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/guides/fuel_pump-r2.png",
+        "G:/DEV/Terepasztal/fuel-work/docs/art-direction/images/03-theme-town-growth.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r1-fitted.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "w": [
+          299,
+          890.0812872185129
+        ],
+        "s": [
+          740.0860901675939,
+          1170.4569549162031
+        ],
+        "e": [
+          938,
+          1071.5
+        ],
+        "sure": [
+          true,
+          false
+        ],
+        "slopes": [
+          0.6356484004996834,
+          -0.5
+        ],
+        "lowerLeftSpan": 441.08609016759385,
+        "lowerRightSpan": 197.91390983240615,
+        "difference": 1.228676552047839,
+        "plan": {
+          "measured": {
+            "w": [
+              299,
+              890.0812872185129
+            ],
+            "s": [
+              740.0860901675939,
+              1170.4569549162031
+            ],
+            "e": [
+              938,
+              1071.5
+            ]
+          },
+          "used": {
+            "w": [
+              256,
+              875
+            ],
+            "s": [
+              750,
+              1164
+            ],
+            "e": [
+              942,
+              1067
+            ]
+          },
+          "readByEye": true,
+          "reason": "Read outer quoin base corners by eye: measureBase w falls inside the stepped quoin and s/e are fitted intersections.",
+          "lowerLeftSpan": 494,
+          "lowerRightSpan": 192,
+          "longToShort": 2.5729166666666665,
+          "required": [
+            2,
+            2.8
+          ]
+        },
+        "planPass": true,
+        "camera": {
+          "off": true,
+          "by": null,
+          "foot": 0,
+          "slope": 0.636
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off: the lower-left wall's foot slopes 0.64 where the game's slopes 0.50"
+          ],
+          "notes": [
+            "placed by its outline: no straight wall base was found"
+          ],
+          "fit": {
+            "method": "outline",
+            "sure": [
+              true,
+              false
+            ],
+            "measured": [
+              0.636,
+              -0.5
+            ],
+            "slopes": [
+              0.636,
+              -0.5
+            ],
+            "base": {
+              "w": [
+                299,
+                890.1
+              ],
+              "s": [
+                740.1,
+                1170.5
+              ],
+              "e": [
+                938,
+                1071.5
+              ]
+            },
+            "scale": 0.7051,
+            "vertical": 0.8806,
+            "shear": -0.0597,
+            "cx": 618.5,
+            "cy": 826.7,
+            "box": {
+              "left": 258.5,
+              "top": 406.5,
+              "right": 867.7,
+              "bottom": 943
+            },
+            "camera": null,
+            "area": 431554
+          },
+          "camera": {
+            "by": null,
+            "was": "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "height": {
+          "foot": [
+            750,
+            1164
+          ],
+          "top": [
+            750,
+            860
+          ],
+          "houseWidth": 686,
+          "pixels": 304,
+          "ratio": 0.44314868804664725,
+          "pass": true,
+          "required": [
+            0.43,
+            0.47
+          ]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [
+                390,
+                800,
+                600,
+                920
+              ],
+              "pixels": 24819,
+              "median": 119.34699999999998
+            },
+            {
+              "box": [
+                795,
+                909,
+                860,
+                1020
+              ],
+              "pixels": 7215,
+              "median": 68.8382
+            }
+          ],
+          "rightToLeft": 0.5767903675836009,
+          "pass": true
+        },
+        "observation": "r2: Long plain back lower left, short plain side lower right, no door/porch/lamp. Single crane jib is too long (horizontal reach about 255 px versus 192 px short side). House fills more canvas than guide.",
+        "grassReview": "review/fuel_pump-a1-r2-attempt-4-grass.png",
+        "houseWidthFraction": 0.5470494417862839,
+        "accepted": false
+      }
+    },
+    {
+      "view": "r2",
+      "attempt": 5,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r2-attempt-5.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines\n\nA LONG, NARROW red-brick pump house on cream limestone quoins and base; its\nlong side is about 2.4 times its short side; walls tall, about 0.45 of the house's width. The long\nside has two bays: the door bay (forest-green plank door, lamp over it, a small slate-roofed porch\ngable a little forward of the wall), a downpipe, a plain bay, and a big quoined pier at the end.\nThe short side and the back are plain brick between quoins: no door, no window, no porch, no lamp.\nOn the house a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\ntwo oat-cream bands, a railing, a manhole and a vent, as long as the long side and as deep as the\nhouse, covering the whole roof. At one end of the long side a tall forest-green hose crane: ONE\npost with one diagonal brace and ONE jib, about 0.43 tile long (the width of the short side), the\nhose hanging from the jib's end. Pipes with copper bands run from the tank to the crane.\nTHE LIGHT never turns with the building. It comes from the upper left: tops lightest, the\nlower-left wall mid (r0's front, luma 112), the lower-right wall darkest (r0's short side, 67).\nCamera: orthographic 2:1 isometric, 30 degrees down, no perspective; both wall feet fall one pixel\nfor every two across.\n\nView r2. The front faces the upper right, hidden: nothing of the front shows on either visible\nwall. The lower-left wall is the BACK: LONG, plain brick between quoins, no door, no porch, two\nbays wide, as the lower-right wall of the fourth picture. The lower-right wall is the left-hand\nside: SHORT and plain, one bay wide, brick between limestone quoins with a quoined pier at each\nend, no door, no window, no porch, no lamp. The tank lies along the lower-left wall and is as long\nas it. The crane's post stands at the right corner, where the guide's thin post is, with one\ndiagonal brace and one jib that rises to the upper right, parallel to the lower-right wall's foot;\nthe jib is about as long as the short side is wide (about 92 px on the guide), not longer, and the\nhose hangs from its end. The post's top stands above the tank's top.\n\nReferences: the first is the guide, the second the style board. The third is this same building\nin view r0, seen from the front, laid onto its footprint at the guide's camera and scale. The\nfourth is this building in view r1: its lower-right wall is the BACK and is the lower-left wall of\nthis picture; take its walls, tank and colours from it, but not its crane, whose jib is too long.\nPaint the SAME building at the same size, turned on a turntable while the camera stays where it is.\nIt is not a mirror image and not a copy of any reference. The light stays where it is. It is\nexactly as large as in the references: no taller, no lower, no storey more. Do not paint the\nreference again.\n\nFootprint, in pixels on the guide's 1024x1024 canvas (if your tool returns another size, scale\nevery number by its width / 1024 and keep the same places): the house's three outer corners at\nground level are w (353, 799), s (579, 911) and e (671, 865). The lower-left foot from w to s is\n225 px long, the lower-right foot from s to e is 92 px, and the house is 317 px wide from w to e.\nNothing at ground level goes outside that diamond. The brick wall, foot to the top of its quoins\nat the near corner s, is 136 to 149 px tall (the quoin top at about y 762 to 775 there); the steel\nframe and the tank stand above it, the tank's top rim reaching about y 560 at s. Do not widen,\nlengthen or lower the house.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last r2 had lower-left foot slope 0.636 where 0.500 is wanted (camera at most 2 degrees), and jib horizontal reach 255 px where the short side's 192 px is wanted. Keep the height ratio 0.443 and plan 2.57, but paint both ground edges at exactly 1 down per 2 across and shorten the jib to the short-side width.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/guides/fuel_pump-r2.png",
+        "G:/DEV/Terepasztal/fuel-work/docs/art-direction/images/03-theme-town-growth.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r1-fitted.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "w": [
+          269,
+          863.1526697601464
+        ],
+        "s": [
+          748.251574483655,
+          1148.3742127581725
+        ],
+        "e": [
+          912,
+          1066.5
+        ],
+        "sure": [
+          true,
+          false
+        ],
+        "slopes": [
+          0.595139501221928,
+          -0.5
+        ],
+        "lowerLeftSpan": 479.25157448365496,
+        "lowerRightSpan": 163.74842551634504,
+        "difference": 1.9267553136614253,
+        "plan": {
+          "measured": {
+            "w": [
+              269,
+              863.1526697601464
+            ],
+            "s": [
+              748.251574483655,
+              1148.3742127581725
+            ],
+            "e": [
+              912,
+              1066.5
+            ]
+          },
+          "used": {
+            "w": [
+              264,
+              868
+            ],
+            "s": [
+              745,
+              1151
+            ],
+            "e": [
+              916,
+              1060
+            ]
+          },
+          "readByEye": true,
+          "reason": "Outer quoin base corners by eye; detector w is inset on quoin step, s/e fitted from untrusted right edge.",
+          "lowerLeftSpan": 481,
+          "lowerRightSpan": 171,
+          "longToShort": 2.8128654970760234,
+          "required": [
+            2,
+            2.8
+          ]
+        },
+        "planPass": false,
+        "camera": {
+          "off": true,
+          "by": null,
+          "foot": 0,
+          "slope": 0.595
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off: the lower-left wall's foot slopes 0.59 where the game's slopes 0.50"
+          ],
+          "notes": [
+            "placed by its outline: no straight wall base was found"
+          ],
+          "fit": {
+            "method": "outline",
+            "sure": [
+              true,
+              false
+            ],
+            "measured": [
+              0.595,
+              -0.5
+            ],
+            "slopes": [
+              0.595,
+              -0.5
+            ],
+            "base": {
+              "w": [
+                269,
+                863.2
+              ],
+              "s": [
+                748.3,
+                1148.4
+              ],
+              "e": [
+                912,
+                1066.5
+              ]
+            },
+            "scale": 0.7007,
+            "vertical": 0.9131,
+            "shear": -0.0434,
+            "cx": 590.5,
+            "cy": 855.4,
+            "box": {
+              "left": 286.7,
+              "top": 413.3,
+              "right": 900.5,
+              "bottom": 946.6
+            },
+            "camera": null,
+            "area": 389122
+          },
+          "camera": {
+            "by": null,
+            "was": "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "height": {
+          "foot": [
+            745,
+            1151
+          ],
+          "top": [
+            745,
+            873
+          ],
+          "houseWidth": 652,
+          "pixels": 278,
+          "ratio": 0.4263803680981595,
+          "pass": false,
+          "required": [
+            0.43,
+            0.47
+          ]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [
+                380,
+                800,
+                590,
+                915
+              ],
+              "pixels": 23293,
+              "median": 121.40079999999999
+            },
+            {
+              "box": [
+                800,
+                925,
+                850,
+                1030
+              ],
+              "pixels": 5250,
+              "median": 73.54419999999999
+            }
+          ],
+          "rightToLeft": 0.6057966669082905,
+          "pass": true
+        },
+        "observation": "r2: Correct plain back and side, but jib reach about 250 px exceeds short side 171; camera slope 0.595 and plan/height miss bounds.",
+        "grassReview": "review/fuel_pump-a1-r2-attempt-5-grass.png",
+        "houseWidthFraction": 0.5199362041467305,
+        "accepted": false
+      }
+    },
+    {
+      "view": "r2",
+      "attempt": 6,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r2-attempt-6.png",
+      "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nThe building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side.\n\nDiesel age: larger and more industrial, still of the same countryside. Warm brick walls on cream stone bases, riveted iron and steel trusses, slate or corrugated roofs with roof lights, big sliding doors, iron cranes and tanks, forest-green paint.\n\nFuel Pump. A railway refuelling point for diesel engines\n\nA LONG, NARROW red-brick pump house on cream limestone quoins and base; its\nlong side is about 2.4 times its short side; walls tall, about 0.45 of the house's width. The long\nside has two bays: the door bay (forest-green plank door, lamp over it, a small slate-roofed porch\ngable a little forward of the wall), a downpipe, a plain bay, and a big quoined pier at the end.\nThe short side and the back are plain brick between quoins: no door, no window, no porch, no lamp.\nOn the house a dark steel frame with X bracing, and on it a riveted forest-green steel tank with\ntwo oat-cream bands, a railing, a manhole and a vent, as long as the long side and as deep as the\nhouse, covering the whole roof. At one end of the long side a tall forest-green hose crane: ONE\npost with one diagonal brace and ONE jib, about 0.43 tile long (the width of the short side), the\nhose hanging from the jib's end. Pipes with copper bands run from the tank to the crane.\nTHE LIGHT never turns with the building. It comes from the upper left: tops lightest, the\nlower-left wall mid (r0's front, luma 112), the lower-right wall darkest (r0's short side, 67).\nCamera: orthographic 2:1 isometric, 30 degrees down, no perspective; both wall feet fall one pixel\nfor every two across.\n\nView r2. The front faces the upper right, hidden: nothing of the front shows on either visible\nwall. The lower-left wall is the BACK: LONG, plain brick between quoins, no door, no porch, two\nbays wide, as the lower-right wall of the fourth picture. The lower-right wall is the left-hand\nside: SHORT and plain, one bay wide, brick between limestone quoins with a quoined pier at each\nend, no door, no window, no porch, no lamp. The tank lies along the lower-left wall and is as long\nas it. The crane's post stands at the right corner, where the guide's thin post is, with one\ndiagonal brace and one jib that rises to the upper right, parallel to the lower-right wall's foot;\nthe jib is about as long as the short side is wide (about 92 px on the guide), not longer, and the\nhose hangs from its end. The post's top stands above the tank's top.\n\nReferences: the first is the guide, the second the style board. The third is this same building\nin view r0, seen from the front, laid onto its footprint at the guide's camera and scale. The\nfourth is this building in view r1: its lower-right wall is the BACK and is the lower-left wall of\nthis picture; take its walls, tank and colours from it, but not its crane, whose jib is too long.\nPaint the SAME building at the same size, turned on a turntable while the camera stays where it is.\nIt is not a mirror image and not a copy of any reference. The light stays where it is. It is\nexactly as large as in the references: no taller, no lower, no storey more. Do not paint the\nreference again.\n\nFootprint, in pixels on the guide's 1024x1024 canvas (if your tool returns another size, scale\nevery number by its width / 1024 and keep the same places): the house's three outer corners at\nground level are w (353, 799), s (579, 911) and e (671, 865). The lower-left foot from w to s is\n225 px long, the lower-right foot from s to e is 92 px, and the house is 317 px wide from w to e.\nNothing at ground level goes outside that diamond. The brick wall, foot to the top of its quoins\nat the near corner s, is 136 to 149 px tall (the quoin top at about y 762 to 775 there); the steel\nframe and the tank stand above it, the tank's top rim reaching about y 560 at s. Do not widen,\nlengthen or lower the house.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last r2 had plan 2.813 where 2.0 to 2.8 is wanted, height 0.426 where 0.43 to 0.47 is wanted, and lower-left foot slope 0.595 where 0.500 is wanted. Paint a 2.4 plan, height 0.45, both feet slope exactly 0.5. Your last jib reached about 250 px where the short side was only 171 px: make the jib exactly the short-side width. Follow the small guide footprint coordinates, not the enlarged reference silhouette.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/guides/fuel_pump-r2.png",
+        "G:/DEV/Terepasztal/fuel-work/docs/art-direction/images/03-theme-town-growth.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r1-fitted.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "w": [
+          303,
+          885.0403550272366
+        ],
+        "s": [
+          754.9953075562612,
+          1148.0023462218696
+        ],
+        "e": [
+          923,
+          1064
+        ],
+        "sure": [
+          true,
+          false
+        ],
+        "slopes": [
+          0.5817803565624434,
+          -0.5
+        ],
+        "lowerLeftSpan": 451.9953075562612,
+        "lowerRightSpan": 168.0046924437388,
+        "difference": 1.6903731138796898,
+        "plan": {
+          "measured": {
+            "w": [
+              303,
+              885.0403550272366
+            ],
+            "s": [
+              754.9953075562612,
+              1148.0023462218696
+            ],
+            "e": [
+              923,
+              1064
+            ]
+          },
+          "used": {
+            "w": [
+              296,
+              894
+            ],
+            "s": [
+              751,
+              1150
+            ],
+            "e": [
+              926,
+              1064
+            ]
+          },
+          "readByEye": true,
+          "reason": "Outer quoin corners read by eye because fitted w is inset on quoin and right base is untrusted.",
+          "lowerLeftSpan": 455,
+          "lowerRightSpan": 175,
+          "longToShort": 2.6,
+          "required": [
+            2,
+            2.8
+          ]
+        },
+        "planPass": true,
+        "camera": {
+          "off": true,
+          "by": null,
+          "foot": 0,
+          "slope": 0.582
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off: the lower-left wall's foot slopes 0.58 where the game's slopes 0.50"
+          ],
+          "notes": [
+            "placed by its outline: no straight wall base was found"
+          ],
+          "fit": {
+            "method": "outline",
+            "sure": [
+              true,
+              false
+            ],
+            "measured": [
+              0.582,
+              -0.5
+            ],
+            "slopes": [
+              0.582,
+              -0.5
+            ],
+            "base": {
+              "w": [
+                303,
+                885
+              ],
+              "s": [
+                755,
+                1148
+              ],
+              "e": [
+                923,
+                1064
+              ]
+            },
+            "scale": 0.7267,
+            "vertical": 0.9244,
+            "shear": -0.0378,
+            "cx": 613,
+            "cy": 877.7,
+            "box": {
+              "left": 286.7,
+              "top": 436.9,
+              "right": 879,
+              "bottom": 945.4
+            },
+            "camera": null,
+            "area": 344293
+          },
+          "camera": {
+            "by": null,
+            "was": "Its lower-left wall's foot ran too steep. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "height": {
+          "foot": [
+            751,
+            1150
+          ],
+          "top": [
+            751,
+            914
+          ],
+          "houseWidth": 630,
+          "pixels": 236,
+          "ratio": 0.3746031746031746,
+          "pass": false,
+          "required": [
+            0.43,
+            0.47
+          ]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [
+                400,
+                845,
+                590,
+                950
+              ],
+              "pixels": 19262,
+              "median": 119.27479999999998
+            },
+            {
+              "box": [
+                800,
+                948,
+                850,
+                1030
+              ],
+              "pixels": 4100,
+              "median": 69.77519999999998
+            }
+          ],
+          "rightToLeft": 0.5849953217276407,
+          "pass": true
+        },
+        "observation": "r2: Correct plain wall assignment, but walls are squat, crane jib about 240 px versus short side 175 px; foot slope 0.582 fails camera.",
+        "grassReview": "review/fuel_pump-a1-r2-attempt-6-grass.png",
+        "houseWidthFraction": 0.5023923444976076,
+        "accepted": false
+      }
     }
   ],
   "selection": {
@@ -2017,29 +3670,53 @@
     "r3": 9,
     "r1": 12,
     "r2": 2,
-    "policy": "At most three new attempts per view: retained r1 attempt12, which passes plan/height/camera/light and has improved far-corner crane; r3 attempt9 is the closest relit correct-turn draft but fails height and crane/hose details. R2 unchanged: no r3 attempt satisfies the explicit fallback height requirement."
+    "policy": "r0 master and r1 attempt12 remain unchanged. R2 attempts4-6 rejected: closest attempt4 retained as raw only (plan/height/light pass; camera and jib fail). Canonical r2 stays attempt2. R3 pending crane-only edit from attempt7.",
+    "r2Closest": 4
   },
-  "referencePreparation": "Turntable references were made inside the fuel folder using the repository's fitPicture and normalisePicture functions at t1. Source deliverables remain the native imagegen PNGs: no resizing, cropping, moving, recolouring or alpha thresholding was applied.",
+  "referencePreparation": "Turntable references were made inside the fuel folder using the repository's fitPicture and normalisePicture functions at t1. Source deliverables remain the native imagegen PNGs: no resizing, cropping, moving, recolouring or alpha thresholding was applied. R1 attempt12 fitted for r2 at refs/fuel_pump-a1-r1-fitted.png; no r3 reference created.",
   "qa": {
-    "readiness": "Partial: r1 attempt12 passes all four requested measurements, while native surface-alpha/highlight caveats remain. R3 relit draft does not pass height or all crane/hose details. R2 not repainted because no r3 reference meets fallback requirements.",
+    "readiness": "Partial: r2 rejected after three attempts; r3 crane/light pending. R0 and accepted r1 unchanged.",
     "images": {
       "r0": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r0.png",
-        "dimensions": [1254, 1254],
+        "dimensions": [
+          1254,
+          1254
+        ],
         "sha256": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
         "check": {
           "ok": true,
           "problems": [],
-          "notes": ["placed by its outline: no straight wall base was found"],
+          "notes": [
+            "placed by its outline: no straight wall base was found"
+          ],
           "fit": {
             "method": "outline",
-            "sure": [false, true],
-            "measured": [0.5, -0.506],
-            "slopes": [0.5, -0.506],
+            "sure": [
+              false,
+              true
+            ],
+            "measured": [
+              0.5,
+              -0.506
+            ],
+            "slopes": [
+              0.5,
+              -0.506
+            ],
             "base": {
-              "w": [354, 922.5],
-              "s": [795.3, 1143.1],
-              "e": [1139, 969.2]
+              "w": [
+                354,
+                922.5
+              ],
+              "s": [
+                795.3,
+                1143.1
+              ],
+              "e": [
+                1139,
+                969.2
+              ]
             },
             "scale": 0.574,
             "vertical": 0.9942,
@@ -2059,7 +3736,10 @@
       },
       "r1": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r1.png",
-        "dimensions": [1254, 1254],
+        "dimensions": [
+          1254,
+          1254
+        ],
         "sha256": "18767adf3e76cd96f1ddd872e84fbe6436e3f79dfe4d5accbe482a27e62a18f2",
         "check": {
           "ok": true,
@@ -2067,13 +3747,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.481, -0.483],
-            "slopes": [0.481, -0.483],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.481,
+              -0.483
+            ],
+            "slopes": [
+              0.481,
+              -0.483
+            ],
             "base": {
-              "w": [299, 1078.4],
-              "s": [485.8, 1168.2],
-              "e": [933, 952.4]
+              "w": [
+                299,
+                1078.4
+              ],
+              "s": [
+                485.8,
+                1168.2
+              ],
+              "e": [
+                933,
+                952.4
+              ]
             },
             "scale": 0.7107,
             "vertical": 1.038,
@@ -2096,7 +3794,10 @@
       },
       "r2": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r2.png",
-        "dimensions": [1254, 1254],
+        "dimensions": [
+          1254,
+          1254
+        ],
         "sha256": "fb4c343628773ba6a9543ee922b99e0ed2c0dc0805dfc2eb0a8f9f3bf4afe52b",
         "check": {
           "ok": false,
@@ -2106,13 +3807,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.533, -0.418],
-            "slopes": [0.533, -0.418],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.533,
+              -0.418
+            ],
+            "slopes": [
+              0.533,
+              -0.418
+            ],
             "base": {
-              "w": [227, 897.3],
-              "s": [780.1, 1192],
-              "e": [1065, 1072.9]
+              "w": [
+                227,
+                897.3
+              ],
+              "s": [
+                780.1,
+                1192
+              ],
+              "e": [
+                1065,
+                1072.9
+              ]
             },
             "scale": 0.5377,
             "vertical": 1.052,
@@ -2139,7 +3858,10 @@
       },
       "r3": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r3.png",
-        "dimensions": [1254, 1254],
+        "dimensions": [
+          1254,
+          1254
+        ],
         "sha256": "8ef80ceba09070b1d0db82c2d14484e7b3bba1e56991bb6c91649c5981621eb8",
         "check": {
           "ok": false,
@@ -2149,13 +3871,31 @@
           "notes": [],
           "fit": {
             "method": "base",
-            "sure": [true, true],
-            "measured": [0.565, -0.499],
-            "slopes": [0.565, -0.499],
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.565,
+              -0.499
+            ],
+            "slopes": [
+              0.565,
+              -0.499
+            ],
             "base": {
-              "w": [298, 1069.9],
-              "s": [510.8, 1190.1],
-              "e": [1084, 903.8]
+              "w": [
+                298,
+                1069.9
+              ],
+              "s": [
+                510.8,
+                1190.1
+              ],
+              "e": [
+                1084,
+                903.8
+              ]
             },
             "scale": 0.5732,
             "vertical": 0.9395,
@@ -2182,22 +3922,17 @@
       }
     },
     "repaint": {
-      "date": "2026-10-17",
-      "order": ["r3", "r1", "r2"],
-      "newAttempts": {
-        "r3": [9, 10, 11],
-        "r1": [10, 11, 12],
-        "r2": []
-      },
-      "measuredPass": {
-        "r1": true,
-        "r3": false,
-        "r2": false
-      },
-      "productionAccepted": {
-        "r1": false,
-        "r3": false,
-        "r2": false
+      "date": "2026-10-18",
+      "outcome": "in progress",
+      "r2": {
+        "accepted": false,
+        "attempts": [
+          4,
+          5,
+          6
+        ],
+        "closest": 4,
+        "reason": "Attempt4 passes plan 2.573, height .443 and light 119.35/68.84; fails camera lower-left slope .636 and jib reach about255 versus192. No canonical replacement."
       }
     },
     "lightCheck": {
@@ -2206,12 +3941,22 @@
       "master": {
         "walls": [
           {
-            "box": [760, 880, 850, 1000],
+            "box": [
+              760,
+              880,
+              850,
+              1000
+            ],
             "pixels": 10800,
             "median": 112.4954
           },
           {
-            "box": [975, 830, 1060, 960],
+            "box": [
+              975,
+              830,
+              1060,
+              960
+            ],
             "pixels": 10994,
             "median": 66.77
           }
@@ -2222,12 +3967,22 @@
       "previousR3": {
         "walls": [
           {
-            "box": [400, 880, 530, 1000],
+            "box": [
+              400,
+              880,
+              530,
+              1000
+            ],
             "pixels": 14930,
             "median": 118.7276
           },
           {
-            "box": [850, 760, 1000, 860],
+            "box": [
+              850,
+              760,
+              1000,
+              860
+            ],
             "pixels": 14100,
             "median": 117.8576
           }
@@ -2237,8 +3992,14 @@
       }
     },
     "heightCalibration": {
-      "masterFoot": [915, 1155],
-      "masterTop": [915, 815],
+      "masterFoot": [
+        915,
+        1155
+      ],
+      "masterTop": [
+        915,
+        815
+      ],
       "houseWidth": 775,
       "ratio": 0.43870967741935485,
       "readByEye": true,
@@ -2252,7 +4013,10 @@
     ],
     "masterUnchanged": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
     "grassReview": {
-      "inspected": ["r3 attempts9,10,11", "r1 attempts10,11,12"],
+      "inspected": [
+        "r3 attempts9,10,11",
+        "r1 attempts10,11,12"
+      ],
       "method": "Unmodified repository building-sheets --picture, through the existing folder-local inventory/output adapter. Native measurement grids are diagnostic copies only.",
       "saved": [
         "review/fuel_pump-a1-r0-grass.png",
@@ -2316,7 +4080,10 @@
       "resets_at": 1791831557,
       "limit_window_minutes": 1440
     },
-    "newAttemptLimitExhausted": ["r1", "r3"]
+    "newAttemptLimitExhausted": [
+      "r1",
+      "r3"
+    ]
   },
   "qaHistory": [
     {
@@ -2326,7 +4093,10 @@
         "images": {
           "r0": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r0.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
             "transparentPixels": 936212,
             "opaquePixels": 815,
@@ -2334,16 +4104,36 @@
             "check": {
               "ok": true,
               "problems": [],
-              "notes": ["placed by its outline: no straight wall base was found"],
+              "notes": [
+                "placed by its outline: no straight wall base was found"
+              ],
               "fit": {
                 "method": "outline",
-                "sure": [false, true],
-                "measured": [0.5, -0.506],
-                "slopes": [0.5, -0.506],
+                "sure": [
+                  false,
+                  true
+                ],
+                "measured": [
+                  0.5,
+                  -0.506
+                ],
+                "slopes": [
+                  0.5,
+                  -0.506
+                ],
                 "base": {
-                  "w": [354, 922.5],
-                  "s": [795.3, 1143.1],
-                  "e": [1139, 969.2]
+                  "w": [
+                    354,
+                    922.5
+                  ],
+                  "s": [
+                    795.3,
+                    1143.1
+                  ],
+                  "e": [
+                    1139,
+                    969.2
+                  ]
                 },
                 "scale": 0.574,
                 "vertical": 0.9942,
@@ -2363,7 +4153,10 @@
           },
           "r1": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r1.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "e61958af2368d193062179aeb247cea676e04ea8d5aed0362c2e39e7195287e1",
             "transparentPixels": 1109055,
             "opaquePixels": 983,
@@ -2374,13 +4167,31 @@
               "notes": [],
               "fit": {
                 "method": "base",
-                "sure": [true, true],
-                "measured": [0.536, -0.492],
-                "slopes": [0.536, -0.492],
+                "sure": [
+                  true,
+                  true
+                ],
+                "measured": [
+                  0.536,
+                  -0.492
+                ],
+                "slopes": [
+                  0.536,
+                  -0.492
+                ],
                 "base": {
-                  "w": [334, 993.6],
-                  "s": [612.5, 1142.8],
-                  "e": [1026, 939.2]
+                  "w": [
+                    334,
+                    993.6
+                  ],
+                  "s": [
+                    612.5,
+                    1142.8
+                  ],
+                  "e": [
+                    1026,
+                    939.2
+                  ]
                 },
                 "scale": 0.6511,
                 "vertical": 0.9728,
@@ -2403,7 +4214,10 @@
           },
           "r2": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r2.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "fb4c343628773ba6a9543ee922b99e0ed2c0dc0805dfc2eb0a8f9f3bf4afe52b",
             "transparentPixels": 1061066,
             "opaquePixels": 895,
@@ -2416,13 +4230,31 @@
               "notes": [],
               "fit": {
                 "method": "base",
-                "sure": [true, true],
-                "measured": [0.533, -0.418],
-                "slopes": [0.533, -0.418],
+                "sure": [
+                  true,
+                  true
+                ],
+                "measured": [
+                  0.533,
+                  -0.418
+                ],
+                "slopes": [
+                  0.533,
+                  -0.418
+                ],
                 "base": {
-                  "w": [227, 897.3],
-                  "s": [780.1, 1192],
-                  "e": [1065, 1072.9]
+                  "w": [
+                    227,
+                    897.3
+                  ],
+                  "s": [
+                    780.1,
+                    1192
+                  ],
+                  "e": [
+                    1065,
+                    1072.9
+                  ]
                 },
                 "scale": 0.5377,
                 "vertical": 1.052,
@@ -2449,7 +4281,10 @@
           },
           "r3": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r3.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "6437a461a475a31623557c755dcac860dad5e0070a94335c0e048b2ec2bb9f06",
             "transparentPixels": 1072812,
             "opaquePixels": 956,
@@ -2462,13 +4297,31 @@
               "notes": [],
               "fit": {
                 "method": "base",
-                "sure": [true, true],
-                "measured": [0.561, -0.53],
-                "slopes": [0.561, -0.53],
+                "sure": [
+                  true,
+                  true
+                ],
+                "measured": [
+                  0.561,
+                  -0.53
+                ],
+                "slopes": [
+                  0.561,
+                  -0.53
+                ],
                 "base": {
-                  "w": [262, 927.7],
-                  "s": [605.4, 1120.3],
-                  "e": [1092, 862.5]
+                  "w": [
+                    262,
+                    927.7
+                  ],
+                  "s": [
+                    605.4,
+                    1120.3
+                  ],
+                  "e": [
+                    1092,
+                    862.5
+                  ]
                 },
                 "scale": 0.5428,
                 "vertical": 0.9171,
@@ -2497,7 +4350,10 @@
         "grassReview": {
           "command": "node tools/building-sheets.mjs --picture <file>",
           "adapter": "Unmodified origin/develop tools invoked with a temporary Node registerHooks loader: added fuel_pump with t1 to main's in-memory inventory; redirected lookFile output to assets/source/fuel-2026-10-11/.qa. No queue, families, report or tool source was edited.",
-          "inspected": ["r1 attempts 4, 5, 6", "r3 attempts 3, 4, 5"],
+          "inspected": [
+            "r1 attempts 4, 5, 6",
+            "r3 attempts 3, 4, 5"
+          ],
           "observations": [
             "Wrong tank axis, rectangular plan, camera 5.1 degrees off; mast correctly at far corner.",
             "Correct tank axis, plain rear walls and far-corner mast. Camera passes at 1.2 degrees. Plan differs by 48.4%; retained closest draft, not accepted.",
@@ -2526,8 +4382,16 @@
         "repaint": {
           "outcome": "partial",
           "newAttempts": {
-            "r1": [4, 5, 6],
-            "r3": [3, 4, 5],
+            "r1": [
+              4,
+              5,
+              6
+            ],
+            "r3": [
+              3,
+              4,
+              5
+            ],
             "r2": []
           },
           "accepted": {
@@ -2550,21 +4414,44 @@
         "images": {
           "r0": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r0.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
             "check": {
               "ok": true,
               "problems": [],
-              "notes": ["placed by its outline: no straight wall base was found"],
+              "notes": [
+                "placed by its outline: no straight wall base was found"
+              ],
               "fit": {
                 "method": "outline",
-                "sure": [false, true],
-                "measured": [0.5, -0.506],
-                "slopes": [0.5, -0.506],
+                "sure": [
+                  false,
+                  true
+                ],
+                "measured": [
+                  0.5,
+                  -0.506
+                ],
+                "slopes": [
+                  0.5,
+                  -0.506
+                ],
                 "base": {
-                  "w": [354, 922.5],
-                  "s": [795.3, 1143.1],
-                  "e": [1139, 969.2]
+                  "w": [
+                    354,
+                    922.5
+                  ],
+                  "s": [
+                    795.3,
+                    1143.1
+                  ],
+                  "e": [
+                    1139,
+                    969.2
+                  ]
                 },
                 "scale": 0.574,
                 "vertical": 0.9942,
@@ -2584,7 +4471,10 @@
           },
           "r1": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r1.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "0796df2c555945e86fb1a6f954ec7d18c7cc97875a83a213ecc119f22585f7ad",
             "check": {
               "ok": false,
@@ -2594,13 +4484,31 @@
               "notes": [],
               "fit": {
                 "method": "base",
-                "sure": [true, true],
-                "measured": [0.606, -0.531],
-                "slopes": [0.606, -0.531],
+                "sure": [
+                  true,
+                  true
+                ],
+                "measured": [
+                  0.606,
+                  -0.531
+                ],
+                "slopes": [
+                  0.606,
+                  -0.531
+                ],
                 "base": {
-                  "w": [350, 1049.5],
-                  "s": [493.4, 1136.4],
-                  "e": [949, 894.3]
+                  "w": [
+                    350,
+                    1049.5
+                  ],
+                  "s": [
+                    493.4,
+                    1136.4
+                  ],
+                  "e": [
+                    949,
+                    894.3
+                  ]
                 },
                 "scale": 0.7522,
                 "vertical": 0.8795,
@@ -2627,7 +4535,10 @@
           },
           "r2": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r2.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "fb4c343628773ba6a9543ee922b99e0ed2c0dc0805dfc2eb0a8f9f3bf4afe52b",
             "check": {
               "ok": false,
@@ -2637,13 +4548,31 @@
               "notes": [],
               "fit": {
                 "method": "base",
-                "sure": [true, true],
-                "measured": [0.533, -0.418],
-                "slopes": [0.533, -0.418],
+                "sure": [
+                  true,
+                  true
+                ],
+                "measured": [
+                  0.533,
+                  -0.418
+                ],
+                "slopes": [
+                  0.533,
+                  -0.418
+                ],
                 "base": {
-                  "w": [227, 897.3],
-                  "s": [780.1, 1192],
-                  "e": [1065, 1072.9]
+                  "w": [
+                    227,
+                    897.3
+                  ],
+                  "s": [
+                    780.1,
+                    1192
+                  ],
+                  "e": [
+                    1065,
+                    1072.9
+                  ]
                 },
                 "scale": 0.5377,
                 "vertical": 1.052,
@@ -2670,7 +4599,10 @@
           },
           "r3": {
             "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r3.png",
-            "dimensions": [1254, 1254],
+            "dimensions": [
+              1254,
+              1254
+            ],
             "sha256": "29dffc6117e955e905501bf426507bbb74ddd39a014557955468fabd7bf3f51e",
             "check": {
               "ok": false,
@@ -2680,13 +4612,31 @@
               "notes": [],
               "fit": {
                 "method": "base",
-                "sure": [true, true],
-                "measured": [0.54, -0.526],
-                "slopes": [0.54, -0.526],
+                "sure": [
+                  true,
+                  true
+                ],
+                "measured": [
+                  0.54,
+                  -0.526
+                ],
+                "slopes": [
+                  0.54,
+                  -0.526
+                ],
                 "base": {
-                  "w": [381, 1009.5],
-                  "s": [561.7, 1107],
-                  "e": [1057, 846.3]
+                  "w": [
+                    381,
+                    1009.5
+                  ],
+                  "s": [
+                    561.7,
+                    1107
+                  ],
+                  "e": [
+                    1057,
+                    846.3
+                  ]
                 },
                 "scale": 0.6665,
                 "vertical": 0.9382,
@@ -2715,8 +4665,16 @@
         "repaint": {
           "date": "2026-10-16",
           "newAttempts": {
-            "r1": [7, 8, 9],
-            "r3": [6, 7, 8],
+            "r1": [
+              7,
+              8,
+              9
+            ],
+            "r3": [
+              6,
+              7,
+              8
+            ],
             "r2": []
           },
           "accepted": {
@@ -2740,7 +4698,10 @@
         ],
         "grassReview": {
           "command": "node tools/building-sheets.mjs --picture <file>",
-          "inspected": ["r1 attempts 7,8,9", "r3 attempts 6,7,8"],
+          "inspected": [
+            "r1 attempts 7,8,9",
+            "r3 attempts 6,7,8"
+          ],
           "adapter": "Existing .qa/fuel-tools.mjs registers fuel_pump/t1 in CLI inventory, recognises raw attempt names and redirects report/look output inside this folder. Camera and grass drawing calculations are unmodified. No queue, families, repository tools or other folders changed.",
           "saved": [
             "review/fuel_pump-a1-r0-grass.png",
