@@ -1,0 +1,410 @@
+{
+  "status": "curated-artwork-candidates",
+  "generator": "built-in image_gen",
+  "projection": {
+    "game_tile_pixels": [
+      64,
+      32
+    ],
+    "ground_slopes": [
+      0.5,
+      -0.5
+    ],
+    "screen_edge_degrees": 26.565051177,
+    "camera_azimuth_degrees": 45,
+    "camera_elevation_degrees": 30,
+    "certification": "Visually reviewed and direction-diagnosed illustrations; not mathematically exact 3D renders. Runtime ground anchors and in-game placement remain to calibrate."
+  },
+  "scale": {
+    "tile_metres": 4,
+    "status": "proposed art convention",
+    "door_height_metres": 2,
+    "storey_height_metres": 3
+  },
+  "assets": [
+    {
+      "id": "01-merchants-last-stop",
+      "name": "Merchant's Last Stop",
+      "file": "01-merchants-last-stop.png",
+      "source_candidate": "../01-merchants-last-stop-grid-v5.png",
+      "footprint_tiles": [
+        3,
+        2
+      ],
+      "rarity_chance_per_9_chunks_percent": 6,
+      "proposed_dimensions_metres": [
+        12,
+        8,
+        8
+      ],
+      "logical_footprint_span_pixels": [
+        160,
+        80
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Use case: stylized-concept. Retexture the supplied architectural geometry into one finished illustrated game asset. Input image is the EDIT TARGET: exact game 2:1 orthographic blockout. It is authoritative for camera, horizontal construction axes, ground footprint and human scale. Rebuild the subject inside it. Preserve base-corner locations and front-corner vertical direction. No lens perspective.\nSUBJECT: Merchant's Last Stop. A weathered two-storey timber roadside inn physically incorporating a huge abandoned covered trading wagon, wagon canopy tucked into one side, slate roof, chimney, timber balcony, realistically sized crates and wheels. Wagon is large enough for cargo but smaller than inn. No signs with writing.\nFootprint 3 by 2 tiles = 12m by 8m. Overall height about 8m. Human door2m, storey3m, stair riser18cm. Preserve guide door scale. Guide top is MAXIMUM building height, including roof or chimney; lower the walls to allow roof within that envelope. The blockout is NOT a design for a solid box: create the actual architecture described, including holes and visible supporting structures.\nCRITICAL projection: world-horizontal X edges slope exactly +0.5 down-right, Y edges slope exactly -0.5 up-right. These are the guide's two directions. Equal world lengths have equal screen lengths on both axes. Match BOTH facade orientations, not just one. Vertical lines remain vertical. Orthographic dimetric camera azimuth45, elevation26.565 degrees, NOT30. No rotational drift or front-facing perspective. Keep entire silhouette inside a clear transparent safety margin.\nSTYLE: detailed cozy architectural illustration for the same pastoral railway game, realistic human proportions, warm cream limestone, weathered brown timber, muted slate blue roof, restrained copper, natural moss and greenery, upper-left diffuse daylight. Materials and joinery believable. Discovery/abandoned state with restrained wear. No people, no text, no labels, no captions, no grid, no terrain slab or scenery background, no vignette, no atmospheric halo or painted background shadow.\nOne standalone PNG with genuine RGBA transparency including architectural openings with nothing behind. Preserve architectural foundations, steps, attached vegetation and supports only. No guide gray shading or guide floor lines in final.",
+      "source_resolution_pixels": [
+        1536,
+        1024
+      ],
+      "solid_alpha_bounds_pixels": [
+        184,
+        25,
+        1357,
+        973
+      ]
+    },
+    {
+      "id": "02-overgrown-bathhouse",
+      "name": "Overgrown Bathhouse",
+      "file": "02-overgrown-bathhouse.png",
+      "source_candidate": "../02-overgrown-bathhouse-grid-v6.png",
+      "footprint_tiles": [
+        4,
+        3
+      ],
+      "rarity_chance_per_9_chunks_percent": 5,
+      "proposed_dimensions_metres": [
+        16,
+        12,
+        7
+      ],
+      "logical_footprint_span_pixels": [
+        224,
+        112
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Paint the supplied exact geometry guide into a final Overgrown Bathhouse game building sprite. The guide is the construction drawing; trace its two facade orientations. It is not merely a mood reference. Preserve the parallel facade edges and common vertical corner. A roofless limestone bathhouse ruin with elegant arches and a partially broken glass barrel vault, turquoise shallow pools inside actual stone pool basins, vines through glazing, intact doorway. Water confined to masonry basins, no surrounding terrain.\nThe last attempt had unequal facade angles. This one must use two symmetric screen directions: for every 200px horizontal run, a world-horizontal edge changes100px vertically, positive on the left facade, negative on the right facade. Orthographic no vanishing points. Screen grid lines are26.565degrees from horizontal. In 3D terms camera azimuth45deg and elevation30deg. Do not confuse screen edge angle with camera elevation. NO camera elevation26.565deg, NO true isometric35.264deg camera. Exact 2:1 game projection. Follow supplied guide.\nGround footprint4x3 tiles, tile4m, overallheight7m. Door2m, floors3m, stairs18cm. Keep the door-to-building ratio in guide. Coherent architectural construction. Fit the roof and chimneys INSIDE maximum-height envelope, not on top of guide envelope.\nStyle: beautiful believable illustrated architectural sprite for pastoral railway game, nuanced wood/limestone/slate/copper, upper-left illumination. No giant flowers or enormous steps. No people or labels. Genuine alpha transparency, empty safety margin, no background color or scenery, no glow or ground shadows or terrain diamond. Single standalone asset, no guide lines visible.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        119,
+        172,
+        1139,
+        1038
+      ]
+    },
+    {
+      "id": "03-bellkeepers-refuge",
+      "name": "Bellkeeper's Refuge",
+      "file": "03-bellkeepers-refuge.png",
+      "source_candidate": "../03-bellkeepers-refuge-grid-v4.png",
+      "footprint_tiles": [
+        1,
+        1
+      ],
+      "rarity_chance_per_9_chunks_percent": 4,
+      "proposed_dimensions_metres": [
+        4,
+        4,
+        14
+      ],
+      "logical_footprint_span_pixels": [
+        64,
+        32
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Retexture and detail the supplied architectural geometry guide into one finished illustrated game sprite. The guide is the EDIT TARGET and its camera orientation, horizontal edge directions and vertical front corner are locked. KEEP the same orthographic viewpoint and body proportions. Render only this building with no background, transparent PNG. Single image, not sheet.\nSubject Bellkeeper's Refuge: undefined.\nFootprint1x1 tiles, 4m by 4m ground, 14m overallheight. Ordinary door2m height, floors3m. Use the guide door as the human-scale reference.\nKeep all world-horizontal edges parallel to either guide roof edge: precisely slope0.5 down-right and slope0.5 down-left. Equal world lengths on either ground axis have equal screen lengths. Straight verticals. No perspective distortion, no front-facing facade, no cinematic or three-quarter view. 2:1 game projection with camera26.565deg elevation, not30deg elevation.\nArtist finish: refined cozy painted realistic miniature architecture, limestone warm cream, weatheredtimber, slate mutedblue, mossgreen, upperleft daylight. Realistic sizes of bricks, windows and steps. Follow subject construction and open up appropriate holes in guide. Do not simply paint a solid graybox. Keep object fully visible with clear transparent border, zero backdrop, no halo, no text, no terrain cube or groundslab.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        424,
+        5,
+        831,
+        1183
+      ]
+    },
+    {
+      "id": "04-flooded-archive",
+      "name": "Flooded Archive",
+      "file": "04-flooded-archive.png",
+      "source_candidate": "../04-flooded-archive-grid-v3.png",
+      "footprint_tiles": [
+        4,
+        4
+      ],
+      "rarity_chance_per_9_chunks_percent": 3,
+      "proposed_dimensions_metres": [
+        16,
+        16,
+        10
+      ],
+      "logical_footprint_span_pixels": [
+        256,
+        128
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Use case: stylized-concept. Image1 is the EDIT TARGET: exact game-coordinate architectural blockout. Image2 is only a reference for building design, materials, vegetation, color and texture. Paint Image1 into Flooded Archive. Do NOT copy Image2's camera or silhouette; Image1's geometry must dominate.\nLocked projection: orthographic 2:1 dimetric, all world X horizontal construction edges slope +0.5 and all world Y horizontal construction edges slope -0.5. Front corner vertical. Parallel sides identical orientation, no vanishing points. Base corners, front corner, floor lines and front/side facade extents must follow Image1, no camera rotation. Camera azimuth45 and elevation26.565 degrees. NOT 30degree isometric lines.\nBuilding design:  Flooded Archive. Footprint 4 by 4 tiles, approximately 16 by 16 metres; height approximately 10 metres.\nAn abandoned two-storey partly collapsed limestone library standing on stone foundations, exposed bookshelves visible through broken front wall, shattered glass roof, shallow translucent teal floodwater ONLY inside the ruined building footprint, a few reeds caught along foundation. No lake or ground tile slab.\nKeep human scale from guide: door2m and floors3m, footprint 4x4 tiles, one tile4m, height10m. You may sculpt roofs, ruin openings, attached roots and other subject features within guide envelope but keep horizontal construction axes fixed. Do not depict a plain grey box, no guide lines. Style must match Image2's warm detailed architectural illustration with upper-left lighting.\nOne isolated building, genuine alpha transparent background, zero backdrop/vignette/atmospheric glow, empty transparent margin around full silhouette, no captions or grid or earth slab. Preserve interior holes as transparency where no physical building surface is behind.",
+      "source_resolution_pixels": [
+        1536,
+        1024
+      ],
+      "solid_alpha_bounds_pixels": [
+        194,
+        49,
+        1349,
+        995
+      ]
+    },
+    {
+      "id": "05-rootbound-workshop",
+      "name": "Rootbound Workshop",
+      "file": "05-rootbound-workshop.png",
+      "source_candidate": "../05-rootbound-workshop-grid-v5.png",
+      "footprint_tiles": [
+        2,
+        2
+      ],
+      "rarity_chance_per_9_chunks_percent": 3,
+      "proposed_dimensions_metres": [
+        8,
+        8,
+        8
+      ],
+      "logical_footprint_span_pixels": [
+        128,
+        64
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Use case: stylized-concept. Retexture the supplied architectural geometry into one finished illustrated game asset. Input image is the EDIT TARGET: exact game 2:1 orthographic blockout. It is authoritative for camera, horizontal construction axes, ground footprint and human scale. Rebuild the subject inside it. Preserve base-corner locations and front-corner vertical direction. No lens perspective.\nSUBJECT: Rootbound Workshop. A modest one-storey timber craftsman's workshop elevated above ground by massive intertwined roots, weathered red clay roof, small wooden stair and deck, visible workbench, tree growing through back corner. All root tips and steps fully visible, ordinary two-metre door.\nFootprint 2 by 2 tiles = 8m by 8m. Overall height about 8m. Human door2m, storey3m, stair riser18cm. Preserve guide door scale. Guide top is MAXIMUM building height, including roof or chimney; lower the walls to allow roof within that envelope. The blockout is NOT a design for a solid box: create the actual architecture described, including holes and visible supporting structures.\nCRITICAL projection: world-horizontal X edges slope exactly +0.5 down-right, Y edges slope exactly -0.5 up-right. These are the guide's two directions. Equal world lengths have equal screen lengths on both axes. Match BOTH facade orientations, not just one. Vertical lines remain vertical. Orthographic dimetric camera azimuth45, elevation26.565 degrees, NOT30. No rotational drift or front-facing perspective. Keep entire silhouette inside a clear transparent safety margin.\nSTYLE: detailed cozy architectural illustration for the same pastoral railway game, realistic human proportions, warm cream limestone, weathered brown timber, muted slate blue roof, restrained copper, natural moss and greenery, upper-left diffuse daylight. Materials and joinery believable. Discovery/abandoned state with restrained wear. No people, no text, no labels, no captions, no grid, no terrain slab or scenery background, no vignette, no atmospheric halo or painted background shadow.\nOne standalone PNG with genuine RGBA transparency including architectural openings with nothing behind. Preserve architectural foundations, steps, attached vegetation and supports only. No guide gray shading or guide floor lines in final.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        53,
+        33,
+        1230,
+        1212
+      ]
+    },
+    {
+      "id": "06-cliffside-cable-station",
+      "name": "Cliffside Cable Station",
+      "file": "06-cliffside-cable-station.png",
+      "source_candidate": "../06-cliffside-cable-station-grid-v6.png",
+      "footprint_tiles": [
+        3,
+        2
+      ],
+      "rarity_chance_per_9_chunks_percent": 2.5,
+      "proposed_dimensions_metres": [
+        12,
+        8,
+        7
+      ],
+      "logical_footprint_span_pixels": [
+        160,
+        80
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Paint the supplied exact geometry guide into a final Cliffside Cable Station game building sprite. The guide is the construction drawing; trace its two facade orientations. It is not merely a mood reference. Preserve the parallel facade edges and common vertical corner. A weathered timber cable winch station with slate roof, exposed winding drum and gears, anchored elevated timber deck with integrated trestle supports, one short cable arm projecting to right with hanging cargo basket. A standalone architecture asset for placement on existing cliff terrain: include structural supports but NO cliff, rock mountain, terrain chunk, remote station, long disconnected cable or backdrop. Cable and basket fully inside image.\nThe last attempt had unequal facade angles. This one must use two symmetric screen directions: for every 200px horizontal run, a world-horizontal edge changes100px vertically, positive on the left facade, negative on the right facade. Orthographic no vanishing points. Screen grid lines are26.565degrees from horizontal. In 3D terms camera azimuth45deg and elevation30deg. Do not confuse screen edge angle with camera elevation. NO camera elevation26.565deg, NO true isometric35.264deg camera. Exact 2:1 game projection. Follow supplied guide.\nGround footprint3x2 tiles, tile4m, overallheight7m. Door2m, floors3m, stairs18cm. Keep the door-to-building ratio in guide. Coherent architectural construction. Fit the roof and chimneys INSIDE maximum-height envelope, not on top of guide envelope.\nStyle: beautiful believable illustrated architectural sprite for pastoral railway game, nuanced wood/limestone/slate/copper, upper-left illumination. No giant flowers or enormous steps. No people or labels. Genuine alpha transparency, empty safety margin, no background color or scenery, no glow or ground shadows or terrain diamond. Single standalone asset, no guide lines visible.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        132,
+        100,
+        1242,
+        1141
+      ]
+    },
+    {
+      "id": "07-stormglass-observatory",
+      "name": "Stormglass Observatory",
+      "file": "07-stormglass-observatory.png",
+      "source_candidate": "../07-stormglass-observatory-grid-v5.png",
+      "footprint_tiles": [
+        2,
+        2
+      ],
+      "rarity_chance_per_9_chunks_percent": 2,
+      "proposed_dimensions_metres": [
+        8,
+        8,
+        11
+      ],
+      "logical_footprint_span_pixels": [
+        128,
+        64
+      ],
+      "common_scale_visible_span_factor": 0.7071067811865476,
+      "prompt": "Use case: stylized-concept. Retexture the supplied architectural geometry into one finished illustrated game asset. Input image is the EDIT TARGET: exact game 2:1 orthographic blockout. It is authoritative for camera, horizontal construction axes, ground footprint and human scale. Rebuild the subject inside it. Preserve base-corner locations and front-corner vertical direction. No lens perspective.\nSUBJECT: Stormglass Observatory. A round limestone observatory, weathered copper dome partly opened around brass telescope, narrow small balcony, modest pale blue stormglass instrument on parapet, ordinary human doorway. Three storeys at realistic architectural proportions. No floating magic particles.\nFootprint 2 by 2 tiles = 8m by 8m. Overall height about 11m. Human door2m, storey3m, stair riser18cm. Preserve guide door scale. Guide top is MAXIMUM building height, including roof or chimney; lower the walls to allow roof within that envelope. The blockout is NOT a design for a solid box: create the actual architecture described, including holes and visible supporting structures.\nCRITICAL projection: world-horizontal X edges slope exactly +0.5 down-right, Y edges slope exactly -0.5 up-right. These are the guide's two directions. Equal world lengths have equal screen lengths on both axes. Match BOTH facade orientations, not just one. Vertical lines remain vertical. Orthographic dimetric camera azimuth45, elevation26.565 degrees, NOT30. No rotational drift or front-facing perspective. Keep entire silhouette inside a clear transparent safety margin.\nSTYLE: detailed cozy architectural illustration for the same pastoral railway game, realistic human proportions, warm cream limestone, weathered brown timber, muted slate blue roof, restrained copper, natural moss and greenery, upper-left diffuse daylight. Materials and joinery believable. Discovery/abandoned state with restrained wear. No people, no text, no labels, no captions, no grid, no terrain slab or scenery background, no vignette, no atmospheric halo or painted background shadow.\nOne standalone PNG with genuine RGBA transparency including architectural openings with nothing behind. Preserve architectural foundations, steps, attached vegetation and supports only. No guide gray shading or guide floor lines in final.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        300,
+        20,
+        992,
+        1204
+      ]
+    },
+    {
+      "id": "08-ashen-conservatory",
+      "name": "Ashen Conservatory",
+      "file": "08-ashen-conservatory.png",
+      "source_candidate": "../08-ashen-conservatory-grid-v6.png",
+      "footprint_tiles": [
+        4,
+        2
+      ],
+      "rarity_chance_per_9_chunks_percent": 1.5,
+      "proposed_dimensions_metres": [
+        16,
+        8,
+        6
+      ],
+      "logical_footprint_span_pixels": [
+        192,
+        96
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Paint the supplied exact geometry guide into a final Ashen Conservatory game building sprite. The guide is the construction drawing; trace its two facade orientations. It is not merely a mood reference. Preserve the parallel facade edges and common vertical corner. A long low Victorian greenhouse with blackened wrought iron ribs, smoke-stained stone plinth, some shattered glazing, vivid surviving plants growing inside, modest entry door at near gable. Mostly abandoned and visibly fire damaged, no external garden ground.\nThe last attempt had unequal facade angles. This one must use two symmetric screen directions: for every 200px horizontal run, a world-horizontal edge changes100px vertically, positive on the left facade, negative on the right facade. Orthographic no vanishing points. Screen grid lines are26.565degrees from horizontal. In 3D terms camera azimuth45deg and elevation30deg. Do not confuse screen edge angle with camera elevation. NO camera elevation26.565deg, NO true isometric35.264deg camera. Exact 2:1 game projection. Follow supplied guide.\nGround footprint4x2 tiles, tile4m, overallheight6m. Door2m, floors3m, stairs18cm. Keep the door-to-building ratio in guide. Coherent architectural construction. Fit the roof and chimneys INSIDE maximum-height envelope, not on top of guide envelope.\nStyle: beautiful believable illustrated architectural sprite for pastoral railway game, nuanced wood/limestone/slate/copper, upper-left illumination. No giant flowers or enormous steps. No people or labels. Genuine alpha transparency, empty safety margin, no background color or scenery, no glow or ground shadows or terrain diamond. Single standalone asset, no guide lines visible.",
+      "source_resolution_pixels": [
+        1536,
+        1024
+      ],
+      "solid_alpha_bounds_pixels": [
+        245,
+        24,
+        1304,
+        971
+      ]
+    },
+    {
+      "id": "09-inverted-manor",
+      "name": "Inverted Manor",
+      "file": "09-inverted-manor.png",
+      "source_candidate": "../09-inverted-manor-grid-v6.png",
+      "footprint_tiles": [
+        3,
+        3
+      ],
+      "rarity_chance_per_9_chunks_percent": 1,
+      "proposed_dimensions_metres": [
+        12,
+        12,
+        9
+      ],
+      "logical_footprint_span_pixels": [
+        192,
+        96
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Edit the supplied upside-down manor sprite: zoom the entire building OUT by20percent and center it on a generously larger empty transparent canvas, so the complete uppermost foundation stones and the complete lowest roof tip are visible with at least80pixels of clear alpha margin on EVERY side. The top currently clips a stone: reconstruct it fully. Keep the exact existing inverted architecture, materials, human proportions, roof-down orientation and camera. Do not rotate or redesign building. Ground-plane construction directions should follow2:1 game grid: screen slopes +0.5 and -0.5, verticalsvertical, orthographic no perspective. Background genuinely transparent with no halo or shadows. No text or extra scenery. One finished asset.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        180,
+        105,
+        1080,
+        1159
+      ]
+    },
+    {
+      "id": "10-sleeping-foundry",
+      "name": "Sleeping Foundry",
+      "file": "10-sleeping-foundry.png",
+      "source_candidate": "../10-sleeping-foundry-grid-v5.png",
+      "footprint_tiles": [
+        5,
+        4
+      ],
+      "rarity_chance_per_9_chunks_percent": 0.75,
+      "proposed_dimensions_metres": [
+        20,
+        16,
+        14
+      ],
+      "logical_footprint_span_pixels": [
+        288,
+        144
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Use case: stylized-concept. Retexture the supplied architectural geometry into one finished illustrated game asset. Input image is the EDIT TARGET: exact game 2:1 orthographic blockout. It is authoritative for camera, horizontal construction axes, ground footprint and human scale. Rebuild the subject inside it. Preserve base-corner locations and front-corner vertical direction. No lens perspective.\nSUBJECT: Sleeping Foundry. A broad abandoned brick foundry with cold furnaces, four tall chimneys, weathered slate roof, modest yard crane and metalworking apparatus, wide dark factory doorway containing a dormant brass mechanical guardian approximately three metres tall. Building twenty by sixteen metres, ordinary pedestrian doors two metres tall and factory entrance five metres. No rails extending outside footprint, no ground landscape.\nFootprint 5 by 4 tiles = 20m by 16m. Overall height about 14m. Human door2m, storey3m, stair riser18cm. Preserve guide door scale. Guide top is MAXIMUM building height, including roof or chimney; lower the walls to allow roof within that envelope. The blockout is NOT a design for a solid box: create the actual architecture described, including holes and visible supporting structures.\nCRITICAL projection: world-horizontal X edges slope exactly +0.5 down-right, Y edges slope exactly -0.5 up-right. These are the guide's two directions. Equal world lengths have equal screen lengths on both axes. Match BOTH facade orientations, not just one. Vertical lines remain vertical. Orthographic dimetric camera azimuth45, elevation26.565 degrees, NOT30. No rotational drift or front-facing perspective. Keep entire silhouette inside a clear transparent safety margin.\nSTYLE: detailed cozy architectural illustration for the same pastoral railway game, realistic human proportions, warm cream limestone, weathered brown timber, muted slate blue roof, restrained copper, natural moss and greenery, upper-left diffuse daylight. Materials and joinery believable. Discovery/abandoned state with restrained wear. No people, no text, no labels, no captions, no grid, no terrain slab or scenery background, no vignette, no atmospheric halo or painted background shadow.\nOne standalone PNG with genuine RGBA transparency including architectural openings with nothing behind. Preserve architectural foundations, steps, attached vegetation and supports only. No guide gray shading or guide floor lines in final.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        66,
+        41,
+        1224,
+        1145
+      ]
+    },
+    {
+      "id": "11-moonwell-pavilion",
+      "name": "Moonwell Pavilion",
+      "file": "11-moonwell-pavilion.png",
+      "source_candidate": "../11-moonwell-pavilion-grid-v5.png",
+      "footprint_tiles": [
+        2,
+        2
+      ],
+      "rarity_chance_per_9_chunks_percent": 0.5,
+      "proposed_dimensions_metres": [
+        8,
+        8,
+        7
+      ],
+      "logical_footprint_span_pixels": [
+        128,
+        64
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Use case: stylized-concept. Retexture the supplied architectural geometry into one finished illustrated game asset. Input image is the EDIT TARGET: exact game 2:1 orthographic blockout. It is authoritative for camera, horizontal construction axes, ground footprint and human scale. Rebuild the subject inside it. Preserve base-corner locations and front-corner vertical direction. No lens perspective.\nSUBJECT: Moonwell Pavilion. An elegant circular limestone pavilion on a thin architectural stone plinth with six slender columns and a slate blue shallow dome, surrounding a perfectly still reflective pool within a real round stone basin. Faint silver crescent reflected INSIDE water, sparse flowering vines around columns. Human-proportioned steps and columns. No external glow or magical particles against transparency.\nFootprint 2 by 2 tiles = 8m by 8m. Overall height about 7m. Human door2m, storey3m, stair riser18cm. Preserve guide door scale. Guide top is MAXIMUM building height, including roof or chimney; lower the walls to allow roof within that envelope. The blockout is NOT a design for a solid box: create the actual architecture described, including holes and visible supporting structures.\nCRITICAL projection: world-horizontal X edges slope exactly +0.5 down-right, Y edges slope exactly -0.5 up-right. These are the guide's two directions. Equal world lengths have equal screen lengths on both axes. Match BOTH facade orientations, not just one. Vertical lines remain vertical. Orthographic dimetric camera azimuth45, elevation26.565 degrees, NOT30. No rotational drift or front-facing perspective. Keep entire silhouette inside a clear transparent safety margin.\nSTYLE: detailed cozy architectural illustration for the same pastoral railway game, realistic human proportions, warm cream limestone, weathered brown timber, muted slate blue roof, restrained copper, natural moss and greenery, upper-left diffuse daylight. Materials and joinery believable. Discovery/abandoned state with restrained wear. No people, no text, no labels, no captions, no grid, no terrain slab or scenery background, no vignette, no atmospheric halo or painted background shadow.\nOne standalone PNG with genuine RGBA transparency including architectural openings with nothing behind. Preserve architectural foundations, steps, attached vegetation and supports only. No guide gray shading or guide floor lines in final.",
+      "source_resolution_pixels": [
+        1254,
+        1254
+      ],
+      "solid_alpha_bounds_pixels": [
+        177,
+        41,
+        1078,
+        1177
+      ]
+    },
+    {
+      "id": "12-house-between-seasons",
+      "name": "House Between Seasons",
+      "file": "12-house-between-seasons.png",
+      "source_candidate": "../12-house-between-seasons.png",
+      "footprint_tiles": [
+        4,
+        4
+      ],
+      "rarity_chance_per_9_chunks_percent": 0.25,
+      "proposed_dimensions_metres": [
+        16,
+        16,
+        10
+      ],
+      "logical_footprint_span_pixels": [
+        256,
+        128
+      ],
+      "common_scale_visible_span_factor": 1,
+      "prompt": "Use case: stylized-concept.\nAsset type: single high-resolution standalone game building PNG with genuine alpha transparency.\nReference image: twelve-panel approved landmark concept sheet, STYLE AND SUBJECT REFERENCE ONLY. Generate only the requested landmark; no sheet, labels, border or other landmarks.\nProjection: exact game 2:1 dimetric isometric orthographic view, camera azimuth 45 degrees and elevation 30 degrees, parallel architectural axes slope +0.5 and -0.5 on screen. See roof, front and right facades. Vertical lines vertical, no lens distortion or perspective vanishing points.\nStyle: match approved cozy illustrated architecture, realistically proportioned materials and human-scale construction, detailed softly painted stone, timber, glass and metal. Not pixel art, not toy chibi proportions, not a photograph. Upper-left sunlight, restrained natural warm palette, readable silhouette.\nScale: proposed common design convention 1 tile = 4 metres, ordinary doors about 2m tall, floor spacing about 3m, steps about 18cm. Footprint is ground area, never normalize buildings to the same world size. Source PNG may fill canvas for detail; runtime scaling is separate.\nBackground: genuinely transparent alpha, including holes through open architecture. Keep all silhouette, eaves, roots, cable and spire inside canvas with generous 7 percent transparent safety margins. Only building-owned foundations, steps, attached vegetation and tiny contact debris; no ground diamond, grid, earth cube, pedestal diorama, scene background, paper, opaque checkerboard, text, people, watermark. No broad painted ground shadows; very subtle attached contact shade only.\nState: abandoned/discovered, intact enough to recognize structure, detailed yet believable.\nSubject: House Between Seasons. Footprint 4 by 4 tiles, approximately 16 by 16 metres; height approximately 10 metres.\nOne coherent four-wing timber manor around a small central architectural courtyard. Each attached wing expresses a different season: snow-covered slate roof, delicate pink blossoms, lush green climbing plants, copper autumn leaves. All vegetation integrated with building, no four separate houses and no diorama terrain slab. Windows and two-storey floor heights consistent throughout. Small central stone basin.",
+      "source_resolution_pixels": [
+        1536,
+        1024
+      ],
+      "solid_alpha_bounds_pixels": [
+        98,
+        27,
+        1446,
+        1001
+      ]
+    }
+  ]
+}
