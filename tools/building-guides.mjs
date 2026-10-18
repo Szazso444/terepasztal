@@ -6,6 +6,9 @@
  * greys by the way they look: top light, lower-left wall mid, lower-right wall dark. The block's
  * height is the footprint's, unless a family names its own (`blockHeight` in families.json): that
  * family then has guides of its own, `guides/<family>-r<view>.png`.
+ * The windmill has a guide kind of its own (`guideKind: "windmill"` in families.json): a round
+ * tower with its windshaft stub on the lower-left face, a hub file that says where the sails
+ * turn, and the sail cross seen face on (`windmillFiles`).
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -218,6 +221,368 @@ export function drawGuide(fpId, rot, height = HEIGHT[fpId]) {
   return png;
 }
 
+/**
+ * A metre on screen, upright: the 1.75 m person is drawn 9 game px tall (PERSON_PX in
+ * src/render/assetScale.ts), so 2.1 m is 10.8 px.
+ */
+export const METRE_PX = 9 / 1.75;
+
+/**
+ * The windmill: a round tower (a truncated cone) under a cone cap, on the footprint's plinth, with
+ * its windshaft stub pointing along tile +y, which is the lower-left face, and a door at the foot
+ * of the same face. Lengths in tiles; heights and radii of small parts in game px, heights above
+ * the plinth (the `blockHeight` sense of the other guides).
+ *
+ * The size is the game's own windmill picture (`structures/windmill` in the shipped atlas, scaled
+ * as src/render/assetScale.ts scales it), measured from the tile centre on the ground: the cone cap
+ * reaches 50 px, the tower is 43 px wide at its foot and about 30 px under the cap (radii of 0.475
+ * and 0.33 tile: a tile is 64 px wide), and the cap is about 15 px high with an eave of 0.375
+ * tile. The apex stands PLINTH + towerHeight + capHeight = 51.4 px above the ground.
+ */
+export const WINDMILL = {
+  footprint: 't1',
+  /** from the plinth to where the cap begins */
+  towerHeight: 32,
+  baseRadius: 0.475,
+  topRadius: 0.33,
+  capHeight: 15.4,
+  /** the eave stands a little proud of the tower's top */
+  capRadius: 0.375,
+  /** the shaft runs from the tower's axis along +y, and the hub is at its end */
+  shaftLength: 0.5,
+  /** the hub's height above the eave: on the lower part of the cap */
+  hubAboveEave: 6,
+  /** 2.1 m: 10.8 px beside the 9 px person */
+  doorHeight: 2.1 * METRE_PX,
+  /**
+   * 1.0 m along the face (tile x): a metre is METRE_PX / (sqrt(3) / 2) in the camera's own length
+   * unit (an upright length shrinks to sqrt(3) / 2 of it, see CROSS_AFFINE), and a tile is
+   * 32 * sqrt(2) of them.
+   */
+  doorWidth: METRE_PX / (Math.sqrt(3) / 2) / (32 * Math.SQRT2),
+  /** the stub's radius and the hub plate's, which faces +y */
+  stubRadius: 1.5,
+  plateRadius: 5,
+  /**
+   * The sails' radius, hub to tip, in the cross's own px (CROSS_AFFINE's unit, game px of the
+   * plane the cross turns in): the lowest tip hangs sqrt(3) / 2 of it below the hub, 34.6 px,
+   * which leaves 7.4 px (1.4 m) to the ground.
+   */
+  sailRadius: 40,
+};
+
+/**
+ * The greys of the round tower by how it faces, in six bands from the right-hand silhouette (the
+ * darkest) to the left-hand one; the cap has the same bands, lighter, as it faces up. The stub and
+ * the hub plate have a grey of their own, so that a check can find them by it.
+ */
+const TOWER_BANDS = [113, 125, 137, 149, 161, 172].map((g) => [g, g, g]);
+const CAP_BANDS = [153, 165, 177, 189, 201, 212].map((g) => [g, g, g]);
+const STUB = [205, 205, 205];
+const PLATE = [84, 84, 84];
+export const WINDMILL_GREY = { tower: TOWER_BANDS, cap: CAP_BANDS, stub: STUB, plate: PLATE };
+
+/**
+ * The map of the plane of tile x and the vertical (the plane square to the shaft) onto the
+ * screen, for a cross of unit scale: (u right, v down) to (screen x, screen y).
+ */
+export const CROSS_AFFINE = [
+  [Math.SQRT1_2, 0],
+  [Math.SQRT1_2 / 2, Math.sqrt(3) / 2],
+];
+
+/** The sail cross picture: a square, the hub at its middle, arms at 45 degrees. */
+export const SAILS_FACE = {
+  size: 1254,
+  pivot: [626.5, 626.5],
+  /** the farthest painted pixel from the hub, as a share of the side */
+  reach: 0.46,
+  plate: 80,
+  spar: 14,
+  frame: { from: 175, halfWidth: 80 },
+};
+
+const SLICES = 360;
+const azimuth = (i) => (2 * Math.PI * i) / SLICES;
+/** A point of the ring of radius `r` at azimuth `a` (0 is +x, a quarter turn is +y). */
+const ring = (fp, a, r, z) => project(fp, r * Math.cos(a), r * Math.sin(a), z);
+
+/** The convex hull of canvas points: the outline of a round solid. */
+function hull(points) {
+  const pts = [...points].sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const half = (list) => {
+    const out = [];
+    for (const p of list) {
+      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
+      out.push(p);
+    }
+    out.pop();
+    return out;
+  };
+  return [...half(pts), ...half([...pts].reverse())];
+}
+
+/** The tower's radius at height z (game px above the ground; the plinth's top is `PLINTH`). */
+const towerRadius = (z) =>
+  WINDMILL.baseRadius +
+  ((WINDMILL.topRadius - WINDMILL.baseRadius) * (z - PLINTH)) / WINDMILL.towerHeight;
+
+/** Where the windmill's parts stand on its canvas. */
+export function windmillGeometry() {
+  const fp = FOOTPRINTS[WINDMILL.footprint];
+  const eave = PLINTH + WINDMILL.towerHeight;
+  const hubZ = eave + WINDMILL.hubAboveEave;
+  const doorZ = PLINTH + WINDMILL.doorHeight / 2;
+  return {
+    fp,
+    eave,
+    apex: eave + WINDMILL.capHeight,
+    hubZ,
+    hub: project(fp, 0, WINDMILL.shaftLength, hubZ),
+    axis: project(fp, 0, 0, hubZ),
+    door: project(fp, 0, towerRadius(PLINTH), doorZ),
+    /** a canvas point in game px from the anchor */
+    inGame: (p) => [(p[0] - fp.centre[0]) / fp.scale, (p[1] - fp.centre[1]) / fp.scale],
+  };
+}
+
+/** The windmill's guide: plinth, tower, door, cap, windshaft stub and the hub plate. */
+export function drawWindmill({ plinth = true } = {}) {
+  const g = windmillGeometry();
+  const { fp } = g;
+  const W = WINDMILL;
+  const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
+  // the plinth is the footprint, as for every guide (`plinth: false` for a stand-in picture)
+  if (plinth)
+    drawBox(
+      png,
+      fp,
+      { x0: -0.5, y0: -0.5, x1: 0.5, y1: 0.5, z0: 0, z1: PLINTH },
+      { top: GREY.plinthTop, left: GREY.plinthLeft, right: GREY.plinthRight },
+    );
+  // slices, the far ones first: a slice's grey is how far its normal turns to the screen's left
+  const order = [...Array(SLICES).keys()].sort(
+    (i, j) => Math.cos(azimuth(i) - Math.PI / 4) - Math.cos(azimuth(j) - Math.PI / 4),
+  );
+  const band = (a, bands) => {
+    const sx = Math.cos(a + Math.PI / 4);
+    const i = Math.floor(((1 - sx) / 2) * bands.length);
+    return bands[Math.min(bands.length - 1, Math.max(0, i))];
+  };
+  for (const i of order) {
+    const a0 = azimuth(i),
+      a1 = azimuth(i + 1);
+    fillPoly(
+      png,
+      [
+        ring(fp, a0, W.baseRadius, PLINTH),
+        ring(fp, a1, W.baseRadius, PLINTH),
+        ring(fp, a1, W.topRadius, g.eave),
+        ring(fp, a0, W.topRadius, g.eave),
+      ],
+      band((a0 + a1) / 2, TOWER_BANDS),
+    );
+  }
+  const body = [];
+  for (let i = 0; i < SLICES; i++)
+    body.push(
+      ring(fp, azimuth(i), W.baseRadius, PLINTH),
+      ring(fp, azimuth(i), W.topRadius, g.eave),
+    );
+  strokePoly(png, hull(body), GREY.line);
+  // the door: on the +y face at the foot, plumb as a door hangs (the wall leans back from it by
+  // a pixel and a half at its head), its sides on the tower's surface at the sill
+  const door = [
+    [-W.doorWidth / 2, PLINTH],
+    [W.doorWidth / 2, PLINTH],
+    [W.doorWidth / 2, PLINTH + W.doorHeight],
+    [-W.doorWidth / 2, PLINTH + W.doorHeight],
+  ].map(([x, z]) => project(fp, x, Math.sqrt(towerRadius(PLINTH) ** 2 - x * x), z));
+  fillPoly(png, door, GREY.opening);
+  strokePoly(png, door, GREY.line);
+  // the cap
+  const apex = project(fp, 0, 0, g.apex);
+  for (const i of order) {
+    const a0 = azimuth(i),
+      a1 = azimuth(i + 1);
+    fillPoly(
+      png,
+      [ring(fp, a0, W.capRadius, g.eave), ring(fp, a1, W.capRadius, g.eave), apex],
+      band((a0 + a1) / 2, CAP_BANDS),
+    );
+  }
+  const cap = [apex];
+  for (let i = 0; i < SLICES; i++) cap.push(ring(fp, azimuth(i), W.capRadius, g.eave));
+  strokePoly(png, hull(cap), GREY.line);
+  // the eave's near edge: the half of its ring that faces the camera
+  const near = [];
+  for (let i = 0; i <= SLICES / 2; i++)
+    near.push(ring(fp, -Math.PI / 4 + azimuth(i), W.capRadius, g.eave));
+  for (let i = 0; i + 1 < near.length; i++) strokePoly(png, [near[i], near[i + 1]], GREY.line);
+  // the windshaft stub, a cylinder along +y from the cap to the hub, and the hub plate
+  const [dx, dy] = [g.hub[0] - g.axis[0], g.hub[1] - g.axis[1]];
+  const len = Math.hypot(dx, dy);
+  const nx = (-dy / len) * W.stubRadius * fp.scale,
+    ny = (dx / len) * W.stubRadius * fp.scale;
+  // the stub comes out of the cap's surface, at the shaft's height
+  const out = (W.capRadius * (g.apex - g.hubZ)) / W.capHeight / W.shaftLength;
+  const start = [g.axis[0] + dx * out, g.axis[1] + dy * out];
+  const stub = [
+    [start[0] + nx, start[1] + ny],
+    [g.hub[0] + nx, g.hub[1] + ny],
+    [g.hub[0] - nx, g.hub[1] - ny],
+    [start[0] - nx, start[1] - ny],
+  ];
+  fillPoly(png, stub, STUB);
+  strokePoly(png, stub, GREY.line);
+  const plate = [];
+  for (let i = 0; i < 72; i++) {
+    const t = (2 * Math.PI * i) / 72;
+    const u = W.plateRadius * Math.cos(t) * fp.scale,
+      v = W.plateRadius * Math.sin(t) * fp.scale;
+    plate.push([
+      g.hub[0] + CROSS_AFFINE[0][0] * u + CROSS_AFFINE[0][1] * v,
+      g.hub[1] + CROSS_AFFINE[1][0] * u + CROSS_AFFINE[1][1] * v,
+    ]);
+  }
+  fillPoly(png, plate, PLATE);
+  strokePoly(png, plate, GREY.line);
+  return png;
+}
+
+/** The sail cross seen face on along the shaft: four arms at 45 degrees round a plate. */
+export function drawSailsFace() {
+  const S = SAILS_FACE;
+  const png = new PNG({ width: S.size, height: S.size });
+  // pixel centres sit at +0.5, so the middle in picture px (626.5) is S.size / 2 here
+  const c = S.size / 2;
+  const reach = S.reach * S.size;
+  const line = 1.5;
+  // the end corners of a frame, with their outline, are the farthest painted points
+  const end = Math.sqrt(reach ** 2 - (S.frame.halfWidth + line) ** 2) - line;
+  const bar = (angle, from, to, half, rgb) => {
+    const d = [Math.cos(angle), Math.sin(angle)],
+      n = [-d[1], d[0]];
+    const p = (t, w) => [c + d[0] * t + n[0] * w, c + d[1] * t + n[1] * w];
+    const quad = [p(from, -half), p(to, -half), p(to, half), p(from, half)];
+    fillPoly(png, quad, rgb);
+    strokePoly(png, quad, GREY.line);
+  };
+  for (let k = 0; k < 4; k++) {
+    const a = Math.PI / 4 + (k * Math.PI) / 2;
+    bar(a, S.plate * 0.5, end, S.spar, [150, 150, 150]);
+    bar(a, S.frame.from, end, S.frame.halfWidth, GREY.left);
+    // a cross bar in the middle of the frame: the sail's bays
+    const mid = (S.frame.from + end) / 2;
+    bar(a, mid - 6, mid + 6, S.frame.halfWidth - 6, [150, 150, 150]);
+  }
+  const plate = [0, 1, 2, 3].map((k) => {
+    const a = Math.PI / 4 + (k * Math.PI) / 2;
+    return [c + S.plate * Math.cos(a), c + S.plate * Math.sin(a)];
+  });
+  fillPoly(png, plate, PLATE);
+  strokePoly(png, plate, GREY.line);
+  return png;
+}
+
+const round4 = (v) => Math.round(v * 1e4) / 1e4;
+const pair = (p) => p.map(round4);
+
+/** The hub file: where the sails turn, which way the shaft points, how the cross is seen. */
+export function windmillHub() {
+  const g = windmillGeometry();
+  const W = WINDMILL;
+  const [dx, dy] = [g.hub[0] - g.axis[0], g.hub[1] - g.axis[1]];
+  const len = Math.hypot(dx, dy);
+  const A = CROSS_AFFINE;
+  // the ellipse a circle of the cross becomes: the singular values of the map
+  const p = A[0][0] ** 2 + A[1][0] ** 2,
+    q = A[0][0] * A[0][1] + A[1][0] * A[1][1],
+    r = A[0][1] ** 2 + A[1][1] ** 2;
+  const mean = (p + r) / 2,
+    spread = Math.hypot((p - r) / 2, q);
+  return {
+    guide: 'windmill-r0.png',
+    note: 'Written by tools/building-guides.mjs: do not edit by hand.',
+    canvas: g.fp.canvas,
+    scale: g.fp.scale,
+    anchor: g.fp.centre,
+    units:
+      "canvas px are the guide picture's; game px are canvas px over `scale`, from the anchor (the footprint's centre at ground level), x to the right and y down",
+    hub: {
+      canvas: pair(g.hub),
+      fromAnchorGame: pair(g.inGame(g.hub)),
+      tile: [0, W.shaftLength],
+      heightAbovePlinth: g.hubZ - PLINTH,
+      heightAboveGround: g.hubZ,
+    },
+    shaft: {
+      tileAxis: '+y',
+      face: 'lower left',
+      lengthTiles: W.shaftLength,
+      from: { canvas: pair(g.axis), tile: [0, 0] },
+      screenDirection: pair([dx / len, dy / len]),
+      screenSlope: round4(Math.abs(dy / dx)),
+    },
+    door: {
+      canvas: pair(g.door),
+      fromAnchorGame: pair(g.inGame(g.door)),
+      widthTiles: round4(W.doorWidth),
+      heightPx: round4(W.doorHeight),
+      heightMetres: 2.1,
+      widthMetres: 1.0,
+      note: 'the person is 9 px for 1.75 m, so a metre stands 5.1429 px upright; the sill is the top of the plinth, the tower foot',
+    },
+    tower: {
+      baseRadiusTiles: W.baseRadius,
+      topRadiusTiles: W.topRadius,
+      heightPx: W.towerHeight,
+      capHeightPx: W.capHeight,
+      capRadiusTiles: W.capRadius,
+      footEllipse: {
+        centre: pair(project(g.fp, 0, 0, PLINTH)),
+        semiMajor: round4(g.fp.scale * 32 * Math.SQRT2 * W.baseRadius),
+        semiMinor: round4(g.fp.scale * 16 * Math.SQRT2 * W.baseRadius),
+        minorOverMajor: 0.5,
+      },
+    },
+    cross: {
+      plane: 'the plane of tile x and the vertical, to which the shaft (tile y) stands square',
+      affine: A.map((row) => row.map(round4)),
+      formula:
+        "screen = s * [[0.7071, 0], [0.3536, 0.866]] * (u, v), u to the right and v down in the cross's own px, s game px per cross px",
+      ellipseMinorOverMajor: round4(Math.sqrt((mean - spread) / (mean + spread))),
+      sails: {
+        radiusGamePx: W.sailRadius,
+        gamePxPerCrossPx:
+          Math.round((W.sailRadius / (SAILS_FACE.reach * SAILS_FACE.size)) * 1e6) / 1e6,
+        lowestTipDropPx: round4(W.sailRadius * A[1][1]),
+        lowestTipAboveGroundPx: round4(g.hubZ - W.sailRadius * A[1][1]),
+        lowestTipAboveGroundMetres: round4((g.hubZ - W.sailRadius * A[1][1]) / METRE_PX),
+        note: 'the radius is in the cross plane, hub to tip of the longest painted point; the lowest tip of a turning cross hangs sqrt(3)/2 of it below the hub',
+      },
+      sailsFace: {
+        picture: 'windmill-sails-face.png',
+        size: [SAILS_FACE.size, SAILS_FACE.size],
+        pivot: SAILS_FACE.pivot,
+        reachShare: SAILS_FACE.reach,
+        armsDegrees: 45,
+      },
+    },
+  };
+}
+
+/** The windmill's three files, as `[path, bytes]`. */
+export function windmillFiles() {
+  const dir = `${ROOT}/guides`;
+  return [
+    [`${dir}/windmill-r0.png`, PNG.sync.write(drawWindmill())],
+    [`${dir}/windmill-r0-hub.json`, Buffer.from(JSON.stringify(windmillHub(), null, 2) + '\n')],
+    [`${dir}/windmill-sails-face.png`, PNG.sync.write(drawSailsFace())],
+  ];
+}
+
 /** The families that ask for a block of their own: `{ family, footprint, height }`. */
 export function familyBlocks(inventory, families) {
   return inventory
@@ -229,29 +594,38 @@ export function familyBlocks(inventory, families) {
     }));
 }
 
+/** The families of families.json that ask for the windmill's guide kind. */
+export const windmillFamilies = (families) =>
+  Object.entries(families.families)
+    .filter(([, f]) => f.guideKind === 'windmill')
+    .map(([family]) => family);
+
 /**
- * Write a guide for every footprint and rotation, and a set for every family with a
- * `blockHeight` (read from families.json and the game's data in the working directory).
+ * Write a guide for every footprint and rotation, a set for every family with a `blockHeight`
+ * (read from families.json and the game's data in the working directory), and the windmill's three
+ * files when a family asks for that guide kind (`blocks` and `windmill` stand in for them).
  */
-export function writeGuides(
-  root = '.',
-  blocks = familyBlocks(
-    loadInventory(),
-    JSON.parse(readFileSync(join(ROOT, 'families.json'), 'utf8')),
-  ),
-) {
+export function writeGuides(root = '.', blocks = null, windmill = null) {
+  const families = JSON.parse(readFileSync(join(ROOT, 'families.json'), 'utf8'));
+  blocks ??= familyBlocks(loadInventory(), families);
+  windmill ??= windmillFamilies(families).length > 0;
   const out = [];
-  const write = (file, png) => {
+  const write = (file, bytes) => {
     file = join(root, file);
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, PNG.sync.write(png));
+    writeFileSync(file, bytes);
     out.push(file);
   };
   for (const fpId of Object.keys(FOOTPRINTS))
-    for (const r of ROTATIONS) write(guideFile(fpId, r.index), drawGuide(fpId, r.index));
+    for (const r of ROTATIONS)
+      write(guideFile(fpId, r.index), PNG.sync.write(drawGuide(fpId, r.index)));
   for (const b of blocks)
     for (const r of ROTATIONS)
-      write(guideFile(b.footprint, r.index, b.family), drawGuide(b.footprint, r.index, b.height));
+      write(
+        guideFile(b.footprint, r.index, b.family),
+        PNG.sync.write(drawGuide(b.footprint, r.index, b.height)),
+      );
+  if (windmill) for (const [file, bytes] of windmillFiles()) write(file, bytes);
   return out;
 }
 

@@ -24,7 +24,7 @@ built yet").
 | `assets/source/buildings-v2/families.json` | What each building is, age by age, and every sentence of the prompts                                                     |
 | `assets/source/buildings-v2/GUIDE.md`      | The artist agent's brief                                                                                                 |
 | `assets/source/buildings-v2/PROMPT.md`     | The text that starts an agent session                                                                                    |
-| `assets/source/buildings-v2/guides/`       | The 16 footprint block-outs and the sets of the families with a `blockHeight`, drawn by the guide tool                   |
+| `assets/source/buildings-v2/guides/`       | The 16 footprint block-outs, the `blockHeight` sets and the windmill's three files, drawn by the guide tool              |
 | `assets/source/buildings-v2/queue.json`    | Progress, one entry per picture. Written by the queue tool only                                                          |
 | `assets/source/buildings-v2/report.json`   | What the check measured of each picture                                                                                  |
 | `assets/source/buildings-v2/review/`       | The sheets and `index.html`                                                                                              |
@@ -98,7 +98,9 @@ and shows it in a running build, as drawn or straightened.
   painted from that attempt laid onto its footprint and straightened. After three attempts it
   keeps the closest of them and marks it `kept`. A picture kept within 3° is near enough; a
   family with more than a quarter of its pictures kept further off, rejected or never made stops
-  the work (`STOP`).
+  the work (`STOP`). A round building (`round` in `families.json`, the windmill) has no wall feet:
+  its camera is read from the ellipse of its foot, whose minor over major is the sine of the
+  camera's height (0.50 at 30°), with the same 2° limit; its turn cannot be read and is for eyes.
 - A depot's portals: in the wall the block-out has them in. A view of the wrong rotation has
   them on the other side, and in the game the rails would run into a wall. Every prompt of a
   depot names the wall: a view painted from the front view copied the front view's wall at the
@@ -267,7 +269,14 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   `building-guides.mjs`, then redraw the guides. A family whose picture needs a taller block
   than its footprint's (the coaling stage) gets `blockHeight` in `families.json`, game px above
   the plinth, 20 to 100; it then has guides of its own, `guides/<family>-r<view>.png`, and the
-  queue names those.
+  queue names those. The windmill (`guideKind: "windmill"`) has a guide kind of its own, front view
+  only: `guides/windmill-r0.png`, a round tower under a cone cap with its windshaft stub along tile
+  +y; `windmill-r0-hub.json`, the hub, the shaft's direction, the door and the affine of the sail
+  cross into the camera; and `windmill-sails-face.png`, the cross seen face on. The queue does not
+  name them: they are handed to the painter by hand. The tower is the size of the windmill the game
+  draws today (a cone cap 51 px above the ground, 43 px across the foot), the door is 2.1 m by 1.0 m
+  (10.8 px beside the 9 px, 1.75 m person) and the sails' radius is 40 px, so that the lowest tip
+  clears the ground by more than a metre.
 - The prompts: only in `families.json`. `shared` is the same for every picture; `references`
   says what each attached picture is for; `views` names the walls of each view.
 - The camera limit: `FIT.camera`. Then `recheck`.
