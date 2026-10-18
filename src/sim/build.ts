@@ -183,8 +183,12 @@ export class Builder {
   onRoadChanged: ((x: number, y: number) => void) | null = null;
   /** electrification overlay (set by the game) */
   catenary: Catenary | null = null;
-  /** fired once when a producing station or a works building is newly placed (not on load or upgrade) */
-  onIndustryPlaced: ((x: number, y: number) => void) | null = null;
+  /**
+   * fired once when a producing station or a works building is newly placed (not on load or
+   * upgrade): its corner, and every tile of its footprint
+   */
+  onIndustryPlaced:
+    ((x: number, y: number, tiles: readonly { x: number; y: number }[]) => void) | null = null;
   /** fired when a station loses (true) or regains (false) its last platform tile */
   onStationOrphaned: ((s: Station, orphaned: boolean) => void) | null = null;
   /**
@@ -894,13 +898,14 @@ export class Builder {
       }),
     );
   }
-  /** Output multiplier a harvesting station would get on a tile (1 for others). */
-  harvestFactor(x: number, y: number, defId: string) {
-    return terrainFactorAt(this.map, x, y, defId);
+  /** Output multiplier a harvesting station turned to `rot` would get on a tile (1 for others). */
+  harvestFactor(x: number, y: number, defId: string, rot = 0) {
+    return terrainFactorAt(this.map, x, y, defId, rot);
   }
   /** Recompute every station's nearby-resource multiplier (after terrain edits). */
   refreshHarvest() {
-    for (const s of this.stations) s.terrainFactor = terrainFactorAt(this.map, s.x, s.y, s.def.id);
+    for (const s of this.stations)
+      s.terrainFactor = terrainFactorAt(this.map, s.x, s.y, s.def.id, s.rot);
   }
   /**
    * Place a station turned to `rot`, one of the four rotations (`BUILDING_ROTATIONS`); its
@@ -920,11 +925,11 @@ export class Builder {
       count ? `${stationDef(defId).name} ${count + 1}` : undefined,
     );
     s.rot = turn;
-    s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
+    s.terrainFactor = terrainFactorAt(this.map, x, y, defId, turn);
     this.stations.push(s);
     this.refreshStationBoosts();
     this.onStationChanged?.(s, false);
-    if (s.def.produces.length) this.onIndustryPlaced?.(x, y);
+    if (s.def.produces.length) this.onIndustryPlaced?.(x, y, s.footprint());
     this.connectPlace(stationPlace(s));
     sfx('build.place');
     return s;
@@ -1188,7 +1193,7 @@ export class Builder {
     const b: Building = { id: defId, x, y, acc: 0, rot, active: false, rate: 0 };
     this.buildings.set(this.key(x, y), b);
     this.onBuildingChanged?.(b, false);
-    this.onIndustryPlaced?.(x, y);
+    this.onIndustryPlaced?.(x, y, buildingFootprint(defId, x, y, rot));
     return b;
   }
   buildingRefund(b: Building): Cost {

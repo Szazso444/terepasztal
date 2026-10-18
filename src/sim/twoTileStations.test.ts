@@ -573,6 +573,45 @@ describe('the stations of a town, a pair of tiles each', () => {
   });
 });
 
+describe('newcomers for a station of two tiles', () => {
+  /** A hall at (20, 29) with one finished house in reach, and room in it. */
+  function hallWithRoomyHouse() {
+    const w = world();
+    station(w, 'town', 20, 29);
+    expect(w.builder.spawnDecor(20, 25, 'townhouse', 0)).not.toBeNull();
+    w.towns.refresh();
+    w.houses.finishAll();
+    const home = w.houses.at(20, 25)!;
+    expect(home.residents).toBeLessThan(w.houses.capacity(home));
+    line(w, 15, 20, 26);
+    return { w, home };
+  }
+
+  it('come to the town when its far tile is in reach, though its corner is not', () => {
+    const { w, home } = hallWithRoomyHouse();
+    const before = home.residents;
+    // the corner is 8 rows from the hall, the lower tile 7
+    const halt = w.builder.placeStation(20, 21, 'farm');
+    expect(halt?.footprint().map((c) => c.y)).toEqual([21, 22]);
+    expect(home.residents).toBeGreaterThan(before);
+  });
+
+  it('do not come when neither tile is in reach', () => {
+    const { w, home } = hallWithRoomyHouse();
+    const before = home.residents;
+    expect(w.builder.placeStation(20, 18, 'farm')).not.toBeNull();
+    expect(home.residents).toBe(before);
+  });
+
+  it('come for a works too, by the nearest tile of its footprint', () => {
+    const { w, home } = hallWithRoomyHouse();
+    const before = home.residents;
+    // a 2 x 1 grinder on the hall's row: its corner 8 columns from the hall, its far tile 7
+    expect(w.builder.placeBuilding(12, 29, 'grinder', 0)).not.toBeNull();
+    expect(home.residents).toBeGreaterThan(before);
+  });
+});
+
 describe('the walkers of a station of two tiles', () => {
   const DT = 1;
   const POPULATION = 12;

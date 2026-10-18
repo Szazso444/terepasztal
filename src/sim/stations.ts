@@ -119,8 +119,11 @@ export const HARVEST_FULL = 12;
 /** The ground factor's floor (a bare site) and ceiling (a dense patch). */
 export const HARVEST_FLOOR = 0.15;
 export const HARVEST_CEIL = 1.6;
-/** Most tiles a harvest counts: every tile within the radius but the station's own. */
-export const HARVEST_CELLS_MAX = (2 * HARVEST_RADIUS + 1) ** 2 - 1;
+/**
+ * Most tiles a harvest counts: every tile within the radius of the footprint but the footprint's
+ * own, for the largest footprint a harvesting station may take (2 x 2; a test holds the kinds to it).
+ */
+export const HARVEST_CELLS_MAX = (2 * HARVEST_RADIUS + 2) ** 2 - 4;
 
 /** The kind of ground a harvesting station counts. */
 export type HarvestTerrain = NonNullable<StationDef['terrain']>;
@@ -221,6 +224,10 @@ export function weeklyOutput(
  * a station that harvests nothing. Whether a station may stand there is not asked, so a preview
  * can show the yield of a tile it cannot be placed on. The counted tiles go into `cells`, which is
  * overwritten (emptied for a null), so a caller that asks every frame passes the same one.
+ *
+ * (x, y) is the corner of the station's footprint, turned to `rot` (`stationSpan`): the ground is
+ * counted round the whole footprint, a tile at the Chebyshev distance `Station.distTo` gives it,
+ * and the footprint's own tiles are not ground round it. A one-tile station is unchanged.
  */
 export function harvestBreakdown(
   map: GameMap,
@@ -231,22 +238,28 @@ export function harvestBreakdown(
   season: Season,
   tuning: Pick<Rules, 'productionMul'> = rules,
   cells: HarvestCells = new HarvestCells(),
+  rot = 0,
 ): HarvestBreakdown | null {
   cells.count = 0;
-  const want = stationDef(defId).terrain;
+  const def = stationDef(defId);
+  const want = def.terrain;
   if (!want) return null;
+  const span = stationSpan(def, rot);
   let n1 = 0;
   let n2 = 0;
   let n3 = 0;
   let n4 = 0;
   let sum = 0;
   // dy outer, dx inner, adding as it goes: the float sum every placed station's factor came from
-  for (let dy = -HARVEST_RADIUS; dy <= HARVEST_RADIUS; dy++)
-    for (let dx = -HARVEST_RADIUS; dx <= HARVEST_RADIUS; dx++) {
-      if (!dx && !dy) continue;
+  for (let dy = -HARVEST_RADIUS; dy < span.h + HARVEST_RADIUS; dy++)
+    for (let dx = -HARVEST_RADIUS; dx < span.w + HARVEST_RADIUS; dx++) {
+      // the offset to the footprint's nearest tile: 0 along an axis the tile lies within
+      const ex = Math.max(-dx, 0, dx - (span.w - 1));
+      const ey = Math.max(-dy, 0, dy - (span.h - 1));
+      const d = Math.max(ex, ey);
+      if (!d) continue; // the station's own tile
       if (!inBounds(map, x + dx, y + dy)) continue;
       if (!harvests(want, terrainAt(map, x + dx, y + dy))) continue;
-      const d = Math.max(Math.abs(dx), Math.abs(dy));
       const w = 1 / (1 + d);
       sum += w;
       const i = cells.count++;
@@ -297,8 +310,14 @@ const FACTOR_CELLS = new HarvestCells();
  * How well a harvesting station is placed (`harvestBreakdown`'s factor): 1 = plenty; sparse
  * surroundings drop towards 0.15, a dense patch reaches 1.6. 1 for a station that harvests nothing.
  */
-export function terrainFactorAt(map: GameMap, x: number, y: number, defId: string): number {
-  return harvestBreakdown(map, x, y, defId, 1, 'spring', rules, FACTOR_CELLS)?.factor ?? 1;
+export function terrainFactorAt(
+  map: GameMap,
+  x: number,
+  y: number,
+  defId: string,
+  rot = 0,
+): number {
+  return harvestBreakdown(map, x, y, defId, 1, 'spring', rules, FACTOR_CELLS, rot)?.factor ?? 1;
 }
 
 /** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */

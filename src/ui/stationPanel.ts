@@ -276,7 +276,17 @@ export class StationPanel {
   private drawGround(s: Station): number {
     const map = this.builder.map;
     const b = s.def.terrain
-      ? harvestBreakdown(map, s.x, s.y, s.def.id, s.level, this.view.season(), rules)
+      ? harvestBreakdown(
+          map,
+          s.x,
+          s.y,
+          s.def.id,
+          s.level,
+          this.view.season(),
+          rules,
+          undefined,
+          s.rot,
+        )
       : null;
     const weeklyAtLevel1 = weeklyOutput(1, 1);
     const doc = groundRows({

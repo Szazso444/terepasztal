@@ -1622,7 +1622,10 @@
     "structures/farm_1": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [16.47, -8.74],
         [32.15, -3.1],
@@ -1644,7 +1647,10 @@
     "structures/farm_1_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [3.02, -12.08],
         [14, -6.58],
@@ -1666,7 +1672,10 @@
     "structures/farm_1_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-3.02, -12.08],
         [10, -5.57],
@@ -1688,7 +1697,10 @@
     "structures/farm_1_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [3.02, -12.08],
         [14, -6.58],
@@ -1710,7 +1722,10 @@
     "structures/farm_2": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [17.17, -8.09],
         [33.38, -2.42],
@@ -1732,7 +1747,10 @@
     "structures/farm_2_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-19.57, -14.04],
         [18, 4.75],
@@ -1754,7 +1772,10 @@
     "structures/farm_2_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [19.57, -14.04],
         [24, -11.82],
@@ -1776,7 +1797,10 @@
     "structures/farm_2_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-19.57, -14.04],
         [18, 4.75],
@@ -1798,7 +1822,10 @@
     "structures/farm_3": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [18.24, -10.47],
         [34.6, -4.74],
@@ -1820,7 +1847,10 @@
     "structures/farm_3_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [6.84, -14.1],
         [21, -8.72],
@@ -1842,7 +1872,10 @@
     "structures/farm_3_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-6.84, -14.1],
         [26, 2.32],
@@ -1864,7 +1897,10 @@
     "structures/farm_3_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [6.84, -14.1],
         [21, -8.72],
@@ -1886,7 +1922,10 @@
     "structures/farm_4": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [18.85, -10.08],
         [35.72, -4.35],
@@ -1908,7 +1947,10 @@
     "structures/farm_4_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-3.4, -7.89],
         [22, 2.78],
@@ -1928,9 +1970,9 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [0, 0],
+          "tile": [1, 0],
           "side": "E",
-          "reach": [1, 0],
+          "reach": [2, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.03
@@ -1940,7 +1982,10 @@
     "structures/farm_4_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [3.4, -7.89],
         [26, 3.41],
@@ -1962,7 +2007,10 @@
     "structures/farm_4_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-3.4, -7.89],
         [22, 2.78],
@@ -1982,9 +2030,9 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [1, 0],
           "side": "E",
-          "reach": [1, 0],
+          "reach": [2, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.03
@@ -1994,7 +2042,10 @@
     "structures/farm_5": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [18.85, -10.08],
         [35.72, -4.35],
@@ -2016,7 +2067,10 @@
     "structures/farm_5_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-2.96, -8.45],
         [22, 2.78],
@@ -2036,9 +2090,9 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [0, 0],
+          "tile": [1, 0],
           "side": "E",
-          "reach": [1, 0],
+          "reach": [2, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.02
@@ -2048,7 +2102,10 @@
     "structures/farm_5_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [2.96, -8.45],
         [26, 3.07],
@@ -2070,7 +2127,10 @@
     "structures/farm_5_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-2.96, -8.45],
         [22, 2.78],
@@ -2090,9 +2150,9 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [1, 0],
           "side": "E",
-          "reach": [1, 0],
+          "reach": [2, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.02
@@ -7726,7 +7786,10 @@
     "structures/town_1": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-7.22, -1.52],
         [16.34, 9.08],
@@ -7743,22 +7806,15 @@
         ],
         "visible": true
       },
-      "doors": [
-        {
-          "kind": "platform",
-          "tile": [0, 0],
-          "side": "S",
-          "reach": [0, 1],
-          "point": [-8.28, 6.78],
-          "width": 3.3,
-          "offset": -0.09
-        }
-      ]
+      "doors": []
     },
     "structures/town_1_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-1, 2.47],
         [8, 6.97],
@@ -7780,7 +7836,10 @@
     "structures/town_1_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [1, 2.47],
         [10, 6.97],
@@ -7802,7 +7861,10 @@
     "structures/town_1_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-1, 2.47],
         [8, 6.97],
@@ -7824,7 +7886,10 @@
     "structures/town_2": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-8.99, -10.91],
         [33.75, 4.48],
@@ -7847,16 +7912,19 @@
           "tile": [0, 0],
           "side": "S",
           "reach": [0, 1],
-          "point": [-6.12, -0.68],
-          "width": 2.3,
-          "offset": -0.03
+          "point": [-18, -4.95],
+          "width": 3,
+          "offset": -0.11
         }
       ]
     },
     "structures/town_2_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [1.68, -13.34],
         [25, -0.52],
@@ -7873,22 +7941,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "E",
-          "reach": [1, 0],
-          "point": [10.5, 6.48],
-          "width": 3,
-          "offset": 0.04
-        }
-      ]
+      "doors": []
     },
     "structures/town_2_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-1.68, -13.34],
         [25, 0],
@@ -7908,19 +7969,22 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [0, 0],
+          "tile": [1, 0],
           "side": "S",
-          "reach": [0, 1],
-          "point": [-10.5, 6.98],
+          "reach": [1, 1],
+          "point": [-3.5, 9.48],
           "width": 3,
-          "offset": 0.04
+          "offset": 0.11
         }
       ]
     },
     "structures/town_2_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [1.68, -13.34],
         [25, -0.52],
@@ -7937,22 +8001,15 @@
         ],
         "visible": true
       },
-      "doors": [
-        {
-          "kind": "platform",
-          "tile": [0, 0],
-          "side": "E",
-          "reach": [1, 0],
-          "point": [10, 6.73],
-          "width": 4,
-          "offset": 0.06
-        }
-      ]
+      "doors": []
     },
     "structures/town_3": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-9.58, -10.57],
         [32.65, 4.63],
@@ -7975,16 +8032,19 @@
           "tile": [0, 0],
           "side": "S",
           "reach": [0, 1],
-          "point": [-9.73, 0.63],
-          "width": 8.3,
-          "offset": -0.1
+          "point": [-18.35, -4.47],
+          "width": 3,
+          "offset": -0.11
         }
       ]
     },
     "structures/town_3_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [1.74, -12.27],
         [25, -0.64],
@@ -8001,22 +8061,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "E",
-          "reach": [1, 0],
-          "point": [11, 5.11],
-          "width": 2,
-          "offset": 0
-        }
-      ]
+      "doors": []
     },
     "structures/town_3_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-1.74, -12.27],
         [26, 1.6],
@@ -8036,19 +8089,22 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [0, 0],
+          "tile": [1, 0],
           "side": "S",
-          "reach": [0, 1],
-          "point": [-11, 6.61],
-          "width": 2,
-          "offset": 0
+          "reach": [1, 1],
+          "point": [-2, 9.11],
+          "width": 6,
+          "offset": 0.16
         }
       ]
     },
     "structures/town_3_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [1.74, -12.27],
         [25, -0.64],
@@ -8070,7 +8126,10 @@
     "structures/town_4": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-9.4, -10.09],
         [33.78, 5.45],
@@ -8093,16 +8152,19 @@
           "tile": [0, 0],
           "side": "S",
           "reach": [0, 1],
-          "point": [-11.35, 0.51],
-          "width": 6.3,
-          "offset": -0.13
+          "point": [-18.85, -4.19],
+          "width": 3.3,
+          "offset": -0.11
         }
       ]
     },
     "structures/town_4_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [2.35, -12.56],
         [25, -1.23],
@@ -8124,7 +8186,10 @@
     "structures/town_4_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-2.35, -12.56],
         [26, 2.47],
@@ -8141,22 +8206,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "S",
-          "reach": [0, 1],
-          "point": [-11, 6.45],
-          "width": 2,
-          "offset": -0.01
-        }
-      ]
+      "doors": []
     },
     "structures/town_4_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [2.35, -12.56],
         [25, -1.23],
@@ -8176,19 +8234,22 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [0, 1],
           "side": "E",
-          "reach": [1, 0],
-          "point": [8, 7.51],
-          "width": 2,
-          "offset": 0.1
+          "reach": [1, 1],
+          "point": [1.5, 9.96],
+          "width": 5,
+          "offset": 0.16
         }
       ]
     },
     "structures/town_5": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-9.4, -10.09],
         [33.78, 5.45],
@@ -8211,16 +8272,19 @@
           "tile": [0, 0],
           "side": "S",
           "reach": [0, 1],
-          "point": [-11.35, 0.51],
-          "width": 6.3,
-          "offset": -0.13
+          "point": [-18.85, -4.19],
+          "width": 3.3,
+          "offset": -0.11
         }
       ]
     },
     "structures/town_5_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [2.35, -12.56],
         [25, -1.23],
@@ -8242,7 +8306,10 @@
     "structures/town_5_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-2.35, -12.56],
         [26, 2.47],
@@ -8259,22 +8326,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "S",
-          "reach": [0, 1],
-          "point": [-11, 6.45],
-          "width": 2,
-          "offset": -0.01
-        }
-      ]
+      "doors": []
     },
     "structures/town_5_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [2.35, -12.56],
         [25, -1.23],
@@ -8294,12 +8354,12 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [0, 1],
           "side": "E",
-          "reach": [1, 0],
-          "point": [8, 7.51],
-          "width": 2,
-          "offset": 0.1
+          "reach": [1, 1],
+          "point": [1.5, 9.96],
+          "width": 5,
+          "offset": 0.16
         }
       ]
     },
@@ -9022,7 +9082,10 @@
     "structures/warehouse_1": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-10.36, -9.94],
         [18.03, 5.1],
@@ -9044,7 +9107,10 @@
     "structures/warehouse_1_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [5.06, -7.18],
         [14, -2.71],
@@ -9066,7 +9132,10 @@
     "structures/warehouse_1_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-5.06, -7.18],
         [14, -0.32],
@@ -9088,7 +9157,10 @@
     "structures/warehouse_1_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [5.06, -7.18],
         [14, -2.71],
@@ -9105,22 +9177,15 @@
         ],
         "visible": true
       },
-      "doors": [
-        {
-          "kind": "platform",
-          "tile": [0, 0],
-          "side": "E",
-          "reach": [1, 0],
-          "point": [6, -1.01],
-          "width": 4,
-          "offset": -0.08
-        }
-      ]
+      "doors": []
     },
     "structures/warehouse_2": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-9.6, -11.69],
         [23.05, 5.94],
@@ -9142,7 +9207,10 @@
     "structures/warehouse_2_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-4.54, -5.49],
         [14, 6.93],
@@ -9159,22 +9227,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "E",
-          "reach": [1, 0],
-          "point": [8, 8.68],
-          "width": 2,
-          "offset": -0.09
-        }
-      ]
+      "doors": []
     },
     "structures/warehouse_2_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [4.54, -5.49],
         [19, 1.74],
@@ -9191,22 +9252,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "S",
-          "reach": [0, 1],
-          "point": [-8, 9.18],
-          "width": 2,
-          "offset": -0.09
-        }
-      ]
+      "doors": []
     },
     "structures/warehouse_2_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-4.54, -5.49],
         [14, 6.93],
@@ -9228,7 +9282,10 @@
     "structures/warehouse_3": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-12.75, -18.02],
         [27.83, 3.89],
@@ -9250,7 +9307,10 @@
     "structures/warehouse_3_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-6, -15.86],
         [23, -1.36],
@@ -9267,22 +9327,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "E",
-          "reach": [1, 0],
-          "point": [5.5, 6.03],
-          "width": 3,
-          "offset": 0.26
-        }
-      ]
+      "doors": []
     },
     "structures/warehouse_3_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [6, -15.86],
         [29, -0.44],
@@ -9304,7 +9357,10 @@
     "structures/warehouse_3_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-6, -15.86],
         [23, -1.36],
@@ -9321,22 +9377,15 @@
         ],
         "visible": true
       },
-      "doors": [
-        {
-          "kind": "platform",
-          "tile": [0, 0],
-          "side": "E",
-          "reach": [1, 0],
-          "point": [18, 1.66],
-          "width": 4,
-          "offset": -0.28
-        }
-      ]
+      "doors": []
     },
     "structures/warehouse_4": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-13.01, -18.03],
         [28.7, 4.49],
@@ -9353,12 +9402,25 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S",
+          "reach": [0, 1],
+          "point": [-24.93, -10.74],
+          "width": 2.3,
+          "offset": -0.12
+        }
+      ]
     },
     "structures/warehouse_4_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-5.47, -16.61],
         [24, -2.76],
@@ -9381,16 +9443,19 @@
           "tile": [0, 0],
           "side": "E",
           "reach": [1, 0],
-          "point": [9, -2.04],
+          "point": [15, -5.06],
           "width": 2,
-          "offset": 0.11
+          "offset": 0.23
         }
       ]
     },
     "structures/warehouse_4_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [5.47, -16.61],
         [30, -0.17],
@@ -9407,22 +9472,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "S",
-          "reach": [0, 1],
-          "point": [-15, -4.39],
-          "width": 2,
-          "offset": -0.13
-        }
-      ]
+      "doors": []
     },
     "structures/warehouse_4_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-5.47, -16.61],
         [24, -2.76],
@@ -9442,19 +9500,22 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [0, 1],
           "side": "E",
-          "reach": [1, 0],
-          "point": [17.5, -5.74],
+          "reach": [1, 1],
+          "point": [3.5, 10.64],
           "width": 3,
-          "offset": -0.24
+          "offset": 0.17
         }
       ]
     },
     "structures/warehouse_5": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [-13.01, -18.03],
         [28.7, 4.49],
@@ -9471,12 +9532,25 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S",
+          "reach": [0, 1],
+          "point": [-24.93, -10.74],
+          "width": 2.3,
+          "offset": -0.12
+        }
+      ]
     },
     "structures/warehouse_5_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-5.2, -16.77],
         [24, -2.76],
@@ -9499,16 +9573,19 @@
           "tile": [0, 0],
           "side": "E",
           "reach": [1, 0],
-          "point": [9, -2.04],
+          "point": [15, -5.06],
           "width": 2,
-          "offset": 0.1
+          "offset": 0.23
         }
       ]
     },
     "structures/warehouse_5_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
       "foot": [
         [5.2, -16.77],
         [30, -0.16],
@@ -9525,22 +9602,15 @@
         ],
         "visible": false
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [0, 0],
-          "side": "S",
-          "reach": [0, 1],
-          "point": [-15, -4.39],
-          "width": 2,
-          "offset": -0.14
-        }
-      ]
+      "doors": []
     },
     "structures/warehouse_5_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [[0, 0]],
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
       "foot": [
         [-5.2, -16.77],
         [24, -2.76],
@@ -9560,12 +9630,12 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [0, 1],
           "side": "E",
-          "reach": [1, 0],
-          "point": [17.5, -5.74],
+          "reach": [1, 1],
+          "point": [3.5, 10.64],
           "width": 3,
-          "offset": -0.24
+          "offset": 0.15
         }
       ]
     },

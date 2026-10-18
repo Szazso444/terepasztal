@@ -917,7 +917,7 @@ export class Game implements UiHost {
         structureFrame(this.atlas, this.houses.frame(h), this.builder.decorAt(h.x, h.y)?.rot ?? 0),
         20,
       );
-    this.builder.onIndustryPlaced = (x, y) => this.houses.industryPlaced(x, y);
+    this.builder.onIndustryPlaced = (x, y, tiles) => this.houses.industryPlaced(x, y, tiles);
     this.power = new PowerGrid(this.map);
     this.catenary = new Catenary(this.map);
     this.builder.catenary = this.catenary;

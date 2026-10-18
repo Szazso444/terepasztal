@@ -143,7 +143,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   const towns = new TownRegistry(builder);
   const houses = new HouseRegistry(builder, towns, stock);
   towns.residentsAt = (x, y) => houses.residentsAt(x, y);
-  builder.onIndustryPlaced = (x, y) => houses.industryPlaced(x, y);
+  builder.onIndustryPlaced = (x, y, tiles) => houses.industryPlaced(x, y, tiles);
   const power = new PowerGrid(map);
   const catenary = new Catenary(map);
   builder.catenary = catenary;

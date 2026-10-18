@@ -4,6 +4,8 @@ import {
   Station,
   MAX_LEVEL,
   LEVELS,
+  HARVEST_CELLS_MAX,
+  HARVEST_RADIUS,
   HarvestCells,
   harvestBreakdown,
   resetStationIds,
@@ -304,9 +306,11 @@ const TERRAINS = TERRAIN_NAMES.map((_, i) => i as Terrain);
 
 /**
  * terrainFactorAt as it stood before the harvest breakdown, kept verbatim as the oracle: every
- * placed station, and every save on load, got its factor from it.
+ * placed station, and every save on load, got its factor from it. Only the footprint is new: the
+ * ground is counted from the nearest tile of the station's footprint (`footprintOf`, from its
+ * span), and a station of one tile is as it was.
  */
-function factorBefore(map: GameMap, x: number, y: number, defId: string): number {
+function factorBefore(map: GameMap, x: number, y: number, defId: string, rot = 0): number {
   const want = stationDef(defId).terrain;
   if (!want) return 1;
   const match = (t: Terrain) =>
@@ -320,12 +324,13 @@ function factorBefore(map: GameMap, x: number, y: number, defId: string): number
             ? t === Terrain.Sand
             : t === Terrain.Water;
   let sum = 0;
-  for (let dy = -4; dy <= 4; dy++)
-    for (let dx = -4; dx <= 4; dx++) {
-      if (!dx && !dy) continue;
-      if (!inBounds(map, x + dx, y + dy)) continue;
-      if (!match(terrainAt(map, x + dx, y + dy))) continue;
-      const d = Math.max(Math.abs(dx), Math.abs(dy));
+  const feet = footprintOf(x, y, defId, rot);
+  for (let ty = y - 4; ty <= y + feet.h + 3; ty++)
+    for (let tx = x - 4; tx <= x + feet.w + 3; tx++) {
+      if (!inBounds(map, tx, ty)) continue;
+      if (!match(terrainAt(map, tx, ty))) continue;
+      const d = feet.nearest(tx, ty);
+      if (!d) continue;
       sum += 1 / (1 + d);
     }
   return Math.max(0.15, Math.min(1.6, sum / 12));
@@ -367,14 +372,32 @@ const NUMBER_LEVELS = [
   ...ODD_LEVELS.filter((v): v is number => typeof v === 'number'),
 ];
 
+/**
+ * The footprint of a station of the kind with its corner at (x, y), turned to `rot`, listed tile
+ * by tile and measured by looking at every one, so that it shares no arithmetic with the code.
+ */
+function footprintOf(x: number, y: number, defId: string, rot: number) {
+  const span = placeSpan(stationDef(defId));
+  const [w, h] = rot % 2 === 0 ? [span.w, span.h] : [span.h, span.w];
+  const tiles: { x: number; y: number }[] = [];
+  for (let ty = y; ty < y + h; ty++)
+    for (let tx = x; tx < x + w; tx++) tiles.push({ x: tx, y: ty });
+  /** the Chebyshev distance from (tx, ty) to the nearest tile of the footprint; 0 inside it */
+  const nearest = (tx: number, ty: number) =>
+    Math.min(...tiles.map((t) => Math.max(Math.abs(t.x - tx), Math.abs(t.y - ty))));
+  return { w, h, nearest };
+}
+
 /** The tiles a harvest at (x, y) must count, rows north to south, each west to east. */
-function countedTiles(map: GameMap, x: number, y: number, defId: string) {
+function countedTiles(map: GameMap, x: number, y: number, defId: string, rot = 0) {
   const out: { x: number; y: number; d: number }[] = [];
-  for (let ty = y - 4; ty <= y + 4; ty++)
-    for (let tx = x - 4; tx <= x + 4; tx++) {
-      if ((tx === x && ty === y) || !inBounds(map, tx, ty)) continue;
+  const feet = footprintOf(x, y, defId, rot);
+  for (let ty = y - 4; ty <= y + feet.h + 3; ty++)
+    for (let tx = x - 4; tx <= x + feet.w + 3; tx++) {
+      const d = feet.nearest(tx, ty);
+      if (!d || !inBounds(map, tx, ty)) continue;
       if (!COUNTS[defId].includes(terrainAt(map, tx, ty))) continue;
-      out.push({ x: tx, y: ty, d: Math.max(Math.abs(tx - x), Math.abs(ty - y)) });
+      out.push({ x: tx, y: ty, d });
     }
   return out;
 }
@@ -386,6 +409,8 @@ interface HarvestSite {
   defId: string;
   level: number;
   season: Season;
+  /** the footprint's turn, 0 where it is not given */
+  rot?: number;
 }
 
 /**
@@ -396,7 +421,8 @@ interface HarvestSite {
 function stationOutput(map: GameMap, at: HarvestSite) {
   const s = new Station(at.defId, at.x, at.y);
   s.level = at.level;
-  s.terrainFactor = terrainFactorAt(map, at.x, at.y, at.defId);
+  s.rot = at.rot ?? 0;
+  s.terrainFactor = terrainFactorAt(map, at.x, at.y, at.defId, s.rot);
   s.productionMul =
     productionMul(at.defId, at.season) *
     (biomeDef(biomeAt(map, at.x, at.y)).production[at.defId] ?? 1);
@@ -406,9 +432,10 @@ function stationOutput(map: GameMap, at: HarvestSite) {
 /** Every row of a breakdown, each read again from the map apart from the code that made it. */
 function expectBreakdown(b: HarvestBreakdown | null, map: GameMap, at: HarvestSite, label: string) {
   const { x, y, defId, level, season } = at;
+  const rot = at.rot ?? 0;
   expect(b, `${label}: a harvesting station has a breakdown`).not.toBeNull();
   if (!b) return;
-  const want = countedTiles(map, x, y, defId);
+  const want = countedTiles(map, x, y, defId, rot);
   const got = Array.from({ length: b.cells.count }, (_, i) => ({
     x: b.cells.x[i],
     y: b.cells.y[i],
@@ -438,8 +465,10 @@ function expectBreakdown(b: HarvestBreakdown | null, map: GameMap, at: HarvestSi
   expect(b.factor, `${label}: factor`).toBe(
     clamped === 'floor' ? 0.15 : clamped === 'ceil' ? 1.6 : b.raw,
   );
-  expect(b.factor, `${label}: the factor stations always got`).toBe(factorBefore(map, x, y, defId));
-  expect(terrainFactorAt(map, x, y, defId), `${label}: terrainFactorAt`).toBe(b.factor);
+  expect(b.factor, `${label}: the factor stations always got`).toBe(
+    factorBefore(map, x, y, defId, rot),
+  );
+  expect(terrainFactorAt(map, x, y, defId, rot), `${label}: terrainFactorAt`).toBe(b.factor);
   const biome = biomeDef(biomeAt(map, x, y));
   expect(b.biome, `${label}: biome of its own tile`).toBe(biome.id);
   expect(b.biomeMul, `${label}: biome multiplier`).toBe(biome.production[defId] ?? 1);
@@ -524,6 +553,7 @@ describe('a harvest breakdown', () => {
             defId: rng.pick(HARVESTERS).id,
             level: rng.int(1, MAX_LEVEL),
             season: rng.pick(SEASONS),
+            rot: rng.int(0, 3),
             productionMul: rng.pick([1, 0, 0.1, 2.5, 5, Math.round(rng.range(0, 50)) / 10]),
             tiles,
           };
@@ -533,8 +563,18 @@ describe('a harvest breakdown', () => {
           const map = mapOf(c.map);
           const cells = new HarvestCells();
           for (const t of c.tiles) {
-            const at = { ...t, defId: c.defId, level: c.level, season: c.season };
-            const b = harvestBreakdown(map, t.x, t.y, c.defId, c.level, c.season, rules, cells);
+            const at = { ...t, defId: c.defId, level: c.level, season: c.season, rot: c.rot };
+            const b = harvestBreakdown(
+              map,
+              t.x,
+              t.y,
+              c.defId,
+              c.level,
+              c.season,
+              rules,
+              cells,
+              c.rot,
+            );
             expectBreakdown(b, map, at, `${c.defId} at ${t.x},${t.y}`);
             expect(b?.cells, 'the tiles go into the buffer given').toBe(cells);
             if (b?.clamped === 'floor') seen.floor++;
@@ -552,15 +592,80 @@ describe('a harvest breakdown', () => {
   );
 
   it('gives a farm on plain grass at level 1 its base of 30, its ground held at the ceiling', () => {
-    const map = emptyMap(1, 9, 9, Terrain.Grass);
-    // every tile within the radius is grass: 8/2 + 16/3 + 24/4 + 32/5 = 21.73, raw 1.81
-    const b = harvestBreakdown(map, 4, 4, 'farm', 1, 'spring', { productionMul: 1 });
+    const map = emptyMap(1, 11, 11, Terrain.Grass);
+    // every tile within the radius of its two tiles is grass: 10/2 + 18/3 + 26/4 + 34/5 = 24.3, raw 2.03
+    const b = harvestBreakdown(map, 5, 4, 'farm', 1, 'spring', { productionMul: 1 });
     expect(b?.base).toBe(30);
-    expect(b?.rings.map((r) => r.n)).toEqual([8, 16, 24, 32]);
+    expect(b?.rings.map((r) => r.n)).toEqual([10, 18, 26, 34]);
     expect(b?.clamped).toBe('ceil');
     expect(b?.factor).toBe(1.6);
     expect([b?.biome, b?.biomeMul, b?.seasonMul]).toEqual(['plains', 1.25, 1]);
     expect(b?.perWeek).toBe(30 * 1 * 1.6 * (1 * 1.25));
+  });
+
+  /** The tiles `cells` holds, as `x,y` keys with their distance. */
+  const heldTiles = (cells: HarvestCells) => {
+    const out = new Map<string, number>();
+    for (let i = 0; i < cells.count; i++) out.set(`${cells.x[i]},${cells.y[i]}`, cells.d[i]);
+    return out;
+  };
+
+  it("counts a two-tile farm halt's ground round its footprint, not round its corner", () => {
+    // an 11 x 11 plain: the halt (1 x 2 at rotation 0) stands on 5,4 and 5,5, clear of the edges
+    const map = emptyMap(1, 11, 11, Terrain.Grass);
+    const cells = new HarvestCells();
+    const b = harvestBreakdown(map, 5, 4, 'farm', 1, 'spring', { productionMul: 1 }, cells, 0);
+    // ring d: the (1 + 2d) x (2 + 2d) tiles within d of the pair, less those inside it
+    expect(b?.rings.map((r) => r.n)).toEqual([10, 18, 26, 34]);
+    const tiles = heldTiles(cells);
+    expect(tiles.has('5,5'), "the halt's second tile is not grass round it").toBe(false);
+    expect(tiles.has('5,4'), 'nor is its corner').toBe(false);
+    // a tile beyond the second tile is as near as one beside the corner
+    expect(['5,3', '5,6', '6,5', '7,5', '5,8'].map((k) => tiles.get(k))).toEqual([1, 1, 1, 2, 3]);
+  });
+
+  it('turns the footprint with the halt: rotation 1 is 2 x 1, and rotation 2 is rotation 0', () => {
+    const map = emptyMap(1, 11, 11, Terrain.Grass);
+    const tuning = { productionMul: 1 };
+    const at = (rot: number) => {
+      const cells = new HarvestCells();
+      const b = harvestBreakdown(map, 4, 5, 'farm', 1, 'spring', tuning, cells, rot);
+      return { b, tiles: heldTiles(cells) };
+    };
+    const turned = at(1);
+    expect(turned.b?.rings.map((r) => r.n)).toEqual([10, 18, 26, 34]);
+    expect(turned.tiles.has('5,5'), 'the second tile, east of the corner').toBe(false);
+    expect(turned.tiles.has('4,6'), 'a tile that is the second at rotation 0').toBe(true);
+    const a = at(0);
+    const c = at(2);
+    expect([...c.tiles]).toEqual([...a.tiles]);
+    expect(c.b?.sum).toBe(a.b?.sum);
+    // terrainFactorAt reads the same footprint
+    expect(terrainFactorAt(map, 4, 5, 'farm', 1)).toBe(turned.b?.factor);
+    expect(terrainFactorAt(map, 4, 5, 'farm', 0)).toBe(a.b?.factor);
+  });
+
+  it('holds a one-tile station to the ring it always had, whatever the rotation', () => {
+    const map = emptyMap(1, 9, 9, Terrain.Forest);
+    const tuning = { productionMul: 1 };
+    const base = harvestBreakdown(map, 4, 4, 'lumber', 1, 'spring', tuning);
+    expect(base?.rings.map((r) => r.n)).toEqual([8, 16, 24, 32]);
+    for (let rot = 0; rot < 4; rot++) {
+      const b = harvestBreakdown(map, 4, 4, 'lumber', 1, 'spring', tuning, undefined, rot);
+      expect(
+        b?.rings.map((r) => r.n),
+        `rotation ${rot}`,
+      ).toEqual([8, 16, 24, 32]);
+      expect(b?.sum).toBe(base?.sum);
+    }
+  });
+
+  it('gives its buffer room for the ring round the largest footprint a harvester takes', () => {
+    for (const d of HARVESTERS) {
+      const { w, h } = placeSpan(d);
+      const ring = (w + 2 * HARVEST_RADIUS) * (h + 2 * HARVEST_RADIUS) - w * h;
+      expect(ring, `${d.id}: ${w} x ${h}`).toBeLessThanOrEqual(HARVEST_CELLS_MAX);
+    }
   });
 
   it('is null, with factor 1 and no tiles, for a station that harvests nothing', () => {
