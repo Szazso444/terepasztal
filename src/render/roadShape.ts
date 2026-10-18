@@ -49,6 +49,11 @@ export const ROAD_PINNED_SHIFT = 4;
 export const ROAD_CROSSING_X = 0x100;
 /** A level crossing over track that runs along x: the road runs straight along y. */
 export const ROAD_CROSSING_Y = 0x200;
+/**
+ * A road on a bridge platform, as the painter is handed it (`paintedRoads`, roadPaint.ts): the
+ * deck is its road, so nothing is painted on the tile. Never part of a code `roadCode` makes.
+ */
+export const ROAD_ON_DECK = 0x400;
 
 /**
  * A road tile's code, as the painter is handed it: its `sides` (`roadSides`), the sides whose edge

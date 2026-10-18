@@ -7,6 +7,7 @@ import {
   deckAtOffset,
   deckSamples,
   DECK_SAMPLES,
+  roadDeckSamples,
   type BridgePlan,
   type BridgeSite,
   type Joins,
@@ -1748,5 +1749,51 @@ describe('road decks beside rail decks (#503)', () => {
       },
       { shrink: shrinkMixed },
     );
+  });
+});
+
+describe('a road deck (#506)', () => {
+  /** A run of road decks along one axis, from `first` on, and the banks it meets at each end. */
+  function run(rng: Rng) {
+    const n = rng.int(1, 7),
+      first = rng.int(-20, 20),
+      from = rng.chance(0.3) ? 0 : rng.range(-20, 30),
+      to = rng.chance(0.3) ? from : rng.range(-20, 30),
+      floor = rng.chance(0.5) ? -Infinity : rng.range(-10, 10);
+    return { n, first, from, to, floor };
+  }
+  const decksOf = ({ n, first, from, to, floor }: ReturnType<typeof run>) =>
+    Array.from({ length: n }, (_, i) => ({
+      axis: 1 as const,
+      deck: roadDeckSamples(first + i, first - 0.5, from, first + n - 0.5, to, floor),
+    }));
+
+  it('meets the ground of the bank at each end of its run, and the next deck along it', () => {
+    forAll(run, (r) => {
+      const decks = decksOf(r),
+        at = (z: number) => Math.max(r.floor, z);
+      expect(decks.every((d) => d.deck.length === DECK_SAMPLES.length)).toBe(true);
+      expect(deckAt(decks[0], -0.5)).toBeCloseTo(at(r.from), 9);
+      expect(deckAt(decks[r.n - 1], 0.5)).toBeCloseTo(at(r.to), 9);
+      for (let i = 0; i + 1 < r.n; i++)
+        expect(deckAt(decks[i], 0.5)).toBeCloseTo(deckAt(decks[i + 1], -0.5), 9);
+    });
+  });
+
+  it('runs straight from bank to bank at its samples, never below its floor, level where the banks are', () => {
+    forAll(run, (r) => {
+      const decks = decksOf(r),
+        start = r.first - 0.5,
+        length = r.n;
+      for (let i = 0; i < r.n; i++)
+        for (const l of DECK_SAMPLES) {
+          const t = (r.first + i + l - start) / length,
+            line = r.from + (r.to - r.from) * t,
+            z = deckAt(decks[i], l);
+          expect(z).toBeGreaterThanOrEqual(r.floor);
+          expect(z).toBeCloseTo(Math.max(r.floor, line), 9);
+          if (r.from === r.to) expect(z).toBeCloseTo(Math.max(r.floor, r.from), 9);
+        }
+    });
   });
 });

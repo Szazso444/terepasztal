@@ -34,11 +34,14 @@ export interface BridgeSite {
   /** 1 along x, 0 along y, null a square pad under a curve, switch or crossing. */
   axis: 0 | 1 | null;
   /**
-   * Deck top (the rail level) in world px up at each of DECK_SAMPLES along the axis. A pad's
-   * deck is level: its first sample stands for all.
+   * Deck top (the rail level, or a road deck's `roadDeckSamples`) in world px up at each of
+   * DECK_SAMPLES along the axis. A pad's deck is level: its first sample stands for all.
    */
   deck: readonly number[];
-  /** Per edge (N, E, S, W), whether a track crosses it: a pad keeps those free of parapets. */
+  /**
+   * Per edge (N, E, S, W), whether a track crosses it, or on a road deck the road runs on through
+   * it: a pad keeps those free of parapets, and over water a deck's end there rests on the bank.
+   */
   open?: readonly boolean[];
 }
 
@@ -58,6 +61,27 @@ const DX = [0, 1, 0, -1],
  */
 export function deckSamples(bed: RailBed, centre: number, step: number): number[] {
   return DECK_SAMPLES.map((l) => railLevel(bed, centre + l) * step);
+}
+
+/**
+ * A road deck's samples (#506), in world px up: a road has no rail profile, so its deck runs
+ * straight from the ground `from` where its run of road decks leaves one bank, at along coordinate
+ * `start`, to the ground `to` where it reaches the other, at `end`, and the road on each bank runs
+ * on to it at its own height. Read at DECK_SAMPLES about the tile centre `centre`, never below
+ * `floor` (over water, the waterline's deck).
+ */
+export function roadDeckSamples(
+  centre: number,
+  start: number,
+  from: number,
+  end: number,
+  to: number,
+  floor = -Infinity,
+): number[] {
+  return DECK_SAMPLES.map((l) => {
+    const t = end > start ? Math.max(0, Math.min(1, (centre + l - start) / (end - start))) : 0.5;
+    return Math.max(floor, from + (to - from) * t);
+  });
 }
 
 /** Deck height (world px up) at along offset `l` in [-0.5, 0.5]. */

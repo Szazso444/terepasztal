@@ -60,6 +60,7 @@ import {
   bridgeJoins,
   bridgePlan,
   deckSamples,
+  roadDeckSamples,
   type BridgeCarries,
   type BridgeSite,
 } from './bridgeLayout';
@@ -80,6 +81,7 @@ import {
 } from './wheatField';
 import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
 import { doorSides, roadCode, roadSides } from './roadShape';
+import { paintedRoads } from './roadPaint';
 import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 
@@ -108,6 +110,8 @@ const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
 >;
 
 const CHUNK = 8;
+/** How far off a road deck's run (tiles) the bank's ground it meets is read (`roadDeckProfile`). */
+const BANK_READ = 0.02;
 
 /**
  * Props a railway cuts instead of pushing aside. A wheat field lies over its whole tile, so
@@ -271,6 +275,11 @@ export class WorldRenderer {
   private roads = new Set<number>();
   /** The code of each road tile as the painter was last handed it (`roadCode`, roadShape.ts). */
   private roadCodes = new Map<number, number>();
+  /**
+   * The tiles a bridge deck is drawn on, in any style, as last drawn (`setTexturedBridges`): a
+   * road there is the deck, and the painter is handed it as such (`paintedRoads`).
+   */
+  private bridgeDecks = new Set<number>();
   /**
    * Where walkers are drawn on the roads (#477), by the codes the painter was handed; the people
    * renderer finds it by this renderer's object layer (`roadWalks`).
@@ -516,11 +525,38 @@ export class WorldRenderer {
       else this.roadCodes.set(k, code);
       repaint.add(k);
     }
-    if (!repaint.size) return;
-    const list: number[] = [];
-    for (const [k, code] of this.roadCodes) list.push(k, code);
-    this.landscape.setRoads(list);
-    for (const k of repaint) this.landscape.repaint(k % w, Math.floor(k / w));
+    if (repaint.size) this.handRoads(repaint);
+  }
+  /** Hands the painter the roads, a road on a bridge deck as the deck's, and repaints `tiles`. */
+  private handRoads(tiles: Iterable<number>) {
+    const { w } = this.map;
+    this.landscape.setRoads(paintedRoads(this.roadCodes, (k) => this.bridgeDecks.has(k)));
+    for (const k of tiles) this.landscape.repaint(k % w, Math.floor(k / w));
+  }
+  /**
+   * The tiles bridge decks are drawn on now: the textured style's `drawn` and the platforms of the
+   * others. Where a road tile went on to a deck or came off one, it and the tiles beside it are
+   * painted again: no road on the deck, and the road beside it run up to its edge or on over it.
+   */
+  private refreshDecks(drawn: Iterable<number>) {
+    const { w, h } = this.map,
+      decks = new Set(drawn);
+    for (const key of this.platformSprites.keys()) if (key < w * h) decks.add(key);
+    const old = this.bridgeDecks,
+      repaint = new Set<number>();
+    this.bridgeDecks = decks;
+    for (const k of this.roads) {
+      if (old.has(k) === decks.has(k)) continue;
+      const x = k % w,
+        y = Math.floor(k / w);
+      repaint.add(k);
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d],
+          ny = y + DIR_DY[d];
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h) repaint.add(ny * w + nx);
+      }
+    }
+    if (repaint.size) this.handRoads(repaint);
   }
   private groundFrame(x: number, y: number): string {
     if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
@@ -1400,8 +1436,15 @@ export class WorldRenderer {
     this.bridgeWaterChanged = false;
     this.texturedFailed = this.landscape.failed;
     const surfaces = this.bridgeMode === 'textured' ? this.bridgeSurfaces : null,
-      sites = surfaces
-        ? tiles.map((t) => ({ ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water) }))
+      roadDecks = new Map<number, TexturedBridge>();
+    for (const t of tiles)
+      if (t.carries === 'road' && t.axis !== null) roadDecks.set(idx(this.map, t.x, t.y), t);
+    const sites = surfaces
+        ? tiles.map((t) =>
+            roadDecks.has(idx(this.map, t.x, t.y))
+              ? { ...t, open: this.roadDeckEnds(t), deck: this.roadDeckProfile(t, roadDecks) }
+              : { ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water) },
+          )
         : [],
       joins = bridgeJoins(sites, this.map.w),
       ground = (tx: number, ty: number) => this.bridgeGround(tx, ty),
@@ -1449,6 +1492,53 @@ export class WorldRenderer {
         for (const c of [old.under, old.near]) destroyBridgeParts(c);
         this.texturedParts.delete(k);
       }
+    this.refreshDecks(keep);
+  }
+  /**
+   * The edges of road deck `t` its road leaves through (N, E, S, W): its ends along its axis where
+   * a road runs on. Over water each rests on the bank's abutment there, as a rail deck's does
+   * where its track runs on (`bridgePlan`).
+   */
+  private roadDeckEnds(t: TexturedBridge) {
+    return DIRS.map(
+      (d) =>
+        (t.axis === 1 ? DIR_DX[d] !== 0 : DIR_DY[d] !== 0) &&
+        this.hasRoad(t.x + DIR_DX[d], t.y + DIR_DY[d]),
+    );
+  }
+  /**
+   * Road deck `t`'s top in world px up at DECK_SAMPLES along its axis (`roadDeckSamples`): straight
+   * from the ground where its run of road decks (`decks`, by tile, on one axis) meets the bank at
+   * one end to the ground at the other. Over water it never sinks below the waterline's deck.
+   */
+  private roadDeckProfile(t: TexturedBridge, decks: ReadonlyMap<number, TexturedBridge>) {
+    const alongX = t.axis === 1,
+      { w, h } = this.map,
+      inRun = (k: number) => {
+        const x = alongX ? t.x + k : t.x,
+          y = alongX ? t.y : t.y + k;
+        return (
+          x >= 0 && y >= 0 && x < w && y < h && decks.get(idx(this.map, x, y))?.axis === t.axis
+        );
+      };
+    let back = 0,
+      on = 0;
+    while (back < w + h && inRun(-back - 1)) back++;
+    while (on < w + h && inRun(on + 1)) on++;
+    const centre = alongX ? t.x : t.y,
+      start = centre - back - 0.5,
+      end = centre + on + 0.5,
+      // the ground just off the run's end, on the bank
+      bank = (l: number) => -(alongX ? this.groundAt(l, t.y) : this.groundAt(t.x, l)).dz,
+      floor = t.water ? Math.max(0, -this.groundAt(t.x, t.y).dz) : -Infinity;
+    return roadDeckSamples(
+      centre,
+      start,
+      bank(start - BANK_READ),
+      end,
+      bank(end + BANK_READ),
+      floor,
+    );
   }
   /**
    * A bridge deck's top (the rail level) in world px up at DECK_SAMPLES along its axis; one level
