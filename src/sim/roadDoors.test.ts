@@ -174,7 +174,7 @@ describe('a road and a footprint', () => {
       }
     // the depot's two by two and the narrow shed's two by one, at every rotation
     expect(wide).toBeGreaterThanOrEqual(8);
-    // a bridge platform on land is no place, and no road stands on it either
+    // a bridge platform on land is no place: a road may stand on it (#493)
     const w = world();
     w.builder.buildings.set(5 * W + 5, {
       id: 'bridge_wood',
@@ -184,7 +184,8 @@ describe('a road and a footprint', () => {
       active: false,
       rate: 0,
     });
-    expect(refusal(w, { x: 5, y: 5 })).toBe(STR.build.roadOnBuilding);
+    w.stock.add('stone', 100);
+    expect(refusal(w, { x: 5, y: 5 })).toBeNull();
   });
 
   it('keeps every place off its tile: the placement check gives the road as the reason', () => {

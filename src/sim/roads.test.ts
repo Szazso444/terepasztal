@@ -36,6 +36,8 @@ import {
   type Person,
 } from './people';
 import { SAVE_VERSION, migrate, readSaveText, type SaveGame } from './save';
+import { buildingFromJSON, buildingToJSON } from './buildings';
+import { repairBuiltRoads } from '../engine/loadRepair';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, line, station } from '../testing/simWorld';
 
@@ -175,7 +177,7 @@ describe('laying a road', () => {
     });
   });
 
-  it('is refused on any tile of a station, a works, a bridge platform or a house (#408)', () => {
+  it('is refused on any tile of a station, a works or a house (#408)', () => {
     const w = world();
     w.builder.free = true;
     lay(w, 10, 10, STRAIGHT, EW);
@@ -186,16 +188,12 @@ describe('laying a road', () => {
     expect(depot).not.toBeNull();
     expect(farm).not.toBeNull();
     expect(w.builder.placeBuilding(20, 20, 'windmill')).not.toBeNull();
-    w.map.terrain[25 * W + 25] = Terrain.Water;
-    expect(w.builder.placeBuilding(25, 25, 'bridge_wood')).not.toBeNull();
-    expect(w.builder.placeBuilding(26, 26, 'bridge_wood')).not.toBeNull();
     expect(w.builder.placeDecor(5, 5, 'townhouse', 0)).not.toBeNull();
     expect(w.builder.placeDecor(7, 5, 'water_tower', 0)).not.toBeNull();
     const taken = [
       ...depot.footprint(),
       ...farm.footprint(),
       { x: 20, y: 20 },
-      { x: 26, y: 26 },
       { x: 5, y: 5 },
       { x: 7, y: 5 },
     ];
@@ -208,8 +206,6 @@ describe('laying a road', () => {
       expect(refusal(w, t.x, t.y), `${t.x},${t.y}`).toBe(STR.build.roadOnBuilding);
       expect(w.builder.placeRoad(t.x, t.y)).toBe(false);
     }
-    // the platform on water is water's: nothing is built on it but its rail
-    expect(refusal(w, 25, 25)).toBe(STR.build.nothingOn.water);
     expect(w.roads.toJSON()).toEqual(laid);
   });
 
@@ -296,6 +292,140 @@ describe('laying a road', () => {
     w.builder.removeRoad(3, 4);
     w.builder.placeRoad(-1, 4);
     expect(seen).toEqual(['3,4', '3,4']);
+  });
+});
+
+// ------------------------------------------------------------------ roads on bridge platforms
+
+describe('a road on a bridge platform (#493)', () => {
+  /** A world whose row 10, x from 12 to 16, is water: a river a bridge may span. */
+  function river() {
+    const w = world();
+    w.builder.free = true;
+    for (let x = 12; x <= 16; x++) w.map.terrain[10 * W + x] = Terrain.Water;
+    return w;
+  }
+  const PLATFORMS = ['bridge_wood', 'bridge_stone'];
+
+  it('goes on a platform with no rail, over water and over land, at a road price', () => {
+    for (const id of PLATFORMS) {
+      const w = river();
+      expect(w.builder.placeBuilding(13, 10, id), id).not.toBeNull();
+      expect(w.builder.placeBuilding(20, 20, id), id).not.toBeNull();
+      w.builder.free = false;
+      expect(w.builder.checkRoad(13, 10).cost, id).toEqual(w.builder.checkRoad(5, 5).cost);
+      w.builder.free = true;
+      pave(w, [
+        [13, 10],
+        [20, 20],
+      ]);
+      expect(w.builder.buildingAt(13, 10)?.id, id).toBe(id);
+    }
+  });
+
+  it('is refused on water with no platform under it, and on rock or a mountain', () => {
+    const w = river();
+    expect(refusal(w, 14, 10)).toBe(STR.build.nothingOn.water);
+    expect(w.builder.placeRoad(14, 10)).toBe(false);
+    // no platform stands on rock or a mountain, so none carries a road there
+    for (const t of [Terrain.Rock, Terrain.Mountain]) {
+      w.map.terrain[3 * W + 3] = t;
+      expect(w.builder.placeBuilding(3, 3, 'bridge_wood')).toBeNull();
+      expect(refusal(w, 3, 3)).not.toBeNull();
+    }
+    expect(w.roads.size).toBe(0);
+  });
+
+  it('never shares its tile with rail, whichever is laid first', () => {
+    const w = river();
+    // rail first: the platform carries rail, and a road is refused there
+    expect(
+      w.builder.placeLine([
+        { kind: 'platform', x: 13, y: 10, defId: 'bridge_wood' },
+        { kind: 'track', x: 13, y: 10, item: STRAIGHT, rot: NS },
+      ]),
+    ).toBe(true);
+    expect(refusal(w, 13, 10)).toBe(STR.build.trackInWay);
+    expect(w.builder.placeRoad(13, 10)).toBe(false);
+    // a road first: the platform carries the road, and rail is refused there, alone or in a line
+    expect(w.builder.placeBuilding(15, 10, 'bridge_stone')).not.toBeNull();
+    pave(w, [[15, 10]]);
+    const track = trackOf(w.track);
+    for (const item of [STRAIGHT, NARROW])
+      for (const rot of [NS, EW]) {
+        expect(w.builder.checkTrack(15, 10, item, rot).reason).toBe(STR.build.roadInWay);
+        expect(w.builder.placeTrack(15, 10, item, rot)).toBe(false);
+        const c = w.builder.checkLine([{ kind: 'track', x: 15, y: 10, item, rot }]);
+        expect(c.reason).toBe(STR.build.roadInWay);
+      }
+    expect(trackOf(w.track)).toBe(track);
+    // and a road on land still makes a level crossing with track laid after it
+    pave(w, [[5, 5]]);
+    lay(w, 5, 5, STRAIGHT, EW);
+    expect(w.roads.isCrossing(5, 5)).toBe(true);
+  });
+
+  it('keeps its platform: the platform comes up only once the road is off, as with rail', () => {
+    rules.refundRate = 1;
+    const w = river();
+    w.builder.free = false;
+    w.stock.add('stone', 100);
+    w.stock.add('wood', 100);
+    expect(w.builder.placeBuilding(13, 10, 'bridge_wood')).not.toBeNull();
+    expect(w.builder.placeRoad(13, 10)).toBe(true);
+    const stock = JSON.stringify(w.stock.toJSON());
+    expect(w.builder.removeBuilding(13, 10)).toBe(false);
+    expect(w.builder.buildingAt(13, 10)?.id).toBe('bridge_wood');
+    expect(w.roads.has(13, 10)).toBe(true);
+    expect(JSON.stringify(w.stock.toJSON())).toBe(stock);
+    expect(w.builder.removeRoad(13, 10)).toBe(true);
+    expect(w.builder.removeBuilding(13, 10)).toBe(true);
+    expect(w.builder.buildingAt(13, 10)).toBeUndefined();
+  });
+
+  it('is never a spur: a door near a platform gets its road round it', () => {
+    const w = river();
+    // a road north of the river, platforms all across it, and a house south of it: the spur
+    // straight over a platform would be the shortest, and it goes round the river instead
+    for (let x = 12; x <= 16; x++)
+      expect(w.builder.placeBuilding(x, 10, 'bridge_wood')).not.toBeNull();
+    pave(w, [
+      [14, 7],
+      [14, 8],
+    ]);
+    expect(w.builder.placeDecor(14, 12, 'townhouse', 0)).not.toBeNull();
+    expect(w.roads.size, 'the spur').toBeGreaterThan(2);
+    for (let x = 12; x <= 16; x++) expect(w.roads.has(x, 10), `${x}`).toBe(false);
+  });
+
+  it('comes back through a save and a load, and the load repair leaves it', () => {
+    const w = river();
+    for (let x = 12; x <= 16; x++)
+      expect(w.builder.placeBuilding(x, 10, 'bridge_wood')).not.toBeNull();
+    pave(w, [[11, 10], ...Array.from({ length: 5 }, (_, i) => [12 + i, 10] as [number, number])]);
+    const read = readSaveText(
+      JSON.stringify({
+        ...oldSave(SAVE_VERSION),
+        buildings: [...w.builder.buildings.values()].map(buildingToJSON),
+        roads: w.roads.toJSON(),
+      }),
+    );
+    if (!('save' in read)) throw new Error(read.error);
+    expect(read.save.version).toBe(SAVE_VERSION);
+    const back = river();
+    for (const j of read.save.buildings ?? []) {
+      const b = buildingFromJSON(j);
+      back.builder.buildings.set(back.track.key(b.x, b.y), b);
+    }
+    back.roads.load(read.save.roads);
+    for (const { x, y } of repairBuiltRoads(back.map, read.save)) back.roads.remove(x, y);
+    expect(back.roads.toJSON()).toEqual(w.roads.toJSON());
+    for (let x = 12; x <= 16; x++) {
+      expect(back.builder.bridgeAt(x, 10), `${x}`).toBeTruthy();
+      // the loaded platform keeps the rule: no rail on it, and it stays while its road does
+      expect(back.builder.checkTrack(x, 10, STRAIGHT, EW).reason).toBe(STR.build.roadInWay);
+      expect(back.builder.removeBuilding(x, 10)).toBe(false);
+    }
   });
 });
 

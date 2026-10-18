@@ -1365,6 +1365,27 @@ describe('a road on ground that cannot hold one', () => {
     expect(repairBuiltRoads(map, builtOf(builder))).toEqual([]);
   });
 
+  it('stays on a bridge platform with no rail, on water as on land, and goes off one with rail (#493)', () => {
+    for (const t of [Terrain.Water, Terrain.Grass, ...STONE]) {
+      const m = flat(t);
+      const built = only({
+        track: [straight(6, 4)],
+        buildings: [works(4, 4, 'bridge_wood'), works(6, 4, 'bridge_stone')],
+        roads: [road(4, 4), road(6, 4)],
+      });
+      expect(keys(repairBuiltRoads(m, built)), name(t)).toEqual(['6,4']);
+      // a road on the same ground with no platform under it goes by the ground alone
+      const bare = only({ roads: [road(4, 4)] });
+      expect(keys(repairBuiltRoads(m, bare)), name(t)).toEqual(NO_LAND.includes(t) ? ['4,4'] : []);
+    }
+    // a road the builder laid on a platform over water is a road the repair leaves
+    const { map, builder } = builderOn(Terrain.Water);
+    expect(builder.placeBuilding(4, 4, 'bridge_wood')).not.toBeNull();
+    expect(builder.placeRoad(4, 4)).toBe(true);
+    expect(repairBuiltRoads(map, builtOf(builder))).toEqual([]);
+    expect(repairBuiltTiles(map, builtOf(builder))).toEqual([]);
+  });
+
   it('skips what a load skips, and answers nothing for a save with no road list', () => {
     const m = flat(Terrain.Rock);
     const odd = roadsOf([
@@ -1401,17 +1422,26 @@ describe('a road on ground that cannot hold one', () => {
   });
 
   it('goes, in any scene, exactly where the ground the repair leaves refuses a road', () => {
-    const seen = { gone: 0, kept: 0, landMade: 0 };
+    const seen = { gone: 0, kept: 0, landMade: 0, keptOnDeck: 0, goneOffRail: 0 };
     forAll(
       (rng) => {
         const c = genCase(rng);
         const tiles = c.built.track.flatMap(([x, y, kind, rot, cls]) =>
           footprintOf(x, y, kind, rot, cls ?? 'regular'),
         );
-        // roads on the track's tiles (crossings) as well as anywhere, and a corrupt entry now and then
+        const decks = (c.built.buildings ?? [])
+          .filter(([, , id]) => buildingDef(id).bridge)
+          .map(([x, y]) => ({ x, y }));
+        // roads on the track's tiles (crossings) and on bridge platforms as well as anywhere, and
+        // a corrupt entry now and then
         const roads: unknown[] = Array.from({ length: rng.int(0, 16) }, () => {
           const at2 = { x: rng.int(-1, SIZE), y: rng.int(-1, SIZE) };
-          const { x, y } = rng.chance(0.4) && tiles.length ? rng.pick(tiles) : at2;
+          const { x, y } =
+            rng.chance(0.4) && tiles.length
+              ? rng.pick(tiles)
+              : rng.chance(0.5) && decks.length
+                ? rng.pick(decks)
+                : at2;
           return rng.chance(0.1) ? [x + 0.5, y] : [x, y];
         });
         if (roads.length && rng.chance(0.3)) roads.push(rng.pick(roads));
@@ -1437,20 +1467,36 @@ describe('a road on ground that cannot hold one', () => {
         const loaded = new Roads(new TrackGraph(SIZE, SIZE));
         loaded.load(c.built.roads);
         const saved = loaded.list();
+        // a bridge platform carries a road where it carries no rail (#493), whatever the ground
+        const on = (list: readonly { x: number; y: number }[], x: number, y: number) =>
+          list.some((t) => t.x === x && t.y === y);
+        const rails = c.built.track.flatMap(([x, y, kind, rot, cls]) =>
+          footprintOf(x, y, kind, rot, cls ?? 'regular'),
+        );
+        const decks = (c.built.buildings ?? [])
+          .filter(([, , id]) => buildingDef(id).bridge)
+          .map(([x, y]) => ({ x, y }));
+        const goes = (x: number, y: number) =>
+          on(decks, x, y) ? on(rails, x, y) : unbuildable(at(m, x, y)) !== null;
         for (const { x, y } of saved)
-          if (unbuildable(at(m, x, y)) !== null) seen.gone++;
+          if (on(decks, x, y)) seen[on(rails, x, y) ? 'goneOffRail' : 'keptOnDeck']++;
+          else if (goes(x, y)) seen.gone++;
           else {
             seen.kept++;
             if (NO_LAND.includes(c.terrain[y * SIZE + x])) seen.landMade++;
           }
         // the ones that go are those the builder would refuse for the ground they stand on now,
-        // each once and in the order saved, and no other
-        const refused = saved.filter(({ x, y }) => unbuildable(at(m, x, y)) !== null);
+        // or for the rail on their platform, each once and in the order saved, and no other
+        const refused = saved.filter(({ x, y }) => goes(x, y));
         expect(keys(lost)).toEqual(keys(refused));
       },
       { shrink: shrinkRoadCase },
     );
-    // the seeds reach roads taken off, roads left, and roads left on ground made land for another
-    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(10);
+    // the seeds reach roads taken off, roads left, roads left on ground made land for another, and
+    // roads on platforms, kept where no rail is and taken off the rail; a platform with rail under
+    // a saved road is the rarest of them
+    const { goneOffRail, ...rest } = seen;
+    for (const [what, n] of Object.entries(rest)) expect(n, what).toBeGreaterThan(10);
+    expect(goneOffRail, 'goneOffRail').toBeGreaterThan(3);
   });
 });
