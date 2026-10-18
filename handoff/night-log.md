@@ -479,3 +479,12 @@ Launched from the author's branch list: #148 #149 #150 #151 #152 #153 #154 #155.
   5. Short reports; no image reads unless needed to judge a change.
 - 2026-10-18T15:49:28Z Token rules amended by the author: up to two implementation tasks at once when they share no file; Haiku for lightweight work (publish agent now Haiku in wave-continue.js; impl on Haiku when a task sets model 'haiku'). QA Sonnet, fixes Sonnet then Opus from round 2.
 - 2026-10-18T15:59:44Z Author: up to 4 tasks in parallel when they share no file. Principle: best quality for fewest tokens; never spend tokens to buy speed. Practice: precise briefs so fix rounds are rare; resume a workflow with only its unfinished tasks (the B1 re-run cost a whole extra round); no duplicate reviews; parallel only when it costs no extra tokens. Disk (about 1-2 GB free, 0.5-0.7 GB per worktree) caps parallel runs before 4 does.
+
+## 2026-10-18, new Core session
+
+- Board: 11 answers (answeredAt up to 2026-10-18T15:32:20Z, now the last processed) settled in `decisions`.
+- Author in chat: two-tile-old-saves = (c), nothing done for old saves; wind = pure function, coupled to rain/fog; coaling = all nine calls; building-scale-pick waits for the author's review of https://claude.ai/artifact/Mtq8MbsVSzn4hzY6GfhLzp (all buildings beside a walker; outliers: pump L2-L5, farm halt, windmill, depot eaves).
+- Pushed, no PR yet (gh not logged in): `claude/f1-two-tile-buildings` e4e406a5 (F1; F2: farm doors, walker corner; F3: onStationChanged, toolRotation ghost; needs verification before gate), `claude/w1-wind-weather` e1574a70 (W1, `weather.wind`, no save change), `claude/art-guides-windmill-coaling` 830d576b (windmill r1-r3 + oblong coaling r1-r3 guides).
+- Codex prompts page v14: new C17d (windmill r1-r3) and C4e (coaling r1-r3 on branch art/325-buildings-v2), C4d removed. Order R8d, C4e, C17c, C17d, R7c-1.
+- 8-hour board-check cron: refused by the auto-mode classifier (merge step); not scheduled.
+- To do once gh works: record decisions on #325, #331, #461, #494/#507; file F1-F5, W1, W2, X1 and the guides issue; open the three PRs; gate.
