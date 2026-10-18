@@ -1,0 +1,48 @@
+{
+  "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last picture's corners w(373,1062), s(542,1163), e(1057,898) moved up to56px where at most10px is allowed, plan3.047 exceeded2.8, and camera5.8 degrees exceeded2.5. Preserve the first picture's house without translating or redrawing it. Your post at x490 must instead be the near riser at x562, with ONE jib reaching x742 (180px), and your hose end(650,902) must instead be within x700-790,y800-880. Remove the old far-left post and beam; change only these crane/hose pixels.",
+  "references": [
+    "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+    "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+  ],
+  "corners": {
+    "w": [
+      386,
+      1053
+    ],
+    "s": [
+      561,
+      1149
+    ],
+    "e": [
+      1065,
+      893
+    ]
+  },
+  "cornerReason": "Outer quoin corners by eye: detector e sits inside end-pier step; s is a fitted intersection.",
+  "height": {
+    "foot": [
+      561,
+      1149
+    ],
+    "top": [
+      561,
+      881
+    ]
+  },
+  "lightBoxes": [
+    [
+      400,
+      880,
+      530,
+      1000
+    ],
+    [
+      850,
+      760,
+      1000,
+      860
+    ]
+  ],
+  "observation": "r3 step 1: Closest, failed. Single post remains at x480 rather than near riser x562; jib reach about230px exceeds210. Hose end713,873 passes. Footprint moved down44/42/47px. No S1 accepted, so no step2.",
+  "grassReview": "review/fuel_pump-a1-r3-attempt-14-grass.png"
+}

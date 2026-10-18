@@ -3280,7 +3280,8 @@
         "grassReview": "review/fuel_pump-a1-r2-attempt-4-grass.png",
         "houseWidthFraction": 0.5470494417862839,
         "accepted": false
-      }
+      },
+      "sha256": "0bfdf6c206fdd58237b62c01dcef3325215b0ad37a5130ee6b4318dc9a16c2fc"
     },
     {
       "view": "r2",
@@ -3471,7 +3472,8 @@
         "grassReview": "review/fuel_pump-a1-r2-attempt-5-grass.png",
         "houseWidthFraction": 0.5199362041467305,
         "accepted": false
-      }
+      },
+      "sha256": "2a4b2e0c4fe1e68223cb53fb4e60e3eb8f7ae74dd65a1b6ef28f4e341ac42872"
     },
     {
       "view": "r2",
@@ -3662,7 +3664,824 @@
         "grassReview": "review/fuel_pump-a1-r2-attempt-6-grass.png",
         "houseWidthFraction": 0.5023923444976076,
         "accepted": false
-      }
+      },
+      "sha256": "29b8617fec0cd899b96fe95e1c7c12d146bf37a1d7a62578c708d201d6bf36df"
+    },
+    {
+      "view": "r3",
+      "attempt": 12,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-12.png",
+      "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "w": [
+          387,
+          1045.282286959702
+        ],
+        "s": [
+          574.7724099859691,
+          1146.9944795636613
+        ],
+        "e": [
+          1019,
+          910.4569052414498
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.5416780485032883,
+          -0.5324693459826315
+        ],
+        "lowerLeftSpan": 187.77240998596915,
+        "lowerRightSpan": 444.22759001403085,
+        "difference": 1.365776687039511,
+        "plan": {
+          "measured": {
+            "w": [
+              387,
+              1045.282286959702
+            ],
+            "s": [
+              574.7724099859691,
+              1146.9944795636613
+            ],
+            "e": [
+              1019,
+              910.4569052414498
+            ]
+          },
+          "used": {
+            "w": [
+              386,
+              1048
+            ],
+            "s": [
+              564,
+              1147
+            ],
+            "e": [
+              1076,
+              892
+            ]
+          },
+          "readByEye": true,
+          "reason": "Outer quoin corners by eye: detector e falls inside projecting right-end pier step; retain automatic values too.",
+          "lowerLeftSpan": 178,
+          "lowerRightSpan": 512,
+          "longToShort": 2.8764044943820224,
+          "required": [
+            2,
+            2.8
+          ]
+        },
+        "planPass": false,
+        "camera": {
+          "off": true,
+          "by": 2.5,
+          "elevation": 2.5,
+          "turn": 0.2,
+          "required": "at most2.5 degrees"
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 2.5°: it looks down from 32.5° where the game looks down from 30° (the wall feet slope 0.54 and -0.53, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.542,
+              -0.532
+            ],
+            "slopes": [
+              0.542,
+              -0.532
+            ],
+            "base": {
+              "w": [
+                387,
+                1045.3
+              ],
+              "s": [
+                574.8,
+                1147
+              ],
+              "e": [
+                1019,
+                910.5
+              ]
+            },
+            "scale": 0.7129,
+            "vertical": 0.931,
+            "shear": -0.0043,
+            "cx": 703,
+            "cy": 907.4,
+            "box": {
+              "left": 286.7,
+              "top": 355.6,
+              "right": 772.2,
+              "bottom": 946.7
+            },
+            "camera": {
+              "elevation": 32.5,
+              "turn": 0.2
+            },
+            "area": 397217
+          },
+          "camera": {
+            "by": 2.5,
+            "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "height": {
+          "foot": [
+            564,
+            1147
+          ],
+          "top": [
+            564,
+            879
+          ],
+          "houseWidth": 690,
+          "pixels": 268,
+          "ratio": 0.3884057971014493,
+          "pass": false,
+          "required": [
+            0.39,
+            0.47
+          ]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [
+                400,
+                880,
+                530,
+                1000
+              ],
+              "pixels": 15111,
+              "median": 120.9664
+            },
+            {
+              "box": [
+                850,
+                760,
+                1000,
+                860
+              ],
+              "pixels": 13706,
+              "median": 120.6146
+            }
+          ],
+          "rightToLeft": 0.9970917544045289,
+          "pass": true,
+          "directionalRatioPass": false,
+          "referenceMedians": [
+            118.7276,
+            117.8576
+          ],
+          "deltas": [
+            2.2387999999999977,
+            2.756999999999991
+          ],
+          "required": "Each median within8 of attempt7; directional contrast is not a step1 test."
+        },
+        "observation": "r3 step 1: Failed. Original far-left post and beam remain; near riser was not promoted. Corners moved down39/40/46px; width690 (14px wider). Hose ends about715,977, below y800-880.",
+        "grassReview": "review/fuel_pump-a1-r3-attempt-12-grass.png",
+        "houseWidthFraction": 0.5502392344497608,
+        "step": "r3 step 1",
+        "accepted": false,
+        "crane": {
+          "postTop": [
+            461,
+            545
+          ],
+          "postBase": [
+            450,
+            849
+          ],
+          "jibEnd": [
+            688,
+            701
+          ],
+          "hoseEnd": [
+            715,
+            977
+          ],
+          "horizontalReach": 227,
+          "onePost": false,
+          "beamOverTank": true,
+          "postAboveTank": false,
+          "readByEye": true,
+          "pass": false
+        },
+        "footprint": {
+          "baseline": {
+            "w": [
+              381,
+              1009
+            ],
+            "s": [
+              562,
+              1107
+            ],
+            "e": [
+              1057,
+              846
+            ]
+          },
+          "corners": {
+            "w": [
+              386,
+              1048
+            ],
+            "s": [
+              564,
+              1147
+            ],
+            "e": [
+              1076,
+              892
+            ]
+          },
+          "width": 690,
+          "widthDelta": 14,
+          "delta": {
+            "w": [
+              5,
+              39
+            ],
+            "s": [
+              2,
+              40
+            ],
+            "e": [
+              19,
+              46
+            ]
+          },
+          "pass": false
+        }
+      },
+      "sha256": "c1b693de693db9c67cc250f7a41e86940d2592d8b4b6e6bcd1fc48eb49df721c"
+    },
+    {
+      "view": "r3",
+      "attempt": 13,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-13.png",
+      "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last picture's hose ended at (715,977) where x700 to790 and y800 to880 is wanted; its w(386,1048), s(564,1147), e(1076,892) missed the fixed corners by up to46px, and width690 missed676 by14px. The old post at x450 and the long beam over the tank were still there: REMOVE them and make the near riser at x562 the single post, jib end near742 and hose ending y840. Keep the original attempt7 pixels outside the crane/hose area.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "w": [
+          374,
+          1058.7439704518074
+        ],
+        "s": [
+          537.4589694993336,
+          1166.208128612611
+        ],
+        "e": [
+          1056,
+          896.1847270391112
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.6574381234016141,
+          -0.5207368090289488
+        ],
+        "lowerLeftSpan": 163.45896949933365,
+        "lowerRightSpan": 518.5410305006664,
+        "difference": 2.172300866015066,
+        "plan": {
+          "measured": {
+            "w": [
+              374,
+              1058.7439704518074
+            ],
+            "s": [
+              537.4589694993336,
+              1166.208128612611
+            ],
+            "e": [
+              1056,
+              896.1847270391112
+            ]
+          },
+          "used": {
+            "w": [
+              373,
+              1062
+            ],
+            "s": [
+              542,
+              1163
+            ],
+            "e": [
+              1057,
+              898
+            ]
+          },
+          "readByEye": true,
+          "reason": "Outer quoin corners read by eye; detector s is fitted inward on near quoin step.",
+          "lowerLeftSpan": 169,
+          "lowerRightSpan": 515,
+          "longToShort": 3.0473372781065087,
+          "required": [
+            2,
+            2.8
+          ]
+        },
+        "planPass": false,
+        "camera": {
+          "off": true,
+          "by": 5.8,
+          "elevation": 5.8,
+          "turn": 3.3,
+          "required": "at most2.5 degrees"
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 5.8°: it looks down from 35.8° where the game looks down from 30° and the building is turned 3.3° towards its lower-right wall (the wall feet slope 0.66 and -0.52, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.657,
+              -0.521
+            ],
+            "slopes": [
+              0.657,
+              -0.521
+            ],
+            "base": {
+              "w": [
+                374,
+                1058.7
+              ],
+              "s": [
+                537.5,
+                1166.2
+              ],
+              "e": [
+                1056,
+                896.2
+              ]
+            },
+            "scale": 0.6606,
+            "vertical": 0.8488,
+            "shear": -0.058,
+            "cx": 715,
+            "cy": 788.2,
+            "box": {
+              "left": 286.7,
+              "top": 424.2,
+              "right": 737.3,
+              "bottom": 943.9
+            },
+            "camera": {
+              "elevation": 35.8,
+              "turn": 3.3
+            },
+            "area": 401650
+          },
+          "camera": {
+            "by": 5.8,
+            "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "height": {
+          "foot": [
+            542,
+            1163
+          ],
+          "top": [
+            542,
+            889
+          ],
+          "houseWidth": 684,
+          "pixels": 274,
+          "ratio": 0.40058479532163743,
+          "pass": true,
+          "required": [
+            0.39,
+            0.47
+          ]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [
+                400,
+                880,
+                530,
+                1000
+              ],
+              "pixels": 8998,
+              "median": 120.55959999999999
+            },
+            {
+              "box": [
+                850,
+                760,
+                1000,
+                860
+              ],
+              "pixels": 14706,
+              "median": 123.98799999999999
+            }
+          ],
+          "rightToLeft": 1.0284373869853582,
+          "pass": true,
+          "directionalRatioPass": false,
+          "referenceMedians": [
+            118.7276,
+            117.8576
+          ],
+          "deltas": [
+            1.8319999999999936,
+            6.13039999999998
+          ],
+          "required": "Each median within8 of attempt7; directional contrast is not a step1 test."
+        },
+        "observation": "r3 step 1: Failed. Far-left finial removed but single post is at x490 instead of562; jib end649,670 and hose end650,902. Corners moved down53/56/52px. Wall base angles and plan changed.",
+        "grassReview": "review/fuel_pump-a1-r3-attempt-13-grass.png",
+        "houseWidthFraction": 0.5454545454545454,
+        "step": "r3 step 1",
+        "accepted": false,
+        "crane": {
+          "postTop": [
+            490,
+            461
+          ],
+          "postBase": [
+            490,
+            1056
+          ],
+          "jibEnd": [
+            649,
+            670
+          ],
+          "hoseEnd": [
+            650,
+            902
+          ],
+          "horizontalReach": 159,
+          "onePost": true,
+          "beamOverTank": true,
+          "postAboveTank": false,
+          "readByEye": true,
+          "pass": false
+        },
+        "footprint": {
+          "baseline": {
+            "w": [
+              381,
+              1009
+            ],
+            "s": [
+              562,
+              1107
+            ],
+            "e": [
+              1057,
+              846
+            ]
+          },
+          "corners": {
+            "w": [
+              373,
+              1062
+            ],
+            "s": [
+              542,
+              1163
+            ],
+            "e": [
+              1057,
+              898
+            ]
+          },
+          "width": 684,
+          "widthDelta": 8,
+          "delta": {
+            "w": [
+              -8,
+              53
+            ],
+            "s": [
+              -20,
+              56
+            ],
+            "e": [
+              0,
+              52
+            ]
+          },
+          "pass": false
+        }
+      },
+      "sha256": "1365d73bdc8b85f657009ec3f541308783560bf8b9645b0447f9171892ee56be"
+    },
+    {
+      "view": "r3",
+      "attempt": 14,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-14.png",
+      "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last picture's corners w(373,1062), s(542,1163), e(1057,898) moved up to56px where at most10px is allowed, plan3.047 exceeded2.8, and camera5.8 degrees exceeded2.5. Preserve the first picture's house without translating or redrawing it. Your post at x490 must instead be the near riser at x562, with ONE jib reaching x742 (180px), and your hose end(650,902) must instead be within x700-790,y800-880. Remove the old far-left post and beam; change only these crane/hose pixels.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "w": [
+          388,
+          1048.7412019292194
+        ],
+        "s": [
+          568.5454054132043,
+          1143.254195826582
+        ],
+        "e": [
+          1013,
+          911.0072906438523
+        ],
+        "sure": [
+          true,
+          true
+        ],
+        "slopes": [
+          0.523486009965504,
+          -0.5225436029042448
+        ],
+        "lowerLeftSpan": 180.54540541320432,
+        "lowerRightSpan": 444.4545945867957,
+        "difference": 1.4617330669235082,
+        "plan": {
+          "measured": {
+            "w": [
+              388,
+              1048.7412019292194
+            ],
+            "s": [
+              568.5454054132043,
+              1143.254195826582
+            ],
+            "e": [
+              1013,
+              911.0072906438523
+            ]
+          },
+          "used": {
+            "w": [
+              386,
+              1053
+            ],
+            "s": [
+              561,
+              1149
+            ],
+            "e": [
+              1065,
+              893
+            ]
+          },
+          "readByEye": true,
+          "reason": "Outer quoin corners by eye: detector e sits inside end-pier step; s is a fitted intersection.",
+          "lowerLeftSpan": 175,
+          "lowerRightSpan": 504,
+          "longToShort": 2.88,
+          "required": [
+            2,
+            2.8
+          ]
+        },
+        "planPass": false,
+        "camera": {
+          "off": false,
+          "by": 1.5,
+          "elevation": 1.5,
+          "turn": 0,
+          "required": "at most2.5 degrees"
+        },
+        "check": {
+          "ok": true,
+          "problems": [],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [
+              true,
+              true
+            ],
+            "measured": [
+              0.523,
+              -0.523
+            ],
+            "slopes": [
+              0.523,
+              -0.523
+            ],
+            "base": {
+              "w": [
+                388,
+                1048.7
+              ],
+              "s": [
+                568.5,
+                1143.3
+              ],
+              "e": [
+                1013,
+                911
+              ]
+            },
+            "scale": 0.7209,
+            "vertical": 0.956,
+            "shear": -0.0005,
+            "cx": 700.5,
+            "cy": 936.4,
+            "box": {
+              "left": 286.7,
+              "top": 338.6,
+              "right": 771.2,
+              "bottom": 950
+            },
+            "camera": {
+              "elevation": 31.5,
+              "turn": 0
+            },
+            "area": 394693
+          }
+        },
+        "height": {
+          "foot": [
+            561,
+            1149
+          ],
+          "top": [
+            561,
+            881
+          ],
+          "houseWidth": 679,
+          "pixels": 268,
+          "ratio": 0.3946980854197349,
+          "pass": true,
+          "required": [
+            0.39,
+            0.47
+          ]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [
+                400,
+                880,
+                530,
+                1000
+              ],
+              "pixels": 14666,
+              "median": 125.2026
+            },
+            {
+              "box": [
+                850,
+                760,
+                1000,
+                860
+              ],
+              "pixels": 14298,
+              "median": 120.641
+            }
+          ],
+          "rightToLeft": 0.9635662518190516,
+          "pass": true,
+          "directionalRatioPass": false,
+          "referenceMedians": [
+            118.7276,
+            117.8576
+          ],
+          "deltas": [
+            6.4750000000000085,
+            2.7834000000000003
+          ],
+          "required": "Each median within8 of attempt7; directional contrast is not a step1 test."
+        },
+        "observation": "r3 step 1: Closest, failed. Single post remains at x480 rather than near riser x562; jib reach about230px exceeds210. Hose end713,873 passes. Footprint moved down44/42/47px. No S1 accepted, so no step2.",
+        "grassReview": "review/fuel_pump-a1-r3-attempt-14-grass.png",
+        "houseWidthFraction": 0.5414673046251993,
+        "step": "r3 step 1",
+        "accepted": false,
+        "crane": {
+          "postTop": [
+            480,
+            453
+          ],
+          "postBase": [
+            480,
+            855
+          ],
+          "jibEnd": [
+            710,
+            640
+          ],
+          "hoseEnd": [
+            713,
+            873
+          ],
+          "horizontalReach": 230,
+          "onePost": true,
+          "beamOverTank": true,
+          "postAboveTank": false,
+          "readByEye": true,
+          "pass": false
+        },
+        "footprint": {
+          "baseline": {
+            "w": [
+              381,
+              1009
+            ],
+            "s": [
+              562,
+              1107
+            ],
+            "e": [
+              1057,
+              846
+            ]
+          },
+          "corners": {
+            "w": [
+              386,
+              1053
+            ],
+            "s": [
+              561,
+              1149
+            ],
+            "e": [
+              1065,
+              893
+            ]
+          },
+          "width": 679,
+          "widthDelta": 3,
+          "delta": {
+            "w": [
+              5,
+              44
+            ],
+            "s": [
+              -1,
+              42
+            ],
+            "e": [
+              8,
+              47
+            ]
+          },
+          "pass": false
+        }
+      },
+      "sha256": "e8936c62b2c69f042d8b8ec08e61446f93a2b39155e0577265e9e81fc6227456"
     }
   ],
   "selection": {
@@ -3670,12 +4489,14 @@
     "r3": 9,
     "r1": 12,
     "r2": 2,
-    "policy": "r0 master and r1 attempt12 remain unchanged. R2 attempts4-6 rejected: closest attempt4 retained as raw only (plan/height/light pass; camera and jib fail). Canonical r2 stays attempt2. R3 pending crane-only edit from attempt7.",
-    "r2Closest": 4
+    "policy": "R0 master and accepted r1 attempt12 untouched. R2 closest attempt4 retained raw only: camera and jib fail; canonical r2 remains attempt2. R3 step1 closest attempt14 retained raw only: footprint, plan and crane fail; no accepted S1, no step2, canonical r3 remains attempt9.",
+    "r2Closest": 4,
+    "r3Closest": 14,
+    "r3Step1": null
   },
   "referencePreparation": "Turntable references were made inside the fuel folder using the repository's fitPicture and normalisePicture functions at t1. Source deliverables remain the native imagegen PNGs: no resizing, cropping, moving, recolouring or alpha thresholding was applied. R1 attempt12 fitted for r2 at refs/fuel_pump-a1-r1-fitted.png; no r3 reference created.",
   "qa": {
-    "readiness": "Partial: r2 rejected after three attempts; r3 crane/light pending. R0 and accepted r1 unchanged.",
+    "readiness": "Partial: r2 not accepted; r3 step1 failed and step2 not run. Canonical r0/r1/r2/r3 remain unchanged.",
     "images": {
       "r0": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r0.png",
@@ -3923,16 +4744,45 @@
     },
     "repaint": {
       "date": "2026-10-18",
-      "outcome": "in progress",
+      "outcome": "partial",
+      "order": [
+        "r2",
+        "r3 step1"
+      ],
+      "requestedSize": [
+        1024,
+        1024
+      ],
+      "returnedSize": [
+        1254,
+        1254
+      ],
+      "tool": "built-in image_gen edit",
       "r2": {
-        "accepted": false,
         "attempts": [
           4,
           5,
           6
         ],
+        "accepted": false,
         "closest": 4,
-        "reason": "Attempt4 passes plan 2.573, height .443 and light 119.35/68.84; fails camera lower-left slope .636 and jib reach about255 versus192. No canonical replacement."
+        "reason": "Attempt4 passes plan2.573, height.443, light119.35/68.84, but camera foot slope.636 and jib255px versus192px fail."
+      },
+      "r3Step1": {
+        "attempts": [
+          12,
+          13,
+          14
+        ],
+        "passed": false,
+        "closest": 14,
+        "reason": "Attempt14 passes height.395, camera1.5 degrees, unchanged light125.20/120.64 and hose713,873, but plan2.88, footprint displacement up to47px and crane placement/reach fail."
+      },
+      "r3Step2": {
+        "run": false,
+        "passed": false,
+        "widenedHouse": false,
+        "reason": "Not run: no S1 passed."
       }
     },
     "lightCheck": {
@@ -4006,10 +4856,9 @@
       "note": "Read upper edge of projecting quoin cap, not its bottom edge. R3 attempts9 and11 were refined after this calibration; both initial and final readings retained. Actual prompts preserve initial numbers as sent."
     },
     "remainingIssues": [
-      "R1 attempt12 passes plan2.393, height0.423, camera1.2 degrees and right/left wall luma0.556. Single far-corner crane and upper-left jib improved. Native highlight/alpha caveats below prevent claiming complete production compliance.",
-      "R3 attempt9 passes plan2.694 and light0.498, camera2.1 degrees is near, but refined height290/786=0.369 fails minimum0.40. Its edit enlarged the building, the crane remains toward the short side left end, and the hose is below door-top height. Retained as the closest relit draft, not accepted.",
-      "R2 unchanged at attempt2: r3 fails the explicit plan/height/light/camera reference prerequisite on height; no r2 generation call was made.",
-      "All six returned images are1254x1254 rather than requested1024x1024 and were retained unchanged. Native surface alpha is not uniformly255 and pixels above cursor-white luma remain; counts are recorded per attempt. No alpha or colour postprocessing."
+      "Attempt4 passes plan2.573, height.443, light119.35/68.84, but camera foot slope.636 and jib255px versus192px fail.",
+      "Attempt14 passes height.395, camera1.5 degrees, unchanged light125.20/120.64 and hose713,873, but plan2.88, footprint displacement up to47px and crane placement/reach fail.",
+      "No relight run; no S1 accepted. Art needs a crane edit that preserves attempt7 geometry."
     ],
     "masterUnchanged": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
     "grassReview": {
@@ -4039,6 +4888,22 @@
       "integrity": "Six new paintings byte-exact to built-in outputs. All15 earlier raw PNGs, master r0, previous r2, fitted r0 reference and all3 committed guides unchanged. Selected r1/r3 are byte-exact raw copies. Every prompt contains shared/view/age verbatim and the required correction.",
       "lightCheck": "Baseline tests pass: r0 medians112.4954/66.77; previous r3 medians118.7276/117.8576. The exact alpha/RGB filter from the brief is used, with median values computed from the requested sample boxes.",
       "art": "Partial. R1 attempt12 passes plan2.3931, height0.4227, camera1.2 degrees, and light0.5565 with improved far-corner single crane. R3 attempt9 relit front passes plan2.6939/light0.4978 and camera is near at2.1 degrees, but height0.3690 fails and crane/hose details remain. No r2 call, because r3 fails the explicit fallback height prerequisite. Native alpha/highlight caveats recorded per attempt; no production-complete claim."
+    },
+    "verification325": {
+      "scope": "pass: all committed paths inside assets/source/fuel-2026-10-11/",
+      "typecheck": "unavailable: tsc executable absent in worktree",
+      "lint": "unavailable: eslint executable absent in worktree",
+      "test": "unavailable: vitest executable absent in worktree",
+      "build": "unavailable: tsc executable absent in worktree",
+      "format": "unavailable: prettier executable absent in worktree",
+      "imageMeasurements": "measure-plan, record-attempt/checkFile and light-check run for all6 attempts using existing read-only dependency resolver"
+    },
+    "canonicalIntegrity325": {
+      "r0": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
+      "r1": "18767adf3e76cd96f1ddd872e84fbe6436e3f79dfe4d5accbe482a27e62a18f2",
+      "r2": "fb4c343628773ba6a9543ee922b99e0ed2c0dc0805dfc2eb0a8f9f3bf4afe52b",
+      "r3": "8ef80ceba09070b1d0db82c2d14484e7b3bba1e56991bb6c91649c5981621eb8",
+      "r1RawAttempt12Identical": true
     }
   },
   "repaintPreparation": {
