@@ -5,6 +5,7 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
+import { bridgeTilesTouched } from './engine/bridgeRefresh';
 import { applyTileRepairs, repairBuiltRoads, repairBuiltTiles } from './engine/loadRepair';
 import {
   BrokenNumberWarning,
@@ -1038,7 +1039,12 @@ export class Game implements UiHost {
         this.builder.decorAt(x, y)
       );
     this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
-    this.builder.onRoadChanged = (x, y) => this.world.roadChanged(x, y);
+    this.builder.onRoadChanged = (x, y) => {
+      this.world.roadChanged(x, y);
+      // a road on a platform changes its span, and its neighbours' (#496); refreshed once a frame
+      if (bridgeTilesTouched((nx, ny) => !!this.builder.bridgeAt(nx, ny), x, y))
+        this.bridgesDirty = true;
+    };
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
@@ -1441,8 +1447,11 @@ export class Game implements UiHost {
     }
   }
   private restoringWorld = false;
+  /** A road changed on or beside a bridge platform: the spans are redrawn once, next frame. */
+  private bridgesDirty = false;
   private refreshBridges() {
     if (this.restoringWorld) return;
+    this.bridgesDirty = false;
     const mode = this.world.bridgeMode,
       textured: TexturedBridge[] = [];
     for (const b of this.builder.buildings.values())
@@ -2236,6 +2245,7 @@ export class Game implements UiHost {
     this.camera.update(dt);
     this.updateViewBlend(dt);
     if (this.railsDirty) this.refreshRails();
+    if (this.bridgesDirty) this.refreshBridges();
     this.world.animate(dt);
     this.world.applyCamera(this.camera);
     this.layoutViews();
