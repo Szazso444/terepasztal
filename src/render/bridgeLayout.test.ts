@@ -1388,3 +1388,255 @@ it('joins are symmetric', () => {
   expect(joins.get(5 * W + 4)![S]).toBe(true);
   expect(joins.get(5 * W + 4)![N]).toBe(false);
 });
+
+describe('road decks beside rail decks (#503)', () => {
+  const road = (x: number, y: number, axis: 0 | 1 = 1, z = 20, more: Partial<Site> = {}) =>
+    span(x, y, axis, z, { carries: 'road', ...more });
+  /** The long sides of a span, far then near: N and S along x, W and E along y. */
+  const longSides = (axis: 0 | 1) => (axis === 1 ? ['N', 'S'] : ['W', 'E']);
+  /** The `i`th of a row of tiles side by side across `axis`, from (5, 5). */
+  const across = (axis: 0 | 1, i: number) => (axis === 1 ? [5, 5 + i] : [5 + i, 5]);
+  /** Tile offset of a support line at across offset `w` of tile `s`, in map units. */
+  const acrossAt = (axis: 0 | 1, s: BridgeSite, w: number) => (axis === 1 ? s.y : s.x) + w;
+  const KINDS = [
+    ['stone', false],
+    ['stone', true],
+    ['wood', false],
+    ['wood', true],
+  ] as const;
+
+  it('a road deck beside a rail deck makes one deck: outer parapets only, shared supports', () => {
+    for (const axis of [0, 1] as const)
+      for (const [material, water] of KINDS)
+        for (const roadFirst of [false, true]) {
+          const more = { material, water },
+            [ax, ay] = across(axis, 0),
+            [bx, by] = across(axis, 1),
+            first = roadFirst ? road(ax, ay, axis, 20, more) : span(ax, ay, axis, 20, more),
+            second = roadFirst ? span(bx, by, axis, 20, more) : road(bx, by, axis, 20, more),
+            [a, b] = plans([first, second]),
+            [far, near] = longSides(axis);
+          expect(parapetSides(a.site, a.plan)).toEqual([far]);
+          expect(parapetSides(b.site, b.plan)).toEqual([near]);
+          // Each half keeps its own tile's deck: the rail on one, the road on the other.
+          for (const t of [a, b])
+            expect(onMap(t.site, t.plan.deck)).toEqual({
+              x0: t.site.x - 0.5,
+              x1: t.site.x + 0.5,
+              y0: t.site.y - 0.5,
+              y1: t.site.y + 0.5,
+            });
+          if (material === 'wood' || water) {
+            // Three support lines across the two tiles, one of them under the seam.
+            const at = [a, b].flatMap((t) =>
+              (material === 'wood' ? t.plan.trestles : t.plan.arches).map((w) =>
+                acrossAt(axis, t.site, w),
+              ),
+            );
+            expect(at.length).toBe(3);
+            expect(new Set(at.map((v) => v.toFixed(3))).size).toBe(3);
+            expect(at).toContainEqual(5.5);
+          } else {
+            // Stone piers over land run across both tiles without a break.
+            expect(a.plan.piers.length).toBe(2);
+            expect(b.plan.piers.length).toBe(2);
+            for (let i = 0; i < 2; i++) {
+              const p = onMap(a.site, a.plan.piers[i]),
+                q = onMap(b.site, b.plan.piers[i]);
+              expect(axis === 1 ? p.y1 : p.x1).toBeCloseTo(axis === 1 ? q.y0 : q.x0, 9);
+            }
+          }
+        }
+  });
+
+  it('a lone road deck walls both long sides', () => {
+    for (const axis of [0, 1] as const)
+      for (const [material, water] of KINDS) {
+        const [t] = plans([road(5, 5, axis, 20, { material, water })]);
+        expect(t.joins).toEqual([false, false, false, false]);
+        expect(parapetSides(t.site, t.plan).sort()).toEqual([...longSides(axis)].sort());
+      }
+  });
+
+  it('road decks merge with each other as rail decks do', () => {
+    const layouts: Site[][] = [
+      [span(5, 5), span(5, 6)],
+      [span(5, 5), span(5, 6), span(5, 7)],
+      [span(4, 5), span(5, 5), span(6, 5)],
+      [...[4, 5, 6, 7].map((x) => span(x, 5)), ...[3, 4, 5, 6, 7, 8].map((x) => span(x, 6))],
+      [span(5, 5, 0), span(6, 5, 0, 20, { material: 'wood' }), span(7, 5, 0, 20.4)],
+    ];
+    for (const rail of layouts) {
+      const roads = rail.map((s) => ({ ...s, carries: 'road' as const }));
+      expect(plans(roads).map((t) => [t.joins, t.plan])).toEqual(
+        plans(rail).map((t) => [t.joins, t.plan]),
+      );
+    }
+  });
+
+  it('does not merge a road deck with another material, another axis, another height or a pad', () => {
+    const cases: [Site, Site][] = [
+      [road(5, 5), span(5, 6, 1, 20, { material: 'wood' })],
+      [road(5, 5, 1, 20, { material: 'wood' }), span(5, 6)],
+      [road(5, 5), road(5, 6, 1, 20, { material: 'wood' })],
+      [road(5, 5, 1), span(5, 6, 0)],
+      [road(5, 5, 0), road(5, 6, 1)],
+      [road(5, 5), span(5, 6, 1, 21)],
+      [road(5, 5), pad(5, 6)],
+      [road(4, 5), pad(5, 5, 20, { open: [false, false, false, true] })],
+    ];
+    for (const pair of cases) {
+      const ts = plans(pair);
+      for (const t of ts) expect(t.joins).toEqual([false, false, false, false]);
+      for (const t of ts.filter((t) => t.site.axis !== null))
+        expect(parapetSides(t.site, t.plan).length).toBe(2);
+    }
+  });
+
+  /** The merge rule before decks carried roads, which rail-only layouts must keep. */
+  function railMerges(a: BridgeSite, b: BridgeSite, d: number) {
+    if (a.material !== b.material) return false;
+    if (a.axis !== null && b.axis !== null && a.axis !== b.axis) return false;
+    const edge = (s: BridgeSite, e: number) =>
+      [-0.5, 0, 0.5].map((v) =>
+        e === N || e === S
+          ? deckAtOffset(s, v, e === N ? -0.5 : 0.5)
+          : deckAtOffset(s, e === 3 ? -0.5 : 0.5, v),
+      );
+    const ha = edge(a, d),
+      hb = edge(b, (d + 2) % 4);
+    return ha.every((h, i) => Math.abs(h - hb[i]) <= 0.5);
+  }
+  const DX = [0, 1, 0, -1],
+    DY = [-1, 0, 1, 0];
+  const neighbours = (sites: readonly Site[], s: Site) =>
+    [0, 1, 2, 3].map((d) => sites.find((n) => n.x === s.x + DX[d] && n.y === s.y + DY[d]));
+  /** Bridge tiles of every kind on a 5 x 5 block, often alike so that they merge. */
+  function layout(rng: Rng, carries: () => Site['carries']): Site[] {
+    const alike = rng.chance(0.5),
+      material = rng.pick(['stone', 'wood'] as const),
+      axis = rng.pick([0, 1] as const),
+      sites: Site[] = [];
+    for (let y = 4; y < 9; y++)
+      for (let x = 4; x < 9; x++) {
+        if (rng.chance(0.4)) continue;
+        const z = rng.pick([20, 20, 20, 20.3, 21, 30]),
+          more: Partial<Site> = {
+            material: alike ? material : rng.pick(['stone', 'wood'] as const),
+            water: rng.chance(0.5),
+            open: [0, 1, 2, 3].map(() => rng.chance(0.3)),
+            carries: carries(),
+          };
+        if (rng.chance(0.2)) sites.push(pad(x, y, z, more));
+        else {
+          const grade = rng.chance(0.7) ? 0 : rng.range(-4, 4),
+            a = alike && rng.chance(0.8) ? axis : rng.pick([0, 1] as const);
+          sites.push(span(x, y, a, z, { ...more, deck: DECK_SAMPLES.map((l) => z + grade * l) }));
+        }
+      }
+    return sites;
+  }
+
+  it('lays out rail-only bridges as before, whether or not they say they carry rail', () => {
+    forAll(
+      (rng) => layout(rng, () => (rng.chance(0.5) ? 'rail' : undefined)),
+      (sites) => {
+        const joins = bridgeJoins(sites, W),
+          bare = sites.map((s) => ({ ...s, carries: undefined })),
+          bareJoins = bridgeJoins(bare, W);
+        sites.forEach((s, i) => {
+          const j = joins.get(s.y * W + s.x)!;
+          expect(j).toEqual(neighbours(sites, s).map((n, d) => !!n && railMerges(s, n, d)));
+          expect(bridgePlan(s, j, !!s.water)).toEqual(
+            bridgePlan(bare[i], bareJoins.get(s.y * W + s.x)!, !!s.water),
+          );
+        });
+      },
+      { shrink: (s) => shrinkArray(s) },
+    );
+  });
+
+  it('merges whatever each deck carries, symmetrically, and never across materials or axes', () => {
+    forAll(
+      (rng) => layout(rng, () => rng.pick(['rail', 'road', undefined] as const)),
+      (sites) => {
+        const joins = bridgeJoins(sites, W),
+          rail = sites.map((s) => ({ ...s, carries: 'rail' as const })),
+          railJoins = bridgeJoins(rail, W);
+        sites.forEach((s, i) => {
+          const j = joins.get(s.y * W + s.x)!;
+          neighbours(sites, s).forEach((n, d) => {
+            if (!n) return expect(j[d]).toBe(false);
+            const roadPad =
+              (s.carries === 'road' || n.carries === 'road') &&
+              (s.axis === null || n.axis === null);
+            expect(joins.get(n.y * W + n.x)![(d + 2) % 4]).toBe(j[d]);
+            if (n.material !== s.material) expect(j[d]).toBe(false);
+            if (s.axis !== null && n.axis !== null && s.axis !== n.axis) expect(j[d]).toBe(false);
+            // What two spans carry never decides; a road deck only refuses a pad.
+            expect(j[d]).toBe(roadPad ? false : railJoins.get(s.y * W + s.x)![d]);
+          });
+          // The plan reads only the joins: a road deck is laid out as a rail deck joined alike.
+          expect(bridgePlan(s, j, !!s.water)).toEqual(bridgePlan(rail[i], j, !!s.water));
+        });
+      },
+      { shrink: (s) => shrinkArray(s) },
+    );
+  });
+
+  type Row = {
+    axis: 0 | 1;
+    material: 'stone' | 'wood';
+    water: boolean;
+    z: number;
+    carries: ('rail' | 'road')[];
+    along: boolean;
+  };
+  function* shrinkRow(r: Row): Iterable<Row> {
+    for (const carries of shrinkArray(r.carries)) if (carries.length >= 2) yield { ...r, carries };
+  }
+
+  it('makes one bridge of any row of decks alike, walled on its two outer long edges only', () => {
+    forAll(
+      (rng): Row => ({
+        axis: rng.pick([0, 1] as const),
+        material: rng.pick(['stone', 'wood'] as const),
+        water: rng.chance(0.5),
+        z: rng.pick([0, 20, 40]),
+        carries: Array.from({ length: rng.int(2, 6) }, () => rng.pick(['rail', 'road'] as const)),
+        along: rng.chance(0.3),
+      }),
+      ({ axis, material, water, z, carries, along }) => {
+        // Side by side across the axis, or end to end along it.
+        const sites = carries.map((c, i) => {
+            const [x, y] = along ? (axis === 1 ? [5 + i, 5] : [5, 5 + i]) : across(axis, i);
+            return span(x, y, axis, z, { material, water, carries: c });
+          }),
+          ts = plans(sites),
+          [far, near] = longSides(axis),
+          n = sites.length;
+        // Every seam of the row is merged from both sides, so the row is one bridge.
+        for (const t of ts)
+          neighbours(sites, t.site).forEach((m, d) => expect(t.joins[d]).toBe(!!m));
+        const walls = ts.map((t) => parapetSides(t.site, t.plan));
+        if (along) for (const w of walls) expect(w).toEqual([far, near]);
+        else {
+          expect(walls.flat()).toEqual([far, near]);
+          expect(walls[0]).toEqual([far]);
+          expect(walls[n - 1]).toEqual([near]);
+        }
+        if (!along && (material === 'wood' || water)) {
+          // A support line under each seam and the two outer ones, never two in one place.
+          const at = ts.flatMap((t) =>
+            (material === 'wood' ? t.plan.trestles : t.plan.arches).map((w) =>
+              acrossAt(axis, t.site, w),
+            ),
+          );
+          expect(at.length).toBe(n + 1);
+          expect(new Set(at.map((v) => v.toFixed(3))).size).toBe(n + 1);
+        }
+      },
+      { shrink: shrinkRow },
+    );
+  });
+});

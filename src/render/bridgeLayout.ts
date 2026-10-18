@@ -4,14 +4,21 @@
  *
  * Every deck covers its whole tile, so decks of neighbouring bridge tiles always meet at the tile
  * seam. Two bridge tiles that share an edge merge into one bridge when they are of one material,
- * their decks meet at the same height all along the edge and, when both carry straight rail, the
- * rail runs the same way: parallel tracks on adjacent bridge tiles make one wide bridge. A merged
- * edge has no parapet, and the supports under it are shared: one pier wall, post line or arched
- * wall stands under the seam instead of one under each tile.
+ * their decks meet at the same height all along the edge and, when both are spans (straight rail
+ * or a road), they run the same way: parallel lines on adjacent bridge tiles make one wide
+ * bridge. A merged edge has no parapet, and the supports under it are shared: one pier wall, post
+ * line or arched wall stands under the seam instead of one under each tile.
+ *
+ * A deck carries rail or a road, and spans merge whatever each carries: a road deck beside a rail
+ * deck of one material, on the same axis and at the same height, makes one wide bridge with the
+ * rail on one half and the road on the other, its parapets on the two outer long edges only. A
+ * pad under curved or switched rail has no axis of its own, so it merges with rail only.
  */
 import { railLevel, type RailBed } from '../world/railProfile';
 
 export type BridgeMaterial = 'wood' | 'stone';
+/** What a deck carries: `road` is a platform with a road and no rail on it. */
+export type BridgeCarries = 'rail' | 'road';
 
 /** Along offsets (tile units from the tile centre) at which a deck's height is sampled. */
 export const DECK_SAMPLES = [-0.5, -0.25, 0, 0.25, 0.5] as const;
@@ -22,6 +29,8 @@ export interface BridgeSite {
   x: number;
   y: number;
   material: BridgeMaterial;
+  /** Rail when absent, as every deck was before roads went on bridges. */
+  carries?: BridgeCarries;
   /** 1 along x, 0 along y, null a square pad under a curve, switch or crossing. */
   axis: 0 | 1 | null;
   /**
@@ -76,6 +85,8 @@ function edgeHeights(s: BridgeSite, d: number): number[] {
 /** Whether tile `a` merges with tile `b` across `a`'s edge `d`. */
 export function merges(a: BridgeSite, b: BridgeSite, d: number): boolean {
   if (a.material !== b.material) return false;
+  const road = a.carries === 'road' || b.carries === 'road';
+  if (road && (a.axis === null || b.axis === null)) return false;
   if (a.axis !== null && b.axis !== null && a.axis !== b.axis) return false;
   const ha = edgeHeights(a, d),
     hb = edgeHeights(b, (d + 2) % 4);

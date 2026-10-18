@@ -1488,6 +1488,7 @@ export class Game implements UiHost {
             x: b.x,
             y: b.y,
             material: s.material,
+            carries: !piece && this.builder.roads.has(b.x, b.y) ? 'road' : 'rail',
             axis: span ? (s.axis as 0 | 1) : null,
             open: DIRS.map((d) => !!piece?.links.some((l) => l.includes(d))),
             water,

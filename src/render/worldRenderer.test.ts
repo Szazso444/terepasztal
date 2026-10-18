@@ -21,6 +21,7 @@ import { picture } from '../testing/townPaving';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
+import { lineSpans, type RailBed } from '../world/railProfile';
 import {
   TRACK_ITEMS,
   TRACK_KINDS,
@@ -1857,6 +1858,7 @@ describe('textured bridges over the painted water', () => {
       x,
       y: 6,
       material: 'stone' as const,
+      carries: 'rail' as const,
       axis: 1 as const,
       open: [false, true, false, true],
       water: true,
@@ -1905,6 +1907,37 @@ describe('textured bridges over the painted water', () => {
     const second = parts();
     for (const x of [10, 11]) expect(second.get(at(x)), `x ${x}`).toBe(first.get(at(x)));
     expect(second.get(at(25))).not.toBe(first.get(at(25)));
+  });
+
+  it('draw a road bridge beside a rail bridge as one, walled on its outer long edges (#503)', () => {
+    const { world, tiles } = bridged(),
+      // The rail over the first river runs level along y = 6, on the bridge from x = 10 to 11.
+      levels = Array.from({ length: 32 }, () => 0),
+      { spans } = lineSpans(
+        levels,
+        levels.map((_, x) => x === 10 || x === 11),
+      ),
+      beds = new Map<number, RailBed>(
+        [10, 11].map((x) => [at(x), { axis: 'x', spans, bridge: true, flat: true }]),
+      );
+    world.setRailBeds(beds);
+    const parapets = (c: Container) => c.children.filter((m) => m.label.startsWith('parapet'));
+    const drawn = () =>
+      world['texturedParts'] as Map<number, { under: Container; near: Container }>;
+    world.setTexturedBridges(tiles);
+    for (const x of [10, 11]) expect(parapets(drawn().get(at(x))!.near).length).toBeGreaterThan(0);
+    // A road bridge on the +y side of the rail bridge, over the same river.
+    const roads = [10, 11].map((x) => ({ ...tiles[0], x, y: 7, carries: 'road' as const }));
+    world.setTexturedBridges([...tiles, ...roads]);
+    for (const x of [10, 11]) {
+      const rail = drawn().get(at(x))!,
+        road = drawn().get(7 * 32 + x)!;
+      // The far parapet on the rail's side, the near one on the road's, none on the seam.
+      expect(parapets(rail.under).length, `rail ${x}`).toBeGreaterThan(0);
+      expect(parapets(rail.near).length, `rail ${x}`).toBe(0);
+      expect(parapets(road.under).length, `road ${x}`).toBe(0);
+      expect(parapets(road.near).length, `road ${x}`).toBeGreaterThan(0);
+    }
   });
 
   type Edit = { kind: 'pave' | 'water' | 'fail'; x: number; y: number };
