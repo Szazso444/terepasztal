@@ -51,7 +51,10 @@ function isStationDef(def: PlaceDef): def is StationDef {
   return 'accepts' in def;
 }
 
-/** A `span` a def may hold: whole tiles, each 1 or 2, two tiles at most (1 x 1, 2 x 1 or 1 x 2). */
+/** The most tiles a `span` has along one side. */
+export const MAX_SPAN = 3;
+
+/** A `span` a def may hold: whole tiles, 1 to `MAX_SPAN` along each side. */
 function validSpan(span: unknown): span is { w: number; h: number } {
   if (!span || typeof span !== 'object') return false;
   const { w, h } = span as Record<string, unknown>;
@@ -60,18 +63,25 @@ function validSpan(span: unknown): span is { w: number; h: number } {
     Number.isInteger(h) &&
     (w as number) >= 1 &&
     (h as number) >= 1 &&
-    (w as number) * (h as number) <= 2
+    (w as number) <= MAX_SPAN &&
+    (h as number) <= MAX_SPAN
   );
 }
 
+/** The `span` a station or a works def declares, valid or not; a decor has none. */
+function declaredSpan(def: PlaceDef): unknown {
+  return 'span' in def ? def.span : undefined;
+}
+
 /**
- * Width (along x) and depth (along y) of a place at rotation 0: a station's own `span` when it
- * has a valid one, else a long station 2 × 1, any other station its `size` square, and a works or
- * a decor one tile. A turn of an odd rotation swaps them (`stationSpan`).
+ * Width (along x) and depth (along y) of a place at rotation 0: its own `span` when it has a valid
+ * one (a station or a works), else for a station a long one 2 × 1 or its `size` square, and for a
+ * works or a decor one tile. A turn of an odd rotation swaps them (`stationSpan`, `buildingSpan`).
  */
 export function placeSpan(def: PlaceDef): { w: number; h: number } {
+  const span = declaredSpan(def);
+  if (validSpan(span)) return { w: span.w, h: span.h };
   if (!isStationDef(def)) return { w: 1, h: 1 };
-  if (validSpan(def.span)) return { w: def.span.w, h: def.span.h };
   if (def.long) return { w: 2, h: 1 };
   const n = def.size ?? 1;
   return { w: n, h: n };
@@ -151,11 +161,11 @@ export function hasDoors(def: PlaceDef): boolean {
   return def.crew > 0 || ('residents' in def && !!def.residents);
 }
 
-/** What is wrong with a station def's `span`, for the content check; nothing when it has none. */
+/** What is wrong with a def's `span`, for the content check; nothing when it has none. */
 export function spanProblems(def: PlaceDef): string[] {
-  const span: unknown = isStationDef(def) ? def.span : undefined;
+  const span = declaredSpan(def);
   if (span === undefined || validSpan(span)) return [];
-  return ['span must be { w, h } of whole tiles, 1 to 2 each, two tiles at most'];
+  return [`span must be { w, h } of whole tiles, 1 to ${MAX_SPAN} each`];
 }
 
 /**

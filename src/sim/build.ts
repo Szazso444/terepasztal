@@ -35,6 +35,8 @@ import {
   buildingLevel,
   buildingUpgradeCost,
   worksMaxLevel,
+  buildingFootprint,
+  BuildingMap,
   BUILDING_DEFS,
   type Building,
 } from './buildings';
@@ -159,8 +161,11 @@ export class Builder {
   readonly stations: Station[] = [];
   /** signals, towers, coaling stages, power poles keyed by tile */
   readonly decor = new Map<number, Decor>();
-  /** processing buildings keyed by tile */
-  readonly buildings = new Map<number, Building>();
+  /**
+   * processing buildings keyed by their footprint's corner tile, also found from any tile they
+   * cover (`buildingAt`)
+   */
+  readonly buildings: BuildingMap;
   /** editor mode: no costs, no region or tier locks */
   free = false;
   onTrackChanged: ((x: number, y: number) => void) | null = null;
@@ -200,7 +205,9 @@ export class Builder {
     readonly stock: Stockpile,
     /** the roads on the map (src/sim/roads.ts); a line's probe shares its builder's */
     readonly roads: Roads = new Roads(track),
-  ) {}
+  ) {
+    this.buildings = new BuildingMap(map.w, map.h);
+  }
 
   // ------------------------------------------------------------------ helpers
   private key(x: number, y: number) {
@@ -237,8 +244,9 @@ export class Builder {
         ? (bridgeCapacity(this.bridgeAt(x, y)!) ?? undefined)
         : undefined;
   }
+  /** The works that covers (x, y): any tile of its footprint finds it. */
   buildingAt(x: number, y: number): Building | undefined {
-    return this.buildings.get(this.key(x, y));
+    return this.buildings.at(x, y);
   }
   terrainMul(x: number, y: number): number {
     const t = terrainAt(this.map, x, y);
@@ -1069,39 +1077,53 @@ export class Builder {
 
   // ------------------------------------------------------------------ buildings
   /**
-   * Whether a works may stand on a tile turned to `_rot`. A works covers its one tile whatever
-   * its rotation, so the rotation changes nothing here; it is taken as `checkStation` takes it.
+   * Whether a works may stand with its corner at (x, y), turned to `rot`: every tile of its
+   * footprint (`buildingFootprint`) must be on the map, unlocked, buildable, level and free of
+   * track, stations, decor, works and roads, as `checkStation` asks of a station. The site rules
+   * are asked of the footprint as a whole: water must lie beside it (on a side of any of its
+   * tiles, `waterBeside`), and the ground it needs (`terrain`) and the deposit (`deposit`) must be
+   * under any one of its tiles, so a colliery on a 3 x 2 needs a hill, not six.
    */
-  checkBuilding(x: number, y: number, defId: string, _rot = 0): PlacementCheck {
-    const c = this.buildingRules(x, y, defId);
+  checkBuilding(x: number, y: number, defId: string, rot = 0): PlacementCheck {
+    const c = this.buildingRules(x, y, defId, rot);
     return c.ok ? this.affordable(c.cost) : c;
   }
   /** `checkBuilding`'s rules and price, without asking whether the stock can pay. */
-  private buildingRules(x: number, y: number, defId: string): PlacementCheck {
+  private buildingRules(x: number, y: number, defId: string, rot = 0): PlacementCheck {
     const def = buildingDef(defId);
-    if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
-    if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
+    const tiles = buildingFootprint(defId, x, y, wrapRotation(rot));
+    for (const t of tiles) {
+      if (!inBounds(this.map, t.x, t.y)) return { ok: false, cost: {}, reason: STR.build.offMap };
+      if (!this.unlocked(t.x, t.y)) return { ok: false, cost: {}, reason: STR.build.locked };
+    }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
-    const t = terrainAt(this.map, x, y);
-    // Bridge platforms stand on water or carry a rail level across a dip in the land.
-    const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
-    if (bad) return { ok: false, cost: {}, reason: bad };
-    if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
-      return { ok: false, cost: {}, reason: STR.build.notLevel };
-    if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
-      return { ok: false, cost: {}, reason: STR.build.occupied };
-    if (this.roads.has(x, y)) return { ok: false, cost: {}, reason: STR.build.roadInWay };
-    if (
-      def.needsWater &&
-      !DIRS.some((d) => terrainAt(this.map, x + DDX[d], y + DDY[d]) === Terrain.Water)
-    )
+    for (const { x: tx, y: ty } of tiles) {
+      const t = terrainAt(this.map, tx, ty);
+      // Bridge platforms stand on water or carry a rail level across a dip in the land.
+      const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
+      if (bad) return { ok: false, cost: {}, reason: bad };
+      if (!def.bridge && this.groundCheck && !this.groundCheck(tx, ty, 'level'))
+        return { ok: false, cost: {}, reason: STR.build.notLevel };
+      if (
+        this.track.has(tx, ty) ||
+        this.stationAt(tx, ty) ||
+        this.decorAt(tx, ty) ||
+        this.buildingAt(tx, ty)
+      )
+        return { ok: false, cost: {}, reason: STR.build.occupied };
+      if (this.roads.has(tx, ty)) return { ok: false, cost: {}, reason: STR.build.roadInWay };
+    }
+    if (def.needsWater && !this.waterBeside(tiles))
       return { ok: false, cost: {}, reason: STR.build.needWaterside };
-    if (def.terrain && TERRAIN_NAMES[t].toLowerCase() !== def.terrain)
+    if (
+      def.terrain &&
+      !tiles.some((t) => TERRAIN_NAMES[terrainAt(this.map, t.x, t.y)].toLowerCase() === def.terrain)
+    )
       return { ok: false, cost: {}, reason: STR.build.needTerrain(def.terrain) };
-    if (def.deposit && !this.hasDeposit(x, y, def.deposit))
+    if (def.deposit && !tiles.some((t) => this.hasDeposit(t.x, t.y, def.deposit!)))
       return { ok: false, cost: {}, reason: STR.build.needDeposit(def.deposit) };
     return { ok: true, cost: this.priced(def.cost, def.bridge ? 1 : this.kindMul(defId)) };
   }
@@ -1167,12 +1189,13 @@ export class Builder {
       ? {}
       : scaleCost(buildingDef(b.id).cost, rules.buildCostMul * rules.refundRate);
   }
+  /** Take down the works that covers (x, y), whichever tile of its footprint that is: all of it goes. */
   removeBuilding(x: number, y: number): boolean {
     const b = this.buildingAt(x, y);
     // a platform goes only with nothing on it: its rail or its road comes off first
     if (!b || (buildingDef(b.id).bridge && (this.track.has(x, y) || this.roads.has(x, y))))
       return false;
-    this.buildings.delete(this.key(x, y));
+    this.buildings.delete(this.key(b.x, b.y));
     // removed during its upgrade, it is gone for good: no level rises later
     delete b.work;
     this.refund(buildingDef(b.id).cost);
