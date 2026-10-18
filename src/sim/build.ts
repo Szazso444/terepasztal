@@ -92,9 +92,10 @@ export interface PlacementCheck {
 /**
  * Why nothing can be built on terrain `t`, naming the ground, or null when it takes buildings.
  * The one list of where nothing stands: stations, works, decor off the track, roads and a depot's
- * gates all ask it, and a bridge platform asks it everywhere but on water, which it spans. Track
- * has rules of its own (`checkTrackTile`, and `trackRules` for rock and mountain), and so do the
- * walkers (`walkable` in people.ts) and the town paving (`cityTiles` in city.ts).
+ * gates all ask it, and a bridge platform asks it everywhere but on water, which it spans, as a
+ * road on a platform does. Track has rules of its own (`checkTrackTile`, and `trackRules` for
+ * rock and mountain), and so do the walkers (`walkable` in people.ts) and the town paving
+ * (`cityTiles` in city.ts).
  */
 export function unbuildable(t: Terrain): string | null {
   switch (t) {
@@ -462,6 +463,8 @@ export class Builder {
     // a depot is a through-station: plain pieces may run through the shed
     if ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
       return STR.build.occupied;
+    // a platform carries rail or a road, never both: no level crossing on a bridge (#493)
+    if (this.bridgeAt(x, y) && this.roads.has(x, y)) return STR.build.roadInWay;
     const dec = this.decorAt(x, y);
     if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
@@ -1155,7 +1158,9 @@ export class Builder {
   }
   removeBuilding(x: number, y: number): boolean {
     const b = this.buildingAt(x, y);
-    if (!b || (buildingDef(b.id).bridge && this.track.has(x, y))) return false;
+    // a platform goes only with nothing on it: its rail or its road comes off first
+    if (!b || (buildingDef(b.id).bridge && (this.track.has(x, y) || this.roads.has(x, y))))
+      return false;
     this.buildings.delete(this.key(x, y));
     // removed during its upgrade, it is gone for good: no level rises later
     delete b.work;
@@ -1168,12 +1173,14 @@ export class Builder {
   // ------------------------------------------------------------------ roads
   /**
    * Whether a road may be laid on (x, y), and its price: on owned buildable land (not water, rock
-   * or a mountain) with no road on it yet, off every station's footprint, works and bridge
-   * platform and off the tile of decor that stands off the rails (a house, a tower), as a road
-   * meets a building only at a street door, from the tile outside it (#408); a signal or a pole
-   * may share its tile. On track it is a level crossing, which only a plain straight of regular or
-   * narrow track takes, the road across it (`Roads.trackRefusal`). Each tile costs `roadCost`,
-   * scaled by the build cost tuning, whatever the ground.
+   * or a mountain) with no road on it yet, off every station's footprint and works and off the
+   * tile of decor that stands off the rails (a house, a tower), as a road meets a building only at
+   * a street door, from the tile outside it (#408); a signal or a pole may share its tile. On track
+   * it is a level crossing, which only a plain straight of regular or narrow track takes, the road
+   * across it (`Roads.trackRefusal`). A bridge platform carries a road where it carries no rail,
+   * on water as on land: one tile holds rail or road, never both, so a platform with rail on it
+   * refuses the road (#493). Each tile costs `roadCost`, scaled by the build cost tuning, whatever
+   * the ground.
    */
   checkRoad(x: number, y: number): PlacementCheck {
     const reason = this.roadRules(x, y);
@@ -1185,10 +1192,17 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (roads.has(x, y)) return STR.build.roadHere;
+    const deck = this.bridgeAt(x, y);
     const bad = unbuildable(terrainAt(this.map, x, y));
-    if (bad) return bad;
+    // a platform stands on water or on land, never on rock or a mountain (`buildingRules`)
+    if (bad && !deck) return bad;
+    if (deck && this.track.has(x, y)) return STR.build.trackInWay;
     const dec = this.decorAt(x, y);
-    if (this.stationAt(x, y) || this.buildingAt(x, y) || (dec && !decorDef(dec.id).onTrack))
+    if (
+      this.stationAt(x, y) ||
+      (this.buildingAt(x, y) && !deck) ||
+      (dec && !decorDef(dec.id).onTrack)
+    )
       return STR.build.roadOnBuilding;
     return roads.trackRefusal(x, y);
   }
@@ -1332,8 +1346,9 @@ export class Builder {
    * (`network`), the fewest tiles that keep every rule below, at most SPUR_REACH of them. Every
    * tile of it is one a road could be laid on (`checkRoad`'s rules, judged tile by tile as if the
    * tiles before it stood, the stock aside), on land the player owns even where the builder lifts
-   * the lock, and off every station's platform and depot's gates (`spurSite`), which a road to a
-   * door never touches (#406 D1). With no road that near, or none a spur keeping to those rules
+   * the lock, off every station's platform and depot's gates (`spurSite`), which a road to a
+   * door never touches (#406 D1), and off every bridge platform, which carries a road only where
+   * the player lays one (#493). With no road that near, or none a spur keeping to those rules
    * reaches, nothing is laid: a lone road tile at a door would be one the player can neither see
    * nor remove until roads are drawn (#329) and can be removed (#409). Nothing either when the
    * reach tile holds a road already or can take none. Each tile laid is told (`onRoadChanged`);
@@ -1345,6 +1360,7 @@ export class Builder {
   ): { x: number; y: number }[] {
     const open = (x: number, y: number, roads = this.roads) =>
       !this.roadRules(x, y, roads) &&
+      !this.bridgeAt(x, y) &&
       this.regions.isTileUnlocked(x, y) &&
       !site.platforms.has(this.key(x, y));
     const { reach } = door;
