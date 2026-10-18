@@ -2342,5 +2342,440 @@
     "observation": "No front apparatus. Plan passes, height/camera/amber fail.",
     "closestRaw": false,
     "disposition": "rejected"
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 10,
+    "file": "raw/fuel_stop-a0-r1-attempt-10.png",
+    "returned": [1254, 1254],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-625fb898-a592-48ea-a0ca-cd7bee51aeb2.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 278,
+      "right": 981,
+      "px": 703,
+      "of1254": 703,
+      "guidePx": 574.060606060606
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "77c948643fd9722344b6b701d9d2797a3a433a69ce393d51a0d8fce984d67ef5",
+    "promptFile": "raw/fuel_stop-a0-r1-prompt-10.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths.",
+    "visual": "Long side incorrectly on lower-right wall; no front apparatus."
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 11,
+    "file": "raw/fuel_stop-a0-r1-attempt-11.png",
+    "returned": [1254, 1254],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-3ab63130-6077-4a21-93d1-3cb797325c5f.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 281,
+      "right": 981,
+      "px": 700,
+      "of1254": 700,
+      "guidePx": 571.6108452950558
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "d60c84c1f5de59d8ba3323a1885a1bdd1811ebc5dbdb0df3b5a4faf31757f4c0",
+    "promptFile": "raw/fuel_stop-a0-r1-prompt-11.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": true,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths."
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 12,
+    "file": "raw/fuel_stop-a0-r1-attempt-12.png",
+    "returned": [1254, 1254],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-790a34d2-d0c6-4cce-bb2e-55c3a853020e.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 268,
+      "right": 997,
+      "px": 729,
+      "of1254": 729,
+      "guidePx": 595.2918660287081
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "51795f7f868b65a88945ee660d2481df4732df90a351146ed5df68c1b3cf8661",
+    "promptFile": "raw/fuel_stop-a0-r1-prompt-12.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths."
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 10,
+    "file": "raw/fuel_stop-a0-r3-attempt-10.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "w": [293, 883.3],
+      "s": [670.3, 1137.3],
+      "e": [905, 1010.9],
+      "lowerLeft": 377.29999999999995,
+      "lowerRight": 234.70000000000005,
+      "ratio": 1.6075841499786958
+    },
+    "top": 346.9,
+    "height": 1.32666015625,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-6d10b229-7db7-43b0-a10e-b13a24778bf4.png",
+    "tests": {
+      "width": false,
+      "height": true,
+      "plan": false,
+      "camera": false,
+      "highlights": false
+    },
+    "pierSpan": {
+      "left": 293,
+      "right": 960,
+      "px": 667,
+      "of1254": 667,
+      "guidePx": 544.6634768740032
+    },
+    "camera": {
+      "off": true,
+      "by": 7,
+      "elevation": 7,
+      "turn": 3.2
+    },
+    "highlights": {
+      "white": 1169,
+      "amber": 2,
+      "surfaceAlphaAbove": 200
+    },
+    "masterHighlights": {
+      "white": 553,
+      "amber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 7.0°: it looks down from 37.0° where the game looks down from 30° and the building is turned 3.2° towards its lower-right wall (the wall feet slope 0.67 and -0.54, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "camera": {
+        "by": 7,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "observation": "Width revised from initial 648 to 667 after closer crop of the rightmost pier; stone behind chain reaches x=959 (outer boundary 960), left boundary 293. Refused for width. Fit, camera and highlight fields were computed before this correction and are diagnostic only; no acceptance.",
+    "measurementOrderCorrection": true,
+    "sha256": "222f87241052b7095916228a070143285a0edc1bccb21bbda5da8cb656ec65f7",
+    "promptFile": "raw/fuel_stop-a0-r3-prompt-10.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths.",
+    "measuredSlopes": [0.673, -0.539],
+    "visual": "Winch chain on far end of front wall; mirrored placement."
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 11,
+    "file": "raw/fuel_stop-a0-r3-attempt-11.png",
+    "returned": [1254, 1254],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-a258da87-b8e4-4d6e-8db8-9290d841001a.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 264,
+      "right": 1005,
+      "px": 741,
+      "of1254": 741,
+      "guidePx": 605.0909090909091
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "fe7ae1e37eb3f43d36accf98269c524a0b0875b23b693e22ba0856f859d1805c",
+    "promptFile": "raw/fuel_stop-a0-r3-prompt-11.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths.",
+    "visual": "Chain moved toward near end but still too far from near corner."
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 12,
+    "file": "raw/fuel_stop-a0-r3-attempt-12.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "w": [309, 853],
+      "s": [685, 1108.5],
+      "e": [946, 1001.9],
+      "lowerLeft": 376,
+      "lowerRight": 261,
+      "ratio": 1.4406130268199233
+    },
+    "top": 368.3,
+    "height": 1.2791637073863635,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-bceeaf4e-13eb-44f5-addb-f964c67a46af.png",
+    "tests": {
+      "width": true,
+      "height": false,
+      "plan": true,
+      "camera": false,
+      "highlights": false
+    },
+    "pierSpan": {
+      "left": 309,
+      "right": 947,
+      "px": 638,
+      "of1254": 638,
+      "guidePx": 520.9824561403509
+    },
+    "camera": {
+      "off": true,
+      "by": 7.2,
+      "elevation": 1.8,
+      "turn": 7.2
+    },
+    "highlights": {
+      "white": 688,
+      "amber": 1,
+      "surfaceAlphaAbove": 200
+    },
+    "masterHighlights": {
+      "white": 553,
+      "amber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 7.2°: the building is turned 7.2° towards its lower-right wall (the wall feet slope 0.68 and -0.41, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "camera": {
+        "by": 7.2,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "sha256": "2a0476dfa53240c0598ab068eebfc1c60d970b431dd41990e9ed20c6b0a281c1",
+    "promptFile": "raw/fuel_stop-a0-r3-prompt-12.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": true,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths.",
+    "measuredSlopes": [0.679, -0.408],
+    "observation": "Turned front on lower-right short wall; chain at near end beside near corner. Width and plan pass; height, camera and highlights fail."
+  },
+  {
+    "id": "fuel_stop-a0-r2",
+    "attempt": 10,
+    "file": "raw/fuel_stop-a0-r2-attempt-10.png",
+    "returned": [1254, 1254],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-f6cef4b0-d5d3-45ff-a559-8659991c9921.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 282,
+      "right": 989,
+      "px": 707,
+      "of1254": 707,
+      "guidePx": 577.3269537480064
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "f59113e9c53e528a4c60bb85b645de1cf142164da30b723569cc263c39723ac5",
+    "promptFile": "raw/fuel_stop-a0-r2-prompt-10.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r2.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths.",
+    "visual": "No front apparatus; short back wall lower left, long side lower right."
+  },
+  {
+    "id": "fuel_stop-a0-r2",
+    "attempt": 11,
+    "file": "raw/fuel_stop-a0-r2-attempt-11.png",
+    "returned": [1254, 1254],
+    "spans": {
+      "w": [314, 981.5],
+      "s": [553.7, 1131],
+      "e": [974, 890.7],
+      "lowerLeft": 239.70000000000005,
+      "lowerRight": 420.29999999999995,
+      "ratio": 0.5703069236259816
+    },
+    "top": 428.9,
+    "height": 1.1446644176136365,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-d64989d9-551a-43a3-a013-5e5d06683fd6.png",
+    "tests": {
+      "width": true,
+      "height": false,
+      "plan": false,
+      "camera": false,
+      "highlights": false
+    },
+    "pierSpan": {
+      "left": 314,
+      "right": 975,
+      "px": 661,
+      "of1254": 661,
+      "guidePx": 539.7639553429027
+    },
+    "camera": {
+      "off": true,
+      "by": 6.7,
+      "elevation": 6.7,
+      "turn": 1.2
+    },
+    "highlights": {
+      "white": 890,
+      "amber": 19,
+      "surfaceAlphaAbove": 200
+    },
+    "masterHighlights": {
+      "white": 553,
+      "amber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 6.7°: it looks down from 36.7° where the game looks down from 30° (the wall feet slope 0.62 and -0.57, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "camera": {
+        "by": 6.7,
+        "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "sha256": "45d84df58a905227883c02f1f64c8a865525c254c320388182bc4593b463e026",
+    "promptFile": "raw/fuel_stop-a0-r2-prompt-11.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r2.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": true,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths.",
+    "measuredSlopes": [0.624, -0.572],
+    "visual": "No front apparatus; short back wall lower left, long side lower right."
+  },
+  {
+    "id": "fuel_stop-a0-r2",
+    "attempt": 12,
+    "file": "raw/fuel_stop-a0-r2-attempt-12.png",
+    "returned": [1254, 1254],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a150ca-851b-7930-a831-97452214b901/exec-4759b162-7862-48f9-9906-5332e0d0c0cb.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 294,
+      "right": 990,
+      "px": 696,
+      "of1254": 696,
+      "guidePx": 568.3444976076555
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "9d07278c1994e07a3be38fe963203290a06f19f52a917f1069a7907e7ff93b16",
+    "promptFile": "raw/fuel_stop-a0-r2-prompt-12.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r2.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer visible stone-foot boundaries on crop; chute and chain excluded. Opaque edge checked at alpha > 128 for close widths.",
+    "visual": "No front apparatus; short back wall lower left, long side lower right."
   }
 ]
