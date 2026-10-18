@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TrackGraph } from '../world/track';
-import { Dir } from '../engine/iso';
+import { TrackGraph, type TrackClass } from '../world/track';
+import { Dir, opposite } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { content, type LocoDef } from '../data/content';
 import { Train } from './trains';
 import { rules, DEFAULT_RULES } from './rules';
-import { forAll, shrinkInt } from '../testing/property';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { buildingDef } from './buildings';
 import {
   BRIDGE_SLOW_FACTOR,
   BRIDGE_SLOW_SHARE,
@@ -252,5 +253,147 @@ describe('the span of road platforms', () => {
       }
     });
     expect(joined, 'spans of more than one platform').toBeGreaterThan(20);
+  });
+});
+
+// ------------------------------------------------------------------ rail platforms beside roads
+
+/** One platform of a seeded layout, with what stands on it. */
+interface RailDeck {
+  x: number;
+  y: number;
+  id: string;
+  /**
+   * a straight of `cls` turned `rot` (0 north to south, 1 east to west), a narrow curve or switch
+   * at any turn, or none
+   */
+  rail: { kind: 'straight' | 'curve' | 'switch'; rot: number; cls: TrackClass } | null;
+  road: boolean;
+}
+interface RailCase {
+  decks: RailDeck[];
+  roads: { x: number; y: number }[];
+}
+/** Runs of platforms, most with a straight along the run, of one material or two; roads anywhere. */
+function drawRails(rng: Rng): RailCase {
+  const IDS = ['bridge_wood', 'bridge_stone'];
+  const CLASSES: TrackClass[] = ['regular', 'regular', 'narrow', 'high_speed'];
+  const decks = Array.from({ length: rng.int(1, 7) }, () => {
+    const x = rng.int(0, SIDE - 1),
+      y = rng.int(0, SIDE - 1),
+      rot = rng.int(0, 1),
+      id = rng.pick(IDS),
+      mixed = rng.chance(0.3);
+    return Array.from({ length: rng.int(1, 6) }, (_, i): RailDeck => {
+      const r = rng.next();
+      const rail: RailDeck['rail'] =
+        r < 0.7
+          ? { kind: 'straight', rot, cls: rng.pick(CLASSES) }
+          : r < 0.8
+            ? { kind: 'straight', rot: 1 - rot, cls: 'regular' }
+            : r < 0.88
+              ? { kind: rng.pick(['curve', 'switch'] as const), rot: rng.int(0, 7), cls: 'narrow' }
+              : null;
+      return {
+        x: rot ? x + i : x,
+        y: rot ? y : y + i,
+        id: mixed ? rng.pick(IDS) : id,
+        rail,
+        road: !rail && rng.chance(0.6),
+      };
+    }).filter((d) => d.x < SIDE && d.y < SIDE);
+  }).flat();
+  const roads = Array.from({ length: rng.int(0, 40) }, () => ({
+    x: rng.int(0, SIDE - 1),
+    y: rng.int(0, SIDE - 1),
+  }));
+  return { decks, roads };
+}
+/** The layout of `c` on a fresh water map, with its roads unless `roads` is false. */
+function layRails(c: RailCase, roads = true) {
+  const w = deckWorld();
+  for (const d of c.decks) {
+    if (w.builder.buildingAt(d.x, d.y)) continue;
+    deck(w.builder, d.x, d.y, d.id);
+    if (d.rail) w.track.place(d.x, d.y, d.rail.kind, d.rail.rot, d.rail.cls);
+    else if (d.road && roads) w.builder.roads.add(d.x, d.y);
+  }
+  // roads beside and around the rail, never on it: the build rules keep a road off a railed deck
+  if (roads) for (const r of c.roads) if (!w.track.has(r.x, r.y)) w.builder.roads.add(r.x, r.y);
+  return w;
+}
+
+describe('the span of rail platforms, with roads beside them (#493)', () => {
+  it('is the run of joined straights along its axis on one material, and no road moves it', () => {
+    const seen = { joined: 0, besideRoad: 0, partedByMaterial: 0, partedUnjoined: 0 };
+    forAll(
+      drawRails,
+      (c) => {
+        const w = layRails(c);
+        const bare = layRails(c, false);
+        const { builder, track } = w;
+        const material = (x: number, y: number) =>
+          buildingDef(builder.bridgeAt(x, y)!.id).bridge!.material;
+        // the piece on (x, y) has a straight link along `axis`
+        const straightOn = (x: number, y: number, axis: number) =>
+          !!track
+            .get(x, y)
+            ?.links.some(
+              ([a, b]) =>
+                opposite(a) === b &&
+                (axis ? a === Dir.E || a === Dir.W : a === Dir.N || a === Dir.S),
+            );
+        for (const b of builder.buildings.values()) {
+          if (!track.has(b.x, b.y)) continue;
+          const at = `${b.x},${b.y}`;
+          const s = bridgeSpan(builder, b);
+          // no road changes a rail platform's span: it is the span with every road gone
+          expect(s, `${at} with roads`).toEqual(
+            bridgeSpan(bare.builder, bare.builder.bridgeAt(b.x, b.y)!),
+          );
+          if (
+            [-1, 1].some((k) => builder.roads.has(b.x + k, b.y) || builder.roads.has(b.x, b.y + k))
+          )
+            seen.besideRoad++;
+          if (s.length > 1) seen.joined++;
+          expect(s.material, at).toBe(material(b.x, b.y));
+          const dx = s.axis ? 1 : 0,
+            dy = s.axis ? 0 : 1;
+          const step = s.axis ? Dir.E : Dir.S;
+          // every member is a platform of the span's material with rail along the axis, joined
+          // to the next one, and gives the same span
+          for (let i = 0; i < s.length; i++) {
+            const x = b.x + (i - s.index) * dx,
+              y = b.y + (i - s.index) * dy;
+            const where = `${x},${y} in the span of ${at}`;
+            const m = builder.bridgeAt(x, y);
+            expect(m, where).toBeTruthy();
+            expect(material(x, y), where).toBe(s.material);
+            if (s.length > 1) expect(straightOn(x, y, s.axis), where).toBe(true);
+            if (i + 1 < s.length) expect(track.connected(x, y, step), where).toBe(true);
+            expect(bridgeSpan(builder, m!), where).toEqual({ ...s, index: i });
+          }
+          // and it ends where nothing more joins: past each end, no platform of its material
+          // with a straight along the axis joined to the end
+          if (!straightOn(b.x, b.y, s.axis)) continue;
+          for (const k of [-1, 1]) {
+            const ex = b.x + (k < 0 ? -s.index : s.length - 1 - s.index) * dx,
+              ey = b.y + (k < 0 ? -s.index : s.length - 1 - s.index) * dy;
+            const nx = ex + k * dx,
+              ny = ey + k * dy;
+            if (!builder.bridgeAt(nx, ny) || !straightOn(nx, ny, s.axis)) continue;
+            const joined = track.connected(ex, ey, k > 0 ? step : opposite(step));
+            const same = material(nx, ny) === s.material;
+            if (joined && !same) seen.partedByMaterial++;
+            if (same && !joined) seen.partedUnjoined++;
+            expect(joined && same, `${nx},${ny} past the span of ${at}`).toBe(false);
+          }
+        }
+      },
+      { shrink: (c) => [...shrinkArray(c.decks)].map((decks) => ({ ...c, decks })) },
+    );
+    // the seeds reach long spans, rail beside roads, and spans parted by a change of material
+    // and by a straight that does not join
+    for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(20);
   });
 });
