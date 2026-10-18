@@ -1,0 +1,172 @@
+Paint three views of the coaling stage (fuel_stop, Steam age a0) again for the isometric railway
+game in this repository, for issue #325: r1, then r3, then r2. r0 is finished and is not painted
+again. This replaces C4d, which is off the page. All nine calls are made, r2 included: the earlier
+r2 attempt 8 is no longer the plan. The coaling stage's work is on branch art/325-buildings-v2,
+as C4d's (art/325-fuel-pump is the Fuel Pump's, not this one): git fetch origin art/325-buildings-v2,
+git switch art/325-buildings-v2, git pull --ff-only (head b2a45afc or later). Touch nothing outside
+assets/source/buildings-v2/. Commit there, never stash pictures, push the branch. Never push to
+main or develop. Commit subjects read "Art: <outcome>". Keep every picture your image tool returns,
+byte for byte, as raw/<id>-attempt-<k>.png, k going on from 10 for each view (attempts 1 to 9
+exist), and add {id, attempt, file, returned, spans, top, height, kept} to raw/returns.json for each
+call.
+
+WHY AGAIN. C4d's nine attempts all failed. The 62 game px block-out cured the low views only
+partly, because the guide was a square block on a thin plinth, and the painter spread the stage
+wider than the plinth: in the kept attempts of r1, r3 and r2 (9, 9 and 8) the six piers' feet
+spanned 794, 737 and 725 px of the 1254 px picture, against 632 for the plinth: 26, 17 and 15 per
+cent wider. That is measured on all nine of C4d's pictures: Codex paints the stage 15 to 26 per cent
+wider than the plinth. The fit scales a picture by its feet's span, so a wider stage comes out
+lower: the height shortfall, and with the same freedom came the wrong plan (r1's long side 36
+per cent too long, r3's short side widened until the plan read 1.069, nearly square), the
+camera drift, and r3's winch in the middle of the wall instead of at the near end. So the guide
+is new: an OBLONG block on an oblong plinth of the footprint's width, with the six stone pier
+stubs standing on it at the exact places of the stage's six piers, at the same 62 px block height.
+The pier span is the number you keep: it is measured first.
+
+THE LIMIT. The plinth is 516 px wide in the guide, 632 px in a 1254 px picture (1.2246 times as
+many). The painted stage, from the outer edge of its leftmost pier's foot to the outer edge of its
+rightmost pier's foot, is at most 5 per cent wider: 542 px of the guide, 663 px of 1254, and not
+narrower than 490 px of the guide, 600 px of 1254. Over 663 px, or under 600, the picture is
+refused for its width whatever else it shows, and is not measured further.
+
+THE FILES. The oblong guides are on a branch that is not merged yet, and they are not to be
+committed to your art branch. From the repository root:
+  git fetch origin claude/art-guides-windmill-coaling
+(its head is 830d576b or later; if the guides are already on develop in your tree, use those and
+skip the rest of this paragraph). Make a folder OUTSIDE the repository, say ../guides-0325, and
+write out of that branch, each as
+  git show origin/claude/art-guides-windmill-coaling:assets/source/buildings-v2/guides/<name> > ../guides-0325/<name>
+the six files fuel_stop-oblong-r1.png, fuel_stop-oblong-r2.png, fuel_stop-oblong-r3.png and
+fuel_stop-oblong-r1-plan.json, fuel_stop-oblong-r2-plan.json, fuel_stop-oblong-r3-plan.json (each
+guide is 1024 x 1024). Do the same for assets/source/buildings-v2/GUIDE.md, and read its section 3
+(the oblong guides) and sections 5 to 8 again; the plan files' paintedWidth.words holds the limit
+above. Never git add anything from ../guides-0325. The earlier fuel_stop-r0.png to -r3.png (62 px
+block, square plan) are in your tree: they are no longer the picture you edit, but the queue still
+names them, and the fit measures against them. Check the oblong guides exist and are 1024 x 1024;
+if not, stop and say so.
+
+READ FIRST: assets/source/buildings-v2/GUIDE.md sections 5 to 8 again.
+
+THE MASTER. assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png, sha256
+49f701ce3e2bd4a3c4b0a2a6194fd1470a56390dda9f241dd7a82c9a2e6c6ce4. Check the hash first; if it
+differs, stop and say so. It is r0, the finished front view, and the only picture of the stage you
+are shown: use it for the stage's colours and materials (planks, iron straps, stone piers, coal),
+for its details and for the building's size. Do not attach any earlier r1, r2 or r3 of yours, nor
+a .rejected, .before or .fitted file of one: they are wrong. What r0 shows, to carry round: a
+raised timber stage on six stone piers, a coal bunker of planks with iron straps and corner posts,
+heaped with coal, on tall X-braced timber legs. The legs, from the pier caps up to the bunker's
+floor, are longer than the bunker's plank wall is deep. The front (lower-left in r0) is the SHORT
+side, two piers and one bay, with the chute sloping out from it and the winch drum and chain at
+its left end. The right-hand side (lower-right in r0) is the LONG side, three piers and two
+braced bays.
+
+THE PLAN, per view, in guide px (1024 canvas). The walls' feet are w, s and e (left, near, right);
+the plinth's left and right corners stand 31 px further out. The long side is the longer foot:
+  r1 and r3: w (286.7, 814.7), s (546.7, 944.6), e (737.3, 849.3). Lower-left foot 260.0, lower-right
+             foot 190.6: ratio 1.364, the long side LOWER LEFT (the plinth: 290.7 and 221.3).
+  r2:        w (286.7, 849.3), s (477.3, 944.6), e (737.3, 814.7). Lower-left foot 190.6, lower-right
+             foot 260.0: ratio 0.733, the long side LOWER RIGHT (the plinth: 221.3 and 290.7).
+The six piers: three along the long side, two along the short side, one of them (the near corner's)
+on both. Four of the six show; two stand under the hidden walls. Pier feet, guide px, with the
+near corner last: r1 and r3 long side (286.7, 782.7), (416.7, 847.6), (546.7, 912.6); short side,
+beyond the near corner, (737.3, 817.3); r2 long side (477.3, 912.6), (607.3, 847.6), (737.3, 782.7);
+short side (286.7, 817.3). The block stands at height 62 game px: the near corner's row is 944.64
+and the far corner's top row 191.36. The numbers in the plan files are the ones to read.
+
+PUT THE VIEWS BACK, afresh:
+  node tools/building-queue.mjs redo fuel_stop-a0-r1 --yes
+  node tools/building-queue.mjs redo fuel_stop-a0-r3 --yes
+Run node tools/building-queue.mjs status and check that r1, r2 and r3 are pending and r0
+generated. Do not run "next"; use show and take with each id: r1, then r3, then r2.
+
+EACH VIEW. show <id> lists the references and prints the prompt and its "edit this" line, which
+names the square guide: paint instead as an edit of the OBLONG guide of the view
+(../guides-0325/fuel_stop-oblong-r<v>.png), the first picture attached, and then the references
+show lists, in its order, without the square guide; ask for the size it prints, transparent
+background. Take it with take <id> --from <file>, look at .look/<id>.png, measure (below), then set
+<id> generated --note "<measurements>". Paste the printed prompt whole, then the view's Correction
+below, on EVERY attempt, the first included. Put nothing else in the picture: no ground, no
+plinth (the grey plinth is the footprint, not a thing to paint), no shadow, text, border, glow or
+extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as strong as selection
+amber #E8AA48 on the timber.
+
+For r1:
+Correction: the earlier r1 stretched the stage wider than its plinth (feet 794 px of 1254 where the
+plinth is 632) and came back a low, long bin. Edit the oblong grey guide: it is one stage on its
+plinth. The six stone piers stand on the six pier stubs of the guide, at their places; nothing
+stands outside the plinth, and the painted stage is no wider than 663 px of a 1254 px picture
+(542 px of the guide). The block's height is the stage's full height: the post tops and the coal
+heap reach its top face, on legs as tall as r0's, longer from the pier caps to the bunker's floor
+than the bunker's plank wall is deep. The bunker is r0's, the same size, no longer and no deeper.
+The lower-left wall is the right-hand side, the long side: three piers and two X-braced bays, its
+foot 1.364 times the lower-right wall's. The lower-right wall is the back, the short side: two
+piers and one bay. The chute, the winch and the chain are on the front, out of sight: none of them
+shows.
+
+For r3:
+Correction: the earlier r3 was turned right but came back wide (feet 737 px of 1254 where the plinth
+is 632), with its plan nearly square and its winch in the middle of the wall. Edit the oblong grey
+guide: it is one stage on its plinth. The six stone piers stand on the pier stubs of the guide, at
+their places; nothing stands outside the plinth, and the painted stage is no wider than 663 px of a
+1254 px picture (542 px of the guide). This view is the front view turned on a turntable, not
+flipped. The lower-right wall is the front, the short side: two piers and one bay, with the chute
+sloping out from it, and the winch drum and chain in the dark opening the guide has on that wall,
+at its near (bottom) end, next to the near corner, not in the middle of the wall. The lower-left
+wall is the left-hand side, the long side, its foot 1.364 times the lower-right wall's: three piers
+and two X-braced bays. The block's height is the stage's full height: the post tops and the coal
+heap reach its top face, on legs as tall as r0's.
+
+For r2:
+Correction: the earlier r2 was a low long bin and, in its best attempt, 15 per cent wider than the
+plinth (feet 725 px of 1254 where the plinth is 632). Edit the oblong grey guide: it is one stage
+on its plinth. The six stone piers stand on the pier stubs of the guide, at their places; nothing
+stands outside the plinth, and the painted stage is no wider than 663 px of a 1254 px picture
+(542 px of the guide). The block's height is the stage's full height: the post tops and the coal
+heap reach its top face, on legs as tall as r0's. The bunker is r0's, the same size. The
+lower-left wall is the back, the short side, two piers and one bay, as r1 shows it. The lower-right
+wall is the left-hand side, the long side, its foot 1.364 times the lower-left wall's, three piers
+and two X-braced bays, as r3 shows it. The chute, the winch and the chain are on the front, out of
+sight: none of them shows. Attach r1 and r3 only if they passed; r2 then copies their walls. If
+one failed, record it (below) and show lists r2 from r0 alone.
+
+MEASURE BEFORE YOU RECORD (after take, before set), in this order:
+- width first: on a crop, read the leftmost pier's foot and the rightmost pier's foot (outer edges;
+  chute and chain do not count) and their span in the returned picture's px. A picture passes when
+  it is 600 to 663 px of 1254 (490 to 542 of the guide, scaled by returned width / 1024 if it is
+  another size). Outside it the picture is refused: record it as an attempt with its span, write
+  its Correction, and do not run the fit;
+- node tools/building-fit.mjs <id>. Its base corners w, s and e give the lower-left foot
+  s.x - w.x and the lower-right foot e.x - s.x. A picture passes when:
+- height: (944.64 - box.top) / 450.56 is within 10% of r0's 1.464 (r0's box.top 284.8; the
+  numbers come from wallBase in tools/building-kit.mjs: the near corner's row and the house width).
+  That is 1.318 to 1.611, box.top 219 to 351. C4d's views were 1.062 to 1.372;
+- plan: lower-left foot / lower-right foot, r1 and r3 between 1.16 and 1.57 (r0's 1.364 turned
+  over), r2 between 0.62 and 0.84 (r0's 0.733), each within 15%; the long side as above;
+- camera: at most 2 degrees off the game's (checkFile(file, 't1', rot) in tools/building-check.mjs
+  and cameraOff in tools/building-fit.mjs, which set runs; node tools/building-check.mjs <file>
+  prints it). Measure width and height first: if the picture is wide or low, do not set it, paint
+  it again;
+- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12
+  (RGB distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may
+  exceed r0's (Art caps the rest at packing);
+- by eye: r3 turned, not mirrored (winch, chain and chute at the lower-right wall's near end,
+  inside the guide's opening); no chute, winch or chain on a hidden wall; six piers, three along
+  the long side; no plinth painted; the same bunker, coal, straps and legs as r0; lower-left wall
+  lighter than lower-right.
+A picture refused for its camera alone, that passes the other tests, is handled by the tool
+(GUIDE.md section 7: `next` hands it out to paint again from its own earlier self; also attach
+.fitted/fuel_stop-a0-r0.png). A picture that fails the width, the height or the plan is made again
+from the printed prompt: keep every Correction paragraph of that view and add one that begins
+"Correction:" and names the number it missed, as "your last r1's piers spanned 790 px of 1254 where
+the plinth is 632 and the limit 663". Never attach a wide or low picture to paint again from, and
+never stretch, squeeze, shear or bend a picture: the angles come from the camera, in the painting.
+At most three attempts a view, nine calls in all. If none passes, keep the closest in raw/, run
+set <id> rejected --note "<the test it failed and its number>" (the tool sets the file aside), and
+say so in your message; never accept it quietly.
+
+CLOSE THE FAMILY. node tools/building-check.mjs --family fuel_stop; node
+tools/building-sheets.mjs --family fuel_stop, then look at review/fuel_stop.png: all four views
+should be one stage of one height. Commit "Art: fuel_stop, r1, r3 and r2 on the oblong guides, r3
+turned", push the branch and stop. In your message give the review sheet's path and, for each
+attempt, its pier span (px of 1254), spans, ratio, box.top, height, camera and highlight counts,
+and which attempt was kept.

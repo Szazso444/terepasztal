@@ -28,13 +28,15 @@
 </style>
 <div class="wrap">
   <h1>Codex art prompts</h1>
-  <p class="lead">Updated 2026-10-18 (v9). Only what Codex still has to paint is here. Three prompts can be pasted now, two in the buildings lane and one in the people lane; the others are added here, ready to copy, as soon as the guides they need are on develop.</p>
-  <nav><a href="#next">Paste next</a><a href="#r8d">R8d &middot; Fuel Pump r2 painted now, then r3&#x27;s crane and hose, then its light (r1 accepted)</a><a href="#c17c">C17c &middot; Windmill body without sails, in the game&#x27;s camera, on the new block-out (1 picture)</a><a href="#r7c1">R7c-1 &middot; People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)</a><a href="#coming">Coming next</a></nav>
+  <p class="lead">Updated 2026-10-18 (v10). Only what Codex still has to paint is here. Five prompts can be pasted now: four in the buildings lane, in this order (R8d, C4e, C17c, C17d), and one in the people lane (R7c-1). The windmill&#x27;s turned guides and the coaling stage&#x27;s oblong guides are on the branch claude/art-guides-windmill-coaling, not merged yet: C17d and C4e tell Codex how to fetch them without committing them to its art branch.</p>
+  <nav><a href="#next">Paste next</a><a href="#r8d">R8d &middot; Fuel Pump r2 painted now, then r3&#x27;s crane and hose, then its light (r1 accepted)</a><a href="#c4e">C4e &middot; Coaling stage r1, r3 and r2 on the oblong guides with pier stubs (3 pictures)</a><a href="#c17c">C17c &middot; Windmill body without sails, in the game&#x27;s camera, on the new block-out (1 picture)</a><a href="#c17d">C17d &middot; Windmill body without sails, r3, r1 and r2, each on its own guide (3 pictures)</a><a href="#r7c1">R7c-1 &middot; People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)</a></nav>
 <section class="card" id="next">
   <header><h2>Paste next</h2></header>
   <ol>
     <li><b>Buildings lane: R8d</b>, Fuel Pump r2, then r3 in two steps, branch <span class="cid">art/325-fuel-pump</span>, issue #325. Each part commits and pushes on its own; at most three attempts a part.</li>
-    <li><b>Buildings lane, after R8d: C17c</b>, the windmill&#x27;s tower without sails, branch <span class="cid">art/461-windmill-sails</span>, issue #461. One picture, at most three attempts.</li>
+    <li><b>Buildings lane, after R8d: C4e</b>, the coaling stage r1, r3 and r2 on the oblong guides, branch <span class="cid">art/325-buildings-v2</span>, issue #325. Replaces C4d. Nine calls, three attempts a view, r2 included.</li>
+    <li><b>Buildings lane, after C4e: C17c</b>, the windmill&#x27;s tower without sails, front view r0, branch <span class="cid">art/461-windmill-sails</span>, issue #461. One picture, at most three attempts.</li>
+    <li><b>Buildings lane, after C17c: C17d</b>, the same tower without sails in r3, r1 and r2, same branch and issue. Three pictures, at most three attempts each.</li>
     <li><b>People lane</b>, in its own Codex window beside the buildings lane: <b>R7c-1</b>, the lumberjack walking away, branch <span class="cid">art/331-people</span>, issue #331. Four pictures, at most twelve calls. The other strips wait for this trial&#x27;s result.</li>
   </ol>
 </section>
@@ -221,9 +223,185 @@ END. In your message give, for each attempt: the view and step, plan ratio, heig
 light values, the corner positions for r3, and which attempt was kept and why; and say plainly
 whether r2 was accepted, whether r3 step 1 and step 2 passed, and whether step 2 widened the house.</pre>
 </section>
+<section class="card" id="c4e">
+  <header><span class="cid">C4e</span><h2>Coaling stage r1, r3 and r2 on the oblong guides with pier stubs (3 pictures)</h2><button class="copy" type="button" data-for="p-c4e">Copy prompt</button></header>
+  <p class="note"><b>Buildings lane, after R8d. Branch art/325-buildings-v2 (exists, head b2a45afc or later; art/325-fuel-pump is the Fuel Pump&#x27;s, not the coaling stage&#x27;s).</b> Issue #325. Replaces C4d, which is off the page: all nine of its attempts failed on 18 October. The review measured why: Codex paints the stage 15 to 26 per cent wider than the plinth, and the fit then shrinks it low. The author chose another Codex round, with all nine calls, so r2 is repainted too (r2 attempt 8 is no longer the plan). The guides are new: an oblong block on an oblong plinth with six pier stubs (Art&#x27;s <span class="cid">fuel_stop-oblong-r1</span> to <span class="cid">r3</span>), on the branch claude/art-guides-windmill-coaling, not merged yet; the prompt tells Codex to read them out of that branch into a folder outside its checkout. It carries the width limit (plinth 516 px of the guide, 632 of 1254; painted at most 5 per cent wider, 542 and 663), the walls&#x27; feet ratio, the long side per view, and the r3 winch opening, and measures the pier span before the fit. Nothing is stretched or bent: the angles come from the painting.</p>
+  <pre id="p-c4e" tabindex="0">Paint three views of the coaling stage (fuel_stop, Steam age a0) again for the isometric railway
+game in this repository, for issue #325: r1, then r3, then r2. r0 is finished and is not painted
+again. This replaces C4d, which is off the page. All nine calls are made, r2 included: the earlier
+r2 attempt 8 is no longer the plan. The coaling stage&#x27;s work is on branch art/325-buildings-v2,
+as C4d&#x27;s (art/325-fuel-pump is the Fuel Pump&#x27;s, not this one): git fetch origin art/325-buildings-v2,
+git switch art/325-buildings-v2, git pull --ff-only (head b2a45afc or later). Touch nothing outside
+assets/source/buildings-v2/. Commit there, never stash pictures, push the branch. Never push to
+main or develop. Commit subjects read &quot;Art: &lt;outcome&gt;&quot;. Keep every picture your image tool returns,
+byte for byte, as raw/&lt;id&gt;-attempt-&lt;k&gt;.png, k going on from 10 for each view (attempts 1 to 9
+exist), and add {id, attempt, file, returned, spans, top, height, kept} to raw/returns.json for each
+call.
+
+WHY AGAIN. C4d&#x27;s nine attempts all failed. The 62 game px block-out cured the low views only
+partly, because the guide was a square block on a thin plinth, and the painter spread the stage
+wider than the plinth: in the kept attempts of r1, r3 and r2 (9, 9 and 8) the six piers&#x27; feet
+spanned 794, 737 and 725 px of the 1254 px picture, against 632 for the plinth: 26, 17 and 15 per
+cent wider. That is measured on all nine of C4d&#x27;s pictures: Codex paints the stage 15 to 26 per cent
+wider than the plinth. The fit scales a picture by its feet&#x27;s span, so a wider stage comes out
+lower: the height shortfall, and with the same freedom came the wrong plan (r1&#x27;s long side 36
+per cent too long, r3&#x27;s short side widened until the plan read 1.069, nearly square), the
+camera drift, and r3&#x27;s winch in the middle of the wall instead of at the near end. So the guide
+is new: an OBLONG block on an oblong plinth of the footprint&#x27;s width, with the six stone pier
+stubs standing on it at the exact places of the stage&#x27;s six piers, at the same 62 px block height.
+The pier span is the number you keep: it is measured first.
+
+THE LIMIT. The plinth is 516 px wide in the guide, 632 px in a 1254 px picture (1.2246 times as
+many). The painted stage, from the outer edge of its leftmost pier&#x27;s foot to the outer edge of its
+rightmost pier&#x27;s foot, is at most 5 per cent wider: 542 px of the guide, 663 px of 1254, and not
+narrower than 490 px of the guide, 600 px of 1254. Over 663 px, or under 600, the picture is
+refused for its width whatever else it shows, and is not measured further.
+
+THE FILES. The oblong guides are on a branch that is not merged yet, and they are not to be
+committed to your art branch. From the repository root:
+  git fetch origin claude/art-guides-windmill-coaling
+(its head is 830d576b or later; if the guides are already on develop in your tree, use those and
+skip the rest of this paragraph). Make a folder OUTSIDE the repository, say ../guides-0325, and
+write out of that branch, each as
+  git show origin/claude/art-guides-windmill-coaling:assets/source/buildings-v2/guides/&lt;name&gt; &gt; ../guides-0325/&lt;name&gt;
+the six files fuel_stop-oblong-r1.png, fuel_stop-oblong-r2.png, fuel_stop-oblong-r3.png and
+fuel_stop-oblong-r1-plan.json, fuel_stop-oblong-r2-plan.json, fuel_stop-oblong-r3-plan.json (each
+guide is 1024 x 1024). Do the same for assets/source/buildings-v2/GUIDE.md, and read its section 3
+(the oblong guides) and sections 5 to 8 again; the plan files&#x27; paintedWidth.words holds the limit
+above. Never git add anything from ../guides-0325. The earlier fuel_stop-r0.png to -r3.png (62 px
+block, square plan) are in your tree: they are no longer the picture you edit, but the queue still
+names them, and the fit measures against them. Check the oblong guides exist and are 1024 x 1024;
+if not, stop and say so.
+
+READ FIRST: assets/source/buildings-v2/GUIDE.md sections 5 to 8 again.
+
+THE MASTER. assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png, sha256
+49f701ce3e2bd4a3c4b0a2a6194fd1470a56390dda9f241dd7a82c9a2e6c6ce4. Check the hash first; if it
+differs, stop and say so. It is r0, the finished front view, and the only picture of the stage you
+are shown: use it for the stage&#x27;s colours and materials (planks, iron straps, stone piers, coal),
+for its details and for the building&#x27;s size. Do not attach any earlier r1, r2 or r3 of yours, nor
+a .rejected, .before or .fitted file of one: they are wrong. What r0 shows, to carry round: a
+raised timber stage on six stone piers, a coal bunker of planks with iron straps and corner posts,
+heaped with coal, on tall X-braced timber legs. The legs, from the pier caps up to the bunker&#x27;s
+floor, are longer than the bunker&#x27;s plank wall is deep. The front (lower-left in r0) is the SHORT
+side, two piers and one bay, with the chute sloping out from it and the winch drum and chain at
+its left end. The right-hand side (lower-right in r0) is the LONG side, three piers and two
+braced bays.
+
+THE PLAN, per view, in guide px (1024 canvas). The walls&#x27; feet are w, s and e (left, near, right);
+the plinth&#x27;s left and right corners stand 31 px further out. The long side is the longer foot:
+  r1 and r3: w (286.7, 814.7), s (546.7, 944.6), e (737.3, 849.3). Lower-left foot 260.0, lower-right
+             foot 190.6: ratio 1.364, the long side LOWER LEFT (the plinth: 290.7 and 221.3).
+  r2:        w (286.7, 849.3), s (477.3, 944.6), e (737.3, 814.7). Lower-left foot 190.6, lower-right
+             foot 260.0: ratio 0.733, the long side LOWER RIGHT (the plinth: 221.3 and 290.7).
+The six piers: three along the long side, two along the short side, one of them (the near corner&#x27;s)
+on both. Four of the six show; two stand under the hidden walls. Pier feet, guide px, with the
+near corner last: r1 and r3 long side (286.7, 782.7), (416.7, 847.6), (546.7, 912.6); short side,
+beyond the near corner, (737.3, 817.3); r2 long side (477.3, 912.6), (607.3, 847.6), (737.3, 782.7);
+short side (286.7, 817.3). The block stands at height 62 game px: the near corner&#x27;s row is 944.64
+and the far corner&#x27;s top row 191.36. The numbers in the plan files are the ones to read.
+
+PUT THE VIEWS BACK, afresh:
+  node tools/building-queue.mjs redo fuel_stop-a0-r1 --yes
+  node tools/building-queue.mjs redo fuel_stop-a0-r3 --yes
+Run node tools/building-queue.mjs status and check that r1, r2 and r3 are pending and r0
+generated. Do not run &quot;next&quot;; use show and take with each id: r1, then r3, then r2.
+
+EACH VIEW. show &lt;id&gt; lists the references and prints the prompt and its &quot;edit this&quot; line, which
+names the square guide: paint instead as an edit of the OBLONG guide of the view
+(../guides-0325/fuel_stop-oblong-r&lt;v&gt;.png), the first picture attached, and then the references
+show lists, in its order, without the square guide; ask for the size it prints, transparent
+background. Take it with take &lt;id&gt; --from &lt;file&gt;, look at .look/&lt;id&gt;.png, measure (below), then set
+&lt;id&gt; generated --note &quot;&lt;measurements&gt;&quot;. Paste the printed prompt whole, then the view&#x27;s Correction
+below, on EVERY attempt, the first included. Put nothing else in the picture: no ground, no
+plinth (the grey plinth is the footprint, not a thing to paint), no shadow, text, border, glow or
+extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as strong as selection
+amber #E8AA48 on the timber.
+
+For r1:
+Correction: the earlier r1 stretched the stage wider than its plinth (feet 794 px of 1254 where the
+plinth is 632) and came back a low, long bin. Edit the oblong grey guide: it is one stage on its
+plinth. The six stone piers stand on the six pier stubs of the guide, at their places; nothing
+stands outside the plinth, and the painted stage is no wider than 663 px of a 1254 px picture
+(542 px of the guide). The block&#x27;s height is the stage&#x27;s full height: the post tops and the coal
+heap reach its top face, on legs as tall as r0&#x27;s, longer from the pier caps to the bunker&#x27;s floor
+than the bunker&#x27;s plank wall is deep. The bunker is r0&#x27;s, the same size, no longer and no deeper.
+The lower-left wall is the right-hand side, the long side: three piers and two X-braced bays, its
+foot 1.364 times the lower-right wall&#x27;s. The lower-right wall is the back, the short side: two
+piers and one bay. The chute, the winch and the chain are on the front, out of sight: none of them
+shows.
+
+For r3:
+Correction: the earlier r3 was turned right but came back wide (feet 737 px of 1254 where the plinth
+is 632), with its plan nearly square and its winch in the middle of the wall. Edit the oblong grey
+guide: it is one stage on its plinth. The six stone piers stand on the pier stubs of the guide, at
+their places; nothing stands outside the plinth, and the painted stage is no wider than 663 px of a
+1254 px picture (542 px of the guide). This view is the front view turned on a turntable, not
+flipped. The lower-right wall is the front, the short side: two piers and one bay, with the chute
+sloping out from it, and the winch drum and chain in the dark opening the guide has on that wall,
+at its near (bottom) end, next to the near corner, not in the middle of the wall. The lower-left
+wall is the left-hand side, the long side, its foot 1.364 times the lower-right wall&#x27;s: three piers
+and two X-braced bays. The block&#x27;s height is the stage&#x27;s full height: the post tops and the coal
+heap reach its top face, on legs as tall as r0&#x27;s.
+
+For r2:
+Correction: the earlier r2 was a low long bin and, in its best attempt, 15 per cent wider than the
+plinth (feet 725 px of 1254 where the plinth is 632). Edit the oblong grey guide: it is one stage
+on its plinth. The six stone piers stand on the pier stubs of the guide, at their places; nothing
+stands outside the plinth, and the painted stage is no wider than 663 px of a 1254 px picture
+(542 px of the guide). The block&#x27;s height is the stage&#x27;s full height: the post tops and the coal
+heap reach its top face, on legs as tall as r0&#x27;s. The bunker is r0&#x27;s, the same size. The
+lower-left wall is the back, the short side, two piers and one bay, as r1 shows it. The lower-right
+wall is the left-hand side, the long side, its foot 1.364 times the lower-left wall&#x27;s, three piers
+and two X-braced bays, as r3 shows it. The chute, the winch and the chain are on the front, out of
+sight: none of them shows. Attach r1 and r3 only if they passed; r2 then copies their walls. If
+one failed, record it (below) and show lists r2 from r0 alone.
+
+MEASURE BEFORE YOU RECORD (after take, before set), in this order:
+- width first: on a crop, read the leftmost pier&#x27;s foot and the rightmost pier&#x27;s foot (outer edges;
+  chute and chain do not count) and their span in the returned picture&#x27;s px. A picture passes when
+  it is 600 to 663 px of 1254 (490 to 542 of the guide, scaled by returned width / 1024 if it is
+  another size). Outside it the picture is refused: record it as an attempt with its span, write
+  its Correction, and do not run the fit;
+- node tools/building-fit.mjs &lt;id&gt;. Its base corners w, s and e give the lower-left foot
+  s.x - w.x and the lower-right foot e.x - s.x. A picture passes when:
+- height: (944.64 - box.top) / 450.56 is within 10% of r0&#x27;s 1.464 (r0&#x27;s box.top 284.8; the
+  numbers come from wallBase in tools/building-kit.mjs: the near corner&#x27;s row and the house width).
+  That is 1.318 to 1.611, box.top 219 to 351. C4d&#x27;s views were 1.062 to 1.372;
+- plan: lower-left foot / lower-right foot, r1 and r3 between 1.16 and 1.57 (r0&#x27;s 1.364 turned
+  over), r2 between 0.62 and 0.84 (r0&#x27;s 0.733), each within 15%; the long side as above;
+- camera: at most 2 degrees off the game&#x27;s (checkFile(file, &#x27;t1&#x27;, rot) in tools/building-check.mjs
+  and cameraOff in tools/building-fit.mjs, which set runs; node tools/building-check.mjs &lt;file&gt;
+  prints it). Measure width and height first: if the picture is wide or low, do not set it, paint
+  it again;
+- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12
+  (RGB distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may
+  exceed r0&#x27;s (Art caps the rest at packing);
+- by eye: r3 turned, not mirrored (winch, chain and chute at the lower-right wall&#x27;s near end,
+  inside the guide&#x27;s opening); no chute, winch or chain on a hidden wall; six piers, three along
+  the long side; no plinth painted; the same bunker, coal, straps and legs as r0; lower-left wall
+  lighter than lower-right.
+A picture refused for its camera alone, that passes the other tests, is handled by the tool
+(GUIDE.md section 7: `next` hands it out to paint again from its own earlier self; also attach
+.fitted/fuel_stop-a0-r0.png). A picture that fails the width, the height or the plan is made again
+from the printed prompt: keep every Correction paragraph of that view and add one that begins
+&quot;Correction:&quot; and names the number it missed, as &quot;your last r1&#x27;s piers spanned 790 px of 1254 where
+the plinth is 632 and the limit 663&quot;. Never attach a wide or low picture to paint again from, and
+never stretch, squeeze, shear or bend a picture: the angles come from the camera, in the painting.
+At most three attempts a view, nine calls in all. If none passes, keep the closest in raw/, run
+set &lt;id&gt; rejected --note &quot;&lt;the test it failed and its number&gt;&quot; (the tool sets the file aside), and
+say so in your message; never accept it quietly.
+
+CLOSE THE FAMILY. node tools/building-check.mjs --family fuel_stop; node
+tools/building-sheets.mjs --family fuel_stop, then look at review/fuel_stop.png: all four views
+should be one stage of one height. Commit &quot;Art: fuel_stop, r1, r3 and r2 on the oblong guides, r3
+turned&quot;, push the branch and stop. In your message give the review sheet&#x27;s path and, for each
+attempt, its pier span (px of 1254), spans, ratio, box.top, height, camera and highlight counts,
+and which attempt was kept.</pre>
+</section>
 <section class="card" id="c17c">
   <header><span class="cid">C17c</span><h2>Windmill body without sails, in the game&#x27;s camera, on the new block-out (1 picture)</h2><button class="copy" type="button" data-for="p-c17c">Copy prompt</button></header>
-  <p class="note"><b>Buildings lane, after R8d. Branch art/461-windmill-sails (exists, head beed486 or later).</b> Issue #461. The author found the demo&#x27;s windmill wonky and asked for a repaint so it can be animated. The accepted body was seen from 19&deg; down instead of the game&#x27;s 30&deg;, with its door and shaft turned about 27&deg; off, so the sails could not sit on it. C17c paints the tower again, without sails, as an edit of Art&#x27;s block-out in the game&#x27;s own projection (on develop, assets/source/buildings-v2/guides/, PR #490), and records the hub point. The sail cross from C17b is kept. Every number is measured from the foot&#x27;s width: camera, height, shaft slope, hub, door. Near-white pixels alone do not fail a picture; Art caps them at packing.</p>
+  <p class="note"><b>Buildings lane, after C4e. Branch art/461-windmill-sails (exists, head beed486 or later).</b> Issue #461. The author found the demo&#x27;s windmill wonky and asked for a repaint so it can be animated. The accepted body was seen from 19&deg; down instead of the game&#x27;s 30&deg;, with its door and shaft turned about 27&deg; off, so the sails could not sit on it. C17c paints the tower again, without sails, as an edit of Art&#x27;s block-out in the game&#x27;s own projection (on develop, assets/source/buildings-v2/guides/, PR #490), and records the hub point. The sail cross from C17b is kept. Every number is measured from the foot&#x27;s width: camera, height, shaft slope, hub, door. Near-white pixels alone do not fail a picture; Art caps them at packing. Decided on 18 October: all four views are painted. C17c paints the front view r0; C17d follows it with r3, r1 and r2.</p>
   <pre id="p-c17c" tabindex="0">Paint the windmill&#x27;s tower again, without its sails, for the isometric railway game in this
 repository, for issue #461. The first body was drawn in the wrong camera, so the sails could not be
 animated on it; this one is an edit of a block-out drawn by the game&#x27;s own projection. Work on
@@ -351,6 +529,185 @@ ratio and degrees, apex over W, the stub slope, the hub offset from (-16, -34), 
 position and height numbers, the three pixel counts, and which attempt was kept; and the path of
 hub.json. Do not paste pictures.</pre>
 </section>
+<section class="card" id="c17d">
+  <header><span class="cid">C17d</span><h2>Windmill body without sails, r3, r1 and r2, each on its own guide (3 pictures)</h2><button class="copy" type="button" data-for="p-c17d">Copy prompt</button></header>
+  <p class="note"><b>Buildings lane, after C17c. Branch art/461-windmill-sails (C17c&#x27;s commit or later).</b> Issue #461. The author decided on 18 October that the windmill has four views. C17d paints the tower without sails for r3, r1 and r2, each as an edit of its own guide (canvas 1024, scale 8, anchor 512,832; hub offsets r1 (-16,-50), r2 (16,-50), r3 (16,-34)), in the same lane and with the same tests as C17c. C17b&#x27;s sail cross is turned into each view by an exact transform, so each body must leave the hub exactly at its guide&#x27;s point. In r1 and r2 the cross is seen from behind: no door, no window, and the stub and plate stand behind the tower. The guides are on the branch claude/art-guides-windmill-coaling, not merged yet; the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to the art branch. Nothing is mirrored, sheared or stretched: each view is turned by its own camera.</p>
+  <pre id="p-c17d" tabindex="0">Paint the windmill&#x27;s tower without sails in the three views C17c did not paint, r3, r1 and r2, for
+the isometric railway game in this repository, for issue #461. C17c painted r0 (the front view);
+the game turns the building in quarter turns and shows the tower from four sides, and the sail
+cross from C17b is put on the tower by an exact transform per view, centred on the hub point. So
+each body must leave the hub exactly where its guide has it. Do this after C17c: work on branch
+art/461-windmill-sails, which exists: git fetch origin art/461-windmill-sails, git switch
+art/461-windmill-sails, git pull --ff-only (the head is C17c&#x27;s commit, &quot;Art: windmill body without
+sails in the game&#x27;s camera&quot;, or later). Do not merge develop again. Check that
+assets/source/windmill-2026-10-17/windmill-a0-r0.png and hub.json exist; if not, stop and say so
+(C17c comes first). Touch nothing outside assets/source/windmill-2026-10-17/ (nothing in
+windmill-2026-10-16/ is edited; you paint no sails). Commit there and push the branch. Never push
+to main or develop. Commit subjects read &quot;Art: &lt;outcome&gt;&quot;. Keep every picture your image tool
+returns, byte for byte, as raw/windmill-a0-r&lt;v&gt;-attempt-&lt;k&gt;.png (v is the view, 1 to 3, k from 1
+for each view) and record each call in prompts.json beside C17c&#x27;s: {view, attempt, file, prompt,
+references, returned (the size it came back), numbers (below), kept}. Never delete or overwrite a
+picture. Three views, at most three attempts each: nine calls in all.
+
+THE VIEWS. The tower is round, so a quarter turn changes only what stands on it: the windshaft
+stub and its dark hub plate, and the door. The stub turns with the building (lower left, upper
+left, upper right, lower right in r0 to r3). In r1 and r2 the front is away from the camera: the
+stub and the plate stand BEHIND the tower, there is no door and no window on either visible face,
+and the sail cross, which the game adds later, is seen from behind. The guides are drawn by the
+game&#x27;s own projection, canvas 1024 x 1024, 8 canvas px to a game px, anchor (the footprint&#x27;s
+centre at ground level) at (512, 832). The tower is the same in all four: foot ellipse centre
+(512, 800), semi-axes 171.97 and 85.98 (ratio 0.50), cone tip at (512, 420). What differs:
+
+  view  front is   plate centre (canvas)  hub from the anchor (game px)  stub leaves the cap
+  r1    upper left  (384, 432)            (-16, -50)                     up and to the left, behind
+  r2    upper right (640, 432)            ( 16, -50)                     up and to the right, behind
+  r3    lower right (640, 560)            ( 16, -34)                     down and to the right, in front
+
+The stub&#x27;s top edge runs at slope 0.5 (one pixel up or down for two across) in every view. Only r3
+has a door: on the lower-right face, centre (633.6, 817.6), 86.4 canvas px (10.8 game px, 2.1 m)
+high. For r0 the numbers are C17c&#x27;s: hub (-16, -34), door on the lower-left face.
+
+HOW TO GET THE GUIDES. They are on a branch that is not merged yet, and they are not to be
+committed to your art branch. From the repository root:
+  git fetch origin claude/art-guides-windmill-coaling
+(its head is 830d576b or later; if the guides are already on develop and in your tree, use those
+and skip the rest of this paragraph). Make a folder OUTSIDE the repository, say ../guides-0461,
+and for each file in
+assets/source/buildings-v2/guides/ named windmill-r1.png, windmill-r2.png, windmill-r3.png and
+windmill-r1-hub.json, windmill-r2-hub.json, windmill-r3-hub.json, write it out:
+  git show origin/claude/art-guides-windmill-coaling:assets/source/buildings-v2/guides/&lt;name&gt; &gt; ../guides-0461/&lt;name&gt;
+Do the same for assets/source/buildings-v2/GUIDE.md and docs/art-direction/building-production.md
+and read GUIDE.md section 2, the bullet of section 3 that names &quot;The windmill&#x27;s guides&quot;, and the
+bullet of the production document that begins &#x27;The windmill (`guideKind: &quot;windmill&quot;`)&#x27;. Never git
+add anything from ../guides-0461. Check that each guide is 1024 x 1024 (the hub files&#x27; &quot;canvas&quot;).
+The building queue does not handle the windmill: do not run tools/building-queue.mjs.
+
+REFERENCES (never attach more than these four, in this order; never an attempt of yours, never a
+.rejected file):
+(1) the guide of the view you paint, from ../guides-0461, the image to edit, every attempt;
+(2) docs/art-direction/images/03-theme-town-growth.png, the style board; (3)
+assets/source/base-v1/windmill.png, the windmill the game shows today: take its stone, slate and
+door, not its sails and not its pose; (4) assets/source/windmill-2026-10-17/windmill-a0-r0.png,
+C17c&#x27;s kept body, the same tower seen from the front: take its stone courses, its slate cap and its
+colours, nothing of its door, its window or its stub, which are on a different side of the
+building. Ask for 1024 x 1024, transparent background. Do not fix a returned picture by resizing,
+cropping, flipping, shearing or repainting it, and never build a view from another view&#x27;s pixels:
+each view is turned by its own camera, painted on its own guide.
+
+THE PROMPT, word for word, every attempt: the shared text, then the view&#x27;s paragraph, then the
+closing paragraph (then any Correction paragraphs below it).
+
+Shared text:
+&quot;Edit this grey block-out into ONE finished stone tower windmill WITHOUT SAILS, for a pastoral
+isometric railway game. Style: the attached style board; crisp clustered shading, broad readable
+masses, three or four shades per material. Materials as the third and fourth pictures: cream
+limestone courses with a few grey stones, a dark slate cone cap. Light from the upper left, and it
+does not turn with the building: the cap&#x27;s left side and the tower&#x27;s upper left lightest, the
+lower-left face mid-tone, the lower-right face darkest. Nothing brighter than a soft cream: no
+pure-white highlights, nothing orange.
+
+Camera: keep the block-out&#x27;s camera and turn exactly. Orthographic 2:1 isometric, 30 degrees
+down. The tower is round and smooth, no facets: its foot is an ellipse half as tall as it is
+wide, and every stone course curves like that foot (down in the middle of the face), not as a
+straight line. Keep the tower&#x27;s size, taper and place, and the cone cap&#x27;s height: the cone&#x27;s tip
+stands where the block-out&#x27;s does, with a plain tip, no finial, no ball. The windshaft: keep the
+block-out&#x27;s stub, a short round shaft of dark iron-banded timber coming out of the cap and
+ending in the block-out&#x27;s dark iron hub plate, the same oval at the same place and of the same
+size; the plate is bare, with nothing on it, and nothing hides its middle.&quot;
+
+View r3 paragraph:
+&quot;This is the view from the lower right. The stub comes out of the cap&#x27;s lower-right slope and
+points down and to the right along the lower-right face, one pixel down for two across, in front
+of the tower, and ends in the plate at the cap&#x27;s right edge. The dark door is on the LOWER-RIGHT
+face where the block-out has it, at ground level on the tower&#x27;s foot, as tall as the block-out&#x27;s
+door (about a quarter of the tower&#x27;s foot width): an evergreen plank door with iron straps and a
+plain stone frame, no step, no sack, nothing in front. One narrow window may sit above it on the
+same centre line.&quot;
+
+View r1 paragraph:
+&quot;This is the view from behind the windmill. The front is away from the camera: there is no door
+and no window on either visible face, only plain stone courses; the lower-left face is lighter than
+the lower-right. The windshaft stub stands BEHIND the tower: it comes out of the far side of the
+cap, its root hidden by the cap, and points up and to the left, one pixel up for two across, and
+ends in the plate above the cap&#x27;s left shoulder, in the open, not hidden by the cap.&quot;
+
+View r2 paragraph:
+&quot;This is the view from behind the windmill, turned a quarter further. The front is away from the
+camera: there is no door and no window on either visible face, only plain stone courses; the
+lower-left face is lighter than the lower-right. The windshaft stub stands BEHIND the tower: it
+comes out of the far side of the cap, its root hidden by the cap, and points up and to the right,
+one pixel up for two across, and ends in the plate above the cap&#x27;s right shoulder, in the open,
+not hidden by the cap.&quot;
+
+Closing paragraph:
+&quot;Do not paint the grey slab: the tower stands straight on the ground, its foot plain and clean. No
+sails, no stocks, no timber lattice, no square iron plate, no shadow, ground, grass, sacks, people,
+text, border or glow. A real RGBA PNG with a transparent background (alpha 0) and an opaque
+building. References: the first is the block-out to edit; the second the style board; the third
+the game&#x27;s present windmill, for stone, slate and door only (not its sails); the fourth the same
+tower seen from the front, for stone, slate and colours only: it has a door, a window and a
+stub on another side, which do not belong to this view.&quot;
+
+MEASURE EVERY PICTURE BEFORE YOU GO ON. C17c wrote check-body.mjs in this folder; give it the view
+(1, 2 or 3) and the table&#x27;s hub and stub direction for it, and have it print each number below
+with PASS or FAIL. Only the foot is read by machine:
+- camera: from tools/building-fit.mjs, roundCamera(png) (ratio, and degrees off), and from
+  tools/building-check.mjs, checkFile(path, &#x27;t1&#x27;, 0, { round: true }), which must list no
+  problem. Do not run it through the command line form: that writes
+  assets/source/buildings-v2/report.json, which is not yours. The foot columns are those whose
+  lowest pixel is within 0.4 of the building&#x27;s width of the lowest pixel of all; W is their span,
+  xc their middle, yc = lowest pixel - 0.25 W (the ellipse&#x27;s centre), s = W / 42.99 picture px per
+  game px.
+Everything else you read off a zoomed crop and pass to the script as coordinates. A picture passes
+when:
+- foot ellipse: minor over major 0.50 +-0.04, at most 2 degrees off (a picture 2 to 3 degrees
+  off that passes the rest is a near keeper: kept and reported; if the best attempt of the view is
+  still more than 3 degrees off, stop that view, do not paint it again);
+- the tower stands as the guide&#x27;s: xc within 12 px of 512 and yc within 12 px of 800 (scale these
+  by the returned width / 1024), and W within 3% of the W in hub.json of r0, so that the four views
+  are one windmill at one scale;
+- tower: (yc - the cone&#x27;s tip) / W within 5% of 1.105 (1.05 to 1.16). The tip is the cone&#x27;s own
+  point, read on the crop: in r1 and r2 the plate stands higher than the tip, so the topmost
+  opaque pixel is the plate, not the tip;
+- stub: two points on the top edge of the stub, one near the cap or its edge, one near the plate,
+  at least 40 px apart; the edge runs at slope 0.50 +-0.08 and in the view&#x27;s direction (up to the
+  left in r1, up to the right in r2, down to the right in r3);
+- hub: the plate&#x27;s centre, ((x - xc) / s, (y - yc) / s - 4), is within 2 game px of the view&#x27;s
+  hub: (-16, -50) in r1, (16, -50) in r2, (16, -34) in r3. The plate must be seen whole, as in the
+  guide; in r1 and r2 nothing of the cap covers its middle;
+- door: r3 only: its centre column is (x - xc) / W = +0.354 +-0.04; its height over W is 0.251
+  +-0.03 (a 2.5 m door reads 0.30). In r1 and r2: no door, no window, nothing dark and
+  door-shaped on the face;
+- clean: pixels with hue 8 to 48 degrees, saturation 0.45 or more and value 0.60 or less (the sail
+  timber; the stone&#x27;s own warmth is not counted) outside the door, the stub and the hub plate: at
+  most 25; opaque pixels (alpha above 128) with red, green and blue all at or above #ECE4D0: 0;
+  within 12 (RGB distance) of selection amber #E8AA48: 0. A picture whose only miss is the
+  near-white count is a keeper all the same: record the count, and Art caps those pixels when it
+  packs the sprite; name it in a Correction only while another test also failed;
+- by eye, on your own look at the zoomed picture: a round smooth tower, no sails or stocks or
+  lattice, no plinth, no finial, nothing standing at the foot, nothing orange, the lower-left face
+  lighter than the lower-right, the cap slate, and, in r1 and r2, the stub and plate behind the
+  tower with nothing in front of the tower where a door would be.
+
+A picture that fails: keep the prompt whole, add under it one paragraph beginning &quot;Correction:&quot;
+that names the number it missed, as &quot;your last r1 body&#x27;s plate stood at (-16, -41) where the
+block-out&#x27;s is (-16, -50)&quot;, and keep every earlier Correction paragraph of that view. Always edit
+the guide, never an attempt. At most three attempts a view. If none passes, keep the closest in
+raw/, copy it to the kept file all the same, mark it kept: false with the test it failed in
+prompts.json, and say so in your message: never accept it quietly.
+
+THE KEPT PICTURES. Copy each passing (or closest) raw file, byte for byte, to
+assets/source/windmill-2026-10-17/windmill-a0-r&lt;v&gt;.png and write hub-r&lt;v&gt;.json beside it: {view,
+picture, size, box [left, top, right, bottom of the pixels above alpha 128], footCentre [xc, yc],
+footWidth W, hub [x, y] of the plate&#x27;s centre as you read it, hubFromAnchorWorld [dx, dy] in game
+px as the hub test computes it, hubTarget (the table&#x27;s), stubSlope, door [left, top, right,
+bottom] (r3; null in r1 and r2), apexTip (the cone tip&#x27;s y), numbers (every test&#x27;s value)}. Leave
+r0&#x27;s hub.json and picture alone. Commit &quot;Art: windmill body without sails, r3, r1 and r2 in the
+game&#x27;s camera&quot;, push the branch and stop. In your message give, for each attempt of each view: the
+returned size, the foot ratio and degrees, the tip over W, W against r0&#x27;s, the stub slope, the hub
+offset from the view&#x27;s hub, for r3 the door&#x27;s position and height numbers, the three pixel
+counts, and which attempt was kept; and the paths of the three hub files. Do not paste pictures.</pre>
+</section>
 <section class="card" id="r7c1">
   <header><span class="cid">R7c-1</span><h2>People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)</h2><button class="copy" type="button" data-for="p-r7c1">Copy prompt</button></header>
   <p class="note"><b>People lane. Branch art/331-people (exists, head 8005c80 or later).</b> Issue #331. The author chose to repaint whole figures, not only legs. Earlier rounds failed because Codex copies the legs of any painting attached to it, so each pose is now an edit of Art&#x27;s grey pose mannequin (on develop, assets/source/people-v3-guides/, PR #491: the game&#x27;s camera and gait, turned 45 degrees), with only the lumberjack&#x27;s upper body attached for his look. The lumberjack keeps his axe on his shoulder. Every pose is measured: height, soles, the planted foot&#x27;s slide, the turn, and that P1 and P3 differ. If this trial passes, R7c-2 onward repaint the other back strips and the limping front strips the same way.</p>
@@ -377,12 +734,6 @@ PROCEDURE. Paint P1, P2, P3, P4 in that order, one call each, then measure. A pi
 IF ALL FOUR PASS. Assemble the strip with a copy of the branch&#x27;s tool: copy assemble-strips.mjs to v3/assemble-v3.mjs and change it so that it reads the four kept pictures from v3/prompts.json, divides by 960 where it divided by 1152 (one uniform scale, 360 / 960 = 0.375), puts each frame&#x27;s guide groundPoint (the exact anchor, not the measured sole row) on the column&#x27;s anchor (centre column, row 480), keeps its rule for the column width (192, 256 or 320), and writes v3/strips/lumberjack-back-walk.png and its 9 px, 9 px at 6x and 36 px sheets in v3/checks/; it must not back up, overwrite or read anything outside v3/. Then look, and say in the report what you see, at: the 50% overlay of P1 over P3 (thighs crossing in an X); the 9 px and 36 px strips (the leading leg changes between frames 0 and 2; frames 1 and 3 lift opposite feet; the figure reads as a walk, not as sliding); and whether the four frames show one man (cap, shirt, trousers, boots). Commit (&quot;Art: lumberjack-back-walk repainted whole on the pose guides&quot;) and push the branch. If a pose failed, still commit the raw pictures, prompts.json and the tool as &quot;Art: R7c-1 trial attempts recorded&quot;, and push.
 
 REPORT. The branch head, then for every attempt: pose, attempt, the numbers of tests 1 to 7, pass or fail, and which attempt is kept; the calls used of twelve; the paths of the strip, the checks and the overlay; the by-eye findings; and anything in this prompt you could not do as written. Paths only for pictures; do not paste images or base64.</pre>
-</section>
-<section class="card" id="coming">
-  <header><h2>Coming next (not pasteable yet)</h2></header>
-  <ul>
-    <li><b>Coaling stage r1 and r3</b>, issue #325: C4d failed again (Codex paints the stage wider than its plinth). The next step waits for the author&#x27;s answer on the board card &quot;Coaling stage turned views&quot;: Art builds them from r0, or another Codex round on a new guide.</li>
-  </ul>
 </section>
 </div>
 <script>

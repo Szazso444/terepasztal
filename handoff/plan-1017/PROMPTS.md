@@ -91,8 +91,9 @@ Paste order (lanes run in parallel; inside a lane one at a time, each after the 
   - registration: the body's own box recorded in `hub.json` format (box, hub, hubFromAnchorWorld) by `register-body` for Art's packing.
 - **Waits for:** A1 part B (the windmill block-out and hub JSON). Then Art packs the body by its hub box and the cross as a square
   (`structures/windmill` and `_lv2`..`_lv4`; `structures/windmill_sails`), Rendering turns it (W10 in ISSUES.md).
-- **Decision for the main session:** the sails step (see above) and Q5 (only rotation 0 is repainted; r1 to r3 keep today's static
-  pictures until a later C17d).
+- **Decision (author, 2026-10-18):** all four views are painted, not only rotation 0 (Q5 is answered). C17c paints r0; C17d, written
+  and on the Codex prompts page after C17c in the buildings lane, paints r3, r1 and r2 on their own guides, so r1 to r3 no longer keep today's
+  static pictures. The sails step (see above) is still open.
 
 ---
 
