@@ -200,7 +200,7 @@ Generic extra chimneys are not sufficient to distinguish every works upgrade.
 | Stone Grinder                           | Broad crushing rollers/jaws, hopper, pale aggregate.           | Additional conveyor/covered sorting unit; no mine headframe.                                        |
 | Oil Refinery                            | Tank, compact distillation column and connected pipes.         | More structured pipe racks and processing units.                                                    |
 | Power Plant                             | Boiler/turbine hall, one clear stack, electrical yard.         | Larger hall and cleaner, better organised electrical equipment.                                     |
-| Substation                              | Transformer block and ceramic insulators in a low fenced yard. | Additional transformer/insulator assemblies.                                                        |
+| Battery                                 | Transformer block and ceramic insulators in a low fenced yard. | Additional transformer/insulator assemblies.                                                        |
 | Hydro Plant                             | Water intake and turbine house with visible outflow cue.       | Better intake gate and larger turbine housing; preserve shore placement rules.                      |
 | Colliery                                | Dark coal bins, headframe or sorting tower.                    | Covered screens and improved loading plant.                                                         |
 | Ironworks                               | Furnace mass, muted warm opening and ingot staging.            | Larger furnace enclosure and organised handling bays.                                               |

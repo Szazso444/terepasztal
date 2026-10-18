@@ -73,10 +73,14 @@
       }
     },
     "perWeek": 20,
+    "span": {
+      "w": 2,
+      "h": 1
+    },
     "doors": [
       {
         "kind": "street",
-        "tile": [0, 0],
+        "tile": [1, 0],
         "side": "S"
       }
     ]
@@ -104,10 +108,14 @@
       }
     },
     "perWeek": 15,
+    "span": {
+      "w": 2,
+      "h": 2
+    },
     "doors": [
       {
         "kind": "street",
-        "tile": [0, 0],
+        "tile": [0, 1],
         "side": "S"
       }
     ]
@@ -140,17 +148,21 @@
     },
     "power": true,
     "perWeek": 60,
+    "span": {
+      "w": 3,
+      "h": 2
+    },
     "doors": [
       {
         "kind": "street",
-        "tile": [0, 0],
+        "tile": [1, 1],
         "side": "S"
       }
     ]
   },
   {
     "id": "substation",
-    "name": "Substation",
+    "name": "Battery",
     "flavor": "Taps the pole grid and feeds the wires within six tiles. Too many trains under one and they all slow together.",
     "cost": {
       "iron": 24,
@@ -168,10 +180,14 @@
       "throughput": 3
     },
     "perWeek": 0,
+    "span": {
+      "w": 2,
+      "h": 2
+    },
     "doors": [
       {
         "kind": "street",
-        "tile": [0, 0],
+        "tile": [0, 1],
         "side": "S"
       }
     ]

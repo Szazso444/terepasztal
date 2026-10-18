@@ -65,7 +65,7 @@ export const STR = {
       depots: 'Depots',
       population: 'Residents',
       earned: 'Earned in total',
-      substations: 'Powered substations',
+      substations: 'Powered batteries',
       wires: 'Live electrified tiles',
       chunks: 'Owned chunks',
     } as Record<string, string>,
@@ -510,8 +510,7 @@ export const STR = {
       hv_catenary:
         'Heavier masts and wire for high-speed pantographs. Standard electrics cannot draw from it unless multi-system. Drag along track.',
     } as Record<string, string>,
-    placeSupply:
-      'On track within six tiles of a powered substation to be live. R does nothing here.',
+    placeSupply: 'On track within six tiles of a powered battery to be live. R does nothing here.',
   },
   building: {
     title: (name: string, level: number) => `${name} · Level ${level}`,

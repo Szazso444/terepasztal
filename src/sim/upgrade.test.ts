@@ -350,7 +350,7 @@ describe('a building being upgraded', () => {
     w.stock.add('wheat', 100);
     const mill = works(w, 'windmill', 4, 10);
     const plant = works(w, 'power_plant', 10, 10);
-    const sub = works(w, 'substation', 11, 10);
+    const sub = works(w, 'substation', 14, 10);
     line(w, 6, 12, 16);
     freely(w, () => w.builder.placeSupply(11, 12, 'catenary'));
     expect(w.catenary.isLive(11, 12)).toBe(true);

@@ -20,6 +20,7 @@ import {
 } from './buildings';
 import { MIGRATIONS, SAVE_VERSION, migrate, readSaveText, type SaveGame } from './save';
 import { decorDef } from './build';
+import { placeSpan } from './doors';
 import { rules, DEFAULT_RULES } from './rules';
 import type { LevelStation } from '../world/level';
 import { Terrain } from '../world/tiles';
@@ -490,6 +491,10 @@ interface Trial {
 
 function genTrial(rng: Rng): Trial {
   const tile = () => rng.int(0, SIDE - 1);
+  // a works of one tile stands the same at any turn; one with a span only at a half turn on
+  const worksDef = rng.pick(BUILDING_DEFS);
+  const worksRot = rng.int(-5, 8);
+  const { w: sw, h: sh } = placeSpan(worksDef);
   const lines = Array.from({ length: rng.int(0, 4) }, () => [tile(), tile(), tile()]);
   const def = rng.pick(STATION_DEFS);
   // mostly beside a line, where a station that needs track can stand (a two-tile shed clear of
@@ -516,11 +521,11 @@ function genTrial(rng: Rng): Trial {
     rot: rng.int(-5, 8),
     halfTurns: rng.pick([-2, -1, 1, 2]),
     works: {
-      defId: rng.pick(BUILDING_DEFS).id,
+      defId: worksDef.id,
       x: tile(),
       y: tile(),
-      rot: rng.int(-5, 8),
-      other: rng.int(-5, 8),
+      rot: worksRot,
+      other: sw === 1 && sh === 1 ? rng.int(-5, 8) : worksRot + 2 * rng.pick([-2, -1, 1, 2]),
     },
   };
 }
@@ -601,7 +606,8 @@ describe('in any small world', () => {
         }
         expect(occupancy(b), 'every tile held as in the twin').toEqual(occupancy(a));
 
-        // a works stands on its one tile at any turn, and keeps the turn it was given
+        // a works stands as it was checked at a half turn on, and at any turn if it has one tile,
+        // and keeps the turn it was given
         const k = t.works;
         expect(a.builder.checkBuilding(k.x, k.y, k.defId, k.other), 'works check').toEqual(
           a.builder.checkBuilding(k.x, k.y, k.defId, k.rot),

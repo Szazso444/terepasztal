@@ -82,9 +82,13 @@ function bare(side: number, seed = 7) {
 
 const isStation = (def: PlaceDef): def is StationDef => 'accepts' in def;
 
+/** A span turned to `rot`: width and depth swapped on the odd rotations. */
+const turned = (s: { w: number; h: number }, rot: number) =>
+  Math.abs(rot) % 2 === 1 ? { w: s.h, h: s.w } : s;
+
 /** The tiles a place of `def` covers with its corner at (x, y), turned to `rot`. */
 function footprint(def: PlaceDef, x: number, y: number, rot: number) {
-  const { w, h } = isStation(def) ? stationSpan(def, rot) : { w: 1, h: 1 };
+  const { w, h } = isStation(def) ? stationSpan(def, rot) : turned(placeSpan(def), rot);
   const out: { x: number; y: number }[] = [];
   for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out.push({ x: x + dx, y: y + dy });
   return out;
@@ -359,7 +363,7 @@ describe('the content check of doors', () => {
     expect(spanProblems(span21)).toEqual([]);
     expect(spanProblems(span12)).toEqual([]);
     expect(spanProblems(base)).toEqual([]);
-    for (const span of [{ w: 2, h: 2 }, { w: 3, h: 1 }, { w: 0.5, h: 1 }, { w: 1 }, 'x'])
+    for (const span of [{ w: 4, h: 1 }, { w: 1, h: 4 }, { w: 0.5, h: 1 }, { w: 1 }, 'x'])
       expect(
         spanProblems({ ...base, span } as unknown as StationDef).join('; '),
         JSON.stringify(span),
@@ -672,23 +676,24 @@ describe('walkers and the street door', () => {
 // ------------------------------------------------------------------ the footprint, read apart
 
 describe('the footprint a door is checked against', () => {
-  it('is the span a station always had, a long one 2 x 1 and any other its size square, and one tile for a works or a decor, turned on the odd rotations', () => {
+  it('is the span a def declares, else what a station always had, a long one 2 x 1 and any other its size square, and one tile for a works or a decor, turned on the odd rotations', () => {
     // read apart from placeSpan and stationSpan, which now share it: what stationSpan returned
     // before doors, for every rotation a caller may pass
     const literal = (def: PlaceDef, rot: number) => {
       const odd = Math.abs(rot) % 2 === 1;
-      if (!isStation(def)) return { w: 1, h: 1 };
-      // a span comes first, then `long`, then the `size` square
-      const sp = def.span;
+      // a span comes first (a station's or a works'), then `long`, then the `size` square
+      const sp = 'span' in def ? def.span : undefined;
       if (
         sp &&
         sp.w >= 1 &&
         sp.h >= 1 &&
         Number.isInteger(sp.w) &&
         Number.isInteger(sp.h) &&
-        sp.w * sp.h <= 2
+        sp.w <= 3 &&
+        sp.h <= 3
       )
         return odd ? { w: sp.h, h: sp.w } : { w: sp.w, h: sp.h };
+      if (!isStation(def)) return { w: 1, h: 1 };
       if (def.long) return odd ? { w: 1, h: 2 } : { w: 2, h: 1 };
       const n = def.size ?? 1;
       return { w: n, h: n };
@@ -705,7 +710,7 @@ describe('the footprint a door is checked against', () => {
       { ...plain, id: 'span before long', span: { w: 1, h: 2 }, long: true },
       { ...plain, id: 'span before size', span: { w: 2, h: 1 }, size: 3 },
       // a span the content check refuses is not read: the footprint the def had
-      { ...plain, id: 'span too big', span: { w: 2, h: 2 }, size: 3 },
+      { ...plain, id: 'span too big', span: { w: 4, h: 1 }, size: 3 },
       { ...plain, id: 'span odd', span: { w: 1.5, h: 1 }, long: true },
     ];
     for (const def of defs) {

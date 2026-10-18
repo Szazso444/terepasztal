@@ -192,11 +192,14 @@ describe('the content check of a span', () => {
       { w: 1, h: 1 },
       { w: 2, h: 1 },
       { w: 1, h: 2 },
+      { w: 2, h: 2 },
+      { w: 3, h: 2 },
+      { w: 3, h: 3 },
     ])
       expect(of(span), JSON.stringify(span)).toEqual([]);
     for (const span of [
-      { w: 2, h: 2 },
-      { w: 3, h: 1 },
+      { w: 4, h: 1 },
+      { w: 1, h: 4 },
       { w: 1.5, h: 1 },
       { w: 0, h: 1 },
       { w: -1, h: 2 },

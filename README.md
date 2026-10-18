@@ -104,7 +104,7 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 - **Crafting**: unlock a recipe with money (three cards, keep one), craft copies with iron, wood,
   stone and coal; failure chance grows with quality. Unlimited copies; spares level a model.
 - **Electrification**: third rail, catenary and HV catenary over track, live within reach of a
-  substation on a powered pole grid; substations have a throughput the trains under them share.
+  battery on a powered pole grid; batteries have a throughput the trains under them share.
 - **Towns grow**: townhouses build in stages, hold 10 / 25 / 50 residents by level, fill slowly
   while fed and spawn near track and other houses as traffic grows.
 - **Semaphores**: home and distant arms on a post, animated between danger, caution and clear.

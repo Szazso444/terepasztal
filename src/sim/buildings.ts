@@ -4,6 +4,7 @@ import { rules, weekSeconds } from './rules';
 import { MAX_LEVEL, levelCap } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
+import { placeSpan } from './doors';
 import type { LevelBuilding } from '../world/level';
 
 export type { BuildingDef };
@@ -13,10 +14,78 @@ export function buildingDef(id: string): BuildingDef {
   if (!d) throw new Error(`unknown building ${id}`);
   return d;
 }
+/**
+ * Width (along x) and depth (along y) of a works turned to `rot`: its span at rotation 0
+ * (`placeSpan`), swapped on the other axis, so `rot` and `rot + 2` give the same span.
+ */
+export function buildingSpan(def: BuildingDef, rot: number): { w: number; h: number } {
+  const { w, h } = placeSpan(def);
+  return wrapRotation(rot) % 2 === 0 ? { w, h } : { w: h, h: w };
+}
+/** The tiles a works of this kind covers with its corner at (x, y), turned to `rot`. */
+export function buildingFootprint(defId: string, x: number, y: number, rot: number) {
+  const { w, h } = buildingSpan(buildingDef(defId), rot);
+  const out: { x: number; y: number }[] = [];
+  for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) out.push({ x: x + dx, y: y + dy });
+  return out;
+}
+
+/**
+ * The works of a map keyed by their corner tile (`y * w + x`), which is all a save holds, and also
+ * indexed by every tile of their footprint, so `at` finds a works from any tile it covers. Setting
+ * or deleting an entry keeps the index, whoever does it. A footprint tile off the map is not
+ * indexed (a repaired old save may hold one).
+ */
+export class BuildingMap extends Map<number, Building> {
+  private readonly cover = new Map<number, Building>();
+  constructor(
+    private readonly w: number,
+    private readonly h: number,
+  ) {
+    super();
+  }
+  private tiles(b: Building) {
+    // a works of a kind the content no longer has covers its corner tile alone
+    const all = BUILDING_DEFS.some((d) => d.id === b.id)
+      ? buildingFootprint(b.id, b.x, b.y, b.rot ?? 0)
+      : [{ x: b.x, y: b.y }];
+    return all.filter((t) => this.inside(t.x, t.y));
+  }
+  private inside(x: number, y: number) {
+    return x >= 0 && y >= 0 && x < this.w && y < this.h;
+  }
+  private uncover(b: Building) {
+    for (const t of this.tiles(b)) {
+      const k = t.y * this.w + t.x;
+      if (this.cover.get(k) === b) this.cover.delete(k);
+    }
+  }
+  override set(key: number, b: Building) {
+    const old = this.get(key);
+    if (old) this.uncover(old);
+    super.set(key, b);
+    for (const t of this.tiles(b)) this.cover.set(t.y * this.w + t.x, b);
+    return this;
+  }
+  override delete(key: number) {
+    const old = this.get(key);
+    if (old) this.uncover(old);
+    return super.delete(key);
+  }
+  override clear() {
+    super.clear();
+    this.cover.clear();
+  }
+  /** The works that covers (x, y), whichever of its tiles that is. */
+  at(x: number, y: number): Building | undefined {
+    return this.inside(x, y) ? this.cover.get(y * this.w + x) : undefined;
+  }
+}
 
 /** A placed processing building. */
 export interface Building {
   id: string;
+  /** the footprint's corner, its lowest x and y (`buildingFootprint`); a save keeps only this */
   x: number;
   y: number;
   /** fraction of a batch accumulated */
@@ -24,9 +93,10 @@ export interface Building {
   /** Player-paid upgrade, 1..`worksMaxLevel`. Older saves default to 1. */
   level?: number;
   /**
-   * The rotation it was placed in, 0 to 3 (`BUILDING_ROTATIONS`). A works covers its one tile at
-   * every rotation, so nothing it does depends on it. A level file keeps it too (`buildingToLevel`);
-   * missing (a works built without one, or one in a level file older than that) means 0.
+   * The rotation it was placed in, 0 to 3 (`BUILDING_ROTATIONS`). It turns the footprint of a
+   * works with a `span` (`buildingFootprint`) and its doors. A level file keeps it too
+   * (`buildingToLevel`); missing (a works built without one, or one in a level file older than
+   * that) means 0.
    */
   rot?: number;
   /** running in the last tick */

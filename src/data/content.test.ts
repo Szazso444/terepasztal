@@ -128,8 +128,13 @@ const PAST = {
   },
   buildings: () => {
     const list = clone(shipped.DEFAULT_CONTENT.buildings);
-    // before works had doors (#406)
-    for (const b of list) delete b.doors;
+    // before works had doors (#406), and before they could cover more than a tile (#525)
+    for (const b of list) {
+      delete b.doors;
+      delete b.span;
+    }
+    // the Battery was the Substation
+    list.find((b) => b.id === 'substation')!.name = 'Substation';
     delete list.find((b) => b.id === 'kiln')!.lastTier;
     list.find((b) => b.id === 'windmill')!.flavor =
       'Mills wheat into food. One wheat makes 5 food, then 7, 9 and 11 with upgrades.';

@@ -2,18 +2,30 @@ import type { GameMap } from '../world/tiles';
 import type { Decor } from './build';
 import type { Building } from './buildings';
 import { decorDef } from './build';
-import { buildingDef } from './buildings';
+import { buildingDef, buildingSpan } from './buildings';
 
 /**
  * Electric network. Poles (power-line decor) and power plants are nodes; nodes within two tiles of
  * each other connect. A component with at least one plant is live, and every tile within one tile of
  * a live node is powered. Rebuilt whenever decor or buildings change. A plant or substation being
- * upgraded is closed and is no node at all.
+ * upgraded is closed and is no node at all. A node of more than one tile (a plant, a battery) is
+ * its whole footprint: nodes connect when the gap between their footprints is two tiles at most,
+ * and the tiles within one tile of the footprint are powered.
  */
 export interface PowerNode {
+  /** the corner of its footprint */
   x: number;
   y: number;
   plant: boolean;
+  /** tiles along x and y (missing: one each) */
+  w?: number;
+  h?: number;
+}
+/** Chebyshev gap between two nodes' footprints: 0 where they touch, 1 beside each other. */
+function gap(a: PowerNode, b: PowerNode) {
+  const dx = Math.max(0, a.x - (b.x + (b.w ?? 1) - 1), b.x - (a.x + (a.w ?? 1) - 1));
+  const dy = Math.max(0, a.y - (b.y + (b.h ?? 1) - 1), b.y - (a.y + (a.h ?? 1) - 1));
+  return Math.max(dx, dy);
 }
 export interface PowerEdge {
   a: PowerNode;
@@ -37,23 +49,24 @@ export class PowerGrid {
 
   rebuild(decor: Iterable<Decor>, buildings: Iterable<Building>) {
     this.powered.fill(0);
-    const nodes: { x: number; y: number; plant: boolean }[] = [];
+    const nodes: PowerNode[] = [];
     for (const d of decor) if (decorDef(d.id).power) nodes.push({ x: d.x, y: d.y, plant: false });
     for (const b of buildings) {
       if (b.work) continue;
       const def = buildingDef(b.id);
-      if (def.power) nodes.push({ x: b.x, y: b.y, plant: true });
-      else if (def.substation) nodes.push({ x: b.x, y: b.y, plant: false });
+      const { w, h } = buildingSpan(def, b.rot ?? 0);
+      if (def.power) nodes.push({ x: b.x, y: b.y, plant: true, w, h });
+      else if (def.substation) nodes.push({ x: b.x, y: b.y, plant: false, w, h });
     }
     this.poles = nodes.filter((n) => !n.plant).length;
     this.plants = nodes.filter((n) => n.plant).length;
-    // union-find over nodes within Chebyshev distance 2
+    // union-find over nodes within Chebyshev distance 2 of one another's footprints
     const parent = nodes.map((_, i) => i);
     const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
     const pairs: [number, number][] = [];
     for (let i = 0; i < nodes.length; i++)
       for (let j = i + 1; j < nodes.length; j++) {
-        if (Math.max(Math.abs(nodes[i].x - nodes[j].x), Math.abs(nodes[i].y - nodes[j].y)) <= 2) {
+        if (gap(nodes[i], nodes[j]) <= 2) {
           parent[find(i)] = find(j);
           pairs.push([i, j]);
         }
@@ -65,8 +78,8 @@ export class PowerGrid {
     this.edgeList = pairs.map(([i, j]) => ({ a: nodes[i], b: nodes[j], live: live.has(find(i)) }));
     nodes.forEach((n, i) => {
       if (!live.has(find(i))) return;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= (n.h ?? 1); dy++)
+        for (let dx = -1; dx <= (n.w ?? 1); dx++) {
           const x = n.x + dx;
           const y = n.y + dy;
           if (x < 0 || y < 0 || x >= this.map.w || y >= this.map.h) continue;
