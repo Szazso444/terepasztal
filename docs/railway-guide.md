@@ -126,6 +126,9 @@ track on them. Straight rails on consecutive platforms of the same material join
 into timber trusses or masonry arches with supports. Regular and high-speed rails can both
 use a platform; normal class transitions are still required where classes meet.
 
+A platform that carries no rail can carry a road instead, and townsfolk walk over a road bridge,
+keeping to the road along the deck. They never walk on a bare platform or on one with rails.
+
 | Platform      | Base material cost | Capacity | Half speed above |
 | ------------- | ------------------ | -------- | ---------------- |
 | Wooden Bridge | 24 wood            | 180 t    | 144 t            |

@@ -8,6 +8,8 @@ import type { RoadTiles } from './roads';
 import { streetDoor, type Door } from './doors';
 import { Rng } from '../engine/rng';
 import { DIR_DX, DIR_DY } from '../engine/iso';
+import type { RoadDecks } from './bridges';
+import { roadDecks } from './bridges';
 
 /**
  * What a walker does for a living, which follows from where it lives. The ids are what the art
@@ -247,11 +249,24 @@ export interface PeopleJSON {
 /**
  * Ground a walker may step on. A list of its own, which today leaves out the terrains where
  * nothing can be built (`unbuildable` in build.ts); a change to that helper does not reach it.
+ * Water is walkable only where `decks` has a road deck on it (#502): a bridge platform that carries
+ * a road and no rail. A bare platform, one with rail, and water with none stay off the way; with no
+ * `decks`, all water does, as before there were road bridges.
  */
-export function walkable(map: GameMap, x: number, y: number) {
+export function walkable(map: GameMap, x: number, y: number, decks?: RoadDecks | null) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
   const t = map.terrain[y * map.w + x];
-  return t !== Terrain.Water && t !== Terrain.Rock && t !== Terrain.Mountain;
+  if (t === Terrain.Water) return !!decks && decks.axis(x, y) !== null;
+  return t !== Terrain.Rock && t !== Terrain.Mountain;
+}
+
+/**
+ * A step of (dx, dy) on or off a road deck of `axis` (`RoadDecks.axis`) goes along the deck, one
+ * tile straight: east or west on a deck that runs east to west (1), north or south on one that
+ * runs north to south (0), never sideways off it nor diagonally. Off any deck (null) every step is.
+ */
+function alongDeck(axis: 0 | 1 | null, dx: number, dy: number) {
+  return axis === null || (axis ? dy === 0 : dx === 0);
 }
 
 /**
@@ -327,6 +342,14 @@ class WalkQueue {
   }
 }
 
+/** The tiles a walk search may step on: x0 to x1 and y0 to y1, both ends in. */
+interface WalkBox {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
 /**
  * The cheapest walk between two tiles over walkable ground, in 8 directions, inside the box the two
  * ends span and WALK_MARGIN tiles round it; null when there is none. A step along a road costs 1
@@ -338,6 +361,14 @@ class WalkQueue {
  * found to a tile is kept unless a lighter one comes: with no road it is the breadth-first walk it
  * has always been, step for step. A walk never steps on a tile `avoid` names, `to` among them; it
  * may set out from one.
+ *
+ * A walk crosses a road bridge where `decks` gives one (#502): it steps on a road deck over water
+ * (`walkable`), and onto, along and off any road deck, over land too, only one tile straight along
+ * the deck's axis (`alongDeck`). Where no walk is found in the box and a road deck lies in it, the
+ * search is made once more in a box wider along each axis a deck there runs on, on both sides, by
+ * the longest such span (`RoadDecks.length`) and WALK_MARGIN, so a walk that takes a bridge
+ * reaching out of the box finds the far bank. With no road deck in the box, a walk is what it was
+ * before there were road bridges, step for step.
  */
 export function findWalk(
   map: GameMap,
@@ -345,12 +376,56 @@ export function findWalk(
   to: { x: number; y: number },
   roads?: RoadTiles | null,
   avoid?: ((x: number, y: number) => boolean) | null,
+  decks?: RoadDecks | null,
 ): { x: number; y: number }[] | null {
-  const margin = WALK_MARGIN;
-  const x0 = Math.max(0, Math.min(from.x, to.x) - margin);
-  const y0 = Math.max(0, Math.min(from.y, to.y) - margin);
-  const x1 = Math.min(map.w - 1, Math.max(from.x, to.x) + margin);
-  const y1 = Math.min(map.h - 1, Math.max(from.y, to.y) + margin);
+  const box = {
+    x0: Math.max(0, Math.min(from.x, to.x) - WALK_MARGIN),
+    y0: Math.max(0, Math.min(from.y, to.y) - WALK_MARGIN),
+    x1: Math.min(map.w - 1, Math.max(from.x, to.x) + WALK_MARGIN),
+    y1: Math.min(map.h - 1, Math.max(from.y, to.y) + WALK_MARGIN),
+  };
+  const walk = searchWalk(map, from, to, box, roads, avoid, decks);
+  if (walk || !decks) return walk;
+  const wide = widened(map, box, decks);
+  return wide ? searchWalk(map, from, to, wide, roads, avoid, decks) : null;
+}
+
+/**
+ * The box a walk search that found nothing in `box` tries once more (`findWalk`): wider by the
+ * longest span of a road deck in it and WALK_MARGIN, on both sides, east and west for a deck that
+ * runs east to west, north and south for one that runs north to south, inside the map. Null where
+ * no road deck lies in `box`, or the map leaves no room to widen it.
+ */
+function widened(map: GameMap, box: WalkBox, decks: RoadDecks): WalkBox | null {
+  // the longest span on each axis: [north to south, east to west]
+  const longest = [0, 0];
+  for (let y = box.y0; y <= box.y1; y++)
+    for (let x = box.x0; x <= box.x1; x++) {
+      const axis = decks.axis(x, y);
+      if (axis !== null) longest[axis] = Math.max(longest[axis], decks.length(x, y));
+    }
+  const ox = longest[1] && longest[1] + WALK_MARGIN;
+  const oy = longest[0] && longest[0] + WALK_MARGIN;
+  const wide = {
+    x0: Math.max(0, box.x0 - ox),
+    y0: Math.max(0, box.y0 - oy),
+    x1: Math.min(map.w - 1, box.x1 + ox),
+    y1: Math.min(map.h - 1, box.y1 + oy),
+  };
+  const same = wide.x0 === box.x0 && wide.y0 === box.y0 && wide.x1 === box.x1 && wide.y1 === box.y1;
+  return same ? null : wide;
+}
+
+/** `findWalk`'s search inside `box`. */
+function searchWalk(
+  map: GameMap,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  { x0, y0, x1, y1 }: WalkBox,
+  roads: RoadTiles | null | undefined,
+  avoid: ((x: number, y: number) => boolean) | null | undefined,
+  decks: RoadDecks | null | undefined,
+): { x: number; y: number }[] | null {
   const W = x1 - x0 + 1;
   const H = y1 - y0 + 1;
   // A walk's weight is its cost in units of more than any walk in the box has steps, plus its
@@ -374,9 +449,12 @@ export function findWalk(
     if (k === tk) break;
     const cx = (k % W) + x0;
     const cy = Math.floor(k / W) + y0;
+    // the deck the walker stands on, which it leaves only along its axis
+    const here = decks ? decks.axis(cx, cy) : null;
     for (let dy = -1; dy <= 1; dy++)
       for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
+        if (!alongDeck(here, dx, dy)) continue;
         const nx = cx + dx;
         const ny = cy + dy;
         if (nx < x0 || ny < y0 || nx > x1 || ny > y1) continue;
@@ -384,7 +462,8 @@ export function findWalk(
         const next =
           w + (roadStep(roads, { x: cx, y: cy }, { x: nx, y: ny }) ? alongRoad : offRoad);
         if (next >= weight[nk]) continue;
-        if (!walkable(map, nx, ny) && !(nx === to.x && ny === to.y)) continue;
+        if (!walkable(map, nx, ny, decks) && !(nx === to.x && ny === to.y)) continue;
+        if (decks && !alongDeck(decks.axis(nx, ny), dx, dy)) continue;
         if (avoid?.(nx, ny)) continue;
         prev[nk] = k;
         weight[nk] = next;
@@ -442,12 +521,15 @@ export class PeopleSim {
     pump: Terrain.Water,
   };
   /** Without `rng` the walkers draw from a stream seeded by the map. */
+  /** The road bridges a walk may cross (`findWalk`), as the builder has them at each step. */
+  private readonly decks: RoadDecks;
   constructor(
     readonly map: GameMap,
     private readonly builder: Builder,
     rng?: Rng,
   ) {
     this.rng = rng ?? new Rng(map.seed ^ PEOPLE_SEED);
+    this.decks = roadDecks(builder);
   }
   private rnd() {
     return this.rng.next();
@@ -557,7 +639,7 @@ export class PeopleSim {
   private spawnTransient(st: Station, plat: { x: number; y: number }, boarding: boolean) {
     const from = boarding ? st : plat;
     const to = boarding ? plat : st;
-    const path = findWalk(this.map, from, to, this.builder.roads) ?? [from, to];
+    const path = findWalk(this.map, from, to, this.builder.roads, null, this.decks) ?? [from, to];
     const at = {
       x: from.x + (this.rnd() - 0.5) * 0.4,
       y: from.y + (this.rnd() - 0.5) * 0.4,
@@ -622,7 +704,7 @@ export class PeopleSim {
     state: PersonState,
     there = false,
   ) {
-    const path = findWalk(this.map, from, to, this.builder.roads);
+    const path = findWalk(this.map, from, to, this.builder.roads, null, this.decks);
     if (!path || path.length < (there ? 1 : 2)) return false;
     p.path = path;
     p.step = 0;
@@ -695,6 +777,8 @@ export class PeopleSim {
           { x: Math.round(p.x), y: Math.round(p.y) },
           this.doorstepOf(home.door),
           this.builder.roads,
+          null,
+          this.decks,
         );
         if (back && back.length >= 2) {
           p.path = back;
@@ -841,6 +925,8 @@ export class PeopleSim {
       { x: Math.round(p.x), y: Math.round(p.y) },
       this.doorstepOf(home.door),
       this.builder.roads,
+      null,
+      this.decks,
     );
     if (!back || back.length < (there ? 1 : 2)) return false;
     p.path = back;
@@ -967,7 +1053,7 @@ export class PeopleSim {
       x: Math.round(p.x - ((next.x - p.x) / len) * EDGE_EPS),
       y: Math.round(p.y - ((next.y - p.y) / len) * EDGE_EPS),
     };
-    const walk = findWalk(this.map, back, end, this.builder.roads, avoid);
+    const walk = findWalk(this.map, back, end, this.builder.roads, avoid, this.decks);
     if (!walk) return false;
     const path =
       walk.length > 1 && clearAhead(p, walk[1], avoid) === Infinity ? walk : [back, ...walk];
