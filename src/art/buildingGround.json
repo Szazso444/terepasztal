@@ -1,16 +1,1074 @@
 {
   "version": 1,
   "frames": {
+    "structures/big_farm_1": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [16.47, -8.74],
+        [32.15, -3.1],
+        [-12.67, 12.14],
+        [-28.35, 6.5]
+      ],
+      "fit": "walls",
+      "baked": 3,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-28.35, 6.5],
+          [-12.67, 12.14]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_1_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [3.02, -12.08],
+        [14, -6.58],
+        [0.98, -0.08],
+        [-10, -5.57]
+      ],
+      "fit": "walls",
+      "baked": 233,
+      "front": {
+        "side": "W",
+        "edge": [
+          [3.02, -12.08],
+          [-10, -5.57]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_1_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [-3.02, -12.08],
+        [10, -5.57],
+        [-0.98, -0.08],
+        [-14, -6.58]
+      ],
+      "fit": "walls",
+      "baked": 233,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-3.02, -12.08],
+          [10, -5.57]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_1_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [3.02, -12.08],
+        [14, -6.58],
+        [0.98, -0.08],
+        [-10, -5.57]
+      ],
+      "fit": "walls",
+      "baked": 233,
+      "front": {
+        "side": "E",
+        "edge": [
+          [14, -6.58],
+          [0.98, -0.08]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_2": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [17.17, -8.09],
+        [33.38, -2.42],
+        [-12.17, 13.07],
+        [-28.37, 7.39]
+      ],
+      "fit": "walls",
+      "baked": 3,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-28.37, 7.39],
+          [-12.17, 13.07]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_2_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-19.57, -14.04],
+        [18, 4.75],
+        [13.57, 6.96],
+        [-24, -11.82]
+      ],
+      "fit": "walls",
+      "baked": 298,
+      "front": {
+        "side": "W",
+        "edge": [
+          [-19.57, -14.04],
+          [-24, -11.82]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_2_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [19.57, -14.04],
+        [24, -11.82],
+        [-13.57, 6.96],
+        [-18, 4.75]
+      ],
+      "fit": "walls",
+      "baked": 298,
+      "front": {
+        "side": "N",
+        "edge": [
+          [19.57, -14.04],
+          [24, -11.82]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_2_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-19.57, -14.04],
+        [18, 4.75],
+        [13.57, 6.96],
+        [-24, -11.82]
+      ],
+      "fit": "walls",
+      "baked": 298,
+      "front": {
+        "side": "E",
+        "edge": [
+          [18, 4.75],
+          [13.57, 6.96]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_3": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [18.24, -10.47],
+        [34.6, -4.74],
+        [-11.79, 11.03],
+        [-28.15, 5.31]
+      ],
+      "fit": "walls",
+      "baked": 3,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-28.15, 5.31],
+          [-11.79, 11.03]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_3_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [6.84, -14.1],
+        [21, -8.72],
+        [-11.84, 7.7],
+        [-26, 2.32]
+      ],
+      "fit": "walls",
+      "baked": 222,
+      "front": {
+        "side": "W",
+        "edge": [
+          [6.84, -14.1],
+          [-26, 2.32]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_3_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [-6.84, -14.1],
+        [26, 2.32],
+        [11.84, 7.7],
+        [-21, -8.72]
+      ],
+      "fit": "walls",
+      "baked": 222,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-6.84, -14.1],
+          [26, 2.32]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_3_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [6.84, -14.1],
+        [21, -8.72],
+        [-11.84, 7.7],
+        [-26, 2.32]
+      ],
+      "fit": "walls",
+      "baked": 222,
+      "front": {
+        "side": "E",
+        "edge": [
+          [21, -8.72],
+          [-11.84, 7.7]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_4": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [18.85, -10.08],
+        [35.72, -4.35],
+        [-12.15, 11.93],
+        [-29.03, 6.19]
+      ],
+      "fit": "walls",
+      "baked": 4,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-29.03, 6.19],
+          [-12.15, 11.93]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_4_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-3.4, -7.89],
+        [22, 2.78],
+        [-0.6, 14.08],
+        [-26, 3.41]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "W",
+        "edge": [
+          [-3.4, -7.89],
+          [-26, 3.41]
+        ],
+        "visible": false
+      },
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [10, 8.53],
+          "width": 2,
+          "offset": 0.03
+        }
+      ]
+    },
+    "structures/big_farm_4_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [3.4, -7.89],
+        [26, 3.41],
+        [0.6, 14.08],
+        [-22, 2.78]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "N",
+        "edge": [
+          [3.4, -7.89],
+          [26, 3.41]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_4_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-3.4, -7.89],
+        [22, 2.78],
+        [-0.6, 14.08],
+        [-26, 3.41]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "E",
+        "edge": [
+          [22, 2.78],
+          [-0.6, 14.08]
+        ],
+        "visible": true
+      },
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [10, 8.53],
+          "width": 2,
+          "offset": 0.03
+        }
+      ]
+    },
+    "structures/big_farm_5": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [18.85, -10.08],
+        [35.72, -4.35],
+        [-12.15, 11.93],
+        [-29.03, 6.19]
+      ],
+      "fit": "walls",
+      "baked": 4,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-29.03, 6.19],
+          [-12.15, 11.93]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_farm_5_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-2.96, -8.45],
+        [22, 2.78],
+        [-1.04, 14.3],
+        [-26, 3.07]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "W",
+        "edge": [
+          [-2.96, -8.45],
+          [-26, 3.07]
+        ],
+        "visible": false
+      },
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [10, 8.53],
+          "width": 2,
+          "offset": 0.02
+        }
+      ]
+    },
+    "structures/big_farm_5_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [2.96, -8.45],
+        [26, 3.07],
+        [1.04, 14.3],
+        [-22, 2.78]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "N",
+        "edge": [
+          [2.96, -8.45],
+          [26, 3.07]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_farm_5_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-2.96, -8.45],
+        [22, 2.78],
+        [-1.04, 14.3],
+        [-26, 3.07]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "E",
+        "edge": [
+          [22, 2.78],
+          [-1.04, 14.3]
+        ],
+        "visible": true
+      },
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [10, 8.53],
+          "width": 2,
+          "offset": 0.02
+        }
+      ]
+    },
+    "structures/big_station_1": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-4.19, -7.6],
+        [25.65, 4.93],
+        [9.49, 10.42],
+        [-20.35, -2.11]
+      ],
+      "fit": "walls",
+      "baked": 4,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-20.35, -2.11],
+          [9.49, 10.42]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_1_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [1.46, -12.28],
+        [16, -5.01],
+        [-3.46, 4.72],
+        [-18, -2.55]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "W",
+        "edge": [
+          [1.46, -12.28],
+          [-18, -2.55]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_1_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-1.46, -12.28],
+        [18, -2.55],
+        [3.46, 4.72],
+        [-16, -5.01]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-1.46, -12.28],
+          [18, -2.55]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_1_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [-1.57, -10.77],
+        [13, -3.48],
+        [-3.43, 4.73],
+        [-18, -2.55]
+      ],
+      "fit": "walls",
+      "baked": 77,
+      "front": {
+        "side": "E",
+        "edge": [
+          [13, -3.48],
+          [-3.43, 4.73]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_2": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-7.36, -7.85],
+        [29.25, 7.52],
+        [9.36, 14.29],
+        [-27.25, -1.09]
+      ],
+      "fit": "walls",
+      "baked": 8,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-27.25, -1.09],
+          [9.36, 14.29]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_2_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [1.95, -13.04],
+        [18, -5.01],
+        [-4.95, 6.46],
+        [-21, -1.56]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "W",
+        "edge": [
+          [1.95, -13.04],
+          [-21, -1.56]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_2_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-1.95, -13.04],
+        [21, -1.56],
+        [4.95, 6.46],
+        [-18, -5.01]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-1.95, -13.04],
+          [21, -1.56]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_2_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [10.44, -15.08],
+        [26, -7.3],
+        [-5.44, 6.22],
+        [-21, -1.56]
+      ],
+      "fit": "walls",
+      "baked": 158,
+      "front": {
+        "side": "E",
+        "edge": [
+          [26, -7.3],
+          [-5.44, 6.22]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_3": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-6.76, -9.3],
+        [33.82, 7.74],
+        [11.91, 15.19],
+        [-28.68, -1.85]
+      ],
+      "fit": "walls",
+      "baked": 9,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-28.68, -1.85],
+          [11.91, 15.19]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_3_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [2.95, -14.53],
+        [20, -6.01],
+        [-7.95, 7.97],
+        [-25, -0.56]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "W",
+        "edge": [
+          [2.95, -14.53],
+          [-25, -0.56]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_3_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-2.95, -14.53],
+        [25, -0.56],
+        [7.95, 7.97],
+        [-20, -6.01]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-2.95, -14.53],
+          [25, -0.56]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_3_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [4.33, -14.83],
+        [32, -0.99],
+        [2.67, 13.09],
+        [-25, -0.75]
+      ],
+      "fit": "walls",
+      "baked": 23,
+      "front": {
+        "side": "E",
+        "edge": [
+          [32, -0.99],
+          [2.67, 13.09]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_4": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-6.94, -7.1],
+        [34.95, 10.5],
+        [12.35, 18.18],
+        [-29.55, 0.59]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-29.55, 0.59],
+          [12.35, 18.18]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_4_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [3.79, -15.06],
+        [21, -6.46],
+        [-7.79, 7.94],
+        [-25, -0.67]
+      ],
+      "fit": "walls",
+      "baked": 46,
+      "front": {
+        "side": "W",
+        "edge": [
+          [3.79, -15.06],
+          [-25, -0.67]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_4_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-3.79, -15.06],
+        [25, -0.67],
+        [7.79, 7.94],
+        [-21, -6.46]
+      ],
+      "fit": "walls",
+      "baked": 46,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-3.79, -15.06],
+          [25, -0.67]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_4_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [0.63, -13.66],
+        [33, 2.53],
+        [7.37, 15.34],
+        [-25, -0.85]
+      ],
+      "fit": "walls",
+      "baked": 64,
+      "front": {
+        "side": "E",
+        "edge": [
+          [33, 2.53],
+          [7.37, 15.34]
+        ],
+        "visible": true
+      },
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 1],
+          "side": "E",
+          "reach": [1, 1],
+          "point": [12.5, 6.53],
+          "width": 5,
+          "offset": 0.1
+        }
+      ]
+    },
+    "structures/big_station_5": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-6.94, -7.1],
+        [34.95, 10.5],
+        [12.35, 18.18],
+        [-29.55, 0.59]
+      ],
+      "fit": "walls",
+      "baked": 11,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-29.55, 0.59],
+          [12.35, 18.18]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/big_station_5_r1": {
+      "source": "generated",
+      "rot": 1,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [3.79, -15.06],
+        [21, -6.46],
+        [-7.79, 7.94],
+        [-25, -0.67]
+      ],
+      "fit": "walls",
+      "baked": 46,
+      "front": {
+        "side": "W",
+        "edge": [
+          [3.79, -15.06],
+          [-25, -0.67]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_5_r2": {
+      "source": "generated",
+      "rot": 2,
+      "footprint": [
+        [0, 0],
+        [1, 0]
+      ],
+      "foot": [
+        [-3.79, -15.06],
+        [25, -0.67],
+        [7.79, 7.94],
+        [-21, -6.46]
+      ],
+      "fit": "walls",
+      "baked": 46,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-3.79, -15.06],
+          [25, -0.67]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/big_station_5_r3": {
+      "source": "generated",
+      "rot": 3,
+      "footprint": [
+        [0, 0],
+        [0, 1]
+      ],
+      "foot": [
+        [0.63, -13.66],
+        [33, 2.53],
+        [7.37, 15.34],
+        [-25, -0.85]
+      ],
+      "fit": "walls",
+      "baked": 64,
+      "front": {
+        "side": "E",
+        "edge": [
+          [33, 2.53],
+          [7.37, 15.34]
+        ],
+        "visible": true
+      },
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 1],
+          "side": "E",
+          "reach": [1, 1],
+          "point": [12.5, 6.53],
+          "width": 5,
+          "offset": 0.1
+        }
+      ]
+    },
     "structures/colliery": {
       "source": "illustrated",
       "rot": 0,
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-13.32, -10.36],
@@ -36,10 +1094,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-13.69, -11.07],
@@ -66,9 +1122,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [-1.7, -2.7],
@@ -94,10 +1148,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [1.7, -2.7],
@@ -124,9 +1176,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [-1.7, -2.7],
@@ -152,10 +1202,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-13.69, -11.07],
@@ -182,9 +1230,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [10.22, -7.13],
@@ -210,10 +1256,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-10.22, -7.13],
@@ -240,9 +1284,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [10.22, -7.13],
@@ -268,10 +1310,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-13.69, -11.07],
@@ -298,9 +1338,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [10.51, -6.98],
@@ -326,10 +1364,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-10.51, -6.98],
@@ -356,9 +1392,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [10.51, -6.98],
@@ -385,9 +1419,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [-10.26, -9.03],
@@ -413,10 +1445,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [10.26, -9.03],
@@ -443,9 +1473,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [-10.26, -9.03],
@@ -1622,10 +2650,7 @@
     "structures/farm_1": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [16.47, -8.74],
         [32.15, -3.1],
@@ -1647,10 +2672,7 @@
     "structures/farm_1_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [3.02, -12.08],
         [14, -6.58],
@@ -1672,10 +2694,7 @@
     "structures/farm_1_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-3.02, -12.08],
         [10, -5.57],
@@ -1697,10 +2716,7 @@
     "structures/farm_1_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [3.02, -12.08],
         [14, -6.58],
@@ -1722,10 +2738,7 @@
     "structures/farm_2": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [17.17, -8.09],
         [33.38, -2.42],
@@ -1747,10 +2760,7 @@
     "structures/farm_2_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-19.57, -14.04],
         [18, 4.75],
@@ -1772,10 +2782,7 @@
     "structures/farm_2_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [19.57, -14.04],
         [24, -11.82],
@@ -1797,10 +2804,7 @@
     "structures/farm_2_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-19.57, -14.04],
         [18, 4.75],
@@ -1822,10 +2826,7 @@
     "structures/farm_3": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [18.24, -10.47],
         [34.6, -4.74],
@@ -1847,10 +2848,7 @@
     "structures/farm_3_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [6.84, -14.1],
         [21, -8.72],
@@ -1872,10 +2870,7 @@
     "structures/farm_3_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-6.84, -14.1],
         [26, 2.32],
@@ -1897,10 +2892,7 @@
     "structures/farm_3_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [6.84, -14.1],
         [21, -8.72],
@@ -1922,10 +2914,7 @@
     "structures/farm_4": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [18.85, -10.08],
         [35.72, -4.35],
@@ -1947,10 +2936,7 @@
     "structures/farm_4_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-3.4, -7.89],
         [22, 2.78],
@@ -1970,9 +2956,9 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "E",
-          "reach": [2, 0],
+          "reach": [1, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.03
@@ -1982,10 +2968,7 @@
     "structures/farm_4_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [3.4, -7.89],
         [26, 3.41],
@@ -2007,10 +2990,7 @@
     "structures/farm_4_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-3.4, -7.89],
         [22, 2.78],
@@ -2030,9 +3010,9 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "E",
-          "reach": [2, 0],
+          "reach": [1, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.03
@@ -2042,10 +3022,7 @@
     "structures/farm_5": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [18.85, -10.08],
         [35.72, -4.35],
@@ -2067,10 +3044,7 @@
     "structures/farm_5_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-2.96, -8.45],
         [22, 2.78],
@@ -2090,9 +3064,9 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "E",
-          "reach": [2, 0],
+          "reach": [1, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.02
@@ -2102,10 +3076,7 @@
     "structures/farm_5_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [2.96, -8.45],
         [26, 3.07],
@@ -2127,10 +3098,7 @@
     "structures/farm_5_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-2.96, -8.45],
         [22, 2.78],
@@ -2150,9 +3118,9 @@
       "doors": [
         {
           "kind": "platform",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "E",
-          "reach": [2, 0],
+          "reach": [1, 0],
           "point": [10, 8.53],
           "width": 2,
           "offset": 0.02
@@ -2250,10 +3218,7 @@
     "structures/grinder": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-20.31, -7.19],
         [5.29, 6.63],
@@ -2273,22 +3238,19 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "S",
-          "reach": [1, 1],
-          "point": [-12.21, 3.36],
-          "width": 3.5,
-          "offset": 0.02
+          "reach": [0, 1],
+          "point": [-22.46, -0.93],
+          "width": 3,
+          "offset": -0.14
         }
       ]
     },
     "structures/grinder_lv2": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-21.28, -7.53],
         [5.43, 7.42],
@@ -2308,22 +3270,19 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "S",
-          "reach": [1, 1],
-          "point": [-12.44, 2.73],
-          "width": 3.3,
-          "offset": 0.04
+          "reach": [0, 1],
+          "point": [-23.07, -0.72],
+          "width": 3,
+          "offset": -0.13
         }
       ]
     },
     "structures/grinder_lv2_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [12.12, -1.24],
         [20, 2.7],
@@ -2345,10 +3304,7 @@
     "structures/grinder_lv2_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-12.12, -1.24],
         [10, 9.82],
@@ -2370,10 +3326,7 @@
     "structures/grinder_lv2_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [12.12, -1.24],
         [20, 2.7],
@@ -2395,10 +3348,7 @@
     "structures/grinder_lv3": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-21.28, -7.53],
         [5.43, 7.42],
@@ -2418,22 +3368,19 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "S",
-          "reach": [1, 1],
-          "point": [-12.44, 2.73],
-          "width": 3.3,
-          "offset": 0.04
+          "reach": [0, 1],
+          "point": [-23.07, -0.72],
+          "width": 3,
+          "offset": -0.13
         }
       ]
     },
     "structures/grinder_lv3_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [13.88, -2.56],
         [22, 1.5],
@@ -2455,10 +3402,7 @@
     "structures/grinder_lv3_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-13.87, -2.56],
         [11, 9.88],
@@ -2480,10 +3424,7 @@
     "structures/grinder_lv3_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [13.88, -2.56],
         [22, 1.5],
@@ -2500,15 +3441,22 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "E",
+          "reach": [1, 0],
+          "point": [9, 7.75],
+          "width": 4,
+          "offset": 0.02
+        }
+      ]
     },
     "structures/grinder_lv4": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-21.28, -7.53],
         [5.43, 7.42],
@@ -2528,22 +3476,19 @@
       "doors": [
         {
           "kind": "street",
-          "tile": [1, 0],
+          "tile": [0, 0],
           "side": "S",
-          "reach": [1, 1],
-          "point": [-12.44, 2.73],
-          "width": 3.3,
-          "offset": 0.04
+          "reach": [0, 1],
+          "point": [-23.07, -0.72],
+          "width": 3,
+          "offset": -0.13
         }
       ]
     },
     "structures/grinder_lv4_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [14, -2.5],
         [22, 1.5],
@@ -2565,10 +3510,7 @@
     "structures/grinder_lv4_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-14, -2.5],
         [11, 10],
@@ -2590,10 +3532,7 @@
     "structures/grinder_lv4_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [14, -2.5],
         [22, 1.5],
@@ -2610,15 +3549,22 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "E",
+          "reach": [1, 0],
+          "point": [9, 7.75],
+          "width": 4,
+          "offset": 0.02
+        }
+      ]
     },
     "structures/grinder_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [0.35, -10.3],
         [12, -4.48],
@@ -2640,10 +3586,7 @@
     "structures/grinder_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-0.35, -10.3],
         [11, -4.62],
@@ -2665,10 +3608,7 @@
     "structures/grinder_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [0, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [0.35, -10.3],
         [12, -4.48],
@@ -2685,7 +3625,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "E",
+          "reach": [1, 0],
+          "point": [4, -1.73],
+          "width": 2,
+          "offset": 0.2
+        }
+      ]
     },
     "structures/hydro_plant": {
       "source": "illustrated",
@@ -3045,10 +3995,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-15, -8.63],
@@ -3072,9 +4020,9 @@
           "tile": [1, 1],
           "side": "S",
           "reach": [1, 2],
-          "point": [-15.02, 0.92],
-          "width": 3.8,
-          "offset": -0.29
+          "point": [2.1, 6.49],
+          "width": 3.5,
+          "offset": 0.19
         }
       ]
     },
@@ -3084,10 +4032,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-19.25, -8.85],
@@ -3105,7 +4051,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 1],
+          "side": "S",
+          "reach": [1, 2],
+          "point": [3.35, 2.51],
+          "width": 2,
+          "offset": 0.2
+        }
+      ]
     },
     "structures/ironworks_lv2_r1": {
       "source": "generated",
@@ -3114,9 +4070,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [6.32, -7.86],
@@ -3142,10 +4096,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-6.32, -7.86],
@@ -3172,9 +4124,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [6.3, -8.06],
@@ -3192,7 +4142,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [17, 2.37],
+          "width": 4,
+          "offset": -0.24
+        }
+      ]
     },
     "structures/ironworks_lv3": {
       "source": "illustrated",
@@ -3200,10 +4160,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-19.25, -8.85],
@@ -3221,7 +4179,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 1],
+          "side": "S",
+          "reach": [1, 2],
+          "point": [3.35, 2.51],
+          "width": 2,
+          "offset": 0.2
+        }
+      ]
     },
     "structures/ironworks_lv3_r1": {
       "source": "generated",
@@ -3230,9 +4198,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [6.35, -8.05],
@@ -3258,10 +4224,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-6.35, -8.05],
@@ -3288,9 +4252,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [6.27, -8.06],
@@ -3308,7 +4270,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [17, 2.39],
+          "width": 4,
+          "offset": -0.24
+        }
+      ]
     },
     "structures/ironworks_lv4": {
       "source": "illustrated",
@@ -3316,10 +4288,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-19.25, -8.85],
@@ -3337,7 +4307,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 1],
+          "side": "S",
+          "reach": [1, 2],
+          "point": [3.35, 2.51],
+          "width": 2,
+          "offset": 0.2
+        }
+      ]
     },
     "structures/ironworks_lv4_r1": {
       "source": "generated",
@@ -3346,9 +4326,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [7.61, -7.22],
@@ -3374,10 +4352,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-7.61, -7.22],
@@ -3404,9 +4380,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [6.5, -7.88],
@@ -3424,7 +4398,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [17, 2.41],
+          "width": 4,
+          "offset": -0.24
+        }
+      ]
     },
     "structures/ironworks_r1": {
       "source": "generated",
@@ -3433,9 +4417,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [6.3, -5.74],
@@ -3461,10 +4443,8 @@
       "footprint": [
         [0, 0],
         [1, 0],
-        [2, 0],
         [0, 1],
-        [1, 1],
-        [2, 1]
+        [1, 1]
       ],
       "foot": [
         [-6.3, -5.74],
@@ -3491,9 +4471,7 @@
         [0, 0],
         [1, 0],
         [0, 1],
-        [1, 1],
-        [0, 2],
-        [1, 2]
+        [1, 1]
       ],
       "foot": [
         [6.3, -5.74],
@@ -3511,7 +4489,17 @@
         ],
         "visible": true
       },
-      "doors": []
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [1, 0],
+          "side": "E",
+          "reach": [2, 0],
+          "point": [18, 2.55],
+          "width": 8,
+          "offset": -0.07
+        }
+      ]
     },
     "structures/kiln": {
       "source": "illustrated",
@@ -6352,12 +7340,7 @@
     "structures/refinery": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [9.09, 0.33],
         [25.67, 8.28],
@@ -6379,12 +7362,7 @@
     "structures/refinery_lv2": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [9.63, 0.78],
         [26.81, 9.02],
@@ -6406,12 +7384,7 @@
     "structures/refinery_lv2_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [7.02, -11.6],
         [24, -0.4],
@@ -6433,12 +7406,7 @@
     "structures/refinery_lv2_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-7.02, -11.6],
         [18, 0.91],
@@ -6460,12 +7428,7 @@
     "structures/refinery_lv2_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [7.02, -11.6],
         [24, -0.4],
@@ -6482,27 +7445,12 @@
         ],
         "visible": true
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [1, 1],
-          "side": "E",
-          "reach": [2, 1],
-          "point": [2.5, 6.1],
-          "width": 3,
-          "offset": 0.22
-        }
-      ]
+      "doors": []
     },
     "structures/refinery_lv3": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [9.63, 0.78],
         [26.81, 9.02],
@@ -6524,12 +7472,7 @@
     "structures/refinery_lv3_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [15.86, -3.47],
         [24, -0.38],
@@ -6551,12 +7494,7 @@
     "structures/refinery_lv3_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-15.86, -3.47],
         [11, 9.96],
@@ -6578,12 +7516,7 @@
     "structures/refinery_lv3_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [16.49, -4.12],
         [24, -0.36],
@@ -6600,27 +7533,12 @@
         ],
         "visible": true
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [1, 1],
-          "side": "E",
-          "reach": [2, 1],
-          "point": [2, 10.39],
-          "width": 6,
-          "offset": 0.1
-        }
-      ]
+      "doors": []
     },
     "structures/refinery_lv4": {
       "source": "illustrated",
       "rot": 0,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [9.63, 0.78],
         [26.81, 9.02],
@@ -6642,12 +7560,7 @@
     "structures/refinery_lv4_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [16.7, -4.03],
         [24, -0.38],
@@ -6669,12 +7582,7 @@
     "structures/refinery_lv4_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-16.7, -4.03],
         [11, 9.82],
@@ -6696,12 +7604,7 @@
     "structures/refinery_lv4_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [16.65, -4],
         [24, -0.33],
@@ -6718,27 +7621,12 @@
         ],
         "visible": true
       },
-      "doors": [
-        {
-          "kind": "street",
-          "tile": [1, 1],
-          "side": "E",
-          "reach": [2, 1],
-          "point": [1.5, 10.67],
-          "width": 5,
-          "offset": 0.13
-        }
-      ]
+      "doors": []
     },
     "structures/refinery_r1": {
       "source": "generated",
       "rot": 1,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [7.85, -9.97],
         [24, 0.2],
@@ -6760,12 +7648,7 @@
     "structures/refinery_r2": {
       "source": "generated",
       "rot": 2,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [-7.85, -9.97],
         [18, 0.88],
@@ -6787,12 +7670,7 @@
     "structures/refinery_r3": {
       "source": "generated",
       "rot": 3,
-      "footprint": [
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-      ],
+      "footprint": [[0, 0]],
       "foot": [
         [7.85, -9.97],
         [24, 0.2],

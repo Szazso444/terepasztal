@@ -10,7 +10,8 @@ import { doorsOf, placeSpan, spanProblems } from './doors';
 import { DEFAULT_RULES, rules } from './rules';
 import { PowerGrid } from './power';
 
-// Industries take the footprint the author chose (2026-10-18, F6): tiles are where it may stand,
+// Industries take the footprint the author chose (2026-10-18, F6; the stone grinder, the oil refinery,
+// the colliery and the ironworks again on 2026-10-19, F7): tiles are where it may stand,
 // how much room it takes and where it sits in that room, not how big its model is. At rotation 0 a
 // footprint's long axis is the picture's, which is x for every one of the nine (the foot of each
 // r0 frame in src/art/buildingGround.json), so the author's "1 x 2", "2 x 3" are w 2 x h 1 and
@@ -18,21 +19,21 @@ import { PowerGrid } from './power';
 interface Case {
   id: string;
   /** the footprint class: the size the author named */
-  size: '1x2' | '2x2' | '2x3' | '3x2';
+  size: '1x1' | '1x2' | '2x2' | '2x3';
   /** width along x and depth along y at rotation 0 */
   w: number;
   h: number;
 }
 const CASES: Case[] = [
-  { id: 'grinder', size: '1x2', w: 2, h: 1 },
+  { id: 'grinder', size: '1x1', w: 1, h: 1 },
+  { id: 'refinery', size: '1x1', w: 1, h: 1 },
   { id: 'oil_derrick', size: '1x2', w: 2, h: 1 },
-  { id: 'refinery', size: '2x2', w: 2, h: 2 },
   { id: 'diesel_refinery', size: '2x2', w: 2, h: 2 },
   { id: 'substation', size: '2x2', w: 2, h: 2 },
   { id: 'wire_mill', size: '2x2', w: 2, h: 2 },
   { id: 'power_plant', size: '2x3', w: 3, h: 2 },
-  { id: 'colliery', size: '3x2', w: 3, h: 2 },
-  { id: 'ironworks', size: '3x2', w: 3, h: 2 },
+  { id: 'colliery', size: '2x2', w: 2, h: 2 },
+  { id: 'ironworks', size: '2x2', w: 2, h: 2 },
 ];
 
 const ROTS = [0, 1, 2, 3];
@@ -81,8 +82,8 @@ describe('the footprints the author chose', () => {
     for (const c of CASES) {
       expect(placeSpan(buildingDef(c.id)), c.id).toEqual({ w: c.w, h: c.h });
     }
-    // the four classes all appear
-    expect(new Set(CASES.map((c) => c.size))).toEqual(new Set(['1x2', '2x2', '2x3', '3x2']));
+    // the four classes all appear (the grinder and the refinery are one tile, kept in the list to check it)
+    expect(new Set(CASES.map((c) => c.size))).toEqual(new Set(['1x1', '1x2', '2x2', '2x3']));
   });
 
   it('leaves every other works on its one tile', () => {

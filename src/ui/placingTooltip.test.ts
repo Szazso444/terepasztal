@@ -203,8 +203,8 @@ describe('the yield rows', () => {
   });
 
   it('name a single tile in the singular and several in the plural', () => {
-    // one grass tile beside the farm halt (it stands on the middle tile and the one below), three
-    // two away from its two tiles
+    // one grass tile beside the Big Farm Halt (it stands on the middle tile and the one below),
+    // three two away from its two tiles
     const b = breakdown(
       mapWith(
         Terrain.Water,
@@ -216,6 +216,7 @@ describe('the yield rows', () => {
         ],
         Terrain.Grass,
       ),
+      'big_farm',
     );
     const { ring } = read(rows(b));
     expect(ring.map((r) => plain(r.label))).toEqual([

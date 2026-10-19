@@ -162,17 +162,17 @@ the **current** buildings, levels, construction states and service art to redesi
 
 ![Current structure families and upgrades](images/current-structures.png)
 
-| Definition / role            | Proposed primary silhouette                                        | Upgrade language                                                                                             |
-| ---------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| Station (`station`)          | Passenger canopy, platform edge, readable station sign.            | Larger canopy, better frontage, additional existing platform treatment. Retain five levels.                  |
-| Townhouse (`town`)           | Civic frontage, clock gable or small central tower, modest square. | More substantial civic wings. No passenger platform or passenger icon.                                       |
-| House (`townhouse` decor ID) | Residential windows, door and domestic roof.                       | Cottage → low-rise apartments → high-rise → slender masonry/glass skyscraper. Capacities stay 20/60/140/300. |
-| Warehouse                    | Broad loading doors, stacked crates, short loading canopy.         | More bays and better handling equipment; keep footprint.                                                     |
-| Depot                        | Two-track engine shed with clearly open train portals.             | Timber/brick → iron spans → refined service hall; preserve all four orientations and gate clearances.        |
-| Farm Halt                    | Barn, modest wheat patch, sacks and loading edge.                  | Larger barn/silo and tidier yard, not an unrelated factory.                                                  |
-| Lumber Yard                  | Log stacks, saw shed, handling frame.                              | More organised stacks, covered sawline and better crane.                                                     |
-| Quarry                       | Excavated rock face, pale stone heaps, lifting frame.              | Larger machinery and sorting bays inside the existing visual footprint.                                      |
-| Water Pump                   | Intake pipe, pump house and small tank.                            | Clearer machinery and improved intake housing. Distinct from a service water tower.                          |
+| Definition / role                                                  | Proposed primary silhouette                                        | Upgrade language                                                                                             |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Station (`station`, one tile; `big_station`, the Big Station, two) | Passenger canopy, platform edge, readable station sign.            | Larger canopy, better frontage, additional existing platform treatment. Retain five levels.                  |
+| Townhouse (`town`)                                                 | Civic frontage, clock gable or small central tower, modest square. | More substantial civic wings. No passenger platform or passenger icon.                                       |
+| House (`townhouse` decor ID)                                       | Residential windows, door and domestic roof.                       | Cottage → low-rise apartments → high-rise → slender masonry/glass skyscraper. Capacities stay 20/60/140/300. |
+| Warehouse                                                          | Broad loading doors, stacked crates, short loading canopy.         | More bays and better handling equipment; keep footprint.                                                     |
+| Depot                                                              | Two-track engine shed with clearly open train portals.             | Timber/brick → iron spans → refined service hall; preserve all four orientations and gate clearances.        |
+| Farm Halt (`farm`, one tile; `big_farm`, the Big Farm Halt, two)   | Barn, modest wheat patch, sacks and loading edge.                  | Larger barn/silo and tidier yard, not an unrelated factory.                                                  |
+| Lumber Yard                                                        | Log stacks, saw shed, handling frame.                              | More organised stacks, covered sawline and better crane.                                                     |
+| Quarry                                                             | Excavated rock face, pale stone heaps, lifting frame.              | Larger machinery and sorting bays inside the existing visual footprint.                                      |
+| Water Pump                                                         | Intake pipe, pump house and small tank.                            | Clearer machinery and improved intake housing. Distinct from a service water tower.                          |
 
 `mine`, `sand_pit` and `copper_mine` currently share quarry art in full-chain mode. Proposed
 distinctive cues: dark ore bins/headframe for iron, pale low heaps for sand, warm copper ore

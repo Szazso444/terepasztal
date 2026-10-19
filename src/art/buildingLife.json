@@ -1,5 +1,38 @@
 {
   "pots": {
+    "structures/big_farm_1": [{ "dx": 13.4, "dy": -50.25, "work": false }],
+    "structures/big_farm_2": [{ "dx": 14.45, "dy": -50.25, "work": false }],
+    "structures/big_farm_3": [{ "dx": 15.48, "dy": -53.75, "work": false }],
+    "structures/big_farm_4": [{ "dx": 15.6, "dy": -55, "work": false }],
+    "structures/big_farm_5": [{ "dx": 15.6, "dy": -55, "work": false }],
+    "structures/big_station_1": [
+      { "dx": -13.85, "dy": -30.5, "work": false },
+      { "dx": 0.65, "dy": -26.5, "work": false },
+      { "dx": 14.28, "dy": -21, "work": false }
+    ],
+    "structures/big_station_2": [
+      { "dx": -20, "dy": -36, "work": false },
+      { "dx": -2.25, "dy": -30.75, "work": false },
+      { "dx": 14, "dy": -24.25, "work": false }
+    ],
+    "structures/big_station_2_r1": [{ "dx": 1.5, "dy": -48, "work": false }],
+    "structures/big_station_2_r2": [{ "dx": -1.5, "dy": -48, "work": false }],
+    "structures/big_station_2_r3": [{ "dx": 1.5, "dy": -48, "work": false }],
+    "structures/big_station_3": [
+      { "dx": -20.68, "dy": -40.5, "work": false },
+      { "dx": -0.18, "dy": -35, "work": false },
+      { "dx": 17.45, "dy": -27.5, "work": false }
+    ],
+    "structures/big_station_4": [
+      { "dx": -21.24, "dy": -39.25, "work": false },
+      { "dx": -0.05, "dy": -33.5, "work": false },
+      { "dx": 18.08, "dy": -25.75, "work": false }
+    ],
+    "structures/big_station_5": [
+      { "dx": -21.24, "dy": -39.25, "work": false },
+      { "dx": -0.05, "dy": -33.5, "work": false },
+      { "dx": 18.08, "dy": -25.75, "work": false }
+    ],
     "structures/farm_1": [{ "dx": 13.4, "dy": -50.25, "work": false }],
     "structures/farm_2": [{ "dx": 14.45, "dy": -50.25, "work": false }],
     "structures/farm_3": [{ "dx": 15.48, "dy": -53.75, "work": false }],

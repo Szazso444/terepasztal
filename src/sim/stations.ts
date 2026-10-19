@@ -1,4 +1,4 @@
-import { content, type StationDef, type Cost } from '../data/content';
+import { behavesAs, content, type StationDef, type Cost } from '../data/content';
 import type { LevelStation } from '../world/level';
 import { scaleCost } from './stockpile';
 import { weekSeconds } from './rules';
@@ -276,8 +276,9 @@ export function harvestBreakdown(
   const factor = Math.max(HARVEST_FLOOR, Math.min(HARVEST_CEIL, raw));
   const whole = wholeLevel(level);
   const biome = biomeDef(biomeAt(map, x, y));
-  const biomeMul = biome.production[defId] ?? 1;
-  const seasonMul = seasonProductionMul(defId, season);
+  const kind = behavesAs(def);
+  const biomeMul = biome.production[kind] ?? 1;
+  const seasonMul = seasonProductionMul(kind, season);
   return {
     defId,
     terrain: want,
@@ -324,6 +325,10 @@ export function terrainFactorAt(
 export class Station {
   readonly id: number;
   readonly def: StationDef;
+  /** the kind of station it is for the seasons, the biomes, its gatherers and its passengers (`behavesAs`) */
+  get kind() {
+    return behavesAs(this.def);
+  }
   name: string;
   level = 1;
   storage = new Map<string, number>();
@@ -461,7 +466,7 @@ export class Station {
   get productionPerWeek() {
     if (this.closed) return 0;
     const rate = weeklyOutput(this.level, this.terrainFactor);
-    return this.def.id === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
+    return this.kind === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
   }
   /** Picture of the level (`spriteByLevel`): levels above the highest picture repeat it. */
   get spriteLevel() {

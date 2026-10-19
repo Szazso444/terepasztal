@@ -178,9 +178,9 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   };
   builder.onStationChanged = (s: Station, removed: boolean) => {
     if (removed) return;
-    const biome = biomeDef(biomeAt(map, s.x, s.y)).production[s.def.id] ?? 1;
+    const biome = biomeDef(biomeAt(map, s.x, s.y)).production[s.kind] ?? 1;
     // Game keeps the season of its last step, with weather on as in DEFAULT_SETTINGS
-    s.productionMul = productionMul(s.def.id, seasonOf(clock.day)) * biome;
+    s.productionMul = productionMul(s.kind, seasonOf(clock.day)) * biome;
   };
   builder.onDecorChanged = (d: Decor, removed: boolean) => {
     if (d.id === 'signal') fleet.signals.rebuild(builder.decor.values());

@@ -540,8 +540,7 @@ function layoutScene(c: Layout): World {
   const builder = new Builder(map, regions, track, economy, stock);
   builder.free = true;
   const put = (kind: Kind, x: number, y: number, stocked: boolean) => {
-    // a farm halt is two tiles deep, so its corner is one row higher than the others'
-    const s = new Station(kind, x, kind === 'farm' ? y - 1 : y);
+    const s = new Station(kind, x, y);
     if (stocked && kind === 'farm') s.storage.set('wheat', 30);
     else if (stocked && kind !== 'depot') s.storage.set('stone', 40);
     builder.stations.push(s);
@@ -1219,8 +1218,7 @@ function trafficWithStops(c: TrafficCase) {
   const sc = buildTrafficScenario(c.count, c.pinned);
   const stop = new Map<number, number>();
   for (const x of new Set(sc.destinations.values())) {
-    // two tiles deep: the corner one row higher stands it beside the line
-    const st = new Station('farm', x, SCENARIO_ROW - 2);
+    const st = new Station('farm', x, SCENARIO_ROW - 1);
     sc.builder.stations.push(st);
     stop.set(x, st.id);
   }

@@ -190,12 +190,12 @@ describe('the ghost of a station of a two-tile span', () => {
 
 describe('the ghost of a works with a footprint', () => {
   const sizes: Record<string, [number, number]> = {
-    grinder: [2, 1],
     oil_derrick: [2, 1],
     power_plant: [3, 2],
-    colliery: [3, 2],
-    ironworks: [3, 2],
-    refinery: [2, 2],
+    colliery: [2, 2],
+    ironworks: [2, 2],
+    grinder: [1, 1],
+    refinery: [1, 1],
     diesel_refinery: [2, 2],
     substation: [2, 2],
     wire_mill: [2, 2],

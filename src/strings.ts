@@ -1577,6 +1577,7 @@ export const STR = {
      */
     plural: {
       farm: 'farm halts',
+      big_farm: 'big farm halts',
       lumber: 'lumber yards',
       quarry: 'quarries',
       pump: 'water pumps',

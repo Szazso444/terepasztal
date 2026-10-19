@@ -386,10 +386,12 @@ describe('professions', () => {
   it('give every kind of station a profession: gatherers, passengers, and railway workers for the rest', () => {
     const want: Record<string, Profession> = {
       farm: 'farmer',
+      big_farm: 'farmer',
       lumber: 'lumberjack',
       quarry: 'stone_mason',
       pump: 'pump_hand',
       station: 'passenger',
+      big_station: 'passenger',
     };
     const defs = content.stations.defs;
     expect(defs.map((d) => d.id)).toEqual(expect.arrayContaining(Object.keys(want)));
@@ -413,6 +415,7 @@ describe('professions', () => {
     };
     const byKind: Record<string, Profession> = {
       farm: 'farmer',
+      big_farm: 'farmer',
       lumber: 'lumberjack',
       quarry: 'stone_mason',
       pump: 'pump_hand',

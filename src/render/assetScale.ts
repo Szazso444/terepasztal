@@ -10,10 +10,14 @@ export const DOOR_PX = 13.2;
 export const TREE_SCALE = 1.5;
 export const DOOR_REFERENCE_PX: Record<string, number> = {
   station: 10.5,
+  /** the Big Station draws the Station's pictures (F7) */
+  big_station: 10.5,
   town: 10,
   townhouse: 18,
   warehouse: 11,
   farm: 12,
+  /** the Big Farm Halt draws the Farm Halt's pictures (F7) */
+  big_farm: 12,
   lumber: 12,
   windmill: 13,
   grinder: 12,
@@ -21,10 +25,12 @@ export const DOOR_REFERENCE_PX: Record<string, number> = {
 /** Door aperture / trimmed-frame height, reviewed on the packed illustrated atlas. */
 export const DOOR_FRACTION: Record<string, number> = {
   station: 36 / 169,
+  big_station: 36 / 169,
   town: 43 / 199,
   townhouse: 68 / 251,
   warehouse: 53 / 191,
   farm: 47 / 262,
+  big_farm: 47 / 262,
   windmill: 38 / 240,
 };
 /** Outdoor equipment has no standard door; these explicit estimates need physical references. */
@@ -47,22 +53,31 @@ export const EQUIPMENT_SCALE: Record<string, number> = {
   wire_mill: 1,
 };
 /**
- * The author's per-family size pick (2026-10-18, judged on the building scale review page): a
+ * The author's per-family size pick (2026-10-18 and 2026-10-19, judged on the building scale review page): a
  * multiplier on the size a family is drawn at by the door reference and the equipment table
  * above, for every level, age and turn of the family. It is the one place to tune a family's
  * size by eye; a family not named here is drawn as the references give it. A key that is a whole
  * frame name (`town_1`) overrides its family's multiplier for that frame. Pictures are only ever
  * scaled uniformly. Footprints and where a picture stands on them are not decided here.
+ *
+ * "Fills its footprint" (author, 2026-10-19) is one rule for six families: at rotation 0 and at
+ * the game's zoom, the drawn width of the family's level 1 picture is 0.9 times the screen width
+ * of its footprint, `(w + h) * TILE_W / 2` (96 px for 2 x 1, 128 px for 2 x 2). The multiplier is
+ * the one that makes the level 1 picture so wide, rounded to 0.01, and the family takes it at
+ * every level; the later pictures are a little wider (assetScale.test.ts lists them).
  */
 export const AUTHOR_SCALE: Record<string, number> = {
-  /** Town Hall */
-  town: 1.2,
-  /** Town Hall L1 is sized by another path and already lands near 1.36 doors: exempt from the town pick */
-  town_1: 1,
+  /** Town Hall: fills its footprint (author, 2026-10-19); Town Hall L1 is measured here too, so it needs no pick of its own */
+  town: 1.83,
   station: 0.9,
-  warehouse: 1.25,
+  /** the Big Station draws the Station's pictures at the Station's size */
+  big_station: 0.9,
+  /** Warehouse: fills its footprint (author, 2026-10-19) */
+  warehouse: 1.86,
   /** Farm Halt */
   farm: 0.75,
+  /** the Big Farm Halt draws the Farm Halt's pictures at the Farm Halt's size */
+  big_farm: 0.75,
   lumber: 0.9,
   /** Quarry, shared by the Iron Mine, Sand Pit and Copper Mine */
   quarry: 0.8,
@@ -70,9 +85,15 @@ export const AUTHOR_SCALE: Record<string, number> = {
   power_plant: 1.2,
   /** the Battery once it is renamed; the id stays */
   substation: 0.9,
-  colliery: 1.2,
-  ironworks: 1.2,
-  /** proposal: "taller, increase its size" came with no number */
+  /** Colliery: fills its footprint (author, 2026-10-19) */
+  colliery: 1.96,
+  /** Ironworks: fills its footprint (author, 2026-10-19) */
+  ironworks: 2,
+  /** Refinery (the diesel one): fills its footprint (author, 2026-10-19) */
+  diesel_refinery: 1.88,
+  /** Wire Mill: fills its footprint (author, 2026-10-19) */
+  wire_mill: 2.13,
+  /** author, 2026-10-19: "taller, increase its size" */
   water_tower: 1.3,
   /** the Coaling Stage; proposal: "also bigger" came with no number */
   fuel_stop: 1.25,

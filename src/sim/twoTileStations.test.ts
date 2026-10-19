@@ -20,9 +20,15 @@ import {
 import { STATION_REACH } from './people';
 import { TOWN_RADIUS } from './towns';
 
-// The town hall and the goods shed lie along x at rotation 0 and the farm halt along y, as their
-// pictures do (the author's decision of 2026-10-18, #509): the span of each shipped def.
-const SPANS = { town: { w: 2, h: 1 }, warehouse: { w: 2, h: 1 }, farm: { w: 1, h: 2 } } as const;
+// The town hall, the goods shed and the Big Station lie along x at rotation 0 and the Big Farm Halt
+// along y, as their pictures do (the author's decisions of 2026-10-18, #509, and 2026-10-19, F7):
+// the span of each shipped def that takes two tiles. The Station and the Farm Halt take one.
+const SPANS = {
+  town: { w: 2, h: 1 },
+  warehouse: { w: 2, h: 1 },
+  big_station: { w: 2, h: 1 },
+  big_farm: { w: 1, h: 2 },
+} as const;
 const WIDE = Object.keys(SPANS) as (keyof typeof SPANS)[];
 
 beforeEach(() => {
@@ -64,8 +70,8 @@ function world(): SimWorld {
   return w;
 }
 
-describe('the shipped town hall, goods shed and farm halt', () => {
-  it('span the tiles their pictures lie along: x for the hall and the shed, y for the halt', () => {
+describe('the shipped town hall, goods shed, Big Station and Big Farm Halt', () => {
+  it('span the tiles their pictures lie along: x for the hall, the shed and the Big Station, y for the Big Farm Halt', () => {
     for (const id of WIDE) {
       const def = stationDef(id);
       expect(def.span, id).toEqual(SPANS[id]);
@@ -412,9 +418,9 @@ describe('the doors of a station of two tiles', () => {
         }
         expect(platform.side, label).toBe(FRONT[rot]);
         expect(street.side, label).toBe(opposite(platform.side));
-        // two rows deep (the farm halt, turned or not) it has the platform door on its front row
+        // two rows deep (the Big Farm Halt, turned or not) it has the platform door on its front row
         // and the street door on its back row; one row deep (the hall, the shed) both are on it
-        if (id === 'farm') expect(key(platform.tile), label).not.toBe(key(street.tile));
+        if (id === 'big_farm') expect(key(platform.tile), label).not.toBe(key(street.tile));
         else expect(key(platform.tile), label).toBe(key(street.tile));
       }
   });
@@ -587,12 +593,12 @@ describe('the stations of a town, a pair of tiles each', () => {
     line(w, 15, 20, 26);
     line(w, 15, 17, 26);
     // above the hall: its lower tile, on row 22, is 7 rows from the hall's row, its corner 8
-    const near = station(w, 'farm', 20, 21);
+    const near = station(w, 'big_farm', 20, 21);
     expect(near.footprint().map((c) => c.y)).toEqual([21, 22]);
     expect(hall.distTo(near.x, near.y), 'its corner').toBe(8);
     expect(hall.distTo(near.x, near.y + 1), 'its lower tile').toBe(7);
     // and three rows up: 10 and 11 rows
-    const far = station(w, 'farm', 20, 18);
+    const far = station(w, 'big_farm', 20, 18);
     expect(hall.distTo(far.x, far.y + 1)).toBe(10);
     const m = w.towns.members(t);
     expect(m.stations).toContain(near);
@@ -627,7 +633,7 @@ describe('newcomers for a station of two tiles', () => {
     const { w, home } = hallWithRoomyHouse();
     const before = home.residents;
     // the corner is 8 rows from the hall, the lower tile 7
-    const halt = w.builder.placeStation(20, 21, 'farm');
+    const halt = w.builder.placeStation(20, 21, 'big_farm');
     expect(halt?.footprint().map((c) => c.y)).toEqual([21, 22]);
     expect(home.residents).toBeGreaterThan(before);
   });
@@ -635,15 +641,15 @@ describe('newcomers for a station of two tiles', () => {
   it('do not come when neither tile is in reach', () => {
     const { w, home } = hallWithRoomyHouse();
     const before = home.residents;
-    expect(w.builder.placeStation(20, 18, 'farm')).not.toBeNull();
+    expect(w.builder.placeStation(20, 18, 'big_farm')).not.toBeNull();
     expect(home.residents).toBe(before);
   });
 
   it('come for a works too, by the nearest tile of its footprint', () => {
     const { w, home } = hallWithRoomyHouse();
     const before = home.residents;
-    // a 2 x 1 grinder on the hall's row: its corner 8 columns from the hall, its far tile 7
-    expect(w.builder.placeBuilding(12, 29, 'grinder', 0)).not.toBeNull();
+    // a 2 x 2 Battery on the hall's rows: its corner 8 columns from the hall, its far tile 7
+    expect(w.builder.placeBuilding(12, 28, 'substation', 0)).not.toBeNull();
     expect(home.residents).toBeGreaterThan(before);
   });
 });
@@ -660,7 +666,7 @@ describe('the walkers of a station of two tiles', () => {
     // its door faces.
     const w = world();
     line(w, 15, 28, 19);
-    const halt = station(w, 'farm', 20, 28);
+    const halt = station(w, 'big_farm', 20, 28);
     const door = doorsOf(halt.def, halt.x, halt.y, halt.rot).find((d) => d.kind === 'platform')!;
     expect(key(door.tile)).toBe('20,29');
     const platforms = w.builder.platformTiles(halt);
@@ -719,7 +725,7 @@ describe('the walkers of a station of two tiles', () => {
 
   it('never gather on the tiles under their own halt', () => {
     const w = world();
-    const halt = station(w, 'farm', 20, 28);
+    const halt = station(w, 'big_farm', 20, 28);
     const under = new Set(keys(halt.footprint()));
     let gathered = 0;
     for (let i = 0; i < 2500; i++) {

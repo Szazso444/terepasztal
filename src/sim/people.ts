@@ -1,5 +1,5 @@
 import { Terrain, type GameMap } from '../world/tiles';
-import type { StationDef } from '../data/content';
+import { behavesAs, type StationDef } from '../data/content';
 import type { Builder } from './build';
 import type { Station } from './stations';
 import { decorDef } from './build';
@@ -37,8 +37,11 @@ const GATHERER: Record<string, Profession> = {
  * Who lives at a station: the gatherers by their kind of yard or field, passengers at a station
  * that takes passengers, and railway workers at any other (a depot, a warehouse, a mine).
  */
-export function stationProfession(def: Pick<StationDef, 'id' | 'accepts'>): Profession {
-  return GATHERER[def.id] ?? (def.accepts.includes('passengers') ? 'passenger' : 'railway_worker');
+export function stationProfession(def: Pick<StationDef, 'id' | 'like' | 'accepts'>): Profession {
+  return (
+    GATHERER[behavesAs(def)] ??
+    (def.accepts.includes('passengers') ? 'passenger' : 'railway_worker')
+  );
 }
 
 export interface Place {
@@ -596,7 +599,7 @@ export class PeopleSim {
           y: s.y,
           tiles: s.footprint(),
           key: stationKey(s.id),
-          gathers: this.gatherTerrain[s.def.id] ?? null,
+          gathers: this.gatherTerrain[s.kind] ?? null,
           profession: stationProfession(s.def),
           door: streetDoor(s.def, s.x, s.y, s.rot),
         });

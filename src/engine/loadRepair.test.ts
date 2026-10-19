@@ -192,8 +192,8 @@ describe('the ground under everything else a load repairs', () => {
       const repairs = repaired(
         m,
         only({
-          // a depot covers 2 x 2 tiles, from its corner, and a farm halt 1 x 2
-          stations: [station('depot', 2, 0), station('farm', 5, 0)],
+          // a depot covers 2 x 2 tiles, from its corner, and a Big Farm Halt 1 x 2
+          stations: [station('depot', 2, 0), station('big_farm', 5, 0)],
           // a signal with no track under it, a power pole, which asks the ground even on track,
           // and a house
           decor: [
@@ -1238,7 +1238,7 @@ describe('a load with repairs', () => {
     const repairs = repaired(
       m,
       only({
-        stations: [station('farm', water[0], water[1])],
+        stations: [station('big_farm', water[0], water[1])],
         buildings: [
           works(grass[0], grass[1], 'bridge_wood'),
           works(rock[0], rock[1], 'bridge_stone'),

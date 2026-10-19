@@ -1593,6 +1593,8 @@ function wireMill(): PixelBuf {
 
 export const STATION_FAMILIES: Record<string, (level: number) => PixelBuf> = {
   farm,
+  /** the Big Farm Halt draws today's farm pictures (F7), under a name of its own */
+  big_farm: farm,
   lumber,
   quarry,
   pump,

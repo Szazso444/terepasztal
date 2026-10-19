@@ -2,6 +2,10 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import atlas from '../../public/assets/structures.json';
 import { structureFrame } from '../art/frames';
 import { generateStructuresAtlas } from '../art/structures';
+import { buildingDef } from '../sim/buildings';
+import { stationDef } from '../sim/stations';
+import { TILE_W } from '../engine/iso';
+import { placeSpan } from '../sim/doors';
 import {
   AUTHOR_SCALE,
   DOOR_FRACTION,
@@ -57,6 +61,9 @@ const BASELINE = {
     lumber: 12,
     windmill: 13,
     grinder: 12,
+    /** the Big Station and the Big Farm Halt draw the old pictures (F7) */
+    big_station: 10.5,
+    big_farm: 12,
   } as Record<string, number>,
   /** door aperture / illustrated frame height */
   fractions: {
@@ -66,6 +73,8 @@ const BASELINE = {
     warehouse: 53 / 191,
     farm: 47 / 262,
     windmill: 38 / 240,
+    big_station: 36 / 169,
+    big_farm: 47 / 262,
   } as Record<string, number>,
   /** declared scale of outdoor equipment with no door */
   declared: {
@@ -86,26 +95,37 @@ const BASELINE = {
   } as Record<string, number>,
 };
 /**
- * The author's size pick of 2026-10-18 as plain numbers, pinned apart from `AUTHOR_SCALE` so that
- * editing the table cannot move them. A family not named here is drawn as the references give it.
+ * The author's size picks of 2026-10-18 and 2026-10-19 as plain numbers, pinned apart from
+ * `AUTHOR_SCALE` so that editing the table cannot move them. A family not named here is drawn as
+ * the references give it. The six "fills its footprint" families (2026-10-19) are the town hall,
+ * the warehouse, the colliery, the ironworks, the Refinery and the wire mill; the Big Station and
+ * the Big Farm Halt take the Station's and the Farm Halt's.
  */
 const PICK: Record<string, number> = {
-  town: 1.2,
+  town: 1.83,
   station: 0.9,
-  warehouse: 1.25,
+  big_station: 0.9,
+  warehouse: 1.86,
   farm: 0.75,
+  big_farm: 0.75,
   lumber: 0.9,
   quarry: 0.8,
   grinder: 0.8,
   power_plant: 1.2,
   substation: 0.9,
-  colliery: 1.2,
-  ironworks: 1.2,
+  colliery: 1.96,
+  ironworks: 2,
+  diesel_refinery: 1.88,
+  wire_mill: 2.13,
   water_tower: 1.3,
   fuel_stop: 1.25,
 };
-/** Frames exempt from their family's pick: Town Hall L1 is sized by another path (about 1.36 doors). */
-const EXEMPT: Record<string, number> = { town_1: 1 };
+/**
+ * Frames exempt from their family's pick: none. Town Hall L1 was (it was sized by another path,
+ * about 1.36 doors, and kept the reference size) until the town's multiplier was measured on it
+ * (2026-10-19), so that it fills its footprint like the rest of the family.
+ */
+const EXEMPT: Record<string, number> = {};
 /** The pick a frame has: its own exemption, else its family's multiplier, else none. */
 const pickOf = (frame: string) =>
   EXEMPT[frame.replace('structures/', '')] ?? PICK[structureFamily(frame)] ?? 1;
@@ -219,8 +239,10 @@ describe("the author's size pick", () => {
   const REPRESENTATIVE: Record<string, string> = {
     town: 'structures/town_2',
     station: 'structures/station_2',
+    big_station: 'structures/big_station_3',
     warehouse: 'structures/warehouse_3',
     farm: 'structures/farm_1',
+    big_farm: 'structures/big_farm_1',
     lumber: 'structures/lumber_4',
     quarry: 'structures/quarry_2',
     grinder: 'structures/grinder_lv2',
@@ -228,6 +250,8 @@ describe("the author's size pick", () => {
     substation: 'structures/substation_lv3',
     colliery: 'structures/colliery',
     ironworks: 'structures/ironworks_lv4',
+    diesel_refinery: 'structures/diesel_refinery_lv2',
+    wire_mill: 'structures/wire_mill',
     water_tower: 'structures/water_tower',
     fuel_stop: 'structures/fuel_stop',
   };
@@ -237,21 +261,21 @@ describe("the author's size pick", () => {
     expect(Object.keys(REPRESENTATIVE).sort()).toEqual(Object.keys(PICK).sort());
   });
 
-  it('exempts Town Hall L1 from the town pick, at every measure and turn, and no other town frame', () => {
+  it('gives Town Hall L1 the town multiplier like every other town frame, at every measure and turn', () => {
+    // the pick is measured on L1 (it fills its footprint), so L1 has no exemption of its own
+    expect(EXEMPT).toEqual({});
+    expect(AUTHOR_SCALE.town_1).toBeUndefined();
     for (const height of [undefined, 199, 250]) {
-      expect(structureScale('structures/town_1', height), `town_1 at ${height}`).toBe(
-        referenceScale('structures/town_1', height),
-      );
-      for (const n of [2, 3, 4, 5])
+      for (const n of [1, 2, 3, 4, 5])
         expect(
           structureScale(`structures/town_${n}`, height),
           `town_${n} at ${height}`,
-        ).toBeCloseTo(referenceScale(`structures/town_${n}`, height) * 1.2, 12);
+        ).toBeCloseTo(referenceScale(`structures/town_${n}`, height) * 1.83, 12);
     }
     const turned: FrameNames = { has: (k) => k === 'structures/town_1' };
     expect(scaleReference(turned, 'structures/town_1_r2')).toEqual({
       family: 'town',
-      scale: referenceScale('structures/town_1'),
+      scale: structureScale('structures/town_1'),
     });
   });
 
@@ -294,8 +318,6 @@ describe("the author's size pick", () => {
       'pump',
       'hydro_plant',
       'oil_derrick',
-      'diesel_refinery',
-      'wire_mill',
     ]) {
       expect(AUTHOR_SCALE[family], family).toBeUndefined();
       const frame = `structures/${family}_lv2`;
@@ -304,6 +326,90 @@ describe("the author's size pick", () => {
     }
     expect(structureScale('structures/not_a_family')).toBe(1);
     expect(scaleReference(frames, 'structures/not_a_family')).toBeNull();
+  });
+});
+
+describe('fills its footprint (author, 2026-10-19)', () => {
+  /** The six families the author asked to be bigger, their footprint's def, and their level 1 picture. */
+  const FILL: { family: string; def: () => { w: number; h: number }; level1: string }[] = [
+    { family: 'town', def: () => placeSpan(stationDef('town')), level1: 'town_1' },
+    { family: 'warehouse', def: () => placeSpan(stationDef('warehouse')), level1: 'warehouse_1' },
+    { family: 'colliery', def: () => placeSpan(buildingDef('colliery')), level1: 'colliery' },
+    { family: 'ironworks', def: () => placeSpan(buildingDef('ironworks')), level1: 'ironworks' },
+    {
+      family: 'diesel_refinery',
+      def: () => placeSpan(buildingDef('diesel_refinery')),
+      level1: 'diesel_refinery',
+    },
+    { family: 'wire_mill', def: () => placeSpan(buildingDef('wire_mill')), level1: 'wire_mill' },
+  ];
+  const packed = atlas.frames as Record<string, { w: number; h: number }>;
+  /** The drawn width of a packed picture at rotation 0 and the game's zoom, as the renderer sizes it. */
+  const drawnWidth = (name: string) => {
+    const f = packed[`structures/${name}`];
+    return (f.w / atlas.resolution) * structureScale(`structures/${name}`, f.h / atlas.resolution);
+  };
+  /** A footprint's width on screen: its two sides' tile widths halved, (w + h) * TILE_W / 2. */
+  const screenWidth = ({ w, h }: { w: number; h: number }) => ((w + h) * TILE_W) / 2;
+
+  it('is 0.9 of the footprint on screen for the level 1 picture of each of the six, within 0.02', () => {
+    for (const { family, def, level1 } of FILL) {
+      const ratio = drawnWidth(level1) / screenWidth(def());
+      expect(
+        Math.abs(ratio - 0.9),
+        `${family}: ${ratio.toFixed(4)} of its footprint`,
+      ).toBeLessThanOrEqual(0.02);
+    }
+  });
+
+  it('measures the footprints it fills: 2 x 1 and 2 x 2, 96 and 128 px across', () => {
+    expect(FILL.map((f) => screenWidth(f.def()))).toEqual([96, 96, 128, 128, 128, 128]);
+  });
+
+  it('keeps every later picture of the family inside its footprint and not much smaller', () => {
+    let checked = 0;
+    for (const { family, def } of FILL)
+      for (const key of Object.keys(packed)) {
+        const name = key.replace('structures/', '');
+        if (structureFamily(key) !== family) continue;
+        const ratio = drawnWidth(name) / screenWidth(def());
+        expect(ratio, name).toBeGreaterThan(0.85);
+        expect(ratio, name).toBeLessThanOrEqual(1);
+        checked++;
+      }
+    expect(checked).toBeGreaterThanOrEqual(24);
+  });
+
+  it('is the multiplier that was computed: old multiplier times footprint over today’s drawn width', () => {
+    // the author's old multipliers (2026-10-18) and the level 1 picture's width then, from the
+    // reference alone; the new one is rounded to 0.01
+    const OLD: Record<string, number> = {
+      town: 1, // Town Hall L1 had no pick
+      warehouse: 1.25,
+      colliery: 1.2,
+      ironworks: 1.2,
+      diesel_refinery: 1,
+      wire_mill: 1,
+    };
+    for (const { family, def, level1 } of FILL) {
+      const today = drawnWidth(level1) * (OLD[family] / PICK[family]);
+      const exact = (OLD[family] * 0.9 * screenWidth(def())) / today;
+      expect(PICK[family], family).toBeCloseTo(exact, 2);
+      expect(Math.abs(PICK[family] - exact), family).toBeLessThanOrEqual(0.005 + 1e-9);
+    }
+  });
+
+  it('puts the doors of the two families that have one at about 2.7 persons tall', () => {
+    for (const family of ['town', 'warehouse'])
+      expect((DOOR_PX * PICK[family]) / PERSON_PX, family).toBeCloseTo(
+        family === 'town' ? 2.684 : 2.728,
+        2,
+      );
+  });
+
+  it('leaves the power plant as it was, and the coaling stage a proposal', () => {
+    expect(AUTHOR_SCALE.power_plant).toBe(1.2);
+    expect(AUTHOR_SCALE.fuel_stop).toBe(1.25);
   });
 });
 

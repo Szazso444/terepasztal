@@ -56,6 +56,9 @@ const WINDOW_REGIONS: Record<string, number[][]> = {
   ],
   windmill: [[0.4, 0.57, 0.055, 0.11]],
 };
+// the Big Station and the Big Farm Halt draw the Station's and the Farm Halt's pictures (F7)
+WINDOW_REGIONS.big_station = WINDOW_REGIONS.station;
+WINDOW_REGIONS.big_farm = WINDOW_REGIONS.farm;
 
 /** Frame `f`'s size in world px over `canvas`, filtered linearly with no mipmaps. */
 function texture(canvas: HTMLCanvasElement, f: FrameInfo) {

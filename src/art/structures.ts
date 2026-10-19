@@ -733,17 +733,21 @@ function depotAtLevel(rot: number, level: number): PixelBuf {
 export function generateStructuresAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   addBridgeFrames(ab);
-  addTurns(ab, 'structures/station_1', stationL1, OX, OY);
-  addTurns(ab, 'structures/station_2', stationL2, OX, OY);
-  addTurns(ab, 'structures/station_3', stationL3, OX, OY);
-  for (let l = 4; l <= 5; l++)
-    addTurns(
-      ab,
-      `structures/station_${l}`,
-      () => upgradedStation(stationL3(), l - 1),
-      CIVIC_OX,
-      CIVIC_OY,
-    );
+  // the Big Station (F7) draws today's station pictures under a name of its own, so that the
+  // Station's can be replaced by new art without taking the Big Station's with them
+  for (const fam of ['station', 'big_station']) {
+    addTurns(ab, `structures/${fam}_1`, stationL1, OX, OY);
+    addTurns(ab, `structures/${fam}_2`, stationL2, OX, OY);
+    addTurns(ab, `structures/${fam}_3`, stationL3, OX, OY);
+    for (let l = 4; l <= 5; l++)
+      addTurns(
+        ab,
+        `structures/${fam}_${l}`,
+        () => upgradedStation(stationL3(), l - 1),
+        CIVIC_OX,
+        CIVIC_OY,
+      );
+  }
   // depots keep today's r0 and r1 pictures; `_r2` and `_r3` turn them half way round
   for (const r of [0, 1])
     for (const [rot, turn] of [

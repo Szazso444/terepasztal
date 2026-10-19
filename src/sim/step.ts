@@ -230,7 +230,7 @@ export class SimStep {
     }
     const famineMul = stock.famine ? FAMINE_PRODUCTION_MUL : 1;
     for (const s of builder.stations) {
-      if (s.def.id === 'station') s.passengerPopulation = catchment(houses.houses.values(), s);
+      if (s.kind === 'station') s.passengerPopulation = catchment(houses.houses.values(), s);
       s.tick(gdt * famineMul);
     }
     tickBuildings(
