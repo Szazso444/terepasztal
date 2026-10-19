@@ -1,0 +1,180 @@
+{
+  "r0Reference": {
+    "file": "assets/source/base-v1/works-full-oil-derrick.png",
+    "sha256": "a7d6f694fdc2d4c0d72dd3717d77ba7cba8eff69f1ad03b8499b699701ca375c",
+    "returned": [1774, 887],
+    "eye": {
+      "baseCorners": {
+        "w": [509, 623],
+        "s": [1000, 851],
+        "e": [1264, 755]
+      },
+      "postFrameTop": [914, 727],
+      "beamPivot": [884, 241]
+    },
+    "baseWidth": 755,
+    "postHeightPx": 486,
+    "heightNumber": 0.6437086092715232,
+    "highlights": {
+      "nearWhite": 20,
+      "nearAmber": 0
+    },
+    "note": "Read from full master and zoomed detail crop; automatic base corners differ because wellhead and skid ends interrupt the outline."
+  },
+  "attempts": [
+    {
+      "view": "r1",
+      "attempt": 1,
+      "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-1.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Oil derrick, a rusty steel pumpjack on a skid frame with a tank and a\nwellhead, the SAME building as in the third picture, turned to the view named under View. Style:\nthat of the second picture, the style board. Crisp pixel-art-inspired clustered shading, broad\nreadable masses, three or four shades per material, restrained detail, a strong silhouette. The\npalette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone\n#BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops\nlightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0\nand nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The camera stays where it is and the plant is turned 1 quarter turn clockwise seen from\nabove; the plant has no front and no entrance in this view. The plant is r0 turned 90 degrees\nclockwise seen from above, about the middle of the plinth, not mirrored: every part stays where it\nis in the plant and moves with it. What r0 has at the left corner stands at the far (top) corner\nhere: the horizontal grey storage tank with its copper bands and its copper pipe, at the end of the\nskid frame. What r0 has at the near (bottom) corner stands at the left corner here: the wellhead,\nthe copper-banded standpipe on its round flange, with the horse-head of the walking beam above it\nand the copper pipes along the frame. What r0 has along the lower-left side stands along the\nupper-left side here: the riveted steel gearbox with the crank wheel and pitman arm and the lattice\nA-frame carrying the beam's pivot, between the tank and the wellhead, the walking beam running the\nlength of the frame. The sides of the units that r0 does not show are built as r0 builds them: the\nsame materials and parts, a plainer finish, nothing new. The beam's pivot, the horse-head and the\ncrank wheel are as tall as in r0; the machine is the same size.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the parts placed above, and\ncarry the same materials, roof, colours and details round the building. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nRequested output: 1024 x 1024 pixels.",
+      "references": [
+        "../guides-535/oil_derrick-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/works-full-oil-derrick.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-1.png",
+        "picture": null,
+        "returned": [1254, 1254],
+        "automaticCorners": {
+          "w": [118, 1062.273668602221],
+          "s": [392.9430960579737, 1160.87834466001],
+          "e": [1135, 845.9149894511647]
+        },
+        "corners": {
+          "w": [118, 1062.273668602221],
+          "s": [392.9430960579737, 1160.87834466001],
+          "e": [1135, 845.9149894511647]
+        },
+        "width": 1017,
+        "limits": {
+          "min": 807.017578125,
+          "held": 849.87890625,
+          "max": 892.740234375
+        },
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "opaqueBox": [118, 156, 1135, 1176]
+      },
+      "kept": false,
+      "failure": {
+        "test": "width",
+        "actual": 1017,
+        "min": 807.017578125,
+        "max": 892.740234375
+      },
+      "nextCorrection": "Correction: your last r1 base measured 1017 px of 1254 where the limit is 892 px; hold the base to 850 px, within 807 to 892 px, with all grounded parts inside the guide footprint."
+    },
+    {
+      "view": "r1",
+      "attempt": 2,
+      "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-2.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Oil derrick, a rusty steel pumpjack on a skid frame with a tank and a\nwellhead, the SAME building as in the third picture, turned to the view named under View. Style:\nthat of the second picture, the style board. Crisp pixel-art-inspired clustered shading, broad\nreadable masses, three or four shades per material, restrained detail, a strong silhouette. The\npalette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone\n#BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops\nlightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0\nand nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The camera stays where it is and the plant is turned 1 quarter turn clockwise seen from\nabove; the plant has no front and no entrance in this view. The plant is r0 turned 90 degrees\nclockwise seen from above, about the middle of the plinth, not mirrored: every part stays where it\nis in the plant and moves with it. What r0 has at the left corner stands at the far (top) corner\nhere: the horizontal grey storage tank with its copper bands and its copper pipe, at the end of the\nskid frame. What r0 has at the near (bottom) corner stands at the left corner here: the wellhead,\nthe copper-banded standpipe on its round flange, with the horse-head of the walking beam above it\nand the copper pipes along the frame. What r0 has along the lower-left side stands along the\nupper-left side here: the riveted steel gearbox with the crank wheel and pitman arm and the lattice\nA-frame carrying the beam's pivot, between the tank and the wellhead, the walking beam running the\nlength of the frame. The sides of the units that r0 does not show are built as r0 builds them: the\nsame materials and parts, a plainer finish, nothing new. The beam's pivot, the horse-head and the\ncrank wheel are as tall as in r0; the machine is the same size.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the parts placed above, and\ncarry the same materials, roof, colours and details round the building. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nRequested output: 1024 x 1024 pixels.\n\nCorrection: your last r1 base measured 1017 px of 1254 where the limit is 892 px (allowed 807 to 892, held 850). Paint the skid frame at the guide block's exact width, 694 px on a 1024 canvas, including its outline. Keep the entire grounded machine inside that frame and the guide footprint; leave transparent margins. The long frame side runs lower right, tank at far top corner and wellhead at left corner.",
+      "references": [
+        "../guides-535/oil_derrick-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/works-full-oil-derrick.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-2.png",
+        "picture": null,
+        "returned": [1254, 1254],
+        "automaticCorners": {
+          "w": [185, 1082.5],
+          "s": [387.70597033031623, 1183.852985165158],
+          "e": [1084, 878.6046078176272]
+        },
+        "corners": {
+          "w": [185, 1082.5],
+          "s": [387.70597033031623, 1183.852985165158],
+          "e": [1084, 878.6046078176272]
+        },
+        "width": 899,
+        "limits": {
+          "min": 807.017578125,
+          "held": 849.87890625,
+          "max": 892.740234375
+        },
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "opaqueBox": [185, 281, 1089, 1170]
+      },
+      "kept": false,
+      "failure": {
+        "test": "width",
+        "actual": 899,
+        "min": 807.017578125,
+        "max": 892.740234375
+      },
+      "nextCorrection": "Correction: your last r1 base measured 899 px of 1254 where the limit is 892 px; hold the base to 850 px, within 807 to 892 px, with all grounded parts inside the guide footprint.",
+      "selectedAsClosest": true,
+      "keptFile": "assets/source/rotations-535/oil_derrick/oil_derrick-r1.png"
+    },
+    {
+      "view": "r1",
+      "attempt": 3,
+      "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-3.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Oil derrick, a rusty steel pumpjack on a skid frame with a tank and a\nwellhead, the SAME building as in the third picture, turned to the view named under View. Style:\nthat of the second picture, the style board. Crisp pixel-art-inspired clustered shading, broad\nreadable masses, three or four shades per material, restrained detail, a strong silhouette. The\npalette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone\n#BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops\nlightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0\nand nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The camera stays where it is and the plant is turned 1 quarter turn clockwise seen from\nabove; the plant has no front and no entrance in this view. The plant is r0 turned 90 degrees\nclockwise seen from above, about the middle of the plinth, not mirrored: every part stays where it\nis in the plant and moves with it. What r0 has at the left corner stands at the far (top) corner\nhere: the horizontal grey storage tank with its copper bands and its copper pipe, at the end of the\nskid frame. What r0 has at the near (bottom) corner stands at the left corner here: the wellhead,\nthe copper-banded standpipe on its round flange, with the horse-head of the walking beam above it\nand the copper pipes along the frame. What r0 has along the lower-left side stands along the\nupper-left side here: the riveted steel gearbox with the crank wheel and pitman arm and the lattice\nA-frame carrying the beam's pivot, between the tank and the wellhead, the walking beam running the\nlength of the frame. The sides of the units that r0 does not show are built as r0 builds them: the\nsame materials and parts, a plainer finish, nothing new. The beam's pivot, the horse-head and the\ncrank wheel are as tall as in r0; the machine is the same size.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the parts placed above, and\ncarry the same materials, roof, colours and details round the building. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nRequested output: 1024 x 1024 pixels.\n\nCorrection: your last r1 base measured 899 px of 1254 where the maximum is 892 px and the held width is 850 px. Paint the outer skid corners at guide coordinates w (166,858), s (397,973), e (858,742), n (627,627) on the requested 1024 x 1024 canvas, outline included: a 694 px base width, 230 px lower-left run and 461 px lower-right run, both slopes exactly 0.50. At 1254 returned size those corners are w (204,1050), s (486,1191), e (1050,909), n (768,768). Keep all grounded components inside that skid. Place the tank at the far top corner and the wellhead at the left corner; rotate the actual parts with this plan.",
+      "references": [
+        "../guides-535/oil_derrick-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/works-full-oil-derrick.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-3.png",
+        "picture": null,
+        "returned": [1254, 1254],
+        "automaticCorners": {
+          "w": [214, 1077.1208123097033],
+          "s": [453.40557245240774, 1132.9109684786854],
+          "e": [1115, 837.9704248602288]
+        },
+        "corners": {
+          "w": [149, 1018],
+          "s": [485, 1141],
+          "e": [1171, 826]
+        },
+        "width": 1022,
+        "limits": {
+          "min": 807.017578125,
+          "held": 849.87890625,
+          "max": 892.740234375
+        },
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "eyeNote": "Zoomed base crop: automatic w lies inside the wellhead flange step and automatic e falls inside the end foot; outer skid extremities read by eye. Both sets are retained.",
+        "opaqueBox": [151, 192, 1168, 1143]
+      },
+      "kept": false,
+      "failure": {
+        "test": "width",
+        "actual": 1022,
+        "min": 807.017578125,
+        "max": 892.740234375
+      },
+      "nextCorrection": "Correction: your last r1 base measured 1022 px of 1254 where the limit is 892 px; hold the base to 850 px, within 807 to 892 px, with all grounded parts inside the guide footprint."
+    }
+  ],
+  "status": {
+    "outcome": "stopped",
+    "reason": "All three r1 attempts refused for width. Stop after this view as instructed.",
+    "passedViews": [],
+    "closestViews": ["r1"],
+    "unpaintedViews": ["r3", "r2"],
+    "selectedAttempt": 2
+  },
+  "measurementHelper": "measure-oil.mjs: local oil-specific helper; existing shared measure.mjs has concurrent 1-tile jobs using different width limits and is preserved.",
+  "review": {
+    "command": "node tools/building-sheets.mjs --picture assets/source/rotations-535/oil_derrick/oil_derrick-r1.png",
+    "result": "CLI refuses requested filename: not a building picture's name. Used exported drawLook with t1x2 footprint, r1, writing local ignored .look instead."
+  }
+}
