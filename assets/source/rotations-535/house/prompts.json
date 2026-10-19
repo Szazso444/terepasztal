@@ -1,0 +1,184 @@
+{
+  "r0Reference": {
+    "file": "assets/source/base-v1/house-cottage.png",
+    "sha256": "309358e31f5bf99f846bbf9f13f91bcd2cb0e7b36d2d9eb8d7e12663e3000c16",
+    "size": [1536, 1024],
+    "automaticCorners": {
+      "w": [334, 733.6301],
+      "s": [885.7995, 938.3115],
+      "e": [1211, 796.4692]
+    },
+    "corners": {
+      "w": [334, 729],
+      "s": [890, 935],
+      "e": [1211, 802]
+    },
+    "eavesY": 674,
+    "wallHeight": 261,
+    "baseWidth": 877,
+    "height": 0.2976054732041049,
+    "highlights": {
+      "nearWhite": 9474,
+      "nearAmber": 1
+    },
+    "inspection": "Zoomed crop: wall eaves at near corner; excludes roof, gable and chimney."
+  },
+  "basePrompts": {
+    "r1": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the House, a small cream-stone cottage with a slate roof and a chimney, the\r\nSAME building as in the third picture, turned to the view named under View. Style: that of the\r\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\r\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\r\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\r\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\r\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\r\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\r\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\r\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\r\nright-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream\r\nlimestone courses, the stepped corbelled gable edge under the slate, and the small window with a\r\ncream sill high in the gable. The lower-right wall is the BACK: a plain long wall in the same\r\nlimestone, with two small windows and no door, under the same eaves. The roof is r0's: dark slate\r\ngable roof with ridge tiles, its ridge along the long walls, and the cream limestone chimney stack\r\nwith two red pots at the same end of the ridge, turning with the building.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\r\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\r\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\r\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\r\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\r\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\r\nagain. There, in view r0, the lower-left wall is the front: the long front with the green door and\r\nthe two windows. In this picture the front faces away, hidden behind the building: neither visible\r\nwall is the front, and what the front has does not show on them. The building is exactly as large as\r\nin the reference: no taller, with no storey more. Its roof is the reference's roof, turned: the same\r\nform and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.",
+    "r3": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the House, a small cream-stone cottage with a slate roof and a chimney, the\r\nSAME building as in the third picture, turned to the view named under View. Style: that of the\r\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\r\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\r\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\r\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\r\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the\r\nlower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The\r\nlower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not\r\nmirrored: the long front: the forest-green plank door with its cream lintel in the middle, and a\r\nsmall window with a forest-green frame and a cream surround on each side. The lower-left wall is the\r\nleft-hand side: a plain gable end with the same corbelled gable edge and no window. The roof is\r\nr0's: dark slate gable roof with ridge tiles, its ridge along the long walls, and the cream\r\nlimestone chimney stack with two red pots at the same end of the ridge, turning with the building.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\r\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\r\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\r\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\r\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\r\ncarry the same materials, roof, colours and details round the building. The building is exactly as\r\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\r\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.",
+    "r2": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the House, a small cream-stone cottage with a slate roof and a chimney, the\r\nSAME building as in the third picture, turned to the view named under View. Style: that of the\r\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\r\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\r\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\r\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\r\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\n\nView. The building is turned half round. The front faces the upper right, away from the camera, and\r\nnothing of it is in this picture: no entrance door and none of the front's windows or other features\r\non either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right\r\nwall is the left-hand side. The lower-left wall is the BACK, the same wall as the lower-right wall\r\nof the r1 picture: a plain long wall in the same limestone, with two small windows and no door,\r\nunder the same eaves. The lower-right wall is the left-hand side, the same wall as the lower-left\r\nwall of the r3 picture: a plain gable end with the same corbelled gable edge and no window. Where r1\r\nor r3 is not attached, take that wall from these words. The roof is r0's: dark slate gable roof with\r\nridge tiles, its ridge along the long walls, and the cream limestone chimney stack with two red pots\r\nat the same end of the ridge, turning with the building.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\r\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\r\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\r\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\r\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\r\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\r\nagain. There, in view r0, the lower-left wall is the front: the long front with the green door and\r\nthe two windows. In this picture the front faces away, hidden behind the building: neither visible\r\nwall is the front, and what the front has does not show on them. About the extra references, the\r\nsize and the roof. The fourth reference is this same building in view r1 (the kept picture): its\r\nlower-right wall is the BACK, and that wall is the lower-left wall of this picture. The fifth is\r\nthis same building in view r3 (the kept picture): its lower-left wall is the left-hand side, and\r\nthat wall is the lower-right wall of this picture. Copy both walls as they stand in those\r\nreferences: the same height, the same shape under the roof, the same windows and doors. The building\r\nis exactly as large as in the references: no taller, and with no storey more. The roof is the one\r\nall the references show, seen from behind: the same form, its eaves as low as in the references, and\r\nthe ridge runs the same way across the picture as in the front view. It carries what the references\r\nshow on the roof, at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building."
+  },
+  "attempts": [
+    {
+      "view": "r1",
+      "attempt": 1,
+      "file": "raw/townhouse-r1-attempt-1.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the House, a small cream-stone cottage with a slate roof and a chimney, the\r\nSAME building as in the third picture, turned to the view named under View. Style: that of the\r\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\r\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\r\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\r\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\r\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\r\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\r\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\r\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\r\nright-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream\r\nlimestone courses, the stepped corbelled gable edge under the slate, and the small window with a\r\ncream sill high in the gable. The lower-right wall is the BACK: a plain long wall in the same\r\nlimestone, with two small windows and no door, under the same eaves. The roof is r0's: dark slate\r\ngable roof with ridge tiles, its ridge along the long walls, and the cream limestone chimney stack\r\nwith two red pots at the same end of the ridge, turning with the building.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\r\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\r\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\r\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\r\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\r\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\r\nagain. There, in view r0, the lower-left wall is the front: the long front with the green door and\r\nthe two windows. In this picture the front faces away, hidden behind the building: neither visible\r\nwall is the front, and what the front has does not show on them. The building is exactly as large as\r\nin the reference: no taller, with no storey more. Its roof is the reference's roof, turned: the same\r\nform and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nOutput canvas: 1024 x 1536 pixels. Edit target: first reference. Preserve its base position and 464 px painted base width (allowed 441–487 px).",
+      "references": [
+        "../guides-535/townhouse-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/house-cottage.png"
+      ],
+      "returned": [1024, 1536],
+      "measured": {
+        "size": [1024, 1536],
+        "picture": null,
+        "automaticCorners": {
+          "w": [155, 1268.6656383483626],
+          "s": [497.45707270380063, 1423.383426935228],
+          "e": [894, 1225.1720255412401]
+        },
+        "corners": {
+          "w": [155, 1268.6656383483626],
+          "s": [497.45707270380063, 1423.383426935228],
+          "e": [894, 1225.1720255412401]
+        },
+        "width": 739,
+        "widthLimits": [441, 487],
+        "tests": {
+          "width": "FAIL"
+        },
+        "opaqueBox": [121, 685, 919, 1422],
+        "stoppedAfter": "width"
+      },
+      "kept": false,
+      "visualNotes": "Visible glow copied from master; width gate prevents further tests.",
+      "failure": {
+        "test": "width",
+        "value": 739,
+        "min": 441,
+        "max": 487
+      },
+      "correction": "Correction: your last r1 base measured 739 px of 1024 where the limit is 487 px. The base must be 464 px wide, with its left foot corner at x282, y1344, near corner at x512, y1459, and right corner at x742, y1344, staying on the original guide block edges. Keep all the generous empty transparent space above and beside this small cottage; do not enlarge it to fill the canvas.",
+      "remainingTests": "NOT_RUN: width gate failed",
+      "sha256": "d899c79fff4b570a0e36cbe75e53f37a2abf4b7eb397c2ac998b63ea5279ef61"
+    },
+    {
+      "view": "r1",
+      "attempt": 2,
+      "file": "raw/townhouse-r1-attempt-2.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the House, a small cream-stone cottage with a slate roof and a chimney, the\nSAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream\nlimestone courses, the stepped corbelled gable edge under the slate, and the small window with a\ncream sill high in the gable. The lower-right wall is the BACK: a plain long wall in the same\nlimestone, with two small windows and no door, under the same eaves. The roof is r0's: dark slate\ngable roof with ridge tiles, its ridge along the long walls, and the cream limestone chimney stack\nwith two red pots at the same end of the ridge, turning with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long front with the green door and\nthe two windows. In this picture the front faces away, hidden behind the building: neither visible\nwall is the front, and what the front has does not show on them. The building is exactly as large as\nin the reference: no taller, with no storey more. Its roof is the reference's roof, turned: the same\nform and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: your last r1 base measured 739 px of 1024 where the limit is 487 px. The base must be 464 px wide, with its left foot corner at x282, y1344, near corner at x512, y1459, and right corner at x742, y1344, staying on the original guide block edges. Keep all the generous empty transparent space above and beside this small cottage; do not enlarge it to fill the canvas.\n\nOutput canvas: 1024 x 1536 pixels.\n",
+      "references": [
+        "../guides-535/townhouse-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/house-cottage.png"
+      ],
+      "returned": [1024, 1536],
+      "measured": {
+        "size": [1024, 1536],
+        "picture": null,
+        "automaticCorners": {
+          "w": [192, 1265.5109887128283],
+          "s": [461.5738547365328, 1400.0549205713444],
+          "e": [827, 1242.822426705975]
+        },
+        "corners": {
+          "w": [192, 1265.5109887128283],
+          "s": [461.5738547365328, 1400.0549205713444],
+          "e": [827, 1242.822426705975]
+        },
+        "width": 635,
+        "widthLimits": [441, 487],
+        "tests": {
+          "width": "FAIL"
+        },
+        "opaqueBox": [169, 768, 847, 1401],
+        "stoppedAfter": "width"
+      },
+      "kept": false,
+      "failure": {
+        "test": "width",
+        "value": 635,
+        "min": 441,
+        "max": 487
+      },
+      "correction": "Correction: your last r1 base measured 635 px of 1024 where the maximum is 487 px; the required width is 464 px. Paint ONLY over the small grey block's footprint at the bottom of the first picture: left ground corner (282,1344), near ground corner (512,1459), right ground corner (742,1344). These coordinates are fixed; walls rise vertically from those edges. The building must occupy less than half of the 1024 px canvas width at ground level. Keep the original guide's generous blank transparent upper area and side margins. Do not zoom in or enlarge the building to fill the image.",
+      "remainingTests": "NOT_RUN: width gate failed",
+      "copiedToKeptFile": true,
+      "sha256": "6c22d669997358ec229460dcd7e475b942f88317974e120fb111fb0f7951b928"
+    },
+    {
+      "view": "r1",
+      "attempt": 3,
+      "file": "raw/townhouse-r1-attempt-3.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the House, a small cream-stone cottage with a slate roof and a chimney, the\nSAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream\nlimestone courses, the stepped corbelled gable edge under the slate, and the small window with a\ncream sill high in the gable. The lower-right wall is the BACK: a plain long wall in the same\nlimestone, with two small windows and no door, under the same eaves. The roof is r0's: dark slate\ngable roof with ridge tiles, its ridge along the long walls, and the cream limestone chimney stack\nwith two red pots at the same end of the ridge, turning with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long front with the green door and\nthe two windows. In this picture the front faces away, hidden behind the building: neither visible\nwall is the front, and what the front has does not show on them. The building is exactly as large as\nin the reference: no taller, with no storey more. Its roof is the reference's roof, turned: the same\nform and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: your last r1 base measured 635 px of 1024 where the maximum is 487 px; the required width is 464 px. Paint ONLY over the small grey block's footprint at the bottom of the first picture: left ground corner (282,1344), near ground corner (512,1459), right ground corner (742,1344). These coordinates are fixed; walls rise vertically from those edges. The building must occupy less than half of the 1024 px canvas width at ground level. Keep the original guide's generous blank transparent upper area and side margins. Do not zoom in or enlarge the building to fill the image.\n\nOutput canvas: 1024 x 1536 pixels.\n",
+      "references": [
+        "../guides-535/townhouse-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/house-cottage.png"
+      ],
+      "returned": [1024, 1536],
+      "measured": {
+        "size": [1024, 1536],
+        "picture": null,
+        "automaticCorners": {
+          "w": [208, 1282.143443503162],
+          "s": [495.6444632074961, 1429.2594919351814],
+          "e": [846, 1249.7659608909607]
+        },
+        "corners": {
+          "w": [208, 1282.143443503162],
+          "s": [495.6444632074961, 1429.2594919351814],
+          "e": [846, 1249.7659608909607]
+        },
+        "width": 638,
+        "widthLimits": [441, 487],
+        "tests": {
+          "width": "FAIL"
+        },
+        "opaqueBox": [179, 756, 868, 1428],
+        "stoppedAfter": "width"
+      },
+      "kept": false,
+      "failure": {
+        "test": "width",
+        "value": 638,
+        "min": 441,
+        "max": 487
+      },
+      "correction": "Correction: your last r1 base measured 638 px of 1024 where the limit is 487 px; paint the base 464 px wide on the original guide block edges, from x282 to x742. This correction was recorded but not sent: the three-width-failures stop rule applies.",
+      "remainingTests": "NOT_RUN: width gate failed",
+      "sha256": "6f5c2fae4c1abfdcf1e7f4d3b14f3c7f2ccaee89d1460a95fb029331cb0bded9"
+    }
+  ],
+  "keptFiles": {
+    "r1": {
+      "file": "townhouse-r1.png",
+      "attempt": 2,
+      "kept": false,
+      "reason": "Closest width: 635 px, exceeding maximum 487 px by 148 px; no attempt passed."
+    }
+  },
+  "status": {
+    "outcome": "stopped",
+    "reason": "All three r1 attempts refused for width; mandatory stop after this view.",
+    "unpainted": ["r3", "r2"],
+    "measurementHelper": "measure-house.mjs uses pictureOf, measureBase and checkFile(t1tall). The pre-existing shared measure.mjs belongs to concurrent art jobs and was not committed with this task."
+  },
+  "preview": {
+    "directCommand": "node tools/building-sheets.mjs --picture assets/source/rotations-535/house/townhouse-r1.png",
+    "directResult": "Tool does not recognize filename without age.",
+    "fallback": "Byte-identical temporary copy ../guides-535/townhouse-a0-r1.png used with same --picture command; viewed assets/source/buildings-v2/.look/townhouse-a0-r1.png",
+    "visual": "Same stone materials, two chimney pots, gable window on lower-left and two rear windows on lower-right; plainly too wide for guide. Preview only; no full visual acceptance after width failure."
+  }
+}
