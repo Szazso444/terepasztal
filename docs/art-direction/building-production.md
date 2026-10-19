@@ -13,22 +13,22 @@ built yet").
 
 ## The parts
 
-| Part                                       | What it is                                                                                                                               |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `tools/building-kit.mjs`                   | The conventions: ages `a0` to `a5`, views `r0` to `r3`, the four footprints, the projection, and the building list                       |
-| `tools/building-guides.mjs`                | Draws the grey block-outs the agent paints over: one per footprint and view, and one set per family with a `blockHeight`                 |
-| `tools/building-queue.mjs`                 | The work list: what to paint next, with its prompt; records results; gates and stops                                                     |
-| `tools/building-check.mjs`                 | Checks a picture: background, size, view, camera, a depot's portals                                                                      |
-| `tools/building-fit.mjs`                   | Measures where the building stands in its picture and from which camera; lays it onto its footprint                                      |
-| `tools/building-sheets.mjs`                | Review sheets per family, the index page, and one picture laid on grass for the agent's eye                                              |
-| `assets/source/buildings-v2/families.json` | What each building is, age by age, and every sentence of the prompts                                                                     |
-| `assets/source/buildings-v2/GUIDE.md`      | The artist agent's brief                                                                                                                 |
-| `assets/source/buildings-v2/PROMPT.md`     | The text that starts an agent session                                                                                                    |
-| `assets/source/buildings-v2/guides/`       | The 16 footprint block-outs, the `blockHeight` sets, the windmill's files and the coaling stage's oblong guides, drawn by the guide tool |
-| `assets/source/buildings-v2/queue.json`    | Progress, one entry per picture. Written by the queue tool only                                                                          |
-| `assets/source/buildings-v2/report.json`   | What the check measured of each picture                                                                                                  |
-| `assets/source/buildings-v2/review/`       | The sheets and `index.html`                                                                                                              |
-| `assets/source/buildings-v2/<family>/`     | The pictures: `<family>-a<age>-r<view>.png`                                                                                              |
+| Part                                       | What it is                                                                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tools/building-kit.mjs`                   | The conventions: ages `a0` to `a5`, views `r0` to `r3`, the four footprints, the projection, and the building list                                                 |
+| `tools/building-guides.mjs`                | Draws the grey block-outs the agent paints over: one per footprint and view, and one set per family with a `blockHeight`                                           |
+| `tools/building-queue.mjs`                 | The work list: what to paint next, with its prompt; records results; gates and stops                                                                               |
+| `tools/building-check.mjs`                 | Checks a picture: background, size, view, camera, a depot's portals                                                                                                |
+| `tools/building-fit.mjs`                   | Measures where the building stands in its picture and from which camera; lays it onto its footprint                                                                |
+| `tools/building-sheets.mjs`                | Review sheets per family, the index page, and one picture laid on grass for the agent's eye                                                                        |
+| `assets/source/buildings-v2/families.json` | What each building is, age by age, and every sentence of the prompts                                                                                               |
+| `assets/source/buildings-v2/GUIDE.md`      | The artist agent's brief                                                                                                                                           |
+| `assets/source/buildings-v2/PROMPT.md`     | The text that starts an agent session                                                                                                                              |
+| `assets/source/buildings-v2/guides/`       | The 16 footprint block-outs, the `blockHeight` sets, the windmill's files, the coaling stage's oblong guides and the review-2 plan guides, drawn by the guide tool |
+| `assets/source/buildings-v2/queue.json`    | Progress, one entry per picture. Written by the queue tool only                                                                                                    |
+| `assets/source/buildings-v2/report.json`   | What the check measured of each picture                                                                                                                            |
+| `assets/source/buildings-v2/review/`       | The sheets and `index.html`                                                                                                                                        |
+| `assets/source/buildings-v2/<family>/`     | The pictures: `<family>-a<age>-r<view>.png`                                                                                                                        |
 
 The building list is not written down anywhere: `loadInventory` reads it from the game's data
 (`src/data/stations.json`, `stations_full.json`, `buildings.json`, `buildings_full.json`,
@@ -290,6 +290,21 @@ Measured on the first hundred pictures. These are the reasons for the rules abov
   draws today (a cone cap 51 px above the ground, 43 px across the foot), the door is 2.1 m by 1.0 m
   (10.8 px beside the 9 px, 1.75 m person) and the sails' radius is 40 px, so that the lowest tip
   clears the ground by more than a metre.
+- The plan guides of the second review round (#535): a camera and pose guide for each turned view
+  that a repaint was asked for, `guides/review2/<job>-r<view>.png` with a `-plan.json` beside it,
+  52 guides for 17 jobs (`PLAN_JOBS` in `building-guides.mjs`). The footprint is the game's room
+  for the building, in tiles at r0 (a quarter turn swaps the sides): the plinth is that footprint,
+  a plain grey base stands on it and fills 90 per cent of its long side, set inside it, and the
+  front door is marked on the front wall where the camera sees it (r0 and r3). One tile uses the
+  1024 px canvas, two by one and one by two the footprint canvas of the narrow depot, two by two
+  the depot's 1536 x 1024, three by two a 1536 x 1024 canvas of its own at 5 px per game px, and a
+  house the tall one (1024 x 1536). A building whose finished r0 has an oblong plan (the farm
+  halt, the quarry, the fuel pump) keeps it: the long side fills 90 per cent and the short one its
+  share, turned with the view. Each plan file gives the canvas, the anchor, the ground line, the
+  footprint's corners and `paintedWidth`, worded as the coaling stage's: the width the painted
+  base must hold, at most 5 per cent more, and never more than the footprint's. A 1024 px canvas
+  comes back 1254 px wide, a 1536 x 1024 one as asked. Handed to the painter by hand, as the
+  oblong guides are.
 - The prompts: only in `families.json`. `shared` is the same for every picture; `references`
   says what each attached picture is for; `views` names the walls of each view.
 - The camera limit: `FIT.camera`. Then `recheck`.

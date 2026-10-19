@@ -1,0 +1,166 @@
+{
+  "guide": "review2/substation-r1.png",
+  "job": "substation",
+  "name": "Battery (the `substation` id)",
+  "view": "r1",
+  "rotation": 1,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1536,
+    1024
+  ],
+  "scale": 6,
+  "anchor": [
+    768,
+    760
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1536,
+    1024
+  ],
+  "toReturn": 1,
+  "footprint": {
+    "tilesAtR0": [
+      2,
+      2
+    ],
+    "tiles": [
+      2,
+      2
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "equal",
+    "longSideTiles": 2,
+    "corners": {
+      "w": [
+        384,
+        760
+      ],
+      "s": [
+        768,
+        952
+      ],
+      "e": [
+        1152,
+        760
+      ],
+      "n": [
+        768,
+        568
+      ]
+    },
+    "spanPx": 768,
+    "drawnWidthPx": [
+      772,
+      772
+    ],
+    "lowerLeftFootPx": 384,
+    "lowerRightFootPx": 384
+  },
+  "groundLine": {
+    "anchorRow": 760,
+    "nearCornerRow": 952,
+    "farCornerRow": 568,
+    "leftCornerRow": 760,
+    "rightCornerRow": 760,
+    "lowerLeft": [
+      [
+        384,
+        760
+      ],
+      [
+        768,
+        952
+      ]
+    ],
+    "lowerRight": [
+      [
+        768,
+        952
+      ],
+      [
+        1152,
+        760
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "W",
+    "visible": false,
+    "visibleOn": null
+  },
+  "plan": {
+    "basis": "a plain box: 0.9 of each side of the footprint",
+    "baseTiles": [
+      1.8,
+      1.8
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.9,
+    "longSide": "equal",
+    "lowerLeftOverLowerRight": 1,
+    "lowerLeftShare": 0.5,
+    "lowerRightShare": 0.5
+  },
+  "base": {
+    "corners": {
+      "w": [
+        422.4,
+        760
+      ],
+      "s": [
+        768,
+        932.8
+      ],
+      "e": [
+        1113.6,
+        760
+      ],
+      "n": [
+        768,
+        587.2
+      ]
+    },
+    "spanPx": 691.2,
+    "lowerLeftFootPx": 345.6,
+    "lowerRightFootPx": 345.6,
+    "heightPx": 36,
+    "topFarCornerRow": 347.2,
+    "nearCornerRow": 932.8
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      694,
+      694
+    ],
+    "minPx": [
+      659.3,
+      659.3
+    ],
+    "maxPx": [
+      728.7,
+      728.7
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      772,
+      772
+    ],
+    "longSideTiles": 1.8,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 772 px wide in the guide (772 px in a 1536 px wide picture), and the base stands on it and fills 90 per cent of its long side (1.8 of 2 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 694 px wide in the guide (694 px), no wider than 729 px (729 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": false,
+    "note": "the front (W) is away from the camera: no front door in this view, on either visible wall"
+  }
+}

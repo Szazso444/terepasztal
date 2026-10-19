@@ -1,0 +1,186 @@
+{
+  "guide": "review2/farm-r3.png",
+  "job": "farm",
+  "name": "Small farm halt (buildings-v2, a0)",
+  "view": "r3",
+  "rotation": 3,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1024
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    832
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1254,
+    1254
+  ],
+  "toReturn": 1.2246,
+  "footprint": {
+    "tilesAtR0": [
+      1,
+      1
+    ],
+    "tiles": [
+      1,
+      1
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "equal",
+    "longSideTiles": 1,
+    "corners": {
+      "w": [
+        256,
+        832
+      ],
+      "s": [
+        512,
+        960
+      ],
+      "e": [
+        768,
+        832
+      ],
+      "n": [
+        512,
+        704
+      ]
+    },
+    "spanPx": 512,
+    "drawnWidthPx": [
+      516,
+      631.8984
+    ],
+    "lowerLeftFootPx": 256,
+    "lowerRightFootPx": 256
+  },
+  "groundLine": {
+    "anchorRow": 832,
+    "nearCornerRow": 960,
+    "farCornerRow": 704,
+    "leftCornerRow": 832,
+    "rightCornerRow": 832,
+    "lowerLeft": [
+      [
+        256,
+        832
+      ],
+      [
+        512,
+        960
+      ]
+    ],
+    "lowerRight": [
+      [
+        512,
+        960
+      ],
+      [
+        768,
+        832
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "E",
+    "visible": true,
+    "visibleOn": "lower right"
+  },
+  "plan": {
+    "basis": "farm-a0-r0.png's walls' feet, measured with measureBase of tools/building-fit.mjs: 532 px lower left, 422 px lower right of 954 px in a 1254 px picture",
+    "baseTiles": [
+      0.7158,
+      0.9
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.7158,
+    "longSide": "lower right",
+    "lowerLeftOverLowerRight": 0.7953,
+    "lowerLeftShare": 0.443,
+    "lowerRightShare": 0.557
+  },
+  "base": {
+    "corners": {
+      "w": [
+        305.1777,
+        843.7889
+      ],
+      "s": [
+        488.4223,
+        935.4111
+      ],
+      "e": [
+        718.8223,
+        820.2111
+      ],
+      "n": [
+        535.5777,
+        728.5889
+      ]
+    },
+    "spanPx": 413.6445,
+    "lowerLeftFootPx": 183.2445,
+    "lowerRightFootPx": 230.4,
+    "heightPx": 40,
+    "topFarCornerRow": 376.5889,
+    "nearCornerRow": 935.4111
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      416,
+      509.4375
+    ],
+    "minPx": [
+      395.2,
+      483.9656
+    ],
+    "maxPx": [
+      436.8,
+      534.9094
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      516,
+      631.8984
+    ],
+    "longSideTiles": 0.9,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 516 px wide in the guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 416 px wide in the guide (509 px), no wider than 437 px (535 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": true,
+    "outline": [
+      [
+        629.2223,
+        833.0111
+      ],
+      [
+        578.0223,
+        858.6111
+      ],
+      [
+        578.0223,
+        714.6111
+      ],
+      [
+        629.2223,
+        689.0111
+      ]
+    ],
+    "widthTiles": 0.2,
+    "heightPx": 18,
+    "note": "the front door, on the lower right wall, in the middle of the wall"
+  }
+}
