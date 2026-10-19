@@ -1,0 +1,133 @@
+{
+  "measurements": {
+    "shapePass": true,
+    "width": 1024,
+    "height": 1536,
+    "bounds": {
+      "x": 287,
+      "y": 454,
+      "width": 533,
+      "height": 992
+    },
+    "soleRow": 1445,
+    "figureHeight": 992,
+    "feet": {
+      "right": {
+        "ylow": 1434,
+        "cx": 683.6330103157237,
+        "cy": 1410.7852453891842,
+        "pixels": 3199,
+        "f": 0.12462885394582869
+      },
+      "left": {
+        "ylow": 1445,
+        "cx": 407.0466803050028,
+        "cy": 1421.6724939557373,
+        "pixels": 5377,
+        "f": -0.04907912645928728
+      }
+    },
+    "turn": {
+      "L": 533,
+      "R": 467,
+      "ratio": -0.06875
+    },
+    "caps": {
+      "white": 0,
+      "amber": 1616,
+      "pass": false
+    },
+    "rgba": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true
+    },
+    "groundPoint": [
+      512,
+      1432
+    ]
+  },
+  "tests": {
+    "1": {
+      "height": 992,
+      "target": 969,
+      "relativeError": 0.023735810113518996,
+      "pass": true
+    },
+    "2": {
+      "soleRow": 1445,
+      "target": 1440,
+      "difference": 5,
+      "pass": true
+    },
+    "3": {
+      "feet": {
+        "right": {
+          "ylow": 1434,
+          "cx": 683.6330103157237,
+          "cy": 1410.7852453891842,
+          "pixels": 3199,
+          "f": 0.12462885394582869
+        },
+        "left": {
+          "ylow": 1445,
+          "cx": 407.0466803050028,
+          "cy": 1421.6724939557373,
+          "pixels": 5377,
+          "f": -0.04907912645928728
+        }
+      },
+      "slide": null,
+      "pass": true,
+      "status": "pair pending"
+    },
+    "4": {
+      "contactOverlap": null,
+      "pass": true,
+      "status": "pair pending"
+    },
+    "5": {
+      "L": 533,
+      "R": 467,
+      "ratio": -0.06875,
+      "target": {
+        "L": 550,
+        "R": 553,
+        "ratio": 0.003125
+      },
+      "difference": -0.07187500000000001,
+      "rawColumnPass": false,
+      "pass": null,
+      "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+      "visualReview": "pending"
+    },
+    "6": {
+      "white": 0,
+      "amber": 1616,
+      "pass": false
+    },
+    "7": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true,
+      "shapePass": true
+    }
+  },
+  "failedTests": [
+    6
+  ],
+  "unresolvedTests": [
+    5
+  ],
+  "pass": false
+}

@@ -1,0 +1,152 @@
+{
+  "calls": 2,
+  "reason": "Test 6 failed twice on P1: attempt 1 had 1616 amber violations; attempt 2 had 10 cursor-white violations. Repeated-test stop rule; guide must be changed before another trial.",
+  "attempts": [
+    {
+      "pose": 1,
+      "attempt": 1,
+      "tests": {
+        "1": {
+          "height": 992,
+          "target": 969,
+          "relativeError": 0.023735810113518996,
+          "pass": true
+        },
+        "2": {
+          "soleRow": 1445,
+          "target": 1440,
+          "difference": 5,
+          "pass": true
+        },
+        "3": {
+          "feet": {
+            "right": {
+              "ylow": 1434,
+              "cx": 683.6330103157237,
+              "cy": 1410.7852453891842,
+              "pixels": 3199,
+              "f": 0.12462885394582869
+            },
+            "left": {
+              "ylow": 1445,
+              "cx": 407.0466803050028,
+              "cy": 1421.6724939557373,
+              "pixels": 5377,
+              "f": -0.04907912645928728
+            }
+          },
+          "slide": null,
+          "pass": true,
+          "status": "pair pending"
+        },
+        "4": {
+          "contactOverlap": null,
+          "pass": true,
+          "status": "pair pending"
+        },
+        "5": {
+          "L": 533,
+          "R": 467,
+          "ratio": -0.06875,
+          "target": {
+            "L": 550,
+            "R": 553,
+            "ratio": 0.003125
+          },
+          "difference": -0.07187500000000001,
+          "pass": null,
+          "visualReview": "Back and right side visible; no frontal face. Axe head covers the left test columns and cap covers right test columns; raw top rows are not isolated shoulder tops.",
+          "status": "inconclusive: shoulder under axe not isolated",
+          "rawColumnPass": false
+        },
+        "6": {
+          "white": 0,
+          "amber": 1616,
+          "pass": false
+        },
+        "7": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true,
+          "shapePass": true
+        }
+      },
+      "failed": [6],
+      "unresolved": [5],
+      "sha256": "e811ab1ea0388be014d14cc542d48a53663096ad9e4927081e3fa79aef720d4b"
+    },
+    {
+      "pose": 1,
+      "attempt": 2,
+      "tests": {
+        "1": {
+          "height": 986,
+          "target": 969,
+          "relativeError": 0.01754385964912286,
+          "pass": true
+        },
+        "2": {
+          "soleRow": 1427,
+          "target": 1440,
+          "difference": -13,
+          "pass": false
+        },
+        "3": {
+          "feet": {
+            "right": {
+              "ylow": 1420,
+              "cx": 669.7663614784673,
+              "cy": 1396.342488979315,
+              "pixels": 2949,
+              "f": 0.13337295267806082
+            },
+            "left": {
+              "ylow": 1427,
+              "cx": 394.64555468135325,
+              "cy": 1402.162077104642,
+              "pixels": 5084,
+              "f": -0.03358092659986664
+            }
+          },
+          "slide": null,
+          "pass": true,
+          "status": "pair pending"
+        },
+        "4": {
+          "contactOverlap": null,
+          "pass": true,
+          "status": "pair pending"
+        },
+        "5": {
+          "L": 539,
+          "R": 484,
+          "ratio": -0.057291666666666664,
+          "target": {
+            "L": 550,
+            "R": 553,
+            "ratio": 0.003125
+          },
+          "difference": -0.06041666666666667,
+          "pass": null,
+          "visualReview": "Back and right side visible; no frontal face. Axe head covers the left test columns and cap covers right test columns; raw top rows are not isolated shoulder tops.",
+          "status": "inconclusive: shoulder under axe not isolated",
+          "rawColumnPass": false
+        },
+        "6": {
+          "white": 10,
+          "amber": 0,
+          "pass": false
+        },
+        "7": {
+          "colourType": 6,
+          "corners": [0, 0, 0, 0],
+          "pass": true,
+          "shapePass": true
+        }
+      },
+      "failed": [2, 6],
+      "unresolved": [5],
+      "sha256": "02f5f29558cc2686ed305ce18c8fe3fdc167ebb43ab546634fdccb28ec570a62"
+    }
+  ]
+}
