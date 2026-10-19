@@ -1,65 +1,27 @@
 {
   "r0Reference": {
     "picture": null,
-    "returned": [
-      1774,
-      887
-    ],
+    "returned": [1774, 887],
     "automaticCorners": {
-      "w": [
-        482,
-        618.1834193498834
-      ],
-      "s": [
-        955.0450266136064,
-        816.5780890683751
-      ],
-      "e": [
-        1373,
-        741.336940046714
-      ]
+      "w": [482, 618.1834193498834],
+      "s": [955.0450266136064, 816.5780890683751],
+      "e": [1373, 741.336940046714]
     },
     "corners": {
-      "w": [
-        480,
-        615
-      ],
-      "s": [
-        970,
-        817
-      ],
-      "e": [
-        1373,
-        755
-      ]
+      "w": [480, 615],
+      "s": [970, 817],
+      "e": [1373, 755]
     },
     "width": 893,
-    "widthLimits": [
-      763.998046875,
-      843.689453125
-    ],
+    "widthLimits": [763.998046875, 843.689453125],
     "tests": {
       "width": "REFERENCE"
     },
-    "feet": [
-      490,
-      403
-    ],
+    "feet": [490, 403],
     "ratio": 1.215880893300248,
-    "slopes": [
-      0.4122448979591837,
-      0.15384615384615385
-    ],
-    "slopeErrors": [
-      0.08775510204081632,
-      0.34615384615384615
-    ],
-    "opaqueBox": [
-      482,
-      21,
-      1389,
-      819
-    ],
+    "slopes": [0.4122448979591837, 0.15384615384615385],
+    "slopeErrors": [0.08775510204081632, 0.34615384615384615],
+    "opaqueBox": [482, 21, 1389, 819],
     "highlights": {
       "nearWhite": 2337,
       "nearAmber": 0
@@ -80,14 +42,8 @@
       "turn": 11.8
     },
     "eyeReading": {
-      "wallFoot": [
-        1040,
-        779
-      ],
-      "underEaves": [
-        1040,
-        432
-      ],
+      "wallFoot": [1040, 779],
+      "underEaves": [1040, 432],
       "note": "Main house near quoin is recessed behind the machinery near corner. Height read on that house quoin; base includes all ground-standing machinery and lean-to. Automatic east corner falls inside lean-to foot."
     }
   },
@@ -107,36 +63,17 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/base-v1/grinder.png"
       ],
-      "returned": [
-        1254,
-        1254
-      ],
+      "returned": [1254, 1254],
       "measured": {
-        "returned": [
-          1254,
-          1254
-        ],
+        "returned": [1254, 1254],
         "picture": null,
         "automaticCorners": {
-          "w": [
-            164,
-            976.8200947603121
-          ],
-          "s": [
-            458.13031944685645,
-            1152.1483126794442
-          ],
-          "e": [
-            1161,
-            820.2539189527224
-          ]
+          "w": [164, 976.8200947603121],
+          "s": [458.13031944685645, 1152.1483126794442],
+          "e": [1161, 820.2539189527224]
         },
         "width": 997,
-        "widthLimits": [
-          540.052734375,
-          568.21875,
-          596.384765625
-        ],
+        "widthLimits": [540.052734375, 568.21875, 596.384765625],
         "tests": {
           "width": "FAIL"
         },
@@ -155,36 +92,17 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/base-v1/grinder.png"
       ],
-      "returned": [
-        1254,
-        1254
-      ],
+      "returned": [1254, 1254],
       "measured": {
-        "returned": [
-          1254,
-          1254
-        ],
+        "returned": [1254, 1254],
         "picture": null,
         "automaticCorners": {
-          "w": [
-            265,
-            1036.3629401795242
-          ],
-          "s": [
-            541.4464260539872,
-            1163.9673086028656
-          ],
-          "e": [
-            1026,
-            914.8527487099657
-          ]
+          "w": [265, 1036.3629401795242],
+          "s": [541.4464260539872, 1163.9673086028656],
+          "e": [1026, 914.8527487099657]
         },
         "width": 761,
-        "widthLimits": [
-          540.052734375,
-          568.21875,
-          596.384765625
-        ],
+        "widthLimits": [540.052734375, 568.21875, 596.384765625],
         "tests": {
           "width": "FAIL"
         },
@@ -203,36 +121,17 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/base-v1/grinder.png"
       ],
-      "returned": [
-        1254,
-        1254
-      ],
+      "returned": [1254, 1254],
       "measured": {
-        "returned": [
-          1254,
-          1254
-        ],
+        "returned": [1254, 1254],
         "picture": null,
         "automaticCorners": {
-          "w": [
-            311,
-            983.5250289472178
-          ],
-          "s": [
-            520.5483654271284,
-            1067.2135236732993
-          ],
-          "e": [
-            951,
-            837.9381591809436
-          ]
+          "w": [311, 983.5250289472178],
+          "s": [520.5483654271284, 1067.2135236732993],
+          "e": [951, 837.9381591809436]
         },
         "width": 640,
-        "widthLimits": [
-          540.052734375,
-          568.21875,
-          596.384765625
-        ],
+        "widthLimits": [540.052734375, 568.21875, 596.384765625],
         "tests": {
           "width": "FAIL"
         },
