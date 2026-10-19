@@ -1,0 +1,374 @@
+{
+  "issue": 535,
+  "requestedSize": [
+    1024,
+    1024
+  ],
+  "tool": "built-in image_gen",
+  "masterSha256": "e49ab2a1d71cebfe45201e5fb8983a46b169e97ce4e158d9fde33008b9a124b2",
+  "r0Reference": {
+    "file": "assets/source/base-v1/warehouse.png",
+    "size": [
+      1774,
+      887
+    ],
+    "automatic": {
+      "w": [
+        300,
+        578.2942
+      ],
+      "s": [
+        1008.1855,
+        831.1918
+      ],
+      "e": [
+        1360,
+        710.7882
+      ]
+    },
+    "eye": {
+      "w": [
+        295,
+        581
+      ],
+      "s": [
+        1008,
+        831
+      ],
+      "e": [
+        1467,
+        749
+      ],
+      "eavesY": 550
+    },
+    "width": 1172,
+    "height": 0.23976109215017063,
+    "highlights": {
+      "nearWhite": 7138,
+      "nearAmber": 0
+    },
+    "note": "Outer canopy footing included by eye; automatic right corner excludes it. R0 only supplies height and highlights, not projection."
+  },
+  "prompts": {
+    "r1": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Warehouse, a long red-brick railway goods shed with green sliding doors,\nthe SAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The canopy's posts and footings stand on the plinth inside it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the brick gable end with\ncream quoins, scalloped bargeboards and the arched window, the deep corrugated canopy on green\ntimber posts and stone footings, and the window and green door under it. The lower-right wall is the\nBACK: a plain long brick wall under the slate roof with the same cream base course and quoins, a row\nof small windows and one plain green door, and no sliding doors and no canopy. The roof is r0's:\ndark slate, its ridge along the long walls, the three chimney stacks at the same places along the\nridge.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long front with its three green\nsliding doors, two open. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.",
+    "r3": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Warehouse, a long red-brick railway goods shed with green sliding doors,\nthe SAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The canopy's posts and footings stand on the plinth inside it.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the\nlower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The\nlower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not\nmirrored: the long front: three forest-green plank sliding doors on an iron rail over the stone base\ncourse, two pushed open onto the stone-floored bays, a small window and the green downpipes. The\nlower-left wall is the left-hand side: a brick gable end with cream quoins, scalloped bargeboards\nand one arched window, without the canopy and without a door. The roof is r0's: dark slate, its\nridge along the long walls, the three chimney stacks at the same places along the ridge.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.",
+    "r2": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Warehouse, a long red-brick railway goods shed with green sliding doors,\nthe SAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The canopy's posts and footings stand on the plinth inside it.\n\nView. The building is turned half round. The front faces the upper right, away from the camera, and\nnothing of it is in this picture: no entrance door and none of the front's windows or other features\non either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right\nwall is the left-hand side. The lower-left wall is the BACK, the same wall as the lower-right wall\nof the r1 picture: a plain long brick wall under the slate roof with the same cream base course and\nquoins, a row of small windows and one plain green door, and no sliding doors and no canopy. The\nlower-right wall is the left-hand side, the same wall as the lower-left wall of the r3 picture: a\nbrick gable end with cream quoins, scalloped bargeboards and one arched window, without the canopy\nand without a door. Where r1 or r3 is not attached, take that wall from these words. The roof is\nr0's: dark slate, its ridge along the long walls, the three chimney stacks at the same places along\nthe ridge.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long front with its three green\nsliding doors, two open. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. About the extra references,\nthe size and the roof. The fourth reference is this same building in view r1 (the kept picture): its\nlower-right wall is the BACK, and that wall is the lower-left wall of this picture. The fifth is\nthis same building in view r3 (the kept picture): its lower-left wall is the left-hand side, and\nthat wall is the lower-right wall of this picture. Copy both walls as they stand in those\nreferences: the same height, the same shape under the roof, the same windows and doors. The building\nis exactly as large as in the references: no taller, and with no storey more. The roof is the one\nall the references show, seen from behind: the same form, its eaves as low as in the references, and\nthe ridge runs the same way across the picture as in the front view. It carries what the references\nshow on the roof, at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building."
+  },
+  "attempts": [
+    {
+      "view": "r1",
+      "attempt": 1,
+      "file": "assets/source/rotations-535/warehouse/raw/warehouse-r1-attempt-1.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Warehouse, a long red-brick railway goods shed with green sliding doors,\nthe SAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The canopy's posts and footings stand on the plinth inside it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the brick gable end with\ncream quoins, scalloped bargeboards and the arched window, the deep corrugated canopy on green\ntimber posts and stone footings, and the window and green door under it. The lower-right wall is the\nBACK: a plain long brick wall under the slate roof with the same cream base course and quoins, a row\nof small windows and one plain green door, and no sliding doors and no canopy. The roof is r0's:\ndark slate, its ridge along the long walls, the three chimney stacks at the same places along the\nridge.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long front with its three green\nsliding doors, two open. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nOutput canvas: 1024 x 1024.",
+      "references": [
+        "../guides-535/warehouse-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/warehouse.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "size": [
+          1254,
+          1254
+        ],
+        "picture": null,
+        "opaqueBox": {
+          "left": 66,
+          "top": 211,
+          "right": 1229,
+          "bottom": 1140
+        },
+        "automatic": {
+          "w": [
+            72,
+            1006.2838742031477
+          ],
+          "s": [
+            411.0103281427323,
+            1153.5275020300971
+          ],
+          "e": [
+            1221,
+            771.6188525368722
+          ],
+          "slopes": [
+            0.4343337521119892,
+            -0.47149817184400233
+          ],
+          "sure": [
+            true,
+            true
+          ]
+        },
+        "eye": {
+          "corners": {
+            "w": [
+              65,
+              1013
+            ],
+            "s": [
+              550,
+              1103
+            ],
+            "e": [
+              1225,
+              775
+            ]
+          },
+          "note": "Outer footing and opposite wall corner read by eye; width only; further tests skipped."
+        },
+        "corners": {
+          "w": [
+            65,
+            1013
+          ],
+          "s": [
+            550,
+            1103
+          ],
+          "e": [
+            1225,
+            775
+          ]
+        },
+        "width": 1160,
+        "limits": [
+          807.017578125,
+          849.87890625,
+          892.740234375
+        ],
+        "tests": {
+          "width": "FAIL"
+        },
+        "skipped": [
+          "plan",
+          "camera",
+          "height",
+          "highlights",
+          "visual"
+        ]
+      },
+      "kept": false,
+      "failed": "width",
+      "sha256": "f4310420afd987fc6d14fdefd25d8e599f845b9966b4026fb29c4d8866b8f22f"
+    },
+    {
+      "view": "r1",
+      "attempt": 2,
+      "file": "assets/source/rotations-535/warehouse/raw/warehouse-r1-attempt-2.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Warehouse, a long red-brick railway goods shed with green sliding doors,\nthe SAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The canopy's posts and footings stand on the plinth inside it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the brick gable end with\ncream quoins, scalloped bargeboards and the arched window, the deep corrugated canopy on green\ntimber posts and stone footings, and the window and green door under it. The lower-right wall is the\nBACK: a plain long brick wall under the slate roof with the same cream base course and quoins, a row\nof small windows and one plain green door, and no sliding doors and no canopy. The roof is r0's:\ndark slate, its ridge along the long walls, the three chimney stacks at the same places along the\nridge.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long front with its three green\nsliding doors, two open. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nOutput canvas: 1024 x 1024.\n\nCorrection: your last r1 base measured 1160 px of 1254 where the maximum is 893 px and the held width is 850 px (694 px on the requested 1024 canvas). Keep the complete ground-level base INCLUDING the canopy posts and footings between guide x166 and x858, width about 694 px, within 659 to 729 px on the 1024 canvas. The building must stand on and within the guide plinth, not spread beyond it. Preserve the guide's exact 0.50 ground slopes.",
+      "references": [
+        "../guides-535/warehouse-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/warehouse.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "size": [
+          1254,
+          1254
+        ],
+        "picture": null,
+        "opaqueBox": {
+          "left": 126,
+          "top": 298,
+          "right": 1166,
+          "bottom": 1163
+        },
+        "automatic": {
+          "w": [
+            225,
+            998.142173492491
+          ],
+          "s": [
+            546.1530308559436,
+            1125.076903246252
+          ],
+          "e": [
+            1163,
+            829.2671863481658
+          ],
+          "slopes": [
+            0.3952468684958441,
+            -0.4795512204729724
+          ],
+          "sure": [
+            true,
+            true
+          ]
+        },
+        "eye": {
+          "corners": {
+            "w": [
+              126,
+              1024
+            ],
+            "s": [
+              550,
+              1126
+            ],
+            "e": [
+              1166,
+              831
+            ]
+          },
+          "note": "Automatic w225 misses canopy footing x126; only width tested."
+        },
+        "corners": {
+          "w": [
+            126,
+            1024
+          ],
+          "s": [
+            550,
+            1126
+          ],
+          "e": [
+            1166,
+            831
+          ]
+        },
+        "width": 1040,
+        "limits": [
+          807.017578125,
+          849.87890625,
+          892.740234375
+        ],
+        "tests": {
+          "width": "FAIL"
+        },
+        "skipped": [
+          "plan",
+          "camera",
+          "height",
+          "highlights",
+          "visual"
+        ]
+      },
+      "kept": false,
+      "failed": "width",
+      "sha256": "369f29bf3a57e93ccee1834a6dd232bf61511e1f2c1e38a35ff67725c2d82a91"
+    },
+    {
+      "view": "r1",
+      "attempt": 3,
+      "file": "assets/source/rotations-535/warehouse/raw/warehouse-r1-attempt-3.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Warehouse, a long red-brick railway goods shed with green sliding doors,\nthe SAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The canopy's posts and footings stand on the plinth inside it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the brick gable end with\ncream quoins, scalloped bargeboards and the arched window, the deep corrugated canopy on green\ntimber posts and stone footings, and the window and green door under it. The lower-right wall is the\nBACK: a plain long brick wall under the slate roof with the same cream base course and quoins, a row\nof small windows and one plain green door, and no sliding doors and no canopy. The roof is r0's:\ndark slate, its ridge along the long walls, the three chimney stacks at the same places along the\nridge.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long front with its three green\nsliding doors, two open. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nOutput canvas: 1024 x 1024.\n\nCorrection: your last r1 complete base measured 1040 px of 1254, including the outer canopy footing, where the maximum is 893 px and the required held width is 850 px. Paint the WHOLE ground-level building and ALL canopy footings at width 694 px on the 1024 guide, held within 659 to 729 px, between x166 and x858. Leave broad transparent side margins: 166 px left and 166 px right in the requested 1024 canvas. The canopy must fit inside those same limits, so reserve room for it inside the block footprint. Do not enlarge to fill the image. Match the guide's ground lines exactly.",
+      "references": [
+        "../guides-535/warehouse-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/warehouse.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "measured": {
+        "size": [
+          1254,
+          1254
+        ],
+        "picture": null,
+        "opaqueBox": {
+          "left": 139,
+          "top": 306,
+          "right": 1153,
+          "bottom": 1132
+        },
+        "automatic": {
+          "w": [
+            228,
+            996.8387966785516
+          ],
+          "s": [
+            553.317953623094,
+            1093.2380730939756
+          ],
+          "e": [
+            1152,
+            815.9356130602864
+          ],
+          "slopes": [
+            0.29632325957364736,
+            -0.4631882010022908
+          ],
+          "sure": [
+            true,
+            true
+          ]
+        },
+        "eye": {
+          "corners": {
+            "w": [
+              139,
+              1015
+            ],
+            "s": [
+              557,
+              1099
+            ],
+            "e": [
+              1153,
+              817
+            ]
+          },
+          "note": "Outer canopy footing x139 included; automatic w228 excludes it; width only."
+        },
+        "corners": {
+          "w": [
+            139,
+            1015
+          ],
+          "s": [
+            557,
+            1099
+          ],
+          "e": [
+            1153,
+            817
+          ]
+        },
+        "width": 1014,
+        "limits": [
+          807.017578125,
+          849.87890625,
+          892.740234375
+        ],
+        "tests": {
+          "width": "FAIL"
+        },
+        "skipped": [
+          "plan",
+          "camera",
+          "height",
+          "highlights",
+          "visual"
+        ]
+      },
+      "kept": false,
+      "failed": "width",
+      "selectedAsClosest": true,
+      "correction": "Correction: your last r1 complete base measured 1014 px of 1254 where the maximum is 893 px and the held width is 850 px. The entire base including all canopy footings must fit within 659 to 729 guide pixels.",
+      "sha256": "0863fcc5f5ede76515e69e2c35bbb7cb5c9fbb19e4cf080d203cd3cf8c5c76f7"
+    }
+  ],
+  "status": "STOP: all three r1 attempts refused for width; r3 and r2 not started",
+  "closest": {
+    "view": "r1",
+    "attempt": 3,
+    "kept": false,
+    "failed": {
+      "test": "width",
+      "value": 1014,
+      "max": 892.740234375
+    },
+    "file": "assets/source/rotations-535/warehouse/warehouse-r1.png"
+  },
+  "measurementTool": "warehouse/inspect.mjs: shared measure.mjs changed concurrently for other buildings; left unchanged. Width scales by returned width / 1024; ground-standing canopy footings included by eye."
+}
