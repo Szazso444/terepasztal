@@ -1,0 +1,205 @@
+Paint the Fuel Pump (fuel_pump, Diesel age a1) again for the isometric railway game in this
+repository, for issue #325: r1 (the author found it too thin), then r3, then r2, each on the
+tool-made guides of PR #537 that replace the hand-made ones. r0 is the master and is not touched.
+This replaces R8d. R8d ran: r2 (attempts 4 to 6) and r3 step 1 (attempts 12 to 14) failed, its
+two-step edit of r3 attempt 7 is dropped, and its plan numbers (long side 2.0 to 2.8 times the short
+side) are superseded: they were measured on r1 attempt 12, which the author found too thin. The
+guides come from r0's own measured feet.
+
+Work on branch art/325-fuel-pump, which exists: git fetch origin art/325-fuel-pump, git switch
+art/325-fuel-pump, git pull --ff-only (head b26ccab3 or later). Touch nothing outside
+assets/source/fuel-2026-10-11/. Commit there and push the branch. Never push to main or develop.
+Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte for byte, as
+raw/fuel_pump-a1-r<v>-attempt-<k>.png: r1 from 13, r2 from 7, r3 from 15 (if prompts.json holds a
+higher number for a view, go on from that), and never delete or overwrite a painting. Ask the tool
+for 1024x1024 and record the size it returns in "returned" (the earlier pictures came back
+1254x1254).
+
+THE STATE. r0, fuel_pump-a1-r0.png, sha256
+c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0: check the hash first; if it
+differs, stop and say so. It is the master and is not touched. The files fuel_pump-a1-r1.png
+(attempt 12), -r2.png (attempt 2) and -r3.png (attempt 9) stay where they are until a new picture of
+the view passes every test; then it is copied over the file. Never attach r1 attempt 12 (the author
+found it too thin), r2 attempt 2, r3 attempt 9 or any failed attempt of yours: attach only what is
+listed below.
+
+THE GUIDES. The new tool-made guides are on a branch that is not merged yet (PR #537), and they are
+not to be committed to your art branch. They replace the hand-made
+assets/source/fuel-2026-10-11/guides/fuel_pump-r1.png to -r3.png, which you do not use again. From
+the repository root: git fetch origin claude/art-guides-review-2 (its head is 21329dd7 or later; if
+assets/source/buildings-v2/guides/review2/ is already on develop in your tree, use it there and skip
+the rest of this paragraph). Make a folder OUTSIDE the repository, say ../guides-535, and write out
+of that branch, for <name> in fuel_pump-r1.png, fuel_pump-r2.png, fuel_pump-r3.png and
+fuel_pump-r1-plan.json, fuel_pump-r2-plan.json, fuel_pump-r3-plan.json:
+
+  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/<name> > ../guides-535/<name>
+
+Check that each guide is 1024 x 1024 and its plan file's "job" is "fuel_pump"; if not, stop and say
+so. Never git add anything from ../guides-535. Each guide is a grey plinth (the one-tile footprint)
+with a grey block on it (the house's base); the plan files hold the numbers below.
+
+THE BUILDING (r0). A red-brick pump house on cream limestone quoins and base. Its front is the long
+side: two bays, the door bay (forest-green plank door, lamp over it, a small slate-roofed porch
+gable a little forward of the wall), a downpipe, a plain bay, and a big quoined pier at the end. The
+short side and the back are plain brick between quoins: no door, no window, no porch, no lamp. On
+the house a dark steel frame with X bracing, and on it a riveted forest-green steel tank with two
+oat-cream bands, a railing, a manhole and a vent, as long as the long side and as deep as the house,
+covering the whole roof. At the end of the front next to the left-hand side wall stands a tall
+forest-green hose crane: ONE post with one diagonal brace and ONE jib about 0.43 tile long (the
+width of the short side), the hose hanging from the jib's end. Pipes with copper bands run from the
+tank to the crane. THE LIGHT never turns with the building. It comes from the upper left: tops
+lightest, the lower-left wall mid (r0's front, luma 112), the lower-right wall darkest (r0's short
+side, 67). Camera: orthographic 2:1 isometric, 30 degrees down, no perspective; both wall feet fall
+one pixel for every two across.
+
+STEP 0, before any call: measure r0's own feet. Run node
+assets/source/fuel-2026-10-11/measure-plan.mjs on fuel_pump-a1-r0.png and read the house's outer
+quoin corners by eye on a zoomed crop (the crane, the porch and the end pier can throw measureBase).
+The guides are built on measureBase's reading of r0, 441 px for the front and 344 px for the side,
+of 785 px in a 1254 px picture: a long side over short side of 1.28, not R8d's 2.4. Record both
+readings in prompts.json. If your eye-read ratio of front over side is outside 1.1 to 1.5, stop and
+say so, with the numbers, before painting anything: the guides would then be wrong and Art must hear
+it.
+
+THE PLAN, per view, in guide px (1024 x 1024 canvas, 8 px to a game px, anchor (512, 832); a picture
+comes back 1254 px wide, 1.2246 times the guide: scale every number by returned width / 1024).
+
+r1 (front faces the upper left, hidden): the base's feet w (307, 844.7), s (486.6, 934.5), e (717,
+819.3); lower-left foot 179.6, lower-right foot 230.4, lower-left over lower-right 0.779 (the
+house's long side over its short side: 1.283); the long side is lower right; block 44 game px.
+Plinth corners w (256, 832), s (512, 960), e (768, 832).
+
+r3 (front faces the lower right): the base's feet w (307, 844.7), s (486.6, 934.5), e (717, 819.3);
+lower-left foot 179.6, lower-right foot 230.4, lower-left over lower-right 0.779 (the house's long
+side over its short side: 1.283); the long side is lower right; block 44 game px. Plinth corners w
+(256, 832), s (512, 960), e (768, 832).
+
+r2 (front faces the upper right, hidden): the base's feet w (307, 819.3), s (537.4, 934.5), e (717,
+844.7); lower-left foot 230.4, lower-right foot 179.6, lower-left over lower-right 1.283 (the
+house's long side over its short side: 1.283); the long side is lower left; block 44 game px. Plinth
+corners w (256, 832), s (512, 960), e (768, 832).
+
+THE LIMIT, the number you keep. Keep the base to the footprint: the grey plinth is the footprint,
+516 px wide in the guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90
+per cent of its long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left
+corner to the right corner, is 412 px wide in the guide (505 px), no wider than 433 px (530 px) and
+never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its
+plinth before, and the fit then shrinks the whole building. For the Fuel Pump, in every view: the
+base's width, from the outer edge of the house's left corner to the outer edge of its right corner
+at ground level, outline included (the crane's post, the pier and the porch count only where they
+stand on the ground), is held at 412 px of the guide (505 of 1254), at most 433 (530), at least 391
+(479). Over the most or under the least the picture is refused for its width whatever else it shows,
+and is not measured further.
+
+THE ORDER. r1, then r3, then r2: at most three attempts a view, nine calls in all. Every call is an
+image EDIT of the guide of its view, never of an attempt. References, in this order: r1: (1)
+../guides-535/fuel_pump-r1.png, the image to edit; (2)
+docs/art-direction/images/03-theme-town-growth.png, the style board; (3)
+assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png, r0 laid onto its footprint. r3: the
+same three with its own guide, and (4) the kept new r1 (only if it passed). r2: (1) its guide, (2),
+(3), and (4) and (5) the kept new r1 and r3 (only if they passed; attach what passed). Never attach
+more.
+
+THE PROMPT, word for word, on EVERY attempt, the first included. It is: the "shared" text, the
+"views.rN" line of the view and "age" of prompts.json "verbatim", word for word; then "Fuel Pump. A
+railway refuelling point for diesel engines", followed by THE BUILDING and THE LIGHT above; then the
+view's paragraphs below; then the references paragraph; then the output rules. At most one
+Correction paragraph is added under it, as below.
+
+View r1. "The front faces the upper left, hidden: nothing of the front shows on either visible wall.
+The lower-left wall is the right-hand side: SHORT, plain brick between limestone quoins with a
+quoined pier at each end, no door, no window, no porch, no lamp. The lower-right wall is the BACK:
+LONG, plain brick between quoins, no door, no porch, two bays wide. The tank lies along the long
+lower-right wall and is as long as it. The crane's post stands at the far (top) corner, behind the
+tank, with one diagonal brace and one jib that rises to the upper left, about as long as the short
+side is wide (about 92 px on the guide), not longer; the hose hangs from its end."
+
+View r3. "The front faces the lower right. The lower-right wall is the FRONT: LONG, the door bay
+with the forest-green plank door, the lamp and the small slate-roofed porch gable a little forward
+of the wall, the downpipe, a plain bay and the big quoined pier at the end, two bays wide. The
+lower-left wall is the left-hand side: SHORT, plain brick between limestone quoins with a quoined
+pier at each end, no door, no window, no porch, no lamp. The tank lies along the long lower-right
+wall and is as long as it. The crane's post stands on the ground at the near corner, with one
+diagonal brace and one jib that falls to the lower right, about as long as the short side is wide
+(about 92 px on the guide), not longer; the hose hangs from its end in front of the door bay and
+ends at the top of the door frame."
+
+View r2. "The front faces the upper right, hidden: nothing of the front shows on either visible
+wall. The lower-left wall is the BACK: LONG, plain brick between quoins, no door, no porch, two bays
+wide. The lower-right wall is the left-hand side: SHORT and plain, one bay wide, brick between
+limestone quoins with a quoined pier at each end, no door, no window, no porch, no lamp. The tank
+lies along the lower-left wall and is as long as it. The crane's post stands at the right corner
+with one diagonal brace and one jib that rises to the upper right, about as long as the short side
+is wide (about 92 px on the guide), not longer; the hose hangs from its end. The post's top stands
+above the tank's top."
+
+References paragraph. "References: the first is the guide, the second the style board. The third is
+this same building in view r0, seen from the front, laid onto its footprint at the guide's camera
+and scale: take its brick, quoins, tank, frame, crane and colours from it. It is not a copy of r0:
+in this view the long wall is NOT on the lower left except where the paragraph above says so. Paint
+the SAME building at the same size, turned on a turntable while the camera stays where it is. It is
+not a mirror image and not a copy of any reference. The light stays where it is. It is exactly as
+large as in the references: no taller, no lower, no storey more. Do not paint the reference again.
+Where the fourth (and fifth) reference is a view of this same building, copy its walls at the places
+this view shares with it: r1's lower-right wall is r2's lower-left wall, r3's lower-left wall is
+r2's lower-right wall." Output rules: "Output: 1024x1024 RGBA PNG, transparent background, opaque
+surfaces. Smooth painted contours, broad masses, three or four shades per material. Nothing at or
+above #ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows
+outside the base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow
+or loose objects."
+
+Footprint sentence for every view (put it after the view's paragraph): "The house stands on the
+guide's grey block and fills it: the three outer corners of its walls at ground level are the
+block's, within 10 px. Nothing at ground level goes outside the grey plinth. Do not widen, lengthen
+or lower the house."
+
+MEASURE EVERY ATTEMPT, in this order (record-attempt.mjs writes prompts.json; its plan test still
+holds R8d's 2.0 to 2.8: change it, in your own folder, to the window below, and say so):
+
+- width first: the base's width in the returned picture, against the limit above. Refused outside
+  the least and the most: record the attempt with its width, write its Correction, and do not run
+  the other tests;
+
+- plan: the house's long side over its short side (measure-plan.mjs; read the outer quoin corners by
+  eye where the crane, pipe or pier throws it, and record both) within 15 per cent of 1.283: 1.09 to
+  1.48, the long side on the side the plan names: lower right in r1 and r3, lower left in r2;
+
+- height: the brick wall at the near corner, foot to the top of its quoins, over the base's width
+  e.x - w.x: 0.39 to 0.47 (r0 0.43). Not lower than r0's;
+
+- camera: both feet's slopes within 0.03 of 0.50, at most 2 degrees by checkFile for t1 and the
+  view's rotation (record-attempt.mjs runs it). A picture off by more is repainted, never
+  straightened (issue #536); a picture within 3 degrees that passes the rest may be kept, and is
+  recorded as such;
+
+- light: light-check.mjs with a box on plain brick of the lower-left wall, then one of the
+  lower-right wall, clear of quoins and the crane: the lower-right median at most 0.75 times the
+  lower-left's, the lower-left between 100 and 150 and the lower-right between 60 and 85;
+
+- crane: exactly one post and one jib, no second post and no beam over the tank; the post's top
+  above the tank's top; the jib's reach 0.43 tile, about 92 px of the guide (75 to 110 px); the hose
+  ending at the door's top in r3;
+
+- look, on grass as in review/: set beside r0 it is the same building, the plain walls plain, no
+  door, porch or lamp on a hidden front, the crane at the corner the paragraph says.
+
+CORRECTIONS AND STOPS. A picture that fails: repaint from the guide again with the same attachments
+(never attach a failed picture) and add exactly ONE paragraph that begins "Correction:" and names
+the number it missed, as "your last r1's base measured 560 px of 1254 where 480 to 530 is wanted";
+it replaces the earlier Correction, so that no prompt has more than one. Never resize, crop, move,
+stretch, squeeze, shear, rotate or bend a returned picture: the angles and the width come from the
+painting. If none of a view's three attempts passes, keep the closest in raw/, say which test failed
+with its number, copy nothing over the view's file, and go on to the next view. If a view's three
+attempts are all refused for their width, say so and stop that view.
+
+KEEPING. A picture that passes every test is copied over fuel_pump-a1-r<v>.png (r1 replaces attempt
+12). Records: add every attempt to prompts.json "attempts" as {view, attempt, selected, file,
+prompt, references, returned, measured} (record-attempt.mjs does it), with the plan corners and
+whether any were read by eye, the height, camera, the light values with their boxes, and what you
+saw. Update "selection" and "qa". Put a grass sheet of each kept picture in review/. Commit after
+each view: "Art: Fuel Pump r1 repainted on the review-2 guide" and the like, and push.
+
+END. In your message give, for each attempt: the view, the base's width against the limit, the long
+over short ratio, the height, the camera, the light values, the crane's numbers, and which attempt
+was kept and why; and say plainly whether r1, r3 and r2 passed, and whether Step 0 agreed with the
+guides.

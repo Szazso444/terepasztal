@@ -1,0 +1,126 @@
+Paint one view of the quarry (family quarry, Steam age a0) again for the isometric railway game in
+this repository, for issue #325: r2. r0, r1 and r3 are accepted and are not painted again.
+
+Work on branch art/325-buildings-v2, which exists (head c2b648e2 or later; art/325-fuel-pump is the
+Fuel Pump's, not this one): git fetch origin art/325-buildings-v2, git switch art/325-buildings-v2,
+git pull --ff-only. The pictures this job needs must be in your tree:
+assets/source/buildings-v2/quarry/quarry-a0-r0.png (the master), quarry-a0-r1.png and
+quarry-a0-r3.png (accepted), and quarry-a0-r2.png as it is today. If one is missing, stop and say
+so. Touch nothing outside assets/source/buildings-v2/. Commit there, never stash pictures, push the
+branch. Never push to main or develop. Commit subjects read "Art: <outcome>". Keep every picture
+your image tool returns, byte for byte, as raw/<id>-attempt-<k>.png (k from 1 for each id, or going
+on from the number raw/returns.json already holds), and add {id, attempt, file, returned, spans,
+top, height, kept} to raw/returns.json for each call. Ask for 1024 x 1024, transparent background,
+and record the size it returns.
+
+WHY AGAIN. The author's review 2 found r2 wrong. The new plan guide keeps the oblong plan that the
+finished r0 measures (measureBase: 430 px lower left, 357 px lower right of 787 px in a 1254 px
+picture, 0.547 : 0.453 of the foot): r2 shows the back and the left-hand side, with the long side on
+the lower left. r2 is painted from the guide, r0 and the accepted r1 and r3, and copies their walls:
+the back is r1's lower-right wall, the left-hand side is r3's lower-left wall.
+
+THE GUIDES. They are on a branch that is not merged yet (PR #537), and they are not to be committed
+to your art branch. From the repository root: git fetch origin claude/art-guides-review-2 (its head
+is 21329dd7 or later; if assets/source/buildings-v2/guides/review2/ is already on develop in your
+tree, use those files and skip the rest of this paragraph). Make a folder OUTSIDE the repository,
+say ../guides-535, and write out of that branch, for <name> in quarry-r2.png and
+quarry-r2-plan.json:
+
+  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/<name> > ../guides-535/<name>
+
+Do the same for assets/source/buildings-v2/GUIDE.md and read its sections 2 and 5 to 8 again. Never
+git add anything from ../guides-535. Check that each guide is 1024 x 1024 and its plan file's "job"
+is "quarry"; if not, stop and say so. The plan files hold the numbers below. The queue's own guide
+for this picture (guides/t1-r2.png) is no longer the picture you edit: the review-2 guide is,
+because it carries the oblong plan the finished r0 has.
+
+THE PLAN, per view, in guide px (1024 x 1024 canvas, 8 px to a game px).
+
+r2: footprint 1 x 1 tile, long side lower left. Plinth corners w (256, 832), s (512, 960), e (768,
+832). The base's feet: w (301.4, 822.1), s (531.8, 937.3), e (722.6, 841.9); lower-left foot 230.4,
+lower-right foot 190.8 (ratio 1.208); block 40 game px high. The front faces the upper right,
+hidden: the side where the hopper discharges does not show on either visible wall.
+
+THE LIMIT. Keep the base to the footprint: the grey plinth is the footprint, 516 px wide in the
+guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its
+long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left corner to the
+right corner, is 424 px wide in the guide (519 px), no wider than 445 px (545 px) and never outside
+the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and
+the fit then shrinks the whole building. Held 424 px of the guide (519 of 1254), at most 445 (545),
+at least 403 (493). Over the most or under the least, the picture is refused for its width whatever
+else it shows.
+
+PUT THE VIEW BACK. Run node tools/building-queue.mjs status first and note the state of this family.
+Run node tools/building-queue.mjs redo quarry-a0-r2 (it builds on nothing else; it needs no --yes
+unless the tool asks for it, and it must name no other picture: if it names r0, r1 or r3, stop and
+say so). Then run status again and check that r2 is pending and r0, r1 and r3 stay generated. Do not
+run "next"; use show and take with each id, in this order: quarry-a0-r2.
+
+EACH VIEW. show <id> lists the references and prints the prompt and its "edit this" line, which
+names the queue's guide. Paint instead as an edit of the REVIEW-2 guide of the view
+(../guides-535/quarry-r<v>.png), the first picture attached, and then the references show lists, in
+its order, without the queue's guide; ask for the size it prints, transparent background. Take it
+with take <id> --from <file>, look at .look/<id>.png, measure (below), then set <id> generated
+--note "<measurements>". Paste the printed prompt whole, then the view's Correction below, on EVERY
+attempt, the first included. Nothing else goes in the picture: no ground, plinth, shadow, text,
+border, glow or extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as strong
+as selection amber #E8AA48.
+
+For r2: Correction: the earlier r2 did not follow the quarry's plan and is repainted whole. Edit the
+grey guide exactly: it is one stage on its oblong plan, long side on the lower left (lower-left foot
+230.4 px of the guide, lower-right foot 190.8). The lower-left wall is the BACK, the same wall as
+r1's lower-right wall; the lower-right wall is the left-hand side, the same wall as r3's lower-left
+wall. The cut-stone retaining wall, the timber derrick crane over the hopper and the pale stone
+heaps are r0's, the same size and no taller; the hopper's discharge side is the front and faces the
+upper right, hidden. The painted base is no wider than 445 px of the guide (545 of 1254) and nothing
+stands outside the plinth at ground level.
+
+MEASURE BEFORE YOU RECORD (after take, before set), in this order:
+
+- width first: on a crop, read the outer edge of the base's left corner and of its right corner (the
+  foot of the walls, outline included; roofs, chimneys and anything above the ground do not count)
+  and their span in the returned picture's px. A picture passes when it is 403 to 445 px of the
+  guide, which is 493 to 545 px of a 1254 px picture (held 424 and 519). Outside it the picture is
+  refused: record it as an attempt with its span, write its Correction, and do not run the fit;
+
+- node tools/building-fit.mjs <id>. Its base corners w, s and e give the lower-left foot s.x - w.x
+  and the lower-right foot e.x - s.x. A picture passes when:
+
+- plan: lower-left foot over lower-right foot within 15 per cent of 1.208 (1.03 to 1.39), the long
+  side lower left;
+
+- camera: at most 2 degrees off the game's (the tool's check, which set runs; node
+  tools/building-check.mjs <file> prints it). Measure width and plan first: if the picture is wide,
+  thin or low, do not set it, paint it again. A picture that fails the camera is repainted, never
+  stretched (issue #536);
+
+- height: (the near corner's row - box.top) over e.x - w.x within 15 per cent of r0's, both read
+  from node tools/building-fit.mjs (compare the two ratios);
+
+- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12 (RGB
+  distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may exceed
+  r0's (Art caps the rest at packing);
+
+- by eye: the same retaining wall, derrick crane, hopper and stone heaps as r0, turned (not
+  mirrored), the front hidden (nothing of the discharge side shows); r2's back is r1's back and its
+  left-hand side is r3's left-hand side; no plinth painted; the foot of both walls plain and
+  straight; the lower-left wall lighter than the lower-right wall.
+
+A picture refused for its camera alone, that passes the other tests, is handled by the tool
+(GUIDE.md section 7: next hands it out to paint again from its own earlier self). A picture that
+fails the width, the plan or the height is made again from the printed prompt: keep the view's
+Correction and add ONE more paragraph that begins "Correction:" and names the number it missed, as
+"your last picture's base spanned 560 px of 1254 where the limit is 545"; it replaces the added one
+from the attempt before. Never attach a wide, thin or low picture to paint again from, and never
+stretch, squeeze, shear or bend a picture: the angles come from the camera, in the painting. At most
+three attempts a view, 3 calls in all. If none passes, keep the closest in raw/, run set <id>
+rejected --note "<the test it failed and its number>" (the tool sets the file aside), and say so in
+your message; never accept it quietly.
+
+CLOSE. Attach r1 and r3 as references only because they are accepted. node tools/building-check.mjs
+--family quarry; node tools/building-sheets.mjs --family quarry, then look at review/quarry.png: all
+four views should be one quarry of one size. Commit "Art: quarry r2 repainted on the review-2
+guide", push the branch and stop. In your message give the review sheet's path and, for each
+attempt: the view, its base span (px of the returned picture) against the limit, the feet and ratio,
+the height number, the camera error, the highlight counts, and which attempt was kept; and say
+plainly which pictures passed every test.

@@ -1,0 +1,62 @@
+AFTER THE HOUSE ROTATIONS ARE ACCEPTED (C33a): do not paste this before the author has accepted r1,
+r3 and r2 of the House. It has two steps: STEP 1 proposes the biome variants in words and stops;
+STEP 2 paints them, and only on a message from the author that names the approved rows. Paint
+nothing in step 1.
+
+Paint the biome variants of the House (id townhouse, the small cottage) for the isometric railway
+game in this repository, for issue #535: the land biomes plains, forest, desert, taiga, swamp,
+mountain and beach, each in all four views, r0 to r3. The base house is the one of C33a:
+assets/source/base-v1/house-cottage.png (r0, which stays) and the kept r1, r3 and r2 in
+assets/source/rotations-535/house/ (house-r1.png, house-r3.png, house-r2.png). A biome variant is
+the SAME house, the same footprint, plan, camera, walls and roof shape, with other materials: its
+walls, its roof, its trim and its chimney, as the biome would build them. The game's art direction
+stays: the palette family (forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B,
+slate #626B6C, teal #477B82, copper #A36B42; muted, no neon), the crisp clustered shading, three or
+four shades per material.
+
+Work on branch art/535-rotations, which exists by now: git fetch origin develop art/535-rotations,
+git switch art/535-rotations, git pull --ff-only (it must hold C33a's commit, "Art: House turned,
+r1, r3 and r2 on the review-2 guides"; check that assets/source/rotations-535/house/house-r1.png,
+house-r2.png and house-r3.png exist, and if not, stop and say so). Touch nothing outside
+assets/source/rotations-535/house/biomes/ (make it). Commit there and push the branch. Never push to
+main or develop. Commit subjects read "Art: <outcome>". Never commit the guides.
+
+STEP 1, THE PROPOSAL (paint nothing). Write assets/source/rotations-535/house/biomes/proposal.json,
+a table with one row per biome (plains, forest, desert, taiga, swamp, mountain, beach) with these
+columns: walls (material, colour, how it is built), roof (material, colour, form details that do not
+change the roof's shape), door and trim, chimney, what it must read as at the game's small size, and
+the one reason (the biome's own building tradition, in a sentence). Rules for the proposal: (1) the
+plains row may keep the C33a house as it is if you say why; (2) the footprint, the walls' height,
+the roof's shape and ridge, the chimney's place and the door's and windows' places do not change, so
+the same plan numbers and tests of C33a hold for every variant; (3) the seven houses must be told
+apart at the game's small size by wall colour and roof colour alone, so no two rows may share both a
+wall hue and a roof hue; (4) every row stays inside the palette family above and must not use
+#ECE4D0 or brighter, nor #E8AA48 or anything as strong; (5) no new objects: no props, no snow or
+sand piled on the ground, no vegetation standing apart from the house (a roof of turf or thatch is a
+material, not a prop); (6) say for each row which materials of the base house change (stone walls,
+slate roof, green door, red clay chimney pots) and which stay. Also give the painting order and the
+number of pictures: 7 biomes x 4 views = 28 pictures, r0 first for each biome, then r1, r3, r2 as in
+C33a, three attempts a view at most, the same tests (width first, plan, camera, height, highlights,
+by eye), so 84 calls at the most; say whether you would paint the whole set in one run or in two.
+Commit "Art: House biome variants, proposal", push the branch and STOP. In your message give the
+table in one block of text and say plainly what you are unsure about. Do not start step 2.
+
+STEP 2, THE PAINTING (only when the author's next message names the approved rows; paint exactly
+those, with the changes the author asks for). For each approved biome, the views in this order: r0,
+r1, r3, r2. r0 is painted on the guide of the House's r0
+(assets/source/buildings-v2/guides/t1tall-r0.png, 1024 x 1536, 8 px to a game px, anchor (512,
+1344); it is in your tree) from the base house's r0 and the biome's row of the proposal; r1, r3 and
+r2 on the review-2 guides townhouse-r1.png to townhouse-r3.png (fetch them as C33a does: git fetch
+origin claude/art-guides-review-2, then git show
+origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/<name> >
+../guides-535/<name>, for <name> in townhouse-r1.png, townhouse-r2.png, townhouse-r3.png and their
+-plan.json files; never git add them) from the kept biome r0, the base house's kept view of the same
+rotation (for the walls' places) and the style board. Use C33a's picture prompt, its limit table and
+its tests word for word, with the biome's materials from its row in place of the base house's. Every
+picture is an image EDIT of the guide; never paint on an earlier attempt; one Correction paragraph
+at a time, replacing the last; never stretch, squeeze, shear or bend a returned picture (issue
+#536). Keep every returned picture as
+assets/source/rotations-535/house/biomes/<biome>/raw/house-<biome>-r<v>-attempt-<k>.png and the kept
+ones as house-<biome>-r<v>.png, with prompts.json beside them. Commit after each biome ("Art: House
+<biome>, r0 to r3") and push. In your message give, per biome and attempt, the numbers C33a asks
+for, and which attempt was kept.

@@ -1,0 +1,146 @@
+Paint two views of the small farm halt (family farm, Steam age a0) again for the isometric railway
+game in this repository, for issue #325: r1, then r3. r0 and r2 are accepted and are not painted
+again. The author's review 2 found r1 too wide and r3 too thin with its angle off.
+
+Work on branch art/325-buildings-v2, which exists (head c2b648e2 or later; art/325-fuel-pump is the
+Fuel Pump's, not this one): git fetch origin art/325-buildings-v2, git switch art/325-buildings-v2,
+git pull --ff-only. The pictures this job needs must be in your tree:
+assets/source/buildings-v2/farm/farm-a0-r0.png (the master, finished) and farm-a0-r1.png,
+farm-a0-r2.png, farm-a0-r3.png (the pictures as they are today). If one is missing, stop and say so.
+Touch nothing outside assets/source/buildings-v2/. Commit there, never stash pictures, push the
+branch. Never push to main or develop. Commit subjects read "Art: <outcome>". Keep every picture
+your image tool returns, byte for byte, as raw/<id>-attempt-<k>.png (k from 1 for each id, or going
+on from the number raw/returns.json already holds), and add {id, attempt, file, returned, spans,
+top, height, kept} to raw/returns.json for each call. Ask for 1024 x 1024, transparent background,
+and record the size it returns.
+
+WHY AGAIN. The pictures are laid onto the footprint by the walls' feet, and a picture that is too
+wide comes out low, one that is too thin comes out tall and narrow, and an angle that is off is
+stretched back by the fit, which the author does not accept (issue #536: repaint, never stretch).
+The new plan guides keep the oblong plan that the finished r0 measures (measureBase: 532 px lower
+left, 422 px lower right of 954 px in a 1254 px picture, 0.557 : 0.443 of the foot), turned with the
+view: the long side fills 90 per cent of the footprint's side, the short one its share. In r1 the
+long side is the lower right, in r3 too. The painter spreads a building wider than its plinth unless
+it is told the width and checked: r1's width is the number to hold.
+
+THE GUIDES. They are on a branch that is not merged yet (PR #537), and they are not to be committed
+to your art branch. From the repository root: git fetch origin claude/art-guides-review-2 (its head
+is 21329dd7 or later; if assets/source/buildings-v2/guides/review2/ is already on develop in your
+tree, use those files and skip the rest of this paragraph). Make a folder OUTSIDE the repository,
+say ../guides-535, and write out of that branch, for <name> in farm-r1.png and farm-r1-plan.json,
+farm-r3.png and farm-r3-plan.json:
+
+  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/<name> > ../guides-535/<name>
+
+Do the same for assets/source/buildings-v2/GUIDE.md and read its sections 2 and 5 to 8 again. Never
+git add anything from ../guides-535. Check that each guide is 1024 x 1024 and its plan file's "job"
+is "farm"; if not, stop and say so. The plan files hold the numbers below. The queue's own guide for
+this picture (guides/t1-r1.png, t1-r3.png) is no longer the picture you edit: the review-2 guide is,
+because it carries the oblong plan the finished r0 has.
+
+THE PLAN, per view, in guide px (1024 x 1024 canvas, 8 px to a game px).
+
+r1: footprint 1 x 1 tile, long side lower right. Plinth corners w (256, 832), s (512, 960), e (768,
+832). The base's feet: w (305.2, 843.8), s (488.4, 935.4), e (718.8, 820.2); lower-left foot 183.2,
+lower-right foot 230.4 (ratio 0.795: r0's 532 : 422 turned over); block 40 game px high. The front
+faces away: no door, no loading hatch on either visible wall.
+
+r3: footprint 1 x 1 tile, long side lower right. Plinth corners w (256, 832), s (512, 960), e (768,
+832). The base's feet: w (305.2, 843.8), s (488.4, 935.4), e (718.8, 820.2); lower-left foot 183.2,
+lower-right foot 230.4 (ratio 0.795: r0's 532 : 422 turned over); block 40 game px high. The front
+(the lower-right wall) carries the door and the loading hatch where r0 has them: the guide marks the
+door on the lower-right wall.
+
+THE LIMIT. Keep the base to the footprint: the grey plinth is the footprint, 516 px wide in the
+guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its
+long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left corner to the
+right corner, is 416 px wide in the guide (509 px), no wider than 437 px (535 px) and never outside
+the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and
+the fit then shrinks the whole building. Per view: held 416 px of the guide (509 of 1254), at most
+437 (535), at least 395 (484). Over the most or under the least, the picture is refused for its
+width whatever else it shows.
+
+PUT THE VIEWS BACK. Run node tools/building-queue.mjs status first and note the state of this
+family. Run node tools/building-queue.mjs redo farm-a0-r1 and redo farm-a0-r3 WITHOUT --yes first
+and read what each says it would undo. The queue says that redoing r1 or r3 also puts the r2 of its
+age back: r2 is accepted and must stay. If it names farm-a0-r2, do not add --yes; put the two
+pictures back with node tools/building-queue.mjs set farm-a0-r1 pending --note "repaint, review 2"
+and the same for r3. If it names nothing else, run it with --yes. Then run status again and check
+that r1 and r3 are pending, r0 and r2 stay generated. Do not run "next"; use show and take with each
+id, in this order: farm-a0-r1, farm-a0-r3.
+
+EACH VIEW. show <id> lists the references and prints the prompt and its "edit this" line, which
+names the queue's guide. Paint instead as an edit of the REVIEW-2 guide of the view
+(../guides-535/farm-r<v>.png), the first picture attached, and then the references show lists, in
+its order, without the queue's guide; ask for the size it prints, transparent background. Take it
+with take <id> --from <file>, look at .look/<id>.png, measure (below), then set <id> generated
+--note "<measurements>". Paste the printed prompt whole, then the view's Correction below, on EVERY
+attempt, the first included. Nothing else goes in the picture: no ground, plinth, shadow, text,
+border, glow or extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as strong
+as selection amber #E8AA48.
+
+For r1: Correction: the earlier r1 was too wide: its walls spread beyond what the plinth takes and
+the fit shrank it low. Edit the grey guide exactly: it is one barn on its oblong plan, long side on
+the lower right. The base's feet are 183.2 px (lower left) and 230.4 px (lower right) of the guide,
+the base 414 px wide (held 416, at most 437 px of the guide, 535 of 1254), and nothing stands
+outside the plinth at ground level. The front faces the upper left, hidden: no door and no loading
+hatch on either visible wall. The lower-left wall is the right-hand side, the lower-right wall the
+back, plainer; the barn, the round silo and the roof are r0's, the same size, no taller.
+
+For r3: Correction: the earlier r3 was too thin and its angle was off: its feet ran flatter than the
+guide's and its plan was too narrow. Edit the grey guide exactly: both feet two pixels across for
+each pixel down, the lower-left wall's foot 183.2 px of the guide and the lower-right wall's 230.4
+px, the base 414 px wide (416 held, at most 437, at least 395 px of the guide; 509, 535 and 484 of
+1254). This view is the front view turned on a turntable, not flipped: the lower-right wall is the
+front, with the door and the loading hatch where the guide marks the door; the lower-left wall is
+the left-hand side. The barn, the round silo and the roof are r0's, the same size, no taller.
+
+MEASURE BEFORE YOU RECORD (after take, before set), in this order:
+
+- width first: on a crop, read the outer edge of the base's left corner and of its right corner (the
+  foot of the walls, outline included; roofs, chimneys and anything above the ground do not count)
+  and their span in the returned picture's px. A picture passes when it is 395 to 437 px of the
+  guide, which is 484 to 535 px of a 1254 px picture (held 416 and 509). Outside it the picture is
+  refused: record it as an attempt with its span, write its Correction, and do not run the fit;
+
+- node tools/building-fit.mjs <id>. Its base corners w, s and e give the lower-left foot s.x - w.x
+  and the lower-right foot e.x - s.x. A picture passes when:
+
+- plan: lower-left foot over lower-right foot within 15 per cent of 0.795 (0.68 to 0.91) in r1 and
+  r3, the long side lower right;
+
+- camera: at most 2 degrees off the game's (the tool's check, which set runs; node
+  tools/building-check.mjs <file> prints it). Measure width and plan first: if the picture is wide,
+  thin or low, do not set it, paint it again. A picture that fails the camera is repainted, never
+  stretched (issue #536);
+
+- height: (the near corner's row - box.top) over e.x - w.x, within 15 per cent of the same number
+  for r0's fitted picture, both from node tools/building-fit.mjs;
+
+- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12 (RGB
+  distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may exceed
+  r0's (Art caps the rest at packing);
+
+- by eye: r3 turned, not mirrored (door and loading hatch on the lower-right wall); no door or hatch
+  on r1; the same barn, silo and roof as r0; no plinth painted; the foot of both visible walls plain
+  and straight; the lower-left wall lighter than the lower-right wall.
+
+A picture refused for its camera alone, that passes the other tests, is handled by the tool
+(GUIDE.md section 7: next hands it out to paint again from its own earlier self). A picture that
+fails the width, the plan or the height is made again from the printed prompt: keep the view's
+Correction and add ONE more paragraph that begins "Correction:" and names the number it missed, as
+"your last picture's base spanned 540 px of 1254 where the limit is 535"; it replaces the added one
+from the attempt before. Never attach a wide, thin or low picture to paint again from, and never
+stretch, squeeze, shear or bend a picture: the angles come from the camera, in the painting. At most
+three attempts a view, 6 calls in all. If none passes, keep the closest in raw/, run set <id>
+rejected --note "<the test it failed and its number>" (the tool sets the file aside), and say so in
+your message; never accept it quietly.
+
+CLOSE. Leave r0 and r2 as they are. If the new r1 or r3 shows walls the old r2 does not copy (the
+back from r1, the left-hand side from r3), say so in your message, and do not repaint r2: that is
+the author's call. node tools/building-check.mjs --family farm; node tools/building-sheets.mjs
+--family farm, then look at review/farm.png. Commit "Art: small farm halt, r1 and r3 repainted on
+the review-2 guides", push the branch and stop. In your message give the review sheet's path and,
+for each attempt: the view, its base span (px of the returned picture) against the limit, the feet
+and ratio, the height number, the camera error, the highlight counts, and which attempt was kept;
+and say plainly which pictures passed every test.
