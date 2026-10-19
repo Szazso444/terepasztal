@@ -1,0 +1,153 @@
+{
+  "oldReference": {
+    "file": "assets/source/base-v1/works-full-ironworks.png",
+    "returned": [1536, 1024],
+    "baseWidth": 1188,
+    "chimneyTopY": 45,
+    "furnaceFootY": 835,
+    "heightPixels": 790,
+    "heightRatio": 0.664983164983165,
+    "readByEye": true,
+    "crop": "G:/DEV/Terepasztal/guides-535/ironworks-old-crop.png",
+    "highlights": {
+      "white": 1115,
+      "amber": 0
+    },
+    "note": "Width outer ground-level edges x=180 to 1368; furnace foot is its right cream quoin at y=835, not cast-bed apron."
+  },
+  "attempts": [
+    {
+      "view": 0,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Ironworks, a brick furnace with a tall chimney, a forge shed and an open\r\ningot store, the same building as in the third picture in the view named under View. Style: that of\r\nthe second picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable\r\nmasses, three or four shades per material, restrained detail, a strong silhouette. The palette\r\nfamily of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B,\r\nslate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest,\r\nlower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and\r\nnothing as strong as selection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the forge shed's brick wall with its door in the middle; the\r\nlower-right wall is the right-hand side: the open ingot store. The furnace and its chimney stand at\r\nthe far corner behind them. The groups stand as the Design paragraph says. Roofs, chimney and hoist\r\nare as in the old picture: the teal-green corrugated roofs, the clerestory, the tall chimney.\r\nDesign. Lay the same works out on the 2 x 2 plinth, filling it as the block does (90 per cent of\r\neach side, 691 px wide in the guide): the long forge shed with its teal roof and clerestory stands\r\nalong the lower-left side (the front), from the left corner to the near corner, with its door in the\r\nmiddle of that wall where the guide has its dark door mark; the open timber-framed ingot store with\r\nits hoist stands along the lower-right side, from the near corner to the right corner; the brick\r\nfurnace with its tall chimney stands at the far (top) corner behind them. The groups stand so that\r\nthe ground-level outline follows the plinth's 2:1 lines from the left corner through the near corner\r\nto the right corner; nothing stands outside the plinth at ground level. Keep every structure as the\r\nold picture draws it. The furnace mouth's orange glow stays as small as in the old picture.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold ironworks picture: its structures, materials and colours; nothing of its angle or layout: take\r\nits materials, details and character from it, but not its angle or its footprint; the block-out sets\r\nthose. This is the front view: repaint the same building, on the block-out's plan, at the game's\r\ncamera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nOutput canvas: 1536 x 1024 pixels.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/ironworks-r0.png",
+        "G:/DEV/Terepasztal/rotations-535/docs/art-direction/images/03-theme-town-growth.png",
+        "G:/DEV/Terepasztal/rotations-535/assets/source/base-v1/works-full-ironworks.png"
+      ],
+      "file": "raw/ironworks-r0-attempt-1.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/rotations-535/ironworks/raw/ironworks-r0-attempt-1.png",
+        "identity": null,
+        "returned": [1536, 1024],
+        "opaqueBox": [182, 37, 1383, 961],
+        "automaticCorners": {
+          "w": [184, 713.5],
+          "s": [793.5881096007322, 1018.2940548003661],
+          "e": [1383, 842.3815185005976]
+        },
+        "corners": {
+          "w": [184, 713.5],
+          "s": [793.5881096007322, 1018.2940548003661],
+          "e": [1383, 842.3815185005976]
+        },
+        "eye": {},
+        "width": 1199,
+        "limits": [659, 694, 729],
+        "tests": {
+          "width": "FAIL"
+        },
+        "stoppedAfter": "width"
+      },
+      "kept": false,
+      "rawSha256": "5bc9db1bf0e14ff3604db1270fa6f9c7a54795a21b04f243acac36019f52132e",
+      "correctionRequired": "Correction: your last r0 base measured 1199 px of 1536 where the limit is 729 px and the target is 694 px."
+    },
+    {
+      "view": 0,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Ironworks, a brick furnace with a tall chimney, a forge shed and an open\r\ningot store, the same building as in the third picture in the view named under View. Style: that of\r\nthe second picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable\r\nmasses, three or four shades per material, restrained detail, a strong silhouette. The palette\r\nfamily of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B,\r\nslate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest,\r\nlower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and\r\nnothing as strong as selection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the forge shed's brick wall with its door in the middle; the\r\nlower-right wall is the right-hand side: the open ingot store. The furnace and its chimney stand at\r\nthe far corner behind them. The groups stand as the Design paragraph says. Roofs, chimney and hoist\r\nare as in the old picture: the teal-green corrugated roofs, the clerestory, the tall chimney.\r\nDesign. Lay the same works out on the 2 x 2 plinth, filling it as the block does (90 per cent of\r\neach side, 691 px wide in the guide): the long forge shed with its teal roof and clerestory stands\r\nalong the lower-left side (the front), from the left corner to the near corner, with its door in the\r\nmiddle of that wall where the guide has its dark door mark; the open timber-framed ingot store with\r\nits hoist stands along the lower-right side, from the near corner to the right corner; the brick\r\nfurnace with its tall chimney stands at the far (top) corner behind them. The groups stand so that\r\nthe ground-level outline follows the plinth's 2:1 lines from the left corner through the near corner\r\nto the right corner; nothing stands outside the plinth at ground level. Keep every structure as the\r\nold picture draws it. The furnace mouth's orange glow stays as small as in the old picture.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold ironworks picture: its structures, materials and colours; nothing of its angle or layout: take\r\nits materials, details and character from it, but not its angle or its footprint; the block-out sets\r\nthose. This is the front view: repaint the same building, on the block-out's plan, at the game's\r\ncamera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nOutput canvas: 1536 x 1024 pixels.\n\nCorrection: your last r0 base measured 1199 px of 1536 where the limit is 729 px. Paint the base at 694 px wide, from x=422 to x=1114, with the near foot at (768,933), exactly on the FIRST reference block, leaving large transparent margins. The third reference gives materials only: its wide layout must be replaced by the Design layout, furnace and chimney at the far top corner, forge along lower-left, store along lower-right. No surrounding glow; the background must have alpha zero.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/ironworks-r0.png",
+        "G:/DEV/Terepasztal/rotations-535/docs/art-direction/images/03-theme-town-growth.png",
+        "G:/DEV/Terepasztal/rotations-535/assets/source/base-v1/works-full-ironworks.png"
+      ],
+      "file": "raw/ironworks-r0-attempt-2.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/rotations-535/ironworks/raw/ironworks-r0-attempt-2.png",
+        "identity": null,
+        "returned": [1536, 1024],
+        "opaqueBox": [241, 68, 1330, 965],
+        "automaticCorners": {
+          "w": [242, 734.5],
+          "s": [826.2507524204736, 1026.625376210237],
+          "e": [1330, 834.706623452531]
+        },
+        "corners": {
+          "w": [242, 734.5],
+          "s": [826.2507524204736, 1026.625376210237],
+          "e": [1330, 834.706623452531]
+        },
+        "eye": {},
+        "width": 1088,
+        "limits": [659, 694, 729],
+        "tests": {
+          "width": "FAIL"
+        },
+        "stoppedAfter": "width"
+      },
+      "kept": false,
+      "rawSha256": "5b18a8fe98566ea41f073a55060c9bae625f8d4fedc2c0e395e68b7f6d86caf5",
+      "correctionRequired": "Correction: your last r0 base measured 1088 px of 1536 where the limit is 729 px and the target is 694 px."
+    },
+    {
+      "view": 0,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Ironworks, a brick furnace with a tall chimney, a forge shed and an open\r\ningot store, the same building as in the third picture in the view named under View. Style: that of\r\nthe second picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable\r\nmasses, three or four shades per material, restrained detail, a strong silhouette. The palette\r\nfamily of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B,\r\nslate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest,\r\nlower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and\r\nnothing as strong as selection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the forge shed's brick wall with its door in the middle; the\r\nlower-right wall is the right-hand side: the open ingot store. The furnace and its chimney stand at\r\nthe far corner behind them. The groups stand as the Design paragraph says. Roofs, chimney and hoist\r\nare as in the old picture: the teal-green corrugated roofs, the clerestory, the tall chimney.\r\nDesign. Lay the same works out on the 2 x 2 plinth, filling it as the block does (90 per cent of\r\neach side, 691 px wide in the guide): the long forge shed with its teal roof and clerestory stands\r\nalong the lower-left side (the front), from the left corner to the near corner, with its door in the\r\nmiddle of that wall where the guide has its dark door mark; the open timber-framed ingot store with\r\nits hoist stands along the lower-right side, from the near corner to the right corner; the brick\r\nfurnace with its tall chimney stands at the far (top) corner behind them. The groups stand so that\r\nthe ground-level outline follows the plinth's 2:1 lines from the left corner through the near corner\r\nto the right corner; nothing stands outside the plinth at ground level. Keep every structure as the\r\nold picture draws it. The furnace mouth's orange glow stays as small as in the old picture.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold ironworks picture: its structures, materials and colours; nothing of its angle or layout: take\r\nits materials, details and character from it, but not its angle or its footprint; the block-out sets\r\nthose. This is the front view: repaint the same building, on the block-out's plan, at the game's\r\ncamera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nOutput canvas: 1536 x 1024 pixels.\n\nCorrection: your last r0 base measured 1088 px of 1536, where the maximum is 729 and the target is 694. The FIRST reference is the actual image to edit: retain its tiny 694-pixel-wide block footprint at x=422..1114 and its ground corner at (768,933). Replace that block with the works; leave all the wide margins empty transparent alpha zero. Build a NEW compact square plant layout on this guide, furnace at far top, forge lower-left, ingot store lower-right. Do not reproduce the third reference composition or fill the frame with it. Its materials are the only reference. Ground feet must run from (422,760) through (768,933) to (1114,760).",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/ironworks-r0.png",
+        "G:/DEV/Terepasztal/rotations-535/docs/art-direction/images/03-theme-town-growth.png",
+        "G:/DEV/Terepasztal/rotations-535/assets/source/base-v1/works-full-ironworks.png"
+      ],
+      "file": "raw/ironworks-r0-attempt-3.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/rotations-535/ironworks/raw/ironworks-r0-attempt-3.png",
+        "identity": null,
+        "returned": [1536, 1024],
+        "opaqueBox": [269, 113, 1314, 951],
+        "automaticCorners": {
+          "w": [270, 737.5],
+          "s": [795.6274881989012, 1000.3137440994506],
+          "e": [1314, 850.220255384028]
+        },
+        "corners": {
+          "w": [270, 737.5],
+          "s": [795.6274881989012, 1000.3137440994506],
+          "e": [1314, 850.220255384028]
+        },
+        "eye": {},
+        "width": 1044,
+        "limits": [659, 694, 729],
+        "tests": {
+          "width": "FAIL"
+        },
+        "stoppedAfter": "width"
+      },
+      "kept": false,
+      "selectedAsClosest": true,
+      "rawSha256": "95997bf7ebb54dcf7162cca0e4c91fe01e2ec1d74dff53d7beaffdb0f18db2ef",
+      "correctionRequired": "Correction: your last r0 base measured 1044 px of 1536 where the limit is 729 px and the target is 694 px."
+    }
+  ],
+  "outcome": "STOP: all three r0 attempts refused for width; r1, r3 and r2 not attempted.",
+  "selected": {
+    "view": 0,
+    "attempt": 3,
+    "file": "ironworks-r0.png",
+    "kept": false,
+    "failedTest": "width",
+    "value": 1044,
+    "maximum": 729,
+    "note": "Closest attempt only, not accepted. Other measurements not run after width failure.",
+    "sha256": "95997bf7ebb54dcf7162cca0e4c91fe01e2ec1d74dff53d7beaffdb0f18db2ef"
+  },
+  "preview": {
+    "requestedCommand": "node tools/building-sheets.mjs --picture assets/source/rotations-535/ironworks/ironworks-r0.png",
+    "result": "Tool rejected the required filename; preview generated using a byte-identical temporary ironworks-a0-r0.png alias outside repository.",
+    "look": "assets/source/buildings-v2/.look/ironworks-a0-r0.png",
+    "inspected": true
+  }
+}
