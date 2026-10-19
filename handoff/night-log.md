@@ -496,3 +496,10 @@ Launched from the author's branch list: #148 #149 #150 #151 #152 #153 #154 #155.
 - Open: #532 F3 (footprint rendering, base develop) and #533 F2 (base F3 branch, retarget after #532; verification PASS, fixes 27c87bd7). Both wait for the author's review of https://claude.ai/artifact/3jFQW5HahSo224CXVJzEMT (v2: newest accepted art, all buildings, before/after sizes; depot x1.5, farm x0.66, quarry x0.71, water tower/coaling proposals flagged).
 - Repaints needed for turned footprints: town hall, grinder, oil derrick, colliery r1-r3 (and farm per F2's ground check). C17d was run before C17c by mistake; author told to run C17c first.
 - Not yet started: W2 (#514), W3/W4/W9/X1 (rendering, one at a time), W10 after C17c/C17d.
+
+## 2026-10-19, review round 2
+- Author's review-2 list -> F7 PR #538 (issue #534, base F2 branch): station/farm small 1x1 (new art at packing) + big_station 2x1 / big_farm 1x2 (old art, `like` defs, own frame families); grinder and oil refinery 1x1, colliery/ironworks 2x2; AUTHOR_SCALE "fills footprint" (0.9 of footprint screen width): town 1.83, warehouse 1.86, colliery 1.96, ironworks 2.00, diesel 1.88, wire mill 2.13 -> doors ~2.7 walkers, shown to the author. Water tower x1.3 is the author's.
+- Art guides PR #537 (issue #535): 52 guides for 17 repaint/rotation jobs. Prompts page v15 (commit ec985d71): C18a-C35a, C33b (house biomes, after), C4e r1+r3 only, R8e replaces R8d.
+- Issue #536: tools/building-fit.mjs stretches (vertical/shear); pack uniformly. Narrow depot was never painted (queue pending). Depot r3 painted at 25°.
+- Review page v3 https://claude.ai/artifact/3jFQW5HahSo224CXVJzEMT: uniform packing, F7 sizes; scripts in G:\DEV\wt\_fp3-scripts.
+- Open PR stack: #532 F3 <- #533 F2 <- #538 F7; #537 guides. All wait for the author.
