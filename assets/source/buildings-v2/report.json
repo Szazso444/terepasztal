@@ -1,6 +1,6 @@
 {
-  "checked": 8,
-  "failed": 0,
+  "checked": 11,
+  "failed": 1,
   "pictures": {
     "water_tower-a0-r0": {
       "ok": true,
@@ -418,6 +418,189 @@
       "camera": {
         "by": 3.9,
         "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "depot-a0-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.555,
+          -0.498
+        ],
+        "slopes": [
+          0.555,
+          -0.498
+        ],
+        "base": {
+          "w": [
+            319,
+            687.4
+          ],
+          "s": [
+            775.5,
+            940.7
+          ],
+          "e": [
+            1238,
+            710.5
+          ]
+        },
+        "scale": 0.7855,
+        "vertical": 0.9501,
+        "shear": -0.0272,
+        "cx": 778.5,
+        "cy": 642.9,
+        "box": {
+          "left": 399.2,
+          "top": 313,
+          "right": 1142.3,
+          "bottom": 940
+        },
+        "camera": {
+          "elevation": 31.7,
+          "turn": 1.6
+        },
+        "area": 485207
+      },
+      "ground": [
+        0.58,
+        0.84
+      ],
+      "through": [
+        0,
+        0
+      ],
+      "hang": 0
+    },
+    "depot-a0-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.517,
+          -0.51
+        ],
+        "slopes": [
+          0.517,
+          -0.51
+        ],
+        "base": {
+          "w": [
+            280,
+            743.6
+          ],
+          "s": [
+            730.2,
+            976.3
+          ],
+          "e": [
+            1270,
+            701.1
+          ]
+        },
+        "scale": 0.7292,
+        "vertical": 0.9739,
+        "shear": -0.0034,
+        "cx": 775,
+        "cy": 700.9,
+        "box": {
+          "left": 398.3,
+          "top": 300,
+          "right": 1138.4,
+          "bottom": 925.4
+        },
+        "camera": {
+          "elevation": 30.9,
+          "turn": 0.2
+        },
+        "area": 548707
+      },
+      "ground": [
+        0.77,
+        0.69
+      ],
+      "through": [
+        0,
+        0
+      ],
+      "hang": 0.22
+    },
+    "depot-a0-r2": {
+      "ok": false,
+      "problems": [
+        "camera off by 3.0°: the building is turned 3.0° towards its lower-right wall (the wall feet slope 0.58 and -0.47, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.578,
+          -0.468
+        ],
+        "slopes": [
+          0.578,
+          -0.468
+        ],
+        "base": {
+          "w": [
+            364,
+            652.2
+          ],
+          "s": [
+            793,
+            900.3
+          ],
+          "e": [
+            1216,
+            702.1
+          ]
+        },
+        "scale": 0.8473,
+        "vertical": 0.9554,
+        "shear": -0.0525,
+        "cx": 790,
+        "cy": 605.4,
+        "box": {
+          "left": 400.3,
+          "top": 340.7,
+          "right": 1129,
+          "bottom": 942
+        },
+        "camera": {
+          "elevation": 31.4,
+          "turn": 3
+        },
+        "area": 394484
+      },
+      "ground": [
+        0.51,
+        0.68
+      ],
+      "through": [
+        0,
+        0
+      ],
+      "hang": 0,
+      "camera": {
+        "by": 3,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     }
   }
