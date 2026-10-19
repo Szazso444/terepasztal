@@ -12,8 +12,8 @@
     }
   ],
   "accepted": [],
-  "mark": 1792357755752,
-  "chat": "01a150ca-851b-7930-a831-97452214b901",
+  "mark": 1792449391987,
+  "chat": "01a15645-2fdc-7973-8dbf-44fb32dd8904",
   "counts": {
     "pictures": 548,
     "families": 27
@@ -5480,8 +5480,8 @@
       "rot": 1,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r1.png",
       "status": "rejected",
-      "attempts": 3,
-      "note": "Oblong attempts 10,11,12 final opaque-foot spans703,700,729 px of1254 (earlier crop estimates705,702,732), all exceed663. Width refused before fit; closest11 retained raw, no view accepted."
+      "attempts": 6,
+      "note": "Attempt 15 width 639 passes; height 1.136 below 1.318, box.top 432.9 above 351; camera 8.1 degrees; white 1486 amber 3647 above master 553/0. Attempts 13/14 too wide 677/808."
     },
     {
       "id": "fuel_stop-a0-r2",
@@ -5489,9 +5489,10 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png",
-      "status": "rejected",
-      "attempts": 3,
-      "note": "Oblong10/12 foot spans707/696 exceed663. Attempt11 width661 passes; height1.145 box.top428.9 too low, plan0.570 outside0.62-0.84, camera6.7deg and highlights890/19 exceed limits. No attempt passes; closest11 retained raw."
+      "status": "generated",
+      "attempts": 4,
+      "note": "kept with its camera off by 3.5° after 4 attempts",
+      "kept": 3.5
     },
     {
       "id": "fuel_stop-a0-r3",
@@ -5500,8 +5501,8 @@
       "rot": 3,
       "file": "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r3.png",
       "status": "rejected",
-      "attempts": 3,
-      "note": "Oblong10/11 final foot spans667/741 exceed663. Attempt12 width638 plan1.441 pass; height1.279 box.top368.3 below1.318, camera7.2deg exceeds2, highlights688/1 exceed553/0. Turned near-end apparatus. No attempt passes; closest12 retained raw."
+      "attempts": 6,
+      "note": "All three attempts too wide: 13=734, 14=674 (closest), 15=756 px of 1254; allowed 600 to 663. Width refused, no further measurements. Closest preserved raw/fuel_stop-a0-r3-attempt-14.png."
     }
   ]
 }

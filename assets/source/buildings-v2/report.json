@@ -368,7 +368,7 @@
       "ok": true,
       "problems": [],
       "notes": [
-        "camera off by 3.9°: it looks down from 33.9° where the game looks down from 30° (the wall feet slope 0.58 and -0.53, the game's 0.50 and -0.50); kept, and corrected by the tools"
+        "camera off by 3.5°: it looks down from 33.5° where the game looks down from 30° (the wall feet slope 0.58 and -0.53, the game's 0.50 and -0.50); kept, and corrected by the tools"
       ],
       "fit": {
         "method": "base",
@@ -377,46 +377,46 @@
           true
         ],
         "measured": [
-          0.584,
-          -0.532
+          0.579,
+          -0.527
         ],
         "slopes": [
-          0.584,
-          -0.532
+          0.579,
+          -0.527
         ],
         "base": {
           "w": [
-            272,
-            964.2
+            294,
+            1011.3
           ],
           "s": [
-            577.5,
-            1142.5
+            592.1,
+            1183.9
           ],
           "e": [
-            1032,
-            900.8
+            1019,
+            958.7
           ]
         },
-        "scale": 0.5928,
-        "vertical": 0.8964,
+        "scale": 0.6215,
+        "vertical": 0.9039,
         "shear": -0.0233,
-        "cx": 652,
-        "cy": 820.7,
+        "cx": 656.5,
+        "cy": 875.1,
         "box": {
           "left": 286.7,
-          "top": 458.1,
+          "top": 338.4,
           "right": 737.3,
-          "bottom": 944.4
+          "bottom": 945.3
         },
         "camera": {
-          "elevation": 33.9,
+          "elevation": 33.5,
           "turn": 1.3
         },
-        "area": 418217
+        "area": 497683
       },
       "camera": {
-        "by": 3.9,
+        "by": 3.5,
         "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     },

@@ -2944,4 +2944,291 @@
     "closestRaw": false,
     "widthMeasurement": "Approximate outer stone wall-foot corners read visually on saved crops; not fitted. All exceed the width limit by a decisive margin."
   }
+,
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 13,
+    "file": "raw/fuel_stop-a0-r1-attempt-13.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a15645-2fdc-7973-8dbf-44fb32dd8904/exec-66a4e347-e6d9-4531-b290-9e62b05d0597.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 307,
+      "right": 984,
+      "px": 677,
+      "of1254": 677,
+      "guidePx": 552.829346092504
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "db64fca86be9a061700f6ad2000b0ad6c1eebed27f40a8947a163e114735ead9",
+    "promptFile": "raw/fuel_stop-a0-r1-prompt-13.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png",
+      "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer stone pier-foot edges read on crop; chute and chain excluded; returned 1254 px canvas."
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 14,
+    "file": "raw/fuel_stop-a0-r1-attempt-14.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a15645-2fdc-7973-8dbf-44fb32dd8904/exec-91382e8e-36b9-4ae5-8f50-d05365b93a7f.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 225,
+      "right": 1033,
+      "px": 808,
+      "of1254": 808,
+      "guidePx": 659.8022328548644
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "0c4b42433a4aa0f128448c55bc5af078f8af74aaa96ea74285ef4e43d97e967e",
+    "promptFile": "raw/fuel_stop-a0-r1-prompt-14.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png",
+      "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer stone pier-foot edges read on crop; chute and chain excluded; returned 1254 px canvas."
+  },
+  {
+    "id": "fuel_stop-a0-r1",
+    "attempt": 15,
+    "file": "raw/fuel_stop-a0-r1-attempt-15.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": {
+      "w": [
+        324,
+        859
+      ],
+      "s": [
+        708.9,
+        1114.2
+      ],
+      "e": [
+        959,
+        970.7
+      ],
+      "lowerLeft": 384.9,
+      "lowerRight": 250.10000000000002,
+      "ratio": 1.5389844062375049
+    },
+    "top": 432.9,
+    "height": 1.1357865767045454,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a15645-2fdc-7973-8dbf-44fb32dd8904/exec-298cfd46-a1ca-41e6-9337-42b38cc5730e.png",
+    "tests": {
+      "width": true,
+      "height": false,
+      "plan": true,
+      "camera": false,
+      "highlights": false
+    },
+    "pierSpan": {
+      "left": 323,
+      "right": 962,
+      "px": 639,
+      "of1254": 639,
+      "guidePx": 521.799043062201
+    },
+    "camera": {
+      "off": true,
+      "by": 8.1,
+      "elevation": 8.1,
+      "turn": 2.1
+    },
+    "highlights": {
+      "white": 1486,
+      "amber": 3647,
+      "surfaceAlphaAbove": 200
+    },
+    "masterHighlights": {
+      "white": 553,
+      "amber": 0,
+      "surfaceAlphaAbove": 200
+    },
+    "check": {
+      "ok": false,
+      "problems": [
+        "camera off by 8.1°: it looks down from 38.1° where the game looks down from 30° and the building is turned 2.1° towards its lower-right wall (the wall feet slope 0.66 and -0.57, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "camera": {
+        "by": 8.1,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "sha256": "447d74429cf13189f8621e6df7cbda434e45533939bc2e9e00e49aeea1c818f2",
+    "promptFile": "raw/fuel_stop-a0-r1-prompt-15.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r1.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png",
+      "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": true,
+    "widthMeasurement": "Outer stone pier-foot edges read on crop; chute and chain excluded; returned 1254 px canvas.",
+    "measuredSlopes": [
+      0.663,
+      -0.574
+    ]
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 13,
+    "file": "raw/fuel_stop-a0-r3-attempt-13.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a15645-2fdc-7973-8dbf-44fb32dd8904/exec-a125d220-0f79-4dbb-9b67-46de4e0a0c59.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 256,
+      "right": 990,
+      "px": 734,
+      "of1254": 734,
+      "guidePx": 599.3748006379585
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "cda173ae3b4158673a3b7e7be0e02b9a67f7aec81e3542bba04cab2fb483fd07",
+    "promptFile": "raw/fuel_stop-a0-r3-prompt-13.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png",
+      "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer stone pier-foot edges read on crop; chute and chain excluded; returned 1254 px canvas."
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 14,
+    "file": "raw/fuel_stop-a0-r3-attempt-14.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a15645-2fdc-7973-8dbf-44fb32dd8904/exec-b4b16a40-428a-4f86-975f-655228db022e.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 304,
+      "right": 978,
+      "px": 674,
+      "of1254": 674,
+      "guidePx": 550.3795853269537
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "6b89e3f599b878d0fecd20dc86df04eba2fdebe913e3ee8bfd7159a36bfa7273",
+    "promptFile": "raw/fuel_stop-a0-r3-prompt-14.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png",
+      "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": true,
+    "widthMeasurement": "Outer stone pier-foot edges read on crop; chute and chain excluded; returned 1254 px canvas."
+  },
+  {
+    "id": "fuel_stop-a0-r3",
+    "attempt": 15,
+    "file": "raw/fuel_stop-a0-r3-attempt-15.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": null,
+    "top": null,
+    "height": null,
+    "kept": false,
+    "source": "C:/Users/Zso/.codex/generated_images/01a15645-2fdc-7973-8dbf-44fb32dd8904/exec-c44bbb53-1c3e-4e67-b57c-b43d36afb846.png",
+    "tests": {
+      "width": false,
+      "height": null,
+      "plan": null,
+      "camera": null,
+      "highlights": null
+    },
+    "pierSpan": {
+      "left": 229,
+      "right": 985,
+      "px": 756,
+      "of1254": 756,
+      "guidePx": 617.3397129186603
+    },
+    "observation": "Width refused; no fit, height, plan, camera or highlights measured.",
+    "sha256": "dd988c7fee7be1518c301c8151377b2658e0a2b088c0fff138e3387efb731b34",
+    "promptFile": "raw/fuel_stop-a0-r3-prompt-15.txt",
+    "references": [
+      "../guides-0325/fuel_stop-oblong-r3.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/buildings-v2/.fitted/fuel_stop-a0-r0.png",
+      "assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png"
+    ],
+    "disposition": "rejected",
+    "closestRaw": false,
+    "widthMeasurement": "Outer stone pier-foot edges read on crop; chute and chain excluded; returned 1254 px canvas."
+  }
 ]

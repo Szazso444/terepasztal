@@ -17,14 +17,14 @@
   code { color: inherit; }
 </style>
 <h1>Building pictures</h1>
-<p>5 of 548 made. Each picture is shown laid onto its footprint, as the game will lay it. Gates: "depot": waiting for approval; "station": waiting for approval.</p>
+<p>9 of 548 made. Each picture is shown laid onto its footprint, as the game will lay it. Gates: "depot": waiting for approval; "station": waiting for approval.</p>
 <section id="depot">
   <h2>Depot <small>depot</small></h2>
-  <p>0 of 24 made. Rows: Steam, Diesel, Electric, Nuclear, Magnetic, Hyper. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
+  <p>3 of 24 made, 1 rejected. Rows: Steam, Diesel, Electric, Nuclear, Magnetic, Hyper. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
   <img src="depot.png" alt="Depot: every age and view" loading="lazy" />
   <p><a href="depot-angles.png">The same sheet with the footprint and the wall lines drawn in</a>. Ground lines as measured, lower left / lower right (the game's are 0.50 / -0.50), marked where the camera is further than 2° from the game's:</p>
-  <table><tr><th></th><th>r0</th><th>r1</th><th>r2</th><th>r3</th><th>sizes apart</th></tr><tr><th>Steam</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Diesel</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Electric</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Nuclear</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Magnetic</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Hyper</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr></table>
-  
+  <table><tr><th></th><th>r0</th><th>r1</th><th>r2</th><th>r3</th><th>sizes apart</th></tr><tr><th>Steam</th><td class="">0.56 / -0.50</td><td class="">0.52 / -0.51</td><td class="off">0.58 / -0.47</td><td class="none">-</td><td class="">x1.03</td></tr><tr><th>Diesel</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Electric</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Nuclear</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Magnetic</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr><tr><th>Hyper</th><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td><td class="none">-</td></tr></table>
+  <ul><li><code>depot-a0-r2</code> generated: camera off by 3.0°: the building is turned 3.0° towards its lower-right wall (the wall feet slope 0.58 and -0.47, the game's 0.50 and -0.50) <em>(kept with its camera off by 3.0° after 3 attempts: an earlier one was the closest)</em></li><li><code>depot-a0-r3</code> rejected <em>(All 3 attempts fail width 686-758 px: 848,1083,895 px; closest raw attempt 1, none accepted. Camera not measured because width fails. #536)</em></li></ul>
 </section>
 <section id="station">
   <h2>Station <small>station</small></h2>
@@ -228,9 +228,9 @@
 </section>
 <section id="fuel_stop">
   <h2>Coaling Stage <small>fuel_stop</small></h2>
-  <p>1 of 4 made, 3 rejected. Rows: Steam. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
+  <p>2 of 4 made, 1 kept with the camera off, 2 rejected. Rows: Steam. Columns: r0 (front lower left), r1, r2, r3 (front lower right).</p>
   <img src="fuel_stop.png" alt="Coaling Stage: every age and view" loading="lazy" />
   <p><a href="fuel_stop-angles.png">The same sheet with the footprint and the wall lines drawn in</a>. Ground lines as measured, lower left / lower right (the game's are 0.50 / -0.50), marked where the camera is further than 2° from the game's:</p>
-  <table><tr><th></th><th>r0</th><th>r1</th><th>r2</th><th>r3</th><th>sizes apart</th></tr><tr><th>Steam</th><td class="">0.54 / -0.51</td><td class="off">0.58 / -0.49</td><td class="off">0.58 / -0.53</td><td class="off">0.61 / -0.48</td><td class="off">x1.24</td></tr></table>
-  <ul><li><code>fuel_stop-a0-r1</code> rejected <em>(Oblong attempts 10,11,12 final opaque-foot spans703,700,729 px of1254 (earlier crop estimates705,702,732), all exceed663. Width refused before fit; closest11 retained raw, no view accepted.)</em></li><li><code>fuel_stop-a0-r2</code> rejected <em>(Oblong10/12 foot spans707/696 exceed663. Attempt11 width661 passes; height1.145 box.top428.9 too low, plan0.570 outside0.62-0.84, camera6.7deg and highlights890/19 exceed limits. No attempt passes; closest11 retained raw.)</em></li><li><code>fuel_stop-a0-r3</code> rejected <em>(Oblong10/11 final foot spans667/741 exceed663. Attempt12 width638 plan1.441 pass; height1.279 box.top368.3 below1.318, camera7.2deg exceeds2, highlights688/1 exceed553/0. Turned near-end apparatus. No attempt passes; closest12 retained raw.)</em></li></ul>
+  <table><tr><th></th><th>r0</th><th>r1</th><th>r2</th><th>r3</th><th>sizes apart</th></tr><tr><th>Steam</th><td class="">0.54 / -0.51</td><td class="off">0.58 / -0.49</td><td class="off">0.58 / -0.53</td><td class="off">0.61 / -0.48</td><td class="off">x1.22</td></tr></table>
+  <ul><li><code>fuel_stop-a0-r1</code> rejected <em>(Attempt 15 width 639 passes; height 1.136 below 1.318, box.top 432.9 above 351; camera 8.1 degrees; white 1486 amber 3647 above master 553/0. Attempts 13/14 too wide 677/808.)</em></li><li><code>fuel_stop-a0-r3</code> rejected <em>(All three attempts too wide: 13=734, 14=674 (closest), 15=756 px of 1254; allowed 600 to 663. Width refused, no further measurements. Closest preserved raw/fuel_stop-a0-r3-attempt-14.png.)</em></li><li class="note"><code>fuel_stop-a0-r2</code>: camera off by 3.5°: it looks down from 33.5° where the game looks down from 30° (the wall feet slope 0.58 and -0.53, the game's 0.50 and -0.50); kept, and corrected by the tools</li></ul>
 </section>
