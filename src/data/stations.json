@@ -27,6 +27,38 @@
       "accepts": [],
       "art": "farm",
       "terrain": "grass",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
+    },
+    {
+      "id": "big_farm",
+      "name": "Big Farm Halt",
+      "flavor": "Grows wheat. Haul it to the depot and a Windmill turns it into food for residents and crews.",
+      "cost": {
+        "wood": 30,
+        "stone": 10
+      },
+      "tier": 0,
+      "produces": [
+        {
+          "cargo": "wheat",
+          "level": 1
+        }
+      ],
+      "accepts": [],
+      "art": "big_farm",
+      "like": "farm",
+      "terrain": "grass",
       "span": {
         "w": 1,
         "h": 2
@@ -327,6 +359,42 @@
       ],
       "accepts": ["passengers"],
       "art": "station",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
+    },
+    {
+      "id": "big_station",
+      "name": "Big Station",
+      "flavor": "Passenger platforms serving nearby homes. Connect two stations with coaches to carry people between towns.",
+      "cost": {
+        "wood": 35,
+        "stone": 25,
+        "iron": 5
+      },
+      "tier": 0,
+      "produces": [
+        {
+          "cargo": "passengers",
+          "level": 1
+        }
+      ],
+      "accepts": ["passengers"],
+      "art": "big_station",
+      "like": "station",
+      "span": {
+        "w": 2,
+        "h": 1
+      },
       "doors": [
         {
           "kind": "platform",

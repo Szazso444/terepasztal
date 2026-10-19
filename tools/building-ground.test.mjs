@@ -737,48 +737,48 @@ describe(`the ground data of the ${GROUP} frames`, () => {
   });
 
   /**
-   * Frames whose foot is not the shape of their footprint yet: the footprint of eight works grew
-   * (F6, #525: tiles are the room a works takes, not the size of its model) while their pictures
-   * stayed as they were. The one-tile pictures of a works are near square, and their turned
-   * placeholders (`_r1` to `_r3`) are no better. They are repainted to the footprint with the
-   * rest of the work on how a picture sits in it (F3, #510); the entry goes with its repaint.
+   * Frames whose foot is not the shape of their footprint yet, one reason each. They are the
+   * turned placeholders (`_r1` to `_r3`) generated from a picture that was not drawn for the
+   * footprint its def has now: the oil derrick's (F6, #525: tiles are the room a works takes, not
+   * the size of its model), the town hall's, the goods shed's and the old farm halt's (F2, #509),
+   * which the Big Farm Halt draws, and the old station's upgraded pictures, which the Big Station
+   * draws (F7). The stone grinder, the Oil Refinery and the colliery are listed no more: they are
+   * square now (F7), and the Station and the Farm Halt are one tile. They are repainted to the
+   * footprint with the rest of the work on how a picture sits in it (F3, #510); the entry goes
+   * with its repaint.
    */
   const NOT_THE_FOOTPRINTS_SHAPE = new Map([
     [
-      'structures/colliery_lv2_r1',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_farm_1_r1',
+      'turned placeholder of a Big Farm Halt picture (the old farm halt one), 1 x 2 (F2, #509; F7); repaint pending',
     ],
     [
-      'structures/colliery_lv2_r2',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_farm_1_r2',
+      'turned placeholder of a Big Farm Halt picture (the old farm halt one), 1 x 2 (F2, #509; F7); repaint pending',
     ],
     [
-      'structures/colliery_lv2_r3',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_farm_1_r3',
+      'turned placeholder of a Big Farm Halt picture (the old farm halt one), 1 x 2 (F2, #509; F7); repaint pending',
     ],
     [
-      'structures/colliery_r1',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_farm_3_r1',
+      'turned placeholder of a Big Farm Halt picture (the old farm halt one), 1 x 2 (F2, #509; F7); repaint pending',
     ],
     [
-      'structures/colliery_r2',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_farm_3_r2',
+      'turned placeholder of a Big Farm Halt picture (the old farm halt one), 1 x 2 (F2, #509; F7); repaint pending',
     ],
     [
-      'structures/colliery_r3',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_farm_3_r3',
+      'turned placeholder of a Big Farm Halt picture (the old farm halt one), 1 x 2 (F2, #509; F7); repaint pending',
     ],
     [
-      'structures/grinder_r1',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_station_4_r3',
+      'turned placeholder of an upgraded Big Station picture (the old station one), 2 x 1 (F7); repaint pending',
     ],
     [
-      'structures/grinder_r2',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
-    ],
-    [
-      'structures/grinder_r3',
-      'turned placeholder of a works picture; the footprint grew (F6, #525), repaint pending',
+      'structures/big_station_5_r3',
+      'turned placeholder of an upgraded Big Station picture (the old station one), 2 x 1 (F7); repaint pending',
     ],
     [
       'structures/oil_derrick_r1',
@@ -803,30 +803,6 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     [
       'structures/town_1_r3',
       'turned placeholder of the town hall, now 2 x 1 (F2, #509); repaint pending',
-    ],
-    [
-      'structures/farm_1_r1',
-      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
-    ],
-    [
-      'structures/farm_1_r2',
-      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
-    ],
-    [
-      'structures/farm_1_r3',
-      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
-    ],
-    [
-      'structures/farm_3_r1',
-      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
-    ],
-    [
-      'structures/farm_3_r2',
-      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
-    ],
-    [
-      'structures/farm_3_r3',
-      'turned placeholder of a farm halt picture, now 1 x 2 (F2, #509); repaint pending',
     ],
     [
       'structures/warehouse_2_r1',

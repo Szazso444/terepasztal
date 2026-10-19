@@ -25,6 +25,7 @@ import { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
 import { simWorld, mapParams, line, station as placeStation } from '../testing/simWorld';
 import { placeSpan } from './doors';
+import { behavesAs } from '../data/content';
 
 /** A value as it reads back from JSON. */
 const asStored = (v: unknown): unknown => JSON.parse(JSON.stringify(v));
@@ -289,6 +290,7 @@ describe('a station of any other kind read from a save', () => {
 /** The ground each harvesting kind counts, as the game has always counted it. */
 const COUNTS: Record<string, readonly Terrain[]> = {
   farm: [Terrain.Grass],
+  big_farm: [Terrain.Grass],
   lumber: [Terrain.Forest],
   quarry: [Terrain.Rock, Terrain.Hill],
   mine: [Terrain.Rock, Terrain.Hill],
@@ -343,7 +345,7 @@ function factorBefore(map: GameMap, x: number, y: number, defId: string, rot = 0
 function perWeekBefore(s: Station): number {
   if (s.closed) return 0;
   const rate = LEVELS.production[s.level - 1] * rules.productionMul * s.terrainFactor;
-  return s.def.id === 'station' ? Math.min(rate, s.passengerPopulation * 0.4) : rate;
+  return behavesAs(s.def) === 'station' ? Math.min(rate, s.passengerPopulation * 0.4) : rate;
 }
 
 /** A breakdown's rows, without the buffer its tiles went into (`tilesOf` reads that). */
@@ -424,8 +426,8 @@ function stationOutput(map: GameMap, at: HarvestSite) {
   s.rot = at.rot ?? 0;
   s.terrainFactor = terrainFactorAt(map, at.x, at.y, at.defId, s.rot);
   s.productionMul =
-    productionMul(at.defId, at.season) *
-    (biomeDef(biomeAt(map, at.x, at.y)).production[at.defId] ?? 1);
+    productionMul(behavesAs(stationDef(at.defId)), at.season) *
+    (biomeDef(biomeAt(map, at.x, at.y)).production[behavesAs(stationDef(at.defId))] ?? 1);
   return s.productionPerWeek * s.productionMul;
 }
 
@@ -471,10 +473,12 @@ function expectBreakdown(b: HarvestBreakdown | null, map: GameMap, at: HarvestSi
   expect(terrainFactorAt(map, x, y, defId, rot), `${label}: terrainFactorAt`).toBe(b.factor);
   const biome = biomeDef(biomeAt(map, x, y));
   expect(b.biome, `${label}: biome of its own tile`).toBe(biome.id);
-  expect(b.biomeMul, `${label}: biome multiplier`).toBe(biome.production[defId] ?? 1);
+  expect(b.biomeMul, `${label}: biome multiplier`).toBe(
+    biome.production[behavesAs(stationDef(defId))] ?? 1,
+  );
   expect([b.season, b.seasonMul], `${label}: season`).toEqual([
     season,
-    productionMul(defId, season),
+    productionMul(behavesAs(stationDef(defId)), season),
   ]);
   expect(b.rulesMul, `${label}: tuning`).toBe(rules.productionMul);
   expect([b.level, b.base], `${label}: the level's base`).toEqual([
@@ -593,8 +597,20 @@ describe('a harvest breakdown', () => {
 
   it('gives a farm on plain grass at level 1 its base of 30, its ground held at the ceiling', () => {
     const map = emptyMap(1, 11, 11, Terrain.Grass);
-    // every tile within the radius of its two tiles is grass: 10/2 + 18/3 + 26/4 + 34/5 = 24.3, raw 2.03
+    // every tile within the radius of its one tile is grass: 8/2 + 16/3 + 24/4 + 32/5 = 21.7, raw 1.81
     const b = harvestBreakdown(map, 5, 4, 'farm', 1, 'spring', { productionMul: 1 });
+    expect(b?.base).toBe(30);
+    expect(b?.rings.map((r) => r.n)).toEqual([8, 16, 24, 32]);
+    expect(b?.clamped).toBe('ceil');
+    expect(b?.factor).toBe(1.6);
+    expect([b?.biome, b?.biomeMul, b?.seasonMul]).toEqual(['plains', 1.25, 1]);
+    expect(b?.perWeek).toBe(30 * 1 * 1.6 * (1 * 1.25));
+  });
+
+  it('gives a Big Farm Halt the same base, season and biome, its ground round its two tiles', () => {
+    const map = emptyMap(1, 11, 11, Terrain.Grass);
+    // every tile within the radius of its two tiles is grass: 10/2 + 18/3 + 26/4 + 34/5 = 24.3, raw 2.03
+    const b = harvestBreakdown(map, 5, 4, 'big_farm', 1, 'spring', { productionMul: 1 });
     expect(b?.base).toBe(30);
     expect(b?.rings.map((r) => r.n)).toEqual([10, 18, 26, 34]);
     expect(b?.clamped).toBe('ceil');
@@ -610,11 +626,11 @@ describe('a harvest breakdown', () => {
     return out;
   };
 
-  it("counts a two-tile farm halt's ground round its footprint, not round its corner", () => {
+  it("counts a Big Farm Halt's ground round its footprint, not round its corner", () => {
     // an 11 x 11 plain: the halt (1 x 2 at rotation 0) stands on 5,4 and 5,5, clear of the edges
     const map = emptyMap(1, 11, 11, Terrain.Grass);
     const cells = new HarvestCells();
-    const b = harvestBreakdown(map, 5, 4, 'farm', 1, 'spring', { productionMul: 1 }, cells, 0);
+    const b = harvestBreakdown(map, 5, 4, 'big_farm', 1, 'spring', { productionMul: 1 }, cells, 0);
     // ring d: the (1 + 2d) x (2 + 2d) tiles within d of the pair, less those inside it
     expect(b?.rings.map((r) => r.n)).toEqual([10, 18, 26, 34]);
     const tiles = heldTiles(cells);
@@ -629,7 +645,7 @@ describe('a harvest breakdown', () => {
     const tuning = { productionMul: 1 };
     const at = (rot: number) => {
       const cells = new HarvestCells();
-      const b = harvestBreakdown(map, 4, 5, 'farm', 1, 'spring', tuning, cells, rot);
+      const b = harvestBreakdown(map, 4, 5, 'big_farm', 1, 'spring', tuning, cells, rot);
       return { b, tiles: heldTiles(cells) };
     };
     const turned = at(1);
@@ -641,8 +657,8 @@ describe('a harvest breakdown', () => {
     expect([...c.tiles]).toEqual([...a.tiles]);
     expect(c.b?.sum).toBe(a.b?.sum);
     // terrainFactorAt reads the same footprint
-    expect(terrainFactorAt(map, 4, 5, 'farm', 1)).toBe(turned.b?.factor);
-    expect(terrainFactorAt(map, 4, 5, 'farm', 0)).toBe(a.b?.factor);
+    expect(terrainFactorAt(map, 4, 5, 'big_farm', 1)).toBe(turned.b?.factor);
+    expect(terrainFactorAt(map, 4, 5, 'big_farm', 0)).toBe(a.b?.factor);
   });
 
   it('holds a one-tile station to the ring it always had, whatever the rotation', () => {
@@ -890,7 +906,7 @@ describe("a station's weekly output", () => {
           if (c.closed) s.work = { to: c.level + 1, left: 30, total: 60 };
           expect(s.productionPerWeek, def.id).toBe(perWeekBefore(s));
           if (s.closed) seen.closed++;
-          else if (def.id === 'station') {
+          else if (behavesAs(def) === 'station') {
             const open = weeklyOutput(s.level, s.terrainFactor);
             seen[s.passengerPopulation * 0.4 < open ? 'capped' : 'uncapped']++;
           }

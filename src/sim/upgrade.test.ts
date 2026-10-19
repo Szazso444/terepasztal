@@ -99,7 +99,7 @@ const holdings = (w: SimWorld) => JSON.stringify(w.stock.toJSON());
 /** A farm, a windmill and a house, each one level 1. */
 function three(w: SimWorld) {
   return {
-    farm: station(w, 'farm', 6, 28),
+    farm: station(w, 'big_farm', 6, 28),
     mill: works(w, 'windmill', 4, 10),
     home: house(w, 20, 25),
   };
@@ -185,7 +185,7 @@ describe('how long an upgrade takes', () => {
     expect(w.builder.upgradeBuilding(mill)).toBe(true);
     expect(w.houses.upgrade(home)).toBe(true);
     // each one starts closed and redrawn, at its old level
-    expect(log).toEqual(['changed farm at 1', 'changed windmill at 1', 'changed house at 1']);
+    expect(log).toEqual(['changed big_farm at 1', 'changed windmill at 1', 'changed house at 1']);
     for (const work of [farm.work, mill.work, home.work])
       expect(work).toEqual({ to: 2, left: t, total: t });
 
@@ -212,7 +212,7 @@ describe('how long an upgrade takes', () => {
     ]);
     // redrawn at the new level first, then reported once each
     expect(log).toEqual([
-      'changed farm at 2',
+      'changed big_farm at 2',
       'upgraded station to 2',
       'changed windmill at 2',
       'upgraded works to 2',
@@ -288,7 +288,7 @@ describe('how long an upgrade takes', () => {
 describe('a building being upgraded', () => {
   it('closes a station while it is upgraded', () => {
     const w = world(1);
-    const farm = station(w, 'farm', 6, 28);
+    const farm = station(w, 'big_farm', 6, 28);
     const crew = w.builder.crewTotal();
     w.builder.upgradeStation(farm);
     expect(farm.crew).toBe(0);
@@ -311,7 +311,7 @@ describe('a building being upgraded', () => {
 
   it('gives out what it holds and takes nothing in', () => {
     const w = world(1);
-    station(w, 'farm', 6, 28);
+    station(w, 'big_farm', 6, 28);
     const store = station(w, 'warehouse', 10, 29);
     const town = station(w, 'town', 20, 29);
     /** What contracts could bring to the town. */
@@ -651,7 +651,7 @@ const perKind = <T>(f: (k: Kind) => T) =>
   ({ station: f('station'), works: f('works'), house: f('house') }) as Record<Kind, T>;
 
 /** The farm, the windmill and the house of a world, found where they stand (a load makes anew). */
-const farmOf = (w: SimWorld) => w.builder.stations.find((s) => s.def.id === 'farm')!;
+const farmOf = (w: SimWorld) => w.builder.stations.find((s) => s.def.id === 'big_farm')!;
 const millOf = (w: SimWorld) => w.builder.buildingAt(AT.works.x, AT.works.y)!;
 const homeOf = (w: SimWorld) => w.houses.at(AT.house.x, AT.house.y)!;
 function levelOf(w: SimWorld, k: Kind): number {
@@ -681,7 +681,7 @@ function press(w: SimWorld, k: Kind): boolean {
  */
 function site(from: Record<Kind, number>): World {
   const w = world(5);
-  station(w, 'farm', AT.station.x, AT.station.y);
+  station(w, 'big_farm', AT.station.x, AT.station.y);
   works(w, 'windmill', AT.works.x, AT.works.y);
   house(w, AT.house.x, AT.house.y);
   freely(w, () => {
@@ -940,7 +940,17 @@ describe('a work in a save', () => {
       to === level + 1 && to <= top && total > 0 && total < Infinity && left >= 0 && left <= total
     );
   };
-  const STATION_IDS = ['farm', 'lumber', 'quarry', 'pump', 'town', 'warehouse', 'station'];
+  const STATION_IDS = [
+    'farm',
+    'big_farm',
+    'lumber',
+    'quarry',
+    'pump',
+    'town',
+    'warehouse',
+    'station',
+    'big_station',
+  ];
   const WORKS_IDS = BUILDING_DEFS.map((d) => d.id);
 
   it('keeps only a work the building could have started, and every such work as it was', () => {

@@ -110,7 +110,7 @@ export const POT_GROUPS = [
   { keys: names('townhouse_s1', 'townhouse_s2'), work: false, exact: true, at: [[142.4, 5]] },
   // stations: three stacks; a station's turned placeholder has a stove pipe at the back
   {
-    keys: names('station_1'),
+    keys: names('station_1', 'big_station_1'),
     work: false,
     at: [
       [55, 3],
@@ -119,7 +119,7 @@ export const POT_GROUPS = [
     ],
   },
   {
-    keys: names('station_2'),
+    keys: names('station_2', 'big_station_2'),
     work: false,
     exact: true,
     at: [
@@ -129,7 +129,7 @@ export const POT_GROUPS = [
     ],
   },
   {
-    keys: names('station_3'),
+    keys: names('station_3', 'big_station_3'),
     work: false,
     at: [
       [71, 5],
@@ -138,7 +138,7 @@ export const POT_GROUPS = [
     ],
   },
   {
-    keys: names('station_4', 'station_5'),
+    keys: names('station_4', 'station_5', 'big_station_4', 'big_station_5'),
     work: false,
     at: [
       [73, 5],
@@ -146,8 +146,12 @@ export const POT_GROUPS = [
       [230.5, 59.5],
     ],
   },
-  { keys: names('station_2_r1', 'station_2_r3'), work: false, at: [[26.5, 1]] },
-  { keys: names('station_2_r2'), work: false, at: [[19.5, 1]] },
+  {
+    keys: names('station_2_r1', 'station_2_r3', 'big_station_2_r1', 'big_station_2_r3'),
+    work: false,
+    at: [[26.5, 1]],
+  },
+  { keys: names('station_2_r2', 'big_station_2_r2'), work: false, at: [[19.5, 1]] },
   // warehouses: two stacks; the vent between them has no pots
   {
     keys: names('warehouse_1'),
@@ -196,10 +200,10 @@ export const POT_GROUPS = [
   },
   { keys: names('lumber_4_r2', 'lumber_5_r2'), work: true, at: [[26, 2]] },
   // farms: the farmhouse chimney, not the silo
-  { keys: names('farm_1'), work: false, at: [[188, 5]] },
-  { keys: names('farm_2'), work: false, exact: true, at: [[192.3, 6]] },
-  { keys: names('farm_3'), work: false, at: [[196.5, 5]] },
-  { keys: names('farm_4', 'farm_5'), work: false, at: [[201.5, 6]] },
+  { keys: names('farm_1', 'big_farm_1'), work: false, at: [[188, 5]] },
+  { keys: names('farm_2', 'big_farm_2'), work: false, exact: true, at: [[192.3, 6]] },
+  { keys: names('farm_3', 'big_farm_3'), work: false, at: [[196.5, 5]] },
+  { keys: names('farm_4', 'farm_5', 'big_farm_4', 'big_farm_5'), work: false, at: [[201.5, 6]] },
   // pumping stations: one works chimney of twin pots
   { keys: names('pump_1'), work: true, exact: true, at: [[120.3, 6]] },
   { keys: names('pump_2'), work: true, at: [[136, 8]] },

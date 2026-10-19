@@ -194,6 +194,13 @@ export interface StationDef {
   accepts: string[];
   /** which station sprite family to draw */
   art?: string;
+  /**
+   * the id of the def this one behaves as: the same kind of station for the season's and the
+   * biome's say on its output, the gatherers who live at it and the passengers round a station.
+   * It differs in its footprint and its picture only (the Big Station is a Station, the Big Farm
+   * Halt a Farm Halt). Missing: its own id; see `behavesAs`.
+   */
+  like?: string;
   /** terrain the station harvests; output scales with how much of it lies nearby */
   terrain?: 'grass' | 'forest' | 'rock' | 'water' | 'sand';
   /**
@@ -233,6 +240,10 @@ export interface StationDef {
    * `defDoors` in src/sim/doors.ts)
    */
   doors?: DoorDef[];
+}
+/** The id of the kind of station a def is: its `like`, else its own id. */
+export function behavesAs(def: Pick<StationDef, 'id' | 'like'>): string {
+  return def.like ?? def.id;
 }
 export interface BuildingDef {
   bridge?: { material: 'wood' | 'stone'; capacity: number };
@@ -807,6 +818,8 @@ const CHECKS: Record<ContentKey, Check> = {
         out.push(`station ${s.id}: standOn must list some of ${STAND_ON.join(', ')}`);
       if (s.needsWater !== undefined && typeof s.needsWater !== 'boolean')
         out.push(`station ${s.id}: needsWater must be true or false`);
+      if (s.like !== undefined && !defs.some((o) => o.id === s.like && o.like === undefined))
+        out.push(`station ${s.id}: like must be the id of another station that is not like one`);
       for (const p of spanProblems(s)) out.push(`station ${s.id}: ${p}`);
       for (const p of doorProblems(s)) out.push(`station ${s.id}: ${p}`);
     }

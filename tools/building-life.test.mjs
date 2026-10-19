@@ -26,7 +26,8 @@ import {
 
 /** Making the atlas takes seconds, more on a busy machine. */
 const SLOW = 120_000;
-const PICTURE = /^structures\/(town|townhouse|station|warehouse|lumber|farm|pump|quarry)/;
+const PICTURE =
+  /^structures\/(town|townhouse|station|big_station|warehouse|lumber|farm|big_farm|pump|quarry)/;
 
 let frames;
 beforeAll(() => {

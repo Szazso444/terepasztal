@@ -1446,8 +1446,8 @@ const FIELD_FRAMES: FieldFrame[] = [
     }
   return { data, width, height, density: 4, anchorX: 108, anchorY: 63 };
 });
-/** The farm halt's illustrated picture, rotation 0, the size of its atlas frame. */
-const FARM = 'structures/farm_1';
+/** The Big Farm Halt's illustrated picture (the old farm halt's), rotation 0, the size of its atlas frame. */
+const FARM = 'structures/big_farm_1';
 const FIELD_ATLAS_FRAMES: Record<string, FrameInfo> = {
   'props/wheat_0': frame(54, 29, 4),
   'props/wheat_1': frame(54, 30, 4),

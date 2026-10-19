@@ -1687,7 +1687,7 @@ export class Game implements UiHost {
     const fx = SEASON_FX[s];
     this.world.setSeasonTint(fx.ground, fx.props);
     for (const st of this.builder.stations)
-      st.productionMul = productionMul(st.def.id, s) * this.biomeProduction(st);
+      st.productionMul = productionMul(st.kind, s) * this.biomeProduction(st);
   }
   private onStationChanged(s: Station, removed: boolean) {
     const id = `station:${s.id}`;
@@ -1698,7 +1698,7 @@ export class Game implements UiHost {
         if (terrainAt(this.map, f.x, f.y) === Terrain.Hill && !this.track.has(f.x, f.y))
           this.world.setFlattened(f.x, f.y, false);
     } else {
-      s.productionMul = productionMul(s.def.id, this.season ?? 'spring') * this.biomeProduction(s);
+      s.productionMul = productionMul(s.kind, this.season ?? 'spring') * this.biomeProduction(s);
       for (const f of s.footprint()) {
         if (terrainAt(this.map, f.x, f.y) === Terrain.Hill) this.world.setFlattened(f.x, f.y, true);
         this.world.removeProps(f.x, f.y);
@@ -1800,7 +1800,7 @@ export class Game implements UiHost {
   }
   /** Biome multiplier on a station's output. */
   private biomeProduction(s: Station) {
-    return biomeDef(biomeAt(this.map, s.x, s.y)).production[s.def.id] ?? 1;
+    return biomeDef(biomeAt(this.map, s.x, s.y)).production[s.kind] ?? 1;
   }
   /** Buy a revealed, unowned chunk. Returns true when the purchase went through. */
   buyChunk(i: number, confirmed = false) {

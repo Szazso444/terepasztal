@@ -4,6 +4,7 @@ import { PAL } from '../art/palette';
 import { DIR_DX, DIR_DY, Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
+import packed from '../../public/assets/structures.json';
 import { structureScale } from './assetScale';
 import {
   BuildingYards,
@@ -148,7 +149,9 @@ describe('the yard a building wears into the ground', () => {
     expect(yardKind('structures/farm_3', true)).toBe('sand');
     expect(yardKind('structures/station_1', true)).toBe('gravel');
     // stations and warehouses end their platform in a kerb, no other building does
-    expect(FRAMES.filter(hasKerb).every((f) => /\/(station|warehouse)_/.test(f))).toBe(true);
+    expect(FRAMES.filter(hasKerb).every((f) => /\/(station|big_station|warehouse)_/.test(f))).toBe(
+      true,
+    );
     expect(FRAMES.some(hasKerb)).toBe(true);
     for (const kind of Object.keys(YARD_MARGIN) as YardKind[]) {
       expect(YARD_MARGIN[kind], kind).toBeGreaterThanOrEqual(0.1);
@@ -609,8 +612,14 @@ describe('yards that meet', () => {
 });
 
 describe("a door's worn path", () => {
-  /** The scales a frame is tested at: its data's own, and the one the game draws it at. */
-  const scales = (frame: string) => [...new Set([1, structureScale(frame)])];
+  /**
+   * The scales a frame is tested at: its data's own, and the one the game draws it at, which for
+   * an illustrated picture is measured on its own height (`setSpriteFrame`).
+   */
+  const scales = (frame: string) => {
+    const pic = (packed.frames as Record<string, { h: number }>)[frame];
+    return [...new Set([1, structureScale(frame, pic ? pic.h / packed.resolution : undefined)])];
+  };
   /** The yard's edge band begins this far (tiles) inside its margin (`EDGE` in buildingYard.ts). */
   const EDGE_BAND = 0.07;
 
@@ -1109,7 +1118,7 @@ describe('a footprint of another shape than the frame records (a two-tile statio
 
   it('leaves a footprint of the recorded shape as the ground data has it', () => {
     const colliery = groundOf('structures/colliery')!;
-    expect(footprintTiles(colliery, 10, 9.5, { w: 3, h: 2 })).toEqual(
+    expect(footprintTiles(colliery, 10, 9.5, { w: 2, h: 2 })).toEqual(
       footprintTiles(colliery, 10, 9.5),
     );
     const site = { x: 10, y: 9.5, scale: 1.2, sandy: false };
@@ -1117,7 +1126,7 @@ describe('a footprint of another shape than the frame records (a two-tile statio
       buildingYard(
         'structures/colliery',
         colliery,
-        { ...site, span: { w: 3, h: 2 } },
+        { ...site, span: { w: 2, h: 2 } },
         [],
         () => false,
       ),

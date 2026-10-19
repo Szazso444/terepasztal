@@ -128,14 +128,18 @@ describe('where a works stands', () => {
   });
 
   it('swaps the footprint on a quarter turn and keeps it on a half turn', () => {
-    for (const id of ['colliery', 'ironworks', 'power_plant']) {
-      const spans = ROTS.map((rot) => buildingPlacement(everything, works(id, rot)).span);
-      expect(spans[0]).toEqual({ w: 3, h: 2 });
-      expect(spans[1]).toEqual({ w: 2, h: 3 });
-      expect(spans[2]).toEqual(spans[0]);
-      expect(spans[3]).toEqual(spans[1]);
-    }
-    for (const id of ['grinder', 'oil_derrick']) {
+    const spansOf = (id: string) =>
+      ROTS.map((rot) => buildingPlacement(everything, works(id, rot)).span);
+    const power = spansOf('power_plant');
+    expect(power[0]).toEqual({ w: 3, h: 2 });
+    expect(power[1]).toEqual({ w: 2, h: 3 });
+    expect(power[2]).toEqual(power[0]);
+    expect(power[3]).toEqual(power[1]);
+    // square after the review of 2026-10-19 (F7): the same at every turn
+    for (const id of ['colliery', 'ironworks'])
+      for (const span of spansOf(id)) expect(span, id).toEqual({ w: 2, h: 2 });
+    for (const span of spansOf('grinder')) expect(span).toEqual({ w: 1, h: 1 });
+    for (const id of ['oil_derrick']) {
       expect(buildingPlacement(everything, works(id, 0)).span).toEqual({ w: 2, h: 1 });
       expect(buildingPlacement(everything, works(id, 3)).span).toEqual({ w: 1, h: 2 });
     }

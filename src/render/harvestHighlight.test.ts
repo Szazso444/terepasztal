@@ -41,11 +41,11 @@ function fixture() {
 const key = (t: { x: number; y: number }) => `${t.x},${t.y}`;
 const NONE: HarvestFocus = { tool: { kind: 'none' }, rot: 0, selected: null };
 const farmTool = (rot = 0): HarvestFocus => ({
-  tool: { kind: 'station', defId: 'farm' },
+  tool: { kind: 'station', defId: 'big_farm' },
   rot,
   selected: null,
 });
-const selecting = (x: number, y: number, id = 'farm', rot = 0): HarvestFocus => ({
+const selecting = (x: number, y: number, id = 'big_farm', rot = 0): HarvestFocus => ({
   tool: { kind: 'none' },
   rot: 0,
   selected: { x, y, def: { id }, rot },
@@ -94,7 +94,7 @@ describe('litTiles', () => {
       { x: 19, y: 4 },
     ];
     for (const s of sites) {
-      const b = harvestBreakdown(map, s.x, s.y, 'farm', 1, 'spring')!;
+      const b = harvestBreakdown(map, s.x, s.y, 'big_farm', 1, 'spring')!;
       const lit = litTiles(b);
       expect(lit.length).toBe(b.cells.count);
       expect(new Set(lit.map(key)).size).toBe(lit.length);
@@ -132,10 +132,10 @@ describe('the harvest highlight layer', () => {
     for (let f = 0; f < 30; f++) h.follow(null, selecting(3, 3), 'spring');
     expect(draws()).toBe(4);
     // a selected halt is lit as it is turned
-    for (let f = 0; f < 30; f++) h.follow(null, selecting(3, 3, 'farm', 1), 'spring');
+    for (let f = 0; f < 30; f++) h.follow(null, selecting(3, 3, 'big_farm', 1), 'spring');
     expect(draws()).toBe(5);
     for (let f = 0; f < 30; f++)
-      h.follow({ x: f % 24, y: 2 }, selecting(3, 3, 'farm', 1), 'spring');
+      h.follow({ x: f % 24, y: 2 }, selecting(3, 3, 'big_farm', 1), 'spring');
     expect(draws()).toBe(5);
     for (let f = 0; f < 30; f++) h.follow({ x: 1, y: 1 }, NONE, 'spring');
     expect(draws()).toBe(6);
@@ -151,7 +151,7 @@ describe('the harvest highlight layer', () => {
       return fits;
     };
     h.follow({ x: 8, y: 8 }, farmTool(3), 'summer');
-    expect(calls).toEqual([[8, 8, 'farm', 3]]);
+    expect(calls).toEqual([[8, 8, 'big_farm', 3]]);
     expect(h.layer.visible).toBe(false);
     expect(asked).toEqual([]);
     expect(h.outline).toBe(OUTLINE.refused);
@@ -160,7 +160,7 @@ describe('the harvest highlight layer', () => {
     expect(h.layer.visible).toBe(true);
     expect(h.outline).toBe(OUTLINE.fits);
     const want = litTiles(
-      harvestBreakdown(emptyMap(1, 24, 24), 8, 8, 'farm', 1, 'summer', rules, undefined, 3),
+      harvestBreakdown(emptyMap(1, 24, 24), 8, 8, 'big_farm', 1, 'summer', rules, undefined, 3),
     );
     expect(asked.map(key).sort()).toEqual(want.map(key).sort());
     // off the field the tool lights nothing
@@ -217,8 +217,8 @@ describe('the harvest highlight layer', () => {
   it('draws each lit tile as a flat diamond on its own top face', () => {
     const { h, surface } = layer(emptyMap(1, 9, 9, Terrain.Grass));
     h.follow(null, selecting(4, 4), 'spring');
-    const pts = litTiles(harvestBreakdown(emptyMap(1, 9, 9), 4, 4, 'farm', 1, 'spring')).map((t) =>
-      surface(t.x, t.y),
+    const pts = litTiles(harvestBreakdown(emptyMap(1, 9, 9), 4, 4, 'big_farm', 1, 'spring')).map(
+      (t) => surface(t.x, t.y),
     );
     const b = h.layer.getLocalBounds();
     expect(b.minX).toBeCloseTo(Math.min(...pts.map((p) => p.x)) - HALF_W, 6);

@@ -175,15 +175,15 @@ function nameOf(frame: string) {
  */
 export function yardKind(frame: string, sandy: boolean): YardKind {
   const name = nameOf(frame);
-  if (/^(farm|windmill|grinder|lumber)/.test(name)) return sandy ? 'sand' : 'earth';
+  if (/^(farm|big_farm|windmill|grinder|lumber)/.test(name)) return sandy ? 'sand' : 'earth';
   if (/^pump/.test(name)) return 'sand';
-  if (/^(station|warehouse|town)/.test(name)) return 'gravel';
+  if (/^(station|big_station|warehouse|town)/.test(name)) return 'gravel';
   if (/^quarry/.test(name)) return 'grit';
   return 'cinder';
 }
 /** Does the building's yard end in a platform's kerb toward the track? Stations and warehouses. */
 export function hasKerb(frame: string) {
-  return /^(station|warehouse)_/.test(nameOf(frame));
+  return /^(station|big_station|warehouse)_/.test(nameOf(frame));
 }
 
 /**

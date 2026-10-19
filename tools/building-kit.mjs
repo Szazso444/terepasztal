@@ -139,7 +139,9 @@ export function loadInventory(root = '.') {
     out.push({ ...f, lastAge: last, ages: last - f.firstAge + 1, order: out.length });
   };
   const footprint = (d) => (d.long ? 't1x2' : (d.size ?? 1) > 1 ? 't2x2' : 't1');
-  for (const d of data('stations.json').defs)
+  // a def that is `like` another (the Big Station, the Big Farm Halt) draws the old pictures of
+  // the family it copies (F7), under a name of its own: there is nothing new to make for it
+  for (const d of data('stations.json').defs.filter((d) => !d.like))
     add({
       family: d.art,
       id: d.id,

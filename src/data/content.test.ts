@@ -116,7 +116,8 @@ function oldBundle(edit: (b: ContentBundle) => void) {
 const PAST = {
   houses: () => clone(PRE_92_HOUSES),
   stations: () => {
-    const defs = clone(shipped.DEFAULT_CONTENT.stations.defs);
+    // before the Big Station and the Big Farm Halt (F7), which are the defs that are `like` another
+    const defs = clone(shipped.DEFAULT_CONTENT.stations.defs).filter((d) => !d.like);
     // before stations had doors (#406), and before the hall, the shed and the halt could cover two
     // tiles (#509)
     for (const d of defs) {

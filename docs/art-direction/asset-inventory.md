@@ -13,18 +13,20 @@ Repository snapshot; includes both production-chain modes. IDs are implementatio
 | swamp  | Swamp  | —          | —                  |
 | ocean  | Ocean  | —          | —                  |
 
-## stations (8)
+## stations (10)
 
-| ID        | Name        | Art / body | Size / plan / tier |
-| --------- | ----------- | ---------- | ------------------ |
-| farm      | Farm Halt   | farm       | tier 0             |
-| lumber    | Lumber Yard | lumber     | tier 0             |
-| quarry    | Quarry      | quarry     | tier 0             |
-| pump      | Water Pump  | pump       | tier 0             |
-| town      | Townhouse   | town       | tier 0             |
-| warehouse | Warehouse   | warehouse  | tier 0             |
-| depot     | Depot       | depot      | 2 / tier 0         |
-| station   | Station     | station    | tier 0             |
+| ID          | Name          | Art / body  | Size / plan / tier |
+| ----------- | ------------- | ----------- | ------------------ |
+| farm        | Farm Halt     | farm        | tier 0             |
+| big_farm    | Big Farm Halt | big_farm    | tier 0             |
+| lumber      | Lumber Yard   | lumber      | tier 0             |
+| quarry      | Quarry        | quarry      | tier 0             |
+| pump        | Water Pump    | pump        | tier 0             |
+| town        | Townhouse     | town        | tier 0             |
+| warehouse   | Warehouse     | warehouse   | tier 0             |
+| depot       | Depot         | depot       | 2 / tier 0         |
+| station     | Station       | station     | tier 0             |
+| big_station | Big Station   | big_station | tier 0             |
 
 ## stations_full (3)
 
