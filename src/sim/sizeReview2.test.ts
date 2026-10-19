@@ -307,3 +307,53 @@ describe('the footprints after the review', () => {
     expect(w.builder.buildingAt(15, 11)).toBeUndefined();
   });
 });
+
+describe('the repeat-build cost step counts the small and the big one together', () => {
+  const step = () => 1 + 2 * DEFAULT_RULES.repeatCostStep;
+
+  for (const [small, big] of [
+    ['farm', 'big_farm'],
+    ['station', 'big_station'],
+  ] as const) {
+    it(`${small} twice, then ${big}: the third one costs the third step`, () => {
+      const w = world();
+      station(w, small, 10, 28);
+      station(w, small, 14, 28);
+      expect(w.builder.kindCount(big)).toBe(2);
+      expect(w.builder.kindMul(big)).toBeCloseTo(step());
+      expect(w.builder.kindMul(small)).toBeCloseTo(step());
+      w.builder.free = false;
+      const cost = w.builder.checkStation(20, 28, big).cost;
+      const base = stationDef(big).cost;
+      for (const [k, v] of Object.entries(base))
+        expect(cost[k as keyof typeof cost], `${big} ${k}`).toBe(
+          Math.ceil(v * step() * rules.buildCostMul),
+        );
+    });
+
+    it(`${big} twice, then ${small}: the third one costs the third step`, () => {
+      const w = world();
+      station(w, big, 10, 28);
+      station(w, big, 16, 28);
+      expect(w.builder.kindCount(small)).toBe(2);
+      expect(w.builder.kindMul(small)).toBeCloseTo(step());
+    });
+
+    it(`${small} and ${big} each count once towards the other`, () => {
+      const w = world();
+      station(w, small, 10, 28);
+      station(w, big, 16, 28);
+      expect(w.builder.kindCount(small)).toBe(2);
+      expect(w.builder.kindCount(big)).toBe(2);
+    });
+  }
+
+  it('leaves the refund as the def’s own cost, whichever of the pair is pulled down', () => {
+    const w = world();
+    const a = station(w, 'farm', 10, 28);
+    station(w, 'big_farm', 16, 28);
+    expect(w.builder.kindCount('farm')).toBe(2);
+    w.builder.removeStation(a);
+    expect(w.builder.kindCount('big_farm')).toBe(1);
+  });
+});

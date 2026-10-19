@@ -177,6 +177,8 @@ export const STR = {
     title: (name: string) => `${name} biome`,
     /** a production row: the resource, and the kind of station that makes it, as a term */
     production: '{res} from {station}',
+    /** joins the kinds of station one production row names (farm halts and big farm halts) */
+    and: ' and ',
     trackCost: 'Track cost',
     waterUse: "Steam engines' {res} use",
     speed: 'Train speed',

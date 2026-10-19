@@ -16,12 +16,20 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
-import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
+import {
+  content,
+  behavesAs,
+  type DecorDef,
+  type Cost,
+  type Gauge,
+  type StationDef,
+} from '../data/content';
 import { rules } from './rules';
 import {
   Station,
   terrainFactorAt,
   stationDef,
+  STATION_DEFS,
   stationFootprint,
   stationGates,
   stationSpan,
@@ -262,10 +270,16 @@ export class Builder {
   private priced(cost: Cost, mul: number): Cost {
     return this.free ? {} : scaleCost(cost, mul * rules.buildCostMul);
   }
-  /** How many of one kind stand already (stations, services, works). */
+  /**
+   * How many of one kind stand already (stations, services, works). A station counts by the kind
+   * it behaves as (`behavesAs`), so the small and the big one of a pair are one kind: a Big Farm
+   * Halt after two Farm Halts is the third.
+   */
   kindCount(defId: string) {
+    const own = STATION_DEFS.find((d) => d.id === defId);
+    const kind = own ? behavesAs(own) : defId;
     let n = 0;
-    for (const s of this.stations) if (s.def.id === defId) n++;
+    for (const s of this.stations) if (behavesAs(s.def) === kind) n++;
     for (const d of this.decor.values()) if (d.id === defId) n++;
     for (const b of this.buildings.values()) if (b.id === defId) n++;
     return n;
@@ -1097,7 +1111,7 @@ export class Builder {
    * track, stations, decor, works and roads, as `checkStation` asks of a station. The site rules
    * are asked of the footprint as a whole: water must lie beside it (on a side of any of its
    * tiles, `waterBeside`), and the ground it needs (`terrain`) and the deposit (`deposit`) must be
-   * under any one of its tiles, so a colliery on a 3 x 2 needs a hill, not six.
+   * under any one of its tiles, so a colliery on its 2 x 2 needs a hill, not four.
    */
   checkBuilding(x: number, y: number, defId: string, rot = 0): PlacementCheck {
     const c = this.buildingRules(x, y, defId, rot);

@@ -4,6 +4,7 @@
  * DOM-free; `renderTip` draws the document.
  */
 import { STR } from '../strings';
+import { behavesAs } from '../data/content';
 import { biomeDef } from '../sim/biomes';
 import { HARVEST_RADIUS, STATION_DEFS } from '../sim/stations';
 import type { Biome } from '../world/tiles';
@@ -19,6 +20,7 @@ import {
   text,
   title,
   type Block,
+  type Parts,
   type TermPart,
   type TipDoc,
 } from './tooltipDoc';
@@ -63,14 +65,24 @@ export function biomeTip(b: Biome, weeklyAtLevel1: number): TipDoc {
   return out;
 }
 
-/** `[icon] wheat from farm halts` and its percent; a station id the data does not know stays plain. */
+/**
+ * `[icon] wheat from farm halts and big farm halts` and its percent; a station id the data does not
+ * know stays plain. The biome names a kind of station, so a def that behaves as it (`behavesAs`,
+ * the Big Farm Halt) is listed beside it, each as a term of its own.
+ */
 function productionRow(stationId: string, m: number, weeklyAtLevel1: number): Block {
   const kind = STATION_DEFS.find((d) => d.id === stationId);
   const cargo = kind?.produces[0]?.cargo;
   const plural = STR.station.plural[stationId] ?? stationId;
+  const kinds = kind
+    ? STATION_DEFS.filter((d) => d === kind || behavesAs(d) === stationId).map((d) =>
+        term(STR.station.plural[d.id] ?? d.id, () => stationKindTip(d.id, weeklyAtLevel1)),
+      )
+    : [];
+  const stations: Parts = kinds.flatMap((t, i) => (i ? [STR.biome.and, t] : [t]));
   const label = fill(STR.biome.production, {
     res: cargo ? res(cargo) : stationId,
-    station: kind ? term(plural, () => stationKindTip(stationId, weeklyAtLevel1)) : plural,
+    station: kind ? stations : plural,
   });
   return row(label, percent(m), m === 1 ? {} : { tone: m > 1 ? 'good' : 'bad' });
 }

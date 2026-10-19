@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
 import { STR } from '../strings';
-import { content } from '../data/content';
+import { behavesAs, content } from '../data/content';
 import { BIOME_DEFS, biomeDef, biomeSummary } from '../sim/biomes';
 import { HARVEST_RADIUS, STATION_DEFS, weeklyOutput } from '../sim/stations';
 import { cargoName } from '../sim/cargo';
@@ -624,6 +624,17 @@ describe('the biome tooltip', () => {
     }
   });
 
+  it('lists the Big Farm Halt where it lists the farm halt, and not where there is no farm row', () => {
+    for (const [i, def] of BIOME_DEFS.entries()) {
+      const says = termsOf(biomeTip(i as Biome, WEEKLY)).map((t) => t.term);
+      expect(says.includes(STR.station.plural.big_farm), def.id).toBe('farm' in def.production);
+      if ('farm' in def.production)
+        expect(says.indexOf(STR.station.plural.big_farm)).toBe(
+          says.indexOf(STR.station.plural.farm) + 1,
+        );
+    }
+  });
+
   it('leaves out track cost, water use and speed at 1, and lists them otherwise', () => {
     for (const [i, def] of BIOME_DEFS.entries()) {
       const extra = [def.trackCostMul, def.waterUseMul, def.speedMul].filter((m) => m !== 1);
@@ -653,7 +664,7 @@ describe('the biome tooltip', () => {
     expect(doc).toHaveLength(3);
     const r = doc[2];
     expect(r).toMatchObject({ kind: 'row', tone: 'good' });
-    expect(blockText(r)).toBe('wheat from farm halts: +25%');
+    expect(blockText(r)).toBe('wheat from farm halts and big farm halts: +25%');
     expect(termIn(partsOf(r)).term).toBe('farm halts');
   });
 
@@ -662,7 +673,7 @@ describe('the biome tooltip', () => {
     expect(rows(doc).map(blockText)).toEqual([
       'stone from quarries: +30%',
       'water from water pumps: −50%',
-      'wheat from farm halts: −50%',
+      'wheat from farm halts and big farm halts: −50%',
       "Steam engines' water use: +50%",
     ]);
     expect(rows(doc).map((r) => (r.kind === 'row' ? r.tone : null))).toEqual([
@@ -732,11 +743,15 @@ describe('the station tooltip a biome opens', () => {
     expect(named.length).toBeGreaterThan(0);
     for (const [i, def] of BIOME_DEFS.entries()) {
       const terms = termsOf(biomeTip(i as Biome, WEEKLY));
+      // a def that behaves as a kind the biome names (the Big Farm Halt) is listed beside it
+      const listed = Object.keys(def.production).flatMap((id) =>
+        STATION_DEFS.filter((d) => d.id === id || behavesAs(d) === id).map((d) => d.id),
+      );
       expect(
         terms.map((t) => t.term),
         def.id,
-      ).toEqual(Object.keys(def.production).map((id) => STR.station.plural[id]));
-      Object.keys(def.production).forEach((id, k) =>
+      ).toEqual(listed.map((id) => STR.station.plural[id]));
+      listed.forEach((id, k) =>
         expect(blockText(terms[k].tip()[0]), `${def.id} ${id}`).toBe(
           STATION_DEFS.find((d) => d.id === id)!.name,
         ),
