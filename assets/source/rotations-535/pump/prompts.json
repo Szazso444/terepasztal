@@ -1,0 +1,167 @@
+{
+  "r0Reference": {
+    "height": 0.34675615212527966,
+    "highlights": {
+      "nearWhite": 3396,
+      "nearAmber": 14
+    },
+    "eye": {
+      "corners": {
+        "w": [458, 767],
+        "s": [1106, 750],
+        "e": [1352, 666]
+      },
+      "eavesY": 440
+    },
+    "note": "Zoomed r0 crop: automatic near corner falls below the image because machinery disrupts the wall-foot fit. Whole ground base including strainer and bearing blocks spans x458..1352; near stone wall corner (1106,750), eaves y440. Height 310 / 894. Master unmodified.",
+    "file": "assets/source/base-v1/pump.png",
+    "size": [1774, 887],
+    "sha256": "e754de8982e85f6423a1db6950ccb368bcdcb852916dc7642bcee6d6998a9aed",
+    "automatic": {
+      "w": [458, 766.7776971456217],
+      "s": [892.6850195640022, 925.6574902179989],
+      "e": [1352, 696]
+    }
+  },
+  "attempts": [
+    {
+      "view": "r1",
+      "attempt": 1,
+      "file": "raw/pump-r1-attempt-1.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the\nSAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The flywheel and the pipe stand against the front wall on the plinth,\ninside it: the house is smaller than in the reference so that house and machinery fit the plinth\ntogether.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream\nlimestone courses and quoins, the forest-green plank door with a small window, the two stone steps,\nthe hanging iron lamp, the green downpipe, the slate roof with cream coping and the chimney stack\nbehind. The lower-right wall is the BACK: a plain stone wall: cream limestone courses with one small\nwindow, no flywheel, no pipe and no door. The roof is r0's: dark slate gable roof with cream coping,\nits ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on\nthe ridge, turning with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long window wall with the flywheel\nand the bending pipe. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nRequested output size: 1024 x 1024.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/pump-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "width": 649,
+        "limits": [540, 568, 597],
+        "automatic": {
+          "w": [307, 1051.5],
+          "s": [544.8580772061817, 1170.429038603091],
+          "e": [956, 986.7116752978824]
+        },
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "footRatio": null,
+        "slopes": null,
+        "cameraError": null,
+        "height": null,
+        "highlights": null,
+        "eyeWidthCheck": {
+          "wX": 307,
+          "eX": 956,
+          "width": 649,
+          "note": "Opaque outer ground-level x extents confirmed on the foot. Automatic near corner is displaced by the steps; no further geometry tests after width refusal."
+        }
+      },
+      "kept": false,
+      "correction": "Correction: your last r1 base measured 649 px of a 1254 px canvas, where the maximum is 597 px and the target is 568 px (464 px on the requested 1024 canvas, range 441 to 487). Keep the entire ground base including the two door steps within that width, centered on the guide block, without increasing the house height. Repaint directly on the first guide at its scale.",
+      "sha256": "0294fa60d98c4c547b61740be6d67079015093f6d3bf9551885a30e374fc6e36"
+    },
+    {
+      "view": "r1",
+      "attempt": 2,
+      "file": "raw/pump-r1-attempt-2.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the\nSAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The flywheel and the pipe stand against the front wall on the plinth,\ninside it: the house is smaller than in the reference so that house and machinery fit the plinth\ntogether.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream\nlimestone courses and quoins, the forest-green plank door with a small window, the two stone steps,\nthe hanging iron lamp, the green downpipe, the slate roof with cream coping and the chimney stack\nbehind. The lower-right wall is the BACK: a plain stone wall: cream limestone courses with one small\nwindow, no flywheel, no pipe and no door. The roof is r0's: dark slate gable roof with cream coping,\nits ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on\nthe ridge, turning with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long window wall with the flywheel\nand the bending pipe. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nRequested output size: 1024 x 1024.\n\nCorrection: your last r1 base measured 649 px of a 1254 px canvas, where the maximum is 597 px and the target is 568 px (464 px on the requested 1024 canvas, range 441 to 487). Keep the entire ground base including the two door steps within that width, centered on the guide block, without increasing the house height. Repaint directly on the first guide at its scale.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/pump-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "width": 635,
+        "limits": [540, 568, 597],
+        "automatic": {
+          "w": [338, 925.3240267866162],
+          "s": [756.4750473698772, 1137.7624763150613],
+          "e": [973, 1029.5]
+        },
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "footRatio": null,
+        "slopes": null,
+        "cameraError": null,
+        "height": null,
+        "highlights": null,
+        "eyeWidthCheck": {
+          "wX": 338,
+          "eX": 973,
+          "width": 635,
+          "note": "Opaque outer ground-level x extents confirmed on the foot. Automatic near corner is displaced by the steps; no further geometry tests after width refusal."
+        }
+      },
+      "kept": false,
+      "correction": "Correction: your last r1 base measured 635 px of a 1254 px canvas where the allowed maximum is 597 px, minimum 540 px and target 568 px. Reduce the painted ground base to exactly the guide block width: x281.6 through x742.4 on the requested 1024 canvas, centered at x512; with outline the width is 464 px, not 520 px. This is a small sprite low on the canvas with large empty margins. Copy the guide camera and turn: the DOOR GABLE must be the LOWER-LEFT wall, and the plain BACK window wall must be the LOWER-RIGHT wall; the previous picture reversed these. Repaint the first guide, never the last attempt.",
+      "sha256": "fd421b7973e7a9631429142258436d3e5125e39b747c89ab7ae85febb230dad1"
+    },
+    {
+      "view": "r1",
+      "attempt": 3,
+      "file": "raw/pump-r1-attempt-3.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the\nSAME building as in the third picture, turned to the view named under View. Style: that of the\nsecond picture, the style board. Crisp pixel-art-inspired clustered shading, broad readable masses,\nthree or four shades per material, restrained detail, a strong silhouette. The palette family of the\nwhole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C,\nteal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls\nmid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\nselection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little. The flywheel and the pipe stand against the front wall on the plinth,\ninside it: the house is smaller than in the reference so that house and machinery fit the plinth\ntogether.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream\nlimestone courses and quoins, the forest-green plank door with a small window, the two stone steps,\nthe hanging iron lamp, the green downpipe, the slate roof with cream coping and the chimney stack\nbehind. The lower-right wall is the BACK: a plain stone wall: cream limestone courses with one small\nwindow, no flywheel, no pipe and no door. The roof is r0's: dark slate gable roof with cream coping,\nits ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on\nthe ridge, turning with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nbuilding as it is in the game today, seen from the front (view r0): take its materials, details and\ncharacter from it, but not its angle, its footprint or any dark glow round it; the block-out sets\nthose. Paint the SAME building at the same size, turned on a turntable while the camera stays where\nit is. It is not a mirror image and not a copy of that reference: show the walls named above, and\ncarry the same materials, roof, colours and details round the building. Do not paint the reference\nagain. There, in view r0, the lower-left wall is the front: the long window wall with the flywheel\nand the bending pipe. In this picture the front faces away, hidden behind the building: neither\nvisible wall is the front, and what the front has does not show on them. The building is exactly as\nlarge as in the reference: no taller, with no storey more. Its roof is the reference's roof, turned:\nthe same form and ridge, with what stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nRequested output size: 1024 x 1024.\n\nCorrection: your last r1 base measured 635 px of a 1254 px canvas where the allowed maximum is 597 px, minimum 540 px and target 568 px. Reduce the painted ground base to exactly the guide block width: x281.6 through x742.4 on the requested 1024 canvas, centered at x512; with outline the width is 464 px, not 520 px. This is a small sprite low on the canvas with large empty margins. Copy the guide camera and turn: the DOOR GABLE must be the LOWER-LEFT wall, and the plain BACK window wall must be the LOWER-RIGHT wall; the previous picture reversed these. Repaint the first guide, never the last attempt.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/pump-r1.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "width": 611,
+        "limits": [540, 568, 597],
+        "automatic": {
+          "w": [321, 1038],
+          "s": [543.805986896612, 1149.402993448306],
+          "e": [932, 969.0296647058096]
+        },
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "footRatio": null,
+        "slopes": null,
+        "cameraError": null,
+        "height": null,
+        "highlights": null,
+        "eyeWidthCheck": {
+          "wX": 321,
+          "eX": 932,
+          "width": 611,
+          "note": "Opaque outer ground-level x extents confirmed on the foot. Automatic near corner is displaced by the steps; no further geometry tests after width refusal."
+        }
+      },
+      "kept": false,
+      "selectedClosest": true,
+      "correction": "Correction: your last r1 base measured 611 px of a 1254 px canvas, above the maximum 597 px (exact scaled limit 596.385 px), where target width is 568 px. The ground base must be 464 px wide on the requested 1024 canvas, including outline and all ground-standing parts. Repaint at the guide block scale.",
+      "sha256": "8cbef5c1c9d6567ccda8c4da296dc9be0e1d24fb26c40b0885b7104519dfe42a"
+    }
+  ],
+  "outcome": {
+    "status": "STOP",
+    "reason": "All three r1 attempts refused for width; r3 and r2 were not painted.",
+    "closest": {
+      "view": "r1",
+      "attempt": 3,
+      "file": "pump-r1.png",
+      "kept": false,
+      "failedTest": "width",
+      "width": 611,
+      "max": 597
+    }
+  },
+  "preview": {
+    "initialCommand": "node tools/building-sheets.mjs --picture assets/source/rotations-535/pump/pump-r1.png",
+    "initialResult": "Filename is not accepted by the tool (expects pump-a0-r1.png).",
+    "workaround": "Copied kept bytes outside the repository as ../guides-535/pump-a0-r1.png and ran --picture on that alias.",
+    "result": "assets/source/buildings-v2/.look/pump-a0-r1.png",
+    "inspected": true
+  },
+  "tool": "Built-in image_gen image edits; exact guide first, style board second, unchanged r0 third; requested 1024x1024 RGBA. No returned image transformed."
+}
