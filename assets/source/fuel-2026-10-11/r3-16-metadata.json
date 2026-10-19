@@ -1,0 +1,39 @@
+{
+  "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last picture moved w to(383,1099), s to(562,1198), e to(1076,934), about90px down, where each must stay within10px of(381,1009),(562,1107),(1057,846). Its post was at x481 instead of562, and hose ended(683,936) instead of x700 to790/y800 to880. Keep the original house pixels in place; only replace the far-left crane with the near-corner post and180px jib, shortening the hose to y840. The brick medians rose to133/129 instead of119/118; preserve the original light.",
+  "references": [
+    "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+    "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+  ],
+  "corners": {
+    "w": [383, 1080],
+    "s": [550, 1176],
+    "e": [1065, 915]
+  },
+  "cornerReason": "Outer stepped foundation silhouette read by eye on native grid. Near rounded corner apex read at550,1176; automatic fitted intersection558,1174 retained.",
+  "height": {
+    "foot": [550, 1176],
+    "top": [550, 902]
+  },
+  "lightBoxes": [
+    [400, 880, 530, 1000],
+    [850, 760, 1000, 860]
+  ],
+  "observation": "r3 step 1: Failed. House corners shifted down roughly70px; near corner moved12px left, plan too narrow at short side. Post remains at x500 rather than562 with beam across tank; hose ends681,916 below required box.",
+  "grassReview": "review/fuel_pump-a1-r3-attempt-16-grass.png",
+  "source": "C:/Users/Zso/.codex/generated_images/01a15645-43d1-77a2-82d1-c7c7e35a7dcf/exec-b0b367af-d73f-4c44-8ed8-54c80e9b7c3b.png",
+  "crane": {
+    "postTop": [501, 478],
+    "postBase": [501, 949],
+    "jibEnd": [674, 685],
+    "hoseEnd": [681, 916],
+    "horizontalReach": 173,
+    "onePost": true,
+    "oneJib": true,
+    "beamOverTank": true,
+    "postAboveTank": false,
+    "postAtNearCorner": false,
+    "pass": false
+  },
+  "accepted": false,
+  "failure": "Footprint corners displaced71/69/69px vertically; plan3.084 above2.8; wrong post placement and beam over tank; hose681,916 outside required box."
+}

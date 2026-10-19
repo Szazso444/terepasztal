@@ -2927,7 +2927,15 @@
           "pass": false
         },
         "accepted": false,
-        "failure": "Height0.407 below0.43; camera lower-left slope0.639; jib244px longer than short side182px."
+        "failure": "Height0.407 below0.43; camera lower-left slope0.639; jib244px longer than short side182px.",
+        "testResults": {
+          "plan": true,
+          "height": false,
+          "camera": false,
+          "light": true,
+          "crane": false
+        },
+        "failedTests": ["height", "camera", "crane"]
       },
       "sha256": "77f8cbd9657f914c20f4af3d1352bb40e45e2a67825cf57b0412cd4d79e567aa",
       "source": "C:/Users/Zso/.codex/generated_images/01a15645-43d1-77a2-82d1-c7c7e35a7dcf/exec-d86fda68-76c8-4c63-b927-c3ead5d23cc0.png"
@@ -3053,7 +3061,15 @@
           "pass": false
         },
         "accepted": false,
-        "failure": "Plan2.899 above2.8; height0.383 below0.43; camera slope0.602; jib259px versus178px short side."
+        "failure": "Plan2.899 above2.8; height0.383 below0.43; camera slope0.602; jib259px versus178px short side.",
+        "testResults": {
+          "plan": false,
+          "height": false,
+          "camera": false,
+          "light": true,
+          "crane": false
+        },
+        "failedTests": ["plan", "height", "camera", "crane"]
       },
       "sha256": "95c2e1ab58c40c029b377b363d1da0cad3b661c591d2bc52859c10a445488e34",
       "source": "C:/Users/Zso/.codex/generated_images/01a15645-43d1-77a2-82d1-c7c7e35a7dcf/exec-f124c3a5-54a1-4ffa-b000-79e786e64023.png"
@@ -3179,10 +3195,483 @@
           "pass": false
         },
         "accepted": false,
-        "failure": "Height0.423 below0.43; camera lower-left slope0.639; jib235px versus169px short side."
+        "failure": "Height0.423 below0.43; camera lower-left slope0.639; jib235px versus169px short side.",
+        "testResults": {
+          "plan": true,
+          "height": false,
+          "camera": false,
+          "light": true,
+          "crane": false
+        },
+        "failedTests": ["height", "camera", "crane"]
       },
       "sha256": "a20a181a5068cd080a46e33975716e9cd531196672bdf70fe3a1d910f8a65446",
       "source": "C:/Users/Zso/.codex/generated_images/01a15645-43d1-77a2-82d1-c7c7e35a7dcf/exec-59a2288c-83d5-44e3-b77c-b2a04e5d1f62.png"
+    },
+    {
+      "view": "r3",
+      "attempt": 15,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-15.png",
+      "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [385, 1098.960386428358],
+        "s": [560.1285374925537, 1198.1649464888728],
+        "e": [1076, 932.3235476707288],
+        "sure": [true, true],
+        "slopes": [0.5664671302627237, -0.5153248786548388],
+        "lowerLeftSpan": 175.12853749255373,
+        "lowerRightSpan": 515.8714625074463,
+        "difference": 1.9456733316772006,
+        "plan": {
+          "measured": {
+            "w": [385, 1098.960386428358],
+            "s": [560.1285374925537, 1198.1649464888728],
+            "e": [1076, 932.3235476707288]
+          },
+          "used": {
+            "w": [383, 1099],
+            "s": [562, 1198],
+            "e": [1076, 934]
+          },
+          "readByEye": true,
+          "reason": "Outer foundation quoin corners read by eye on native grid; automatic endpoints also retained.",
+          "lowerLeftSpan": 179,
+          "lowerRightSpan": 514,
+          "longToShort": 2.8715083798882683,
+          "required": [2, 2.8]
+        },
+        "planPass": false,
+        "camera": {
+          "off": true,
+          "by": 2.7,
+          "elevation": 2.7,
+          "turn": 1.4
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 2.7°: it looks down from 32.7° where the game looks down from 30° (the wall feet slope 0.57 and -0.52, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.566, -0.515],
+            "slopes": [0.566, -0.515],
+            "base": {
+              "w": [385, 1099],
+              "s": [560.1, 1198.2],
+              "e": [1076, 932.3]
+            },
+            "scale": 0.652,
+            "vertical": 0.9244,
+            "shear": -0.0236,
+            "cx": 730.5,
+            "cy": 921.6,
+            "box": {
+              "left": 286.7,
+              "top": 383.3,
+              "right": 737.3,
+              "bottom": 946.4
+            },
+            "camera": {
+              "elevation": 32.7,
+              "turn": 1.4
+            },
+            "area": 422224
+          },
+          "camera": {
+            "by": 2.7,
+            "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "height": {
+          "foot": [562, 1198],
+          "top": [562, 924],
+          "houseWidth": 693,
+          "pixels": 274,
+          "ratio": 0.3953823953823954,
+          "pass": true,
+          "required": [0.39, 0.47]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [400, 880, 530, 1000],
+              "pixels": 11970,
+              "median": 133.10799999999998
+            },
+            {
+              "box": [850, 760, 1000, 860],
+              "pixels": 13134,
+              "median": 128.88939999999997
+            }
+          ],
+          "rightToLeft": 0.9683069387264476,
+          "pass": false,
+          "directionalRatioPass": false,
+          "referenceMedians": [118.7276, 117.8576],
+          "deltas": [14.38039999999998, 11.031799999999961]
+        },
+        "observation": "r3 step 1: Failed. House moved down90px and widened17px. Crane post remains at x480 rather than near corner562; beam still crosses tank. Hose ends683,936 outside required box.",
+        "grassReview": "review/fuel_pump-a1-r3-attempt-15-grass.png",
+        "houseWidthFraction": 0.5526315789473685,
+        "crane": {
+          "postTop": [481, 481],
+          "postBase": [481, 918],
+          "jibEnd": [675, 690],
+          "hoseEnd": [683, 936],
+          "horizontalReach": 194,
+          "onePost": true,
+          "oneJib": true,
+          "beamOverTank": true,
+          "postAboveTank": false,
+          "postAtNearCorner": false,
+          "pass": false
+        },
+        "accepted": false,
+        "failure": "Footprint y displaced90/91/88px, width693 versus676; plan2.872 above2.8; crane post not at near corner and beam crosses tank; hose683,936 outside700..790/800..880.",
+        "step": "r3 step 1",
+        "footprint": {
+          "baseline": {
+            "w": [381, 1009],
+            "s": [562, 1107],
+            "e": [1057, 846]
+          },
+          "delta": {
+            "w": [2, 90],
+            "s": [0, 91],
+            "e": [19, 88]
+          },
+          "widthDelta": 17,
+          "pass": false
+        },
+        "testResults": {
+          "plan": false,
+          "height": true,
+          "camera": false,
+          "light": false,
+          "crane": false,
+          "footprint": false
+        },
+        "failedTests": ["plan", "camera", "light", "crane", "footprint"]
+      },
+      "sha256": "cba326ca86c8dfdab1dbd05ed188bd01e51a1ebf3824f75aa589735536efdae3",
+      "source": "C:/Users/Zso/.codex/generated_images/01a15645-43d1-77a2-82d1-c7c7e35a7dcf/exec-3759038d-9c3c-4819-9ff5-8848b781d52f.png"
+    },
+    {
+      "view": "r3",
+      "attempt": 16,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-16.png",
+      "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last picture moved w to(383,1099), s to(562,1198), e to(1076,934), about90px down, where each must stay within10px of(381,1009),(562,1107),(1057,846). Its post was at x481 instead of562, and hose ended(683,936) instead of x700 to790/y800 to880. Keep the original house pixels in place; only replace the far-left crane with the near-corner post and180px jib, shortening the hose to y840. The brick medians rose to133/129 instead of119/118; preserve the original light.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [385, 1076.36915040856],
+        "s": [557.9669772270046, 1174.0051304468398],
+        "e": [1065, 912.511659750757],
+        "sure": [true, true],
+        "slopes": [0.5644775760296757, -0.5157326228298872],
+        "lowerLeftSpan": 172.96697722700458,
+        "lowerRightSpan": 507.0330227729954,
+        "difference": 1.9313862732743332,
+        "plan": {
+          "measured": {
+            "w": [385, 1076.36915040856],
+            "s": [557.9669772270046, 1174.0051304468398],
+            "e": [1065, 912.511659750757]
+          },
+          "used": {
+            "w": [383, 1080],
+            "s": [550, 1176],
+            "e": [1065, 915]
+          },
+          "readByEye": true,
+          "reason": "Outer stepped foundation silhouette read by eye on native grid. Near rounded corner apex read at550,1176; automatic fitted intersection558,1174 retained.",
+          "lowerLeftSpan": 167,
+          "lowerRightSpan": 515,
+          "longToShort": 3.0838323353293413,
+          "required": [2, 2.8]
+        },
+        "planPass": false,
+        "camera": {
+          "off": true,
+          "by": 2.7,
+          "elevation": 2.7,
+          "turn": 1.3
+        },
+        "check": {
+          "ok": false,
+          "problems": [
+            "camera off by 2.7°: it looks down from 32.7° where the game looks down from 30° (the wall feet slope 0.56 and -0.52, the game's 0.50 and -0.50)"
+          ],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.564, -0.516],
+            "slopes": [0.564, -0.516],
+            "base": {
+              "w": [385, 1076.4],
+              "s": [558, 1174],
+              "e": [1065, 912.5]
+            },
+            "scale": 0.6626,
+            "vertical": 0.9257,
+            "shear": -0.0226,
+            "cx": 725,
+            "cy": 904.2,
+            "box": {
+              "left": 286.7,
+              "top": 388.4,
+              "right": 737.3,
+              "bottom": 948.5
+            },
+            "camera": {
+              "elevation": 32.7,
+              "turn": 1.3
+            },
+            "area": 402628
+          },
+          "camera": {
+            "by": 2.7,
+            "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+          }
+        },
+        "height": {
+          "foot": [550, 1176],
+          "top": [550, 902],
+          "houseWidth": 682,
+          "pixels": 274,
+          "ratio": 0.40175953079178883,
+          "pass": true,
+          "required": [0.39, 0.47]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [400, 880, 530, 1000],
+              "pixels": 12005,
+              "median": 125.9046
+            },
+            {
+              "box": [850, 760, 1000, 860],
+              "pixels": 13882,
+              "median": 121.0634
+            }
+          ],
+          "rightToLeft": 0.9615486646238501,
+          "pass": true,
+          "directionalRatioPass": false,
+          "referenceMedians": [118.7276, 117.8576],
+          "deltas": [7.177000000000007, 3.2057999999999964]
+        },
+        "observation": "r3 step 1: Failed. House corners shifted down roughly70px; near corner moved12px left, plan too narrow at short side. Post remains at x500 rather than562 with beam across tank; hose ends681,916 below required box.",
+        "grassReview": "review/fuel_pump-a1-r3-attempt-16-grass.png",
+        "houseWidthFraction": 0.543859649122807,
+        "crane": {
+          "postTop": [501, 478],
+          "postBase": [501, 949],
+          "jibEnd": [674, 685],
+          "hoseEnd": [681, 916],
+          "horizontalReach": 173,
+          "onePost": true,
+          "oneJib": true,
+          "beamOverTank": true,
+          "postAboveTank": false,
+          "postAtNearCorner": false,
+          "pass": false
+        },
+        "accepted": false,
+        "failure": "Footprint corners displaced71/69/69px vertically; plan3.084 above2.8; wrong post placement and beam over tank; hose681,916 outside required box.",
+        "step": "r3 step 1",
+        "footprint": {
+          "baseline": {
+            "w": [381, 1009],
+            "s": [562, 1107],
+            "e": [1057, 846]
+          },
+          "delta": {
+            "w": [2, 71],
+            "s": [-12, 69],
+            "e": [8, 69]
+          },
+          "widthDelta": 6,
+          "pass": false
+        },
+        "testResults": {
+          "plan": false,
+          "height": true,
+          "camera": false,
+          "light": true,
+          "crane": false,
+          "footprint": false
+        },
+        "failedTests": ["plan", "camera", "crane", "footprint"]
+      },
+      "sha256": "9bee2e962d82af97d224390d68f31e27aa8606584e205e322f2ff020e8d90dc4",
+      "source": "C:/Users/Zso/.codex/generated_images/01a15645-43d1-77a2-82d1-c7c7e35a7dcf/exec-b0b367af-d73f-4c44-8ed8-54c80e9b7c3b.png"
+    },
+    {
+      "view": "r3",
+      "attempt": 17,
+      "selected": false,
+      "file": "raw/fuel_pump-a1-r3-attempt-17.png",
+      "prompt": "Edit the first picture. Keep the house exactly where it is: its three outer quoin corners at\nground level are w (381, 1009), s (562, 1107) and e (1057, 846), and none may move more than 10 px;\nthe house must not become wider or longer. Keep the light, the walls and their height, the door, the porch, the lamp,\nthe downpipe, the tank and the frame as they are. Change only the crane and the hose:\n1. Remove the green post with the round finial at the far-left corner (about x 450, y 520 to 800)\n   and the long green beam that runs from it down-right over the tank.\n2. Make the thick green riser at the near corner (x about 520 to 575) the crane's ONE post: it\n   stands on the ground at the near corner, x about 562, and rises well above the tank, its top\n   about 40 px above the tank's top outline there. One diagonal brace from the post up to the jib.\n3. ONE jib from the post's top, falling to the lower right and parallel to the lower-left wall's\n   foot, about 180 px long horizontally and about 95 px down, as long as the short side is wide.\n   The second picture shows the crane to copy, nothing else.\n4. The hose hangs from the jib's end, in front of the door bay, and ends at the top of the door\n   frame, near y 840: about 140 px shorter than the present one.\nTransparent background, nothing else added; output rules as in Part 1.\n\nOutput: 1024x1024 RGBA PNG, transparent background, opaque surfaces.\nSmooth painted contours, broad masses, three or four shades per material. Nothing at or above\n#ECE4D0 and no yellow or orange as strong as #E8AA48. Never ground, plinth, grass, shadows outside\nthe base, rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow or\nloose objects.\n\nCorrection: your last picture's ground corners were w(383,1080), s(550,1176), e(1065,915), about70px too low; they must stay within10px of w(381,1009), s(562,1107), e(1057,846). Plan was3.084 where2.0 to2.8 is wanted. Your post remained at x501 and its jib crossed the tank; the one post must instead rise from the near corner at x562 with its top40px above the tank outline, and the jib must start there and end around x742. Your hose ended(681,916), outside x700 to790/y800 to880; end it near(742,840). Preserve every original house edge and the119/118 brick medians.",
+      "references": [
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/raw/fuel_pump-a1-r3-attempt-7.png",
+        "G:/DEV/Terepasztal/fuel-work/assets/source/fuel-2026-10-11/refs/fuel_pump-a1-r0-fitted.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "w": [389, 1078.0539044289044],
+        "s": [577.532171458653, 1178.5367733654532],
+        "e": [1073, 920.8926430420246],
+        "sure": [true, true],
+        "slopes": [0.5329746544535277, -0.5200017346876604],
+        "lowerLeftSpan": 188.532171458653,
+        "lowerRightSpan": 495.467828541347,
+        "difference": 1.6280280161627907,
+        "plan": {
+          "measured": {
+            "w": [389, 1078.0539044289044],
+            "s": [577.532171458653, 1178.5367733654532],
+            "e": [1073, 920.8926430420246]
+          },
+          "used": {
+            "w": [389, 1078.0539044289044],
+            "s": [577.532171458653, 1178.5367733654532],
+            "e": [1073, 920.8926430420246]
+          },
+          "readByEye": false,
+          "reason": "Measured points lie on the house base corners.",
+          "lowerLeftSpan": 188.532171458653,
+          "lowerRightSpan": 495.467828541347,
+          "longToShort": 2.6280280161627907,
+          "required": [2, 2.8]
+        },
+        "planPass": true,
+        "camera": {
+          "off": false,
+          "by": 1.8,
+          "elevation": 1.8,
+          "turn": 0.4
+        },
+        "check": {
+          "ok": true,
+          "problems": [],
+          "notes": [],
+          "fit": {
+            "method": "base",
+            "sure": [true, true],
+            "measured": [0.533, -0.52],
+            "slopes": [0.533, -0.52],
+            "base": {
+              "w": [389, 1078.1],
+              "s": [577.5, 1178.5],
+              "e": [1073, 920.9]
+            },
+            "scale": 0.6587,
+            "vertical": 0.9497,
+            "shear": -0.0062,
+            "cx": 731,
+            "cy": 944.7,
+            "box": {
+              "left": 286.7,
+              "top": 379.3,
+              "right": 737.3,
+              "bottom": 949.3
+            },
+            "camera": {
+              "elevation": 31.8,
+              "turn": 0.4
+            },
+            "area": 409689
+          }
+        },
+        "height": {
+          "foot": [578, 1179],
+          "top": [578, 910],
+          "houseWidth": 684,
+          "pixels": 269,
+          "ratio": 0.3932748538011696,
+          "pass": true,
+          "required": [0.39, 0.47]
+        },
+        "light": {
+          "walls": [
+            {
+              "box": [400, 880, 530, 1000],
+              "pixels": 12976,
+              "median": 127.053
+            },
+            {
+              "box": [850, 760, 1000, 860],
+              "pixels": 13289,
+              "median": 125.637
+            }
+          ],
+          "rightToLeft": 0.9888550447451064,
+          "pass": false,
+          "directionalRatioPass": false,
+          "referenceMedians": [118.7276, 117.8576],
+          "deltas": [8.325400000000002, 7.779399999999995]
+        },
+        "observation": "r3 step 1: Failed. Automatic base points lie on unobstructed wall feet and are retained; visually checked outer quoin steps agree within10px. House moved down about70px. Post still at x493, not near corner562; jib crosses tank and hose ends653,914 outside required box. Plain left wall and door front remain correct.",
+        "grassReview": "review/fuel_pump-a1-r3-attempt-17-grass.png",
+        "houseWidthFraction": 0.5454545454545454,
+        "crane": {
+          "postTop": [493, 482],
+          "postBase": [493, 908],
+          "jibEnd": [660, 646],
+          "hoseEnd": [653, 914],
+          "horizontalReach": 167,
+          "onePost": true,
+          "oneJib": true,
+          "beamOverTank": true,
+          "postAboveTank": false,
+          "postAtNearCorner": false,
+          "pass": false
+        },
+        "accepted": false,
+        "failure": "Footprint corners displaced69/72/75px vertically; post not near corner and beam crosses tank; hose653,914 outside700..790/800..880.",
+        "step": "r3 step 1",
+        "footprint": {
+          "baseline": {
+            "w": [381, 1009],
+            "s": [562, 1107],
+            "e": [1057, 846]
+          },
+          "delta": {
+            "w": [8, 69.05390442890439],
+            "s": [15.53217145865301, 71.5367733654532],
+            "e": [16, 74.89264304202459]
+          },
+          "widthDelta": 8,
+          "pass": false
+        },
+        "testResults": {
+          "plan": true,
+          "height": true,
+          "camera": true,
+          "light": false,
+          "crane": false,
+          "footprint": false
+        },
+        "failedTests": ["light", "crane", "footprint"]
+      },
+      "sha256": "70310db6efcf8340a5e3667e7bd2da7f89d8fb405af4eb2e3c4db0b90b30bab4",
+      "source": "C:/Users/Zso/.codex/generated_images/01a15645-43d1-77a2-82d1-c7c7e35a7dcf/exec-266fe1a4-1d8f-4f5f-ae39-f91508569d12.png"
     }
   ],
   "selection": {
@@ -3190,14 +3679,14 @@
     "r3": 9,
     "r1": 12,
     "r2": 2,
-    "policy": "2026-10-19 continuation: r0 and accepted r1 untouched. R2 attempts7-9 rejected, closest9 raw only; canonical r2 remains2. R3 crane step pending.",
+    "policy": "2026-10-19 continuation: all three new r2 attempts7-9 and all three r3 step1 attempts15-17 rejected. Closest9 and17 retained raw only. No S1, no step2. All canonical PNGs unchanged; r1 remains accepted attempt12.",
     "r2Closest": 9,
-    "r3Closest": 14,
+    "r3Closest": 17,
     "r3Step1": null
   },
   "referencePreparation": "Turntable references were made inside the fuel folder using the repository's fitPicture and normalisePicture functions at t1. Source deliverables remain the native imagegen PNGs: no resizing, cropping, moving, recolouring or alpha thresholding was applied. R1 attempt12 fitted for r2 at refs/fuel_pump-a1-r1-fitted.png; no r3 reference created.",
   "qa": {
-    "readiness": "Partial: continuation r2 rejected; r3 crane edit pending.",
+    "readiness": "Partial: r2 not accepted, r3 step1 failed, step2 not run. All original paintings and canonical assets unchanged.",
     "images": {
       "r0": {
         "file": "assets/source/fuel-2026-10-11/fuel_pump-a1-r0.png",
@@ -3358,8 +3847,53 @@
       }
     },
     "repaint": {
-      "outcome": "in progress",
-      "reason": "Repainting on the corrected 2.4:1 master plan."
+      "tool": "built-in image_gen edit",
+      "requestedSize": [1024, 1024],
+      "r2": {
+        "attempts": [7, 8, 9],
+        "accepted": false,
+        "closest": 9,
+        "reason": "Plan2.438 and light116.48/68.70 pass, height0.423 below0.43, camera lower-left slope0.639, jib235px versus169px short side."
+      },
+      "verification": {
+        "scope": "passed",
+        "repositoryChecks": "typecheck/lint/test/build/format attempted; unavailable because local executables absent",
+        "measurements": "measure-plan, record-attempt/checkFile, light-check run for every attempt",
+        "scopedFormatting": "Passed using existing Prettier installation from another worktree; no dependency or configuration changes."
+      },
+      "integrity": {
+        "baseline": "b26ccab3",
+        "protectedPngCount": 47,
+        "allExistingPngsUnchanged": true,
+        "allNewRawByteIdentical": true,
+        "r0Hash": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
+        "r1Attempt12Identical": true,
+        "promptsAndOrderedReferencesVerified": true
+      },
+      "date": "2026-10-19",
+      "outcome": "partial",
+      "r3Step1": {
+        "attempts": [15, 16, 17],
+        "passed": false,
+        "closest": 17,
+        "reason": "Attempt17 passes plan2.628, height range0.393 and camera1.8 degrees, but ground corners moved69-75px down, crane post stays at x493 rather than562, beam crosses tank, hose653/914 misses required box, left light127.053 is8.325 above source."
+      },
+      "r3Step2": {
+        "run": false,
+        "passed": false,
+        "widenedHouse": null,
+        "reason": "Not run because no S1 passed. No step2 image exists, so step2 did not widen the house."
+      },
+      "lightBaseline": {
+        "measured": [118.7276, 117.8576],
+        "nominalInBrief": [119, 121],
+        "boxes": [
+          [400, 880, 530, 1000],
+          [850, 760, 1000, 860]
+        ],
+        "boxesMoved": false,
+        "note": "Compared with source attempt7 recomputed by light-check; both actual medians recorded."
+      }
     },
     "lightCheck": {
       "script": "light-check.mjs",
@@ -3406,9 +3940,9 @@
       "note": "Read upper edge of projecting quoin cap, not its bottom edge. R3 attempts9 and11 were refined after this calibration; both initial and final readings retained. Actual prompts preserve initial numbers as sent."
     },
     "remainingIssues": [
-      "Attempt4 passes plan2.573, height.443, light119.35/68.84, but camera foot slope.636 and jib255px versus192px fail.",
-      "Attempt14 passes height.395, camera1.5 degrees, unchanged light125.20/120.64 and hose713,873, but plan2.88, footprint displacement up to47px and crane placement/reach fail.",
-      "No relight run; no S1 accepted. Art needs a crane edit that preserves attempt7 geometry."
+      "Plan2.438 and light116.48/68.70 pass, height0.423 below0.43, camera lower-left slope0.639, jib235px versus169px short side.",
+      "Attempt17 passes plan2.628, height range0.393 and camera1.8 degrees, but ground corners moved69-75px down, crane post stays at x493 rather than562, beam crosses tank, hose653/914 misses required box, left light127.053 is8.325 above source.",
+      "No S1 passed; step2 not run."
     ],
     "masterUnchanged": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
     "grassReview": {
@@ -3464,7 +3998,41 @@
       "verification": {
         "scope": "passed",
         "repositoryChecks": "typecheck/lint/test/build/format attempted; unavailable because local executables absent",
-        "measurements": "measure-plan, record-attempt/checkFile, light-check run for every attempt"
+        "measurements": "measure-plan, record-attempt/checkFile, light-check run for every attempt",
+        "scopedFormatting": "Passed using existing Prettier installation from another worktree; no dependency or configuration changes."
+      },
+      "integrity": {
+        "baseline": "b26ccab3",
+        "protectedPngCount": 47,
+        "allExistingPngsUnchanged": true,
+        "allNewRawByteIdentical": true,
+        "r0Hash": "c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0",
+        "r1Attempt12Identical": true,
+        "promptsAndOrderedReferencesVerified": true
+      },
+      "date": "2026-10-19",
+      "outcome": "partial",
+      "r3Step1": {
+        "attempts": [15, 16, 17],
+        "passed": false,
+        "closest": 17,
+        "reason": "Attempt17 passes plan2.628, height range0.393 and camera1.8 degrees, but ground corners moved69-75px down, crane post stays at x493 rather than562, beam crosses tank, hose653/914 misses required box, left light127.053 is8.325 above source."
+      },
+      "r3Step2": {
+        "run": false,
+        "passed": false,
+        "widenedHouse": null,
+        "reason": "Not run because no S1 passed. No step2 image exists, so step2 did not widen the house."
+      },
+      "lightBaseline": {
+        "measured": [118.7276, 117.8576],
+        "nominalInBrief": [119, 121],
+        "boxes": [
+          [400, 880, 530, 1000],
+          [850, 760, 1000, 860]
+        ],
+        "boxesMoved": false,
+        "note": "Compared with source attempt7 recomputed by light-check; both actual medians recorded."
       }
     }
   },
