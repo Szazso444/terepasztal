@@ -1,0 +1,409 @@
+[
+  {
+    "view": "r0",
+    "attempt": 1,
+    "file": "raw/substation-r0-attempt-1.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\nlower-left wall is the FRONT: the front wall of the switch house: the forest-green steel door in its\ncream stone frame, a narrow louvred window beside it, the stone parapet above, and on the roof the\ncontrol cabinet with its hazard sign at the edge. The lower-right wall is the building's right-hand\nside: the right-hand side wall of the switch house: cream limestone courses, two narrow arched\nlouvred windows, the stone parapet, and above it the transformer tank, the three insulator stacks\nand the portal frame. The roof is flat, edged by the stone parapet; the equipment on it\n(transformer, insulator stacks, portal frame, cabinet) is the same in every view, turned with the\nbuilding. Design. The guide's block is 36 game px high and fills 90 per cent of the 2 x 2 plinth\n(1.8 x 1.8 tiles, 691 px wide in the guide). Build the Battery on that block as a compact station:\nthe block is a low cream-limestone switch house, a plain walled hall with a flat roof edged by a\nstone parapet, a forest-green steel door in its front wall (where the guide has the dark door mark,\nr0 and r3), and two narrow arched louvred windows in each side wall; on its flat roof stands the old\npicture's equipment, kept as drawn: the olive-green finned transformer tank, the three brown\ninsulator stacks with their curved cables, the grey lattice portal frame and, at the roof edge, the\nolive-green control cabinet with its yellow hazard sign. The equipment is carried inside the block's\nwidth and the whole fills the plinth; the parapet is the walls' top. Nothing stands outside the\nplinth.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\nold Battery picture: the equipment and the palette, nothing of its angle or layout: take its\nmaterials, details and character from it, but not its angle or its footprint; the block-out sets\nthose. This is the front view: repaint the same building, on the block-out's plan, at the game's\ncamera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [387, 40, 1149, 974],
+      "base": {
+        "w": [387, 763.924391322507],
+        "s": [789.2798393966111, 974.5546363690194],
+        "e": [1149, 781.9659019604842],
+        "sure": [true, true]
+      },
+      "width": 762,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "kept": false
+  },
+  {
+    "view": "r0",
+    "attempt": 2,
+    "file": "raw/substation-r0-attempt-2.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\nlower-left wall is the FRONT: the front wall of the switch house: the forest-green steel door in its\ncream stone frame, a narrow louvred window beside it, the stone parapet above, and on the roof the\ncontrol cabinet with its hazard sign at the edge. The lower-right wall is the building's right-hand\nside: the right-hand side wall of the switch house: cream limestone courses, two narrow arched\nlouvred windows, the stone parapet, and above it the transformer tank, the three insulator stacks\nand the portal frame. The roof is flat, edged by the stone parapet; the equipment on it\n(transformer, insulator stacks, portal frame, cabinet) is the same in every view, turned with the\nbuilding. Design. The guide's block is 36 game px high and fills 90 per cent of the 2 x 2 plinth\n(1.8 x 1.8 tiles, 691 px wide in the guide). Build the Battery on that block as a compact station:\nthe block is a low cream-limestone switch house, a plain walled hall with a flat roof edged by a\nstone parapet, a forest-green steel door in its front wall (where the guide has the dark door mark,\nr0 and r3), and two narrow arched louvred windows in each side wall; on its flat roof stands the old\npicture's equipment, kept as drawn: the olive-green finned transformer tank, the three brown\ninsulator stacks with their curved cables, the grey lattice portal frame and, at the roof edge, the\nolive-green control cabinet with its yellow hazard sign. The equipment is carried inside the block's\nwidth and the whole fills the plinth; the parapet is the walls' top. Nothing stands outside the\nplinth.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\nold Battery picture: the equipment and the palette, nothing of its angle or layout: take its\nmaterials, details and character from it, but not its angle or its footprint; the block-out sets\nthose. This is the front view: repaint the same building, on the block-out's plan, at the game's\ncamera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: your last r0 base measured 762 px of 1536 where the limit is 729 px and the held width is 694 px. Paint the outer corners of the walls' foot at x=422 and x=1114, total 694 px including every outline and footing; keep the near foot corner at (768,933). Hold the guide block's size exactly; no broad footing projecting beyond its walls. This is a new edit of the guide, not the previous attempt.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [423, 48, 1139, 942],
+      "base": {
+        "w": [427, 742.8153812348934],
+        "s": [794.7546018603588, 942.352283243497],
+        "e": [1133, 765.8406732604547],
+        "sure": [true, true]
+      },
+      "width": 706,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "PASS",
+        "plan": "PASS",
+        "camera": "FAIL",
+        "height": "FAIL",
+        "highlights": "FAIL",
+        "visual": "PASS"
+      },
+      "feet": [367.7546018603588, 338.2453981396412],
+      "ratio": 1.0872419961454582,
+      "slopes": [0.5425816590715848, -0.5218448231782633],
+      "slopeErrors": [0.04258165907158484, 0.021844823178263306],
+      "check": {
+        "ok": false,
+        "problems": [
+          "camera off by 2.1°: it looks down from 32.1° where the game looks down from 30° (the wall feet slope 0.54 and -0.52, the game's 0.50 and -0.50)",
+          "the portals are not open to the ground (over a stretch 0.3 of the portal's width the ground is open 0.00 of that width deep, and 0.3 is asked): a floor, a threshold, an apron, rails, a door leaf or a post stands where the game's rails run in, or the portal is too narrow. Inside each doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there."
+        ],
+        "camera": {
+          "by": 2.1,
+          "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        },
+        "fittedCamera": {
+          "elevation": 32.1,
+          "turn": 0.6
+        }
+      },
+      "height": {
+        "parapetY": 678,
+        "pixels": 264.352283243497,
+        "ratio": 0.37443666181798446,
+        "planRatio": 0.31,
+        "masterRatio": null
+      },
+      "highlights": {
+        "white": 2507,
+        "amber": 0
+      },
+      "highlightReference": {
+        "file": "assets/source/base-v1/substation.png",
+        "white": 1569,
+        "amber": 0
+      },
+      "visual": {
+        "footing": "Wall feet are plain; slight quoin steps included by measurement.",
+        "design": "Correct front on lower-left, one front louvre, two right side arched louvres; three insulator stacks and matching roof equipment.",
+        "light": "Lower-left wall lighter.",
+        "parapetReading": "Zoomed crop: top of near parapet cap at y=678. Earlier provisional y=704 was the front face of the coping, not its top."
+      }
+    },
+    "kept": false,
+    "selected": true,
+    "failure": "Closest r0 retained after three attempts: camera 2.1 degrees; left-foot slope error .04258; near-white count 2507 > 1569; t2x2 checker additionally assumes depot portals. Height corrected from zoomed crop: ratio 0.37443666181798446 exceeds plan .31 by more than 15%."
+  },
+  {
+    "view": "r0",
+    "attempt": 3,
+    "file": "raw/substation-r0-attempt-3.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\nlower-left wall is the FRONT: the front wall of the switch house: the forest-green steel door in its\ncream stone frame, a narrow louvred window beside it, the stone parapet above, and on the roof the\ncontrol cabinet with its hazard sign at the edge. The lower-right wall is the building's right-hand\nside: the right-hand side wall of the switch house: cream limestone courses, two narrow arched\nlouvred windows, the stone parapet, and above it the transformer tank, the three insulator stacks\nand the portal frame. The roof is flat, edged by the stone parapet; the equipment on it\n(transformer, insulator stacks, portal frame, cabinet) is the same in every view, turned with the\nbuilding. Design. The guide's block is 36 game px high and fills 90 per cent of the 2 x 2 plinth\n(1.8 x 1.8 tiles, 691 px wide in the guide). Build the Battery on that block as a compact station:\nthe block is a low cream-limestone switch house, a plain walled hall with a flat roof edged by a\nstone parapet, a forest-green steel door in its front wall (where the guide has the dark door mark,\nr0 and r3), and two narrow arched louvred windows in each side wall; on its flat roof stands the old\npicture's equipment, kept as drawn: the olive-green finned transformer tank, the three brown\ninsulator stacks with their curved cables, the grey lattice portal frame and, at the roof edge, the\nolive-green control cabinet with its yellow hazard sign. The equipment is carried inside the block's\nwidth and the whole fills the plinth; the parapet is the walls' top. Nothing stands outside the\nplinth.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\nold Battery picture: the equipment and the palette, nothing of its angle or layout: take its\nmaterials, details and character from it, but not its angle or its footprint; the block-out sets\nthose. This is the front view: repaint the same building, on the block-out's plan, at the game's\ncamera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: the last r0 wall feet measured slopes 0.5426 and -0.5218, camera 32.1 degrees instead of 30 degrees, and 2507 near-white pixels where the old picture permits 1569. Keep both wall-foot slopes exactly +0.50 and -0.50 as the guide, with outer wall-foot corners (422,760), (768,933), (1114,760), total width 694 px including outlines. Keep the near parapet at y=717 (216 px above the foot). Use muted limestone highlights below RGB (236,228,208), reducing bright highlights. Paint anew on the guide; maintain its width, camera and block height.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "opaqueBox": [403, 49, 1143, 976],
+      "base": {
+        "w": [403, 762.8770802544497],
+        "s": [796.4625498222713, 976.4907927154395],
+        "e": [1143, 793.7135164509436],
+        "sure": [true, true]
+      },
+      "width": 740,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "kept": false
+  },
+  {
+    "view": "r1",
+    "attempt": 1,
+    "file": "raw/substation-r1-attempt-1.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the right-hand side wall of\nthe switch house: cream limestone courses, two narrow arched louvred windows, the stone parapet, and\nabove it the transformer tank, the three insulator stacks and the portal frame. The lower-right wall\nis the BACK: a plain cream limestone wall with the same base, quoins and parapet, no door, and one\nnarrow louvred window. The roof is flat, edged by the stone parapet; the equipment on it\n(transformer, insulator stacks, portal frame, cabinet) is the same in every view, turned with the\nbuilding.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nsame building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take\nits materials, details and character from it, and its size. Paint the SAME building at the same\nsize, turned on a turntable while the camera stays where it is. It is not a mirror image and not a\ncopy of that reference: show the walls named above, and carry the same materials, roof, colours and\ndetails round the building. Do not paint the reference again. There, in view r0, the lower-left wall\nis the front: the front wall with the green steel door and the control cabinet above it. In this\npicture the front faces away, hidden behind the building: neither visible wall is the front, and\nwhat the front has does not show on them. The building is exactly as large as in the reference: no\ntaller, with no storey more. Its roof is the reference's roof, turned: the same form and ridge, with\nwhat stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r1.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\rotations-535\\battery\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [388, 42, 1149, 980],
+      "base": {
+        "w": [391, 755.7835280566068],
+        "s": [801.5304477529514, 979.4897298035321],
+        "e": [1144, 797.0635975320358],
+        "sure": [true, true]
+      },
+      "width": 753,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "kept": false
+  },
+  {
+    "view": "r1",
+    "attempt": 2,
+    "file": "raw/substation-r1-attempt-2.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the right-hand side wall of\nthe switch house: cream limestone courses, two narrow arched louvred windows, the stone parapet, and\nabove it the transformer tank, the three insulator stacks and the portal frame. The lower-right wall\nis the BACK: a plain cream limestone wall with the same base, quoins and parapet, no door, and one\nnarrow louvred window. The roof is flat, edged by the stone parapet; the equipment on it\n(transformer, insulator stacks, portal frame, cabinet) is the same in every view, turned with the\nbuilding.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nsame building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take\nits materials, details and character from it, and its size. Paint the SAME building at the same\nsize, turned on a turntable while the camera stays where it is. It is not a mirror image and not a\ncopy of that reference: show the walls named above, and carry the same materials, roof, colours and\ndetails round the building. Do not paint the reference again. There, in view r0, the lower-left wall\nis the front: the front wall with the green steel door and the control cabinet above it. In this\npicture the front faces away, hidden behind the building: neither visible wall is the front, and\nwhat the front has does not show on them. The building is exactly as large as in the reference: no\ntaller, with no storey more. Its roof is the reference's roof, turned: the same form and ridge, with\nwhat stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: your last r1 base measured 753 px of 1536 where the maximum is 729 and the target is 694 px. Keep the outer wall-foot corners at (422,760), (768,933), (1114,760), exactly 694 px wide including outlines and quoins, each foot slope exactly 0.50. Use the guide's block without enlarging it. The whole rooftop equipment also turns clockwise with the house: portal beam must run from rear upper-right toward front lower-left in this view, perpendicular to its r0 orientation; cabinet belongs on the hidden front edge. Do not repeat the r0 equipment arrangement unchanged.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r1.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\rotations-535\\battery\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [424, 51, 1124, 965],
+      "base": {
+        "w": [425, 729.5703570626545],
+        "s": [788.667480463301, 964.4395477134941],
+        "e": [1120, 796.0908498860307],
+        "sure": [true, true]
+      },
+      "width": 695,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "PASS",
+        "plan": "PASS",
+        "camera": "FAIL",
+        "height": "FAIL",
+        "highlights": "FAIL",
+        "visual": "FAIL"
+      },
+      "feet": [363.667480463301, 331.332519536699],
+      "ratio": 1.0975906650268312,
+      "slopes": [0.6458350093652138, -0.508095909399007],
+      "slopeErrors": [0.14583500936521376, 0.00809590939900695],
+      "check": {
+        "ok": false,
+        "problems": [
+          "camera off by 4.9°: it looks down from 34.9° where the game looks down from 30° and the building is turned 3.4° towards its lower-right wall (the wall feet slope 0.65 and -0.51, the game's 0.50 and -0.50)",
+          "the portals are not open to the ground (over a stretch 0.3 of the portal's width the ground is open 0.00 of that width deep, and 0.3 is asked): a floor, a threshold, an apron, rails, a door leaf or a post stands where the game's rails run in, or the portal is too narrow. Inside each doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there."
+        ],
+        "camera": {
+          "by": 4.9,
+          "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+        },
+        "fittedCamera": {
+          "elevation": 34.9,
+          "turn": 3.4
+        }
+      },
+      "height": {
+        "parapetY": 686,
+        "pixels": 278.4395477134941,
+        "ratio": 0.40063244275322896,
+        "planRatio": 0.31,
+        "masterRatio": 0.374436661817984
+      },
+      "highlights": {
+        "white": 3649,
+        "amber": 0
+      },
+      "highlightReference": {
+        "file": "assets/source/rotations-535/battery/substation-r0.png",
+        "white": 2507,
+        "amber": 0
+      },
+      "visual": {
+        "sameBuilding": "House walls have correct two/one window counts and no front door; roof portal and transformer repeat the r0 orientation instead of a quarter turn. Cabinet not visible.",
+        "parapetReading": "Provisional near parapet cap top y=686; height far above plan even allowing a few pixels."
+      }
+    },
+    "kept": false
+  },
+  {
+    "view": "r1",
+    "attempt": 3,
+    "file": "raw/substation-r1-attempt-3.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper\nleft, away from the camera, and nothing of it is in this picture: no entrance door and none of the\nfront's windows or other features on either visible wall. The lower-left wall is the right-hand\nside; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the\nright-hand side and is r0's lower-right wall, copied as it stands there: the right-hand side wall of\nthe switch house: cream limestone courses, two narrow arched louvred windows, the stone parapet, and\nabove it the transformer tank, the three insulator stacks and the portal frame. The lower-right wall\nis the BACK: a plain cream limestone wall with the same base, quoins and parapet, no door, and one\nnarrow louvred window. The roof is flat, edged by the stone parapet; the equipment on it\n(transformer, insulator stacks, portal frame, cabinet) is the same in every view, turned with the\nbuilding.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nsame building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take\nits materials, details and character from it, and its size. Paint the SAME building at the same\nsize, turned on a turntable while the camera stays where it is. It is not a mirror image and not a\ncopy of that reference: show the walls named above, and carry the same materials, roof, colours and\ndetails round the building. Do not paint the reference again. There, in view r0, the lower-left wall\nis the front: the front wall with the green steel door and the control cabinet above it. In this\npicture the front faces away, hidden behind the building: neither visible wall is the front, and\nwhat the front has does not show on them. The building is exactly as large as in the reference: no\ntaller, with no storey more. Its roof is the reference's roof, turned: the same form and ridge, with\nwhat stands on it at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: last r1 measured 695 px wide (good), but wall feet sloped +0.646/-0.508 instead of +0.50/-0.50, camera 4.9 degrees off, wall-height/base-width .401 instead of .31, and 3649 near-white pixels versus r0's 2507. Hold the guide geometry: wall-foot w=(422,760), s=(768,933), e=(1114,760), parapet at near corner y=717. Both feet must run exactly 2 across per 1 down, with 216px wall height; use dimmer limestone highlights below RGB(236,228,208). Turn ALL rooftop machinery with the house: the portal crossbeam must ascend to the RIGHT, its left end lower and nearer, its right end higher and farther, opposite diagonal to r0. Tank finned face now follows the lower-left wall; cabinet is on the far hidden front edge. Preserve 694px wall-base width including quoins; do not repeat the r0 equipment orientation.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r1.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\rotations-535\\battery\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [417, 79, 1127, 962],
+      "base": {
+        "w": [421, 798.5154652007054],
+        "s": [730.081114884421, 961.9209671342123],
+        "e": [1122, 765.9112385528474],
+        "sure": [true, true]
+      },
+      "width": 701,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "PASS",
+        "plan": "FAIL",
+        "camera": "FAIL",
+        "height": "FAIL",
+        "highlights": "PASS",
+        "visual": "PASS"
+      },
+      "feet": [309.081114884421, 391.918885115579],
+      "ratio": 0.7886354208046682,
+      "slopes": [0.5286816116041623, -0.5001283072224512],
+      "slopeErrors": [0.02868161160416227, 0.00012830722245116277],
+      "check": {
+        "ok": false,
+        "problems": [
+          "the portals are not open to the ground (over a stretch 0.3 of the portal's width the ground is open 0.00 of that width deep, and 0.3 is asked): a floor, a threshold, an apron, rails, a door leaf or a post stands where the game's rails run in, or the portal is too narrow. Inside each doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there."
+        ],
+        "fittedCamera": {
+          "elevation": 30.9,
+          "turn": 0.8
+        }
+      },
+      "height": {
+        "parapetY": 709,
+        "pixels": 252.92096713421233,
+        "ratio": 0.3608002384225568,
+        "planRatio": 0.31,
+        "masterRatio": 0.374436661817984
+      },
+      "highlights": {
+        "white": 1613,
+        "amber": 0
+      },
+      "highlightReference": {
+        "file": "assets/source/rotations-535/battery/substation-r0.png",
+        "white": 2507,
+        "amber": 0
+      },
+      "visual": {
+        "design": "Two arched louvres on lower-left right side, one on lower-right back; no front door. Three insulator stacks, tank fins, porthole and portal now follow the turned roof. Cabinet obscured on far front side.",
+        "parapetReading": "Near parapet cap top y=709."
+      }
+    },
+    "kept": false,
+    "selected": true,
+    "failure": "Closest after three attempts: foot ratio .7886 below .85; height ratio .3608 above .3565; checkFile reports depot portals. Geometry camera itself is within .03 slopes and .9 degrees."
+  },
+  {
+    "view": "r3",
+    "attempt": 1,
+    "file": "raw/substation-r3-attempt-1.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the\nlower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The\nlower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not\nmirrored: the front wall of the switch house: the forest-green steel door in its cream stone frame,\na narrow louvred window beside it, the stone parapet above, and on the roof the control cabinet with\nits hazard sign at the edge. The lower-left wall is the left-hand side: the left-hand side wall,\nplainer than the right-hand one: cream limestone with the same parapet and one narrow louvred\nwindow. The roof is flat, edged by the stone parapet; the equipment on it (transformer, insulator\nstacks, portal frame, cabinet) is the same in every view, turned with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nsame building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take\nits materials, details and character from it, and its size. Paint the SAME building at the same\nsize, turned on a turntable while the camera stays where it is. It is not a mirror image and not a\ncopy of that reference: show the walls named above, and carry the same materials, roof, colours and\ndetails round the building. The building is exactly as large as in the reference: no taller, with no\nstorey more. Its roof is the reference's roof, turned: the same form and ridge, with what stands on\nit at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r3.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\rotations-535\\battery\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [413, 45, 1160, 967],
+      "base": {
+        "w": [413, 749.708411735086],
+        "s": [800.3876192893847, 967.5765970516006],
+        "e": [1156, 785.9845703644586],
+        "sure": [true, true]
+      },
+      "width": 743,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "kept": false,
+    "selected": true,
+    "failure": "Closest width after three width refusals: 743 > maximum 729 px. Stopped the job after r3; r2 not painted. Roof equipment also remains in r0 orientation rather than following the required turn."
+  },
+  {
+    "view": "r3",
+    "attempt": 2,
+    "file": "raw/substation-r3-attempt-2.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the\nlower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The\nlower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not\nmirrored: the front wall of the switch house: the forest-green steel door in its cream stone frame,\na narrow louvred window beside it, the stone parapet above, and on the roof the control cabinet with\nits hazard sign at the edge. The lower-left wall is the left-hand side: the left-hand side wall,\nplainer than the right-hand one: cream limestone with the same parapet and one narrow louvred\nwindow. The roof is flat, edged by the stone parapet; the equipment on it (transformer, insulator\nstacks, portal frame, cabinet) is the same in every view, turned with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nsame building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take\nits materials, details and character from it, and its size. Paint the SAME building at the same\nsize, turned on a turntable while the camera stays where it is. It is not a mirror image and not a\ncopy of that reference: show the walls named above, and carry the same materials, roof, colours and\ndetails round the building. The building is exactly as large as in the reference: no taller, with no\nstorey more. Its roof is the reference's roof, turned: the same form and ridge, with what stands on\nit at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: your last r3 wall-base measured 743 px of 1536, outside the 729px maximum. Hold the guide's 694px base, with w=(422,760), s=(768,933), e=(1114,760) including quoins and outlines, no projecting footing. Keep wall height 216px, top of near parapet y=717, each foot slope exactly 0.50. The FRONT is lower-right and its roof-edge control cabinet must be above that wall, not on the left side. All roof machinery turns three quarter turns with the house: portal beam and tank's long axis ascend toward the upper right, perpendicular to r0; porthole side box belongs at the far upper-right end. Keep the window and door arrangement named in View.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r3.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\rotations-535\\battery\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [405, 35, 1162, 982],
+      "base": {
+        "w": [406, 734.9144611528823],
+        "s": [804.0046873513136, 981.8754147559083],
+        "e": [1159, 792.5041072608817],
+        "sure": [true, true]
+      },
+      "width": 753,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "kept": false
+  },
+  {
+    "view": "r3",
+    "attempt": 3,
+    "file": "raw/substation-r3-attempt-3.png",
+    "prompt": "Output specification: edit image 1 at exactly 1536 x 1024 pixels, RGBA transparent. Keep the painted wall base 694 pixels wide including outline (allowed 659–729 pixels); each foot runs 2 across for 1 down, with equal lengths. Wall foot to parapet at near corner: 216 pixels, height/base-width ratio 0.31. Guide plinth is 772 pixels wide; remove it in finished art.\n\nEdit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Battery (the substation), a stone switch house carrying a transformer\nand a steel portal frame, the same building as in the third picture in the view named under View.\nStyle: that of the second picture, the style board. Crisp pixel-art-inspired clustered shading,\nbroad readable masses, three or four shades per material, restrained detail, a strong silhouette.\nThe palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5,\nlimestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and\ntops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white\n#ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the\nlower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The\nlower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not\nmirrored: the front wall of the switch house: the forest-green steel door in its cream stone frame,\na narrow louvred window beside it, the stone parapet above, and on the roof the control cabinet with\nits hazard sign at the edge. The lower-left wall is the left-hand side: the left-hand side wall,\nplainer than the right-hand one: cream limestone with the same parapet and one narrow louvred\nwindow. The roof is flat, edged by the stone parapet; the equipment on it (transformer, insulator\nstacks, portal frame, cabinet) is the same in every view, turned with the building.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is this\nsame building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take\nits materials, details and character from it, and its size. Paint the SAME building at the same\nsize, turned on a turntable while the camera stays where it is. It is not a mirror image and not a\ncopy of that reference: show the walls named above, and carry the same materials, roof, colours and\ndetails round the building. The building is exactly as large as in the reference: no taller, with no\nstorey more. Its roof is the reference's roof, turned: the same form and ridge, with what stands on\nit at the same places.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nCorrection: your last r3 base measured 753 px of 1536 where the maximum is 729 px, and the preceding attempt measured 743 px. Width is the first acceptance gate. Keep the switch house EXACTLY the size of the grey block: outer wall-foot leftmost x=422, rightmost x=1114, width 692–694 pixels including every quoin and outline. No ground-level pixel left of x=422 or right of x=1114. The visible wall-foot corners are w=(422,760), s=(768,933), e=(1114,760); parapet near-corner top is (768,717). Preserve the guide's broad transparent margins. Do not enlarge the block or add a projecting base. Rooftop equipment must fit above this fixed compact house.",
+    "references": [
+      "G:\\DEV\\Terepasztal\\guides-535\\substation-r3.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\docs\\art-direction\\images\\03-theme-town-growth.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\rotations-535\\battery\\substation-r0.png",
+      "G:\\DEV\\Terepasztal\\rotations-535\\assets\\source\\base-v1\\substation.png"
+    ],
+    "returned": [1536, 1024],
+    "measured": {
+      "size": [1536, 1024],
+      "picture": null,
+      "opaqueBox": [405, 42, 1167, 957],
+      "base": {
+        "w": [407, 727.7275129503521],
+        "s": [819.8073026590619, 957.247473352011],
+        "e": [1163, 768.701415571284],
+        "sure": [true, true]
+      },
+      "width": 756,
+      "widthLimits": [659, 694, 729],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "kept": false
+  }
+]

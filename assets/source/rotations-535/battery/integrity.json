@@ -1,0 +1,83 @@
+[
+  {
+    "view": "r0",
+    "attempt": 1,
+    "file": "raw/substation-r0-attempt-1.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-55ae58e4-840c-4a41-a586-e91e893b7a64.png",
+    "sha256": "a98948ca8db2f9d0dbe7d8b6d936378926c350307d2ca88d2faf6cd69389e0bf",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": null
+  },
+  {
+    "view": "r0",
+    "attempt": 2,
+    "file": "raw/substation-r0-attempt-2.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-fb0d6f4e-1575-4a78-a75a-484344ff3b7d.png",
+    "sha256": "3814cb19ad6c1ff4cb33d8fd499eed38f3b70c5f285a7fe021b0344a164f30c1",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": true
+  },
+  {
+    "view": "r0",
+    "attempt": 3,
+    "file": "raw/substation-r0-attempt-3.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-0d86f2a0-8724-4556-bf3b-36de730912c3.png",
+    "sha256": "10597b4ce1106372001c6f3e1127f7e75168836cfce053ee4231fa4987e5b0c1",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": null
+  },
+  {
+    "view": "r1",
+    "attempt": 1,
+    "file": "raw/substation-r1-attempt-1.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-6d5a734b-6aba-492d-aea8-ec12df3dd920.png",
+    "sha256": "fa37931f40e18c89627e04135eb12440d25a29dcbf12b4e5a3475132b3ff9b27",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": null
+  },
+  {
+    "view": "r1",
+    "attempt": 2,
+    "file": "raw/substation-r1-attempt-2.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-74781d73-670d-4a8d-8c9e-806d0e537344.png",
+    "sha256": "ff9688ae66288fa632f76c24d4f7ab40670940f8f88c839ae2efefdbd3d071e0",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": null
+  },
+  {
+    "view": "r1",
+    "attempt": 3,
+    "file": "raw/substation-r1-attempt-3.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-7fe78848-df52-4f00-bb2c-350b82e5a0da.png",
+    "sha256": "4f081b2a8052af5debc1d708a9630c1cdf0b55ae7f11920b808f9cb60862ce01",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": true
+  },
+  {
+    "view": "r3",
+    "attempt": 1,
+    "file": "raw/substation-r3-attempt-1.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-3715d1a9-8259-4952-a627-fb522ad738ac.png",
+    "sha256": "8d430d14895f53137dc664aa4a5f9f67f4d4589d756df55db1f16745c6431c73",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": true
+  },
+  {
+    "view": "r3",
+    "attempt": 2,
+    "file": "raw/substation-r3-attempt-2.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-f8d26033-68d9-4b6d-b222-0ae9bb829cb3.png",
+    "sha256": "ed8324eacb2bcf11c5235294175321b57d478dcd612303b2b8cffeb960f5425c",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": null
+  },
+  {
+    "view": "r3",
+    "attempt": 3,
+    "file": "raw/substation-r3-attempt-3.png",
+    "source": "C:/Users/Zso/.codex/generated_images/01a15646-6b97-7cd1-92b9-8a312a704cf6/exec-170c44ca-bc15-4ad1-a914-652a7f0c772e.png",
+    "sha256": "f1e9ae1f7a3cca52a80561acc12ab6780fec57e513479296a881187d8073b1bb",
+    "rawMatchesReturned": true,
+    "selectedCopyMatchesRaw": null
+  }
+]
