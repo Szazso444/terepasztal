@@ -1,0 +1,230 @@
+{
+  "oldReference": {
+    "file": "assets/source/base-v1/works-full-colliery.png",
+    "sha256": "7803f567559ca14ddb53a9078580bfe8abe1c7842baedca5de097b1b036e7215",
+    "returned": [
+      1774,
+      887
+    ],
+    "manualBase": {
+      "w": [
+        337,
+        647
+      ],
+      "s": [
+        1110,
+        862
+      ],
+      "e": [
+        1442,
+        758
+      ]
+    },
+    "baseWidth": 1105,
+    "towerNearFootY": 687,
+    "wheelTopY": 10,
+    "towerHeightPx": 677,
+    "heightNumber": 0.6126696832579186,
+    "highlights": {
+      "nearWhite": 3,
+      "nearAmber": 0
+    },
+    "note": "Manual ground extremities include tower stone footing; the automatic base puts the west corner on its leg. Height measured from nearer headgear stone footing to winding-wheel top.",
+    "automaticCorners": {
+      "w": [
+        390,
+        638.1242
+      ],
+      "s": [
+        1105.8113,
+        889.0353
+      ],
+      "e": [
+        1440,
+        759.3887
+      ]
+    },
+    "automaticWidth": 1050
+  },
+  "attempts": [
+    {
+      "view": 0,
+      "attempt": 1,
+      "file": "raw/colliery-r0-attempt-1.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Colliery, a coal mine with a timber headgear tower, coal hoppers and a\nbrick engine house, the same building as in the third picture in the view named under View. Style:\nthat of the second picture, the style board. Crisp pixel-art-inspired clustered shading, broad\nreadable masses, three or four shades per material, restrained detail, a strong silhouette. The\npalette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone\n#BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops\nlightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0\nand nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\nlower-left wall is the FRONT: the red-brick engine house's wall with its forest-green arched door in\nthe middle; the lower-right wall is the right-hand side: the hopper gantry and the lift-house. The\nheadgear tower stands at the far corner behind them. The groups stand as the Design paragraph says.\nRoofs, wheels and chimney are as in the old picture; the three groups keep their sizes and their\nmaterials. Design. Lay the same plant out on the 2 x 2 plinth, filling it as the block does (90 per\ncent of each side, 691 px wide in the guide): the red-brick engine house stands along the lower-left\nside (the front), from the left corner to the near corner, with its forest-green arched door in the\nmiddle of that wall where the guide has its dark door mark; the timber hopper gantry with its three\ncoal hoppers, the chute and the lift-house stand along the lower-right side, from the near corner to\nthe right corner; the headgear tower stands at the far (top) corner behind them, its cable running\nto the engine house's roof wheel. The groups stand so that the ground-level outline follows the\nplinth's 2:1 lines from the left corner through the near corner to the right corner; nothing stands\noutside the plinth at ground level. Keep every structure as r0 draws it.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\nold colliery picture: its structures, materials and colours; nothing of its angle or its row layout:\ntake its materials, details and character from it, but not its angle or its footprint; the block-out\nsets those. This is the front view: repaint the same building, on the block-out's plan, at the\ngame's camera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nOutput canvas: 1536 x 1024.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/colliery-r0.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/works-full-colliery.png"
+      ],
+      "returned": [
+        1536,
+        1024
+      ],
+      "measured": {
+        "automaticCorners": {
+          "w": [
+            316,
+            801.0143
+          ],
+          "s": [
+            696.4622,
+            974.578
+          ],
+          "e": [
+            1228,
+            786.0882
+          ]
+        },
+        "automaticWidth": 912,
+        "manualGroundExtremities": {
+          "w": [
+            316,
+            801
+          ],
+          "e": [
+            1335,
+            717
+          ]
+        },
+        "width": 1019,
+        "limits": [
+          659,
+          694,
+          729
+        ],
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "note": "Automatic east corner lands on hopper support, excluding the headgear stone footing; outer ground edges read by eye."
+      },
+      "kept": false,
+      "sha256": "94acb102a0d090ba42601966e12375bf9bac1880e8b044392e107a9afbb8f3e8"
+    },
+    {
+      "view": 0,
+      "attempt": 2,
+      "file": "raw/colliery-r0-attempt-2.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Colliery, a coal mine with a timber headgear tower, coal hoppers and a\nbrick engine house, the same building as in the third picture in the view named under View. Style:\nthat of the second picture, the style board. Crisp pixel-art-inspired clustered shading, broad\nreadable masses, three or four shades per material, restrained detail, a strong silhouette. The\npalette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone\n#BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops\nlightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0\nand nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\nlower-left wall is the FRONT: the red-brick engine house's wall with its forest-green arched door in\nthe middle; the lower-right wall is the right-hand side: the hopper gantry and the lift-house. The\nheadgear tower stands at the far corner behind them. The groups stand as the Design paragraph says.\nRoofs, wheels and chimney are as in the old picture; the three groups keep their sizes and their\nmaterials. Design. Lay the same plant out on the 2 x 2 plinth, filling it as the block does (90 per\ncent of each side, 691 px wide in the guide): the red-brick engine house stands along the lower-left\nside (the front), from the left corner to the near corner, with its forest-green arched door in the\nmiddle of that wall where the guide has its dark door mark; the timber hopper gantry with its three\ncoal hoppers, the chute and the lift-house stand along the lower-right side, from the near corner to\nthe right corner; the headgear tower stands at the far (top) corner behind them, its cable running\nto the engine house's roof wheel. The groups stand so that the ground-level outline follows the\nplinth's 2:1 lines from the left corner through the near corner to the right corner; nothing stands\noutside the plinth at ground level. Keep every structure as r0 draws it.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\nold colliery picture: its structures, materials and colours; nothing of its angle or its row layout:\ntake its materials, details and character from it, but not its angle or its footprint; the block-out\nsets those. This is the front view: repaint the same building, on the block-out's plan, at the\ngame's camera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nOutput canvas: 1536 x 1024.\n\nCorrection: your last r0 base measured 1019 px of 1536, including the outer headgear footing, where the allowed width is 659 to 729 px and the target is 694 px. Paint the base at the guide block's exact width, from x=422 to x=1114, the near corner x=768; every ground-standing part including headgear footings must fit inside that 694 px span and the guide plinth. Keep the entire 1536 x 1024 canvas and its transparent margins; do not enlarge the plant to fill the canvas.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/colliery-r0.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/works-full-colliery.png"
+      ],
+      "returned": [
+        1536,
+        1024
+      ],
+      "measured": {
+        "manualGroundExtremities": {
+          "w": [
+            363,
+            779
+          ],
+          "e": [
+            1257,
+            683
+          ]
+        },
+        "width": 894,
+        "limits": [
+          659,
+          694,
+          729
+        ],
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused",
+        "note": "Includes outer headgear stone footing, not just hopper supports.",
+        "automaticCorners": {
+          "w": [
+            363,
+            777.8773
+          ],
+          "s": [
+            717.2605,
+            930.4356
+          ],
+          "e": [
+            1256,
+            682.8866
+          ]
+        },
+        "automaticWidth": 893
+      },
+      "kept": false,
+      "sha256": "cc609f6fbc00f245888e8214367d9acafa4993f5795b86ba99d3105d33a83504"
+    },
+    {
+      "view": 0,
+      "attempt": 3,
+      "file": "raw/colliery-r0-attempt-3.png",
+      "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\nisometric railway game: the Colliery, a coal mine with a timber headgear tower, coal hoppers and a\nbrick engine house, the same building as in the third picture in the view named under View. Style:\nthat of the second picture, the style board. Crisp pixel-art-inspired clustered shading, broad\nreadable masses, three or four shades per material, restrained detail, a strong silhouette. The\npalette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone\n#BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops\nlightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0\nand nothing as strong as selection amber #E8AA48.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\nround: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\nand may overhang a little.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\nlower-left wall is the FRONT: the red-brick engine house's wall with its forest-green arched door in\nthe middle; the lower-right wall is the right-hand side: the hopper gantry and the lift-house. The\nheadgear tower stands at the far corner behind them. The groups stand as the Design paragraph says.\nRoofs, wheels and chimney are as in the old picture; the three groups keep their sizes and their\nmaterials. Design. Lay the same plant out on the 2 x 2 plinth, filling it as the block does (90 per\ncent of each side, 691 px wide in the guide): the red-brick engine house stands along the lower-left\nside (the front), from the left corner to the near corner, with its forest-green arched door in the\nmiddle of that wall where the guide has its dark door mark; the timber hopper gantry with its three\ncoal hoppers, the chute and the lift-house stand along the lower-right side, from the near corner to\nthe right corner; the headgear tower stands at the far (top) corner behind them, its cable running\nto the engine house's roof wheel. The groups stand so that the ground-level outline follows the\nplinth's 2:1 lines from the left corner through the near corner to the right corner; nothing stands\noutside the plinth at ground level. Keep every structure as r0 draws it.\n\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\nold colliery picture: its structures, materials and colours; nothing of its angle or its row layout:\ntake its materials, details and character from it, but not its angle or its footprint; the block-out\nsets those. This is the front view: repaint the same building, on the block-out's plan, at the\ngame's camera.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\nor loose objects standing apart from the building.\n\nOutput canvas: 1536 x 1024.\n\nCorrection: your last r0 ground-level base measured 894 px of the 1536 px canvas, where the maximum is 729 px and the required target is 694 px. The engine-house leftmost footing must be at x=422, the near corner at x=768, and the rightmost footing of any structure at x=1114 or less. Put the headgear at the far TOP corner centred x=768, not beyond the right-hand gantry. The plant must occupy the small grey guide block's 694 px ground span; preserve the broad transparent canvas margins, and do not fill the 1536 px canvas with the plant.",
+      "references": [
+        "G:/DEV/Terepasztal/guides-535/colliery-r0.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/works-full-colliery.png"
+      ],
+      "returned": [
+        1536,
+        1024
+      ],
+      "measured": {
+        "automaticCorners": {
+          "w": [
+            379,
+            792.4947
+          ],
+          "s": [
+            697.5534,
+            936.8965
+          ],
+          "e": [
+            1186,
+            790.8422
+          ]
+        },
+        "width": 807,
+        "limits": [
+          659,
+          694,
+          729
+        ],
+        "tests": {
+          "width": "FAIL"
+        },
+        "remainingTests": "SKIPPED: width refused"
+      },
+      "kept": false,
+      "closest": true,
+      "copiedTo": "colliery-r0.png",
+      "failure": "width 807 px exceeds 729 px by 78 px",
+      "sha256": "9cb4afaab39b07d707352821b7f22d45ca6390f56d6437789803850b988d359e"
+    }
+  ],
+  "status": "STOP: all three r0 attempts refused for width",
+  "keptViews": [],
+  "closestViews": [
+    {
+      "view": 0,
+      "attempt": 3,
+      "file": "colliery-r0.png",
+      "kept": false,
+      "sha256": "9cb4afaab39b07d707352821b7f22d45ca6390f56d6437789803850b988d359e"
+    }
+  ],
+  "unpaintedViews": [
+    1,
+    3,
+    2
+  ],
+  "preview": {
+    "requestedCommand": "node tools/building-sheets.mjs --picture assets/source/rotations-535/colliery/colliery-r0.png",
+    "requestedCommandResult": "not a building picture name: tool requires an age in filename",
+    "fallback": "same tools/building-sheets.mjs drawLook function with explicit t2x2 footprint, r0",
+    "file": "assets/source/buildings-v2/.look/colliery-r0.png",
+    "review": "Closest attempt remains refused for width. Front engine house and three hoppers visible; no turned views generated. Preview shows layout is not square enough; no acceptance inferred from preview."
+  }
+}
