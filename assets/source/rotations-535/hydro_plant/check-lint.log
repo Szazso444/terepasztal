@@ -1,0 +1,4 @@
+
+> terepasztal@0.1.0 lint
+> eslint src tools vite.config.ts vitest.config.ts eslint.config.js
+

@@ -1,0 +1,104 @@
+[
+  {
+    "references": [
+      "G:/DEV/Terepasztal/guides-535/hydro_plant-r0.png",
+      "G:/DEV/Terepasztal/rotations-535/docs/art-direction/images/03-theme-town-growth.png",
+      "G:/DEV/Terepasztal/rotations-535/assets/source/base-v1/hydro-plant.png"
+    ],
+    "file": "raw/hydro_plant-r0-attempt-1.png",
+    "view": "r0",
+    "returned": [1254, 1254],
+    "kept": false,
+    "failure": "width 923 > maximum 506.98828125; all subsequent tests skipped",
+    "measured": {
+      "size": [1254, 1254],
+      "picture": null,
+      "opaqueBox": [241, 357, 1164, 1167],
+      "base": {
+        "w": [241, 894.6891104987776],
+        "s": [865.146596427295, 1213.4267017863524],
+        "e": [1164, 1064],
+        "sure": [true, false]
+      },
+      "width": 923,
+      "widthLimits": [458.00390625, 482.49609375, 506.98828125],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Hydro plant, an oblong stone powerhouse with a water intake, a sluice\r\nand a penstock, a new design (the Design paragraph below). Style: that of the second picture, the\r\nstyle board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades\r\nper material, restrained detail, a strong silhouette. The palette family of the whole game: forest\r\ngreen #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82,\r\ncopper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid,\r\nlower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\r\n\r\nDesign, carried round every view. (1) The powerhouse: an oblong hall of cream limestone courses on a\r\nhigh rusticated stone base, a dark slate gable roof with its ridge along the long front and a small\r\nforest-green vented ridge lantern at its middle, no chimney stack; three tall round-arched windows\r\nwith cream arches and forest-green glazing bars in the long front wall and a forest-green double\r\ndoor at its near end. (2) The water side, on the short end wall at the right: a small cream-stone\r\nintake chamber with a forest-green steel sluice gate and a handwheel on a railed platform, from\r\nwhich one big riveted forest-green penstock pipe with copper-banded flanges runs down the end wall\r\ninto the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace opening in\r\nthe rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is one\r\nbuilding on the guide's oblong base: the intake and the pipe stand on the base, inside the plinth,\r\nnothing at ground level outside it. (5) It must not look like the pump: no flywheel, no elbow pipe\r\nwith a strainer drum, no small cottage with a chimney stack; its silhouette is the long hall with\r\nthe lantern, the three arches, the penstock down the end wall and the sluice with its handwheel.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the long front: three tall round-arched windows with cream arches and\r\nforest-green glazing bars, the forest-green double door at its near end, and the arched tailrace\r\nopening low in the rusticated base. The lower-right wall is the building's right-hand side: the\r\nshort end wall with the water intake: the cream-stone intake chamber with the sluice gate and its\r\nhandwheel on a railed platform, and the riveted green penstock running down the wall into the\r\npowerhouse. The roof is the powerhouse's: dark slate gable roof, its ridge along the long walls,\r\nwith the small forest-green vented lantern in the middle of the ridge, in every view.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold hydro-plant picture: for the stone, the slate, the green iron and the mood, not for its layout\r\n(it has an arched powerhouse, a green penstock and a sluice gate, but it is much larger than one\r\ntile): take its materials, details and character from it, nothing of its layout: the block-out and\r\nthe design paragraph set those.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nRequested output canvas: 1024 x 1024 pixels.",
+    "attempt": 1
+  },
+  {
+    "file": "raw/hydro_plant-r0-attempt-2.png",
+    "view": "r0",
+    "references": [
+      "G:/DEV/Terepasztal/guides-535/hydro_plant-r0.png",
+      "G:/DEV/Terepasztal/rotations-535/docs/art-direction/images/03-theme-town-growth.png",
+      "G:/DEV/Terepasztal/rotations-535/assets/source/base-v1/hydro-plant.png"
+    ],
+    "attempt": 2,
+    "failure": "outer width 882 > maximum 506.98828125; all subsequent tests skipped",
+    "returned": [1254, 1254],
+    "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Hydro plant, an oblong stone powerhouse with a water intake, a sluice\r\nand a penstock, a new design (the Design paragraph below). Style: that of the second picture, the\r\nstyle board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades\r\nper material, restrained detail, a strong silhouette. The palette family of the whole game: forest\r\ngreen #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82,\r\ncopper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid,\r\nlower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\r\n\r\nDesign, carried round every view. (1) The powerhouse: an oblong hall of cream limestone courses on a\r\nhigh rusticated stone base, a dark slate gable roof with its ridge along the long front and a small\r\nforest-green vented ridge lantern at its middle, no chimney stack; three tall round-arched windows\r\nwith cream arches and forest-green glazing bars in the long front wall and a forest-green double\r\ndoor at its near end. (2) The water side, on the short end wall at the right: a small cream-stone\r\nintake chamber with a forest-green steel sluice gate and a handwheel on a railed platform, from\r\nwhich one big riveted forest-green penstock pipe with copper-banded flanges runs down the end wall\r\ninto the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace opening in\r\nthe rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is one\r\nbuilding on the guide's oblong base: the intake and the pipe stand on the base, inside the plinth,\r\nnothing at ground level outside it. (5) It must not look like the pump: no flywheel, no elbow pipe\r\nwith a strainer drum, no small cottage with a chimney stack; its silhouette is the long hall with\r\nthe lantern, the three arches, the penstock down the end wall and the sluice with its handwheel.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the long front: three tall round-arched windows with cream arches and\r\nforest-green glazing bars, the forest-green double door at its near end, and the arched tailrace\r\nopening low in the rusticated base. The lower-right wall is the building's right-hand side: the\r\nshort end wall with the water intake: the cream-stone intake chamber with the sluice gate and its\r\nhandwheel on a railed platform, and the riveted green penstock running down the wall into the\r\npowerhouse. The roof is the powerhouse's: dark slate gable roof, its ridge along the long walls,\r\nwith the small forest-green vented lantern in the middle of the ridge, in every view.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold hydro-plant picture: for the stone, the slate, the green iron and the mood, not for its layout\r\n(it has an arched powerhouse, a green penstock and a sluice gate, but it is much larger than one\r\ntile): take its materials, details and character from it, nothing of its layout: the block-out and\r\nthe design paragraph set those.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nRequested output canvas: 1024 x 1024 pixels.\n\nCorrection: your last r0 base measured 923 px of 1254 where the permitted range is 458 to 507 px and the target is 482 px (374 to 414, target 394, on the 1024 guide). The whole ground-level base, including the intake chamber, must stay between the guide block's outer left and right corners, w (316.7, 814.4), s (547.1, 929.6), e (707.3, 849.6) in 1024 guide pixels. Paint at the block's actual small size and position within the full canvas, not enlarged to fill the picture. The intake and sluice stand within that base, never as a separate ground-level extension. Preserve the guide's 40-game-pixel wall height and 2:1 slopes.",
+    "measured": {
+      "size": [1254, 1254],
+      "picture": null,
+      "opaqueBox": [249, 424, 1131, 1181],
+      "base": {
+        "w": [303, 946.4092638458806],
+        "s": [823.6740600973669, 1203.93044388619],
+        "e": [1131, 1072.0851465982068],
+        "sure": [true, true]
+      },
+      "width": 828,
+      "widthLimits": [458.00390625, 482.49609375, 506.98828125],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width",
+      "manualCorners": {
+        "w": [249, 932],
+        "e": [1131, 1071]
+      },
+      "manualWidth": 882,
+      "manualReason": "Automatic w is inside a quoin step; outer opaque ground edge read by eye and alpha boundary."
+    },
+    "kept": false
+  },
+  {
+    "view": "r0",
+    "attempt": 3,
+    "file": "raw/hydro_plant-r0-attempt-3.png",
+    "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Hydro plant, an oblong stone powerhouse with a water intake, a sluice\r\nand a penstock, a new design (the Design paragraph below). Style: that of the second picture, the\r\nstyle board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades\r\nper material, restrained detail, a strong silhouette. The palette family of the whole game: forest\r\ngreen #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82,\r\ncopper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid,\r\nlower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside\r\nthe plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\r\n\r\nDesign, carried round every view. (1) The powerhouse: an oblong hall of cream limestone courses on a\r\nhigh rusticated stone base, a dark slate gable roof with its ridge along the long front and a small\r\nforest-green vented ridge lantern at its middle, no chimney stack; three tall round-arched windows\r\nwith cream arches and forest-green glazing bars in the long front wall and a forest-green double\r\ndoor at its near end. (2) The water side, on the short end wall at the right: a small cream-stone\r\nintake chamber with a forest-green steel sluice gate and a handwheel on a railed platform, from\r\nwhich one big riveted forest-green penstock pipe with copper-banded flanges runs down the end wall\r\ninto the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace opening in\r\nthe rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is one\r\nbuilding on the guide's oblong base: the intake and the pipe stand on the base, inside the plinth,\r\nnothing at ground level outside it. (5) It must not look like the pump: no flywheel, no elbow pipe\r\nwith a strainer drum, no small cottage with a chimney stack; its silhouette is the long hall with\r\nthe lantern, the three arches, the penstock down the end wall and the sluice with its handwheel.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the long front: three tall round-arched windows with cream arches and\r\nforest-green glazing bars, the forest-green double door at its near end, and the arched tailrace\r\nopening low in the rusticated base. The lower-right wall is the building's right-hand side: the\r\nshort end wall with the water intake: the cream-stone intake chamber with the sluice gate and its\r\nhandwheel on a railed platform, and the riveted green penstock running down the wall into the\r\npowerhouse. The roof is the powerhouse's: dark slate gable roof, its ridge along the long walls,\r\nwith the small forest-green vented lantern in the middle of the ridge, in every view.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold hydro-plant picture: for the stone, the slate, the green iron and the mood, not for its layout\r\n(it has an arched powerhouse, a green penstock and a sluice gate, but it is much larger than one\r\ntile): take its materials, details and character from it, nothing of its layout: the block-out and\r\nthe design paragraph set those.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nRequested output canvas: 1024 x 1024 pixels.\n\nCorrection: your last r0 ground-level base measured 882 px of 1254 from its outer left stone corner to the intake's outer right stone corner (the automatic reading at an inner quoin was 828 px); the maximum is 507 px, target 482 px. You enlarged the guide block instead of painting on it. Keep the full 1024 x 1024 canvas and paint ONLY within the first image's small block: ground corners w (316.7, 814.4), s (547.1, 929.6), e (707.3, 849.6), total ground span about 394 pixels, wall height 320 pixels. On a returned 1254 canvas those ground corners are approximately (388,997), (670,1138), (866,1040), span 482 pixels. Leave the large transparent margins the guide has. Fit the intake chamber and the sluice into the short end ABOVE this same base; they must not extend the building's footprint. Use the guide as the actual edit target, not just inspiration for a large independently composed sprite.",
+    "references": [
+      "G:/DEV/Terepasztal/guides-535/hydro_plant-r0.png",
+      "G:/DEV/Terepasztal/rotations-535/docs/art-direction/images/03-theme-town-growth.png",
+      "G:/DEV/Terepasztal/rotations-535/assets/source/base-v1/hydro-plant.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "size": [1254, 1254],
+      "picture": null,
+      "opaqueBox": [305, 423, 1054, 1139],
+      "base": {
+        "w": [305, 907.9596296033827],
+        "s": [785.9659609717569, 1174.0170195141218],
+        "e": [1054, 1040],
+        "sure": [true, false]
+      },
+      "width": 749,
+      "widthLimits": [458.00390625, 482.49609375, 506.98828125],
+      "tests": {
+        "width": "FAIL"
+      },
+      "stoppedAfter": "width"
+    },
+    "kept": false,
+    "selectedAsClosest": true,
+    "keptFile": "hydro_plant-r0.png",
+    "failure": "width 749 > maximum 506.98828125; all subsequent tests skipped",
+    "nextCorrection": "Correction: your last r0 base measured 749 px of 1254 where the maximum is 507 px and the target is 482 px. Its entire ground-level base including the sluice must occupy only the guide block's 394-pixel span on the requested 1024 canvas. No further call: all three r0 attempts refused for width, so the job stopped."
+  }
+]
