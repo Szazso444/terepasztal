@@ -23,21 +23,49 @@
     "branch": "art/325-buildings-v2, in commit 586865bf, head cd7919ec",
     "sha256": "487bdc4177f28b94b4024be7922d67bce745b202c7d515c8b0c1412ad66e7f0c",
     "scaleK": 0.806
+   },
+   {
+    "prompt": "C33a",
+    "view": "r1",
+    "attempt": 1,
+    "file": "assets/source/rotations-535/house/raw/townhouse-r1-attempt-1.png",
+    "branch": "art/535-rotations (head 272a7108)",
+    "sha256": "d899c79fff4b570a0e36cbe75e53f37a2abf4b7eb397c2ac998b63ea5279ef61",
+    "scaleK": 0.628,
+    "acceptedBy": "the author",
+    "acceptedOn": "2026-10-19",
+    "how": "Accepted as a near miss: the re-test refused it only on the camera rule (the lower-left foot slope 0.452, 0.048 off where 0.03 was allowed; 1.6 degrees by the check). The plan (0.864), the footprint after scaling (8.7 of 16 guide px), the height (0.338, window 0.253 to 0.342) and the light passed, and it is the same cottage turned. Under the new rule of the same day (turned views painted over the 3D scaffolds) no camera test is left for it.",
+    "note": "The kept file assets/source/rotations-535/house/townhouse-r1.png on art/535-rotations holds the bytes of attempt 2 (sha256 6c22d669997358ec229460dcd7e475b942f88317974e120fb111fb0f7951b928), because the stopped run copied its closest-by-width picture over it. Step 0 of the C33a prompt (v14) has Codex copy attempt 1 over it, byte for byte."
    }
   ],
   "removedFromPage": [
-   "C34a (its only view, r3, is accepted)"
+   "C34a (its only view, r3, is accepted)",
+   "C33a, view r1 only (attempt 1 accepted by the author on 2026-10-19; the card keeps r3 and r2)"
   ],
-  "stillOnThePage": "C35a, C21a, C23a, C4e, R8e, C17c, C17d (buildings lane); C18a, C22a, C19a, C20a, C24a, C25a, C26a, C27a, C28a, C29a, C30a, C31a, C32a, C33a, C33b (rotations lane); R7c-1 (people lane). No view of any of them is accepted.",
+  "stillOnThePage": "C35a, C21a, C23a, C4e, R8e, C17c, C17d (buildings lane); C18a, C22a, C19a, C20a, C24a, C25a, C26a, C27a, C28a, C29a, C30a, C31a, C32a, C33a (r3 and r2 only), C33b (rotations lane); R7c-1 (people lane). No view of any of them is accepted, apart from the house r1 above.",
   "notRetested": "R8e: its pictures are R8d's (r2 attempts 7 to 9, r3 15 to 17), refused for plan/camera/crane/light, never for width; they stay refused. R7c-1: the people trial has no width test. C17c, C17d, C18a, C19a, C21a, C23a, C33b, C35a: not run, no pictures.",
-  "nearMissesNote": "See nearMisses: where a picture fails by a hair, the numbers are there so the author can decide; none was accepted on a softer rule than the prompt's."
+  "nearMissesNote": "See nearMisses: where a picture fails by a hair, the numbers are there so the author can decide; none was accepted on a softer rule than the prompt's.",
+  "update20261019": {
+   "decisions": [
+    "Turned views are painted OVER the 3D scaffold renders (branch claude/art-scaffolds-review-2, fc07d589): the lit render is the picture to paint over, the bare render and the json outline are for the silhouette check. Painting stays painting: every surface repainted in the game style, matching r0; the invented surfaces (README of the scaffolds) painted anew, never left soft.",
+    "Acceptance per view: the result's silhouette matches the scaffold outline: IoU at least 0.90 at the best uniform scale (0.85 to 1.15) and shift, and a boundary deviation (symmetric Hausdorff) of at most 3 game px (24 canvas px at 8 px per game px, 18 at 6, 15 at 5). No separate camera, plan or footprint test; the width is a measurement (k = held width / measured width); the height proportion (against the scaffold's bare render), the light and the same building as r0 keep their tests; highlights are reported only.",
+    "C33a r1, attempt 1 accepted by the author (see accepted). The depot a0 r3 acceptance stands (C34a is gone).",
+    "C30a and C31a: r0 keeps the existing art (now 2 x 2); C28a Battery r0 is painted over its scaffold r0 (replaces the wrong-angle painting); C29a (hydro plant) and C35a (narrow depot) have no r0: stage 1 paints r0 freely to its guide with the camera test strict and stops, stage 2 paints r1 to r3 over scaffolds rendered from the accepted r0. C33b stays after C33a; C17c, C17d and R7c-1 unchanged."
+   ],
+   "tests": {
+    "silhouette": "IoU at least 0.90 and boundary deviation at most 3 game px, at the best fit (one uniform factor 0.85 to 1.15 and a shift); the IoU at the nominal scale without shift is reported.",
+    "reported": "base width and k, the two feet slopes, the highlight counts.",
+    "kept": "height as a proportion within 15 per cent of the scaffold's reading of the same measure, light (lower-left wall lighter), same building as r0 and every surface repainted (by eye)."
+   }
+  }
  },
  "nearMisses": [
   {
    "prompt": "C33a",
    "view": "r1",
    "attempt": 1,
-   "why": "The closest picture of the round. It passes the plan (0.864), the footprint after scaling (8.7 of 16), the light, the height (0.338, window 0.253 to 0.342) and looks like the same cottage turned; it fails only the camera rule: the lower-left foot slope is 0.452 (0.048 off where 0.03 is allowed), while the check reports 1.6 degrees. Kept as refused because the author asked for the camera to stay strict; say if a slope of 0.048 (1.6 degrees by the check) may pass."
+   "why": "The closest picture of the round. It passes the plan (0.864), the footprint after scaling (8.7 of 16), the light, the height (0.338, window 0.253 to 0.342) and looks like the same cottage turned; it fails only the camera rule: the lower-left foot slope is 0.452 (0.048 off where 0.03 is allowed), while the check reports 1.6 degrees. Kept as refused because the author asked for the camera to stay strict; say if a slope of 0.048 (1.6 degrees by the check) may pass.",
+   "resolution": "ACCEPTED by the author on 2026-10-19: a slope of 0.048 (1.6 degrees by the check) passes. Recorded in summary.accepted."
   },
   {
    "prompt": "C33a",
@@ -2251,7 +2279,13 @@
   "C33a": {
    "views": {
     "r1": {
-     "accepted": null,
+     "accepted": {
+      "attempt": 1,
+      "by": "the author",
+      "on": "2026-10-19",
+      "sha256": "d899c79fff4b570a0e36cbe75e53f37a2abf4b7eb397c2ac998b63ea5279ef61",
+      "file": "assets/source/rotations-535/house/raw/townhouse-r1-attempt-1.png"
+     },
      "attempts": [
       {
        "attempt": 1,
@@ -2308,8 +2342,9 @@
         "pass": true,
         "how": "by eye on a crop: foot to the eaves at the near corner, about 250 px of 739"
        },
-       "verdict": "refused",
-       "failed": [
+       "verdict": "ACCEPTED by the author on 2026-10-19 (it had been refused only on the camera rule's foot slope, 0.048 off)",
+       "failed": [],
+       "refusedByRule": [
         "camera: slopes 0.452 / -0.5 (error 0.048 / 0, 0.03 allowed), 1.6 degrees by the check"
        ]
       },

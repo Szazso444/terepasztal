@@ -1,167 +1,41 @@
-Paint a new design of the Hydro plant in four views for the isometric railway game in this
-repository, for issue #535 (review 2 of the building pictures): r0 first, then r1, r3 and r2. The
-Hydro plant has so far been drawn as a variation of the Water pump (a small stone house with a
-flywheel and a pipe). The author wants a new design that is clearly its own building: an oblong
-powerhouse by the water, with an intake and a penstock. Footprint 1 x 1 tile; the guide's base is an
-oblong 0.9 x 0.625 tiles (a powerhouse 1.44 times as long as it is deep), so that its silhouette is
-not the pump's square. Keep the game's art direction: the palette, the shading, the materials of the
-stone buildings.
+Paint the new Hydro plant design, STAGE 1 of 2: ONE view, r0, for the isometric railway game in this repository, for issue #535 (review 2 of the building pictures). The Hydro plant has so far been drawn as a variation of the Water pump (a small stone house with a flywheel and a pipe). The author wants a new design that is clearly its own building: an oblong powerhouse by the water, with an intake and a penstock. Footprint 1 x 1 tile; the guide's base is an oblong 0.9 x 0.625 tiles (a powerhouse 1.44 times as long as it is deep), so that its silhouette is not the pump's square. Keep the game's art direction: the palette, the shading, the materials of the stone buildings. This job paints r0 only and then stops: see TWO STAGES.
 
-Work on branch art/535-rotations. It is the lane of the turned views of the old pictures and may not
-exist yet: git fetch origin develop art/535-rotations. If origin/art/535-rotations exists: git
-switch art/535-rotations (git switch -c art/535-rotations origin/art/535-rotations if it is not
-local yet), git pull --ff-only, then git merge origin/develop once if the branch is behind it (stop
-and say where if it conflicts). If it does not exist: git switch -c art/535-rotations
-origin/develop, and push it with git push -u origin art/535-rotations at your first commit. Touch
-nothing outside assets/source/rotations-535/hydro_plant/ (make it, with raw/ inside) and your own measuring script assets/source/rotations-535/hydro_plant/measure-hydro_plant.mjs (below). Never push to main or develop.
-Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte for byte, as
-raw/hydro_plant-r<v>-attempt-<k>.png (v the view, k from 1 for each view; if the job's prompts.json already holds attempts of a view, go on from its highest k and never overwrite or attach one), and record each call in
-assets/source/rotations-535/hydro_plant/prompts.json: {view, attempt, file, prompt, references (in
-order), returned (the size it came back), measured (the numbers below), kept}. Never delete or
-overwrite a picture. Never commit the guides (below). Ask the tool for 1024 x 1024 and record the
-size it returns (a 1024 px canvas has come back 1254 px wide; 1536 x 1024 came back as asked).
+TWO STAGES (the author's decision of 19 October 2026). The new Hydro plant design has no painted r0 yet, so there is nothing to build a 3D scaffold from. STAGE 1, this prompt: you paint r0 ONLY, freely, as an edit of its own guide, with the camera test STRICT (below), and then you STOP: do not paint r1, r3 or r2, even if r0 passes at the first attempt. STAGE 2, a separate prompt that comes later: after the author has accepted r0, Core renders a 3D scaffold from that accepted r0 (the way it did for the other jobs, at the game's exact camera, for r1, r3 and r2), and Codex then paints r1, r3 and r2 OVER those scaffolds, repainting every surface in the game's painted style, with the silhouette of each result checked against the scaffold's outline. The turned views r1, r3 and r2 are not in this prompt, and the guides for them (guides/review2/hydro_plant-r1 to r3) will not be used. Say in your final message that stage 1 is done and that r1 to r3 wait for the scaffolds.
+
+Work on branch art/535-rotations. It is the lane of the turned views of the old pictures and may not exist yet: git fetch origin develop art/535-rotations. If origin/art/535-rotations exists: git switch art/535-rotations (git switch -c art/535-rotations origin/art/535-rotations if it is not local yet), git pull --ff-only, then git merge origin/develop once if the branch is behind it (stop and say where if it conflicts). If it does not exist: git switch -c art/535-rotations origin/develop, and push it with git push -u origin art/535-rotations at your first commit. Touch nothing outside assets/source/rotations-535/hydro_plant/ (make it, with raw/ inside) and your own measuring script assets/source/rotations-535/hydro_plant/measure-hydro_plant.mjs (below). Never push to main or develop. Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte for byte, as raw/hydro_plant-r<v>-attempt-<k>.png (v the view, k from 1 for each view; if the job's prompts.json already holds attempts of a view, go on from its highest k and never overwrite or attach one), and record each call in assets/source/rotations-535/hydro_plant/prompts.json: {view, attempt, file, prompt, references (in order), returned (the size it came back), measured (the numbers below), kept}. Never delete or overwrite a picture. Never commit the guides (below). Ask the tool for 1024 x 1024 and record the size it returns (a 1024 px canvas has come back 1254 px wide; 1536 x 1024 came back as asked).
 
 SHARED BRANCH. Several Codex windows work on art/535-rotations at the same time, each in its own folder under assets/source/rotations-535/. Touch only yours. Before every push: git fetch origin art/535-rotations, then git rebase origin/art/535-rotations (their commits touch other folders), then push; if a push is refused, fetch, rebase and push again. Never force-push.
 
 STATE OF THE FOLDER, from the run of 19 October, re-tested on 19 October after the author's width decision (handoff/codex-review-1019.json and codex-review-1019b.json). ACCEPTED: none. r0 was painted three times (attempts 1 to 3). Re-tested without the width gate none passes. Plan (window 1.22 to 1.65, the lower-left foot the longer): foot ratios 2.088, 1.694 and 1.794. Camera: attempt 2 is 2.6 degrees off (slopes 0.495 and 0.429); in attempt 3 the lower-left slope is 0.553 (0.053 off); in attempt 1 the lower-left slope is 0.511 and the lower-right foot could not be read. Inside the footprint after scaling: all three are inside, but only because the scale is small (k 0.52, 0.58, 0.64): the base the tool reads is the hall with its intake, sluice and penstock laid in a row, far wider than the plinth, and scaling shrinks the whole hall with it. A long limestone hall with three arched windows and a vented ridge lantern, the riveted green penstock and the sluice with handwheels at the short end, a tailrace arch in the base: the design was painted well. Paint the hall, the intake, the sluice and the penstock together on the 1 x 1 plan, so that the walls' two feet have the ratio 1.44 and the whole stands on the plinth. Keep that run's pictures and records where they are, go on from the next attempt number (4), and never attach them to a call. A new picture that passes every test is copied over r0.png.
 
-WHY THIS WAY. The game's camera is 30 degrees down, 2:1. A picture painted from another angle is
-repainted, never stretched, squeezed or sheared to fit: that is the author's standing rule (issue
-#536), because the fit stretches whatever it is given and a stretched building looks wrong. The new
-design has no old r0 to turn: r0 is painted first, on the oblong guide, and its kept picture is the
-master for the other three. Three things were learned on the coaling stage and the Fuel Pump and are
-built into this prompt: paint on the guide, never on an earlier attempt of yours; the painter's building comes out wider than its plinth (that no longer refuses a picture: the width is measured, recorded and scaled by Art at packing), so what is checked first is the camera, the plan and what stands on the ground; and one correction at a time, replacing the last, never a growing
-pile.
+WHY THIS WAY. The game's camera is 30 degrees down, 2:1. A picture painted from another angle is repainted, never stretched, squeezed or sheared to fit: that is the author's standing rule (issue #536). The new design has no old r0 to turn, so r0 is painted first, on the oblong guide, and its camera is tested STRICTLY: it is the picture the scaffold of stage 2 will be built from, and a camera that is off would pass into every turned view. Paint on the guide, never on an earlier attempt of yours; the painter's building comes out wider than its plinth (that no longer refuses a picture: the width is measured, recorded and scaled by Art at packing), so what is checked first is the camera, the plan and what stands on the ground; and one correction at a time, replacing the last, never a growing pile.
 
-THE GUIDES. They are on a branch that is not merged yet (PR #537, art: plan guides for the review-2
-repaints), and they are not to be committed to your art branch. From the repository root:
+THE GUIDE. It is on a branch that is not merged yet (PR #537, art: plan guides for the review-2 repaints), and it is not to be committed to your art branch. From the repository root:
 
   git fetch origin claude/art-guides-review-2
 
-(its head is 21329dd7 or later; if assets/source/buildings-v2/guides/review2/ is already on develop
-in your tree, use those files there and skip the rest of this paragraph). Make a folder OUTSIDE the
-repository, say ../guides-535, and write out of that branch:
+(its head is 21329dd7 or later; if assets/source/buildings-v2/guides/review2/ is already on develop in your tree, use those files there and skip the rest of this paragraph). Make a folder OUTSIDE the repository, say ../guides-535, and write out of that branch:
 
   git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r0.png > ../guides-535/hydro_plant-r0.png
   git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r0-plan.json > ../guides-535/hydro_plant-r0-plan.json
-  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r1.png > ../guides-535/hydro_plant-r1.png
-  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r1-plan.json > ../guides-535/hydro_plant-r1-plan.json
-  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r2.png > ../guides-535/hydro_plant-r2.png
-  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r2-plan.json > ../guides-535/hydro_plant-r2-plan.json
-  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r3.png > ../guides-535/hydro_plant-r3.png
-  git show origin/claude/art-guides-review-2:assets/source/buildings-v2/guides/review2/hydro_plant-r3-plan.json > ../guides-535/hydro_plant-r3-plan.json
 
-Do the same for assets/source/buildings-v2/GUIDE.md and read its section 2 (the rules every picture
-follows) and sections 5 to 7 (making one picture, looking at it, when it fails). The building queue
-does not handle this job: do not run tools/building-queue.mjs. Never git add anything from
-../guides-535. Check that each guide is 1024 x 1024 (the plan's "canvas") and that each plan file
-names job "hydro_plant"; if not, stop and say so. Each guide is a grey plinth (the footprint) with a
-plain grey block on it (the base); the plan files hold the numbers quoted below.
+Do the same for assets/source/buildings-v2/GUIDE.md and read its section 2 (the rules every picture follows) and sections 5 to 7 (making one picture, looking at it, when it fails). The building queue does not handle this job: do not run tools/building-queue.mjs. Never git add anything from ../guides-535. Check that the guide is 1024 x 1024 (the plan's "canvas") and that the plan file names job "hydro_plant"; if not, stop and say so. The guide is a grey plinth (the footprint) with a plain grey block on it (the base); the plan file holds the numbers quoted below.
 
-THE OLD PICTURE. Art-direction reference only (not a master): assets/source/base-v1/hydro-plant.png,
-sha256 9b404cd2224f3728befa6fa7272ee01f06f92c881e384ff21ef2cdb1e422a778. Check its hash first; if it
-differs, stop and say so. It is what the game shows today. It is an art-direction reference only. It
-has a dark glow round the building: that glow is not in the picture you are to make; paint a
-transparent background. What it shows: a stone powerhouse of cream limestone courses with a dark
-slate gable roof, three tall round-arched windows with cream arches and green glazing bars, a big
-forest-green riveted penstock pipe with copper-banded flanges entering the wall, a sluice gate with
-two handwheels and a railing, a forest-green door on a railed stone platform, mossy stone footings.
-(Water pump, to be kept apart from: a small square cottage with a chimney stack, a big dark-green
-flywheel and an elbow pipe ending in a strainer drum.)
+THE OLD PICTURE. Art-direction reference only (not a master): assets/source/base-v1/hydro-plant.png, sha256 9b404cd2224f3728befa6fa7272ee01f06f92c881e384ff21ef2cdb1e422a778. Check its hash first; if it differs, stop and say so. It is what the game shows today. It is an art-direction reference only. It has a dark glow round the building: that glow is not in the picture you are to make; paint a transparent background. What it shows: a stone powerhouse of cream limestone courses with a dark slate gable roof, three tall round-arched windows with cream arches and green glazing bars, a big forest-green riveted penstock pipe with copper-banded flanges entering the wall, a sluice gate with two handwheels and a railing, a forest-green door on a railed stone platform, mossy stone footings. (Water pump, to be kept apart from: a small square cottage with a chimney stack, a big dark-green flywheel and an elbow pipe ending in a strainer drum.)
 
-DESIGN, for r0 and carried round the other views. (1) The powerhouse: an oblong hall of cream
-limestone courses on a high rusticated stone base, a dark slate gable roof with its ridge along the
-long front and a small forest-green vented ridge lantern at its middle, no chimney stack; three tall
-round-arched windows with cream arches and forest-green glazing bars in the long front wall and a
-forest-green double door at its near end. (2) The water side, on the short end wall at the right: a
-small cream-stone intake chamber with a forest-green steel sluice gate and a handwheel on a railed
-platform, from which one big riveted forest-green penstock pipe with copper-banded flanges runs down
-the end wall into the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace
-opening in the rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is
-one building on the guide's oblong base: the intake and the pipe stand on the base, inside the
-plinth, nothing at ground level outside it. (5) It must not look like the pump: no flywheel, no
-elbow pipe with a strainer drum, no small cottage with a chimney stack; its silhouette is the long
-hall with the lantern, the three arches, the penstock down the end wall and the sluice with its
-handwheel.
+DESIGN, for r0 and carried round the other views. (1) The powerhouse: an oblong hall of cream limestone courses on a high rusticated stone base, a dark slate gable roof with its ridge along the long front and a small forest-green vented ridge lantern at its middle, no chimney stack; three tall round-arched windows with cream arches and forest-green glazing bars in the long front wall and a forest-green double door at its near end. (2) The water side, on the short end wall at the right: a small cream-stone intake chamber with a forest-green steel sluice gate and a handwheel on a railed platform, from which one big riveted forest-green penstock pipe with copper-banded flanges runs down the end wall into the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace opening in the rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is one building on the guide's oblong base: the intake and the pipe stand on the base, inside the plinth, nothing at ground level outside it. (5) It must not look like the pump: no flywheel, no elbow pipe with a strainer drum, no small cottage with a chimney stack; its silhouette is the long hall with the lantern, the three arches, the penstock down the end wall and the sluice with its handwheel.
 
-THE PLAN, per view, in guide px (1024 x 1024 canvas, 8 px to a game px, anchor (512, 832)). A
-picture comes back 1254 px wide, 1.2246 times the guide: scale every number by returned width / 1024
-and keep the same places.
+THE PLAN, in guide px (1024 x 1024 canvas, 8 px to a game px, anchor (512, 832)). A picture comes back 1254 px wide, 1.2246 times the guide: scale every number by returned width / 1024 and keep the same places.
 
-r0 (front faces the lower left): footprint 1 x 1 tiles (r0: 1 x 1), long side equal; plinth corners
-w (256, 832), s (512, 960), e (768, 832), n (512, 704). The base's feet: w (316.7, 814.4), s (547.1,
-929.6), e (707.3, 849.6); lower-left foot 230.4, lower-right foot 160.1; block 40 game px high. The
-guide's dark door mark on the lower-right wall is the plan's default: keep the door and the details
-where r0 has them.
+r0 (front faces the lower left): footprint 1 x 1 tiles, long side lower left; plinth corners w (256, 832), s (512, 960), e (768, 832), n (512, 704). The base's feet: w (316.7, 814.4), s (547.1, 929.6), e (707.3, 849.6); lower-left foot 230.4, lower-right foot 160.1; block 40 game px high. The guide's dark door mark on the lower-right wall is the plan's default: keep the door and the details where the design has them.
 
-r1 (front faces the upper left, hidden): footprint 1 x 1 tiles (r0: 1 x 1), long side equal; plinth
-corners w (256, 832), s (512, 960), e (768, 832), n (512, 704). The base's feet: w (316.7, 849.6), s
-(476.9, 929.6), e (707.3, 814.4); lower-left foot 160.1, lower-right foot 230.4; block 40 game px
-high.
+THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The grey plinth is the footprint, 516 px wide in the guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). Art scales a returned picture UNIFORMLY at packing, one factor on both axes and no shear, until its base is the held width, 394 px in the guide (482 px in a 1254 px wide picture). A uniform scale distorts nothing, so the painted width no longer refuses a picture, and you do not try to hit it: paint the building at the size that comes naturally, and never resize it yourself. Measure the base as the coaling stage's was: the opaque width of the drawn base at ground level, from the outer edge of the left corner to the outer edge of the right corner, its outline included; chimneys, canopies, pipes and the like above the ground do not count, but anything standing on the ground does. Record that width (px of the returned picture) and the scale k = held width / measured width in prompts.json, as a measurement. The camera, the plan (the foot ratio), the height (a proportion of the base width), the light and the same building decide; and one more test, because a picture whose parts at ground level stand off the footprint is still wrong after scaling: INSIDE THE FOOTPRINT AFTER SCALING, below. For r0 the held width is 394 px of the guide (482 of 1254) and the plan's foot ratio is 1.439 (1.22 to 1.65), the long side lower left.
 
-r2 (front faces the upper right, hidden): footprint 1 x 1 tiles (r0: 1 x 1), long side equal; plinth
-corners w (256, 832), s (512, 960), e (768, 832), n (512, 704). The base's feet: w (316.7, 814.4), s
-(547.1, 929.6), e (707.3, 849.6); lower-left foot 230.4, lower-right foot 160.1; block 40 game px
-high.
+THE ORDER. Paint r0, three attempts at most (stage 1), and then stop. Every call is an image EDIT of the guide of the view, 1024 x 1024, transparent background: attach the guide first, then the references in the order below, never more.
 
-r3 (front faces the lower right): footprint 1 x 1 tiles (r0: 1 x 1), long side equal; plinth corners
-w (256, 832), s (512, 960), e (768, 832), n (512, 704). The base's feet: w (316.7, 849.6), s (476.9,
-929.6), e (707.3, 814.4); lower-left foot 160.1, lower-right foot 230.4; block 40 game px high. The
-guide's dark door mark on the lower-right wall is the plan's default: keep the door and the details
-where r0 has them.
+REFERENCES, in this order (never an attempt that failed, never a .rejected file): r0: (1) ../guides-535/hydro_plant-r0.png, the guide of the view, the image to edit; (2) docs/art-direction/images/03-theme-town-growth.png, the style board; (3) assets/source/base-v1/hydro-plant.png, the old hydro-plant picture: for the stone, the slate, the green iron and the mood, not for its layout (it has an arched powerhouse, a green penstock and a sluice gate, but it is much larger than one tile)
 
-THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The
-grey plinth is the footprint, 516 px wide in the guide (632 px in a 1254 px wide picture), and the base
-stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). Art scales a returned picture
-UNIFORMLY at packing, one factor on both axes and no shear, until its base is the held width,
-394 px in the guide (482 px in a 1254 px wide picture). A uniform scale distorts nothing, so the painted
-width no longer refuses a picture, and you do not try to hit it: paint the building at the size that
-comes naturally, and never resize it yourself. Measure the base as the coaling stage's was: the
-opaque width of the drawn base at ground level, from the outer edge of the left corner to the outer
-edge of the right corner, its outline included; chimneys, canopies, pipes and the like above the
-ground do not count, but anything standing on the ground does. Record that width (px of the returned
-picture) and the scale k = held width / measured width in prompts.json, as a measurement. The camera, the plan
-(the foot ratio), the height (a proportion of the base width), the light and the same building
-decide; and one more test, because a picture whose parts at ground level stand off the footprint is
-still wrong after scaling: INSIDE THE FOOTPRINT AFTER SCALING, below. The table gives, per view, the
-held width and the plan's foot ratio with its 15 per cent window.
-
-  view  long side     held width (guide px)   held width (returned px)   LL/LR foot
-  r0    equal         394                     482                        1.439 (1.22 to 1.65)
-  r1    equal         394                     482                        0.695 (0.59 to 0.80)
-  r2    equal         394                     482                        1.439 (1.22 to 1.65)
-  r3    equal         394                     482                        0.695 (0.59 to 0.80)
-
-THE ORDER. Paint r0, then r1, then r3, then r2. r0 first: it is repainted too (see the design and
-layout paragraphs above), and its kept picture is the master for the other three. Every call is an
-image EDIT of the guide of its view, 1024 x 1024, transparent background: attach the guide first,
-then the references in the order below, never more.
-
-REFERENCES, in this order (never an attempt that failed, never a .rejected file):
-
-r0: (1) ../guides-535/hydro_plant-r0.png, the guide of the view, the image to edit; (2)
-docs/art-direction/images/03-theme-town-growth.png, the style board; (3)
-assets/source/base-v1/hydro-plant.png, the old hydro-plant picture: for the stone, the slate, the
-green iron and the mood, not for its layout (it has an arched powerhouse, a green penstock and a
-sluice gate, but it is much larger than one tile)
-
-r1: (1) ../guides-535/hydro_plant-r1.png, the guide of the view, the image to edit; (2)
-docs/art-direction/images/03-theme-town-growth.png, the style board; (3)
-assets/source/rotations-535/hydro_plant/hydro_plant-r0.png, the kept r0 of this job;
-
-r3: (1) ../guides-535/hydro_plant-r3.png, the guide of the view, the image to edit; (2)
-docs/art-direction/images/03-theme-town-growth.png, the style board; (3)
-assets/source/rotations-535/hydro_plant/hydro_plant-r0.png, the kept r0 of this job;
-
-r2: (1) ../guides-535/hydro_plant-r2.png, the guide of the view, the image to edit; (2)
-docs/art-direction/images/03-theme-town-growth.png, the style board; (3)
-assets/source/rotations-535/hydro_plant/hydro_plant-r0.png, the kept r0 of this job; (4)
-assets/source/rotations-535/hydro_plant/hydro_plant-r1.png and (5)
-assets/source/rotations-535/hydro_plant/hydro_plant-r3.png, the kept r1 and r3 (only if they passed)
-
-THE PICTURE PROMPT, word for word, on EVERY attempt, the first included (then at most one Correction
-paragraph, below). It has three parts, in this order: PART A, the same for every view; PART B, the
-view's own; PART C, the same for every view.
+THE PICTURE PROMPT, word for word, on EVERY attempt, the first included (then at most one Correction paragraph, below). It has three parts, in this order: PART A, the same for every view; PART B, the view's own (r0 only in stage 1); PART C, the same for every view.
 
 PART A:
 
@@ -221,86 +95,6 @@ old hydro-plant picture: for the stone, the slate, the green iron and the mood, 
 tile): take its materials, details and character from it, nothing of its layout: the block-out and
 the design paragraph set those."
 
-PART B, r1:
-
-"View. The building is turned a quarter turn clockwise seen from above. The front faces the upper
-left, away from the camera, and nothing of it is in this picture: no entrance door and none of the
-front's windows or other features on either visible wall. The lower-left wall is the right-hand
-side; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the
-right-hand side and is r0's lower-right wall, copied as it stands there: the short end wall with the
-water intake: the cream-stone intake chamber with the sluice gate and its handwheel on a railed
-platform, and the riveted green penstock running down the wall into the powerhouse. The lower-right
-wall is the BACK: a plain long wall in cream limestone on the same rusticated base, with a row of
-small windows and the lower run of the penstock; no door and no tailrace arch. The roof is the
-powerhouse's: dark slate gable roof, its ridge along the long walls, with the small forest-green
-vented lantern in the middle of the ridge, in every view.
-
-References: the first is the grey block-out to edit, the second the style board. The third is this
-same building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take
-its materials, details and character from it, and its size. Paint the SAME building at the same
-size, turned on a turntable while the camera stays where it is. It is not a mirror image and not a
-copy of that reference: show the walls named above, and carry the same materials, roof, colours and
-details round the building. Do not paint the reference again. There, in view r0, the lower-left wall
-is the front: the long front with the three arched windows, the double door and the tailrace arch.
-In this picture the front faces away, hidden behind the building: neither visible wall is the front,
-and what the front has does not show on them. The building is exactly as large as in the reference:
-no taller, with no storey more. Its roof is the reference's roof, turned: the same form and ridge,
-with what stands on it at the same places."
-
-PART B, r3:
-
-"View. The building is turned three quarter turns clockwise seen from above. The front faces the
-lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The
-lower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not
-mirrored: the long front: three tall round-arched windows with cream arches and forest-green glazing
-bars, the forest-green double door at its near end, and the arched tailrace opening low in the
-rusticated base. The lower-left wall is the left-hand side: the other short end: a plain gable end
-with one louvred window and a drainpipe; no intake and no penstock. The roof is the powerhouse's:
-dark slate gable roof, its ridge along the long walls, with the small forest-green vented lantern in
-the middle of the ridge, in every view.
-
-References: the first is the grey block-out to edit, the second the style board. The third is this
-same building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take
-its materials, details and character from it, and its size. Paint the SAME building at the same
-size, turned on a turntable while the camera stays where it is. It is not a mirror image and not a
-copy of that reference: show the walls named above, and carry the same materials, roof, colours and
-details round the building. The building is exactly as large as in the reference: no taller, with no
-storey more. Its roof is the reference's roof, turned: the same form and ridge, with what stands on
-it at the same places."
-
-PART B, r2:
-
-"View. The building is turned half round. The front faces the upper right, away from the camera, and
-nothing of it is in this picture: no entrance door and none of the front's windows or other features
-on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right
-wall is the left-hand side. The lower-left wall is the BACK, the same wall as the lower-right wall
-of the r1 picture: a plain long wall in cream limestone on the same rusticated base, with a row of
-small windows and the lower run of the penstock; no door and no tailrace arch. The lower-right wall
-is the left-hand side, the same wall as the lower-left wall of the r3 picture: the other short end:
-a plain gable end with one louvred window and a drainpipe; no intake and no penstock. Where r1 or r3
-is not attached, take that wall from these words. The roof is the powerhouse's: dark slate gable
-roof, its ridge along the long walls, with the small forest-green vented lantern in the middle of
-the ridge, in every view.
-
-References: the first is the grey block-out to edit, the second the style board. The third is this
-same building in view r0, the kept r0 of this job, seen from the front, at the game's camera: take
-its materials, details and character from it, and its size. Paint the SAME building at the same
-size, turned on a turntable while the camera stays where it is. It is not a mirror image and not a
-copy of that reference: show the walls named above, and carry the same materials, roof, colours and
-details round the building. Do not paint the reference again. There, in view r0, the lower-left wall
-is the front: the long front with the three arched windows, the double door and the tailrace arch.
-In this picture the front faces away, hidden behind the building: neither visible wall is the front,
-and what the front has does not show on them. About the extra references, the size and the roof. The
-fourth reference is this same building in view r1 (the kept picture): its lower-right wall is the
-BACK, and that wall is the lower-left wall of this picture. The fifth is this same building in view
-r3 (the kept picture): its lower-left wall is the left-hand side, and that wall is the lower-right
-wall of this picture. Copy both walls as they stand in those references: the same height, the same
-shape under the roof, the same windows and doors. The building is exactly as large as in the
-references: no taller, and with no storey more. The roof is the one all the references show, seen
-from behind: the same form, its eaves as low as in the references, and the ridge runs the same way
-across the picture as in the front view. It carries what the references show on the roof, at the
-same places."
-
 PART C:
 
 "Do not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around
@@ -308,70 +102,24 @@ the building. A real RGBA PNG with a transparent background (alpha zero) and opa
 surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,
 or loose objects standing apart from the building."
 
-THE MEASURING SCRIPT. Write assets/source/rotations-535/hydro_plant/measure-hydro_plant.mjs, your own. The shared assets/source/rotations-535/measure.mjs belongs to no job: other windows work on this branch at the same time and rewrote its numbers under each other, so do not use, edit or commit it. Your held width is the guide's number times (the returned picture's width / 1024) for every picture the tool returns, and k = held width / the measured base width (never the width of r0's picture, which is a reading, not a test). checkFile knows depots and one-tile buildings: for any other footprint its complaints about portals or the footprint are not a failure; the camera test is the two foot slopes within 0.03 of 0.50. Your script is built as follows. It reads a picture with pictureOf
-(tools/building-check.mjs) and takes the walls' feet with measureBase (tools/building-fit.mjs); it
-prints, per picture: the size; the opaque box (alpha above 128); the base corners w, s, e; the
-lower-left and lower-right foot (s.x - w.x, e.x - s.x) and their ratio; the base's width e.x - w.x with its outline, and k; the slope of each foot (rise over run; a 30 degree camera gives 0.50) and its
-distance from 0.50; the camera's error in degrees from checkFile(file, 't1', <view>) of
-tools/building-check.mjs (never the command-line form: that writes report.json, which is not yours);
-the counts of opaque pixels (alpha above 128) with red, green and blue all at or above #ECE4D0 and
-within 12 (RGB distance) of #E8AA48; and PASS or FAIL for each test below that a machine can read.
-Where measureBase puts a corner on a crane, a pipe, a canopy post or inside a quoin step, read the
-outer corner of the wall's foot by eye on a zoomed crop and record both values.
+THE MEASURING SCRIPT. Write assets/source/rotations-535/hydro_plant/measure-hydro_plant.mjs, your own. The shared assets/source/rotations-535/measure.mjs belongs to no job: other windows work on this branch at the same time and rewrote its numbers under each other, so do not use, edit or commit it. Your held width is the guide's number times (the returned picture's width / 1024) for every picture the tool returns, and k = held width / the measured base width (never the width of r0's picture, which is a reading, not a test). checkFile knows depots and one-tile buildings: for any other footprint its complaints about portals or the footprint are not a failure; the camera test is the two foot slopes within 0.03 of 0.50. Your script is built as follows. It reads a picture with pictureOf (tools/building-check.mjs) and takes the walls' feet with measureBase (tools/building-fit.mjs); it prints, per picture: the size; the opaque box (alpha above 128); the base corners w, s, e; the lower-left and lower-right foot (s.x - w.x, e.x - s.x) and their ratio; the base's width e.x - w.x with its outline, and k; the slope of each foot (rise over run; a 30 degree camera gives 0.50) and its distance from 0.50; the camera's error in degrees from checkFile(file, 't1', <view>) of tools/building-check.mjs (never the command-line form: that writes report.json, which is not yours); the counts of opaque pixels (alpha above 128) with red, green and blue all at or above #ECE4D0 and within 12 (RGB distance) of #E8AA48; and PASS or FAIL for each test below that a machine can read. Where measureBase puts a corner on a crane, a pipe, a canopy post or inside a quoin step, read the outer corner of the wall's foot by eye on a zoomed crop and record both values.
 
-MEASURE EVERY PICTURE BEFORE YOU RECORD IT, in this order. Before the first call, read nothing:
-there is no old picture to read for the height; the plan gives the number.
+MEASURE EVERY PICTURE BEFORE YOU RECORD IT, in this order. Before the first call, read nothing: there is no old picture to read for the height; the plan gives the number.
 
-- width and scale: a measurement, never a refusal. The base's width in the returned picture's px, and
-  k = the held width from the table / that width. Record both; the picture goes on to the next tests
-  whatever its width;
+- width and scale: a measurement, never a refusal. The base's width in the returned picture's px, and k = the held width / that width. Record both; the picture goes on to the next tests whatever its width;
 
-- plan: lower-left foot over lower-right foot within 15 per cent of the plan's ratio for the view,
-  and the long side on the side the plan names;
+- plan: lower-left foot over lower-right foot within 15 per cent of the plan's ratio, 1.439 (1.22 to 1.65), and the long side lower left;
 
-- camera: both feet's slopes within 0.03 of 0.50 (that is within about 2 degrees of the game's 30),
-  and no problem listed by the check. A picture off by more is repainted, never straightened;
+- camera, STRICT (this is the picture the scaffolds of stage 2 are built from): both feet's slopes within 0.03 of 0.50 (that is within about 2 degrees of the game's 30), and no problem listed by the check. A picture off by more is repainted, never straightened;
 
-- inside the footprint after scaling: take the returned picture in memory (never saved, never
-  committed), scale it uniformly by k, and lay it on the guide with the base's near corner s on the
-  guide's base corner s (the plan numbers above). The lowest opaque pixel of every column must lie
-  inside the plinth: not below its two lower edges (w to s, s to e) and not beyond its left and right
-  corners, by more than 2 game px (16 guide px; the outline is 3 px of that). Canopy posts, steps, door leaves, pipes
-  and the like standing on the ground count. A picture that fails it is repainted with those parts
-  brought inside; never moved, cropped or bent. Record the largest overshoot;
+- inside the footprint after scaling: take the returned picture in memory (never saved, never committed), scale it uniformly by k, and lay it on the guide with the base's near corner s on the guide's base corner s (the plan numbers above). The lowest opaque pixel of every column must lie inside the plinth: not below its two lower edges (w to s, s to e) and not beyond its left and right corners, by more than 2 game px (16 guide px; the outline is 3 px of that). Steps, door leaves, pipes, the intake and the like standing on the ground count. A picture that fails it is repainted with those parts brought inside; never moved, cropped or bent. Record the largest overshoot;
 
-- height, as a proportion (scaling does not change it): the powerhouse wall's height at the near corner s: foot to the eaves, which is the plan's
-  block of 40 game px (320 guide px), 0.82 of the base's width of 390.5 px; there is no old r0 to
-  read for the new design, so the plan's number is the test. Within 15 per cent of that number in
-  every view; r1 to r3 also within 15 per cent of the kept r0's, read the same way;
+- height, as a proportion (scaling does not change it): the powerhouse wall's height at the near corner s: foot to the eaves, which is the plan's block of 40 game px (320 guide px), 0.82 of the base's width of 390.5 px; there is no old r0 to read for the new design, so the plan's number is the test. Within 15 per cent of that number;
 
-- highlights: reported, NOT a pass rule (tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them); the aim is that neither the near-white nor the near-amber count exceeds the old picture's (count it
-  the same way) for r0 and the kept r0's for r1 to r3 (Art caps what is left at packing; lamps and
-  glowing openings that the old picture has may show, as small as there);
+- highlights: reported, NOT a pass rule (tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them); the aim is that neither the near-white nor the near-amber count exceeds the old picture's (count it the same way);
 
-- by eye, on a crop beside the kept r0 and the guide: (a) the same building as the kept r0: the same
-  materials, roof form, colours and details, the same powerhouse with its three arched windows, the
-  vented lantern, the intake chamber with the sluice and the penstock, at the same places (r1 to r3
-  against the kept r0); (b) turned, not mirrored, and the walls as the View line names them, with no
-  front showing in r1 and r2; (c) the base fills its plinth as the block does and nothing at ground
-  level is outside it; the foot of both visible walls is plain and straight; no plinth, ground,
-  shadow or loose object; set beside the Water pump's r0 the silhouette is clearly different
-  (oblong, no flywheel, no chimney stack); (d) the lower-left wall lighter than the lower-right
-  wall; no lettering, people, rails or smoke; nothing orange except what the old picture has.
+- by eye, on a crop beside the guide: (a) the design: the powerhouse with its three arched windows, the vented lantern, the intake chamber with the sluice and the penstock, the tailrace arch, at the places the design gives them; (b) the base fills its plinth as the block does and nothing at ground level is outside it; the foot of both visible walls is plain and straight; no plinth, ground, shadow or loose object; set beside the Water pump's r0 the silhouette is clearly different (oblong, no flywheel, no chimney stack); (c) the lower-left wall lighter than the lower-right wall; no lettering, people, rails or smoke; nothing orange except what the old picture has.
 
-CORRECTIONS AND STOPS. A picture that fails: keep the prompt whole and add under it ONE paragraph
-beginning "Correction:" that names the number it missed and where it belongs, as "your last r1's feet ran at slopes 0.60 and 0.55 where 0.50 and 0.50 are wanted". It replaces the earlier Correction: no prompt has
-more than one. Never attach a picture that failed, never paint on an earlier attempt of yours, and
-never resize, crop, move, stretch, squeeze, shear, rotate or bend a returned picture to make it fit:
-the angles come from the painting, and the size is Art's to scale at packing. At most three attempts a view, 12 calls in all. If
-none passes, keep the closest in raw/, copy it to the view's kept file all the same, mark it kept:
-false in prompts.json with the test it failed and its number, and say so in your message: never
-accept it quietly. If the camera is more than 3 degrees off in all three attempts of a view, stop the job after that view, commit what you have and say so.
+CORRECTIONS AND STOPS. A picture that fails: keep the prompt whole and add under it ONE paragraph beginning "Correction:" that names the number it missed and where it belongs, as "your last r0's feet ran at slopes 0.60 and 0.55 where 0.50 and 0.50 are wanted". It replaces the earlier Correction: no prompt has more than one. Never attach a picture that failed, never paint on an earlier attempt of yours, and never resize, crop, move, stretch, squeeze, shear, rotate or bend a returned picture to make it fit: the angles come from the painting, and the size is Art's to scale at packing. At most three attempts (3 calls in all). If none passes, keep the closest in raw/, copy it to the view's kept file all the same, mark it kept: false in prompts.json with the test it failed and its number, and say so in your message: never accept it quietly. If the camera is more than 3 degrees off in all three attempts, say so.
 
-THE KEPT PICTURES. Copy the passing (or closest) raw file of each view, byte for byte, to
-assets/source/rotations-535/hydro_plant/hydro_plant-r<v>.png (r0, r1, r2, r3). Look at each kept
-picture with node tools/building-sheets.mjs --picture <file> (if it refuses the file name as "not a building picture's name", import its exported drawLook and call it for the footprint and view instead, as earlier jobs did; it lays one picture on grass, into .look/, which is not committed), and at the views side by side: they should be one building of one
-size. Commit "Art: Hydro plant, new design, r0, r1, r3 and r2 on the review-2 guides", push the
-branch and stop. In your message give, for each attempt: the view, the returned size, the base's width (px of the returned picture), the scale k and the held width, the largest overshoot outside the plinth after scaling, the foot ratio, the slopes and the camera
-error, the height number against r0's, the highlight counts against r0's, and which attempt was
-kept; and say plainly which views passed every test and which were kept as the closest.
+THE KEPT PICTURE, AND THE STOP. Copy the passing (or closest) raw file, byte for byte, to assets/source/rotations-535/hydro_plant/hydro_plant-r0.png. Look at it with node tools/building-sheets.mjs --picture <file> (if it refuses the file name as "not a building picture's name", import its exported drawLook and call it for the footprint and view instead, as earlier jobs did; it lays one picture on grass, into .look/, which is not committed), and beside the Water pump's r0. Commit "Art: Hydro plant, new design, r0 on the review-2 guide (stage 1)", push the branch and STOP: r1, r3 and r2 are stage 2 and wait for the scaffolds that Core renders from the accepted r0. In your message give, for each attempt: the returned size, the base's width (px of the returned picture), the scale k and the held width, the largest overshoot outside the plinth after scaling, the foot ratio, the slopes and the camera error, the height number against the plan's, the highlight counts against the old picture's, and which attempt was kept; and say plainly whether r0 passed every test or was kept as the closest.

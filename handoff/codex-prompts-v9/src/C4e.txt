@@ -1,184 +1,61 @@
-Paint two views of the coaling stage (fuel_stop, Steam age a0) again for the isometric railway game
-in this repository, for issue #325: r1, then r3. r0 and r2 are accepted by the author (review 2: "r0
-and r2 are good") and are not painted again: r1 and r3 must match them. This replaces C4d, which is
-off the page. The coaling stage's work is on branch art/325-buildings-v2, as C4d's
-(art/325-fuel-pump is the Fuel Pump's, not this one): git fetch origin art/325-buildings-v2, git
-switch art/325-buildings-v2, git pull --ff-only (head cd7919ec or later). Touch nothing outside
-assets/source/buildings-v2/. Commit there, never stash pictures, push the branch. Never push to main
-or develop. Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte
-for byte, as raw/<id>-attempt-<k>.png, k going on from 16 for r1 and r3 (attempts 1 to 15 exist; go on from the highest number raw/returns.json holds), and add {id, attempt, file, returned, spans,
-top, height, kept} to raw/returns.json for each call.
+Paint two views of the coaling stage (fuel_stop, Steam age a0) for the isometric railway game in this repository, for issue #325: r1, then r3, each OVER a 3D scaffold render of that view. r0 and r2 are accepted by the author (review 2: "r0 and r2 are good") and are not painted again: r1 and r3 must match them. This replaces C4d and the earlier C4e, whose six attempts on the oblong guides all failed the camera (the feet ran steeper than 2:1): the render fixes the shape, the camera and the layout, and you repaint every surface of it in the game's painted style, matching r0 and the accepted r2 and painting the legs and feet r0 never showed anew. A picture is accepted when its silhouette matches the scaffold's outline (overlap at least 0.90, boundary deviation at most 24 canvas px); the camera comes from the scaffold, so there is no separate camera test.
 
-STATE OF THE BRANCH, after the run of 19 October, re-tested on 19 October after the author's width decision (handoff/codex-review-1019.json and codex-review-1019b.json). ACCEPTED: r0 (fuel_stop/fuel_stop-a0-r0.png) and r2 (fuel_stop/fuel_stop-a0-r2.png, byte-identical to raw/fuel_stop-a0-r2-attempt-8.png); no picture of r1 or r3. Six calls were made (r1 and r3, attempts 13 to 15) and none passes. The camera fails in all six: the feet run steeper than 2:1. r1: attempts 13, 14 and 15 are 7.2, 4.4 and 8.1 degrees off (slopes 0.695 and 0.525, 0.642 and 0.473, 0.663 and 0.574; 0.50 and 0.50 wanted). Plan (1.16 to 1.57): 1.380, 1.737 and 1.539 (attempt 14 is out). Height as a proportion, (near corner's row - box.top) / pier span on the picture as returned: 1.376, 1.236 and 1.415 where r0 reads 1.531 (window 1.378 to 1.684): attempt 15 passes it; the old reading of 1.136 came from the fit stretching a picture that is 8 degrees off. Inside the plinth after scaling: 8.5, 36.8 and 22.1 guide px over (16 allowed): only attempt 13 is inside. r3: attempts 13, 14 and 15 are 4.7, 5.7 and 8.1 degrees off (slopes 0.645 and 0.503, 0.665 and 0.446, 0.688 and 0.389). Plan 1.482, 1.452 and 1.400 pass; height 1.417, 1.435 and 1.297 (attempt 15 is low); inside after scaling 17.4, 14.8 and 10.3 guide px over (16 allowed): attempt 13 is out. Attempt 14 of r3 (the winch and chute at the near end as wanted) fails the camera alone as far as measured. r0 and r2 are untouched and r2 is back on the branch. The queue has r1 and r3 as rejected: set them pending (node tools/building-queue.mjs set <id> pending --note "repaint, review 2, second run") before you take. Never attach those pictures. What both views lack is the camera: paint the long lower-left side's foot at exactly 2:1 along the guide's plinth edge, and keep the legs as tall as the guide's piers.
+The coaling stage's work is on branch art/325-buildings-v2, as C4d's (art/325-fuel-pump is the Fuel Pump's, not this one): git fetch origin art/325-buildings-v2, git switch art/325-buildings-v2, git pull --ff-only (head cd7919ec or later). Touch nothing outside assets/source/buildings-v2/. Commit there, never stash pictures, push the branch. Never push to main or develop. Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte for byte, as raw/<id>-attempt-<k>.png, k going on from 16 for r1 and r3 (attempts 1 to 15 exist; go on from the highest number raw/returns.json holds), and add {id, attempt, file, returned, spans, top, height, kept} to raw/returns.json for each call.
 
-WHY AGAIN. C4d's nine attempts all failed. The 62 game px block-out cured the low views only
-partly, because the guide was a square block on a thin plinth, and the painter spread the stage
-wider than the plinth: in the kept attempts of r1, r3 and r2 (9, 9 and 8) the six piers' feet
-spanned 794, 737 and 725 px of the 1254 px picture, against 632 for the plinth: 26, 17 and 15 per
-cent wider. That is measured on all nine of C4d's pictures: Codex paints the stage 15 to 26 per cent
-wider than the plinth. The fit scales a picture by its feet's span, so a wider stage comes out
-lower: the height shortfall, and with the same freedom came the wrong plan (r1's long side 36
-per cent too long, r3's short side widened until the plan read 1.069, nearly square), the
-camera drift, and r3's winch in the middle of the wall instead of at the near end. So the guide
-is new: an OBLONG block on an oblong plinth of the footprint's width, with the six stone pier
-stubs standing on it at the exact places of the stage's six piers, at the same 62 px block height.
-The pier span is measured and recorded first; it no longer refuses a picture (THE SIZE, below).
+STATE OF THE BRANCH. ACCEPTED: r0 (fuel_stop/fuel_stop-a0-r0.png) and r2 (fuel_stop/fuel_stop-a0-r2.png, byte-identical to raw/fuel_stop-a0-r2-attempt-8.png); no picture of r1 or r3 (re-tested on 19 October, numbers in handoff/codex-review-1019b.json). Six calls were made on the oblong guides (r1 and r3, attempts 13 to 15) and none passes: every one fails the camera, the feet running steeper than 2:1 (r1 7.2, 4.4 and 8.1 degrees off; r3 4.7, 5.7 and 8.1). Those pictures stay in raw/ and are never attached. The queue has r1 and r3 as rejected: set them pending (node tools/building-queue.mjs set <id> pending --note "repaint over the scaffold, review 2") before you take.
 
-THE ACCEPTED r2. The author accepted r0 and r2. r2 is raw/fuel_stop-a0-r2-attempt-8.png (the earlier
-round's best; its camera is 3.5 degrees off, which the author accepts). The queue shows r2 as
-rejected and has set its file aside as fuel_stop/fuel_stop-a0-r2.rejected.png, the same picture.
-Since cd7919ec fuel_stop/fuel_stop-a0-r2.png is on the branch: if it is byte-identical to raw/fuel_stop-a0-r2-attempt-8.png and the queue shows r2 generated, skip the rest of this paragraph. Otherwise put it back: check that raw/fuel_stop-a0-r2-attempt-8.png is byte-identical to
-fuel_stop-a0-r2.rejected.png if that file is there; copy it, byte for byte, to
-assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png, and run node tools/building-queue.mjs set
-fuel_stop-a0-r2 generated --note "accepted by the author in review 2, camera 3.5 degrees". If set
-refuses it for its camera, leave the file where it is, say so in your message and go on: r2 is not
-painted again, and r1 and r3 are painted to match it. Do not run redo on r2.
+THE SCAFFOLDS. For every view you paint there is a 3D scaffold render: Core rebuilt the building as a 3D model from its painted r0 and rendered it at the game's exact camera on the guide's canvas. The scaffolds are on a branch that is not merged yet (art: 3D scaffold renders for the turned-view painting jobs, review 2), and they are not to be committed to your art branch. From the repository root:
 
-THE PAINTER'S SPREAD (revised 19 October). The painter fills the grey PLINTH rather than the block that stands on it, so its building comes out wider than the block. The author decided on 19 October that this no longer refuses a picture (THE SIZE, below). Still, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge." It is one sentence, not a second Correction.
+  git fetch origin claude/art-scaffolds-review-2
 
-THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The
-plinth is 516 px wide in the guide, 632 px in a 1254 px picture (1.2246 times as many). The stage's
-pier span, from the outer edge of its leftmost pier's foot to the outer edge of its rightmost
-pier's foot, is held at 516 px of the guide (632 px of 1254): Art scales a returned picture
-UNIFORMLY at packing, one factor on both axes and no shear, until its piers' span is that. A uniform
-scale distorts nothing, so the painted span no longer refuses a picture, and you do not try to hit
-it: paint the stage at the size that comes naturally, and never resize it yourself. Record the span
-and the scale k = held span / measured span. The camera, the plan, the height (a proportion), the
-light and the same stage decide; and the footprint after scaling (below).
+(its head is fc07d589 or later). Make a folder OUTSIDE the repository, say ../scaffolds-535, and write out of that branch, byte for byte (a PowerShell redirect corrupts a PNG: use bash, or cmd /c, or git cat-file blob with --filters off), these 6 files:
 
-THE FILES. The oblong guides are on a branch that is not merged yet, and they are not to be
-committed to your art branch. From the repository root:
-  git fetch origin claude/art-guides-windmill-coaling
-(its head is 830d576b or later; if the guides are already on develop in your tree, use those and
-skip the rest of this paragraph). Make a folder OUTSIDE the repository, say ../guides-0325, and
-write out of that branch, each as
-  git show origin/claude/art-guides-windmill-coaling:assets/source/buildings-v2/guides/<name> > ../guides-0325/<name>
-the six files fuel_stop-oblong-r1.png, fuel_stop-oblong-r2.png, fuel_stop-oblong-r3.png and
-fuel_stop-oblong-r1-plan.json, fuel_stop-oblong-r2-plan.json, fuel_stop-oblong-r3-plan.json (each
-guide is 1024 x 1024). Do the same for assets/source/buildings-v2/GUIDE.md, and read its section 3
-(the oblong guides) and sections 5 to 8 again; the plan files' paintedWidth.words holds the limit
-above. Never git add anything from ../guides-0325. The earlier fuel_stop-r0.png to -r3.png (62 px
-block, square plan) are in your tree: they are no longer the picture you edit, but the queue still
-names them, and the fit measures against them. Check the oblong guides exist and are 1024 x 1024;
-if not, stop and say so.
+  git show origin/claude/art-scaffolds-review-2:assets/source/buildings-v2/scaffolds/fuel_stop/fuel_stop-r1-lit.png > ../scaffolds-535/fuel_stop-r1-lit.png
+  git show origin/claude/art-scaffolds-review-2:assets/source/buildings-v2/scaffolds/fuel_stop/fuel_stop-r1-bare.png > ../scaffolds-535/fuel_stop-r1-bare.png
+  git show origin/claude/art-scaffolds-review-2:assets/source/buildings-v2/scaffolds/fuel_stop/fuel_stop-r1.json > ../scaffolds-535/fuel_stop-r1.json
+  git show origin/claude/art-scaffolds-review-2:assets/source/buildings-v2/scaffolds/fuel_stop/fuel_stop-r3-lit.png > ../scaffolds-535/fuel_stop-r3-lit.png
+  git show origin/claude/art-scaffolds-review-2:assets/source/buildings-v2/scaffolds/fuel_stop/fuel_stop-r3-bare.png > ../scaffolds-535/fuel_stop-r3-bare.png
+  git show origin/claude/art-scaffolds-review-2:assets/source/buildings-v2/scaffolds/fuel_stop/fuel_stop-r3.json > ../scaffolds-535/fuel_stop-r3.json
 
-READ FIRST: assets/source/buildings-v2/GUIDE.md sections 5 to 8 again.
+Per view, in assets/source/buildings-v2/scaffolds/fuel_stop/ on that branch: fuel_stop-r<v>-lit.png is the render with the painting projected back onto the model, its light corrected for the turn: it is the picture you PAINT OVER (shape, camera, layout). fuel_stop-r<v>-bare.png is the same shape in plain clay on a white background, and fuel_stop-r<v>.json holds outline_polygon_px (the silhouette, canvas px), the base and footprint corners, the camera numbers, the canvas, the anchor and the scaffold's own verdict: they are for the SILHOUETTE CHECK, never attached to a call. Read assets/source/buildings-v2/scaffolds/README.md on that branch the same way (how the scaffolds were made, what each is good for). Check that every lit and bare picture is 1024 x 1024 and that each json names job "fuel_stop" and its view and canvas [1024, 1024]; if not, stop and say so. Never git add anything from ../scaffolds-535. Read assets/source/buildings-v2/GUIDE.md too (sections 5 to 8). The scaffolds replace the review-2 plan guides (guides/review2/*) that this prompt used before: they are no longer the picture you edit, and the plan, camera and footprint tests that went with them are gone. The oblong guides of the branch claude/art-guides-windmill-coaling are not used by this job any more.
 
-THE MASTER. assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png, sha256
-49f701ce3e2bd4a3c4b0a2a6194fd1470a56390dda9f241dd7a82c9a2e6c6ce4. Check the hash first; if it
-differs, stop and say so. It is r0, the finished front view, and the first picture of the stage you
-are shown: use it for the stage's colours and materials (planks, iron straps, stone piers, coal),
-for its details and for the building's size. Do not attach any earlier r1 or r3 of yours, nor a
-.rejected, .before or .fitted file of one: they are wrong. The accepted r2 is the one exception,
-below. What r0 shows, to carry round: a raised timber stage on six stone piers, a coal bunker of
-planks with iron straps and corner posts, heaped with coal, on tall X-braced timber legs. The legs,
-from the pier caps up to the bunker's floor, are longer than the bunker's plank wall is deep. The
-front (lower-left in r0) is the SHORT side, two piers and one bay, with the chute sloping out from
-it and the winch drum and chain at its left end. The right-hand side (lower-right in r0) is the LONG
-side, three piers and two braced bays.
+PAINTING OVER A SCAFFOLD (the author's decision of 19 October 2026). The lit render is a rough 3D picture: its shape, its camera and its layout are right, and everything else about it is not a painting. Its surfaces are soft, smeared or patchy, and every wall that r0 did not show is INVENTED by the 3D reconstruction (the invented surfaces of each view are named below under THE VIEWS). Painting stays painting: every call is an image EDIT of the lit render in which you repaint EVERY surface in the game's painted style (crisp pixel-art-inspired clustered shading, three or four shades per material, the style board's look), matching r0's materials and details wherever r0 shows them. The invented surfaces are painted anew: plausibly, in the same building's style, from the materials and details of the sides r0 does show, and never left soft, blurred, smeared or plain. What stays: the outline of the render, its camera, and where every roof, wall, chimney, opening and part stands (nothing is added outside the silhouette or removed from it, nothing moved: the picture is checked against the scaffold's outline, below).
 
-THE PLAN, per view, in guide px (1024 canvas). The walls' feet are w, s and e (left, near, right);
-the plinth's left and right corners stand 31 px further out. The long side is the longer foot:
-  r1 and r3: w (286.7, 814.7), s (546.7, 944.6), e (737.3, 849.3). Lower-left foot 260.0, lower-right
-             foot 190.6: ratio 1.364, the long side LOWER LEFT (the plinth: 290.7 and 221.3).
-  r2:        w (286.7, 849.3), s (477.3, 944.6), e (737.3, 814.7). Lower-left foot 190.6, lower-right
-             foot 260.0: ratio 0.733, the long side LOWER RIGHT (the plinth: 221.3 and 290.7).
-The six piers: three along the long side, two along the short side, one of them (the near corner's)
-on both. Four of the six show; two stand under the hidden walls. Pier feet, guide px, with the
-near corner last: r1 and r3 long side (286.7, 782.7), (416.7, 847.6), (546.7, 912.6); short side,
-beyond the near corner, (737.3, 817.3); r2 long side (477.3, 912.6), (607.3, 847.6), (737.3, 782.7);
-short side (286.7, 817.3). The block stands at height 62 game px: the near corner's row is 944.64
-and the far corner's top row 191.36. The numbers in the plan files are the ones to read.
+THE MASTER. assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r0.png, sha256 49f701ce3e2bd4a3c4b0a2a6194fd1470a56390dda9f241dd7a82c9a2e6c6ce4. Check the hash first; if it differs, stop and say so. It is r0, the finished front view, and the first picture of the stage you are shown: use it for the stage's colours and materials (planks, iron straps, stone piers, coal), for its details and for the building's size. Do not attach any earlier r1 or r3 of yours, nor a .rejected, .before or .fitted file of one: they are wrong. The accepted r2 is the one exception, below. What r0 shows, to carry round: a raised timber stage on six stone piers, a coal bunker of planks with iron straps and corner posts, heaped with coal, on tall X-braced timber legs. The legs, from the pier caps up to the bunker's floor, are longer than the bunker's plank wall is deep. The front (lower-left in r0) is the SHORT side, two piers and one bay, with the chute sloping out from it and the winch drum and chain at its left end. The right-hand side (lower-right in r0) is the LONG side, three piers and two braced bays.
 
-PUT THE VIEWS BACK. Run node tools/building-queue.mjs redo fuel_stop-a0-r1 and redo fuel_stop-a0-r3
-WITHOUT --yes first and read what each says it would undo. The queue says that redoing r1 or r3 also
-puts the r2 of its age back: r2 is accepted and must stay. If it names fuel_stop-a0-r2, do not add
---yes; put the two pictures back with node tools/building-queue.mjs set fuel_stop-a0-r1 pending
---note "repaint on the oblong guide" and the same for r3. If it names nothing else, run it with
---yes. Then run node tools/building-queue.mjs status and check that r1 and r3 are pending and r0 and
-r2 generated. Do not run "next"; use show and take with each id: r1, then r3.
+THE ACCEPTED r2. The author accepted r0 and r2. r2 is raw/fuel_stop-a0-r2-attempt-8.png (the earlier round's best; its camera is 3.5 degrees off, which the author accepts). The queue shows r2 as rejected and has set its file aside as fuel_stop/fuel_stop-a0-r2.rejected.png, the same picture. Since cd7919ec fuel_stop/fuel_stop-a0-r2.png is on the branch: if it is byte-identical to raw/fuel_stop-a0-r2-attempt-8.png and the queue shows r2 generated, skip the rest of this paragraph. Otherwise put it back: check that raw/fuel_stop-a0-r2-attempt-8.png is byte-identical to fuel_stop-a0-r2.rejected.png if that file is there; copy it, byte for byte, to assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png, and run node tools/building-queue.mjs set fuel_stop-a0-r2 generated --note "accepted by the author in review 2, camera 3.5 degrees". If set refuses it for its camera, leave the file where it is, say so in your message and go on: r2 is not painted again, and r1 and r3 are painted to match it. Do not run redo on r2.
 
-EACH VIEW. show <id> lists the references and prints the prompt and its "edit this" line, which
-names the square guide: paint instead as an edit of the OBLONG guide of the view
-(../guides-0325/fuel_stop-oblong-r<v>.png), the first picture attached, and then the references show
-lists, in its order, without the square guide; ask for the size it prints, transparent background.
-Take it with take <id> --from <file>, look at .look/<id>.png, measure (below), then set <id>
-generated --note "<measurements>". Paste the printed prompt whole, then the view's Correction below,
-on EVERY attempt, the first included. Attach the accepted r2 after the references show lists
-(assets/source/buildings-v2/.fitted/fuel_stop-a0-r2.png if the tool has made it, otherwise
-fuel_stop/fuel_stop-a0-r2.png): its lower-left wall is the BACK, which is r1's lower-right wall, and
-its lower-right wall is the left-hand side, which is r3's lower-left wall. r1 and r3 copy those
-walls from it: take its walls, piers, colours and size, not its angle. Put nothing else in the
-picture: no ground, no plinth (the grey plinth is the footprint, not a thing to paint), no shadow,
-text, border, glow or extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as
-strong as selection amber #E8AA48 on the timber.
+THE VIEWS, one line each: what the scaffold shows and what it invented. Canvas 1024 x 1024, 8 canvas px to a game px.
 
-For r1: Correction: the earlier r1 came back a low, long bin with its feet steeper than the game's 2:1 (slopes 0.66 and 0.57 where 0.50 and 0.50). Edit the oblong grey guide: it is one stage
-on its plinth. The six stone piers stand on the six pier stubs of the guide, at their places;
-nothing stands outside the plinth, and the feet of the piers run two pixels across for each pixel down. The block's height is the stage's full height: the post tops and the
-coal heap reach its top face, on legs as tall as r0's, longer from the pier caps to the bunker's
-floor than the bunker's plank wall is deep. The bunker is r0's, the same size, no longer and no
-deeper. The back (the lower-right wall) is the accepted r2's lower-left wall. The lower-left wall is
-the right-hand side, the long side: three piers and two X-braced bays, its foot 1.364 times the
-lower-right wall's. The lower-right wall is the back, the short side: two piers and one bay. The
-chute, the winch and the chain are on the front, out of sight: none of them shows.
+r1 (the front faces the upper left, hidden; the lower-left wall is the right-hand side, the long side (three piers, two X-braced bays), the lower-right wall the back, the short side (two piers, one bay)): INVENTED in the render: the far legs and feet. Everything else on it is r0's, projected onto the model and soft. The scaffold's own verdict (warn: Shape right; legs, braces and stone feet are soft, the chute from r0 is clean.)
+r3 (the front faces the lower right: the lower-right wall is the front, the short side with the chute and the winch drum and chain at its near end; the lower-left wall is the left-hand side, the long side): INVENTED in the render: the far legs. Everything else on it is r0's, projected onto the model and soft. The scaffold's own verdict (warn: Winch side and chute seen from the other end; legs smeared, coal heap clean.)
 
-For r3: Correction: the earlier r3 attempts were turned right, with the winch and chute at the near end, but came back with their feet steeper than the game's 2:1 (the lower-left slope 0.65 to 0.69 where 0.50). Edit the
-oblong grey guide: it is one stage on its plinth. The six stone piers stand on the pier stubs of the
-guide, at their places; nothing stands outside the plinth, and the feet of the piers run two pixels across for each pixel down. This view is the front view turned on a
-turntable, not flipped. The lower-right wall is the front, the short side: two piers and one bay,
-with the chute sloping out from it, and the winch drum and chain in the dark opening the guide has
-on that wall, at its near (bottom) end, next to the near corner, not in the middle of the wall. The
-lower-left wall is the left-hand side, the long side, its foot 1.364 times the lower-right wall's:
-three piers and two X-braced bays. The block's height is the stage's full height: the post tops and
-the coal heap reach its top face, on legs as tall as r0's. The left-hand side (the lower-left wall)
-is the accepted r2's lower-right wall.
+THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The stage's pier span, from the outer edge of its leftmost pier's foot to the outer edge of its rightmost pier's foot, is held at 516 px of the canvas (632 px of a 1254 px wide picture): Art scales a returned picture UNIFORMLY at packing, one factor on both axes and no shear, until its piers' span is that. A uniform scale distorts nothing, so the painted span no longer refuses a picture: paint at the size the scaffold has and never resize it yourself. Record the span and k = held span / measured span.
 
-MEASURE BEFORE YOU RECORD (after take, before set), in this order:
-- width and scale: a measurement, never a refusal. On a crop, read the leftmost pier's foot and the
-  rightmost pier's foot (outer edges; chute and chain do not count) and their span in the returned
-  picture's px, and k = 632 / that span (scaled by returned width / 1024 if the picture is another
-  size). Record both; the picture goes on to the fit whatever its span;
-- node tools/building-fit.mjs <id>. Its base corners w, s and e give the lower-left foot
-  s.x - w.x and the lower-right foot e.x - s.x. A picture passes when:
-- inside the footprint after scaling: take the returned picture in memory (never saved, never
-  committed), scale it uniformly by k, and lay it on the guide with the base's near corner s on the
-  guide's base corner s, (546.7, 944.6) in r1 and r3 (the plinth's corners there are w (256, 814.7), s (546.7, 960), e (768, 849.3)). The lowest opaque pixel of every column must lie
-  inside the plinth: not below its two lower edges (w to s, s to e) and not beyond its left and right
-  corners, by more than 2 game px (16 guide px; the outline is 3 px of that). Canopy posts, steps, door leaves, piers and the
-  like standing on the ground count. A picture that fails it is made again with those parts brought
-  inside; never moved, cropped or bent. Record the largest overshoot;
-- height, as a proportion (scaling does not change it): (s.y - box.top) / (e.x - w.x), with the
-  base corners s, e and w that node tools/building-fit.mjs prints for the picture as it was returned
-  (the pier span e.x - w.x) and box.top its opaque box's top row, within 10% of the same number for
-  r0's picture read the same way: 1.531 (s.y 1128, box.top 154, span 636 of 1254; r2 reads 1.484).
-  That is 1.378 to 1.684. The older reading, (944.64 - box.top) / 450.56 of the fitted picture (r0
-  1.464), is the same proportion only while the fit has not had to stretch the picture to the
-  camera: do not use it on a picture whose camera is off. C4d's views were 1.062 to 1.372 by it;
-- plan: lower-left foot / lower-right foot, between 1.16 and 1.57 (r0's 1.364 turned over), within
-  15%; the long side lower left, as above;
-- camera: at most 2 degrees off the game's (checkFile(file, 't1', rot) in tools/building-check.mjs
-  and cameraOff in tools/building-fit.mjs, which set runs; node tools/building-check.mjs <file>
-  prints it). Measure the plan and the height first: if the plan is wrong or the picture is low, do not set it, paint it again;
-- highlights (reported, NOT a pass rule: tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them): count opaque pixels with all three channels at or above #ECE4D0, and within 12
-  (RGB distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may
-  exceed r0's (Art caps the rest at packing);
-- by eye: r3 turned, not mirrored (winch, chain and chute at the lower-right wall's near end,
-  inside the guide's opening); no chute, winch or chain on a hidden wall; six piers, three along
-  the long side; no plinth painted; the same bunker, coal, straps and legs as r0; lower-left wall
-  lighter than lower-right.
-A picture refused for its camera alone, that passes the other tests, is handled by the tool
-(GUIDE.md section 7: `next` hands it out to paint again from its own earlier self; also attach
-.fitted/fuel_stop-a0-r0.png). A picture that fails the plan, the height or the footprint is made again
-from the printed prompt: keep every Correction paragraph of that view and add one that begins
-"Correction:" and names the number it missed, as "your last r1's feet ran at slopes 0.66 and 0.57 where 0.50 and 0.50 are wanted". Never attach a picture that failed to paint again from, and
-never stretch, squeeze, shear or bend a picture: the angles come from the camera, in the painting.
-At most three attempts a view, six calls in all. If none passes, keep the closest in raw/, run
-set <id> rejected --note "<the test it failed and its number>" (the tool sets the file aside), and
-say so in your message; never accept it quietly.
+PUT THE VIEWS BACK. Run node tools/building-queue.mjs redo fuel_stop-a0-r1 and redo fuel_stop-a0-r3 WITHOUT --yes first and read what each says it would undo. The queue says that redoing r1 or r3 also puts the r2 of its age back: r2 is accepted and must stay. If it names fuel_stop-a0-r2, do not add --yes; put the two pictures back with node tools/building-queue.mjs set fuel_stop-a0-r1 pending --note "repaint on the oblong guide" and the same for r3. If it names nothing else, run it with --yes. Then run node tools/building-queue.mjs status and check that r1 and r3 are pending and r0 and r2 generated. Do not run "next"; use show and take with each id: r1, then r3.
 
-CLOSE THE FAMILY. node tools/building-check.mjs --family fuel_stop; node tools/building-sheets.mjs
---family fuel_stop, then look at review/fuel_stop.png: all four views should be one stage of one
-height, r1 and r3 matching r2. Commit "Art: fuel_stop, r1 and r3 on the oblong guides, r3 turned,
-matching the accepted r2", push the branch and stop. In your message give the review sheet's path
-and, for each attempt, its pier span (px of 1254), k, the largest overshoot outside the plinth, spans, ratio, box.top, height, camera and highlight counts, and which attempt was kept.
+EACH VIEW. show <id> lists the references and prints the prompt and its "edit this" line, which names the square guide. Paint instead as an edit of the LIT SCAFFOLD RENDER of the view (../scaffolds-535/fuel_stop-r<v>-lit.png), the first picture attached, and then the references show lists, in its order, without the square guide; ask for the size it prints, transparent background. Take it with take <id> --from <file>, look at .look/<id>.png, measure (below), then set <id> generated --note "<measurements>". Paste the printed prompt whole, then the view's paint-over paragraph below, on EVERY attempt, the first included. Attach the accepted r2 after the references show lists (assets/source/buildings-v2/.fitted/fuel_stop-a0-r2.png if the tool has made it, otherwise fuel_stop/fuel_stop-a0-r2.png): its lower-left wall is the BACK, which is r1's lower-right wall, and its lower-right wall is the left-hand side, which is r3's lower-left wall. r1 and r3 copy those walls from it: take its walls, piers, colours and size, not its angle. Put nothing else in the picture: no ground, no plinth, no shadow, text, border, glow or extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as strong as selection amber #E8AA48 on the timber. The bare render and the json are never attached.
+
+For r1: the paint-over paragraph, added after the printed prompt on every attempt (the first included), then at most one Correction under it: "The first picture is not a grey block-out but a rough 3D render of the coaling stage (a coal bunker on tall X-braced legs and six stone piers) at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, post, opening and part where the render has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it again in the game's painted style, crisp clustered shading, three or four shades per material, taking the materials and details of the building from the other references. The front faces the upper left, hidden: the chute, the winch and the chain are on the front, out of sight, none of them shows. The lower-left wall is the right-hand side, the long side: three piers and two X-braced bays; the lower-right wall is the back, the short side: two piers and one bay, the accepted r2's lower-left wall. The bunker is r0's, the same size, on legs as tall as r0's. Invented by the render, never shown by the front view: the far legs and feet. Paint those surfaces anew, plausibly and in this building's own style, and never leave them soft, blurred, smeared or plain. Light from the upper left: lower-left walls mid, lower-right walls darkest. Paint no plinth, ground or shadow. Do not rotate, tilt, resize, shift or reshape the building." (The scaffold's own verdict on this view: warn: Shape right; legs, braces and stone feet are soft, the chute from r0 is clean.)
+
+For r3: the paint-over paragraph, added after the printed prompt on every attempt (the first included), then at most one Correction under it: "The first picture is not a grey block-out but a rough 3D render of the coaling stage (a coal bunker on tall X-braced legs and six stone piers) at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, post, opening and part where the render has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it again in the game's painted style, crisp clustered shading, three or four shades per material, taking the materials and details of the building from the other references. This view is the front view turned on a turntable, not flipped. The lower-right wall is the front, the short side: two piers and one bay, with the chute sloping out from it and the winch drum and chain in the dark opening on that wall, at its near (bottom) end, next to the near corner, not in the middle of the wall. The lower-left wall is the left-hand side, the long side: three piers and two X-braced bays, the accepted r2's lower-right wall. The block's height is the stage's full height: the post tops and the coal heap reach its top, on legs as tall as r0's. Invented by the render, never shown by the front view: the far legs. Paint those surfaces anew, plausibly and in this building's own style, and never leave them soft, blurred, smeared or plain. Light from the upper left: lower-left walls mid, lower-right walls darkest. Paint no plinth, ground or shadow. Do not rotate, tilt, resize, shift or reshape the building." (The scaffold's own verdict on this view: warn: Winch side and chute seen from the other end; legs smeared, coal heap clean.)
+
+MEASURE BEFORE YOU RECORD (after take, before set), in this order. There is NO separate camera test, foot-ratio test or footprint test any more: the scaffold carries the camera and the plan, and the silhouette decides.
+
+- silhouette, the first test. The scaffold's silhouette is the polygon outline_polygon_px of the view's json (../scaffolds-535/fuel_stop-r<v>.json: canvas px, 1024 x 1024), filled and scaled by s0 = returned width / 1024 to the returned picture. The picture's silhouette is its opaque pixels (alpha above 128) with the enclosed holes filled (the polygon has none). Compute (a) the overlap IoU (intersection over union of the two filled shapes) at s0 with no shift, reported; (b) the best fit: one uniform factor f between 0.85 and 1.15 on both axes and a shift (dx, dy), which is all Art's packing does to a picture, chosen to maximise the IoU (a coarse-to-fine search is fine); record f, dx, dy and the IoU at the best fit; (c) the boundary deviation at the best fit: the largest distance, in canvas px (returned px divided by s0 x f), from any point of the picture's outline to the scaffold's outline and from any point of the scaffold's outline to the picture's (symmetric Hausdorff), after an opening of 2 canvas px on the picture's mask so that antialiasing specks do not count. PASS needs an IoU at the best fit of at least 0.90 AND a boundary deviation of at most 24 canvas px (3 game px; 8 canvas px make a game px). Write the small script yourself (it reads pictureOf from tools/building-check.mjs for the alpha; it is not committed unless the folder already has a measuring script for this family); a picture that fails is repainted, never nudged, stretched or reshaped to fit;
+
+- width and scale: a measurement, never a refusal. The pier span is held at 516 px of the canvas (632 of 1254): on a crop, read the leftmost pier's foot and the rightmost pier's foot (outer edges; chute and chain do not count), and k = held span scaled by returned width / 1024, divided by that span. Record both; the picture goes on to the next tests whatever its width;
+
+- node tools/building-fit.mjs <id>. Its base corners w, s and e give the lower-left foot s.x - w.x and the lower-right foot e.x - s.x: REPORTED, never refused (the slopes of the two feet, 0.50 for a 30 degree camera, go in the record too);
+
+- height, as a proportion (scaling does not change it): (s.y - box.top) / (e.x - w.x), with the base corners s, e and w that node tools/building-fit.mjs prints for the picture as it was returned (the pier span e.x - w.x) and box.top its opaque box's top row (r0 reads 1.531: s.y 1128, box.top 154, span 636 of 1254; r2 reads 1.484). Read it on the picture and on the same view's bare scaffold render the same way (record it as scaffoldReference): within 15 per cent of the scaffold's; r0's number goes in the record too;
+
+- light: the lower-left wall lighter than the lower-right wall, by eye on a crop;
+
+- highlights (reported, NOT a pass rule: tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them): count opaque pixels with all three channels at or above #ECE4D0, and within 12 (RGB distance) of #E8AA48, on your picture and on r0 (its fitted picture); Art caps the rest at packing;
+
+- by eye: r3 turned, not mirrored (winch, chain and chute at the lower-right wall's near end, inside the opening); no chute, winch or chain on a hidden wall; six piers, three along the long side; the same bunker, coal, straps and legs as r0 and the accepted r2; every surface repainted: no soft, blurred, smeared or patchy surface of the render is left anywhere, and above all not on the invented surfaces named under THE VIEWS (crisp courses, planks, timbers or fittings of the same building, never a plain wash); no plinth, ground, shadow or loose object painted; the lower-left wall lighter than the lower-right wall.
+
+A picture refused by `set` for its camera is handled by the tool (GUIDE.md section 7); but a picture that matches the scaffold's silhouette has the game's camera, so if set refuses one that passes the silhouette test, say so in your message with its number and keep the file. A picture that fails the silhouette, the height or the by-eye test is made again from the printed prompt: keep the view's paint-over paragraph and add ONE more paragraph that begins "Correction:" and names the number it missed and where it belongs, as "your last r1 left the roof ridge 31 canvas px above the scaffold's outline, and the back wall soft where a plank wall is wanted"; it replaces the added one from the attempt before. Always edit the lit render of the view, never an earlier attempt of yours; never attach a picture that failed; never resize, crop, move, stretch, squeeze, shear, rotate or bend a returned picture: the shape comes from painting over the scaffold, and the size is Art's to scale at packing. At most three attempts a view, 6 calls in all. If none passes, keep the closest in raw/, run set <id> rejected --note "<the test it failed and its number>" (the tool sets the file aside), and say so in your message; never accept it quietly. If the silhouette's IoU is under 0.80 in all three attempts of a view, stop after that view and say so.
+
+CLOSE THE FAMILY. node tools/building-check.mjs --family fuel_stop; node tools/building-sheets.mjs --family fuel_stop, then look at review/fuel_stop.png: all four views should be one stage of one height, r1 and r3 matching r2. Commit "Art: fuel_stop, r1 and r3 painted over the scaffolds, matching the accepted r2", push the branch and stop. In your message give the review sheet's path and, for each attempt, its pier span (px of 1254), k, the silhouette numbers (IoU at s0, f, dx, dy, the IoU at the best fit, the boundary deviation), spans, box.top, the height against the scaffold's and the highlight counts, and which attempt was kept.
