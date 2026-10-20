@@ -1,0 +1,195 @@
+{
+  "updated": "2026-10-20",
+  "source": "handoff/codex-prompts-v9 on claude/optimistic-thompson-ndc4an-core-handoff (5a76a6b8)",
+  "ledgerBranch": "claude/codex-queue",
+  "worktreeRoot": "G:/DEV/wt",
+  "groups": [
+    {
+      "id": "rotations",
+      "title": "Rotations over scaffolds",
+      "laneBranch": "art/535-rotations",
+      "worktree": "G:/DEV/wt/codex-rotations",
+      "localBranch": "codex-rotations",
+      "status": "ready",
+      "ledger": "codex-queue/status/rotations.md",
+      "note": "Prompts run in this order. C29a stops after r0 (stage 1 of 2). The lane already holds earlier jobs from 19 October: each prompt rebases before it pushes.",
+      "prompts": [
+        {
+          "id": "C18a",
+          "title": "Big Station: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C18a.md"
+        },
+        {
+          "id": "C22a",
+          "title": "Big Farm Halt: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C22a.md"
+        },
+        {
+          "id": "C19a",
+          "title": "Town hall: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C19a.md"
+        },
+        {
+          "id": "C20a",
+          "title": "Warehouse: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C20a.md"
+        },
+        {
+          "id": "C24a",
+          "title": "Water pump: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C24a.md"
+        },
+        {
+          "id": "C25a",
+          "title": "Stone grinder: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C25a.md"
+        },
+        {
+          "id": "C26a",
+          "title": "Oil refinery: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C26a.md"
+        },
+        {
+          "id": "C27a",
+          "title": "Power plant: r1, r3 and r2 painted over the scaffolds on the 1536 x 1024 canvas (3 pictures)",
+          "file": "codex-queue/prompts/C27a.md"
+        },
+        {
+          "id": "C28a",
+          "title": "Battery (substation): r0 painted over its scaffold, then r1, r3 and r2 (4 pictures)",
+          "file": "codex-queue/prompts/C28a.md"
+        },
+        {
+          "id": "C30a",
+          "title": "Colliery: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
+          "file": "codex-queue/prompts/C30a.md"
+        },
+        {
+          "id": "C31a",
+          "title": "Ironworks: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
+          "file": "codex-queue/prompts/C31a.md"
+        },
+        {
+          "id": "C32a",
+          "title": "Oil derrick: r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/C32a.md"
+        },
+        {
+          "id": "C33a",
+          "title": "House (townhouse) turned: r3 and r2 painted over the scaffolds on the tall 1024 x 1536 canvas (2 pictures)",
+          "file": "codex-queue/prompts/C33a.md"
+        },
+        {
+          "id": "C29a",
+          "title": "Hydro plant, a new design: STAGE 1 of 2, r0 only on its guide (1 picture)",
+          "file": "codex-queue/prompts/C29a.md"
+        }
+      ]
+    },
+    {
+      "id": "buildings",
+      "title": "Buildings-v2 lane",
+      "laneBranch": "art/325-buildings-v2",
+      "worktree": "G:/DEV/wt/codex-buildings",
+      "localBranch": "codex-buildings",
+      "status": "ready",
+      "ledger": "codex-queue/status/buildings.md",
+      "note": "C35a stops after r0 (stage 1 of 2). C21a and C23a start with a Step 0 that restores their pictures from the backup snapshot. Only this group uses art/325-buildings-v2.",
+      "prompts": [
+        {
+          "id": "C35a",
+          "title": "Narrow depot a0, STAGE 1 of 2: r0 only, painted freely on its guide (1 picture)",
+          "file": "codex-queue/prompts/C35a.md"
+        },
+        {
+          "id": "C21a",
+          "title": "Small Farm Halt a0: r1 and r3 painted over the scaffolds (2 pictures)",
+          "file": "codex-queue/prompts/C21a.md"
+        },
+        {
+          "id": "C23a",
+          "title": "Quarry a0 r2 painted over its scaffold (1 picture)",
+          "file": "codex-queue/prompts/C23a.md"
+        },
+        {
+          "id": "C4e",
+          "title": "Coaling stage r1 and r3 painted over the scaffolds, matching the accepted r0 and r2 (2 pictures)",
+          "file": "codex-queue/prompts/C4e.md"
+        }
+      ]
+    },
+    {
+      "id": "fuelpump",
+      "title": "Fuel Pump",
+      "laneBranch": "art/325-fuel-pump",
+      "worktree": "G:/DEV/wt/codex-fuelpump",
+      "localBranch": "codex-fuelpump",
+      "status": "ready",
+      "ledger": "codex-queue/status/fuelpump.md",
+      "note": "One prompt. Only this group uses art/325-fuel-pump.",
+      "prompts": [
+        {
+          "id": "R8e",
+          "title": "Fuel Pump r1, r3 and r2 painted over the scaffolds (3 pictures)",
+          "file": "codex-queue/prompts/R8e.md"
+        }
+      ]
+    },
+    {
+      "id": "windmill",
+      "title": "Windmill",
+      "laneBranch": "art/461-windmill-sails",
+      "worktree": "G:/DEV/wt/codex-windmill",
+      "localBranch": "codex-windmill",
+      "status": "ready",
+      "ledger": "codex-queue/status/windmill.md",
+      "note": "C17d runs only after C17c has committed and pushed (it needs the hub point C17c records).",
+      "prompts": [
+        {
+          "id": "C17c",
+          "title": "Windmill body without sails, front view r0, in the game's camera (1 picture)",
+          "file": "codex-queue/prompts/C17c.md"
+        },
+        {
+          "id": "C17d",
+          "title": "Windmill body without sails, r3, r1 and r2, each on its own guide (3 pictures)",
+          "file": "codex-queue/prompts/C17d.md"
+        }
+      ]
+    },
+    {
+      "id": "people",
+      "title": "People",
+      "laneBranch": "art/331-people",
+      "worktree": "G:/DEV/wt/codex-people",
+      "localBranch": "codex-people",
+      "status": "ready",
+      "ledger": "codex-queue/status/people.md",
+      "note": "One prompt. The other back strips wait for this trial.",
+      "prompts": [
+        {
+          "id": "R7c-1",
+          "title": "People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)",
+          "file": "codex-queue/prompts/R7c-1.md"
+        }
+      ]
+    },
+    {
+      "id": "later",
+      "title": "Later (NOT to run)",
+      "laneBranch": "art/535-rotations",
+      "worktree": null,
+      "localBranch": null,
+      "status": "later",
+      "ledger": null,
+      "note": "C33b belongs to the Rotations conversation (same lane) and waits until the author has accepted C33a r1, r3 and r2. Do not run it.",
+      "prompts": [
+        {
+          "id": "C33b",
+          "title": "Biome variants of the House, proposal first (28 pictures)",
+          "file": "codex-queue/prompts/C33b.md"
+        }
+      ]
+    }
+  ]
+}
