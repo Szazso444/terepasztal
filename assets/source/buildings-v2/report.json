@@ -1,6 +1,6 @@
 {
-  "checked": 11,
-  "failed": 1,
+  "checked": 12,
+  "failed": 2,
   "pictures": {
     "water_tower-a0-r0": {
       "ok": true,
@@ -601,6 +601,69 @@
       "camera": {
         "by": 3,
         "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "depot_narrow-a0-r0": {
+      "ok": false,
+      "problems": [
+        "camera off by 6.4°: it looks down from 24.8° where the game looks down from 30° and the building is turned 6.4° towards its lower-right wall (the wall feet slope 0.52 and -0.34, the game's 0.50 and -0.50)"
+      ],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.524,
+          -0.335
+        ],
+        "slopes": [
+          0.524,
+          -0.335
+        ],
+        "base": {
+          "w": [
+            177,
+            791.5
+          ],
+          "s": [
+            800.8,
+            1118.6
+          ],
+          "e": [
+            1124,
+            1010.3
+          ]
+        },
+        "scale": 0.7461,
+        "vertical": 1.1635,
+        "shear": -0.1101,
+        "cx": 650.5,
+        "cy": 976.6,
+        "box": {
+          "left": 147.5,
+          "top": 218,
+          "right": 879.5,
+          "bottom": 979.3
+        },
+        "camera": {
+          "elevation": 24.8,
+          "turn": 6.4
+        },
+        "area": 516258
+      },
+      "ground": [
+        0.96
+      ],
+      "through": [
+        0.12
+      ],
+      "hang": 0,
+      "camera": {
+        "by": 6.4,
+        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
       }
     }
   }

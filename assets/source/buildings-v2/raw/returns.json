@@ -3230,5 +3230,180 @@
     "disposition": "rejected",
     "closestRaw": false,
     "widthMeasurement": "Outer stone pier-foot edges read on crop; chute and chain excluded; returned 1254 px canvas."
+  },
+  {
+    "id": "depot_narrow-a0-r0",
+    "attempt": 1,
+    "file": "raw/depot_narrow-a0-r0-attempt-1.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": {
+      "w": [
+        186,
+        835.2642301638493
+      ],
+      "s": [
+        753.8466280404031,
+        1159.167479691778
+      ],
+      "e": [
+        1126,
+        999.352884611577
+      ],
+      "lowerLeft": 567.8466280404031,
+      "lowerRight": 372.15337195959694,
+      "ratio": 1.5258403411753896,
+      "width": 940,
+      "held": 706.56,
+      "k": 0.7516595744680851
+    },
+    "top": {
+      "nearEaves": 874
+    },
+    "height": {
+      "nearWall": 285.167479691778,
+      "proportion": 0.30336965924657233,
+      "target": 0.385,
+      "range": [
+        0.32725,
+        0.44275
+      ]
+    },
+    "kept": false,
+    "overshoot": 36.06043488815283,
+    "camera": {
+      "off": true,
+      "by": 4.1,
+      "elevation": -0.3,
+      "turn": 4.1
+    },
+    "highlights": {
+      "white": 4053,
+      "amber": 0
+    },
+    "referenceHighlights": {
+      "white": 563,
+      "amber": 2
+    },
+    "refused": "plan 1.52584 outside 1.82..2.46; height .30337 outside .32725..44275; footprint 36.06px >16px; camera 4.1 degrees >2"
+  },
+  {
+    "id": "depot_narrow-a0-r0",
+    "attempt": 2,
+    "file": "raw/depot_narrow-a0-r0-attempt-2.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": {
+      "w": [
+        203,
+        821.2137293552055
+      ],
+      "s": [
+        788.4307442724044,
+        1146.0924865600682
+      ],
+      "e": [
+        1119,
+        1012.1366095024846
+      ],
+      "lowerLeft": 585.4307442724044,
+      "lowerRight": 330.56925572759565,
+      "ratio": 1.7709775913184933,
+      "width": 916,
+      "held": 706.56,
+      "k": 0.7713537117903929
+    },
+    "top": {
+      "nearEaves": 852
+    },
+    "height": {
+      "nearWall": 294.0924865600682,
+      "proportion": 0.3210616665502928,
+      "target": 0.385,
+      "range": [
+        0.32725,
+        0.44275
+      ]
+    },
+    "overshoot": 26.05563248860608,
+    "camera": {
+      "off": true,
+      "by": 4.5,
+      "elevation": -1.7,
+      "turn": 4.5
+    },
+    "highlights": {
+      "white": 1883,
+      "amber": 0
+    },
+    "referenceHighlights": {
+      "white": 563,
+      "amber": 2
+    },
+    "kept": false,
+    "refused": "plan1.77098 outside1.82..2.46; height.32106 outside.32725..44275; footprint26.06px >16px; camera4.5degrees >2",
+    "closestRaw": true
+  },
+  {
+    "id": "depot_narrow-a0-r0",
+    "attempt": 3,
+    "file": "raw/depot_narrow-a0-r0-attempt-3.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "spans": {
+      "w": [
+        177,
+        791.4549781383644
+      ],
+      "s": [
+        800.8489113256452,
+        1118.581588848561
+      ],
+      "e": [
+        1124,
+        1010.2958456389149
+      ],
+      "lowerLeft": 623.8489113256452,
+      "lowerRight": 323.1510886743548,
+      "ratio": 1.930517746001806,
+      "width": 947,
+      "held": 706.56,
+      "k": 0.7461034846884899
+    },
+    "top": {
+      "nearEaves": 822
+    },
+    "height": {
+      "nearWall": 296.58158884856107,
+      "proportion": 0.31318013605972655,
+      "target": 0.385,
+      "range": [
+        0.32725,
+        0.44275
+      ]
+    },
+    "overshoot": 27.90949228092586,
+    "camera": {
+      "off": true,
+      "by": 6.4,
+      "elevation": -5.2,
+      "turn": 6.4
+    },
+    "highlights": {
+      "white": 2221,
+      "amber": 0
+    },
+    "referenceHighlights": {
+      "white": 563,
+      "amber": 2
+    },
+    "kept": false,
+    "refused": "camera6.4degrees >2; height.31318 outside.32725..44275; footprint27.91px >16px"
   }
 ]

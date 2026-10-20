@@ -12,8 +12,8 @@
     }
   ],
   "accepted": [],
-  "mark": 1792449391987,
-  "chat": "01a15645-2fdc-7973-8dbf-44fb32dd8904",
+  "mark": 1792533858913,
+  "chat": "raw",
   "counts": {
     "pictures": 548,
     "families": 27
@@ -2585,9 +2585,9 @@
       "age": 0,
       "rot": 0,
       "file": "assets/source/buildings-v2/depot_narrow/depot_narrow-a0-r0.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "C35a: all 3 attempts refused. Attempt 3 plan1.93052 passes; camera6.4deg exceeds2; height.31318 below.32725; footprint overshoot27.91 guide px exceeds16. Closest overall attempt2 retained in raw. No view accepted."
     },
     {
       "id": "depot_narrow-a0-r1",
