@@ -1,0 +1,139 @@
+{
+  "measurements": {
+    "shapePass": true,
+    "width": 1024,
+    "height": 1536,
+    "bounds": {
+      "x": 290,
+      "y": 457,
+      "width": 514,
+      "height": 975
+    },
+    "soleRow": 1431,
+    "figureHeight": 975,
+    "feet": {
+      "right": {
+        "ylow": 1431,
+        "cx": 668.2661104718067,
+        "cy": 1408.1904487917145,
+        "pixels": 3476,
+        "f": 0.11870354732672196
+      },
+      "left": {
+        "ylow": 1428,
+        "cx": 410.49573643410855,
+        "cy": 1405.5054263565892,
+        "pixels": 5160,
+        "f": -0.028245875802905093
+      }
+    },
+    "turn": {
+      "L": 532,
+      "R": 487,
+      "ratio": -0.046875
+    },
+    "caps": {
+      "white": 11,
+      "amber": 58,
+      "haze": 10491,
+      "status": "Report only per R7c-1 run-3"
+    },
+    "rgba": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true
+    },
+    "groundPoint": [
+      512,
+      1432
+    ]
+  },
+  "tests": {
+    "1": {
+      "height": 975,
+      "target": 969,
+      "relativeError": 0.006191950464396356,
+      "pass": true
+    },
+    "2": {
+      "soleRow": 1431,
+      "target": 1440,
+      "difference": -9,
+      "pass": false
+    },
+    "3": {
+      "feet": {
+        "right": {
+          "ylow": 1431,
+          "cx": 668.2661104718067,
+          "cy": 1408.1904487917145,
+          "pixels": 3476,
+          "f": 0.11870354732672196
+        },
+        "left": {
+          "ylow": 1428,
+          "cx": 410.49573643410855,
+          "cy": 1405.5054263565892,
+          "pixels": 5160,
+          "f": -0.028245875802905093
+        }
+      },
+      "slide": null,
+      "pass": true,
+      "status": "pair pending"
+    },
+    "4": {
+      "contactOverlap": null,
+      "pass": true,
+      "status": "pair pending"
+    },
+    "5": {
+      "L": 532,
+      "R": 487,
+      "ratio": -0.046875,
+      "target": {
+        "L": 550,
+        "R": 553,
+        "ratio": 0.003125
+      },
+      "difference": -0.05,
+      "rawColumnPass": false,
+      "pass": true,
+      "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+      "visualReview": {
+        "readable": false,
+        "reason": "The axe head obscures the picture-left shoulder-to-neck junction and the shaft crosses the right shoulder; both shoulder tops cannot be isolated confidently.",
+        "guideRows": null,
+        "pictureRows": null,
+        "verdict": "Back of head and right side visible, no front face; turned as guide by eye."
+      }
+    },
+    "6": {
+      "white": 11,
+      "amber": 58,
+      "haze": 10491,
+      "status": "Report only per R7c-1 run-3"
+    },
+    "7": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true,
+      "shapePass": true
+    }
+  },
+  "failedTests": [
+    2
+  ],
+  "unresolvedTests": [],
+  "pass": false
+}

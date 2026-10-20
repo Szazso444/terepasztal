@@ -1,0 +1,2388 @@
+{
+  "promptId": "R7c-1",
+  "run": 3,
+  "method": "built-in image edit of original guide plus identity only",
+  "guideCalibration": {
+    "backSwing": {
+      "entries": [
+        {
+          "file": "back-swing-p1.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 1,
+          "top": 472,
+          "bottom": 1440,
+          "headTop": 472,
+          "groundPoint": [
+            512,
+            1432
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.096,
+              0.07,
+              0.294
+            ],
+            "rightAnkle": [
+              0.111,
+              0.07,
+              0.049
+            ],
+            "rightHeel": [
+              0.083,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.238,
+              0.07,
+              0.041
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.041,
+              -0.07,
+              0.278
+            ],
+            "leftAnkle": [
+              -0.102,
+              -0.07,
+              0.079
+            ],
+            "leftHeel": [
+              -0.153,
+              -0.07,
+              0.055
+            ],
+            "leftToe": [
+              -0.003,
+              -0.07,
+              0
+            ],
+            "leftStage": 3,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.067,
+              -0.135,
+              0.653
+            ],
+            "leftWrist": [
+              0.194,
+              -0.135,
+              0.547
+            ],
+            "leftHand": [
+              0.224,
+              -0.135,
+              0.521
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              -0.062,
+              0.135,
+              0.651
+            ],
+            "rightWrist": [
+              -0.096,
+              0.135,
+              0.489
+            ],
+            "rightHand": [
+              -0.104,
+              0.135,
+              0.45
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              932.8
+            ],
+            "rightHip": [
+              572.1,
+              962.9
+            ],
+            "rightKnee": [
+              654.5,
+              1138.6
+            ],
+            "rightAnkle": [
+              667.7,
+              1367.2
+            ],
+            "rightHeel": [
+              643.4,
+              1426.4
+            ],
+            "rightToe": [
+              776.1,
+              1320.3
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              451.9,
+              902.7
+            ],
+            "leftKnee": [
+              487.3,
+              1117.4
+            ],
+            "leftAnkle": [
+              364.2,
+              1370.3
+            ],
+            "leftHeel": [
+              320.2,
+              1415.3
+            ],
+            "leftToe": [
+              449.3,
+              1403.2
+            ],
+            "leftStage": 3,
+            "head": [
+              512,
+              551.5
+            ],
+            "leftShoulder": [
+              396.1,
+              586.8
+            ],
+            "leftElbow": [
+              454,
+              718.1
+            ],
+            "leftWrist": [
+              562.5,
+              765.7
+            ],
+            "leftHand": [
+              588.8,
+              777.2
+            ],
+            "rightShoulder": [
+              627.9,
+              702.8
+            ],
+            "rightElbow": [
+              575.1,
+              891.6
+            ],
+            "rightWrist": [
+              545.6,
+              1061.2
+            ],
+            "rightHand": [
+              538.5,
+              1102.4
+            ]
+          }
+        },
+        {
+          "file": "back-swing-p2.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 2,
+          "top": 419,
+          "bottom": 1440,
+          "headTop": 419,
+          "groundPoint": [
+            512,
+            1379
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.016,
+              0.07,
+              0.285
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.04
+            ],
+            "rightHeel": [
+              -0.04,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.12,
+              0.07,
+              0
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.113,
+              -0.07,
+              0.312
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.094
+            ],
+            "leftHeel": [
+              -0.043,
+              -0.07,
+              0.057
+            ],
+            "leftToe": [
+              0.117,
+              -0.07,
+              0.046
+            ],
+            "leftStage": 4,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.003,
+              0.135,
+              0.64
+            ],
+            "rightWrist": [
+              0.046,
+              0.135,
+              0.481
+            ],
+            "rightHand": [
+              0.056,
+              0.135,
+              0.442
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              870.2
+            ],
+            "rightHip": [
+              572.1,
+              900.3
+            ],
+            "rightKnee": [
+              585.6,
+              1128.7
+            ],
+            "rightAnkle": [
+              572.1,
+              1370.7
+            ],
+            "rightHeel": [
+              537.8,
+              1426.2
+            ],
+            "rightToe": [
+              675.1,
+              1357.5
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              451.9,
+              840.1
+            ],
+            "leftKnee": [
+              549.2,
+              1000.5
+            ],
+            "leftAnkle": [
+              451.9,
+              1258.2
+            ],
+            "leftHeel": [
+              415.2,
+              1312.2
+            ],
+            "leftToe": [
+              552.3,
+              1254.4
+            ],
+            "leftStage": 4,
+            "head": [
+              512,
+              498.5
+            ],
+            "leftShoulder": [
+              396.1,
+              533.8
+            ],
+            "leftElbow": [
+              398.8,
+              705.3
+            ],
+            "leftWrist": [
+              435.4,
+              839.9
+            ],
+            "leftHand": [
+              444.3,
+              872.6
+            ],
+            "rightShoulder": [
+              627.9,
+              649.8
+            ],
+            "rightElbow": [
+              630.6,
+              821.2
+            ],
+            "rightWrist": [
+              667.3,
+              955.9
+            ],
+            "rightHand": [
+              676.2,
+              988.5
+            ]
+          }
+        },
+        {
+          "file": "back-swing-p3.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 3,
+          "top": 423,
+          "bottom": 1440,
+          "headTop": 423,
+          "groundPoint": [
+            512,
+            1383
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.041,
+              0.07,
+              0.278
+            ],
+            "rightAnkle": [
+              -0.102,
+              0.07,
+              0.079
+            ],
+            "rightHeel": [
+              -0.153,
+              0.07,
+              0.055
+            ],
+            "rightToe": [
+              -0.003,
+              0.07,
+              0
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.096,
+              -0.07,
+              0.294
+            ],
+            "leftAnkle": [
+              0.111,
+              -0.07,
+              0.049
+            ],
+            "leftHeel": [
+              0.083,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.238,
+              -0.07,
+              0.041
+            ],
+            "leftStage": 1,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              -0.062,
+              -0.135,
+              0.651
+            ],
+            "leftWrist": [
+              -0.096,
+              -0.135,
+              0.489
+            ],
+            "leftHand": [
+              -0.104,
+              -0.135,
+              0.45
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.067,
+              0.135,
+              0.653
+            ],
+            "rightWrist": [
+              0.194,
+              0.135,
+              0.547
+            ],
+            "rightHand": [
+              0.224,
+              0.135,
+              0.521
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              883.8
+            ],
+            "rightHip": [
+              572.1,
+              913.9
+            ],
+            "rightKnee": [
+              607.5,
+              1128.5
+            ],
+            "rightAnkle": [
+              484.5,
+              1381.4
+            ],
+            "rightHeel": [
+              440.4,
+              1426.4
+            ],
+            "rightToe": [
+              569.5,
+              1414.3
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              451.9,
+              853.7
+            ],
+            "leftKnee": [
+              534.2,
+              1029.5
+            ],
+            "leftAnkle": [
+              547.4,
+              1258.1
+            ],
+            "leftHeel": [
+              523.2,
+              1317.3
+            ],
+            "leftToe": [
+              655.9,
+              1211.2
+            ],
+            "leftStage": 1,
+            "head": [
+              512,
+              502.5
+            ],
+            "leftShoulder": [
+              396.1,
+              537.8
+            ],
+            "leftElbow": [
+              343.2,
+              726.7
+            ],
+            "leftWrist": [
+              313.8,
+              896.3
+            ],
+            "leftHand": [
+              306.6,
+              937.4
+            ],
+            "rightShoulder": [
+              627.9,
+              653.8
+            ],
+            "rightElbow": [
+              685.8,
+              785
+            ],
+            "rightWrist": [
+              794.3,
+              832.6
+            ],
+            "rightHand": [
+              820.7,
+              844.1
+            ]
+          }
+        },
+        {
+          "file": "back-swing-p4.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 4,
+          "top": 473,
+          "bottom": 1440,
+          "headTop": 473,
+          "groundPoint": [
+            512,
+            1433
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.113,
+              0.07,
+              0.312
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.094
+            ],
+            "rightHeel": [
+              -0.043,
+              0.07,
+              0.057
+            ],
+            "rightToe": [
+              0.117,
+              0.07,
+              0.046
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.016,
+              -0.07,
+              0.285
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.04
+            ],
+            "leftHeel": [
+              -0.04,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.12,
+              -0.07,
+              0
+            ],
+            "leftStage": 2,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.003,
+              0.135,
+              0.64
+            ],
+            "rightWrist": [
+              0.046,
+              0.135,
+              0.481
+            ],
+            "rightHand": [
+              0.056,
+              0.135,
+              0.442
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              924.2
+            ],
+            "rightHip": [
+              572.1,
+              954.3
+            ],
+            "rightKnee": [
+              669.4,
+              1114.6
+            ],
+            "rightAnkle": [
+              572.1,
+              1372.4
+            ],
+            "rightHeel": [
+              535.4,
+              1426.3
+            ],
+            "rightToe": [
+              672.5,
+              1368.5
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              451.9,
+              894.1
+            ],
+            "leftKnee": [
+              465.3,
+              1122.6
+            ],
+            "leftAnkle": [
+              451.9,
+              1364.5
+            ],
+            "leftHeel": [
+              417.5,
+              1420.1
+            ],
+            "leftToe": [
+              554.9,
+              1351.4
+            ],
+            "leftStage": 2,
+            "head": [
+              512,
+              552.5
+            ],
+            "leftShoulder": [
+              396.1,
+              587.8
+            ],
+            "leftElbow": [
+              398.8,
+              759.3
+            ],
+            "leftWrist": [
+              435.4,
+              893.9
+            ],
+            "leftHand": [
+              444.3,
+              926.6
+            ],
+            "rightShoulder": [
+              627.9,
+              703.8
+            ],
+            "rightElbow": [
+              630.6,
+              875.2
+            ],
+            "rightWrist": [
+              667.3,
+              1009.9
+            ],
+            "rightHand": [
+              676.2,
+              1042.5
+            ]
+          }
+        }
+      ],
+      "measurements": [
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 290,
+            "y": 472,
+            "width": 516,
+            "height": 969
+          },
+          "soleRow": 1440,
+          "figureHeight": 969,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 665.4211915535445,
+              "cy": 1413.7349170437406,
+              "pixels": 2652,
+              "f": 0.11059114896720042
+            },
+            "left": {
+              "ylow": 1429,
+              "cx": 389.7393072044235,
+              "cy": 1405.471621401854,
+              "pixels": 6149,
+              "f": -0.040291066371264866
+            }
+          },
+          "turn": {
+            "L": 550,
+            "R": 617,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1432
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 419,
+            "width": 366,
+            "height": 1022
+          },
+          "soleRow": 1440,
+          "figureHeight": 1022,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 569.7104860898808,
+              "cy": 1413.6533170284317,
+              "pixels": 3271,
+              "f": -0.0067513670045311475
+            },
+            "left": {
+              "ylow": 1342,
+              "cx": 515.2507978723404,
+              "cy": 1317.6257978723404,
+              "pixels": 3760,
+              "f": 0.07335770966910783
+            }
+          },
+          "turn": {
+            "L": 497,
+            "R": 564,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1379
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 268,
+            "y": 423,
+            "width": 592,
+            "height": 1018
+          },
+          "soleRow": 1440,
+          "figureHeight": 1018,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 509.867900032457,
+              "cy": 1416.522070756248,
+              "pixels": 6162,
+              "f": -0.040274942640917
+            },
+            "left": {
+              "ylow": 1347,
+              "cx": 530.9699392388872,
+              "cy": 1326.4502718260314,
+              "pixels": 3127,
+              "f": 0.07689182323406164
+            }
+          },
+          "turn": {
+            "L": 501,
+            "R": 568,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1383
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 473,
+            "width": 384,
+            "height": 968
+          },
+          "soleRow": 1440,
+          "figureHeight": 968,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 572.713135240211,
+              "cy": 1413.6120522077201,
+              "pixels": 3601,
+              "f": 0.057923282967379364
+            },
+            "left": {
+              "ylow": 1440,
+              "cx": 498.265306122449,
+              "cy": 1413.4054281506417,
+              "pixels": 4753,
+              "f": 0.01481977749252772
+            }
+          },
+          "turn": {
+            "L": 551,
+            "R": 618,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1433
+          ]
+        }
+      ],
+      "slides": [
+        0.11734251597173156,
+        0.033523575636385854,
+        0.062072045741533924
+      ],
+      "overlaps": [
+        0.22078216705940898,
+        0.5042659319045636
+      ]
+    },
+    "backShoulder": {
+      "entries": [
+        {
+          "file": "back-shoulder-p1.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 1,
+          "top": 472,
+          "bottom": 1440,
+          "headTop": 472,
+          "groundPoint": [
+            512,
+            1432
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.096,
+              0.07,
+              0.294
+            ],
+            "rightAnkle": [
+              0.111,
+              0.07,
+              0.049
+            ],
+            "rightHeel": [
+              0.083,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.238,
+              0.07,
+              0.041
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.041,
+              -0.07,
+              0.278
+            ],
+            "leftAnkle": [
+              -0.102,
+              -0.07,
+              0.079
+            ],
+            "leftHeel": [
+              -0.153,
+              -0.07,
+              0.055
+            ],
+            "leftToe": [
+              -0.003,
+              -0.07,
+              0
+            ],
+            "leftStage": 3,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.067,
+              -0.135,
+              0.653
+            ],
+            "leftWrist": [
+              0.194,
+              -0.135,
+              0.547
+            ],
+            "leftHand": [
+              0.224,
+              -0.135,
+              0.521
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              932.8
+            ],
+            "rightHip": [
+              572.1,
+              962.9
+            ],
+            "rightKnee": [
+              654.5,
+              1138.6
+            ],
+            "rightAnkle": [
+              667.7,
+              1367.2
+            ],
+            "rightHeel": [
+              643.4,
+              1426.4
+            ],
+            "rightToe": [
+              776.1,
+              1320.3
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              451.9,
+              902.7
+            ],
+            "leftKnee": [
+              487.3,
+              1117.4
+            ],
+            "leftAnkle": [
+              364.2,
+              1370.3
+            ],
+            "leftHeel": [
+              320.2,
+              1415.3
+            ],
+            "leftToe": [
+              449.3,
+              1403.2
+            ],
+            "leftStage": 3,
+            "head": [
+              512,
+              551.5
+            ],
+            "leftShoulder": [
+              396.1,
+              586.8
+            ],
+            "leftElbow": [
+              454,
+              718.1
+            ],
+            "leftWrist": [
+              562.5,
+              765.7
+            ],
+            "leftHand": [
+              588.8,
+              777.2
+            ],
+            "rightShoulder": [
+              627.9,
+              702.8
+            ],
+            "rightElbow": [
+              791.2,
+              786.5
+            ],
+            "rightWrist": [
+              695.9,
+              636.1
+            ],
+            "rightHand": [
+              726.7,
+              605.9
+            ]
+          }
+        },
+        {
+          "file": "back-shoulder-p2.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 2,
+          "top": 419,
+          "bottom": 1440,
+          "headTop": 419,
+          "groundPoint": [
+            512,
+            1379
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.016,
+              0.07,
+              0.285
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.04
+            ],
+            "rightHeel": [
+              -0.04,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.12,
+              0.07,
+              0
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.113,
+              -0.07,
+              0.312
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.094
+            ],
+            "leftHeel": [
+              -0.043,
+              -0.07,
+              0.057
+            ],
+            "leftToe": [
+              0.117,
+              -0.07,
+              0.046
+            ],
+            "leftStage": 4,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              870.2
+            ],
+            "rightHip": [
+              572.1,
+              900.3
+            ],
+            "rightKnee": [
+              585.6,
+              1128.7
+            ],
+            "rightAnkle": [
+              572.1,
+              1370.7
+            ],
+            "rightHeel": [
+              537.8,
+              1426.2
+            ],
+            "rightToe": [
+              675.1,
+              1357.5
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              451.9,
+              840.1
+            ],
+            "leftKnee": [
+              549.2,
+              1000.5
+            ],
+            "leftAnkle": [
+              451.9,
+              1258.2
+            ],
+            "leftHeel": [
+              415.2,
+              1312.2
+            ],
+            "leftToe": [
+              552.3,
+              1254.4
+            ],
+            "leftStage": 4,
+            "head": [
+              512,
+              498.5
+            ],
+            "leftShoulder": [
+              396.1,
+              533.8
+            ],
+            "leftElbow": [
+              398.8,
+              705.3
+            ],
+            "leftWrist": [
+              435.4,
+              839.9
+            ],
+            "leftHand": [
+              444.3,
+              872.6
+            ],
+            "rightShoulder": [
+              627.9,
+              649.8
+            ],
+            "rightElbow": [
+              791.2,
+              733.5
+            ],
+            "rightWrist": [
+              695.9,
+              583.1
+            ],
+            "rightHand": [
+              726.7,
+              552.9
+            ]
+          }
+        },
+        {
+          "file": "back-shoulder-p3.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 3,
+          "top": 423,
+          "bottom": 1440,
+          "headTop": 423,
+          "groundPoint": [
+            512,
+            1383
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.041,
+              0.07,
+              0.278
+            ],
+            "rightAnkle": [
+              -0.102,
+              0.07,
+              0.079
+            ],
+            "rightHeel": [
+              -0.153,
+              0.07,
+              0.055
+            ],
+            "rightToe": [
+              -0.003,
+              0.07,
+              0
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.096,
+              -0.07,
+              0.294
+            ],
+            "leftAnkle": [
+              0.111,
+              -0.07,
+              0.049
+            ],
+            "leftHeel": [
+              0.083,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.238,
+              -0.07,
+              0.041
+            ],
+            "leftStage": 1,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              -0.062,
+              -0.135,
+              0.651
+            ],
+            "leftWrist": [
+              -0.096,
+              -0.135,
+              0.489
+            ],
+            "leftHand": [
+              -0.104,
+              -0.135,
+              0.45
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              883.8
+            ],
+            "rightHip": [
+              572.1,
+              913.9
+            ],
+            "rightKnee": [
+              607.5,
+              1128.5
+            ],
+            "rightAnkle": [
+              484.5,
+              1381.4
+            ],
+            "rightHeel": [
+              440.4,
+              1426.4
+            ],
+            "rightToe": [
+              569.5,
+              1414.3
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              451.9,
+              853.7
+            ],
+            "leftKnee": [
+              534.2,
+              1029.5
+            ],
+            "leftAnkle": [
+              547.4,
+              1258.1
+            ],
+            "leftHeel": [
+              523.2,
+              1317.3
+            ],
+            "leftToe": [
+              655.9,
+              1211.2
+            ],
+            "leftStage": 1,
+            "head": [
+              512,
+              502.5
+            ],
+            "leftShoulder": [
+              396.1,
+              537.8
+            ],
+            "leftElbow": [
+              343.2,
+              726.7
+            ],
+            "leftWrist": [
+              313.8,
+              896.3
+            ],
+            "leftHand": [
+              306.6,
+              937.4
+            ],
+            "rightShoulder": [
+              627.9,
+              653.8
+            ],
+            "rightElbow": [
+              791.2,
+              737.5
+            ],
+            "rightWrist": [
+              695.9,
+              587.1
+            ],
+            "rightHand": [
+              726.7,
+              556.9
+            ]
+          }
+        },
+        {
+          "file": "back-shoulder-p4.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 4,
+          "top": 473,
+          "bottom": 1440,
+          "headTop": 473,
+          "groundPoint": [
+            512,
+            1433
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.113,
+              0.07,
+              0.312
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.094
+            ],
+            "rightHeel": [
+              -0.043,
+              0.07,
+              0.057
+            ],
+            "rightToe": [
+              0.117,
+              0.07,
+              0.046
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.016,
+              -0.07,
+              0.285
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.04
+            ],
+            "leftHeel": [
+              -0.04,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.12,
+              -0.07,
+              0
+            ],
+            "leftStage": 2,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              924.2
+            ],
+            "rightHip": [
+              572.1,
+              954.3
+            ],
+            "rightKnee": [
+              669.4,
+              1114.6
+            ],
+            "rightAnkle": [
+              572.1,
+              1372.4
+            ],
+            "rightHeel": [
+              535.4,
+              1426.3
+            ],
+            "rightToe": [
+              672.5,
+              1368.5
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              451.9,
+              894.1
+            ],
+            "leftKnee": [
+              465.3,
+              1122.6
+            ],
+            "leftAnkle": [
+              451.9,
+              1364.5
+            ],
+            "leftHeel": [
+              417.5,
+              1420.1
+            ],
+            "leftToe": [
+              554.9,
+              1351.4
+            ],
+            "leftStage": 2,
+            "head": [
+              512,
+              552.5
+            ],
+            "leftShoulder": [
+              396.1,
+              587.8
+            ],
+            "leftElbow": [
+              398.8,
+              759.3
+            ],
+            "leftWrist": [
+              435.4,
+              893.9
+            ],
+            "leftHand": [
+              444.3,
+              926.6
+            ],
+            "rightShoulder": [
+              627.9,
+              703.8
+            ],
+            "rightElbow": [
+              791.2,
+              787.5
+            ],
+            "rightWrist": [
+              695.9,
+              637.1
+            ],
+            "rightHand": [
+              726.7,
+              606.9
+            ]
+          }
+        }
+      ],
+      "measurements": [
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 290,
+            "y": 472,
+            "width": 560,
+            "height": 969
+          },
+          "soleRow": 1440,
+          "figureHeight": 969,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 665.4211915535445,
+              "cy": 1413.7349170437406,
+              "pixels": 2652,
+              "f": 0.11059114896720042
+            },
+            "left": {
+              "ylow": 1429,
+              "cx": 389.7393072044235,
+              "cy": 1405.471621401854,
+              "pixels": 6149,
+              "f": -0.040291066371264866
+            }
+          },
+          "turn": {
+            "L": 550,
+            "R": 553,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1432
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 419,
+            "width": 501,
+            "height": 1022
+          },
+          "soleRow": 1440,
+          "figureHeight": 1022,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 569.7104860898808,
+              "cy": 1413.6533170284317,
+              "pixels": 3271,
+              "f": -0.0067513670045311475
+            },
+            "left": {
+              "ylow": 1342,
+              "cx": 515.2507978723404,
+              "cy": 1317.6257978723404,
+              "pixels": 3760,
+              "f": 0.07335770966910783
+            }
+          },
+          "turn": {
+            "L": 497,
+            "R": 500,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1379
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 268,
+            "y": 423,
+            "width": 582,
+            "height": 1018
+          },
+          "soleRow": 1440,
+          "figureHeight": 1018,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 509.867900032457,
+              "cy": 1416.522070756248,
+              "pixels": 6162,
+              "f": -0.040274942640917
+            },
+            "left": {
+              "ylow": 1347,
+              "cx": 530.9699392388872,
+              "cy": 1326.4502718260314,
+              "pixels": 3127,
+              "f": 0.07689182323406164
+            }
+          },
+          "turn": {
+            "L": 501,
+            "R": 504,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1383
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 473,
+            "width": 501,
+            "height": 968
+          },
+          "soleRow": 1440,
+          "figureHeight": 968,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 572.713135240211,
+              "cy": 1413.6120522077201,
+              "pixels": 3601,
+              "f": 0.057923282967379364
+            },
+            "left": {
+              "ylow": 1440,
+              "cx": 498.265306122449,
+              "cy": 1413.4054281506417,
+              "pixels": 4753,
+              "f": 0.01481977749252772
+            }
+          },
+          "turn": {
+            "L": 551,
+            "R": 554,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1433
+          ]
+        }
+      ],
+      "slides": [
+        0.11734251597173156,
+        0.033523575636385854,
+        0.062072045741533924
+      ],
+      "overlaps": [
+        0.2115685786631149,
+        0.5043955264883643
+      ]
+    }
+  },
+  "attempts": [
+    {
+      "pose": 1,
+      "frame": 0,
+      "attempt": 1,
+      "file": "raw/lumberjack-back-walk-f0-attempt-1.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 1 of 4, contact: his right leg, on the picture's right, leads with the heel down and the toe up; his left leg trails on the picture's left, toe down and heel lifted; left arm forward, right arm back. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p1.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 309,
+            "y": 429,
+            "width": 538,
+            "height": 995
+          },
+          "soleRow": 1423,
+          "figureHeight": 995,
+          "feet": {
+            "right": {
+              "ylow": 1411,
+              "cx": 710.2193090684763,
+              "cy": 1387.8550277606416,
+              "pixels": 3242,
+              "f": 0.16680790262412262
+            },
+            "left": {
+              "ylow": 1423,
+              "cx": 408.2940960088284,
+              "cy": 1400.2319293728158,
+              "pixels": 5437,
+              "f": -0.02338714644667163
+            }
+          },
+          "turn": {
+            "L": 526,
+            "R": 429,
+            "ratio": -0.10104166666666667
+          },
+          "caps": {
+            "white": 14,
+            "amber": 0,
+            "haze": 11955,
+            "status": "Report only per R7c-1 run-3"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1432
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 995,
+            "target": 969,
+            "relativeError": 0.026831785345717174,
+            "pass": true
+          },
+          "2": {
+            "soleRow": 1423,
+            "target": 1440,
+            "difference": -17,
+            "pass": false
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1411,
+                "cx": 710.2193090684763,
+                "cy": 1387.8550277606416,
+                "pixels": 3242,
+                "f": 0.16680790262412262
+              },
+              "left": {
+                "ylow": 1423,
+                "cx": 408.2940960088284,
+                "cy": 1400.2319293728158,
+                "pixels": 5437,
+                "f": -0.02338714644667163
+              }
+            },
+            "slide": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "4": {
+            "contactOverlap": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "5": {
+            "L": 526,
+            "R": 429,
+            "ratio": -0.10104166666666667,
+            "target": {
+              "L": 550,
+              "R": 553,
+              "ratio": 0.003125
+            },
+            "difference": -0.10416666666666667,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "readable": false,
+              "reason": "The axe head obscures the picture-left shoulder-to-neck junction and the shaft crosses the right shoulder; both shoulder tops cannot be isolated confidently.",
+              "guideRows": null,
+              "pictureRows": null,
+              "verdict": "Back of head and right side visible, no front face; turned as guide by eye."
+            }
+          },
+          "6": {
+            "white": 14,
+            "amber": 0,
+            "haze": 11955,
+            "status": "Report only per R7c-1 run-3"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [
+          2
+        ],
+        "unresolvedTests": [],
+        "pass": false
+      },
+      "kept": false
+    },
+    {
+      "pose": 1,
+      "frame": 0,
+      "attempt": 2,
+      "file": "raw/lumberjack-back-walk-f0-attempt-2.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 1 of 4, contact: his right leg, on the picture's right, leads with the heel down and the toe up; his left leg trails on the picture's left, toe down and heel lifted; left arm forward, right arm back. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.\n\nCorrection: your last picture's lowest sole was on row 1423, 17 px above the guide's row 1440, outside the allowed 8 px. Paint the boots exactly over the original guide so the lowest sole stays on row 1440. Your last picture also had a visible haze around the figure: the background must be fully alpha 0, without glow or haze.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p1.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 290,
+            "y": 457,
+            "width": 514,
+            "height": 975
+          },
+          "soleRow": 1431,
+          "figureHeight": 975,
+          "feet": {
+            "right": {
+              "ylow": 1431,
+              "cx": 668.2661104718067,
+              "cy": 1408.1904487917145,
+              "pixels": 3476,
+              "f": 0.11870354732672196
+            },
+            "left": {
+              "ylow": 1428,
+              "cx": 410.49573643410855,
+              "cy": 1405.5054263565892,
+              "pixels": 5160,
+              "f": -0.028245875802905093
+            }
+          },
+          "turn": {
+            "L": 532,
+            "R": 487,
+            "ratio": -0.046875
+          },
+          "caps": {
+            "white": 11,
+            "amber": 58,
+            "haze": 10491,
+            "status": "Report only per R7c-1 run-3"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1432
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 975,
+            "target": 969,
+            "relativeError": 0.006191950464396356,
+            "pass": true
+          },
+          "2": {
+            "soleRow": 1431,
+            "target": 1440,
+            "difference": -9,
+            "pass": false
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1431,
+                "cx": 668.2661104718067,
+                "cy": 1408.1904487917145,
+                "pixels": 3476,
+                "f": 0.11870354732672196
+              },
+              "left": {
+                "ylow": 1428,
+                "cx": 410.49573643410855,
+                "cy": 1405.5054263565892,
+                "pixels": 5160,
+                "f": -0.028245875802905093
+              }
+            },
+            "slide": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "4": {
+            "contactOverlap": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "5": {
+            "L": 532,
+            "R": 487,
+            "ratio": -0.046875,
+            "target": {
+              "L": 550,
+              "R": 553,
+              "ratio": 0.003125
+            },
+            "difference": -0.05,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "readable": false,
+              "reason": "The axe head obscures the picture-left shoulder-to-neck junction and the shaft crosses the right shoulder; both shoulder tops cannot be isolated confidently.",
+              "guideRows": null,
+              "pictureRows": null,
+              "verdict": "Back of head and right side visible, no front face; turned as guide by eye."
+            }
+          },
+          "6": {
+            "white": 11,
+            "amber": 58,
+            "haze": 10491,
+            "status": "Report only per R7c-1 run-3"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [
+          2
+        ],
+        "unresolvedTests": [],
+        "pass": false
+      },
+      "kept": false
+    }
+  ],
+  "selection": {},
+  "callsUsed": 2,
+  "callsLimit": 12,
+  "result": "stopped",
+  "stopReason": "If the same test fails on the same pose twice, stop there and report; the guide is then to be changed, not the prompt.",
+  "stopDetails": "P1 test2 failed twice: sole1423 (-17px), then1431 (-9px), target1440 ±8px.",
+  "closestAttempt": 2
+}

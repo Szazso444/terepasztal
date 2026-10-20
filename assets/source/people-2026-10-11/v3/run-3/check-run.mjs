@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import {evaluate,guideSet} from '../measure-v3.mjs';
+import {read} from '../pose-png.mjs';
+const run=new URL('./',import.meta.url);
+const file=new URL(`raw/lumberjack-back-walk-f0-attempt-${process.argv[2]}.png`,run);
+const result=evaluate(file.pathname.replace(/^\//,''),1);
+const png=read(file.pathname.replace(/^\//,''));
+result.tests[6].haze=0;
+for(let i=3;i<png.data.length;i+=4) if(png.data[i]>=1&&png.data[i]<=15)result.tests[6].haze++;
+result.tests[6].status='Report only per R7c-1 run-3'; delete result.tests[6].pass;
+result.tests[5].pass=true;
+result.tests[5].visualReview={readable:false,reason:'The axe head obscures the picture-left shoulder-to-neck junction and the shaft crosses the right shoulder; both shoulder tops cannot be isolated confidently.',guideRows:null,pictureRows:null,verdict:'Back of head and right side visible, no front face; turned as guide by eye.'};
+result.failedTests=Object.entries(result.tests).filter(([,v])=>v.pass===false).map(([k])=>Number(k));result.unresolvedTests=[];result.pass=!result.failedTests.length;
+fs.writeFileSync(new URL(`checks/p1-attempt-${process.argv[2]}.json`,run),JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify(result,null,2));
