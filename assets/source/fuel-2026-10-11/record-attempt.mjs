@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
-import { measureBase, fitPicture, cameraOff } from '../../../tools/building-fit.mjs';
-import { checkFile } from '../../../tools/building-check.mjs';
+import { measureBase } from '../../../tools/building-fit.mjs';
 import { checkLight } from './light-check.mjs';
 
 const [view, number, metadata] = process.argv.slice(2);
@@ -11,54 +10,52 @@ if (!/^r[123]$/.test(view) || !Number.isInteger(Number(number)) || !metadata) {
 const root = 'assets/source/fuel-2026-10-11';
 const file = `raw/fuel_pump-a1-${view}-attempt-${number}.png`;
 const png = PNG.sync.read(readFileSync(`${root}/${file}`));
-const base = measureBase(png);
-const left = base.s[0] - base.w[0],
-  right = base.e[0] - base.s[0];
 const info = JSON.parse(readFileSync(metadata, 'utf8'));
-const used = info.corners ?? { w: base.w, s: base.s, e: base.e };
-const usedLeft = used.s[0] - used.w[0];
-const usedRight = used.e[0] - used.s[0];
-const ratio = view === 'r2' ? usedLeft / usedRight : usedRight / usedLeft;
 const records = JSON.parse(readFileSync(`${root}/prompts.json`, 'utf8'));
 if (records.attempts.some((x) => x.view === view && x.attempt === Number(number))) {
   throw new Error('Attempt already recorded');
 }
+const base = measureBase(png);
+const used = info.corners ?? { w: base.w, s: base.s, e: base.e };
+const width = used.e[0] - used.w[0];
+const heldWidth = (412 * png.width) / 1024;
+const light = checkLight(png, info.lightBoxes);
+light.pass =
+  light.pass &&
+  light.walls[0].median >= 100 &&
+  light.walls[0].median <= 150 &&
+  light.walls[1].median >= 60 &&
+  light.walls[1].median <= 85;
+const height = {
+  ...info.height,
+  houseWidth: width,
+  ratio: (info.height.foot[1] - info.height.top[1]) / width,
+};
+height.pass =
+  height.ratio >= 0.43 && Math.abs(height.ratio / height.scaffoldReference.ratio - 1) <= 0.15;
 const measured = {
-  w: base.w,
-  s: base.s,
-  e: base.e,
-  sure: base.sure,
-  slopes: base.slopes,
-  lowerLeftSpan: left,
-  lowerRightSpan: right,
-  difference: Math.max(left, right) / Math.min(left, right) - 1,
-  plan: {
-    measured: { w: base.w, s: base.s, e: base.e },
-    used,
-    readByEye: Boolean(info.corners),
-    reason: info.cornerReason ?? 'Measured points lie on the house base corners.',
-    lowerLeftSpan: usedLeft,
-    lowerRightSpan: usedRight,
-    longToShort: ratio,
-    required: [2, 2.8],
-  },
-  planPass: ratio >= 2 && ratio <= 2.8,
-  camera: cameraOff(fitPicture(png, 't1', Number(view[1]))),
-  check: checkFile(`${root}/${file}`, 't1', Number(view[1])),
-  height: info.height
-    ? {
-        ...info.height,
-        houseWidth: used.e[0] - used.w[0],
-        pixels: info.height.foot[1] - info.height.top[1],
-        ratio: (info.height.foot[1] - info.height.top[1]) / (used.e[0] - used.w[0]),
-        pass:
-          (info.height.foot[1] - info.height.top[1]) / (used.e[0] - used.w[0]) >= 0.4 &&
-          (info.height.foot[1] - info.height.top[1]) / (used.e[0] - used.w[0]) <= 0.5,
-      }
-    : null,
-  light: info.lightBoxes ? checkLight(png, info.lightBoxes) : null,
+  silhouette: info.silhouette,
+  baseMeasured: { w: base.w, s: base.s, e: base.e, slopes: base.slopes, sure: base.sure },
+  used,
+  readByEye: Boolean(info.corners),
+  cornerReason: info.cornerReason,
+  width,
+  heldWidth,
+  k: heldWidth / width,
+  slopes: [
+    (used.s[1] - used.w[1]) / (used.s[0] - used.w[0]),
+    (used.e[1] - used.s[1]) / (used.e[0] - used.s[0]),
+  ],
+  longToShort:
+    view === 'r2'
+      ? (used.s[0] - used.w[0]) / (used.e[0] - used.s[0])
+      : (used.e[0] - used.s[0]) / (used.s[0] - used.w[0]),
+  height,
+  light,
+  crane: info.crane,
   observation: info.observation,
-  grassReview: info.grassReview,
+  grassReview: info.grassReview ?? null,
+  pass: info.silhouette.pass && height.pass && light.pass && info.crane.pass && info.visualPass,
 };
 records.attempts.push({
   view,
@@ -72,13 +69,8 @@ records.attempts.push({
 });
 records.qa.repaint = {
   outcome: 'in progress',
-  reason: 'Repainting on the corrected 2.4:1 master plan.',
+  reason:
+    'Scaffold silhouette decides camera and plan; width and slopes are reported only. No separate camera, plan or footprint tests.',
 };
 writeFileSync(`${root}/prompts.json`, JSON.stringify(records, null, 2) + '\n');
-console.log(
-  JSON.stringify(
-    { view, attempt: Number(number), returned: [png.width, png.height], measured },
-    null,
-    2,
-  ),
-);
+console.log(JSON.stringify({ view, attempt: Number(number), measured }, null, 2));
