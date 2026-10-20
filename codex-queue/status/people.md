@@ -1,0 +1,9 @@
+# people
+
+## R7c-1 (2026-10-20 22:17:46 UTC)
+- Result: stopped
+- Lane commit: e8ff134673a38f1ccbe15c58737e28c527de7f4c pushed to origin/art/331-people
+- Views accepted: none
+- Refused attempts: P1 attempt 1: test 2 sole row 1423, target 1440, difference -17 px (limit +/-8); P1 attempt 2: test 2 sole row 1431, difference -9 px (limit +/-8).
+- Stop reason: "If the same test fails on the same pose twice, stop there and report; the guide is then to be changed, not the prompt."
+- Notes: Two built-in image edits of back-shoulder-p1.png plus upper-only lumberjack identity; 2/12 calls. Returned 1024x1536 each; both raw byte hashes verified against tool originals. P2-P4 not painted, no accepted pose, strip/check sheets/overlap not made. Closest attempt 2 remains refused. Tests 1: heights 995/969 (+2.683%) and 975/969 (+0.619%), pass. Tests 3/4 pairs pending. Test 5 machine L/R=526/429 ratio -.1010417 and 532/487 ratio -.046875, reported; axe head/shaft obscure shoulder-to-neck junctions, permitted by-eye back/right turn passes, no front face. Test 6 report white/amber/haze 14/0/11955 and 11/58/10491; never treated as stop. Test 7 PNG type6, four corners alpha0, pass. Swing calibration reproduces f/slides/overlaps; shoulder targets recorded. Original v3 tools unchanged; run-3/check-run.mjs imports them, adds haze and applies changed tests 5/6. Full prompts and tests in assets/source/people-2026-10-11/v3/run-3/prompts.json; report run-3/REPORT.md; raw files run-3/raw/lumberjack-back-walk-f0-attempt-{1,2}.png. Existing run-1/run-2 artifacts untouched. develop already ancestor; fetched lane already ancestor of own commit, so no replay needed before normal push. No application code changed/tests run. G: temp/npm cache used; tool autonomously saved C: originals, copied bytes to G: and left originals alone per README. Worktree clean.
