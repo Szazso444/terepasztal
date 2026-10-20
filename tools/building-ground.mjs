@@ -926,7 +926,7 @@ export async function serialise(data, root = '.') {
 }
 
 /** The game's own code the tool reads, through a Vite server so that it need not be compiled. */
-async function gameModules(root) {
+export async function gameModules(root) {
   const { createServer } = await import('vite');
   const server = await createServer({
     root,

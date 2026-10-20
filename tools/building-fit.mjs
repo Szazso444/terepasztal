@@ -227,6 +227,58 @@ export function cameraOff(fit) {
 }
 
 /**
+ * The camera of a round building (a tower), read from its foot. A circle on the ground is drawn
+ * as an ellipse whose minor over major axis is the sine of the camera's height, 0.50 for the
+ * game's 30 degrees; a round building has no straight wall feet to read the camera from, and the
+ * slopes the wall-foot measure takes from a curve are not the camera's. The lowest pixel of every
+ * column along the foot is the front half of that ellipse: fitted for its half-width `a`, as
+ * y = yc + b * sqrt(1 - (x - xc)^2 / a^2), the ratio is b / a. The turn cannot be read from a
+ * round building: it is 0. Returns the same record as `cameraOff` for the camera of two feet
+ * (`elevation` and `turn` degrees from the game's, `by`, `off`) with the `ratio` and the height
+ * the camera looked down from, `looking`; null when the foot is too small a part of the picture
+ * to be an ellipse.
+ */
+export function roundCamera(png) {
+  const { low, minX, maxX } = columns(png);
+  if (maxX < 0) return null;
+  const width = maxX - minX + 1;
+  let maxY = -1;
+  for (let x = minX; x <= maxX; x++) maxY = Math.max(maxY, low[x]);
+  // the lowest part of the picture is the foot; its middle is the tower's axis (a shaft or a hub
+  // that stands out to one side widens the picture, but is not at the foot)
+  const cols = [];
+  for (let x = minX; x <= maxX; x++) if (low[x] >= maxY - 0.4 * width) cols.push(x);
+  if (cols.length < 16) return null;
+  const xc = (cols[0] + cols[cols.length - 1]) / 2;
+  // the foot's half-width is where its columns end: the ellipse is upright there, level with its
+  // centre. Only the depth is fitted, so that a flat facet cannot trade width for depth
+  const a = (cols[cols.length - 1] - cols[0] + 1) / 2;
+  const f = cols.map((x) => Math.sqrt(Math.max(0, 1 - ((x - xc) / a) ** 2)));
+  const n = cols.length;
+  const mf = f.reduce((s, v) => s + v, 0) / n,
+    my = cols.reduce((s, x) => s + low[x], 0) / n;
+  let cov = 0,
+    varf = 0;
+  for (let i = 0; i < n; i++) {
+    cov += (f[i] - mf) * (low[cols[i]] - my);
+    varf += (f[i] - mf) ** 2;
+  }
+  if (varf < 1e-9 || cov <= 0) return null;
+  const ratio = cov / varf / a;
+  const looking = (Math.asin(Math.min(1, ratio)) * 180) / Math.PI;
+  const elevation = round(looking - ELEVATION);
+  const by = Math.abs(elevation);
+  return {
+    off: by > FIT.camera,
+    by,
+    elevation,
+    turn: 0,
+    ratio: round(ratio, 3),
+    looking: round(looking),
+  };
+}
+
+/**
  * How a picture goes onto its footprint's canvas. A point (x, y) of the picture lands at
  * X = centre.x + scale * (x - cx), Y = centre.y + scale * (vertical * y + shear * x - cy):
  * `vertical` and `shear` turn the measured ground slopes into 0.5 and -0.5 and leave upright edges

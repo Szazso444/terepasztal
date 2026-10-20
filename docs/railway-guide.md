@@ -21,7 +21,7 @@ An upgrade is paid when it starts and takes game time: 6, 9, 12, 18 and 24 game 
 2 to 6, from a quarter of a day to a whole one (the **Upgrade time** tuning value scales them; at
 0 every upgrade is instant). The building is closed until the work is done and keeps its old
 level meanwhile: a station or works makes nothing and has no crew to feed, a Power Plant gives
-no power and a Substation feeds no wire, and a House takes no newcomers but keeps its residents.
+no power and a Battery feeds no wire, and a House takes no newcomers but keeps its residents.
 Nobody lives at a closed station or works, and nobody sets out from one to gather: the people
 who lived there move to the open place nearest to where they stand. Trains still stop at a
 closed station and load what it holds, but deliver nothing there, and a train set to wait for a
@@ -125,6 +125,9 @@ From **Track**, build Wooden Bridge or Stone Bridge platforms on water. Then lay
 track on them. Straight rails on consecutive platforms of the same material join visually
 into timber trusses or masonry arches with supports. Regular and high-speed rails can both
 use a platform; normal class transitions are still required where classes meet.
+
+A platform that carries no rail can carry a road instead, and townsfolk walk over a road bridge,
+keeping to the road along the deck. They never walk on a bare platform or on one with rails.
 
 | Platform      | Base material cost | Capacity | Half speed above |
 | ------------- | ------------------ | -------- | ---------------- |

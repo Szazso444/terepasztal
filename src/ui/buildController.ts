@@ -26,10 +26,24 @@ import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotati
 import { placingTip, yieldLabel } from './placingTooltip';
 import type { TipDoc } from './tooltipDoc';
 import { tipKey, type Point, type TooltipStack } from './tooltipStack';
+import {
+  builderJudge,
+  hoverStatus,
+  judgeStroke,
+  strokeStatus,
+  strokeTiles,
+  type RoadStep,
+  type RoadStrokeCheck,
+} from './roadStroke';
+import { doorReachTiles } from './roadDoors';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
 const REPLACE_TINT = 0xffc860;
+/** the road tool's mark on a street door's reach tile: not the stroke's cyan or red */
+const DOOR_TINT = 0xfff08a;
+/** frames between two looks at the street doors while the road tool is in hand (#409) */
+const DOOR_MARK_FRAMES = 30;
 
 type Tile = { x: number; y: number };
 
@@ -56,6 +70,13 @@ export class BuildController {
   private ghostDiamond: Sprite;
   private lineGhosts: Sprite[] = [];
   private reachGhosts: Sprite[] = [];
+  /** the road tool's marks, one per distinct street-door reach tile; apart from `lineGhosts` */
+  private doorMarks: Sprite[] = [];
+  /** the reach tiles `doorMarks` stand on, as of the last look at the doors */
+  private doorTiles: Tile[] = [];
+  /** what the last look at the doors saw (counts of places) and how many frames ago it was */
+  private doorSeen = '';
+  private doorAge = 0;
   /** reach (Chebyshev tiles) highlighted around the cursor while placing; 0 = none */
   reach = 0;
   private dragStart: { x: number; y: number } | null = null;
@@ -142,6 +163,8 @@ export class BuildController {
 
   private clearGhost() {
     for (const g of this.reachGhosts) g.visible = false;
+    for (const g of this.doorMarks) g.visible = false;
+    this.doorSeen = '';
     if (this.ghost) {
       this.ghost.destroy();
       this.ghost = null;
@@ -205,6 +228,9 @@ export class BuildController {
       case 'reclass':
         this.updateReclassTool(t, inMap);
         break;
+      case 'road':
+        this.updateRoadTool(t, inMap);
+        break;
       case 'terrain':
         this.updateTerrainTool(t, inMap);
         break;
@@ -219,6 +245,7 @@ export class BuildController {
       this.ghostDiamond.visible = false;
       for (const g of this.lineGhosts) g.visible = false;
       for (const g of this.reachGhosts) g.visible = false;
+      for (const g of this.doorMarks) g.visible = false;
     }
   }
   /** Faint diamonds on every tile within `r` of the cursor (what a service or pole would cover). */
@@ -572,17 +599,123 @@ export class BuildController {
     this.ghostDiamond.tint = 0xffffff;
     const dec = this.builder.decorAt(t.x, t.y);
     const bld = this.builder.buildingAt(t.x, t.y);
+    // a bridge platform loses its rail or its road first, as removeAt does
+    const bridge = !!bld && !!buildingDef(bld.id).bridge;
+    const bridgeRail = bridge && !!piece;
+    const bridgeRoad = bridge && !bridgeRail && this.builder.roads.has(t.x, t.y);
+    // what removeAt takes off the tile first
     const refund = st
       ? scaleCost(st.def.cost, 0.5)
       : bld
-        ? this.builder.buildingRefund(bld)
+        ? bridgeRoad
+          ? this.builder.roadRefund()
+          : bridgeRail
+            ? this.builder.refundFor(piece!)
+            : this.builder.buildingRefund(bld)
         : dec
           ? this.builder.decorRefund(dec)
-          : piece
-            ? this.builder.refundFor(piece)
-            : {};
+          : this.builder.roads.has(t.x, t.y)
+            ? this.builder.roadRefund()
+            : piece
+              ? this.builder.refundFor(piece)
+              : {};
     this.status(Object.keys(refund).length ? STR.build.refund(fmtCost(refund)) : '');
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
+  }
+
+  /**
+   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile (`placeRoad`). The
+   * drag shows the build preview's diamond on each tile, red where the release would not lay a
+   * road, with the total cost and every reason a tile is refused in the status line. Before the
+   * press the one tile under the cursor shows, priced or refused.
+   */
+  private updateRoadTool(t: Tile, inMap: boolean) {
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    this.showDoorMarks();
+    // a press starts a stroke on the map, none off it
+    if (inp.buttonPressed.has(0)) this.dragStart = inMap ? { x: t.x, y: t.y } : null;
+    if (this.dragStart && inp.buttons.has(0)) {
+      const stroke = this.roadStroke(this.dragStart, t);
+      this.showRoadMarks(stroke.steps);
+      this.status(strokeStatus(stroke));
+      return;
+    }
+    if (this.dragStart && inp.buttonReleased.has(0)) {
+      const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
+      this.dragStart = null;
+      for (const g of this.lineGhosts) g.visible = false;
+      for (const r of tiles) this.builder.placeRoad(r.x, r.y);
+      return;
+    }
+    // the button is up: a stroke whose release fell over a panel lays nothing, and is over
+    this.dragStart = null;
+    if (!inMap) {
+      for (const g of this.lineGhosts) g.visible = false;
+      this.status('');
+      return;
+    }
+    const one = this.roadStroke(t, t);
+    this.showRoadMarks(one.steps);
+    this.status(hoverStatus(one.steps[0], !!this.builder.bridgeAt(t.x, t.y)));
+  }
+
+  /**
+   * A faint marker on the reach tile of each street door, so the player sees where a road meets a
+   * building. `streetDoors()` allocates, so the tiles are read again only when the tool was just
+   * taken up, the number of stations, works or decor changed, or DOOR_MARK_FRAMES passed (a place
+   * turned in place keeps its counts); the markers are the pool's own, never the stroke's.
+   */
+  private showDoorMarks() {
+    const b = this.builder;
+    const seen = `${b.stations.length},${b.buildings.size},${b.decor.size}`;
+    if (seen !== this.doorSeen || ++this.doorAge >= DOOR_MARK_FRAMES) {
+      this.doorSeen = seen;
+      this.doorAge = 0;
+      this.doorTiles = doorReachTiles(b.streetDoors(), (x, y) => inBounds(b.map, x, y));
+    }
+    while (this.doorMarks.length < this.doorTiles.length) {
+      const g = this.world.makeOverlaySprite('terrain/select');
+      g.alpha = 0.7;
+      g.tint = DOOR_TINT;
+      this.doorMarks.push(g);
+    }
+    this.doorMarks.forEach((g, i) => {
+      const t = this.doorTiles[i];
+      g.visible = !!t;
+      if (!t) return;
+      const p = this.world.surfacePoint(t.x, t.y);
+      g.position.set(p.x, p.y);
+    });
+  }
+
+  /**
+   * The tile a road stroke ends on with the cursor on `t`: that tile, kept on the map. The one
+   * place a stroke's end is decided.
+   */
+  private roadEnd(t: Tile): Tile {
+    const { w, h } = this.builder.map;
+    return { x: Math.max(0, Math.min(w - 1, t.x)), y: Math.max(0, Math.min(h - 1, t.y)) };
+  }
+
+  /** The road stroke from `start` to the cursor on `t`, judged as its release would lay it. */
+  private roadStroke(start: Tile, t: Tile): RoadStrokeCheck {
+    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder));
+  }
+
+  /** The build preview's tile diamond on each tile of a road stroke: red where it is refused. */
+  private showRoadMarks(steps: readonly RoadStep[]) {
+    this.showGhosts(
+      steps.map((s) => ({
+        x: s.x,
+        y: s.y,
+        frame: s.state === 'refused' ? 'terrain/ghost_bad' : 'terrain/ghost_ok',
+      })),
+      true,
+    );
+    // the frame carries the colour, as the one-tile diamond's does
+    for (let i = 0; i < steps.length; i++) this.lineGhosts[i].tint = 0xffffff;
   }
 
   /**
@@ -705,8 +838,11 @@ export class BuildController {
       return this.builder.removeStation(st);
     }
     const bld = this.builder.buildingAt(x, y);
+    // a platform comes down only bare: its rail or its road comes off first, the next use takes it
     if (bld && buildingDef(bld.id).bridge && this.builder.track.has(x, y))
       return this.builder.removeTrack(x, y);
+    if (bld && buildingDef(bld.id).bridge && this.builder.roads.has(x, y))
+      return this.builder.removeRoad(x, y);
     if (bld) {
       if (this.selectedBuilding === bld) this.selectBuilding(null);
       return this.builder.removeBuilding(x, y);
@@ -716,6 +852,8 @@ export class BuildController {
       if (this.selectedDecor === dec) this.selectDecor(null);
       return this.builder.removeDecor(x, y);
     }
+    // a level crossing loses its road first, and stays plain track
+    if (this.builder.roads.has(x, y)) return this.builder.removeRoad(x, y);
     return this.builder.removeTrack(x, y);
   }
 

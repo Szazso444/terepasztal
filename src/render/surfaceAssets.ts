@@ -4,6 +4,7 @@ import { PAL } from '../art/palette';
 import { structureFamily } from './assetScale';
 import {
   bakedShadow,
+  baseColour,
   contactShadow,
   feetOf,
   footContour,
@@ -15,6 +16,7 @@ import {
   type Pebble,
   type Tuft,
 } from './groundFit';
+import { FIELD_RES, type FieldFrame, type FieldPicture } from './wheatField';
 
 // Reviewed regions on the packed, rectified source frames: x/y/width/height.
 // The colour selector is deliberately restricted to these windows, so blue roof
@@ -106,6 +108,63 @@ function canvasTexture(canvas: HTMLCanvasElement, ow: number, oh: number, mipmap
     orig: new Rectangle(0, 0, ow, oh),
   });
 }
+/**
+ * The wheat field variants' atlas frames as the fields' pictures read them (wheatField.ts): their
+ * texels, how many there are per world px, and their anchors in texels. An atlas loaded from a
+ * file is decoded again off the main thread from the file (`createImageBitmap` of the image itself
+ * decodes it on the main thread: some 20 ms for the props sheet), so reading costs no frame its
+ * time.
+ */
+export function fieldFrames(frames: readonly (FrameInfo | null)[]) {
+  const files = new Map<string, Promise<Blob>>(),
+    source = (image: FrameInfo['image']) => {
+      if (!(image instanceof HTMLImageElement) || !image.src) return Promise.resolve(image);
+      let file = files.get(image.src);
+      if (!file) {
+        file = fetch(image.src).then((r) => r.blob());
+        files.set(image.src, file);
+      }
+      return file;
+    };
+  return Promise.all(
+    frames.map(async (f): Promise<FieldFrame | null> => {
+      if (!f) return null;
+      const rect = f.texture.frame,
+        bitmap = await createImageBitmap(
+          await source(f.image),
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height,
+        ),
+        canvas = document.createElement('canvas');
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+      ctx.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      return {
+        data: ctx.getImageData(0, 0, rect.width, rect.height).data,
+        width: rect.width,
+        height: rect.height,
+        density: rect.width / f.w,
+        anchorX: f.anchorX * rect.width,
+        anchorY: f.anchorY * rect.height,
+      };
+    }),
+  );
+}
+/**
+ * A field tile's picture as a texture of its own, its size in world px, filtered through mipmaps
+ * like the illustrated atlases (the picture's skirt keeps its joins closed through them).
+ */
+export function fieldTexture(p: FieldPicture) {
+  const canvas = document.createElement('canvas');
+  canvas.width = p.width;
+  canvas.height = p.height;
+  canvas.getContext('2d')!.putImageData(new ImageData(p.data, p.width, p.height), 0, 0);
+  return canvasTexture(canvas, p.width / FIELD_RES, p.height / FIELD_RES, true);
+}
 /** A layer drawn with a building, placed by its anchor (0..1 of its size). */
 export interface AnchoredTexture {
   texture: Texture;
@@ -123,6 +182,8 @@ export interface GroundFitArt {
   shadow: AnchoredTexture | null;
   /** Its feet about one world px apart, in world px from its anchor at that scale. */
   feet: Foot[];
+  /** The colour of its walls just above their foot (`baseColour`), for a plinth under them. */
+  base: readonly [number, number, number] | null;
 }
 /**
  * Colour statistics measured from the atlases (terrain/mountain_* frames, and the rock material
@@ -290,6 +351,7 @@ export class SurfaceAssets {
         anchorY: (-cast.y * cast.resolution) / cast.height,
       },
       feet: feetOf(picture, foot, at),
+      base: baseColour(picture, foot),
     };
     this.groundFits.set(id, result);
     return result;

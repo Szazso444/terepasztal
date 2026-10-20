@@ -65,7 +65,7 @@ export const STR = {
       depots: 'Depots',
       population: 'Residents',
       earned: 'Earned in total',
-      substations: 'Powered substations',
+      substations: 'Powered batteries',
       wires: 'Live electrified tiles',
       chunks: 'Owned chunks',
     } as Record<string, string>,
@@ -375,12 +375,19 @@ export const STR = {
     /** a road tried on a tile that has one (src/sim/roads.ts) */
     roadHere: 'There is a road here already',
     /**
-     * a road tried on a tile of a station, a works, a bridge platform, a house or a service stop:
-     * a road meets a building only at its street door, from the tile outside it (#408)
+     * a road tried on a tile of a station, a works, a house or a service stop: a road meets a
+     * building only at its street door, from the tile outside it (#408). A bridge platform is no
+     * such building: it carries a road where it carries no rail (`bridgeCarriesRail`)
      */
     roadOnBuilding: 'A road goes round a building and meets it only at its door',
     /** a station, a works, a house or a service stop tried on a tile that holds a road (#408) */
     roadInWay: 'A road is in the way: remove it first',
+    /** a road tried on a bridge platform that carries rail: a platform holds rail or a road (#493) */
+    bridgeCarriesRail: 'This bridge carries rail: remove the track to lay a road on it',
+    /** rail tried on a bridge platform that carries a road (#493) */
+    bridgeCarriesRoad: 'This bridge carries a road: remove the road to lay track on it',
+    /** the road tool over a bridge platform that takes a road: a road goes on the bridge (#495) */
+    roadOnBridge: 'A road on the bridge',
     /**
      * A road and track on one tile make a level crossing: the road crosses a plain straight of
      * regular or narrow track at right angles (src/sim/roads.ts), whichever of the two is laid
@@ -390,6 +397,12 @@ export const STR = {
       'A road crosses only plain straight track: no curve, switch, crossing or transition',
     crossingHighSpeed: 'No level crossings on high-speed track',
     crossingAlong: 'A road crosses track at right angles, never along it',
+    /** the road tool's drag (#328): how many tiles its release lays, and `cost` (`fmtCost`) */
+    roadLine: (tiles: number, cost: string) =>
+      `${tiles} road ${tiles === 1 ? 'tile' : 'tiles'}: ${cost}`,
+    /** the road tool's drag: how many of its tiles are not laid, and each reason once */
+    roadNotLaid: (tiles: number, reasons: readonly string[]) =>
+      `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} not laid: ${reasons.join(' · ')}`,
     needResources: (m: string) => `Need ${m}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
@@ -416,6 +429,11 @@ export const STR = {
     downgradeHint:
       'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
+    /** the toolbar category of roads, and the road tool in it (#328) */
+    roads: 'Roads',
+    road: 'Road',
+    roadDesc:
+      'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a run.',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
     typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
     bridges: 'Bridges',
@@ -447,6 +465,7 @@ export const STR = {
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
+      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight wide or narrow track at right angles, as a level crossing; never high-speed track.',
     },
     trackDesc: {
       straight_regular: 'Plain rail. Drag to lay a run of straights.',
@@ -491,8 +510,7 @@ export const STR = {
       hv_catenary:
         'Heavier masts and wire for high-speed pantographs. Standard electrics cannot draw from it unless multi-system. Drag along track.',
     } as Record<string, string>,
-    placeSupply:
-      'On track within six tiles of a powered substation to be live. R does nothing here.',
+    placeSupply: 'On track within six tiles of a powered battery to be live. R does nothing here.',
   },
   building: {
     title: (name: string, level: number) => `${name} · Level ${level}`,

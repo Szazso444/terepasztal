@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyTileRepairs, repairBuiltTiles, type BuiltObjects } from './loadRepair';
+import {
+  applyTileRepairs,
+  repairBuiltRoads,
+  repairBuiltTiles,
+  type BuiltObjects,
+} from './loadRepair';
 import type { Rng } from './rng';
-import { Terrain, inBounds, type GameMap, type PropInstance } from '../world/tiles';
+import { Terrain, TERRAIN_NAMES, inBounds, type GameMap, type PropInstance } from '../world/tiles';
 import { DEFAULT_MAP_PARAMS, emptyMap } from '../world/mapgen';
 import type { MapGenerator } from '../world/chunks';
 import { RegionState } from '../world/regions';
@@ -17,7 +22,8 @@ import {
 import { DIR_DX, DIR_DY, opposite } from './iso';
 import { stationFootprint } from '../sim/stations';
 import { buildingDef, buildingToJSON } from '../sim/buildings';
-import { Builder, DECOR_DEFS } from '../sim/build';
+import { Builder, DECOR_DEFS, unbuildable } from '../sim/build';
+import { Roads } from '../sim/roads';
 import { Economy } from '../sim/economy';
 import { Stockpile } from '../sim/stockpile';
 import { STR } from '../strings';
@@ -507,6 +513,13 @@ function* shrinkCase(c: Case): Iterable<Case> {
     }
 }
 
+/** A case with fewer roads saved, then one `shrinkCase` makes smaller. */
+function* shrinkRoadCase(c: Case): Iterable<Case> {
+  for (const xs of shrinkArray((c.built.roads ?? []) as unknown[]))
+    yield { ...c, built: { ...c.built, roads: xs as BuiltObjects['roads'] } };
+  yield* shrinkCase(c);
+}
+
 /**
  * Every tile the objects of `built` stand on, by the kind of ground they need: a platform, land,
  * or rails (plain track off a platform, and a signal on such a tile). The cases hold no retired
@@ -926,6 +939,7 @@ function builtOf(b: Builder): BuiltObjects {
     stations: b.stations.map((s) => s.toJSON()) as unknown as SaveGame['stations'],
     decor: [...b.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
     buildings: [...b.buildings.values()].map(buildingToJSON),
+    roads: b.roads.toJSON(),
   };
 }
 
@@ -1243,4 +1257,246 @@ describe('a load with repairs', () => {
     expect([...again.map.terrain]).toEqual([...generated]);
     expect(world.chunks).toEqual(stored);
   }, 20_000);
+});
+
+// ---------------------------------------------------------------- roads
+
+/** A road tile as a save holds it. */
+const road = (x: number, y: number): [number, number] => [x, y];
+const keys = (list: readonly { x: number; y: number }[]) => list.map((r) => `${r.x},${r.y}`);
+/** The roads of a save as a test makes it up, whatever shape: a corrupt file holds odd entries. */
+const roadsOf = (list: unknown): BuiltObjects['roads'] => list as BuiltObjects['roads'];
+
+describe('a road on ground that cannot hold one', () => {
+  it('is tried on every ground there is', () => {
+    // a ground added to the game is one more for the tests below to try, not one they miss
+    expect([...ALL].sort()).toEqual(TERRAIN_NAMES.map((_, t) => t));
+    expect(NO_LAND.every((t) => ALL.includes(t as (typeof ALL)[number]))).toBe(true);
+  });
+
+  it('is taken off exactly where the ground is water, rock or a mountain', () => {
+    for (const t of ALL) {
+      const m = flat(t);
+      const built = only({ roads: [road(4, 4)] });
+      expect(keys(repairBuiltRoads(m, built)), name(t)).toEqual(NO_LAND.includes(t) ? ['4,4'] : []);
+      // the ground is not bent for a road: it goes instead
+      expect(repairBuiltTiles(m, built), name(t)).toEqual([]);
+    }
+  });
+
+  it('is taken off where the builder would not lay a road, and kept where it would', () => {
+    for (const t of ALL) {
+      const { map, builder } = builderOn(t);
+      const refusal = builder.checkRoad(4, 4);
+      const lost = repairBuiltRoads(map, only({ roads: [road(4, 4)] })).length > 0;
+      expect(lost, `${name(t)}: ${refusal.reason}`).toBe(!refusal.ok);
+      if (lost)
+        expect(refusal.reason, name(t)).toBe(
+          (STR.build.nothingOn as Record<string, string | undefined>)[name(t)],
+        );
+      else {
+        // and a road the builder laid is a road the repair leaves
+        expect(builder.placeRoad(4, 4), name(t)).toBe(true);
+        expect(repairBuiltRoads(map, builtOf(builder)), name(t)).toEqual([]);
+      }
+    }
+  });
+
+  it('is the only road to go: every other stays, and those that go are listed once, in the order saved', () => {
+    const m = flat(Terrain.Grass);
+    // row 2: water, rock and a mountain among the land a road may stand on
+    set(m, 1, 2, Terrain.Water);
+    set(m, 3, 2, Terrain.Water);
+    set(m, 5, 2, Terrain.Rock);
+    set(m, 7, 2, Terrain.Mountain);
+    set(m, 2, 2, Terrain.Hill);
+    set(m, 4, 2, Terrain.Forest);
+    set(m, 6, 2, Terrain.Sand);
+    set(m, 8, 5, Terrain.Water); // no road is saved here
+    const row = Array.from({ length: m.w }, (_, x) => road(x, 2)).reverse();
+    const built = only({ roads: [...row, road(5, 2), road(1, 2), road(0, 5)] });
+    expect(keys(repairBuiltRoads(m, built))).toEqual(['7,2', '5,2', '3,2', '1,2']);
+    // the map was only read
+    expect(at(m, 5, 2)).toBe(Terrain.Rock);
+    expect(at(m, 1, 2)).toBe(Terrain.Water);
+    // asked of the map the repair has been applied to, it answers the same
+    repaired(m, built);
+    expect(keys(repairBuiltRoads(m, built))).toEqual(['7,2', '5,2', '3,2', '1,2']);
+  });
+
+  it('is judged on the ground the repair leaves under it, where other things were built', () => {
+    // a line of track over water: the repair makes its tiles land, a level crossing's among them,
+    // and a signal's tile too; the water beside them stays water
+    const m = flat(Terrain.Water);
+    const built = only({
+      track: [straight(3, 4), straight(4, 4), straight(5, 4)],
+      decor: [[2, 6, 'signal', 0]],
+      roads: [road(4, 4), road(4, 3), road(4, 5), road(2, 6)],
+    });
+    expect(keys(repairBuiltRoads(m, built))).toEqual(['4,3', '4,5']);
+    expect(keys(repairBuiltTiles(m, built))).toEqual(['3,4', '4,4', '5,4', '2,6']);
+    // and a line on rock or a mountain keeps its ground, so a road across it goes
+    for (const t of STONE) {
+      const stone = flat(t);
+      for (const x of [3, 5]) set(stone, x, 4, Terrain.Grass);
+      const crossing = only({
+        track: [straight(3, 4), straight(4, 4), straight(5, 4)],
+        roads: [road(4, 4)],
+      });
+      expect(repairBuiltTiles(stone, crossing), name(t)).toEqual([]);
+      expect(keys(repairBuiltRoads(stone, crossing)), name(t)).toEqual(['4,4']);
+      // the builder agrees: it lays no road there
+      const { map, builder } = builderOn(t);
+      set(map, 3, 4, Terrain.Grass);
+      set(map, 5, 4, Terrain.Grass);
+      const along = { kind: 'straight', cls: 'regular' } as const;
+      for (const x of [3, 4, 5])
+        expect(builder.placeTrack(x, 4, along, 1), `${name(t)} ${x}`).toBe(true);
+      expect(builder.checkRoad(4, 4).ok, name(t)).toBe(false);
+    }
+  });
+
+  it('keeps a level crossing on land, as the builder lays one there', () => {
+    const { map, builder } = builderOn(Terrain.Grass);
+    const along = { kind: 'straight', cls: 'regular' } as const;
+    for (const x of [3, 4, 5]) expect(builder.placeTrack(x, 4, along, 1)).toBe(true);
+    expect(builder.placeRoad(4, 4)).toBe(true);
+    expect(builder.roads.crossingKeys().size).toBe(1);
+    expect(repairBuiltRoads(map, builtOf(builder))).toEqual([]);
+  });
+
+  it('stays on a bridge platform with no rail, on water as on land, and goes off one with rail (#493)', () => {
+    for (const t of [Terrain.Water, Terrain.Grass, ...STONE]) {
+      const m = flat(t);
+      const built = only({
+        track: [straight(6, 4)],
+        buildings: [works(4, 4, 'bridge_wood'), works(6, 4, 'bridge_stone')],
+        roads: [road(4, 4), road(6, 4)],
+      });
+      expect(keys(repairBuiltRoads(m, built)), name(t)).toEqual(['6,4']);
+      // a road on the same ground with no platform under it goes by the ground alone
+      const bare = only({ roads: [road(4, 4)] });
+      expect(keys(repairBuiltRoads(m, bare)), name(t)).toEqual(NO_LAND.includes(t) ? ['4,4'] : []);
+    }
+    // a road the builder laid on a platform over water is a road the repair leaves
+    const { map, builder } = builderOn(Terrain.Water);
+    expect(builder.placeBuilding(4, 4, 'bridge_wood')).not.toBeNull();
+    expect(builder.placeRoad(4, 4)).toBe(true);
+    expect(repairBuiltRoads(map, builtOf(builder))).toEqual([]);
+    expect(repairBuiltTiles(map, builtOf(builder))).toEqual([]);
+  });
+
+  it('skips what a load skips, and answers nothing for a save with no road list', () => {
+    const m = flat(Terrain.Rock);
+    const odd = roadsOf([
+      road(9, 9),
+      road(-1, 0),
+      // off the side of a 9 wide map, where the index `y * w + x` lands on a tile of the next row
+      // or the one before: a check on the index alone would take them for roads on 0,1 and 8,0
+      road(9, 0),
+      road(-1, 1),
+      [1.5, 2],
+      // two halves that add up to a whole index on a 9 wide map (0.5 * 9 + 0.5 = 5, a rock tile):
+      // a check on the index alone would take this for a road on tile 5,0
+      [0.5, 0.5],
+      [Number.NaN, 4],
+      [4, Number.POSITIVE_INFINITY],
+      ['3', 4],
+      [5],
+      [],
+      null,
+      { x: 1 },
+      'road',
+      road(4, 4),
+      [4, 4, 9],
+      road(4, 4),
+    ]);
+    expect(keys(repairBuiltRoads(m, only({ roads: odd })))).toEqual(['4,4']);
+    // what a load skips is what `Roads.load` skips: the one road it keeps is the one that goes
+    const kept = new Roads(new TrackGraph(m.w, m.h));
+    kept.load(odd);
+    expect(keys(kept.list())).toEqual(['4,4']);
+    for (const none of [undefined, null, 5, 'roads', { 0: [4, 4] }, []])
+      expect(repairBuiltRoads(m, only({ roads: roadsOf(none) })), String(none)).toEqual([]);
+    expect(repairBuiltRoads(m, only({}))).toEqual([]);
+  });
+
+  it('goes, in any scene, exactly where the ground the repair leaves refuses a road', () => {
+    const seen = { gone: 0, kept: 0, landMade: 0, keptOnDeck: 0, goneOffRail: 0 };
+    forAll(
+      (rng) => {
+        const c = genCase(rng);
+        const tiles = c.built.track.flatMap(([x, y, kind, rot, cls]) =>
+          footprintOf(x, y, kind, rot, cls ?? 'regular'),
+        );
+        const decks = (c.built.buildings ?? [])
+          .filter(([, , id]) => buildingDef(id).bridge)
+          .map(([x, y]) => ({ x, y }));
+        // roads on the track's tiles (crossings) and on bridge platforms as well as anywhere, and
+        // a corrupt entry now and then
+        const roads: unknown[] = Array.from({ length: rng.int(0, 16) }, () => {
+          const at2 = { x: rng.int(-1, SIZE), y: rng.int(-1, SIZE) };
+          const { x, y } =
+            rng.chance(0.4) && tiles.length
+              ? rng.pick(tiles)
+              : rng.chance(0.5) && decks.length
+                ? rng.pick(decks)
+                : at2;
+          return rng.chance(0.1) ? [x + 0.5, y] : [x, y];
+        });
+        if (roads.length && rng.chance(0.3)) roads.push(rng.pick(roads));
+        return { ...c, built: { ...c.built, roads: roadsOf(roads) } };
+      },
+      (c) => {
+        const m = flat(Terrain.Grass, SIZE, SIZE);
+        m.terrain.set(c.terrain);
+        const was = Uint8Array.from(m.terrain);
+        const builtWas = structuredClone(c.built);
+        const lost = repairBuiltRoads(m, c.built);
+        // asking reads the map and the save and changes neither
+        expect([...m.terrain]).toEqual([...was]);
+        expect(c.built).toEqual(builtWas);
+        // the roads do not change the ground the repair gives the other things built
+        const tiles = repairBuiltTiles(m, c.built);
+        expect(repairBuiltTiles(m, { ...c.built, roads: [] })).toEqual(tiles);
+        applyTileRepairs(m, tiles);
+        // asked again, of the repaired map, it answers the same
+        expect(repairBuiltRoads(m, c.built)).toEqual(lost);
+
+        // the roads a load keeps: whole tiles on the map, once each, in the order saved
+        const loaded = new Roads(new TrackGraph(SIZE, SIZE));
+        loaded.load(c.built.roads);
+        const saved = loaded.list();
+        // a bridge platform carries a road where it carries no rail (#493), whatever the ground
+        const on = (list: readonly { x: number; y: number }[], x: number, y: number) =>
+          list.some((t) => t.x === x && t.y === y);
+        const rails = c.built.track.flatMap(([x, y, kind, rot, cls]) =>
+          footprintOf(x, y, kind, rot, cls ?? 'regular'),
+        );
+        const decks = (c.built.buildings ?? [])
+          .filter(([, , id]) => buildingDef(id).bridge)
+          .map(([x, y]) => ({ x, y }));
+        const goes = (x: number, y: number) =>
+          on(decks, x, y) ? on(rails, x, y) : unbuildable(at(m, x, y)) !== null;
+        for (const { x, y } of saved)
+          if (on(decks, x, y)) seen[on(rails, x, y) ? 'goneOffRail' : 'keptOnDeck']++;
+          else if (goes(x, y)) seen.gone++;
+          else {
+            seen.kept++;
+            if (NO_LAND.includes(c.terrain[y * SIZE + x])) seen.landMade++;
+          }
+        // the ones that go are those the builder would refuse for the ground they stand on now,
+        // or for the rail on their platform, each once and in the order saved, and no other
+        const refused = saved.filter(({ x, y }) => goes(x, y));
+        expect(keys(lost)).toEqual(keys(refused));
+      },
+      { shrink: shrinkRoadCase },
+    );
+    // the seeds reach roads taken off, roads left, roads left on ground made land for another, and
+    // roads on platforms, kept where no rail is and taken off the rail; a platform with rail under
+    // a saved road is the rarest of them
+    const { goneOffRail, ...rest } = seen;
+    for (const [what, n] of Object.entries(rest)) expect(n, what).toBeGreaterThan(10);
+    expect(goneOffRail, 'goneOffRail').toBeGreaterThan(3);
+  });
 });

@@ -18,7 +18,14 @@ import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
 import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
 import { rules } from './rules';
-import { Station, terrainFactorAt, stationDef, stationFootprint, MAX_LEVEL } from './stations';
+import {
+  Station,
+  terrainFactorAt,
+  stationDef,
+  stationFootprint,
+  stationGates,
+  MAX_LEVEL,
+} from './stations';
 import { ageOfLevel, levelCap } from './levels';
 import { ageDef, LAST_AGE } from './ages';
 import type { Economy } from './economy';
@@ -28,6 +35,9 @@ import {
   buildingLevel,
   buildingUpgradeCost,
   worksMaxLevel,
+  buildingFootprint,
+  buildingSpan,
+  BuildingMap,
   BUILDING_DEFS,
   type Building,
 } from './buildings';
@@ -92,9 +102,10 @@ export interface PlacementCheck {
 /**
  * Why nothing can be built on terrain `t`, naming the ground, or null when it takes buildings.
  * The one list of where nothing stands: stations, works, decor off the track, roads and a depot's
- * gates all ask it, and a bridge platform asks it everywhere but on water, which it spans. Track
- * has rules of its own (`checkTrackTile`, and `trackRules` for rock and mountain), and so do the
- * walkers (`walkable` in people.ts) and the town paving (`cityTiles` in city.ts).
+ * gates all ask it, and a bridge platform asks it everywhere but on water, which it spans, as a
+ * road on a platform does. Track has rules of its own (`checkTrackTile`, and `trackRules` for
+ * rock and mountain), and so do the walkers (`walkable` in people.ts) and the town paving
+ * (`cityTiles` in city.ts).
  */
 export function unbuildable(t: Terrain): string | null {
   switch (t) {
@@ -151,8 +162,11 @@ export class Builder {
   readonly stations: Station[] = [];
   /** signals, towers, coaling stages, power poles keyed by tile */
   readonly decor = new Map<number, Decor>();
-  /** processing buildings keyed by tile */
-  readonly buildings = new Map<number, Building>();
+  /**
+   * processing buildings keyed by their footprint's corner tile, also found from any tile they
+   * cover (`buildingAt`)
+   */
+  readonly buildings: BuildingMap;
   /** editor mode: no costs, no region or tier locks */
   free = false;
   onTrackChanged: ((x: number, y: number) => void) | null = null;
@@ -192,7 +206,9 @@ export class Builder {
     readonly stock: Stockpile,
     /** the roads on the map (src/sim/roads.ts); a line's probe shares its builder's */
     readonly roads: Roads = new Roads(track),
-  ) {}
+  ) {
+    this.buildings = new BuildingMap(map.w, map.h);
+  }
 
   // ------------------------------------------------------------------ helpers
   private key(x: number, y: number) {
@@ -229,8 +245,9 @@ export class Builder {
         ? (bridgeCapacity(this.bridgeAt(x, y)!) ?? undefined)
         : undefined;
   }
+  /** The works that covers (x, y): any tile of its footprint finds it. */
   buildingAt(x: number, y: number): Building | undefined {
-    return this.buildings.get(this.key(x, y));
+    return this.buildings.at(x, y);
   }
   terrainMul(x: number, y: number): number {
     const t = terrainAt(this.map, x, y);
@@ -278,7 +295,13 @@ export class Builder {
   private unlocked(x: number, y: number) {
     return this.free || this.regions.isTileUnlocked(x, y);
   }
-  hasAdjacentTrack(x: number, y: number) {
+  /**
+   * Track beside (x, y); with a station kind given, beside its footprint turned to `rot` (beside
+   * any of its tiles, so a station of two tiles is served from either).
+   */
+  hasAdjacentTrack(x: number, y: number, defId?: string, rot = 0) {
+    if (defId !== undefined)
+      return stationGates(defId, x, y, rot).some((g) => this.track.has(g.x, g.y));
     return DIRS.some((d) => this.track.has(x + DIR_DX[d], y + DIR_DY[d]));
   }
   /** Track tiles serving a station: its platforms (a depot's gates with track on them). */
@@ -405,7 +428,11 @@ export class Builder {
     for (const s of this.stations)
       if (s.work) out.push({ x: s.x, y: s.y, w: s.w, h: s.h, progress: workProgress(s.work) });
     for (const b of this.buildings.values())
-      if (b.work) out.push({ x: b.x, y: b.y, w: 1, h: 1, progress: workProgress(b.work) });
+      if (b.work) {
+        // the whole footprint, as turned: the progress overlay covers every tile, not the corner
+        const { w, h } = buildingSpan(buildingDef(b.id), b.rot ?? 0);
+        out.push({ x: b.x, y: b.y, w, h, progress: workProgress(b.work) });
+      }
     return out;
   }
 
@@ -462,6 +489,8 @@ export class Builder {
     // a depot is a through-station: plain pieces may run through the shed
     if ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
       return STR.build.occupied;
+    // a platform carries rail or a road, never both: no level crossing on a bridge (#493)
+    if (this.bridgeAt(x, y) && this.roads.has(x, y)) return STR.build.bridgeCarriesRoad;
     const dec = this.decorAt(x, y);
     if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
@@ -821,14 +850,12 @@ export class Builder {
     }
     if (defId === 'town') {
       const near = this.stations.find(
-        (s) =>
-          s.def.id === 'town' &&
-          Math.max(Math.abs(s.x - x), Math.abs(s.y - y)) < Builder.TOWN_SPACING,
+        (s) => s.def.id === 'town' && s.distTo(x, y) < Builder.TOWN_SPACING,
       );
       if (near)
         return { ok: false, cost: {}, reason: STR.build.townTooClose(Builder.TOWN_SPACING) };
     }
-    if (!def.depot && !this.hasAdjacentTrack(x, y))
+    if (!def.depot && !this.hasAdjacentTrack(x, y, defId, rot))
       return { ok: false, cost: {}, reason: STR.build.needTrack };
     const own = this.stationGround(def, stationFootprint(defId, x, y, rot));
     if (own) return { ok: false, cost: {}, reason: own };
@@ -1055,39 +1082,53 @@ export class Builder {
 
   // ------------------------------------------------------------------ buildings
   /**
-   * Whether a works may stand on a tile turned to `_rot`. A works covers its one tile whatever
-   * its rotation, so the rotation changes nothing here; it is taken as `checkStation` takes it.
+   * Whether a works may stand with its corner at (x, y), turned to `rot`: every tile of its
+   * footprint (`buildingFootprint`) must be on the map, unlocked, buildable, level and free of
+   * track, stations, decor, works and roads, as `checkStation` asks of a station. The site rules
+   * are asked of the footprint as a whole: water must lie beside it (on a side of any of its
+   * tiles, `waterBeside`), and the ground it needs (`terrain`) and the deposit (`deposit`) must be
+   * under any one of its tiles, so a colliery on a 3 x 2 needs a hill, not six.
    */
-  checkBuilding(x: number, y: number, defId: string, _rot = 0): PlacementCheck {
-    const c = this.buildingRules(x, y, defId);
+  checkBuilding(x: number, y: number, defId: string, rot = 0): PlacementCheck {
+    const c = this.buildingRules(x, y, defId, rot);
     return c.ok ? this.affordable(c.cost) : c;
   }
   /** `checkBuilding`'s rules and price, without asking whether the stock can pay. */
-  private buildingRules(x: number, y: number, defId: string): PlacementCheck {
+  private buildingRules(x: number, y: number, defId: string, rot = 0): PlacementCheck {
     const def = buildingDef(defId);
-    if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
-    if (!this.unlocked(x, y)) return { ok: false, cost: {}, reason: STR.build.locked };
+    const tiles = buildingFootprint(defId, x, y, wrapRotation(rot));
+    for (const t of tiles) {
+      if (!inBounds(this.map, t.x, t.y)) return { ok: false, cost: {}, reason: STR.build.offMap };
+      if (!this.unlocked(t.x, t.y)) return { ok: false, cost: {}, reason: STR.build.locked };
+    }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
-    const t = terrainAt(this.map, x, y);
-    // Bridge platforms stand on water or carry a rail level across a dip in the land.
-    const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
-    if (bad) return { ok: false, cost: {}, reason: bad };
-    if (!def.bridge && this.groundCheck && !this.groundCheck(x, y, 'level'))
-      return { ok: false, cost: {}, reason: STR.build.notLevel };
-    if (this.track.has(x, y) || this.stationAt(x, y) || this.decorAt(x, y) || this.buildingAt(x, y))
-      return { ok: false, cost: {}, reason: STR.build.occupied };
-    if (this.roads.has(x, y)) return { ok: false, cost: {}, reason: STR.build.roadInWay };
-    if (
-      def.needsWater &&
-      !DIRS.some((d) => terrainAt(this.map, x + DDX[d], y + DDY[d]) === Terrain.Water)
-    )
+    for (const { x: tx, y: ty } of tiles) {
+      const t = terrainAt(this.map, tx, ty);
+      // Bridge platforms stand on water or carry a rail level across a dip in the land.
+      const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
+      if (bad) return { ok: false, cost: {}, reason: bad };
+      if (!def.bridge && this.groundCheck && !this.groundCheck(tx, ty, 'level'))
+        return { ok: false, cost: {}, reason: STR.build.notLevel };
+      if (
+        this.track.has(tx, ty) ||
+        this.stationAt(tx, ty) ||
+        this.decorAt(tx, ty) ||
+        this.buildingAt(tx, ty)
+      )
+        return { ok: false, cost: {}, reason: STR.build.occupied };
+      if (this.roads.has(tx, ty)) return { ok: false, cost: {}, reason: STR.build.roadInWay };
+    }
+    if (def.needsWater && !this.waterBeside(tiles))
       return { ok: false, cost: {}, reason: STR.build.needWaterside };
-    if (def.terrain && TERRAIN_NAMES[t].toLowerCase() !== def.terrain)
+    if (
+      def.terrain &&
+      !tiles.some((t) => TERRAIN_NAMES[terrainAt(this.map, t.x, t.y)].toLowerCase() === def.terrain)
+    )
       return { ok: false, cost: {}, reason: STR.build.needTerrain(def.terrain) };
-    if (def.deposit && !this.hasDeposit(x, y, def.deposit))
+    if (def.deposit && !tiles.some((t) => this.hasDeposit(t.x, t.y, def.deposit!)))
       return { ok: false, cost: {}, reason: STR.build.needDeposit(def.deposit) };
     return { ok: true, cost: this.priced(def.cost, def.bridge ? 1 : this.kindMul(defId)) };
   }
@@ -1153,10 +1194,13 @@ export class Builder {
       ? {}
       : scaleCost(buildingDef(b.id).cost, rules.buildCostMul * rules.refundRate);
   }
+  /** Take down the works that covers (x, y), whichever tile of its footprint that is: all of it goes. */
   removeBuilding(x: number, y: number): boolean {
     const b = this.buildingAt(x, y);
-    if (!b || (buildingDef(b.id).bridge && this.track.has(x, y))) return false;
-    this.buildings.delete(this.key(x, y));
+    // a platform goes only with nothing on it: its rail or its road comes off first
+    if (!b || (buildingDef(b.id).bridge && (this.track.has(x, y) || this.roads.has(x, y))))
+      return false;
+    this.buildings.delete(this.key(b.x, b.y));
     // removed during its upgrade, it is gone for good: no level rises later
     delete b.work;
     this.refund(buildingDef(b.id).cost);
@@ -1168,12 +1212,14 @@ export class Builder {
   // ------------------------------------------------------------------ roads
   /**
    * Whether a road may be laid on (x, y), and its price: on owned buildable land (not water, rock
-   * or a mountain) with no road on it yet, off every station's footprint, works and bridge
-   * platform and off the tile of decor that stands off the rails (a house, a tower), as a road
-   * meets a building only at a street door, from the tile outside it (#408); a signal or a pole
-   * may share its tile. On track it is a level crossing, which only a plain straight of regular or
-   * narrow track takes, the road across it (`Roads.trackRefusal`). Each tile costs `roadCost`,
-   * scaled by the build cost tuning, whatever the ground.
+   * or a mountain) with no road on it yet, off every station's footprint and works and off the
+   * tile of decor that stands off the rails (a house, a tower), as a road meets a building only at
+   * a street door, from the tile outside it (#408); a signal or a pole may share its tile. On track
+   * it is a level crossing, which only a plain straight of regular or narrow track takes, the road
+   * across it (`Roads.trackRefusal`). A bridge platform carries a road where it carries no rail,
+   * on water as on land: one tile holds rail or road, never both, so a platform with rail on it
+   * refuses the road (#493). Each tile costs `roadCost`, scaled by the build cost tuning, whatever
+   * the ground.
    */
   checkRoad(x: number, y: number): PlacementCheck {
     const reason = this.roadRules(x, y);
@@ -1185,10 +1231,17 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (roads.has(x, y)) return STR.build.roadHere;
+    const deck = this.bridgeAt(x, y);
     const bad = unbuildable(terrainAt(this.map, x, y));
-    if (bad) return bad;
+    // a platform stands on water or on land, never on rock or a mountain (`buildingRules`)
+    if (bad && !deck) return bad;
+    if (deck && this.track.has(x, y)) return STR.build.bridgeCarriesRail;
     const dec = this.decorAt(x, y);
-    if (this.stationAt(x, y) || this.buildingAt(x, y) || (dec && !decorDef(dec.id).onTrack))
+    if (
+      this.stationAt(x, y) ||
+      (this.buildingAt(x, y) && !deck) ||
+      (dec && !decorDef(dec.id).onTrack)
+    )
       return STR.build.roadOnBuilding;
     return roads.trackRefusal(x, y);
   }
@@ -1251,15 +1304,16 @@ export class Builder {
     return roadServes(this.roads, place);
   }
   /**
-   * A place was placed: each of its street doors gets its spur (`laySpur`), or, where no road is
-   * near enough, its reach tile alone, so the next road laid beside it joins it. Nothing for what
-   * has no door. A place is turned by placing it anew: it gets the spur of its door where it faces
-   * now, and the spur it had stays, a road like any other.
+   * A place was placed: each of its street doors gets its spur (`laySpur`) where a road of the
+   * network is near enough, and no road tile otherwise; a road laid near the door later brings it
+   * its spur (`connectNear`). Nothing for what has no door. A place is turned by placing it anew:
+   * it gets the spur of its door where it faces now, and the spur it had stays, a road like any
+   * other.
    */
   private connectPlace(p: PlaceAt) {
     if (!hasDoors(p.def)) return;
     const site = this.spurSite();
-    for (const d of streetDoors(p)) this.laySpur(d, true, site);
+    for (const d of streetDoors(p)) this.laySpur(d, site);
   }
   /**
    * A road was laid on (x, y): each street door with no road on its reach tile within SPUR_REACH
@@ -1274,7 +1328,7 @@ export class Builder {
     );
     if (!near.length) return;
     const site = this.spurSite();
-    for (const d of near) this.laySpur(d, false, site);
+    for (const d of near) this.laySpur(d, site);
   }
   /**
    * What every spur laid now is judged against. `platforms`: the keys of the tiles a spur keeps
@@ -1331,19 +1385,21 @@ export class Builder {
    * (`network`), the fewest tiles that keep every rule below, at most SPUR_REACH of them. Every
    * tile of it is one a road could be laid on (`checkRoad`'s rules, judged tile by tile as if the
    * tiles before it stood, the stock aside), on land the player owns even where the builder lifts
-   * the lock, and off every station's platform and depot's gates (`spurSite`), which a road to a
-   * door never touches (#406 D1). With no road that near, or none a spur keeping to those rules
-   * reaches, the reach tile alone is laid when `alone` says so, and nothing otherwise. Nothing
-   * either when the reach tile holds a road already or can take none. Each tile laid is told
-   * (`onRoadChanged`); nothing is paid. The tiles laid, the reach tile first.
+   * the lock, off every station's platform and depot's gates (`spurSite`), which a road to a
+   * door never touches (#406 D1), and off every bridge platform, which carries a road only where
+   * the player lays one (#493). With no road that near, or none a spur keeping to those rules
+   * reaches, nothing is laid: a lone road tile at a door would be one the player can neither see
+   * nor remove until roads are drawn (#329) and can be removed (#409). Nothing either when the
+   * reach tile holds a road already or can take none. Each tile laid is told (`onRoadChanged`);
+   * nothing is paid. The tiles laid, the reach tile first.
    */
   private laySpur(
     door: Door,
-    alone: boolean,
     site: { platforms: Set<number>; reaches: Set<number> },
   ): { x: number; y: number }[] {
     const open = (x: number, y: number, roads = this.roads) =>
       !this.roadRules(x, y, roads) &&
+      !this.bridgeAt(x, y) &&
       this.regions.isTileUnlocked(x, y) &&
       !site.platforms.has(this.key(x, y));
     const { reach } = door;
@@ -1361,7 +1417,7 @@ export class Builder {
         tried.add(t.x, t.y);
       }
     }
-    tiles ??= alone ? [reach] : [];
+    if (!tiles) return [];
     for (const t of tiles) {
       this.roads.add(t.x, t.y);
       this.onRoadChanged?.(t.x, t.y);

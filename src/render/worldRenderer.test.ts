@@ -17,9 +17,11 @@ import { DEFAULT_RULES, rules } from '../sim/rules';
 import { harvestBreakdown } from '../sim/stations';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, type SimWorld } from '../testing/simWorld';
+import { picture } from '../testing/townPaving';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
+import { lineSpans, type RailBed } from '../world/railProfile';
 import {
   TRACK_ITEMS,
   TRACK_KINDS,
@@ -30,13 +32,31 @@ import {
   type TrackPiece,
 } from '../world/track';
 import { structureScale, TREE_SCALE } from './assetScale';
+import { groundOf as groundDataOf } from '../art/buildingGround';
+import { yardTiles, type Yard } from './buildingYard';
 import { litTiles } from './harvestHighlight';
 import { Landscape, type PainterPool } from './landscape';
 import { buildRelief, groundAllows } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
-import { PAVING_FRINGE, TownPaving } from './townPaving';
+import { ROAD_ON_DECK } from './roadShape';
+import { TownPaving } from './townPaving';
 import { WATERLINE } from './bridgeMeshes';
+import {
+  CELL_BLOCKED,
+  CELL_FIELD,
+  CELL_OPEN,
+  RUN_S,
+  RUN_W,
+  fieldPicture,
+  readSite,
+  type FieldFrame,
+  type FieldPicture,
+} from './wheatField';
+import { WheatFields } from './wheatFields';
 import { WorldRenderer } from './worldRenderer';
+
+/** The paved tiles a world renderer holds (`setCity`), which its `paved` reads. */
+const cityOf = (world: WorldRenderer) => (world as unknown as { city: Set<number> }).city;
 
 const SOURCE = new TextureSource({ width: 1024, height: 1024 });
 
@@ -67,6 +87,8 @@ const FRAMES: Record<string, FrameInfo> = {
   'structures/townhouse_s1_r3': frame(40, 50),
   'terrain/ghost_ok': frame(64, 32),
   'props/oak_2': frame(20, 30),
+  'props/bush_0': frame(12, 10),
+  'props/coal_0': frame(24, 16),
 };
 
 /** What a ground fit hands out in these tests, one set per picture and scale, as surfaces cache. */
@@ -109,6 +131,26 @@ function pictureOf(key: string, f: FrameInfo) {
 }
 
 /**
+ * What a world renderer built from its prototype needs to follow roads (`setRoads`,
+ * `roadChanged`, `setCity`): none yet, no track and no nature drawn.
+ */
+const noRoads = () => ({
+  roads: new Set(),
+  roadCodes: new Map(),
+  bridgeDecks: new Set(),
+  doorsByReach: new Map(),
+  trackFrames: new Map(),
+  decks: new Map(),
+  deckMeshes: new Map(),
+  crossings: new Container(),
+  propSprites: new Map(),
+  flattened: new Set(),
+  cutSprites: new WeakSet(),
+  deposits: new WeakSet(),
+  paveCleared: new WeakSet(),
+});
+
+/**
  * A world renderer with only what placing a structure touches: the atlas above, a one-tile map,
  * its two layers, and surfaces that hand back textures without reading pixels (Node has no
  * canvas), the pictures from `PICTURES`. `families` records the window-light family each building
@@ -127,6 +169,7 @@ function renderer() {
     objects,
     contactGround,
     city: new Set(),
+    paved: (tile: number) => cityOf(world).has(tile),
     doorsteps: [],
     propTint: 0xffffff,
     structures: new Map(),
@@ -155,11 +198,23 @@ function renderer() {
         return { texture, anchorX: 0.5, anchorY: 0.5 };
       },
     },
-    landscape: { setCity: () => {}, invalidate: () => {} },
+    landscape: {
+      setCity: () => {},
+      invalidate: () => {},
+      setYards: () => {},
+      setRoads: () => {},
+      repaint: () => {},
+    },
+    ...noRoads(),
+    footings: new Map(),
+    doorsByTile: new Map(),
+    trackSprites: new Map(),
+    roadAt: () => false,
     texturedParts: new Map(),
     groundSprites: [],
     elevationOf: () => 0,
     refreshScatter: () => {},
+    wheat: new WheatFields(1, 1),
   });
   const lights = () => objects.children.filter((c) => c.label === 'emissive').length;
   return {
@@ -178,7 +233,8 @@ describe('a structure sprite switching frames', () => {
   it('takes its new frame size, lights and ground shadow, never the frame before', () => {
     const { world, lights, patches, families } = renderer();
     const s = world.setStructure('decor:0,0', 0, 0, 'structures/water_tower');
-    expect(s.scale.x).toBeCloseTo(0.7, 9);
+    // the equipment estimate 0.7 times the author's pick of 1.3
+    expect(s.scale.x).toBeCloseTo(0.7 * 1.3, 9);
     expect([lights(), patches()]).toEqual([1, 1]);
     // the same sprite shows a frame with no scale reference: scale 1, no lights, no shadow
     expect(world.setStructure('decor:0,0', 0, 0, 'structures/power_line')).toBe(s);
@@ -186,7 +242,7 @@ describe('a structure sprite switching frames', () => {
     expect([lights(), patches()]).toEqual([0, 0]);
     // and back to a building, turned this time: its unturned frame's size and lights
     world.setStructure('decor:0,0', 0, 0, 'structures/water_tower_r2');
-    expect(s.scale.x).toBeCloseTo(0.7, 9);
+    expect(s.scale.x).toBeCloseTo(0.7 * 1.3, 9);
     expect([lights(), patches()]).toEqual([1, 1]);
     expect(families.at(-1)).toBe('water_tower');
     world.setStructure('decor:0,0', 0, 0, 'structures/depot_r1');
@@ -283,6 +339,32 @@ describe('a building fitted to the ground', () => {
     expect(shown()).toBe(weeds[1].texture);
     world.removeStructure('decor:0,0');
     expect(weeds[1].texture.destroyed).toBe(true);
+  });
+
+  it("hides the map's bushes under paving, and shows them again when the paving goes", () => {
+    const { world } = renderer();
+    const props: PropInstance[] = [
+      { kind: 'bush', variant: 0, ox: 0, oy: 0 },
+      { kind: 'oak', variant: 2, ox: 0.1, oy: 0.1 },
+      { kind: 'coal', variant: 0, ox: -0.1, oy: 0 },
+    ];
+    Object.assign(world, { isBuilt: () => true });
+    (world as unknown as { buildPropsAt(i: number, l: PropInstance[]): void }).buildPropsAt(
+      0,
+      props,
+    );
+    const sprites = (world as unknown as { propSprites: Map<number, Sprite[]> }).propSprites.get(
+      0,
+    )!;
+    const shown = () => sprites.map((s) => s.visible);
+    expect(sprites.length).toBe(3);
+    expect(shown()).toEqual([true, true, true]);
+    world.setCity(new Set([0]));
+    expect(shown()).toEqual([false, true, true]);
+    world.setCity(new Set());
+    expect(shown()).toEqual([true, true, true]);
+    // the sprites were only hidden, never destroyed
+    expect(sprites.every((s) => !s.destroyed)).toBe(true);
   });
 
   it('moves, turns, scales and goes with its building', () => {
@@ -414,6 +496,8 @@ describe('a building fitted to the ground', () => {
         ready: true,
         root: { visible: false },
         isPainted: () => false,
+        setYards: () => {},
+        repaint: () => {},
       },
       refreshSummits: () => {},
       harvest: { refresh: () => {} },
@@ -489,15 +573,345 @@ describe('a building fitted to the ground', () => {
   });
 });
 
+/** A footing as the world renderer keeps it (the parts these tests read). */
+type FootingParts = { yard: Yard; lift: number; plinth: Graphics | null };
+const footingsOf = (world: WorldRenderer) =>
+  (world as unknown as { footings: Map<string, FootingParts> }).footings;
+
+describe("a building's yard and plinth", () => {
+  /**
+   * The one-tile world above on an 8 x 8 map, its ground `height` world px high at any map point
+   * (level by default), with a landscape that records the yards it is handed and the tiles it is
+   * told to repaint.
+   */
+  function yarded(height: (x: number, y: number) => number = () => 0) {
+    const r = renderer(),
+      handed: Yard[][] = [],
+      repainted = new Set<number>();
+    Object.assign(r.world, {
+      map: emptyMap(3, 8, 8),
+      elevationOf: (x: number, y: number) => -height(x, y),
+      landscape: {
+        setCity: () => {},
+        invalidate: () => {},
+        setYards: (yards: Yard[]) => handed.push(yards),
+        setRoads: () => {},
+        repaint: (x: number, y: number) => repainted.add(y * 8 + x),
+      },
+    });
+    return { ...r, handed, repainted };
+  }
+
+  it('hands its yard to the painter and repaints the ground it covers, then takes it back', () => {
+    const { world, handed, repainted } = yarded();
+    world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    const yard = footingsOf(world).get('decor:3,3')!.yard;
+    expect(handed.at(-1)).toEqual([yard]);
+    expect(yard.kind).toBe('gravel');
+    expect([...repainted].sort()).toEqual(yardTiles(yard, 8, 8).sort());
+    // the same building again changes nothing
+    repainted.clear();
+    const calls = handed.length;
+    world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    expect([handed.length, repainted.size]).toEqual([calls, 0]);
+    // a second building: both yards, the new one's ground repainted
+    world.setStructure('station:1', 5, 5, 'structures/station_1');
+    const station = footingsOf(world).get('station:1')!.yard;
+    expect(handed.at(-1)).toEqual([yard, station]);
+    expect(station.kerb).not.toBeNull();
+    for (const k of yardTiles(station, 8, 8)) expect(repainted.has(k)).toBe(true);
+    // a frame that is no building has no yard: its ground is repainted bare
+    repainted.clear();
+    world.setStructure('decor:3,3', 3, 3, 'structures/power_line', 14);
+    expect(handed.at(-1)).toEqual([station]);
+    expect([...repainted].sort()).toEqual(yardTiles(yard, 8, 8).sort());
+    repainted.clear();
+    world.removeStructure('station:1');
+    expect(handed.at(-1)).toEqual([]);
+    expect([...repainted].sort()).toEqual(yardTiles(station, 8, 8).sort());
+    expect(footingsOf(world).size).toBe(0);
+  });
+
+  it("stands its yard's foot where its anchor puts it: moved off its tile, a long or square footprint's middle", () => {
+    const { world } = yarded();
+    // a 2 x 2 depot is anchored at its middle, a long one between its two tiles (src/game.ts)
+    world.setStructure('station:2', 4, 4, 'structures/station_1', 20, -16);
+    const moved = footingsOf(world).get('station:2')!.yard,
+      ground = groundDataOf('structures/station_1')!,
+      s = world.getStructure('station:2')!;
+    ground.foot.forEach(([px, py], i) => {
+      const k = s.scale.x;
+      expect(moved.foot[i * 2]).toBeCloseTo(3.5 + (px / 64 + py / 32) * k, 9);
+      expect(moved.foot[i * 2 + 1]).toBeCloseTo(3.5 + (py / 32 - px / 64) * k, 9);
+    });
+  });
+
+  it('takes a door path on to a road laid beside the door, and back off it', () => {
+    const { world, handed } = yarded();
+    let road = false;
+    world.roadAt = (x, y) => road && x === 3 && y === 4;
+    // the house's street door faces S, to tile 3, 4 (src/sim/doors.ts)
+    world.setCity(new Set(), [{ tile: { x: 3, y: 3 }, side: Dir.S }]);
+    world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    const path = () =>
+      footingsOf(world)
+        .get('decor:3,3')!
+        .yard.paths.find((p) => p.dy === 1)!;
+    expect(path().open).toBe(false);
+    road = true;
+    world.roadChanged(3, 4);
+    expect(path().open).toBe(true);
+    expect(handed.at(-1)![0].paths).toContainEqual(path());
+    // a road that comes up beside it takes the path back
+    road = false;
+    world.roadChanged(3, 4);
+    expect(path().open).toBe(false);
+  });
+
+  it('stands on a plinth under its picture where the ground under it drops away', () => {
+    // the ground falls 8 px east of x = 3.2, under the house's right corner
+    const { world, objects } = yarded((x) => (x > 3.2 ? -8 : 0));
+    const s = world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1'),
+      footing = footingsOf(world).get('decor:3,3')!,
+      plinth = footing.plinth!;
+    expect(plinth).not.toBeNull();
+    expect(plinth.parent).toBe(objects);
+    expect(footing.lift).toBe(0);
+    // under the picture, over everything a depth step behind it
+    expect(plinth.zIndex).toBeLessThan(s.zIndex);
+    expect(plinth.zIndex).toBeGreaterThan(depthKey(3, 2, 21));
+    expect([plinth.x, plinth.y]).toEqual([s.x, s.y]);
+    expect(plinth.context.instructions.length).toBeGreaterThan(0);
+    // it goes with its building
+    world.removeStructure('decor:3,3');
+    expect(plinth.destroyed).toBe(true);
+    // on level ground there is none
+    const level = yarded();
+    level.world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1');
+    expect(footingsOf(level.world).get('decor:3,3')!.plinth).toBeNull();
+  });
+
+  it('is lifted onto ground that stands higher under its foot, its ground fit with it', () => {
+    // the ground rises 6 px under the back of the house, as a terrace's bank reaches into it
+    const { world } = yarded((x, y) => (x + y < 5.9 ? 6 : 0));
+    const s = world.setStructure('decor:3,3', 3, 3, 'structures/townhouse_s1', 20, 3, 5),
+      footing = footingsOf(world).get('decor:3,3')!,
+      fit = fitsOf(world).get('decor:3,3')!,
+      p = tileToWorld(3, 3);
+    expect(footing.lift).toBe(6);
+    expect([s.x, s.y]).toEqual([p.x + 5, p.y + 3 - 6]);
+    for (const part of [fit.shadow, fit.foot, fit.weeds])
+      expect([part.x, part.y]).toEqual([s.x, s.y]);
+    // and its front, now over lower ground, stands on a plinth
+    expect(footing.plinth).not.toBeNull();
+  });
+
+  /** The frames these tests put up: buildings with ground data, and a frame that is none. */
+  const SHOWN = [
+    'structures/townhouse_s1',
+    'structures/townhouse_s1_r3',
+    'structures/station_1',
+    'structures/station_1_r1',
+    'structures/water_tower',
+    'structures/water_tower_r2',
+    'structures/power_line',
+  ];
+  /** A building put up (or shown anew) on a tile, moved off it as long footprints are, or taken down. */
+  type Step =
+    { put: string; frame: string; x: number; y: number; dx: number; dy: number } | { take: string };
+  const IDS = ['decor:a', 'decor:b', 'station:c', 'station:d'];
+  function put(rng: Rng): Step {
+    return {
+      put: rng.pick(IDS),
+      frame: rng.pick(SHOWN),
+      x: rng.int(1, 6),
+      y: rng.int(1, 6),
+      dx: rng.pick([0, 0, 16, -16]),
+      dy: rng.pick([0, 0, 8, -8]),
+    };
+  }
+  const run = (world: WorldRenderer, step: Step) =>
+    'take' in step
+      ? world.removeStructure(step.take)
+      : world.setStructure(step.put, step.x, step.y, step.frame, 20, step.dy, step.dx);
+  /** Each tile of the 8 x 8 map, with the yards that reach it (yardTiles), in a fixed order. */
+  function reach(yards: readonly Yard[]) {
+    const out: string[][] = Array.from({ length: 64 }, () => []);
+    for (const yard of yards)
+      for (const k of yardTiles(yard, 8, 8)) out[k].push(JSON.stringify(yard));
+    return out.map((list) => list.sort().join('|'));
+  }
+
+  // Slow: plays up to 16 steps on a fresh world for each of 100 seeds (about a third of a second
+  // alone).
+  it('after any run of placing, moving, replacing and removing, paints just the yards that stand', () => {
+    let plinthed = 0,
+      lifted = 0;
+    forAll(
+      (rng) => ({
+        // the ground drops 8 px east of x = fall: buildings beside it stand on plinths
+        fall: rng.range(1, 7),
+        steps: Array.from({ length: rng.int(1, 16) }, () =>
+          rng.chance(0.25) ? { take: rng.pick(IDS) } : put(rng),
+        ) as Step[],
+      }),
+      ({ fall, steps }) => {
+        const height = (x: number) => (x > fall ? -8 : 0),
+          { world, objects, handed, repainted } = yarded(height),
+          shown = new Map<string, string>(),
+          placed = new Map<string, Step & { put: string }>();
+        let before: Yard[] = [];
+        steps.forEach((step, i) => {
+          const where = `after step ${i + 1}, ${JSON.stringify(step)}`;
+          repainted.clear();
+          run(world, step);
+          if ('take' in step) {
+            shown.delete(step.take);
+            placed.delete(step.take);
+          } else {
+            shown.set(step.put, step.frame);
+            placed.set(step.put, step);
+          }
+          const footings = footingsOf(world),
+            after = handed.at(-1) ?? [];
+          // a footing for each building with ground data that stands, and the painter has its yard
+          expect([...footings.keys()].sort(), where).toEqual(
+            [...shown]
+              .filter(([, f]) => groundDataOf(f))
+              .map(([id]) => id)
+              .sort(),
+          );
+          expect(after, where).toEqual([...footings.values()].map((f) => f.yard));
+          // every tile some yard reaches differently is painted again; none when no yard changed
+          const was = reach(before),
+            now = reach(after);
+          for (let k = 0; k < 64; k++)
+            if (was[k] !== now[k]) expect(repainted.has(k), `${where}: tile ${k}`).toBe(true);
+          if (was.join() === now.join()) expect([...repainted], where).toEqual([]);
+          // each picture stands where its tile puts it, lifted once by its footing's lift, and
+          // its ground fit with it
+          for (const [id, f] of footings) {
+            const s = world.getStructure(id)!,
+              at = placed.get(id)! as Extract<Step, { put: string }>,
+              p = tileToWorld(at.x, at.y),
+              fit = fitsOf(world).get(id)!;
+            expect(f.lift, `${where}: ${id}`).toBeGreaterThanOrEqual(0);
+            if (f.lift > 0) lifted++;
+            expect([s.x, s.y], `${where}: ${id}`).toEqual([
+              p.x + at.dx,
+              p.y - height(at.x) + at.dy - f.lift,
+            ]);
+            for (const part of [fit.shadow, fit.foot, fit.weeds])
+              expect([part.x, part.y], `${where}: ${id}`).toEqual([s.x, s.y]);
+          }
+          // each plinth stands with its own building, under its picture; none is left behind
+          const plinths = [...footings].flatMap(([id, f]) => {
+            if (!f.plinth) return [];
+            const s = world.getStructure(id)!;
+            expect([f.plinth.x, f.plinth.y], where).toEqual([s.x, s.y]);
+            expect(f.plinth.zIndex, where).toBeLessThan(s.zIndex);
+            expect(f.plinth.destroyed, where).toBe(false);
+            return [f.plinth];
+          });
+          const drawn = objects.children.filter((c) => c instanceof Graphics);
+          expect(drawn.length, where).toBe(plinths.length);
+          for (const g of plinths) expect(drawn.includes(g), where).toBe(true);
+          plinthed += plinths.length;
+          before = after;
+        });
+      },
+      { shrink: (c) => [...shrinkArray(c.steps)].map((steps) => ({ ...c, steps })) },
+    );
+    // about 120 steps of the 785 leave a plinth standing, and about 60 a picture lifted
+    expect(plinthed).toBeGreaterThan(50);
+    expect(lifted).toBeGreaterThan(25);
+  }, 20_000);
+
+  /** A road laid on a tile or taken off it, or the street doors of every place anew. */
+  type Change =
+    | { road: readonly [number, number] }
+    | { doors: { tile: { x: number; y: number }; side: Dir }[] };
+
+  it('keeps each yard as it would be drawn afresh, however the roads and doors round it change', () => {
+    const seen = { open: 0, street: 0 };
+    forAll(
+      (rng) => {
+        // buildings on their own tiles; the roads and street doors mostly beside and on them
+        const buildings = Array.from({ length: rng.int(1, 4) }, (_, i) => ({
+          put: IDS[i],
+          frame: rng.pick(SHOWN),
+          x: rng.int(1, 6),
+          y: rng.int(1, 6),
+          dx: 0,
+          dy: 0,
+        }));
+        const near = (d: number) => {
+          const b = rng.pick(buildings);
+          return rng.chance(0.8)
+            ? { x: b.x + rng.int(-d, d), y: b.y + rng.int(-d, d) }
+            : { x: rng.int(0, 7), y: rng.int(0, 7) };
+        };
+        const changes = Array.from({ length: rng.int(1, 10) }, (): Change => {
+          if (rng.chance(0.7)) {
+            const { x, y } = near(1);
+            return { road: [x, y] as const };
+          }
+          return {
+            doors: Array.from({ length: rng.int(0, 4) }, () => ({
+              tile: near(0),
+              side: rng.pick([Dir.N, Dir.E, Dir.S, Dir.W]),
+            })),
+          };
+        });
+        return { buildings, changes };
+      },
+      ({ buildings, changes }) => {
+        const roads = new Set<number>();
+        let doors: { tile: { x: number; y: number }; side: Dir }[] = [];
+        const live = yarded();
+        live.world.roadAt = (x, y) => roads.has(y * 8 + x);
+        for (const b of buildings) run(live.world, b);
+        for (const change of changes)
+          if ('road' in change) {
+            const [x, y] = change.road;
+            if (!roads.delete(y * 8 + x)) roads.add(y * 8 + x);
+            live.world.roadChanged(x, y);
+          } else {
+            doors = change.doors;
+            live.world.setCity(new Set(), doors);
+          }
+        // the same buildings put up where those roads and doors already are
+        const fresh = yarded();
+        fresh.world.roadAt = (x, y) => roads.has(y * 8 + x);
+        fresh.world.setCity(new Set(), doors);
+        for (const b of buildings) run(fresh.world, b);
+        const yards = (r: ReturnType<typeof yarded>) =>
+          [...footingsOf(r.world)].map(([id, f]) => [id, f.yard] as const);
+        expect(yards(live)).toEqual(yards(fresh));
+        expect(live.handed.at(-1) ?? []).toEqual(fresh.handed.at(-1) ?? []);
+        for (const [id, yard] of yards(live)) {
+          const shown = groundDataOf(buildings.find((b) => b.put === id)!.frame)!.doors.length;
+          seen.open += yard.paths.filter((p) => p.open).length;
+          seen.street += yard.paths.length - shown;
+        }
+      },
+      { shrink: (c) => [...shrinkArray(c.changes)].map((changes) => ({ ...c, changes })) },
+    );
+    // paths on to roads, and paths from street doors the pictures do not show, both came and went
+    expect(seen.open).toBeGreaterThan(20);
+    expect(seen.street).toBeGreaterThan(20);
+  });
+});
+
 describe('a ghost sprite switching frames', () => {
   it('takes each new frame size', () => {
     const { world } = renderer();
     const g = new Sprite();
     const steps: [string, number][] = [
-      ['structures/water_tower', 0.7],
-      ['structures/water_tower_r2', 0.7],
+      ['structures/water_tower', 0.7 * 1.3],
+      ['structures/water_tower_r2', 0.7 * 1.3],
       ['terrain/ghost_ok', 1],
-      ['structures/water_tower_r2', 0.7],
+      ['structures/water_tower_r2', 0.7 * 1.3],
       ['props/oak_2', TREE_SCALE],
       ['structures/depot_r1', 1],
     ];
@@ -708,6 +1122,8 @@ describe('the harvest highlight in a whole world', () => {
     }
   });
 
+  // slow because a whole world is built for each of 12 seeds and run for up to 40 frames: 0.40 s
+  // alone, so a limit of 30 s
   it('follows the relief on the frames its landscape says it moved, and on no others', () => {
     forAll(
       (rng) => Array.from({ length: rng.int(1, 40) }, () => rng.chance(0.25)),
@@ -735,10 +1151,10 @@ describe('the harvest highlight in a whole world', () => {
           expect(centres(world.harvest.layer), `frame ${f}`).toEqual(grounds(world, 4, 4, 'farm'));
         });
       },
-      // a whole world per case: twelve seeds, some 240 frames, keep it well inside the default limit
+      // a whole world per case: twelve seeds, some 240 frames, keep it well inside its limit
       { seeds: SEEDS.slice(0, 12), shrink: (moves) => shrinkArray(moves) },
     );
-  });
+  }, 30_000);
 });
 
 /** Prop pictures for the fields below: a field covers its tile, a tree stands on it. */
@@ -1014,6 +1430,272 @@ function checkMixedTile(props: PropInstance[], piece: TrackPiece) {
 const named = ({ kind, cls, cls2, rot, unit }: TrackPiece) =>
   `${kind} ${cls}${cls2 ? `/${cls2}` : ''} rot ${rot}${unit ? ' (member)' : ''}`;
 
+/** The variants' pictures the fields are coloured from in these tests: rows of two shades. */
+const FIELD_FRAMES: FieldFrame[] = [
+  [190, 150, 70],
+  [176, 150, 64],
+  [200, 160, 80],
+].map(([r, g, b]) => {
+  const width = 216,
+    height = 120,
+    data = new Uint8ClampedArray(width * height * 4);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const k = (x + 2 * y) % 16 < 8 ? 1 : 0.8;
+      data.set([r * k, g * k, b * k, 255], (y * width + x) * 4);
+    }
+  return { data, width, height, density: 4, anchorX: 108, anchorY: 63 };
+});
+/** The farm halt's illustrated picture, rotation 0, the size of its atlas frame. */
+const FARM = 'structures/farm_1';
+const FIELD_ATLAS_FRAMES: Record<string, FrameInfo> = {
+  'props/wheat_0': frame(54, 29, 4),
+  'props/wheat_1': frame(54, 30, 4),
+  'props/wheat_2': frame(54, 30, 4),
+  [FARM]: frame(66, 65.5, 4),
+};
+const FIELD_ATLAS = {
+  has: (k: string) => k in FIELD_ATLAS_FRAMES || !k.startsWith('props/'),
+  get: (k: string) => FIELD_ATLAS_FRAMES[k] ?? ANY_FRAME,
+} as unknown as AtlasRegistry;
+
+/**
+ * A 12 x 12 world with wheat on `fields`, whose field pictures are painted from FIELD_FRAMES into
+ * textures that remember their pictures (`pictures`), and whose buildings take their ground fit
+ * from stand-ins, as `renderer` gives them (Node has no canvas). `building` says whether a tile is
+ * taken: the builder's `occupied`.
+ */
+function fieldWorld(fields: [number, number][]) {
+  const map = emptyMap(1, 12, 12);
+  for (const [x, y] of fields)
+    map.props.set(y * 12 + x, [{ kind: 'wheat', variant: (x * 7 + y * 5) % 3, ox: 0, oy: 0 }]);
+  const world = new WorldRenderer(FIELD_ATLAS, map, new RegionState(map)),
+    pictures = new Map<Texture, FieldPicture>(),
+    taken = new Set<string>();
+  world.fieldArt = {
+    frames: () => FIELD_FRAMES,
+    texture: (p) => {
+      const t = new Texture({ source: new TextureSource({ width: p.width, height: p.height }) });
+      pictures.set(t, p);
+      return t;
+    },
+  };
+  world.occupied = (x, y) => taken.has(`${x},${y}`);
+  Object.assign(world, {
+    surfaces: {
+      picture: pictureOf,
+      window: () => Texture.EMPTY,
+      groundFit: (key: string, _f: FrameInfo, scale: number) => {
+        const t = fitTextures(key, scale);
+        return {
+          foot: { texture: t.foot, anchorX: 0.5, anchorY: 0.8 },
+          shadow: { texture: t.shadow, anchorX: 0.3, anchorY: 0.2 },
+          feet: t.feet,
+          base: null,
+        };
+      },
+      weeds: () => null,
+      destroy: () => {},
+    },
+  });
+  /** The sprite each field tile is drawn with. */
+  const sprite = (x: number, y: number) =>
+    (world as unknown as { wheat: WheatFields }).wheat.sprite(y * 12 + x)!;
+  /** The picture each field tile shows now: null where it shows its atlas frame, or no sprite. */
+  const shown = () =>
+    new Map(
+      fields.map(([x, y]) => {
+        const s = sprite(x, y) as Sprite | undefined;
+        return [`${x},${y}`, (s && pictures.get(s.texture)) ?? null];
+      }),
+    );
+  return { world, map, pictures, taken, sprite, shown };
+}
+/** Every texture a field picture was made into that is still alive. */
+const alive = (pictures: Map<Texture, FieldPicture>) =>
+  [...pictures.keys()].filter((t) => !t.destroyed);
+
+/**
+ * A field round the farm halt's tile (5, 4), which holds none: on its W side (4, 4) and its S side
+ * (5, 5), and the tiles between them; and a field tile far off, beyond any picture's reach.
+ */
+const AROUND_FARM: [number, number][] = [
+  [3, 4],
+  [4, 4],
+  [3, 5],
+  [4, 5],
+  [5, 5],
+  [10, 10],
+];
+/** Painting a field's pictures over and over takes a while under Node. */
+const SLOW = 30_000;
+
+describe("a wheat field's picture (#444)", () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it(
+    'shows its atlas frame until it is painted, and wherever no picture can be read',
+    () => {
+      const { world, sprite, shown } = fieldWorld(AROUND_FARM);
+      expect(sprite(3, 4).texture).toBe(
+        FIELD_ATLAS_FRAMES['props/wheat_' + ((3 * 7 + 4 * 5) % 3)].texture,
+      );
+      world.updateFields(Infinity);
+      for (const [k, p] of shown()) expect(p, k).not.toBeNull();
+      // Node reads no atlas pixels: a world with the game's own art keeps the atlas frames
+      const plain = new WorldRenderer(FIELD_ATLAS, world.map, new RegionState(world.map));
+      plain.updateFields(Infinity);
+      const s = (plain as unknown as { wheat: WheatFields }).wheat.sprite(4 * 12 + 3)!;
+      expect(s.texture).toBe(FIELD_ATLAS_FRAMES['props/wheat_' + ((3 * 7 + 4 * 5) % 3)].texture);
+    },
+    SLOW,
+  );
+
+  it(
+    'paints a little each call, within its budget, and then the rest',
+    () => {
+      const { world, shown } = fieldWorld(AROUND_FARM);
+      world.updateFields(0);
+      expect([...shown().values()].filter((p) => p).length).toBeLessThan(AROUND_FARM.length);
+      world.updateFields(Infinity);
+      expect([...shown().values()].every((p) => p)).toBe(true);
+    },
+    SLOW,
+  );
+
+  it(
+    "is drawn after a building's picture, foot, weeds and plinth on its S side, and before it on its W",
+    () => {
+      const { world, taken, sprite } = fieldWorld(AROUND_FARM);
+      taken.add('5,4');
+      const s = world.setStructure('station:1', 5, 4, FARM),
+        fit = fitsOf(world).get('station:1')!;
+      world.updateFields(Infinity);
+      const south = sprite(5, 5),
+        west = sprite(4, 4);
+      // the plinth is drawn just under the picture (`fitPlinth`), so after the picture is after it
+      for (const part of [s, fit.foot, fit.weeds]) {
+        expect(south.zIndex).toBeGreaterThan(part.zIndex);
+        expect(west.zIndex).toBeLessThan(part.zIndex - 0.004);
+      }
+    },
+    SLOW,
+  );
+
+  it(
+    'runs up to a building placed beside it, and is as a fresh build paints it once it goes',
+    () => {
+      const fresh = fieldWorld(AROUND_FARM);
+      fresh.world.updateFields(Infinity);
+      const before = fresh.shown();
+      const { world, taken, shown, pictures } = fieldWorld(AROUND_FARM);
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(before);
+      taken.add('5,4');
+      world.setStructure('station:1', 5, 4, FARM);
+      world.updateFields(Infinity);
+      const beside = shown();
+      // each field round it is painted as the map reads with the farm halt's tile a footprint whose
+      // W and S sides it runs up to (it has no door path there)
+      const site = (x: number, y: number) =>
+        readSite(x, y, (cx, cy) =>
+          cx < 0 || cy < 0 || cx >= 12 || cy >= 12
+            ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: 0 }
+            : cx === 5 && cy === 4
+              ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: RUN_W | RUN_S }
+              : AROUND_FARM.some(([fx, fy]) => fx === cx && fy === cy)
+                ? { kind: CELL_FIELD, variant: (cx * 7 + cy * 5) % 3, level: 0, run: 0 }
+                : { kind: CELL_OPEN, variant: 0, level: 0, run: 0 },
+        );
+      for (const [x, y] of [
+        [4, 4],
+        [5, 5],
+        [4, 5],
+      ])
+        expect(beside.get(`${x},${y}`), `${x},${y}`).toEqual(
+          fieldPicture(site(x, y), FIELD_FRAMES),
+        );
+      expect(beside.get('4,4')).not.toEqual(before.get('4,4'));
+      // and a field out of its reach does not change
+      expect(beside.get('10,10')).toEqual(before.get('10,10'));
+      // every picture replaced was freed
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length);
+      taken.delete('5,4');
+      world.removeStructure('station:1');
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(before);
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length);
+      world.root.destroy({ children: true });
+      expect(alive(pictures)).toHaveLength(0);
+    },
+    SLOW,
+  );
+
+  it(
+    'is not drawn under track, and is painted as before when the track goes',
+    () => {
+      const fresh = fieldWorld(AROUND_FARM);
+      fresh.world.updateFields(Infinity);
+      const { world, shown, sprite, pictures } = fieldWorld(AROUND_FARM);
+      world.updateFields(Infinity);
+      world.displaceProps(3, 5, [[0, 2]]);
+      world.setTrack(3, 5, pieceFrame(makePiece('straight', 0)));
+      world.updateFields(Infinity);
+      // the railed tile shows no field, its picture freed; its neighbours end short of the track
+      expect(sprite(3, 5).visible).toBe(false);
+      expect(shown().get('3,5')).toBeNull();
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length - 1);
+      expect(shown().get('4,5')).not.toEqual(fresh.shown().get('4,5'));
+      world.setTrack(3, 5, null);
+      world.updateFields(Infinity);
+      expect(sprite(3, 5).visible).toBe(true);
+      expect(shown()).toEqual(fresh.shown());
+    },
+    SLOW,
+  );
+
+  it(
+    'counts a tile as field where its wheat is drawn: not where it was taken away, still under a signal',
+    () => {
+      const fresh = fieldWorld(AROUND_FARM);
+      fresh.world.updateFields(Infinity);
+      const { world, shown, taken, pictures } = fieldWorld(AROUND_FARM),
+        wheat = (world as unknown as { wheat: WheatFields }).wheat;
+      world.updateFields(Infinity);
+      // a station put up on it takes its sprite away (src/game.ts); the wheat stays in the map
+      taken.add('3,5');
+      world.removeProps(3, 5);
+      world.setStructure('station:9', 3, 5, 'structures/power_line', 14);
+      world.updateFields(Infinity);
+      expect(wheat.sprite(5 * 12 + 3)).toBeUndefined();
+      expect(alive(pictures)).toHaveLength(AROUND_FARM.length - 1);
+      const without = shown();
+      expect(without.get('4,5')).not.toEqual(fresh.shown().get('4,5'));
+      // gone, and its sprite not made again (as develop leaves it), it is open land: the field
+      // reaches on to it, as it would on to any open tile beside it
+      taken.delete('3,5');
+      world.removeStructure('station:9');
+      world.updateFields(Infinity);
+      expect(shown().get('4,5')).not.toEqual(without.get('4,5'));
+      expect(shown().get('4,5')).not.toEqual(fresh.shown().get('4,5'));
+      // made again, it is field once more
+      world.rebuildProps(3, 5);
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(fresh.shown());
+      // a signal or a power line stands in a field without cutting it
+      taken.add('4,5');
+      world.setStructure('decor:4,5', 4, 5, 'structures/power_line', 14);
+      world.updateFields(Infinity);
+      expect(shown()).toEqual(fresh.shown());
+    },
+    SLOW,
+  );
+});
+
 describe('a tile of mixed props under track', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -1179,6 +1861,7 @@ describe('textured bridges over the painted water', () => {
       x,
       y: 6,
       material: 'stone' as const,
+      carries: 'rail' as const,
       axis: 1 as const,
       open: [false, true, false, true],
       water: true,
@@ -1227,6 +1910,97 @@ describe('textured bridges over the painted water', () => {
     const second = parts();
     for (const x of [10, 11]) expect(second.get(at(x)), `x ${x}`).toBe(first.get(at(x)));
     expect(second.get(at(25))).not.toBe(first.get(at(25)));
+  });
+
+  it('draw a road bridge beside a rail bridge as one, walled on its outer long edges (#503)', () => {
+    const { world, tiles } = bridged(),
+      // The rail over the first river runs level along y = 6, on the bridge from x = 10 to 11.
+      levels = Array.from({ length: 32 }, () => 0),
+      { spans } = lineSpans(
+        levels,
+        levels.map((_, x) => x === 10 || x === 11),
+      ),
+      beds = new Map<number, RailBed>(
+        [10, 11].map((x) => [at(x), { axis: 'x', spans, bridge: true, flat: true }]),
+      );
+    world.setRailBeds(beds);
+    const parapets = (c: Container) => c.children.filter((m) => m.label.startsWith('parapet'));
+    const drawn = () =>
+      world['texturedParts'] as Map<number, { under: Container; near: Container }>;
+    world.setTexturedBridges(tiles);
+    for (const x of [10, 11]) expect(parapets(drawn().get(at(x))!.near).length).toBeGreaterThan(0);
+    // A road bridge on the +y side of the rail bridge, over the same river.
+    const roads = [10, 11].map((x) => ({ ...tiles[0], x, y: 7, carries: 'road' as const }));
+    world.setTexturedBridges([...tiles, ...roads]);
+    for (const x of [10, 11]) {
+      const rail = drawn().get(at(x))!,
+        road = drawn().get(7 * 32 + x)!;
+      // The far parapet on the rail's side, the near one on the road's, none on the seam.
+      expect(parapets(rail.under).length, `rail ${x}`).toBeGreaterThan(0);
+      expect(parapets(rail.near).length, `rail ${x}`).toBe(0);
+      expect(parapets(road.under).length, `road ${x}`).toBe(0);
+      expect(parapets(road.near).length, `road ${x}`).toBeGreaterThan(0);
+    }
+  });
+
+  it('hand the painter a road on a road deck as the deck, whichever comes first (#506)', () => {
+    const { world, tiles } = bridged(),
+      // a road along y = 7 over the first river, on platforms at x = 10 and 11
+      roads = new Set([8, 9, 10, 11, 12, 13].map((x) => 7 * 32 + x)),
+      decks = [10, 11].map((x) => ({ ...tiles[0], x, y: 7, carries: 'road' as const })),
+      handed = () => {
+        const list = world.landscape['roads'] as readonly number[],
+          all = new Set<number>(),
+          on = new Set<number>();
+        for (let i = 0; i + 1 < list.length; i += 2) {
+          all.add(list[i]);
+          if (list[i + 1] & ROAD_ON_DECK) on.add(list[i]);
+        }
+        return { all, on };
+      },
+      repaint = vi.spyOn(world.landscape, 'repaint'),
+      painted = () => new Set(repaint.mock.calls.map(([x, y]) => y * 32 + x));
+    world.roadAt = (x, y) => roads.has(y * 32 + x);
+    // the roads first, as a load lays them, and the decks drawn after
+    world.setRoads([...roads].map((k) => ({ x: k % 32, y: Math.floor(k / 32) })));
+    expect(handed()).toEqual({ all: roads, on: new Set() });
+    repaint.mockClear();
+    world.setTexturedBridges([...tiles, ...decks]);
+    expect(handed()).toEqual({ all: roads, on: new Set([at(10) + 32, at(11) + 32]) });
+    // the decks' tiles and the road on the banks beside them are painted again
+    for (const x of [9, 10, 11, 12]) expect(painted().has(at(x) + 32), `x ${x}`).toBe(true);
+    // drawn again as they are, nothing changes
+    repaint.mockClear();
+    world.setTexturedBridges([...tiles, ...decks]);
+    expect(repaint).not.toHaveBeenCalled();
+    // a road laid on to a deck already drawn is the deck's at once
+    roads.add(7 * 32 + 14);
+    world.roadChanged(14, 7);
+    expect(handed().on).toEqual(new Set([at(10) + 32, at(11) + 32]));
+    // the platforms go: the road is painted there again
+    world.setTexturedBridges(tiles);
+    expect(handed()).toEqual({ all: roads, on: new Set() });
+    for (const x of [10, 11]) expect(painted().has(at(x) + 32), `x ${x}`).toBe(true);
+  });
+
+  it("rest a road deck's ends over water on the banks it runs on to, level with them (#506)", () => {
+    const { world, tiles } = bridged(),
+      roads = new Set([8, 9, 10, 11, 12, 13].map((x) => 7 * 32 + x)),
+      decks = [10, 11].map((x) => ({ ...tiles[0], x, y: 7, carries: 'road' as const }));
+    world.roadAt = (x, y) => roads.has(y * 32 + x);
+    world.setRoads([...roads].map((k) => ({ x: k % 32, y: Math.floor(k / 32) })));
+    const ends = (t: (typeof decks)[number]) =>
+      (world['roadDeckEnds'] as (t: object) => boolean[]).call(world, t);
+    // the road runs on along x through both ends of each deck; never out through its sides
+    for (const t of decks) expect(ends(t)).toEqual([false, true, false, true]);
+    roads.delete(7 * 32 + 12);
+    world.setRoads([...roads].map((k) => ({ x: k % 32, y: Math.floor(k / 32) })));
+    expect(ends(decks[1])).toEqual([false, false, false, true]);
+    // on level banks the deck is level with them, at the waterline's deck
+    const profile = world['roadDeckProfile'] as (t: object, d: Map<number, object>) => number[],
+      run = new Map(decks.map((t) => [7 * 32 + t.x, t]));
+    for (const t of decks)
+      for (const z of profile.call(world, t, run)) expect(Math.abs(z)).toBeLessThan(0.5);
   });
 
   type Edit = { kind: 'pave' | 'water' | 'fail'; x: number; y: number };
@@ -1357,15 +2131,20 @@ describe('the town paving handed to the painter', () => {
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
       map: emptyMap(3, 4, 4),
+      wheat: new WheatFields(4, 4),
       city: new Set(),
+      paved: (tile: number) => cityOf(world).has(tile),
       doorsteps: [],
       groundFits: new Map(),
+      footings: new Map(),
       groundSprites: [],
       texturedParts: new Map(),
       landscape: {
         setCity: (_tiles: Set<number>, steps: readonly number[]) => handed.push(steps),
         invalidate: (x: number, y: number) => repainted.push(`${x},${y}`),
       },
+      ...noRoads(),
+      trackSprites: new Map(),
       refreshScatter: () => {},
     });
     return { world, handed, repainted };
@@ -1487,9 +2266,12 @@ describe('the paving of a town the simulation raises, as the game hands it over'
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
       map: w.map,
+      wheat: new WheatFields(w.map.w, w.map.h),
       city: new Set(),
+      paved: (tile: number) => cityOf(world).has(tile),
       doorsteps: [],
       groundFits: new Map(),
+      footings: new Map(),
       groundSprites: [],
       texturedParts: new Map(),
       landscape: {
@@ -1497,6 +2279,8 @@ describe('the paving of a town the simulation raises, as the game hands it over'
           given.push({ tiles, steps }),
         invalidate: (x: number, y: number) => repainted.add(y * SIZE + x),
       },
+      ...noRoads(),
+      trackSprites: new Map(),
       refreshScatter: () => {},
     });
     const game = Object.create(GameClass.prototype) as Game;
@@ -1623,13 +2407,4 @@ function paveChanged(was: TownPaving, is: TownPaving, i: number, j: number) {
       if (was.paved(y * was.w + x) !== is.paved(y * was.w + x)) return true;
     }
   return false;
-}
-/** What the painter takes from the paving at map point (x, y): its distance and colour there. */
-function picture(p: TownPaving, x: number, y: number) {
-  const d = p.near(Math.round(y) * p.w + Math.round(x)) ? p.distance(x, y) : -9;
-  if (d <= -PAVING_FRINGE) return [];
-  if (d <= 0) return [d, p.fringe(x, y, d)];
-  const out = [0, 0, 0];
-  p.paint(x, y, d, [70, 190, 60], 1, out);
-  return [d, ...out];
 }

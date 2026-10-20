@@ -1557,9 +1557,11 @@ describe('planRetreat and planAside with shunting on generated lines with siding
 describe('planAside on mine lines', () => {
   // the station's platform may lie under the cars where the way aside ends, the rear end on its
   // edge: the train sets off rear first from the tile beyond that edge, which the stop is not on
+  // slow because every one of MANY_SEEDS mine lines is planned aside and checked: 0.34 s alone, so
+  // a limit of 30 s
   it('moves an idle mine train only where it can get back to its station from, its rear on a tile edge too', () => {
     forAll(asideCase(true), asideHolds, { seeds: MANY_SEEDS, shrink: shrinkAside });
-  });
+  }, 30_000);
   it('does not leave a Muki and five tubs with its stop under the last tub', () => {
     // four and a half tiles, its head at x 13 and its rear end on the edge of x 8 and 9; the other
     // train's route takes x 9 to 16, the stop is at x 7. Backed off to x 3, its rear end would lie

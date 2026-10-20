@@ -1183,6 +1183,9 @@ describe('SimStep: tickets, money and stock', () => {
 interface Site {
   x: number;
   y: number;
+  /** tiles along x and y when it covers more than one (the plant, a battery) */
+  w?: number;
+  h?: number;
 }
 
 /** A world for the age snapshot: what stands where, and the numbers it holds. */
@@ -1200,20 +1203,20 @@ interface AgeCase {
   bought: number[];
 }
 
-/** The power plant's site, when a case has one. */
-const PLANT: Site = { x: 10, y: 24 };
+/** The power plant's site, when a case has one: it covers 3 x 2 tiles from this corner. */
+const PLANT: Site = { x: 10, y: 24, w: 3, h: 2 };
 /** The row the line and its wire run along. */
 const WIRE_ROW = 20;
 /**
- * Substation sites: two within two tiles of the plant, (30, 24) at the end of the power line and
- * (40, 26) out of every node's reach.
+ * Substation (Battery) sites, each covering 2 x 2 tiles from its corner: two within two tiles of the
+ * plant's footprint, (30, 24) at the end of the power line and (40, 26) out of every node's reach.
  */
 const SUBSTATIONS: readonly Site[] = [
-  { x: 12, y: 24 },
-  { x: 10, y: 26 },
+  { x: 14, y: 24 },
+  { x: 10, y: 27 },
   { x: 30, y: 24 },
   { x: 40, y: 26 },
-];
+].map((s) => ({ ...s, w: 2, h: 2 }));
 /**
  * Pole sites: a power line from the plant to the substation site at (30, 24), each pole within two
  * tiles of the one before, running along row 21 beside the wired row from x 14 to 28.
@@ -1224,7 +1227,15 @@ const POLES: readonly Site[] = [
   { x: 30, y: 22 },
 ];
 
-const chebyshev = (a: Site, b: Site) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+/** The gap between two sites' footprints, Chebyshev: 1 beside each other, 0 where they touch. */
+const chebyshev = (a: Site, b: Site) =>
+  Math.max(
+    0,
+    a.x - (b.x + (b.w ?? 1) - 1),
+    b.x - (a.x + (a.w ?? 1) - 1),
+    a.y - (b.y + (b.h ?? 1) - 1),
+    b.y - (a.y + (a.h ?? 1) - 1),
+  );
 
 /**
  * The snapshot of a case counted from its own sites, by the rules of PowerGrid.rebuild and

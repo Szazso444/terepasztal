@@ -79,6 +79,7 @@ describe('R in the build tools', () => {
       { kind: 'remove' },
       { kind: 'supply', supply: 'catenary' },
       { kind: 'reclass', target: 'high_speed' },
+      { kind: 'road' },
       { kind: 'terrain', terrain: 0 },
     ];
     for (const tool of still) expect(toolRotations(tool), tool.kind).toBe(1);

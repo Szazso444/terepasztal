@@ -224,38 +224,6 @@
     "anchorY": 5
   },
   {
-    "key": "people/crossing_dirt_0",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
-    "key": "people/crossing_dirt_1",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
-    "key": "people/crossing_stone_0",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
-    "key": "people/crossing_stone_1",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
     "key": "people/path_dirt_0",
     "group": "people",
     "width": 61,
@@ -536,6 +504,30 @@
     "anchorY": 7
   },
   {
+    "key": "props/mangrove_0",
+    "group": "props",
+    "width": 26.75,
+    "height": 21.75,
+    "anchorX": 14,
+    "anchorY": 20
+  },
+  {
+    "key": "props/mangrove_1",
+    "group": "props",
+    "width": 36,
+    "height": 28.5,
+    "anchorX": 18,
+    "anchorY": 25
+  },
+  {
+    "key": "props/mangrove_2",
+    "group": "props",
+    "width": 49.25,
+    "height": 34,
+    "anchorX": 25,
+    "anchorY": 31
+  },
+  {
     "key": "props/oak_0",
     "group": "props",
     "width": 34,
@@ -734,6 +726,30 @@
     "height": 30.25,
     "anchorX": 27,
     "anchorY": 16
+  },
+  {
+    "key": "props/willow_0",
+    "group": "props",
+    "width": 35,
+    "height": 30.75,
+    "anchorX": 17,
+    "anchorY": 27
+  },
+  {
+    "key": "props/willow_1",
+    "group": "props",
+    "width": 43.25,
+    "height": 36,
+    "anchorX": 22,
+    "anchorY": 32
+  },
+  {
+    "key": "props/willow_2",
+    "group": "props",
+    "width": 49.25,
+    "height": 40,
+    "anchorX": 25,
+    "anchorY": 36
   },
   {
     "key": "rolling/bogie3_f0",
@@ -22302,6 +22318,38 @@
     "height": 17,
     "anchorX": 26,
     "anchorY": 14
+  },
+  {
+    "key": "track/level_crossing_narrow_0",
+    "group": "track",
+    "width": 22,
+    "height": 11,
+    "anchorX": 11,
+    "anchorY": 6
+  },
+  {
+    "key": "track/level_crossing_narrow_1",
+    "group": "track",
+    "width": 22,
+    "height": 11,
+    "anchorX": 11,
+    "anchorY": 6
+  },
+  {
+    "key": "track/level_crossing_regular_0",
+    "group": "track",
+    "width": 27,
+    "height": 13.5,
+    "anchorX": 14,
+    "anchorY": 7
+  },
+  {
+    "key": "track/level_crossing_regular_1",
+    "group": "track",
+    "width": 27,
+    "height": 13.5,
+    "anchorX": 14,
+    "anchorY": 7
   },
   {
     "key": "track/straight_high_speed_0",

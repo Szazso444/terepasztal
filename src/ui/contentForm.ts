@@ -71,7 +71,7 @@ export const TAB_FORMS: Record<ContentKey, FormSpec[]> = {
       pick: (b) => b.stations.defs,
       list: true,
       title: STR.content.entries,
-      declared: { lastTier: 2 } satisfies Declared<StationDef>,
+      declared: { lastTier: 2, span: { w: 2, h: 1 } } satisfies Declared<StationDef>,
     },
   ],
   contracts: [

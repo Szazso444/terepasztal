@@ -161,6 +161,8 @@ describe('walkerGround', () => {
     );
   });
 
+  // slow because every seeded ground is read at 300 pairs of points a hair apart across its seams:
+  // 0.32 s alone, so a limit of 30 s
   it('is continuous across every edge and corner of the fallback ground, at a bounded slope', () => {
     // Points on or within a thousandth of a tile of an edge or a corner, each paired with a point
     // up to a ten-thousandth away, so many pairs straddle the seam. A pop is a whole level (10 or
@@ -205,7 +207,7 @@ describe('walkerGround', () => {
           }),
       },
     );
-  });
+  }, 30_000);
 
   it('stands on its own tile away from the edges and halfway between two tiles on their edge', () => {
     forAll(steppedGround, ({ levels, ground }) => {

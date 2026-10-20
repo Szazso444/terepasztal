@@ -6,11 +6,12 @@ import {
   chunkKey,
   chunkOf,
   decodeChunk,
-  type ChunkPlanes,
+  encodeMap,
   type ChunkStore,
   type MapGenerator,
 } from './chunks';
 import { generateMap, type MapGenParams } from './mapgen';
+import { oldChunkText, textOf } from './oldChunkTexts';
 import { Biome, CLIMATES, climateAt, type GameMap } from './tiles';
 
 // The climate plane in stored chunks (#354, with #339's chunk rule): chunks stored before the
@@ -22,83 +23,11 @@ const never: MapGenerator = () => {
   throw new Error('generated a chunk that is stored');
 };
 
-/** The bytes of a chunk text, and the text of bytes. */
-const bytesOf = (text: string) => Array.from(atob(text), (ch) => ch.charCodeAt(0));
-const textOf = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
-
-/** How many bytes a plane takes as runs, as the encoding in chunks.ts describes them. */
-function runBytes(plane: Uint8Array): number {
-  let n = 0;
-  for (let i = 0; i < plane.length;) {
-    let end = i + 1;
-    while (end < plane.length && plane[end] === plane[i]) end++;
-    n++;
-    // a run of 16 or more carries its length less 16 as a varint
-    if (end - i >= 16)
-      for (let v = end - i - 16; ; v = Math.floor(v / 128)) {
-        n++;
-        if (v < 128) break;
-      }
-    i = end;
-  }
-  return n;
-}
-
-/** How many bytes varint `v` takes. */
-function varintBytes(v: number): number {
-  let n = 1;
-  for (; v >= 128; v = Math.floor(v / 128)) n++;
-  return n;
-}
-
 /**
- * How many bytes the water planes of version 3 (#341) take at the end of a text: the water level
- * runs, the count of river tiles, and each one's skip and flow with its side.
+ * The text chunk text `text` would have had in version 1, before the climate plane: version 1's
+ * text of its planes (oldChunkTexts.ts), without the climate, water planes and features.
  */
-function waterBytes(c: ChunkPlanes): number {
-  let n = runBytes(c.waterSurface);
-  let rivers = 0;
-  for (let i = 0, last = -1; i < c.flowDir.length; i++) {
-    if (!c.flowDir[i]) continue;
-    n += varintBytes(i - last - 1) + varintBytes(c.flow[i] * 4 + c.flowDir[i] - 1);
-    last = i;
-    rivers++;
-  }
-  return n + varintBytes(rivers);
-}
-
-/**
- * How many bytes the water features of version 4 (#342) take at the end of a text: the count of
- * tiles with a feature, and each one's skip and byte.
- */
-function featureBytes(c: ChunkPlanes): number {
-  let n = 0;
-  let tiles = 0;
-  for (let i = 0, last = -1; i < c.feature.length; i++) {
-    if (!c.feature[i]) continue;
-    n += varintBytes(i - last - 1) + 1;
-    last = i;
-    tiles++;
-  }
-  return n + varintBytes(tiles);
-}
-
-/**
- * The text `text` would have had in version 1, before the climate plane: the same bytes with the
- * version byte 1 and without the climate runs, which come right after the biome runs, and without
- * the water planes of version 3 and the features of version 4, which come last.
- */
-function asVersion1(text: string): string {
-  const c = decodeChunk(text)!;
-  const bytes = bytesOf(text);
-  const planes = 5 + runBytes(c.terrain) + runBytes(c.biome);
-  const water = (c.version >= 3 ? waterBytes(c) : 0) + (c.version >= 4 ? featureBytes(c) : 0);
-  return textOf([
-    1,
-    ...bytes.slice(1, planes),
-    ...bytes.slice(planes + runBytes(c.climate), bytes.length - water),
-  ]);
-}
+const asVersion1 = (text: string) => oldChunkText(decodeChunk(text)!, 1);
 
 /** The world as map generation made it before the landform biomes: its biome is its climate. */
 const beforeLandforms: MapGenerator = (s, p) => {
@@ -152,6 +81,8 @@ describe('a chunk text', () => {
   // Version 1 holding part of its chunk (a map whose edge was off the chunk grid): header
   // 01 02 01 03 02, the 3 x 2 tiles from (2, 1); terrain six grass (05), biome runs 3 3 5 5 1 4
   // (31 51 10 40), variant 00 00, no props (00).
+  // slow because it generates a world to fill the rest of the chunk: 0.31 s alone, so a limit
+  // of 30 s
   it('of version 1 holding part of its chunk keeps its climate its biome when the rest is generated', () => {
     const text = textOf([1, 2, 1, 3, 2, 0x05, 0x31, 0x51, 0x10, 0x40, 0, 0, 0]);
     const old = [3, 3, 5, 5, 1, 4];
@@ -181,7 +112,7 @@ describe('a chunk text', () => {
     const again = buildMap(1, { w: 32, h: 32 }, built.chunks, never);
     expect([...again.map.biome]).toEqual([...m.biome]);
     expect([...again.map.climate!]).toEqual([...m.climate!]);
-  });
+  }, 30_000);
 
   // 4 worlds, each with two start chunks (two river plans) and three maps: about 2 s alone
   it('holds the climate of a generated map, and a map built from it reads it back', () => {
@@ -284,18 +215,19 @@ describe('a world stored before the climate plane', () => {
 describe('the climate plane in a save', () => {
   // six worlds of 9 and 49 chunks: about 0.6 s alone
   it('takes a small share of the stored text of 9- and 49-chunk worlds', () => {
-    // the climate is the biome but under a landform, so its runs are long; measured for #354 at
-    // about 6 % of the store for 9, 49 and 784 chunks
+    // the climate is the biome but under a landform, so it costs little beside the biome: what
+    // the store grows by for holding it, against the same map stored with no climate of its own
+    // (its climate its biome). Measured for #354 at about 6 % of a version 4 store
     for (const seed of [1, 7412, 20260912])
       for (const [side, at] of [
         [96, -32],
         [224, -96],
       ]) {
-        const { chunks } = buildMap(seed, { w: side, h: side, originX: at, originY: at }, {});
+        const { map, chunks } = buildMap(seed, { w: side, h: side, originX: at, originY: at }, {});
         expect(Object.keys(chunks)).toHaveLength((side / CHUNK_TILES) ** 2);
-        let climate = 0;
-        for (const text of Object.values(chunks)) climate += runBytes(decodeChunk(text)!.climate);
-        const share = ((climate * 4) / 3 / JSON.stringify(chunks).length) * 100;
+        const size = JSON.stringify(chunks).length;
+        const none = JSON.stringify(encodeMap({ ...map, climate: undefined })).length;
+        const share = ((size - none) / size) * 100;
         expect(share, `seed ${seed}, ${side} tiles`).toBeLessThan(10);
       }
   }, 15_000);

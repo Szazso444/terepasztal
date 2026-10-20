@@ -5,7 +5,8 @@ import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
 import { GameLoop, type LoopPhase } from './engine/loop';
 import { AutosavePause } from './engine/autosavePause';
-import { applyTileRepairs, repairBuiltTiles } from './engine/loadRepair';
+import { bridgeTilesTouched } from './engine/bridgeRefresh';
+import { applyTileRepairs, repairBuiltRoads, repairBuiltTiles } from './engine/loadRepair';
 import {
   BrokenNumberWarning,
   StorageRefusalWarning,
@@ -1037,6 +1038,13 @@ export class Game implements UiHost {
         this.builder.buildingAt(x, y) ||
         this.builder.decorAt(x, y)
       );
+    this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
+    this.builder.onRoadChanged = (x, y) => {
+      this.world.roadChanged(x, y);
+      // a road on a platform changes its span, and its neighbours' (#496); refreshed once a frame
+      if (bridgeTilesTouched((nx, ny) => !!this.builder.bridgeAt(nx, ny), x, y))
+        this.bridgesDirty = true;
+    };
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
@@ -1290,6 +1298,9 @@ export class Game implements UiHost {
       }
     } else this.legacySupplyPending = true;
     this.builder.roads.load(j.roads);
+    // a road on ground that can no longer hold one comes off, with no refund (`repairBuiltRoads`)
+    for (const r of repairBuiltRoads(this.map, j)) this.builder.roads.remove(r.x, r.y);
+    this.world.setRoads(this.builder.roads.list());
     resetStationIds(1);
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);
@@ -1436,8 +1447,11 @@ export class Game implements UiHost {
     }
   }
   private restoringWorld = false;
+  /** A road changed on or beside a bridge platform: the spans are redrawn once, next frame. */
+  private bridgesDirty = false;
   private refreshBridges() {
     if (this.restoringWorld) return;
+    this.bridgesDirty = false;
     const mode = this.world.bridgeMode,
       textured: TexturedBridge[] = [];
     for (const b of this.builder.buildings.values())
@@ -1474,6 +1488,7 @@ export class Game implements UiHost {
             x: b.x,
             y: b.y,
             material: s.material,
+            carries: !piece && this.builder.roads.has(b.x, b.y) ? 'road' : 'rail',
             axis: span ? (s.axis as 0 | 1) : null,
             open: DIRS.map((d) => !!piece?.links.some((l) => l.includes(d))),
             water,
@@ -2231,6 +2246,7 @@ export class Game implements UiHost {
     this.camera.update(dt);
     this.updateViewBlend(dt);
     if (this.railsDirty) this.refreshRails();
+    if (this.bridgesDirty) this.refreshBridges();
     this.world.animate(dt);
     this.world.applyCamera(this.camera);
     this.layoutViews();

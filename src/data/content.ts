@@ -30,7 +30,7 @@ import { PAST_SHIPPED } from './pastShipped';
 import type { SupplyMode } from '../sim/supply';
 import { OWN_LENGTH, type PartKind } from '../sim/body';
 import { MAX_LEVEL } from '../sim/levels';
-import { doorProblems } from '../sim/doors';
+import { doorProblems, spanProblems } from '../sim/doors';
 export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
@@ -213,6 +213,12 @@ export interface StationDef {
   size?: number;
   /** 1×2 footprint along its axis (rotation 0: x, rotation 1: y) */
   long?: boolean;
+  /**
+   * footprint in tiles at rotation 0, width along x and depth along y, whole tiles, 1 to 3 each
+   * (missing: `long`, then `size`; `placeSpan` in src/sim/doors.ts). A turn of an odd rotation
+   * swaps them. Unlike `long` it makes no shed: its gates are every side of the footprint.
+   */
+  span?: { w: number; h: number };
   /** depot of this gauge: builds and serves only trains of it (default regular) */
   gauge?: Gauge;
   /** trains refuel coal / wood / oil here */
@@ -256,6 +262,13 @@ export interface BuildingDef {
   terrain?: 'hill' | 'grass' | 'sand' | 'forest';
   /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
   substation?: { radius: number; throughput: number };
+  /**
+   * footprint in tiles at rotation 0, width along x and depth along y, whole tiles, 1 to 3 each
+   * (missing: one tile; `placeSpan` in src/sim/doors.ts). A turn of an odd rotation swaps them. It
+   * is the room the works takes on the map, not the size of its model. Its site rules (`terrain`,
+   * `deposit`, `needsWater`) are met by any tile of it (`Builder.checkBuilding`).
+   */
+  span?: { w: number; h: number };
   /** doors at rotation 0 (missing: a street door on its front, `defDoors` in src/sim/doors.ts) */
   doors?: DoorDef[];
 }
@@ -794,6 +807,7 @@ const CHECKS: Record<ContentKey, Check> = {
         out.push(`station ${s.id}: standOn must list some of ${STAND_ON.join(', ')}`);
       if (s.needsWater !== undefined && typeof s.needsWater !== 'boolean')
         out.push(`station ${s.id}: needsWater must be true or false`);
+      for (const p of spanProblems(s)) out.push(`station ${s.id}: ${p}`);
       for (const p of doorProblems(s)) out.push(`station ${s.id}: ${p}`);
     }
     const lv = t.levels;
@@ -843,6 +857,7 @@ const CHECKS: Record<ContentKey, Check> = {
       if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
         out.push(`building ${bd.id}: perWeek must be non-negative`);
       if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
+      for (const p of spanProblems(bd)) out.push(`building ${bd.id}: ${p}`);
       for (const p of doorProblems(bd)) out.push(`building ${bd.id}: ${p}`);
       const r: unknown = bd.recipe;
       if (!isObj(r) || !isObj(r.in) || !isObj(r.out)) {

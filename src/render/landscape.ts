@@ -9,6 +9,7 @@ import {
   type TextureSource,
 } from 'pixi.js';
 import { type LandscapeMap } from './landscapeModel';
+import type { Yard } from './buildingYard';
 import {
   buildRelief,
   reliefHeight,
@@ -197,6 +198,8 @@ export class Landscape {
   private chunks = new Map<string, Chunk>();
   private tint = 0xffffff;
   private dirtyTiles: { x: number; y: number }[] = [];
+  /** Tiles whose picture changes over unchanged ground (`repaint`), not yet taken by a flush. */
+  private repaints: { x: number; y: number }[] = [];
   private allDirty = false;
   private invalid = false;
   private heightsDirty = false;
@@ -223,6 +226,10 @@ export class Landscape {
   private city: ReadonlySet<number> = new Set();
   /** The doorsteps of the street doors on paved tiles (`pavingDoorsteps`, townPaving.ts). */
   private doorsteps: readonly number[] = [];
+  /** The buildings' yards (buildingYard.ts). */
+  private yards: readonly Yard[] = [];
+  /** The road tiles, two numbers each: the tile's index and its code (roadShape.ts). */
+  private roads: readonly number[] = [];
   constructor(
     private readonly map: LandscapeMap,
     private readonly flat: ReadonlySet<number>,
@@ -610,6 +617,8 @@ export class Landscape {
         tint: this.tint,
         city: [...this.city],
         doorsteps: this.doorsteps,
+        yards: this.yards,
+        roads: this.roads,
         snowLevels: SNOW_LEVELS,
       });
   }
@@ -643,6 +652,31 @@ export class Landscape {
   setCity(tiles: ReadonlySet<number>, doorsteps: readonly number[] = []) {
     this.city = tiles;
     this.doorsteps = doorsteps;
+  }
+  /**
+   * The buildings' yards (`buildingYard`), for the paint workers from the next map hand-off. The
+   * caller repaints the tiles whose picture changes (`repaint`, `yardTiles`).
+   */
+  setYards(yards: readonly Yard[]) {
+    this.yards = yards;
+  }
+  /**
+   * The road tiles, two numbers each: the tile's index (`y * w + x`) and its code (`roadCode`,
+   * roadShape.ts), for the paint workers from the next map hand-off. The caller repaints the tiles
+   * whose picture changes (`repaint`).
+   */
+  setRoads(roads: readonly number[]) {
+    this.roads = roads;
+  }
+  /**
+   * The picture of tile (x, y) changes while its ground stays (a building's yard): the chunks it
+   * reaches are painted again from the next flush. Unlike `invalidate`, nothing that stands on the
+   * ground moves and the relief is not built again.
+   */
+  repaint(x: number, y: number) {
+    if (this.failed) return;
+    this.invalid = true;
+    this.repaints.push({ x, y });
   }
   isPainted(x: number, y: number) {
     const chunk = this.chunks.get(`${Math.floor(x / 8) * 8},${Math.floor(y / 8) * 8}`);
@@ -723,6 +757,7 @@ export class Landscape {
         }
       moved = this.dirtyTiles.length > 0;
       this.dirtyTiles = [];
+      this.repaints = [];
       this.allDirty = false;
       if (this.handOff(this.slots)) this.pump();
     }
@@ -739,12 +774,9 @@ export class Landscape {
   }
   /** Does an edit or a tint change not yet taken by a flush reach this chunk's picture? */
   private touchedByEdit(c: Chunk) {
-    return (
-      this.allDirty ||
-      this.dirtyTiles.some(
-        (p) => p.x >= c.x - 6 && p.x < c.x + c.w + 6 && p.y >= c.y - 6 && p.y < c.y + c.h + 6,
-      )
-    );
+    const near = (p: { x: number; y: number }) =>
+      p.x >= c.x - 6 && p.x < c.x + c.w + 6 && p.y >= c.y - 6 && p.y < c.y + c.h + 6;
+    return this.allDirty || this.dirtyTiles.some(near) || this.repaints.some(near);
   }
   /**
    * The watchdog: a job unanswered for JOB_TIMEOUT_MS of running time is lost, and the pool is

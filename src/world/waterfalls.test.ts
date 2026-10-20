@@ -19,10 +19,10 @@ import {
   encodeMap,
   mapChunks,
   placeChunk,
-  type ChunkPlanes,
   type ChunkStore,
   type MapGenerator,
 } from './chunks';
+import { bytesOf, oldChunkText, textOf } from './oldChunkTexts';
 import {
   FALL_BITS,
   MAX_DROP,
@@ -481,35 +481,13 @@ describe('waterfalls of a generated map', () => {
   }, 40_000);
 });
 
-/** How many bytes varint `v` takes. */
-const varintBytes = (v: number) => {
-  let n = 1;
-  for (; v >= 128; v = Math.floor(v / 128)) n++;
-  return n;
-};
-/** How many bytes the water features of version 4 take at the end of a chunk text. */
-function featureBytes(c: ChunkPlanes): number {
-  let n = 0;
-  let tiles = 0;
-  for (let i = 0, last = -1; i < c.feature.length; i++) {
-    if (!c.feature[i]) continue;
-    n += varintBytes(i - last - 1) + 1;
-    last = i;
-    tiles++;
-  }
-  return n + varintBytes(tiles);
-}
-const bytesOf = (text: string) => Array.from(atob(text), (ch) => ch.charCodeAt(0));
-const textOf = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
 /**
- * The text `text` would have had in version 3, before the water features: the same bytes with the
- * version byte 3 and without the features, which version 4 writes last.
+ * The text `text` would have had in version 3, before the water features: version 3's text of its
+ * planes (oldChunkTexts.ts), without the features.
  */
-function asVersion3(text: string): string {
-  const bytes = bytesOf(text);
-  const tail = featureBytes(decodeChunk(text)!);
-  return textOf([3, ...bytes.slice(1, bytes.length - tail)]);
-}
+const asVersion3 = (text: string) => oldChunkText(decodeChunk(text)!, 3);
+/** Version 4's text of the planes of `text`, whose features come last. */
+const asVersion4 = (text: string) => oldChunkText(decodeChunk(text)!, 4);
 
 /** A 32 x 32 map with a river dropping 1, 2, 3 and 4 levels over each edge in turn. */
 function stairs(): GameMap {
@@ -535,13 +513,14 @@ describe('waterfalls in stored chunks', () => {
     const text = encodeChunk(m, 0, 0);
     const c = decodeChunk(text)!;
     expect(c.version).toBe(CHUNK_VERSION);
-    expect(CHUNK_VERSION).toBe(4);
+    expect(CHUNK_VERSION).toBeGreaterThanOrEqual(4);
     expect([...c.feature]).toEqual([...m.feature!]);
     const back = buildMap(1, { w: 32, h: 32 }, { '0,0': text }, never).map;
     expect(falls(back)).toEqual(falls(m));
   });
 
-  // 200 maps of up to 3 x 3 chunks, any frame, a waterfall of any drop and edge on any tile
+  // 200 maps of up to 3 x 3 chunks, any frame, a waterfall of any drop and edge on any tile: 0.38 s
+  // alone, so a limit of 30 s
   it('hold any feature byte on any tile and read it back as it was', () => {
     let stored = 0;
     forAll(
@@ -582,7 +561,7 @@ describe('waterfalls in stored chunks', () => {
       },
     );
     expect(stored).toBeGreaterThan(0);
-  });
+  }, 30_000);
 
   it('refuse a feature byte the plane does not hold', () => {
     for (const f of [MAX_DROP + 1, 7, 0b1000, 0b10_0000, 0b100_0001, 0x80 | 1]) {
@@ -590,11 +569,12 @@ describe('waterfalls in stored chunks', () => {
       m.feature![40] = f;
       expect(() => encodeChunk(m, 0, 0), `byte ${f}`).toThrow(/waterfalls/);
     }
-    // a text whose features say what encodeChunk never writes reads as nothing: a byte the plane
-    // does not hold, a 0 listed, a tile past the chunk (a skip of 1024, as a varint)
+    // a text of version 4 whose features, which it lists last, say what no encoder wrote reads as
+    // nothing: a byte the plane does not hold, a 0 listed, a tile past the chunk (a skip of 1024,
+    // as a varint)
     const m = blank(32, 32);
     m.feature![40] = fallFeature(2, Dir.W);
-    const bytes = bytesOf(encodeChunk(m, 0, 0));
+    const bytes = bytesOf(asVersion4(encodeChunk(m, 0, 0)));
     const head = bytes.slice(0, -3);
     expect(bytes.slice(-3)).toEqual([1, 40, fallFeature(2, Dir.W)]);
     expect(decodeChunk(textOf(bytes))).not.toBeNull();
@@ -859,10 +839,13 @@ describe('a feature section written by hand', () => {
     for (; v >= 0x80; v = Math.floor(v / 0x80)) out.push((v % 0x80) | 0x80);
     out.push(v);
   };
-  /** The text: the planes encodeChunk writes for the rectangle, then the section by hand. */
+  /**
+   * The text: the planes of the rectangle as version 4 writes them, the last version to list its
+   * features as a section of its own, then the section by hand.
+   */
   function handText(c: HandFeatures): string {
     const m = emptyMap(0, c.w, c.h, Terrain.Grass, c.x0, c.y0);
-    const bytes = bytesOf(encodeChunk(m, 0, 0));
+    const bytes = bytesOf(asVersion4(encodeChunk(m, 0, 0)));
     // a map with no waterfalls ends in a count of 0
     if (bytes.pop() !== 0) throw new Error('a chunk text with no waterfalls ends in a count of 0');
     varint(bytes, count(c));
@@ -899,7 +882,7 @@ describe('a feature section written by hand', () => {
   const plain: MapGenerator = (s, p) =>
     emptyMap(s, p.w!, p.h!, Terrain.Grass, p.originX, p.originY);
 
-  // 400 texts, each read, built into a map and written again
+  // 400 texts, each read, built into a map and written again: 0.93 s alone, so a limit of 30 s
   it('reads as the waterfalls it lists, on the tiles it lists them, or as nothing', () => {
     const seen = new Set<string>();
     forAll(
@@ -927,10 +910,12 @@ describe('a feature section written by hand', () => {
             if (built.map.feature![y * 32 + x] !== f || read !== f)
               throw new Error(`tile (${x}, ${y}): ${built.map.feature![y * 32 + x]}, not ${f}`);
           }
-        // and the planes it read, written again, are the same text
+        // and the planes it read, written again, are the same text in version 4 and read the same
+        // in today's
         const m = emptyMap(0, c.w, c.h, Terrain.Grass, c.x0, c.y0);
         placeChunk(m, 0, 0, got!);
-        expect(encodeChunk(m, 0, 0)).toBe(text);
+        expect(asVersion4(encodeChunk(m, 0, 0))).toBe(text);
+        expect(decodeChunk(encodeChunk(m, 0, 0))).toEqual({ ...got!, version: CHUNK_VERSION });
       },
       {
         seeds: Array.from({ length: 400 }, (_, i) => i + 1),
@@ -949,7 +934,7 @@ describe('a feature section written by hand', () => {
       'cut short',
     ])
       expect(seen, why).toContain(why);
-  });
+  }, 30_000);
 });
 
 describe('waterfalls of a world grown beside a stored chunk of any ground', () => {

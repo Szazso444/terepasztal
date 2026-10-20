@@ -2,16 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
+import { picture } from '../testing/townPaving';
 import { doorsOf as placeDoors, type PlaceDef } from '../sim/doors';
+import { ROAD_FEATHER, ROAD_HALF, ROAD_RAG, ROAD_REACH } from './roadShape';
+import { roadWeight } from './roadPaint';
 import {
+  courseAt,
   doorstepChanges,
   doorstepTiles,
   FRINGE_EARTH,
+  LANE_FADE,
+  LANE_FULL,
+  LANE_REACH,
+  laneWeight,
   PAVING_DEEP,
   PAVING_FRINGE,
   PAVING_SOLID,
   pavingDoorsteps,
   settAt,
+  streetWeight,
   TownPaving,
   type PavingDoor,
 } from './townPaving';
@@ -463,6 +472,8 @@ describe('the town paving outline, against the shape worked out piece by piece',
     );
   }, 20_000);
 
+  // slow because 150 points of each seeded town are set against the outline worked out piece by
+  // piece: 0.33 s alone, so a limit of 30 s
   it('wobbles both ways along a straight edge', () => {
     let least = 0,
       most = 0;
@@ -480,20 +491,12 @@ describe('the town paving outline, against the shape worked out piece by piece',
     });
     expect(least).toBeLessThan(-0.03);
     expect(most).toBeGreaterThan(0.03);
-  });
+  }, 30_000);
 });
 
-/** What the painter takes from the paving at map point (x, y): its distance and colour there. */
-function picture(p: TownPaving, x: number, y: number) {
-  const d = p.near(Math.round(y) * p.w + Math.round(x)) ? p.distance(x, y) : -9;
-  if (d <= -PAVING_FRINGE) return [];
-  if (d <= 0) return [d, p.fringe(x, y, d)];
-  const out = [0, 0, 0];
-  p.paint(x, y, d, [70, 190, 60], 1, out);
-  return [d, ...out];
-}
-
 describe('the town paving picture, wherever it is asked for', () => {
+  // slow because each seeded town's 200 points are painted forward and again backward on a paving
+  // of its own: 0.32 s alone, so a limit of 30 s
   it('is the same at a point whatever was painted before it, as in two chunks', () => {
     forAll(
       (rng) => town(rng),
@@ -510,8 +513,10 @@ describe('the town paving picture, wherever it is asked for', () => {
       },
       { shrink: shrinkTown },
     );
-  });
+  }, 30_000);
 
+  // slow because each seeded town is painted at 200 points before and after its doors come and go:
+  // 0.49 s alone, so a limit of 30 s
   it('changes, when doors come and go, only on the tiles doorstepChanges repaints', () => {
     forAll(
       (rng) => {
@@ -551,7 +556,7 @@ describe('the town paving picture, wherever it is asked for', () => {
         },
       },
     );
-  });
+  }, 30_000);
 });
 
 describe('doorsteps of the simulation doors', () => {
@@ -772,5 +777,441 @@ describe('the light on the setts', () => {
     );
     expect(setts).toBeGreaterThan(200);
     expect(lighter / setts).toBeGreaterThan(0.75);
+  });
+});
+
+describe('the lane of a road across the paving', () => {
+  const PAVED_RAG = 0.04;
+
+  it('weighs 1 on the centre line, falls smoothly out and is gone by LANE_REACH', () => {
+    expect(laneWeight(0, 0)).toBe(1);
+    expect(laneWeight(LANE_FULL, 0)).toBe(1);
+    expect(laneWeight(LANE_FULL + LANE_FADE, 0)).toBe(0);
+    forAll(
+      (rng) => ({
+        d: rng.range(0, 0.6),
+        e: rng.range(0, 0.1),
+        rag: rng.range(-PAVED_RAG, PAVED_RAG),
+      }),
+      ({ d, e, rag }) => {
+        const w = laneWeight(d, rag);
+        // a weight, no more the farther out, and none from LANE_REACH on whatever the ragged line
+        if (!(w >= 0 && w <= 1)) return false;
+        if (laneWeight(d + e, rag) > w + 1e-12) return false;
+        if (d >= LANE_REACH && w !== 0) return false;
+        // a ragged line moved outward takes some of it away, never gives any
+        return laneWeight(d, rag + e) <= w + 1e-12;
+      },
+    );
+  });
+
+  it('lays its setts over the road width the gravel road has, and no wider than its dust', () => {
+    forAll(
+      (rng) => ({ d: rng.range(0, 0.5), rag: rng.range(0, ROAD_RAG) }),
+      ({ d, rag }) => {
+        const street = streetWeight(d, rag);
+        if (street !== roadWeight(d - ROAD_HALF, rag)) return false;
+        // setts in courses are always dusty ones: the street lies inside the lane's reach
+        return street === 0 || laneWeight(d, PAVED_RAG) > 0;
+      },
+    );
+    expect(streetWeight(0, 0)).toBe(1);
+    expect(streetWeight(ROAD_HALF, 0)).toBe(0.5);
+  });
+
+  it('puts setts in straight courses 0.1 tile deep, along x or along y', () => {
+    forAll(
+      (rng) => ({ u: rng.range(-500, 500), v: rng.range(-500, 500) }),
+      ({ u, v }) => {
+        const a = courseAt(u, v);
+        // a course is 0.1 tile deep: its setts' centres lie on its middle, and the point in the sett
+        const row = Math.floor(v / 0.1);
+        if (Math.abs(a.v - (row + 0.5) * 0.1) > 1e-9) return false;
+        // (the rounded corners of its rectangle leave a hair of joint just outside it)
+        if (Math.abs(v - a.v) > 0.05 + 1e-9 || a.inside < -0.022) return false;
+        // along y it is the same laid with the axes swapped
+        const b = courseAt(v, u, true);
+        return b.id === a.id && Math.abs(b.u - a.v) < 1e-9 && Math.abs(b.v - a.u) < 1e-9;
+      },
+    );
+  });
+
+  it('cuts each course into setts of about a tenth of a tile, offset from the next course', () => {
+    const lengths: number[] = [];
+    const starts = new Set<number>();
+    for (let row = 0; row < 40; row++) {
+      const v = (row + 0.5) * 0.1;
+      // the first sett is cut short by where the scan starts
+      let run = -1,
+        last = courseAt(-30, v).id;
+      for (let u = -30; u < -28; u += 0.002) {
+        const here = courseAt(u, v);
+        if (here.id === last) run += 0.002;
+        else {
+          if (run > 0) lengths.push(run);
+          starts.add(Math.round(((u + 30) % 0.13) * 1000));
+          run = 0.002;
+          last = here.id;
+        }
+      }
+    }
+    expect(lengths.length).toBeGreaterThan(400);
+    expect(Math.min(...lengths)).toBeGreaterThan(0.045);
+    expect(Math.max(...lengths)).toBeLessThan(0.22);
+    expect(lengths.reduce((a, b) => a + b) / lengths.length).toBeCloseTo(0.13, 1);
+    // the courses do not line their joints up
+    expect(starts.size).toBeGreaterThan(20);
+  });
+
+  describe('painted', () => {
+    // a square of paved tiles, the points in it well inside the paving
+    const w = 10,
+      paved = Array.from({ length: w * w }, (_, k) => k),
+      p = new TownPaving(w, w, 120, -40, paved);
+    const points: [number, number][] = [];
+    for (let y = 2.1; y < 7.9; y += 0.063)
+      for (let x = 2.1; x < 7.9; x += 0.061) points.push([x, y]);
+    const paint = (x: number, y: number, lane?: number, axis?: number) => {
+      const out = [0, 0, 0];
+      p.paint(x, y, p.distance(x, y), null, 2, out, lane, axis);
+      return out;
+    };
+    const mean = (f: (x: number, y: number) => number) =>
+      points.reduce((sum, [x, y]) => sum + f(x, y), 0) / points.length;
+    const luma = (c: number[]) => c[0] + c[1] + c[2];
+
+    // Slow: paints 8 000 points four times with matchers (about 0.35 s alone), so the limit is 10 s.
+    it('is the plain paving anywhere the lane does not reach', () => {
+      for (const [x, y] of points) {
+        const plain = paint(x, y);
+        expect(paint(x, y, Infinity, 2)).toEqual(plain);
+        expect(paint(x, y, LANE_REACH, 1)).toEqual(plain);
+        expect(paint(x, y, 0.9, 2)).toEqual(plain);
+      }
+    }, 10_000);
+
+    it('reads no ground, as the plain paving does not, from PAVING_SOLID in', () => {
+      for (const [x, y] of points) {
+        const d = p.distance(x, y),
+          a = [0, 0, 0],
+          b = [0, 0, 0];
+        p.paint(x, y, d, [70, 190, 60], 2, a, 0.05, 1);
+        p.paint(x, y, d, [200, 40, 210], 2, b, 0.05, 1);
+        expect(a).toEqual(b);
+      }
+    });
+
+    it('is a little darker on the centre line, and dustier toward it', () => {
+      const dust = [160, 142, 110];
+      const away = (c: number[]) => Math.hypot(c[0] - dust[0], c[1] - dust[1], c[2] - dust[2]);
+      const plain = mean((x, y) => luma(paint(x, y)));
+      const onLine = mean((x, y) => luma(paint(x, y, 0, 1)));
+      const beside = mean((x, y) => luma(paint(x, y, 0.22, 1)));
+      expect(onLine).toBeLessThan(beside);
+      expect(beside).toBeLessThan(plain);
+      // a little: a few percent, not a different paving
+      expect(onLine).toBeGreaterThan(plain * 0.9);
+      expect(mean((x, y) => away(paint(x, y, 0, 1)))).toBeLessThan(
+        mean((x, y) => away(paint(x, y))),
+      );
+    });
+
+    it('lays its setts in courses on the line: the joints follow courseAt, not the fan', () => {
+      for (const alongV of [false, true]) {
+        let joint = 0,
+          jointN = 0,
+          top = 0,
+          topN = 0;
+        for (const [x, y] of points) {
+          const sett = courseAt(x + 120, y - 40, alongV);
+          const l = luma(paint(x, y, 0, alongV ? 2 : 1));
+          if (sett.inside < 0.004) {
+            joint += l;
+            jointN++;
+          } else if (sett.inside > 0.03) {
+            top += l;
+            topN++;
+          }
+        }
+        expect(jointN).toBeGreaterThan(300);
+        expect(topN).toBeGreaterThan(300);
+        // the joint is darker than the sett's top where the courses are laid, 2 or 3 percent at least
+        expect(joint / jointN).toBeLessThan((top / topN) * 0.97);
+      }
+    });
+
+    // Slow: paints 2 000 points along 90 steps each (about 0.7 s alone), so the limit is 20 s.
+    it('meets the plain paving without a jump: the courses fade out over the road width', () => {
+      let step = 0;
+      for (const [x, y] of points) {
+        let last = paint(x, y, 0.1, 1);
+        for (let lane = 0.1; lane < LANE_REACH + 0.05; lane += 0.004) {
+          const here = paint(x, y, lane, 1);
+          step = Math.max(step, Math.abs(luma(here) - luma(last)));
+          last = here;
+        }
+      }
+      // across the road's soft edge the courses give way to the fan, and a sett differs from a
+      // joint by a few tens: no jump of a whole palette
+      expect(step).toBeLessThan(120);
+    }, 20_000);
+  });
+});
+
+describe('the lane painted, as properties of every point (#476)', () => {
+  const w = 12,
+    paved = Array.from({ length: w * w }, (_, k) => k);
+  /** A paint call: where, how far inside the paving, and the lane's distance and axis. */
+  interface Call {
+    x: number;
+    y: number;
+    d: number;
+    scale: number;
+    lane: number;
+    axis: number;
+  }
+  const call = (rng: Rng): Call => ({
+    x: rng.range(1, 10),
+    y: rng.range(1, 10),
+    // across the whole of the paving, from the outline in to its solid part
+    d: rng.chance(0.5) ? rng.range(0.001, PAVING_DEEP) : rng.range(PAVING_DEEP, 2),
+    scale: rng.pick([1, 2, 4]),
+    lane: rng.chance(0.15) ? Infinity : rng.range(0, LANE_REACH + 0.05),
+    axis: rng.pick([1, 2]),
+  });
+  const GROUND = [90, 130, 60];
+  const run = (p: TownPaving, c: Call) => {
+    const out = [-1, -1, -1];
+    p.paint(c.x, c.y, c.d, GROUND, c.scale, out, c.lane, c.axis);
+    return out;
+  };
+
+  it('is a colour, finite and within a byte, at any depth, scale, lane and axis', () => {
+    const p = new TownPaving(w, w, 37, -91, paved);
+    forAll(call, (c) => {
+      const out = run(p, c);
+      return out.every((v) => Number.isFinite(v) && v >= 0 && v <= 255);
+    });
+  });
+
+  it('is a function of its arguments alone: the order of the calls, and the lane before, change nothing', () => {
+    const p = new TownPaving(w, w, 5, 12, paved);
+    forAll(
+      (rng) => Array.from({ length: 40 }, () => call(rng)),
+      (calls) => {
+        const first = calls.map((c) => run(p, c));
+        // the same calls backwards, each after a different call that leaves its own sett behind
+        const back = calls.map((c) => c).reverse();
+        const again = back.map((c, i) => {
+          run(p, { ...c, lane: 0.05, axis: 3 - c.axis, x: c.x + 0.7 + i * 0.01 });
+          return run(p, c);
+        });
+        again.reverse();
+        return first.every((out, i) => out.every((v, c) => v === again[i][c]));
+      },
+      { shrink: (calls) => shrinkArray(calls) },
+    );
+  });
+
+  it('keeps its picture when the map grows: the same world point, whole tiles of origin apart, is the same colour', () => {
+    forAll(
+      (rng) => ({ c: call(rng), dx: rng.int(-80, 80), dy: rng.int(-80, 80) }),
+      ({ c, dx, dy }) => {
+        // deep inside the paving no wear reads where the tiles lie, only the world point does
+        const deep = { ...c, d: PAVING_DEEP + 0.3 };
+        const a = new TownPaving(w, w, 0, 0, paved),
+          b = new TownPaving(w, w, dx, dy, paved);
+        const at = run(a, { ...deep, x: deep.x + dx, y: deep.y + dy }),
+          there = run(b, deep);
+        return at.every((v, i) => Math.abs(v - there[i]) < 1e-9);
+      },
+    );
+  });
+
+  it('lays its courses alike along x and along y: the same mean colour on the line', () => {
+    const p = new TownPaving(w, w, 0, 0, paved),
+      sum = [0, 0];
+    forAll(
+      (rng) => ({ x0: rng.range(1, 6), y0: rng.range(1, 6) }),
+      ({ x0, y0 }) => {
+        const lum = [0, 0];
+        let n = 0;
+        for (let i = 0; i < 90; i++)
+          for (let j = 0; j < 90; j++) {
+            const x = x0 + i * 0.037,
+              y = y0 + j * 0.037;
+            for (const axis of [1, 2]) {
+              const out = run(p, { x, y, d: 1.5, scale: 2, lane: 0, axis });
+              lum[axis - 1] += out[0] + out[1] + out[2];
+            }
+            n++;
+          }
+        sum[0] += lum[0] / n;
+        sum[1] += lum[1] / n;
+        // mean colour of a few thousand points of a laying differs by under a percent
+        return Math.abs(lum[0] - lum[1]) / lum[0] < 0.01;
+      },
+      { seeds: [1, 2, 3, 4, 5, 6, 7, 8] },
+    );
+    expect(sum[0]).toBeGreaterThan(0);
+  });
+
+  // Slow: paints 17 000 points 14 times (about 0.4 s alone), so the limit is 10 s.
+  it('gets no darker the farther from the line, is the plain paving at the reach of the lane, and is dustier on the line', () => {
+    const p = new TownPaving(w, w, 0, 0, paved);
+    const pts: [number, number][] = [];
+    for (let x = 2; x < 9; x += 0.049) for (let y = 2; y < 9; y += 0.053) pts.push([x, y]);
+    const dust = [160, 142, 110];
+    const mean = (lane: number, axis: number) => {
+      let l = 0,
+        away = 0;
+      for (const [x, y] of pts) {
+        const out = run(p, { x, y, d: 1.5, scale: 2, lane, axis });
+        l += out[0] + out[1] + out[2];
+        away += Math.hypot(out[0] - dust[0], out[1] - dust[1], out[2] - dust[2]);
+      }
+      return [l / pts.length, away / pts.length];
+    };
+    for (const axis of [1, 2]) {
+      // from the line out to the edge of the lane's reach, in steps wide enough for the mean to
+      // be clear of the sampling: never darker the farther out (the distance to the dust is not
+      // monotone, the courses' joints being darker than the fan's)
+      let last = mean(0, axis);
+      for (const lane of [0.08, 0.16, 0.24, 0.32, LANE_REACH]) {
+        const here = mean(lane, axis);
+        expect(here[0], `axis ${axis}, lane ${lane}: lighter`).toBeGreaterThan(last[0] - 0.5);
+        last = here;
+      }
+      // the whole way is a real change, more than a unit of colour, ends in the plain paving, and
+      // is nearer the dust on the line than in the plain paving
+      expect(last[0] - mean(0, axis)[0]).toBeGreaterThan(5);
+      expect(last).toEqual(mean(Infinity, axis));
+      expect(mean(0, axis)[1]).toBeLessThan(last[1]);
+    }
+  }, 10_000);
+
+  it('mixes the packed earth into the joints the more the nearer the line: each joint is nearer the earth, never farther', () => {
+    const p = new TownPaving(w, w, 7, 3, paved),
+      earth = [160 * 0.9, 142 * 0.9, 110 * 0.9],
+      away = (c: number[]) => Math.hypot(c[0] - earth[0], c[1] - earth[1], c[2] - earth[2]);
+    let joints = 0;
+    forAll(
+      (rng) => ({ x: rng.range(2, 9), y: rng.range(2, 9) }),
+      ({ x, y }) => {
+        // a point well inside a joint of the fan (past the street, which is laid in courses), where
+        // a joint is made of nothing but its own colour and the earth the lane mixes in
+        if (settAt(x + 7, y + 3).inside > 0.004) return true;
+        joints++;
+        let last = Infinity;
+        for (const lane of [LANE_REACH, 0.3, 0.27, 0.25, ROAD_REACH + 0.001]) {
+          const here = away(run(p, { x, y, d: 1.5, scale: 2, lane, axis: 1 }));
+          if (here > last + 1e-9) return false;
+          last = here;
+        }
+        // and the lane has mixed some in
+        return last < away(run(p, { x, y, d: 1.5, scale: 2, lane: Infinity, axis: 1 })) - 0.01;
+      },
+      { seeds: Array.from({ length: 600 }, (_, i) => i + 1) },
+    );
+    expect(joints).toBeGreaterThan(60);
+  });
+
+  it('lays the joints of a course off those of the next: few of them within a hundredth of a tile', () => {
+    // the joints of course `row`, from scanning along it
+    const joints = (row: number, from: number) => {
+      const out: number[] = [];
+      let last = courseAt(from, (row + 0.5) * 0.1).id;
+      for (let u = from; u < from + 30; u += 0.002) {
+        const id = courseAt(u, (row + 0.5) * 0.1).id;
+        if (id !== last) out.push(u);
+        last = id;
+      }
+      return out;
+    };
+    let joints0 = 0,
+      close = 0;
+    for (const row of [3, 40, 91, -17, -300, 250, 17, 64]) {
+      const a = joints(row, 5),
+        b = joints(row + 1, 5);
+      for (const u of a) {
+        joints0++;
+        if (b.some((v) => Math.abs(u - v) < 0.01)) close++;
+      }
+    }
+    expect(joints0).toBeGreaterThan(1000);
+    // random joints would meet one in seven, and a bond that lines them up much more
+    expect(close / joints0).toBeLessThan(0.2);
+  });
+
+  // Slow: paints 10 000 points four times over twice (about 0.4 s alone), so the limit is 10 s.
+  it('lays the courses over the road width and the fan outside it: the axis matters inside the road, not past its edge', () => {
+    const p = new TownPaving(w, w, 3, 9, paved);
+    forAll(
+      (rng) => ({ x: rng.range(2, 9), y: rng.range(2, 9) }),
+      ({ x, y }) => {
+        // past the road's reach (it and its ragged edge) the street weighs nothing: the axis is
+        // not read, and the paving is the fan with the lane's dust over it
+        for (const lane of [ROAD_REACH, ROAD_REACH + 0.03, LANE_REACH - 0.01]) {
+          const a = run(p, { x, y, d: 1.5, scale: 2, lane, axis: 1 }),
+            b = run(p, { x, y, d: 1.5, scale: 2, lane, axis: 2 });
+          if (a.some((v, i) => v !== b[i])) return false;
+        }
+        return true;
+      },
+    );
+    // how much the way the courses run matters at a lane distance is how much street there is:
+    // all of it inside the road's soft edge, about half at the edge the ragged line moves, none past it
+    const matters = (lane: number) => {
+      let sum = 0,
+        n = 0;
+      for (let x = 2; x < 9; x += 0.071)
+        for (let y = 2; y < 9; y += 0.073) {
+          const a = run(p, { x, y, d: 1.5, scale: 2, lane, axis: 1 }),
+            b = run(p, { x, y, d: 1.5, scale: 2, lane, axis: 2 });
+          sum += Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+          n++;
+        }
+      return sum / n;
+    };
+    const whole = matters(0);
+    expect(whole).toBeGreaterThan(3);
+    expect(matters(ROAD_HALF - ROAD_FEATHER / 2 - 0.001)).toBeGreaterThan(whole * 0.9);
+    // the edge, moved out by the ragged line, is about 0.02 tile past the road's half width
+    const edge = matters(ROAD_HALF + ROAD_RAG / 2) / whole;
+    expect(edge).toBeGreaterThan(0.25);
+    expect(edge).toBeLessThan(0.7);
+    expect(matters(ROAD_HALF + 0.04)).toBeLessThan(whole * 0.15);
+    expect(matters(ROAD_REACH)).toBe(0);
+  }, 10_000);
+
+  it('cuts every course into setts that tile it: one centre per sett, within its half length of every point', () => {
+    forAll(
+      (rng) => ({
+        s0: rng.range(-300, 300),
+        across: rng.range(-300, 300),
+        alongV: rng.chance(0.5),
+      }),
+      ({ s0, across, alongV }) => {
+        // walking along one course (x, or y when `alongV`): the sett is the same for as long as
+        // its centre is, the centres only rise, and a point is never farther from its sett's centre
+        // than half the longest sett (SETT_LONG 0.13 and its jitter 0.6, so 0.104)
+        let id = NaN,
+          centre = -Infinity;
+        for (let i = 0; i < 1200; i++) {
+          const s = s0 + i * 0.004,
+            sett = alongV ? courseAt(across, s, true) : courseAt(s, across),
+            pos = alongV ? sett.v : sett.u;
+          if (Math.abs(s - pos) > 0.1045) return false;
+          if (sett.id === id) {
+            if (pos !== centre) return false;
+          } else {
+            if (pos < centre) return false;
+            id = sett.id;
+            centre = pos;
+          }
+        }
+        return true;
+      },
+    );
   });
 });
