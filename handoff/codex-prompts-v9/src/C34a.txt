@@ -1,7 +1,7 @@
 Paint one view of the depot (family depot, Steam age a0, 2 x 2 tiles) again for the isometric
 railway game in this repository, for issues #325 and #536: r3. r0, r1 and r2 are not painted again.
 
-Work on branch art/325-buildings-v2, which exists (head c2b648e2 or later; art/325-fuel-pump is the
+Work on branch art/325-buildings-v2, which exists (head cd7919ec or later; art/325-fuel-pump is the
 Fuel Pump's, not this one): git fetch origin art/325-buildings-v2, git switch art/325-buildings-v2,
 git pull --ff-only. The pictures this job needs must be in your tree:
 assets/source/buildings-v2/depot/depot-a0-r0.png (the master), depot-a0-r1.png, depot-a0-r2.png and
@@ -12,6 +12,8 @@ stash pictures, push the branch. Never push to main or develop. Commit subjects 
 (k from 1 for each id, or going on from the number raw/returns.json already holds), and add {id,
 attempt, file, returned, spans, top, height, kept} to raw/returns.json for each call. Ask for 1536 x
 1024, transparent background, and record the size it returns.
+
+STATE OF THE BRANCH, after the run of 19 October (review in handoff/codex-review-1019.json). The depot's a0 r0, r1, r2 and r3 pictures are on the branch now (586865bf restored them; r3 is the old 25-degree one, kept as the file until a new r3 passes). r3 was painted three times (raw/depot-a0-r3-attempt-1.png to 3) and refused three times for width: its base measured 848, 1083 and 895 px of 1536, where 758 is the most (the plinth is 772). Attempts 2 and 3 are the right depot (portals on the lower-left wall, crew door and windows lower right, slate roof with vents), and attempt 3's feet (ratio 1.03) and slopes (0.51 and -0.48) look right: width is the whole failure. The queue has depot-a0-r3 as rejected with 3 attempts; set it back with node tools/building-queue.mjs set depot-a0-r3 pending --note "repaint, review 2, second run" before you take, and go on from attempt 4. Never attach attempts 1 to 3.
 
 WHY AGAIN. Issue #536 measured the review-2 packing: depot a0 r3 was painted from a camera 25
 degrees down where the game's is 30, and the fit stretched it (x 0.923, y 1.089, shear +0.02; its
@@ -36,6 +38,8 @@ wallBase, walls set in 0.06 tile): the base's feet w (407.0, 760), s (768.0, 940
 high (276 px). The front faces the lower right: the lower-right wall carries the small crew door and
 the windows; the lower-left wall is the left-hand side, with the two train portals side by side (the
 guide marks them).
+
+THE PAINTER'S SPREAD (added 19 October). On 19 October 47 of 51 paintings of this kind came back wider than the most allowed, and nothing passed its width at the first call: the painter seems to fill the grey PLINTH, not the block that stands on it. So, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Paint the whole building, canopies, steps, pipes, piers and everything else that stands on the ground included, a little SMALLER than looks natural: earlier paintings came out 10 to 40 per cent wider than the block, never narrower." It is one sentence, not a second Correction.
 
 THE LIMIT. The guide's base is 722 px wide in the guide (the same px in a 1536 px picture: the
 depot's canvas has come back as asked). Hold it: no wider than 758 px (5 per cent over) and no
@@ -98,7 +102,7 @@ MEASURE BEFORE YOU RECORD (after take, before set), in this order:
   cent of r0's, both read by eye on crops (the roof and the chimneys do not count; the chimneys are
   judged by eye: no taller than r0's);
 
-- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12 (RGB
+- highlights (reported, NOT a pass rule: tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them): count opaque pixels with all three channels at or above #ECE4D0, and within 12 (RGB
   distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may exceed
   r0's (Art caps the rest at packing);
 

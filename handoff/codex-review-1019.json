@@ -1,0 +1,824 @@
+{
+ "summary": {
+  "reviewed": "2026-10-19, after Codex's runs of 19 October (commits 18:26 to 18:49, made in the Codex worktrees G:\\DEV\\Terepasztal\\{rotations-535,farm-535,fuel-work,people-331,service-work} and pushed to origin art/*; the main checkout is on an old branch and holds nothing new for this round)",
+  "method": "Fetched origin. Read every commit message, REVIEW/REPORT/README/result md, prompts.json and returns.json. Re-measured every raw attempt of the rotation jobs, the depot r3 and the coaling stage r1/r3 with the repo's own measureBase (tools/building-fit.mjs) and an opaque-box scan: my base widths agree with Codex's to within 1 per cent wherever an automatic reading exists, and where Codex read the canopy or step footing by eye the picture's bbox agrees. Looked at every picture on contact sheets beside r0 and the guide.",
+  "result": "No prompt is DONE. Twelve rotation jobs, the depot r3, the coaling stage r1 and r3, R8d (again) and R7c-1 (again) were run; not one view passed. C21a and C23a cannot start because the pictures they say stay are not on the branch. R7c-1 is stopped by two of its own rules that Art's packer makes redundant. C18a and C19a were only started (r0 read, nothing painted).",
+  "status": {
+   "C18a": "not run (started: r0 read, nothing painted, nothing committed)",
+   "C19a": "not run (started: r0 read, one unrecorded raw attempt, nothing committed)",
+   "C20a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C21a": "BLOCKED: farm-a0 r0..r3 are not on art/325-buildings-v2",
+   "C22a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C23a": "BLOCKED: quarry-a0 r0, r1, r3 are not on art/325-buildings-v2",
+   "C24a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C25a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C26a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C27a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C28a": "delivered but failing: r0 (closest passes width, fails camera, height, highlights), r1 (fails plan, camera, height), r3 (width 3 of 3); r2 not painted",
+   "C29a": "delivered but failing: r0 refused for width 3 of 3; r1, r3, r2 not painted",
+   "C30a": "delivered but failing: r0 refused for width 3 of 3; r1, r3, r2 not painted",
+   "C31a": "delivered but failing: r0 refused for width 3 of 3; r1, r3, r2 not painted",
+   "C32a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C33a": "delivered but failing: r1 refused for width 3 of 3; r3, r2 not painted",
+   "C33b": "not run (waits for C33a)",
+   "C34a": "delivered but failing: r3 refused for width 3 of 3",
+   "C35a": "not run",
+   "C4e": "delivered but failing: r1 (attempt 15 passes width, fails height, camera, highlights) and r3 (width 3 of 3, closest 677 against 663)",
+   "R8e": "not run (R8d, its predecessor, ran a second time on 19 October and failed again)",
+   "R8d": "ran twice (18 and 19 October), failed both times; superseded by R8e: taken off the page",
+   "C17c": "not run",
+   "C17d": "not run",
+   "R7c-1": "run a second time, stopped at P1 by its own test 6 (and an unreadable test 5): blocked, rewritten"
+  },
+  "removedFromPage": [
+   "R8d (ran twice and failed; R8e replaces it, and R8d's second-run results are now on R8e's card)"
+  ],
+  "commonCause": "The width gate. In all 12 rotation jobs, the depot r3 and the coaling stage the painter returns the building wider than the maximum allowed: 47 of 51 attempts are over it (the only ones inside it are three Battery attempts at 695 to 706 of 729 and coaling stage r1 attempt 15 at 639 of 663). It looks as if the painter fills the PLINTH (945 px of a 1254 px picture for 2 x 1) rather than the block that stands on it (850 held, 892 allowed): widths come out at 95 to 110 per cent of the plinth against a 90 per cent aim with a 5 per cent window (farm attempt 1 measures exactly 945). Every view is then refused at the first test, and plan, camera, height and light are never run, so this review has no information on them for most pictures. The pictures themselves are good: the same buildings, turned correctly, in the game's style (see the sheets). Several closest attempts are inside the plinth already: Big Farm 903 and 927 (plinth 945), Oil derrick 899 (945), Pump 611 (632), Warehouse wall feet 924 (945; 1014 with the canopy footings).",
+  "forAuthor": [
+   "DECISION (it unblocks about a dozen prompts at once): the width rule. The prompts say both 'never outside the footprint' and 'held 90 per cent, at most 95 per cent of the plinth, refused outside'. The second is what stops every job. Options: (a) keep it, and accept that each view costs three calls and so far fails (nothing has passed in 51 attempts); (b) make the hard limit the plinth itself (nothing at ground level outside it, 100 per cent) and keep 90 per cent as the aim; (c) allow the packing to scale a returned picture uniformly (one factor on both axes, no shear) to the held width when plan, camera and height pass: it distorts nothing, which is what issue #536 forbids, and tools/building-fit.mjs already scales by the feet's span. I changed none of the numbers: the prompts that stay carry the failing widths and one new instruction (the walls start at the block's corners, not the plinth's; paint smaller than seems natural). That instruction is untested.",
+   "R7c-1: I made test 6 (cursor white and amber) report-only: tools/atlas-cap.mjs (#465) already caps both and zeroes haze at packing, and the trial stopped four times on 3 to 49 near-white pixels and 137 to 1616 amber pixels. Say if you want it back as a gate.",
+   "Farm (C21a) and quarry (C23a): their accepted a0 pictures are only in the unpushed local branch art/buildings-v2 and in the backup snapshot branch origin/backup/g-dev-terepasztal-terepasztal-wip (commit 731a7719), byte-identical to the main checkout's copies (sha256 in the prompts). The prompts now restore them from there. If you would rather push them to art/325-buildings-v2 yourself, do it and the restore step becomes a no-op.",
+   "Several Codex windows work on art/535-rotations at the same time and rewrote the shared measure.mjs under each other (five reports say so). The prompts now tell each job to write its own script.",
+   "The Power plant and the House: the held width (724 of a 3 x 2 plan; 464 of a 1024 canvas) is far below r0's own base (1252 of 1536; 877 of 1536) while the prompt says 'the same building at the same size'. The two instructions fight; say which wins."
+  ]
+ },
+ "C18a": {
+  "status": "not run",
+  "delivery": "Nothing committed. Codex's worktree rotations-535 holds, uncommitted, assets/source/rotations-535/big_station/prompts.json (1.1 KB, 18:27): only an r0Reference reading with 'tests.width FAIL, stoppedAfter width'. No raw picture, no attempt.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "none",
+    "measures": "r0 base read by eye: width 1224 px of the 1536 px r0 picture, corners w(226,728) s(1017,909) e(1450,795), wall height 281. Codex applied a width table of 988.5 / 1041 / 1093.5, which is 1.5 times the guide's numbers: it scaled by r0's width (1536) instead of by the width of the picture the tool returns (1254, table 807 / 850 / 892). r0 is not subject to the gate.",
+    "look": "n/a",
+    "verdict": "not run",
+    "why": "The job stopped (or was cut off) after reading r0; there is no stop note anywhere. Probably a wrong-scale width table applied to r0 itself."
+   }
+  ],
+  "rootCause": "No report. The only trace is the r0 reading, which fails a gate it is not subject to, with a table scaled by the wrong width. The shared measure.mjs was also being rewritten by other windows at the time (see summary).",
+  "nextSteps": [
+   "Paste again after the common edits: own measuring script per job; r0 is read, not gated; the table is the returned width / 1024 times the guide numbers; rebase before push."
+  ],
+  "forAuthor": [
+   "The width rule decision in the summary applies here too."
+  ],
+  "sheets": []
+ },
+ "C19a": {
+  "status": "not run",
+  "delivery": "Nothing committed. Worktree rotations-535 holds, uncommitted, town_hall/prompts.json (r0 reading, again 'width FAIL, stoppedAfter width' against the same 1.5-times table: 924 against 988.5 to 1093.5) and raw/town-r1-attempt-1.png (18:28, 1.46 MB), which is not recorded in prompts.json.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "none",
+    "measures": "r0 (townhouse-civic.png) base width 924 px of 1536, eaves y579, foot y988. The unrecorded attempt was not measured.",
+    "look": "not reviewed: it is neither committed nor recorded",
+    "verdict": "not run",
+    "why": "Same as C18a."
+   }
+  ],
+  "rootCause": "Same as C18a.",
+  "nextSteps": [
+   "Same as C18a. The unrecorded raw attempt must not be attached to anything."
+  ],
+  "forAuthor": [],
+  "sheets": []
+ },
+ "C20a": {
+  "status": "delivered but failing",
+  "delivery": "Commit f06d3035 \"Warehouse r1 closest after three width refusals\" (warehouse/REVIEW.md, inspect.mjs, prompts.json, three raw files). Only r1 was painted.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 3 copied to warehouse-r1.png, kept: false",
+    "measures": "Base width including the canopy footings (read by eye; my bbox agrees: 1164, 1041, 1015): 1160 / 1040 / 1014 px of 1254. The automatic reading misses the canopy footings: 1149 / 938 / 924. Allowed 807 to 892 (held 850); plinth 945. All three FAIL. Nothing else measured.",
+    "look": "All three are the Warehouse turned correctly: brick back wall with small windows and one green door lower right, the brick gable with the arched window and the cream canopy on green posts lower left, no sliding doors, three chimney stacks. Style and palette match r0. The canopy posts stand out beyond the block: that is the excess width.",
+    "verdict": "redo",
+    "why": "Attempt 3 is the right building; it is 14 per cent over on the canopy footings (inside the plinth on the wall feet). Redo r1 with the posts drawn inside the block."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false. The canopy is the width: the cream corrugated canopy and its stone-footed posts stand about 100 px outside the walls.",
+  "nextSteps": [
+   "Kept as C20a with the failure stated; width instruction, own measuring script, report-only highlights."
+  ],
+  "forAuthor": [
+   "Width rule decision."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/wh.png"
+  ]
+ },
+ "C21a": {
+  "status": "BLOCKED",
+  "delivery": "Nothing painted, nothing committed. No stop note from Codex either.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "none",
+    "measures": "git ls-tree origin/art/325-buildings-v2 assets/source/buildings-v2 has no farm/ folder at all (head cd7919ec): farm-a0-r0.png (\"the master, finished\") and r1 to r3 are missing, and queue.json has farm-a0-r0..r3 pending with 0 attempts.",
+    "look": "n/a",
+    "verdict": "blocked",
+    "why": "The prompt says \"If one is missing, stop and say so\"."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "same",
+    "look": "n/a",
+    "verdict": "blocked",
+    "why": "same"
+   }
+  ],
+  "rootCause": "A prerequisite that is not met. The farm's accepted a0 pictures exist only in the local branch art/buildings-v2 of the main checkout (766de10a, never pushed under that name) and in backup snapshots on origin: origin/backup/c-users-zso-terepasztal--art-buildings-v2 (766de10a) and origin/backup/g-dev-terepasztal-terepasztal-wip (731a7719). The depot had the same problem at c2b648e2: its run found no depot PNGs, asked, and copied them from the main checkout (586865bf). I checked the snapshot copies against the main checkout's working copies: all four farm files are byte-identical.",
+  "nextSteps": [
+   "Rewritten: step 0 restores farm-a0-r0..r3 from origin/backup/g-dev-terepasztal-terepasztal-wip with git show, checks the sha256 (in the prompt), commits them as \"Art: restore the farm a0 pictures from the backup snapshot\", and sets the four queue entries to generated, before anything else."
+  ],
+  "forAuthor": [
+   "If you prefer to push the farm and quarry pictures yourself, do it first and the step is a no-op. Codex may not be allowed to commit pictures it did not paint; the depot run did so after the user said yes."
+  ],
+  "sheets": []
+ },
+ "C22a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 4326b514 \"Big Farm Halt r1 closest after three width refusals\" (README.md, measure-big-farm.mjs, prompts.json, three raw files, big_farm-r1.png = attempt 1). Only r1.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 1 copied to big_farm-r1.png, kept: false",
+    "measures": "Outer base width read by eye including the stone steps at the feet of the barn and silo: 903 / 964 / 927 px of 1254 (my automatic reading 866 / 964 / 896, bbox 945 / 995 / 969). Allowed 807 to 892; plinth 945. All FAIL. Attempts 1 and 3 are 1 and 4 per cent over the maximum and inside the plinth.",
+    "look": "The same barn and silo as r0: timber barn, slate roof, dormer, brick stack, cream stone base course, silo with the green downpipe, green door. Turned correctly: the dock and its canopy are hidden. Style matches r0.",
+    "verdict": "redo",
+    "why": "A near miss on width (+1 per cent for attempt 1). Everything else looks right but was not measured."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false.",
+  "nextSteps": [
+   "Kept as C22a with the failure stated."
+  ],
+  "forAuthor": [
+   "Under option (b) of the width decision, attempts 1 and 3 pass the first gate."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/farm.png"
+  ]
+ },
+ "C23a": {
+  "status": "BLOCKED",
+  "delivery": "Nothing painted, nothing committed.",
+  "perView": [
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "origin/art/325-buildings-v2 has no quarry/ folder: quarry-a0-r0, r1, r3 (\"accepted\") and r2 (\"as it is today\") are missing; queue.json has quarry-a0-r0..r3 pending with 0 attempts.",
+    "look": "n/a",
+    "verdict": "blocked",
+    "why": "The prompt says \"If one is missing, stop and say so\"."
+   }
+  ],
+  "rootCause": "Same as C21a: the quarry's a0 pictures are only in the main checkout (untracked there: assets/source/buildings-v2/quarry/) and in the snapshot branch origin/backup/g-dev-terepasztal-terepasztal-wip (731a7719); quarry-a0-r0, r1 and r3 are byte-identical in both. quarry-a0-r2.png exists nowhere: only quarry-a0-r2.rejected.png (the queue has it as rejected), so \"r2 as it is today\" is the rejected file.",
+  "nextSteps": [
+   "Rewritten: step 0 restores quarry-a0-r0, r1, r3 from the snapshot (sha256 in the prompt) and sets their queue entries generated (r1 \"kept with its camera off by 5.4 degrees after 3 attempts\"); r2 stays rejected and is painted new."
+  ],
+  "forAuthor": [
+   "As C21a."
+  ],
+  "sheets": []
+ },
+ "C24a": {
+  "status": "delivered but failing",
+  "delivery": "Commit d7bed050 \"Water pump r1 retained after three width refusals\" (prompts.json, pump-r1.png = attempt 1, three raw files). Only r1.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 1 copied to pump-r1.png, kept: false",
+    "measures": "Base width 649 / 635 / 611 px of 1254 (eye extents agree; my bbox 683 / 657 / 643). Allowed 540 to 597 (held 568); plinth 632. All FAIL: attempt 3 is 2 per cent over the maximum and inside the plinth.",
+    "look": "The same pump house turned: stone walls, slate roof, brick stack with two pots, green door with a lamp, downpipe, steps. The flywheel and the pipe of r0 are not shown (hidden behind the house, as the prompt tucks them inside the plinth). Style matches r0.",
+    "verdict": "redo",
+    "why": "Width only."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false.",
+  "nextSteps": [
+   "Kept as C24a with the failure stated."
+  ],
+  "forAuthor": [
+   "Under option (b), attempt 3 (611) passes the first gate."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/pump.png"
+  ]
+ },
+ "C25a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 151971cc \"Stone grinder r1 closest after three width refusals\" (and 6106ca4f, a format fix). Only r1.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 3 copied to grinder-r1.png, kept: false",
+    "measures": "Base width 997 / 761 / 640 px of 1254 (my bbox 1010 / 794 / 665). Allowed 540 to 596 (held 568); plinth 632. All FAIL; attempt 3 is 7 per cent over, attempt 2 28 per cent.",
+    "look": "The stone grinder house turned: a stone cottage with slate roof, brick stack, the lean-to with the ore box lower left, windows. The two millstones and the hopper of r0 are on r0's front (lower left), which is hidden in r1, so they are rightly not shown.",
+    "verdict": "redo",
+    "why": "Width only; attempt 3 is close."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false.",
+  "nextSteps": [
+   "Kept as C25a with the failure stated."
+  ],
+  "forAuthor": [],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/grinder.png"
+  ]
+ },
+ "C26a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 7427fc13 \"Oil refinery r1 closest after three width refusals\". Only r1.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 3 copied to refinery-r1.png, kept: false",
+    "measures": "Base width 803 / 725 / 673 px of 1254 read by eye on the outer supports (the automatic corners measure only the furnace: 592 / 725 / 362). Allowed 540 to 596 (held 568); plinth 632. All FAIL, by 13 to 35 per cent.",
+    "look": "The same refinery turned by the corner map: tank, column and furnace on a steel frame with copper pipes. Style matches r0. Good pictures; the horizontal tank's cradle stands outside the furnace's frame.",
+    "verdict": "redo",
+    "why": "Width: the plant has to be narrower along the lower-left foot."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false.",
+  "nextSteps": [
+   "Kept as C26a with the failure stated."
+  ],
+  "forAuthor": [
+   "r0 itself is 937 px wide on a 1536 canvas; the 1 x 1 plan holds 568 of 1254."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/refinery.png"
+  ]
+ },
+ "C27a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 42aab982 \"Power plant r1 closest after three width refusals\" (REVIEW.md, measure-power.mjs, prompts.json). Only r1.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 2 copied to power_plant-r1.png, kept: false",
+    "measures": "Ground width 1250 / 872 / 1033 px of 1536 (manual corners including the annex; my bbox 1251 / 873 / 1034). Allowed 688 to 760 (held 724); plinth 804. All FAIL, the closest by 15 per cent. r0 itself measures 1252 on the same canvas.",
+    "look": "The same power plant turned: brick hall with the two green roof lanterns, the chimney and the engine annex. Good pictures.",
+    "verdict": "redo",
+    "why": "Width. The old r0 is 1252 px wide against a held width of 724 for this 3 x 2 plan: the guide is 58 per cent of r0's own base, and the painter is told \"the same building at the same size\"."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false. In addition the prompt tells the painter to paint the building \"exactly as large as\" r0, and r0 is 1.7 times the held width. The two instructions fight.",
+  "nextSteps": [
+   "Kept as C27a with the failure stated and the contradiction named."
+  ],
+  "forAuthor": [
+   "Decide whether the turned views of the power plant are as large as r0 (1252 px) or as large as the guide (724 px)."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/power.png"
+  ]
+ },
+ "C28a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 95a7c3d9 \"Battery r0, r1 and r3 closest, stopped after width refusals\" (REPORT.md, integrity.json, prompts.json, nine raw files, substation-r0/r1/r3.png = attempts 2, 3, 1). r2 not painted.",
+  "perView": [
+   {
+    "view": "r0",
+    "kept": "attempt 2, kept: false",
+    "measures": "Width 706 PASS (762 and 740 refused); plan 1.087 PASS; slopes +0.543 / -0.522 FAIL (limit 0.03; camera 2.1 degrees); height 0.374 against the plan 0.31 FAIL (limit 0.3565); white 2507 against r0's 1569 FAIL, amber 0. Held 694, allowed 659 to 729. My automatic widths agree (762 / 706 / 740).",
+    "look": "A cream-limestone switch house carrying the olive transformer, three brown insulator stacks, the portal frame and the cabinet; a door and louvres on the two walls. It reads as the old substation put on the limestone block. The roof gear is too tall for the block.",
+    "verdict": "redo",
+    "why": "Closest to passing of anything in the round: the slope is 0.013 over its limit, the height 5 per cent over, and the highlights (which Art caps at packing) over."
+   },
+   {
+    "view": "r1",
+    "kept": "attempt 3, kept: false",
+    "measures": "Attempt 2: width 695 PASS, plan 1.098 PASS, slope 0.646 FAIL (4.9 degrees), height 0.401 FAIL, white 3649 FAIL. Attempt 3: width 701 PASS, plan 0.789 FAIL (needs 0.85 to 1.15), slopes 0.529 / -0.500 PASS (0.9 degrees), height 0.361 FAIL against the plan but inside 15 per cent of r0, white 1613 PASS. Attempt 1: 753 FAIL.",
+    "look": "Turned correctly (front door gone, two louvres lower left, one lower right); the transformer follows the turned diagonal.",
+    "verdict": "redo",
+    "why": "Attempt 3 fails only the plan ratio (one wall foot too short) and the height."
+   },
+   {
+    "view": "r3",
+    "kept": "attempt 1, kept: false",
+    "measures": "Width 743 / 753 / 756 FAIL, all three (allowed 659 to 729). Nothing else measured.",
+    "look": "The rooftop equipment repeats r0's orientation and the cabinet is on the wrong edge: not an accepted turn even on width.",
+    "verdict": "redo",
+    "why": "Width, and the roof gear is not turned."
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule (r3: three width refusals)"
+   }
+  ],
+  "rootCause": "Width is not the whole story here: r0 and r1 passed the width gate and then failed on other tests, so these are real failures of the picture. Codex notes that checkFile(file, 't2x2', view) assumes the footprint is a depot and reports missing rail portals for a stone switch house; this is not a cause, but it is noise in every record.",
+  "nextSteps": [
+   "Kept as C28a with the numbers; checkFile's portal complaint named as ignorable for non-depots; highlights report-only."
+  ],
+  "forAuthor": [],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/battery.png"
+  ]
+ },
+ "C29a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 272a7108 \"Preserve Hydro plant r0 attempts after width failures\" (REVIEW.md, check logs, prompts.json, three raw files, hydro_plant-r0.png = attempt 3). Only r0.",
+  "perView": [
+   {
+    "view": "r0",
+    "kept": "attempt 3, kept: false",
+    "measures": "Base width 923 / 882 (by eye; automatic 828) / 749 px of 1254 (my bbox 924 / 883 / 750). Allowed 458 to 507 (held 482); plinth 632. All FAIL by 48 to 82 per cent; even the closest is 18 per cent wider than the plinth.",
+    "look": "A long limestone hall with three arched windows and a vented ridge lantern, a riveted green penstock and the sluice with handwheels at the short end, a tailrace arch in the base: the prompt's design, painted well, at about 1.2 to 1.5 times the plinth.",
+    "verdict": "redo",
+    "why": "The prompt's design (a long hall with the intake and penstock beside it) does not fit a base of 394 px of a 516 px plinth: the penstock and sluice are painted outside the hall's base."
+   },
+   {
+    "view": "r1",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false. Here the instruction also asks for more than the plan holds: the hall base is only 76 per cent of the plinth, and the intake, sluice and penstock all stand on the ground at the end.",
+  "nextSteps": [
+   "Kept as C29a with the failure stated; the design is asked to be shortened so that hall, intake and sluice together stay inside the base."
+  ],
+  "forAuthor": [
+   "Is the hydro plant's plan right (a 1 x 1 plinth, a base of 0.9 x 0.625 tile)? The painter turns it into a building 1.2 to 1.5 plinths long."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/hydro.png"
+  ]
+ },
+ "C30a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 1d57f695 \"Colliery r0 closest after three width refusals\" (colliery-r0.png = attempt 3, prompts.json, three raw files). Only r0.",
+  "perView": [
+   {
+    "view": "r0",
+    "kept": "attempt 3, kept: false",
+    "measures": "Base width 1019 / 894 / 807 px of 1536 (corners read by eye on the headgear footing; my bbox 1019 / 894 / 808). Allowed 659 to 729 (held 694); plinth 772. All FAIL; the closest is 11 per cent over the maximum, 4.5 per cent over the plinth.",
+    "look": "Engine house (brick, slate), the wooden hopper gantry with coal bins, the headgear with its wheel and the inclined rope: the prompt's three parts, in the old colliery's materials. The headgear's stone footing and the hopper supports stand outside the plinth.",
+    "verdict": "redo",
+    "why": "Width; the headgear should stand on the block's far corner, not past it."
+   },
+   {
+    "view": "r1",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false.",
+  "nextSteps": [
+   "Kept as C30a with the failure stated."
+  ],
+  "forAuthor": [],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/colliery.png"
+  ]
+ },
+ "C31a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 708a926a \"Ironworks r0 closest preserved after three width failures\" (ironworks-r0.png = attempt 3, inspect.mjs, prompts.json, three raw files). Only r0.",
+  "perView": [
+   {
+    "view": "r0",
+    "kept": "attempt 3, kept: false",
+    "measures": "Base width 1199 / 1088 / 1044 px of 1536 (my bbox 1202 / 1090 / 1046). Allowed 659 to 729 (held 694); plinth 772. All FAIL by 43 to 64 per cent.",
+    "look": "The forge: the brick chimney tower with the glowing furnace mouth, the teal-roofed forge shed and the ingot store on timber posts, a copper pipe. Good, in style, and about 1.4 times as wide as its plinth.",
+    "verdict": "redo",
+    "why": "Width, by far the worst: the three parts are laid in a row instead of on the block's 2 x 2 footprint."
+   },
+   {
+    "view": "r1",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false. Corrections do not help: 1199, 1088 and 1044 fell by 4 to 9 per cent a call, and three calls are not enough.",
+  "nextSteps": [
+   "Kept as C31a with the failure stated; the layout paragraph asks for the three parts to stand on the block."
+  ],
+  "forAuthor": [],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/ironworks.png"
+  ]
+ },
+ "C32a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 4cd16519 \"Oil derrick r1 closest after three width refusals\" (README.txt, measure-oil.mjs, record.mjs, prompts.json, oil_derrick-r1.png = attempt 2). Only r1.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 2, kept: false",
+    "measures": "Base width 1017 / 899 / 1022 (eye; automatic 901) px of 1254 (my bbox 1018 / 905 / 1018). Allowed 807 to 892 (held 850); plinth 945. All FAIL; attempt 2 is 7 px (0.8 per cent) over the maximum and inside the plinth.",
+    "look": "The same pumpjack turned: Samson post, A-frame, horse-head beam, the copper flywheel and the grey tank on the skid frame. Clean pictures in r0's style.",
+    "verdict": "redo",
+    "why": "Near miss on width: attempt 2 is 7 px over."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false.",
+  "nextSteps": [
+   "Kept as C32a with the failure stated."
+  ],
+  "forAuthor": [
+   "Under option (b), attempt 2 passes the first gate."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/derrick.png"
+  ]
+ },
+ "C33a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 17e9a69e \"House r1 closest after three width refusals\" (measure-house.mjs, record-attempt.mjs, prompts.json, townhouse-r1.png = attempt 2, three raw files, two prompt text files). Only r1.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 2, kept: false",
+    "measures": "Base width 739 / 635 / 638 px of a 1024 px wide picture (it came back 1024 x 1536 as asked). Allowed 441 to 487 (held 464); my widths agree. All FAIL by 30 to 52 per cent. The old r0 cottage is 877 of 1536 = 57 per cent of its width; the held width is 45 per cent of the guide's.",
+    "look": "The cottage turned: stone walls, slate roof with the brick stack, a gable end with a window and a plain wall; the front door is hidden. Same house as r0, in style. It fills 62 to 72 per cent of the width of the tall canvas.",
+    "verdict": "redo",
+    "why": "The painter takes the building to r0's size (57 per cent of the canvas) while the held width is 45: the same contradiction as the power plant, milder."
+   },
+   {
+    "view": "r3",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   },
+   {
+    "view": "r2",
+    "kept": "none",
+    "measures": "not painted",
+    "look": "-",
+    "verdict": "not run",
+    "why": "stop rule: three width refusals of the first view end the job"
+   }
+  ],
+  "rootCause": "Stopped by the prompt's own rule (all three attempts of the first view refused for width, so the job stops after that view). Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false.",
+  "nextSteps": [
+   "Kept as C33a with the failure stated. C33b waits for it."
+  ],
+  "forAuthor": [
+   "Width decision."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/house.png"
+  ]
+ },
+ "C33b": {
+  "status": "not run",
+  "delivery": "None.",
+  "perView": [],
+  "rootCause": "Waits for C33a to be accepted, by design.",
+  "nextSteps": [
+   "Stays on the page unchanged."
+  ],
+  "forAuthor": [],
+  "sheets": []
+ },
+ "C34a": {
+  "status": "delivered but failing",
+  "delivery": "Commit 586865bf \"Art: depot a0 r3 repainted at the game camera\" (three raw attempts, crops, review.md, returns.json, queue.json, report.json, review/depot.png; and the depot a0 r0 to r2 pictures, restored from the main checkout because the branch did not have them).",
+  "perView": [
+   {
+    "view": "r3",
+    "kept": "none (queue: rejected, closest raw attempt 1)",
+    "measures": "Base width 848 / 1083 / 895 px of 1536 (eye; my automatic widths 843 / 1088 / 896). Allowed 686 to 758 (held 722); plinth 772. All FAIL, by 12 to 43 per cent. Not measured further. As a what-if I measured the rest on attempt 3: foot ratio 1.03 and slopes 0.51 / -0.48, which would pass plan and camera; attempt 1 has 1.11 and 0.44 / -0.45.",
+    "look": "The depot turned: portals on the lower-left wall, the crew door and windows on the lower-right wall, chimneys, the slate roof with the smoke vents. Attempts 2 and 3 are the same depot as r0 and look right. Attempt 1 (closest on width) has its roof ridge running the wrong way (Codex's note).",
+    "verdict": "redo",
+    "why": "Width. Attempt 3 would be a usable picture if the width allowed 895."
+   }
+  ],
+  "rootCause": "Three attempts of the one view, all refused for width. Also a prerequisite that was missing: at c2b648e2 the branch had none of the depot PNGs; the run recovered r0 to r2 from the main checkout after the author agreed; they are on the branch now.",
+  "nextSteps": [
+   "Kept as C34a: branch head cd7919ec (depot a0 r0 to r2 are on it), attempts go on from 4, failing widths stated, width instruction added."
+  ],
+  "forAuthor": [
+   "The existing depot r2 fails its camera by 3.0 degrees (the queue kept it after 3 attempts); it stays."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/depot.png"
+  ]
+ },
+ "C35a": {
+  "status": "not run",
+  "delivery": "None; queue entries depot_narrow-a0-r0..r3 pending, 0 attempts.",
+  "perView": [],
+  "rootCause": "Not started. One prerequisite note: the prompt attaches depot-a0-r0.png for the family look; at c2b648e2 that file was not on the branch, now it is (586865bf).",
+  "nextSteps": [
+   "Head updated to cd7919ec or later; the width instruction added (same painter, same gate)."
+  ],
+  "forAuthor": [],
+  "sheets": []
+ },
+ "C4e": {
+  "status": "delivered but failing",
+  "delivery": "Commit cd7919ec \"fuel_stop, r1 and r3 on the oblong guides, r3 turned, matching the accepted r2\": six new raw attempts (r1 and r3, 13 to 15), their prompt texts, returns.json, queue.json, the review sheet, and the accepted r2 put back as fuel_stop/fuel_stop-a0-r2.png. r0 and r2 untouched.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "none (queue: rejected, 6 attempts)",
+    "measures": "Pier span 677 / 808 / 639 px of 1254 (my bbox 670 / 807 / 636). Allowed 600 to 663. Attempt 15 PASSES width and then fails: height 1.136 against 1.318 to 1.611 (box top 433 against 351), camera 8.1 degrees, white 1486 and amber 3647 against the master's 553 / 0. Attempts 13 and 14 are 2 and 22 per cent over.",
+    "look": "A squat coaling bin on six piers with the chute lower right; the bin is as wide as before but the legs are short, so the stage is low. Turned correctly (the front chute is hidden).",
+    "verdict": "redo",
+    "why": "The first r1 that is narrow enough, and it is too low and 8 degrees off in camera."
+   },
+   {
+    "view": "r3",
+    "kept": "none (queue: rejected, 6 attempts)",
+    "measures": "Pier span 734 / 674 / 756 (my bbox 738 / 677 / 762); allowed 600 to 663. All FAIL; attempt 14 is 1.7 per cent over. Not measured further.",
+    "look": "The coal bin on piers with the winch and chute at the near end of the lower-right wall: the same stage as r0 and r2, turned. Good, close to the right height.",
+    "verdict": "redo",
+    "why": "Near miss on width (11 px over for attempt 14)."
+   }
+  ],
+  "rootCause": "Nothing was transformed; every raw picture is kept and the closest is copied to <view>.png with kept: false. The oblong guide cured the plan (the stage no longer comes out as a wide square) and not the width: still +1.7 to +25 per cent. Attempt 15 of r1 got the width and lost the height.",
+  "nextSteps": [
+   "Kept as C4e: head cd7919ec; r2 is already back (the step becomes a check); attempts go on from 16."
+  ],
+  "forAuthor": [
+   "The window is 600 to 663 around a plinth of 632, 105 per cent of it. Under option (b) of the width decision, r3 attempt 14 passes the first gate."
+  ],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/fuelstop.png"
+  ]
+ },
+ "R8e": {
+  "status": "not run",
+  "delivery": "None under this prompt (no r1 attempt after 12, nothing painted on the PR #537 fuel_pump guides). The commits of 19 October (cfc57b31 18:32, 95fa3cf8 18:40) are a second run of R8d: r2 attempts 7 to 9 and r3 step 1 attempts 15 to 17, on the old hand-made guides and r3 attempt 7.",
+  "perView": [
+   {
+    "view": "r1",
+    "kept": "attempt 12 (the author finds it too thin)",
+    "measures": "not repainted",
+    "look": "unchanged",
+    "verdict": "redo (R8e)",
+    "why": "not run"
+   },
+   {
+    "view": "r2 (R8d, second run)",
+    "kept": "none",
+    "measures": "Attempts 7 / 8 / 9: long over short 2.65 / 2.90 / 2.44; height over width 0.407 / 0.383 / 0.423 (needs 0.43); camera: left slope 0.639 / 0.602 / 0.639 FAIL; light left/right 121.9/74.3, 121.4/74.3, 116.5/68.7; the crane jib 244 / 259 / 235 px against a short side of 182 / 178 / 169. Closest attempt 9: plan and light pass; height, camera and jib fail.",
+    "look": "The pump house low and wide, with one crane at the right and the hose: decent painting, low, with a jib 40 per cent too long.",
+    "verdict": "redo (R8e)",
+    "why": "R8d's second run failed the same way as its first (attempts 4 to 6)."
+   },
+   {
+    "view": "r3 step 1 (R8d, second run)",
+    "kept": "none",
+    "measures": "Attempts 15 / 16 / 17: plan 2.87 / 3.08 / 2.63, height 0.395 / 0.402 / 0.393, camera 2.7 / 2.7 / 1.8 degrees, light 133/129, 126/121, 127/126 (the source 119/121), crane and footprint failed. The hose ends at (683,936) (681,916) (653,914); the target is x 700 to 790, y 800 to 880.",
+    "look": "Still the two-post portal crane of attempt 7 (a post left of the near corner, a beam across the tank): editing attempt 7 did not remove it.",
+    "verdict": "redo (R8e)",
+    "why": "Confirms the 18 October finding: editing an earlier attempt keeps its faults. R8e paints on the guide."
+   }
+  ],
+  "rootCause": "R8d, run again, fails the same way. R8e is the new prompt and was not pasted: it is the next Codex job for the Fuel Pump.",
+  "nextSteps": [
+   "R8e stays; its card carries R8d's second-run results; attempt numbers go on from r1 13, r2 10, r3 18; branch head 95fa3cf8."
+  ],
+  "forAuthor": [],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/fuel.png"
+  ]
+ },
+ "R8d": {
+  "status": "ran twice, failed; superseded by R8e; taken off the page",
+  "delivery": "First run 18 October (21d821c8, b26ccab3), second 19 October (cfc57b31, 95fa3cf8). See R8e.",
+  "perView": [],
+  "rootCause": "Hand-made guides and editing an earlier attempt; see the 1018 review and R8e.",
+  "nextSteps": [
+   "Removed from the page; R8e replaces it."
+  ],
+  "forAuthor": [],
+  "sheets": [
+   "C:/Users/Zso/AppData/Local/Temp/claude/G--DEV-Terepasztal/88d0603a-baf4-4999-8596-c9bb3d2a64cc/scratchpad/r19/fuel.png"
+  ]
+ },
+ "C17c": {
+  "status": "not run",
+  "delivery": "None. origin/art/461-windmill-sails is still at beed4861 (17 October); the worktree windmill-461 has one untracked folder (registered/test/).",
+  "perView": [],
+  "rootCause": "Not started. Prerequisites checked: the windmill guides are on origin/develop (PR #490, and #524 which merged on 18 October: guides/windmill-r0..r3.png, -hub.json, windmill-sails-face.png); the branch exists at the head the prompt names.",
+  "nextSteps": [
+   "Unchanged. C17d's remark that its guides are 'not merged yet' is stale: they are on develop; corrected in the card."
+  ],
+  "forAuthor": [],
+  "sheets": []
+ },
+ "C17d": {
+  "status": "not run",
+  "delivery": "None.",
+  "perView": [],
+  "rootCause": "Not started; it follows C17c.",
+  "nextSteps": [
+   "Unchanged; the card note now says the guides are on develop."
+  ],
+  "forAuthor": [],
+  "sheets": []
+ },
+ "R7c-1": {
+  "status": "BLOCKED (second time)",
+  "delivery": "Commit f7268089 \"R7c-1 trial attempts recorded\" (REPORT.md, checks/trial-results.json, guide-measurements.json, remeasured-attempt-1.json, measure-v3.mjs, prompts.json, two raw attempts). The branch already held the 18 October trial (26b45984); Codex noticed after its calls and preserved the old files under v3/prior-26b45984/. Two of twelve calls used again.",
+  "perView": [
+   {
+    "view": "P1 (this run, attempts 1 and 2)",
+    "kept": "none (attempt 1 closest)",
+    "measures": "Attempt 1: height 992 against 969 (+2.4 per cent) PASS; sole row 1445 against 1440 PASS; test 6 amber 1616 FAIL; test 5 raw 533 / 467 unreadable. Attempt 2: height 986 PASS; sole 1427 FAIL (13 off, limit 8); white 10, amber 0: test 6 FAIL. Test 7 PASS. The stop rule \"the same test fails on the same pose twice\" fired.",
+    "look": "Both show the back of the head and the right side, the green cap, the checked shirt, charcoal trousers, brown boots and the axe on the shoulder, as asked; the legs and the left arm drift from the guide (the left arm hangs); Codex reports coloured translucent haze round the figure.",
+    "verdict": "redo",
+    "why": "Stopped on test 6 and on test 5."
+   },
+   {
+    "view": "P1 (18 October run, attempts 1 and 2)",
+    "kept": "none (attempt 2 closest)",
+    "measures": "Height +4.4 and +0.8 per cent; sole 1439 and 1447 PASS; white 3 and 49, amber 0 and 137: test 6 FAIL.",
+    "look": "as above",
+    "verdict": "redo",
+    "why": "The same test stopped it on 18 October."
+   }
+  ],
+  "rootCause": "Two defects in the prompt, not in the painting. (1) Test 6 asks for zero pixels at cursor white or selection amber, while tools/atlas-cap.mjs (#465) scales both down and zeroes alpha below 16 at packing: 3 to 49 near-white and 137 to 1616 amber pixels (a rust-orange flannel shirt) are what the cap is for; the trial stopped on it four times in two runs. (2) Test 5 (the shoulder row in fixed columns) cannot be read when the axe head and the cap cover those columns; the prompt says 'take the shoulder under it' without saying how, and both runs recorded it as unresolved. Also: the prompt does not know that v3/ already holds a trial, and it asks for a new measure-v3.mjs although one that reproduces the calibration is on the branch.",
+  "nextSteps": [
+   "Rewritten: test 6 is report-only (counts, no stop; the packer caps them); test 5 is by eye with a recorded reading of the two shoulder tops; reuse v3/measure-v3.mjs; the new run goes in v3/run-3/; the head is \"f7268089 or later\"; haze is reported as a count of pixels with alpha 1 to 15, not a failure."
+  ],
+  "forAuthor": [
+   "Say if you want the highlight cap back as a gate for people."
+  ],
+  "sheets": []
+ }
+}

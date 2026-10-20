@@ -4,7 +4,7 @@ It is a small single-track engine shed for narrow-gauge trains, 2 x 1 tiles, whi
 through: a narrow hall with one portal in each end wall. It must match the depot family's a0 in
 style: the same materials, colours and details, smaller and narrower.
 
-Work on branch art/325-buildings-v2, which exists (head c2b648e2 or later; art/325-fuel-pump is the
+Work on branch art/325-buildings-v2, which exists (head cd7919ec or later; art/325-fuel-pump is the
 Fuel Pump's, not this one): git fetch origin art/325-buildings-v2, git switch art/325-buildings-v2,
 git pull --ff-only. The pictures this job needs must be in your tree:
 assets/source/buildings-v2/depot/depot-a0-r0.png (the finished depot, for the family's look), and
@@ -15,6 +15,8 @@ never stash pictures, push the branch. Never push to main or develop. Commit sub
 (k from 1 for each id, or going on from the number raw/returns.json already holds), and add {id,
 attempt, file, returned, spans, top, height, kept} to raw/returns.json for each call. Ask for 1024 x
 1024, transparent background, and record the size it returns.
+
+STATE OF THE BRANCH, 19 October. Not started. The depot's a0 pictures are on the branch now (586865bf; at c2b648e2 they were not), so the depot's a0 r0 can be attached for the family look. The painter has returned every building wider than allowed on 19 October (see the paragraph before THE LIMIT).
 
 WHY AGAIN. The queue lists depot_narrow a0 to a5, 24 pictures, all pending; this job paints the
 Steam age. The family has no base picture in the game (families.json: base null), so there is no old
@@ -56,6 +58,8 @@ walls set in 0.06 tile): w (158.7, 736.0), s (640.0, 976.6), e (865.3, 864.0); l
 481.3, lower-right foot 225.3, ratio 2.136; block 34 game px high (272 px). The front faces the
 upper right, hidden: the lower-left wall is the long BACK, plainer, with no crew door; the
 lower-right wall is the left-hand end with the portal.
+
+THE PAINTER'S SPREAD (added 19 October). On 19 October 47 of 51 paintings of this kind came back wider than the most allowed, and nothing passed its width at the first call: the painter seems to fill the grey PLINTH, not the block that stands on it. So, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Paint the whole building, canopies, steps, pipes, piers and everything else that stands on the ground included, a little SMALLER than looks natural: earlier paintings came out 10 to 40 per cent wider than the block, never narrower." It is one sentence, not a second Correction.
 
 THE LIMIT. The base's foot is 706.6 px wide from the left corner to the right corner in the guide
 (865 px in a 1254 px picture, 1.2246 times as many) in every view. Hold it: no wider than 742 px of
@@ -124,7 +128,7 @@ MEASURE BEFORE YOU RECORD (after take, before set), in this order:
   of the guide), over e.x - w.x within 15 per cent of the guide's 0.385; r1 to r3 against the kept
   r0;
 
-- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12 (RGB
+- highlights (reported, NOT a pass rule: tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them): count opaque pixels with all three channels at or above #ECE4D0, and within 12 (RGB
   distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may exceed
   r0's (Art caps the rest at packing);
 

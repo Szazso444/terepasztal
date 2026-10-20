@@ -1,16 +1,16 @@
 Paint the Fuel Pump (fuel_pump, Diesel age a1) again for the isometric railway game in this
 repository, for issue #325: r1 (the author found it too thin), then r3, then r2, each on the
 tool-made guides of PR #537 that replace the hand-made ones. r0 is the master and is not touched.
-This replaces R8d. R8d ran: r2 (attempts 4 to 6) and r3 step 1 (attempts 12 to 14) failed, its
+This replaces R8d. R8d ran twice: r2 (attempts 4 to 6, then 7 to 9) and r3 step 1 (attempts 12 to 14, then 15 to 17) failed both times (the closest r2, attempt 9, had its plan and light right but was low, 0.423 where 0.43, its lower-left foot too steep at 0.639, and its crane jib 235 px against a short side of 169; every r3 step 1 kept attempt 7's two-post portal crane, so editing an earlier attempt does not remove a fault), its
 two-step edit of r3 attempt 7 is dropped, and its plan numbers (long side 2.0 to 2.8 times the short
 side) are superseded: they were measured on r1 attempt 12, which the author found too thin. The
 guides come from r0's own measured feet.
 
 Work on branch art/325-fuel-pump, which exists: git fetch origin art/325-fuel-pump, git switch
-art/325-fuel-pump, git pull --ff-only (head b26ccab3 or later). Touch nothing outside
+art/325-fuel-pump, git pull --ff-only (head 95fa3cf8 or later). Touch nothing outside
 assets/source/fuel-2026-10-11/. Commit there and push the branch. Never push to main or develop.
 Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte for byte, as
-raw/fuel_pump-a1-r<v>-attempt-<k>.png: r1 from 13, r2 from 7, r3 from 15 (if prompts.json holds a
+raw/fuel_pump-a1-r<v>-attempt-<k>.png: r1 from 13, r2 from 10, r3 from 18 (if prompts.json holds a
 higher number for a view, go on from that), and never delete or overwrite a painting. Ask the tool
 for 1024x1024 and record the size it returns in "returned" (the earlier pictures came back
 1254x1254).

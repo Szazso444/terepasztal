@@ -3,12 +3,13 @@ in this repository, for issue #325: r1, then r3. r0 and r2 are accepted by the a
 and r2 are good") and are not painted again: r1 and r3 must match them. This replaces C4d, which is
 off the page. The coaling stage's work is on branch art/325-buildings-v2, as C4d's
 (art/325-fuel-pump is the Fuel Pump's, not this one): git fetch origin art/325-buildings-v2, git
-switch art/325-buildings-v2, git pull --ff-only (head c2b648e2 or later). Touch nothing outside
+switch art/325-buildings-v2, git pull --ff-only (head cd7919ec or later). Touch nothing outside
 assets/source/buildings-v2/. Commit there, never stash pictures, push the branch. Never push to main
 or develop. Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte
-for byte, as raw/<id>-attempt-<k>.png, k going on from 10 for r1 and r3 (attempts 1 to 9 exist; go
-on from the highest number raw/returns.json holds), and add {id, attempt, file, returned, spans,
+for byte, as raw/<id>-attempt-<k>.png, k going on from 16 for r1 and r3 (attempts 1 to 15 exist; go on from the highest number raw/returns.json holds), and add {id, attempt, file, returned, spans,
 top, height, kept} to raw/returns.json for each call.
+
+STATE OF THE BRANCH, after the run of 19 October (review in handoff/codex-review-1019.json). Six calls were made (r1 and r3, attempts 13 to 15) and none passed. r1: the pier span measured 677, 808 and 639 px of 1254 (600 to 663 allowed); attempt 15 passed the width and then failed the height (1.136 where 1.318 to 1.611: the stage came out squat, its legs short), the camera (8.1 degrees) and the highlights; r3: the span measured 734, 674 and 756, all over 663 (attempt 14, 674, was 11 px over, with the winch and chute at the near end as wanted). r0 and r2 are untouched and r2 is back on the branch. The queue has r1 and r3 as rejected: set them pending (node tools/building-queue.mjs set <id> pending --note "repaint, review 2, second run") before you take. Never attach those pictures. For r1 the lesson is the legs: the piers' height is what attempt 15 lost, so keep the stage as tall as the guide's piers and the bin as narrow as the plinth.
 
 WHY AGAIN. C4d's nine attempts all failed. The 62 game px block-out cured the low views only
 partly, because the guide was a square block on a thin plinth, and the painter spread the stage
@@ -26,12 +27,14 @@ The pier span is the number you keep: it is measured first.
 THE ACCEPTED r2. The author accepted r0 and r2. r2 is raw/fuel_stop-a0-r2-attempt-8.png (the earlier
 round's best; its camera is 3.5 degrees off, which the author accepts). The queue shows r2 as
 rejected and has set its file aside as fuel_stop/fuel_stop-a0-r2.rejected.png, the same picture.
-Before anything else, put it back: check that raw/fuel_stop-a0-r2-attempt-8.png is byte-identical to
+Since cd7919ec fuel_stop/fuel_stop-a0-r2.png is on the branch: if it is byte-identical to raw/fuel_stop-a0-r2-attempt-8.png and the queue shows r2 generated, skip the rest of this paragraph. Otherwise put it back: check that raw/fuel_stop-a0-r2-attempt-8.png is byte-identical to
 fuel_stop-a0-r2.rejected.png if that file is there; copy it, byte for byte, to
 assets/source/buildings-v2/fuel_stop/fuel_stop-a0-r2.png, and run node tools/building-queue.mjs set
 fuel_stop-a0-r2 generated --note "accepted by the author in review 2, camera 3.5 degrees". If set
 refuses it for its camera, leave the file where it is, say so in your message and go on: r2 is not
 painted again, and r1 and r3 are painted to match it. Do not run redo on r2.
+
+THE PAINTER'S SPREAD (added 19 October). On 19 October 47 of 51 paintings of this kind came back wider than the most allowed, and nothing passed its width at the first call: the painter seems to fill the grey PLINTH, not the block that stands on it. So, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Paint the whole building, canopies, steps, pipes, piers and everything else that stands on the ground included, a little SMALLER than looks natural: earlier paintings came out 10 to 40 per cent wider than the block, never narrower." It is one sentence, not a second Correction.
 
 THE LIMIT. The plinth is 516 px wide in the guide, 632 px in a 1254 px picture (1.2246 times as
 many). The painted stage, from the outer edge of its leftmost pier's foot to the outer edge of its
@@ -148,7 +151,7 @@ MEASURE BEFORE YOU RECORD (after take, before set), in this order:
   and cameraOff in tools/building-fit.mjs, which set runs; node tools/building-check.mjs <file>
   prints it). Measure width and height first: if the picture is wide or low, do not set it, paint
   it again;
-- highlights: count opaque pixels with all three channels at or above #ECE4D0, and within 12
+- highlights (reported, NOT a pass rule: tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them): count opaque pixels with all three channels at or above #ECE4D0, and within 12
   (RGB distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may
   exceed r0's (Art caps the rest at packing);
 - by eye: r3 turned, not mirrored (winch, chain and chute at the lower-right wall's near end,

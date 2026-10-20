@@ -12,7 +12,6 @@
     "C23a",
     "c4e",
     "R8e",
-    "r8d",
     "c17c",
     "c17d"
    ]
@@ -54,173 +53,173 @@
   "C34a": {
    "file": "C34a",
    "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head c2b648e2 or later)",
+   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later)",
    "issue": "#325 and #536",
    "title": "Depot a0 r3 repainted at the game camera (1 picture)",
-   "next": "Depot a0 r3, repainted at the game camera. One picture, at most three attempts.",
-   "note": "Depot r3 was painted from a camera 25 degrees down where the game's is 30, and the packing stretched it (x 0.923, y 1.089, shear +0.02; ink aspect 1.21 to 1.03: taller, narrower, tall chimneys). The author's rule: repaint, never stretch (issue #536). It is painted again on the queue's own guide, guides/t2x2-r3.png (2 x 2 tiles, 1536 x 1024, 6 px to a game px), as the same depot as r0: portals on the lower-left wall, crew door on the lower-right wall. The prompt holds the base at 722 px (686 to 758, both feet 361 px) and measures the width before the fit."
+   "next": "Depot a0 r3, repainted at the game camera (the 19 October run failed on width). One picture, at most three attempts.",
+   "note": "Run 19 October, failed: r3 was painted three times and refused three times for width (848, 1083 and 895 px of 1536; most 758). Attempts 2 and 3 are the right depot; attempt 3's feet and camera look right. The depot a0 r0 to r2 are on the branch now (they were not before). Redo. Depot r3 was painted from a camera 25 degrees down where the game's is 30, and the packing stretched it (x 0.923, y 1.089, shear +0.02; ink aspect 1.21 to 1.03: taller, narrower, tall chimneys). The author's rule: repaint, never stretch (issue #536). It is painted again on the queue's own guide, guides/t2x2-r3.png (2 x 2 tiles, 1536 x 1024, 6 px to a game px), as the same depot as r0: portals on the lower-left wall, crew door on the lower-right wall. The prompt holds the base at 722 px (686 to 758, both feet 361 px) and measures the width before the fit."
   },
   "C35a": {
    "file": "C35a",
    "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head c2b648e2 or later)",
+   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later)",
    "issue": "#325",
    "title": "Narrow depot a0, never painted: r0 to r3 on the 2 x 1 guides (4 pictures)",
    "next": "Narrow depot a0, r0 to r3: a single-track shed on 2 x 1 tiles, in the depot family's a0 style. Twelve calls at most.",
-   "note": "The queue lists depot_narrow a0 to a5 as pending; this paints the Steam age. A small single-track engine shed, one portal per end wall, matching the depot's a0 in materials and colours. Guides guides/t1x2-r0.png to r3 (1024 x 1024, 8 px to a game px) are in the tree. The base is held at 707 px of the guide (671 to 742; 865 of 1254), feet 481 : 225 at r0 and r2, 225 : 481 at r1 and r3. r0 first, then r1, r3, r2; the depot's a0 r0 is attached for the family look only."
+   "note": "Not run. The depot a0 pictures it attaches for the family look are on the branch now (586865bf). The queue lists depot_narrow a0 to a5 as pending; this paints the Steam age. A small single-track engine shed, one portal per end wall, matching the depot's a0 in materials and colours. Guides guides/t1x2-r0.png to r3 (1024 x 1024, 8 px to a game px) are in the tree. The base is held at 707 px of the guide (671 to 742; 865 of 1254), feet 481 : 225 at r0 and r2, 225 : 481 at r1 and r3. r0 first, then r1, r3, r2; the depot's a0 r0 is attached for the family look only."
   },
   "C21a": {
    "file": "C21a",
    "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head c2b648e2 or later)",
+   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later)",
    "issue": "#325",
    "title": "Small Farm Halt a0: r1 (too wide) and r3 (too thin, angle off) repainted (2 pictures)",
-   "next": "Small farm halt a0, r1 and r3 repainted on the review-2 guides. r0 and r2 stay. Two pictures.",
-   "note": "On the review-2 guides farm-r1 and farm-r3, which keep the oblong plan the finished r0 measures (532 : 422 of the foot), turned. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The base is held at 416 px of the guide (395 to 437; 509 of 1254), feet 183.2 : 230.4. r0 and r2 stay: the prompt does not let the queue's redo undo r2."
+   "next": "Small farm halt a0, r1 and r3 repainted on the review-2 guides. Step 0 puts the farm pictures on the branch first. r0 and r2 stay. Two pictures.",
+   "note": "BLOCKED on 19 October, now fixed in the prompt: the farm a0 pictures it says \"stay\" (r0 to r3) are not on art/325-buildings-v2 (they were only in the unpushed local branch and a backup snapshot). Step 0 restores them from origin/backup/g-dev-terepasztal-terepasztal-wip, sha256 checked, and sets the queue. If Codex may not commit pictures it did not paint, the author pushes them first. On the review-2 guides farm-r1 and farm-r3, which keep the oblong plan the finished r0 measures (532 : 422 of the foot), turned. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The base is held at 416 px of the guide (395 to 437; 509 of 1254), feet 183.2 : 230.4. r0 and r2 stay: the prompt does not let the queue's redo undo r2."
   },
   "C23a": {
    "file": "C23a",
    "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head c2b648e2 or later)",
+   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later)",
    "issue": "#325",
    "title": "Quarry a0 r2 repainted on the oblong plan (1 picture)",
-   "next": "Quarry a0 r2 on the review-2 guide. r0, r1 and r3 are accepted. One picture.",
-   "note": "r2 on the review-2 guide quarry-r2 (long side lower left: feet 230.4 : 190.8, the plan r0 measures, turned). The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The base is held at 424 px of the guide (403 to 445; 519 of 1254). r2 copies r1's back and r3's left-hand side."
+   "next": "Quarry a0 r2 on the review-2 guide. Step 0 puts the quarry pictures on the branch first. r0, r1 and r3 are accepted. One picture.",
+   "note": "BLOCKED on 19 October, now fixed in the prompt: the quarry a0 pictures r0, r1 and r3 are not on art/325-buildings-v2 (only in the main checkout, untracked, and a backup snapshot). Step 0 restores them from origin/backup/g-dev-terepasztal-terepasztal-wip, sha256 checked. quarry r2 does not exist (only the rejected one); it is painted new. r2 on the review-2 guide quarry-r2 (long side lower left: feet 230.4 : 190.8, the plan r0 measures, turned). The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The base is held at 424 px of the guide (403 to 445; 519 of 1254). r2 copies r1's back and r3's left-hand side."
   },
   "R8e": {
    "file": "R8e",
    "lane": "Buildings lane",
-   "branch": "art/325-fuel-pump (exists, head b26ccab3 or later)",
+   "branch": "art/325-fuel-pump (exists, head 95fa3cf8 or later)",
    "issue": "#325",
    "title": "Fuel Pump r1 (too thin), r3 and r2 on the new tool guides (3 pictures)",
    "next": "Fuel Pump r1, r3 and r2 on the new tool-made guides; replaces R8d. Branch art/325-fuel-pump. Nine calls at most.",
-   "note": "Replaces R8d, which ran on 19 October: r2 (attempts 4 to 6) and r3 step 1 (attempts 12 to 14) failed. The author found r1 too thin and wants the tool-made guides (fuel_pump-r1 to r3 of PR #537, which replace the hand-made ones). They are built on r0's own measured feet (441 : 344 of 785 px, long over short 1.28), so R8d's 2.0 to 2.8 plan test is superseded; Step 0 measures r0 again and stops if its feet disagree. The base is held at 412 px of the guide (391 to 433; 505 of 1254). One edit of the guide per call, never of an attempt, r1, then r3, then r2, one Correction at a time."
+   "note": "Not run. R8d ran again on 19 October (r2 attempts 7 to 9, r3 step 1 attempts 15 to 17) and failed the same way: r2 low and wide with a jib 40 per cent too long and its lower-left foot too steep (0.639), r3 still a two-post portal crane. The branch is at 95fa3cf8; attempts go on from r1 13, r2 10, r3 18. Replaces R8d, which ran on 19 October: r2 (attempts 4 to 6) and r3 step 1 (attempts 12 to 14) failed. The author found r1 too thin and wants the tool-made guides (fuel_pump-r1 to r3 of PR #537, which replace the hand-made ones). They are built on r0's own measured feet (441 : 344 of 785 px, long over short 1.28), so R8d's 2.0 to 2.8 plan test is superseded; Step 0 measures r0 again and stops if its feet disagree. The base is held at 412 px of the guide (391 to 433; 505 of 1254). One edit of the guide per call, never of an attempt, r1, then r3, then r2, one Correction at a time."
   },
   "C18a": {
    "file": "C18a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Big Station: the old station picture turned, r1, r3 and r2 (3 pictures)",
-   "next": "Big Station (the old station picture), r1, r3 and r2. Creates the branch art/535-rotations. Blocks gameplay: one side only today.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/station.png and stays. Footprint 2 x 1 tiles at r0, 1024 canvas, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. One view at a time, three attempts each, width measured first; r2 copies r1's back and r3's left side."
+   "next": "Big Station (the old station picture), r1, r3 and r2. Creates the branch art/535-rotations. Blocks gameplay: one side only today. Not run yet.",
+   "note": "Not run: a window read r0, wrote an r0 reading with a wrong-scale width table and stopped; nothing painted, nothing committed. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/station.png and stays. Footprint 2 x 1 tiles at r0, 1024 canvas, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. One view at a time, three attempts each, width measured first; r2 copies r1's back and r3's left side."
   },
   "C22a": {
    "file": "C22a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Big Farm Halt: the old farm picture turned, r1, r3 and r2 (3 pictures)",
-   "next": "Big Farm Halt (the old farm picture), r1, r3 and r2. 1 x 2 tiles.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/farm.png and stays. Footprint 1 x 2 tiles at r0 (the short gable end with the loading dock is the front), base held at 694 px of the guide (850 of 1254; 659 to 729), feet 460.8 : 230.4 in r1 and r3, 230.4 : 460.8 in r2. The dock and the silo stand inside the plinth."
+   "next": "Big Farm Halt (the old farm picture), r1, r3 and r2. 1 x 2 tiles. Redo: r1 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r1 refused for width three times (903, 964 and 927 px of 1254; most 892; attempt 1 was 1 per cent over). The barn and silo are right and turned. r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/farm.png and stays. Footprint 1 x 2 tiles at r0 (the short gable end with the loading dock is the front), base held at 694 px of the guide (850 of 1254; 659 to 729), feet 460.8 : 230.4 in r1 and r3, 230.4 : 460.8 in r2. The dock and the silo stand inside the plinth."
   },
   "C19a": {
    "file": "C19a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Town hall turned, r1, r3 and r2 (3 pictures); r0 stays",
    "next": "Town hall, r1, r3 and r2. r0 stays.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The illustrated r0 (base-v1/townhouse-civic.png) stays as it is: only the three turned views are painted. Footprint 2 x 1 tiles, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. The bell cupola stays on the ridge in every view."
+   "note": "Not run: the same; one raw attempt exists uncommitted in that window and must not be used. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The illustrated r0 (base-v1/townhouse-civic.png) stays as it is: only the three turned views are painted. Footprint 2 x 1 tiles, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. The bell cupola stays on the ridge in every view."
   },
   "C20a": {
    "file": "C20a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Warehouse turned, r1, r3 and r2 (3 pictures)",
-   "next": "Warehouse, r1, r3 and r2.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/warehouse.png and stays. Footprint 2 x 1 tiles, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. The green sliding doors are on the front only, the canopy on the right-hand end only."
+   "next": "Warehouse, r1, r3 and r2. Redo after the 19 October width failure.",
+   "note": "Run 19 October, failed: r1 refused for width three times (1160, 1040 and 1014 px of 1254 with the canopy footings; most 892). The building and its turn are right; the canopy posts stand outside the block. r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/warehouse.png and stays. Footprint 2 x 1 tiles, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. The green sliding doors are on the front only, the canopy on the right-hand end only."
   },
   "C24a": {
    "file": "C24a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Water pump turned, r1, r3 and r2 (3 pictures)",
-   "next": "Water pump, r1, r3 and r2. 1 x 1 tile.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/pump.png and stays. Footprint 1 x 1 tile, base held at 464 px of the guide (568 of 1254; 441 to 487), feet 230.4 : 230.4. The flywheel and the pipe are tucked inside the plinth with the house, so the base measures the whole building."
+   "next": "Water pump, r1, r3 and r2. 1 x 1 tile. Redo: r1 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r1 refused for width three times (649, 635 and 611 px of 1254; most 597). The house is right and turned. r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/pump.png and stays. Footprint 1 x 1 tile, base held at 464 px of the guide (568 of 1254; 441 to 487), feet 230.4 : 230.4. The flywheel and the pipe are tucked inside the plinth with the house, so the base measures the whole building."
   },
   "C25a": {
    "file": "C25a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Stone grinder turned, r1, r3 and r2 (3 pictures)",
-   "next": "Stone grinder, r1, r3 and r2. 1 x 1 tile.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/grinder.png and stays. Footprint 1 x 1 tile (the game data says 2 x 1: the review's footprint is used), base held at 464 px of the guide (568 of 1254; 441 to 487), feet 230.4 : 230.4."
+   "next": "Stone grinder, r1, r3 and r2. 1 x 1 tile. Redo: r1 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r1 refused for width three times (997, 761 and 640 px of 1254; most 596). The house is right and turned. r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/grinder.png and stays. Footprint 1 x 1 tile (the game data says 2 x 1: the review's footprint is used), base held at 464 px of the guide (568 of 1254; 441 to 487), feet 230.4 : 230.4."
   },
   "C26a": {
    "file": "C26a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Oil refinery turned, r1, r3 and r2 (3 pictures)",
-   "next": "Oil refinery, r1, r3 and r2. 1 x 1 tile; a plant of units, turned by the corner map.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/refinery.png and stays. Footprint 1 x 1 tile (the game data says 2 x 2), base held at 464 px of the guide (568 of 1254; 441 to 487), feet 230.4 : 230.4. The tank, the column and the furnace each stay where they are on the footprint and turn with it (the prompt gives the corner map)."
+   "next": "Oil refinery, r1, r3 and r2. 1 x 1 tile; a plant of units, turned by the corner map. Redo: r1 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r1 refused for width three times (803, 725 and 673 px of 1254; most 596): the tank's cradle stands outside the furnace's frame. r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/refinery.png and stays. Footprint 1 x 1 tile (the game data says 2 x 2), base held at 464 px of the guide (568 of 1254; 441 to 487), feet 230.4 : 230.4. The tank, the column and the furnace each stay where they are on the footprint and turn with it (the prompt gives the corner map)."
   },
   "C27a": {
    "file": "C27a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Power plant turned, r1, r3 and r2 on the 1536 x 1024 canvas (3 pictures)",
-   "next": "Power plant, r1, r3 and r2. 3 x 2 tiles on the new 1536 x 1024 canvas.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/power-plant.png and stays. Footprint 3 x 2 tiles at r0 on a new canvas (1536 x 1024, 5 px to a game px, anchor 768,740), base held at 724 px (688 to 760; the picture comes back as asked), feet 288 : 432 in r1 and r3, 432 : 288 in r2. The camera is judged from the feet's slopes: checkFile does not know this footprint."
+   "next": "Power plant, r1, r3 and r2. 3 x 2 tiles on the new 1536 x 1024 canvas. Redo: r1 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r1 refused for width three times (1250, 872 and 1033 px of 1536; most 760). r0 itself is 1252 px wide, 1.7 times the held width: the prompt now says the width table beats every sentence about size. r3 and r2 not painted. Redo; the author may want to decide the size. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/power-plant.png and stays. Footprint 3 x 2 tiles at r0 on a new canvas (1536 x 1024, 5 px to a game px, anchor 768,740), base held at 724 px (688 to 760; the picture comes back as asked), feet 288 : 432 in r1 and r3, 432 : 288 in r2. The camera is judged from the feet's slopes: checkFile does not know this footprint."
   },
   "C28a": {
    "file": "C28a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Battery (substation): repainted whole, r0, r1, r3 and r2 on a 2 x 2 plan (4 pictures)",
-   "next": "Battery (substation), repainted whole: r0, r1, r3 and r2. 2 x 2 tiles.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. Today's angle is wrong and it does not fill 2 x 2, so r0 is repainted too, on the r0 guide (1536 x 1024, 6 px to a game px): a cream-limestone switch house (the guide's 36 px block) carrying the old transformer, insulator stacks, portal frame and cabinet on its roof. Base held at 694 px (659 to 729), feet 345.6 : 345.6. The layout is a design choice made from the guide's block: please look at the r0 first."
+   "next": "Battery (substation), repainted whole: r0, r1, r3 and r2. 2 x 2 tiles. Redo r0, r1 and r3 from the 19 October numbers.",
+   "note": "Run 19 October, partly passing: r0 (attempt 2: width passes; camera 2.1 degrees, height 0.374 against 0.31 and highlights fail), r1 (attempt 3: plan 0.79 fails) and r3 (width 743, 753, 756; roof gear not turned) were painted; r2 was not. Redo r0, r1 and r3 from the numbers in the prompt. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. Today's angle is wrong and it does not fill 2 x 2, so r0 is repainted too, on the r0 guide (1536 x 1024, 6 px to a game px): a cream-limestone switch house (the guide's 36 px block) carrying the old transformer, insulator stacks, portal frame and cabinet on its roof. Base held at 694 px (659 to 729), feet 345.6 : 345.6. The layout is a design choice made from the guide's block: please look at the r0 first."
   },
   "C29a": {
    "file": "C29a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Hydro plant: a new design, apart from the water pump, r0, r1, r3 and r2 (4 pictures)",
-   "next": "Hydro plant, a new design: an oblong powerhouse with an intake, a sluice and a penstock. r0, r1, r3 and r2. 1 x 1 tile.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The hydro plant had been drawn as a variation of the water pump; this is its own building on the guide's oblong base (0.9 x 0.625 tile): a long limestone hall with three arched windows and a vented ridge lantern, the intake chamber with sluice and handwheel on the short end, a riveted penstock down the end wall, a tailrace arch in the base. No flywheel, no elbow pipe, no chimney stack. Base held at 394 px of the guide (482 of 1254; 374 to 414), feet 230.4 : 160.1 at r0 and r2, 160.1 : 230.4 at r1 and r3. The game's art direction stays. Please look at r0 first."
+   "next": "Hydro plant, a new design: an oblong powerhouse with an intake, a sluice and a penstock. r0, r1, r3 and r2. 1 x 1 tile. Redo: r0 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r0 refused for width three times (923, 882 and 749 px of 1254; most 507; the plinth is 632). The design is painted well but 1.3 plinths long; the prompt asks to shorten the hall and the intake. r1, r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The hydro plant had been drawn as a variation of the water pump; this is its own building on the guide's oblong base (0.9 x 0.625 tile): a long limestone hall with three arched windows and a vented ridge lantern, the intake chamber with sluice and handwheel on the short end, a riveted penstock down the end wall, a tailrace arch in the base. No flywheel, no elbow pipe, no chimney stack. Base held at 394 px of the guide (482 of 1254; 374 to 414), feet 230.4 : 160.1 at r0 and r2, 160.1 : 230.4 at r1 and r3. The game's art direction stays. Please look at r0 first."
   },
   "C30a": {
    "file": "C30a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Colliery repainted on the 2 x 2 plan, r0, r1, r3 and r2 (4 pictures)",
-   "next": "Colliery, r0 to r3. 2 x 2 tiles; the plant is laid out on the plinth.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The plan has an r0 guide, so r0 is repainted: the engine house along the lower-left side, the hopper gantry along the lower-right side, the headgear at the far corner, all inside the plinth (1536 x 1024, 6 px to a game px). Base held at 694 px (659 to 729), feet 345.6 : 345.6. r1, r3 and r2 turn it by the corner map."
+   "next": "Colliery, r0 to r3. 2 x 2 tiles; the plant is laid out on the plinth. Redo: r0 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r0 refused for width three times (1019, 894 and 807 px of 1536; most 729). The three parts are right; the headgear's footing stands outside the plinth. r1, r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The plan has an r0 guide, so r0 is repainted: the engine house along the lower-left side, the hopper gantry along the lower-right side, the headgear at the far corner, all inside the plinth (1536 x 1024, 6 px to a game px). Base held at 694 px (659 to 729), feet 345.6 : 345.6. r1, r3 and r2 turn it by the corner map."
   },
   "C31a": {
    "file": "C31a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Ironworks repainted on the 2 x 2 plan, r0, r1, r3 and r2 (4 pictures)",
-   "next": "Ironworks, r0 to r3. 2 x 2 tiles; the works are laid out on the plinth.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The plan has an r0 guide, so r0 is repainted: the forge shed along the lower-left side, the ingot store along the lower-right side, the furnace with its chimney at the far corner, inside the plinth (1536 x 1024, 6 px to a game px). Base held at 694 px (659 to 729), feet 345.6 : 345.6. r1, r3 and r2 turn it by the corner map."
+   "next": "Ironworks, r0 to r3. 2 x 2 tiles; the works are laid out on the plinth. Redo: r0 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r0 refused for width three times (1199, 1088 and 1044 px of 1536; most 729; about 1.4 plinths long). The prompt asks for the three parts on the block from the first call. r1, r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. The plan has an r0 guide, so r0 is repainted: the forge shed along the lower-left side, the ingot store along the lower-right side, the furnace with its chimney at the far corner, inside the plinth (1536 x 1024, 6 px to a game px). Base held at 694 px (659 to 729), feet 345.6 : 345.6. r1, r3 and r2 turn it by the corner map."
   },
   "C32a": {
    "file": "C32a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "Oil derrick turned, r1, r3 and r2 (3 pictures); r0 stays",
-   "next": "Oil derrick, r1, r3 and r2. 2 x 1 tiles. r0 stays (the author likes its angle).",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/works-full-oil-derrick.png and stays: the author likes its angle. Footprint 2 x 1 tiles, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. The tank, the gearbox, the A-frame and the wellhead turn with the skid frame by the corner map."
+   "next": "Oil derrick, r1, r3 and r2. 2 x 1 tiles. r0 stays (the author likes its angle). Redo: r1 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r1 refused for width three times (1017, 899 and 1022 px of 1254; most 892; attempt 2 was 7 px over). The derrick is right and turned. r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/works-full-oil-derrick.png and stays: the author likes its angle. Footprint 2 x 1 tiles, base held at 694 px of the guide (850 of 1254; 659 to 729), feet 230.4 : 460.8 in r1 and r3, 460.8 : 230.4 in r2. The tank, the gearbox, the A-frame and the wellhead turn with the skid frame by the corner map."
   },
   "C33a": {
    "file": "C33a",
    "lane": "Rotations lane",
-   "branch": "art/535-rotations (the first of these prompts creates it from develop)",
+   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
    "issue": "#535",
    "title": "House (townhouse) turned, r1, r3 and r2 on the tall 1024 x 1536 canvas (3 pictures)",
-   "next": "House (townhouse), r1, r3 and r2 on the tall canvas. 1 x 1 tile.",
-   "note": "The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/house-cottage.png and stays. Footprint 1 x 1 tile on a tall canvas (1024 x 1536, anchor 512,1344; assumed to come back as asked), base held at 464 px (441 to 487), feet 230.4 : 230.4. The biome variants are a separate prompt, C33b, for after these are accepted."
+   "next": "House (townhouse), r1, r3 and r2 on the tall canvas. 1 x 1 tile. Redo: r1 failed on width on 19 October.",
+   "note": "Run 19 October, failed: r1 refused for width three times (739, 635 and 638 px of 1024; most 487). r0's cottage fills 57 per cent of its canvas and the block-out holds 45: paint at the block-out's size. r3 and r2 not painted. Redo. The guides are those of PR #537 (claude/art-guides-review-2, not merged): the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to its art branch. r0 is base-v1/house-cottage.png and stays. Footprint 1 x 1 tile on a tall canvas (1024 x 1536, anchor 512,1344; assumed to come back as asked), base held at 464 px (441 to 487), feet 230.4 : 230.4. The biome variants are a separate prompt, C33b, for after these are accepted."
   },
   "C33b": {
    "file": "C33b",
@@ -234,17 +233,9 @@
   }
  },
  "old": {
-  "r8d": {
-   "title": "Fuel Pump r2 painted now, then r3's crane and hose, then its light (r1 accepted)",
-   "note_html": "<b>Already run on 19 October; replaced by R8e above (do not paste it again).</b> <b>Buildings lane. Branch art/325-fuel-pump (exists, head 25ba21e2 or later).</b> Issue #325. Follows R8c, reviewed on 18 October: r1 attempt 12 passes every test and is accepted. r3 attempt 9 got the light right but came back squat with a two-post crane, because one edit was asked to change three things at once. r2 was never painted, because R8c held it back until r3 passed. So R8d paints r2 now, on r0 and the accepted r1, then fixes r3 from attempt 7 in two steps with one change each: the crane and the hose first, with the house locked in pixels, then the light, with attempt 9 as the light reference.",
-   "label": "R8d",
-   "file": "R8d",
-   "anchor": "r8d",
-   "copy": "p-r8d"
-  },
   "c4e": {
    "title": "Coaling stage r1 and r3 on the oblong guides, matching the accepted r0 and r2 (2 pictures)",
-   "note_html": "<b>Buildings lane. Branch art/325-buildings-v2 (exists, head c2b648e2 or later; art/325-fuel-pump is the Fuel Pump&#x27;s, not the coaling stage&#x27;s).</b> Issue #325. Replaces C4d, which is off the page: all nine of its attempts failed on 18 October (Codex paints the stage 15 to 26 per cent wider than the plinth, and the fit then shrinks it low). Changed 19 October after the author&#x27;s review 2: r0 and r2 are good, so only r1 and r3 are painted (six calls, three attempts a view) and they must match r2; the prompt puts the accepted r2 (raw attempt 8) back in the queue and does not repaint it. The guides are the oblong ones of #524 (Art&#x27;s <span class=\"cid\">fuel_stop-oblong-r1</span> to <span class=\"cid\">r3</span>), on the branch claude/art-guides-windmill-coaling, not merged yet; the prompt tells Codex to read them out of that branch into a folder outside its checkout. It carries the width limit (plinth 516 px of the guide, 632 of 1254; painted at most 5 per cent wider, 542 and 663), the walls&#x27; feet ratio, the long side per view, and the r3 winch opening, and measures the pier span before the fit. Nothing is stretched or bent: the angles come from the painting.",
+   "note_html": "<b>Run 19 October (cd7919ec), failed.</b> r1 and r3 were painted three times each. r1: the pier span measured 677, 808 and 639 px of 1254 (most 663); attempt 15 passed the width and failed the height (1.136 where 1.318 to 1.611, the stage squat) and the camera (8.1&deg;); r3: 734, 674 and 756, all over 663 (attempt 14 was 11 px over). r2 is back on the branch. Redo both. <b>Buildings lane. Branch art/325-buildings-v2 (exists, head cd7919ec or later; art/325-fuel-pump is the Fuel Pump&#x27;s, not the coaling stage&#x27;s).</b> Issue #325. Replaces C4d, which is off the page: all nine of its attempts failed on 18 October (Codex paints the stage 15 to 26 per cent wider than the plinth, and the fit then shrinks it low). Changed 19 October after the author&#x27;s review 2: r0 and r2 are good, so only r1 and r3 are painted (six calls, three attempts a view) and they must match r2; the prompt puts the accepted r2 (raw attempt 8) back in the queue and does not repaint it. The guides are the oblong ones of #524 (Art&#x27;s <span class=\"cid\">fuel_stop-oblong-r1</span> to <span class=\"cid\">r3</span>), on the branch claude/art-guides-windmill-coaling, merged on 18 October, so also on develop; the prompt tells Codex to read them out of that branch into a folder outside its checkout. It carries the width limit (plinth 516 px of the guide, 632 of 1254; painted at most 5 per cent wider, 542 and 663), the walls&#x27; feet ratio, the long side per view, and the r3 winch opening, and measures the pier span before the fit. Nothing is stretched or bent: the angles come from the painting.",
    "label": "C4e",
    "file": "C4e",
    "anchor": "c4e",
@@ -253,7 +244,7 @@
   },
   "c17c": {
    "title": "Windmill body without sails, in the game's camera, on the new block-out (1 picture)",
-   "note_html": "<b>Buildings lane, after C4e. Branch art/461-windmill-sails (exists, head beed486 or later).</b> Issue #461. The author found the demo&#x27;s windmill wonky and asked for a repaint so it can be animated. The accepted body was seen from 19&deg; down instead of the game&#x27;s 30&deg;, with its door and shaft turned about 27&deg; off, so the sails could not sit on it. C17c paints the tower again, without sails, as an edit of Art&#x27;s block-out in the game&#x27;s own projection (on develop, assets/source/buildings-v2/guides/, PR #490), and records the hub point. The sail cross from C17b is kept. Every number is measured from the foot&#x27;s width: camera, height, shaft slope, hub, door. Near-white pixels alone do not fail a picture; Art caps them at packing. Decided on 18 October: all four views are painted. C17c paints the front view r0; C17d follows it with r3, r1 and r2.",
+   "note_html": "<b>Not run (19 October).</b> <b>Buildings lane, after C4e. Branch art/461-windmill-sails (exists, head beed486 or later).</b> Issue #461. The author found the demo&#x27;s windmill wonky and asked for a repaint so it can be animated. The accepted body was seen from 19&deg; down instead of the game&#x27;s 30&deg;, with its door and shaft turned about 27&deg; off, so the sails could not sit on it. C17c paints the tower again, without sails, as an edit of Art&#x27;s block-out in the game&#x27;s own projection (on develop, assets/source/buildings-v2/guides/, PR #490), and records the hub point. The sail cross from C17b is kept. Every number is measured from the foot&#x27;s width: camera, height, shaft slope, hub, door. Near-white pixels alone do not fail a picture; Art caps them at packing. Decided on 18 October: all four views are painted. C17c paints the front view r0; C17d follows it with r3, r1 and r2.",
    "label": "C17c",
    "file": "C17c",
    "anchor": "c17c",
@@ -262,7 +253,7 @@
   },
   "c17d": {
    "title": "Windmill body without sails, r3, r1 and r2, each on its own guide (3 pictures)",
-   "note_html": "<b>Buildings lane, after C17c. Branch art/461-windmill-sails (C17c&#x27;s commit or later).</b> Issue #461. The author decided on 18 October that the windmill has four views. C17d paints the tower without sails for r3, r1 and r2, each as an edit of its own guide (canvas 1024, scale 8, anchor 512,832; hub offsets r1 (-16,-50), r2 (16,-50), r3 (16,-34)), in the same lane and with the same tests as C17c. C17b&#x27;s sail cross is turned into each view by an exact transform, so each body must leave the hub exactly at its guide&#x27;s point. In r1 and r2 the cross is seen from behind: no door, no window, and the stub and plate stand behind the tower. The guides are on the branch claude/art-guides-windmill-coaling, not merged yet; the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to the art branch. Nothing is mirrored, sheared or stretched: each view is turned by its own camera.",
+   "note_html": "<b>Not run (19 October).</b> <b>Buildings lane, after C17c. Branch art/461-windmill-sails (C17c&#x27;s commit or later).</b> Issue #461. The author decided on 18 October that the windmill has four views. C17d paints the tower without sails for r3, r1 and r2, each as an edit of its own guide (canvas 1024, scale 8, anchor 512,832; hub offsets r1 (-16,-50), r2 (16,-50), r3 (16,-34)), in the same lane and with the same tests as C17c. C17b&#x27;s sail cross is turned into each view by an exact transform, so each body must leave the hub exactly at its guide&#x27;s point. In r1 and r2 the cross is seen from behind: no door, no window, and the stub and plate stand behind the tower. The guides are on develop since 18 October (PR #524) and still on the branch claude/art-guides-windmill-coaling; the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to the art branch. Nothing is mirrored, sheared or stretched: each view is turned by its own camera.",
    "label": "C17d",
    "file": "C17d",
    "anchor": "c17d",
@@ -271,7 +262,7 @@
   },
   "r7c1": {
    "title": "People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)",
-   "note_html": "<b>People lane. Branch art/331-people (exists, head 8005c80 or later).</b> Issue #331. The author chose to repaint whole figures, not only legs. Earlier rounds failed because Codex copies the legs of any painting attached to it, so each pose is now an edit of Art&#x27;s grey pose mannequin (on develop, assets/source/people-v3-guides/, PR #491: the game&#x27;s camera and gait, turned 45 degrees), with only the lumberjack&#x27;s upper body attached for his look. The lumberjack keeps his axe on his shoulder. Every pose is measured: height, soles, the planted foot&#x27;s slide, the turn, and that P1 and P3 differ. If this trial passes, R7c-2 onward repaint the other back strips and the limping front strips the same way.",
+   "note_html": "<b>Run twice (18 and 19 October), both stopped at P1: blocked, rewritten.</b> Test 6 (cursor white and amber, zero tolerance) fired on all four pictures (3 to 49 white, 137 to 1616 amber pixels) although tools/atlas-cap.mjs caps both at packing, and test 5 (shoulder row) could not be read under the axe. Test 6 is now a report, test 5 is read by eye; the new run goes in v3/run-3/ and reuses the calibrated measure-v3.mjs. <b>People lane. Branch art/331-people (exists, head f7268089 or later).</b> Issue #331. The author chose to repaint whole figures, not only legs. Earlier rounds failed because Codex copies the legs of any painting attached to it, so each pose is now an edit of Art&#x27;s grey pose mannequin (on develop, assets/source/people-v3-guides/, PR #491: the game&#x27;s camera and gait, turned 45 degrees), with only the lumberjack&#x27;s upper body attached for his look. The lumberjack keeps his axe on his shoulder. Every pose is measured: height, soles, the planted foot&#x27;s slide, the turn, and that P1 and P3 differ. If this trial passes, R7c-2 onward repaint the other back strips and the limping front strips the same way.",
    "label": "R7c-1",
    "file": "R7c-1",
    "anchor": "r7c1",

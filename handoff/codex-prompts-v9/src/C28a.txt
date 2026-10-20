@@ -11,14 +11,17 @@ switch art/535-rotations (git switch -c art/535-rotations origin/art/535-rotatio
 local yet), git pull --ff-only, then git merge origin/develop once if the branch is behind it (stop
 and say where if it conflicts). If it does not exist: git switch -c art/535-rotations
 origin/develop, and push it with git push -u origin art/535-rotations at your first commit. Touch
-nothing outside assets/source/rotations-535/battery/ (make it, with raw/ inside) and, only if it is
-not there yet, assets/source/rotations-535/measure.mjs (below). Never push to main or develop.
+nothing outside assets/source/rotations-535/battery/ (make it, with raw/ inside) and your own measuring script assets/source/rotations-535/battery/measure-battery.mjs (below). Never push to main or develop.
 Commit subjects read "Art: <outcome>". Keep every picture your image tool returns, byte for byte, as
-raw/substation-r<v>-attempt-<k>.png (v the view, k from 1 for each view), and record each call in
+raw/substation-r<v>-attempt-<k>.png (v the view, k from 1 for each view; if the job's prompts.json already holds attempts of a view, go on from its highest k and never overwrite or attach one), and record each call in
 assets/source/rotations-535/battery/prompts.json: {view, attempt, file, prompt, references (in
 order), returned (the size it came back), measured (the numbers below), kept}. Never delete or
 overwrite a picture. Never commit the guides (below). Ask the tool for 1536 x 1024 and record the
 size it returns (a 1024 px canvas has come back 1254 px wide; 1536 x 1024 came back as asked).
+
+SHARED BRANCH. Several Codex windows work on art/535-rotations at the same time, each in its own folder under assets/source/rotations-535/. Touch only yours. Before every push: git fetch origin art/535-rotations, then git rebase origin/art/535-rotations (their commits touch other folders), then push; if a push is refused, fetch, rebase and push again. Never force-push.
+
+STATE OF THE FOLDER, from the run of 19 October (review in handoff/codex-review-1019.json). nine attempts were made (r0, r1 and r3, three each) and none passed. r0: attempt 2 is the closest (width 706 passes; slopes +0.543 and -0.522 against the 0.03 limit; wall height 0.374 of the width against the plan 0.31, limit 0.3565; near-white 2507 against r0's 1569); attempts 1 and 3 were 762 and 740 wide (most 729). r1: attempt 3 (width 701, slopes pass, but the lower-left over lower-right foot ratio was 0.789 where 0.85 to 1.15 is allowed); attempt 2 was 4.9 degrees off in camera; attempt 1 was 753 wide. r3: widths 743, 753 and 756 (all over 729), and the roof gear repeated r0's orientation with the cabinet on the wrong edge: it must turn with the building. r2 was not painted. The folder has all nine pictures, prompts.json, REPORT.md and closest copies; keep them and go on from attempt 4 for each view. Keep the walls of the switch house lower: foot to parapet at the near corner is 0.31 of the base width, not 0.37. Keep that run's pictures and records where they are, go on from the next attempt number, and never attach them to a call. A new picture that passes every test is copied over r0.png.
 
 WHY THIS WAY. The game's camera is 30 degrees down, 2:1. A picture painted from another angle is
 repainted, never stretched, squeezed or sheared to fit: that is the author's standing rule (issue
@@ -171,8 +174,7 @@ round: nothing touches the edge of the picture.
 
 Footprint: the grey plinth is the building's footprint and the block on it is its base. The building
 stands on the plinth and fills it as the block does (the base is as wide as the block is, and about
-as deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside
-the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that
+as deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside the plinth. The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Paint the whole building, canopies, steps, pipes and everything else that stands on the ground included, a little SMALLER than looks natural: earlier paintings came out 10 to 40 per cent wider than the block, never narrower. Keep the foot of the two visible walls plain and straight from corner to corner, so that
 it shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front
 of it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block
 and may overhang a little."
@@ -292,8 +294,7 @@ the building. A real RGBA PNG with a transparent background (alpha zero) and opa
 surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,
 or loose objects standing apart from the building."
 
-THE MEASURING SCRIPT. Write assets/source/rotations-535/measure.mjs once (if an earlier job of this
-lane left it there, use it and fix only a wrong number). It reads a picture with pictureOf
+THE MEASURING SCRIPT. Write assets/source/rotations-535/battery/measure-battery.mjs, your own. The shared assets/source/rotations-535/measure.mjs belongs to no job: other windows work on this branch at the same time and rewrote its numbers under each other, so do not use, edit or commit it. Your width table is the guide's numbers times (the returned picture's width / 1024) for every picture the tool returns (never the width of r0's picture, which is a reading, not a test). checkFile knows depots and one-tile buildings: for any other footprint its complaints about portals or the footprint are not a failure; the camera test is the two foot slopes within 0.03 of 0.50. Your script is built as follows. It reads a picture with pictureOf
 (tools/building-check.mjs) and takes the walls' feet with measureBase (tools/building-fit.mjs); it
 prints, per picture: the size; the opaque box (alpha above 128); the base corners w, s, e; the
 lower-left and lower-right foot (s.x - w.x, e.x - s.x) and their ratio; the base's width e.x - w.x
@@ -323,7 +324,7 @@ there is no old picture to read for the height; the plan gives the number.
   is no old r0 to read). Within 15 per cent of that number in every view; r1 to r3 also within 15
   per cent of the kept r0's, read the same way;
 
-- highlights: neither the near-white nor the near-amber count exceeds the old picture's (count it
+- highlights: reported, NOT a pass rule (tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them); the aim is that neither the near-white nor the near-amber count exceeds the old picture's (count it
   the same way) for r0 and the kept r0's for r1 to r3 (Art caps what is left at packing; lamps and
   glowing openings that the old picture has may show, as small as there);
 
@@ -350,7 +351,7 @@ more than 3 degrees off in all three, stop the job after that view, commit what 
 
 THE KEPT PICTURES. Copy the passing (or closest) raw file of each view, byte for byte, to
 assets/source/rotations-535/battery/substation-r<v>.png (r0, r1, r2, r3). Look at each kept picture
-with node tools/building-sheets.mjs --picture <file> (it lays one picture on grass, into .look/,
+with node tools/building-sheets.mjs --picture <file> (if it refuses the file name as "not a building picture's name", import its exported drawLook and call it for the footprint and view instead, as earlier jobs did; it lays one picture on grass, into .look/,
 which is not committed), and at the views side by side: they should be one building of one size.
 Commit "Art: Battery repainted whole, r0, r1, r3 and r2 on the review-2 guides", push the branch and
 stop. In your message give, for each attempt: the view, the returned size, the base's width (px of

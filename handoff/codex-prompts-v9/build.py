@@ -54,13 +54,16 @@ def card(label, anchor, title, note, text):
 
 
 lead = (
-    'Updated 2026-10-19 (v11). Review 2 of the building pictures is in, and this page holds what Codex still has to paint. '
+    'Updated 2026-10-19 (v12). Codex ran many of the v11 prompts on 19 October and the review is in (handoff/codex-review-1019.json): nothing was accepted, so only R8d is off this page (R8e replaces it). '
+    "Every view that was painted was refused at the first test, the width of the base: the painter fills the plinth rather than the block (47 of 51 paintings over the limit), so most cards below are the same prompt with the failing numbers stated and one new instruction (paint smaller than looks natural; the wall feet start at the block's corners). "
+    'Blocked and fixed: C21a and C23a (their farm and quarry pictures were not on the branch: Step 0 restores them from a backup snapshot) and R7c-1 (a zero-tolerance highlight test that the packer makes redundant is now a report). '
+    "The width rule itself is the author's decision (see the review). "
     'Three lanes, each its own Codex window: the buildings lane (depots and the farm halt first, then the quarry, the coaling stage, '
-    'the Fuel Pump and the windmill), the rotations lane (the turned views of the old base-v1 pictures on the new branch art/535-rotations, '
-    'the ones that block gameplay first), and the people lane. Every prompt measures the base width first, against the numbers of the review-2 guides '
+    'the Fuel Pump and the windmill), the rotations lane (the turned views of the old base-v1 pictures on the branch art/535-rotations, '
+    'the ones that block gameplay first; each job writes its own measuring script and rebases before it pushes), and the people lane. Every prompt measures the base width first, against the numbers of the review-2 guides '
     '(PR #537, not merged yet: each prompt tells Codex how to read them out of that branch without committing them to its art branch); '
     "a picture off the game's camera is repainted and never stretched (issue #536); at most three attempts a view. "
-    'R8e replaces R8d, which has run. The house biome prompt, C33b, waits for the house rotations to be accepted.'
+    'The house biome prompt, C33b, waits for the house rotations to be accepted.'
 )
 
 nav_rows = ['<nav><a href="#next">Paste next</a></nav>']
