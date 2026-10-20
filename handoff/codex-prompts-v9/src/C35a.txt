@@ -16,7 +16,7 @@ never stash pictures, push the branch. Never push to main or develop. Commit sub
 attempt, file, returned, spans, top, height, kept} to raw/returns.json for each call. Ask for 1024 x
 1024, transparent background, and record the size it returns.
 
-STATE OF THE BRANCH, 19 October. Not started. The depot's a0 pictures are on the branch now (586865bf; at c2b648e2 they were not), so the depot's a0 r0 can be attached for the family look. The painter has returned every building wider than allowed on 19 October (see the paragraph before THE LIMIT).
+STATE OF THE BRANCH, 19 October. Not started. ACCEPTED: none. The depot's a0 pictures are on the branch now (586865bf; at c2b648e2 they were not), so the depot's a0 r0 can be attached for the family look. (The one accepted depot picture of 19 October is the 2 x 2 depot's r3, attempt 3: not this family's.) The painter's width no longer refuses a picture (THE SIZE, below).
 
 WHY AGAIN. The queue lists depot_narrow a0 to a5, 24 pictures, all pending; this job paints the
 Steam age. The family has no base picture in the game (families.json: base null), so there is no old
@@ -59,13 +59,17 @@ walls set in 0.06 tile): w (158.7, 736.0), s (640.0, 976.6), e (865.3, 864.0); l
 upper right, hidden: the lower-left wall is the long BACK, plainer, with no crew door; the
 lower-right wall is the left-hand end with the portal.
 
-THE PAINTER'S SPREAD (added 19 October). On 19 October 47 of 51 paintings of this kind came back wider than the most allowed, and nothing passed its width at the first call: the painter seems to fill the grey PLINTH, not the block that stands on it. So, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Paint the whole building, canopies, steps, pipes, piers and everything else that stands on the ground included, a little SMALLER than looks natural: earlier paintings came out 10 to 40 per cent wider than the block, never narrower." It is one sentence, not a second Correction.
+THE PAINTER'S SPREAD (revised 19 October). The painter fills the grey PLINTH rather than the block that stands on it, so its building comes out wider than the block. The author decided on 19 October that this no longer refuses a picture (THE SIZE, below). Still, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge." It is one sentence, not a second Correction.
 
-THE LIMIT. The base's foot is 706.6 px wide from the left corner to the right corner in the guide
-(865 px in a 1254 px picture, 1.2246 times as many) in every view. Hold it: no wider than 742 px of
-the guide (909 px of 1254, 5 per cent over) and no narrower than 671 px (822 px of 1254), never
-outside the plinth. The painter has made buildings 15 to 26 per cent wider than their plinth before
-(review 2026-10-18), and the fit then shrinks the whole building.
+THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The
+base's foot is 706.6 px wide from the left corner to the right corner in the guide (865 px in a 1254
+px picture, 1.2246 times as many) in every view: that is the held width. Art scales a returned
+picture UNIFORMLY at packing, one factor on both axes and no shear, until its base is that wide. A
+uniform scale distorts nothing, so the painted width no longer refuses a picture, and you do not try
+to hit it: paint the building at the size that comes naturally, and never resize it yourself. Record
+the base's width and the scale k = held width / measured width. The camera, the plan (the foot
+ratio), the height (a proportion), the light and the same building decide; and the footprint after
+scaling (below), because parts that stand off the plinth are still wrong once the picture is scaled.
 
 PUT THE VIEWS BACK. Run node tools/building-queue.mjs status first and note the state of this
 family. Nothing is to be put back: all four are pending. Do not run redo. Then run status again and
@@ -106,11 +110,10 @@ and transparent, so that the game's rails show there." Do not sharpen them.
 
 MEASURE BEFORE YOU RECORD (after take, before set), in this order:
 
-- width first: on a crop, read the outer edge of the base's left corner and of its right corner (the
+- width and scale: a measurement, never a refusal. On a crop, read the outer edge of the base's left corner and of its right corner (the
   foot of the walls, outline included; roofs, chimneys and anything above the ground do not count)
-  and their span in the returned picture's px. A picture passes when it is 671 to 742 px of the
-  guide, which is 822 to 909 px of a 1254 px picture (held 707 and 865). Outside it the picture is
-  refused: record it as an attempt with its span, write its Correction, and do not run the fit;
+  and their span in the returned picture's px, and k = the held width (707 px of the guide, 865 of a 1254 px
+  picture) / that span. Record both; the picture goes on to the fit whatever its span;
 
 - node tools/building-fit.mjs <id>. Its base corners w, s and e give the lower-left foot s.x - w.x
   and the lower-right foot e.x - s.x. A picture passes when:
@@ -120,11 +123,19 @@ MEASURE BEFORE YOU RECORD (after take, before set), in this order:
   long side lower right);
 
 - camera: at most 2 degrees off the game's (the tool's check, which set runs; node
-  tools/building-check.mjs <file> prints it). Measure width and plan first: if the picture is wide,
-  thin or low, do not set it, paint it again. A picture that fails the camera is repainted, never
+  tools/building-check.mjs <file> prints it). Measure the plan first: if the feet are not in the plan's
+  ratio, do not set it, paint it again. A picture that fails the camera is repainted, never
   stretched (issue #536);
 
-- height: the walls' height at the near corner s, foot to the eaves (the block's 34 game px, 272 px
+- inside the footprint after scaling: take the returned picture in memory (never saved, never
+  committed), scale it uniformly by k, and lay it on the guide with the base's near corner s on the
+  guide's base corner s (the plan numbers above). The lowest opaque pixel of every column must lie
+  inside the plinth: not below its two lower edges (w to s, s to e) and not beyond its left and right
+  corners, by more than 2 game px (16 guide px; the outline is 3 px of that). Canopy posts, steps, door leaves, piers and the
+  like standing on the ground count. A picture that fails it is made again with those parts brought
+  inside; never moved, cropped or bent. Record the largest overshoot;
+
+- height, as a proportion (scaling does not change it): the walls' height at the near corner s, foot to the eaves (the block's 34 game px, 272 px
   of the guide), over e.x - w.x within 15 per cent of the guide's 0.385; r1 to r3 against the kept
   r0;
 
@@ -141,10 +152,10 @@ MEASURE BEFORE YOU RECORD (after take, before set), in this order:
 
 A picture refused for its camera alone, that passes the other tests, is handled by the tool
 (GUIDE.md section 7: next hands it out to paint again from its own earlier self). A picture that
-fails the width, the plan or the height is made again from the printed prompt: keep the view's
+fails the plan, the height or the footprint is made again from the printed prompt: keep the view's
 Correction and add ONE more paragraph that begins "Correction:" and names the number it missed, as
-"your last picture's base spanned 930 px of 1254 where the limit is 909"; it replaces the added one
-from the attempt before. Never attach a wide, thin or low picture to paint again from, and never
+"your last picture's lower-left foot was 0.62 of the lower-right one where 2.14 is wanted"; it replaces the added one
+from the attempt before. Never attach a picture that failed to paint again from, and never
 stretch, squeeze, shear or bend a picture: the angles come from the camera, in the painting. At most
 three attempts a view, 12 calls in all. If none passes, keep the closest in raw/, run set <id>
 rejected --note "<the test it failed and its number>" (the tool sets the file aside), and say so in
@@ -154,6 +165,5 @@ CLOSE. Only the Steam age a0 is painted here: do not start a1. node tools/buildi
 --family depot_narrow; node tools/building-sheets.mjs --family depot_narrow, then look at
 review/depot_narrow.png: all four views should be one shed of one size, and beside the depot one
 family. Commit "Art: narrow depot a0, r0 to r3 on the t1x2 guides", push the branch and stop. In
-your message give the review sheet's path and, for each attempt: the view, its base span (px of the
-returned picture) against the limit, the feet and ratio, the height number, the camera error, the
+your message give the review sheet's path and, for each attempt: the view, its base span (px of the returned picture), k and the held span, the largest overshoot outside the plinth, the feet and ratio, the height number, the camera error, the
 highlight counts, and which attempt was kept; and say plainly which pictures passed every test.

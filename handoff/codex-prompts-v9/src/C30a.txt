@@ -21,16 +21,14 @@ size it returns (a 1024 px canvas has come back 1254 px wide; 1536 x 1024 came b
 
 SHARED BRANCH. Several Codex windows work on art/535-rotations at the same time, each in its own folder under assets/source/rotations-535/. Touch only yours. Before every push: git fetch origin art/535-rotations, then git rebase origin/art/535-rotations (their commits touch other folders), then push; if a push is refused, fetch, rebase and push again. Never force-push.
 
-STATE OF THE FOLDER, from the run of 19 October (review in handoff/codex-review-1019.json). r0 was painted three times and refused three times for width: its base measured 1019, 894 and 807 px of 1536 (the headgear's stone footing read by eye), where 729 is the most (the plinth is 772). The three parts were right (engine house, hopper gantry, headgear with its wheel); the headgear's footing and the hopper's supports stood outside the plinth. The headgear stands ON the block's far corner, not past it. Keep that run's pictures and records where they are, go on from the next attempt number, and never attach them to a call. A new picture that passes every test is copied over r0.png.
+STATE OF THE FOLDER, from the run of 19 October, re-tested on 19 October after the author's width decision (handoff/codex-review-1019.json and codex-review-1019b.json). ACCEPTED: none. r0 was painted three times (attempts 1 to 3). Re-tested without the width gate none passes. Camera: slopes 0.456 and 0.355 (6.3 degrees off), 0.431 and 0.459 (3.6) and 0.453 and 0.299 (8.4) where 0.50 and 0.50: both feet too flat. Plan (window 0.85 to 1.15): foot ratios 0.716, 0.658 and 0.652, the lower-left foot too short. Inside the footprint after scaling (k 0.68, 0.78, 0.86): parts at ground level stand 34 to 62 guide px outside the plinth in all three (in attempt 3 the headgear's footing and the hopper's supports). The engine house, the wooden hopper gantry with the coal bins, the headgear with its wheel and the inclined rope were all there, in the old colliery's materials. Paint r0 again with the headgear on the block's far corner, not past it, and both feet at slope 0.50. Keep that run's pictures and records where they are, go on from the next attempt number (4), and never attach them to a call. A new picture that passes every test is copied over r0.png.
 
 WHY THIS WAY. The game's camera is 30 degrees down, 2:1. A picture painted from another angle is
 repainted, never stretched, squeezed or sheared to fit: that is the author's standing rule (issue
 #536), because the fit stretches whatever it is given and a stretched building looks wrong. The old
 picture is a row of three structures that fills a long strip, not the 2 x 2 plinth; the plan wants
 the plant to stand on the plinth. Three things were learned on the coaling stage and the Fuel Pump
-and are built into this prompt: paint on the guide, never on an earlier attempt of yours; the
-painter spreads a building 15 to 26 per cent wider than its plinth unless it is told the width and
-checked (so the width is measured first); and one correction at a time, replacing the last, never a
+and are built into this prompt: paint on the guide, never on an earlier attempt of yours; the painter's building comes out wider than its plinth (that no longer refuses a picture: the width is measured, recorded and scaled by Art at packing), so what is checked first is the camera, the plan and what stands on the ground; and one correction at a time, replacing the last, never a
 growing pile.
 
 THE GUIDES. They are on a branch that is not merged yet (PR #537, art: plan guides for the review-2
@@ -104,24 +102,27 @@ w (384, 760), s (768, 952), e (1152, 760), n (768, 568). The base's feet: w (422
 guide's dark door mark on the lower-right wall is the plan's default: keep the door and the details
 where r0 has them.
 
-THE LIMIT, the number you keep. Keep the base to the footprint: the grey plinth is the footprint,
-772 px wide in the guide (772 px in a 1536 px wide picture), and the base stands on it and fills 90
-per cent of its long side (1.8 of 2 tiles). The painted base, the foot of the walls from the left
-corner to the right corner, is 694 px wide in the guide (694 px), no wider than 729 px (729 px) and
-never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its
-plinth before, and the fit then shrinks the whole building. The base is measured as the coaling
-stage's was: the opaque width of the drawn base at ground level, from the outer edge of the left
-corner to the outer edge of the right corner, its outline included; chimneys, canopies, pipes and
-the like above the ground do not count, but anything standing on the ground does. The table gives,
-per view, the least, the held and the most width allowed, in guide px and in returned px, and the
-plan's foot ratio with its 15 per cent window. Over the most, or under the least, the picture is
-refused for its width whatever else it shows, and is not measured further.
+THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The
+grey plinth is the footprint, 772 px wide in the guide (772 px in a 1536 px wide picture), and the base
+stands on it and fills 90 per cent of its long side (1.8 of 2 tiles). Art scales a returned picture
+UNIFORMLY at packing, one factor on both axes and no shear, until its base is the held width,
+694 px in the guide (694 px in a 1536 px wide picture). A uniform scale distorts nothing, so the painted
+width no longer refuses a picture, and you do not try to hit it: paint the building at the size that
+comes naturally, and never resize it yourself. Measure the base as the coaling stage's was: the
+opaque width of the drawn base at ground level, from the outer edge of the left corner to the outer
+edge of the right corner, its outline included; chimneys, canopies, pipes and the like above the
+ground do not count, but anything standing on the ground does. Record that width (px of the returned
+picture) and the scale k = held width / measured width in prompts.json, as a measurement. The camera, the plan
+(the foot ratio), the height (a proportion of the base width), the light and the same building
+decide; and one more test, because a picture whose parts at ground level stand off the footprint is
+still wrong after scaling: INSIDE THE FOOTPRINT AFTER SCALING, below. The table gives, per view, the
+held width and the plan's foot ratio with its 15 per cent window.
 
-  view  long side     width (guide px)             width (returned px)          LL/LR foot
-  r0    equal         659 / 694 / 729              659 / 694 / 729              1.000 (0.85 to 1.15)
-  r1    equal         659 / 694 / 729              659 / 694 / 729              1.000 (0.85 to 1.15)
-  r2    equal         659 / 694 / 729              659 / 694 / 729              1.000 (0.85 to 1.15)
-  r3    equal         659 / 694 / 729              659 / 694 / 729              1.000 (0.85 to 1.15)
+  view  long side     held width (guide px)   held width (returned px)   LL/LR foot
+  r0    equal         694                     694                        1.000 (0.85 to 1.15)
+  r1    equal         694                     694                        1.000 (0.85 to 1.15)
+  r2    equal         694                     694                        1.000 (0.85 to 1.15)
+  r3    equal         694                     694                        1.000 (0.85 to 1.15)
 
 THE ORDER. Paint r0, then r1, then r3, then r2. r0 first: it is repainted too (see the design and
 layout paragraphs above), and its kept picture is the master for the other three. Every call is an
@@ -176,7 +177,7 @@ round: nothing touches the edge of the picture.
 
 Footprint: the grey plinth is the building's footprint and the block on it is its base. The building
 stands on the plinth and fills it as the block does (the base is as wide as the block is, and about
-as deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside the plinth. The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Paint the whole building, canopies, steps, pipes and everything else that stands on the ground included, a little SMALLER than looks natural: earlier paintings came out 10 to 40 per cent wider than the block, never narrower. Keep the foot of the two visible walls plain and straight from corner to corner, so that
+as deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside the plinth. The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Keep the foot of the two visible walls plain and straight from corner to corner, so that
 it shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front
 of it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block
 and may overhang a little."
@@ -296,11 +297,10 @@ the building. A real RGBA PNG with a transparent background (alpha zero) and opa
 surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,
 or loose objects standing apart from the building."
 
-THE MEASURING SCRIPT. Write assets/source/rotations-535/colliery/measure-colliery.mjs, your own. The shared assets/source/rotations-535/measure.mjs belongs to no job: other windows work on this branch at the same time and rewrote its numbers under each other, so do not use, edit or commit it. Your width table is the guide's numbers times (the returned picture's width / 1024) for every picture the tool returns (never the width of r0's picture, which is a reading, not a test). checkFile knows depots and one-tile buildings: for any other footprint its complaints about portals or the footprint are not a failure; the camera test is the two foot slopes within 0.03 of 0.50. Your script is built as follows. It reads a picture with pictureOf
+THE MEASURING SCRIPT. Write assets/source/rotations-535/colliery/measure-colliery.mjs, your own. The shared assets/source/rotations-535/measure.mjs belongs to no job: other windows work on this branch at the same time and rewrote its numbers under each other, so do not use, edit or commit it. Your held width is the guide's number times (the returned picture's width / 1024) for every picture the tool returns, and k = held width / the measured base width (never the width of r0's picture, which is a reading, not a test). checkFile knows depots and one-tile buildings: for any other footprint its complaints about portals or the footprint are not a failure; the camera test is the two foot slopes within 0.03 of 0.50. Your script is built as follows. It reads a picture with pictureOf
 (tools/building-check.mjs) and takes the walls' feet with measureBase (tools/building-fit.mjs); it
 prints, per picture: the size; the opaque box (alpha above 128); the base corners w, s, e; the
-lower-left and lower-right foot (s.x - w.x, e.x - s.x) and their ratio; the base's width e.x - w.x
-with its outline; the slope of each foot (rise over run; a 30 degree camera gives 0.50) and its
+lower-left and lower-right foot (s.x - w.x, e.x - s.x) and their ratio; the base's width e.x - w.x with its outline, and k; the slope of each foot (rise over run; a 30 degree camera gives 0.50) and its
 distance from 0.50; the camera's error in degrees from checkFile(file, 't2x2', <view>) of
 tools/building-check.mjs (never the command-line form: that writes report.json, which is not yours);
 the counts of opaque pixels (alpha above 128) with red, green and blue all at or above #ECE4D0 and
@@ -313,9 +313,9 @@ picture once (a zoomed crop) the same way as below, for the height number, and w
 to prompts.json as oldReference; for r1 to r3 the kept r0 is read the same way and recorded as
 r0Reference.
 
-- width first: the base's width from the table, in the returned picture's px. Refused outside the
-  least and the most: record the attempt with its width, write its Correction, and do not run the
-  other tests;
+- width and scale: a measurement, never a refusal. The base's width in the returned picture's px, and
+  k = the held width from the table / that width. Record both; the picture goes on to the next tests
+  whatever its width;
 
 - plan: lower-left foot over lower-right foot within 15 per cent of the plan's ratio for the view,
   and the long side on the side the plan names;
@@ -323,7 +323,15 @@ r0Reference.
 - camera: both feet's slopes within 0.03 of 0.50 (that is within about 2 degrees of the game's 30),
   and no problem listed by the check. A picture off by more is repainted, never straightened;
 
-- height: the headgear tower's height: from the foot of the tower's nearer legs to the top of its
+- inside the footprint after scaling: take the returned picture in memory (never saved, never
+  committed), scale it uniformly by k, and lay it on the guide with the base's near corner s on the
+  guide's base corner s (the plan numbers above). The lowest opaque pixel of every column must lie
+  inside the plinth: not below its two lower edges (w to s, s to e) and not beyond its left and right
+  corners, by more than 2 game px (12 guide px; the outline is 3 px of that). Canopy posts, steps, door leaves, pipes
+  and the like standing on the ground count. A picture that fails it is repainted with those parts
+  brought inside; never moved, cropped or bent. Record the largest overshoot;
+
+- height, as a proportion (scaling does not change it): the headgear tower's height: from the foot of the tower's nearer legs to the top of its
   winding wheel, over the base's width e.x - w.x. Within 15 per cent of the old picture's for r0
   (oldReference), and for r1 to r3 within 15 per cent of the kept r0's (r0Reference), read the same
   way;
@@ -343,22 +351,19 @@ r0Reference.
   orange except what the old picture has.
 
 CORRECTIONS AND STOPS. A picture that fails: keep the prompt whole and add under it ONE paragraph
-beginning "Correction:" that names the number it missed and where it belongs, as "your last r1 base
-measured 816 px of 1536 where the limit is 729". It replaces the earlier Correction: no prompt has
+beginning "Correction:" that names the number it missed and where it belongs, as "your last r1's feet ran at slopes 0.60 and 0.55 where 0.50 and 0.50 are wanted". It replaces the earlier Correction: no prompt has
 more than one. Never attach a picture that failed, never paint on an earlier attempt of yours, and
 never resize, crop, move, stretch, squeeze, shear, rotate or bend a returned picture to make it fit:
-the angles and the width come from the painting. At most three attempts a view, 12 calls in all. If
+the angles come from the painting, and the size is Art's to scale at packing. At most three attempts a view, 12 calls in all. If
 none passes, keep the closest in raw/, copy it to the view's kept file all the same, mark it kept:
 false in prompts.json with the test it failed and its number, and say so in your message: never
-accept it quietly. If all three attempts of a view are refused for their width, or the camera is
-more than 3 degrees off in all three, stop the job after that view, commit what you have and say so.
+accept it quietly. If the camera is more than 3 degrees off in all three attempts of a view, stop the job after that view, commit what you have and say so.
 
 THE KEPT PICTURES. Copy the passing (or closest) raw file of each view, byte for byte, to
 assets/source/rotations-535/colliery/colliery-r<v>.png (r0, r1, r2, r3). Look at each kept picture
 with node tools/building-sheets.mjs --picture <file> (if it refuses the file name as "not a building picture's name", import its exported drawLook and call it for the footprint and view instead, as earlier jobs did; it lays one picture on grass, into .look/,
 which is not committed), and at the views side by side: they should be one building of one size.
 Commit "Art: Colliery repainted on the 2 x 2 plan, r0, r1, r3 and r2", push the branch and stop. In
-your message give, for each attempt: the view, the returned size, the base's width (px of the
-returned picture) and the table's limit, the foot ratio, the slopes and the camera error, the height
+your message give, for each attempt: the view, the returned size, the base's width (px of the returned picture), the scale k and the held width, the largest overshoot outside the plinth after scaling, the foot ratio, the slopes and the camera error, the height
 number against r0's, the highlight counts against r0's, and which attempt was kept; and say plainly
 which views passed every test and which were kept as the closest.

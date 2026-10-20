@@ -9,7 +9,7 @@ or develop. Commit subjects read "Art: <outcome>". Keep every picture your image
 for byte, as raw/<id>-attempt-<k>.png, k going on from 16 for r1 and r3 (attempts 1 to 15 exist; go on from the highest number raw/returns.json holds), and add {id, attempt, file, returned, spans,
 top, height, kept} to raw/returns.json for each call.
 
-STATE OF THE BRANCH, after the run of 19 October (review in handoff/codex-review-1019.json). Six calls were made (r1 and r3, attempts 13 to 15) and none passed. r1: the pier span measured 677, 808 and 639 px of 1254 (600 to 663 allowed); attempt 15 passed the width and then failed the height (1.136 where 1.318 to 1.611: the stage came out squat, its legs short), the camera (8.1 degrees) and the highlights; r3: the span measured 734, 674 and 756, all over 663 (attempt 14, 674, was 11 px over, with the winch and chute at the near end as wanted). r0 and r2 are untouched and r2 is back on the branch. The queue has r1 and r3 as rejected: set them pending (node tools/building-queue.mjs set <id> pending --note "repaint, review 2, second run") before you take. Never attach those pictures. For r1 the lesson is the legs: the piers' height is what attempt 15 lost, so keep the stage as tall as the guide's piers and the bin as narrow as the plinth.
+STATE OF THE BRANCH, after the run of 19 October, re-tested on 19 October after the author's width decision (handoff/codex-review-1019.json and codex-review-1019b.json). ACCEPTED: r0 (fuel_stop/fuel_stop-a0-r0.png) and r2 (fuel_stop/fuel_stop-a0-r2.png, byte-identical to raw/fuel_stop-a0-r2-attempt-8.png); no picture of r1 or r3. Six calls were made (r1 and r3, attempts 13 to 15) and none passes. The camera fails in all six: the feet run steeper than 2:1. r1: attempts 13, 14 and 15 are 7.2, 4.4 and 8.1 degrees off (slopes 0.695 and 0.525, 0.642 and 0.473, 0.663 and 0.574; 0.50 and 0.50 wanted). Plan (1.16 to 1.57): 1.380, 1.737 and 1.539 (attempt 14 is out). Height as a proportion, (near corner's row - box.top) / pier span on the picture as returned: 1.376, 1.236 and 1.415 where r0 reads 1.531 (window 1.378 to 1.684): attempt 15 passes it; the old reading of 1.136 came from the fit stretching a picture that is 8 degrees off. Inside the plinth after scaling: 8.5, 36.8 and 22.1 guide px over (16 allowed): only attempt 13 is inside. r3: attempts 13, 14 and 15 are 4.7, 5.7 and 8.1 degrees off (slopes 0.645 and 0.503, 0.665 and 0.446, 0.688 and 0.389). Plan 1.482, 1.452 and 1.400 pass; height 1.417, 1.435 and 1.297 (attempt 15 is low); inside after scaling 17.4, 14.8 and 10.3 guide px over (16 allowed): attempt 13 is out. Attempt 14 of r3 (the winch and chute at the near end as wanted) fails the camera alone as far as measured. r0 and r2 are untouched and r2 is back on the branch. The queue has r1 and r3 as rejected: set them pending (node tools/building-queue.mjs set <id> pending --note "repaint, review 2, second run") before you take. Never attach those pictures. What both views lack is the camera: paint the long lower-left side's foot at exactly 2:1 along the guide's plinth edge, and keep the legs as tall as the guide's piers.
 
 WHY AGAIN. C4d's nine attempts all failed. The 62 game px block-out cured the low views only
 partly, because the guide was a square block on a thin plinth, and the painter spread the stage
@@ -22,7 +22,7 @@ per cent too long, r3's short side widened until the plan read 1.069, nearly squ
 camera drift, and r3's winch in the middle of the wall instead of at the near end. So the guide
 is new: an OBLONG block on an oblong plinth of the footprint's width, with the six stone pier
 stubs standing on it at the exact places of the stage's six piers, at the same 62 px block height.
-The pier span is the number you keep: it is measured first.
+The pier span is measured and recorded first; it no longer refuses a picture (THE SIZE, below).
 
 THE ACCEPTED r2. The author accepted r0 and r2. r2 is raw/fuel_stop-a0-r2-attempt-8.png (the earlier
 round's best; its camera is 3.5 degrees off, which the author accepts). The queue shows r2 as
@@ -34,13 +34,17 @@ fuel_stop-a0-r2 generated --note "accepted by the author in review 2, camera 3.5
 refuses it for its camera, leave the file where it is, say so in your message and go on: r2 is not
 painted again, and r1 and r3 are painted to match it. Do not run redo on r2.
 
-THE PAINTER'S SPREAD (added 19 October). On 19 October 47 of 51 paintings of this kind came back wider than the most allowed, and nothing passed its width at the first call: the painter seems to fill the grey PLINTH, not the block that stands on it. So, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Paint the whole building, canopies, steps, pipes, piers and everything else that stands on the ground included, a little SMALLER than looks natural: earlier paintings came out 10 to 40 per cent wider than the block, never narrower." It is one sentence, not a second Correction.
+THE PAINTER'S SPREAD (revised 19 October). The painter fills the grey PLINTH rather than the block that stands on it, so its building comes out wider than the block. The author decided on 19 October that this no longer refuses a picture (THE SIZE, below). Still, in the picture prompt of EVERY attempt, the first included, add this sentence after the printed prompt and the view's Correction: "The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge." It is one sentence, not a second Correction.
 
-THE LIMIT. The plinth is 516 px wide in the guide, 632 px in a 1254 px picture (1.2246 times as
-many). The painted stage, from the outer edge of its leftmost pier's foot to the outer edge of its
-rightmost pier's foot, is at most 5 per cent wider: 542 px of the guide, 663 px of 1254, and not
-narrower than 490 px of the guide, 600 px of 1254. Over 663 px, or under 600, the picture is
-refused for its width whatever else it shows, and is not measured further.
+THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The
+plinth is 516 px wide in the guide, 632 px in a 1254 px picture (1.2246 times as many). The stage's
+pier span, from the outer edge of its leftmost pier's foot to the outer edge of its rightmost
+pier's foot, is held at 516 px of the guide (632 px of 1254): Art scales a returned picture
+UNIFORMLY at packing, one factor on both axes and no shear, until its piers' span is that. A uniform
+scale distorts nothing, so the painted span no longer refuses a picture, and you do not try to hit
+it: paint the stage at the size that comes naturally, and never resize it yourself. Record the span
+and the scale k = held span / measured span. The camera, the plan, the height (a proportion), the
+light and the same stage decide; and the footprint after scaling (below).
 
 THE FILES. The oblong guides are on a branch that is not merged yet, and they are not to be
 committed to your art branch. From the repository root:
@@ -109,11 +113,9 @@ picture: no ground, no plinth (the grey plinth is the footprint, not a thing to 
 text, border, glow or extra object; real RGBA, nothing at or above cursor white #ECE4D0, nothing as
 strong as selection amber #E8AA48 on the timber.
 
-For r1: Correction: the earlier r1 stretched the stage wider than its plinth (feet 794 px of 1254
-where the plinth is 632) and came back a low, long bin. Edit the oblong grey guide: it is one stage
+For r1: Correction: the earlier r1 came back a low, long bin with its feet steeper than the game's 2:1 (slopes 0.66 and 0.57 where 0.50 and 0.50). Edit the oblong grey guide: it is one stage
 on its plinth. The six stone piers stand on the six pier stubs of the guide, at their places;
-nothing stands outside the plinth, and the painted stage is no wider than 663 px of a 1254 px
-picture (542 px of the guide). The block's height is the stage's full height: the post tops and the
+nothing stands outside the plinth, and the feet of the piers run two pixels across for each pixel down. The block's height is the stage's full height: the post tops and the
 coal heap reach its top face, on legs as tall as r0's, longer from the pier caps to the bunker's
 floor than the bunker's plank wall is deep. The bunker is r0's, the same size, no longer and no
 deeper. The back (the lower-right wall) is the accepted r2's lower-left wall. The lower-left wall is
@@ -121,11 +123,9 @@ the right-hand side, the long side: three piers and two X-braced bays, its foot 
 lower-right wall's. The lower-right wall is the back, the short side: two piers and one bay. The
 chute, the winch and the chain are on the front, out of sight: none of them shows.
 
-For r3: Correction: the earlier r3 was turned right but came back wide (feet 737 px of 1254 where
-the plinth is 632), with its plan nearly square and its winch in the middle of the wall. Edit the
+For r3: Correction: the earlier r3 attempts were turned right, with the winch and chute at the near end, but came back with their feet steeper than the game's 2:1 (the lower-left slope 0.65 to 0.69 where 0.50). Edit the
 oblong grey guide: it is one stage on its plinth. The six stone piers stand on the pier stubs of the
-guide, at their places; nothing stands outside the plinth, and the painted stage is no wider than
-663 px of a 1254 px picture (542 px of the guide). This view is the front view turned on a
+guide, at their places; nothing stands outside the plinth, and the feet of the piers run two pixels across for each pixel down. This view is the front view turned on a
 turntable, not flipped. The lower-right wall is the front, the short side: two piers and one bay,
 with the chute sloping out from it, and the winch drum and chain in the dark opening the guide has
 on that wall, at its near (bottom) end, next to the near corner, not in the middle of the wall. The
@@ -135,22 +135,31 @@ the coal heap reach its top face, on legs as tall as r0's. The left-hand side (t
 is the accepted r2's lower-right wall.
 
 MEASURE BEFORE YOU RECORD (after take, before set), in this order:
-- width first: on a crop, read the leftmost pier's foot and the rightmost pier's foot (outer edges;
-  chute and chain do not count) and their span in the returned picture's px. A picture passes when
-  it is 600 to 663 px of 1254 (490 to 542 of the guide, scaled by returned width / 1024 if it is
-  another size). Outside it the picture is refused: record it as an attempt with its span, write
-  its Correction, and do not run the fit;
+- width and scale: a measurement, never a refusal. On a crop, read the leftmost pier's foot and the
+  rightmost pier's foot (outer edges; chute and chain do not count) and their span in the returned
+  picture's px, and k = 632 / that span (scaled by returned width / 1024 if the picture is another
+  size). Record both; the picture goes on to the fit whatever its span;
 - node tools/building-fit.mjs <id>. Its base corners w, s and e give the lower-left foot
   s.x - w.x and the lower-right foot e.x - s.x. A picture passes when:
-- height: (944.64 - box.top) / 450.56 is within 10% of r0's 1.464 (r0's box.top 284.8; the
-  numbers come from wallBase in tools/building-kit.mjs: the near corner's row and the house width).
-  That is 1.318 to 1.611, box.top 219 to 351. C4d's views were 1.062 to 1.372;
+- inside the footprint after scaling: take the returned picture in memory (never saved, never
+  committed), scale it uniformly by k, and lay it on the guide with the base's near corner s on the
+  guide's base corner s, (546.7, 944.6) in r1 and r3 (the plinth's corners there are w (256, 814.7), s (546.7, 960), e (768, 849.3)). The lowest opaque pixel of every column must lie
+  inside the plinth: not below its two lower edges (w to s, s to e) and not beyond its left and right
+  corners, by more than 2 game px (16 guide px; the outline is 3 px of that). Canopy posts, steps, door leaves, piers and the
+  like standing on the ground count. A picture that fails it is made again with those parts brought
+  inside; never moved, cropped or bent. Record the largest overshoot;
+- height, as a proportion (scaling does not change it): (s.y - box.top) / (e.x - w.x), with the
+  base corners s, e and w that node tools/building-fit.mjs prints for the picture as it was returned
+  (the pier span e.x - w.x) and box.top its opaque box's top row, within 10% of the same number for
+  r0's picture read the same way: 1.531 (s.y 1128, box.top 154, span 636 of 1254; r2 reads 1.484).
+  That is 1.378 to 1.684. The older reading, (944.64 - box.top) / 450.56 of the fitted picture (r0
+  1.464), is the same proportion only while the fit has not had to stretch the picture to the
+  camera: do not use it on a picture whose camera is off. C4d's views were 1.062 to 1.372 by it;
 - plan: lower-left foot / lower-right foot, between 1.16 and 1.57 (r0's 1.364 turned over), within
   15%; the long side lower left, as above;
 - camera: at most 2 degrees off the game's (checkFile(file, 't1', rot) in tools/building-check.mjs
   and cameraOff in tools/building-fit.mjs, which set runs; node tools/building-check.mjs <file>
-  prints it). Measure width and height first: if the picture is wide or low, do not set it, paint
-  it again;
+  prints it). Measure the plan and the height first: if the plan is wrong or the picture is low, do not set it, paint it again;
 - highlights (reported, NOT a pass rule: tools/atlas-cap.mjs, issue #465, caps both at packing; never refuse or stop a picture for them): count opaque pixels with all three channels at or above #ECE4D0, and within 12
   (RGB distance) of #E8AA48, on your picture and on r0 (its fitted picture); neither count may
   exceed r0's (Art caps the rest at packing);
@@ -160,10 +169,9 @@ MEASURE BEFORE YOU RECORD (after take, before set), in this order:
   lighter than lower-right.
 A picture refused for its camera alone, that passes the other tests, is handled by the tool
 (GUIDE.md section 7: `next` hands it out to paint again from its own earlier self; also attach
-.fitted/fuel_stop-a0-r0.png). A picture that fails the width, the height or the plan is made again
+.fitted/fuel_stop-a0-r0.png). A picture that fails the plan, the height or the footprint is made again
 from the printed prompt: keep every Correction paragraph of that view and add one that begins
-"Correction:" and names the number it missed, as "your last r1's piers spanned 790 px of 1254 where
-the plinth is 632 and the limit 663". Never attach a wide or low picture to paint again from, and
+"Correction:" and names the number it missed, as "your last r1's feet ran at slopes 0.66 and 0.57 where 0.50 and 0.50 are wanted". Never attach a picture that failed to paint again from, and
 never stretch, squeeze, shear or bend a picture: the angles come from the camera, in the painting.
 At most three attempts a view, six calls in all. If none passes, keep the closest in raw/, run
 set <id> rejected --note "<the test it failed and its number>" (the tool sets the file aside), and
@@ -173,5 +181,4 @@ CLOSE THE FAMILY. node tools/building-check.mjs --family fuel_stop; node tools/b
 --family fuel_stop, then look at review/fuel_stop.png: all four views should be one stage of one
 height, r1 and r3 matching r2. Commit "Art: fuel_stop, r1 and r3 on the oblong guides, r3 turned,
 matching the accepted r2", push the branch and stop. In your message give the review sheet's path
-and, for each attempt, its pier span (px of 1254), spans, ratio, box.top, height, camera and
-highlight counts, and which attempt was kept.
+and, for each attempt, its pier span (px of 1254), k, the largest overshoot outside the plinth, spans, ratio, box.top, height, camera and highlight counts, and which attempt was kept.

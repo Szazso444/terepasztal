@@ -91,7 +91,7 @@ A picture passes when:
   off that passes the rest is a near keeper: kept and reported; if the best attempt is still more
   than 3 degrees off, stop, do not paint again);
 - tower: (yc - the topmost opaque pixel) / W within 5% of the block-out's 1.105 (1.05 to 1.16);
-  W over the shorter side of the picture between 0.25 and 0.45;
+  W over the shorter side of the picture is recorded, not a test (Art scales a returned picture uniformly at packing, so the tower's size in the picture does not refuse it);
 - stub: two points on the top edge of the stub, one near the cap, one near the plate; the edge
   goes down to the left at slope 0.50 +-0.08;
 - hub: the plate's centre, ((x - xc) / s, (y - yc) / s - 4), is within 2 game px of (-16, -34);

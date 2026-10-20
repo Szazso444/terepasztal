@@ -1,0 +1,2763 @@
+{
+ "summary": {
+  "reviewed": "2026-10-19, after the author's decision of the same day",
+  "decision": "The painted WIDTH no longer fails a picture. A returned picture is scaled UNIFORMLY at packing (one factor on both axes, no shear) so that its base fits the guide's held width; a uniform scale is not a distortion. Camera (kept strict), the plan's foot ratio, the height as a proportion of the base width, light, the same building as r0, and the base inside the footprint after scaling decide. The width is recorded as a measurement (width and the scale k = held / measured).",
+  "method": "Every raw attempt of the 19 October runs (extracted copies in G:/DEV/wt/rev, byte-identical to the art branches) was measured with the repo's own tools/building-fit.mjs measureBase and cameraOff (fitPicture), the base width taken from Codex's by-eye reading where it recorded one (it agrees with the automatic one except where canopy footings, steps or a silo base throw the automatic corner), and the review-2 plan JSONs of PR #537 for the held width, plinth and base corners. The depot and the coaling stage used the queue's 2 x 2 and oblong guides. The scripts were scratch files and are not committed.",
+  "tests": {
+   "width": "measurement only: base width in returned px, k = held width / base width. Never refuses.",
+   "plan": "lower-left foot over lower-right foot within 15 per cent of the plan's ratio (as in the prompts).",
+   "camera": "both feet's slopes within 0.03 of 0.50, and checkFile's camera within 2 degrees (as in the prompts; unchanged and strict). A foot that is not a straight base is \"unread\": judged only if the other foot is already out.",
+   "insideFootprint": "new: the returned picture scaled by k and laid on the guide with its near corner s on the guide's base corner s; the lowest opaque pixel of every column must lie inside the plinth (below its two lower edges, between its left and right corners) by no more than 2 game px (16 guide px at 8 px to a game px, 12 at 6, 10 at 5; 3 px of it the outline).",
+   "height": "proportion of the base width (foot to eaves or parapet at the near corner over e.x - w.x), within 15 per cent of r0's or of the plan's number, as each prompt defines it; for the coaling stage (near corner row - box.top) over the pier span on the picture as returned, within 10 per cent of r0's 1.531. Read by eye on crops; only where no earlier test had refused the picture.",
+   "light": "lower-left wall lighter than lower-right: by eye; the table carries a machine estimate that is not counted unless confirmed.",
+   "sameBuilding": "by eye beside r0 and the guide.",
+   "highlights": "reported only (tools/atlas-cap.mjs caps them at packing)."
+  },
+  "result": "One picture passes: depot a0 r3, attempt 3 (C34a, off the page). The 47 attempts that were refused only for width all fail the camera (the feet run too steep or too flat: 0.3 to 0.7 against 0.50) or, where the camera passes or is unread, the plan or the footprint. Nothing else is accepted. C4e r1 and r3 and C28a r0 and r1, reconsidered as asked, still fail (camera; for C28a r0 also the height).",
+  "accepted": [
+   {
+    "prompt": "C34a",
+    "view": "r3",
+    "attempt": 3,
+    "file": "assets/source/buildings-v2/raw/depot-a0-r3-attempt-3.png",
+    "branch": "art/325-buildings-v2, in commit 586865bf, head cd7919ec",
+    "sha256": "487bdc4177f28b94b4024be7922d67bce745b202c7d515c8b0c1412ad66e7f0c",
+    "scaleK": 0.806
+   }
+  ],
+  "removedFromPage": [
+   "C34a (its only view, r3, is accepted)"
+  ],
+  "stillOnThePage": "C35a, C21a, C23a, C4e, R8e, C17c, C17d (buildings lane); C18a, C22a, C19a, C20a, C24a, C25a, C26a, C27a, C28a, C29a, C30a, C31a, C32a, C33a, C33b (rotations lane); R7c-1 (people lane). No view of any of them is accepted.",
+  "notRetested": "R8e: its pictures are R8d's (r2 attempts 7 to 9, r3 15 to 17), refused for plan/camera/crane/light, never for width; they stay refused. R7c-1: the people trial has no width test. C17c, C17d, C18a, C19a, C21a, C23a, C33b, C35a: not run, no pictures.",
+  "nearMissesNote": "See nearMisses: where a picture fails by a hair, the numbers are there so the author can decide; none was accepted on a softer rule than the prompt's."
+ },
+ "nearMisses": [
+  {
+   "prompt": "C33a",
+   "view": "r1",
+   "attempt": 1,
+   "why": "The closest picture of the round. It passes the plan (0.864), the footprint after scaling (8.7 of 16), the light, the height (0.338, window 0.253 to 0.342) and looks like the same cottage turned; it fails only the camera rule: the lower-left foot slope is 0.452 (0.048 off where 0.03 is allowed), while the check reports 1.6 degrees. Kept as refused because the author asked for the camera to stay strict; say if a slope of 0.048 (1.6 degrees by the check) may pass."
+  },
+  {
+   "prompt": "C33a",
+   "view": "r1",
+   "attempt": 3,
+   "why": "Camera 0.8 degrees and footprint pass; the foot ratio 0.821 (window 0.85 to 1.15) and the height 0.353 (window up to 0.342) are just outside."
+  },
+  {
+   "prompt": "C28a",
+   "view": "r0",
+   "attempt": 1,
+   "why": "Slopes 0.524 / 0.535 (2.0 degrees by the check) and the height 0.38 against 0.31: the camera is 0.005 over and the height far over."
+  },
+  {
+   "prompt": "C28a",
+   "view": "r1",
+   "attempt": 3,
+   "why": "The camera passes (0.9 degrees) and the footprint; the foot ratio is 0.789 (0.85 to 1.15) and the height 0.361 (0.357 at most)."
+  },
+  {
+   "prompt": "C25a",
+   "view": "r1",
+   "attempt": 2,
+   "why": "The check says 1.5 degrees but the lower-left slope is 0.462 (0.038 off); the foot ratio is 0.571 and parts stand 51 px outside the plinth."
+  },
+  {
+   "prompt": "C4e",
+   "view": "r1",
+   "attempt": 15,
+   "why": "Under the proportion rule its height passes (1.415 against r0 1.531, window 1.378 to 1.684); it fails the camera (8.1 degrees) and the footprint (22.1 px over)."
+  },
+  {
+   "prompt": "C4e",
+   "view": "r3",
+   "attempt": 14,
+   "why": "Plan, height (1.435) and footprint (14.8 of 16) pass; it fails the camera (5.7 degrees: lower-left slope 0.665, lower-right 0.446)."
+  }
+ ],
+ "prompts": {
+  "C20a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/warehouse/raw/warehouse-r1-attempt-1.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 1160,
+       "baseWidthAutomaticPx": 1149,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.733,
+       "plan": {
+        "ratio": 0.419,
+        "window": [
+         0.425,
+         0.575
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.434,
+         -0.471
+        ],
+        "slopeErr": [
+         0.066,
+         0.029
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 3.1,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 5.1,
+        "tolGuidePx": 16,
+        "columnsOver": 17,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.419, window 0.425 to 0.575",
+        "camera: slopes 0.434 / -0.471 (error 0.066 / 0.029, 0.03 allowed), 3.1 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/warehouse/raw/warehouse-r1-attempt-2.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 1040,
+       "baseWidthAutomaticPx": 938,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.817,
+       "plan": {
+        "ratio": 0.521,
+        "window": [
+         0.425,
+         0.575
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.395,
+         -0.48
+        ],
+        "slopeErr": [
+         0.105,
+         0.02
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 4.2,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 50.8,
+        "tolGuidePx": 16,
+        "columnsOver": 108,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.14,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.395 / -0.48 (error 0.105 / 0.02, 0.03 allowed), 4.2 degrees by the check",
+        "inside the footprint after scaling: 50.8 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/warehouse/raw/warehouse-r1-attempt-3.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 1014,
+       "baseWidthAutomaticPx": 924,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.838,
+       "plan": {
+        "ratio": 0.543,
+        "window": [
+         0.425,
+         0.575
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.296,
+         -0.463
+        ],
+        "slopeErr": [
+         0.204,
+         0.037
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 8.3,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 66.7,
+        "tolGuidePx": 16,
+        "columnsOver": 263,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.09,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.296 / -0.463 (error 0.204 / 0.037, 0.03 allowed), 8.3 degrees by the check",
+        "inside the footprint after scaling: 66.7 guide px over, 16 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C22a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/big_farm/raw/big_farm-r1-attempt-1.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 903,
+       "baseWidthAutomaticPx": 866,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.941,
+       "plan": {
+        "ratio": 1.889,
+        "window": [
+         1.7,
+         2.3
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.626,
+         -0.577
+        ],
+        "slopeErr": [
+         0.126,
+         0.077
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 6.9,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 3.8,
+        "tolGuidePx": 16,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.7,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.626 / -0.577 (error 0.126 / 0.077, 0.03 allowed), 6.9 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/big_farm/raw/big_farm-r1-attempt-2.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 964,
+       "baseWidthAutomaticPx": 964,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.882,
+       "plan": {
+        "ratio": 1.621,
+        "window": [
+         1.7,
+         2.3
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.608,
+         -0.495
+        ],
+        "slopeErr": [
+         0.108,
+         0.005
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 3.3,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 3.2,
+        "tolGuidePx": 16,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.59,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.621, window 1.7 to 2.3",
+        "camera: slopes 0.608 / -0.495 (error 0.108 / 0.005, 0.03 allowed), 3.3 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/big_farm/raw/big_farm-r1-attempt-3.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 927,
+       "baseWidthAutomaticPx": 896,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.917,
+       "plan": {
+        "ratio": 1.328,
+        "window": [
+         1.7,
+         2.3
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.645,
+         -0.505
+        ],
+        "slopeErr": [
+         0.145,
+         0.005
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 4.8,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 32.8,
+        "tolGuidePx": 16,
+        "columnsOver": 39,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.32,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.328, window 1.7 to 2.3",
+        "camera: slopes 0.645 / -0.505 (error 0.145 / 0.005, 0.03 allowed), 4.8 degrees by the check",
+        "inside the footprint after scaling: 32.8 guide px over, 16 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C24a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/pump/raw/pump-r1-attempt-1.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 649,
+       "baseWidthAutomaticPx": 649,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.876,
+       "plan": {
+        "ratio": 0.579,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.447
+        ],
+        "slopeErr": [
+         null,
+         0.053
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 55.8,
+        "tolGuidePx": 16,
+        "columnsOver": 73,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.32,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.579, window 0.85 to 1.15",
+        "camera: slopes 0.5 / -0.447 (error unread / 0.053, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 55.8 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/pump/raw/pump-r1-attempt-2.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 635,
+       "baseWidthAutomaticPx": 635,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.895,
+       "plan": {
+        "ratio": 1.933,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.508,
+         -0.5
+        ],
+        "slopeErr": [
+         0.008,
+         null
+        ],
+        "feetRead": [
+         true,
+         false
+        ],
+        "byDegrees": null,
+        "result": "UNREAD"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 57.8,
+        "tolGuidePx": 16,
+        "columnsOver": 74,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 0.77,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.933, window 0.85 to 1.15",
+        "camera: one foot is not a straight base, the other is within 0.03 (not judged)",
+        "inside the footprint after scaling: 57.8 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/pump/raw/pump-r1-attempt-3.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 611,
+       "baseWidthAutomaticPx": 611,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.93,
+       "plan": {
+        "ratio": 0.574,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.465
+        ],
+        "slopeErr": [
+         null,
+         0.035
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 50.9,
+        "tolGuidePx": 16,
+        "columnsOver": 62,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.6,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.574, window 0.85 to 1.15",
+        "camera: slopes 0.5 / -0.465 (error unread / 0.035, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 50.9 guide px over, 16 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C25a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/grinder/raw/grinder-r1-attempt-1.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 997,
+       "baseWidthAutomaticPx": 997,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.57,
+       "plan": {
+        "ratio": 0.418,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.596,
+         -0.472
+        ],
+        "slopeErr": [
+         0.096,
+         0.028
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 3.3,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 75.3,
+        "tolGuidePx": 16,
+        "columnsOver": 154,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 0.77,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.418, window 0.85 to 1.15",
+        "camera: slopes 0.596 / -0.472 (error 0.096 / 0.028, 0.03 allowed), 3.3 degrees by the check",
+        "inside the footprint after scaling: 75.3 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/grinder/raw/grinder-r1-attempt-2.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 761,
+       "baseWidthAutomaticPx": 761,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.747,
+       "plan": {
+        "ratio": 0.571,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.462,
+         -0.514
+        ],
+        "slopeErr": [
+         0.038,
+         0.014
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 1.5,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 51,
+        "tolGuidePx": 16,
+        "columnsOver": 78,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 0.77,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.571, window 0.85 to 1.15",
+        "camera: slopes 0.462 / -0.514 (error 0.038 / 0.014, 0.03 allowed), 1.5 degrees by the check",
+        "inside the footprint after scaling: 51 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/grinder/raw/grinder-r1-attempt-3.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 640,
+       "baseWidthAutomaticPx": 640,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.888,
+       "plan": {
+        "ratio": 0.487,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.399,
+         -0.533
+        ],
+        "slopeErr": [
+         0.101,
+         0.033
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 4.1,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 67.7,
+        "tolGuidePx": 16,
+        "columnsOver": 88,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 0.73,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.487, window 0.85 to 1.15",
+        "camera: slopes 0.399 / -0.533 (error 0.101 / 0.033, 0.03 allowed), 4.1 degrees by the check",
+        "inside the footprint after scaling: 67.7 guide px over, 16 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C26a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/refinery/raw/refinery-r1-attempt-1.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 803,
+       "baseWidthAutomaticPx": 592,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.708,
+       "plan": {
+        "ratio": 1.341,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.609
+        ],
+        "slopeErr": [
+         null,
+         0.109
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 10.6,
+        "tolGuidePx": 16,
+        "columnsOver": 12,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.4,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.341, window 0.85 to 1.15",
+        "camera: slopes 0.5 / -0.609 (error unread / 0.109, 0.03 allowed), one foot unreadable"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/refinery/raw/refinery-r1-attempt-2.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 725,
+       "baseWidthAutomaticPx": 725,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.784,
+       "plan": {
+        "ratio": 1.961,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.455
+        ],
+        "slopeErr": [
+         null,
+         0.045
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 59.6,
+        "tolGuidePx": 16,
+        "columnsOver": 87,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 0.99,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.961, window 0.85 to 1.15",
+        "camera: slopes 0.5 / -0.455 (error unread / 0.045, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 59.6 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/refinery/raw/refinery-r1-attempt-3.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 673,
+       "baseWidthAutomaticPx": 362,
+       "heldWidthReturnedPx": 568.2,
+       "scaleK": 0.844,
+       "plan": {
+        "ratio": 1.692,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.538
+        ],
+        "slopeErr": [
+         null,
+         0.038
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 35.9,
+        "tolGuidePx": 16,
+        "columnsOver": 47,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.26,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.692, window 0.85 to 1.15",
+        "camera: slopes 0.5 / -0.538 (error unread / 0.038, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 35.9 guide px over, 16 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C27a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/power_plant/raw/power_plant-r1-attempt-1.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 1250,
+       "baseWidthAutomaticPx": 1216,
+       "heldWidthReturnedPx": 724,
+       "scaleK": 0.579,
+       "plan": {
+        "ratio": 1.155,
+        "window": [
+         0.567,
+         0.767
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.525,
+         -0.5
+        ],
+        "slopeErr": [
+         0.025,
+         null
+        ],
+        "feetRead": [
+         true,
+         false
+        ],
+        "byDegrees": null,
+        "result": "UNREAD"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 166,
+        "tolGuidePx": 10,
+        "columnsOver": 280,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.06,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.155, window 0.567 to 0.767",
+        "camera: one foot is not a straight base, the other is within 0.03 (not judged)",
+        "inside the footprint after scaling: 166 guide px over, 10 allowed"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/power_plant/raw/power_plant-r1-attempt-2.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 872,
+       "baseWidthAutomaticPx": 799,
+       "heldWidthReturnedPx": 724,
+       "scaleK": 0.83,
+       "plan": {
+        "ratio": 0.27,
+        "window": [
+         0.567,
+         0.767
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.479,
+         -0.481
+        ],
+        "slopeErr": [
+         0.021,
+         0.019
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 1.3,
+        "result": "PASS"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 50.3,
+        "tolGuidePx": 10,
+        "columnsOver": 56,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.47,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.27, window 0.567 to 0.767",
+        "inside the footprint after scaling: 50.3 guide px over, 10 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/power_plant/raw/power_plant-r1-attempt-3.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 1033,
+       "baseWidthAutomaticPx": 1005,
+       "heldWidthReturnedPx": 724,
+       "scaleK": 0.701,
+       "plan": {
+        "ratio": 1.1,
+        "window": [
+         0.567,
+         0.767
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.514,
+         -0.5
+        ],
+        "slopeErr": [
+         0.014,
+         null
+        ],
+        "feetRead": [
+         true,
+         false
+        ],
+        "byDegrees": null,
+        "result": "UNREAD"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 165.2,
+        "tolGuidePx": 10,
+        "columnsOver": 231,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 0.97,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.1, window 0.567 to 0.767",
+        "camera: one foot is not a straight base, the other is within 0.03 (not judged)",
+        "inside the footprint after scaling: 165.2 guide px over, 10 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C28a": {
+   "views": {
+    "r0": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/battery/raw/substation-r0-attempt-1.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 762,
+       "baseWidthAutomaticPx": 762,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.911,
+       "plan": {
+        "ratio": 1.118,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.524,
+         -0.535
+        ],
+        "slopeErr": [
+         0.024,
+         0.035
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 2,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -18.7,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.4,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": {
+        "proportion": 0.38,
+        "plan": "0.31 (window 0.264 to 0.357)",
+        "pass": false,
+        "how": "by eye on a crop: foot to the top of the parapet at the near corner, about 290 px of 762"
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.524 / -0.535 (error 0.024 / 0.035, 0.03 allowed), 2 degrees by the check",
+        "height: 0.38 of the base width against 0.31 (window 0.264 to 0.357)"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/battery/raw/substation-r0-attempt-2.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 706,
+       "baseWidthAutomaticPx": 706,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.983,
+       "plan": {
+        "ratio": 1.087,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.543,
+         -0.522
+        ],
+        "slopeErr": [
+         0.043,
+         0.022
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 2.1,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -17.5,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.42,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": {
+        "proportion": 0.374,
+        "plan": "0.31 (window 0.264 to 0.357)",
+        "pass": false,
+        "how": "Codex's reading, confirmed on the crop"
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.543 / -0.522 (error 0.043 / 0.022, 0.03 allowed), 2.1 degrees by the check",
+        "height: 0.374 of the base width against 0.31 (window 0.264 to 0.357)"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/battery/raw/substation-r0-attempt-3.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 740,
+       "baseWidthAutomaticPx": 740,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.938,
+       "plan": {
+        "ratio": 1.135,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.543,
+         -0.527
+        ],
+        "slopeErr": [
+         0.043,
+         0.027
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 2.4,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -18.5,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.35,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": {
+        "proportion": 0.41,
+        "plan": "0.31 (window 0.264 to 0.357)",
+        "pass": false,
+        "how": "by eye on a crop: about 305 px of 740"
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.543 / -0.527 (error 0.043 / 0.027, 0.03 allowed), 2.4 degrees by the check",
+        "height: 0.41 of the base width against 0.31 (window 0.264 to 0.357)"
+       ]
+      }
+     ]
+    },
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/battery/raw/substation-r1-attempt-1.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 753,
+       "baseWidthAutomaticPx": 753,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.922,
+       "plan": {
+        "ratio": 1.199,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.545,
+         -0.533
+        ],
+        "slopeErr": [
+         0.045,
+         0.033
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 2.6,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -15.7,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.55,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.199, window 0.85 to 1.15",
+        "camera: slopes 0.545 / -0.533 (error 0.045 / 0.033, 0.03 allowed), 2.6 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/battery/raw/substation-r1-attempt-2.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 695,
+       "baseWidthAutomaticPx": 695,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.999,
+       "plan": {
+        "ratio": 1.098,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.646,
+         -0.508
+        ],
+        "slopeErr": [
+         0.146,
+         0.008
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 4.9,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -15.5,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.51,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.646 / -0.508 (error 0.146 / 0.008, 0.03 allowed), 4.9 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/battery/raw/substation-r1-attempt-3.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 701,
+       "baseWidthAutomaticPx": 701,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.99,
+       "plan": {
+        "ratio": 0.789,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.529,
+         -0.5
+        ],
+        "slopeErr": [
+         0.029,
+         0
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 0.9,
+        "result": "PASS"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 9,
+        "tolGuidePx": 12,
+        "columnsOver": 6,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.26,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": {
+        "proportion": 0.361,
+        "plan": "0.31 (window 0.264 to 0.357)",
+        "pass": false,
+        "how": "Codex's reading (the review)"
+       },
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.789, window 0.85 to 1.15",
+        "height: 0.361 of the base width against 0.31 (window 0.264 to 0.357)"
+       ]
+      }
+     ]
+    },
+    "r3": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/battery/raw/substation-r3-attempt-1.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 743,
+       "baseWidthAutomaticPx": 743,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.934,
+       "plan": {
+        "ratio": 1.089,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.562,
+         -0.511
+        ],
+        "slopeErr": [
+         0.062,
+         0.011
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 2.4,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -18.2,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.63,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.562 / -0.511 (error 0.062 / 0.011, 0.03 allowed), 2.4 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/battery/raw/substation-r3-attempt-2.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 753,
+       "baseWidthAutomaticPx": 753,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.922,
+       "plan": {
+        "ratio": 1.121,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.62,
+         -0.533
+        ],
+        "slopeErr": [
+         0.12,
+         0.033
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 5.1,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -18.2,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.69,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.62 / -0.533 (error 0.12 / 0.033, 0.03 allowed), 5.1 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/battery/raw/substation-r3-attempt-3.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 756,
+       "baseWidthAutomaticPx": 756,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.918,
+       "plan": {
+        "ratio": 1.203,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.556,
+         -0.549
+        ],
+        "slopeErr": [
+         0.056,
+         0.049
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 3.6,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -18.1,
+        "tolGuidePx": 12,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.71,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.203, window 0.85 to 1.15",
+        "camera: slopes 0.556 / -0.549 (error 0.056 / 0.049, 0.03 allowed), 3.6 degrees by the check"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C29a": {
+   "views": {
+    "r0": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-1.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 923,
+       "baseWidthAutomaticPx": 923,
+       "heldWidthReturnedPx": 482.5,
+       "scaleK": 0.523,
+       "plan": {
+        "ratio": 2.088,
+        "window": [
+         1.223,
+         1.655
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.511,
+         -0.5
+        ],
+        "slopeErr": [
+         0.011,
+         null
+        ],
+        "feetRead": [
+         true,
+         false
+        ],
+        "byDegrees": null,
+        "result": "UNREAD"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -12.6,
+        "tolGuidePx": 16,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.25,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 2.088, window 1.223 to 1.655",
+        "camera: one foot is not a straight base, the other is within 0.03 (not judged)"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-2.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 828,
+       "baseWidthAutomaticPx": 828,
+       "heldWidthReturnedPx": 482.5,
+       "scaleK": 0.583,
+       "plan": {
+        "ratio": 1.694,
+        "window": [
+         1.223,
+         1.655
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.495,
+         -0.429
+        ],
+        "slopeErr": [
+         0.005,
+         0.071
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 2.6,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -0.6,
+        "tolGuidePx": 16,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.2,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.694, window 1.223 to 1.655",
+        "camera: slopes 0.495 / -0.429 (error 0.005 / 0.071, 0.03 allowed), 2.6 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-3.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 749,
+       "baseWidthAutomaticPx": 749,
+       "heldWidthReturnedPx": 482.5,
+       "scaleK": 0.644,
+       "plan": {
+        "ratio": 1.794,
+        "window": [
+         1.223,
+         1.655
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.553,
+         -0.5
+        ],
+        "slopeErr": [
+         0.053,
+         null
+        ],
+        "feetRead": [
+         true,
+         false
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": -12.5,
+        "tolGuidePx": 16,
+        "columnsOver": 0,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.1,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.794, window 1.223 to 1.655",
+        "camera: slopes 0.553 / -0.5 (error 0.053 / unread, 0.03 allowed), one foot unreadable"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C30a": {
+   "views": {
+    "r0": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/colliery/raw/colliery-r0-attempt-1.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 1019,
+       "baseWidthAutomaticPx": 912,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.681,
+       "plan": {
+        "ratio": 0.716,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.456,
+         -0.355
+        ],
+        "slopeErr": [
+         0.044,
+         0.145
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 6.3,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 49.5,
+        "tolGuidePx": 12,
+        "columnsOver": 285,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.59,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.716, window 0.85 to 1.15",
+        "camera: slopes 0.456 / -0.355 (error 0.044 / 0.145, 0.03 allowed), 6.3 degrees by the check",
+        "inside the footprint after scaling: 49.5 guide px over, 12 allowed"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/colliery/raw/colliery-r0-attempt-2.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 894,
+       "baseWidthAutomaticPx": 893,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.776,
+       "plan": {
+        "ratio": 0.658,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.431,
+         -0.459
+        ],
+        "slopeErr": [
+         0.069,
+         0.041
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 3.6,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 34.2,
+        "tolGuidePx": 12,
+        "columnsOver": 243,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.37,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.658, window 0.85 to 1.15",
+        "camera: slopes 0.431 / -0.459 (error 0.069 / 0.041, 0.03 allowed), 3.6 degrees by the check",
+        "inside the footprint after scaling: 34.2 guide px over, 12 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/colliery/raw/colliery-r0-attempt-3.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 807,
+       "baseWidthAutomaticPx": 807,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.86,
+       "plan": {
+        "ratio": 0.652,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.453,
+         -0.299
+        ],
+        "slopeErr": [
+         0.047,
+         0.201
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 8.4,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 61.5,
+        "tolGuidePx": 12,
+        "columnsOver": 324,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.74,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.652, window 0.85 to 1.15",
+        "camera: slopes 0.453 / -0.299 (error 0.047 / 0.201, 0.03 allowed), 8.4 degrees by the check",
+        "inside the footprint after scaling: 61.5 guide px over, 12 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C31a": {
+   "views": {
+    "r0": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/ironworks/raw/ironworks-r0-attempt-1.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 1199,
+       "baseWidthAutomaticPx": 1199,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.579,
+       "plan": {
+        "ratio": 1.034,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.298
+        ],
+        "slopeErr": [
+         null,
+         0.202
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 44.7,
+        "tolGuidePx": 12,
+        "columnsOver": 387,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.16,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.5 / -0.298 (error unread / 0.202, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 44.7 guide px over, 12 allowed"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/ironworks/raw/ironworks-r0-attempt-2.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 1088,
+       "baseWidthAutomaticPx": 1088,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.638,
+       "plan": {
+        "ratio": 1.16,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.381
+        ],
+        "slopeErr": [
+         null,
+         0.119
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 18.6,
+        "tolGuidePx": 12,
+        "columnsOver": 107,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.2,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 1.16, window 0.85 to 1.15",
+        "camera: slopes 0.5 / -0.381 (error unread / 0.119, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 18.6 guide px over, 12 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/ironworks/raw/ironworks-r0-attempt-3.png",
+       "returned": [
+        1536,
+        1024
+       ],
+       "baseWidthPx": 1044,
+       "baseWidthAutomaticPx": 1044,
+       "heldWidthReturnedPx": 694,
+       "scaleK": 0.665,
+       "plan": {
+        "ratio": 1.014,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.29
+        ],
+        "slopeErr": [
+         null,
+         0.21
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 49.8,
+        "tolGuidePx": 12,
+        "columnsOver": 342,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.14,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.5 / -0.29 (error unread / 0.21, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 49.8 guide px over, 12 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C32a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-1.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 1017,
+       "baseWidthAutomaticPx": 1017,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.836,
+       "plan": {
+        "ratio": 0.371,
+        "window": [
+         0.425,
+         0.575
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.359,
+         -0.424
+        ],
+        "slopeErr": [
+         0.141,
+         0.076
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 7,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 41.6,
+        "tolGuidePx": 16,
+        "columnsOver": 594,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 0.95,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.371, window 0.425 to 0.575",
+        "camera: slopes 0.359 / -0.424 (error 0.141 / 0.076, 0.03 allowed), 7 degrees by the check",
+        "inside the footprint after scaling: 41.6 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-2.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 899,
+       "baseWidthAutomaticPx": 899,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.945,
+       "plan": {
+        "ratio": 0.291,
+        "window": [
+         0.425,
+         0.575
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.5,
+         -0.438
+        ],
+        "slopeErr": [
+         null,
+         0.062
+        ],
+        "feetRead": [
+         false,
+         true
+        ],
+        "byDegrees": null,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 42.2,
+        "tolGuidePx": 16,
+        "columnsOver": 410,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.01,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.291, window 0.425 to 0.575",
+        "camera: slopes 0.5 / -0.438 (error unread / 0.062, 0.03 allowed), one foot unreadable",
+        "inside the footprint after scaling: 42.2 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/oil_derrick/raw/oil_derrick-r1-attempt-3.png",
+       "returned": [
+        1254,
+        1254
+       ],
+       "baseWidthPx": 1022,
+       "baseWidthAutomaticPx": 901,
+       "heldWidthReturnedPx": 849.9,
+       "scaleK": 0.832,
+       "plan": {
+        "ratio": 0.362,
+        "window": [
+         0.425,
+         0.575
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.233,
+         -0.446
+        ],
+        "slopeErr": [
+         0.267,
+         0.054
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 11.2,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 27.5,
+        "tolGuidePx": 16,
+        "columnsOver": 407,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.04,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.362, window 0.425 to 0.575",
+        "camera: slopes 0.233 / -0.446 (error 0.267 / 0.054, 0.03 allowed), 11.2 degrees by the check",
+        "inside the footprint after scaling: 27.5 guide px over, 16 allowed"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C33a": {
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/rotations-535/house/raw/townhouse-r1-attempt-1.png",
+       "returned": [
+        1024,
+        1536
+       ],
+       "baseWidthPx": 739,
+       "baseWidthAutomaticPx": 739,
+       "heldWidthReturnedPx": 464,
+       "scaleK": 0.628,
+       "plan": {
+        "ratio": 0.864,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.452,
+         -0.5
+        ],
+        "slopeErr": [
+         0.048,
+         0
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 1.6,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 8.7,
+        "tolGuidePx": 16,
+        "columnsOver": 8,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.3,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": {
+        "proportion": 0.338,
+        "r0": 0.2976,
+        "window": [
+         0.253,
+         0.342
+        ],
+        "pass": true,
+        "how": "by eye on a crop: foot to the eaves at the near corner, about 250 px of 739"
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.452 / -0.5 (error 0.048 / 0, 0.03 allowed), 1.6 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/rotations-535/house/raw/townhouse-r1-attempt-2.png",
+       "returned": [
+        1024,
+        1536
+       ],
+       "baseWidthPx": 635,
+       "baseWidthAutomaticPx": 635,
+       "heldWidthReturnedPx": 464,
+       "scaleK": 0.731,
+       "plan": {
+        "ratio": 0.738,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.499,
+         -0.43
+        ],
+        "slopeErr": [
+         0.001,
+         0.07
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 2.4,
+        "result": "FAIL"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 25.6,
+        "tolGuidePx": 16,
+        "columnsOver": 52,
+        "pass": false
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.33,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": "not measured: refused by an earlier test",
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.738, window 0.85 to 1.15",
+        "camera: slopes 0.499 / -0.43 (error 0.001 / 0.07, 0.03 allowed), 2.4 degrees by the check",
+        "inside the footprint after scaling: 25.6 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 3,
+       "file": "assets/source/rotations-535/house/raw/townhouse-r1-attempt-3.png",
+       "returned": [
+        1024,
+        1536
+       ],
+       "baseWidthPx": 638,
+       "baseWidthAutomaticPx": 638,
+       "heldWidthReturnedPx": 464,
+       "scaleK": 0.727,
+       "plan": {
+        "ratio": 0.821,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": false
+       },
+       "camera": {
+        "slopes": [
+         0.511,
+         -0.512
+        ],
+        "slopeErr": [
+         0.011,
+         0.012
+        ],
+        "feetRead": [
+         true,
+         true
+        ],
+        "byDegrees": 0.8,
+        "result": "PASS"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 14.8,
+        "tolGuidePx": 16,
+        "columnsOver": 15,
+        "pass": true
+       },
+       "lightLowerLeftOverLowerRight": {
+        "value": 1.28,
+        "note": "machine estimate (mean lightness of the two walls just above their feet); not counted unless confirmed by eye"
+       },
+       "height": {
+        "proportion": 0.353,
+        "r0": 0.2976,
+        "window": [
+         0.253,
+         0.342
+        ],
+        "pass": false,
+        "how": "by eye on a crop: about 225 px of 638"
+       },
+       "verdict": "refused",
+       "failed": [
+        "plan: foot ratio 0.821, window 0.85 to 1.15",
+        "height: 0.353 of the base width against r0's 0.2976 (window 0.253 to 0.342)"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "C34a": {
+   "status": "ACCEPTED, off the page",
+   "views": {
+    "r3": {
+     "accepted": {
+      "attempt": 3,
+      "file": "assets/source/buildings-v2/raw/depot-a0-r3-attempt-3.png",
+      "branch": "art/325-buildings-v2, in commit 586865bf, head cd7919ec",
+      "sha256": "487bdc4177f28b94b4024be7922d67bce745b202c7d515c8b0c1412ad66e7f0c",
+      "returned": [
+       1536,
+       1024
+      ],
+      "measured": {
+       "baseWidthPx": 896,
+       "note": "tools/building-fit.mjs measureBase, outer corners w (329, 690), s (784, 921), e (1225, 707); Codex read it by eye as 895",
+       "heldWidthPx": 722,
+       "scaleK": 0.806,
+       "plan": {
+        "lowerLeftFootPx": 455,
+        "lowerRightFootPx": 441,
+        "ratio": 1.034,
+        "window": [
+         0.85,
+         1.15
+        ],
+        "pass": true
+       },
+       "camera": {
+        "slopes": [
+         0.506,
+         -0.485
+        ],
+        "slopeErr": [
+         0.006,
+         0.015
+        ],
+        "limit": 0.03,
+        "checkFile_t2x2_r3": {
+         "ok": true,
+         "problems": [],
+         "elevation": 29.7,
+         "turn": 0.6
+        },
+        "pass": true
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 9.3,
+        "tolGuidePx": 12,
+        "columnsOver4px": 16,
+        "where": "the open portal door leaf at the west corner",
+        "pass": true,
+        "note": "laid on the 2 x 2 plinth (corners w 384,760 s 768,952 e 1152,760) with the base corner s on (768, 932.8), picture scaled by 0.806"
+       },
+       "height": {
+        "proportion": 0.25,
+        "reading": "foot 921 to the eaves 697 = 224 px of 896",
+        "r0": 0.235,
+        "r0reading": "foot 941 to the eaves 725 = 216 px of 919 (raw r0 picture); Codex read the fitted r0 as 0.254",
+        "ratioToR0": 1.06,
+        "window": "15 per cent",
+        "pass": true
+       },
+       "light": {
+        "value": 1.12,
+        "reading": "mean lightness of plain brick left of the near corner 121.2 against right 107.9 (r0: 127.3 against 103.9, 1.22)",
+        "pass": true
+       },
+       "sameBuildingAsR0": "yes, by eye beside r0: the same brick on a cream stone base, slate roof with its smoke vents and four chimneys, evergreen doors folded open, the two round-arched portals with the hall's inner wall in shadow and the floor open on the lower-left wall, the crew door and windows on the lower-right wall; turned, not mirrored; no plinth, ground or shadow",
+       "highlights": {
+        "nearWhite": 1549,
+        "nearAmber": 0,
+        "note": "reported only (tools/atlas-cap.mjs caps them at packing)"
+       }
+      },
+      "verdict": "ACCEPTED",
+      "action": "Do not paint it again. The queue has depot-a0-r3 as rejected with 3 attempts: Art takes attempt 3 for r3 and scales it by 0.806 at packing."
+     },
+     "attempts": [
+      {
+       "attempt": 1,
+       "file": "assets/source/buildings-v2/raw/depot-a0-r3-attempt-1.png",
+       "baseWidthPx": 843,
+       "scaleK": 0.856,
+       "plan": "1.111 passes",
+       "camera": "fails: slopes 0.442 / -0.450, 3.5 degrees",
+       "insideFootprint": "worst 10.6 guide px over, 12 allowed",
+       "verdict": "refused",
+       "failed": [
+        "camera: 3.5 degrees"
+       ]
+      },
+      {
+       "attempt": 2,
+       "file": "assets/source/buildings-v2/raw/depot-a0-r3-attempt-2.png",
+       "baseWidthPx": 1088,
+       "scaleK": 0.664,
+       "plan": "0.970 passes",
+       "camera": "fails: slopes 0.491 / -0.402, 3.6 degrees",
+       "insideFootprint": "worst 17.3 guide px over (194 columns), 12 allowed: fails",
+       "verdict": "refused",
+       "failed": [
+        "camera: 3.6 degrees",
+        "inside the footprint after scaling"
+       ]
+      },
+      {
+       "attempt": 3,
+       "accepted": true
+      }
+     ]
+    }
+   }
+  },
+  "C4e": {
+   "status": "r0 and r2 accepted earlier; r1 and r3 still needed",
+   "views": {
+    "r1": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 13,
+       "file": "assets/source/buildings-v2/raw/fuel_stop-a0-r1-attempt-13.png",
+       "pierSpanPx": 669,
+       "heldSpanReturnedPx": 632,
+       "scaleK": 0.945,
+       "plan": {
+        "ratio": 1.38,
+        "window": [
+         1.16,
+         1.57
+        ]
+       },
+       "heightProportion": {
+        "value": 1.376,
+        "r0": 1.531,
+        "r2": 1.484,
+        "window": [
+         1.378,
+         1.684
+        ],
+        "note": "(near corner row - box.top) over the pier span, on the picture as returned; the 1.136 of the earlier review was the fit's stretched picture"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 8.5,
+        "tolGuidePx": 16
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.695 / -0.525, 7.2 degrees by the check",
+        "height: 1.376 of the pier span, r0 1.531 (window 1.378 to 1.684)"
+       ]
+      },
+      {
+       "attempt": 14,
+       "file": "assets/source/buildings-v2/raw/fuel_stop-a0-r1-attempt-14.png",
+       "pierSpanPx": 806,
+       "heldSpanReturnedPx": 632,
+       "scaleK": 0.784,
+       "plan": {
+        "ratio": 1.737,
+        "window": [
+         1.16,
+         1.57
+        ]
+       },
+       "heightProportion": {
+        "value": 1.236,
+        "r0": 1.531,
+        "r2": 1.484,
+        "window": [
+         1.378,
+         1.684
+        ],
+        "note": "(near corner row - box.top) over the pier span, on the picture as returned; the 1.136 of the earlier review was the fit's stretched picture"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 36.8,
+        "tolGuidePx": 16
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.642 / -0.473, 4.4 degrees by the check",
+        "plan: foot ratio 1.737, window 1.16 to 1.57",
+        "height: 1.236 of the pier span, r0 1.531 (window 1.378 to 1.684)",
+        "inside the footprint after scaling: 36.8 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 15,
+       "file": "assets/source/buildings-v2/raw/fuel_stop-a0-r1-attempt-15.png",
+       "pierSpanPx": 635,
+       "heldSpanReturnedPx": 632,
+       "scaleK": 0.995,
+       "plan": {
+        "ratio": 1.539,
+        "window": [
+         1.16,
+         1.57
+        ]
+       },
+       "heightProportion": {
+        "value": 1.415,
+        "r0": 1.531,
+        "r2": 1.484,
+        "window": [
+         1.378,
+         1.684
+        ],
+        "note": "(near corner row - box.top) over the pier span, on the picture as returned; the 1.136 of the earlier review was the fit's stretched picture"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 22.1,
+        "tolGuidePx": 16
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.663 / -0.574, 8.1 degrees by the check",
+        "inside the footprint after scaling: 22.1 guide px over, 16 allowed"
+       ]
+      }
+     ]
+    },
+    "r3": {
+     "accepted": null,
+     "attempts": [
+      {
+       "attempt": 13,
+       "file": "assets/source/buildings-v2/raw/fuel_stop-a0-r3-attempt-13.png",
+       "pierSpanPx": 728,
+       "heldSpanReturnedPx": 632,
+       "scaleK": 0.868,
+       "plan": {
+        "ratio": 1.482,
+        "window": [
+         1.16,
+         1.57
+        ]
+       },
+       "heightProportion": {
+        "value": 1.417,
+        "r0": 1.531,
+        "r2": 1.484,
+        "window": [
+         1.378,
+         1.684
+        ],
+        "note": "(near corner row - box.top) over the pier span, on the picture as returned; the 1.136 of the earlier review was the fit's stretched picture"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 17.4,
+        "tolGuidePx": 16
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.645 / -0.503, 4.7 degrees by the check",
+        "inside the footprint after scaling: 17.4 guide px over, 16 allowed"
+       ]
+      },
+      {
+       "attempt": 14,
+       "file": "assets/source/buildings-v2/raw/fuel_stop-a0-r3-attempt-14.png",
+       "pierSpanPx": 670,
+       "heldSpanReturnedPx": 632,
+       "scaleK": 0.943,
+       "plan": {
+        "ratio": 1.452,
+        "window": [
+         1.16,
+         1.57
+        ]
+       },
+       "heightProportion": {
+        "value": 1.435,
+        "r0": 1.531,
+        "r2": 1.484,
+        "window": [
+         1.378,
+         1.684
+        ],
+        "note": "(near corner row - box.top) over the pier span, on the picture as returned; the 1.136 of the earlier review was the fit's stretched picture"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 14.8,
+        "tolGuidePx": 16
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.665 / -0.446, 5.7 degrees by the check"
+       ]
+      },
+      {
+       "attempt": 15,
+       "file": "assets/source/buildings-v2/raw/fuel_stop-a0-r3-attempt-15.png",
+       "pierSpanPx": 753,
+       "heldSpanReturnedPx": 632,
+       "scaleK": 0.839,
+       "plan": {
+        "ratio": 1.4,
+        "window": [
+         1.16,
+         1.57
+        ]
+       },
+       "heightProportion": {
+        "value": 1.297,
+        "r0": 1.531,
+        "r2": 1.484,
+        "window": [
+         1.378,
+         1.684
+        ],
+        "note": "(near corner row - box.top) over the pier span, on the picture as returned; the 1.136 of the earlier review was the fit's stretched picture"
+       },
+       "insideFootprint": {
+        "worstOverGuidePx": 10.3,
+        "tolGuidePx": 16
+       },
+       "verdict": "refused",
+       "failed": [
+        "camera: slopes 0.688 / -0.389, 8.1 degrees by the check",
+        "height: 1.297 of the pier span, r0 1.531 (window 1.378 to 1.684)"
+       ]
+      }
+     ]
+    }
+   }
+  }
+ }
+}

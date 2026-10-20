@@ -15,7 +15,7 @@ higher number for a view, go on from that), and never delete or overwrite a pain
 for 1024x1024 and record the size it returns in "returned" (the earlier pictures came back
 1254x1254).
 
-THE STATE. r0, fuel_pump-a1-r0.png, sha256
+THE STATE. ACCEPTED: none (nothing painted under R8e yet; the pictures of R8d's two runs stay refused: r2 attempt 9 is low, 0.423 where 0.43, its lower-left foot 0.639 and its jib too long; r3 attempts 15 to 17 keep the two-post crane). r0, fuel_pump-a1-r0.png, sha256
 c2ef828ed902b68daa5ef6849d149eb7bb204abe20706a60a281ac83c6d053f0: check the hash first; if it
 differs, stop and say so. It is the master and is not touched. The files fuel_pump-a1-r1.png
 (attempt 12), -r2.png (attempt 2) and -r3.png (attempt 9) stay where they are until a new picture of
@@ -79,17 +79,18 @@ r2 (front faces the upper right, hidden): the base's feet w (307, 819.3), s (537
 house's long side over its short side: 1.283); the long side is lower left; block 44 game px. Plinth
 corners w (256, 832), s (512, 960), e (768, 832).
 
-THE LIMIT, the number you keep. Keep the base to the footprint: the grey plinth is the footprint,
-516 px wide in the guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90
-per cent of its long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left
-corner to the right corner, is 412 px wide in the guide (505 px), no wider than 433 px (530 px) and
-never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its
-plinth before, and the fit then shrinks the whole building. For the Fuel Pump, in every view: the
-base's width, from the outer edge of the house's left corner to the outer edge of its right corner
-at ground level, outline included (the crane's post, the pier and the porch count only where they
-stand on the ground), is held at 412 px of the guide (505 of 1254), at most 433 (530), at least 391
-(479). Over the most or under the least the picture is refused for its width whatever else it shows,
-and is not measured further.
+THE SIZE, a measurement and not a test (the author's decision of 19 October 2026, issue #536). The
+grey plinth is the footprint, 516 px wide in the guide (632 px in a 1254 px wide picture), and the base
+stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). Art scales a returned picture
+UNIFORMLY at packing, one factor on both axes and no shear, until its base is the held width, 412 px
+of the guide (505 of 1254). A uniform scale distorts nothing, so the painted width no longer refuses
+a picture, and you do not try to hit it: paint the house at the size that comes naturally, and never
+resize it yourself. For the Fuel Pump, in every view, measure the base's width from the outer edge of
+the house's left corner to the outer edge of its right corner at ground level, outline included (the
+crane's post, the pier and the porch count only where they stand on the ground), and record it with
+the scale k = held width / measured width. The camera, the plan, the height (a proportion of the
+base width), the light, the crane and the same building decide; and the footprint after scaling
+(below), because parts that stand off the plinth are still wrong once the picture is scaled.
 
 THE ORDER. r1, then r3, then r2: at most three attempts a view, nine calls in all. Every call is an
 image EDIT of the guide of its view, never of an attempt. References, in this order: r1: (1)
@@ -156,15 +157,23 @@ or lower the house."
 MEASURE EVERY ATTEMPT, in this order (record-attempt.mjs writes prompts.json; its plan test still
 holds R8d's 2.0 to 2.8: change it, in your own folder, to the window below, and say so):
 
-- width first: the base's width in the returned picture, against the limit above. Refused outside
-  the least and the most: record the attempt with its width, write its Correction, and do not run
-  the other tests;
+- width and scale: a measurement, never a refusal. The base's width in the returned picture, and
+  k = 505 / that width (scaled by returned width / 1024 if the picture is another size). Record
+  both; the picture goes on to the next tests whatever its width;
 
 - plan: the house's long side over its short side (measure-plan.mjs; read the outer quoin corners by
   eye where the crane, pipe or pier throws it, and record both) within 15 per cent of 1.283: 1.09 to
   1.48, the long side on the side the plan names: lower right in r1 and r3, lower left in r2;
 
-- height: the brick wall at the near corner, foot to the top of its quoins, over the base's width
+- inside the footprint after scaling: take the returned picture in memory (never saved, never
+  committed), scale it uniformly by k, and lay it on the guide with the base's near corner s on the
+  guide's base corner s (the plan numbers above). The lowest opaque pixel of every column must lie
+  inside the plinth: not below its two lower edges (w to s, s to e) and not beyond its left and right
+  corners, by more than 2 game px (16 guide px; the outline is 3 px of that). The crane's post, the
+  pier, the porch and the hose standing on the ground count. A picture that fails it is repainted
+  with those parts brought inside; never moved, cropped or bent. Record the largest overshoot;
+
+- height, as a proportion (scaling does not change it): the brick wall at the near corner, foot to the top of its quoins, over the base's width
   e.x - w.x: 0.39 to 0.47 (r0 0.43). Not lower than r0's;
 
 - camera: both feet's slopes within 0.03 of 0.50, at most 2 degrees by checkFile for t1 and the
@@ -185,12 +194,10 @@ holds R8d's 2.0 to 2.8: change it, in your own folder, to the window below, and 
 
 CORRECTIONS AND STOPS. A picture that fails: repaint from the guide again with the same attachments
 (never attach a failed picture) and add exactly ONE paragraph that begins "Correction:" and names
-the number it missed, as "your last r1's base measured 560 px of 1254 where 480 to 530 is wanted";
+the number it missed, as "your last r1's lower-left foot ran at slope 0.64 where 0.50 is wanted";
 it replaces the earlier Correction, so that no prompt has more than one. Never resize, crop, move,
-stretch, squeeze, shear, rotate or bend a returned picture: the angles and the width come from the
-painting. If none of a view's three attempts passes, keep the closest in raw/, say which test failed
-with its number, copy nothing over the view's file, and go on to the next view. If a view's three
-attempts are all refused for their width, say so and stop that view.
+stretch, squeeze, shear, rotate or bend a returned picture: the angles come from the painting, and the size is Art's to scale at packing. If none of a view's three attempts passes, keep the closest in raw/, say which test failed
+with its number, copy nothing over the view's file, and go on to the next view. If the camera is more than 3 degrees off in all three attempts of a view, say so and stop that view.
 
 KEEPING. A picture that passes every test is copied over fuel_pump-a1-r<v>.png (r1 replaces attempt
 12). Records: add every attempt to prompts.json "attempts" as {view, attempt, selected, file,
@@ -199,7 +206,7 @@ whether any were read by eye, the height, camera, the light values with their bo
 saw. Update "selection" and "qa". Put a grass sheet of each kept picture in review/. Commit after
 each view: "Art: Fuel Pump r1 repainted on the review-2 guide" and the like, and push.
 
-END. In your message give, for each attempt: the view, the base's width against the limit, the long
+END. In your message give, for each attempt: the view, the base's width, the scale k and the held width, the largest overshoot outside the plinth after scaling, the long
 over short ratio, the height, the camera, the light values, the crane's numbers, and which attempt
 was kept and why; and say plainly whether r1, r3 and r2 passed, and whether Step 0 agreed with the
 guides.

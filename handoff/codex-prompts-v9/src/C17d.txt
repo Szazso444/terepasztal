@@ -130,8 +130,7 @@ when:
   off that passes the rest is a near keeper: kept and reported; if the best attempt of the view is
   still more than 3 degrees off, stop that view, do not paint it again);
 - the tower stands as the guide's: xc within 12 px of 512 and yc within 12 px of 800 (scale these
-  by the returned width / 1024), and W within 3% of the W in hub.json of r0, so that the four views
-  are one windmill at one scale;
+  by the returned width / 1024), and W recorded against the W in hub.json of r0 (a measurement, not a test: Art scales each returned picture uniformly at packing, by the ratio of the two, so that the four views are one windmill at one scale);
 - tower: (yc - the cone's tip) / W within 5% of 1.105 (1.05 to 1.16). The tip is the cone's own
   point, read on the crop: in r1 and r2 the plate stands higher than the tip, so the topmost
   opaque pixel is the plate, not the tip;

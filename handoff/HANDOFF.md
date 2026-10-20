@@ -35,7 +35,7 @@ for `develop`. Read this file, then only the files a task needs.
   - `if_version` is required on updates.
   - Card pictures go in `pictures: [{caption, img: <asset id>}]`.
   - Last answer processed: `answeredAt` 2026-10-17T19:17:54Z.
-- **Codex prompts page:** https://claude.ai/artifact/EEr4ow3SevqTmnngUn4c5n, version 13.
+- **Codex prompts page:** https://claude.ai/artifact/EEr4ow3SevqTmnngUn4c5n, version 17 (page text v13, 2026-10-19; the width is a measurement, camera strict; one picture accepted: depot a0 r3 attempt 3, see codex-review-1019b.json).
   - Built by `handoff/codex-prompts-v9/build.py`, which writes `page.html`. Prompt texts are in
     `src/*.txt`.
   - The build reads `../codex-prompts-v7/page.html` and `../codex-review-1016/redo-prompts.md`,

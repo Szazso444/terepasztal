@@ -36,7 +36,7 @@ sand piled on the ground, no vegetation standing apart from the house (a roof of
 material, not a prop); (6) say for each row which materials of the base house change (stone walls,
 slate roof, green door, red clay chimney pots) and which stay. Also give the painting order and the
 number of pictures: 7 biomes x 4 views = 28 pictures, r0 first for each biome, then r1, r3, r2 as in
-C33a, three attempts a view at most, the same tests (width first, plan, camera, height, highlights,
+C33a, three attempts a view at most, the same tests (width and scale as a measurement, plan, camera, footprint after scaling, height, highlights,
 by eye), so 84 calls at the most; say whether you would paint the whole set in one run or in two.
 Commit "Art: House biome variants, proposal", push the branch and STOP. In your message give the
 table in one block of text and say plainly what you are unsure about. Do not start step 2.

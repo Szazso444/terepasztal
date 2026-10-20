@@ -54,16 +54,15 @@ def card(label, anchor, title, note, text):
 
 
 lead = (
-    'Updated 2026-10-19 (v12). Codex ran many of the v11 prompts on 19 October and the review is in (handoff/codex-review-1019.json): nothing was accepted, so only R8d is off this page (R8e replaces it). '
-    "Every view that was painted was refused at the first test, the width of the base: the painter fills the plinth rather than the block (47 of 51 paintings over the limit), so most cards below are the same prompt with the failing numbers stated and one new instruction (paint smaller than looks natural; the wall feet start at the block's corners). "
-    'Blocked and fixed: C21a and C23a (their farm and quarry pictures were not on the branch: Step 0 restores them from a backup snapshot) and R7c-1 (a zero-tolerance highlight test that the packer makes redundant is now a report). '
-    "The width rule itself is the author's decision (see the review). "
-    'Three lanes, each its own Codex window: the buildings lane (depots and the farm halt first, then the quarry, the coaling stage, '
-    'the Fuel Pump and the windmill), the rotations lane (the turned views of the old base-v1 pictures on the branch art/535-rotations, '
-    'the ones that block gameplay first; each job writes its own measuring script and rebases before it pushes), and the people lane. Every prompt measures the base width first, against the numbers of the review-2 guides '
-    '(PR #537, not merged yet: each prompt tells Codex how to read them out of that branch without committing them to its art branch); '
-    "a picture off the game's camera is repainted and never stretched (issue #536); at most three attempts a view. "
-    'The house biome prompt, C33b, waits for the house rotations to be accepted.'
+    "Updated 2026-10-19 (v13). The author decided on 19 October that the painted WIDTH no longer fails a picture: Art scales a returned picture UNIFORMLY at packing (one factor on both axes, no shear) until its base fits the guide's held width, and a uniform scale distorts nothing. The width is a measurement now. The camera (kept strict: a picture off the game's camera is repainted and never corrected, issue #536), the plan's foot ratio, the height as a proportion of the base width, the light, the same building as r0, and one new test, the base inside the footprint after scaling, decide. "
+    "All 51 pictures that Codex painted on 19 October were re-tested on that rule (47 of them had been refused for width only; numbers per attempt in handoff/codex-review-1019b.json). One passes: depot a0 r3, attempt 3 (assets/source/buildings-v2/raw/depot-a0-r3-attempt-3.png on art/325-buildings-v2, sha256 487bdc41..., scaled by 0.806 at packing). It is ACCEPTED and is not painted again, so C34a is off the page. "
+    "Every other picture fails the camera (feet too steep or too flat), most also the plan or the footprint, so the cards below are the same jobs with the width gate turned into a measurement, the line that told the painter to paint smaller taken out, and the re-test numbers of each failed view; every card starts with what is accepted (nothing, apart from the depot). "
+    "Earlier fixes stay: C21a and C23a (Step 0 restores their farm and quarry pictures from a backup snapshot) and R7c-1 (its highlight test is a report). "
+    "Three lanes, each its own Codex window: the buildings lane (the narrow depot and the farm halt first, then the quarry, the coaling stage, the Fuel Pump and the windmill), the rotations lane (the turned views of the old base-v1 pictures on the branch art/535-rotations, "
+    "the ones that block gameplay first; each job writes its own measuring script and rebases before it pushes), and the people lane. Every prompt reads the numbers of the review-2 guides "
+    "(PR #537, not merged yet: each prompt tells Codex how to read them out of that branch without committing them to its art branch); "
+    "at most three attempts a view. "
+    "The house biome prompt, C33b, waits for the house rotations to be accepted."
 )
 
 nav_rows = ['<nav><a href="#next">Paste next</a></nav>']

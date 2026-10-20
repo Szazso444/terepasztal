@@ -40,7 +40,8 @@
    "Farm (C21a) and quarry (C23a): their accepted a0 pictures are only in the unpushed local branch art/buildings-v2 and in the backup snapshot branch origin/backup/g-dev-terepasztal-terepasztal-wip (commit 731a7719), byte-identical to the main checkout's copies (sha256 in the prompts). The prompts now restore them from there. If you would rather push them to art/325-buildings-v2 yourself, do it and the restore step becomes a no-op.",
    "Several Codex windows work on art/535-rotations at the same time and rewrote the shared measure.mjs under each other (five reports say so). The prompts now tell each job to write its own script.",
    "The Power plant and the House: the held width (724 of a 3 x 2 plan; 464 of a 1024 canvas) is far below r0's own base (1252 of 1536; 877 of 1536) while the prompt says 'the same building at the same size'. The two instructions fight; say which wins."
-  ]
+  ],
+  "followUp": "2026-10-19, after the author's width decision: every attempt was re-tested without the width gate; the results, the accepted picture (depot a0 r3 attempt 3) and the near misses are in codex-review-1019b.json. The status lines below are the first review's and are not updated."
  },
  "C18a": {
   "status": "not run",
