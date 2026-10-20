@@ -1,0 +1,503 @@
+{
+ "job": "ironworks",
+ "view": "r3",
+ "canvas": [
+  1536,
+  1024
+ ],
+ "anchor": [
+  768,
+  760
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   192.0,
+   96.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   192.0,
+   -96.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 235.151,
+  "origin_px": [
+   768.0,
+   760.0
+  ],
+  "anchor_px": [
+   768,
+   760
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   384.0,
+   760.0
+  ],
+  "s": [
+   768.0,
+   952.0
+  ],
+  "e": [
+   1152.0,
+   760.0
+  ],
+  "n": [
+   768.0,
+   568.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   422.4,
+   760.0
+  ],
+  "s": [
+   768.0,
+   932.8
+  ],
+  "e": [
+   1113.6,
+   760.0
+  ],
+  "n": [
+   768.0,
+   587.2
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   459.59,
+   778.59
+  ],
+  "s": [
+   730.81,
+   914.21
+  ],
+  "e": [
+   1076.41,
+   741.41
+  ],
+  "n": [
+   805.19,
+   605.79
+  ]
+ },
+ "model_base_tiles": [
+  1.413,
+  1.8
+ ],
+ "plan_base_tiles": [
+  1.8,
+  1.8
+ ],
+ "uniform_scale_applied": 2.3842,
+ "model_size_tiles_xyz": [
+  1.858,
+  1.464,
+  1.904
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  1.842,
+  1.463
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.788,
+   0.891
+  ],
+  [
+   0.626,
+   0.743
+  ],
+  [
+   0.571,
+   0.702
+  ],
+  [
+   0.569,
+   0.699
+  ]
+ ],
+ "texture": {
+  "fov_deg": 17.75,
+  "silhouette_iou": 0.9649,
+  "source_share": 0.162,
+  "nearest_share": 0.838
+ },
+ "outline_polygon_px": [
+  [
+   [
+    860,
+    366
+   ],
+   [
+    853,
+    367
+   ],
+   [
+    848,
+    372
+   ],
+   [
+    846,
+    381
+   ],
+   [
+    826,
+    389
+   ],
+   [
+    780,
+    357
+   ],
+   [
+    743,
+    372
+   ],
+   [
+    737,
+    400
+   ],
+   [
+    744,
+    407
+   ],
+   [
+    741,
+    423
+   ],
+   [
+    698,
+    441
+   ],
+   [
+    693,
+    437
+   ],
+   [
+    684,
+    438
+   ],
+   [
+    680,
+    443
+   ],
+   [
+    678,
+    456
+   ],
+   [
+    673,
+    461
+   ],
+   [
+    621,
+    482
+   ],
+   [
+    615,
+    474
+   ],
+   [
+    606,
+    476
+   ],
+   [
+    602,
+    481
+   ],
+   [
+    594,
+    480
+   ],
+   [
+    589,
+    483
+   ],
+   [
+    587,
+    499
+   ],
+   [
+    528,
+    523
+   ],
+   [
+    534,
+    535
+   ],
+   [
+    527,
+    646
+   ],
+   [
+    520,
+    656
+   ],
+   [
+    519,
+    692
+   ],
+   [
+    513,
+    699
+   ],
+   [
+    512,
+    738
+   ],
+   [
+    565,
+    769
+   ],
+   [
+    566,
+    780
+   ],
+   [
+    578,
+    788
+   ],
+   [
+    575,
+    827
+   ],
+   [
+    720,
+    908
+   ],
+   [
+    772,
+    882
+   ],
+   [
+    776,
+    874
+   ],
+   [
+    787,
+    868
+   ],
+   [
+    801,
+    874
+   ],
+   [
+    817,
+    870
+   ],
+   [
+    827,
+    865
+   ],
+   [
+    830,
+    858
+   ],
+   [
+    873,
+    837
+   ],
+   [
+    889,
+    826
+   ],
+   [
+    905,
+    822
+   ],
+   [
+    909,
+    813
+   ],
+   [
+    906,
+    801
+   ],
+   [
+    899,
+    796
+   ],
+   [
+    891,
+    798
+   ],
+   [
+    888,
+    793
+   ],
+   [
+    874,
+    785
+   ],
+   [
+    874,
+    738
+   ],
+   [
+    927,
+    711
+   ],
+   [
+    942,
+    710
+   ],
+   [
+    963,
+    698
+   ],
+   [
+    974,
+    699
+   ],
+   [
+    986,
+    693
+   ],
+   [
+    985,
+    669
+   ],
+   [
+    974,
+    663
+   ],
+   [
+    971,
+    654
+   ],
+   [
+    962,
+    646
+   ],
+   [
+    961,
+    542
+   ],
+   [
+    965,
+    537
+   ],
+   [
+    965,
+    530
+   ],
+   [
+    971,
+    523
+   ],
+   [
+    898,
+    424
+   ],
+   [
+    894,
+    416
+   ],
+   [
+    895,
+    410
+   ],
+   [
+    887,
+    409
+   ],
+   [
+    870,
+    385
+   ],
+   [
+    869,
+    374
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   512,
+   357,
+   987,
+   908
+  ],
+  "area_px": 170543,
+  "top_row_px": 357,
+  "bottom_row_px": 908,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    422.4,
+    760
+   ],
+   "s": [
+    768,
+    932.8
+   ],
+   "e": [
+    1113.6,
+    760
+   ],
+   "n": [
+    768,
+    587.2
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    384,
+    760
+   ],
+   "s": [
+    768,
+    952
+   ],
+   "e": [
+    1152,
+    760
+   ],
+   "n": [
+    768,
+    568
+   ]
+  },
+  "plan_canvas": [
+   1536,
+   1024
+  ],
+  "plan_anchor": [
+   768,
+   760
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 41.577
+ },
+ "base_fill_of_plan": [
+  0.785,
+  1.0
+ ],
+ "job_code": "C31a",
+ "title": "Ironworks",
+ "r0_outline_overlap": 0.9353,
+ "verdict": [
+  "warn",
+  "Furnace face from r0 clean; the open hall seen from the other side is a jumble."
+ ],
+ "invented_surfaces": "r1: far wall. r2: both walls (patchy). r3: open hall seen from the rear.",
+ "source_picture": "works-full-ironworks",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

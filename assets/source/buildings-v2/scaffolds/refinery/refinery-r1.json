@@ -1,0 +1,539 @@
+{
+ "job": "refinery",
+ "view": "r1",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   305.09,
+   843.75
+  ],
+  "s": [
+   488.51,
+   935.45
+  ],
+  "e": [
+   718.91,
+   820.25
+  ],
+  "n": [
+   535.49,
+   728.55
+  ]
+ },
+ "model_base_tiles": [
+  0.716,
+  0.9
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.2797,
+ "model_size_tiles_xyz": [
+  0.961,
+  0.762,
+  1.098
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.94,
+  0.761
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.746,
+   0.854
+  ],
+  [
+   0.441,
+   0.598
+  ],
+  [
+   0.419,
+   0.526
+  ],
+  [
+   0.394,
+   0.492
+  ]
+ ],
+ "texture": {
+  "fov_deg": 13.657,
+  "silhouette_iou": 0.9543,
+  "source_share": 0.175,
+  "nearest_share": 0.825
+ },
+ "outline_polygon_px": [
+  [
+   [
+    535,
+    498
+   ],
+   [
+    521,
+    500
+   ],
+   [
+    514,
+    506
+   ],
+   [
+    501,
+    505
+   ],
+   [
+    497,
+    517
+   ],
+   [
+    488,
+    525
+   ],
+   [
+    487,
+    545
+   ],
+   [
+    476,
+    554
+   ],
+   [
+    475,
+    582
+   ],
+   [
+    480,
+    589
+   ],
+   [
+    481,
+    608
+   ],
+   [
+    475,
+    615
+   ],
+   [
+    473,
+    649
+   ],
+   [
+    460,
+    658
+   ],
+   [
+    452,
+    669
+   ],
+   [
+    445,
+    672
+   ],
+   [
+    436,
+    686
+   ],
+   [
+    418,
+    703
+   ],
+   [
+    413,
+    714
+   ],
+   [
+    410,
+    734
+   ],
+   [
+    414,
+    757
+   ],
+   [
+    403,
+    754
+   ],
+   [
+    402,
+    765
+   ],
+   [
+    399,
+    767
+   ],
+   [
+    399,
+    795
+   ],
+   [
+    403,
+    798
+   ],
+   [
+    403,
+    863
+   ],
+   [
+    399,
+    881
+   ],
+   [
+    489,
+    929
+   ],
+   [
+    500,
+    925
+   ],
+   [
+    499,
+    914
+   ],
+   [
+    503,
+    912
+   ],
+   [
+    505,
+    903
+   ],
+   [
+    523,
+    893
+   ],
+   [
+    538,
+    902
+   ],
+   [
+    543,
+    902
+   ],
+   [
+    549,
+    897
+   ],
+   [
+    551,
+    882
+   ],
+   [
+    560,
+    880
+   ],
+   [
+    566,
+    874
+   ],
+   [
+    569,
+    878
+   ],
+   [
+    581,
+    874
+   ],
+   [
+    580,
+    858
+   ],
+   [
+    576,
+    856
+   ],
+   [
+    576,
+    814
+   ],
+   [
+    573,
+    808
+   ],
+   [
+    564,
+    806
+   ],
+   [
+    564,
+    800
+   ],
+   [
+    559,
+    800
+   ],
+   [
+    559,
+    792
+   ],
+   [
+    563,
+    793
+   ],
+   [
+    566,
+    786
+   ],
+   [
+    572,
+    802
+   ],
+   [
+    581,
+    805
+   ],
+   [
+    612,
+    788
+   ],
+   [
+    607,
+    767
+   ],
+   [
+    599,
+    763
+   ],
+   [
+    590,
+    763
+   ],
+   [
+    599,
+    754
+   ],
+   [
+    609,
+    755
+   ],
+   [
+    609,
+    728
+   ],
+   [
+    599,
+    725
+   ],
+   [
+    589,
+    730
+   ],
+   [
+    598,
+    717
+   ],
+   [
+    603,
+    700
+   ],
+   [
+    600,
+    663
+   ],
+   [
+    590,
+    643
+   ],
+   [
+    573,
+    628
+   ],
+   [
+    567,
+    613
+   ],
+   [
+    558,
+    606
+   ],
+   [
+    539,
+    601
+   ],
+   [
+    539,
+    584
+   ],
+   [
+    544,
+    580
+   ],
+   [
+    544,
+    575
+   ],
+   [
+    539,
+    570
+   ],
+   [
+    543,
+    536
+   ],
+   [
+    546,
+    533
+   ],
+   [
+    544,
+    521
+   ],
+   [
+    547,
+    514
+   ],
+   [
+    541,
+    502
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   399,
+   498,
+   612,
+   929
+  ],
+  "area_px": 54121,
+  "top_row_px": 498,
+  "bottom_row_px": 929,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    281.6,
+    832
+   ],
+   "s": [
+    512,
+    947.2
+   ],
+   "e": [
+    742.4,
+    832
+   ],
+   "n": [
+    512,
+    716.8
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    832
+   ],
+   "s": [
+    512,
+    960
+   ],
+   "e": [
+    768,
+    832
+   ],
+   "n": [
+    512,
+    704
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1024
+  ],
+  "plan_anchor": [
+   512,
+   832
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 26.265
+ },
+ "base_fill_of_plan": [
+  0.796,
+  1.0
+ ],
+ "job_code": "C26a",
+ "title": "Oil refinery",
+ "r0_outline_overlap": 0.8998,
+ "verdict": [
+  "warn",
+  "Shape and camera right; thin pipes and railings are soft, the far tank end is invented."
+ ],
+ "invented_surfaces": "r1/r2/r3: the far sides of the pipe runs, tank ends, back of the furnace frame.",
+ "source_picture": "base-v1/refinery.png",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

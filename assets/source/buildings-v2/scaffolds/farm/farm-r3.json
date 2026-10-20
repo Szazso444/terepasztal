@@ -1,0 +1,487 @@
+{
+ "job": "farm",
+ "view": "r3",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   295.11,
+   825.24
+  ],
+  "s": [
+   525.51,
+   940.44
+  ],
+  "e": [
+   728.89,
+   838.76
+  ],
+  "n": [
+   498.49,
+   723.56
+  ]
+ },
+ "model_base_tiles": [
+  0.9,
+  0.794
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.6306,
+ "model_size_tiles_xyz": [
+  1.019,
+  0.993,
+  1.277
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.892,
+  0.911
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.783,
+   0.897
+  ],
+  [
+   0.655,
+   0.817
+  ],
+  [
+   0.645,
+   0.775
+  ],
+  [
+   0.627,
+   0.773
+  ]
+ ],
+ "texture": {
+  "fov_deg": 15.615,
+  "silhouette_iou": 0.9745,
+  "source_share": 0.192,
+  "nearest_share": 0.808
+ },
+ "outline_polygon_px": [
+  [
+   [
+    386,
+    401
+   ],
+   [
+    379,
+    408
+   ],
+   [
+    385,
+    425
+   ],
+   [
+    368,
+    436
+   ],
+   [
+    370,
+    456
+   ],
+   [
+    313,
+    617
+   ],
+   [
+    296,
+    650
+   ],
+   [
+    326,
+    672
+   ],
+   [
+    336,
+    736
+   ],
+   [
+    333,
+    739
+   ],
+   [
+    334,
+    767
+   ],
+   [
+    338,
+    772
+   ],
+   [
+    319,
+    785
+   ],
+   [
+    328,
+    835
+   ],
+   [
+    355,
+    845
+   ],
+   [
+    382,
+    863
+   ],
+   [
+    403,
+    847
+   ],
+   [
+    409,
+    855
+   ],
+   [
+    418,
+    859
+   ],
+   [
+    422,
+    856
+   ],
+   [
+    420,
+    804
+   ],
+   [
+    430,
+    813
+   ],
+   [
+    428,
+    824
+   ],
+   [
+    433,
+    832
+   ],
+   [
+    440,
+    863
+   ],
+   [
+    487,
+    886
+   ],
+   [
+    491,
+    885
+   ],
+   [
+    527,
+    905
+   ],
+   [
+    532,
+    916
+   ],
+   [
+    545,
+    922
+   ],
+   [
+    572,
+    899
+   ],
+   [
+    706,
+    807
+   ],
+   [
+    713,
+    806
+   ],
+   [
+    727,
+    796
+   ],
+   [
+    720,
+    758
+   ],
+   [
+    712,
+    753
+   ],
+   [
+    694,
+    651
+   ],
+   [
+    697,
+    647
+   ],
+   [
+    696,
+    627
+   ],
+   [
+    707,
+    629
+   ],
+   [
+    709,
+    621
+   ],
+   [
+    606,
+    563
+   ],
+   [
+    603,
+    541
+   ],
+   [
+    610,
+    533
+   ],
+   [
+    584,
+    496
+   ],
+   [
+    570,
+    503
+   ],
+   [
+    560,
+    457
+   ],
+   [
+    560,
+    436
+   ],
+   [
+    556,
+    431
+   ],
+   [
+    556,
+    422
+   ],
+   [
+    546,
+    397
+   ],
+   [
+    522,
+    391
+   ],
+   [
+    518,
+    387
+   ],
+   [
+    512,
+    387
+   ],
+   [
+    505,
+    392
+   ],
+   [
+    492,
+    389
+   ],
+   [
+    482,
+    393
+   ],
+   [
+    466,
+    414
+   ],
+   [
+    445,
+    425
+   ],
+   [
+    435,
+    437
+   ],
+   [
+    431,
+    447
+   ],
+   [
+    429,
+    471
+   ],
+   [
+    425,
+    468
+   ],
+   [
+    423,
+    439
+   ],
+   [
+    404,
+    424
+   ],
+   [
+    404,
+    405
+   ],
+   [
+    396,
+    400
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   296,
+   387,
+   727,
+   922
+  ],
+  "area_px": 147811,
+  "top_row_px": 387,
+  "bottom_row_px": 922,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    305.1777,
+    843.7889
+   ],
+   "s": [
+    488.4223,
+    935.4111
+   ],
+   "e": [
+    718.8223,
+    820.2111
+   ],
+   "n": [
+    535.5777,
+    728.5889
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    832
+   ],
+   "s": [
+    512,
+    960
+   ],
+   "e": [
+    768,
+    832
+   ],
+   "n": [
+    512,
+    704
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1024
+  ],
+  "plan_anchor": [
+   512,
+   832
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 26.361,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 37.427
+ },
+ "base_fill_of_plan": [
+  1.0,
+  0.882
+ ],
+ "job_code": "C21a",
+ "title": "Small farm halt",
+ "r0_outline_overlap": 0.926,
+ "verdict": [
+  "warn",
+  "Gable end with the chute window from r0 is clean; the far side is invented, the silo stands behind the roof ridge as in the model."
+ ],
+ "invented_surfaces": "r1: rear wall of the barn. r3: far wall and rear of the silo.",
+ "source_picture": "buildings-v2 farm-a0-r0",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

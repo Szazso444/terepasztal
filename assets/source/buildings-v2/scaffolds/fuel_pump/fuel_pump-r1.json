@@ -1,0 +1,515 @@
+{
+ "job": "fuel_pump",
+ "view": "r1",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   313.28,
+   847.84
+  ],
+  "s": [
+   480.32,
+   931.36
+  ],
+  "e": [
+   710.72,
+   816.16
+  ],
+  "n": [
+   543.68,
+   732.64
+  ]
+ },
+ "model_base_tiles": [
+  0.653,
+  0.9
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.6388,
+ "model_size_tiles_xyz": [
+  1.163,
+  0.966,
+  1.316
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.909,
+  0.663
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.737,
+   0.864
+  ],
+  [
+   0.567,
+   0.713
+  ],
+  [
+   0.562,
+   0.702
+  ],
+  [
+   0.533,
+   0.667
+  ]
+ ],
+ "texture": {
+  "fov_deg": 19.216,
+  "silhouette_iou": 0.9713,
+  "source_share": 0.181,
+  "nearest_share": 0.819
+ },
+ "outline_polygon_px": [
+  [
+   [
+    571,
+    299
+   ],
+   [
+    564,
+    302
+   ],
+   [
+    566,
+    312
+   ],
+   [
+    558,
+    317
+   ],
+   [
+    555,
+    328
+   ],
+   [
+    548,
+    335
+   ],
+   [
+    500,
+    447
+   ],
+   [
+    471,
+    461
+   ],
+   [
+    461,
+    459
+   ],
+   [
+    453,
+    467
+   ],
+   [
+    428,
+    479
+   ],
+   [
+    417,
+    478
+   ],
+   [
+    410,
+    486
+   ],
+   [
+    396,
+    492
+   ],
+   [
+    389,
+    501
+   ],
+   [
+    386,
+    516
+   ],
+   [
+    382,
+    521
+   ],
+   [
+    384,
+    552
+   ],
+   [
+    380,
+    568
+   ],
+   [
+    380,
+    597
+   ],
+   [
+    368,
+    605
+   ],
+   [
+    368,
+    624
+   ],
+   [
+    378,
+    631
+   ],
+   [
+    374,
+    663
+   ],
+   [
+    361,
+    671
+   ],
+   [
+    361,
+    719
+   ],
+   [
+    349,
+    787
+   ],
+   [
+    344,
+    790
+   ],
+   [
+    339,
+    832
+   ],
+   [
+    341,
+    844
+   ],
+   [
+    366,
+    857
+   ],
+   [
+    393,
+    846
+   ],
+   [
+    417,
+    857
+   ],
+   [
+    490,
+    901
+   ],
+   [
+    516,
+    891
+   ],
+   [
+    521,
+    884
+   ],
+   [
+    673,
+    808
+   ],
+   [
+    682,
+    811
+   ],
+   [
+    704,
+    801
+   ],
+   [
+    710,
+    792
+   ],
+   [
+    710,
+    767
+   ],
+   [
+    702,
+    761
+   ],
+   [
+    698,
+    707
+   ],
+   [
+    692,
+    682
+   ],
+   [
+    694,
+    630
+   ],
+   [
+    674,
+    620
+   ],
+   [
+    677,
+    595
+   ],
+   [
+    685,
+    586
+   ],
+   [
+    685,
+    569
+   ],
+   [
+    674,
+    562
+   ],
+   [
+    673,
+    548
+   ],
+   [
+    661,
+    541
+   ],
+   [
+    678,
+    527
+   ],
+   [
+    681,
+    509
+   ],
+   [
+    678,
+    483
+   ],
+   [
+    672,
+    465
+   ],
+   [
+    661,
+    448
+   ],
+   [
+    659,
+    424
+   ],
+   [
+    650,
+    404
+   ],
+   [
+    652,
+    395
+   ],
+   [
+    643,
+    381
+   ],
+   [
+    629,
+    373
+   ],
+   [
+    619,
+    372
+   ],
+   [
+    611,
+    379
+   ],
+   [
+    609,
+    400
+   ],
+   [
+    602,
+    410
+   ],
+   [
+    592,
+    409
+   ],
+   [
+    581,
+    415
+   ],
+   [
+    576,
+    413
+   ],
+   [
+    582,
+    356
+   ],
+   [
+    575,
+    351
+   ],
+   [
+    575,
+    343
+   ],
+   [
+    590,
+    312
+   ],
+   [
+    588,
+    306
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   339,
+   299,
+   710,
+   901
+  ],
+  "area_px": 138542,
+  "top_row_px": 299,
+  "bottom_row_px": 901,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    307.0178,
+    844.7089
+   ],
+   "s": [
+    486.5822,
+    934.4911
+   ],
+   "e": [
+    716.9822,
+    819.2911
+   ],
+   "n": [
+    537.4178,
+    729.5089
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    832
+   ],
+   "s": [
+    512,
+    960
+   ],
+   "e": [
+    768,
+    832
+   ],
+   "n": [
+    512,
+    704
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1024
+  ],
+  "plan_anchor": [
+   512,
+   832
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 28.418,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 7.001
+ },
+ "base_fill_of_plan": [
+  0.726,
+  1.0
+ ],
+ "job_code": "R8e",
+ "title": "Fuel Pump",
+ "r0_outline_overlap": 0.9049,
+ "verdict": [
+  "warn",
+  "Shape right; the hose arm points away from the camera and its end is a smear. Brick wall invented."
+ ],
+ "invented_surfaces": "r1: rear wall, hose. r2: both walls. r3: rear wall.",
+ "source_picture": "fuel_pump-a1-r0 (art/325-fuel-pump)",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

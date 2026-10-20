@@ -1,0 +1,435 @@
+{
+ "job": "fuel_pump",
+ "view": "r3",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   313.28,
+   847.84
+  ],
+  "s": [
+   480.32,
+   931.36
+  ],
+  "e": [
+   710.72,
+   816.16
+  ],
+  "n": [
+   543.68,
+   732.64
+  ]
+ },
+ "model_base_tiles": [
+  0.653,
+  0.9
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.6388,
+ "model_size_tiles_xyz": [
+  1.163,
+  0.966,
+  1.316
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.909,
+  0.663
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.737,
+   0.864
+  ],
+  [
+   0.567,
+   0.713
+  ],
+  [
+   0.562,
+   0.702
+  ],
+  [
+   0.533,
+   0.667
+  ]
+ ],
+ "texture": {
+  "fov_deg": 19.216,
+  "silhouette_iou": 0.9713,
+  "source_share": 0.181,
+  "nearest_share": 0.819
+ },
+ "outline_polygon_px": [
+  [
+   [
+    563,
+    377
+   ],
+   [
+    549,
+    387
+   ],
+   [
+    554,
+    400
+   ],
+   [
+    555,
+    422
+   ],
+   [
+    476,
+    453
+   ],
+   [
+    409,
+    485
+   ],
+   [
+    391,
+    474
+   ],
+   [
+    374,
+    481
+   ],
+   [
+    371,
+    493
+   ],
+   [
+    364,
+    504
+   ],
+   [
+    362,
+    527
+   ],
+   [
+    351,
+    537
+   ],
+   [
+    344,
+    550
+   ],
+   [
+    342,
+    571
+   ],
+   [
+    349,
+    600
+   ],
+   [
+    338,
+    609
+   ],
+   [
+    338,
+    624
+   ],
+   [
+    346,
+    634
+   ],
+   [
+    349,
+    660
+   ],
+   [
+    329,
+    671
+   ],
+   [
+    331,
+    720
+   ],
+   [
+    325,
+    743
+   ],
+   [
+    321,
+    792
+   ],
+   [
+    313,
+    798
+   ],
+   [
+    314,
+    827
+   ],
+   [
+    478,
+    914
+   ],
+   [
+    521,
+    895
+   ],
+   [
+    634,
+    834
+   ],
+   [
+    632,
+    810
+   ],
+   [
+    667,
+    794
+   ],
+   [
+    684,
+    782
+   ],
+   [
+    680,
+    734
+   ],
+   [
+    674,
+    730
+   ],
+   [
+    662,
+    664
+   ],
+   [
+    662,
+    620
+   ],
+   [
+    650,
+    612
+   ],
+   [
+    645,
+    580
+   ],
+   [
+    655,
+    574
+   ],
+   [
+    655,
+    554
+   ],
+   [
+    643,
+    545
+   ],
+   [
+    643,
+    516
+   ],
+   [
+    639,
+    498
+   ],
+   [
+    639,
+    480
+   ],
+   [
+    642,
+    474
+   ],
+   [
+    637,
+    465
+   ],
+   [
+    635,
+    452
+   ],
+   [
+    627,
+    444
+   ],
+   [
+    601,
+    446
+   ],
+   [
+    579,
+    433
+   ],
+   [
+    580,
+    422
+   ],
+   [
+    575,
+    419
+   ],
+   [
+    579,
+    409
+   ],
+   [
+    573,
+    396
+   ],
+   [
+    576,
+    387
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   313,
+   377,
+   684,
+   914
+  ],
+  "area_px": 134115,
+  "top_row_px": 377,
+  "bottom_row_px": 914,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    307.0178,
+    844.7089
+   ],
+   "s": [
+    486.5822,
+    934.4911
+   ],
+   "e": [
+    716.9822,
+    819.2911
+   ],
+   "n": [
+    537.4178,
+    729.5089
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    832
+   ],
+   "s": [
+    512,
+    960
+   ],
+   "e": [
+    768,
+    832
+   ],
+   "n": [
+    512,
+    704
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1024
+  ],
+  "plan_anchor": [
+   512,
+   832
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 28.418,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 7.001
+ },
+ "base_fill_of_plan": [
+  0.726,
+  1.0
+ ],
+ "job_code": "R8e",
+ "title": "Fuel Pump",
+ "r0_outline_overlap": 0.9049,
+ "verdict": [
+  "good",
+  "Door wall seen from the other side and the tank are clean enough; the hose is soft."
+ ],
+ "invented_surfaces": "r1: rear wall, hose. r2: both walls. r3: rear wall.",
+ "source_picture": "fuel_pump-a1-r0 (art/325-fuel-pump)",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

@@ -1,0 +1,395 @@
+{
+ "job": "substation",
+ "view": "r3",
+ "canvas": [
+  1536,
+  1024
+ ],
+ "anchor": [
+  768,
+  760
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   192.0,
+   96.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   192.0,
+   -96.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 235.151,
+  "origin_px": [
+   768.0,
+   760.0
+  ],
+  "anchor_px": [
+   768,
+   760
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   384.0,
+   760.0
+  ],
+  "s": [
+   768.0,
+   952.0
+  ],
+  "e": [
+   1152.0,
+   760.0
+  ],
+  "n": [
+   768.0,
+   568.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   422.4,
+   760.0
+  ],
+  "s": [
+   768.0,
+   932.8
+  ],
+  "e": [
+   1113.6,
+   760.0
+  ],
+  "n": [
+   768.0,
+   587.2
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   471.48,
+   784.54
+  ],
+  "s": [
+   718.92,
+   908.26
+  ],
+  "e": [
+   1064.52,
+   735.46
+  ],
+  "n": [
+   817.08,
+   611.74
+  ]
+ },
+ "model_base_tiles": [
+  1.289,
+  1.8
+ ],
+ "plan_base_tiles": [
+  1.8,
+  1.8
+ ],
+ "uniform_scale_applied": 2.524,
+ "model_size_tiles_xyz": [
+  1.834,
+  1.309,
+  1.728
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  1.834,
+  1.309
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.714,
+   0.812
+  ],
+  [
+   0.489,
+   0.594
+  ],
+  [
+   0.487,
+   0.607
+  ],
+  [
+   0.475,
+   0.566
+  ]
+ ],
+ "texture": {
+  "fov_deg": 15.199,
+  "silhouette_iou": 0.9561,
+  "source_share": 0.17,
+  "nearest_share": 0.83
+ },
+ "outline_polygon_px": [
+  [
+   [
+    862,
+    303
+   ],
+   [
+    837,
+    312
+   ],
+   [
+    833,
+    329
+   ],
+   [
+    822,
+    327
+   ],
+   [
+    814,
+    332
+   ],
+   [
+    813,
+    337
+   ],
+   [
+    735,
+    371
+   ],
+   [
+    731,
+    380
+   ],
+   [
+    691,
+    397
+   ],
+   [
+    683,
+    395
+   ],
+   [
+    664,
+    411
+   ],
+   [
+    618,
+    430
+   ],
+   [
+    604,
+    425
+   ],
+   [
+    582,
+    438
+   ],
+   [
+    581,
+    467
+   ],
+   [
+    587,
+    471
+   ],
+   [
+    585,
+    679
+   ],
+   [
+    556,
+    695
+   ],
+   [
+    553,
+    713
+   ],
+   [
+    478,
+    749
+   ],
+   [
+    473,
+    755
+   ],
+   [
+    473,
+    782
+   ],
+   [
+    716,
+    906
+   ],
+   [
+    724,
+    905
+   ],
+   [
+    941,
+    793
+   ],
+   [
+    958,
+    781
+   ],
+   [
+    983,
+    772
+   ],
+   [
+    1059,
+    731
+   ],
+   [
+    1058,
+    705
+   ],
+   [
+    991,
+    673
+   ],
+   [
+    952,
+    650
+   ],
+   [
+    957,
+    638
+   ],
+   [
+    956,
+    551
+   ],
+   [
+    948,
+    544
+   ],
+   [
+    949,
+    515
+   ],
+   [
+    947,
+    511
+   ],
+   [
+    919,
+    496
+   ],
+   [
+    890,
+    485
+   ],
+   [
+    889,
+    444
+   ],
+   [
+    877,
+    429
+   ],
+   [
+    874,
+    414
+   ],
+   [
+    877,
+    351
+   ],
+   [
+    886,
+    341
+   ],
+   [
+    887,
+    318
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   472,
+   303,
+   1059,
+   906
+  ],
+  "area_px": 174027,
+  "top_row_px": 303,
+  "bottom_row_px": 906,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    422.4,
+    760
+   ],
+   "s": [
+    768,
+    932.8
+   ],
+   "e": [
+    1113.6,
+    760
+   ],
+   "n": [
+    768,
+    587.2
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    384,
+    760
+   ],
+   "s": [
+    768,
+    952
+   ],
+   "e": [
+    1152,
+    760
+   ],
+   "n": [
+    768,
+    568
+   ]
+  },
+  "plan_canvas": [
+   1536,
+   1024
+  ],
+  "plan_anchor": [
+   768,
+   760
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 54.873
+ },
+ "base_fill_of_plan": [
+  0.716,
+  1.0
+ ],
+ "job_code": "C28a",
+ "title": "Battery",
+ "r0_outline_overlap": 0.8693,
+ "verdict": [
+  "warn",
+  "Cabinet end from r0 clean; the other side invented."
+ ],
+ "invented_surfaces": "r1: rear fins and gantry side. r2: both tank sides. r3: far side.",
+ "source_picture": "base-v1/substation.png",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

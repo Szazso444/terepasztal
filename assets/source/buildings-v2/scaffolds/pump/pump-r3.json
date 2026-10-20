@@ -1,0 +1,455 @@
+{
+ "job": "pump",
+ "view": "r3",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   303.76,
+   820.92
+  ],
+  "s": [
+   534.16,
+   936.12
+  ],
+  "e": [
+   720.24,
+   843.08
+  ],
+  "n": [
+   489.84,
+   727.88
+  ]
+ },
+ "model_base_tiles": [
+  0.9,
+  0.727
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.0857,
+ "model_size_tiles_xyz": [
+  0.751,
+  0.911,
+  0.926
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.75,
+  0.91
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.808,
+   0.908
+  ],
+  [
+   0.532,
+   0.689
+  ],
+  [
+   0.53,
+   0.666
+  ],
+  [
+   0.516,
+   0.671
+  ]
+ ],
+ "texture": {
+  "fov_deg": 14.231,
+  "silhouette_iou": 0.9775,
+  "source_share": 0.188,
+  "nearest_share": 0.812
+ },
+ "outline_polygon_px": [
+  [
+   [
+    482,
+    511
+   ],
+   [
+    479,
+    513
+   ],
+   [
+    479,
+    521
+   ],
+   [
+    468,
+    519
+   ],
+   [
+    465,
+    524
+   ],
+   [
+    466,
+    531
+   ],
+   [
+    453,
+    538
+   ],
+   [
+    454,
+    564
+   ],
+   [
+    449,
+    569
+   ],
+   [
+    449,
+    583
+   ],
+   [
+    400,
+    601
+   ],
+   [
+    400,
+    609
+   ],
+   [
+    360,
+    643
+   ],
+   [
+    363,
+    645
+   ],
+   [
+    357,
+    649
+   ],
+   [
+    359,
+    658
+   ],
+   [
+    368,
+    663
+   ],
+   [
+    365,
+    750
+   ],
+   [
+    358,
+    754
+   ],
+   [
+    356,
+    796
+   ],
+   [
+    360,
+    800
+   ],
+   [
+    360,
+    822
+   ],
+   [
+    364,
+    830
+   ],
+   [
+    378,
+    837
+   ],
+   [
+    387,
+    835
+   ],
+   [
+    401,
+    843
+   ],
+   [
+    421,
+    832
+   ],
+   [
+    445,
+    843
+   ],
+   [
+    457,
+    837
+   ],
+   [
+    473,
+    857
+   ],
+   [
+    483,
+    863
+   ],
+   [
+    497,
+    856
+   ],
+   [
+    521,
+    868
+   ],
+   [
+    547,
+    855
+   ],
+   [
+    548,
+    903
+   ],
+   [
+    562,
+    909
+   ],
+   [
+    584,
+    909
+   ],
+   [
+    596,
+    901
+   ],
+   [
+    597,
+    839
+   ],
+   [
+    591,
+    830
+   ],
+   [
+    585,
+    795
+   ],
+   [
+    576,
+    781
+   ],
+   [
+    584,
+    781
+   ],
+   [
+    590,
+    774
+   ],
+   [
+    587,
+    732
+   ],
+   [
+    582,
+    726
+   ],
+   [
+    580,
+    650
+   ],
+   [
+    583,
+    639
+   ],
+   [
+    590,
+    633
+   ],
+   [
+    590,
+    628
+   ],
+   [
+    587,
+    627
+   ],
+   [
+    583,
+    611
+   ],
+   [
+    574,
+    599
+   ],
+   [
+    549,
+    549
+   ],
+   [
+    539,
+    542
+   ],
+   [
+    500,
+    558
+   ],
+   [
+    504,
+    537
+   ],
+   [
+    491,
+    528
+   ],
+   [
+    492,
+    513
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   356,
+   511,
+   597,
+   910
+  ],
+  "area_px": 65000,
+  "top_row_px": 511,
+  "bottom_row_px": 910,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    281.6,
+    832
+   ],
+   "s": [
+    512,
+    947.2
+   ],
+   "e": [
+    742.4,
+    832
+   ],
+   "n": [
+    512,
+    716.8
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    832
+   ],
+   "s": [
+    512,
+    960
+   ],
+   "e": [
+    768,
+    832
+   ],
+   "n": [
+    512,
+    704
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1024
+  ],
+  "plan_anchor": [
+   512,
+   832
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 24.776
+ },
+ "base_fill_of_plan": [
+  1.0,
+  0.808
+ ],
+ "job_code": "C24a",
+ "title": "Water pump",
+ "r0_outline_overlap": 0.914,
+ "verdict": [
+  "warn",
+  "Window wall with the flywheel from r0 is partly clean; the flywheel and pipe are soft."
+ ],
+ "invented_surfaces": "r1: end wall. r2: both walls. r3: back of the flywheel.",
+ "source_picture": "base-v1/pump.png",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

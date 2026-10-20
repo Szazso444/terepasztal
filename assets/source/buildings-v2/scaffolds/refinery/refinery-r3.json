@@ -1,0 +1,507 @@
+{
+ "job": "refinery",
+ "view": "r3",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   305.09,
+   843.75
+  ],
+  "s": [
+   488.51,
+   935.45
+  ],
+  "e": [
+   718.91,
+   820.25
+  ],
+  "n": [
+   535.49,
+   728.55
+  ]
+ },
+ "model_base_tiles": [
+  0.716,
+  0.9
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.2797,
+ "model_size_tiles_xyz": [
+  0.961,
+  0.762,
+  1.098
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.94,
+  0.761
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.746,
+   0.854
+  ],
+  [
+   0.441,
+   0.598
+  ],
+  [
+   0.419,
+   0.526
+  ],
+  [
+   0.394,
+   0.492
+  ]
+ ],
+ "texture": {
+  "fov_deg": 13.657,
+  "silhouette_iou": 0.9543,
+  "source_share": 0.175,
+  "nearest_share": 0.825
+ },
+ "outline_polygon_px": [
+  [
+   [
+    518,
+    467
+   ],
+   [
+    492,
+    476
+   ],
+   [
+    482,
+    486
+   ],
+   [
+    476,
+    503
+   ],
+   [
+    479,
+    509
+   ],
+   [
+    477,
+    522
+   ],
+   [
+    481,
+    524
+   ],
+   [
+    484,
+    545
+   ],
+   [
+    484,
+    565
+   ],
+   [
+    479,
+    568
+   ],
+   [
+    481,
+    584
+   ],
+   [
+    475,
+    589
+   ],
+   [
+    474,
+    684
+   ],
+   [
+    477,
+    686
+   ],
+   [
+    477,
+    693
+   ],
+   [
+    466,
+    697
+   ],
+   [
+    464,
+    691
+   ],
+   [
+    459,
+    688
+   ],
+   [
+    460,
+    698
+   ],
+   [
+    450,
+    702
+   ],
+   [
+    447,
+    708
+   ],
+   [
+    447,
+    752
+   ],
+   [
+    443,
+    754
+   ],
+   [
+    442,
+    770
+   ],
+   [
+    450,
+    773
+   ],
+   [
+    453,
+    781
+   ],
+   [
+    435,
+    790
+   ],
+   [
+    423,
+    805
+   ],
+   [
+    420,
+    816
+   ],
+   [
+    420,
+    840
+   ],
+   [
+    426,
+    861
+   ],
+   [
+    416,
+    859
+   ],
+   [
+    411,
+    872
+   ],
+   [
+    414,
+    875
+   ],
+   [
+    416,
+    895
+   ],
+   [
+    428,
+    895
+   ],
+   [
+    490,
+    926
+   ],
+   [
+    508,
+    914
+   ],
+   [
+    522,
+    914
+   ],
+   [
+    530,
+    902
+   ],
+   [
+    588,
+    871
+   ],
+   [
+    600,
+    869
+   ],
+   [
+    601,
+    863
+   ],
+   [
+    610,
+    857
+   ],
+   [
+    624,
+    854
+   ],
+   [
+    622,
+    824
+   ],
+   [
+    614,
+    822
+   ],
+   [
+    608,
+    832
+   ],
+   [
+    598,
+    834
+   ],
+   [
+    603,
+    829
+   ],
+   [
+    612,
+    807
+   ],
+   [
+    613,
+    792
+   ],
+   [
+    608,
+    768
+   ],
+   [
+    624,
+    763
+   ],
+   [
+    620,
+    747
+   ],
+   [
+    621,
+    636
+   ],
+   [
+    596,
+    622
+   ],
+   [
+    597,
+    613
+   ],
+   [
+    587,
+    604
+   ],
+   [
+    584,
+    597
+   ],
+   [
+    572,
+    596
+   ],
+   [
+    570,
+    585
+   ],
+   [
+    574,
+    566
+   ],
+   [
+    571,
+    557
+   ],
+   [
+    562,
+    551
+   ],
+   [
+    547,
+    553
+   ],
+   [
+    547,
+    548
+   ],
+   [
+    544,
+    547
+   ],
+   [
+    545,
+    523
+   ],
+   [
+    526,
+    502
+   ],
+   [
+    528,
+    474
+   ],
+   [
+    525,
+    469
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   411,
+   467,
+   624,
+   926
+  ],
+  "area_px": 57801,
+  "top_row_px": 467,
+  "bottom_row_px": 926,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    281.6,
+    832
+   ],
+   "s": [
+    512,
+    947.2
+   ],
+   "e": [
+    742.4,
+    832
+   ],
+   "n": [
+    512,
+    716.8
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    832
+   ],
+   "s": [
+    512,
+    960
+   ],
+   "e": [
+    768,
+    832
+   ],
+   "n": [
+    512,
+    704
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1024
+  ],
+  "plan_anchor": [
+   512,
+   832
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 26.265
+ },
+ "base_fill_of_plan": [
+  0.796,
+  1.0
+ ],
+ "job_code": "C26a",
+ "title": "Oil refinery",
+ "r0_outline_overlap": 0.8998,
+ "verdict": [
+  "warn",
+  "Tank end and column right; pipe runs are soft."
+ ],
+ "invented_surfaces": "r1/r2/r3: the far sides of the pipe runs, tank ends, back of the furnace frame.",
+ "source_picture": "base-v1/refinery.png",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

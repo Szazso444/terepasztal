@@ -1,0 +1,539 @@
+{
+ "job": "ironworks",
+ "view": "r1",
+ "canvas": [
+  1536,
+  1024
+ ],
+ "anchor": [
+  768,
+  760
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   192.0,
+   96.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   192.0,
+   -96.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 235.151,
+  "origin_px": [
+   768.0,
+   760.0
+  ],
+  "anchor_px": [
+   768,
+   760
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   384.0,
+   760.0
+  ],
+  "s": [
+   768.0,
+   952.0
+  ],
+  "e": [
+   1152.0,
+   760.0
+  ],
+  "n": [
+   768.0,
+   568.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   422.4,
+   760.0
+  ],
+  "s": [
+   768.0,
+   932.8
+  ],
+  "e": [
+   1113.6,
+   760.0
+  ],
+  "n": [
+   768.0,
+   587.2
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   459.59,
+   778.59
+  ],
+  "s": [
+   730.81,
+   914.21
+  ],
+  "e": [
+   1076.41,
+   741.41
+  ],
+  "n": [
+   805.19,
+   605.79
+  ]
+ },
+ "model_base_tiles": [
+  1.413,
+  1.8
+ ],
+ "plan_base_tiles": [
+  1.8,
+  1.8
+ ],
+ "uniform_scale_applied": 2.3842,
+ "model_size_tiles_xyz": [
+  1.858,
+  1.464,
+  1.904
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  1.842,
+  1.463
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.788,
+   0.891
+  ],
+  [
+   0.626,
+   0.743
+  ],
+  [
+   0.571,
+   0.702
+  ],
+  [
+   0.569,
+   0.699
+  ]
+ ],
+ "texture": {
+  "fov_deg": 17.75,
+  "silhouette_iou": 0.9649,
+  "source_share": 0.162,
+  "nearest_share": 0.838
+ },
+ "outline_polygon_px": [
+  [
+   [
+    747,
+    244
+   ],
+   [
+    738,
+    246
+   ],
+   [
+    710,
+    266
+   ],
+   [
+    711,
+    290
+   ],
+   [
+    719,
+    304
+   ],
+   [
+    719,
+    330
+   ],
+   [
+    714,
+    381
+   ],
+   [
+    708,
+    401
+   ],
+   [
+    709,
+    419
+   ],
+   [
+    704,
+    424
+   ],
+   [
+    703,
+    434
+   ],
+   [
+    664,
+    493
+   ],
+   [
+    665,
+    511
+   ],
+   [
+    645,
+    525
+   ],
+   [
+    648,
+    534
+   ],
+   [
+    647,
+    553
+   ],
+   [
+    641,
+    557
+   ],
+   [
+    637,
+    567
+   ],
+   [
+    599,
+    585
+   ],
+   [
+    564,
+    607
+   ],
+   [
+    575,
+    631
+   ],
+   [
+    573,
+    747
+   ],
+   [
+    568,
+    764
+   ],
+   [
+    557,
+    764
+   ],
+   [
+    549,
+    770
+   ],
+   [
+    550,
+    794
+   ],
+   [
+    608,
+    821
+   ],
+   [
+    614,
+    820
+   ],
+   [
+    616,
+    816
+   ],
+   [
+    627,
+    818
+   ],
+   [
+    634,
+    815
+   ],
+   [
+    669,
+    832
+   ],
+   [
+    667,
+    837
+   ],
+   [
+    660,
+    839
+   ],
+   [
+    659,
+    858
+   ],
+   [
+    705,
+    880
+   ],
+   [
+    713,
+    880
+   ],
+   [
+    727,
+    873
+   ],
+   [
+    750,
+    873
+   ],
+   [
+    756,
+    860
+   ],
+   [
+    798,
+    841
+   ],
+   [
+    807,
+    842
+   ],
+   [
+    848,
+    822
+   ],
+   [
+    860,
+    821
+   ],
+   [
+    875,
+    814
+   ],
+   [
+    876,
+    809
+   ],
+   [
+    884,
+    811
+   ],
+   [
+    903,
+    801
+   ],
+   [
+    917,
+    802
+   ],
+   [
+    949,
+    787
+   ],
+   [
+    953,
+    779
+   ],
+   [
+    994,
+    762
+   ],
+   [
+    995,
+    751
+   ],
+   [
+    1023,
+    739
+   ],
+   [
+    1022,
+    698
+   ],
+   [
+    1016,
+    690
+   ],
+   [
+    1015,
+    650
+   ],
+   [
+    1009,
+    646
+   ],
+   [
+    1001,
+    541
+   ],
+   [
+    1001,
+    522
+   ],
+   [
+    1007,
+    515
+   ],
+   [
+    945,
+    433
+   ],
+   [
+    946,
+    414
+   ],
+   [
+    934,
+    405
+   ],
+   [
+    933,
+    393
+   ],
+   [
+    922,
+    382
+   ],
+   [
+    912,
+    392
+   ],
+   [
+    911,
+    400
+   ],
+   [
+    858,
+    427
+   ],
+   [
+    853,
+    416
+   ],
+   [
+    844,
+    409
+   ],
+   [
+    839,
+    411
+   ],
+   [
+    834,
+    424
+   ],
+   [
+    808,
+    414
+   ],
+   [
+    816,
+    406
+   ],
+   [
+    812,
+    379
+   ],
+   [
+    804,
+    369
+   ],
+   [
+    791,
+    289
+   ],
+   [
+    798,
+    280
+   ],
+   [
+    792,
+    252
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   548,
+   244,
+   1023,
+   880
+  ],
+  "area_px": 170995,
+  "top_row_px": 244,
+  "bottom_row_px": 880,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    422.4,
+    760
+   ],
+   "s": [
+    768,
+    932.8
+   ],
+   "e": [
+    1113.6,
+    760
+   ],
+   "n": [
+    768,
+    587.2
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    384,
+    760
+   ],
+   "s": [
+    768,
+    952
+   ],
+   "e": [
+    1152,
+    760
+   ],
+   "n": [
+    768,
+    568
+   ]
+  },
+  "plan_canvas": [
+   1536,
+   1024
+  ],
+  "plan_anchor": [
+   768,
+   760
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 41.577
+ },
+ "base_fill_of_plan": [
+  0.785,
+  1.0
+ ],
+ "job_code": "C31a",
+ "title": "Ironworks",
+ "r0_outline_overlap": 0.9353,
+ "verdict": [
+  "warn",
+  "Forge hall from r0 clean at the lower left; the far wall is a patchwork of brick, stone and grey."
+ ],
+ "invented_surfaces": "r1: far wall. r2: both walls (patchy). r3: open hall seen from the rear.",
+ "source_picture": "works-full-ironworks",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

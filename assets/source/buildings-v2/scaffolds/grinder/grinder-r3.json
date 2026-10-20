@@ -1,0 +1,415 @@
+{
+ "job": "grinder",
+ "view": "r3",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   332.13,
+   857.26
+  ],
+  "s": [
+   461.47,
+   921.94
+  ],
+  "e": [
+   691.87,
+   806.74
+  ],
+  "n": [
+   562.53,
+   742.06
+  ]
+ },
+ "model_base_tiles": [
+  0.505,
+  0.9
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.1482,
+ "model_size_tiles_xyz": [
+  0.923,
+  0.557,
+  0.865
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.922,
+  0.523
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.796,
+   0.922
+  ],
+  [
+   0.637,
+   0.782
+  ],
+  [
+   0.636,
+   0.783
+  ],
+  [
+   0.618,
+   0.77
+  ]
+ ],
+ "texture": {
+  "fov_deg": 16.494,
+  "silhouette_iou": 0.9786,
+  "source_share": 0.174,
+  "nearest_share": 0.826
+ },
+ "outline_polygon_px": [
+  [
+   [
+    483,
+    519
+   ],
+   [
+    477,
+    521
+   ],
+   [
+    477,
+    528
+   ],
+   [
+    468,
+    534
+   ],
+   [
+    471,
+    552
+   ],
+   [
+    468,
+    578
+   ],
+   [
+    422,
+    597
+   ],
+   [
+    416,
+    593
+   ],
+   [
+    406,
+    595
+   ],
+   [
+    397,
+    612
+   ],
+   [
+    361,
+    645
+   ],
+   [
+    363,
+    657
+   ],
+   [
+    371,
+    663
+   ],
+   [
+    371,
+    728
+   ],
+   [
+    352,
+    738
+   ],
+   [
+    349,
+    745
+   ],
+   [
+    342,
+    851
+   ],
+   [
+    344,
+    858
+   ],
+   [
+    391,
+    876
+   ],
+   [
+    400,
+    885
+   ],
+   [
+    403,
+    881
+   ],
+   [
+    413,
+    891
+   ],
+   [
+    445,
+    899
+   ],
+   [
+    447,
+    904
+   ],
+   [
+    466,
+    912
+   ],
+   [
+    487,
+    902
+   ],
+   [
+    511,
+    896
+   ],
+   [
+    519,
+    888
+   ],
+   [
+    647,
+    815
+   ],
+   [
+    644,
+    786
+   ],
+   [
+    631,
+    780
+   ],
+   [
+    625,
+    784
+   ],
+   [
+    623,
+    767
+   ],
+   [
+    638,
+    760
+   ],
+   [
+    630,
+    677
+   ],
+   [
+    637,
+    677
+   ],
+   [
+    636,
+    673
+   ],
+   [
+    597,
+    652
+   ],
+   [
+    596,
+    642
+   ],
+   [
+    604,
+    636
+   ],
+   [
+    603,
+    631
+   ],
+   [
+    565,
+    572
+   ],
+   [
+    554,
+    548
+   ],
+   [
+    541,
+    548
+   ],
+   [
+    532,
+    555
+   ],
+   [
+    501,
+    566
+   ],
+   [
+    500,
+    533
+   ],
+   [
+    490,
+    528
+   ],
+   [
+    489,
+    522
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   342,
+   519,
+   647,
+   912
+  ],
+  "area_px": 80092,
+  "top_row_px": 519,
+  "bottom_row_px": 912,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    281.6,
+    832
+   ],
+   "s": [
+    512,
+    947.2
+   ],
+   "e": [
+    742.4,
+    832
+   ],
+   "n": [
+    512,
+    716.8
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    832
+   ],
+   "s": [
+    512,
+    960
+   ],
+   "e": [
+    768,
+    832
+   ],
+   "n": [
+    512,
+    704
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1024
+  ],
+  "plan_anchor": [
+   512,
+   832
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 56.492
+ },
+ "base_fill_of_plan": [
+  0.561,
+  1.0
+ ],
+ "job_code": "C25a",
+ "title": "Stone grinder",
+ "r0_outline_overlap": 0.963,
+ "verdict": [
+  "warn",
+  "The millstone arch from r0 is seen from the side and is soft; the far end is invented."
+ ],
+ "invented_surfaces": "r1: gable end. r2: both walls. r3: far end.",
+ "source_picture": "base-v1/grinder.png",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

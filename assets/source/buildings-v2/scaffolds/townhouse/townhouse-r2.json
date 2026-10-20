@@ -1,0 +1,335 @@
+{
+ "job": "townhouse",
+ "view": "r2",
+ "canvas": [
+  1024,
+  1536
+ ],
+ "anchor": [
+  512,
+  1344
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   1344.0
+  ],
+  "anchor_px": [
+   512,
+   1344
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   1344.0
+  ],
+  "s": [
+   512.0,
+   1472.0
+  ],
+  "e": [
+   768.0,
+   1344.0
+  ],
+  "n": [
+   512.0,
+   1216.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   1344.0
+  ],
+  "s": [
+   512.0,
+   1459.2
+  ],
+  "e": [
+   742.4,
+   1344.0
+  ],
+  "n": [
+   512.0,
+   1228.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   327.29,
+   1321.15
+  ],
+  "s": [
+   557.69,
+   1436.35
+  ],
+  "e": [
+   696.71,
+   1366.85
+  ],
+  "n": [
+   466.31,
+   1251.65
+  ]
+ },
+ "model_base_tiles": [
+  0.9,
+  0.543
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.426,
+ "model_size_tiles_xyz": [
+  0.925,
+  0.584,
+  1.248
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.904,
+  0.548
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.806,
+   0.916
+  ],
+  [
+   0.631,
+   0.772
+  ],
+  [
+   0.626,
+   0.748
+  ],
+  [
+   0.591,
+   0.786
+  ]
+ ],
+ "texture": {
+  "fov_deg": 15.035,
+  "silhouette_iou": 0.9891,
+  "source_share": 0.24,
+  "nearest_share": 0.76
+ },
+ "outline_polygon_px": [
+  [
+   [
+    431,
+    905
+   ],
+   [
+    426,
+    911
+   ],
+   [
+    416,
+    910
+   ],
+   [
+    412,
+    914
+   ],
+   [
+    412,
+    941
+   ],
+   [
+    399,
+    948
+   ],
+   [
+    399,
+    989
+   ],
+   [
+    325,
+    1154
+   ],
+   [
+    332,
+    1160
+   ],
+   [
+    334,
+    1172
+   ],
+   [
+    338,
+    1177
+   ],
+   [
+    329,
+    1312
+   ],
+   [
+    448,
+    1377
+   ],
+   [
+    555,
+    1431
+   ],
+   [
+    560,
+    1431
+   ],
+   [
+    694,
+    1366
+   ],
+   [
+    689,
+    1223
+   ],
+   [
+    695,
+    1198
+   ],
+   [
+    702,
+    1189
+   ],
+   [
+    649,
+    1119
+   ],
+   [
+    632,
+    1092
+   ],
+   [
+    626,
+    1076
+   ],
+   [
+    455,
+    1002
+   ],
+   [
+    455,
+    965
+   ],
+   [
+    458,
+    949
+   ],
+   [
+    456,
+    944
+   ],
+   [
+    445,
+    939
+   ],
+   [
+    445,
+    908
+   ],
+   [
+    441,
+    905
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   325,
+   905,
+   702,
+   1431
+  ],
+  "area_px": 123764,
+  "top_row_px": 905,
+  "bottom_row_px": 1431,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    281.6,
+    1344
+   ],
+   "s": [
+    512,
+    1459.2
+   ],
+   "e": [
+    742.4,
+    1344
+   ],
+   "n": [
+    512,
+    1228.8
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    1344
+   ],
+   "s": [
+    512,
+    1472
+   ],
+   "e": [
+    768,
+    1344
+   ],
+   "n": [
+    512,
+    1216
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1536
+  ],
+  "plan_anchor": [
+   512,
+   1344
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 51.085
+ },
+ "base_fill_of_plan": [
+  1.0,
+  0.603
+ ],
+ "job_code": "C33a",
+ "title": "House (cottage)",
+ "r0_outline_overlap": 0.9513,
+ "verdict": [
+  "good",
+  "Shape right; the rear wall is invented (two windows, stone texture continues cleanly) and plausible."
+ ],
+ "invented_surfaces": "r2: rear wall (two windows). r3: far end.",
+ "source_picture": "house-cottage.png, from the pilot",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}

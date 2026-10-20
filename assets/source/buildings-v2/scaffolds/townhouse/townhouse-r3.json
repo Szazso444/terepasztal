@@ -1,0 +1,347 @@
+{
+ "job": "townhouse",
+ "view": "r3",
+ "canvas": [
+  1024,
+  1536
+ ],
+ "anchor": [
+  512,
+  1344
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "ground_slope_x": 0.5,
+  "ground_slope_y": -0.5,
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   1344.0
+  ],
+  "anchor_px": [
+   512,
+   1344
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   1344.0
+  ],
+  "s": [
+   512.0,
+   1472.0
+  ],
+  "e": [
+   768.0,
+   1344.0
+  ],
+  "n": [
+   512.0,
+   1216.0
+  ]
+ },
+ "plan_base_px_from_rule": {
+  "w": [
+   281.6,
+   1344.0
+  ],
+  "s": [
+   512.0,
+   1459.2
+  ],
+  "e": [
+   742.4,
+   1344.0
+  ],
+  "n": [
+   512.0,
+   1228.8
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   327.29,
+   1366.85
+  ],
+  "s": [
+   466.31,
+   1436.35
+  ],
+  "e": [
+   696.71,
+   1321.15
+  ],
+  "n": [
+   557.69,
+   1251.65
+  ]
+ },
+ "model_base_tiles": [
+  0.543,
+  0.9
+ ],
+ "plan_base_tiles": [
+  0.9,
+  0.9
+ ],
+ "uniform_scale_applied": 1.426,
+ "model_size_tiles_xyz": [
+  0.925,
+  0.584,
+  1.248
+ ],
+ "base_raw_extent_before_trim_tiles": [
+  0.904,
+  0.548
+ ],
+ "base_trim_percentiles": [
+  1,
+  99
+ ],
+ "pose_fit": [
+  [
+   0.806,
+   0.916
+  ],
+  [
+   0.631,
+   0.772
+  ],
+  [
+   0.626,
+   0.748
+  ],
+  [
+   0.591,
+   0.786
+  ]
+ ],
+ "texture": {
+  "fov_deg": 15.035,
+  "silhouette_iou": 0.9891,
+  "source_share": 0.24,
+  "nearest_share": 0.76
+ },
+ "outline_polygon_px": [
+  [
+   [
+    596,
+    905
+   ],
+   [
+    590,
+    905
+   ],
+   [
+    586,
+    909
+   ],
+   [
+    584,
+    937
+   ],
+   [
+    570,
+    945
+   ],
+   [
+    571,
+    1012
+   ],
+   [
+    406,
+    1080
+   ],
+   [
+    392,
+    1108
+   ],
+   [
+    331,
+    1189
+   ],
+   [
+    331,
+    1199
+   ],
+   [
+    336,
+    1205
+   ],
+   [
+    338,
+    1216
+   ],
+   [
+    329,
+    1364
+   ],
+   [
+    464,
+    1434
+   ],
+   [
+    566,
+    1384
+   ],
+   [
+    568,
+    1375
+   ],
+   [
+    594,
+    1362
+   ],
+   [
+    603,
+    1362
+   ],
+   [
+    692,
+    1312
+   ],
+   [
+    686,
+    1175
+   ],
+   [
+    693,
+    1160
+   ],
+   [
+    704,
+    1153
+   ],
+   [
+    636,
+    989
+   ],
+   [
+    626,
+    987
+   ],
+   [
+    626,
+    968
+   ],
+   [
+    630,
+    964
+   ],
+   [
+    630,
+    954
+   ],
+   [
+    618,
+    947
+   ],
+   [
+    621,
+    921
+   ],
+   [
+    613,
+    916
+   ],
+   [
+    605,
+    917
+   ],
+   [
+    603,
+    909
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   328,
+   905,
+   704,
+   1434
+  ],
+  "area_px": 122201,
+  "top_row_px": 905,
+  "bottom_row_px": 1434,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0
+ },
+ "plan_json": {
+  "base_corners_px": {
+   "w": [
+    281.6,
+    1344
+   ],
+   "s": [
+    512,
+    1459.2
+   ],
+   "e": [
+    742.4,
+    1344
+   ],
+   "n": [
+    512,
+    1228.8
+   ]
+  },
+  "footprint_corners_px": {
+   "w": [
+    256,
+    1344
+   ],
+   "s": [
+    512,
+    1472
+   ],
+   "e": [
+    768,
+    1344
+   ],
+   "n": [
+    512,
+    1216
+   ]
+  },
+  "plan_canvas": [
+   1024,
+   1536
+  ],
+  "plan_anchor": [
+   512,
+   1344
+  ]
+ },
+ "fit_vs_plan_json": {
+  "rule_base_corners_vs_plan_px_max_error": 0.0,
+  "footprint_corners_vs_plan_px_max_error": 0.0,
+  "model_base_corners_vs_plan_px_max_error": 51.085
+ },
+ "base_fill_of_plan": [
+  0.603,
+  1.0
+ ],
+ "job_code": "C33a",
+ "title": "House (cottage)",
+ "r0_outline_overlap": 0.9513,
+ "verdict": [
+  "good",
+  "The door wall is seen from the other side from r0 and is clean."
+ ],
+ "invented_surfaces": "r2: rear wall (two windows). r3: far end.",
+ "source_picture": "house-cottage.png, from the pilot",
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. canvas and anchor are the review-2 plan's; camera is the game camera."
+}
