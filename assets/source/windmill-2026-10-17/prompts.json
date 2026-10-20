@@ -1,0 +1,298 @@
+[
+  {
+    "attempt": 1,
+    "file": "raw/windmill-a0-r0-attempt-1.png",
+    "prompt": "Edit this grey block-out into ONE finished stone tower windmill WITHOUT SAILS, for a pastoral\r\nisometric railway game. Style: the attached style board; crisp clustered shading, broad readable\r\nmasses, three or four shades per material. Materials as the third and fourth pictures: cream\r\nlimestone courses with a few grey stones, a dark slate cone cap, an evergreen plank door with\r\niron straps. Light from the upper left: the cap's left side and the tower's upper left lightest,\r\nthe lower-left face mid-tone, the lower-right face darkest. Nothing brighter than a soft cream: no\r\npure-white highlights, nothing orange.\r\n\r\nCamera: keep the block-out's camera and turn exactly. Orthographic 2:1 isometric, 30 degrees\r\ndown. The tower is round and smooth, no facets: its foot is an ellipse half as tall as it is\r\nwide, and every stone course curves like that foot (down in the middle of the face), not as a\r\nstraight line. Keep the tower's size, taper and place, and the cone cap's height: the cone's tip\r\nstands where the block-out's does, with a plain tip, no finial, no ball. The dark door stays on\r\nthe LOWER-LEFT face where the block-out has it, at ground level on the tower's foot, as tall as the\r\nblock-out's door (about a quarter of the tower's foot width), an evergreen plank door with iron\r\nstraps and a plain stone frame; no step, no sack, nothing in front. One narrow window may sit\r\nabove it on the same face, on the same centre line. The windshaft: keep the block-out's stub, a\r\nshort round shaft of dark iron-banded timber coming out of the cap's lower-left slope and pointing\r\ndown and to the left along the lower-left face, two pixels across for each pixel down, and\r\nending in the block-out's dark iron hub plate, the same oval at the same place; the plate is bare,\r\nwith nothing on it.\r\n\r\nDo not paint the grey slab: the tower stands straight on the ground, its foot plain and clean. No\r\nsails, no stocks, no timber lattice, no square iron plate, no shadow, ground, grass, sacks, people,\r\ntext, border or glow. A real RGBA PNG with a transparent background (alpha 0) and an opaque\r\nbuilding. References: the first is the block-out to edit; the second the style board; the third\r\nthe game's present windmill, for stone, slate and door only (not its sails); the fourth an earlier\r\nbody, for stone, slate and window only, drawn from a camera that is wrong: do not copy its angle.",
+    "references": [
+      "assets/source/buildings-v2/guides/windmill-r0.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/windmill.png",
+      "assets/source/windmill-2026-10-16/windmill-a0-r0.png"
+    ],
+    "returned": [1254, 1254],
+    "numbers": {
+      "returned": [1254, 1254],
+      "box": [389, 368, 891, 1157],
+      "footWidth": 503,
+      "footCentre": [640, 1031.25],
+      "scale": 11.700395440800186,
+      "widthOverShort": 0.4011164274322169,
+      "camera": {
+        "off": false,
+        "by": 1.2,
+        "elevation": -1.2,
+        "turn": 0,
+        "ratio": 0.482,
+        "looking": 28.8
+      },
+      "apexOverW": 1.3185884691848906,
+      "stubSlope": 0.4307692307692308,
+      "hubFromAnchorWorld": [-16.32423459244533, -41.5414662027833],
+      "hubOffset": [-0.32423459244532893, -7.5414662027832975],
+      "hubDistance": 7.548432986962322,
+      "doorPosition": -0.24950298210735586,
+      "doorHeight": 0.38767395626242546,
+      "pixels": {
+        "timber": 1998,
+        "white": 6666,
+        "amber": 0
+      },
+      "check": {
+        "ok": true,
+        "problems": [],
+        "notes": [
+          "placed by its outline: no straight wall base was found",
+          "taller than its canvas by 45 px once on its footprint"
+        ],
+        "fit": {
+          "method": "outline",
+          "sure": [true, false],
+          "measured": [0.329, -0.5],
+          "slopes": [0.33, -0.5],
+          "base": {
+            "w": [439, 1096.6],
+            "s": [707.3, 1184.9],
+            "e": [891, 1093]
+          },
+          "scale": 0.9968,
+          "vertical": 1.2048,
+          "shear": 0.1024,
+          "cx": 665,
+          "cy": 1387.1,
+          "box": {
+            "left": 236.9,
+            "top": -45,
+            "right": 737.3,
+            "bottom": 909.6
+          },
+          "camera": null,
+          "area": 295678
+        }
+      },
+      "tests": {
+        "camera": true,
+        "tower": false,
+        "stub": true,
+        "hub": false,
+        "doorPosition": false,
+        "doorHeight": false,
+        "timber": false,
+        "amber": true,
+        "white": false,
+        "check": true,
+        "eye": true
+      },
+      "eye": {
+        "stub": [
+          [539, 530],
+          [474, 558]
+        ],
+        "hub": [449, 592],
+        "hubBox": [414, 544, 490, 642],
+        "door": [480, 934, 549, 1129],
+        "pass": true,
+        "notes": "Round smooth tower, plain tip, no sails/ground/objects. Limestone and slate, upper-left lighting. Door and shaft on lower-left face."
+      }
+    },
+    "kept": false
+  },
+  {
+    "attempt": 2,
+    "file": "raw/windmill-a0-r0-attempt-2.png",
+    "prompt": "Edit this grey block-out into ONE finished stone tower windmill WITHOUT SAILS, for a pastoral\r\nisometric railway game. Style: the attached style board; crisp clustered shading, broad readable\r\nmasses, three or four shades per material. Materials as the third and fourth pictures: cream\r\nlimestone courses with a few grey stones, a dark slate cone cap, an evergreen plank door with\r\niron straps. Light from the upper left: the cap's left side and the tower's upper left lightest,\r\nthe lower-left face mid-tone, the lower-right face darkest. Nothing brighter than a soft cream: no\r\npure-white highlights, nothing orange.\r\n\r\nCamera: keep the block-out's camera and turn exactly. Orthographic 2:1 isometric, 30 degrees\r\ndown. The tower is round and smooth, no facets: its foot is an ellipse half as tall as it is\r\nwide, and every stone course curves like that foot (down in the middle of the face), not as a\r\nstraight line. Keep the tower's size, taper and place, and the cone cap's height: the cone's tip\r\nstands where the block-out's does, with a plain tip, no finial, no ball. The dark door stays on\r\nthe LOWER-LEFT face where the block-out has it, at ground level on the tower's foot, as tall as the\r\nblock-out's door (about a quarter of the tower's foot width), an evergreen plank door with iron\r\nstraps and a plain stone frame; no step, no sack, nothing in front. One narrow window may sit\r\nabove it on the same face, on the same centre line. The windshaft: keep the block-out's stub, a\r\nshort round shaft of dark iron-banded timber coming out of the cap's lower-left slope and pointing\r\ndown and to the left along the lower-left face, two pixels across for each pixel down, and\r\nending in the block-out's dark iron hub plate, the same oval at the same place; the plate is bare,\r\nwith nothing on it.\r\n\r\nDo not paint the grey slab: the tower stands straight on the ground, its foot plain and clean. No\r\nsails, no stocks, no timber lattice, no square iron plate, no shadow, ground, grass, sacks, people,\r\ntext, border or glow. A real RGBA PNG with a transparent background (alpha 0) and an opaque\r\nbuilding. References: the first is the block-out to edit; the second the style board; the third\r\nthe game's present windmill, for stone, slate and door only (not its sails); the fourth an earlier\r\nbody, for stone, slate and window only, drawn from a camera that is wrong: do not copy its angle.\n\nCorrection: your last body's apex over foot width read 1.319 where the block-out's is 1.105 (must be 1.05 to 1.16): make the tower and cap shorter relative to its foot, matching the guide. Its hub read (-16.32, -41.54) game px where the guide's is (-16, -34), so put the plate lower to the guide's place. The door centre read -0.250 of the foot width where the guide's is -0.354, and its height read 0.388 where the guide's is 0.251: keep it further left, smaller, and at ground level exactly as in the guide. The dark orange timber count outside the door and hub was 1998 where at most 25 is allowed: make the shaft dark desaturated iron-banded timber, with no orange. Near-white count was 6666 where zero is requested: use muted cream, not bright white.",
+    "references": [
+      "assets/source/buildings-v2/guides/windmill-r0.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/windmill.png",
+      "assets/source/windmill-2026-10-16/windmill-a0-r0.png"
+    ],
+    "returned": [1254, 1254],
+    "numbers": {
+      "returned": [1254, 1254],
+      "box": [416, 519, 844, 1102],
+      "footWidth": 429,
+      "footCentre": [630, 994.75],
+      "scale": 9.979064898813677,
+      "widthOverShort": 0.34210526315789475,
+      "camera": {
+        "off": true,
+        "by": 4.3,
+        "elevation": 4.3,
+        "turn": 0,
+        "ratio": 0.563,
+        "looking": 34.3
+      },
+      "apexOverW": 1.108974358974359,
+      "stubSlope": 0.3225806451612903,
+      "hubFromAnchorWorld": [-16.033566433566435, -34.939772727272725],
+      "hubOffset": [-0.03356643356643474, -0.9397727272727252],
+      "hubDistance": 0.9403719925582567,
+      "doorPosition": -0.32284382284382285,
+      "doorHeight": 0.2773892773892774,
+      "pixels": {
+        "timber": 8,
+        "white": 1965,
+        "amber": 0
+      },
+      "check": {
+        "ok": false,
+        "problems": [
+          "camera off by 4.3°: it looks down from 34.3° where the game looks down from 30° (the tower's foot is an ellipse 0.56 minor over major, the game's 0.50)"
+        ],
+        "notes": ["placed by its outline: no straight wall base was found"],
+        "fit": {
+          "method": "outline",
+          "sure": [false, false],
+          "measured": [0.5, -0.5],
+          "slopes": [0.5, -0.5],
+          "base": {
+            "w": [416, 1031],
+            "s": [635.5, 1140.8],
+            "e": [842, 1037.5]
+          },
+          "scale": 1.0577,
+          "vertical": 1,
+          "shear": 0,
+          "cx": 629,
+          "cy": 1034.3,
+          "box": {
+            "left": 286.7,
+            "top": 287,
+            "right": 739.4,
+            "bottom": 903.7
+          },
+          "camera": null,
+          "area": 183287
+        },
+        "camera": {
+          "by": 4.3,
+          "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+        }
+      },
+      "tests": {
+        "camera": false,
+        "tower": true,
+        "stub": false,
+        "hub": true,
+        "doorPosition": true,
+        "doorHeight": true,
+        "timber": true,
+        "amber": true,
+        "white": false,
+        "check": false,
+        "eye": true
+      },
+      "eye": {
+        "stub": [
+          [548, 634],
+          [486, 654]
+        ],
+        "hub": [470, 686],
+        "hubBox": [435, 640, 503, 733],
+        "door": [468, 955, 515, 1074],
+        "pass": true,
+        "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting."
+      }
+    },
+    "kept": false
+  },
+  {
+    "attempt": 3,
+    "file": "raw/windmill-a0-r0-attempt-3.png",
+    "prompt": "Edit this grey block-out into ONE finished stone tower windmill WITHOUT SAILS, for a pastoral\r\nisometric railway game. Style: the attached style board; crisp clustered shading, broad readable\r\nmasses, three or four shades per material. Materials as the third and fourth pictures: cream\r\nlimestone courses with a few grey stones, a dark slate cone cap, an evergreen plank door with\r\niron straps. Light from the upper left: the cap's left side and the tower's upper left lightest,\r\nthe lower-left face mid-tone, the lower-right face darkest. Nothing brighter than a soft cream: no\r\npure-white highlights, nothing orange.\r\n\r\nCamera: keep the block-out's camera and turn exactly. Orthographic 2:1 isometric, 30 degrees\r\ndown. The tower is round and smooth, no facets: its foot is an ellipse half as tall as it is\r\nwide, and every stone course curves like that foot (down in the middle of the face), not as a\r\nstraight line. Keep the tower's size, taper and place, and the cone cap's height: the cone's tip\r\nstands where the block-out's does, with a plain tip, no finial, no ball. The dark door stays on\r\nthe LOWER-LEFT face where the block-out has it, at ground level on the tower's foot, as tall as the\r\nblock-out's door (about a quarter of the tower's foot width), an evergreen plank door with iron\r\nstraps and a plain stone frame; no step, no sack, nothing in front. One narrow window may sit\r\nabove it on the same face, on the same centre line. The windshaft: keep the block-out's stub, a\r\nshort round shaft of dark iron-banded timber coming out of the cap's lower-left slope and pointing\r\ndown and to the left along the lower-left face, two pixels across for each pixel down, and\r\nending in the block-out's dark iron hub plate, the same oval at the same place; the plate is bare,\r\nwith nothing on it.\r\n\r\nDo not paint the grey slab: the tower stands straight on the ground, its foot plain and clean. No\r\nsails, no stocks, no timber lattice, no square iron plate, no shadow, ground, grass, sacks, people,\r\ntext, border or glow. A real RGBA PNG with a transparent background (alpha 0) and an opaque\r\nbuilding. References: the first is the block-out to edit; the second the style board; the third\r\nthe game's present windmill, for stone, slate and door only (not its sails); the fourth an earlier\r\nbody, for stone, slate and window only, drawn from a camera that is wrong: do not copy its angle.\n\nCorrection: your last body's apex over foot width read 1.319 where the block-out's is 1.105 (must be 1.05 to 1.16): make the tower and cap shorter relative to its foot, matching the guide. Its hub read (-16.32, -41.54) game px where the guide's is (-16, -34), so put the plate lower to the guide's place. The door centre read -0.250 of the foot width where the guide's is -0.354, and its height read 0.388 where the guide's is 0.251: keep it further left, smaller, and at ground level exactly as in the guide. The dark orange timber count outside the door and hub was 1998 where at most 25 is allowed: make the shaft dark desaturated iron-banded timber, with no orange. Near-white count was 6666 where zero is requested: use muted cream, not bright white.\n\nCorrection: your last body's foot read 0.563 minor over major and 34.3 degrees down, where the guide's is 0.50 and 30 degrees: keep its lower foot curve exactly like the guide, shallower. Its shaft's top edge read a slope of 0.323 where the guide's is 0.50: the shaft must point more downward toward the left, two across for one down. The tower height and hub placement are now close: keep the guide's height proportion and hub (-16,-34). Your near-white count was still 1965: use softer muted cream while keeping all other guide geometry.",
+    "references": [
+      "assets/source/buildings-v2/guides/windmill-r0.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/windmill.png",
+      "assets/source/windmill-2026-10-16/windmill-a0-r0.png"
+    ],
+    "returned": [1254, 1254],
+    "numbers": {
+      "returned": [1254, 1254],
+      "box": [420, 514, 834, 1079],
+      "footWidth": 415,
+      "footCentre": [627, 975.25],
+      "scale": 9.653407769248663,
+      "widthOverShort": 0.3309409888357257,
+      "camera": {
+        "off": false,
+        "by": 1.5,
+        "elevation": -1.5,
+        "turn": 0,
+        "ratio": 0.478,
+        "looking": 28.5
+      },
+      "apexOverW": 1.1114457831325302,
+      "stubSlope": 0.4772727272727273,
+      "hubFromAnchorWorld": [-15.84932530120482, -34.17069277108433],
+      "hubOffset": [0.15067469879518036, -0.17069277108433312],
+      "hubDistance": 0.22768154724849107,
+      "doorPosition": -0.3409638554216867,
+      "doorHeight": 0.27710843373493976,
+      "pixels": {
+        "timber": 99,
+        "white": 2962,
+        "amber": 0
+      },
+      "check": {
+        "ok": true,
+        "problems": [],
+        "notes": [
+          "placed by its outline: no straight wall base was found",
+          "taller than its canvas by 29 px once on its footprint"
+        ],
+        "fit": {
+          "method": "outline",
+          "sure": [true, false],
+          "measured": [0.163, -0.5],
+          "slopes": [0.33, -0.5],
+          "base": {
+            "w": [499, 1061.4],
+            "s": [687.5, 1092.2],
+            "e": [833, 1019.5]
+          },
+          "scale": 1.349,
+          "vertical": 1.2048,
+          "shear": 0.1024,
+          "cx": 666,
+          "cy": 1321.8,
+          "box": {
+            "left": 180.2,
+            "top": -29,
+            "right": 738.6,
+            "bottom": 893
+          },
+          "camera": null,
+          "area": 173779
+        }
+      },
+      "tests": {
+        "camera": true,
+        "tower": true,
+        "stub": true,
+        "hub": true,
+        "doorPosition": true,
+        "doorHeight": true,
+        "timber": false,
+        "amber": true,
+        "white": false,
+        "check": true,
+        "eye": true
+      },
+      "eye": {
+        "stub": [
+          [537, 633],
+          [493, 654]
+        ],
+        "hub": [474, 684],
+        "hubBox": [439, 637, 508, 731],
+        "door": [467, 940, 504, 1055],
+        "pass": true,
+        "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting. Stub top edge reread from 4x zoom: original coordinates (537,633) near cap to (493,654) near plate; earlier point fell on the curved band instead of edge."
+      }
+    },
+    "kept": false,
+    "closest": true,
+    "failed": "dark-orange timber count 99 exceeds 25; near-white count 2962 also recorded, but not the only miss"
+  }
+]
