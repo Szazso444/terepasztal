@@ -1,263 +1,93 @@
 {
- "lanes": [
-  {
-   "id": "buildings",
-   "title": "Buildings lane",
-   "label": "Buildings lane (one Codex window; its branches are named on each card)",
-   "intro": "Turned views painted over their 3D scaffolds: the farm halt, the quarry, the coaling stage and the Fuel Pump. The narrow depot is a two-stage card: stage 1 paints r0 only; its turned views wait for the scaffold. Then the windmill. The depot r3 is accepted and off the page.",
-   "cards": [
-    "C35a",
-    "C21a",
-    "C23a",
-    "C4e",
-    "R8e",
-    "c17c",
-    "c17d"
-   ]
-  },
+ "updated": "2026-10-20",
+ "lead": [
+  "Each group below is ONE Codex conversation: paste its prompts one after another, each after the previous one finishes. The button Copy whole conversation copies the group's prompts in order, with a separator line between them; Copy prompt copies a single one.",
+  "Codex works in the main checkout (G:\\DEV\\Terepasztal\\terepasztal), which has one branch checked out at a time. So run ONE group at a time there. Two groups can run at the same time only if Codex gives each its own git worktree. Every group is on its own branch, except that the Later prompt C33b belongs to the Rotations conversation (same branch, art/535-rotations).",
+  "Turned views are painted over Core's 3D scaffolds (branch claude/art-scaffolds-review-2, head fc07d589); each prompt says how to read them. Accepted pictures are not painted again."
+ ],
+ "groups": [
   {
    "id": "rotations",
-   "title": "Rotations lane",
-   "label": "Rotations lane (its own Codex window, branch art/535-rotations)",
-   "intro": "The turned views of the old base-v1 pictures, painted over their 3D scaffolds. The ones blocking gameplay come first (Big Station, Big Farm, town hall, warehouse, the 1 x 1 rotations), then the rest. The hydro plant (C29a) is a two-stage card: r0 only now, its turned views after the scaffold. The house r1 is accepted. The house biome prompt is last and waits for the house rotations to be accepted.",
-   "cards": [
-    "C18a",
-    "C22a",
-    "C19a",
-    "C20a",
-    "C24a",
-    "C25a",
-    "C26a",
-    "C27a",
-    "C28a",
-    "C29a",
-    "C30a",
-    "C31a",
-    "C32a",
-    "C33a",
-    "C33b"
-   ]
+   "title": "Rotations over scaffolds",
+   "branch": "art/535-rotations",
+   "run": "Paste in this order: the gameplay blockers first (Big Station, Big Farm, town hall, warehouse, the 1 x 1 buildings), then the larger plants, then the house, then the hydro plant r0 last (it stops after r0). The branch already holds twelve jobs from 19 October: each prompt rebases before it pushes.",
+   "same": "Shares its branch with the Later prompt C33b, which goes into this same conversation. A second conversation on art/535-rotations needs its own worktree.",
+   "status": "Ready.",
+   "cards": ["C18a", "C22a", "C19a", "C20a", "C24a", "C25a", "C26a", "C27a", "C28a", "C30a", "C31a", "C32a", "C33a", "C29a"]
+  },
+  {
+   "id": "buildings",
+   "title": "Buildings-v2 lane",
+   "branch": "art/325-buildings-v2",
+   "run": "Paste in this order: the narrow depot r0 (stage 1, it stops after r0), the farm halt, the quarry, the coaling stage. The farm and quarry prompts start with a Step 0 that restores their pictures from the backup snapshot.",
+   "same": "Only this group uses art/325-buildings-v2. It touches assets/source/buildings-v2/ only.",
+   "status": "Ready. The narrow depot's stage 2 waits for Core's scaffold.",
+   "cards": ["C35a", "C21a", "C23a", "C4e"]
+  },
+  {
+   "id": "fuelpump",
+   "title": "Fuel Pump",
+   "branch": "art/325-fuel-pump",
+   "run": "One prompt.",
+   "same": "Only this group uses art/325-fuel-pump (assets/source/fuel-2026-10-11/).",
+   "status": "Ready.",
+   "cards": ["R8e"]
+  },
+  {
+   "id": "windmill",
+   "title": "Windmill",
+   "branch": "art/461-windmill-sails",
+   "run": "Paste C17c first, then C17d after C17c has committed (C17d needs the hub point C17c records).",
+   "same": "Only this group uses art/461-windmill-sails (assets/source/windmill-2026-10-17/).",
+   "status": "Ready (C17c); C17d waits for C17c.",
+   "cards": ["C17c", "C17d"]
   },
   {
    "id": "people",
-   "title": "People lane",
-   "label": "People lane (its own Codex window)",
-   "intro": "",
-   "cards": [
-    "r7c1"
-   ]
+   "title": "People",
+   "branch": "art/331-people",
+   "run": "One prompt. The other back strips wait for this trial's result.",
+   "same": "Only this group uses art/331-people (assets/source/people-2026-10-11/v3/).",
+   "status": "Ready.",
+   "cards": ["R7c1"]
+  },
+  {
+   "id": "later",
+   "title": "Later (not to run yet)",
+   "branch": "art/535-rotations",
+   "run": "Do not paste yet. C33b goes into the Rotations conversation, after the author has accepted C33a's r1, r3 and r2.",
+   "same": "C33b shares its branch with the Rotations group. The two stage 2 prompts are not written yet; they use the branches of C29a (art/535-rotations) and C35a (art/325-buildings-v2).",
+   "status": "Waits.",
+   "pending": [
+    "C29a stage 2 (hydro plant r1, r3, r2 over the scaffold): after the author accepts C29a's r0 and Core renders the scaffold from it. Not written yet.",
+    "C35a stage 2 (narrow depot r1, r3, r2 over the scaffold): after the author accepts C35a's r0 and Core renders the scaffold from it. Not written yet."
+   ],
+   "cards": ["C33b"]
   }
  ],
  "cards": {
-  "C35a": {
-   "file": "C35a",
-   "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later)",
-   "issue": "#325",
-   "title": "Narrow depot a0, STAGE 1 of 2: r0 only, painted freely on its guide (1 picture)",
-   "next": "Narrow depot a0, stage 1 of 2: r0 only, on the t1x2 guide, camera test strict, then STOP. r1 to r3 are stage 2 (after the scaffold). Three calls at most.",
-   "note": "TWO-STAGE CARD. Stage 1 (this prompt): Codex paints r0 only, freely, as an edit of the family's t1x2-r0 guide, with the camera test strict, and then STOPS; it does not start r1, r3 or r2. Stage 2 (a later card): after the author accepts r0, Core renders a 3D scaffold from that accepted r0 and Codex paints r1, r3 and r2 over the scaffolds (silhouette test against the outline). ACCEPTED: none (never painted; numbers in handoff/codex-review-1019b.json). The depot a0 pictures it attaches for the family look are on the branch now (586865bf). A small single-track engine shed, one portal per end wall, matching the depot's a0 in materials and colours. The guide guides/t1x2-r0.png (1024 x 1024, 8 px to a game px) is in the tree. The base is held at 707 px of the guide (865 of 1254), feet 481 : 225 at r0. The width is a measurement; the plan, the camera (strict), the footprint after scaling, the height and the light decide for r0."
-  },
-  "C21a": {
-   "file": "C21a",
-   "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later)",
-   "issue": "#325",
-   "title": "Small Farm Halt a0: r1 and r3 painted over the scaffolds (2 pictures)",
-   "next": "Small farm halt a0, r1 and r3 painted over their 3D scaffolds. Step 0 puts the farm pictures on the branch first. r0 and r2 stay. Two pictures.",
-   "note": "ACCEPTED: none of r1 and r3 (r0 and r2 stay). NEEDED: r1 and r3, over the scaffolds farm-r1 and farm-r3. BLOCKED on 19 October, fixed in the prompt: the farm a0 pictures (r0 to r3) are not on art/325-buildings-v2 (only in a backup snapshot); Step 0 restores them from origin/backup/g-dev-terepasztal-terepasztal-wip, sha256 checked, and sets the queue. If Codex may not commit pictures it did not paint, the author pushes them first. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the rear wall of the barn; r3 the far wall and the rear of the silo) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The base is held at 416 px of the canvas (509 of 1254). r0 and r2 stay: the prompt does not let the queue's redo undo r2."
-  },
-  "C23a": {
-   "file": "C23a",
-   "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later)",
-   "issue": "#325",
-   "title": "Quarry a0 r2 painted over its scaffold (1 picture)",
-   "next": "Quarry a0 r2 over its 3D scaffold. Step 0 puts the quarry pictures on the branch first. r0, r1 and r3 are accepted. One picture.",
-   "note": "ACCEPTED: none of r2 (r0, r1 and r3 stay). NEEDED: r2, over the scaffold quarry-r2. BLOCKED on 19 October, fixed in the prompt: the quarry a0 pictures r0, r1 and r3 are not on art/325-buildings-v2 (only in a backup snapshot); Step 0 restores them from origin/backup/g-dev-terepasztal-terepasztal-wip, sha256 checked. The old r2 was rejected and is not used. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r2 both stone walls and the hopper from behind) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The base is held at 424 px of the canvas (519 of 1254). r2 copies r1's back and r3's left-hand side."
-  },
-  "R8e": {
-   "file": "R8e",
-   "lane": "Buildings lane",
-   "branch": "art/325-fuel-pump (exists, head 95fa3cf8 or later)",
-   "issue": "#325",
-   "title": "Fuel Pump r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "next": "Fuel Pump r1, r3 and r2 over their 3D scaffolds; replaces R8d and the earlier R8e. Branch art/325-fuel-pump. Nine calls at most.",
-   "note": "ACCEPTED: none (nothing painted under R8e; R8d's runs stay refused). NEEDED: r1, r3 and r2, over the scaffolds fuel_pump-r1 to r3. Replaces R8d and the earlier R8e, which painted on grey guides: r1 was found too thin, r2 and r3 failed again on 19 October (r3 kept a two-post crane; r2 low with a jib 40 per cent too long). The branch is at 95fa3cf8; attempts go on from r1 13, r2 10, r3 18. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the rear wall and the hose; r2 both brick walls; r3 the rear wall) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The base is held at 412 px of the canvas (505 of 1254). The crane (one post, one jib 0.43 tile), the light values and the height keep their tests; Step 0 (the measuring of r0's feet) is gone, the scaffold was built on r0's own picture."
-  },
-  "C18a": {
-   "file": "C18a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Big Station: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "next": "Big Station (the old station picture), r1, r3 and r2 over their 3D scaffolds. Creates or joins the branch art/535-rotations. Not run yet.",
-   "note": "ACCEPTED: none. NEEDED: r1, r3 and r2 (nothing painted; a window read r0 on 19 October and stopped). HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the long back wall; r2 both walls; r3 the canopy underside and the rear gable end) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. r0 is base-v1/station.png and stays. Footprint 2 x 1 tiles at r0, 1024 canvas, base held at 694 px of the canvas (850 of 1254). r2 copies r1's back and r3's left side."
-  },
-  "C22a": {
-   "file": "C22a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Big Farm Halt: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "next": "Big Farm Halt (the old farm picture), r1, r3 and r2 over their 3D scaffolds. 1 x 2 tiles. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1 (three refused attempts on the old guides), r3 and r2 (not painted). r1 attempts 1 to 3 on the old grey guides are on the branch, refused; they are kept, never attached, and the new attempts go on from number 4. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the silo end wall; r2 both walls; r3 the back wall) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. r0 is base-v1/farm.png and stays. Footprint 1 x 2 tiles at r0 (the short gable end with the loading dock is the front), base held at 694 px of the canvas (850 of 1254)."
-  },
-  "C19a": {
-   "file": "C19a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Town hall: r1, r3 and r2 painted over the scaffolds (3 pictures); r0 stays",
-   "next": "Town hall, r1, r3 and r2 over their 3D scaffolds. r0 stays.",
-   "note": "ACCEPTED: none. NEEDED: r1, r3 and r2 (nothing painted; one raw attempt exists uncommitted in another window and must not be used). HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the long rear wall; r2 both walls with no features; r3 one gable end) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The illustrated r0 (base-v1/townhouse-civic.png) stays: only the three turned views are painted. Footprint 2 x 1 tiles, base held at 694 px of the canvas (850 of 1254). The bell cupola stays on the ridge in every view."
-  },
-  "C20a": {
-   "file": "C20a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Warehouse: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "next": "Warehouse, r1, r3 and r2 over their 3D scaffolds. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1 (three refused attempts on the old guides), r3 and r2 (not painted). r1 attempts 1 to 3 on the old grey guides are on the branch, refused; they are kept, never attached, and the new attempts go on from number 4. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the long back wall; r2 both walls; r3 the far end) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. r0 is base-v1/warehouse.png and stays. Footprint 2 x 1 tiles, base held at 694 px of the canvas (850 of 1254). The green sliding doors are on the front only, the canopy on the right-hand end only."
-  },
-  "C24a": {
-   "file": "C24a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Water pump: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "next": "Water pump, r1, r3 and r2 over their 3D scaffolds. 1 x 1 tile. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1 (three refused attempts on the old guides), r3 and r2 (not painted). r1 attempts 1 to 3 on the old grey guides are on the branch, refused; they are kept, never attached, and the new attempts go on from number 4. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the end wall; r2 both walls; r3 the back of the flywheel) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. r0 is base-v1/pump.png and stays. Footprint 1 x 1 tile, base held at 464 px of the canvas (568 of 1254). The flywheel and the pipe are tucked against the house inside the footprint, as the scaffold has them."
-  },
-  "C25a": {
-   "file": "C25a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Stone grinder: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "next": "Stone grinder, r1, r3 and r2 over their 3D scaffolds. 1 x 1 tile. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1 (three refused attempts on the old guides), r3 and r2 (not painted). r1 attempts 1 to 3 on the old grey guides are on the branch, refused; they are kept, never attached, and the new attempts go on from number 4. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the gable end; r2 both walls; r3 the far end) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. r0 is base-v1/grinder.png and stays. Footprint 1 x 1 tile (the game data says 2 x 1: the review's footprint is used), base held at 464 px of the canvas (568 of 1254)."
-  },
-  "C26a": {
-   "file": "C26a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Oil refinery: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "next": "Oil refinery, r1, r3 and r2 over their 3D scaffolds. 1 x 1 tile; a plant of units. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1 (three refused attempts on the old guides), r3 and r2 (not painted). r1 attempts 1 to 3 on the old grey guides are on the branch, refused; they are kept, never attached, and the new attempts go on from number 4. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (in every view the far sides of the pipe runs, the tank ends and the back of the furnace frame) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. r0 is base-v1/refinery.png and stays. Footprint 1 x 1 tile (the game data says 2 x 2), base held at 464 px of the canvas (568 of 1254). The tank, the column and the furnace each stay where they are on the footprint and turn with it (the prompt gives the corner map)."
-  },
-  "C27a": {
-   "file": "C27a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Power plant: r1, r3 and r2 painted over the scaffolds on the 1536 x 1024 canvas (3 pictures)",
-   "next": "Power plant, r1, r3 and r2 over their 3D scaffolds. 3 x 2 tiles on the 1536 x 1024 canvas. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1 (three refused attempts on the old guides), r3 and r2 (not painted). r1 attempts 1 to 3 on the old grey guides are on the branch, refused; they are kept, never attached, and the new attempts go on from number 4. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the long back wall; r2 both long walls; r3 the rear gable end) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 15 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The canvas is 1536 x 1024 at 5 px to a game px, so the deviation limit is 15 canvas px. r0 is base-v1/power-plant.png and stays. Footprint 3 x 2 tiles at r0, base held at 724 px of the canvas (the picture comes back as asked)."
-  },
-  "C28a": {
-   "file": "C28a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Battery (substation): r0 painted over its scaffold, then r1, r3 and r2 (4 pictures)",
-   "next": "Battery (substation): r0 over its scaffold (the old picture rebuilt at the game camera), then r1, r3 and r2. 1536 x 1024. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r0, r1, r3 and r2. Nine attempts on the old guides (r0, r1, r3 three each) are on the branch, refused; the new ones go on from number 4 (r2 from 1). Today's angle is wrong, so r0 is painted too: its scaffold r0 is the old equipment (transformer, insulator stacks, portal frame, cabinet) rebuilt in 3D at the true game camera and replaces the wrong-angle painting; the kept r0 is the master of the other three. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the rear fins and the gantry side; r2 both tank sides; r3 the far side) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 18 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The canvas is 1536 x 1024 at 6 px to a game px, so the deviation limit is 18 canvas px. The scaffold's slab is oblong (1.8 x 1.29 tiles), not the 2 x 2 square: the prompt says not to square it. The earlier switch-house design is dropped, the outline is the scaffold's."
-  },
-  "C29a": {
-   "file": "C29a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Hydro plant, a new design: STAGE 1 of 2, r0 only on its guide (1 picture)",
-   "next": "Hydro plant, a new design: STAGE 1 of 2, r0 only, camera strict, then STOP. r1 to r3 are stage 2 (after the scaffold). 1 x 1 tile. Three calls at most.",
-   "note": "TWO-STAGE CARD. Stage 1 (this prompt): Codex paints r0 only, freely, to its own guide, with the camera test strict, and then STOPS; it does not paint r1, r3 or r2. Stage 2 (a later card): after the author accepts r0, Core renders a 3D scaffold from that accepted r0 and Codex paints r1, r3 and r2 over the scaffolds. ACCEPTED: none. r0 attempts 1 to 3 (19 October) fail the plan (2.088, 1.694, 1.794 against 1.22 to 1.65) and the camera (2.6 degrees; slope 0.553; one foot unreadable), and the whole hall scales to 0.52 to 0.64 because the intake, sluice and penstock make the base far wider than the plinth; the design was painted well. The hydro plant had been drawn as a variation of the water pump; this is its own building on the guide's oblong base (0.9 x 0.625 tile): a long limestone hall with three arched windows and a vented ridge lantern, the intake chamber with sluice and handwheel on the short end, a riveted penstock down the end wall, a tailrace arch in the base. No flywheel, no elbow pipe, no chimney stack. The guide is that of PR #537 (read out of claude/art-guides-review-2). Base held at 394 px of the guide (482 of 1254), feet 230.4 : 160.1. Please look at r0 first."
-  },
-  "C30a": {
-   "file": "C30a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Colliery: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan; r0 keeps the existing art (3 pictures)",
-   "next": "Colliery, r1, r3 and r2 over their 3D scaffolds. 2 x 2 tiles, 1536 x 1024. r0 keeps the existing art. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1, r3 and r2 (not painted). r0 stays the existing art (the author's decision of 19 October: the game's colliery picture, now on a 2 x 2 footprint): the repaint of r0 on the r0 guide (attempts 1 to 3) is dropped. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the engine house back wall; r2 both sides and the bins from behind; r3 the back of the head frame) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 18 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The canvas is 1536 x 1024 at 6 px to a game px, so the deviation limit is 18 canvas px. Base held at 694 px of the canvas. The plant is turned by the corner map."
-  },
-  "C31a": {
-   "file": "C31a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Ironworks: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan; r0 keeps the existing art (3 pictures)",
-   "next": "Ironworks, r1, r3 and r2 over their 3D scaffolds. 2 x 2 tiles, 1536 x 1024. r0 keeps the existing art. Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1, r3 and r2 (not painted). r0 stays the existing art (the author's decision of 19 October: the game's ironworks picture, now on a 2 x 2 footprint): the repaint of r0 on the r0 guide (attempts 1 to 3) is dropped. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the far wall; r2 both walls (patchy in the render); r3 the open hall seen from the rear) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 18 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The canvas is 1536 x 1024 at 6 px to a game px, so the deviation limit is 18 canvas px. Base held at 694 px of the canvas. The works are turned by the corner map."
-  },
-  "C32a": {
-   "file": "C32a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "Oil derrick: r1, r3 and r2 painted over the scaffolds (3 pictures); r0 stays",
-   "next": "Oil derrick, r1, r3 and r2 over their 3D scaffolds. 2 x 1 tiles. r0 stays (the author likes its angle). Accepted: none.",
-   "note": "ACCEPTED: none. NEEDED: r1 (three refused attempts on the old guides), r3 and r2 (not painted). r1 attempts 1 to 3 on the old grey guides are on the branch, refused; they are kept, never attached, and the new attempts go on from number 4. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (in every view the tank, the back of the beam and the lattice) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The scaffold's thin rods and lattice are soft and in places broken: expect the silhouette test to be the hard one here. r0 is base-v1/works-full-oil-derrick.png and stays: the author likes its angle. Footprint 2 x 1 tiles, base held at 694 px of the canvas (850 of 1254)."
-  },
-  "C33a": {
-   "file": "C33a",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists on origin: twelve jobs pushed to it on 19 October; rebase before you push)",
-   "issue": "#535",
-   "title": "House (townhouse) turned: r3 and r2 painted over the scaffolds on the tall 1024 x 1536 canvas; r1 is accepted (2 pictures)",
-   "next": "House (townhouse), r3 and r2 over their 3D scaffolds on the tall canvas. 1 x 1 tile. r1 is ACCEPTED (attempt 1).",
-   "note": "ACCEPTED: r1, attempt 1 (accepted by the author on 19 October 2026: it was refused only on a foot slope 0.048 off, the plan, footprint, height and light passed; raw/townhouse-r1-attempt-1.png on art/535-rotations, sha256 d899c79f...). It is recorded in handoff/codex-review-1019b.json. r1 is removed from this card; Step 0 of the prompt corrects the branch's kept file townhouse-r1.png, which holds attempt 2's bytes. NEEDED: r3 and r2 (not painted). HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r2 the rear wall (two windows); r3 the far end) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. r0 is base-v1/house-cottage.png and stays. Footprint 1 x 1 tile on a tall canvas (1024 x 1536, anchor 512,1344; assumed to come back as asked), base held at 464 px. The biome variants are a separate prompt, C33b, for after these are accepted."
-  },
-  "C33b": {
-   "file": "C33b",
-   "lane": "Rotations lane",
-   "branch": "art/535-rotations (exists by then)",
-   "issue": "#535",
-   "after": true,
-   "title": "AFTER the house rotations are accepted: biome variants of the House, proposal first (28 pictures)",
-   "next": "AFTER the house rotations are accepted: the House in the biomes plains, forest, desert, taiga, swamp, mountain and beach. Step 1 is a proposal in words, then stop for review.",
-   "note": "ACCEPTED: none (it waits for the house rotations, C33a). Paste this only after the author has accepted C33a's r1, r3 and r2. Step 1 proposes the material and roof changes per biome and stops; nothing is painted until the author names the approved rows. Step 2 paints the approved biomes in all four views (r0 on the tall r0 guide, r1 to r3 on the review-2 guides) with C33a's tests: 7 biomes x 4 views = 28 pictures, 84 calls at the most."
-  },
-  "C4e": {
-   "file": "C4e",
-   "lane": "Buildings lane",
-   "branch": "art/325-buildings-v2 (exists, head cd7919ec or later; art/325-fuel-pump is the Fuel Pump's, not the coaling stage's)",
-   "issue": "#325",
-   "title": "Coaling stage r1 and r3 painted over the scaffolds, matching the accepted r0 and r2 (2 pictures)",
-   "next": "Coaling stage r1 and r3 over their 3D scaffolds, matching the accepted r0 and r2 (branch art/325-buildings-v2, issue #325). Accepted: r0 and r2 only. Six calls at most.",
-   "note": "ACCEPTED: r0 and r2 (the author, review 2: \"r0 and r2 are good\"); none of the new pictures. NEEDED: r1 and r3, over the scaffolds fuel_stop-r1 and fuel_stop-r3. Replaces C4d and the earlier C4e: all six attempts on the oblong guides (r1 attempts 13 to 15, r3 13 to 15) failed the camera (r1: 7.2, 4.4 and 8.1 degrees off; r3: 4.7, 5.7 and 8.1: the feet ran steeper than 2:1), r3 attempt 14 passed the plan, the height and the footprint and failed the camera alone. HOW (the author's decision of 19 October): every view is an edit of its 3D scaffold, the lit render (branch claude/art-scaffolds-review-2, head fc07d589, assets/source/buildings-v2/scaffolds/<job>/; the prompt tells Codex to read the files out of that branch into a folder outside its checkout, so they are not committed to its art branch). Codex repaints every surface in the game's painted style matching r0, and paints the invented surfaces (r1 the far legs and feet; r3 the far legs) anew, never left soft. Accepted when the result's silhouette matches the scaffold's outline: IoU at least 0.90 after the best uniform scale and shift and a boundary deviation of at most 24 canvas px (3 game px); the camera comes from the scaffold, so there is no separate camera, plan or footprint test, and the width is only a measurement (Art scales uniformly at packing); height as a proportion, light and the same building as r0 keep their tests. The pier span (516 px of the canvas, 632 of 1254) is a measurement; the prompt carries the long side per view, the r3 winch opening, the height proportion against the scaffold's and the accepted r2 as a reference (its lower-left wall is r1's back, its lower-right wall is r3's left-hand side). Nothing is stretched or bent: the shape comes from the painting over the scaffold."
-  }
- },
- "old": {
-  "c17c": {
-   "title": "Windmill body without sails, in the game's camera, on the new block-out (1 picture)",
-   "note_html": "<b>ACCEPTED: none (not run).</b> <b>Not run (19 October).</b> The tower&#x27;s foot width over the picture is a measurement now, not a test. <b>Buildings lane, after C4e. Branch art/461-windmill-sails (exists, head beed486 or later).</b> Issue #461. The author found the demo&#x27;s windmill wonky and asked for a repaint so it can be animated. The accepted body was seen from 19&deg; down instead of the game&#x27;s 30&deg;, with its door and shaft turned about 27&deg; off, so the sails could not sit on it. C17c paints the tower again, without sails, as an edit of Art&#x27;s block-out in the game&#x27;s own projection (on develop, assets/source/buildings-v2/guides/, PR #490), and records the hub point. The sail cross from C17b is kept. Every number is measured from the foot&#x27;s width: camera, height, shaft slope, hub, door. Near-white pixels alone do not fail a picture; Art caps them at packing. Decided on 18 October: all four views are painted. C17c paints the front view r0; C17d follows it with r3, r1 and r2.",
-   "label": "C17c",
-   "file": "C17c",
-   "anchor": "c17c",
-   "copy": "p-c17c",
-   "next": "The windmill's tower without sails, front view r0 (branch art/461-windmill-sails, issue #461). One picture, at most three attempts."
-  },
-  "c17d": {
-   "title": "Windmill body without sails, r3, r1 and r2, each on its own guide (3 pictures)",
-   "note_html": "<b>ACCEPTED: none (not run).</b> <b>Not run (19 October).</b> The tower&#x27;s foot width against r0&#x27;s is a measurement now, not a test: Art scales each picture uniformly at packing. <b>Buildings lane, after C17c. Branch art/461-windmill-sails (C17c&#x27;s commit or later).</b> Issue #461. The author decided on 18 October that the windmill has four views. C17d paints the tower without sails for r3, r1 and r2, each as an edit of its own guide (canvas 1024, scale 8, anchor 512,832; hub offsets r1 (-16,-50), r2 (16,-50), r3 (16,-34)), in the same lane and with the same tests as C17c. C17b&#x27;s sail cross is turned into each view by an exact transform, so each body must leave the hub exactly at its guide&#x27;s point. In r1 and r2 the cross is seen from behind: no door, no window, and the stub and plate stand behind the tower. The guides are on develop since 18 October (PR #524) and still on the branch claude/art-guides-windmill-coaling; the prompt tells Codex to read them out of that branch into a folder outside its checkout, so they are not committed to the art branch. Nothing is mirrored, sheared or stretched: each view is turned by its own camera.",
-   "label": "C17d",
-   "file": "C17d",
-   "anchor": "c17d",
-   "copy": "p-c17d",
-   "next": "The same tower without sails in r3, r1 and r2 (same branch and issue). Three pictures, at most three attempts each."
-  },
-  "r7c1": {
-   "title": "People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)",
-   "note_html": "<b>ACCEPTED: none.</b> <b>Run twice (18 and 19 October), both stopped at P1: blocked, rewritten.</b> Test 6 (cursor white and amber, zero tolerance) fired on all four pictures (3 to 49 white, 137 to 1616 amber pixels) although tools/atlas-cap.mjs caps both at packing, and test 5 (shoulder row) could not be read under the axe. Test 6 is now a report, test 5 is read by eye; the new run goes in v3/run-3/ and reuses the calibrated measure-v3.mjs. <b>People lane. Branch art/331-people (exists, head f7268089 or later).</b> Issue #331. The author chose to repaint whole figures, not only legs. Earlier rounds failed because Codex copies the legs of any painting attached to it, so each pose is now an edit of Art&#x27;s grey pose mannequin (on develop, assets/source/people-v3-guides/, PR #491: the game&#x27;s camera and gait, turned 45 degrees), with only the lumberjack&#x27;s upper body attached for his look. The lumberjack keeps his axe on his shoulder. Every pose is measured: height, soles, the planted foot&#x27;s slide, the turn, and that P1 and P3 differ. If this trial passes, R7c-2 onward repaint the other back strips and the limping front strips the same way.",
-   "label": "R7c-1",
-   "file": "R7c-1",
-   "anchor": "r7c1",
-   "copy": "p-r7c1",
-   "next": "The lumberjack walking away (branch art/331-people, issue #331). Four pictures, at most twelve calls. The other strips wait for this trial's result."
-  }
+  "C18a": { "file": "C18a", "title": "Big Station: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r0 stays; nothing painted yet." },
+  "C22a": { "file": "C22a", "title": "Big Farm Halt: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r1 attempts 1 to 3 are refused and kept; new attempts go on from 4. r0 stays." },
+  "C19a": { "file": "C19a", "title": "Town hall: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r0 stays." },
+  "C20a": { "file": "C20a", "title": "Warehouse: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r1 attempts 1 to 3 are refused and kept; new attempts go on from 4. r0 stays." },
+  "C24a": { "file": "C24a", "title": "Water pump: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r1 attempts 1 to 3 are refused and kept; new attempts go on from 4. r0 stays." },
+  "C25a": { "file": "C25a", "title": "Stone grinder: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r1 attempts 1 to 3 are refused and kept; new attempts go on from 4. r0 stays." },
+  "C26a": { "file": "C26a", "title": "Oil refinery: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r1 attempts 1 to 3 are refused and kept; new attempts go on from 4. r0 stays." },
+  "C27a": { "file": "C27a", "title": "Power plant: r1, r3 and r2 painted over the scaffolds on the 1536 x 1024 canvas (3 pictures)", "status": "Ready. r1 attempts 1 to 3 are refused and kept; new attempts go on from 4. r0 stays." },
+  "C28a": { "file": "C28a", "title": "Battery (substation): r0 painted over its scaffold, then r1, r3 and r2 (4 pictures)", "status": "Ready. r0 is repainted too (the old angle was wrong); the nine refused attempts are kept, new ones go on from 4 (r2 from 1)." },
+  "C30a": { "file": "C30a", "title": "Colliery: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)", "status": "Ready. r0 keeps the existing art." },
+  "C31a": { "file": "C31a", "title": "Ironworks: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)", "status": "Ready. r0 keeps the existing art." },
+  "C32a": { "file": "C32a", "title": "Oil derrick: r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r1 attempts 1 to 3 are refused and kept; new attempts go on from 4. r0 stays." },
+  "C33a": { "file": "C33a", "title": "House (townhouse) turned: r3 and r2 painted over the scaffolds on the tall 1024 x 1536 canvas (2 pictures)", "status": "Ready. r1 is accepted (attempt 1); Step 0 corrects the branch's townhouse-r1.png. r0 stays." },
+  "C29a": { "file": "C29a", "title": "Hydro plant, a new design: STAGE 1 of 2, r0 only on its guide (1 picture)", "status": "Ready, stage 1 only: r0, then STOP. Stage 2 (r1, r3, r2) waits for Core's scaffold from the accepted r0." },
+  "C35a": { "file": "C35a", "title": "Narrow depot a0, STAGE 1 of 2: r0 only, painted freely on its guide (1 picture)", "status": "Ready, stage 1 only: r0, then STOP. Stage 2 (r1, r3, r2) waits for Core's scaffold from the accepted r0." },
+  "C21a": { "file": "C21a", "title": "Small Farm Halt a0: r1 and r3 painted over the scaffolds (2 pictures)", "status": "Ready. Step 0 restores the farm pictures from the backup snapshot first. r0 and r2 stay." },
+  "C23a": { "file": "C23a", "title": "Quarry a0 r2 painted over its scaffold (1 picture)", "status": "Ready. Step 0 restores the quarry pictures from the backup snapshot first. r0, r1 and r3 stay." },
+  "C4e": { "file": "C4e", "title": "Coaling stage r1 and r3 painted over the scaffolds, matching the accepted r0 and r2 (2 pictures)", "status": "Ready. r0 and r2 are accepted; the six refused attempts are kept, new ones go on from 16." },
+  "R8e": { "file": "R8e", "title": "Fuel Pump r1, r3 and r2 painted over the scaffolds (3 pictures)", "status": "Ready. r0 is the master; attempts go on from r1 13, r2 10, r3 18." },
+  "C17c": { "file": "C17c", "title": "Windmill body without sails, front view r0, in the game's camera (1 picture)", "status": "Ready. Not run yet. Records the hub point that C17d needs." },
+  "C17d": { "file": "C17d", "title": "Windmill body without sails, r3, r1 and r2, each on its own guide (3 pictures)", "status": "Waits for C17c (its commit or later)." },
+  "R7c1": { "file": "R7c-1", "label": "R7c-1", "title": "People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)", "status": "Ready (rewritten after two runs stopped at P1: test 6 is now a report, test 5 is read by eye)." },
+  "C33b": { "file": "C33b", "title": "Biome variants of the House, proposal first (28 pictures)", "status": "Waits for C33a: paste only after the author has accepted its r1, r3 and r2. Step 1 is a proposal in words, then stop for review." }
  }
 }

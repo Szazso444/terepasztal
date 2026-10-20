@@ -1,4 +1,5 @@
-// Node port of build.py (same output). The lead paragraph is read out of build.py so there is one copy of it.
+// Node port of build.py (same output). Everything the page says is data: src/cards.json (groups and cards),
+// src/*.txt (the prompts), src/extra.css and src/page.js (the page's own style and script).
 // Usage: node build.mjs   (writes page.html next to this file)
 import fs from 'fs';
 import path from 'path';
@@ -11,80 +12,84 @@ const rd = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 const prompt = (name) => rd(path.join(S, 'src', name + '.txt')).replace(/\n+$/, '');
 
 const data = JSON.parse(rd(path.join(S, 'src', 'cards.json')));
-const old = data.old;
 const cards = data.cards;
-const lanes = data.lanes;
+const groups = data.groups;
 
+// the page's head (title and the game panel style) comes from v7; the page's own style and script from src/
 const v7 = rd(V7);
 const marker = '<div class="wrap">\n';
-let head = v7.slice(0, v7.indexOf(marker));
-const tail = v7.slice(v7.indexOf('</div>\n<script>'));
+const head = v7.slice(0, v7.indexOf(marker)).replace('</style>', rd(path.join(S, 'src', 'extra.css')).replace(/\n+$/, ''));
+const script = rd(path.join(S, 'src', 'page.js')).replace(/\n+$/, '');
+const tail = '</div>\n<script>\n' + script + '\n</script>\n';
 
-const LANE_CSS =
-  '  .lane { font-family: var(--font-title); font-weight: normal; font-size: 20px; margin: 10px 0 0; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 4px; }\n' +
-  '  .card h3 { font-family: var(--font-title); font-weight: normal; font-size: 15px; margin: 6px 0 0; color: var(--accent); }\n' +
-  '  .lanelabel { color: var(--dim); }\n' +
-  '</style>';
-head = head.replace('</style>', LANE_CSS);
+const SAME_TIME =
+  'Can run beside another group only if Codex works each in its own git worktree; in the main checkout run one group at a time.';
 
-function entry(key) {
-  if (key in old) {
-    const o = old[key];
-    return [o.label, o.anchor, o.title, o.note_html, prompt(o.file), o.next || null];
-  }
+const anchorOf = (key) => key.toLowerCase();
+const labelOf = (key) => cards[key].label || key;
+const plural = (n) => `${n} prompt${n === 1 ? '' : 's'}`;
+
+function card(key, pos, total) {
   const c = cards[key];
-  let lead = `<b>${esc(c.lane)}. Branch ${esc(c.branch)}.</b> Issue ${esc(c.issue)}. `;
-  if (c.after) lead = '<b>AFTER the house rotations are accepted.</b> ' + lead;
-  return [key, key.toLowerCase(), c.title, lead + esc(c.note), prompt(c.file), c.next || null];
+  const anchor = anchorOf(key);
+  return `<section class="card" id="${anchor}">
+  <header><span class="cid">${esc(labelOf(key))}</span><h2>${esc(c.title)}</h2><span class="pos">${pos} of ${total}</span><button class="copy" type="button" data-for="p-${anchor}">Copy prompt</button></header>
+  <p class="status"><b>Status.</b> ${esc(c.status)}</p>
+  <pre id="p-${anchor}" tabindex="0">${esc(prompt(c.file))}</pre>
+</section>
+`;
 }
 
-const card = (label, anchor, title, note, text) => `<section class="card" id="${anchor}">
-  <header><span class="cid">${esc(label)}</span><h2>${esc(title)}</h2><button class="copy" type="button" data-for="p-${anchor}">Copy prompt</button></header>
-  <p class="note">${note}</p>
-  <pre id="p-${anchor}" tabindex="0">${esc(text)}</pre>
+const tocRows = [];
+const sections = [];
+for (const g of groups) {
+  const n = g.cards.length;
+  const ids = g.cards.map(labelOf).join(', ');
+  tocRows.push(
+    `<tr><td><a href="#g-${g.id}">${esc(g.title)}</a></td><td>${esc(g.branch)}</td><td class="n">${n}</td><td>${esc(ids)}. ${esc(g.status)}</td></tr>`
+  );
+  const order = g.cards
+    .map((k) => `    <li><a href="#${anchorOf(k)}">${esc(labelOf(k))}</a> ${esc(cards[k].status)}</li>`)
+    .join('\n');
+  const pending = (g.pending || []).map((t) => `    <li>${esc(t)}</li>`).join('\n');
+  sections.push(
+    `<section class="group" id="g-${g.id}">
+<h2 class="lane">${esc(g.title)}</h2>
+<div class="card ginfo">
+  <p class="note"><b>Branch ${esc(g.branch)}.</b> One Codex conversation, ${plural(n)}. ${esc(g.status)}</p>
+  <p class="note"><b>Order.</b> ${esc(g.run)}</p>
+  <p class="note"><b>Same time.</b> ${esc(g.same)} ${esc(SAME_TIME)}</p>
+  <ol>
+${order}
+  </ol>
+` +
+      (pending ? `  <p class="note"><b>Not written yet.</b></p>\n  <ul>\n${pending}\n  </ul>\n` : '') +
+      `  <button class="copy copyall" type="button" data-group="g-${g.id}">Copy whole conversation</button>
+</div>
+` +
+      g.cards.map((k, i) => card(k, i + 1, n)).join('') +
+      '</section>\n'
+  );
+}
+
+const toc = `<section class="card" id="toc">
+  <header><h2>Contents</h2></header>
+  <table class="toc">
+    <thead><tr><th>Group (one conversation)</th><th>Branch</th><th class="n">Prompts</th><th>Prompts in order, status</th></tr></thead>
+    <tbody>
+${tocRows.join('\n')}
+    </tbody>
+  </table>
 </section>
 `;
 
-// the lead paragraph: the adjacent string literals of `lead = (...)` in build.py
-const py = rd(path.join(S, 'build.py'));
-const a = py.indexOf('lead = (');
-const b = py.indexOf('\n)\n', a);
-const lead = py
-  .slice(a + 'lead = ('.length, b)
-  .split('\n')
-  .map((l) => l.trim())
-  .filter((l) => l.startsWith('"'))
-  .map((l) => l.slice(1, l.lastIndexOf('"')))
-  .join('');
-
-const navRows = ['<nav><a href="#next">Paste next</a></nav>'];
-const nxt = ['<section class="card" id="next">\n  <header><h2>Paste next</h2></header>'];
-const bodyCards = [];
-for (const lane of lanes) {
-  const links = [];
-  const items = [];
-  const cardsHtml = [`<h2 class="lane" id="lane-${lane.id}">${esc(lane.title)}</h2>\n`];
-  for (const key of lane.cards) {
-    const [label, anchor, title, note, text, nxtText] = entry(key);
-    links.push(`<a href="#${anchor}">${esc(label)} &middot; ${esc(title)}</a>`);
-    if (nxtText) items.push(`    <li><b>${esc(label)}</b> ${esc(nxtText)}</li>`);
-    cardsHtml.push(card(label, anchor, title, note, text));
-  }
-  navRows.push(`<nav><span class="lanelabel">${esc(lane.title)}:</span> ` + links.join('') + '</nav>');
-  nxt.push(`  <h3>${esc(lane.label)}</h3>`);
-  if (lane.intro) nxt.push(`  <p class="note">${esc(lane.intro)}</p>`);
-  nxt.push('  <ol>\n' + items.join('\n') + '\n  </ol>');
-  bodyCards.push(cardsHtml.join(''));
-}
-nxt.push('</section>\n');
-
 const body =
   '<div class="wrap">\n  <h1>Codex art prompts</h1>\n' +
-  `  <p class="lead">${esc(lead)}</p>\n  ` +
-  navRows.join('\n  ') +
-  '\n' +
-  nxt.join('\n') +
-  bodyCards.join('');
+  `  <div class="lead">\n    <p>Updated ${esc(data.updated)}.</p>\n` +
+  data.lead.map((p) => `    <p>${esc(p)}</p>\n`).join('') +
+  '  </div>\n' +
+  toc +
+  sections.join('');
 const page = head + body + tail;
 if (!page.startsWith('<title>')) throw new Error('page does not start with <title>');
 fs.writeFileSync(path.join(S, 'page.html'), page, 'utf8');
