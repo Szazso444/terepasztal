@@ -1,0 +1,775 @@
+{
+  "promptId": "C18a",
+  "scaffoldReference": {
+    "r1": {
+      "foot": [350, 921],
+      "eave": [350, 689],
+      "baseWidth": 630,
+      "wallHeightRatio": 0.3682539682539683,
+      "method": "by eye: main-wall near corner, excluding lean-to annex"
+    },
+    "r3": {
+      "foot": [386, 959],
+      "eave": [386, 704],
+      "baseWidth": 623,
+      "wallHeightRatio": 0.40930979133226325,
+      "method": "by eye on bare scaffold"
+    },
+    "r2": {
+      "foot": [674, 944],
+      "eave": [674, 625],
+      "baseWidth": 715,
+      "wallHeightRatio": 0.4461538461538462,
+      "method": "by eye on bare scaffold"
+    }
+  },
+  "r0Reference": {
+    "foot": [1035, 907],
+    "eave": [1035, 617],
+    "baseWidth": 1216,
+    "wallHeightRatio": 0.23848684210526316,
+    "highlights": {
+      "nearWhite": 31852,
+      "nearAmber": 7
+    }
+  },
+  "calls": [
+    {
+      "view": "r1",
+      "attempt": 1,
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r1-attempt-1.png",
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the right-hand side and is r0's lower-right wall, copied as it stands there: the quoined gable end with scalloped bargeboards, the arched green door, the arched windows, the black downpipe and the small slate-roofed lean-to annex with its green door (the annex stands inside the footprint). The lower-right wall is the BACK: a plain long stone wall under the slate roof, built as r0 shows the building built (cream limestone courses, quoined corners, the same base), with a few small windows and one plain green door, and no canopy, no benches and no lanterns. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): the long back wall (the lower-right wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again. There, in view r0, the lower-left wall is the front: the long platform front, with its canopy, lanterns, benches, door and windows. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.",
+      "references": [
+        "../scaffolds-535/big_station-r1-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r1-attempt-1.png",
+        "view": "r1",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.8437192118226601,
+          "bestFit": {
+            "f": 0.9460000000000001,
+            "dx": -25,
+            "dy": 25,
+            "iou": 0.9260403416318371
+          },
+          "boundaryDeviationCanvasPx": 28.99565066562451,
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [131, 136, 1094, 1189],
+        "base": {
+          "sure": [true, true],
+          "slopes": [0.5694501295193213, -0.5246574376770707],
+          "w": [239, 1022.3740236464567],
+          "s": [471.6405796086717, 1154.851231836065],
+          "e": [1091, 829.8997053323949],
+          "minX": 131,
+          "maxX": 1094,
+          "area": 570927
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 11731,
+          "nearAmber": 4
+        },
+        "baseWidth": 852,
+        "scaleK": 0.9975104533450704,
+        "height": {
+          "foot": [470, 1148],
+          "eave": [470, 845],
+          "ratio": 0.35563380281690143,
+          "scaffoldReference": 0.3682539682539683,
+          "pass": true
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye: gable lighter than long back wall"
+        },
+        "lightEstimate": {
+          "lowerLeft": 163.10544743589722,
+          "lowerRight": 158.9170448717952,
+          "eyeConfirmed": {
+            "leftLighter": true,
+            "judgement": "by eye: gable lighter than long back wall"
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [350, 921],
+          "eave": [350, 689],
+          "baseWidth": 630,
+          "wallHeightRatio": 0.3682539682539683,
+          "method": "by eye: main-wall near corner, excluding lean-to annex"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "kept": false,
+      "refusal": "Boundary deviation 28.996 canvas px exceeds 24; best-fit IoU 0.926 passes",
+      "requestedSize": [1024, 1024]
+    },
+    {
+      "kept": false,
+      "view": "r1",
+      "references": [
+        "../scaffolds-535/big_station-r1-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "refusal": "Missing required plain green door on long back wall (visual)",
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r1-attempt-2.png",
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r1-attempt-2.png",
+        "view": "r1",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.7612443490920237,
+          "bestFit": {
+            "f": 0.926,
+            "dx": -39,
+            "dy": 48,
+            "iou": 0.9522955193670071
+          },
+          "boundaryDeviationCanvasPx": 21.886574474209134,
+          "pass": true,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [128, 92, 1099, 1165],
+        "base": {
+          "sure": [true, true],
+          "slopes": [0.5320648663977237, -0.5036858803581059],
+          "w": [241, 997.8889269653927],
+          "s": [488.6741288402354, 1129.6676292369452],
+          "e": [1094, 824.7735349183017],
+          "minX": 128,
+          "maxX": 1099,
+          "area": 596445
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 11031,
+          "nearAmber": 3
+        },
+        "baseWidth": 853,
+        "scaleK": 0.9963410389800703,
+        "height": {
+          "eave": [474, 799],
+          "ratio": 0.3786635404454865,
+          "pass": true,
+          "foot": [474, 1122],
+          "scaffoldReference": 0.3682539682539683
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye"
+        },
+        "lightEstimate": {
+          "lowerLeft": 166.46467307692285,
+          "lowerRight": 160.43891538461594,
+          "eyeConfirmed": {
+            "leftLighter": true,
+            "judgement": "by eye"
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [350, 921],
+          "eave": [350, 689],
+          "baseWidth": 630,
+          "wallHeightRatio": 0.3682539682539683,
+          "method": "by eye: main-wall near corner, excluding lean-to annex"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "attempt": 2,
+      "returned": [1254, 1254],
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the right-hand side and is r0's lower-right wall, copied as it stands there: the quoined gable end with scalloped bargeboards, the arched green door, the arched windows, the black downpipe and the small slate-roofed lean-to annex with its green door (the annex stands inside the footprint). The lower-right wall is the BACK: a plain long stone wall under the slate roof, built as r0 shows the building built (cream limestone courses, quoined corners, the same base), with a few small windows and one plain green door, and no canopy, no benches and no lanterns. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): the long back wall (the lower-right wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again. There, in view r0, the lower-left wall is the front: the long platform front, with its canopy, lanterns, benches, door and windows. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: your last r1 missed the scaffold silhouette: its best-fit boundary deviation was 29 canvas px where at most 24 is allowed, despite IoU 0.926 passing. Hold the precise outline of the first image more closely, especially every chimney top, roof edge and the small lean-to annex and base corners; do not enlarge, shorten, shift or regularise those masses. Repaint its materials crisply while preserving the lit scaffold's exact outline.",
+      "requestedSize": [1024, 1024]
+    },
+    {
+      "kept": false,
+      "view": "r1",
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r1-attempt-3.png",
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r1-attempt-3.png",
+        "view": "r1",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.9302251679680407,
+          "bestFit": {
+            "f": 0.998,
+            "dx": -4,
+            "dy": 10,
+            "iou": 0.9563091118800461
+          },
+          "boundaryDeviationCanvasPx": 26.68330656273118,
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [134, 179, 1029, 1183],
+        "base": {
+          "sure": [true, true],
+          "slopes": [0.5640587819217159, -0.5387536969178608],
+          "w": [231, 1024.33504514356],
+          "s": [447.1051280317922, 1146.2310404282089],
+          "e": [1020, 837.5818102100525],
+          "minX": 134,
+          "maxX": 1029,
+          "area": 512690
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 9535,
+          "nearAmber": 3
+        },
+        "baseWidth": 789,
+        "scaleK": 1.0771595769961977,
+        "height": {
+          "ratio": 0.376425855513308,
+          "scaffoldReference": 0.3682539682539683,
+          "pass": true,
+          "eave": [445, 843],
+          "foot": [445, 1140]
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye"
+        },
+        "lightEstimate": {
+          "lowerLeft": 160.54423461538477,
+          "lowerRight": 151.37362435897424,
+          "eyeConfirmed": {
+            "leftLighter": true,
+            "judgement": "by eye"
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [350, 921],
+          "eave": [350, 689],
+          "baseWidth": 630,
+          "wallHeightRatio": 0.3682539682539683,
+          "method": "by eye: main-wall near corner, excluding lean-to annex"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the right-hand side and is r0's lower-right wall, copied as it stands there: the quoined gable end with scalloped bargeboards, the arched green door, the arched windows, the black downpipe and the small slate-roofed lean-to annex with its green door (the annex stands inside the footprint). The lower-right wall is the BACK: a plain long stone wall under the slate roof, built as r0 shows the building built (cream limestone courses, quoined corners, the same base), with a few small windows and one plain green door, and no canopy, no benches and no lanterns. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): the long back wall (the lower-right wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again. There, in view r0, the lower-left wall is the front: the long platform front, with its canopy, lanterns, benches, door and windows. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: your last r1 passed the silhouette (best-fit IoU 0.9523, boundary deviation 21.9 canvas px) but omitted the one plain green service door required on the long BACK wall, which is the lower-right wall. Paint that door into that long stone wall with the small windows; the arched door on the lower-left gable and the lean-to's door stay where the first image puts them. Preserve the first image's exact roof, chimney, wall and annex outline while adding this surface detail; no new mass or object.",
+      "closest": true,
+      "returned": [1254, 1254],
+      "references": [
+        "../scaffolds-535/big_station-r1-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "attempt": 3,
+      "refusal": "Boundary deviation 26.683 canvas px exceeds 24; best-fit IoU 0.9563 passes",
+      "requestedSize": [1024, 1024]
+    },
+    {
+      "references": [
+        "../scaffolds-535/big_station-r3-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r3-attempt-1.png",
+        "view": "r3",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.7375736341585493,
+          "bestFit": {
+            "f": 0.892,
+            "dx": -1,
+            "dy": 54,
+            "iou": 0.9369063772048847
+          },
+          "boundaryDeviationCanvasPx": 36.84353633726637,
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [192, 116, 1195, 1147],
+        "base": {
+          "sure": [true, true],
+          "slopes": [0.5075842792378226, -0.4586840746393323],
+          "w": [198, 1015.4435903022004],
+          "s": [450.22273385777356, 1143.4678848747915],
+          "e": [1046, 870.1943408631932],
+          "minX": 192,
+          "maxX": 1195,
+          "area": 605422
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 22364,
+          "nearAmber": 70
+        },
+        "baseWidth": 876,
+        "scaleK": 0.9701813998287672,
+        "baseByEye": {
+          "s": [450, 1144],
+          "e": [1074, 854],
+          "note": "far outer post foot; machine e ends early",
+          "w": [198, 1015]
+        },
+        "height": {
+          "scaffoldReference": 0.40930979133226325,
+          "ratio": 0.4052511415525114,
+          "pass": true,
+          "foot": [450, 1144],
+          "eave": [450, 789]
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye"
+        },
+        "lightEstimate": {
+          "lowerLeft": 173.07833589743646,
+          "lowerRight": 106.61774743589766,
+          "eyeConfirmed": {
+            "leftLighter": true,
+            "judgement": "by eye"
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [386, 959],
+          "eave": [386, 704],
+          "baseWidth": 623,
+          "wallHeightRatio": 0.40930979133226325,
+          "method": "by eye on bare scaffold"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "attempt": 1,
+      "returned": [1254, 1254],
+      "refusal": "Boundary deviation 36.844 canvas px exceeds 24",
+      "kept": false,
+      "view": "r3",
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The lower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not mirrored: the long platform front: the deep cream corrugated canopy with its scalloped fascia on dark-green cast-iron posts, the hanging lanterns, two cast-iron benches, the forest-green plank door and two windows. The lower-left wall is the left-hand side: a quoined stone gable end with scalloped bargeboards and one arched window, plainer than the right-hand end: no door and no lean-to annex. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): the canopy's underside and the rear gable end (the lower-left wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.",
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r3-attempt-1.png",
+      "requestedSize": [1024, 1024]
+    },
+    {
+      "refusal": "Boundary deviation 25.365 canvas px exceeds 24",
+      "view": "r3",
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r3-attempt-2.png",
+      "returned": [1254, 1254],
+      "kept": false,
+      "references": [
+        "../scaffolds-535/big_station-r3-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r3-attempt-2.png",
+        "view": "r3",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.7217984898177103,
+          "bestFit": {
+            "f": 0.882,
+            "dx": 3,
+            "dy": 57,
+            "iou": 0.9359533493409125
+          },
+          "boundaryDeviationCanvasPx": 25.365389270139577,
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [182, 114, 1194, 1144],
+        "base": {
+          "sure": [true, true],
+          "slopes": [0.47994239907838526, -0.47604128083993025],
+          "w": [189, 1021.7751713147411],
+          "s": [437.8063641515414, 1141.1878946316021],
+          "e": [1083, 834.0490898325304],
+          "minX": 182,
+          "maxX": 1194,
+          "area": 605458
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 12793,
+          "nearAmber": 11
+        },
+        "baseWidth": 894,
+        "scaleK": 0.9506475461409396,
+        "height": {
+          "ratio": 0.3982102908277405,
+          "pass": true,
+          "eave": [438, 785],
+          "scaffoldReference": 0.40930979133226325,
+          "foot": [438, 1141]
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye"
+        },
+        "lightEstimate": {
+          "lowerLeft": 187.0905807692319,
+          "lowerRight": 104.86685641025649,
+          "eyeConfirmed": {
+            "leftLighter": true,
+            "judgement": "by eye"
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [386, 959],
+          "eave": [386, 704],
+          "baseWidth": 623,
+          "wallHeightRatio": 0.40930979133226325,
+          "method": "by eye on bare scaffold"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "attempt": 2,
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The lower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not mirrored: the long platform front: the deep cream corrugated canopy with its scalloped fascia on dark-green cast-iron posts, the hanging lanterns, two cast-iron benches, the forest-green plank door and two windows. The lower-left wall is the left-hand side: a quoined stone gable end with scalloped bargeboards and one arched window, plainer than the right-hand end: no door and no lean-to annex. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): the canopy's underside and the rear gable end (the lower-left wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: your last r3 failed the silhouette boundary test: 36.84 canvas px against a maximum of 24, although best-fit IoU was 0.9369. The canopy is too deep and its end overhang and posts diverge from the first image's outline; keep that canopy edge, all post feet, the gable corners and chimney tops exactly where the first image places them. Repaint only the surfaces, preserving every part's outline.",
+      "closest": true,
+      "requestedSize": [1024, 1024]
+    },
+    {
+      "attempt": 3,
+      "refusal": "Boundary deviation 44.336 canvas px exceeds 24",
+      "references": [
+        "../scaffolds-535/big_station-r3-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r3-attempt-3.png",
+      "view": "r3",
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r3-attempt-3.png",
+        "view": "r3",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.6645187273459525,
+          "bestFit": {
+            "f": 0.85,
+            "dx": -6,
+            "dy": 48,
+            "iou": 0.9015095729013255
+          },
+          "boundaryDeviationCanvasPx": 44.33610579693758,
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [139, 83, 1241, 1196],
+        "base": {
+          "sure": [true, true],
+          "slopes": [0.5079853400343958, -0.4334256446216262],
+          "w": [155, 1055.1018099547512],
+          "s": [426.14407783064706, 1192.8390265298651],
+          "e": [1115, 894.2712044121886],
+          "minX": 139,
+          "maxX": 1241,
+          "area": 711856
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 21897,
+          "nearAmber": 116
+        },
+        "baseWidth": 960,
+        "scaleK": 0.88529052734375,
+        "height": {
+          "ratio": 0.3770833333333333,
+          "foot": [426, 1193],
+          "eave": [426, 831],
+          "scaffoldReference": 0.40930979133226325,
+          "pass": true
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye"
+        },
+        "lightEstimate": {
+          "lowerLeft": 185.43914999999998,
+          "lowerRight": 108.70078717948715,
+          "eyeConfirmed": {
+            "leftLighter": true,
+            "judgement": "by eye"
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [386, 959],
+          "eave": [386, 704],
+          "baseWidth": 623,
+          "wallHeightRatio": 0.40930979133226325,
+          "method": "by eye on bare scaffold"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The lower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not mirrored: the long platform front: the deep cream corrugated canopy with its scalloped fascia on dark-green cast-iron posts, the hanging lanterns, two cast-iron benches, the forest-green plank door and two windows. The lower-left wall is the left-hand side: a quoined stone gable end with scalloped bargeboards and one arched window, plainer than the right-hand end: no door and no lean-to annex. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): the canopy's underside and the rear gable end (the lower-left wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: your last r3 narrowly missed the silhouette boundary test: 25.37 canvas px where the maximum is 24, despite best-fit IoU 0.9360. Preserve the first image's precise canopy ends and depths, post locations and heights, wall feet, roof outline and chimney top positions; do not tidy those into a larger ideal station outline. Paint the first image's exact geometry surface by surface in the crisp game style.",
+      "kept": false,
+      "returned": [1254, 1254],
+      "requestedSize": [1024, 1024]
+    },
+    {
+      "refusal": "Boundary deviation 29.311 canvas px exceeds 24; missing required back service door",
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r2-attempt-1.png",
+        "view": "r2",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.8012249239006858,
+          "bestFit": {
+            "f": 0.9,
+            "dx": -3,
+            "dy": 30,
+            "iou": 0.9694101816550796
+          },
+          "boundaryDeviationCanvasPx": 29.31072312245656,
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [103, 126, 1195, 1177],
+        "base": {
+          "sure": [false, true],
+          "slopes": [0.5, -0.5032020755756729],
+          "w": [116, 910],
+          "s": [746.5244921886473, 1225.2622460943237],
+          "e": [1082, 1056.450274258848],
+          "minX": 103,
+          "maxX": 1195,
+          "area": 652428
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 7097,
+          "nearAmber": 0
+        },
+        "baseWidth": 966,
+        "scaleK": 0.8797918284161491,
+        "baseByEye": {
+          "s": [836, 1178],
+          "note": "annex obscures long-wall line; machine s is extrapolated below building",
+          "w": [116, 910],
+          "e": [1082, 1056]
+        },
+        "height": {
+          "scaffoldReference": 0.4461538461538462,
+          "eave": [836, 800],
+          "pass": true,
+          "ratio": 0.391304347826087,
+          "foot": [836, 1178]
+        },
+        "light": {
+          "judgement": "by eye",
+          "leftLighter": true
+        },
+        "lightEstimate": {
+          "lowerLeft": 179.29430258302577,
+          "lowerRight": 141.68446589446614,
+          "eyeConfirmed": {
+            "judgement": "by eye",
+            "leftLighter": true
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [674, 944],
+          "eave": [674, 625],
+          "baseWidth": 715,
+          "wallHeightRatio": 0.4461538461538462,
+          "method": "by eye on bare scaffold"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "attempt": 1,
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side. The lower-left wall is the BACK, the same wall as the lower-right wall of the r1 picture: a plain long stone wall under the slate roof, built as r0 shows the building built (cream limestone courses, quoined corners, the same base), with a few small windows and one plain green door, and no canopy, no benches and no lanterns. The lower-right wall is the left-hand side, the same wall as the lower-left wall of the r3 picture: a quoined stone gable end with scalloped bargeboards and one arched window, plainer than the right-hand end: no door and no lean-to annex. Where r1 or r3 is not attached, take that wall from these words. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): both walls (the back and the rear gable end). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again. There, in view r0, the lower-left wall is the front: the long platform front, with its canopy, lanterns, benches, door and windows. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them. The fourth reference is this same building in view r1 (the kept picture): its lower-right wall is the BACK, and that wall is the lower-left wall of this picture. The fifth is this same building in view r3 (the kept picture): its lower-left wall is the left-hand side, and that wall is the lower-right wall of this picture. Copy both walls as they stand in those references: the same height, shape under the roof, windows and doors, painted in the same way. Where r1 or r3 is not attached, take that wall from the words above.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.",
+      "kept": false,
+      "view": "r2",
+      "references": [
+        "../scaffolds-535/big_station-r2-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "returned": [1254, 1254],
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r2-attempt-1.png",
+      "requestedSize": [1024, 1024]
+    },
+    {
+      "references": [
+        "../scaffolds-535/big_station-r2-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/station.png"
+      ],
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Big Station, a long cream-stone railway station building with a platform canopy, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side. The lower-left wall is the BACK, the same wall as the lower-right wall of the r1 picture: a plain long stone wall under the slate roof, built as r0 shows the building built (cream limestone courses, quoined corners, the same base), with a few small windows and one plain green door, and no canopy, no benches and no lanterns. The lower-right wall is the left-hand side, the same wall as the lower-left wall of the r3 picture: a quoined stone gable end with scalloped bargeboards and one arched window, plainer than the right-hand end: no door and no lean-to annex. Where r1 or r3 is not attached, take that wall from these words. The roof is r0's: one dark slate gable roof, its ridge running along the long walls, with the three chimney stacks (two red pots each) on the ridge at the same places along it; the canopy is a lean-to on the front only.\n\nInvented in the first picture (the front view never showed it): both walls (the back and the rear gable end). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again. There, in view r0, the lower-left wall is the front: the long platform front, with its canopy, lanterns, benches, door and windows. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them. The fourth reference is this same building in view r1 (the kept picture): its lower-right wall is the BACK, and that wall is the lower-left wall of this picture. The fifth is this same building in view r3 (the kept picture): its lower-left wall is the left-hand side, and that wall is the lower-right wall of this picture. Copy both walls as they stand in those references: the same height, shape under the roof, windows and doors, painted in the same way. Where r1 or r3 is not attached, take that wall from the words above.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: your last r2 missed the boundary limit (29.31 canvas px, maximum 24; best-fit IoU 0.9694) and omitted the plain green service door on the BACK, the long lower-left wall. Add that one door and the few small back windows as painted wall details, with no bench or lantern on that wall. Hold the lit scaffold's exact outline, particularly its roof ends, chimney tops, near base corner and annex; repaint the surfaces without changing those masses.",
+      "attempt": 2,
+      "visual": "Same cream limestone, slate gable, three paired pots; back service door and small windows; no bench on back; all surfaces crisp; left wall lighter; no ground, smoke, lettering or loose objects.",
+      "measured": {
+        "file": "assets/source/rotations-535/big_station/raw/big_station-r2-attempt-2.png",
+        "view": "r2",
+        "nameMetadata": null,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.9667751861927485,
+          "bestFit": {
+            "f": 0.996,
+            "dx": -2,
+            "dy": 3,
+            "iou": 0.9746607961182496
+          },
+          "boundaryDeviationCanvasPx": 23.47522035041792,
+          "pass": true,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary symmetric Euclidean Hausdorff after 2 canvas px opening"
+        },
+        "opaqueBox": [163, 208, 1137, 1166],
+        "base": {
+          "sure": [false, true],
+          "slopes": [0.5, -0.5897650770940586],
+          "w": [171, 921],
+          "s": [752.2827510699477, 1211.6413755349738],
+          "e": [1033, 1046.0841455781097],
+          "minX": 163,
+          "maxX": 1137,
+          "area": 532933
+        },
+        "heldWidth": 849.87890625,
+        "highlights": {
+          "nearWhite": 8402,
+          "nearAmber": 0
+        },
+        "baseWidth": 862,
+        "scaleK": 0.9859384063225058,
+        "baseByEye": {
+          "e": [1033, 1046],
+          "w": [171, 921],
+          "note": "annex obscures long-wall line; machine s is extrapolated below building",
+          "s": [830, 1165]
+        },
+        "height": {
+          "ratio": 0.41067285382830626,
+          "pass": true,
+          "scaffoldReference": 0.4461538461538462,
+          "eave": [830, 811],
+          "foot": [830, 1165]
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye"
+        },
+        "lightEstimate": {
+          "lowerLeft": 182.0606653543308,
+          "lowerRight": 155.48681258023063,
+          "eyeConfirmed": {
+            "leftLighter": true,
+            "judgement": "by eye"
+          },
+          "pass": true
+        },
+        "scaffoldReference": {
+          "foot": [674, 944],
+          "eave": [674, 625],
+          "baseWidth": 715,
+          "wallHeightRatio": 0.4461538461538462,
+          "method": "by eye on bare scaffold"
+        },
+        "r0Reference": {
+          "foot": [1035, 907],
+          "eave": [1035, 617],
+          "baseWidth": 1216,
+          "wallHeightRatio": 0.23848684210526316,
+          "highlights": {
+            "nearWhite": 31852,
+            "nearAmber": 7
+          }
+        }
+      },
+      "returned": [1254, 1254],
+      "kept": true,
+      "file": "assets/source/rotations-535/big_station/raw/big_station-r2-attempt-2.png",
+      "view": "r2",
+      "requestedSize": [1024, 1024]
+    }
+  ],
+  "notes": [
+    "pictureOf from building-check.mjs parses names only; it does not read alpha. PNG is decoded with pngjs and alpha >128; pictureOf is imported and name metadata reported as null for job filenames.",
+    "r1 closest attempt3 and r3 closest attempt2 remain kept:false; they were not attached to r2. r2 attempt2 passes silhouette/height/light/visual.",
+    "References viewed at full resolution. Bare heights read at the main wall corner under its eave (annex not included). Grass previews generated using exported drawLook and t1x2, not committed."
+  ]
+}
