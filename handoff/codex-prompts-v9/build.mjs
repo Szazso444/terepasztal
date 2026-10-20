@@ -72,6 +72,16 @@ ${order}
   );
 }
 
+// the launcher: one short prompt that makes Codex read the file queue on branch claude/codex-queue itself
+const launcher = prompt('launcher');
+const launcherCard = `<section class="card" id="launcher">
+  <header><span class="cid">Start here</span><h2>Launcher prompt: paste this into Codex</h2><button class="copy" type="button" data-for="p-launcher">Copy prompt</button></header>
+  <p class="status"><b>What it does.</b> One conversation: Codex fetches branch claude/codex-queue, reads codex-queue/README.md and queue.json from it, and runs every ready group as a parallel sub-agent, each in its own worktree on G:, then reports the summary. The same text is in the repository as codex-queue/LAUNCH.md.</p>
+  <p class="status"><b>The cards below.</b> The per-group cards below are the same prompts, kept for reference and for manual runs. The queue's own copies (codex-queue/prompts/ on that branch) differ only in the branch and worktree instructions at their start.</p>
+  <pre id="p-launcher" tabindex="0">${esc(launcher)}</pre>
+</section>
+`;
+
 const toc = `<section class="card" id="toc">
   <header><h2>Contents</h2></header>
   <table class="toc">
@@ -85,6 +95,7 @@ ${tocRows.join('\n')}
 
 const body =
   '<div class="wrap">\n  <h1>Codex art prompts</h1>\n' +
+  launcherCard +
   `  <div class="lead">\n    <p>Updated ${esc(data.updated)}.</p>\n` +
   data.lead.map((p) => `    <p>${esc(p)}</p>\n`).join('') +
   '  </div>\n' +

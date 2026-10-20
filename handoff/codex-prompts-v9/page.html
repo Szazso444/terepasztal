@@ -46,6 +46,19 @@
 </style>
 <div class="wrap">
   <h1>Codex art prompts</h1>
+<section class="card" id="launcher">
+  <header><span class="cid">Start here</span><h2>Launcher prompt: paste this into Codex</h2><button class="copy" type="button" data-for="p-launcher">Copy prompt</button></header>
+  <p class="status"><b>What it does.</b> One conversation: Codex fetches branch claude/codex-queue, reads codex-queue/README.md and queue.json from it, and runs every ready group as a parallel sub-agent, each in its own worktree on G:, then reports the summary. The same text is in the repository as codex-queue/LAUNCH.md.</p>
+  <p class="status"><b>The cards below.</b> The per-group cards below are the same prompts, kept for reference and for manual runs. The queue's own copies (codex-queue/prompts/ on that branch) differ only in the branch and worktree instructions at their start.</p>
+  <pre id="p-launcher" tabindex="0">You are the orchestrator of the Terepasztal art queue. G:/DEV/Terepasztal/terepasztal is read-only for you (it has uncommitted work): never edit or switch anything there, and never write to C:.
+1. git -C G:/DEV/Terepasztal/terepasztal fetch -q origin claude/codex-queue
+2. Make the ledger worktree: git -C G:/DEV/Terepasztal/terepasztal worktree add -b claude/codex-queue G:/DEV/wt/codex-queue origin/claude/codex-queue (if it already exists: fetch there and git merge --ff-only origin/claude/codex-queue).
+3. Read G:/DEV/wt/codex-queue/codex-queue/README.md and queue.json in full, and follow them.
+4. Run every group with status &quot;ready&quot; as its own sub-agent, in parallel, each in its own git worktree on G: (never in the main checkout); the prompts of a group run in order. If you cannot run sub-agents in parallel, run the groups one by one as the README says.
+5. Honour every stop condition in the prompts: a stop halts only that group. Never force-push, never delete branches.
+6. After each prompt the sub-agent appends its result to codex-queue/status/&lt;group&gt;.md and pushes it (see the README, &quot;Ledger&quot;).
+7. When all groups are done or stopped, write and push codex-queue/status/SUMMARY.md and report the summary to me here.</pre>
+</section>
   <div class="lead">
     <p>Updated 2026-10-20.</p>
     <p>Each group below is ONE Codex conversation: paste its prompts one after another, each after the previous one finishes. The button Copy whole conversation copies the group&#x27;s prompts in order, with a separator line between them; Copy prompt copies a single one.</p>
