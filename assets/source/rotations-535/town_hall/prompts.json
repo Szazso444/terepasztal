@@ -103,14 +103,14 @@
           "nearAmber": 41,
           "pass": "reported only; never refuses"
         },
-        "baseWidth": 759.0,
+        "baseWidth": 759,
         "scaleK": 1.1197350543478262,
         "height": {
           "pass": true,
           "method": "by eye, near main-wall corner under eaves",
           "scaffoldReference": 0.5691056910569106,
-          "eaveY": 777.0,
-          "footY": 1186.0,
+          "eaveY": 777,
+          "footY": 1186,
           "ratio": 0.538866930171278
         },
         "light": {
@@ -187,14 +187,14 @@
           "nearAmber": 58,
           "pass": "reported only; never refuses"
         },
-        "baseWidth": 821.0,
+        "baseWidth": 821,
         "scaleK": 1.0351752816686968,
         "height": {
           "pass": true,
-          "footY": 1166.0,
+          "footY": 1166,
           "scaffoldReference": 0.5700325732899023,
           "method": "by eye, near main-wall corner under eaves",
-          "eaveY": 740.0,
+          "eaveY": 740,
           "ratio": 0.5188794153471377
         },
         "light": {
@@ -280,15 +280,15 @@
           "nearAmber": 1,
           "pass": "reported only; never refuses"
         },
-        "baseWidth": 824.0,
+        "baseWidth": 824,
         "scaleK": 1.0314064396237863,
         "height": {
           "pass": true,
           "ratio": 0.5036407766990292,
           "method": "by eye, near main-wall corner under eaves",
           "scaffoldReference": 0.5786163522012578,
-          "footY": 1167.0,
-          "eaveY": 752.0
+          "footY": 1167,
+          "eaveY": 752
         },
         "light": {
           "leftLighter": true,
@@ -315,6 +315,11 @@
     "result": "done",
     "stopReason": "none",
     "refused": "none",
-    "notes": "Town r3 reference corrected by zoom crop to eaves rather than parapet; all heights below parapets/gables/cupola."
+    "notes": "Town r3 reference corrected by zoom crop to eaves rather than parapet; all heights below parapets/gables/cupola.",
+    "coreReview1": {
+      "acceptedBy": "Core review 1, 21 October 2026",
+      "acceptedAttempts": ["r1 attempt1", "r2 attempt1", "r3 attempt1"],
+      "allViewsAccepted": true
+    }
   }
 }
