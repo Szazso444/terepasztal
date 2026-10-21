@@ -1,5 +1,5 @@
 {
-  "checked": 12,
+  "checked": 16,
   "failed": 2,
   "pictures": {
     "water_tower-a0-r0": {
@@ -664,6 +664,203 @@
       "camera": {
         "by": 6.4,
         "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      }
+    },
+    "farm-a0-r0": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.443,
+          -0.5
+        ],
+        "slopes": [
+          0.443,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            204,
+            943
+          ],
+          "s": [
+            735.5,
+            1178.2
+          ],
+          "e": [
+            1158,
+            967
+          ]
+        },
+        "scale": 0.4723,
+        "vertical": 1.0609,
+        "shear": 0.0304,
+        "cx": 681,
+        "cy": 1033.9,
+        "box": {
+          "left": 269.2,
+          "top": 443.9,
+          "right": 739.6,
+          "bottom": 912.5
+        },
+        "camera": null,
+        "area": 613038
+      }
+    },
+    "farm-a0-r1": {
+      "ok": true,
+      "problems": [],
+      "notes": [],
+      "fit": {
+        "method": "base",
+        "sure": [
+          true,
+          true
+        ],
+        "measured": [
+          0.528,
+          -0.458
+        ],
+        "slopes": [
+          0.528,
+          -0.458
+        ],
+        "base": {
+          "w": [
+            385,
+            946.8
+          ],
+          "s": [
+            657.7,
+            1090.7
+          ],
+          "e": [
+            885,
+            986.6
+          ]
+        },
+        "scale": 0.9011,
+        "vertical": 1.0147,
+        "shear": -0.0353,
+        "cx": 635,
+        "cy": 958.4,
+        "box": {
+          "left": 284.9,
+          "top": 436.1,
+          "right": 750.8,
+          "bottom": 952.1
+        },
+        "camera": {
+          "elevation": 29.4,
+          "turn": 2
+        },
+        "area": 207792
+      }
+    },
+    "farm-a0-r2": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          true,
+          false
+        ],
+        "measured": [
+          0.536,
+          -0.5
+        ],
+        "slopes": [
+          0.536,
+          -0.5
+        ],
+        "base": {
+          "w": [
+            209,
+            963.1
+          ],
+          "s": [
+            691,
+            1221.5
+          ],
+          "e": [
+            1170,
+            982
+          ]
+        },
+        "scale": 0.4688,
+        "vertical": 0.9651,
+        "shear": -0.0174,
+        "cx": 689.5,
+        "cy": 926.6,
+        "box": {
+          "left": 271.2,
+          "top": 443.3,
+          "right": 737.3,
+          "bottom": 929.8
+        },
+        "camera": null,
+        "area": 674893
+      }
+    },
+    "farm-a0-r3": {
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "placed by its outline: no straight wall base was found"
+      ],
+      "fit": {
+        "method": "outline",
+        "sure": [
+          false,
+          true
+        ],
+        "measured": [
+          0.5,
+          -0.487
+        ],
+        "slopes": [
+          0.5,
+          -0.487
+        ],
+        "base": {
+          "w": [
+            249,
+            931.5
+          ],
+          "s": [
+            661,
+            1137.5
+          ],
+          "e": [
+            1021,
+            962.1
+          ]
+        },
+        "scale": 0.5836,
+        "vertical": 1.0129,
+        "shear": -0.0065,
+        "cx": 635,
+        "cy": 954.9,
+        "box": {
+          "left": 284.4,
+          "top": 399.8,
+          "right": 747.8,
+          "bottom": 940.1
+        },
+        "camera": null,
+        "area": 458940
       }
     }
   }

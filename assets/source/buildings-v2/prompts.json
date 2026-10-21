@@ -1,0 +1,17 @@
+{
+  "C21a": {
+    "note": "Scaffold r3 shows left-wall door/trim and pedestal despite generic front-wall wording; scaffold geometry wins and those parts were painted as shown. r3 attempt2 passes scaffold metrics but queue set refuses camera6deg, so group stopped under README tool-refusal rule.",
+    "views": {
+      "r1": {
+        "attempt": 2,
+        "status": "generated",
+        "file": "farm/farm-a0-r1.png"
+      },
+      "r3": {
+        "attempt": 2,
+        "status": "scaffold-tests-pass-tool-refused",
+        "file": "raw/farm-a0-r3-attempt-2.png"
+      }
+    }
+  }
+}

@@ -3405,5 +3405,283 @@
     },
     "kept": false,
     "refused": "camera6.4degrees >2; height.31318 outside.32725..44275; footprint27.91px >16px"
+  },
+{
+  "id": "farm-a0-r1",
+  "attempt": 1,
+  "file": "raw/farm-a0-r1-attempt-1.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.5214362072857062,
+    "s0": 1.224609375,
+    "f": 1.1492578328563108,
+    "dx": -77.76472335021947,
+    "dy": -223.11755903186713,
+    "iou": 0.7109757841727702,
+    "p95PictureToScaffold": 53.33267524425652,
+    "p95ScaffoldToPicture": 49.477875083962545,
+    "maximum": 62.21131124786608,
+    "pass": false
+  },
+  "highlights": {
+    "white": 3024,
+    "amber": 2
+  },
+  "spans": {
+    "w": [
+      299,
+      912.7
+    ],
+    "s": [
+      659.9,
+      1107
+    ],
+    "e": [
+      986,
+      961.7
+    ],
+    "slopes": [
+      0.538,
+      -0.446
+    ],
+    "width": 687,
+    "held": 509.4375,
+    "k": 0.7415393013100436
+  },
+  "top": {
+    "wallHeightReadAtVisibleLeftCorner": 282,
+    "nearCornerOccludedBySilo": true
+  },
+  "height": {
+    "wallHeight": 282,
+    "proportion": 0.4104803493449782,
+    "scaffoldReference": {
+      "wallHeight": 165,
+      "width": 431,
+      "proportion": 0.382830626450116
+    },
+    "r0": 0.35333333333333333
+  },
+  "kept": false,
+  "refused": "silhouette IoU .710976 <.90; p95 53.3327 and49.4779 >24; maximum62.2113 >48",
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Farm Halt. A farm halt where grain is loaded.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A warm timber barn on a cream stone base with a slate roof, a round wooden silo and a loading hatch.\n\nKeep in every age: a barn with a grain silo, a loading hatch or spout in the front; it stays a farm, never a factory.\n\nFront: the wall with the loading hatch.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right side is the back: built as the reference shows the building built, no higher than the lower-left side, and plainer than it. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the wall with the loading hatch. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nThe first picture is not a grey block-out but a rough 3D render of the small farm halt (a barn with a round silo) at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, post, opening and part where the render has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it again in the game's painted style, crisp clustered shading, three or four shades per material, taking the materials and details of the building from the other references. The front faces the upper left, hidden: no door and no loading hatch on either visible wall. The lower-left wall is the right-hand side, the lower-right wall the back, plainer; the barn, the round silo and the roof are r0's, the same size, no taller. Invented by the render, never shown by the front view: the rear wall of the barn. Paint those surfaces anew, plausibly and in this building's own style, and never leave them soft, blurred, smeared or plain. Light from the upper left: lower-left walls mid, lower-right walls darkest. Paint no plinth, ground or shadow. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review 1: the scaffold geometry wins; paint every part it shows at its existing position. Do not add front door or hatch to visible walls. Output 1024 x 1024, transparent RGBA background. The edit target is the first image; style board second; r0 reference third.",
+  "references": [
+    "G:/DEV/wt/codex-tmp/buildings/scaffolds/farm-r1-lit.png",
+    "docs/art-direction/images/03-theme-town-growth.png",
+    "assets/source/buildings-v2/.fitted/farm-a0-r0.png"
+  ],
+  "referenceHighlights": {
+    "white": 797,
+    "amber": 2
+  },
+  "visual": "Same barn and silo, crisp replanking, back has no hatch/door, lower-left lighter; no ground. Silhouette expanded far beyond target."
+},
+{
+  "id": "farm-a0-r1",
+  "attempt": 2,
+  "file": "raw/farm-a0-r1-attempt-2.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.8968019602915306,
+    "s0": 1.224609375,
+    "f": 0.9863469521819482,
+    "dx": 18.260091168768554,
+    "dy": -0.9499460676374838,
+    "iou": 0.9305662406035945,
+    "p95PictureToScaffold": 18.878799973806032,
+    "p95ScaffoldToPicture": 19.041473348707903,
+    "maximum": 31.47071693873236,
+    "pass": true
+  },
+  "highlights": {
+    "white": 2206,
+    "amber": 42
+  },
+  "spans": {
+    "w": [
+      385,
+      946.8
+    ],
+    "s": [
+      657.7,
+      1090.7
+    ],
+    "e": [
+      885,
+      986.6
+    ],
+    "slopes": [
+      0.528,
+      -0.458
+    ],
+    "width": 500,
+    "held": 509.4375,
+    "k": 1.018875
+  },
+  "top": {
+    "wallHeightReadAtVisibleLeftCorner": 176,
+    "nearCornerOccludedBySilo": true
+  },
+  "height": {
+    "wallHeight": 176,
+    "proportion": 0.352,
+    "scaffoldReference": {
+      "wallHeight": 165,
+      "width": 431,
+      "proportion": 0.382830626450116
+    },
+    "r0": 0.35333333333333333
+  },
+  "kept": true,
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Farm Halt. A farm halt where grain is loaded.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A warm timber barn on a cream stone base with a slate roof, a round wooden silo and a loading hatch.\n\nKeep in every age: a barn with a grain silo, a loading hatch or spout in the front; it stays a farm, never a factory.\n\nFront: the wall with the loading hatch.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right side is the back: built as the reference shows the building built, no higher than the lower-left side, and plainer than it. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the wall with the loading hatch. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nThe first picture is not a grey block-out but a rough 3D render of the small farm halt (a barn with a round silo) at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, post, opening and part where the render has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it again in the game's painted style, crisp clustered shading, three or four shades per material, taking the materials and details of the building from the other references. The front faces the upper left, hidden: no door and no loading hatch on either visible wall. The lower-left wall is the right-hand side, the lower-right wall the back, plainer; the barn, the round silo and the roof are r0's, the same size, no taller. Invented by the render, never shown by the front view: the rear wall of the barn. Paint those surfaces anew, plausibly and in this building's own style, and never leave them soft, blurred, smeared or plain. Light from the upper left: lower-left walls mid, lower-right walls darkest. Paint no plinth, ground or shadow. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review 1: the scaffold geometry wins; paint every part it shows at its existing position. Do not add front door or hatch to visible walls. Output 1024 x 1024, transparent RGBA background. The edit target is the first image; style board second; r0 reference third.\n\nCorrection: your last r1 enlarged and relocated the building, giving IoU0.711 where at least0.90 is needed, boundary p95 53.33 and49.48 canvas px where24 are allowed, max62.21 where48 is allowed. Keep the target building at its original scale and place inside the full canvas: its outline bbox is x296 to727,y436 to918 on the1024 canvas (x362 to890,y534 to1124 if returned at1254). Preserve the large transparent margin above it. Paint strictly over those pixels, not larger to fill the canvas; match every roof, silo and footing edge.",
+  "referenceHighlights": {
+    "white": 797,
+    "amber": 2
+  },
+  "visual": "Every surface crisp, lower-left lighter, no door/hatch on visible walls, same barn/silo/roof. Height taken on visible left corner and carried to hidden near barn corner."
+},
+{
+  "id": "farm-a0-r3",
+  "attempt": 1,
+  "file": "raw/farm-a0-r3-attempt-1.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.5062447860518371,
+    "s0": 1.224609375,
+    "f": 1.1499159899253781,
+    "dx": -81.28603194823336,
+    "dy": -251.87793024725693,
+    "iou": 0.7139440518098514,
+    "p95PictureToScaffold": 52.42453153120981,
+    "p95ScaffoldToPicture": 58.23478165521142,
+    "maximum": 80.05250201711219,
+    "pass": false
+  },
+  "highlights": {
+    "white": 1046,
+    "amber": 51
+  },
+  "spans": {
+    "w": [
+      417,
+      973.2805290702781
+    ],
+    "s": [
+      643.592897804988,
+      1108.106120710568
+    ],
+    "e": [
+      957,
+      934.4570215347285
+    ],
+    "slopes": [
+      0.595012433956886,
+      -0.5540688068638253
+    ],
+    "lowerLeft": 226.59289780498796,
+    "lowerRight": 313.40710219501204,
+    "width": 664,
+    "held": 509.4375,
+    "k": 0.7672251506024096
+  },
+  "top": {
+    "nearEavesY": 868.1061207105679,
+    "wallHeight": 240
+  },
+  "height": {
+    "wallHeight": 240,
+    "proportion": 0.3614457831325301,
+    "scaffoldReference": {
+      "wallHeight": 141,
+      "width": 409,
+      "proportion": 0.34474327628361856
+    },
+    "r0": 0.35333333333333333
+  },
+  "kept": false,
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Farm Halt. A farm halt where grain is loaded.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A warm timber barn on a cream stone base with a slate roof, a round wooden silo and a loading hatch.\n\nKeep in every age: a barn with a grain silo, a loading hatch or spout in the front; it stays a farm, never a factory.\n\nFront: the wall with the loading hatch.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nThe first picture is not a grey block-out but a rough 3D render of the small farm halt (a barn with a round silo) at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, post, opening and part where the render has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it again in the game's painted style, crisp clustered shading, three or four shades per material, taking the materials and details of the building from the other references. This view is the front view turned on a turntable, not flipped: the lower-right wall is the front, with the door and the loading hatch where r0 has them; the lower-left wall is the left-hand side. The barn, the round silo and the roof are r0's, the same size, no taller. Invented by the render, never shown by the front view: the far wall (the lower-left wall) and the rear of the silo. Paint those surfaces anew, plausibly and in this building's own style, and never leave them soft, blurred, smeared or plain. Light from the upper left: lower-left walls mid, lower-right walls darkest. Paint no plinth, ground or shadow. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review 1: scaffold geometry wins. Preserve the first image full-canvas location, size, transparent margins and silhouette. Output1024 x1024 transparent RGBA; first image is edit target, second style board, third r0 reference.",
+  "referenceHighlights": {
+    "white": 797,
+    "amber": 2
   }
+},
+{
+  "id": "farm-a0-r3",
+  "attempt": 2,
+  "file": "raw/farm-a0-r3-attempt-2.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.9166241155445328,
+    "s0": 1.224609375,
+    "f": 1.0035834384429025,
+    "dx": -1.2232665190031184,
+    "dy": -13.885727314967767,
+    "iou": 0.9325857713167266,
+    "p95PictureToScaffold": 15.459752443926192,
+    "p95ScaffoldToPicture": 16.47558570724765,
+    "maximum": 36.714517168381086,
+    "pass": true
+  },
+  "highlights": {
+    "white": 1350,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      473,
+      1010.3331943712824
+    ],
+    "s": [
+      645.3318498744886,
+      1112.2811585374543
+    ],
+    "e": [
+      883,
+      973.7771655953475
+    ],
+    "slopes": [
+      0.5915793525133164,
+      -0.5827621112419302
+    ],
+    "lowerLeft": 172.33184987448863,
+    "lowerRight": 237.66815012551137,
+    "width": 506,
+    "held": 509.4375,
+    "k": 1.0067934782608696
+  },
+  "top": {
+    "nearEavesY": 932.2811585374543,
+    "wallHeight": 180
+  },
+  "height": {
+    "wallHeight": 180,
+    "proportion": 0.3557312252964427,
+    "scaffoldReference": {
+      "wallHeight": 141,
+      "width": 409,
+      "proportion": 0.34474327628361856
+    },
+    "r0": 0.35333333333333333
+  },
+  "kept": false,
+  "passesScaffoldTests": true,
+  "queueRefusal": "camera 6.0 degrees; legacy gate contradicts scaffold method, group stopped and raw retained",
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Farm Halt. A farm halt where grain is loaded.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A warm timber barn on a cream stone base with a slate roof, a round wooden silo and a loading hatch.\n\nKeep in every age: a barn with a grain silo, a loading hatch or spout in the front; it stays a farm, never a factory.\n\nFront: the wall with the loading hatch.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nThe first picture is not a grey block-out but a rough 3D render of the small farm halt (a barn with a round silo) at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, post, opening and part where the render has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it again in the game's painted style, crisp clustered shading, three or four shades per material, taking the materials and details of the building from the other references. This view is the front view turned on a turntable, not flipped: the lower-right wall is the front, with the door and the loading hatch where r0 has them; the lower-left wall is the left-hand side. The barn, the round silo and the roof are r0's, the same size, no taller. Invented by the render, never shown by the front view: the far wall (the lower-left wall) and the rear of the silo. Paint those surfaces anew, plausibly and in this building's own style, and never leave them soft, blurred, smeared or plain. Light from the upper left: lower-left walls mid, lower-right walls darkest. Paint no plinth, ground or shadow. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review 1: scaffold geometry wins. Preserve the first image full-canvas location, size, transparent margins and silhouette. Output1024 x1024 transparent RGBA; first image is edit target, second style board, third r0 reference.\n\nCorrection: your last r3 enlarged and relocated the building with IoU0.714 rather than0.90, boundary p95 52.42/58.23 instead of at most24, maximum80.05 instead of48. Keep the first image exact full-canvas placement and outline: [296,387,727,922] is its bounding box on1024x1024; retain those large transparent margins, do not enlarge to fill the canvas. Paint all the target surfaces crisply in place, preserving every roof, silo, chimney, pedestal, door and hatch shape and position.",
+  "referenceHighlights": {
+    "white": 797,
+    "amber": 2
+  }
+}
 ]
