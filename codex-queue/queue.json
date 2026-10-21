@@ -46,62 +46,71 @@
           "id": "CR1-adopt",
           "title": "Mark the five views Core review 1 accepted (Big Station r1 r3, Big Farm r1 r2, Warehouse r2): prompts.json only, no image call",
           "file": "codex-queue/prompts/CR1-adopt.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C24a",
           "title": "Water pump: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C24a.md",
-          "status": "ready",
-          "note": "Stopped in the first run over the r2 scaffold's machinery. Core's decision: the scaffold's geometry wins; the prompt is amended."
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C25a",
           "title": "Stone grinder: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C25a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C26a",
           "title": "Oil refinery: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C26a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C27a",
           "title": "Power plant: r1, r3 and r2 painted over the scaffolds on the 1536 x 1024 canvas (3 pictures)",
           "file": "codex-queue/prompts/C27a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C28a",
           "title": "Battery (substation): r0 painted over its scaffold, then r1, r3 and r2 (4 pictures)",
           "file": "codex-queue/prompts/C28a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C30a",
           "title": "Colliery: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
           "file": "codex-queue/prompts/C30a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C31a",
           "title": "Ironworks: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
           "file": "codex-queue/prompts/C31a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C32a",
           "title": "Oil derrick: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C32a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C33a",
           "title": "House (townhouse) turned: r3 and r2 painted over the scaffolds on the tall 1024 x 1536 canvas (2 pictures)",
           "file": "codex-queue/prompts/C33a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C29a",
@@ -126,19 +135,22 @@
           "id": "C21a",
           "title": "Small Farm Halt a0: r1 and r3 painted over the scaffolds (2 pictures)",
           "file": "codex-queue/prompts/C21a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C23a",
           "title": "Quarry a0 r2 painted over its scaffold (1 picture)",
           "file": "codex-queue/prompts/C23a.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C4e",
           "title": "Coaling stage r1 and r3 painted over the scaffolds, matching the accepted r0 and r2 (2 pictures)",
           "file": "codex-queue/prompts/C4e.md",
-          "status": "ready"
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         },
         {
           "id": "C35a",
@@ -163,8 +175,8 @@
           "id": "R8e",
           "title": "Fuel Pump r3 painted over its scaffold (1 picture); r1 and r2 adopted (accepted)",
           "file": "codex-queue/prompts/R8e.md",
-          "status": "ready",
-          "note": "r1 (attempt 15) and r2 (attempt 11) accepted by Core review 1: Step 0 adopts them. Only r3 is painted (attempts 21 to 23). Tests converted to scaffold comparisons."
+          "status": "hold",
+          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
         }
       ]
     },
@@ -237,5 +249,8 @@
     "ready": "run it",
     "blocked": "waits for something Core provides: skip it, do not stop the group",
     "later": "not to run"
+  },
+  "statuses": {
+    "hold": "paused by the author: skip it, do not stop the group"
   }
 }
