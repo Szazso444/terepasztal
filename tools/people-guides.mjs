@@ -23,6 +23,13 @@ export const CANVAS = [1024, 1536];
 /** Figure height in canvas px, the row of the soles and the column of the pelvis. */
 export const HEIGHT = 960;
 export const SOLE_ROW = 1440;
+/**
+ * The sole row is the lowest row at least this many px wide (a sole), not the lowest opaque row:
+ * every foot box ends, in the picture, in a sharp corner a few px wide, up to 16 px below the sole
+ * proper. No painted boot reaches that corner (the R7c-1 paintings stopped 9 to 17 px short of it),
+ * and test 2 of that trial measures the lowest opaque row of the painting against row 1440.
+ */
+export const MIN_SOLE_PX = 36;
 export const CENTRE_X = 512;
 /** The figure is this many game px tall in the game; its canvas px per game px follow. */
 const FIGURE_PX = 9;
@@ -458,6 +465,16 @@ export function rowsOf(png) {
   return top < 0 ? null : { top, bottom };
 }
 
+/** The lowest row with at least MIN_SOLE_PX opaque pixels (the sole proper), or null. */
+export function soleRowOf(png) {
+  for (let y = png.height - 1; y >= 0; y--) {
+    let n = 0;
+    for (let x = 0; x < png.width; x++) if (png.data[(y * png.width + x) * 4 + 3] > 0) n++;
+    if (n >= MIN_SOLE_PX) return y;
+  }
+  return null;
+}
+
 /** A picture moved `dy` rows down (up for a negative one), whole rows, so nothing is resampled. */
 function shiftRows(png, dy) {
   const out = new PNG({ width: png.width, height: png.height });
@@ -472,12 +489,13 @@ function shiftRows(png, dy) {
 /**
  * One guide, at the true size of the game's figure: its scale is the same in every pose, so the
  * 1% of bob and the stagger of depth (the foot toward the camera stands lower on the screen) are
- * the walk's own. The figure is moved up or down until its lowest sole is on SOLE_ROW.
+ * the walk's own. The figure is moved up or down until its sole row (soleRowOf) is on SOLE_ROW; the
+ * sharp corner of a heel-strike foot may stand a few px lower, and flat soles end on SOLE_ROW itself.
  */
 export function drawGuideFor(view, arm, pose, { mirror = false } = {}) {
   const { parts, joints } = solvePose(arm, pose);
   const png = raster(parts, camera(view, { mirror }));
-  const dy = SOLE_ROW - rowsOf(png).bottom;
+  const dy = SOLE_ROW - soleRowOf(png);
   const cam = camera(view, { mirror, dy });
   const screen = {};
   for (const [k, v] of Object.entries(joints))
