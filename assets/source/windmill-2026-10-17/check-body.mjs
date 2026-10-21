@@ -25,20 +25,43 @@ export function measure(file, eye) {
     s = W / 42.99;
   const camera = roundCamera(png),
     check = checkFile(file, 't1', 0, { round: true });
-  const apex = (yc - box[1]) / W;
+  const view = eye.view ?? 0;
+  const target =
+    view === 1 ? [-16, -50] : view === 2 ? [16, -50] : view === 3 ? [16, -34] : [-16, -34];
+  const apex = (yc - (eye.apexTip ?? box[1])) / W;
   const [[sx1, sy1], [sx2, sy2]] = eye.stub;
-  const slope = (sy2 - sy1) / (sx1 - sx2);
+  const slope = Math.abs((sy2 - sy1) / (sx2 - sx1));
+  const expectedSlopeSign = view === 3 || view === 1 ? 1 : -1;
+  const directionPass = ((sy2 - sy1) / (sx2 - sx1)) * expectedSlopeSign > 0;
+  const stubSpan = Math.hypot(sx2 - sx1, sy2 - sy1);
   const [hx, hy] = eye.hub,
     hub = [(hx - xc) / s, (hy - yc) / s - 4];
-  const hubOffset = [hub[0] + 16, hub[1] + 34],
+  const hubOffset = [hub[0] - target[0], hub[1] - target[1]],
     hubDistance = Math.hypot(...hubOffset);
-  const [dl, dt, dr, db] = eye.door;
-  const doorPosition = ((dl + dr) / 2 - xc) / W,
-    doorHeight = (db - dt) / W;
+  const [dl, dt, dr, db] = eye.door ?? [0, 0, 0, 0];
+  const doorPosition = eye.door ? ((dl + dr) / 2 - xc) / W : null,
+    doorHeight = eye.door ? (db - dt) / W : null;
   let timber = 0,
     white = 0,
     amber = 0;
-  const inRect = (x, y, r) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+  const inRect = (x, y, r, pad = 0) =>
+    r && x >= r[0] - pad && x <= r[2] + pad && y >= r[1] - pad && y <= r[3] + pad;
+  const nearEdge = (x, y) => {
+    const opaque = (xx, yy) =>
+      xx >= 0 && yy >= 0 && xx < width && yy < height && data[(yy * width + xx) * 4 + 3] > 128;
+    for (let dy = -3; dy <= 3; dy++)
+      for (let dx = -3; dx <= 3; dx++) {
+        if (dx * dx + dy * dy > 9) continue;
+        const xx = x + dx,
+          yy = y + dy;
+        if (
+          opaque(xx, yy) &&
+          (!opaque(xx - 1, yy) || !opaque(xx + 1, yy) || !opaque(xx, yy - 1) || !opaque(xx, yy + 1))
+        )
+          return true;
+      }
+    return false;
+  };
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
@@ -64,24 +87,35 @@ export function measure(file, eye) {
         mx > 0 &&
         d / mx >= 0.45 &&
         mx / 255 <= 0.6 &&
-        !inRect(x, y, eye.door) &&
-        !inRect(x, y, eye.hubBox)
+        !(view
+          ? inRect(x, y, eye.door, 6) || Math.hypot(x - hx, y - hy) <= 60 || nearEdge(x, y)
+          : inRect(x, y, eye.door) || inRect(x, y, eye.hubBox))
       )
         timber++;
     }
   const tests = {
     camera: camera !== null && camera.ratio >= 0.46 && camera.ratio <= 0.54 && camera.by <= 2,
     tower: apex >= 1.05 && apex <= 1.16,
-    stub: slope >= 0.42 && slope <= 0.58,
+    stub: slope >= 0.42 && slope <= 0.58 && directionPass && (!view || stubSpan >= 40),
     hub: hubDistance <= 2,
-    doorPosition: Math.abs(doorPosition + 0.354) <= 0.04,
-    doorHeight: Math.abs(doorHeight - 0.251) <= 0.03,
+    doorPosition:
+      view === 1 || view === 2
+        ? !eye.door && eye.noDoorWindow
+        : Math.abs(doorPosition - (view === 3 ? 0.354 : -0.354)) <= 0.04,
+    doorHeight:
+      view === 1 || view === 2
+        ? !eye.door && eye.noDoorWindow
+        : Math.abs(doorHeight - 0.251) <= 0.03,
     timber: timber <= 25,
     amber: amber === 0,
     white: white === 0,
     check: check.ok,
     eye: eye.pass,
   };
+  if (view)
+    tests.position =
+      Math.abs(xc - (512 * width) / 1024) <= (12 * width) / 1024 &&
+      Math.abs(yc - (800 * width) / 1024) <= (12 * width) / 1024;
   const numbers = {
     returned: [width, height],
     box,
@@ -92,6 +126,9 @@ export function measure(file, eye) {
     camera,
     apexOverW: apex,
     stubSlope: slope,
+    stubDirectionPass: directionPass,
+    stubSpan,
+    hubTarget: target,
     hubFromAnchorWorld: hub,
     hubOffset,
     hubDistance,
