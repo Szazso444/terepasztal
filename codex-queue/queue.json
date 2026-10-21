@@ -5,6 +5,25 @@
   "worktreeRoot": "G:/DEV/wt",
   "groups": [
     {
+      "id": "textured-pilot",
+      "title": "Textured pilot: repaint over the textured blockout renders",
+      "laneBranch": "art/textured-pilot",
+      "worktree": "G:/DEV/wt/codex-textured-pilot",
+      "localBranch": "codex-textured-pilot",
+      "status": "ready",
+      "ledger": "codex-queue/status/textured-pilot.md",
+      "note": "NEW LANE: art/textured-pilot does not exist on origin yet. The sub-agent creates it from origin/develop (worktree add -b codex-textured-pilot G:/DEV/wt/codex-textured-pilot origin/develop; the first push of HEAD:art/textured-pilot creates the branch). Inputs: the textured renders on claude/art-scaffolds-review-2 (assets/source/buildings-v2/scaffolds-textured/, eef723cf) and the original paintings on origin/develop (assets/source/base-v1/). Stricter tests than the scaffold prompts (IoU 0.92, p95 16, max 32 canvas px, height 8 per cent).",
+      "prompts": [
+        {
+          "id": "TB1",
+          "title": "Textured pilot: warehouse, water pump and power plant, r0 to r3, repainted over the textured renders (12 pictures)",
+          "file": "codex-queue/prompts/TB1.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original r0; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        }
+      ]
+    },
+    {
       "id": "rotations",
       "title": "Rotations over scaffolds",
       "laneBranch": "art/535-rotations",
