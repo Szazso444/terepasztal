@@ -248,9 +248,7 @@
     "done": "finished and accepted: skip it",
     "ready": "run it",
     "blocked": "waits for something Core provides: skip it, do not stop the group",
-    "later": "not to run"
-  },
-  "statuses": {
+    "later": "not to run",
     "hold": "paused by the author: skip it, do not stop the group"
   }
 }
