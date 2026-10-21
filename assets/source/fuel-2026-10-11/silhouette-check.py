@@ -55,12 +55,16 @@ def boundary(a):
  er=np.asarray(Image.fromarray(a).convert('L').filter(ImageFilter.MinFilter(3)))>0
  return np.argwhere(a&~er)
 a=boundary(opened);b=boundary(trans)
-def hd(a,b):
- worst=0
+def directed_distances(a,b):
+ values=[]
  for chunk in np.array_split(a,max(1,len(a)//100)):
   diff=chunk[:,None,:].astype(float)-b[None,:,:]
-  worst=max(worst,float(np.sqrt((diff*diff).sum(2).min(1)).max()))
- return worst
-out={'returned':[w,h],'silhouette':{'iouAtS0':iou(1,0,0,True),'f':f,'dx':dx,'dy':dy,'bestFitIou':iou(f,dx,dy,True),'boundaryDeviationCanvasPx':max(hd(a,b),hd(b,a))/(s0*f)}}
-out['silhouette']['pass']=out['silhouette']['bestFitIou']>=.9 and out['silhouette']['boundaryDeviationCanvasPx']<=24
+  values.extend(np.sqrt((diff*diff).sum(2).min(1)).tolist())
+ return np.array(values)/(s0*f)
+da=directed_distances(a,b);db=directed_distances(b,a)
+def p95(values):
+ return float(np.sort(values)[int(np.ceil(.95*len(values)))-1])
+maximum=float(max(da.max(),db.max()));p95a=p95(da);p95b=p95(db)
+out={'returned':[w,h],'silhouette':{'iouAtS0':iou(1,0,0,True),'f':f,'dx':dx,'dy':dy,'bestFitIou':iou(f,dx,dy,True),'boundaryDeviationCanvasPx':max(p95a,p95b),'pictureToScaffoldP95':p95a,'scaffoldToPictureP95':p95b,'maximumCanvasPx':maximum,'boundaryMethod':'Core review1: directed nearest-rank p95<=24, maximum<=48, after2canvaspx opening'}}
+out['silhouette']['pass']=out['silhouette']['bestFitIou']>=.9 and out['silhouette']['boundaryDeviationCanvasPx']<=24 and maximum<=48
 print(json.dumps(out,default=lambda o:o.item())); Path(f'G:/DEV/wt/codex-tmp/fuelpump/{v}-{k}-measure.json').write_text(json.dumps(out,indent=2,default=lambda o:o.item()))

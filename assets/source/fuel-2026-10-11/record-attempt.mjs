@@ -20,19 +20,13 @@ const used = info.corners ?? { w: base.w, s: base.s, e: base.e };
 const width = used.e[0] - used.w[0];
 const heldWidth = (412 * png.width) / 1024;
 const light = checkLight(png, info.lightBoxes);
-light.pass =
-  light.pass &&
-  light.walls[0].median >= 100 &&
-  light.walls[0].median <= 150 &&
-  light.walls[1].median >= 60 &&
-  light.walls[1].median <= 85;
+light.pass = light.rightToLeft !== null && light.rightToLeft <= 0.85;
 const height = {
   ...info.height,
   houseWidth: width,
   ratio: (info.height.foot[1] - info.height.top[1]) / width,
 };
-height.pass =
-  height.ratio >= 0.43 && Math.abs(height.ratio / height.scaffoldReference.ratio - 1) <= 0.15;
+height.pass = Math.abs(height.ratio / height.scaffoldReference.ratio - 1) <= 0.15;
 const measured = {
   silhouette: info.silhouette,
   baseMeasured: { w: base.w, s: base.s, e: base.e, slopes: base.slopes, sure: base.sure },

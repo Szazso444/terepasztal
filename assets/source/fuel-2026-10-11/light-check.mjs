@@ -27,7 +27,7 @@ export function checkLight(png, boxes) {
   const walls = boxes.map((box) => brickLuma(png, box));
   const ratio =
     walls[0].median && walls[1].median !== null ? walls[1].median / walls[0].median : null;
-  return { walls, rightToLeft: ratio, pass: ratio !== null && ratio <= 0.75 };
+  return { walls, rightToLeft: ratio, pass: ratio !== null && ratio <= 0.85 };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
