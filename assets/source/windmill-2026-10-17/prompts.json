@@ -9,12 +9,26 @@
       "assets/source/base-v1/windmill.png",
       "assets/source/windmill-2026-10-16/windmill-a0-r0.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "numbers": {
-      "returned": [1254, 1254],
-      "box": [389, 368, 891, 1157],
+      "returned": [
+        1254,
+        1254
+      ],
+      "box": [
+        389,
+        368,
+        891,
+        1157
+      ],
       "footWidth": 503,
-      "footCentre": [640, 1031.25],
+      "footCentre": [
+        640,
+        1031.25
+      ],
       "scale": 11.700395440800186,
       "widthOverShort": 0.4011164274322169,
       "camera": {
@@ -27,8 +41,14 @@
       },
       "apexOverW": 1.3185884691848906,
       "stubSlope": 0.4307692307692308,
-      "hubFromAnchorWorld": [-16.32423459244533, -41.5414662027833],
-      "hubOffset": [-0.32423459244532893, -7.5414662027832975],
+      "hubFromAnchorWorld": [
+        -16.32423459244533,
+        -41.5414662027833
+      ],
+      "hubOffset": [
+        -0.32423459244532893,
+        -7.5414662027832975
+      ],
       "hubDistance": 7.548432986962322,
       "doorPosition": -0.24950298210735586,
       "doorHeight": 0.38767395626242546,
@@ -46,13 +66,31 @@
         ],
         "fit": {
           "method": "outline",
-          "sure": [true, false],
-          "measured": [0.329, -0.5],
-          "slopes": [0.33, -0.5],
+          "sure": [
+            true,
+            false
+          ],
+          "measured": [
+            0.329,
+            -0.5
+          ],
+          "slopes": [
+            0.33,
+            -0.5
+          ],
           "base": {
-            "w": [439, 1096.6],
-            "s": [707.3, 1184.9],
-            "e": [891, 1093]
+            "w": [
+              439,
+              1096.6
+            ],
+            "s": [
+              707.3,
+              1184.9
+            ],
+            "e": [
+              891,
+              1093
+            ]
           },
           "scale": 0.9968,
           "vertical": 1.2048,
@@ -84,12 +122,31 @@
       },
       "eye": {
         "stub": [
-          [539, 530],
-          [474, 558]
+          [
+            539,
+            530
+          ],
+          [
+            474,
+            558
+          ]
         ],
-        "hub": [449, 592],
-        "hubBox": [414, 544, 490, 642],
-        "door": [480, 934, 549, 1129],
+        "hub": [
+          449,
+          592
+        ],
+        "hubBox": [
+          414,
+          544,
+          490,
+          642
+        ],
+        "door": [
+          480,
+          934,
+          549,
+          1129
+        ],
         "pass": true,
         "notes": "Round smooth tower, plain tip, no sails/ground/objects. Limestone and slate, upper-left lighting. Door and shaft on lower-left face."
       }
@@ -106,12 +163,26 @@
       "assets/source/base-v1/windmill.png",
       "assets/source/windmill-2026-10-16/windmill-a0-r0.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "numbers": {
-      "returned": [1254, 1254],
-      "box": [416, 519, 844, 1102],
+      "returned": [
+        1254,
+        1254
+      ],
+      "box": [
+        416,
+        519,
+        844,
+        1102
+      ],
       "footWidth": 429,
-      "footCentre": [630, 994.75],
+      "footCentre": [
+        630,
+        994.75
+      ],
       "scale": 9.979064898813677,
       "widthOverShort": 0.34210526315789475,
       "camera": {
@@ -124,8 +195,14 @@
       },
       "apexOverW": 1.108974358974359,
       "stubSlope": 0.3225806451612903,
-      "hubFromAnchorWorld": [-16.033566433566435, -34.939772727272725],
-      "hubOffset": [-0.03356643356643474, -0.9397727272727252],
+      "hubFromAnchorWorld": [
+        -16.033566433566435,
+        -34.939772727272725
+      ],
+      "hubOffset": [
+        -0.03356643356643474,
+        -0.9397727272727252
+      ],
       "hubDistance": 0.9403719925582567,
       "doorPosition": -0.32284382284382285,
       "doorHeight": 0.2773892773892774,
@@ -139,16 +216,36 @@
         "problems": [
           "camera off by 4.3°: it looks down from 34.3° where the game looks down from 30° (the tower's foot is an ellipse 0.56 minor over major, the game's 0.50)"
         ],
-        "notes": ["placed by its outline: no straight wall base was found"],
+        "notes": [
+          "placed by its outline: no straight wall base was found"
+        ],
         "fit": {
           "method": "outline",
-          "sure": [false, false],
-          "measured": [0.5, -0.5],
-          "slopes": [0.5, -0.5],
+          "sure": [
+            false,
+            false
+          ],
+          "measured": [
+            0.5,
+            -0.5
+          ],
+          "slopes": [
+            0.5,
+            -0.5
+          ],
           "base": {
-            "w": [416, 1031],
-            "s": [635.5, 1140.8],
-            "e": [842, 1037.5]
+            "w": [
+              416,
+              1031
+            ],
+            "s": [
+              635.5,
+              1140.8
+            ],
+            "e": [
+              842,
+              1037.5
+            ]
           },
           "scale": 1.0577,
           "vertical": 1,
@@ -184,12 +281,31 @@
       },
       "eye": {
         "stub": [
-          [548, 634],
-          [486, 654]
+          [
+            548,
+            634
+          ],
+          [
+            486,
+            654
+          ]
         ],
-        "hub": [470, 686],
-        "hubBox": [435, 640, 503, 733],
-        "door": [468, 955, 515, 1074],
+        "hub": [
+          470,
+          686
+        ],
+        "hubBox": [
+          435,
+          640,
+          503,
+          733
+        ],
+        "door": [
+          468,
+          955,
+          515,
+          1074
+        ],
         "pass": true,
         "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting."
       }
@@ -206,12 +322,26 @@
       "assets/source/base-v1/windmill.png",
       "assets/source/windmill-2026-10-16/windmill-a0-r0.png"
     ],
-    "returned": [1254, 1254],
+    "returned": [
+      1254,
+      1254
+    ],
     "numbers": {
-      "returned": [1254, 1254],
-      "box": [420, 514, 834, 1079],
+      "returned": [
+        1254,
+        1254
+      ],
+      "box": [
+        420,
+        514,
+        834,
+        1079
+      ],
       "footWidth": 415,
-      "footCentre": [627, 975.25],
+      "footCentre": [
+        627,
+        975.25
+      ],
       "scale": 9.653407769248663,
       "widthOverShort": 0.3309409888357257,
       "camera": {
@@ -224,8 +354,14 @@
       },
       "apexOverW": 1.1114457831325302,
       "stubSlope": 0.4772727272727273,
-      "hubFromAnchorWorld": [-15.84932530120482, -34.17069277108433],
-      "hubOffset": [0.15067469879518036, -0.17069277108433312],
+      "hubFromAnchorWorld": [
+        -15.84932530120482,
+        -34.17069277108433
+      ],
+      "hubOffset": [
+        0.15067469879518036,
+        -0.17069277108433312
+      ],
       "hubDistance": 0.22768154724849107,
       "doorPosition": -0.3409638554216867,
       "doorHeight": 0.27710843373493976,
@@ -243,13 +379,31 @@
         ],
         "fit": {
           "method": "outline",
-          "sure": [true, false],
-          "measured": [0.163, -0.5],
-          "slopes": [0.33, -0.5],
+          "sure": [
+            true,
+            false
+          ],
+          "measured": [
+            0.163,
+            -0.5
+          ],
+          "slopes": [
+            0.33,
+            -0.5
+          ],
           "base": {
-            "w": [499, 1061.4],
-            "s": [687.5, 1092.2],
-            "e": [833, 1019.5]
+            "w": [
+              499,
+              1061.4
+            ],
+            "s": [
+              687.5,
+              1092.2
+            ],
+            "e": [
+              833,
+              1019.5
+            ]
           },
           "scale": 1.349,
           "vertical": 1.2048,
@@ -281,18 +435,38 @@
       },
       "eye": {
         "stub": [
-          [537, 633],
-          [493, 654]
+          [
+            537,
+            633
+          ],
+          [
+            493,
+            654
+          ]
         ],
-        "hub": [474, 684],
-        "hubBox": [439, 637, 508, 731],
-        "door": [467, 940, 504, 1055],
+        "hub": [
+          474,
+          684
+        ],
+        "hubBox": [
+          439,
+          637,
+          508,
+          731
+        ],
+        "door": [
+          467,
+          940,
+          504,
+          1055
+        ],
         "pass": true,
         "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting. Stub top edge reread from 4x zoom: original coordinates (537,633) near cap to (493,654) near plate; earlier point fell on the curved band instead of edge."
       }
     },
-    "kept": false,
+    "kept": true,
     "closest": true,
-    "failed": "dark-orange timber count 99 exceeds 25; near-white count 2962 also recorded, but not the only miss"
+    "failed": "dark-orange timber count 99 exceeds 25; near-white count 2962 also recorded, but not the only miss",
+    "note": "accepted by Core review 1: timber count 99, of which about 85 are outline, door-frame and hub pixels; 15 by the amended test below"
   }
 ]
