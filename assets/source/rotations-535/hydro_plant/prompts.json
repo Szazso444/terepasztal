@@ -100,5 +100,282 @@
     "keptFile": "hydro_plant-r0.png",
     "failure": "width 749 > maximum 506.98828125; all subsequent tests skipped",
     "nextCorrection": "Correction: your last r0 base measured 749 px of 1254 where the maximum is 507 px and the target is 482 px. Its entire ground-level base including the sluice must occupy only the guide block's 394-pixel span on the requested 1024 canvas. No further call: all three r0 attempts refused for width, so the job stopped."
+  },
+  {
+    "view": "r0",
+    "attempt": 4,
+    "file": "raw/hydro_plant-r0-attempt-4.png",
+    "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Hydro plant, an oblong stone powerhouse with a water intake, a sluice\r\nand a penstock, a new design (the Design paragraph below). Style: that of the second picture, the\r\nstyle board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades\r\nper material, restrained detail, a strong silhouette. The palette family of the whole game: forest\r\ngreen #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82,\r\ncopper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid,\r\nlower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside the plinth. The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\r\n\r\nDesign, carried round every view. (1) The powerhouse: an oblong hall of cream limestone courses on a\r\nhigh rusticated stone base, a dark slate gable roof with its ridge along the long front and a small\r\nforest-green vented ridge lantern at its middle, no chimney stack; three tall round-arched windows\r\nwith cream arches and forest-green glazing bars in the long front wall and a forest-green double\r\ndoor at its near end. (2) The water side, on the short end wall at the right: a small cream-stone\r\nintake chamber with a forest-green steel sluice gate and a handwheel on a railed platform, from\r\nwhich one big riveted forest-green penstock pipe with copper-banded flanges runs down the end wall\r\ninto the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace opening in\r\nthe rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is one\r\nbuilding on the guide's oblong base: the intake and the pipe stand on the base, inside the plinth,\r\nnothing at ground level outside it. (5) It must not look like the pump: no flywheel, no elbow pipe\r\nwith a strainer drum, no small cottage with a chimney stack; its silhouette is the long hall with\r\nthe lantern, the three arches, the penstock down the end wall and the sluice with its handwheel.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the long front: three tall round-arched windows with cream arches and\r\nforest-green glazing bars, the forest-green double door at its near end, and the arched tailrace\r\nopening low in the rusticated base. The lower-right wall is the building's right-hand side: the\r\nshort end wall with the water intake: the cream-stone intake chamber with the sluice gate and its\r\nhandwheel on a railed platform, and the riveted green penstock running down the wall into the\r\npowerhouse. The roof is the powerhouse's: dark slate gable roof, its ridge along the long walls,\r\nwith the small forest-green vented lantern in the middle of the ridge, in every view.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold hydro-plant picture: for the stone, the slate, the green iron and the mood, not for its layout\r\n(it has an arched powerhouse, a green penstock and a sluice gate, but it is much larger than one\r\ntile): take its materials, details and character from it, nothing of its layout: the block-out and\r\nthe design paragraph set those.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.",
+    "references": [
+      "G:/DEV/wt/guides-535/hydro_plant-r0.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/hydro-plant.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-4.png",
+      "nameMetadata": null,
+      "returned": [1254, 1254],
+      "opaqueBox": [177, 226, 1147, 1139],
+      "automatic": {
+        "w": [238, 848.96564404444],
+        "s": [833.5576133199085, 1177.8104975157732],
+        "e": [1147, 1033.2051362499035],
+        "slopes": [0.5521629580691664, -0.46134590409898246],
+        "sure": [true, true]
+      },
+      "corners": {
+        "w": [177, 824],
+        "s": [740, 1123],
+        "e": [1147, 1070]
+      },
+      "cornerMethod": "by eye; automatic retained",
+      "baseWidth": 970,
+      "heldWidth": 482.49609375,
+      "k": 0.49741865335051544,
+      "foot": [563, 407],
+      "footRatio": 1.3832923832923834,
+      "slopes": [0.5310834813499112, 0.13022113022113022],
+      "slopeDistances": [0.031083481349911235, 0.36977886977886976],
+      "camera": {
+        "elevation": 30.3,
+        "turn": 2.6
+      },
+      "cameraError": 2.6,
+      "cameraRefusal": {
+        "by": 2.6,
+        "was": "It was painted turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      },
+      "checkProblems": [
+        "camera off by 2.6°: the building is turned 2.6° towards its lower-right wall (the wall feet slope 0.55 and -0.46, the game's 0.50 and -0.50)"
+      ],
+      "largestOvershootGuidePx": 44.26907216494851,
+      "overshootLimitGuidePx": 16,
+      "height": 0.3979381443298969,
+      "heightTarget": 0.82,
+      "highlights": {
+        "nearWhite": 3526,
+        "nearAmber": 4
+      },
+      "tests": {
+        "width": "measurement only",
+        "plan": true,
+        "camera": false,
+        "insideFootprint": false,
+        "height": false
+      },
+      "eye": {
+        "corners": {
+          "w": [177, 824],
+          "s": [740, 1123],
+          "e": [1147, 1070]
+        },
+        "eavesY": 737,
+        "note": "Outer main-wall near corner; intake projects ahead of main end-wall foot, which breaks a plain straight foot. Main hall right foot (976,1004), recorded separately; automatic s lies below paint."
+      }
+    },
+    "kept": false,
+    "review": {
+      "corners": {
+        "w": [177, 824],
+        "s": [740, 1123],
+        "e": [1147, 1070]
+      },
+      "eavesY": 737,
+      "note": "Outer main-wall near corner; intake projects ahead of main end-wall foot, which breaks a plain straight foot. Main hall right foot (976,1004), recorded separately; automatic s lies below paint.",
+      "design": "Three arched windows,vented lantern,tailrace,green penstock/sluice present; oblong hall distinct from pump; no chimney/flywheel; left wall lighter; no text/people/rails/smoke. Intake projects and disrupts plain rectangular ground foot."
+    },
+    "oldHighlightReference": {
+      "nearWhite": 4019,
+      "nearAmber": 0
+    },
+    "failure": "Camera strict: machine slopes .55216/.46135,error2.6deg; whole-base eye slopes .53108/.13022. Height .39794 vs .82; overshoot44.269>16guidepx. Right wall foot not plain/straight."
+  },
+  {
+    "view": "r0",
+    "attempt": 5,
+    "file": "raw/hydro_plant-r0-attempt-5.png",
+    "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Hydro plant, an oblong stone powerhouse with a water intake, a sluice\r\nand a penstock, a new design (the Design paragraph below). Style: that of the second picture, the\r\nstyle board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades\r\nper material, restrained detail, a strong silhouette. The palette family of the whole game: forest\r\ngreen #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82,\r\ncopper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid,\r\nlower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside the plinth. The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\r\n\r\nDesign, carried round every view. (1) The powerhouse: an oblong hall of cream limestone courses on a\r\nhigh rusticated stone base, a dark slate gable roof with its ridge along the long front and a small\r\nforest-green vented ridge lantern at its middle, no chimney stack; three tall round-arched windows\r\nwith cream arches and forest-green glazing bars in the long front wall and a forest-green double\r\ndoor at its near end. (2) The water side, on the short end wall at the right: a small cream-stone\r\nintake chamber with a forest-green steel sluice gate and a handwheel on a railed platform, from\r\nwhich one big riveted forest-green penstock pipe with copper-banded flanges runs down the end wall\r\ninto the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace opening in\r\nthe rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is one\r\nbuilding on the guide's oblong base: the intake and the pipe stand on the base, inside the plinth,\r\nnothing at ground level outside it. (5) It must not look like the pump: no flywheel, no elbow pipe\r\nwith a strainer drum, no small cottage with a chimney stack; its silhouette is the long hall with\r\nthe lantern, the three arches, the penstock down the end wall and the sluice with its handwheel.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the long front: three tall round-arched windows with cream arches and\r\nforest-green glazing bars, the forest-green double door at its near end, and the arched tailrace\r\nopening low in the rusticated base. The lower-right wall is the building's right-hand side: the\r\nshort end wall with the water intake: the cream-stone intake chamber with the sluice gate and its\r\nhandwheel on a railed platform, and the riveted green penstock running down the wall into the\r\npowerhouse. The roof is the powerhouse's: dark slate gable roof, its ridge along the long walls,\r\nwith the small forest-green vented lantern in the middle of the ridge, in every view.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold hydro-plant picture: for the stone, the slate, the green iron and the mood, not for its layout\r\n(it has an arched powerhouse, a green penstock and a sluice gate, but it is much larger than one\r\ntile): take its materials, details and character from it, nothing of its layout: the block-out and\r\nthe design paragraph set those.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.\n\nCorrection: your last r0's automatic feet ran at slopes 0.552 and 0.461 instead of 0.50 and 0.50 (camera 2.6 degrees off), and the intake projected in front of the right wall so that the whole right base foot was not plain and straight. Keep both wall feet parallel to the guide's edges at exactly 0.50; keep the intake on the short end above and inside a single plain rectangular ground base. Its near wall height was only 386/970 = 0.398 of the whole ground base width where 0.82 is wanted: paint the hall much taller, matching the guide's tall block. Keep lower-left foot / lower-right foot 1.439 as the guide, and all design details.",
+    "references": [
+      "G:/DEV/wt/guides-535/hydro_plant-r0.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/hydro-plant.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-5.png",
+      "nameMetadata": null,
+      "returned": [1254, 1254],
+      "opaqueBox": [191, 255, 1131, 1140],
+      "automatic": {
+        "w": [191, 847.1799439036463],
+        "s": [835.3835214373472, 1183.714944926685],
+        "e": [1131, 1027.5139448786508],
+        "slopes": [0.5222588564530191, -0.5283907067952193],
+        "sure": [true, true]
+      },
+      "corners": {
+        "w": [191, 850],
+        "s": [732, 1132],
+        "e": [1131, 1031]
+      },
+      "cornerMethod": "by eye; automatic retained",
+      "baseWidth": 940,
+      "heldWidth": 482.49609375,
+      "k": 0.5132937167553191,
+      "foot": [541, 399],
+      "footRatio": 1.355889724310777,
+      "slopes": [0.5212569316081331, 0.2531328320802005],
+      "slopeDistances": [0.021256931608133134, 0.2468671679197995],
+      "camera": {
+        "elevation": 31.7,
+        "turn": -0.2
+      },
+      "cameraError": 1.6999999999999993,
+      "cameraRefusal": null,
+      "checkProblems": [],
+      "largestOvershootGuidePx": 31.001063829787313,
+      "overshootLimitGuidePx": 16,
+      "height": 0.4117021276595745,
+      "heightTarget": 0.82,
+      "highlights": {
+        "nearWhite": 1799,
+        "nearAmber": 4
+      },
+      "tests": {
+        "width": "measurement only",
+        "plan": true,
+        "camera": false,
+        "insideFootprint": false,
+        "height": false
+      },
+      "eye": {
+        "corners": {
+          "w": [191, 850],
+          "s": [732, 1132],
+          "e": [1131, 1031]
+        },
+        "eavesY": 745,
+        "note": "Main hall near outer foot (732,1132); automatic intersection falls below all paint at y1184 because intake breaks the right straight foot. Hall end-wall outer foot approximately (969,1007); whole intake/base outer right extent1131."
+      }
+    },
+    "kept": false,
+    "oldHighlightReference": {
+      "nearWhite": 4019,
+      "nearAmber": 0
+    },
+    "review": {
+      "corners": {
+        "w": [191, 850],
+        "s": [732, 1132],
+        "e": [1131, 1031]
+      },
+      "eavesY": 745,
+      "note": "Main hall near outer foot (732,1132); automatic intersection falls below all paint at y1184 because intake breaks the right straight foot. Hall end-wall outer foot approximately (969,1007); whole intake/base outer right extent1131.",
+      "design": "Three arched windows,vented lantern,tailrace,green penstock/sluice present; oblong hall distinct from pump; no chimney/flywheel; left wall lighter; no text/people/rails/smoke. Intake projects and disrupts plain rectangular ground foot."
+    },
+    "failure": "Automatic slopes .52226/.52839 pass but near corner falls below paint due projecting intake. Whole-base eye slopes .52126/.25313; height .41170 vs .82; overshoot31.001>16guidepx. Right wall foot not plain/straight.",
+    "selectedAsClosest": true,
+    "outcome": {
+      "status": "stopped",
+      "fallback": "fallback: blockout scaffold",
+      "reason": "All three new attempts4,5,6 fail mandatory tests; no further free attempts. Closest5 by automatic camera1.7deg and lower overshoot31guidepx, still refused height.4117vs.82,footprint31>16,and nonstraight right foot.",
+      "stage": 1,
+      "turnedViews": "r1,r3,r2 not painted; wait for Core Blender scaffold",
+      "oldHighlights": {
+        "nearWhite": 4019,
+        "nearAmber": 0
+      }
+    }
+  },
+  {
+    "view": "r0",
+    "attempt": 6,
+    "file": "raw/hydro_plant-r0-attempt-6.png",
+    "prompt": "Edit the first picture, a grey block-out, into ONE finished building sprite for a pastoral\r\nisometric railway game: the Hydro plant, an oblong stone powerhouse with a water intake, a sluice\r\nand a penstock, a new design (the Design paragraph below). Style: that of the second picture, the\r\nstyle board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades\r\nper material, restrained detail, a strong silhouette. The palette family of the whole game: forest\r\ngreen #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82,\r\ncopper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid,\r\nlower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as\r\nselection amber #E8AA48.\r\n\r\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, 30 degrees down, ground\r\nedges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate,\r\ntilt or turn the view towards the viewer: the foot of the lower-left wall runs parallel to the\r\nplinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge, both\r\nequally steep, neither flatter than the block-out's. Show the whole building with a clear margin all\r\nround: nothing touches the edge of the picture.\r\n\r\nFootprint: the grey plinth is the building's footprint and the block on it is its base. The building\r\nstands on the plinth and fills it as the block does (the base is as wide as the block is, and about\r\nas deep); its outer walls rise from the block's edges, and at ground level nothing reaches outside the plinth. The wall feet start at the block's corners, which stand a little inside the plinth's: do not run them out to the plinth's edge. Keep the foot of the two visible walls plain and straight from corner to corner, so that\r\nit shows where the building stands: no bushes, crates, steps, ramps, pipes or loose objects in front\r\nof it. Above the ground the shape is free: roofs, chimneys and machinery may differ from the block\r\nand may overhang a little.\r\n\r\nDesign, carried round every view. (1) The powerhouse: an oblong hall of cream limestone courses on a\r\nhigh rusticated stone base, a dark slate gable roof with its ridge along the long front and a small\r\nforest-green vented ridge lantern at its middle, no chimney stack; three tall round-arched windows\r\nwith cream arches and forest-green glazing bars in the long front wall and a forest-green double\r\ndoor at its near end. (2) The water side, on the short end wall at the right: a small cream-stone\r\nintake chamber with a forest-green steel sluice gate and a handwheel on a railed platform, from\r\nwhich one big riveted forest-green penstock pipe with copper-banded flanges runs down the end wall\r\ninto the powerhouse above its base. (3) At the front foot a cream-stone arched tailrace opening in\r\nthe rusticated base, a dark arch where the water leaves; paint no water. (4) All of it is one\r\nbuilding on the guide's oblong base: the intake and the pipe stand on the base, inside the plinth,\r\nnothing at ground level outside it. (5) It must not look like the pump: no flywheel, no elbow pipe\r\nwith a strainer drum, no small cottage with a chimney stack; its silhouette is the long hall with\r\nthe lantern, the three arches, the penstock down the end wall and the sluice with its handwheel.\n\nView. The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the\r\nbuilding's right-hand side (to the right of someone standing outside and facing the front). The\r\nlower-left wall is the FRONT: the long front: three tall round-arched windows with cream arches and\r\nforest-green glazing bars, the forest-green double door at its near end, and the arched tailrace\r\nopening low in the rusticated base. The lower-right wall is the building's right-hand side: the\r\nshort end wall with the water intake: the cream-stone intake chamber with the sluice gate and its\r\nhandwheel on a railed platform, and the riveted green penstock running down the wall into the\r\npowerhouse. The roof is the powerhouse's: dark slate gable roof, its ridge along the long walls,\r\nwith the small forest-green vented lantern in the middle of the ridge, in every view.\r\n\r\nReferences: the first is the grey block-out to edit, the second the style board. The third is the\r\nold hydro-plant picture: for the stone, the slate, the green iron and the mood, not for its layout\r\n(it has an arched powerhouse, a green penstock and a sluice gate, but it is much larger than one\r\ntile): take its materials, details and character from it, nothing of its layout: the block-out and\r\nthe design paragraph set those.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around\r\nthe building. A real RGBA PNG with a transparent background (alpha zero) and opaque building\r\nsurfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow,\r\nor loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.\n\nCorrection: your last r0 still had a short wall height: 387 / 940 = 0.412 of the total ground base width, where 0.82 is wanted (allowed 0.697 to 0.943). Make the powerhouse walls almost twice as tall while keeping the gable roof and all named details. The intake still stuck forward from the hall's right wall, breaking a single straight ground foot; its whole outline right foot slope was about 0.253, where 0.50 is required. Put the intake above and within one plain rectangular base whose two foot lines are straight, both slope 0.50, and lower-left / lower-right foot ratio 1.439. Match the tall oblong block in the guide; do not copy the low wide reference layout.",
+    "references": [
+      "G:/DEV/wt/guides-535/hydro_plant-r0.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/hydro-plant.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-6.png",
+      "nameMetadata": null,
+      "returned": [1254, 1254],
+      "opaqueBox": [130, 113, 1177, 1174],
+      "automatic": {
+        "w": [213, 843.3379517380747],
+        "s": [847.1776191578696, 1221.6447246689636],
+        "e": [1177, 1052.9370724880982],
+        "slopes": [0.5965312579672016, -0.5115106250525108],
+        "sure": [true, true]
+      },
+      "corners": {
+        "w": [130, 816],
+        "s": [739, 1151],
+        "e": [1177, 1073]
+      },
+      "cornerMethod": "by eye; automatic retained",
+      "baseWidth": 1047,
+      "heldWidth": 482.49609375,
+      "k": 0.4608367657593123,
+      "foot": [609, 438],
+      "footRatio": 1.3904109589041096,
+      "slopes": [0.5500821018062397, 0.1780821917808219],
+      "slopeDistances": [0.05008210180623973, 0.3219178082191781],
+      "camera": {
+        "elevation": 33.5,
+        "turn": 2.2
+      },
+      "cameraError": 3.5,
+      "cameraRefusal": {
+        "by": 3.5,
+        "was": "It was painted from too high a camera, so too much of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
+      },
+      "checkProblems": [
+        "camera off by 3.5°: it looks down from 33.5° where the game looks down from 30° and the building is turned 2.2° towards its lower-right wall (the wall feet slope 0.60 and -0.51, the game's 0.50 and -0.50)"
+      ],
+      "largestOvershootGuidePx": 37.4378223495703,
+      "overshootLimitGuidePx": 16,
+      "height": 0.5253104106972302,
+      "heightTarget": 0.82,
+      "highlights": {
+        "nearWhite": 3225,
+        "nearAmber": 1
+      },
+      "tests": {
+        "width": "measurement only",
+        "plan": true,
+        "camera": false,
+        "insideFootprint": false,
+        "height": false
+      },
+      "eye": {
+        "corners": {
+          "w": [130, 816],
+          "s": [739, 1151],
+          "e": [1177, 1073]
+        },
+        "eavesY": 601,
+        "note": "Main hall near outer foot (739,1151); automatic s is below all paint at y1222 because intake projects. Whole intake/base right extent1177; main hall end-wall outer foot approximately (990,1015)."
+      }
+    },
+    "kept": false,
+    "oldHighlightReference": {
+      "nearWhite": 4019,
+      "nearAmber": 0
+    },
+    "review": {
+      "corners": {
+        "w": [130, 816],
+        "s": [739, 1151],
+        "e": [1177, 1073]
+      },
+      "eavesY": 601,
+      "note": "Main hall near outer foot (739,1151); automatic s is below all paint at y1222 because intake projects. Whole intake/base right extent1177; main hall end-wall outer foot approximately (990,1015).",
+      "design": "Three arched windows,vented lantern,tailrace,green penstock/sluice present; oblong hall distinct from pump; no chimney/flywheel; left wall lighter; no text/people/rails/smoke. Intake projects and disrupts plain rectangular ground foot."
+    },
+    "failure": "Machine camera3.5deg,slopes.59653/.51151; eye whole-base right foot not straight/parallel; height and footprint fail."
   }
 ]
