@@ -47,3 +47,11 @@
 - Refused attempts: none (adoption only; historical refusals preserved)
 - Stop reason: none
 - Notes: All5 kept/raw pairs SHA256 byte-identical before edits. Changed only4 jobs' prompts.json, set5 calls kept:true with acceptedBy and Core measures, retained other attempts/history. Added outcome.coreReview1 lists: all12 views of C18a/C22a/C19a/C20a now accepted. No image call or image mutation. JSON format/diff checks passed. First-run ledger entries untouched.
+
+## C24a (2026-10-21, second run; interrupted by author HOLD)
+- Result: held (author paused; skip, do not halt group).
+- Lane commit: 5b971d610504b6f33c7fae342687a89ce134332a pushed to origin/art/535-rotations.
+- Views accepted: no new author acceptance. Before HOLD observed, r1 attempt 5 passed scaffold-relative tests and was copied byte-for-byte to pump-r1.png: IoU .974742; directed p95 3.525/3.176 canvas px; max 6.458; height .5894 vs scaffold .5902. Preserved as evidence, pending author review because scaffolds are held.
+- Refused attempts: r1 attempt 4 IoU .49766, p95 99.04/84.56, max 107.88; r3 attempt 1 IoU .30517, p95 212.26/150.74, max 235.54. r3 attempt 2 outline passed (IoU .96772, p95 4.56/4.94,max16.55) but erased green bearing/shaft fitting on lower-left stone mount. r3 attempt 3 was already in flight when HOLD arrived; returned 1254 square bytes saved, not evaluated or accepted. All five returned images 1254 square, exact prompts/references retained in prompts.json.
+- Stop reason: author HOLD at queue 261c7d13/4ba45e20: AI-reconstructed scaffolds morphed; await clean Blender blockouts matched to r0. No further scaffold image calls; r2 not started.
+- Notes: Prior first-run history retained. CR1-adopt completed before HOLD observed (842e3cda; no repaint). C25a,C26a,C27a,C28a,C30a,C31a,C32a,C33a held and skipped; C29a remains ready. New measuring script syntax and staged diff checks passed; broad baseline failures unchanged as earlier entries. No image resizing or geometry editing. r1 exposed machinery painted as scaffold per then-current Core header; current hold now governs.
