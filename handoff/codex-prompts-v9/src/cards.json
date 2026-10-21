@@ -1,6 +1,7 @@
 {
  "updated": "2026-10-21",
  "lead": [
+  "New (21 October 2026): the textured pilot, TB1, the first group below. Core built the warehouse, the water pump and the power plant as clean Blender blockouts matched to their painted r0, projected the original painting onto them and rendered r0 to r3 at the game's exact camera with the game's sun (branch claude/art-scaffolds-review-2, assets/source/buildings-v2/scaffolds-textured/, head eef723cf). The author found that texture \"a bit fallen apart\" (cloned and smeared patches, seams, blocky chimney backs, smeared pipes), so TB1 asks Codex to repaint every view over its textured render into one coherent painting in the style of the original r0, keeping the render's silhouette, camera, proportions and light. Twelve pictures, at most three attempts each, with stricter tests than the scaffold prompts (IoU 0.92, 95th percentile 16 and maximum 32 canvas px, height within 8 per cent). New lane art/textured-pilot, created from develop by Codex; nothing else of the queue changes.",
   "Core review 1 (21 October 2026), the second run of the queue. The boundary test of the scaffold prompts is now a distribution: the 95th percentile of the boundary distances at most 3 game px AND the largest distance at most 6 game px (the old rule took the largest distance alone and refused good pictures for one thin protrusion). The scaffold's geometry wins: parts the lit scaffold shows are painted as shown, whatever a prompt says about a hidden front. Each prompt starts with a CORE REVIEW 1 header that says so.",
   "Done and accepted (not on this page any more): Big Station, Big Farm Halt, Town hall and Warehouse (all twelve views) and the windmill body r0. Core's decisions on every refused attempt are in codex-queue/status/CORE-REVIEW-1.md on branch claude/codex-queue.",
   "Each group below is ONE Codex conversation: paste its prompts one after another, each after the previous one finishes. The button Copy whole conversation copies the group's prompts in order, with a separator line between them; Copy prompt copies a single one.",
@@ -8,6 +9,17 @@
   "Turned views are painted over Core's 3D scaffolds (branch claude/art-scaffolds-review-2, head fc07d589); each prompt says how to read them. The narrow depot (C35a) waits for a Blender blockout scaffold that Core is making. Accepted pictures are not painted again."
  ],
  "groups": [
+  {
+   "id": "textured-pilot",
+   "title": "Textured pilot: repaint over the textured renders",
+   "branch": "art/textured-pilot",
+   "run": "One prompt, TB1: the Warehouse, then the Water pump, then the Power plant, r0 first in each, over the textured renders (12 pictures). The prompt creates the branch from develop, fetches the 36 render files and the three originals into folders outside the repository, measures every picture and commits one building at a time.",
+   "same": "Its own new branch and its own folder (assets/source/textured-pilot/), so it shares nothing with the other groups.",
+   "status": "Ready.",
+   "cards": [
+    "TB1"
+   ]
+  },
   {
    "id": "rotations",
    "title": "Rotations over scaffolds",
@@ -188,6 +200,11 @@
    "label": "CR1-adopt",
    "title": "Mark the five views Core review 1 accepted (prompts.json only, no image call)",
    "status": "Ready. Big Station r1 and r3, Big Farm r1 and r2, Warehouse r2: already in the lane as the kept pictures; this only marks them accepted."
+  },
+  "TB1": {
+   "file": "TB1",
+   "title": "Textured pilot: warehouse, water pump and power plant, r0 to r3, repainted over the textured renders (12 pictures)",
+   "status": "Ready. Paint over the textured render and unify it into one painting in the style of the original r0; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/."
   }
  }
 }
