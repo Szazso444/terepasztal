@@ -31,8 +31,9 @@ Overlap is the outline overlap (intersection over union) between the rectified p
 | C32a | Oil derrick (`oil_derrick`) | works-full-oil-derrick.png, from the pilot | r1, r2, r3 | 0.756 | r1: usable, soft in places; r2: usable, soft in places; r3: usable, soft in places | tank, back of the beam and lattice. |
 | C33a | House (cottage) (`townhouse`) | house-cottage.png, from the pilot | r2, r3 | 0.951 | r2: good; r3: good | r2: rear wall (two windows). r3: far end. |
 | R8e | Fuel Pump (`fuel_pump`) | fuel_pump-a1-r0 (art/325-fuel-pump) | r1, r2, r3 | 0.905 | r1: usable, soft in places; r2: usable, soft in places; r3: good | r1: rear wall, hose. r2: both walls. r3: rear wall. |
+| C35a | Narrow depot (`depot_narrow`) | none: modelled directly in Blender (no painted r0), single-track engine shed, 2 x 1 tiles | r0, r1, r2, r3 | n/a | blockout: shape, proportions and camera exact; no painted detail | none: every surface is a plain flat colour (brick end walls, green plank long walls, cream footing, slate roof) |
 
-No job is without a usable scaffold. Skipped on purpose: C29a hydro and C35a narrow depot (no r0 painted yet), the windmill.
+No job is without a usable scaffold. Skipped on purpose: C29a hydro (no r0 painted yet), the windmill. C35a narrow depot has no painted r0, so its scaffold is a hand-built blockout (see the notes).
 
 Notes:
 
@@ -41,3 +42,4 @@ Notes:
 - 1536 x 1024 canvases (power plant, battery, colliery, ironworks) render at the plan's scale: 5 and 6 canvas px per game px, not 8.
 - Rectifying slopes are measured by eye on each picture's wall bases (listed in each source note in the review page); the converter default is 0.3 / -0.38.
 - C20a warehouse, C32a oil derrick and C33a house are the pilot of 2026-10-19, copied unchanged (house r1 was already accepted from Codex).
+- C35a narrow depot (`depot_narrow/`, made 2026-10-21): not reconstructed from a picture; modelled directly in Blender (`.blend` and scripts kept in `renders/scaffold-narrow-depot/`) and rendered at the exact game camera on the `guides/t1x2-r<v>.png` canvas (1024 x 1024, anchor 512,800, 8 canvas px per game px). Footprint 2 x 1 tiles; the base is the guide's wall base (footprint set in by 0.06 tile, 1.88 x 0.88 tiles: corners match the guide to 0 px in all four views), not the 0.90 rule of the other jobs. Eaves 34 game px (guide block height), gable roof at 34 degrees with a ridge vent (monitor), a chimney stack on the west gable, four small slope vents, one 0.44 tile wide, 24 game px high arched portal in each end wall (doors folded back nearly flat so they stay inside the footprint), crew door and two windows in the front long wall (two windows in the back wall). Flat colours: brick (end walls), green planks with brown posts (long walls), cream footing and arch surround, slate roof, evergreen doors. `-lit.png` is flat colour with the game light (upper left); `-bare.png` is the clay shading. r1 and r3 are 1 x 2 tile footprints (long side lower right), r2 shows the back wall.

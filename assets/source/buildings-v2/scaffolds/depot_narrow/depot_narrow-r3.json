@@ -1,0 +1,329 @@
+{
+ "job": "depot_narrow",
+ "view": "r3",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  800
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   800.0
+  ],
+  "anchor_px": [
+   512,
+   800
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   128.0,
+   864.0
+  ],
+  "s": [
+   384.0,
+   992.0
+  ],
+  "e": [
+   896.0,
+   736.0
+  ],
+  "n": [
+   640.0,
+   608.0
+  ]
+ },
+ "plan_base_px": {
+  "w": [
+   158.72,
+   864.0
+  ],
+  "s": [
+   384.0,
+   976.64
+  ],
+  "e": [
+   865.28,
+   736.0
+  ],
+  "n": [
+   640.0,
+   623.36
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   158.72,
+   864.0
+  ],
+  "s": [
+   384.0,
+   976.64
+  ],
+  "e": [
+   865.28,
+   736.0
+  ],
+  "n": [
+   640.0,
+   623.36
+  ]
+ },
+ "model_base_tiles": [
+  0.88,
+  1.88
+ ],
+ "footprint_tiles": [
+  1,
+  2
+ ],
+ "rule_0.90_base_px": {
+  "w": [
+   166.4,
+   857.6
+  ],
+  "s": [
+   396.8,
+   972.8
+  ],
+  "e": [
+   857.6,
+   742.4
+  ],
+  "n": [
+   627.2,
+   627.2
+  ]
+ },
+ "dimensions": {
+  "footprint_tiles_r0": [
+   2,
+   1
+  ],
+  "base_tiles_r0": [
+   1.88,
+   0.88
+  ],
+  "eaves_h_tiles": 0.867527617235709,
+  "eaves_h_game_px": 34.0,
+  "ridge_h_tiles": 1.200497903101494,
+  "ridge_h_game_px": 47.049716798077164,
+  "monitor_top_tiles": 1.357497903101494,
+  "chimney_top_tiles": 1.4943113646463768,
+  "pitch_deg": 34,
+  "portal_w_tiles": 0.44,
+  "portal_h_game_px": 24.0,
+  "footing_h_tiles": 0.12,
+  "wall_thickness_tiles": 0.05
+ },
+ "source": "modelled directly in Blender (no painted source): blockout of a single-track engine shed",
+ "outline_polygon_px": [
+  [
+   [
+    876,
+    458
+   ],
+   [
+    757,
+    301
+   ],
+   [
+    714,
+    315
+   ],
+   [
+    685,
+    287
+   ],
+   [
+    656,
+    286
+   ],
+   [
+    357,
+    434
+   ],
+   [
+    356,
+    438
+   ],
+   [
+    371,
+    439
+   ],
+   [
+    371,
+    473
+   ],
+   [
+    332,
+    493
+   ],
+   [
+    329,
+    492
+   ],
+   [
+    329,
+    456
+   ],
+   [
+    339,
+    450
+   ],
+   [
+    339,
+    441
+   ],
+   [
+    291,
+    417
+   ],
+   [
+    245,
+    440
+   ],
+   [
+    243,
+    450
+   ],
+   [
+    253,
+    456
+   ],
+   [
+    253,
+    532
+   ],
+   [
+    147,
+    585
+   ],
+   [
+    147,
+    595
+   ],
+   [
+    159,
+    593
+   ],
+   [
+    159,
+    747
+   ],
+   [
+    153,
+    750
+   ],
+   [
+    153,
+    870
+   ],
+   [
+    211,
+    889
+   ],
+   [
+    319,
+    943
+   ],
+   [
+    360,
+    974
+   ],
+   [
+    363,
+    973
+   ],
+   [
+    365,
+    966
+   ],
+   [
+    385,
+    975
+   ],
+   [
+    603,
+    866
+   ],
+   [
+    605,
+    857
+   ],
+   [
+    637,
+    841
+   ],
+   [
+    645,
+    845
+   ],
+   [
+    863,
+    736
+   ],
+   [
+    864,
+    721
+   ],
+   [
+    870,
+    719
+   ],
+   [
+    870,
+    598
+   ],
+   [
+    864,
+    593
+   ],
+   [
+    864,
+    476
+   ],
+   [
+    876,
+    469
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   147,
+   286,
+   876,
+   975
+  ],
+  "area_px": 344581,
+  "top_row_px": 286,
+  "bottom_row_px": 975,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0,
+  "lowest_opaque_px_in_near_corner_column": 975,
+  "max_overshoot_beyond_footprint_px": 0.0
+ },
+ "fit_vs_plan": {
+  "model_base_corners_vs_guide_wallbase_max_error_px": 0.0,
+  "footprint_corners_vs_guide_plinth_max_error_px": 0.0
+ },
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. Canvas and anchor are the t1x2 guide's; camera is the game camera. Base = the guide's wall base (footprint set in by 0.06 tile: 1.88 x 0.88 tiles at r0)."
+}
