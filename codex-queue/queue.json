@@ -120,7 +120,7 @@
       "localBranch": "codex-buildings",
       "status": "ready",
       "ledger": "codex-queue/status/buildings.md",
-      "note": "C21a, C23a and C4e run first (each starts with its Step 0 or its own checks). C35a is blocked: skip it and do not stop the group for it. Only this group uses art/325-buildings-v2.",
+      "note": "C21a, C23a and C4e run first (each starts with its Step 0 or its own checks). C35a runs last. Only this group uses art/325-buildings-v2.",
       "prompts": [
         {
           "id": "C21a",
@@ -142,10 +142,10 @@
         },
         {
           "id": "C35a",
-          "title": "Narrow depot a0: r0, r1, r3 and r2 painted over a Blender blockout scaffold (4 pictures). blocked: scaffold pending",
+          "title": "Narrow depot a0: r0, r1, r3 and r2 painted over a Blender blockout scaffold (4 pictures).",
           "file": "codex-queue/prompts/C35a.md",
-          "status": "blocked",
-          "note": "blocked: scaffold pending. Free painting failed the camera 3 times (4.1, 4.5, 6.4 degrees against 2). Core is making a blockout scaffold at scaffolds/depot_narrow/ on origin/claude/art-scaffolds-review-2; this prompt becomes ready when it lands (Core sets it)."
+          "status": "ready",
+          "note": "ready: the blockout scaffold landed on origin/claude/art-scaffolds-review-2 at c37a3f8d (scaffolds/depot_narrow/, 12 files). Runs last in its group."
         }
       ]
     },
