@@ -25,6 +25,7 @@ import {
   identityCrop,
   manifestOf,
   rowsOf,
+  soleRowOf,
 } from './people-guides.mjs';
 
 const sha = (png) => createHash('sha256').update(png.data).digest('hex');
@@ -46,7 +47,7 @@ describe('people pose guides', () => {
     expect(new Set(guides.map((g) => g.name)).size).toBe(32);
   });
 
-  it('draws each on the 1024 x 1536 canvas, transparent, with the lowest sole on row 1440', () => {
+  it('draws each on the 1024 x 1536 canvas, transparent, with the sole row on row 1440', () => {
     for (const g of guides) {
       expect([g.png.width, g.png.height]).toEqual(CANVAS);
       for (const [x, y] of [
@@ -56,7 +57,12 @@ describe('people pose guides', () => {
         [CANVAS[0] - 1, CANVAS[1] - 1],
       ])
         expect(alpha(g.png, x, y)).toBe(0);
-      expect(Math.abs(rowsOf(g.png).bottom - SOLE_ROW), g.name).toBeLessThanOrEqual(1);
+      // the sole row (lowest row at least MIN_SOLE_PX wide) is on 1440; the sharp corner of a
+      // foot box corner may stand at most 20 px below it, and nothing stands above it
+      expect(Math.abs(soleRowOf(g.png) - SOLE_ROW), g.name).toBeLessThanOrEqual(1);
+      const below = rowsOf(g.png).bottom - SOLE_ROW;
+      expect(below, g.name).toBeGreaterThanOrEqual(-1);
+      expect(below, g.name).toBeLessThanOrEqual(20);
     }
   });
 
