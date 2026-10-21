@@ -7,20 +7,41 @@
     },
     "eye": {
       "corners": {
-        "w": [458, 767],
-        "s": [1106, 750],
-        "e": [1352, 666]
+        "w": [
+          458,
+          767
+        ],
+        "s": [
+          1106,
+          750
+        ],
+        "e": [
+          1352,
+          666
+        ]
       },
       "eavesY": 440
     },
     "note": "Zoomed r0 crop: automatic near corner falls below the image because machinery disrupts the wall-foot fit. Whole ground base including strainer and bearing blocks spans x458..1352; near stone wall corner (1106,750), eaves y440. Height 310 / 894. Master unmodified.",
     "file": "assets/source/base-v1/pump.png",
-    "size": [1774, 887],
+    "size": [
+      1774,
+      887
+    ],
     "sha256": "e754de8982e85f6423a1db6950ccb368bcdcb852916dc7642bcee6d6998a9aed",
     "automatic": {
-      "w": [458, 766.7776971456217],
-      "s": [892.6850195640022, 925.6574902179989],
-      "e": [1352, 696]
+      "w": [
+        458,
+        766.7776971456217
+      ],
+      "s": [
+        892.6850195640022,
+        925.6574902179989
+      ],
+      "e": [
+        1352,
+        696
+      ]
     }
   },
   "attempts": [
@@ -34,14 +55,30 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/base-v1/pump.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
         "width": 649,
-        "limits": [540, 568, 597],
+        "limits": [
+          540,
+          568,
+          597
+        ],
         "automatic": {
-          "w": [307, 1051.5],
-          "s": [544.8580772061817, 1170.429038603091],
-          "e": [956, 986.7116752978824]
+          "w": [
+            307,
+            1051.5
+          ],
+          "s": [
+            544.8580772061817,
+            1170.429038603091
+          ],
+          "e": [
+            956,
+            986.7116752978824
+          ]
         },
         "tests": {
           "width": "FAIL"
@@ -73,14 +110,30 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/base-v1/pump.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
         "width": 635,
-        "limits": [540, 568, 597],
+        "limits": [
+          540,
+          568,
+          597
+        ],
         "automatic": {
-          "w": [338, 925.3240267866162],
-          "s": [756.4750473698772, 1137.7624763150613],
-          "e": [973, 1029.5]
+          "w": [
+            338,
+            925.3240267866162
+          ],
+          "s": [
+            756.4750473698772,
+            1137.7624763150613
+          ],
+          "e": [
+            973,
+            1029.5
+          ]
         },
         "tests": {
           "width": "FAIL"
@@ -112,14 +165,30 @@
         "docs/art-direction/images/03-theme-town-growth.png",
         "assets/source/base-v1/pump.png"
       ],
-      "returned": [1254, 1254],
+      "returned": [
+        1254,
+        1254
+      ],
       "measured": {
         "width": 611,
-        "limits": [540, 568, 597],
+        "limits": [
+          540,
+          568,
+          597
+        ],
         "automatic": {
-          "w": [321, 1038],
-          "s": [543.805986896612, 1149.402993448306],
-          "e": [932, 969.0296647058096]
+          "w": [
+            321,
+            1038
+          ],
+          "s": [
+            543.805986896612,
+            1149.402993448306
+          ],
+          "e": [
+            932,
+            969.0296647058096
+          ]
         },
         "tests": {
           "width": "FAIL"
@@ -163,5 +232,799 @@
     "result": "assets/source/buildings-v2/.look/pump-a0-r1.png",
     "inspected": true
   },
-  "tool": "Built-in image_gen image edits; exact guide first, style board second, unchanged r0 third; requested 1024x1024 RGBA. No returned image transformed."
+  "tool": "Built-in image_gen image edits; exact guide first, style board second, unchanged r0 third; requested 1024x1024 RGBA. No returned image transformed.",
+  "scaffoldReference": {
+    "r1": {
+      "foot": [
+        522,
+        889
+      ],
+      "eave": [
+        522,
+        745
+      ],
+      "baseWidth": 244,
+      "wallHeightRatio": 0.5901639344262295,
+      "method": "by eye on bare crop; main corner eaves, whole base including mounts"
+    },
+    "r3": {
+      "foot": [
+        445,
+        845
+      ],
+      "eave": [
+        445,
+        695
+      ],
+      "baseWidth": 246,
+      "wallHeightRatio": 0.6097560975609756,
+      "method": "by eye on bare crop; whole base including strainer/bearing mounts"
+    },
+    "r2": {
+      "foot": [
+        493,
+        884
+      ],
+      "eave": [
+        493,
+        741
+      ],
+      "baseWidth": 326,
+      "wallHeightRatio": 0.4386503067484663,
+      "method": "by eye on bare crop; whole base including exposed machine/strainer"
+    }
+  },
+  "calls": [
+    {
+      "references": [
+        "../scaffolds-535/pump-r1-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "attempt": 4,
+      "measured": {
+        "file": "assets/source/rotations-535/pump/raw/pump-r1-attempt-4.png",
+        "view": "r1",
+        "nameMetadata": null,
+        "returned": [
+          1254,
+          1254
+        ],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.3584587955625991,
+          "bestFit": {
+            "f": 0.85,
+            "dx": -47,
+            "dy": 30,
+            "iou": 0.4976622662266227
+          },
+          "boundaryDeviationCanvasPx": 107.87839270264904,
+          "directedBoundary": {
+            "pictureToScaffold": {
+              "max": 107.87839270264904,
+              "p95": 99.03551125782445,
+              "count": 2020
+            },
+            "scaffoldToPicture": {
+              "max": 94.19176191059967,
+              "p95": 84.55621713911104,
+              "count": 962
+            }
+          },
+          "p95CanvasPx": 99.03551125782445,
+          "limits": {
+            "iou": 0.9,
+            "p95CanvasPx": 24,
+            "maxCanvasPx": 48
+          },
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary directed p95 rank ceil(.95n) and symmetric Euclidean max after 2 canvas px opening"
+        },
+        "opaqueBox": [
+          440,
+          506,
+          945,
+          1167
+        ],
+        "base": {
+          "sure": [
+            false,
+            false
+          ],
+          "slopes": [
+            0.5,
+            -0.5
+          ],
+          "w": [
+            463,
+            1119
+          ],
+          "s": [
+            655,
+            1215
+          ],
+          "e": [
+            916,
+            1084.5
+          ],
+          "minX": 440,
+          "maxX": 945,
+          "area": 242347
+        },
+        "baseWidthMachine": 453,
+        "baseWidthByEye": null,
+        "heldWidth": 568.21875,
+        "kMachine": 1.2543460264900663,
+        "scaffoldReference": {
+          "foot": [
+            522,
+            889
+          ],
+          "eave": [
+            522,
+            745
+          ],
+          "baseWidth": 244,
+          "wallHeightRatio": 0.5901639344262295,
+          "method": "by eye on bare crop; main corner eaves, whole base including mounts"
+        },
+        "r0Reference": {
+          "height": 0.34675615212527966,
+          "highlights": {
+            "nearWhite": 3396,
+            "nearAmber": 14
+          },
+          "eye": {
+            "corners": {
+              "w": [
+                458,
+                767
+              ],
+              "s": [
+                1106,
+                750
+              ],
+              "e": [
+                1352,
+                666
+              ]
+            },
+            "eavesY": 440
+          },
+          "note": "Zoomed r0 crop: automatic near corner falls below the image because machinery disrupts the wall-foot fit. Whole ground base including strainer and bearing blocks spans x458..1352; near stone wall corner (1106,750), eaves y440. Height 310 / 894. Master unmodified.",
+          "file": "assets/source/base-v1/pump.png",
+          "size": [
+            1774,
+            887
+          ],
+          "sha256": "e754de8982e85f6423a1db6950ccb368bcdcb852916dc7642bcee6d6998a9aed",
+          "automatic": {
+            "w": [
+              458,
+              766.7776971456217
+            ],
+            "s": [
+              892.6850195640022,
+              925.6574902179989
+            ],
+            "e": [
+              1352,
+              696
+            ]
+          }
+        },
+        "lightEstimate": {
+          "lowerLeft": 148.65764142194735,
+          "lowerRight": 135.25551214574884,
+          "eyeConfirmed": null,
+          "pass": null
+        },
+        "highlights": {
+          "nearWhite": 1986,
+          "nearAmber": 7,
+          "pass": "reported only; never refuses"
+        },
+        "baseWidth": 505,
+        "scaleK": 1.1251856435643564,
+        "height": {
+          "ratio": 0.5623762376237624,
+          "method": "by eye, near main-wall corner under eaves",
+          "pass": true,
+          "footY": 1162,
+          "scaffoldReference": 0.5901639344262295,
+          "eaveY": 878
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye, left wall lit above right"
+        }
+      },
+      "view": "r1",
+      "file": "assets/source/rotations-535/pump/raw/pump-r1-attempt-4.png",
+      "kept": false,
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and its own wall features (entrance door, windows, lamps, benches) are not in this picture: none of them is added to either visible wall. Parts that the lit scaffold shows standing outside or beside the walls are NOT removed, moved or hidden: they are painted as the scaffold shows them (the scaffold's geometry wins over this sentence). The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the right-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream limestone courses and quoins, the forest-green plank door with a small window, the two stone steps, the hanging iron lamp, the green downpipe, the slate roof with cream coping and the chimney stack behind. The lower-right wall is the BACK: a plain stone wall: cream limestone courses with one small window, no flywheel, no pipe and no door on the wall itself. Any rim of the flywheel, bearing block or pipe that the scaffold shows standing outside this wall or beside the building is painted as the scaffold shows it. The roof is r0's: dark slate gable roof with cream coping, its ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on the ridge, turning with the building.\n\nInvented in the first picture (the front view never showed it): the end wall (the lower-right wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again. There, in view r0, the lower-left wall is the front: the long window wall with the flywheel and the bending pipe. In this picture the front faces away: neither visible wall is the front, so the front's own door, windows, lamps and benches are not added to them; every part the lit scaffold shows (it stands where the scaffold puts it) is painted as the scaffold shows it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.",
+      "refusal": "BestIoU.49766<.90; directedp95 99.04/84.56>24; max107.88>48; enlarged scaffold",
+      "returned": [
+        1254,
+        1254
+      ],
+      "requestedSize": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "references": [
+        "../scaffolds-535/pump-r1-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and its own wall features (entrance door, windows, lamps, benches) are not in this picture: none of them is added to either visible wall. Parts that the lit scaffold shows standing outside or beside the walls are NOT removed, moved or hidden: they are painted as the scaffold shows them (the scaffold's geometry wins over this sentence). The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The lower-left wall is the right-hand side and is r0's lower-right wall, copied as it stands there: the gable end: cream limestone courses and quoins, the forest-green plank door with a small window, the two stone steps, the hanging iron lamp, the green downpipe, the slate roof with cream coping and the chimney stack behind. The lower-right wall is the BACK: a plain stone wall: cream limestone courses with one small window, no flywheel, no pipe and no door on the wall itself. Any rim of the flywheel, bearing block or pipe that the scaffold shows standing outside this wall or beside the building is painted as the scaffold shows it. The roof is r0's: dark slate gable roof with cream coping, its ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on the ridge, turning with the building.\n\nInvented in the first picture (the front view never showed it): the end wall (the lower-right wall). Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again. There, in view r0, the lower-left wall is the front: the long window wall with the flywheel and the bending pipe. In this picture the front faces away: neither visible wall is the front, so the front's own door, windows, lamps and benches are not added to them; every part the lit scaffold shows (it stands where the scaffold puts it) is painted as the scaffold shows it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.\n\nCorrection: your last r1 enlarged the small scaffold building, failing best-fit silhouette IoU 0.4977 (minimum 0.90), directed p95 distances 99.04 and 84.56 canvas px (maximum 24) and maximum 107.88 (limit 48). The FIRST image's building is deliberately SMALL in the lower part of the canvas: its outline spans about x425–669 and y559–890 on the 1024 canvas. Keep that exact small outline and position, including its large empty margins; do not enlarge it to fill the image. Repaint all surfaces crisply in place, preserving the rim/pipe, bearing block, roof, chimney and steps exactly as the first image shows.",
+      "view": "r1",
+      "refusal": "none",
+      "kept": true,
+      "requestedSize": [
+        1024,
+        1024
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "attempt": 5,
+      "measured": {
+        "file": "assets/source/rotations-535/pump/raw/pump-r1-attempt-5.png",
+        "view": "r1",
+        "nameMetadata": null,
+        "returned": [
+          1254,
+          1254
+        ],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.7613336531542336,
+          "bestFit": {
+            "f": 0.99,
+            "dx": 2,
+            "dy": 32,
+            "iou": 0.9747419880499728
+          },
+          "boundaryDeviationCanvasPx": 6.45788401320258,
+          "directedBoundary": {
+            "pictureToScaffold": {
+              "max": 6.45788401320258,
+              "p95": 3.5247034805836273,
+              "count": 1206
+            },
+            "scaffoldToPicture": {
+              "max": 6.10111002116041,
+              "p95": 3.175870243028524,
+              "count": 962
+            }
+          },
+          "p95CanvasPx": 3.5247034805836273,
+          "limits": {
+            "iou": 0.9,
+            "p95CanvasPx": 24,
+            "maxCanvasPx": 48
+          },
+          "pass": true,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary directed p95 rank ceil(.95n) and symmetric Euclidean max after 2 canvas px opening"
+        },
+        "opaqueBox": [
+          516,
+          650,
+          818,
+          1052
+        ],
+        "base": {
+          "sure": [
+            false,
+            true
+          ],
+          "slopes": [
+            0.5,
+            -0.5112108221107663
+          ],
+          "w": [
+            528,
+            1021
+          ],
+          "s": [
+            617.7722132394932,
+            1065.8861066197467
+          ],
+          "e": [
+            816,
+            964.5499167847103
+          ],
+          "minX": 516,
+          "maxX": 818,
+          "area": 89567
+        },
+        "baseWidthMachine": 288,
+        "baseWidthByEye": null,
+        "heldWidth": 568.21875,
+        "kMachine": 1.9729817708333333,
+        "scaffoldReference": {
+          "foot": [
+            522,
+            889
+          ],
+          "eave": [
+            522,
+            745
+          ],
+          "baseWidth": 244,
+          "wallHeightRatio": 0.5901639344262295,
+          "method": "by eye on bare crop; main corner eaves, whole base including mounts"
+        },
+        "r0Reference": {
+          "height": 0.34675615212527966,
+          "highlights": {
+            "nearWhite": 3396,
+            "nearAmber": 14
+          },
+          "eye": {
+            "corners": {
+              "w": [
+                458,
+                767
+              ],
+              "s": [
+                1106,
+                750
+              ],
+              "e": [
+                1352,
+                666
+              ]
+            },
+            "eavesY": 440
+          },
+          "note": "Zoomed r0 crop: automatic near corner falls below the image because machinery disrupts the wall-foot fit. Whole ground base including strainer and bearing blocks spans x458..1352; near stone wall corner (1106,750), eaves y440. Height 310 / 894. Master unmodified.",
+          "file": "assets/source/base-v1/pump.png",
+          "size": [
+            1774,
+            887
+          ],
+          "sha256": "e754de8982e85f6423a1db6950ccb368bcdcb852916dc7642bcee6d6998a9aed",
+          "automatic": {
+            "w": [
+              458,
+              766.7776971456217
+            ],
+            "s": [
+              892.6850195640022,
+              925.6574902179989
+            ],
+            "e": [
+              1352,
+              696
+            ]
+          }
+        },
+        "lightEstimate": {
+          "lowerLeft": 187.6056431322205,
+          "lowerRight": 137.5762243589742,
+          "eyeConfirmed": null,
+          "pass": null
+        },
+        "highlights": {
+          "nearWhite": 3112,
+          "nearAmber": 0,
+          "pass": "reported only; never refuses"
+        },
+        "baseWidth": 302,
+        "scaleK": 1.8815190397350994,
+        "height": {
+          "eaveY": 875,
+          "footY": 1053,
+          "scaffoldReference": 0.5901639344262295,
+          "ratio": 0.5894039735099338,
+          "pass": true,
+          "method": "by eye, near main-wall corner under eaves"
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye, left wall lit above right"
+        }
+      },
+      "file": "assets/source/rotations-535/pump/raw/pump-r1-attempt-5.png"
+    },
+    {
+      "references": [
+        "../scaffolds-535/pump-r3-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "attempt": 1,
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The lower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not mirrored: the long window wall: cream limestone courses, one small window with a cream surround, the green downpipe, the big dark-green flywheel on its stone bearing blocks and the thick green riveted pipe bending down into the slotted strainer drum. The lower-left wall is the left-hand side: the other gable end, built like the door gable but without the door, the steps and the lamp: stone courses and one small window high up. The roof is r0's: dark slate gable roof with cream coping, its ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on the ridge, turning with the building.\n\nInvented in the first picture (the front view never showed it): the back of the flywheel. Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.",
+      "kept": false,
+      "refusal": "BestIoU.30517<.90; directedp95 212.26/150.74>24; max235.54>48; enlarged scaffold",
+      "requestedSize": [
+        1024,
+        1024
+      ],
+      "file": "assets/source/rotations-535/pump/raw/pump-r3-attempt-1.png",
+      "measured": {
+        "file": "assets/source/rotations-535/pump/raw/pump-r3-attempt-1.png",
+        "view": "r3",
+        "nameMetadata": null,
+        "returned": [
+          1254,
+          1254
+        ],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.19558681413078494,
+          "bestFit": {
+            "f": 0.85,
+            "dx": -17,
+            "dy": 97,
+            "iou": 0.3051735926460533
+          },
+          "boundaryDeviationCanvasPx": 235.5383355751662,
+          "directedBoundary": {
+            "pictureToScaffold": {
+              "max": 235.5383355751662,
+              "p95": 212.26277528968038,
+              "count": 3039
+            },
+            "scaffoldToPicture": {
+              "max": 158.35528190942574,
+              "p95": 150.7392558448952,
+              "count": 1121
+            }
+          },
+          "p95CanvasPx": 212.26277528968038,
+          "limits": {
+            "iou": 0.9,
+            "p95CanvasPx": 24,
+            "maxCanvasPx": 48
+          },
+          "pass": false,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary directed p95 rank ceil(.95n) and symmetric Euclidean max after 2 canvas px opening"
+        },
+        "opaqueBox": [
+          306,
+          151,
+          967,
+          1159
+        ],
+        "base": {
+          "sure": [
+            true,
+            true
+          ],
+          "slopes": [
+            0.4459926102455877,
+            -0.2186652514521367
+          ],
+          "w": [
+            314,
+            907.6357492194902
+          ],
+          "s": [
+            885.3058943386397,
+            1162.4339562842702
+          ],
+          "e": [
+            961,
+            1145.882285636384
+          ],
+          "minX": 306,
+          "maxX": 967,
+          "area": 437839
+        },
+        "baseWidthMachine": 647,
+        "baseWidthByEye": null,
+        "heldWidth": 568.21875,
+        "kMachine": 0.8782360896445132,
+        "scaffoldReference": {
+          "foot": [
+            445,
+            845
+          ],
+          "eave": [
+            445,
+            695
+          ],
+          "baseWidth": 246,
+          "wallHeightRatio": 0.6097560975609756,
+          "method": "by eye on bare crop; whole base including strainer/bearing mounts"
+        },
+        "r0Reference": {
+          "height": 0.34675615212527966,
+          "highlights": {
+            "nearWhite": 3396,
+            "nearAmber": 14
+          },
+          "eye": {
+            "corners": {
+              "w": [
+                458,
+                767
+              ],
+              "s": [
+                1106,
+                750
+              ],
+              "e": [
+                1352,
+                666
+              ]
+            },
+            "eavesY": 440
+          },
+          "note": "Zoomed r0 crop: automatic near corner falls below the image because machinery disrupts the wall-foot fit. Whole ground base including strainer and bearing blocks spans x458..1352; near stone wall corner (1106,750), eaves y440. Height 310 / 894. Master unmodified.",
+          "file": "assets/source/base-v1/pump.png",
+          "size": [
+            1774,
+            887
+          ],
+          "sha256": "e754de8982e85f6423a1db6950ccb368bcdcb852916dc7642bcee6d6998a9aed",
+          "automatic": {
+            "w": [
+              458,
+              766.7776971456217
+            ],
+            "s": [
+              892.6850195640022,
+              925.6574902179989
+            ],
+            "e": [
+              1352,
+              696
+            ]
+          }
+        },
+        "lightEstimate": {
+          "lowerLeft": 134.55227080394909,
+          "lowerRight": 54.95209743589752,
+          "eyeConfirmed": null,
+          "pass": null
+        },
+        "highlights": {
+          "nearWhite": 2279,
+          "nearAmber": 19,
+          "pass": "reported only; never refuses"
+        },
+        "baseWidth": 661,
+        "scaleK": 0.8596350226928896,
+        "height": {
+          "eaveY": 625,
+          "scaffoldReference": 0.6097560975609756,
+          "footY": 1014,
+          "pass": true,
+          "method": "by eye, near main-wall corner under eaves",
+          "ratio": 0.5885022692889561
+        },
+        "light": {
+          "judgement": "by eye, left wall lit above right",
+          "leftLighter": true
+        }
+      },
+      "view": "r3"
+    },
+    {
+      "refusal": "Outline passes; erased green mechanical bearing/shaft fitting on lower-left stone mount, scaffold geometry/identity fault",
+      "attempt": 2,
+      "file": "assets/source/rotations-535/pump/raw/pump-r3-attempt-2.png",
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The lower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not mirrored: the long window wall: cream limestone courses, one small window with a cream surround, the green downpipe, the big dark-green flywheel on its stone bearing blocks and the thick green riveted pipe bending down into the slotted strainer drum. The lower-left wall is the left-hand side: the other gable end, built like the door gable but without the door, the steps and the lamp: stone courses and one small window high up. The roof is r0's: dark slate gable roof with cream coping, its ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on the ridge, turning with the building.\n\nInvented in the first picture (the front view never showed it): the back of the flywheel. Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.\n\nCorrection: your last r3 enlarged the scaffold dramatically, failing best-fit silhouette IoU 0.3052 (minimum 0.90), directed p95 212.26 and 150.74 canvas px (maximum 24), and maximum 235.54 (limit 48). The FIRST image's pump is deliberately SMALL, low on its 1024 canvas: outline about x355–600 and y510–912. Keep that exact small outline and position, including the large empty margins; do not fill the image with the building. Repaint the original small roof, house, chimney, flywheel, pipe, strainer and bearing blocks crisply in their original positions.",
+      "view": "r3",
+      "requestedSize": [
+        1024,
+        1024
+      ],
+      "kept": false,
+      "returned": [
+        1254,
+        1254
+      ],
+      "references": [
+        "../scaffolds-535/pump-r3-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "measured": {
+        "file": "assets/source/rotations-535/pump/raw/pump-r3-attempt-2.png",
+        "view": "r3",
+        "nameMetadata": null,
+        "returned": [
+          1254,
+          1254
+        ],
+        "s0": 1.224609375,
+        "silhouette": {
+          "iouAtS0": 0.9477468839884947,
+          "bestFit": {
+            "f": 0.984,
+            "dx": -2,
+            "dy": 4,
+            "iou": 0.9677180877279448
+          },
+          "boundaryDeviationCanvasPx": 16.549026502311797,
+          "directedBoundary": {
+            "pictureToScaffold": {
+              "max": 16.124876685833364,
+              "p95": 4.5638714163407785,
+              "count": 1370
+            },
+            "scaffoldToPicture": {
+              "max": 16.549026502311797,
+              "p95": 4.935350670767696,
+              "count": 1121
+            }
+          },
+          "p95CanvasPx": 4.935350670767696,
+          "limits": {
+            "iou": 0.9,
+            "p95CanvasPx": 24,
+            "maxCanvasPx": 48
+          },
+          "pass": true,
+          "method": "256px grid IoU coarse-to-fine, pixel boundary directed p95 rank ceil(.95n) and symmetric Euclidean max after 2 canvas px opening"
+        },
+        "opaqueBox": [
+          435,
+          624,
+          736,
+          1117
+        ],
+        "base": {
+          "sure": [
+            true,
+            true
+          ],
+          "slopes": [
+            0.3587064948307857,
+            -0.2672607879924953
+          ],
+          "w": [
+            441,
+            993.7936369301999
+          ],
+          "s": [
+            750.4322254353709,
+            1104.7889859038114
+          ],
+          "e": [
+            750,
+            1104.9045028142589
+          ],
+          "minX": 435,
+          "maxX": 736,
+          "area": 98878
+        },
+        "baseWidthMachine": 309,
+        "baseWidthByEye": null,
+        "heldWidth": 568.21875,
+        "kMachine": 1.8388956310679612,
+        "scaffoldReference": {
+          "foot": [
+            445,
+            845
+          ],
+          "eave": [
+            445,
+            695
+          ],
+          "baseWidth": 246,
+          "wallHeightRatio": 0.6097560975609756,
+          "method": "by eye on bare crop; whole base including strainer/bearing mounts"
+        },
+        "r0Reference": {
+          "height": 0.34675615212527966,
+          "highlights": {
+            "nearWhite": 3396,
+            "nearAmber": 14
+          },
+          "eye": {
+            "corners": {
+              "w": [
+                458,
+                767
+              ],
+              "s": [
+                1106,
+                750
+              ],
+              "e": [
+                1352,
+                666
+              ]
+            },
+            "eavesY": 440
+          },
+          "note": "Zoomed r0 crop: automatic near corner falls below the image because machinery disrupts the wall-foot fit. Whole ground base including strainer and bearing blocks spans x458..1352; near stone wall corner (1106,750), eaves y440. Height 310 / 894. Master unmodified.",
+          "file": "assets/source/base-v1/pump.png",
+          "size": [
+            1774,
+            887
+          ],
+          "sha256": "e754de8982e85f6423a1db6950ccb368bcdcb852916dc7642bcee6d6998a9aed",
+          "automatic": {
+            "w": [
+              458,
+              766.7776971456217
+            ],
+            "s": [
+              892.6850195640022,
+              925.6574902179989
+            ],
+            "e": [
+              1352,
+              696
+            ]
+          }
+        },
+        "lightEstimate": {
+          "lowerLeft": 115.6955896103895,
+          "lowerRight": null,
+          "eyeConfirmed": null,
+          "pass": null
+        },
+        "highlights": {
+          "nearWhite": 423,
+          "nearAmber": 1,
+          "pass": "reported only; never refuses"
+        },
+        "baseWidth": 301,
+        "scaleK": 1.8877699335548173,
+        "height": {
+          "scaffoldReference": 0.6097560975609756,
+          "eaveY": 854,
+          "pass": true,
+          "footY": 1032,
+          "method": "by eye, near main-wall corner under eaves",
+          "ratio": 0.5913621262458472
+        },
+        "light": {
+          "leftLighter": true,
+          "judgement": "by eye, left wall lit above right"
+        }
+      }
+    },
+    {
+      "view": "r3",
+      "attempt": 3,
+      "file": "assets/source/rotations-535/pump/raw/pump-r3-attempt-3.png",
+      "prompt": "Edit the first picture, a rough 3D render, into ONE finished building sprite for a pastoral isometric railway game: the Water pump, a small stone pump house with a flywheel and a pipe, the SAME building as in the third picture, in the view named under View. Paint over the first picture: its shape, outline, camera and layout stay exactly as they are (every roof, wall, chimney, opening and part where the render has it, nothing added outside its outline or taken out of it), but EVERY surface is painted again in the game's painted style, that of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The render's surfaces are soft, smeared and patchy, and the walls that the front view never showed were invented by the 3D reconstruction (they are named under View). Paint all of them anew: where the third picture shows a surface, take its stones, bricks, planks, doors, windows and fittings from it, crisp; where the render has invented a surface, paint it as this same building would have it, plausibly and in the same style, from the materials and details of the sides that are known, and never leave it soft, blurred, smeared or plain. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest (the render's light was corrected for the turn; the painting follows the game's light). Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the render's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the render's is, and the picture is checked against it. Show the whole building with a clear margin all round, as the render does.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the render does not have; keep the foot of the two visible walls plain and straight where the render has it, with no bushes, crates, steps or loose objects added in front of it.\n\nView. The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The lower-right wall is the FRONT and is r0's lower-left wall, turned to the other side and not mirrored: the long window wall: cream limestone courses, one small window with a cream surround, the green downpipe, the big dark-green flywheel on its stone bearing blocks and the thick green riveted pipe bending down into the slotted strainer drum. The lower-left wall is the left-hand side: the other gable end, built like the door gable but without the door, the steps and the lamp: stone courses and one small window high up. The roof is r0's: dark slate gable roof with cream coping, its ridge along the lower-left wall of r0, and the cream chimney stack with two copper-red pots on the ridge, turning with the building.\n\nInvented in the first picture (the front view never showed it): the back of the flywheel. Paint these surfaces anew, crisp and plausible, in this building's own materials and details; the first picture's soft or smeared look is not kept.\n\nReferences: the first is the scaffold's lit render, the picture to paint over; the second is the style board. The third is this building as it is in the game today, seen from the front (view r0): take its materials, details and character from it and paint them over the first picture, surface by surface; the shape, the angle, the outline and the layout are the first picture's and do not change, and the third picture's angle, footprint and any dark glow round it are not used. Paint the SAME building at the size the first picture has it: it is not a mirror image and not a copy of the third picture, and do not paint the third picture again.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.\n\nCorrection: your last r3 passed the outline (IoU 0.9677, directed p95 4.56 and 4.94 canvas px, maximum 16.55), but erased the green mechanical bearing/shaft fitting that the FIRST image shows rising from the stone mount on the LOWER-LEFT gable, replacing it with plain stone. The scaffold's geometry wins: repaint that visible green fitting and its copper pivots crisply exactly where it is in the first image; do not remove it to satisfy old wall wording. Keep the same SMALL original outline about x355–600,y510–912 on the 1024 canvas with the large empty margins, and preserve every other part.",
+      "references": [
+        "../scaffolds-535/pump-r3-lit.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/base-v1/pump.png"
+      ],
+      "returned": [
+        1254,
+        1254
+      ],
+      "requestedSize": [
+        1024,
+        1024
+      ],
+      "measured": {
+        "status": "not evaluated: author HOLD arrived while call in flight; raw bytes preserved"
+      },
+      "kept": false,
+      "refusal": "Author HOLD: reconstructed scaffolds morphed; no further scaffold painting or acceptance."
+    }
+  ],
+  "currentPrompt": "C24a",
+  "note": "Core review1 geometry wins: r1 exposed rim/block and r2 wheel arc,bearing mount,pipe,strainer kept as scaffold, superseding hidden-front wording; no parts moved or removed.",
+  "queueHold": {
+    "status": "hold",
+    "observed": "2026-10-21",
+    "reason": "Author: AI-reconstructed scaffolds morphed; await clean Blender blockouts matched to r0",
+    "completedBeforeObserved": [
+      "r1 attempt5 passed old scaffold-relative tests; retained for evidence, author review pending"
+    ],
+    "interrupted": "r3 attempt3 already in flight; returned preserved, no retry; r2 not started"
+  }
 }
