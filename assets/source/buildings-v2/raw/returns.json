@@ -3683,5 +3683,787 @@
     "white": 797,
     "amber": 2
   }
+},
+{
+  "id": "depot_narrow-a0-r0",
+  "attempt": 4,
+  "file": "raw/depot_narrow-a0-r0-attempt-4.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.8807494683812322,
+    "s0": 1.224609375,
+    "f": 1.0048534712856518,
+    "dx": -3.5029380356008915,
+    "dy": -26.71245994864887,
+    "iou": 0.9367915846806473,
+    "p95PictureToScaffold": 72.32520772573146,
+    "p95ScaffoldToPicture": 13.22886608025648,
+    "maximum": 130.47156410788426,
+    "pass": false
+  },
+  "highlights": {
+    "white": 1373,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      175,
+      851
+    ],
+    "s": [
+      788.1,
+      1184.9
+    ],
+    "e": [
+      1080,
+      1019.8
+    ],
+    "slopes": [
+      0.545,
+      -0.566
+    ],
+    "width": 905,
+    "held": 865.308984375,
+    "k": 0.9561425241712708
+  },
+  "top": {
+    "nearEavesY": 875
+  },
+  "height": {
+    "nearWall": 309.9000000000001,
+    "proportion": 0.34243093922651946,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "outline p95 picture72.325>24,max130.472>48 (deep transparent doorway notch); right brick end wall brighter than left green wall by eye",
+  "referenceHighlights": {
+    "white": 563,
+    "amber": 2
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r0: The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the building's right-hand side (to the right of someone standing outside and facing the front). The train portal is in the LOWER-RIGHT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is the main-line depot of the same age, laid onto its own footprint: match its materials and details. This shed is smaller, with one portal in each end wall. The last reference is a mood board for this age: take only its materials and mood from it, never its perspective, its landscape or its trains.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr0, the front:  the long lower-left wall is the FRONT, with the crew door and the two small windows; the lower-right wall is the end wall with its portal.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. Preserve original full-canvas position and transparent margins (outline bbox x147..876,y197..975 at1024x1024). Output1024x1024 transparent RGBA; edit target first, then style board, fitted main-line depot, age mood board, original main-line depot for materials only."
+},
+{
+  "id": "depot_narrow-a0-r0",
+  "attempt": 5,
+  "file": "raw/depot_narrow-a0-r0-attempt-5.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.8983519676859258,
+    "s0": 1.224609375,
+    "f": 1.0160183232979452,
+    "dx": -10.444393148800373,
+    "dy": -31.312912254476146,
+    "iou": 0.94563305978898,
+    "p95PictureToScaffold": 61.466953774324914,
+    "p95ScaffoldToPicture": 16.549459261809123,
+    "maximum": 118.6123246451233,
+    "pass": false
+  },
+  "highlights": {
+    "white": 1152,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      184,
+      859.8
+    ],
+    "s": [
+      773.4,
+      1202.2
+    ],
+    "e": [
+      1073,
+      1041.9
+    ],
+    "slopes": [
+      0.581,
+      -0.535
+    ],
+    "width": 889,
+    "held": 865.308984375,
+    "k": 0.9733509385545557
+  },
+  "top": {
+    "nearEavesY": 881
+  },
+  "height": {
+    "nearWall": 321.20000000000005,
+    "proportion": 0.3613048368953881,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "outline p95 picture61.467>24,max118.612>48 (deep transparent doorway notch); right brick wall visually brighter than green left wall",
+  "referenceHighlights": {
+    "white": 563,
+    "amber": 2
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r0: The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the building's right-hand side (to the right of someone standing outside and facing the front). The train portal is in the LOWER-RIGHT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is the main-line depot of the same age, laid onto its own footprint: match its materials and details. This shed is smaller, with one portal in each end wall. The last reference is a mood board for this age: take only its materials and mood from it, never its perspective, its landscape or its trains.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr0, the front:  the long lower-left wall is the FRONT, with the crew door and the two small windows; the lower-right wall is the end wall with its portal.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. Preserve original full-canvas position and transparent margins (outline bbox x147..876,y197..975 at1024x1024). Output1024x1024 transparent RGBA; edit target first, then style board, fitted main-line depot, age mood board, original main-line depot for materials only.\n\nCorrection: your last r0 had outline p95 picture-to-scaffold72.33 canvas px where at most24 is allowed, and maximum130.47 where48 is allowed, because the transparent doorway recess cuts too high into the base outline. Paint the inner hall wall in shadow down behind the portal, leaving only a shallow ground opening at the foot (about45 returned pixels deep on a1254 image), with no floor, threshold or apron, so rails remain visible. Keep the folded door leaves almost flat to the end wall exactly as the blockout. Also the lower-right brick end wall was brighter than the lower-left green long wall: make the right brick wall darker and the green left wall visibly lighter, with upper-left light. Keep all other original scaffold dimensions and every part in place."
+},
+{
+  "id": "depot_narrow-a0-r0",
+  "attempt": 6,
+  "file": "raw/depot_narrow-a0-r0-attempt-6.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.8069861767766571,
+    "s0": 1.224609375,
+    "f": 1.0704677417352637,
+    "dx": -36.994285425245494,
+    "dy": -92.82061514215127,
+    "iou": 0.945111260066898,
+    "p95PictureToScaffold": 62.09001674525115,
+    "p95ScaffoldToPicture": 14.493805754483494,
+    "maximum": 118.03945280728767,
+    "pass": false
+  },
+  "highlights": {
+    "white": 1415,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      160,
+      843.3
+    ],
+    "s": [
+      790,
+      1202.6
+    ],
+    "e": [
+      1113,
+      1041.5
+    ],
+    "slopes": [
+      0.57,
+      -0.499
+    ],
+    "width": 953,
+    "held": 865.308984375,
+    "k": 0.9079842438352571
+  },
+  "top": {
+    "nearEavesY": 869
+  },
+  "height": {
+    "nearWall": 333.5999999999999,
+    "proportion": 0.35005246589716676,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "closestRaw": true,
+  "refused": "outline p95 picture62.090>24,max118.039>48 (deep transparent doorway notch)",
+  "referenceHighlights": {
+    "white": 563,
+    "amber": 2
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r0: The front faces the lower left. The lower-left wall is the FRONT; the lower-right wall is the building's right-hand side (to the right of someone standing outside and facing the front). The train portal is in the LOWER-RIGHT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is the main-line depot of the same age, laid onto its own footprint: match its materials and details. This shed is smaller, with one portal in each end wall. The last reference is a mood board for this age: take only its materials and mood from it, never its perspective, its landscape or its trains.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr0, the front:  the long lower-left wall is the FRONT, with the crew door and the two small windows; the lower-right wall is the end wall with its portal.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. Preserve original full-canvas position and transparent margins (outline bbox x147..876,y197..975 at1024x1024). Output1024x1024 transparent RGBA; edit target first, then style board, fitted main-line depot, age mood board, original main-line depot for materials only.\n\nCorrection: the last r0 still left a deep transparent portal notch, maximum118.61 canvas px and picture-outline p95 61.47 instead of48 and24. The back inner hall WALL must continue down in shadow to just above ground level: at a1254 return leave only35 to45 pixels vertical depth of transparent ground, not the120-pixel-deep gap of the last attempt. This is a vertical inner wall, never a floor or apron. Keep portal and folded doors at the exact blockout locations. The lower-left timber wall must visibly be the LIGHTER wall, with muted green planks lit from upper-left; lower-right brick end wall must be much darker shadowed brown-red, at most about60 percent of the left wall brightness. Last attempt kept the right bright red and left dark green, which is wrong. Paint all the original blockout surfaces crisply without changing outline or dimensions.",
+  "visual": "Same family, full crisp repaint, portal inner wall visible and floor open, correct crew door/two windows. Rejected outline, never used as reference."
+},
+{
+  "id": "depot_narrow-a0-r1",
+  "attempt": 1,
+  "file": "raw/depot_narrow-a0-r1-attempt-1.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.9276846354785087,
+    "s0": 1.224609375,
+    "f": 0.9851792131836403,
+    "dx": 16.966035328545104,
+    "dy": 7.1995501324100815,
+    "iou": 0.9425156195934046,
+    "p95PictureToScaffold": 54.49160019787578,
+    "p95ScaffoldToPicture": 12.973890330323158,
+    "maximum": 110.46403104706815,
+    "pass": false
+  },
+  "highlights": {
+    "white": 1290,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      190,
+      1045.3
+    ],
+    "s": [
+      464.2,
+      1191.7
+    ],
+    "e": [
+      1068,
+      884.1
+    ],
+    "slopes": [
+      0.534,
+      -0.509
+    ],
+    "width": 878,
+    "held": 865.308984375,
+    "k": 0.9855455402904328
+  },
+  "top": {
+    "nearEavesY": 869
+  },
+  "height": {
+    "nearWall": 322.70000000000005,
+    "proportion": 0.36753986332574035,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture54.492>24,max110.464>48; transparent doorway recess too deep",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The train portal is in the LOWER-LEFT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right wall is the back: one straight wall from corner to corner, as high as the lower-left wall and plainer than it, with the same base and the same trim. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the long wall with the crew door. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr1 (a quarter turn clockwise; the front faces the upper left, away from the camera): the lower-left wall is r0's end wall with its portal, copied as it stands there; the lower-right wall is the BACK, a long plain plank and brick wall, plainer than the front (no crew door, no windows beyond one or two plain small ones). No crew door, no front windows are added to either visible wall.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. The two back-wall windows are painted exactly as the blockout shows them. Input1 is edit target, input2 style board,input3 main-line depot family materials only. No accepted narrow-depot r0 exists, so no failed r0 reference is attached. Keep original full-canvas placement, outline bbox x147..876,y197..975. Output1024x1024 transparent RGBA."
+},
+{
+  "id": "depot_narrow-a0-r1",
+  "attempt": 2,
+  "file": "raw/depot_narrow-a0-r1-attempt-2.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.9241281312618298,
+    "s0": 1.224609375,
+    "f": 1.0073064909581602,
+    "dx": 2.8140948740151543,
+    "dy": -15.701558690104207,
+    "iou": 0.9430899134847968,
+    "p95PictureToScaffold": 55.46978624685414,
+    "p95ScaffoldToPicture": 16.213276280456288,
+    "maximum": 112.12391994785007,
+    "pass": false
+  },
+  "highlights": {
+    "white": 686,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      171,
+      1053.7
+    ],
+    "s": [
+      472.4,
+      1190
+    ],
+    "e": [
+      1079,
+      881.6
+    ],
+    "slopes": [
+      0.452,
+      -0.508
+    ],
+    "width": 908,
+    "held": 865.308984375,
+    "k": 0.9529834629680617
+  },
+  "top": {
+    "nearEavesY": 872
+  },
+  "height": {
+    "nearWall": 318,
+    "proportion": 0.3502202643171806,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture55.470>24,max112.124>48; deep open-ground portal notch",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The train portal is in the LOWER-LEFT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right wall is the back: one straight wall from corner to corner, as high as the lower-left wall and plainer than it, with the same base and the same trim. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the long wall with the crew door. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr1 (a quarter turn clockwise; the front faces the upper left, away from the camera): the lower-left wall is r0's end wall with its portal, copied as it stands there; the lower-right wall is the BACK, a long plain plank and brick wall, plainer than the front (no crew door, no windows beyond one or two plain small ones). No crew door, no front windows are added to either visible wall.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. The two back-wall windows are painted exactly as the blockout shows them. Input1 is edit target, input2 style board,input3 main-line depot family materials only. No accepted narrow-depot r0 exists, so no failed r0 reference is attached. Keep original full-canvas placement, outline bbox x147..876,y197..975. Output1024x1024 transparent RGBA.\n\nCorrection: last r1 had IoU .94252 passing, but outline p95 picture54.49 exceeded24 canvas px and max110.46 exceeded48 because the transparent portal ground opening goes too high. Extend the shadowed vertical hall inner wall down nearly to the ground. Leave only a shallow transparent ground strip at the very bottom of the doorway, about35 to45 returned pixels deep on a1254 image; no floor or apron, so rails still run into it. Preserve the nearly flat door leaf positions, all original blockout shapes and silhouette, no new crew door on the back. Keep lower-left brick wall lighter than the lower-right green back wall."
+},
+{
+  "id": "depot_narrow-a0-r1",
+  "attempt": 3,
+  "file": "raw/depot_narrow-a0-r1-attempt-3.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.8605644292464429,
+    "s0": 1.224609375,
+    "f": 1.0211953053584077,
+    "dx": 6.643346741557025,
+    "dy": -47.51018063847289,
+    "iou": 0.9427585919991897,
+    "p95PictureToScaffold": 56.14577361084406,
+    "p95ScaffoldToPicture": 14.393490173892541,
+    "maximum": 110.85883292569653,
+    "pass": false
+  },
+  "highlights": {
+    "white": 957,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      180,
+      1029.2
+    ],
+    "s": [
+      481.8,
+      1170.2
+    ],
+    "e": [
+      1101,
+      865.4
+    ],
+    "slopes": [
+      0.467,
+      -0.492
+    ],
+    "width": 921,
+    "held": 865.308984375,
+    "k": 0.9395320134364821
+  },
+  "top": {
+    "nearEavesY": 854
+  },
+  "height": {
+    "nearWall": 316.20000000000005,
+    "proportion": 0.34332247557003265,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture56.146>24,max110.859>48; deep portal notch, all3 new attempts refused",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r1: The building is turned a quarter turn clockwise seen from above. The front faces the upper left, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the right-hand side; the lower-right wall is the BACK, plainer than the front. The train portal is in the LOWER-LEFT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nAbout the building's size and roof. This is the building of the front-view reference turned round, and it is exactly as large as there: no taller, and with no storey more. The lower-left wall is the reference's lower-right wall, copied as it stands there: the same height, the same shape under the roof, the same windows and doors. The lower-right wall is the back: one straight wall from corner to corner, as high as the lower-left wall and plainer than it, with the same base and the same trim. The roof is the reference's roof seen from behind: the same form, its eaves as low as in the reference, and a ridge that runs parallel to the lower-left wall in the reference runs parallel to the lower-right wall here, and the other way round. It carries what the reference shows on its roof, at the same places.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the long wall with the crew door. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr1 (a quarter turn clockwise; the front faces the upper left, away from the camera): the lower-left wall is r0's end wall with its portal, copied as it stands there; the lower-right wall is the BACK, a long plain plank and brick wall, plainer than the front (no crew door, no windows beyond one or two plain small ones). No crew door, no front windows are added to either visible wall.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. The two back-wall windows are painted exactly as the blockout shows them. Input1 is edit target, input2 style board,input3 main-line depot family materials only. No accepted narrow-depot r0 exists, so no failed r0 reference is attached. Keep original full-canvas placement, outline bbox x147..876,y197..975. Output1024x1024 transparent RGBA.\n\nCorrection: last r1 still cut the doorway ground too high: IoU .94309 passes, but picture boundary p95 55.47 canvas px >24 and maximum112.12 >48. Follow the blockout portal outline closely. Paint a dark shadowed vertical inner hall wall extending down behind the arch, to just35 returned pixels above the projected ground line on a1254 canvas; leave only the shallow35-pixel ground strip transparent at the foot, not the tall triangular void of the last result. Do not paint a floor, threshold or apron. Keep every original blockout edge and part in place, lower-left brick lighter than right green wall, no crew door on the rear."
+},
+{
+  "id": "depot_narrow-a0-r3",
+  "attempt": 1,
+  "file": "raw/depot_narrow-a0-r3-attempt-1.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.9175518852024848,
+    "s0": 1.224609375,
+    "f": 0.9792175911480702,
+    "dx": 14.99521273000596,
+    "dy": 8.596656607673594,
+    "iou": 0.9323679065321969,
+    "p95PictureToScaffold": 91.38916663928906,
+    "p95ScaffoldToPicture": 12.729201869161166,
+    "maximum": 145.4463470605712,
+    "pass": false
+  },
+  "highlights": {
+    "white": 1205,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      189,
+      1033.6
+    ],
+    "s": [
+      471.4,
+      1168.2
+    ],
+    "e": [
+      1070,
+      882.2
+    ],
+    "slopes": [
+      0.476,
+      -0.478
+    ],
+    "width": 881,
+    "held": 865.308984375,
+    "k": 0.9821895395856981
+  },
+  "top": {
+    "nearEavesY": 876
+  },
+  "height": {
+    "nearWall": 292.20000000000005,
+    "proportion": 0.3316685584562997,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture91.389>24,max145.446>48 (portal ground notch); end wall wrongly green timber instead of brick",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The train portal is in the LOWER-LEFT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr3 (three quarter turns; the front faces the lower right): the lower-right wall is the FRONT (the crew door and two windows, the same wall as r0's front, turned, not mirrored); the lower-left wall is the other end wall with its own portal.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. Input1 edit target,input2 style board,input3 main-line depot family materials only. No earlier narrow-depot view passed, so none is attached. Keep original full-canvas place and outline bbox x147..876,y286..975. Output1024x1024 transparent RGBA."
+},
+{
+  "id": "depot_narrow-a0-r3",
+  "attempt": 2,
+  "file": "raw/depot_narrow-a0-r3-attempt-2.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.887239165329053,
+    "s0": 1.224609375,
+    "f": 0.9846410344638753,
+    "dx": 26.437120419691155,
+    "dy": -10.170006925495386,
+    "iou": 0.9363161497592433,
+    "p95PictureToScaffold": 68.61375943789173,
+    "p95ScaffoldToPicture": 18.245138737777086,
+    "maximum": 123.37996176380621,
+    "pass": false
+  },
+  "highlights": {
+    "white": 457,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      188,
+      1031.5
+    ],
+    "s": [
+      491.1,
+      1157.8
+    ],
+    "e": [
+      1090,
+      867.3
+    ],
+    "slopes": [
+      0.417,
+      -0.485
+    ],
+    "width": 902,
+    "held": 865.308984375,
+    "k": 0.9593225990853659
+  },
+  "top": {
+    "nearEavesY": 869
+  },
+  "height": {
+    "nearWall": 288.79999999999995,
+    "proportion": 0.3201773835920177,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture68.614>24,max123.380>48; wall height/base .32018 below scaffold lower15percent .32722",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The train portal is in the LOWER-LEFT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr3 (three quarter turns; the front faces the lower right): the lower-right wall is the FRONT (the crew door and two windows, the same wall as r0's front, turned, not mirrored); the lower-left wall is the other end wall with its own portal.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. Input1 edit target,input2 style board,input3 main-line depot family materials only. No earlier narrow-depot view passed, so none is attached. Keep original full-canvas place and outline bbox x147..876,y286..975. Output1024x1024 transparent RGBA.\n\nCorrection: last r3 passed IoU .93237 but had picture-outline p95 91.39>24canvas px and maximum145.45>48 because the doorway ground opening was too deep. Bring the dark vertical hall inner wall down close to the ground and leave only a shallow35-pixel transparent ground strip at the foot on a1254 return; never paint a floor or apron. The LOWER-LEFT END WALL must be warm BRICK around its arched portal as in the blockout and family reference, not green timber as the last attempt. The long LOWER-RIGHT wall is green planks with the crew door and two windows. Lower-left brick is lighter, lower-right green darkest. Preserve all blockout edges, dimensions and parts."
+},
+{
+  "id": "depot_narrow-a0-r3",
+  "attempt": 3,
+  "file": "raw/depot_narrow-a0-r3-attempt-3.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.9178283730139825,
+    "s0": 1.224609375,
+    "f": 0.984856981789855,
+    "dx": 13.170629580854325,
+    "dy": -1.9227375116657868,
+    "iou": 0.9381265082152509,
+    "p95PictureToScaffold": 71.5661061860111,
+    "p95ScaffoldToPicture": 14.31322123720222,
+    "maximum": 126.44629206999699,
+    "pass": false
+  },
+  "highlights": {
+    "white": 717,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      186,
+      1028.7
+    ],
+    "s": [
+      484.6,
+      1169
+    ],
+    "e": [
+      1073,
+      875.5
+    ],
+    "slopes": [
+      0.47,
+      -0.499
+    ],
+    "width": 887,
+    "held": 865.308984375,
+    "k": 0.9755456419109357
+  },
+  "top": {
+    "nearEavesY": 866
+  },
+  "height": {
+    "nearWall": 303,
+    "proportion": 0.3416009019165727,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture71.566>24,max126.446>48; deep portal notch;3newattempts exhausted",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r3: The building is turned three quarter turns clockwise seen from above. The front faces the lower right. The lower-left wall is the left-hand side; the lower-right wall is the FRONT. The train portal is in the LOWER-LEFT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr3 (three quarter turns; the front faces the lower right): the lower-right wall is the FRONT (the crew door and two windows, the same wall as r0's front, turned, not mirrored); the lower-left wall is the other end wall with its own portal.\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins. Input1 edit target,input2 style board,input3 main-line depot family materials only. No earlier narrow-depot view passed, so none is attached. Keep original full-canvas place and outline bbox x147..876,y286..975. Output1024x1024 transparent RGBA.\n\nCorrection: last r3 still had picture-outline p95 68.61canvas px>24 and maximum123.38>48 at the deep transparent doorway ground cutout, despite IoU .93632. Copy the portal shape in the blockout: the vertical shadowed inner hall wall must extend down almost to its ground line, leaving only a narrow35-returned-pixel transparent ground strip at1254; no floor, threshold or apron. The near wall height/base was .320 where the blockout is .385 (must be within15percent, at least .327): keep the blockout full wall height under its eaves, not a shorter wall below an enlarged roof. Preserve all original roof/window/door/vent positions. The end wall LOWER-LEFT is warm brick, long front LOWER-RIGHT green planks with crew door and2windows; left wall lighter."
+},
+{
+  "id": "depot_narrow-a0-r2",
+  "attempt": 1,
+  "file": "raw/depot_narrow-a0-r2-attempt-1.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.9502057826161133,
+    "s0": 1.224609375,
+    "f": 0.9989096593201375,
+    "dx": 3.458813809821663,
+    "dy": -3.576291115609365,
+    "iou": 0.9558730421428805,
+    "p95PictureToScaffold": 54.83810822402595,
+    "p95ScaffoldToPicture": 15.029154795436874,
+    "maximum": 109.31307443312888,
+    "pass": false
+  },
+  "highlights": {
+    "white": 2195,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      184,
+      862.9
+    ],
+    "s": [
+      782.7,
+      1197.7
+    ],
+    "e": [
+      1069,
+      1054.6
+    ],
+    "slopes": [
+      0.559,
+      -0.5
+    ],
+    "width": 885,
+    "held": 865.308984375,
+    "k": 0.9777502648305085
+  },
+  "top": {
+    "nearEavesY": 890
+  },
+  "height": {
+    "nearWall": 307.70000000000005,
+    "proportion": 0.3476836158192091,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture54.838>24,max109.313>48; lower-right end wall timber instead of brick, right wall brighter than left",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r2: The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side. The train portal is in the LOWER-RIGHT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the long wall with the crew door. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr2 (half round; the front faces the upper right, away from the camera): the lower-left wall is the BACK (the same wall as r1's lower-right wall); the lower-right wall is the other end wall with its own portal (the same wall as r3's lower-left wall).\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins; paint its2small back windows exactly where shown, without adding crew door. Input1 edit target,input2 style board,input3 main-line depot family materials only. No narrow-depot earlier view passed, so none is attached. Preserve original full-canvas location and outline bbox x147..876,y286..975. Output1024x1024 transparent RGBA."
+},
+{
+  "id": "depot_narrow-a0-r2",
+  "attempt": 2,
+  "file": "raw/depot_narrow-a0-r2-attempt-2.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.941615991044408,
+    "s0": 1.224609375,
+    "f": 1.000909293811714,
+    "dx": 3.978109274575104,
+    "dy": -4.200123924673676,
+    "iou": 0.9477267368004686,
+    "p95PictureToScaffold": 59.47281199799306,
+    "p95ScaffoldToPicture": 17.15216054179924,
+    "maximum": 114.92995850797561,
+    "pass": false
+  },
+  "highlights": {
+    "white": 695,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      183,
+      857.3
+    ],
+    "s": [
+      776.7,
+      1208
+    ],
+    "e": [
+      1069,
+      1061.3
+    ],
+    "slopes": [
+      0.591,
+      -0.502
+    ],
+    "width": 886,
+    "held": 865.308984375,
+    "k": 0.9766467092268624
+  },
+  "top": {
+    "nearEavesY": 890
+  },
+  "height": {
+    "nearWall": 318,
+    "proportion": 0.35891647855530473,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture59.473>24,max114.930>48; portal recess deep, end wall light ordering not clearly lower-right darker",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r2: The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side. The train portal is in the LOWER-RIGHT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the long wall with the crew door. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr2 (half round; the front faces the upper right, away from the camera): the lower-left wall is the BACK (the same wall as r1's lower-right wall); the lower-right wall is the other end wall with its own portal (the same wall as r3's lower-left wall).\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins; paint its2small back windows exactly where shown, without adding crew door. Input1 edit target,input2 style board,input3 main-line depot family materials only. No narrow-depot earlier view passed, so none is attached. Preserve original full-canvas location and outline bbox x147..876,y286..975. Output1024x1024 transparent RGBA.\n\nCorrection: last r2 IoU .95587 passes but picture-outline p95 54.84canvas px>24 and max109.31>48 at the deep transparent ground notch. Extend the vertical shadowed hall inner wall down behind the arch, leaving only a shallow35-pixel transparent ground strip at1254; no floor, threshold or apron. LOWER-RIGHT END WALL is BRICK as in the blockout, not timber boards as the last attempt. It must be visibly darker shadowed brown-red than the lit green-plank LOWER-LEFT back wall. Two small windows on that back wall, no crew door. Keep blockout shape, edges, camera and all roof parts exactly in place."
+},
+{
+  "id": "depot_narrow-a0-r2",
+  "attempt": 3,
+  "file": "raw/depot_narrow-a0-r2-attempt-3.png",
+  "returned": [
+    1254,
+    1254
+  ],
+  "silhouette": {
+    "iouAtS0": 0.9379489715413856,
+    "s0": 1.224609375,
+    "f": 1.0077163999953458,
+    "dx": 0.572996964030267,
+    "dy": -4.3028901978353815,
+    "iou": 0.9424919827864605,
+    "p95PictureToScaffold": 64.8722900864582,
+    "p95ScaffoldToPicture": 13.583674105443169,
+    "maximum": 120.2165468191556,
+    "pass": false
+  },
+  "highlights": {
+    "white": 1730,
+    "amber": 0
+  },
+  "spans": {
+    "w": [
+      182,
+      872.3
+    ],
+    "s": [
+      776.6,
+      1208.9
+    ],
+    "e": [
+      1046,
+      1079.2
+    ],
+    "slopes": [
+      0.566,
+      -0.482
+    ],
+    "width": 864,
+    "held": 865.308984375,
+    "k": 1.0015150282118055
+  },
+  "top": {
+    "nearEavesY": 893
+  },
+  "height": {
+    "nearWall": 315.9000000000001,
+    "proportion": 0.3656250000000001,
+    "scaffoldReference": {
+      "nearWall": 272,
+      "width": 706.56,
+      "proportion": 0.3849637681159421
+    }
+  },
+  "kept": false,
+  "refused": "p95 picture64.872>24,max120.217>48; deep portal notch,3newattempts exhausted",
+  "referenceHighlights": {
+    "white": 2123,
+    "amber": 0
+  },
+  "prompt": "Repaint the attached grey block-out as ONE finished building sprite for a pastoral isometric railway game.\n\nStyle: that of the attached style board. Crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest.\n\nCamera: keep the block-out's camera exactly. Orthographic 2:1 isometric, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate or tilt the view. The foot of the lower-left wall runs parallel to the plinth's lower-left edge and the foot of the lower-right wall parallel to its lower-right edge: both walls equally steep, neither flatter than the block-out's. Do not turn the building towards the viewer: the lower-right wall is seen as much from the side as the lower-left wall. Show the whole building with a clear margin all round: nothing touches the edge of the picture.\n\nFootprint: the grey plinth is the building's footprint. The building stands on it and fills it: its outer walls rise from the plinth's edges, and at ground level nothing reaches outside the plinth. Keep the foot of the two visible walls plain and straight from corner to corner, so that it shows where the building stands: no bushes, crates, steps or loose objects in front of it. Above the ground the shape is free: roofs, towers, chimneys and machinery may differ from the block and may overhang a little. The dark openings in the block-out show where the front door, or a depot's train portals, are; keep them in those walls.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces.\n\nNever: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nBuilding: Narrow Depot. A small single-track engine shed for narrow-gauge trains, which run through it: a narrow hall with one portal in each end wall.\n\nAge: Steam (model 1 of 6 for this building). Steam age, the first railway: small and rural. Timber framing, cream limestone, warm brick, slate roofs, cast-iron posts, evergreen-painted woodwork, a chimney where it makes sense.\n\nThis building in this age: A timber plank shed on a cream stone footing with a slate roof and one round-arched portal per end.\n\nKeep in every age: one train portal in each end wall, clearly smaller than a main-line depot. The portal is a doorway into the hall, and the inside of the hall shows through it: inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there. Do not make the whole doorway transparent, and paint no floor, threshold, apron or rails. Also keep: a small crew door in the front long wall.\n\nFront: the long wall with the crew door; the track runs through the hall parallel to it.\n\nView r2: The building is turned half round. The front faces the upper right, away from the camera, and nothing of it is in this picture: no entrance door and none of the front's windows or other features on either visible wall. The lower-left wall is the BACK, plainer than the front; the lower-right wall is the left-hand side. The train portal is in the LOWER-RIGHT wall, where the block-out has its large dark opening.\n\nReferences: the first is the style board. The second is this same building in view r0, seen from the front, laid onto its footprint at exactly the block-out's camera and scale. Paint the SAME building at the same size, turned on a turntable while the camera stays where it is. It is not a mirror image: show the walls named under View, and carry the same materials, roof, colours and details round the building.\n\nDo not paint the reference again. There, in view r0, the lower-left wall is the front: the long wall with the crew door. In this picture the front faces away, hidden behind the building: neither visible wall is the front, and what the front has does not show on them.\n\nTHE SHED: a narrow single-track hall of timber planks and brick on a cream stone footing, a slate gable roof with a smoke vent along the ridge, ONE round-arched portal in each end wall with evergreen timber doors folded open (inside each doorway the hall's inner wall in shadow; only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent so that the game's rails show there), a small crew door and two small windows in the front long wall. Narrower and smaller than the depot: the portal is 0.44 tile wide and 24 game px high. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nr2 (half round; the front faces the upper right, away from the camera): the lower-left wall is the BACK (the same wall as r1's lower-right wall); the lower-right wall is the other end wall with its own portal (the same wall as r3's lower-left wall).\n\nThe first picture is not a painting but a plain 3D blockout of the narrow depot at the game's exact camera: keep its shape, outline, camera and layout exactly as they are (every roof, wall, portal, door, window and vent where the blockout has it, nothing added outside its outline or taken out of it) and paint EVERY surface of it in the game's painted style, from the materials and details of the depot picture. Paint no plinth, ground or shadow; the foot of the walls starts at the blockout's corners. Do not rotate, tilt, resize, shift or reshape the building.\n\nCore review: scaffold geometry wins; paint its2small back windows exactly where shown, without adding crew door. Input1 edit target,input2 style board,input3 main-line depot family materials only. No narrow-depot earlier view passed, so none is attached. Preserve original full-canvas location and outline bbox x147..876,y286..975. Output1024x1024 transparent RGBA.\n\nCorrection: last r2 still had a deep transparent doorway notch: picture boundary p95 59.47canvas px exceeded24 and maximum114.93 exceeded48, although IoU .94773 passed. Paint the dark vertical inner hall wall down behind the arch to35returned pixels above the projected ground line on a1254 image, leaving only that narrow transparent ground strip at the foot; no floor, apron or threshold. Lower-left green-plank back wall must be noticeably lighter than the shadowed LOWER-RIGHT brick end wall (keep brick warm dark brown-red, not bright orange). No crew door on the back, just the2small windows shown. Preserve all original blockout edges and parts, and do not enlarge the roof or shorten walls."
 }
 ]

@@ -12,7 +12,7 @@
     }
   ],
   "accepted": [],
-  "mark": 1792602619501,
+  "mark": 1792621928382,
   "chat": "raw",
   "counts": {
     "pictures": 548,
@@ -2590,8 +2590,8 @@
       "rot": 0,
       "file": "assets/source/buildings-v2/depot_narrow/depot_narrow-a0-r0.png",
       "status": "rejected",
-      "attempts": 3,
-      "note": "C35a: all 3 attempts refused. Attempt 3 plan1.93052 passes; camera6.4deg exceeds2; height.31318 below.32725; footprint overshoot27.91 guide px exceeds16. Closest overall attempt2 retained in raw. No view accepted."
+      "attempts": 6,
+      "note": "C35a blockout: new attempts4-6 all refused for outline, best IoUs .93679,.94563,.94511 >=.80; p95 picture72.325,61.467,62.090 >24; max130.472,118.612,118.039 >48. Closest raw attempt6, no accepted r0; continue next view per prompt."
     },
     {
       "id": "depot_narrow-a0-r1",
@@ -2599,9 +2599,9 @@
       "age": 0,
       "rot": 1,
       "file": "assets/source/buildings-v2/depot_narrow/depot_narrow-a0-r1.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "C35a blockout: attempts1-3 refused despite IoUs .94252,.94309,.94276: p95 picture54.492,55.470,56.146>24; max110.464,112.124,110.859>48. Closest raw attempt1; no accepted r1."
     },
     {
       "id": "depot_narrow-a0-r2",
@@ -2609,9 +2609,9 @@
       "age": 0,
       "rot": 2,
       "file": "assets/source/buildings-v2/depot_narrow/depot_narrow-a0-r2.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "C35a blockout: attempts1-3 refused despite IoUs .95587,.94773,.94249: p95 picture54.838,59.473,64.872 >24; max109.313,114.930,120.217 >48. Attempt1 wrong timber endwall. Closest overall raw attempt2; no accepted r2."
     },
     {
       "id": "depot_narrow-a0-r3",
@@ -2619,9 +2619,9 @@
       "age": 0,
       "rot": 3,
       "file": "assets/source/buildings-v2/depot_narrow/depot_narrow-a0-r3.png",
-      "status": "pending",
-      "attempts": 0,
-      "note": ""
+      "status": "rejected",
+      "attempts": 3,
+      "note": "C35a blockout: attempts1-3 refused: best IoUs .93237,.93632,.93813; p95 picture91.389,68.614,71.566 >24,max145.446,123.380,126.446 >48. Attempt1 wrong endwall timber; attempt2 height .32018 below15percentlimit .32722. Closest overall raw attempt3; no accepted r3."
     },
     {
       "id": "depot_narrow-a1-r0",

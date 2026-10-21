@@ -13,5 +13,355 @@
         "file": "raw/farm-a0-r3-attempt-2.png"
       }
     }
+  },
+  "C35a": {
+    "run": 3,
+    "result": "completed-with-four-rejected-views",
+    "accepted": [],
+    "closestRaw": {
+      "r0": 6,
+      "r1": 1,
+      "r3": 3,
+      "r2": 2
+    },
+    "note": "All12newattempts fail doorway outline distance tests despite bestIoUs>.93; back windows shown by scaffold painted as shown; no failed earlier reference attached. Rejected fitted r0 advertised by show was omitted under explicit only-passed reference rule. No geometry change or silent acceptance.",
+    "attempts": [
+      {
+        "id": "depot_narrow-a0-r0",
+        "attempt": 4,
+        "file": "raw/depot_narrow-a0-r0-attempt-4.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.8807494683812322,
+          "s0": 1.224609375,
+          "f": 1.0048534712856518,
+          "dx": -3.5029380356008915,
+          "dy": -26.71245994864887,
+          "iou": 0.9367915846806473,
+          "p95PictureToScaffold": 72.32520772573146,
+          "p95ScaffoldToPicture": 13.22886608025648,
+          "maximum": 130.47156410788426,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 309.9000000000001,
+          "proportion": 0.34243093922651946,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "outline p95 picture72.325>24,max130.472>48 (deep transparent doorway notch); right brick end wall brighter than left green wall by eye"
+      },
+      {
+        "id": "depot_narrow-a0-r0",
+        "attempt": 5,
+        "file": "raw/depot_narrow-a0-r0-attempt-5.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.8983519676859258,
+          "s0": 1.224609375,
+          "f": 1.0160183232979452,
+          "dx": -10.444393148800373,
+          "dy": -31.312912254476146,
+          "iou": 0.94563305978898,
+          "p95PictureToScaffold": 61.466953774324914,
+          "p95ScaffoldToPicture": 16.549459261809123,
+          "maximum": 118.6123246451233,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 321.20000000000005,
+          "proportion": 0.3613048368953881,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "outline p95 picture61.467>24,max118.612>48 (deep transparent doorway notch); right brick wall visually brighter than green left wall"
+      },
+      {
+        "id": "depot_narrow-a0-r0",
+        "attempt": 6,
+        "file": "raw/depot_narrow-a0-r0-attempt-6.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.8069861767766571,
+          "s0": 1.224609375,
+          "f": 1.0704677417352637,
+          "dx": -36.994285425245494,
+          "dy": -92.82061514215127,
+          "iou": 0.945111260066898,
+          "p95PictureToScaffold": 62.09001674525115,
+          "p95ScaffoldToPicture": 14.493805754483494,
+          "maximum": 118.03945280728767,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 333.5999999999999,
+          "proportion": 0.35005246589716676,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "outline p95 picture62.090>24,max118.039>48 (deep transparent doorway notch)"
+      },
+      {
+        "id": "depot_narrow-a0-r1",
+        "attempt": 1,
+        "file": "raw/depot_narrow-a0-r1-attempt-1.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.9276846354785087,
+          "s0": 1.224609375,
+          "f": 0.9851792131836403,
+          "dx": 16.966035328545104,
+          "dy": 7.1995501324100815,
+          "iou": 0.9425156195934046,
+          "p95PictureToScaffold": 54.49160019787578,
+          "p95ScaffoldToPicture": 12.973890330323158,
+          "maximum": 110.46403104706815,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 322.70000000000005,
+          "proportion": 0.36753986332574035,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture54.492>24,max110.464>48; transparent doorway recess too deep"
+      },
+      {
+        "id": "depot_narrow-a0-r1",
+        "attempt": 2,
+        "file": "raw/depot_narrow-a0-r1-attempt-2.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.9241281312618298,
+          "s0": 1.224609375,
+          "f": 1.0073064909581602,
+          "dx": 2.8140948740151543,
+          "dy": -15.701558690104207,
+          "iou": 0.9430899134847968,
+          "p95PictureToScaffold": 55.46978624685414,
+          "p95ScaffoldToPicture": 16.213276280456288,
+          "maximum": 112.12391994785007,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 318,
+          "proportion": 0.3502202643171806,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture55.470>24,max112.124>48; deep open-ground portal notch"
+      },
+      {
+        "id": "depot_narrow-a0-r1",
+        "attempt": 3,
+        "file": "raw/depot_narrow-a0-r1-attempt-3.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.8605644292464429,
+          "s0": 1.224609375,
+          "f": 1.0211953053584077,
+          "dx": 6.643346741557025,
+          "dy": -47.51018063847289,
+          "iou": 0.9427585919991897,
+          "p95PictureToScaffold": 56.14577361084406,
+          "p95ScaffoldToPicture": 14.393490173892541,
+          "maximum": 110.85883292569653,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 316.20000000000005,
+          "proportion": 0.34332247557003265,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture56.146>24,max110.859>48; deep portal notch, all3 new attempts refused"
+      },
+      {
+        "id": "depot_narrow-a0-r3",
+        "attempt": 1,
+        "file": "raw/depot_narrow-a0-r3-attempt-1.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.9175518852024848,
+          "s0": 1.224609375,
+          "f": 0.9792175911480702,
+          "dx": 14.99521273000596,
+          "dy": 8.596656607673594,
+          "iou": 0.9323679065321969,
+          "p95PictureToScaffold": 91.38916663928906,
+          "p95ScaffoldToPicture": 12.729201869161166,
+          "maximum": 145.4463470605712,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 292.20000000000005,
+          "proportion": 0.3316685584562997,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture91.389>24,max145.446>48 (portal ground notch); end wall wrongly green timber instead of brick"
+      },
+      {
+        "id": "depot_narrow-a0-r3",
+        "attempt": 2,
+        "file": "raw/depot_narrow-a0-r3-attempt-2.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.887239165329053,
+          "s0": 1.224609375,
+          "f": 0.9846410344638753,
+          "dx": 26.437120419691155,
+          "dy": -10.170006925495386,
+          "iou": 0.9363161497592433,
+          "p95PictureToScaffold": 68.61375943789173,
+          "p95ScaffoldToPicture": 18.245138737777086,
+          "maximum": 123.37996176380621,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 288.79999999999995,
+          "proportion": 0.3201773835920177,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture68.614>24,max123.380>48; wall height/base .32018 below scaffold lower15percent .32722"
+      },
+      {
+        "id": "depot_narrow-a0-r3",
+        "attempt": 3,
+        "file": "raw/depot_narrow-a0-r3-attempt-3.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.9178283730139825,
+          "s0": 1.224609375,
+          "f": 0.984856981789855,
+          "dx": 13.170629580854325,
+          "dy": -1.9227375116657868,
+          "iou": 0.9381265082152509,
+          "p95PictureToScaffold": 71.5661061860111,
+          "p95ScaffoldToPicture": 14.31322123720222,
+          "maximum": 126.44629206999699,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 303,
+          "proportion": 0.3416009019165727,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture71.566>24,max126.446>48; deep portal notch;3newattempts exhausted"
+      },
+      {
+        "id": "depot_narrow-a0-r2",
+        "attempt": 1,
+        "file": "raw/depot_narrow-a0-r2-attempt-1.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.9502057826161133,
+          "s0": 1.224609375,
+          "f": 0.9989096593201375,
+          "dx": 3.458813809821663,
+          "dy": -3.576291115609365,
+          "iou": 0.9558730421428805,
+          "p95PictureToScaffold": 54.83810822402595,
+          "p95ScaffoldToPicture": 15.029154795436874,
+          "maximum": 109.31307443312888,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 307.70000000000005,
+          "proportion": 0.3476836158192091,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture54.838>24,max109.313>48; lower-right end wall timber instead of brick, right wall brighter than left"
+      },
+      {
+        "id": "depot_narrow-a0-r2",
+        "attempt": 2,
+        "file": "raw/depot_narrow-a0-r2-attempt-2.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.941615991044408,
+          "s0": 1.224609375,
+          "f": 1.000909293811714,
+          "dx": 3.978109274575104,
+          "dy": -4.200123924673676,
+          "iou": 0.9477267368004686,
+          "p95PictureToScaffold": 59.47281199799306,
+          "p95ScaffoldToPicture": 17.15216054179924,
+          "maximum": 114.92995850797561,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 318,
+          "proportion": 0.35891647855530473,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture59.473>24,max114.930>48; portal recess deep, end wall light ordering not clearly lower-right darker"
+      },
+      {
+        "id": "depot_narrow-a0-r2",
+        "attempt": 3,
+        "file": "raw/depot_narrow-a0-r2-attempt-3.png",
+        "kept": false,
+        "silhouette": {
+          "iouAtS0": 0.9379489715413856,
+          "s0": 1.224609375,
+          "f": 1.0077163999953458,
+          "dx": 0.572996964030267,
+          "dy": -4.3028901978353815,
+          "iou": 0.9424919827864605,
+          "p95PictureToScaffold": 64.8722900864582,
+          "p95ScaffoldToPicture": 13.583674105443169,
+          "maximum": 120.2165468191556,
+          "pass": false
+        },
+        "height": {
+          "nearWall": 315.9000000000001,
+          "proportion": 0.3656250000000001,
+          "scaffoldReference": {
+            "nearWall": 272,
+            "width": 706.56,
+            "proportion": 0.3849637681159421
+          }
+        },
+        "refused": "p95 picture64.872>24,max120.217>48; deep portal notch,3newattempts exhausted"
+      }
+    ]
   }
 }
