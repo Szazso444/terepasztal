@@ -1,7 +1,9 @@
 # Rare landmarks
 
-Status: draft for the author's review, 2026-10-22. Nothing here is approved until the decisions in
-section 10 are answered. Epic #529; artwork and handoff #528 (branch
+Status: draft, 2026-10-22. The author took the recommended options of section 10 with one change:
+a landmark appears only where the terrain suits it, and the House Between Seasons where four
+biomes meet, and then not always (sections 1 and 2, measured). The site rules and the junction
+definition (D12, D13) wait for the author's confirmation. Epic #529; artwork and handoff #528 (branch
 `art/528-rare-landmarks-handoff` @ `210cfe5d`, `docs/art-direction/rare-landmarks-handoff.md` and
 `assets/source/rare-landmarks-v1/final/manifest.json` there).
 
@@ -32,26 +34,44 @@ the stockpile, money, passengers, station boosts, weather and the clock (decisio
 ## 1. The twelve landmarks
 
 Footprint `W×D` is in tiles; `W` runs along the map's +x axis (screen down-right) in the painted
-orientation unless Art's calibration (task T6) records the other axis. Chance is per 3×3-chunk
-region (section 2).
+orientation unless Art's calibration (task T6) records the other axis.
 
-| Id (data)                 | Name                    | Footprint | Chance | Site rule beyond the defaults    |
-| ------------------------- | ----------------------- | --------- | ------ | -------------------------------- |
-| `merchants_last_stop`     | Merchant's Last Stop    | 3×2       | 6%     | —                                |
-| `overgrown_bathhouse`     | Overgrown Bathhouse     | 4×3       | 5%     | water within 4 tiles             |
-| `bellkeepers_refuge`      | Bellkeeper's Refuge     | 1×1       | 4%     | —                                |
-| `flooded_archive`         | Flooded Archive         | 4×4       | 3%     | water within 3 tiles             |
-| `rootbound_workshop`      | Rootbound Workshop      | 2×2       | 3%     | a forest prop within 3 tiles     |
-| `cliffside_cable_station` | Cliffside Cable Station | 3×2       | 2.5%   | a drop of ≥ 2 levels at one edge |
-| `stormglass_observatory`  | Stormglass Observatory  | 2×2       | 2%     | —                                |
-| `ashen_conservatory`      | Ashen Conservatory      | 4×2       | 1.5%   | —                                |
-| `inverted_manor`          | Inverted Manor          | 3×3       | 1%     | —                                |
-| `sleeping_foundry`        | Sleeping Foundry        | 5×4       | 0.75%  | —                                |
-| `moonwell_pavilion`       | Moonwell Pavilion       | 2×2       | 0.5%   | —                                |
-| `house_between_seasons`   | House Between Seasons   | 4×4       | 0.25%  | —                                |
+Every landmark has a **site rule**: the terrain it needs around its footprint. "Within r" means in
+the footprint grown by `r` tiles on every side; that whole window must lie inside the anchor chunk
+(section 2), so the rule reads only tiles generated together. Biomes are read as climates
+(`climateAt`), so a river or lake does not hide the climate under it. Fresh water is the `lake` or
+`river` biome; the sea does not count.
 
-The cable station's ravine crossing and far landing are not drawn and need no clearance; its
-footprint is the station building alone.
+**Target** is how often the landmark should appear per 3×3-chunk region, as in the handoff.
+**Sites** is the share of chunks (start chunk left out) that hold at least one legal footprint
+meeting the rule, measured over 40 seeds on 11×11-chunk maps with a 3-tile margin (4 800 chunks;
+the script is `2026-10-18-rare-landmarks-sites.measure.ts` next to this file). **Roll** is what
+the data must say so that the target comes out (section 2).
+
+| Id (data)                 | Name                    | Footprint | Site rule                                     | Target | Sites | Roll     |
+| ------------------------- | ----------------------- | --------- | --------------------------------------------- | ------ | ----- | -------- |
+| `merchants_last_stop`     | Merchant's Last Stop    | 3×2       | footprint all plains                          | 6%     | 82.4% | 7.29%    |
+| `overgrown_bathhouse`     | Overgrown Bathhouse     | 4×3       | fresh water within 3                          | 5%     | 94.9% | 5.27%    |
+| `bellkeepers_refuge`      | Bellkeeper's Refuge     | 1×1       | on a hill (level ≥ 2)                         | 4%     | 64.5% | 6.20%    |
+| `flooded_archive`         | Flooded Archive         | 4×4       | fresh water within 2                          | 3%     | 93.9% | 3.19%    |
+| `rootbound_workshop`      | Rootbound Workshop      | 2×2       | ≥ 8 forest tiles within 2                     | 3%     | 71.3% | 4.21%    |
+| `cliffside_cable_station` | Cliffside Cable Station | 3×2       | a tile 2+ levels higher within 2 (a cliff)    | 2.5%   | 71.0% | 3.52%    |
+| `stormglass_observatory`  | Stormglass Observatory  | 2×2       | on a hill (level ≥ 2)                         | 2%     | 55.5% | 3.60%    |
+| `ashen_conservatory`      | Ashen Conservatory      | 4×2       | desert within 3                               | 1.5%   | 44.4% | 3.38%    |
+| `inverted_manor`          | Inverted Manor          | 3×3       | none                                          | 1%     | 97.9% | 1.02%    |
+| `sleeping_foundry`        | Sleeping Foundry        | 5×4       | rock or mountain within 3 (ore)               | 0.75%  | 25.8% | 2.91%    |
+| `moonwell_pavilion`       | Moonwell Pavilion       | 2×2       | lake within 3 (the reflection)                | 0.5%   | 85.0% | 0.59%    |
+| `house_between_seasons`   | House Between Seasons   | 4×4       | plains, desert, forest and taiga all within 3 | 0.25%  | 0.27% | 10%/site |
+
+The House Between Seasons' four biomes are its four wings: spring is plains, summer desert, autumn
+forest, winter taiga. A desert and a taiga rarely lie close, as one is hot and the other cold, so
+a true four-way meeting is rare: 0.27% of chunks within 3 tiles (1.21% within 4, 5.15% within 6).
+It is placed where the meeting is, not in a rolled chunk (section 2), and appears at about one
+meeting in ten.
+
+Neighbouring tiles differ by at most one level (`tileLevels`), so a cliff is a tile two levels up
+within two tiles, not a sheer drop at the edge. The cable station's ravine crossing and far
+landing are not drawn and need no clearance; its footprint is the station building alone.
 
 ## 2. Rarity and placement
 
@@ -63,12 +83,26 @@ expands in.
   (`src/world/chunks.ts`); likewise for `y`. These do not move when `expandSave` grows the map.
 - **Region.** World chunks are grouped into 3×3 regions: region `(floor(cx / 3), floor(cy / 3))`,
   with floor division for negative coordinates.
+  There are two ways a landmark is placed. Eleven are **rolled** per region; the House Between
+  Seasons is **site-led**: it is looked for wherever its site happens to be.
+
 - **Roll.** One roll per region (decision D2): `u = hash(seed, rx, ry, 'landmark')` in `[0, 1)`
-  picks a landmark by cumulative bands in data order, or none when `u` is past the last band.
-  Each landmark keeps exactly its listed chance; the chance of any landmark is 29.5%. A tuning rule
-  `landmarkChance` (0–3, default 1, in `src/sim/rules.ts`) scales every band.
-- **Anchor chunk.** A second hash picks one of the region's nine chunks. The landmark can appear
-  only there.
+  picks a rolled landmark by cumulative bands in data order, each band as wide as the landmark's
+  Roll in section 1, or none when `u` is past the last band (the bands add up to 40.2%). The roll
+  is wider than the target because the anchor chunk may lack a site; target = roll × sites, so
+  each landmark comes out at its target and all eleven together at about 29%. A tuning rule
+  `landmarkChance` (0–3, default 1, in `src/sim/rules.ts`) scales every band and the site-led
+  chance.
+- **Anchor chunk.** A second hash picks one of the region's nine chunks. A rolled landmark can
+  appear only there.
+- **Site-led.** When a chunk is generated, every footprint in it that meets the House Between
+  Seasons' rule is a site. If the chunk has one, `hash(seed, cx, cy, 'house_between_seasons')`
+  below 10% places the house on the first site in a seeded order. The 10% comes from the target:
+  0.25% per region is 0.028% per chunk, over 0.27% of chunks with a site. If the house and a rolled
+  landmark land in the same chunk, the house wins and the rolled one is not placed.
+- **Calibration.** The Sites and Roll columns are measured, not exact. A World test re-measures
+  the sites on a fixed seed list and fails when roll × sites drifts more than a fifth from the
+  target, which is also what a change to map generation would cause. The data then gets new rolls.
 - **Spacing.** When two 8-neighbouring regions both roll a landmark and their anchor chunks touch
   (8-neighbour), the one with the lower spacing hash drops out. This only reads rolls, never stored
   state, so it does not depend on order; the nearest two landmarks are then at least one whole
@@ -77,7 +111,8 @@ expands in.
   `buildMap`), and only if the anchor chunk is not the start chunk. A chunk that is already stored
   never gets a landmark later, so old saves keep their existing land as it is (decision D4).
 - **Where.** Up to 64 seeded candidate corners inside the anchor chunk, with the whole footprint at
-  least 2 tiles from the chunk's edges (out of reach of `seam()`). The first legal candidate wins.
+  least 3 tiles from the chunk's edges (out of reach of `seam()`, and the site rule's window stays
+  in the chunk). The first legal candidate wins.
 - **Legal** when every footprint tile is in the map, buildable (not water, rock or mountain), at
   one elevation, carries no deposit prop (`coal`, `oil`, `wheat`) and no saved structure (track,
   station, building, decor, road, house), and the landmark's own site rule in section 1 holds.
@@ -215,10 +250,13 @@ landmarks: {
 
 1. For 200 seeds, placement is identical whether the map grows ring by ring or all at once, and
    for any order of the `added` chunk batches (test in `src/world/landmarks.test.ts`).
-2. Over 20 000 seeded regions, each landmark's frequency is within 3 standard errors of its band,
-   and the chance of any landmark within 3 standard errors of 29.5% × `landmarkChance`.
-3. No placed footprint breaks a legality rule, crosses its chunk's 2-tile margin, or sits in the
-   start chunk; no two landmarks sit in 8-neighbouring chunks.
+2. Over 20 000 seeded regions, each rolled landmark is picked within 3 standard errors of its roll
+   band, and the house's site-led draw succeeds within 3 standard errors of 10% of sites. On a
+   fixed seed list, every landmark's placed rate per region is within a fifth of its target
+   (section 1), scaled by `landmarkChance`; this is the calibration test.
+3. No placed footprint breaks a legality rule or its site rule, crosses its chunk's 3-tile margin,
+   or sits in the start chunk; no two rolled landmarks sit in 8-neighbouring chunks; a house and a
+   rolled landmark never share a chunk.
 4. A chunk already in the store never gains a landmark: loading a v20 save and expanding it adds
    landmarks only in chunks that were not stored; the mapgen goldens are unchanged.
 5. Every save version migrates to 21; a v21 round trip keeps every item; `expandSave` shifts
@@ -235,7 +273,18 @@ landmarks: {
 
 ## 10. Decisions for the author
 
-Each has a recommendation (first option). Short form for the decision board:
+On 2026-10-22 the author took the recommended option (a) of D1–D11, with one change to D2: a
+landmark needs terrain that suits it, and the House Between Seasons appears where four biomes
+meet, but not every time. Sections 1 and 2 now say how. Open:
+
+- **D12 House Between Seasons' meeting.** (a) plains, desert, forest and taiga all within 3 tiles
+  of the footprint (0.27% of chunks), placed at 10% of meetings — recommended; (b) within 6 tiles
+  (5.15% of chunks), at 0.5% of meetings; (c) any four of the five land biomes within 3 tiles
+  (28% of chunks), at 0.1%.
+- **D13 Site rules.** (a) the rules in section 1 as written — recommended; (b) the author changes
+  some (any rule changes its measured share and roll, which Core re-measures).
+
+The original list, answered:
 
 - **D1 Encounter model.** (a) story text + train deliveries + choices in a panel — recommended;
   (b) build avatar, combat, survival systems first.
@@ -270,11 +319,13 @@ approval; the links below are the extra ones.
 
 ```
 T1 Gameplay — landmark content and rules
-Goal: src/data/landmarks.json holds the twelve landmarks of sections 1, 4 and 5; content.ts loads
-  and validates it (LandmarkDef); rules.ts gains landmarkChance (0–3, default 1) with RULE_META.
+Goal: src/data/landmarks.json holds the twelve landmarks of sections 1, 4 and 5 (target, roll or
+  site-led chance, site rule as data); content.ts loads and validates it (LandmarkDef); rules.ts
+  gains landmarkChance (0–3, default 1) with RULE_META.
 Acceptance criteria:
-  - validateContent reports an unknown cargo, a footprint outside 1–5, a chance outside 0–1, bands
-    summing over 1 and an unknown effect kind (one test each in src/data/content.test.ts)
+  - validateContent reports an unknown cargo, a footprint outside 1–5, a chance outside 0–1, rolls
+    summing over 1, an unknown site-rule kind and an unknown effect kind (one test each in
+    src/data/content.test.ts)
   - landmarkDef('x') for an unknown id returns undefined, never throws
   - nothing else in src/data references a landmark id (test)
 Context pack: AGENTS.md; this spec §1, §4, §5; src/data/content.ts (BuildingDef, validateContent);
@@ -288,12 +339,18 @@ Out of scope: placement, state, save, strings
 ```
 T2 World — seeded landmark placement
 Goal: src/world/landmarks.ts, a pure placeLandmarks(seed, map, added, sites) returning placements
-  per §2. It defines its own LandmarkSite input {id, w, d, chance, rule} and imports nothing from
+  per §2: region rolls with anchor chunks, the site-led house, and the site rules of §1 as a small
+  closed set of rule kinds (all of a climate, fresh water / lake / desert / rock within r, forest
+  count within r, level at least n, a tile n levels up within r, four climates within r). It
+  defines its own LandmarkSite input {id, w, d, roll | siteChance, rule} and imports nothing from
   src/sim or src/data.
-Acceptance criteria: spec §9 items 1–3, and item 4's "already stored chunks" part, as tests in
-  src/world/landmarks.test.ts using forAll; mapgen goldens unchanged
-Context pack: AGENTS.md; this spec §2; src/world/chunks.ts (CHUNK_TILES, chunkOf, buildMap and its
-  `added`, seam); src/engine/rng.ts (hash2, hashString); src/world/tiles.ts (terrain kinds, props)
+Acceptance criteria: spec §9 items 1–3 (the calibration test included), and item 4's "already
+  stored chunks" part, as tests in src/world/landmarks.test.ts using forAll; mapgen goldens
+  unchanged
+Context pack: AGENTS.md; this spec §1, §2; docs/superpowers/specs/2026-10-18-rare-landmarks-sites.measure.ts
+  (the measurement the calibration test repeats); src/world/chunks.ts (CHUNK_TILES, chunkOf,
+  buildMap and its `added`, seam); src/world/elevation.ts (tileLevels); src/engine/rng.ts (hash2,
+  hashString); src/world/tiles.ts (Terrain, Biome, climateAtIndex, props)
 Seams: buildMap, encodeChunk/decodeChunk, the mapgen goldens (gate file, must not change)
 Verification required: yes — order independence, band frequencies, legality, spacing, margins
 Blocked by: none
