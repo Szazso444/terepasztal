@@ -1,0 +1,765 @@
+{
+  "job": "town",
+  "renderReference": {
+    "r0": {
+      "foot": [636, 974],
+      "eaves": [636, 674],
+      "baseCorners": [164, 859],
+      "baseWidth": 695,
+      "wallRatio": 0.4316546762589928,
+      "uncertaintyPx": 3
+    },
+    "r1": {
+      "foot": [388, 974],
+      "eaves": [388, 674],
+      "baseCorners": [164, 860],
+      "baseWidth": 696,
+      "wallRatio": 0.43103448275862066,
+      "uncertaintyPx": 3,
+      "note": "Textured render back has no green door; paint render layout rather than prose."
+    },
+    "r2": {
+      "foot": [636, 974],
+      "eaves": [636, 674],
+      "baseCorners": [164, 860],
+      "baseWidth": 696,
+      "wallRatio": 0.43103448275862066,
+      "uncertaintyPx": 3,
+      "note": "Render back windows(3upper,2lower), no door; render wins over prose."
+    },
+    "r3": {
+      "foot": [388, 974],
+      "eaves": [388, 674],
+      "baseCorners": [164, 860],
+      "baseWidth": 696,
+      "wallRatio": 0.43103448275862066,
+      "uncertaintyPx": 3
+    }
+  },
+  "attempts": [
+    {
+      "building": "town",
+      "view": 0,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Town hall in the view r0. a two-storey red-brick town hall with cream limestone quoins, string courses and window surrounds, under a dark slate gable roof whose ridge runs along the long front, with a brick chimney stack with red pots at each end and a bell cupola with a slate dome and a gold finial in the middle of the ridge. The FRONT (the long wall) has a central cream-stone gable with a round clock face, a cream portico with columns over a forest-green double door, arched windows on two storeys in a regular rhythm, two hanging lanterns and two conifer planters beside the portico. One END is a brick gable with cream quoins and a stepped or scrolled cream gable edge, two columns of arched windows on two storeys and a small arched attic window. The back wall has the same quoins, string courses and windows and a plain green door instead of the portico; the other end is a brick gable like the first. r0: the visible sides are the lower-left and the lower-right. What the building has where: the long front with the clock gable, the portico and double door, the lanterns and planters and the arched windows (the lower-left side); the brick gable end with cream quoins, two columns of arched windows and the small arched attic window (the lower-right side); the long back wall (brick, quoins and string courses, windows, a plain green door; no clock gable, no portico, no planters, no lanterns) (the upper-right side); the other brick gable end (as the render has it) (the upper-left side). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/town-r0-textured.png",
+        "G:/DEV/wt/originals-textured-a/town.png"
+      ],
+      "file": "raw/town-r0-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/town/raw/town-r0-attempt-1.png",
+        "job": "town",
+        "view": 0,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [203, 254, 1052, 1195],
+          "area": 530667,
+          "width": 850,
+          "height": 942,
+          "overallRatio": 1.108235294117647
+        },
+        "bareOpaque": {
+          "box": [164, 209, 859, 973],
+          "area": 355442,
+          "width": 696,
+          "height": 765,
+          "overallRatio": 1.0991379310344827
+        },
+        "silhouette": {
+          "iouAtS0": 0.9764454280305921,
+          "f": 1.001,
+          "dx": -1.5,
+          "dy": -1.5,
+          "bestIoU": 0.9770306060200271,
+          "p95PictureToRender": 6.5261692055950435,
+          "p95RenderToPicture": 6.5261692055950435,
+          "maximum": 9.924284377544907,
+          "boundarySamples": [3333, 3283],
+          "worstPicture": {
+            "distance": 9.924284377544907,
+            "point": [438.50717703349284, 359.29824561403507]
+          },
+          "worstRender": {
+            "distance": 8.39887804728819,
+            "point": [284.17224880382776, 281.7224880382775]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.4219858156028369,
+          "renderWall": 0.4316546762589928,
+          "wallRelativeDifference": -0.022399527186761192,
+          "overall": 1.108235294117647,
+          "renderOverall": 1.0991379310344827,
+          "overallRelativeDifference": 0.008276816608996596,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 846,
+          "renderWidth": 674.56,
+          "heldWidthAtReturned": 826.0724999999999,
+          "k": 0.9764450354609928
+        },
+        "highlights": {
+          "nearWhite": 10066,
+          "nearAmber": 9
+        },
+        "originalHighlights": {
+          "nearWhite": 5074,
+          "nearAmber": 44
+        },
+        "wallLight": {
+          "left": 213.28419933333342,
+          "right": 131.83040000000014,
+          "boxes": [
+            [670, 1090, 685, 1110],
+            [960, 1070, 975, 1090]
+          ],
+          "ratio": 1.6178681042713456,
+          "render": {
+            "boxes": [
+              [546, 890, 559, 906],
+              [783, 873, 796, 890]
+            ],
+            "left": 208.09479807692307,
+            "right": 108.9018099547511,
+            "ratio": 1.910847929555871,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 846,
+          "wallRatio": 0.4219858156028369,
+          "renderWallRatio": 0.4316546762589928,
+          "wallRead": {
+            "foot": [781, 1195],
+            "eaves": [781, 838],
+            "baseCorners": [204, 1050],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [670, 1090, 685, 1110],
+          "rightBox": [960, 1070, 975, 1090]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "All strict silhouette/height/eye tests pass; cupola gaps/bell, clock/portico, two planters/lanterns,2chimney stacks and window rhythm retained; coherent crisp brick/limestone/slate repaint.",
+      "sha256": "c9696951e3aa5b20b6e7142fee5f13239af1c08796e9afc24f80a60d97867559"
+    },
+    {
+      "building": "town",
+      "view": 1,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Town hall in the view r1. a two-storey red-brick town hall with cream limestone quoins, string courses and window surrounds, under a dark slate gable roof whose ridge runs along the long front, with a brick chimney stack with red pots at each end and a bell cupola with a slate dome and a gold finial in the middle of the ridge. The FRONT (the long wall) has a central cream-stone gable with a round clock face, a cream portico with columns over a forest-green double door, arched windows on two storeys in a regular rhythm, two hanging lanterns and two conifer planters beside the portico. One END is a brick gable with cream quoins and a stepped or scrolled cream gable edge, two columns of arched windows on two storeys and a small arched attic window. The back wall has the same quoins, string courses and windows and a plain green door instead of the portico; the other end is a brick gable like the first. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the long front with the clock gable, the portico and double door, the lanterns and planters and the arched windows stands at the upper-left side; the brick gable end with cream quoins, two columns of arched windows and the small arched attic window stands at the lower-left side; the long back wall (brick, quoins and string courses, windows, a plain green door; no clock gable, no portico, no planters, no lanterns) stands at the lower-right side; the other brick gable end (as the render has it) stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/town-r1-textured.png",
+        "G:/DEV/wt/originals-textured-a/town.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/town/town-r0.png"
+      ],
+      "file": "raw/town-r1-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/town/raw/town-r1-attempt-1.png",
+        "job": "town",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [182, 154, 1096, 1185],
+          "area": 628519,
+          "width": 915,
+          "height": 1032,
+          "overallRatio": 1.1278688524590164
+        },
+        "bareOpaque": {
+          "box": [164, 209, 859, 973],
+          "area": 356216,
+          "width": 696,
+          "height": 765,
+          "overallRatio": 1.0991379310344827
+        },
+        "silhouette": {
+          "iouAtS0": 0.8216162608413193,
+          "f": 0.9209999999999999,
+          "dx": 40.120000000000005,
+          "dy": 102.06000000000006,
+          "bestIoU": 0.9676362676179872,
+          "p95PictureToRender": 9.256696802695568,
+          "p95RenderToPicture": 9.041895003383763,
+          "maximum": 21.018946643387086,
+          "boundarySamples": [3272, 3229],
+          "worstPicture": {
+            "distance": 13.792737564718454,
+            "point": [575.6937799043062, 357.6650717703349]
+          },
+          "worstRender": {
+            "distance": 21.018946643387086,
+            "point": [489.95215311004785, 386.2456140350877]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.40919037199124725,
+          "renderWall": 0.43103448275862066,
+          "wallRelativeDifference": -0.05067833698030633,
+          "overall": 1.1278688524590164,
+          "renderOverall": 1.0991379310344827,
+          "overallRelativeDifference": 0.02613950498232076,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 914,
+          "renderWidth": 674.56,
+          "heldWidthAtReturned": 826.0724999999999,
+          "k": 0.9037992341356672
+        },
+        "highlights": {
+          "nearWhite": 7262,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 5074,
+          "nearAmber": 44
+        },
+        "wallLight": {
+          "left": 218.58411111111113,
+          "right": 144.98375644444465,
+          "boxes": [
+            [260, 1000, 275, 1015],
+            [790, 1000, 805, 1015]
+          ],
+          "ratio": 1.5076455216199953,
+          "render": {
+            "boxes": [
+              [228, 835, 240, 847],
+              [627, 835, 638, 847]
+            ],
+            "left": 162.92233611111112,
+            "right": 145.51496969696973,
+            "ratio": 1.1196259494840406,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 914,
+          "wallRatio": 0.40919037199124725,
+          "renderWallRatio": 0.43103448275862066,
+          "wallRead": {
+            "foot": [466, 1185],
+            "eaves": [466, 811],
+            "baseCorners": [182, 1096],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [260, 1000, 275, 1015],
+          "rightBox": [790, 1000, 805, 1015]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "All strict silhouette/height/eye tests pass. Back has render windows(3upper,2lower), no new door: prose plain-green-door instruction yields to render. Four end windows/attic, cupola/bell gaps and2chimneys retained; seamless brick/stone/slate.",
+      "sha256": "2d868296fc0a3fe1ba7826e560e7b72774fc162ecee79f7c54654d6be34f80d2"
+    },
+    {
+      "building": "town",
+      "view": 2,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Town hall in the view r2. a two-storey red-brick town hall with cream limestone quoins, string courses and window surrounds, under a dark slate gable roof whose ridge runs along the long front, with a brick chimney stack with red pots at each end and a bell cupola with a slate dome and a gold finial in the middle of the ridge. The FRONT (the long wall) has a central cream-stone gable with a round clock face, a cream portico with columns over a forest-green double door, arched windows on two storeys in a regular rhythm, two hanging lanterns and two conifer planters beside the portico. One END is a brick gable with cream quoins and a stepped or scrolled cream gable edge, two columns of arched windows on two storeys and a small arched attic window. The back wall has the same quoins, string courses and windows and a plain green door instead of the portico; the other end is a brick gable like the first. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the long front with the clock gable, the portico and double door, the lanterns and planters and the arched windows stands at the upper-right side; the brick gable end with cream quoins, two columns of arched windows and the small arched attic window stands at the upper-left side; the long back wall (brick, quoins and string courses, windows, a plain green door; no clock gable, no portico, no planters, no lanterns) stands at the lower-left side; the other brick gable end (as the render has it) stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/town-r2-textured.png",
+        "G:/DEV/wt/originals-textured-a/town.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/town/town-r0.png"
+      ],
+      "file": "raw/town-r2-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/town/raw/town-r2-attempt-1.png",
+        "job": "town",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [204, 211, 1061, 1189],
+          "area": 523075,
+          "width": 858,
+          "height": 979,
+          "overallRatio": 1.141025641025641
+        },
+        "bareOpaque": {
+          "box": [164, 198, 859, 973],
+          "area": 353028,
+          "width": 696,
+          "height": 776,
+          "overallRatio": 1.1149425287356323
+        },
+        "silhouette": {
+          "iouAtS0": 0.8877694946195407,
+          "f": 0.988,
+          "dx": -2.1749999999999545,
+          "dy": 31,
+          "bestIoU": 0.9324557224004825,
+          "p95PictureToRender": 50.355795287660165,
+          "p95RenderToPicture": 21.960783277674192,
+          "maximum": 96.26210949482648,
+          "boundarySamples": [3239, 3136],
+          "worstPicture": {
+            "distance": 96.26210949482648,
+            "point": [591.2089314194577, 441.77352472089314]
+          },
+          "worstRender": {
+            "distance": 72.1004215539131,
+            "point": [654.9027113237639, 361.7480063795853]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.40373395565927656,
+          "renderWall": 0.43103448275862066,
+          "wallRelativeDifference": -0.06333722287047838,
+          "overall": 1.141025641025641,
+          "renderOverall": 1.1149425287356323,
+          "overallRelativeDifference": 0.02339413164155424,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 857,
+          "renderWidth": 674.56,
+          "heldWidthAtReturned": 826.0724999999999,
+          "k": 0.9639119019836638
+        },
+        "highlights": {
+          "nearWhite": 9607,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 5074,
+          "nearAmber": 44
+        },
+        "wallLight": {
+          "left": 207.34186666666676,
+          "right": 134.23551644444441,
+          "boxes": [
+            [340, 800, 355, 815],
+            [980, 1010, 995, 1025]
+          ],
+          "ratio": 1.5446125746644601,
+          "render": {
+            "boxes": [
+              [273, 671, 285, 683],
+              [789, 840, 801, 852]
+            ],
+            "left": 181.66521944444446,
+            "right": 151.74322777777778,
+            "ratio": 1.1971883167694726,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 857,
+          "wallRatio": 0.40373395565927656,
+          "renderWallRatio": 0.43103448275862066,
+          "wallRead": {
+            "foot": [782, 1189],
+            "eaves": [782, 843],
+            "baseCorners": [204, 1061],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [340, 800, 355, 815],
+          "rightBox": [980, 1010, 995, 1025]
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Refused outline p9550.356/21.961>16,max96.262>32 despite IoU.932456. Far front-clock-gable silhouette removed and back green door added against render; identity/noextras fail. Both heights pass.",
+      "sha256": "1421268dab6e0634321033e0f35f4e6274c3892a3a28c7a2ae64769e171b1a3a"
+    },
+    {
+      "building": "town",
+      "view": 2,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Town hall in the view r2. a two-storey red-brick town hall with cream limestone quoins, string courses and window surrounds, under a dark slate gable roof whose ridge runs along the long front, with a brick chimney stack with red pots at each end and a bell cupola with a slate dome and a gold finial in the middle of the ridge. The FRONT (the long wall) has a central cream-stone gable with a round clock face, a cream portico with columns over a forest-green double door, arched windows on two storeys in a regular rhythm, two hanging lanterns and two conifer planters beside the portico. One END is a brick gable with cream quoins and a stepped or scrolled cream gable edge, two columns of arched windows on two storeys and a small arched attic window. The back wall has the same quoins, string courses and windows and a plain green door instead of the portico; the other end is a brick gable like the first. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the long front with the clock gable, the portico and double door, the lanterns and planters and the arched windows stands at the upper-right side; the brick gable end with cream quoins, two columns of arched windows and the small arched attic window stands at the upper-left side; the long back wall (brick, quoins and string courses, windows, a plain green door; no clock gable, no portico, no planters, no lanterns) stands at the lower-left side; the other brick gable end (as the render has it) stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r2 removed the far front-clock-gable rising behind the cupola/right roof, and added a central green back door absent from the first render. THE RENDER WINS over the prose: no back door and no new opening on the blank lower central back wall. Restore the far triangular gable behind the ridge exactly at its first-image location (top around render x620,y318, slopes down to x690,y445). Last outline p9550.36/21.96 and maximum96.26canvas px failed. Repaint every existing surface while tracing the entire first outline, keeping its cupola base, far gable, two chimneys and window rhythm exactly.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/town-r2-textured.png",
+        "G:/DEV/wt/originals-textured-a/town.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/town/town-r0.png"
+      ],
+      "file": "raw/town-r2-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/town/raw/town-r2-attempt-2.png",
+        "job": "town",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [185, 121, 1110, 1192],
+          "area": 643705,
+          "width": 926,
+          "height": 1072,
+          "overallRatio": 1.1576673866090712
+        },
+        "bareOpaque": {
+          "box": [164, 198, 859, 973],
+          "area": 353028,
+          "width": 696,
+          "height": 776,
+          "overallRatio": 1.1149425287356323
+        },
+        "silhouette": {
+          "iouAtS0": 0.7603161841502175,
+          "f": 0.9139999999999999,
+          "dx": 33.77500000000009,
+          "dy": 127.58500000000004,
+          "bestIoU": 0.953906367494562,
+          "p95PictureToRender": 16.690484273418168,
+          "p95RenderToPicture": 15.628487065429804,
+          "maximum": 27.58053426829075,
+          "boundarySamples": [3167, 3136],
+          "worstPicture": {
+            "distance": 27.58053426829075,
+            "point": [618.1562998405103, 992.1531100478469]
+          },
+          "worstRender": {
+            "distance": 26.382410097192707,
+            "point": [624.688995215311, 966.8389154704944]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.4335135135135135,
+          "renderWall": 0.43103448275862066,
+          "wallRelativeDifference": 0.005751351351351408,
+          "overall": 1.1576673866090712,
+          "renderOverall": 1.1149425287356323,
+          "overallRelativeDifference": 0.03832023335040402,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 925,
+          "renderWidth": 674.56,
+          "heldWidthAtReturned": 826.0724999999999,
+          "k": 0.8930513513513512
+        },
+        "highlights": {
+          "nearWhite": 5972,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 5074,
+          "nearAmber": 44
+        },
+        "wallLight": {
+          "left": 170.12455933333334,
+          "right": 125.34182684563758,
+          "boxes": [
+            [400, 900, 420, 915],
+            [1000, 1060, 1020, 1075]
+          ],
+          "ratio": 1.357284823547746,
+          "render": {
+            "boxes": [
+              [326, 776, 341, 787],
+              [774, 895, 789, 907]
+            ],
+            "left": 148.6464327272726,
+            "right": 155.02288139534883,
+            "ratio": 0.9588676935257409,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 925,
+          "wallRatio": 0.4335135135135135,
+          "renderWallRatio": 0.43103448275862066,
+          "wallRead": {
+            "foot": [799, 1192],
+            "eaves": [799, 791],
+            "baseCorners": [185, 1110],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [400, 900, 420, 915],
+          "rightBox": [1000, 1060, 1020, 1075]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Refused picture-to-render p9516.690484>16; IoU.953906,reversep9515.628,max27.581 pass. Main near-corner foot too low; corrected far gable/back-no-door and heights/eye pass.",
+      "sha256": "a70956be79dced9abb654178415e189a554c1a0748ac8b3091d7dcc6aab13e48"
+    },
+    {
+      "building": "town",
+      "view": 2,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Town hall in the view r2. a two-storey red-brick town hall with cream limestone quoins, string courses and window surrounds, under a dark slate gable roof whose ridge runs along the long front, with a brick chimney stack with red pots at each end and a bell cupola with a slate dome and a gold finial in the middle of the ridge. The FRONT (the long wall) has a central cream-stone gable with a round clock face, a cream portico with columns over a forest-green double door, arched windows on two storeys in a regular rhythm, two hanging lanterns and two conifer planters beside the portico. One END is a brick gable with cream quoins and a stepped or scrolled cream gable edge, two columns of arched windows on two storeys and a small arched attic window. The back wall has the same quoins, string courses and windows and a plain green door instead of the portico; the other end is a brick gable like the first. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the long front with the clock gable, the portico and double door, the lanterns and planters and the arched windows stands at the upper-right side; the brick gable end with cream quoins, two columns of arched windows and the small arched attic window stands at the upper-left side; the long back wall (brick, quoins and string courses, windows, a plain green door; no clock gable, no portico, no planters, no lanterns) stands at the lower-left side; the other brick gable end (as the render has it) stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r2 restored the far gable and correctly left the central lower back wall blank: keep that exact first-render layout. It still failed picture-to-render p9516.6905canvas px(limit16), mainly near-corner base: aligned foot reached y992 at x618 while render foot ends near y967 at x625. Trace the first roof-to-base silhouette and its near-corner eave/foot exactly, including both base slope endpoints. Preserve the first render margins, cupola gaps, far front gable and two chimney silhouettes. Repaint continuous brick, stone and slate; do not add the prose back door absent from render.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/town-r2-textured.png",
+        "G:/DEV/wt/originals-textured-a/town.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/town/town-r0.png"
+      ],
+      "file": "raw/town-r2-attempt-3.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/town/raw/town-r2-attempt-3.png",
+        "job": "town",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [150, 100, 1119, 1232],
+          "area": 684552,
+          "width": 970,
+          "height": 1133,
+          "overallRatio": 1.1680412371134021
+        },
+        "bareOpaque": {
+          "box": [164, 198, 859, 973],
+          "area": 353028,
+          "width": 696,
+          "height": 776,
+          "overallRatio": 1.1149425287356323
+        },
+        "silhouette": {
+          "iouAtS0": 0.7622356170437958,
+          "f": 0.871,
+          "dx": 70.98500000000001,
+          "dy": 138.015,
+          "bestIoU": 0.9348529928113393,
+          "p95PictureToRender": 32.813481360221346,
+          "p95RenderToPicture": 22.539702750318007,
+          "maximum": 67.21494144598817,
+          "boundarySamples": [3246, 3136],
+          "worstPicture": {
+            "distance": 67.21494144598817,
+            "point": [661.4354066985646, 466.27113237639554]
+          },
+          "worstRender": {
+            "distance": 66.37936865460088,
+            "point": [651.6363636363636, 355.21531100478467]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.42105263157894735,
+          "renderWall": 0.43103448275862066,
+          "wallRelativeDifference": -0.023157894736842044,
+          "overall": 1.1680412371134021,
+          "renderOverall": 1.1149425287356323,
+          "overallRelativeDifference": 0.047624614730577,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 969,
+          "renderWidth": 674.56,
+          "heldWidthAtReturned": 826.0724999999999,
+          "k": 0.8524999999999999
+        },
+        "highlights": {
+          "nearWhite": 6903,
+          "nearAmber": 6
+        },
+        "originalHighlights": {
+          "nearWhite": 5074,
+          "nearAmber": 44
+        },
+        "wallLight": {
+          "left": 130.04621933333337,
+          "right": 133.99413133333312,
+          "boxes": [
+            [350, 900, 370, 915],
+            [1000, 1090, 1020, 1105]
+          ],
+          "ratio": 0.9705366797730965,
+          "render": {
+            "boxes": [
+              [307, 753, 321, 763],
+              [769, 888, 783, 899]
+            ],
+            "left": 134.69876000000002,
+            "right": 136.04594675324674,
+            "ratio": 0.9900975605271786,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 969,
+          "wallRatio": 0.42105263157894735,
+          "renderWallRatio": 0.43103448275862066,
+          "wallRead": {
+            "foot": [812, 1232],
+            "eaves": [812, 824],
+            "baseCorners": [150, 1119],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [350, 900, 370, 915],
+          "rightBox": [1000, 1090, 1020, 1105]
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Refused outline p9532.813/22.540>16,max67.215>32; farclockgable peak moved down/behind cupola against render. IoU.934853 and both heights pass. Closest refused r2 is attempt2(raw only), whose p9516.6905 narrowly fails and identity passes.",
+      "sha256": "4dc1ef1b8c78e34450b1a89aa0f784157a054adb7267e35b5c5eb7f58d4e62de"
+    },
+    {
+      "building": "town",
+      "view": 3,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Town hall in the view r3. a two-storey red-brick town hall with cream limestone quoins, string courses and window surrounds, under a dark slate gable roof whose ridge runs along the long front, with a brick chimney stack with red pots at each end and a bell cupola with a slate dome and a gold finial in the middle of the ridge. The FRONT (the long wall) has a central cream-stone gable with a round clock face, a cream portico with columns over a forest-green double door, arched windows on two storeys in a regular rhythm, two hanging lanterns and two conifer planters beside the portico. One END is a brick gable with cream quoins and a stepped or scrolled cream gable edge, two columns of arched windows on two storeys and a small arched attic window. The back wall has the same quoins, string courses and windows and a plain green door instead of the portico; the other end is a brick gable like the first. r3: the building is turned 3 quarter turns clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the long front with the clock gable, the portico and double door, the lanterns and planters and the arched windows stands at the lower-right side; the brick gable end with cream quoins, two columns of arched windows and the small arched attic window stands at the upper-right side; the long back wall (brick, quoins and string courses, windows, a plain green door; no clock gable, no portico, no planters, no lanterns) stands at the upper-left side; the other brick gable end (as the render has it) stands at the lower-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/town-r3-textured.png",
+        "G:/DEV/wt/originals-textured-a/town.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/town/town-r0.png"
+      ],
+      "file": "raw/town-r3-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/town/raw/town-r3-attempt-1.png",
+        "job": "town",
+        "view": 3,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [207, 205, 1054, 1171],
+          "area": 542614,
+          "width": 848,
+          "height": 967,
+          "overallRatio": 1.1403301886792452
+        },
+        "bareOpaque": {
+          "box": [164, 198, 859, 973],
+          "area": 355306,
+          "width": 696,
+          "height": 776,
+          "overallRatio": 1.1149425287356323
+        },
+        "silhouette": {
+          "iouAtS0": 0.8944207568880198,
+          "f": 0.99,
+          "dx": 2.80499999999995,
+          "dy": 36.879999999999995,
+          "bestIoU": 0.961172071942393,
+          "p95PictureToRender": 9.898023295152482,
+          "p95RenderToPicture": 9.898023295152482,
+          "maximum": 25.181128063752546,
+          "boundarySamples": [3351, 3347],
+          "worstPicture": {
+            "distance": 15.409194571620407,
+            "point": [206.59649122807016, 522.615629984051]
+          },
+          "worstRender": {
+            "distance": 25.181128063752546,
+            "point": [731.6618819776714, 810.054226475279]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.42502951593860683,
+          "renderWall": 0.43103448275862066,
+          "wallRelativeDifference": -0.013931523022432057,
+          "overall": 1.1403301886792452,
+          "renderOverall": 1.1149425287356323,
+          "overallRelativeDifference": 0.02277037541334348,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 847,
+          "renderWidth": 674.56,
+          "heldWidthAtReturned": 826.0724999999999,
+          "k": 0.9752922077922076
+        },
+        "highlights": {
+          "nearWhite": 5085,
+          "nearAmber": 24
+        },
+        "originalHighlights": {
+          "nearWhite": 5074,
+          "nearAmber": 44
+        },
+        "wallLight": {
+          "left": 175.88238044444444,
+          "right": 167.75461422222224,
+          "boxes": [
+            [290, 1010, 305, 1025],
+            [580, 1070, 595, 1085]
+          ],
+          "ratio": 1.0484503288324185,
+          "render": {
+            "boxes": [
+              [237, 847, 249, 859],
+              [471, 895, 483, 907]
+            ],
+            "left": 180.47830416666662,
+            "right": 133.71336388888898,
+            "ratio": 1.3497402123293947,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 847,
+          "wallRatio": 0.42502951593860683,
+          "renderWallRatio": 0.43103448275862066,
+          "wallRead": {
+            "foot": [473, 1171],
+            "eaves": [473, 811],
+            "baseCorners": [207, 1054],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [290, 1010, 305, 1025],
+          "rightBox": [580, 1070, 595, 1085]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "All strict silhouette/height/eye tests pass.2planters/lanterns and clock/portico on front,4endwindows/attic,cupola/bell gaps and2chimneys retained; cohesive brick/stone/slate painting.",
+      "sha256": "3758125bdaa940c8f9a21f16b362ab4b0fb3ab57a88875c15f8f4acc2a65acac"
+    }
+  ],
+  "outcome": {
+    "accepted": ["r0 attempt1", "r1 attempt1", "r3 attempt1"],
+    "verdict": "Three accepted views(r0,r1,r3); r2 refused after three attempts. Brick, limestone and slate read as one coherent painting with crisp glazing and cupola. The hidden far clock-gable and near base corner still drift in r2.",
+    "notes": "Closest refused r2 is raw/town-r2-attempt-2.png: identity/heights pass, p95picture16.690484273418168>16. Render back has no green door despite prose; render layout wins."
+  }
+}
