@@ -1,12 +1,13 @@
 {
  "updated": "2026-10-21",
  "lead": [
+  "New (21 October 2026): Core review 2, after the third run of the queue. Three prompts are ready again: the people trial R7c-1 (pull request #539 now writes the per-guide soleRow field that run 4 stopped on; run 5), the narrow depot C35a (the doorway notch that failed all twelve attempts was the prompt's own fault: the blockout's doorways now read solid and the prompt says to paint them opaque; all four views, three new attempts each) and the hydro plant C29a (a new prompt: a brick turbine house with one tall arched window, a penstock from a small intake chamber and a tailrace arch, painted r0 to r3 over Core's new Blender blockout, strict tests). Core's decisions and the re-test of the twelve depot attempts are in codex-queue/status/CORE-REVIEW-2.md on branch claude/codex-queue.",
   "New (21 October 2026): the textured pilot, TB1, the first group below. Core built the warehouse, the water pump and the power plant as clean Blender blockouts matched to their painted r0, projected the original painting onto them and rendered r0 to r3 at the game's exact camera with the game's sun (branch claude/art-scaffolds-review-2, assets/source/buildings-v2/scaffolds-textured/, head eef723cf). The author found that texture \"a bit fallen apart\" (cloned and smeared patches, seams, blocky chimney backs, smeared pipes), so TB1 asks Codex to repaint every view over its textured render into one coherent painting in the style of the original r0, keeping the render's silhouette, camera, proportions and light. Twelve pictures, at most three attempts each, with stricter tests than the scaffold prompts (IoU 0.92, 95th percentile 16 and maximum 32 canvas px, height within 8 per cent). New lane art/textured-pilot, created from develop by Codex; nothing else of the queue changes.",
   "Core review 1 (21 October 2026), the second run of the queue. The boundary test of the scaffold prompts is now a distribution: the 95th percentile of the boundary distances at most 3 game px AND the largest distance at most 6 game px (the old rule took the largest distance alone and refused good pictures for one thin protrusion). The scaffold's geometry wins: parts the lit scaffold shows are painted as shown, whatever a prompt says about a hidden front. Each prompt starts with a CORE REVIEW 1 header that says so.",
   "Done and accepted (not on this page any more): Big Station, Big Farm Halt, Town hall and Warehouse (all twelve views) and the windmill body r0. Core's decisions on every refused attempt are in codex-queue/status/CORE-REVIEW-1.md on branch claude/codex-queue.",
   "Each group below is ONE Codex conversation: paste its prompts one after another, each after the previous one finishes. The button Copy whole conversation copies the group's prompts in order, with a separator line between them; Copy prompt copies a single one.",
   "Codex works in the main checkout (G:DEVTerepasztal\terepasztal), which has one branch checked out at a time. So run ONE group at a time there. Two groups can run at the same time only if Codex gives each its own git worktree. Every group is on its own branch, except that the Later prompt C33b belongs to the Rotations conversation (same branch, art/535-rotations).",
-  "Turned views are painted over Core's 3D scaffolds (branch claude/art-scaffolds-review-2, head fc07d589); each prompt says how to read them. The narrow depot (C35a) waits for a Blender blockout scaffold that Core is making. Accepted pictures are not painted again."
+  "Turned views are painted over Core's 3D scaffolds (branch claude/art-scaffolds-review-2, head fc07d589); each prompt says how to read them. The narrow depot (C35a) and the hydro plant (C29a) have Core-made Blender blockouts (branch claude/art-scaffolds-review-2, f44a8b9e). Accepted pictures are not painted again."
  ],
  "groups": [
   {
@@ -24,7 +25,7 @@
    "id": "rotations",
    "title": "Rotations over scaffolds",
    "branch": "art/535-rotations",
-   "run": "C18a, C22a, C19a and C20a are done: all twelve views are accepted, so they are no longer listed. Paste CR1-adopt first (it only marks five accepted views in prompts.json), then the larger plants, the house, and the hydro plant r0 last (it stops after r0; if r0 fails the fallback is a blockout scaffold from Core). The branch already holds twelve jobs from 19 October: each prompt rebases before it pushes.",
+   "run": "C18a, C22a, C19a and C20a are done: all twelve views are accepted, so they are no longer listed. Paste CR1-adopt first (it only marks five accepted views in prompts.json), then the larger plants, the house, and the hydro plant last (C29a: all four views over Core's new blockout, three attempts each). The branch already holds twelve jobs from 19 October: each prompt rebases before it pushes.",
    "same": "Shares its branch with the Later prompt C33b, which goes into this same conversation. A second conversation on art/535-rotations needs its own worktree.",
    "status": "Ready.",
    "cards": [
@@ -45,9 +46,9 @@
    "id": "buildings",
    "title": "Buildings-v2 lane",
    "branch": "art/325-buildings-v2",
-   "run": "Paste in this order: the farm halt, the quarry, the coaling stage. The farm and quarry prompts start with a Step 0 that restores their pictures from the backup snapshot. The narrow depot (C35a) is last and BLOCKED until Core's blockout scaffold exists: do not paste it yet.",
+   "run": "Paste in this order: the farm halt, the quarry, the coaling stage. The farm and quarry prompts start with a Step 0 that restores their pictures from the backup snapshot. The narrow depot (C35a) is last: Core's blockout scaffold exists (revised, solid doorways) and the prompt is ready.",
    "same": "Only this group uses art/325-buildings-v2. It touches assets/source/buildings-v2/ only.",
-   "status": "Ready (C21a, C23a, C4e). C35a: blocked, scaffold pending.",
+   "status": "Ready (C21a, C23a, C4e, C35a).",
    "cards": [
     "C21a",
     "C23a",
@@ -81,7 +82,7 @@
    "id": "people",
    "title": "People",
    "branch": "art/331-people",
-   "run": "One prompt (run 4, after the guide fix of pull request #539). The other back strips wait for this trial's result.",
+   "run": "One prompt (run 5, after the guide fix of pull request #539, now with the soleRow field in the manifest). The other back strips wait for this trial's result.",
    "same": "Only this group uses art/331-people (assets/source/people-2026-10-11/v3/).",
    "status": "Ready.",
    "cards": [
@@ -151,13 +152,13 @@
   },
   "C29a": {
    "file": "C29a",
-   "title": "Hydro plant, a new design: STAGE 1 of 2, r0 only on its guide (1 picture)",
-   "status": "Ready, stage 1 only: r0, then STOP. If r0 fails after its attempts the fallback is a blockout scaffold from Core (no free retries); stage 2 waits for Core's scaffold."
+   "title": "Hydro plant, a new brick turbine-house design: r0, r1, r3 and r2 painted over the Blender blockout scaffold (4 pictures)",
+   "status": "Ready (Core review 2): replaces the stage-1 prompt. Core has made a Blender blockout of the hydro plant (scaffolds/hydro_plant-blockout/ on claude/art-scaffolds-review-2, f44a8b9e): a brick turbine house with one tall arched window, a penstock coming down from a small intake chamber, a tailrace arch. Four views, three attempts each, strict tests (IoU 0.92, p95 16, max 32, height 8 per cent), the tailrace doorway painted opaque."
   },
   "C35a": {
    "file": "C35a",
    "title": "Narrow depot a0: r0, r1, r3 and r2 painted over a Blender blockout scaffold (4 pictures)",
-   "status": "BLOCKED: scaffold pending. Free painting failed the camera three times (4.1, 4.5 and 6.4 degrees against 2). Core is making a blockout scaffold (scaffolds/depot_narrow/ on claude/art-scaffolds-review-2); paste this only after Core says it has landed."
+   "status": "Ready again (Core review 2). The blockout doorways are now solid (claude/art-scaffolds-review-2, 394cbfe8 or later) and the prompt says to paint the doorway opaque and dark: run 3 failed all twelve attempts at the transparent doorway notch the old prompt asked for (none of them passes the corrected blockout either). All four views, three new attempts each (r0 from attempt 7, the others from 4)."
   },
   "C21a": {
    "file": "C21a",
@@ -188,7 +189,7 @@
    "file": "R7c-1",
    "label": "R7c-1",
    "title": "People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)",
-   "status": "Ready (run 4). The P1 guide was fixed in pull request #539 (the sole row, not the foot box's corner, is on row 1440); the prompt merges branch claude/people-guide-p1-fix first."
+   "status": "Ready again (Core review 2): pull request #539 now writes soleRow 1440 into every guide of manifest.json, back-shoulder-p1.png included (branch claude/people-guide-p1-fix, a4e36c70). Run 5, in v3/run-5/."
   },
   "C33b": {
    "file": "C33b",
