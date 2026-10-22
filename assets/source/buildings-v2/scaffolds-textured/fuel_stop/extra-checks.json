@@ -1,0 +1,24 @@
+{
+ "iou_plan_placement_1to1": 0.7081,
+ "iou_best_uniform_scale_shift": 0.8594,
+ "scale_accepted_to_blockout": 0.905,
+ "shift_canvas_px": [
+  -18,
+  36
+ ],
+ "accepted_bbox_canvas": [
+  240,
+  88,
+  832,
+  967
+ ],
+ "blockout_bbox_canvas": [
+  262,
+  194,
+  775,
+  956
+ ],
+ "accepted_w_over_h": 0.6735,
+ "blockout_w_over_h": 0.6732,
+ "alignment": "accepted r2 (1254 px, attempt 8) scaled by 1024/1254 onto the plan canvas (the painter returns the canvas x 1.2246); 1:1 = that placement; best fit = uniform scale about the canvas centre + shift searched on the silhouette alpha>127"
+}
