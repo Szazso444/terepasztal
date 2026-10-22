@@ -31,3 +31,17 @@
   - r3 attempt2: Refused picture-to-render p95 18.172>16 and maximum33.609>32; IoU.962886/reversep9515.843 pass; dock/ramp feet protrude. Sacks under dock canopy lost among crates; identity fails. Heights pass.
 - Stop reason: none
 - Notes: 7 calls; 4 accepted/3 refused. All four views accepted. Timber, slate and stone form one coherent painting, with crisp round silo/pipe and no cloned seams. The dock/ramp initially drifted at r3; its final attempt restored the shape and sacks. Render back-wall window retained despite prose plain-back: render geometry wins. Accepted r0#1,r1#2,r2#1,r3#3; three refused attempts kept raw. Full per-attempt exact metrics, returned sizes, prompts, references, hashes and light comparisons: assets/source/textured/big_farm/prompts.json and REPORT.md. Original hash preflight and raw/copy byte hashes verified. Built-in image auto C: saves copied to G raw and originals left as README permits.
+
+## TB2-town (2026-10-22T16:43:41.580Z)
+- Result: done
+- Lane commit: b0d0666c69791e6022517ed2d70d795ec3f11de6 (origin/art/textured-a)
+- Views accepted:
+  - r0: assets/source/textured/town/town-r0.png (attempt1; IoU0.9770306060200271; p956.5261692055950435/6.5261692055950435; max9.924284377544907; wall0.4219858156028369/0.4316546762589928; overall1.108235294117647/1.0991379310344827).
+  - r1: assets/source/textured/town/town-r1.png (attempt1; IoU0.9676362676179872; p959.256696802695568/9.041895003383763; max21.018946643387086; wall0.40919037199124725/0.43103448275862066; overall1.1278688524590164/1.0991379310344827).
+  - r3: assets/source/textured/town/town-r3.png (attempt1; IoU0.961172071942393; p959.898023295152482/9.898023295152482; max25.181128063752546; wall0.42502951593860683/0.43103448275862066; overall1.1403301886792452/1.1149425287356323).
+- Refused attempts:
+  - r2 attempt1: Refused outline p9550.356/21.961>16,max96.262>32 despite IoU.932456. Far front-clock-gable silhouette removed and back green door added against render; identity/noextras fail. Both heights pass.
+  - r2 attempt2: Refused picture-to-render p9516.690484>16; IoU.953906,reversep9515.628,max27.581 pass. Main near-corner foot too low; corrected far gable/back-no-door and heights/eye pass.
+  - r2 attempt3: Refused outline p9532.813/22.540>16,max67.215>32; farclockgable peak moved down/behind cupola against render. IoU.934853 and both heights pass. Closest refused r2 is attempt2(raw only), whose p9516.6905 narrowly fails and identity passes.
+- Stop reason: none
+- Notes: 6 calls; 3 accepted/3 refused. Three accepted views(r0,r1,r3); r2 refused after three attempts. Brick, limestone and slate read as one coherent painting with crisp glazing and cupola. The hidden far clock-gable and near base corner still drift in r2. Closest refused r2 is raw/town-r2-attempt-2.png: identity/heights pass, p95picture16.690484273418168>16. Render back has no green door despite prose; render layout wins. Full per-attempt exact metrics, returned sizes, prompts, references, hashes and light comparisons: assets/source/textured/town/prompts.json and REPORT.md. Original hash preflight and raw/copy byte hashes verified. Built-in image auto C: saves copied to G raw and originals left as README permits.
