@@ -1,44 +1,68 @@
 {
- "updated": "2026-10-21",
+ "updated": "2026-10-22",
  "lead": [
-  "New (21 October 2026): Core review 2, after the third run of the queue. Three prompts are ready again: the people trial R7c-1 (pull request #539 now writes the per-guide soleRow field that run 4 stopped on; run 5), the narrow depot C35a (the doorway notch that failed all twelve attempts was the prompt's own fault: the blockout's doorways now read solid and the prompt says to paint them opaque; all four views, three new attempts each) and the hydro plant C29a (a new prompt: a brick turbine house with one tall arched window, a penstock from a small intake chamber and a tailrace arch, painted r0 to r3 over Core's new Blender blockout, strict tests). Core's decisions and the re-test of the twelve depot attempts are in codex-queue/status/CORE-REVIEW-2.md on branch claude/codex-queue.",
-  "New (21 October 2026): the textured pilot, TB1, the first group below. Core built the warehouse, the water pump and the power plant as clean Blender blockouts matched to their painted r0, projected the original painting onto them and rendered r0 to r3 at the game's exact camera with the game's sun (branch claude/art-scaffolds-review-2, assets/source/buildings-v2/scaffolds-textured/, head eef723cf). The author found that texture \"a bit fallen apart\" (cloned and smeared patches, seams, blocky chimney backs, smeared pipes), so TB1 asks Codex to repaint every view over its textured render into one coherent painting in the style of the original r0, keeping the render's silhouette, camera, proportions and light. Twelve pictures, at most three attempts each, with stricter tests than the scaffold prompts (IoU 0.92, 95th percentile 16 and maximum 32 canvas px, height within 8 per cent). New lane art/textured-pilot, created from develop by Codex; nothing else of the queue changes.",
+  "New (22 October 2026): the textured route replaces the held scaffold prompts. Core built clean textured Blender blockouts for every remaining building (branch claude/art-scaffolds-review-2, assets/source/buildings-v2/scaffolds-textured/, batches A, B and C, and material crops for the power plant). Three new groups, one prompt per building (TB2-<building>), each on its own new lane from develop: textured-a (big station, big farm, town hall, small farm, quarry, house), textured-b (grinder, refinery, colliery, ironworks, oil derrick) and textured-c (battery, power plant, coaling stage, fuel pump). Buildings painted at 20 to 24 degrees in base-v1 get r0 to r3; farm, quarry, coaling stage and fuel pump keep their r0 and get r1 to r3. Five blockouts are being fixed first (grinder, quarry, colliery, ironworks, coaling stage): their cards are marked BLOCKED, do not paste them yet. Tests per view as in TB1: IoU at least 0.92 (oil derrick 0.88), boundary 95th percentile 16 and maximum 32 canvas px, height within 8 per cent, at most three attempts; the stop rule is per building.",
+  "Superseded and removed from this page: CR1-adopt, C24a, C25a, C26a, C27a, C28a, C30a, C31a, C32a, C33a (rotations), C21a, C23a, C4e (buildings), R8e (fuel pump) and TB1 (textured pilot: warehouse and pump done, 8 of 8 views accepted; its power plant is repainted in TB2-power_plant). Their ledger entries stay on branch claude/codex-queue.",
   "Core review 1 (21 October 2026), the second run of the queue. The boundary test of the scaffold prompts is now a distribution: the 95th percentile of the boundary distances at most 3 game px AND the largest distance at most 6 game px (the old rule took the largest distance alone and refused good pictures for one thin protrusion). The scaffold's geometry wins: parts the lit scaffold shows are painted as shown, whatever a prompt says about a hidden front. Each prompt starts with a CORE REVIEW 1 header that says so.",
-  "Done and accepted (not on this page any more): Big Station, Big Farm Halt, Town hall and Warehouse (all twelve views) and the windmill body r0. Core's decisions on every refused attempt are in codex-queue/status/CORE-REVIEW-1.md on branch claude/codex-queue.",
+  "Done and accepted (not on this page any more): the warehouse and the water pump over the textured renders (TB1), the windmill body r0, and the earlier scaffold views of Big Station, Big Farm Halt, Town hall and Warehouse (the textured groups repaint the turned views for consistency).",
   "Each group below is ONE Codex conversation: paste its prompts one after another, each after the previous one finishes. The button Copy whole conversation copies the group's prompts in order, with a separator line between them; Copy prompt copies a single one.",
   "Codex works in the main checkout (G:DEVTerepasztal\terepasztal), which has one branch checked out at a time. So run ONE group at a time there. Two groups can run at the same time only if Codex gives each its own git worktree. Every group is on its own branch, except that the Later prompt C33b belongs to the Rotations conversation (same branch, art/535-rotations).",
-  "Turned views are painted over Core's 3D scaffolds (branch claude/art-scaffolds-review-2, head fc07d589); each prompt says how to read them. The narrow depot (C35a) and the hydro plant (C29a) have Core-made Blender blockouts (branch claude/art-scaffolds-review-2, f44a8b9e). Accepted pictures are not painted again."
+  "The narrow depot (C35a) and the hydro plant (C29a) have Core-made Blender blockouts (branch claude/art-scaffolds-review-2, f44a8b9e). Accepted pictures are not painted again."
  ],
  "groups": [
   {
-   "id": "textured-pilot",
-   "title": "Textured pilot: repaint over the textured renders",
-   "branch": "art/textured-pilot",
-   "run": "One prompt, TB1: the Warehouse, then the Water pump, then the Power plant, r0 first in each, over the textured renders (12 pictures). The prompt creates the branch from develop, fetches the 36 render files and the three originals into folders outside the repository, measures every picture and commits one building at a time.",
-   "same": "Its own new branch and its own folder (assets/source/textured-pilot/), so it shares nothing with the other groups.",
-   "status": "Ready.",
+   "id": "textured-a",
+   "title": "Textured a: big station, big farm, town hall, small farm, quarry, house",
+   "branch": "art/textured-a",
+   "run": "Paste in this order: big_station, big_farm, town, farm, quarry, townhouse. The first prompt creates the branch from develop and the group's measuring script; every prompt paints one building over its textured renders, measures every picture, and commits and pushes that building before the next one starts.",
+   "same": "Its own new branch and folder (assets/source/textured/<building>/); shares nothing with the other groups. The quarry waits for Core's blockout fix.",
+   "status": "Ready (big_station, big_farm, town, farm, townhouse); blocked, not to paste yet: quarry.",
    "cards": [
-    "TB1"
+    "TB2-big_station",
+    "TB2-big_farm",
+    "TB2-town",
+    "TB2-farm",
+    "TB2-quarry",
+    "TB2-townhouse"
+   ]
+  },
+  {
+   "id": "textured-b",
+   "title": "Textured b: stone grinder, oil refinery, colliery, ironworks, oil derrick",
+   "branch": "art/textured-b",
+   "run": "Paste in this order: grinder, refinery, colliery, ironworks, oil_derrick. Grinder, colliery and ironworks are blocked until Core's blockout fixes land: skip them for now and go on with the others (the queue does this by itself).",
+   "same": "Its own new branch and folder (assets/source/textured/<building>/); shares nothing with the other groups.",
+   "status": "Ready (refinery, oil_derrick); blocked, not to paste yet: grinder, colliery, ironworks.",
+   "cards": [
+    "TB2-grinder",
+    "TB2-refinery",
+    "TB2-colliery",
+    "TB2-ironworks",
+    "TB2-oil_derrick"
+   ]
+  },
+  {
+   "id": "textured-c",
+   "title": "Textured c: battery, power plant, coaling stage, fuel pump",
+   "branch": "art/textured-c",
+   "run": "Paste in this order: substation, power_plant, fuel_stop, fuel_pump. The power plant gets only the six material crops, never the full original painting (the full painting made TB1 copy its size, position and glow). The coaling stage waits for Core's blockout fix.",
+   "same": "Its own new branch and folder (assets/source/textured/<building>/); shares nothing with the other groups.",
+   "status": "Ready (substation, power_plant, fuel_pump); blocked, not to paste yet: fuel_stop.",
+   "cards": [
+    "TB2-substation",
+    "TB2-power_plant",
+    "TB2-fuel_stop",
+    "TB2-fuel_pump"
    ]
   },
   {
    "id": "rotations",
    "title": "Rotations over scaffolds",
    "branch": "art/535-rotations",
-   "run": "C18a, C22a, C19a and C20a are done: all twelve views are accepted, so they are no longer listed. Paste CR1-adopt first (it only marks five accepted views in prompts.json), then the larger plants, the house, and the hydro plant last (C29a: all four views over Core's new blockout, three attempts each). The branch already holds twelve jobs from 19 October: each prompt rebases before it pushes.",
+   "run": "Only C29a is left in this group: the hydro plant, all four views over Core's Blender blockout, three attempts each. The other scaffold prompts of this group (CR1-adopt, C24a to C28a, C30a to C33a) are superseded by the textured groups. The branch already holds twelve jobs from 19 October: the prompt rebases before it pushes.",
    "same": "Shares its branch with the Later prompt C33b, which goes into this same conversation. A second conversation on art/535-rotations needs its own worktree.",
-   "status": "Ready.",
+   "status": "Ready (C29a).",
    "cards": [
-    "CR1adopt",
-    "C24a",
-    "C25a",
-    "C26a",
-    "C27a",
-    "C28a",
-    "C30a",
-    "C31a",
-    "C32a",
-    "C33a",
     "C29a"
    ]
   },
@@ -46,25 +70,11 @@
    "id": "buildings",
    "title": "Buildings-v2 lane",
    "branch": "art/325-buildings-v2",
-   "run": "Paste in this order: the farm halt, the quarry, the coaling stage. The farm and quarry prompts start with a Step 0 that restores their pictures from the backup snapshot. The narrow depot (C35a) is last: Core's blockout scaffold exists (revised, solid doorways) and the prompt is ready.",
+   "run": "Only the narrow depot (C35a) is left: Core's blockout scaffold exists (revised, solid doorways) and the prompt is ready. The farm halt, quarry and coaling stage prompts (C21a, C23a, C4e) are superseded by the textured groups.",
    "same": "Only this group uses art/325-buildings-v2. It touches assets/source/buildings-v2/ only.",
-   "status": "Ready (C21a, C23a, C4e, C35a).",
+   "status": "Ready (C35a).",
    "cards": [
-    "C21a",
-    "C23a",
-    "C4e",
     "C35a"
-   ]
-  },
-  {
-   "id": "fuelpump",
-   "title": "Fuel Pump",
-   "branch": "art/325-fuel-pump",
-   "run": "One prompt: r3 only; its Step 0 adopts the accepted r1 and r2.",
-   "same": "Only this group uses art/325-fuel-pump (assets/source/fuel-2026-10-11/).",
-   "status": "Ready.",
-   "cards": [
-    "R8e"
    ]
   },
   {
@@ -103,51 +113,6 @@
   }
  ],
  "cards": {
-  "C24a": {
-   "file": "C24a",
-   "title": "Water pump: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "status": "Ready. Stopped in the first run over the r2 machinery; Core decided that the scaffold's geometry wins and amended the prompt (the flywheel arc, the pipe and the strainer in r2 are painted as shown). r1 attempts 1 to 3 are refused and kept; new attempts go on from 4."
-  },
-  "C25a": {
-   "file": "C25a",
-   "title": "Stone grinder: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "status": "Ready. Boundary rule and scaffold rule of Core review 1 apply. r0 stays."
-  },
-  "C26a": {
-   "file": "C26a",
-   "title": "Oil refinery: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "status": "Ready. Boundary rule and scaffold rule of Core review 1 apply. r0 stays."
-  },
-  "C27a": {
-   "file": "C27a",
-   "title": "Power plant: r1, r3 and r2 painted over the scaffolds on the 1536 x 1024 canvas (3 pictures)",
-   "status": "Ready. Boundary rule (18 and 15 canvas px limits scaled) and scaffold rule of Core review 1 apply. r0 stays."
-  },
-  "C28a": {
-   "file": "C28a",
-   "title": "Battery (substation): r0 painted over its scaffold, then r1, r3 and r2 (4 pictures)",
-   "status": "Ready. r0 is repainted too; the refused attempts are kept, new ones go on from 4 (r2 from 1). Core review 1 rules apply."
-  },
-  "C30a": {
-   "file": "C30a",
-   "title": "Colliery: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
-   "status": "Ready. Core review 1 rules apply. r0 keeps the existing art."
-  },
-  "C31a": {
-   "file": "C31a",
-   "title": "Ironworks: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
-   "status": "Ready. Core review 1 rules apply. r0 keeps the existing art."
-  },
-  "C32a": {
-   "file": "C32a",
-   "title": "Oil derrick: r1, r3 and r2 painted over the scaffolds (3 pictures)",
-   "status": "Ready. Core review 1 rules apply; r1 attempts 1 to 3 are refused and kept, new ones go on from 4. r0 stays."
-  },
-  "C33a": {
-   "file": "C33a",
-   "title": "House (townhouse) turned: r3 and r2 painted over the scaffolds on the tall 1024 x 1536 canvas (2 pictures)",
-   "status": "Ready. r1 is accepted (attempt 1); Step 0 corrects the branch's townhouse-r1.png. Core review 1 rules apply. r0 stays."
-  },
   "C29a": {
    "file": "C29a",
    "title": "Hydro plant, a new brick turbine-house design: r0, r1, r3 and r2 painted over the Blender blockout scaffold (4 pictures)",
@@ -157,26 +122,6 @@
    "file": "C35a",
    "title": "Narrow depot a0: r0, r1, r3 and r2 painted over a Blender blockout scaffold (4 pictures)",
    "status": "Ready again (Core review 2). The blockout doorways are now solid (claude/art-scaffolds-review-2, 394cbfe8 or later) and the prompt says to paint the doorway opaque and dark: run 3 failed all twelve attempts at the transparent doorway notch the old prompt asked for (none of them passes the corrected blockout either). All four views, three new attempts each (r0 from attempt 7, the others from 4)."
-  },
-  "C21a": {
-   "file": "C21a",
-   "title": "Small Farm Halt a0: r1 and r3 painted over the scaffolds (2 pictures)",
-   "status": "Ready. Step 0 restores the farm pictures from the backup snapshot first. r0 and r2 stay. Core review 1 rules apply."
-  },
-  "C23a": {
-   "file": "C23a",
-   "title": "Quarry a0 r2 painted over its scaffold (1 picture)",
-   "status": "Ready. Step 0 restores the quarry pictures from the backup snapshot first. r0, r1 and r3 stay. Core review 1 rules apply."
-  },
-  "C4e": {
-   "file": "C4e",
-   "title": "Coaling stage r1 and r3 painted over the scaffolds, matching the accepted r0 and r2 (2 pictures)",
-   "status": "Ready. r0 and r2 are accepted; the six refused attempts are kept, new ones go on from 16. Core review 1 rules apply."
-  },
-  "R8e": {
-   "file": "R8e",
-   "title": "Fuel Pump r3 painted over its scaffold (1 picture); r1 and r2 adopted",
-   "status": "Ready. r1 (attempt 15) and r2 (attempt 11) are accepted by Core review 1; Step 0 copies them over the r1 and r2 files. Only r3 is painted (attempts from 21). The jib, post-height, 0.43-height and light-window tests are converted into comparisons with the scaffold."
   },
   "C17d": {
    "file": "C17d",
@@ -194,16 +139,80 @@
    "title": "Biome variants of the House, proposal first (28 pictures)",
    "status": "Waits for C33a: paste only after the author has accepted its r1, r3 and r2. Step 1 is a proposal in words, then stop for review."
   },
-  "CR1adopt": {
-   "file": "CR1-adopt",
-   "label": "CR1-adopt",
-   "title": "Mark the five views Core review 1 accepted (prompts.json only, no image call)",
-   "status": "Ready. Big Station r1 and r3, Big Farm r1 and r2, Warehouse r2: already in the lane as the kept pictures; this only marks them accepted."
+  "TB2-big_station": {
+   "file": "TB2-big_station",
+   "title": "Big station: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/big_station/."
   },
-  "TB1": {
-   "file": "TB1",
-   "title": "Textured pilot: warehouse, water pump and power plant, r0 to r3, repainted over the textured renders (12 pictures)",
-   "status": "Ready. Paint over the textured render and unify it into one painting in the style of the original r0; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+  "TB2-big_farm": {
+   "file": "TB2-big_farm",
+   "title": "Big farm halt: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/big_farm/."
+  },
+  "TB2-town": {
+   "file": "TB2-town",
+   "title": "Town hall: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/town/."
+  },
+  "TB2-farm": {
+   "file": "TB2-farm",
+   "title": "Small farm halt: r1 to r3 painted over the textured renders (3 pictures)",
+   "status": "Ready. The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are repainted). At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/farm/."
+  },
+  "TB2-quarry": {
+   "file": "TB2-quarry",
+   "title": "Quarry: r1 to r3 painted over the textured renders (3 pictures)",
+   "status": "BLOCKED: blockout fix pending (Core): r2 and r3 are broken. Do not paste yet; the queue skips it. The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are repainted). At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/quarry/."
+  },
+  "TB2-townhouse": {
+   "file": "TB2-townhouse",
+   "title": "House (townhouse): r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/townhouse/."
+  },
+  "TB2-grinder": {
+   "file": "TB2-grinder",
+   "title": "Stone grinder: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "BLOCKED: blockout fix pending (Core): holes in the walls and roof at r1 to r3. Do not paste yet; the queue skips it. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/grinder/."
+  },
+  "TB2-refinery": {
+   "file": "TB2-refinery",
+   "title": "Oil refinery: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/refinery/."
+  },
+  "TB2-colliery": {
+   "file": "TB2-colliery",
+   "title": "Colliery: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "BLOCKED: blockout fix pending (Core): r2 and r3 are broken; the head frame floats at r3. Do not paste yet; the queue skips it. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/colliery/."
+  },
+  "TB2-ironworks": {
+   "file": "TB2-ironworks",
+   "title": "Ironworks: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "BLOCKED: blockout fix pending (Core): r2 and r3 are blocky. Do not paste yet; the queue skips it. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/ironworks/."
+  },
+  "TB2-oil_derrick": {
+   "file": "TB2-oil_derrick",
+   "title": "Oil derrick: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/oil_derrick/. IoU bar 0.88 (blockout IoU 0.902, thin lattice)."
+  },
+  "TB2-substation": {
+   "file": "TB2-substation",
+   "title": "Battery (substation): r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at 20 to 24 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/substation/."
+  },
+  "TB2-power_plant": {
+   "file": "TB2-power_plant",
+   "title": "Power plant: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render; the look comes from the six material crops only, never the full original painting. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/power_plant/."
+  },
+  "TB2-fuel_stop": {
+   "file": "TB2-fuel_stop",
+   "title": "Coaling stage (fuel_stop): r1 to r3 painted over the textured renders (3 pictures)",
+   "status": "BLOCKED: blockout fix pending (Core): r2 and r3 have flat yellow ends. Do not paste yet; the queue skips it. The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are repainted). At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/fuel_stop/."
+  },
+  "TB2-fuel_pump": {
+   "file": "TB2-fuel_pump",
+   "title": "Fuel pump: r1 to r3 painted over the textured renders (3 pictures)",
+   "status": "Ready. The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are repainted). At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/fuel_pump/."
   }
  }
 }
