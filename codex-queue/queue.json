@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-22",
-  "source": "handoff/codex-prompts-v9 on claude/optimistic-thompson-ndc4an-core-handoff, revised by Core review 1 (codex-queue/status/CORE-REVIEW-1.md); Core review 2 (codex-queue/status/CORE-REVIEW-2.md); the textured route (TB2 prompts, groups textured-a, textured-b, textured-c)",
+  "source": "handoff/codex-prompts-v9 on claude/optimistic-thompson-ndc4an-core-handoff, revised by Core review 1 (codex-queue/status/CORE-REVIEW-1.md); Core review 2 (codex-queue/status/CORE-REVIEW-2.md); the textured route (TB2 prompts, groups textured-a, textured-b, textured-c, textured-d)",
   "ledgerBranch": "claude/codex-queue",
   "worktreeRoot": "G:/DEV/wt",
   "groups": [
@@ -142,6 +142,67 @@
           "file": "codex-queue/prompts/TB2-fuel_pump.md",
           "status": "ready",
           "note": "The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are superseded). At most 3 attempts per view."
+        }
+      ]
+    },
+    {
+      "id": "textured-d",
+      "title": "Textured d: charcoal kiln, diesel refinery, wire mill, small station, lumber yard, depot, water tower",
+      "laneBranch": "art/textured-d",
+      "worktree": "G:/DEV/wt/codex-textured-d",
+      "localBranch": "codex-textured-d",
+      "status": "ready",
+      "ledger": "codex-queue/status/textured-d.md",
+      "note": "NEW LANE: art/textured-d does not exist on origin yet. The sub-agent creates it from origin/develop (worktree add -b codex-textured-d G:/DEV/wt/codex-textured-d origin/develop; the first push of HEAD:art/textured-d creates the branch). Inputs: the textured renders on claude/art-scaffolds-review-2 (assets/source/buildings-v2/scaffolds-textured/, batch D, 791f53c4) and the original or free paintings (the prompt says where each lives). Accepted pictures go to assets/source/textured/<building>/<building>-r<v>.png. Stricter tests than the scaffold prompts (IoU 0.92, p95 16, max 32 canvas px, height 8 per cent). Stop rule per building (two consecutive views with all 3 attempts under IoU 0.80 stops THAT building, the group goes on). The author decided on 2026-10-22 that every player-placed building rotates: the three base-v1 buildings (kiln, diesel refinery, wire mill) get r0 to r3; the buildings-v2 families were checked against their blockouts (best uniform fit, bar 0.88; r0 also by its painted camera, bar 2 degrees from the game camera): station and lumber yard get r0 to r3, depot only r0 and r2, water tower only r1 and r3 (the other views stay). No review-2 plans existed for these jobs: canvas and anchor were made from the footprint (1 x 1: 1024 x 1024, anchor 512,832; 2 x 2: 1536 x 1024, anchor 768,760). Prompts with status blocked or superseded are skipped.",
+      "prompts": [
+        {
+          "id": "TB2-kiln",
+          "title": "Charcoal kiln: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-kiln.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too (the render is the exact game camera). 1 x 1, canvas 1024 x 1024, 8 canvas px per game px. No review-2 plan existed: canvas and anchor made from the footprint. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-diesel_refinery",
+          "title": "Diesel refinery: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-diesel_refinery.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at about 23 degrees, not the game's 30. 2 x 2, canvas 1536 x 1024, 6 canvas px per game px. No review-2 plan existed: canvas and anchor made from the footprint. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-wire_mill",
+          "title": "Wire mill: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-wire_mill.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at about 18 degrees, not the game's 30. 2 x 2, canvas 1536 x 1024, 6 canvas px per game px. No review-2 plan existed: canvas and anchor made from the footprint. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-station",
+          "title": "Small station: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-station.md",
+          "status": "ready",
+          "note": "The four free paintings (buildings-v2, a0) are not rotations of one building (blockout overlap of r1 to r3 with r0: 0.76, 0.76, 0.82) and r0 was painted at about 27.5 degrees, so all four views are painted over the textured renders; the look comes from the free r0 (kept on claude/art-scaffolds-review-2). 1 x 1, canvas 1024 x 1024, 8 canvas px per game px. No review-2 plan existed. At most 3 attempts per view."
+        },
+        {
+          "id": "TB2-lumber",
+          "title": "Lumber yard: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-lumber.md",
+          "status": "ready",
+          "note": "The four free paintings (buildings-v2, a0) are not rotations of one building (blockout overlap of r1 to r3 with r0: 0.80, 0.82, 0.76) and r0 was painted at about 35 degrees, so all four views are painted over the textured renders; the look comes from the free r0 (kept on claude/art-scaffolds-review-2). 1 x 1, canvas 1024 x 1024, 8 canvas px per game px. No review-2 plan existed. At most 3 attempts per view."
+        },
+        {
+          "id": "TB2-depot",
+          "title": "Depot: r0 and r2 painted over the textured renders (2 pictures; r1 and r3 stay)",
+          "file": "codex-queue/prompts/TB2-depot.md",
+          "status": "ready",
+          "note": "Consistency check of the existing depot paintings against the blockout (best uniform fit): r0 0.919 but its camera is 4.5 degrees high, r1 0.920 keep, r2 0.879 repaint, r3 0.898 keep (accepted attempt 3). So only r0 and r2 are painted; r1 and r3 stay and are not touched. 2 x 2, canvas 1536 x 1024, 6 canvas px per game px. No review-2 plan existed. At most 3 attempts per view."
+        },
+        {
+          "id": "TB2-water_tower",
+          "title": "Water tower: r1 and r3 painted over the textured renders (2 pictures; r0 and r2 stay)",
+          "file": "codex-queue/prompts/TB2-water_tower.md",
+          "status": "ready",
+          "note": "Consistency check of the existing water tower paintings against the blockout (best uniform fit): r0 0.930 keep (camera on the game's), r1 0.869 repaint, r2 0.896 keep, r3 0.871 repaint. So only r1 and r3 are painted; r0 and r2 stay and are not touched. 1 x 1, canvas 1024 x 1024, 8 canvas px per game px. No review-2 plan existed. At most 3 attempts per view."
         }
       ]
     },
