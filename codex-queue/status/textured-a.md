@@ -59,3 +59,11 @@
   - r3 attempt1: Refused huge enlargement f.85minimum,IoU.502677<.92,p95157.884/148.944>16,max174.095>32. Heights/eye pass; reported amber244 not a refusal rule.
 - Stop reason: none
 - Notes: 6 calls; 3 accepted/3 refused. All three turned views accepted; existing r0 untouched. Timber/slate/stone and curved silo fittings form one coherent painting. Initial outputs enlarged the small render; corrections restored its shape and empty margins. Accepted r1#2,r2#2,r3#2; three refused attempts raw. Farm silhouette fills enclosed holes as its prompt specifies; strict outline/height thresholds unchanged. Full per-attempt exact metrics, returned sizes, prompts, references, hashes and light comparisons: assets/source/textured/farm/prompts.json and REPORT.md. Original hash preflight and raw/copy byte hashes verified. Built-in image auto C: saves copied to G raw and originals left as README permits.
+
+## TB2-quarry (2026-10-22T16:59:54.628Z)
+- Result: stopped
+- Lane commit: c94b2e2fe966675ad6730e799439d92eb983f789 (origin/art/textured-a)
+- Views accepted: none
+- Refused attempts: r1attempt1 call refused at output moderation, violence; requestID1b51de0c-afe2-9c47-ace6-b909b1f2ea04. No image returned: measurements unavailable, no raw closest image exists.
+- Stop reason: a tool that refuses (README, Running the groups). Stopped immediately without retry or workaround.
+- Notes: All9fixedrenderfiles/metadata and acceptedr0hash passed preflight. Exact call/ref order and refusal recorded in assets/source/textured/quarry/prompts.json and REPORT.md. R0 untouched; r2/r3 not run. Queue header says each stop halts this building only; group scope awaiting orchestrator resolution because initial delegation says toolstophaltsgroup.
