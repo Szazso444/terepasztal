@@ -69,3 +69,23 @@
 - Notes: All9fixedrenderfiles/metadata and acceptedr0hash passed preflight. Exact call/ref order and refusal recorded in assets/source/textured/quarry/prompts.json and REPORT.md. R0 untouched; r2/r3 not run. Queue header says each stop halts this building only; group scope awaiting orchestrator resolution because initial delegation says toolstophaltsgroup.
 
 - Scope resolved by orchestrator: the current TB2-quarry QUEUE header stops quarry only; no retry, rephrase or workaround; townhouse proceeds next with its own unchanged prompt and references.
+
+## TB2-townhouse (2026-10-22T17:28:24.571Z)
+- Result: done
+- Lane commit: 722a2abde903eb99c9a470ec3e342b76bbbabee2 (origin/art/textured-a)
+- Views accepted:
+  - r2: assets/source/textured/townhouse/townhouse-r2.png (attempt3; IoU0.9770539490555566; p955.495066129729086/6.122448979591836; max11.270776548150266; wall0.2677165354330709/0.2619047619047619; overall1.0952380952380953/1.0920096852300243).
+- Refused attempts:
+  - r0 attempt1: Refused massive reference-size enlargement IoU.318884,p95256.141/223.727,max275.849; copied reference glow/shadow violates noextras. Both heights pass, style/identity otherwise pass.
+  - r0 attempt2: Refused enlargement atminimumf.85:IoU.829448<.92,p95both37.647>16,max38.303>32. Heights/identity/painting pass; apparent RGB glow is ignored where alpha0.
+  - r0 attempt3: Refused enlargement:f.85minimum,IoU.646621<.92,p9599.674/97.249>16,max105.941>32. Wall.285455 versus.261905 is+8.992% outside8%; overall/identity/painting pass. Closest refused r0 is attempt2 raw only. Apparent native glow isRGBunderzeroalpha, not an added visible glow.
+  - r1 attempt1: Refused enlargement:f.85minimum,IoU.742457<.92,p9554.728/52.876>16,max62.453>32. Both heights/eye pass; native-only background RGB ignored under alpha0.
+  - r1 attempt2: Refused enlargement:f.85minimum,IoU.612566<.92,p9595.032/90.588>16,max106.599>32. Both heights/eye pass; apparent glow only native RGB under alpha0.
+  - r1 attempt3: Closest refused r1 attempt3 raw only: f.85minimum,IoU.794347<.92,p9541.893/40.482>16,max48.593>32. Heights/identity/painting pass. All3r1IoUs below.80; r0 had.829448, so two-consecutive-views stop has NOT fired.
+  - r2 attempt1: Refused massive enlargement:f.85minimum,IoU.366877<.92,p95248.737/195.294>16,max268.238>32. Wall.285130 versus.261905 is+8.867% outside8%; overall/identity/painting pass.
+  - r2 attempt2: Refused enlargement:f.85minimum,IoU.503201<.92,p95151.906/122.353>16,max174.284>32. Both heights/eye pass.
+  - r3 attempt1: Refused massive enlargement:f.85minimum,IoU.309468<.92,p95247.367/207.973>16,max280.200>32. Wall.288413 versus.261905 is+10.121% outside8%; overall/identity/style pass.
+  - r3 attempt2: Refused enlargement:f.85minimum,IoU.700087<.92,p95both71.765>16,max75.165>32. Wall.287619 versus.261905 is+9.818% outside8%; overall/identity/style pass.
+  - r3 attempt3: Refused enlargement:f.85minimum,IoU.672991<.92,p9596.471/95.301>16,max100.111>32. Both heights/eye pass. Closest refused r3 is attempt2 raw only. No two-consecutive-views lowIoU stop: r2#3 passed .977054 before r3.
+- Stop reason: none
+- Notes: 12 calls; 1 accepted/11 refused. Only r2 attempt3 accepted; r0,r1,r3 refused after three attempts each. Limestone/slate surfaces are coherent and crisp, including hidden plain walls. Most calls copy the larger reference size and cannot fit within f0.85..1.15; exact small shape holds only at r2. Closest refused: r0 raw/townhouse-r0-attempt-2.png, r1 raw/townhouse-r1-attempt-3.png, r3 raw/townhouse-r3-attempt-2.png; no accepted copies for these views.12calls1accepted11refused. Preliminary r0#1 glow claim corrected by alpha-composited preview: RGB underalpha0 only, original note retained plus auditCorrection. Townhouse fills enclosed silhouette holes per its prompt. No building stop fired. Full per-attempt exact metrics, returned sizes, prompts, references, hashes and light comparisons: assets/source/textured/townhouse/prompts.json and REPORT.md. Original hash preflight and raw/copy byte hashes verified. Built-in image auto C: saves copied to G raw and originals left as README permits.
