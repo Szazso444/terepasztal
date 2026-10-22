@@ -1,6 +1,7 @@
 {
  "updated": "2026-10-22",
  "lead": [
+  "New (22 October 2026): batch D of the textured route, group textured-d (lane art/textured-d), seven cards. The author decided that every player-placed building rotates, so the charcoal kiln, the diesel refinery and the wire mill (base-v1 paintings) get textured blockouts and r0 to r3 paint-overs, and the four buildings-v2 families that were painted freely (small station, lumber yard, depot, water tower) were checked view by view against a blockout built from their r0 (best uniform-fit silhouette overlap, bar 0.88; r0 also repainted when its painted camera is more than 2 degrees from the game's 30). Result: station and lumber yard are repainted in all four views (r1 to r3 are not rotations of r0, overlap 0.76 to 0.82, and r0 is 2.5 and 5 degrees off the camera), the depot in r0 and r2 (r1 and r3 stay), the water tower in r1 and r3 (r0 and r2 stay). No review-2 plan existed for these jobs: canvas and anchor were made from the footprint (1 x 1: 1024 x 1024; 2 x 2: 1536 x 1024). Renders: claude/art-scaffolds-review-2, assets/source/buildings-v2/scaffolds-textured/, head 791f53c4.",
   "New (22 October 2026): the textured route replaces the held scaffold prompts. Core built clean textured Blender blockouts for every remaining building (branch claude/art-scaffolds-review-2, assets/source/buildings-v2/scaffolds-textured/, batches A, B and C, and material crops for the power plant). Three new groups, one prompt per building (TB2-<building>), each on its own new lane from develop: textured-a (big station, big farm, town hall, small farm, quarry, house), textured-b (grinder, refinery, colliery, ironworks, oil derrick) and textured-c (battery, power plant, coaling stage, fuel pump). Buildings painted at 20 to 24 degrees in base-v1 get r0 to r3; farm, quarry, coaling stage and fuel pump keep their r0 and get r1 to r3. Five blockouts are being fixed first (grinder, quarry, colliery, ironworks, coaling stage): their cards are marked BLOCKED, do not paste them yet. Tests per view as in TB1: IoU at least 0.92 (oil derrick 0.88), boundary 95th percentile 16 and maximum 32 canvas px, height within 8 per cent, at most three attempts; the stop rule is per building.",
   "Superseded and removed from this page: CR1-adopt, C24a, C25a, C26a, C27a, C28a, C30a, C31a, C32a, C33a (rotations), C21a, C23a, C4e (buildings), R8e (fuel pump) and TB1 (textured pilot: warehouse and pump done, 8 of 8 views accepted; its power plant is repainted in TB2-power_plant). Their ledger entries stay on branch claude/codex-queue.",
   "Core review 1 (21 October 2026), the second run of the queue. The boundary test of the scaffold prompts is now a distribution: the 95th percentile of the boundary distances at most 3 game px AND the largest distance at most 6 game px (the old rule took the largest distance alone and refused good pictures for one thin protrusion). The scaffold's geometry wins: parts the lit scaffold shows are painted as shown, whatever a prompt says about a hidden front. Each prompt starts with a CORE REVIEW 1 header that says so.",
@@ -53,6 +54,23 @@
     "TB2-power_plant",
     "TB2-fuel_stop",
     "TB2-fuel_pump"
+   ]
+  },
+  {
+   "id": "textured-d",
+   "title": "Textured d: charcoal kiln, diesel refinery, wire mill, small station, lumber yard, depot, water tower",
+   "branch": "art/textured-d",
+   "run": "Paste in this order: kiln, diesel_refinery, wire_mill, station, lumber, depot, water_tower. Kiln, diesel refinery and wire mill (base-v1 paintings) and the small station and lumber yard get r0 to r3; the depot only r0 and r2 and the water tower only r1 and r3, because their other existing views passed the check against the blockout and stay.",
+   "same": "Its own new branch and folder (assets/source/textured/<building>/); shares nothing with the other groups.",
+   "status": "Ready (all seven).",
+   "cards": [
+    "TB2-kiln",
+    "TB2-diesel_refinery",
+    "TB2-wire_mill",
+    "TB2-station",
+    "TB2-lumber",
+    "TB2-depot",
+    "TB2-water_tower"
    ]
   },
   {
@@ -213,6 +231,41 @@
    "file": "TB2-fuel_pump",
    "title": "Fuel pump: r1 to r3 painted over the textured renders (3 pictures)",
    "status": "Ready. The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are repainted). At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/fuel_pump/."
+  },
+  "TB2-kiln": {
+   "file": "TB2-kiln",
+   "title": "Charcoal kiln: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 to r3, in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/kiln/."
+  },
+  "TB2-diesel_refinery": {
+   "file": "TB2-diesel_refinery",
+   "title": "Diesel refinery: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at about 23 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/diesel_refinery/."
+  },
+  "TB2-wire_mill": {
+   "file": "TB2-wire_mill",
+   "title": "Wire mill: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the original was painted at about 18 degrees, not the game's 30), in the style of the original; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/wire_mill/."
+  },
+  "TB2-station": {
+   "file": "TB2-station",
+   "title": "Small station: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the free r0 was painted at about 27.5 degrees, not the game's 30; the free r1 to r3 are not rotations of it), in the style of the free r0; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/station/."
+  },
+  "TB2-lumber": {
+   "file": "TB2-lumber",
+   "title": "Lumber yard: r0 to r3 painted over the textured renders (4 pictures)",
+   "status": "Ready. Paint over the textured render, r0 too (the free r0 was painted at about 35 degrees, not the game's 30; the free r1 to r3 are not rotations of it), in the style of the free r0; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/lumber/."
+  },
+  "TB2-depot": {
+   "file": "TB2-depot",
+   "title": "Depot: r0 and r2 painted over the textured renders (2 pictures; r1 and r3 stay)",
+   "status": "Ready. Paint r0 and r2 over the textured renders (the free r0 was painted at about 34.5 degrees, not the game's 30, and the free r2 is not a rotation of it, best-fit overlap 0.879); the accepted r1 and r3 stay as they are. The render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/depot/."
+  },
+  "TB2-water_tower": {
+   "file": "TB2-water_tower",
+   "title": "Water tower: r1 and r3 painted over the textured renders (2 pictures; r0 and r2 stay)",
+   "status": "Ready. Paint r1 and r3 over the textured renders; the accepted r0 painting stays and is the reference, the accepted r2 stays too (the earlier r1 and r3 are not rotations of r0, best-fit overlap 0.869 and 0.871, and are repainted). The render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/. Accepted pictures: assets/source/textured/water_tower/."
   }
  }
 }
