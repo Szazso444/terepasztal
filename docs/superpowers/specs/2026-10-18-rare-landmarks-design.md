@@ -1,9 +1,9 @@
 # Rare landmarks
 
-Status: draft, 2026-10-22. The author took the recommended options of section 10 with one change:
-a landmark appears only where the terrain suits it, and the House Between Seasons where four
-biomes meet, and then not always (sections 1 and 2, measured). The site rules and the junction
-definition (D12, D13) wait for the author's confirmation. Epic #529; artwork and handoff #528 (branch
+Status: approved by the author on 2026-10-22, after a review render of the placement (seed 147,
+21×21 chunks). The author took the recommended options of section 10 with one change: a landmark
+appears only where the terrain suits it, and the House Between Seasons where four biomes meet,
+and then not always (sections 1 and 2, measured). Epic #529; artwork and handoff #528 (branch
 `art/528-rare-landmarks-handoff` @ `210cfe5d`, `docs/art-direction/rare-landmarks-handoff.md` and
 `assets/source/rare-landmarks-v1/final/manifest.json` there).
 
@@ -275,7 +275,8 @@ landmarks: {
 
 On 2026-10-22 the author took the recommended option (a) of D1–D11, with one change to D2: a
 landmark needs terrain that suits it, and the House Between Seasons appears where four biomes
-meet, but not every time. Sections 1 and 2 now say how. Open:
+meet, but not every time. Sections 1 and 2 now say how. The two decisions that change raised were
+answered (a) the same day:
 
 - **D12 House Between Seasons' meeting.** (a) plains, desert, forest and taiga all within 3 tiles
   of the footprint (0.27% of chunks), placed at 10% of meetings — recommended; (b) within 6 tiles
@@ -311,11 +312,13 @@ The original list, answered:
   cleared.
 - **D11 Conditions.** (a) Moonwell needs night, Stormglass a storm — recommended; (b) no conditions.
 
-## 11. Tasks (draft; not filed)
+## 11. Tasks
 
-One role each. Briefs follow `docs/process/context.md`; the issue number and the worktree path are
-filled in when filed. Every branch starts from `origin/develop`. All are blocked by this spec's
-approval; the links below are the extra ones.
+Filed on 2026-10-22 as sub-issues of #529; the issues carry the full briefs and are the source of
+truth from now on. T1 #541, T2 #542, T3 #544, T4 #545, T5 #546, T6 #543, T7 #547, T8 #548,
+T9 #549. Every branch starts from `origin/develop`. All are blocked by this spec reaching
+`develop` (#540); the links below are the extra ones. The briefs here are the drafts they were
+filed from.
 
 ```
 T1 Gameplay — landmark content and rules
