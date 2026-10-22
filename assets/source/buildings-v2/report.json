@@ -606,7 +606,7 @@
     "depot_narrow-a0-r0": {
       "ok": false,
       "problems": [
-        "camera off by 6.4°: it looks down from 24.8° where the game looks down from 30° and the building is turned 6.4° towards its lower-right wall (the wall feet slope 0.52 and -0.34, the game's 0.50 and -0.50)"
+        "the portal is not open to the ground (over a stretch 0.3 of the portal's width the ground is open 0.03 of that width deep, and 0.3 is asked): a floor, a threshold, an apron, rails, a door leaf or a post stands where the game's rails run in, or the portal is too narrow. Inside the doorway paint the hall's inner wall, in shadow. Only the floor is left out: below that inner wall the ground inside the doorway, up to about a third of the doorway's height, and the ground before it stay unpainted and transparent, so that the game's rails show there."
       ],
       "notes": [],
       "fit": {
@@ -616,55 +616,51 @@
           true
         ],
         "measured": [
-          0.524,
-          -0.335
+          0.53,
+          -0.462
         ],
         "slopes": [
-          0.524,
-          -0.335
+          0.53,
+          -0.462
         ],
         "base": {
           "w": [
-            177,
-            791.5
+            178,
+            883.4
           ],
           "s": [
-            800.8,
-            1118.6
+            766.7,
+            1195.2
           ],
           "e": [
-            1124,
-            1010.3
+            1076,
+            1052.2
           ]
         },
-        "scale": 0.7461,
-        "vertical": 1.1635,
-        "shear": -0.1101,
-        "cx": 650.5,
-        "cy": 976.6,
+        "scale": 0.7868,
+        "vertical": 1.0083,
+        "shear": -0.0339,
+        "cx": 627,
+        "cy": 954.6,
         "box": {
-          "left": 147.5,
-          "top": 218,
-          "right": 879.5,
-          "bottom": 979.3
+          "left": 157.1,
+          "top": 208,
+          "right": 870.8,
+          "bottom": 983.3
         },
         "camera": {
-          "elevation": 24.8,
-          "turn": 6.4
+          "elevation": 29.7,
+          "turn": 1.9
         },
-        "area": 516258
+        "area": 535812
       },
       "ground": [
-        0.96
+        0.03
       ],
       "through": [
-        0.12
+        0
       ],
-      "hang": 0,
-      "camera": {
-        "by": 6.4,
-        "was": "It was painted from too low a camera, so too little of its roof showed, and turned, its lower-right wall facing the viewer too much. The reference shows it put right: paint it as the reference and the block-out are seen."
-      }
+      "hang": 0
     },
     "farm-a0-r0": {
       "ok": true,
