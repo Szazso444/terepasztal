@@ -65,3 +65,21 @@
   - r3 attempt3: assets/source/textured/colliery/raw/colliery-r3-attempt-3.png; kept:false.
 - Stop reason: STOP RULE: all three attempts of r2 and r3 below silhouette IoU0.80; the method does not hold the shape: Core decides.
 - Notes: Twelve calls; only r1 attempt3 accepted. Engine-house near corner at r3 hidden in bare render: required manual height comparison unavailable, never accepted or fabricated. Earlier glow notes corrected after compositing: visible haze absent, RGB under alpha0 only. Original SHA7803f567559ca14ddb53a9078580bfe8abe1c7842baedca5de097b1b036e7215 verified; all12inputs passed1536x1024 metadata. Per-building stop only; group continues ironworks. Full per-attempt returned sizes, IoU at s0, fit, p95/max, heights, base/k, highlights/light reports, raw hashes, exact prompts/references and eye decisions are in prompts.json and REPORT.md on the lane. Raw files untouched; accepted files are exact byte copies.
+
+## TB2-ironworks (2026-10-22 17:11:53 UTC)
+- Result: stopped
+- Lane commit: 961130f58cad8da7ace0278a40d195fdb48ac989 (origin/art/textured-b)
+- Views accepted:
+  - none
+- Refused attempts:
+  - r0 attempt1: IoU 0.492537486438116, p95 227.104536696728/167.806941305099, max 241.176470588235; part height 0.192371475953566 vs 0.189111747851003; overall 0.740679370339685 vs 0.74964234620887. Silhouette enlarged beyond fit IoU0.4925,p95227.10/167.81,max241.18.
+  - r0 attempt2: IoU 0.4945045481207, p95 197.829047866917/151.600458317044, max 218.02828298166; part height 0.187813021702838 vs 0.189111747851003; overall 0.750625521267723 vs 0.74964234620887. Still enlarged, IoU0.4945,p95197.83/151.60,max218.03.
+  - r0 attempt3: IoU 0.60282430250737, p95 127.461236389763/107.116984847906, max 147.340905930952; part height 0.166979362101313 vs 0.189111747851003; overall 0.767572633552015 vs 0.74964234620887. Closest refused r0 attempt3: IoU0.6028,p95127.46/107.12,max147.34; hall wall proportion too short and roof/bay geometry drifts.
+  - r1 attempt1: IoU 0.612784395738079, p95 120.489198930126/105.816973278912, max 143.341245992799; part height 0.230352303523035 vs 0.283132530120482; overall 1.30311231393775 vs 1.33066132264529. Enlarged outline IoU0.6128,p95120.49/105.82,max143.34; hall wall proportion below render.
+  - r1 attempt2: IoU 0.791161899729176, p95 52.0978584129048/47.0588235294118, max 59.6413734382898; part height 0.259938837920489 vs 0.283132530120482; overall 1.31145038167939 vs 1.33066132264529. IoU0.7912,p9552.10/47.06,max59.64; newly opens clerestory windows on solid brick back in render; geometry wins over text.
+  - r1 attempt3: IoU 0.760823027196379, p95 65.8508327960307/57.5509402759295, max 78.2242362817849; part height 0.251134644478064 vs 0.283132530120482; overall 1.33383685800604 vs 1.33066132264529. IoU0.7608,p9565.85/57.55,max78.22; wall proportion low, hoist chain moved outside frame toward front fence. STOP: allr0/r1 attempts belowIoU0.80.
+- Closest refused raw only:
+  - r0 attempt3: assets/source/textured/ironworks/raw/ironworks-r0-attempt-3.png; kept:false.
+  - r1 attempt2: assets/source/textured/ironworks/raw/ironworks-r1-attempt-2.png; kept:false.
+- Stop reason: STOP RULE: all three attempts of r0 and r1 below silhouette IoU0.80; method does not hold shape: Core decides.
+- Notes: Six calls, zero accepted; r2/r3 unrun after explicit stop. Render geometry wins: JSONs have0/2/0/1 holes despite prompt body claiming none; actual gaps counted. Solid brick clerestory backs retained as render despite text saying windows. Coherent repaint repeatedly enlarged composition and altered hall proportions/fittings. Original SHA2b709e0386c0b2d35a271dc63c46eba550884056a312f1cf0f72003d84195283 verified; all12inputs passed1536x1024 metadata. Group continues oil_derrick. Full per-attempt returned sizes, IoU at s0, fit, p95/max, heights, base/k, highlights/light reports, raw hashes, exact prompts/references and eye decisions are in prompts.json and REPORT.md on the lane. Raw files untouched; accepted files are exact byte copies.
