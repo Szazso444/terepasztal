@@ -1,0 +1,47 @@
+{
+  "job": "quarry",
+  "renderReference": {
+    "r1": {
+      "foot": [492, 938],
+      "ashlarTop": [492, 775],
+      "baseCorners": [393, 724],
+      "baseWidth": 331,
+      "wallRatio": 0.49244712990936557,
+      "uncertaintyPx": 3,
+      "note": "Stone tower near corner from ground foot to top of ashlar below railings/winch house; wood excluded."
+    }
+  },
+  "attempts": [
+    {
+      "building": "quarry",
+      "view": 1,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Quarry in the view r1. a stone quarry loading station on a base of cream limestone blocks: a large forest-green iron-strapped timber skip full of cream stone blocks standing on a stone base, a cream ashlar stone tower beside it carrying a timber winch house with a dark slate roof, a winding drum with its rope, and a red-brick chimney with two copper pots, and a timber crane post with a jib arm, a pulley, a rope and a hanging crate of cream stone blocks. All timber is warm brown with black iron straps and corner plates. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the timber crane post with its jib arm, pulley, rope and the hanging crate of stone blocks stands at the far (top) corner; the large iron-strapped skip full of stone blocks on its stone base stands at the upper-left side; the cream ashlar stone tower face stands at the lower-left side; the winch house with its slate roof, the winding drum and the chimney with two copper pots on top of the tower stands at the right corner. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/quarry-r1-textured.png",
+        "G:/DEV/wt/originals-textured-a/quarry-r0.png"
+      ],
+      "file": null,
+      "returned": null,
+      "measured": null,
+      "kept": false,
+      "error": {
+        "type": "image_generation_user_error",
+        "code": "moderation_blocked",
+        "stage": "output",
+        "category": "violence",
+        "requestId": "1b51de0c-afe2-9c47-ace6-b909b1f2ea04",
+        "message": "Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID."
+      },
+      "note": "Image tool refused output; no picture returned, no raw file exists. Stopped immediately; no retry or workaround."
+    }
+  ],
+  "outcome": {
+    "result": "stopped",
+    "accepted": [],
+    "refusedCalls": 1,
+    "returnedPictures": 0,
+    "stopReason": "a tool that refuses",
+    "notes": "Preflight passed all9fixedinputs/metadata and acceptedr0hash; r0 untouched. No r2/r3 calls."
+  }
+}
