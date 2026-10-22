@@ -45,3 +45,17 @@
   - r2 attempt3: Refused outline p9532.813/22.540>16,max67.215>32; farclockgable peak moved down/behind cupola against render. IoU.934853 and both heights pass. Closest refused r2 is attempt2(raw only), whose p9516.6905 narrowly fails and identity passes.
 - Stop reason: none
 - Notes: 6 calls; 3 accepted/3 refused. Three accepted views(r0,r1,r3); r2 refused after three attempts. Brick, limestone and slate read as one coherent painting with crisp glazing and cupola. The hidden far clock-gable and near base corner still drift in r2. Closest refused r2 is raw/town-r2-attempt-2.png: identity/heights pass, p95picture16.690484273418168>16. Render back has no green door despite prose; render layout wins. Full per-attempt exact metrics, returned sizes, prompts, references, hashes and light comparisons: assets/source/textured/town/prompts.json and REPORT.md. Original hash preflight and raw/copy byte hashes verified. Built-in image auto C: saves copied to G raw and originals left as README permits.
+
+## TB2-farm (2026-10-22T16:55:32.128Z)
+- Result: done
+- Lane commit: e01702a6154cf443b32e7749fcd27396005050a8 (origin/art/textured-a)
+- Views accepted:
+  - r1: assets/source/textured/farm/farm-r1.png (attempt2; IoU0.982878183825649; p954.846213186053886/4.846213186053886; max5.653915383729533; wall0.38784067085953877/0.3711340206185567; overall1.054054054054054/1.0560747663551402).
+  - r2: assets/source/textured/farm/farm-r2.png (attempt2; IoU0.97782114556965; p955.469960242057949/7.032806025503078; max16.558054213370493; wall0.2656826568265683/0.28289473684210525; overall0.8747763864042933/0.8823529411764706).
+  - r3: assets/source/textured/farm/farm-r3.png (attempt2; IoU0.969642939015879; p957.086689168832151/7.8619757450768; max14.173378337664301; wall0.314453125/0.3118556701030928; overall1.163375224416517/1.1285046728971964).
+- Refused attempts:
+  - r1 attempt1: Refused oversized silhouette: f.85 minimum,IoU.692676<.92,p9579.057/78.777>16,max82.619>32. Both height ratios pass; painting/identity/light pass.
+  - r2 attempt1: Refused oversize f.85minimum,IoU.911820<.92,p95both18.253>16; max22.283 passes. Wall ratio.260057 versus.282895 is -8.073% outside8%; overall passes.
+  - r3 attempt1: Refused huge enlargement f.85minimum,IoU.502677<.92,p95157.884/148.944>16,max174.095>32. Heights/eye pass; reported amber244 not a refusal rule.
+- Stop reason: none
+- Notes: 6 calls; 3 accepted/3 refused. All three turned views accepted; existing r0 untouched. Timber/slate/stone and curved silo fittings form one coherent painting. Initial outputs enlarged the small render; corrections restored its shape and empty margins. Accepted r1#2,r2#2,r3#2; three refused attempts raw. Farm silhouette fills enclosed holes as its prompt specifies; strict outline/height thresholds unchanged. Full per-attempt exact metrics, returned sizes, prompts, references, hashes and light comparisons: assets/source/textured/farm/prompts.json and REPORT.md. Original hash preflight and raw/copy byte hashes verified. Built-in image auto C: saves copied to G raw and originals left as README permits.
