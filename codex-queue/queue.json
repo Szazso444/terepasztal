@@ -201,8 +201,8 @@
           "id": "TB2-water_tower",
           "title": "Water tower: r1 and r3 painted over the textured renders (2 pictures; r0 and r2 stay)",
           "file": "codex-queue/prompts/TB2-water_tower.md",
-          "status": "ready",
-          "note": "Consistency check of the existing water tower paintings against the blockout (best uniform fit): r0 0.930 keep (camera on the game's), r1 0.869 repaint, r2 0.896 keep, r3 0.871 repaint. So only r1 and r3 are painted; r0 and r2 stay and are not touched. 1 x 1, canvas 1024 x 1024, 8 canvas px per game px. No review-2 plan existed. At most 3 attempts per view."
+          "status": "done",
+          "note": "Author 2026-10-22: the water tower keeps its current four pictures; do not repaint."
         }
       ]
     },
