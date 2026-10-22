@@ -1,6 +1,6 @@
 {
   "updated": "2026-10-21",
-  "source": "handoff/codex-prompts-v9 on claude/optimistic-thompson-ndc4an-core-handoff, revised by Core review 1 (codex-queue/status/CORE-REVIEW-1.md)",
+  "source": "handoff/codex-prompts-v9 on claude/optimistic-thompson-ndc4an-core-handoff, revised by Core review 1 (codex-queue/status/CORE-REVIEW-1.md); Core review 2 (codex-queue/status/CORE-REVIEW-2.md)",
   "ledgerBranch": "claude/codex-queue",
   "worktreeRoot": "G:/DEV/wt",
   "groups": [
@@ -31,7 +31,7 @@
       "localBranch": "codex-rotations",
       "status": "ready",
       "ledger": "codex-queue/status/rotations.md",
-      "note": "Resume from the first prompt that is not done: CR1-adopt, then C24a and on. Prompts with status done, blocked or later are skipped. C29a stops after r0 (stage 1 of 2; fallback: blockout scaffold). The scaffold-prompt rules of Core review 1 (boundary p95/max, scaffold geometry wins) are in a header at the top of each prompt.",
+      "note": "Resume from the first prompt that is not done: CR1-adopt, then C24a and on. Prompts with status done, blocked or later are skipped. C29a is the hydro plant painted over its own Blender blockout, r0 to r3 (Core review 2; it replaces the stage-1 prompt). The scaffold-prompt rules of Core review 1 (boundary p95/max, scaffold geometry wins) are in a header at the top of each prompt.",
       "prompts": [
         {
           "id": "C18a",
@@ -133,10 +133,10 @@
         },
         {
           "id": "C29a",
-          "title": "Hydro plant, a new design: STAGE 1 of 2, r0 only on its guide (1 picture)",
+          "title": "Hydro plant, a new brick turbine-house design: r0, r1, r3 and r2 painted over the Blender blockout scaffold (4 pictures)",
           "file": "codex-queue/prompts/C29a.md",
           "status": "ready",
-          "note": "Stage 1 only (free r0, strict camera). If r0 fails after its attempts: fallback to a blockout scaffold (Core makes it), not another free attempt."
+          "note": "ready (Core review 2): the blockout landed on origin/claude/art-scaffolds-review-2 at f44a8b9e (scaffolds/hydro_plant-blockout/, 12 files). REPLACES the stage-1 prompt: new budget of 3 attempts a view (r0 attempts go on from 7, the others from 1), strict tests (IoU 0.92, p95 16, max 32, height 8 per cent), the tailrace doorway is opaque. Lane art/535-rotations, folder rotations-535/hydro_plant/."
         }
       ]
     },
@@ -176,7 +176,7 @@
           "title": "Narrow depot a0: r0, r1, r3 and r2 painted over a Blender blockout scaffold (4 pictures).",
           "file": "codex-queue/prompts/C35a.md",
           "status": "ready",
-          "note": "ready: the blockout scaffold landed on origin/claude/art-scaffolds-review-2 at c37a3f8d (scaffolds/depot_narrow/, 12 files). Runs last in its group."
+          "note": "ready again (Core review 2): the blockout is revised, the doorways are solid (origin/claude/art-scaffolds-review-2 at 394cbfe8, f44a8b9e or later). Run 3 failed all 12 attempts at the transparent doorway notch the old prompt asked for; the prompt now says to paint the doorway opaque and dark. None of the 12 old attempts passes the corrected blockout (re-tested by Core), so all four views are needed: r0 attempts go on from 7, r1, r3 and r2 from 4; 3 new attempts each; all four views are put back to pending first. Runs last in its group."
         }
       ]
     },
@@ -240,7 +240,7 @@
           "title": "People trial: the lumberjack walking away, repainted whole on the grey pose guides (4 pictures)",
           "file": "codex-queue/prompts/R7c-1.md",
           "status": "ready",
-          "note": "P1 guide fixed in PR #539 (branch claude/people-guide-p1-fix): the prompt merges it first; run 4 in v3/run-4/."
+          "note": "ready again (Core review 2): PR #539 (branch claude/people-guide-p1-fix, a4e36c70) now writes \"soleRow\" 1440 into every guide entry of manifest.json, back-shoulder-p1.png included; the prompt merges it first. This is RUN 5, in v3/run-5/ (run-4/ stays as the preflight record)."
         }
       ]
     },
