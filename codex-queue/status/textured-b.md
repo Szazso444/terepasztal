@@ -19,3 +19,25 @@
 - Closest refused raw only: r1 attempt2, r2 attempt2, r3 attempt3; paths assets/source/textured/grinder/raw/grinder-r<v>-attempt-<k>.png, all kept:false.
 - Stop reason: none; eleven calls, each view exhausted or accepted; no two consecutive views had all three IoUs below0.80.
 - Notes: r0 is one coherent painted house with crisp fittings and preserved light. Other views often repaint well but enlarge or alter the house, or invent doors/front machinery. Full prompts, raw SHA256, returned sizes, base/k/highlights/light samples, individual eye decisions and exposed-corner height coordinates are in prompts.json and REPORT.md on the lane. Original SHA256 dd1add6e3653792b017b655bddfec193972c79565de77992655931ce62f2e015; all input preflights passed. No raw image was transformed.
+
+## TB2-refinery (2026-10-22 16:38:32 UTC)
+- Result: done
+- Lane commit: 3149953e8f9634708b25e64663fec019b4753b0b (origin/art/textured-b)
+- Views accepted:
+  - r0: assets/source/textured/refinery/refinery-r0.png (attempt2; IoU 0.958292125635167; p95 6.62327388113186/4.10758008978913; max 18.7334475000163; part height 0.433566433566434 vs 0.45119305856833; overall 0.849912739965096 vs 0.857758620689655).
+  - r2: assets/source/textured/refinery/refinery-r2.png (attempt3; IoU 0.940760924412151; p95 5.17347665119217/6.4445077651556; max 23.2360031923944; part height 0.366616989567809 vs 0.355603448275862; overall 0.925595238095238 vs 0.935344827586207).
+- Refused attempts:
+  - r0 attempt1: IoU 0.470364655728547, p95 135.361938659428/119.76308502749, max 150.021595234596; part height 0.435500515995872 vs 0.45119305856833; overall 0.850515463917526 vs 0.857758620689655. Silhouette enlarged beyond allowed fit; IoU0.4704,p95 135.36/119.76,max150.02.
+  - r1 attempt1: IoU 0.407383820693803, p95 172.416512717522/109.181111839081, max 188.738400137793; part height 0.561151079136691 vs 0.525423728813559; overall 1.79712746858169 vs 1.9364406779661. Enlarged beyond allowed fit: IoU0.4074,p95172.42/109.18,max188.74.
+  - r1 attempt2: IoU 0.94751303587598, p95 3.58939306307727/4.01306344350349, max 14.9348516260437; part height 0.529595015576324 vs 0.525423728813559; overall 1.8944099378882 vs 1.9364406779661. Machine tests pass but adds a yellow ladder down the front-right furnace platform corner, absent in textured render.
+  - r1 attempt3: IoU 0.415042514459525, p95 166.598801030699/110.717235254847, max 199.416763046695; part height 0.71939736346516 vs 0.525423728813559; overall 1.85338345864662 vs 1.9364406779661. Enlarged silhouette and swaps tank/column lateral relationship; tank height proportion fails. Closest refused r1 attempt2 has added furnace ladder.
+  - r2 attempt1: IoU 0.522761765915293, p95 106.094336781261/90.3355617835097, max 133.577441202512; part height 0.383333333333333 vs 0.355603448275862; overall 0.935627081021088 vs 0.935344827586207. Enlarged silhouette: IoU0.5228,p95106.09/90.34,max133.58.
+  - r2 attempt2: IoU 0.858857167347289, p95 15.3710479407074/15.3710479407074, max 24.3227406601; part height 0.378571428571429 vs 0.355603448275862; overall 0.931526390870185 vs 0.935344827586207. IoU0.8589 below0.92; fit reaches minimum f0.85 while outline is still too large.
+  - r3 attempt1: IoU 0.403457240869155, p95 152.171676413256/111.440097570129, max 177.361262997513; part height 0.557223264540338 vs 0.648305084745763; overall 1.87265917602996 vs 2.08050847457627. Enlarged outline, tank and overall proportions fail; furnace shifted right of column rather than hidden left/back.
+  - r3 attempt2: IoU 0.64619951999778, p95 86.1038117793821/45.1524533258279, max 107.944169131936; part height 0.664302600472813 vs 0.648305084745763; overall 2.00943396226415 vs 2.08050847457627. Outline enlarged: IoU0.6462,p9586.10/45.15,max107.94; adds small yellow peg atop tank end and vertical ground pipe not in render.
+  - r3 attempt3: IoU 0.916368870359341, p95 11.1606413009123/13.3163387581561, max 29.1301290043825; part height 0.688622754491018 vs 0.648305084745763; overall 2.03582089552239 vs 2.08050847457627. Closest refused r3 attempt3: IoU0.91637 below0.92; new thin vertical pipe at front tank foot remains absent from render.
+- Closest refused raw only:
+  - r1 attempt2: assets/source/textured/refinery/raw/refinery-r1-attempt-2.png; kept:false.
+  - r3 attempt3: assets/source/textured/refinery/raw/refinery-r3-attempt-3.png; kept:false.
+- Stop reason: none
+- Notes: Eleven calls; r0 and r2 accepted, r1 and r3 exhausted. No per-building stop fired. Coherent copper/steel repaint can retain shape after bbox correction, but invented fittings invalidate otherwise close results. Input SHA25626039befc34c6ca73259d656a3355958b80107d1fe36f0a3f042dec1d66bf8a5 verified; all12inputs passed metadata/dimensions and hole masks counted. Full per-attempt returned sizes, IoU at s0, fit, p95/max, heights, base/k, highlights/light reports, raw hashes, exact prompts/references and eye decisions are in prompts.json and REPORT.md on the lane. Raw files untouched; accepted files are exact byte copies.
