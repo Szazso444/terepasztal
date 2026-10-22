@@ -1,0 +1,713 @@
+{
+  "job": "ironworks",
+  "renderReference": {
+    "r0": {
+      "wallRatio": 0.18911174785100288,
+      "baseWidth": 698,
+      "wallReading": {
+        "eaves": [907, 734],
+        "foot": [907, 866],
+        "baseLeft": 428,
+        "baseRight": 1126,
+        "note": "Near hall corner/post excludes raised stone footing."
+      },
+      "lightBoxes": [
+        [746, 785, 757, 800],
+        [958, 790, 970, 805]
+      ],
+      "light": {
+        "left": 102.91044727272727,
+        "right": 82.77200888888898,
+        "ratio": 1.2433001041556406,
+        "boxes": [
+          [746, 785, 757, 800],
+          [958, 790, 970, 805]
+        ]
+      }
+    },
+    "r1": {
+      "wallRatio": 0.28313253012048195,
+      "baseWidth": 498,
+      "wallReading": {
+        "eaves": [713, 758],
+        "foot": [713, 899],
+        "baseLeft": 486,
+        "baseRight": 984,
+        "note": "Hall near corner excludes projecting stone steps/foundation."
+      },
+      "lightBoxes": [
+        [643, 839, 654, 853],
+        [900, 798, 912, 812]
+      ],
+      "light": {
+        "left": 57.43388311688312,
+        "right": 47.33225508982034,
+        "ratio": 1.2134195382808903,
+        "boxes": [
+          [643, 839, 654, 853],
+          [900, 798, 912, 812]
+        ]
+      }
+    }
+  },
+  "attempts": [
+    {
+      "building": "ironworks",
+      "view": 0,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. The one exception to the amber rule is the glow of the furnace mouth, which stays as the first picture has it (no more of it, and nothing glowing anywhere else).\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Ironworks in the view r0. an ironworks of red brick with cream limestone quoins and sills and teal standing-seam sheet roofs: a tall furnace gable with a glowing arched furnace mouth framed in black iron straps, a black iron trough and stone steps in front of it, a small arched window above it, and a tall square red-brick chimney with a cream band, a black iron band with rivets and a black cap rising behind it; a small lean-to at one end with an arched window, a teal door and a copper boiler with copper pipes; and a long hall with a teal roof carrying a clerestory of small windows on its ridge, whose open side is a timber-framed bay with stacks of grey iron ingots, a hoist with a hanging chain and a timber fence, and whose brick wall has arched windows with cream surrounds. r0: the visible sides are the lower-left and the lower-right. What the building has where: the furnace gable with the glowing furnace mouth, the iron trough, the steps and the small arched window, and beyond it the small lean-to with its teal door and copper boiler (the lower-left side); the open timber-framed bay with the ingot stacks, the hoist and chain and the fence, and the brick wall with its arched windows (the lower-right side); the tall brick chimney with its cream and iron bands (it rises behind the furnace gable) (the left corner); the long teal roof with the clerestory of small windows on its ridge (the far (top) corner). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1536 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/ironworks-r0-textured.png",
+        "G:/DEV/wt/originals-textured-b/ironworks.png"
+      ],
+      "file": "raw/ironworks-r0-attempt-1.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/textured/ironworks/raw/ironworks-r0-attempt-1.png",
+        "job": "ironworks",
+        "view": 0,
+        "returned": [1536, 1024],
+        "s0": 1,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [178, 44, 1384, 937],
+          "area": 597031,
+          "width": 1207,
+          "height": 894,
+          "overallRatio": 0.7406793703396851
+        },
+        "bareOpaque": {
+          "box": [428, 357, 1126, 880],
+          "area": 213434,
+          "width": 699,
+          "height": 524,
+          "overallRatio": 0.7496423462088698
+        },
+        "silhouette": {
+          "iouAtS0": 0.35262574798768126,
+          "f": 0.85,
+          "dx": 76.64999999999998,
+          "dy": 158.075,
+          "bestIoU": 0.49253748643811607,
+          "p95PictureToRender": 227.10453669672762,
+          "p95RenderToPicture": 167.80694130509923,
+          "maximum": 241.1764705882353,
+          "boundarySamples": [2999, 1998],
+          "worstPicture": {
+            "distance": 241.1764705882353,
+            "point": [228, 765]
+          },
+          "worstRender": {
+            "distance": 188.94718326104714,
+            "point": [600, 520]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.19237147595356552,
+          "renderWall": 0.18911174785100288,
+          "wallRelativeDifference": 0.01723704708779339,
+          "overall": 0.7406793703396851,
+          "renderOverall": 0.7496423462088698,
+          "overallRelativeDifference": -0.011956336130839906,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 1206,
+          "renderWidth": 727.6799999999998,
+          "heldWidthAtReturned": 727.6799999999998,
+          "k": 0.6033830845771143
+        },
+        "highlights": {
+          "nearWhite": 3520,
+          "nearAmber": 6
+        },
+        "originalHighlights": {
+          "nearWhite": 1115,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 191.50390380952376,
+          "right": 125.44451868131867,
+          "boxes": [
+            [752, 774, 766, 789],
+            [1237, 699, 1250, 713]
+          ],
+          "ratio": 1.5266024041753745,
+          "renderRatio": 1.2433001041556406
+        },
+        "eye": {
+          "wallRatio": 0.19237147595356552,
+          "renderWallRatio": 0.18911174785100288,
+          "baseWidth": 1206,
+          "leftBox": [752, 774, 766, 789],
+          "rightBox": [1237, 699, 1250, 713],
+          "wallReading": {
+            "eaves": [994, 650],
+            "foot": [994, 882]
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Silhouette enlarged beyond fit IoU0.4925,p95227.10/167.81,max241.18.",
+      "sha256": "0f8a2a35ee9f52ba1cc3022a7d79d17f277bc599ce9feae70c98480bf1a759ba"
+    },
+    {
+      "building": "ironworks",
+      "view": 0,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. The one exception to the amber rule is the glow of the furnace mouth, which stays as the first picture has it (no more of it, and nothing glowing anywhere else).\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Ironworks in the view r0. an ironworks of red brick with cream limestone quoins and sills and teal standing-seam sheet roofs: a tall furnace gable with a glowing arched furnace mouth framed in black iron straps, a black iron trough and stone steps in front of it, a small arched window above it, and a tall square red-brick chimney with a cream band, a black iron band with rivets and a black cap rising behind it; a small lean-to at one end with an arched window, a teal door and a copper boiler with copper pipes; and a long hall with a teal roof carrying a clerestory of small windows on its ridge, whose open side is a timber-framed bay with stacks of grey iron ingots, a hoist with a hanging chain and a timber fence, and whose brick wall has arched windows with cream surrounds. r0: the visible sides are the lower-left and the lower-right. What the building has where: the furnace gable with the glowing furnace mouth, the iron trough, the steps and the small arched window, and beyond it the small lean-to with its teal door and copper boiler (the lower-left side); the open timber-framed bay with the ingot stacks, the hoist and chain and the fence, and the brick wall with its arched windows (the lower-right side); the tall brick chimney with its cream and iron bands (it rises behind the furnace gable) (the left corner); the long teal roof with the clerestory of small windows on its ridge (the far (top) corner). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last drawing enlarged to1207px wide, IoU0.4925,p95227.10/167.81,max241.18. FIRST IMAGE exact small bbox428–1126,357–880 on1536x1024 and every empty margin remain unchanged. Paint only existing first-image pixels at that size, keep full roof valley/clerestory and near hall-post height. The second image supplies surface style only, never size or framing.\n\nOutput: 1536 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/ironworks-r0-textured.png",
+        "G:/DEV/wt/originals-textured-b/ironworks.png"
+      ],
+      "file": "raw/ironworks-r0-attempt-2.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/textured/ironworks/raw/ironworks-r0-attempt-2.png",
+        "job": "ironworks",
+        "view": 0,
+        "returned": [1536, 1024],
+        "s0": 1,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [173, 38, 1371, 937],
+          "area": 594839,
+          "width": 1199,
+          "height": 900,
+          "overallRatio": 0.7506255212677231
+        },
+        "bareOpaque": {
+          "box": [428, 357, 1126, 880],
+          "area": 213434,
+          "width": 699,
+          "height": 524,
+          "overallRatio": 0.7496423462088698
+        },
+        "silhouette": {
+          "iouAtS0": 0.35252754396311387,
+          "f": 0.85,
+          "dx": 106.30000000000007,
+          "dy": 175.625,
+          "bestIoU": 0.49450454812069977,
+          "p95PictureToRender": 197.82904786691665,
+          "p95RenderToPicture": 151.60045831704375,
+          "maximum": 218.02828298166,
+          "boundarySamples": [2981, 1998],
+          "worstPicture": {
+            "distance": 218.02828298166,
+            "point": [256, 789]
+          },
+          "worstRender": {
+            "distance": 161.1764705882353,
+            "point": [1094, 717]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.18781302170283806,
+          "renderWall": 0.18911174785100288,
+          "wallRelativeDifference": -0.006867506450144223,
+          "overall": 0.7506255212677231,
+          "renderOverall": 0.7496423462088698,
+          "overallRelativeDifference": 0.001311525507897704,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 1198,
+          "renderWidth": 727.6799999999998,
+          "heldWidthAtReturned": 727.6799999999998,
+          "k": 0.6074123539232053
+        },
+        "highlights": {
+          "nearWhite": 5196,
+          "nearAmber": 3
+        },
+        "originalHighlights": {
+          "nearWhite": 1115,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 187.0414830769231,
+          "right": 144.3402252747253,
+          "boxes": [
+            [750, 773, 763, 788],
+            [1237, 700, 1250, 714]
+          ],
+          "ratio": 1.2958375443915495,
+          "renderRatio": 1.2433001041556406
+        },
+        "eye": {
+          "wallRatio": 0.18781302170283806,
+          "renderWallRatio": 0.18911174785100288,
+          "baseWidth": 1198,
+          "leftBox": [750, 773, 763, 788],
+          "rightBox": [1237, 700, 1250, 714],
+          "wallReading": {
+            "eaves": [992, 650],
+            "foot": [992, 875]
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Still enlarged, IoU0.4945,p95197.83/151.60,max218.03.",
+      "sha256": "f5e98609ac41187ff89360b8100314a22676f0338ecc812287a026a2bd6661a1"
+    },
+    {
+      "building": "ironworks",
+      "view": 0,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. The one exception to the amber rule is the glow of the furnace mouth, which stays as the first picture has it (no more of it, and nothing glowing anywhere else).\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Ironworks in the view r0. an ironworks of red brick with cream limestone quoins and sills and teal standing-seam sheet roofs: a tall furnace gable with a glowing arched furnace mouth framed in black iron straps, a black iron trough and stone steps in front of it, a small arched window above it, and a tall square red-brick chimney with a cream band, a black iron band with rivets and a black cap rising behind it; a small lean-to at one end with an arched window, a teal door and a copper boiler with copper pipes; and a long hall with a teal roof carrying a clerestory of small windows on its ridge, whose open side is a timber-framed bay with stacks of grey iron ingots, a hoist with a hanging chain and a timber fence, and whose brick wall has arched windows with cream surrounds. r0: the visible sides are the lower-left and the lower-right. What the building has where: the furnace gable with the glowing furnace mouth, the iron trough, the steps and the small arched window, and beyond it the small lean-to with its teal door and copper boiler (the lower-left side); the open timber-framed bay with the ingot stacks, the hoist and chain and the fence, and the brick wall with its arched windows (the lower-right side); the tall brick chimney with its cream and iron bands (it rises behind the furnace gable) (the left corner); the long teal roof with the clerestory of small windows on its ridge (the far (top) corner). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Both last results copied reference2 huge size instead of EDITING FIRST IMAGE. Latest IoU0.4945,p95197.83/151.60,max218.03. First image small building bbox428–1126,357–880 on1536x1024 is mandatory; paint exactly over it, KEEP ALL EMPTY MARGINS and same positions/silhouette. Do not create a close-up. Keep the roof valley, chimney, clerestory, bay, fence and hall-post proportions at first-image sizes.\n\nOutput: 1536 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/ironworks-r0-textured.png",
+        "G:/DEV/wt/originals-textured-b/ironworks.png"
+      ],
+      "file": "raw/ironworks-r0-attempt-3.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/textured/ironworks/raw/ironworks-r0-attempt-3.png",
+        "job": "ironworks",
+        "view": 0,
+        "returned": [1536, 1024],
+        "s0": 1,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [278, 131, 1344, 949],
+          "area": 487842,
+          "width": 1067,
+          "height": 819,
+          "overallRatio": 0.767572633552015
+        },
+        "bareOpaque": {
+          "box": [428, 357, 1126, 880],
+          "area": 213434,
+          "width": 699,
+          "height": 524,
+          "overallRatio": 0.7496423462088698
+        },
+        "silhouette": {
+          "iouAtS0": 0.43554494111376474,
+          "f": 0.85,
+          "dx": 89.14999999999998,
+          "dy": 128,
+          "bestIoU": 0.6028243025073701,
+          "p95PictureToRender": 127.46123638976252,
+          "p95RenderToPicture": 107.11698484790624,
+          "maximum": 147.34090593095195,
+          "boundarySamples": [2565, 1998],
+          "worstPicture": {
+            "distance": 147.34090593095195,
+            "point": [550, 270]
+          },
+          "worstRender": {
+            "distance": 117.64705882352942,
+            "point": [432, 670]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.1669793621013133,
+          "renderWall": 0.18911174785100288,
+          "wallRelativeDifference": -0.1170333731309342,
+          "overall": 0.767572633552015,
+          "renderOverall": 0.7496423462088698,
+          "overallRelativeDifference": 0.023918455826065887,
+          "wallPass": false,
+          "overallPass": true
+        },
+        "base": {
+          "width": 1066,
+          "renderWidth": 727.6799999999998,
+          "heldWidthAtReturned": 727.6799999999998,
+          "k": 0.6826266416510317
+        },
+        "highlights": {
+          "nearWhite": 3159,
+          "nearAmber": 2
+        },
+        "originalHighlights": {
+          "nearWhite": 1115,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 205.17207179487184,
+          "right": 153.06367928994078,
+          "boxes": [
+            [781, 795, 793, 808],
+            [1207, 737, 1220, 750]
+          ],
+          "ratio": 1.3404360377763085,
+          "renderRatio": 1.2433001041556406
+        },
+        "eye": {
+          "wallRatio": 0.1669793621013133,
+          "renderWallRatio": 0.18911174785100288,
+          "baseWidth": 1066,
+          "leftBox": [781, 795, 793, 808],
+          "rightBox": [1207, 737, 1220, 750],
+          "wallReading": {
+            "eaves": [1004, 722],
+            "foot": [1004, 900]
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Closest refused r0 attempt3: IoU0.6028,p95127.46/107.12,max147.34; hall wall proportion too short and roof/bay geometry drifts.",
+      "sha256": "a9434f8dd58e2a43bb97820bfc13d9854d441fab866d84e408d8b7eafc995ec3"
+    },
+    {
+      "building": "ironworks",
+      "view": 1,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. The one exception to the amber rule is the glow of the furnace mouth, which stays as the first picture has it (no more of it, and nothing glowing anywhere else).\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Ironworks in the view r1. an ironworks of red brick with cream limestone quoins and sills and teal standing-seam sheet roofs: a tall furnace gable with a glowing arched furnace mouth framed in black iron straps, a black iron trough and stone steps in front of it, a small arched window above it, and a tall square red-brick chimney with a cream band, a black iron band with rivets and a black cap rising behind it; a small lean-to at one end with an arched window, a teal door and a copper boiler with copper pipes; and a long hall with a teal roof carrying a clerestory of small windows on its ridge, whose open side is a timber-framed bay with stacks of grey iron ingots, a hoist with a hanging chain and a timber fence, and whose brick wall has arched windows with cream surrounds. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the furnace gable with the glowing furnace mouth, the iron trough, the steps and the small arched window, and beyond it the small lean-to with its teal door and copper boiler stands at the upper-left side; the open timber-framed bay with the ingot stacks, the hoist and chain and the fence, and the brick wall with its arched windows stands at the lower-left side; the tall brick chimney with its cream and iron bands (it rises behind the furnace gable) stands at the far (top) corner; the long teal roof with the clerestory of small windows on its ridge stands at the right corner. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1536 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/ironworks-r1-textured.png",
+        "G:/DEV/wt/originals-textured-b/ironworks.png"
+      ],
+      "file": "raw/ironworks-r1-attempt-1.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/textured/ironworks/raw/ironworks-r1-attempt-1.png",
+        "job": "ironworks",
+        "view": 1,
+        "returned": [1536, 1024],
+        "s0": 1,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [403, 26, 1141, 988],
+          "area": 403074,
+          "width": 739,
+          "height": 963,
+          "overallRatio": 1.3031123139377536
+        },
+        "bareOpaque": {
+          "box": [486, 275, 984, 938],
+          "area": 181948,
+          "width": 499,
+          "height": 664,
+          "overallRatio": 1.3306613226452906
+        },
+        "silhouette": {
+          "iouAtS0": 0.4378424703920878,
+          "f": 0.85,
+          "dx": 64.30000000000007,
+          "dy": 134.05,
+          "bestIoU": 0.6127843957380791,
+          "p95PictureToRender": 120.48919893012622,
+          "p95RenderToPicture": 105.81697327891227,
+          "maximum": 143.34124599279917,
+          "boundarySamples": [2365, 1946],
+          "worstPicture": {
+            "distance": 143.34124599279917,
+            "point": [679, 158]
+          },
+          "worstRender": {
+            "distance": 110.82577742193588,
+            "point": [547, 651]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.23035230352303523,
+          "renderWall": 0.28313253012048195,
+          "wallRelativeDifference": -0.18641526840800327,
+          "overall": 1.3031123139377536,
+          "renderOverall": 1.3306613226452906,
+          "overallRelativeDifference": -0.020703246001597786,
+          "wallPass": false,
+          "overallPass": true
+        },
+        "base": {
+          "width": 738,
+          "renderWidth": 727.6799999999998,
+          "heldWidthAtReturned": 727.6799999999998,
+          "k": 0.9860162601626014
+        },
+        "highlights": {
+          "nearWhite": 832,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 1115,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 89.26975076923077,
+          "right": 59.007540476190464,
+          "boxes": [
+            [620, 797, 630, 810],
+            [1001, 756, 1013, 770]
+          ],
+          "ratio": 1.5128532734769906,
+          "renderRatio": 1.2134195382808903
+        },
+        "eye": {
+          "wallRatio": 0.23035230352303523,
+          "renderWallRatio": 0.28313253012048195,
+          "baseWidth": 738,
+          "leftBox": [620, 797, 630, 810],
+          "rightBox": [1001, 756, 1013, 770],
+          "wallReading": {
+            "eaves": [738, 726],
+            "foot": [738, 896]
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Enlarged outline IoU0.6128,p95120.49/105.82,max143.34; hall wall proportion below render.",
+      "sha256": "58f68daf39cc889804fe2d42c9b047f87be91b5e964985722f74ce4b091162e3"
+    },
+    {
+      "building": "ironworks",
+      "view": 1,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. The one exception to the amber rule is the glow of the furnace mouth, which stays as the first picture has it (no more of it, and nothing glowing anywhere else).\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Ironworks in the view r1. an ironworks of red brick with cream limestone quoins and sills and teal standing-seam sheet roofs: a tall furnace gable with a glowing arched furnace mouth framed in black iron straps, a black iron trough and stone steps in front of it, a small arched window above it, and a tall square red-brick chimney with a cream band, a black iron band with rivets and a black cap rising behind it; a small lean-to at one end with an arched window, a teal door and a copper boiler with copper pipes; and a long hall with a teal roof carrying a clerestory of small windows on its ridge, whose open side is a timber-framed bay with stacks of grey iron ingots, a hoist with a hanging chain and a timber fence, and whose brick wall has arched windows with cream surrounds. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the furnace gable with the glowing furnace mouth, the iron trough, the steps and the small arched window, and beyond it the small lean-to with its teal door and copper boiler stands at the upper-left side; the open timber-framed bay with the ingot stacks, the hoist and chain and the fence, and the brick wall with its arched windows stands at the lower-left side; the tall brick chimney with its cream and iron bands (it rises behind the furnace gable) stands at the far (top) corner; the long teal roof with the clerestory of small windows on its ridge stands at the right corner. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Last r1 enlarged silhouette IoU0.6128,p95120.49/105.82,max143.34 and shortened hall wall/base0.2304 vs0.2831. Keep FIRST IMAGE exact small bbox486–984,275–938 on1536x1024, all empty margins and tall hall-post/wall proportions; repaint only those pixels. Roof valley, closed brick clerestory back, arched windows and fence stay first-image sizes and positions.\n\nOutput: 1536 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/ironworks-r1-textured.png",
+        "G:/DEV/wt/originals-textured-b/ironworks.png"
+      ],
+      "file": "raw/ironworks-r1-attempt-2.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/textured/ironworks/raw/ironworks-r1-attempt-2.png",
+        "job": "ironworks",
+        "view": 1,
+        "returned": [1536, 1024],
+        "s0": 1,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [447, 98, 1101, 956],
+          "area": 312839,
+          "width": 655,
+          "height": 859,
+          "overallRatio": 1.3114503816793892
+        },
+        "bareOpaque": {
+          "box": [486, 275, 984, 938],
+          "area": 181948,
+          "width": 499,
+          "height": 664,
+          "overallRatio": 1.3306613226452906
+        },
+        "silhouette": {
+          "iouAtS0": 0.5569577930373178,
+          "f": 0.85,
+          "dx": 91.60000000000002,
+          "dy": 145.05,
+          "bestIoU": 0.7911618997291763,
+          "p95PictureToRender": 52.09785841290478,
+          "p95RenderToPicture": 47.05882352941177,
+          "maximum": 59.641373438289776,
+          "boundarySamples": [2126, 1946],
+          "worstPicture": {
+            "distance": 57.695058048184606,
+            "point": [1027, 526]
+          },
+          "worstRender": {
+            "distance": 59.641373438289776,
+            "point": [953, 566]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.2599388379204893,
+          "renderWall": 0.28313253012048195,
+          "wallRelativeDifference": -0.08191814691912302,
+          "overall": 1.3114503816793892,
+          "renderOverall": 1.3306613226452906,
+          "overallRelativeDifference": -0.014437137864434901,
+          "wallPass": false,
+          "overallPass": true
+        },
+        "base": {
+          "width": 654,
+          "renderWidth": 727.6799999999998,
+          "heldWidthAtReturned": 727.6799999999998,
+          "k": 1.1126605504587153
+        },
+        "highlights": {
+          "nearWhite": 330,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 1115,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 105.46023496503504,
+          "right": 71.70386993006991,
+          "boxes": [
+            [664, 832, 675, 845],
+            [994, 770, 1005, 783]
+          ],
+          "ratio": 1.470774660668754,
+          "renderRatio": 1.2134195382808903
+        },
+        "eye": {
+          "wallRatio": 0.2599388379204893,
+          "renderWallRatio": 0.28313253012048195,
+          "baseWidth": 654,
+          "leftBox": [664, 832, 675, 845],
+          "rightBox": [994, 770, 1005, 783],
+          "wallReading": {
+            "eaves": [742, 733],
+            "foot": [742, 903]
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "IoU0.7912,p9552.10/47.06,max59.64; newly opens clerestory windows on solid brick back in render; geometry wins over text.",
+      "sha256": "e3a1290f98060d17442659560611881546a6f5ae17aee9f9034ce4a2474f1145"
+    },
+    {
+      "building": "ironworks",
+      "view": 1,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. The one exception to the amber rule is the glow of the furnace mouth, which stays as the first picture has it (no more of it, and nothing glowing anywhere else).\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Ironworks in the view r1. an ironworks of red brick with cream limestone quoins and sills and teal standing-seam sheet roofs: a tall furnace gable with a glowing arched furnace mouth framed in black iron straps, a black iron trough and stone steps in front of it, a small arched window above it, and a tall square red-brick chimney with a cream band, a black iron band with rivets and a black cap rising behind it; a small lean-to at one end with an arched window, a teal door and a copper boiler with copper pipes; and a long hall with a teal roof carrying a clerestory of small windows on its ridge, whose open side is a timber-framed bay with stacks of grey iron ingots, a hoist with a hanging chain and a timber fence, and whose brick wall has arched windows with cream surrounds. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the furnace gable with the glowing furnace mouth, the iron trough, the steps and the small arched window, and beyond it the small lean-to with its teal door and copper boiler stands at the upper-left side; the open timber-framed bay with the ingot stacks, the hoist and chain and the fence, and the brick wall with its arched windows stands at the lower-left side; the tall brick chimney with its cream and iron bands (it rises behind the furnace gable) stands at the far (top) corner; the long teal roof with the clerestory of small windows on its ridge stands at the right corner. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Last silhouette IoU0.7912,p9552.10/47.06,max59.64: still too large. FIRST IMAGE small bbox486–984,275–938 on1536x1024 must remain exact, same margins and tall hall walls. Clerestory BACK is SOLID RED BRICK in first render, no windows on this side; remove newly opened clerestory glazing. Keep every first-image part, roof valley, chain and fence unchanged.\n\nOutput: 1536 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/ironworks-r1-textured.png",
+        "G:/DEV/wt/originals-textured-b/ironworks.png"
+      ],
+      "file": "raw/ironworks-r1-attempt-3.png",
+      "returned": [1536, 1024],
+      "measured": {
+        "file": "assets/source/textured/ironworks/raw/ironworks-r1-attempt-3.png",
+        "job": "ironworks",
+        "view": 1,
+        "returned": [1536, 1024],
+        "s0": 1,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [436, 67, 1097, 949],
+          "area": 326833,
+          "width": 662,
+          "height": 883,
+          "overallRatio": 1.3338368580060422
+        },
+        "bareOpaque": {
+          "box": [486, 275, 984, 938],
+          "area": 181948,
+          "width": 499,
+          "height": 664,
+          "overallRatio": 1.3306613226452906
+        },
+        "silhouette": {
+          "iouAtS0": 0.5333792445193521,
+          "f": 0.85,
+          "dx": 101.97500000000002,
+          "dy": 152.2,
+          "bestIoU": 0.7608230271963788,
+          "p95PictureToRender": 65.85083279603073,
+          "p95RenderToPicture": 57.550940275929456,
+          "maximum": 78.2242362817849,
+          "boundarySamples": [2143, 1946],
+          "worstPicture": {
+            "distance": 78.2242362817849,
+            "point": [728, 210]
+          },
+          "worstRender": {
+            "distance": 67.97109094425548,
+            "point": [953, 566]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.25113464447806355,
+          "renderWall": 0.28313253012048195,
+          "wallRelativeDifference": -0.1130138088647118,
+          "overall": 1.3338368580060422,
+          "renderOverall": 1.3306613226452906,
+          "overallRelativeDifference": 0.0023864339533359313,
+          "wallPass": false,
+          "overallPass": true
+        },
+        "base": {
+          "width": 661,
+          "renderWidth": 727.6799999999998,
+          "heldWidthAtReturned": 727.6799999999998,
+          "k": 1.100877458396369
+        },
+        "highlights": {
+          "nearWhite": 818,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 1115,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 121.98385824175824,
+          "right": 67.12514945054947,
+          "boxes": [
+            [660, 816, 673, 830],
+            [980, 757, 993, 771]
+          ],
+          "ratio": 1.817260136331208,
+          "renderRatio": 1.2134195382808903
+        },
+        "eye": {
+          "wallRatio": 0.25113464447806355,
+          "renderWallRatio": 0.28313253012048195,
+          "baseWidth": 661,
+          "leftBox": [660, 816, 673, 830],
+          "rightBox": [980, 757, 993, 771],
+          "wallReading": {
+            "eaves": [738, 720],
+            "foot": [738, 886]
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "IoU0.7608,p9565.85/57.55,max78.22; wall proportion low, hoist chain moved outside frame toward front fence. STOP: allr0/r1 attempts belowIoU0.80.",
+      "sha256": "47bfd9ba0bc8ea1759a0835be24a370c88c22b489ddfa61818e2db5c0521658b"
+    }
+  ],
+  "outcomes": {
+    "r0": {
+      "closestRefused": 3,
+      "kept": false
+    },
+    "r1": {
+      "closestRefused": 2,
+      "kept": false
+    }
+  }
+}
