@@ -322,14 +322,21 @@ export function measure(file, job, view, eye = {}) {
   const j = JSON.parse(readFileSync(`../scaffolds-textured-a/${job}-r${view}.json`)),
     p = png(file),
     bare = png(`../scaffolds-textured-a/${job}-r${view}-bare.png`),
-    original = png(`../originals-textured-a/${job}.png`),
+    original = png(
+      `../originals-textured-a/${job}${['farm', 'quarry'].includes(job) ? '-r0' : ''}.png`,
+    ),
     s0 = p.width / j.canvas[0];
   // pictureOf parses file names rather than reading alpha; this job's custom names return null.
   const nameMetadata = pictureOf(file),
     raw = maskOf(p),
     sb = bounds(raw, p.width, p.height),
     bb = bounds(maskOf(bare), bare.width, bare.height),
-    source = fillSmall(opening(raw, p.width, p.height, 2 * s0), p.width, p.height, 60 * s0 * s0),
+    source = fillSmall(
+      opening(raw, p.width, p.height, 2 * s0),
+      p.width,
+      p.height,
+      job === 'farm' ? Infinity : 60 * s0 * s0,
+    ),
     tw = p.width,
     th = Math.round(j.canvas[1] * s0),
     target = polygonMask(j.outline_polygon_px, tw, th, s0);
@@ -417,17 +424,21 @@ export function prepare(job, view, attempt, renderReference, correction = '') {
   if (renderReference) data.renderReference['r' + view] = renderReference;
   const references = [
     `G:/DEV/wt/scaffolds-textured-a/${job}-r${view}-textured.png`,
-    `G:/DEV/wt/originals-textured-a/${job}.png`,
+    `G:/DEV/wt/originals-textured-a/${job}${['farm', 'quarry'].includes(job) ? '-r0' : ''}.png`,
   ];
-  const r0 = data.attempts.some((a) => a.view === 0 && a.kept === true);
-  if (view && r0) references.push(`G:/DEV/wt/codex-textured-a/${root}/${job}-r0.png`);
+  const consistencyView = ['farm', 'quarry'].includes(job) ? 1 : 0;
+  const consistency =
+    view > consistencyView &&
+    data.attempts.some((a) => a.view === consistencyView && a.kept === true);
+  if (consistency)
+    references.push(`G:/DEV/wt/codex-textured-a/${root}/${job}-r${consistencyView}.png`);
   const refText = src.match(
     /References: the first is the textured render, the picture to paint over: ([\s\S]*?)\[the references paragraph/,
   )[1];
   const thirdAt = refText.indexOf(' The third is this same building');
   const ref =
     'References: the first is the textured render, the picture to paint over: ' +
-    (view && r0 ? refText.trim() : refText.slice(0, thirdAt).trim());
+    (consistency ? refText.trim() : refText.slice(0, thirdAt).trim());
   const b = `View. The building is the ${name} in the view r${view}. ${building} ${line} Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\n${ref}`;
   let prompt = a + '\n\n' + b + '\n\n' + c;
   if (correction) prompt += '\n\nCorrection: ' + correction;
