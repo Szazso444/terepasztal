@@ -75,3 +75,40 @@ All PNGs remain byte-for-byte tool returns. All previews and input extraction st
 Render reference, manual coordinate readings and uncertainty, wall sample coordinates, full prompts and ordered references, hashes and detailed machine measurements are in prompts.json. Highlights are reported only.
 
 Material-only references produced coherent crisp brick, slate, green glazing and machinery, but the edit repeatedly enlarged the whole layout even after numeric corrections. r0 best .7329 and r1 best .5146; neither holds the render silhouette. Stopped afterr1; r2/r3 never attempted; closest refusals r0#3 andr1#2 stay raw, no accepted copy.
+
+## TB2-fuel_stop (2026-10-22T16:43:49.462Z)
+- Result: done
+- Lane commit: 807cc17eeb5dd65090088f1b7b5c19dae44ea943 (origin/art/textured-c)
+- Views accepted: r1 assets/source/textured/fuel_stop/fuel_stop-r1.png (attempt2); r3 assets/source/textured/fuel_stop/fuel_stop-r3.png (attempt2), decidingnumbers below. r0 untouched.
+- Refused attempts: r1#1, r2#1/#2/#3, r3#1; allfailed boundary owingclosed lowerlegspaces. Closest r2#3 byIoU stays rawonly.
+- Stop reason: none
+- Notes:7calls,2selectedaccepted,5refused. Originalhashmatched;9renderfilesvalidated. Geometrywins: horizontalplanks andvisible far-sidewinch/chute followrender despiteprose. Actualjson carrieshole_polygons_px despiteolderprompt sayingnone; holesincluded perqueuerules. Helpercalibration onr1 .99408,p951.003,max2.006. Alpha-awareinspection; eachreturn1254square retainedexactly. r3#1groundbasewidthaudited toexcludechute, oldreadingpreserved; stillrefusedsilhouette. Previousbaselinechecks asreported; syntax/format/diff andacceptedbyteidentitypass.
+
+Acceptedr1 #2: IoU0.9645952637092645, p95 5.254982423385858/5.254982423385858, max8.449524548075857, bin/leg 0.833063209076175vs0.8403865778258, overall1.3826979472140764vs1.397459165154265.
+Acceptedr3 #2: IoU0.951912277863795, p95 10.110479055330506/9.74985901003023, max18.042923584921805, bin/leg 0.8127035830618893vs0.8403865778258, overall1.3835820895522388vs1.3847549909255898.
+
+# fuel_stop textured route audit
+
+All PNGs remain byte-for-byte tool returns. All previews and input extraction stayed on G. Alpha-aware previews composite RGB by alpha; invisible RGB at alpha zero is not a visible glow.
+
+| View / attempt | Size      | IoU s0  | f / dx / dy                    | Best IoU | p95 picture/render  | Max       | Tank or wall / render | Overall / render  | Base / k            | White / amber | Selected |
+| -------------- | --------- | ------- | ------------------------------ | -------- | ------------------- | --------- | --------------------- | ----------------- | ------------------- | ------------- | -------- |
+| r1 #1          | 1254x1254 | 0.81236 | 1.01800 / -22.11000 / 30.36000 | 0.95141  | 8.82363 / 81.96056  | 112.64401 | 0.82421 / 0.84039     | 1.40663 / 1.39746 | 603.00000 / 1.01496 | 1682 / 189    | refused  |
+| r1 #2          | 1254x1254 | 0.82599 | 0.99500 / 1.95500 / 43.10000   | 0.96460  | 5.25498 / 5.25498   | 8.44952   | 0.83306 / 0.84039     | 1.38270 / 1.39746 | 617.00000 / 0.99193 | 2701 / 6      | YES      |
+| r2 #1          | 1254x1254 | 0.88210 | 0.97100 / 18.15500 / 39.94500  | 0.95315  | 8.40975 / 84.47511  | 120.30649 | 0.80190 / 0.84439     | 1.48328 / 1.48444 | 631.00000 / 0.96993 | 2544 / 437    | refused  |
+| r2 #2          | 1254x1254 | 0.80646 | 0.98600 / 11.10000 / 58.37000  | 0.94413  | 13.70884 / 82.80572 | 115.26311 | 0.81180 / 0.84439     | 1.51638 / 1.48444 | 627.00000 / 0.97611 | 1892 / 79     | refused  |
+| r2 #3          | 1254x1254 | 0.77659 | 0.94700 / 32.62500 / 84.77500  | 0.95520  | 7.94990 / 88.22350  | 124.61482 | 0.82827 / 0.84439     | 1.48065 / 1.48444 | 658.00000 / 0.93013 | 2829 / 177    | refused  |
+| r3 #1          | 1254x1254 | 0.77178 | 1.03200 / -24.34500 / 40.22500 | 0.94664  | 13.81887 / 79.00786 | 112.59918 | 0.79739 / 0.84039     | 1.35736 / 1.38475 | 612.00000 / 1.00004 | 2459 / 243    | refused  |
+| r3 #2          | 1254x1254 | 0.85701 | 1.01200 / -10.07500 / 23.82500 | 0.95191  | 10.11048 / 9.74986  | 18.04292  | 0.81270 / 0.84039     | 1.38358 / 1.38475 | 614.00000 / 0.99678 | 2074 / 809    | YES      |
+
+- r1 attempt 1: Refused despite IoU .9514: render-to-picture p95 81.96 and maximum112.64 at lower leggap; opaque timber backing fills gap the render exposes. Otherp95 8.82. Returned1254square, unchangedbytes. Raw: assets/source/textured/fuel_stop/raw/fuel_stop-r1-attempt-1.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r1 attempt 2: Accepted r1#2: IoU .96460 p95 5.255/5.255 max8.450; bothheight ratios within8%. Correct existing chute, sixleg/pier layout and open gaps; varied coal and crisp timber/iron/stone coherent with reference. Geometrywins overprose: bin planks horizontal asrender. Raw: assets/source/textured/fuel_stop/raw/fuel_stop-r1-attempt-2.png. Eye: {"sameBuilding":true,"coherentPainting":true,"light":true,"noExtras":true}.
+- r2 attempt 1: Refused despite IoU .9531: p95 8.41/84.48 max120.31 at lower leggap, newly opaque backing. Winch visible perrender takesauthority overhiddenprose. Raw: assets/source/textured/fuel_stop/raw/fuel_stop-r2-attempt-1.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r2 attempt 2: Refused IoU .9441 p95 13.71/82.81 max115.26: rear stone/wood backing still closes lowerleggap, changed coal profile and rim. Raw: assets/source/textured/fuel_stop/raw/fuel_stop-r2-attempt-2.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r2 attempt 3: Refused IoU .9552 p95 7.95/88.22 max124.61, lower leg opening closed by opaque rearstone/wood; closest byIoU r2#3 rawonly. Raw: assets/source/textured/fuel_stop/raw/fuel_stop-r2-attempt-3.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r3 attempt 1: Refused IoU .9466 p95 13.82/79.01 max112.60: lowerleggap closed. Base audit excludes chute aboveground: width612, height .7974vs.8404 passes; initial665 counted chute, preserved ininitialAssessment. Stillsilhouetterefused. Raw: assets/source/textured/fuel_stop/raw/fuel_stop-r3-attempt-1.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r3 attempt 2: Accepted r3#2: IoU .95191 p95 10.110/9.750 max18.043; bin+leg andoverall heights pass. Open lowergaps andpiers preserved; crisp timber, coal, rope,iron coherent withacceptedr1. Base width excludes overhangingchute. Raw: assets/source/textured/fuel_stop/raw/fuel_stop-r3-attempt-2.png. Eye: {"sameBuilding":true,"coherentPainting":true,"light":true,"noExtras":true}.
+
+Render reference, manual coordinate readings and uncertainty, wall sample coordinates, full prompts and ordered references, hashes and detailed machine measurements are in prompts.json. Highlights are reported only.
+
+Accepted r1#2 andr3#2; r2#3 is closest refused byIoU, rawonly. Timber, coal, iron, rope andstone read asone coherenthand, correcting projectionseams andblockyhidden faces. r2 repeatedly closedlowerleg spaces despite matching overalloutline; exactopenings needCore review. Geometrywins: horizontalplanks andvisible far-side winch/chute followrender despiteprose.
