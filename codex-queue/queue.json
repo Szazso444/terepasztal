@@ -1,25 +1,166 @@
 {
-  "updated": "2026-10-21",
-  "source": "handoff/codex-prompts-v9 on claude/optimistic-thompson-ndc4an-core-handoff, revised by Core review 1 (codex-queue/status/CORE-REVIEW-1.md); Core review 2 (codex-queue/status/CORE-REVIEW-2.md)",
+  "updated": "2026-10-22",
+  "source": "handoff/codex-prompts-v9 on claude/optimistic-thompson-ndc4an-core-handoff, revised by Core review 1 (codex-queue/status/CORE-REVIEW-1.md); Core review 2 (codex-queue/status/CORE-REVIEW-2.md); the textured route (TB2 prompts, groups textured-a, textured-b, textured-c)",
   "ledgerBranch": "claude/codex-queue",
   "worktreeRoot": "G:/DEV/wt",
   "groups": [
+    {
+      "id": "textured-a",
+      "title": "Textured a: big station, big farm, town hall, small farm, quarry, house",
+      "laneBranch": "art/textured-a",
+      "worktree": "G:/DEV/wt/codex-textured-a",
+      "localBranch": "codex-textured-a",
+      "status": "ready",
+      "ledger": "codex-queue/status/textured-a.md",
+      "note": "NEW LANE: art/textured-a does not exist on origin yet. The sub-agent creates it from origin/develop (worktree add -b codex-textured-a G:/DEV/wt/codex-textured-a origin/develop; the first push of HEAD:art/textured-a creates the branch). Inputs: the textured renders on claude/art-scaffolds-review-2 (assets/source/buildings-v2/scaffolds-textured/) and the original paintings (the prompt says where each lives). Accepted pictures go to assets/source/textured/<building>/<building>-r<v>.png. Stricter tests than the scaffold prompts (IoU 0.92, p95 16, max 32 canvas px, height 8 per cent; oil derrick IoU 0.88). Stop rule per building (two consecutive views with all 3 attempts under IoU 0.80 stops THAT building, the group goes on). Prompts with status blocked or superseded are skipped.",
+      "prompts": [
+        {
+          "id": "TB2-big_station",
+          "title": "Big station: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-big_station.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at 20 to 24 degrees, not the game's 30. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-big_farm",
+          "title": "Big farm halt: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-big_farm.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at 20 to 24 degrees, not the game's 30. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-town",
+          "title": "Town hall: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-town.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at 20 to 24 degrees, not the game's 30. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-farm",
+          "title": "Small farm halt: r1 to r3 painted over the textured renders (3 pictures)",
+          "file": "codex-queue/prompts/TB2-farm.md",
+          "status": "ready",
+          "note": "The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are superseded). At most 3 attempts per view."
+        },
+        {
+          "id": "TB2-quarry",
+          "title": "Quarry: r1 to r3 painted over the textured renders (3 pictures)",
+          "file": "codex-queue/prompts/TB2-quarry.md",
+          "status": "blocked",
+          "note": "blocked: blockout fix pending (Core). R2 and r3 are broken. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+        },
+        {
+          "id": "TB2-townhouse",
+          "title": "House (townhouse): r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-townhouse.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at 20 to 24 degrees, not the game's 30. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        }
+      ]
+    },
+    {
+      "id": "textured-b",
+      "title": "Textured b: stone grinder, oil refinery, colliery, ironworks, oil derrick",
+      "laneBranch": "art/textured-b",
+      "worktree": "G:/DEV/wt/codex-textured-b",
+      "localBranch": "codex-textured-b",
+      "status": "ready",
+      "ledger": "codex-queue/status/textured-b.md",
+      "note": "NEW LANE: art/textured-b does not exist on origin yet. The sub-agent creates it from origin/develop (worktree add -b codex-textured-b G:/DEV/wt/codex-textured-b origin/develop; the first push of HEAD:art/textured-b creates the branch). Inputs: the textured renders on claude/art-scaffolds-review-2 (assets/source/buildings-v2/scaffolds-textured/) and the original paintings (the prompt says where each lives). Accepted pictures go to assets/source/textured/<building>/<building>-r<v>.png. Stricter tests than the scaffold prompts (IoU 0.92, p95 16, max 32 canvas px, height 8 per cent; oil derrick IoU 0.88). Stop rule per building (two consecutive views with all 3 attempts under IoU 0.80 stops THAT building, the group goes on). Prompts with status blocked or superseded are skipped.",
+      "prompts": [
+        {
+          "id": "TB2-grinder",
+          "title": "Stone grinder: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-grinder.md",
+          "status": "blocked",
+          "note": "blocked: blockout fix pending (Core). Holes in the walls and roof at r1 to r3. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+        },
+        {
+          "id": "TB2-refinery",
+          "title": "Oil refinery: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-refinery.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at 20 to 24 degrees, not the game's 30. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-colliery",
+          "title": "Colliery: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-colliery.md",
+          "status": "blocked",
+          "note": "blocked: blockout fix pending (Core). R2 and r3 are broken; the head frame floats at r3. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+        },
+        {
+          "id": "TB2-ironworks",
+          "title": "Ironworks: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-ironworks.md",
+          "status": "blocked",
+          "note": "blocked: blockout fix pending (Core). R2 and r3 are blocky. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+        },
+        {
+          "id": "TB2-oil_derrick",
+          "title": "Oil derrick: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-oil_derrick.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at 20 to 24 degrees, not the game's 30. At most 3 attempts per view; the closest refused attempt is kept in raw/. IoU bar 0.88 (blockout IoU 0.902, thin lattice)."
+        }
+      ]
+    },
+    {
+      "id": "textured-c",
+      "title": "Textured c: battery, power plant, coaling stage, fuel pump",
+      "laneBranch": "art/textured-c",
+      "worktree": "G:/DEV/wt/codex-textured-c",
+      "localBranch": "codex-textured-c",
+      "status": "ready",
+      "ledger": "codex-queue/status/textured-c.md",
+      "note": "NEW LANE: art/textured-c does not exist on origin yet. The sub-agent creates it from origin/develop (worktree add -b codex-textured-c G:/DEV/wt/codex-textured-c origin/develop; the first push of HEAD:art/textured-c creates the branch). Inputs: the textured renders on claude/art-scaffolds-review-2 (assets/source/buildings-v2/scaffolds-textured/) and the original paintings (the prompt says where each lives). Accepted pictures go to assets/source/textured/<building>/<building>-r<v>.png. Stricter tests than the scaffold prompts (IoU 0.92, p95 16, max 32 canvas px, height 8 per cent; oil derrick IoU 0.88). Stop rule per building (two consecutive views with all 3 attempts under IoU 0.80 stops THAT building, the group goes on). Prompts with status blocked or superseded are skipped.",
+      "prompts": [
+        {
+          "id": "TB2-substation",
+          "title": "Battery (substation): r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-substation.md",
+          "status": "ready",
+          "note": "Paint over the textured render and unify it into one painting in the style of the original; r0 too, because the original was painted at 20 to 24 degrees, not the game's 30. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+        },
+        {
+          "id": "TB2-power_plant",
+          "title": "Power plant: r0 to r3 painted over the textured renders (4 pictures)",
+          "file": "codex-queue/prompts/TB2-power_plant.md",
+          "status": "ready",
+          "note": "Paint over the textured render; the look comes from the six material crops only (a sheet made from them), NEVER the full original painting (TB1 copied its size and position)."
+        },
+        {
+          "id": "TB2-fuel_stop",
+          "title": "Coaling stage (fuel_stop): r1 to r3 painted over the textured renders (3 pictures)",
+          "file": "codex-queue/prompts/TB2-fuel_stop.md",
+          "status": "blocked",
+          "note": "blocked: blockout fix pending (Core). R2 and r3 have flat yellow ends. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+        },
+        {
+          "id": "TB2-fuel_pump",
+          "title": "Fuel pump: r1 to r3 painted over the textured renders (3 pictures)",
+          "file": "codex-queue/prompts/TB2-fuel_pump.md",
+          "status": "ready",
+          "note": "The accepted r0 painting stays and is the reference; r1 to r3 are painted over the textured renders (the earlier accepted turned views are not rotations of r0 and are superseded). At most 3 attempts per view."
+        }
+      ]
+    },
     {
       "id": "textured-pilot",
       "title": "Textured pilot: repaint over the textured blockout renders",
       "laneBranch": "art/textured-pilot",
       "worktree": "G:/DEV/wt/codex-textured-pilot",
       "localBranch": "codex-textured-pilot",
-      "status": "ready",
+      "status": "done",
       "ledger": "codex-queue/status/textured-pilot.md",
-      "note": "NEW LANE: art/textured-pilot does not exist on origin yet. The sub-agent creates it from origin/develop (worktree add -b codex-textured-pilot G:/DEV/wt/codex-textured-pilot origin/develop; the first push of HEAD:art/textured-pilot creates the branch). Inputs: the textured renders on claude/art-scaffolds-review-2 (assets/source/buildings-v2/scaffolds-textured/, eef723cf) and the original paintings on origin/develop (assets/source/base-v1/). Stricter tests than the scaffold prompts (IoU 0.92, p95 16, max 32 canvas px, height 8 per cent).",
+      "note": "Finished 21 October 2026 (TB1): warehouse and pump accepted; TB1 is superseded for the power plant (see textured-c). Nothing more to run here.",
       "prompts": [
         {
           "id": "TB1",
           "title": "Textured pilot: warehouse, water pump and power plant, r0 to r3, repainted over the textured renders (12 pictures)",
           "file": "codex-queue/prompts/TB1.md",
-          "status": "ready",
-          "note": "Paint over the textured render and unify it into one painting in the style of the original r0; the render's silhouette, camera, proportions and light stay. At most 3 attempts per view; the closest refused attempt is kept in raw/."
+          "status": "superseded",
+          "note": "superseded by textured-c for the power plant. TB1 ran on 21 October 2026: warehouse r0 to r3 and pump r0 to r3 are DONE (8 accepted, lane art/textured-pilot, 528bdb9f); power plant r0 and r1 were refused and r2, r3 were never run: the power plant is repainted in TB2-power_plant (material crops only)."
         }
       ]
     },
@@ -31,7 +172,7 @@
       "localBranch": "codex-rotations",
       "status": "ready",
       "ledger": "codex-queue/status/rotations.md",
-      "note": "Resume from the first prompt that is not done: CR1-adopt, then C24a and on. Prompts with status done, blocked or later are skipped. C29a is the hydro plant painted over its own Blender blockout, r0 to r3 (Core review 2; it replaces the stage-1 prompt). The scaffold-prompt rules of Core review 1 (boundary p95/max, scaffold geometry wins) are in a header at the top of each prompt.",
+      "note": "Only C29a (the hydro plant over its Blender blockout) is left to run; the held scaffold prompts (CR1-adopt, C24a to C28a, C30a to C33a) are superseded by the textured groups. Prompts with status done, blocked, superseded or later are skipped. The scaffold-prompt rules of Core review 1 are in a header at the top of C29a.",
       "prompts": [
         {
           "id": "C18a",
@@ -65,71 +206,71 @@
           "id": "CR1-adopt",
           "title": "Mark the five views Core review 1 accepted (Big Station r1 r3, Big Farm r1 r2, Warehouse r2): prompts.json only, no image call",
           "file": "codex-queue/prompts/CR1-adopt.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-a (big_station, big_farm) and textured-pilot (warehouse). The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C24a",
           "title": "Water pump: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C24a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-pilot (TB1 accepted all four pump views). The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C25a",
           "title": "Stone grinder: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C25a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-b. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C26a",
           "title": "Oil refinery: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C26a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-b. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C27a",
           "title": "Power plant: r1, r3 and r2 painted over the scaffolds on the 1536 x 1024 canvas (3 pictures)",
           "file": "codex-queue/prompts/C27a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-c. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C28a",
           "title": "Battery (substation): r0 painted over its scaffold, then r1, r3 and r2 (4 pictures)",
           "file": "codex-queue/prompts/C28a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-c. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C30a",
           "title": "Colliery: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
           "file": "codex-queue/prompts/C30a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-b. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C31a",
           "title": "Ironworks: r1, r3 and r2 painted over the scaffolds on the 2 x 2 plan (3 pictures)",
           "file": "codex-queue/prompts/C31a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-b. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C32a",
           "title": "Oil derrick: r1, r3 and r2 painted over the scaffolds (3 pictures)",
           "file": "codex-queue/prompts/C32a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-b. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C33a",
           "title": "House (townhouse) turned: r3 and r2 painted over the scaffolds on the tall 1024 x 1536 canvas (2 pictures)",
           "file": "codex-queue/prompts/C33a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-a. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C29a",
@@ -148,28 +289,28 @@
       "localBranch": "codex-buildings",
       "status": "ready",
       "ledger": "codex-queue/status/buildings.md",
-      "note": "C21a, C23a and C4e run first (each starts with its Step 0 or its own checks). C35a runs last. Only this group uses art/325-buildings-v2.",
+      "note": "C21a, C23a and C4e are superseded by textured-a and textured-c; only C35a (narrow depot) is left to run. Only this group uses art/325-buildings-v2.",
       "prompts": [
         {
           "id": "C21a",
           "title": "Small Farm Halt a0: r1 and r3 painted over the scaffolds (2 pictures)",
           "file": "codex-queue/prompts/C21a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-a. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C23a",
           "title": "Quarry a0 r2 painted over its scaffold (1 picture)",
           "file": "codex-queue/prompts/C23a.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-a. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C4e",
           "title": "Coaling stage r1 and r3 painted over the scaffolds, matching the accepted r0 and r2 (2 pictures)",
           "file": "codex-queue/prompts/C4e.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-c. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         },
         {
           "id": "C35a",
@@ -186,16 +327,16 @@
       "laneBranch": "art/325-fuel-pump",
       "worktree": "G:/DEV/wt/codex-fuelpump",
       "localBranch": "codex-fuelpump",
-      "status": "ready",
+      "status": "superseded",
       "ledger": "codex-queue/status/fuelpump.md",
-      "note": "One prompt. Only this group uses art/325-fuel-pump.",
+      "note": "Its only prompt, R8e, is superseded by textured-c (fuel_pump). Nothing to run here.",
       "prompts": [
         {
           "id": "R8e",
           "title": "Fuel Pump r3 painted over its scaffold (1 picture); r1 and r2 adopted (accepted)",
           "file": "codex-queue/prompts/R8e.md",
-          "status": "hold",
-          "note": "HOLD (author, 21 October 2026): the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run."
+          "status": "superseded",
+          "note": "superseded by textured-c. The AI-reconstructed scaffolds are replaced by the clean textured blockouts painted over (previous note: HOLD: the AI-reconstructed scaffolds are morphed; turned views wait for clean Blender blockouts matched to r0. Do not run.)"
         }
       ]
     },
@@ -268,6 +409,7 @@
     "ready": "run it",
     "blocked": "waits for something Core provides: skip it, do not stop the group",
     "later": "not to run",
-    "hold": "paused by the author: skip it, do not stop the group"
+    "hold": "paused by the author: skip it, do not stop the group",
+    "superseded": "replaced by another route (the textured groups): skip it, do not stop the group; the note names the group that took it over"
   }
 }
