@@ -1,0 +1,885 @@
+{
+  "job": "big_farm",
+  "renderReference": {
+    "r0": {
+      "foot": [474, 938],
+      "eaves": [474, 725],
+      "baseCorners": [207, 944],
+      "baseWidth": 737,
+      "wallRatio": 0.28900949796472186,
+      "uncertaintyPx": 3,
+      "note": "Near main-wall corner, dock canopy excluded; actual ground base span read on bare crop."
+    },
+    "r1": {
+      "foot": [604, 965],
+      "eaves": [604, 752],
+      "baseCorners": [217, 845],
+      "baseWidth": 628,
+      "wallRatio": 0.339171974522293,
+      "uncertaintyPx": 5,
+      "note": "Near barn corner partly occluded by silo; continue main wall/eave lines behind it. Dock canopy excluded."
+    },
+    "r2": {
+      "foot": [417, 965],
+      "eaves": [417, 756],
+      "baseCorners": [90, 786],
+      "baseWidth": 696,
+      "wallRatio": 0.30028735632183906,
+      "uncertaintyPx": 3
+    },
+    "r3": {
+      "foot": [551, 938],
+      "eaves": [551, 735],
+      "baseCorners": [180, 863],
+      "baseWidth": 683,
+      "wallRatio": 0.2972181551976574,
+      "uncertaintyPx": 3
+    }
+  },
+  "attempts": [
+    {
+      "building": "big_farm",
+      "view": 0,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Big farm halt in the view r0. a timber-framed farm barn on a cream limestone base course: vertical warm orange-brown plank walls with dark timber braces and posts, a dark slate gable roof with a small louvred dormer on one slope, a cream-stone chimney with a copper pot, and cream-stone gable edges. The long wall has a forest-green plank door in a cream stone frame and a small window with a cream frame and timber braces; at its end stands a round timber silo with iron hoops, a conical slate cap with a copper finial and a dark-green downpipe with a spout box, on a stone base. One gable end has a loading dock: a timber canopy and platform with a ramp, crates and sacks, and a small window. The other gable end is plain timber with a small window high in the gable. r0: the visible sides are the lower-left and the lower-right. What the building has where: the loading-dock gable end (timber canopy, platform and ramp, crates and sacks, small window) (the lower-left side); the long timber wall with the green plank door in its cream stone frame, the window and the braces (the lower-right side); the round silo with its pipe and spout box on its stone base (the right corner); the plain timber gable end with the small high window (no dock, no crates, no ramp) (the upper-right side); the long back wall (plain timber; as the render has it) (the upper-left side). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/big_farm-r0-textured.png",
+        "G:/DEV/wt/originals-textured-a/big_farm.png"
+      ],
+      "file": "raw/big_farm-r0-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/big_farm/raw/big_farm-r0-attempt-1.png",
+        "job": "big_farm",
+        "view": 0,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [89, 253, 1230, 1178],
+          "area": 608580,
+          "width": 1142,
+          "height": 926,
+          "overallRatio": 0.8108581436077058
+        },
+        "bareOpaque": {
+          "box": [138, 315, 942, 959],
+          "area": 302385,
+          "width": 805,
+          "height": 645,
+          "overallRatio": 0.8012422360248447
+        },
+        "silhouette": {
+          "iouAtS0": 0.713140940182956,
+          "f": 0.863,
+          "dx": 89.83000000000004,
+          "dy": 157.16999999999996,
+          "bestIoU": 0.9756147617041065,
+          "p95PictureToRender": 8.463239243541537,
+          "p95RenderToPicture": 10.408408042121525,
+          "maximum": 27.440348474684026,
+          "boundarySamples": [3029, 3065],
+          "worstPicture": {
+            "distance": 16.767041855577254,
+            "point": [191.89792663476874, 680.2169059011164]
+          },
+          "worstRender": {
+            "distance": 27.440348474684026,
+            "point": [899.8787878787879, 640.2041467304625]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.2726396917148362,
+          "renderWall": 0.28900949796472186,
+          "wallRelativeDifference": -0.05664106669561375,
+          "overall": 0.8108581436077058,
+          "renderOverall": 0.8012422360248447,
+          "overallRelativeDifference": 0.012001248998764646,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 1038,
+          "renderWidth": 691.2,
+          "heldWidthAtReturned": 846.45,
+          "k": 0.8154624277456648
+        },
+        "highlights": {
+          "nearWhite": 1945,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 2702,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 155.42847749999999,
+          "right": 175.44639799999987,
+          "boxes": [
+            [250, 855, 270, 875],
+            [650, 1000, 670, 1020]
+          ],
+          "ratio": 0.885902926887106,
+          "render": {
+            "boxes": [
+              [250, 731, 264, 745],
+              [531, 833, 546, 847]
+            ],
+            "left": 170.6366020408164,
+            "right": 147.40971047619047,
+            "ratio": 1.1575669030866018,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 1038,
+          "wallRatio": 0.2726396917148362,
+          "renderWallRatio": 0.28900949796472186,
+          "wallRead": {
+            "foot": [577, 1140],
+            "eaves": [577, 857],
+            "baseCorners": [192, 1230],
+            "uncertaintyPx": 4
+          },
+          "leftBox": [250, 855, 270, 875],
+          "rightBox": [650, 1000, 670, 1020]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "All strict silhouette, both height proportions and eye tests pass; one dormer/chimney, round silo/hoops/pipe, dock/ramp/crates/sacks and long-wall openings retained; coherent plank/stone/slate surfaces.",
+      "sha256": "66d170c2d3b8d656c49a86b98eccbc7b7d97705ce01a400570cb74361952083a"
+    },
+    {
+      "building": "big_farm",
+      "view": 1,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Big farm halt in the view r1. a timber-framed farm barn on a cream limestone base course: vertical warm orange-brown plank walls with dark timber braces and posts, a dark slate gable roof with a small louvred dormer on one slope, a cream-stone chimney with a copper pot, and cream-stone gable edges. The long wall has a forest-green plank door in a cream stone frame and a small window with a cream frame and timber braces; at its end stands a round timber silo with iron hoops, a conical slate cap with a copper finial and a dark-green downpipe with a spout box, on a stone base. One gable end has a loading dock: a timber canopy and platform with a ramp, crates and sacks, and a small window. The other gable end is plain timber with a small window high in the gable. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the loading-dock gable end (timber canopy, platform and ramp, crates and sacks, small window) stands at the upper-left side; the long timber wall with the green plank door in its cream stone frame, the window and the braces stands at the lower-left side; the round silo with its pipe and spout box on its stone base stands at the near (bottom) corner; the plain timber gable end with the small high window (no dock, no crates, no ramp) stands at the lower-right side; the long back wall (plain timber; as the render has it) stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/big_farm-r1-textured.png",
+        "G:/DEV/wt/originals-textured-a/big_farm.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/big_farm/big_farm-r0.png"
+      ],
+      "file": "raw/big_farm-r1-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/big_farm/raw/big_farm-r1-attempt-1.png",
+        "job": "big_farm",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [111, 157, 1169, 1198],
+          "area": 656693,
+          "width": 1059,
+          "height": 1042,
+          "overallRatio": 0.983947119924457
+        },
+        "bareOpaque": {
+          "box": [161, 368, 862, 1009],
+          "area": 266164,
+          "width": 702,
+          "height": 642,
+          "overallRatio": 0.9145299145299145
+        },
+        "silhouette": {
+          "iouAtS0": 0.5104221138789118,
+          "f": 0.85,
+          "dx": 72,
+          "dy": 269.55000000000007,
+          "bestIoU": 0.8370291728018234,
+          "p95PictureToRender": 45.16267228110778,
+          "p95RenderToPicture": 43.82475880074309,
+          "maximum": 54.14068438274473,
+          "boundarySamples": [2708, 2516],
+          "worstPicture": {
+            "distance": 54.14068438274473,
+            "point": [451.5725677830941, 1016.6507177033493]
+          },
+          "worstRender": {
+            "distance": 48.5029788717031,
+            "point": [525.8819776714514, 1001.9521531100479]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.3077742279020234,
+          "renderWall": 0.339171974522293,
+          "wallRelativeDifference": -0.09257175998840039,
+          "overall": 0.983947119924457,
+          "renderOverall": 0.9145299145299145,
+          "overallRelativeDifference": 0.07590479468375211,
+          "wallPass": false,
+          "overallPass": true
+        },
+        "base": {
+          "width": 939,
+          "renderWidth": 691.2,
+          "heldWidthAtReturned": 846.45,
+          "k": 0.9014376996805112
+        },
+        "highlights": {
+          "nearWhite": 3460,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 2702,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 192.25609550000007,
+          "right": 155.46934850000008,
+          "boxes": [
+            [300, 800, 320, 820],
+            [1000, 950, 1020, 970]
+          ],
+          "ratio": 1.2366173612671951,
+          "render": {
+            "boxes": [
+              [267, 775, 281, 789],
+              [753, 880, 767, 893]
+            ],
+            "left": 136.8086724489796,
+            "right": 158.49808235294114,
+            "ratio": 0.8631566415064638,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 939,
+          "wallRatio": 0.3077742279020234,
+          "renderWallRatio": 0.339171974522293,
+          "wallRead": {
+            "foot": [790, 1124],
+            "eaves": [790, 835],
+            "baseCorners": [198, 1137],
+            "uncertaintyPx": 5
+          },
+          "leftBox": [300, 800, 320, 820],
+          "rightBox": [1000, 950, 1020, 970]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Refused silhouette IoU.837029<.92, p95 45.163/43.825>16,max54.141>32; oversized output requires f below allowed range. Wall .307774 versus.339172 is -9.25%, outside8%; overall+7.59% passes.",
+      "sha256": "356f0a61b7ac9e81a7e1dd675d0441526d3a3e575e0350b78d274ca10ba5ebd5"
+    },
+    {
+      "building": "big_farm",
+      "view": 1,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Big farm halt in the view r1. a timber-framed farm barn on a cream limestone base course: vertical warm orange-brown plank walls with dark timber braces and posts, a dark slate gable roof with a small louvred dormer on one slope, a cream-stone chimney with a copper pot, and cream-stone gable edges. The long wall has a forest-green plank door in a cream stone frame and a small window with a cream frame and timber braces; at its end stands a round timber silo with iron hoops, a conical slate cap with a copper finial and a dark-green downpipe with a spout box, on a stone base. One gable end has a loading dock: a timber canopy and platform with a ramp, crates and sacks, and a small window. The other gable end is plain timber with a small window high in the gable. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the loading-dock gable end (timber canopy, platform and ramp, crates and sacks, small window) stands at the upper-left side; the long timber wall with the green plank door in its cream stone frame, the window and the braces stands at the lower-left side; the round silo with its pipe and spout box on its stone base stands at the near (bottom) corner; the plain timber gable end with the small high window (no dock, no crates, no ramp) stands at the lower-right side; the long back wall (plain timber; as the render has it) stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r1 copied a much larger building: the best fit hit minimum f0.85 and still IoU0.8370, p95 45.16/43.82 and maximum54.14 canvas px. Keep the first render at its own size and position with the same generous empty top/side margins, not the original or third picture size. Trace its entire roof, chimney, silo, platform and stonebase outlines exactly. Keep near wall height213 over base628 in render proportions (0.3392); last output wall ratio0.3078 was too short. Repaint all surfaces without changing their positions.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/big_farm-r1-textured.png",
+        "G:/DEV/wt/originals-textured-a/big_farm.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/big_farm/big_farm-r0.png"
+      ],
+      "file": "raw/big_farm-r1-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/big_farm/raw/big_farm-r1-attempt-2.png",
+        "job": "big_farm",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [196, 404, 1059, 1196],
+          "area": 406653,
+          "width": 864,
+          "height": 793,
+          "overallRatio": 0.9178240740740741
+        },
+        "bareOpaque": {
+          "box": [161, 368, 862, 1009],
+          "area": 266164,
+          "width": 702,
+          "height": 642,
+          "overallRatio": 0.9145299145299145
+        },
+        "silhouette": {
+          "iouAtS0": 0.8324898658579101,
+          "f": 0.992,
+          "dx": 2.7749999999999773,
+          "dy": 47.495000000000005,
+          "bestIoU": 0.9861874945539193,
+          "p95PictureToRender": 4.432918501525547,
+          "p95RenderToPicture": 4.432918501525547,
+          "maximum": 11.196353765486808,
+          "boundarySamples": [2508, 2516],
+          "worstPicture": {
+            "distance": 8.394743244068996,
+            "point": [855.7830940988836, 648.3700159489633]
+          },
+          "worstRender": {
+            "distance": 11.196353765486808,
+            "point": [835.3684210526316, 632.8548644338118]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.31565329883570503,
+          "renderWall": 0.339171974522293,
+          "wallRelativeDifference": -0.06934144756421234,
+          "overall": 0.9178240740740741,
+          "renderOverall": 0.9145299145299145,
+          "overallRelativeDifference": 0.003602024922118474,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 773,
+          "renderWidth": 691.2,
+          "heldWidthAtReturned": 846.45,
+          "k": 1.095019404915912
+        },
+        "highlights": {
+          "nearWhite": 2074,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 2702,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 170.3973533333332,
+          "right": 154.1549846666668,
+          "boxes": [
+            [340, 920, 360, 935],
+            [920, 990, 940, 1005]
+          ],
+          "ratio": 1.1053638888277775,
+          "render": {
+            "boxes": [
+              [278, 784, 294, 796],
+              [748, 841, 764, 853]
+            ],
+            "left": 135.9311677083334,
+            "right": 164.893221875,
+            "ratio": 0.824358734474715,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 773,
+          "wallRatio": 0.31565329883570503,
+          "renderWallRatio": 0.339171974522293,
+          "wallRead": {
+            "foot": [745, 1140],
+            "eaves": [745, 896],
+            "baseCorners": [267, 1040],
+            "uncertaintyPx": 5
+          },
+          "leftBox": [340, 920, 360, 935],
+          "rightBox": [920, 990, 940, 1005]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "All strict silhouette/height/eye tests pass. Silo stays near corner with downpipe/spout; plain rear gable and partially occluded long-wall door, dormer and chimney retain render layout; crisp continuous timber/stone/slate.",
+      "sha256": "b97e27096001c952af9e22df719433114dbec072cc482f0cb440dd5c9f200557"
+    },
+    {
+      "building": "big_farm",
+      "view": 2,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Big farm halt in the view r2. a timber-framed farm barn on a cream limestone base course: vertical warm orange-brown plank walls with dark timber braces and posts, a dark slate gable roof with a small louvred dormer on one slope, a cream-stone chimney with a copper pot, and cream-stone gable edges. The long wall has a forest-green plank door in a cream stone frame and a small window with a cream frame and timber braces; at its end stands a round timber silo with iron hoops, a conical slate cap with a copper finial and a dark-green downpipe with a spout box, on a stone base. One gable end has a loading dock: a timber canopy and platform with a ramp, crates and sacks, and a small window. The other gable end is plain timber with a small window high in the gable. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the loading-dock gable end (timber canopy, platform and ramp, crates and sacks, small window) stands at the upper-right side; the long timber wall with the green plank door in its cream stone frame, the window and the braces stands at the upper-left side; the round silo with its pipe and spout box on its stone base stands at the left corner; the plain timber gable end with the small high window (no dock, no crates, no ramp) stands at the lower-left side; the long back wall (plain timber; as the render has it) stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/big_farm-r2-textured.png",
+        "G:/DEV/wt/originals-textured-a/big_farm.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/big_farm/big_farm-r0.png"
+      ],
+      "file": "raw/big_farm-r2-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/big_farm/raw/big_farm-r2-attempt-1.png",
+        "job": "big_farm",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [99, 398, 1151, 1182],
+          "area": 520164,
+          "width": 1053,
+          "height": 785,
+          "overallRatio": 0.7454890788224121
+        },
+        "bareOpaque": {
+          "box": [81, 368, 885, 964],
+          "area": 302142,
+          "width": 805,
+          "height": 597,
+          "overallRatio": 0.7416149068322981
+        },
+        "silhouette": {
+          "iouAtS0": 0.843038642274865,
+          "f": 0.9329999999999999,
+          "dx": 8.75,
+          "dy": 79.80000000000007,
+          "bestIoU": 0.9828762691454804,
+          "p95PictureToRender": 6.126589981726215,
+          "p95RenderToPicture": 6.371749759075995,
+          "maximum": 22.141689865399098,
+          "boundarySamples": [2868, 2961],
+          "worstPicture": {
+            "distance": 12.922573863255163,
+            "point": [801.8883572567784, 741.4609250398724]
+          },
+          "worstRender": {
+            "distance": 22.141689865399098,
+            "point": [120.8548644338118, 650.8197767145135]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.2816281628162816,
+          "renderWall": 0.30028735632183906,
+          "wallRelativeDifference": -0.062137792726641106,
+          "overall": 0.7454890788224121,
+          "renderOverall": 0.7416149068322981,
+          "overallRelativeDifference": 0.005223967256351436,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 909,
+          "renderWidth": 691.2,
+          "heldWidthAtReturned": 846.45,
+          "k": 0.9311881188118812
+        },
+        "highlights": {
+          "nearWhite": 3173,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 2702,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 194.1149086666666,
+          "right": 161.40251333333316,
+          "boxes": [
+            [300, 1025, 320, 1040],
+            [730, 1030, 750, 1045]
+          ],
+          "ratio": 1.2026758732422886,
+          "render": {
+            "boxes": [
+              [236, 846, 251, 858],
+              [563, 850, 579, 861]
+            ],
+            "left": 191.7512222222222,
+            "right": 166.3848261363636,
+            "ratio": 1.152456186509875,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 909,
+          "wallRatio": 0.2816281628162816,
+          "renderWallRatio": 0.30028735632183906,
+          "wallRead": {
+            "foot": [532, 1181],
+            "eaves": [532, 925],
+            "baseCorners": [107, 1016],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [300, 1025, 320, 1040],
+          "rightBox": [730, 1030, 750, 1045]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "All strict silhouette/height/eye tests pass. Render back-wall window and braces retained despite prose plain-back description; render geometry wins. Far dock and dormer, silo, one chimney stay in place; surfaces continuously repainted.",
+      "sha256": "7e9565897277da100a00b0ef571395a05d1b77effb04eb5b97591a1e154dcec7"
+    },
+    {
+      "building": "big_farm",
+      "view": 3,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Big farm halt in the view r3. a timber-framed farm barn on a cream limestone base course: vertical warm orange-brown plank walls with dark timber braces and posts, a dark slate gable roof with a small louvred dormer on one slope, a cream-stone chimney with a copper pot, and cream-stone gable edges. The long wall has a forest-green plank door in a cream stone frame and a small window with a cream frame and timber braces; at its end stands a round timber silo with iron hoops, a conical slate cap with a copper finial and a dark-green downpipe with a spout box, on a stone base. One gable end has a loading dock: a timber canopy and platform with a ramp, crates and sacks, and a small window. The other gable end is plain timber with a small window high in the gable. r3: the building is turned 3 quarter turns clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the loading-dock gable end (timber canopy, platform and ramp, crates and sacks, small window) stands at the lower-right side; the long timber wall with the green plank door in its cream stone frame, the window and the braces stands at the upper-right side; the round silo with its pipe and spout box on its stone base stands at the far (top) corner; the plain timber gable end with the small high window (no dock, no crates, no ramp) stands at the upper-left side; the long back wall (plain timber; as the render has it) stands at the lower-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/big_farm-r3-textured.png",
+        "G:/DEV/wt/originals-textured-a/big_farm.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/big_farm/big_farm-r0.png"
+      ],
+      "file": "raw/big_farm-r3-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/big_farm/raw/big_farm-r3-attempt-1.png",
+        "job": "big_farm",
+        "view": 3,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [180, 239, 1090, 1138],
+          "area": 479234,
+          "width": 911,
+          "height": 900,
+          "overallRatio": 0.9879253567508233
+        },
+        "bareOpaque": {
+          "box": [161, 273, 862, 948],
+          "area": 287132,
+          "width": 702,
+          "height": 676,
+          "overallRatio": 0.9629629629629629
+        },
+        "silhouette": {
+          "iouAtS0": 0.7526384256685813,
+          "f": 0.945,
+          "dx": 27.100000000000023,
+          "dy": 101.81000000000006,
+          "bestIoU": 0.9559576857753347,
+          "p95PictureToRender": 17.021054975889573,
+          "p95RenderToPicture": 15.86300868729254,
+          "maximum": 24.744434771769466,
+          "boundarySamples": [2967, 2942],
+          "worstPicture": {
+            "distance": 20.774688989975644,
+            "point": [701.4481658692185, 930.9090909090909]
+          },
+          "worstRender": {
+            "distance": 24.744434771769466,
+            "point": [694.9154704944178, 892.5295055821372]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.3032694475760992,
+          "renderWall": 0.2972181551976574,
+          "wallRelativeDifference": 0.020359766967860793,
+          "overall": 0.9879253567508233,
+          "renderOverall": 0.9629629629629629,
+          "overallRelativeDifference": 0.025922485856624267,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 887,
+          "renderWidth": 691.2,
+          "heldWidthAtReturned": 846.45,
+          "k": 0.954284103720406
+        },
+        "highlights": {
+          "nearWhite": 4872,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 2702,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 173.34252272727278,
+          "right": 66.18532733333332,
+          "boxes": [
+            [350, 900, 370, 920],
+            [800, 950, 820, 965]
+          ],
+          "ratio": 2.6190476002975243,
+          "render": {
+            "boxes": [
+              [292, 778, 308, 793],
+              [639, 816, 655, 828]
+            ],
+            "left": 202.61934916666652,
+            "right": 34.296066666666604,
+            "ratio": 5.90794714554245,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 887,
+          "wallRatio": 0.3032694475760992,
+          "renderWallRatio": 0.2972181551976574,
+          "wallRead": {
+            "foot": [663, 1104],
+            "eaves": [663, 835],
+            "baseCorners": [203, 1090],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [350, 900, 370, 920],
+          "rightBox": [800, 950, 820, 965]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Refused picture-to-render p95 17.021>16; IoU.955958,p95reverse15.863,max24.744 and heights/eye pass. Dock platform/ramp/feet protrude from render outline.",
+      "sha256": "de05416c51abe12c9767abf96154d040e5c4e49e2ee794e668de673d40f29550"
+    },
+    {
+      "building": "big_farm",
+      "view": 3,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Big farm halt in the view r3. a timber-framed farm barn on a cream limestone base course: vertical warm orange-brown plank walls with dark timber braces and posts, a dark slate gable roof with a small louvred dormer on one slope, a cream-stone chimney with a copper pot, and cream-stone gable edges. The long wall has a forest-green plank door in a cream stone frame and a small window with a cream frame and timber braces; at its end stands a round timber silo with iron hoops, a conical slate cap with a copper finial and a dark-green downpipe with a spout box, on a stone base. One gable end has a loading dock: a timber canopy and platform with a ramp, crates and sacks, and a small window. The other gable end is plain timber with a small window high in the gable. r3: the building is turned 3 quarter turns clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the loading-dock gable end (timber canopy, platform and ramp, crates and sacks, small window) stands at the lower-right side; the long timber wall with the green plank door in its cream stone frame, the window and the braces stands at the upper-right side; the round silo with its pipe and spout box on its stone base stands at the far (top) corner; the plain timber gable end with the small high window (no dock, no crates, no ramp) stands at the upper-left side; the long back wall (plain timber; as the render has it) stands at the lower-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r3 failed the picture-to-render outline p95:17.021canvas px, limit16 (IoU.955958, reversep9515.863,max24.744). The lower-right dock platform, ramp, supportfeet and outer roof edge drifted; paint these exactly over the first render in their exact positions, extents and sizes. Preserve the near wall height/base proportion0.2972 and existing door/window/dormer/silo/chimney layout. Repaint coherent surfaces, but keep the first render camera, shape and margin, not the reference size.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/big_farm-r3-textured.png",
+        "G:/DEV/wt/originals-textured-a/big_farm.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/big_farm/big_farm-r0.png"
+      ],
+      "file": "raw/big_farm-r3-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/big_farm/raw/big_farm-r3-attempt-2.png",
+        "job": "big_farm",
+        "view": 3,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [169, 242, 1098, 1160],
+          "area": 509175,
+          "width": 930,
+          "height": 919,
+          "overallRatio": 0.9881720430107527
+        },
+        "bareOpaque": {
+          "box": [161, 273, 862, 948],
+          "area": 287132,
+          "width": 702,
+          "height": 676,
+          "overallRatio": 0.9629629629629629
+        },
+        "silhouette": {
+          "iouAtS0": 0.7853930210381458,
+          "f": 0.9219999999999999,
+          "dx": 40.180000000000064,
+          "dy": 107.08000000000004,
+          "bestIoU": 0.9628861846031883,
+          "p95PictureToRender": 18.172410851324862,
+          "p95RenderToPicture": 15.843330731402055,
+          "maximum": 33.60877979026685,
+          "boundarySamples": [3001, 2942],
+          "worstPicture": {
+            "distance": 31.94553364677085,
+            "point": [700.6315789473684, 944.7910685805423]
+          },
+          "worstRender": {
+            "distance": 33.60877979026685,
+            "point": [701.4481658692185, 899.0622009569378]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.3064159292035398,
+          "renderWall": 0.2972181551976574,
+          "wallRelativeDifference": 0.03094620515279667,
+          "overall": 0.9881720430107527,
+          "renderOverall": 0.9629629629629629,
+          "overallRelativeDifference": 0.026178660049627878,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 904,
+          "renderWidth": 691.2,
+          "heldWidthAtReturned": 846.45,
+          "k": 0.9363384955752213
+        },
+        "highlights": {
+          "nearWhite": 1430,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 2702,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 180.7006200000001,
+          "right": 32.86590133333339,
+          "boxes": [
+            [350, 910, 370, 925],
+            [800, 970, 820, 985]
+          ],
+          "ratio": 5.49811849574103,
+          "render": {
+            "boxes": [
+              [296, 773, 311, 784],
+              [635, 818, 650, 829]
+            ],
+            "left": 206.70910060606045,
+            "right": 30.304267878787886,
+            "ratio": 6.821121745387911,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 904,
+          "wallRatio": 0.3064159292035398,
+          "renderWallRatio": 0.2972181551976574,
+          "wallRead": {
+            "foot": [664, 1127],
+            "eaves": [664, 850],
+            "baseCorners": [194, 1098],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [350, 910, 370, 925],
+          "rightBox": [800, 970, 820, 985]
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Refused picture-to-render p95 18.172>16 and maximum33.609>32; IoU.962886/reversep9515.843 pass; dock/ramp feet protrude. Sacks under dock canopy lost among crates; identity fails. Heights pass.",
+      "sha256": "c50487b08043f539fee8233832396a83b543178fa4684066d2397482322e1447"
+    },
+    {
+      "building": "big_farm",
+      "view": 3,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Big farm halt in the view r3. a timber-framed farm barn on a cream limestone base course: vertical warm orange-brown plank walls with dark timber braces and posts, a dark slate gable roof with a small louvred dormer on one slope, a cream-stone chimney with a copper pot, and cream-stone gable edges. The long wall has a forest-green plank door in a cream stone frame and a small window with a cream frame and timber braces; at its end stands a round timber silo with iron hoops, a conical slate cap with a copper finial and a dark-green downpipe with a spout box, on a stone base. One gable end has a loading dock: a timber canopy and platform with a ramp, crates and sacks, and a small window. The other gable end is plain timber with a small window high in the gable. r3: the building is turned 3 quarter turns clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the loading-dock gable end (timber canopy, platform and ramp, crates and sacks, small window) stands at the lower-right side; the long timber wall with the green plank door in its cream stone frame, the window and the braces stands at the upper-right side; the round silo with its pipe and spout box on its stone base stands at the far (top) corner; the plain timber gable end with the small high window (no dock, no crates, no ramp) stands at the upper-left side; the long back wall (plain timber; as the render has it) stands at the lower-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r3 failed the outline p9518.172canvas px and maximum33.609 (limits16/32). The front platform/ramp/supportfeet lie too far down and out, especially the lowest ramp edge around render x700,y945 versus its x700,y899 outline; keep their exact shape and location in the first render. Do not enlarge the dock. The sacks beside the crates beneath the dock canopy must stay visible as in the render, not disappear into extra crates. Preserve near wall height/base0.2972; trace the first silhouette exactly and repaint only its surfaces.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-a/big_farm-r3-textured.png",
+        "G:/DEV/wt/originals-textured-a/big_farm.png",
+        "G:/DEV/wt/codex-textured-a/assets/source/textured/big_farm/big_farm-r0.png"
+      ],
+      "file": "raw/big_farm-r3-attempt-3.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/big_farm/raw/big_farm-r3-attempt-3.png",
+        "job": "big_farm",
+        "view": 3,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [143, 138, 1152, 1116],
+          "area": 597867,
+          "width": 1010,
+          "height": 979,
+          "overallRatio": 0.9693069306930693
+        },
+        "bareOpaque": {
+          "box": [161, 273, 862, 948],
+          "area": 287132,
+          "width": 702,
+          "height": 676,
+          "overallRatio": 0.9629629629629629
+        },
+        "silhouette": {
+          "iouAtS0": 0.5867783156215806,
+          "f": 0.85,
+          "dx": 73.625,
+          "dy": 215.05000000000007,
+          "bestIoU": 0.9739634332311348,
+          "p95PictureToRender": 9.890914029806446,
+          "p95RenderToPicture": 9.890914029806446,
+          "maximum": 16.584089255719334,
+          "boundarySamples": [2962, 2942],
+          "worstPicture": {
+            "distance": 13.85527537695891,
+            "point": [691.6491228070175, 906.4114832535885]
+          },
+          "worstRender": {
+            "distance": 16.584089255719334,
+            "point": [694.9154704944178, 892.5295055821372]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.29959514170040485,
+          "renderWall": 0.2972181551976574,
+          "wallRelativeDifference": 0.007997447198899055,
+          "overall": 0.9693069306930693,
+          "renderOverall": 0.9629629629629629,
+          "overallRelativeDifference": 0.006587966488956543,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 988,
+          "renderWidth": 691.2,
+          "heldWidthAtReturned": 846.45,
+          "k": 0.8567307692307693
+        },
+        "highlights": {
+          "nearWhite": 2294,
+          "nearAmber": 0
+        },
+        "originalHighlights": {
+          "nearWhite": 2702,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 150.0821286666666,
+          "right": 61.11873799999993,
+          "boxes": [
+            [350, 890, 370, 905],
+            [900, 865, 920, 880]
+          ],
+          "ratio": 2.455582912504947,
+          "render": {
+            "boxes": [
+              [303, 793, 317, 804],
+              [685, 776, 699, 786]
+            ],
+            "left": 185.95454285714305,
+            "right": 51.90231285714283,
+            "ratio": 3.582779506743154,
+            "note": "Corresponding near-foot patches transformed by measured uniform fit; report only, eye verdict governs."
+          }
+        },
+        "eye": {
+          "baseWidth": 988,
+          "wallRatio": 0.29959514170040485,
+          "renderWallRatio": 0.2972181551976574,
+          "wallRead": {
+            "foot": [694, 1098],
+            "eaves": [694, 802],
+            "baseCorners": [164, 1152],
+            "uncertaintyPx": 3
+          },
+          "leftBox": [350, 890, 370, 905],
+          "rightBox": [900, 865, 920, 880]
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "All strict silhouette/height/eye tests pass at allowed f.85. Dock/ramp and feet fit, sacks/crates restored, far silo/dormer and one chimney retained. Back-wall window follows textured render despite prose plain-back; geometry wins.",
+      "sha256": "87b182d43a330f90d3cf94c129351485ff4700a55d3c6ac9d44ac628aa973226"
+    }
+  ],
+  "outcome": {
+    "accepted": ["r0 attempt1", "r1 attempt2", "r2 attempt1", "r3 attempt3"],
+    "verdict": "All four views accepted. Timber, slate and stone form one coherent painting, with crisp round silo/pipe and no cloned seams. The dock/ramp initially drifted at r3; its final attempt restored the shape and sacks.",
+    "notes": "Render back-wall window retained despite prose plain-back: render geometry wins. Accepted r0#1,r1#2,r2#1,r3#3; three refused attempts kept raw."
+  }
+}
