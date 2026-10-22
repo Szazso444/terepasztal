@@ -252,35 +252,7 @@
     544
    ],
    [
-    971,
-    526
-   ],
-   [
-    969,
-    524
-   ],
-   [
-    969,
-    503
-   ],
-   [
-    967,
-    501
-   ],
-   [
-    893,
-    464
-   ],
-   [
-    871,
-    475
-   ],
-   [
-    869,
-    475
-   ],
-   [
-    863,
+    864,
     472
    ],
    [
@@ -296,7 +268,7 @@
     434
    ],
    [
-    761,
+    762,
     426
    ],
    [
@@ -549,6 +521,7 @@
    ]
   ]
  ],
+ "hole_polygons_px": [],
  "silhouette": {
   "bbox_px": [
    428,
@@ -556,26 +529,27 @@
    1126,
    880
   ],
-  "area_px": 215418,
-  "polygon_vs_mask_iou": 0.9989,
+  "area_px": 213434,
+  "polygon_vs_mask_iou": 0.99908,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
   "alpha_threshold": 128,
   "opened_holes_filled": false
  },
  "source_picture": "works-full-ironworks.png (base-v1)",
  "quality": {
-  "iou_vs_painting_at_painting_camera": 0.9305,
+  "iou_vs_painting_at_painting_camera": 0.9324,
   "texture_share_of_needed_texels": {
-   "painted": 0.344,
-   "mirrored": 0.089,
-   "cloned": 0.545,
-   "healed_or_mean": 0.021
+   "painted": 0.347,
+   "mirrored": 0.069,
+   "cloned": 0.569,
+   "healed_or_mean": 0.015
   },
   "view_share": {
-   "visible": 939848,
-   "painted": 0.736,
-   "copied": 0.005,
-   "cloned": 0.233,
-   "healed_or_mean": 0.026
+   "visible": 928906,
+   "painted": 0.746,
+   "copied": 0.003,
+   "cloned": 0.23,
+   "healed_or_mean": 0.021
   }
  },
  "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."

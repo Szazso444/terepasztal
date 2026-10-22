@@ -40,7 +40,7 @@ Same method as the pilot (`renders/textured-blockout/`, batch A scripts in `tool
 | Town hall (`town`) | base-v1/townhouse-civic.png | 2 x 1 | 21.1 / 38.1 | 1024 x 1024, anchor 512,800 | 0.940 / 0.944 | 36% / 13% / 50% / 0.7% | `town/town-r0..r3-{textured,bare}.png`, `town/town-r0..r3.json` |
 | Big farm (`big_farm`) | base-v1/farm.png | 1 x 2 | 20.5 / 45.0 | 1024 x 1024, anchor 512,800 | 0.925 / 0.929 | 36% / 19% / 44% / 1.1% | `big_farm/big_farm-r0..r3-{textured,bare}.png`, `big_farm/big_farm-r0..r3.json` |
 | Small farm halt (`farm`) | buildings-v2/farm/farm-a0-r0.png | 1 x 1 | 24.4 / 47.3 | 1024 x 1024, anchor 512,832 | 0.954 / 0.964 | 42% / 19% / 37% / 1.2% | `farm/farm-r0..r3-{textured,bare}.png`, `farm/farm-r0..r3.json` |
-| Quarry (`quarry`) | buildings-v2/quarry/quarry-a0-r0.png | 1 x 1 | 30.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.929 / 0.930 | 46% / 19% / 34% / 1.8% | `quarry/quarry-r0..r3-{textured,bare}.png`, `quarry/quarry-r0..r3.json` |
+| Quarry (`quarry`) | buildings-v2/quarry/quarry-a0-r0.png | 1 x 1 | 30.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.929 / 0.931 | 46% / 12% / 42% / 0.0% | `quarry/quarry-r0..r3-{textured,bare}.png`, `quarry/quarry-r0..r3.json` |
 
 Silhouette areas (opaque px, alpha above 128), r0 to r3:
 - townhouse: 101711, 101854, 103420, 103170
@@ -48,7 +48,7 @@ Silhouette areas (opaque px, alpha above 128), r0 to r3:
 - town: 355442, 356216, 353028, 355306
 - big_farm: 302385, 266164, 302142, 287132
 - farm: 135907, 121986, 140498, 129354
-- quarry: 132322, 104562, 119298, 113363
+- quarry: 132413, 104562, 119298, 113400
 
 Notes:
 
@@ -65,23 +65,23 @@ Same method as the pilot and batch A (`renders/textured-blockout/`, one `build_<
 | Building | Source picture | Footprint at r0 | Painted camera, elevation / renderer azimuth (deg) | Canvas | IoU, painting camera (1:1 / best fit) | Texture painted / mirrored / cloned / healed or mean colour | Files |
 |---|---|---|---|---|---|---|---|
 | Battery (`substation`) | base-v1/substation.png | 2 x 2 | 27.6 / 45.0 | 1536 x 1024, anchor 768,760 | 0.928 / 0.931 | 42% / 10% / 45% / 3.8% | `substation/substation-r0..r3-{textured,bare}.png`, `substation/substation-r0..r3.json` |
-| Coaling stage (`fuel_stop`) | buildings-v2/fuel_stop/fuel_stop-a0-r0.png (accepted r0) | oblong, 0.864 x 1.136 (long side lower right) | 30.8 / 43.7 | 1024 x 1024, anchor 512,832 | 0.925 / 0.925 | 36% / 15% / 44% / 5.5% | `fuel_stop/fuel_stop-r0..r3-{textured,bare}.png`, `fuel_stop/fuel_stop-r0..r3.json` |
+| Coaling stage (`fuel_stop`) | buildings-v2/fuel_stop/fuel_stop-a0-r0.png (accepted r0) | oblong, 0.864 x 1.136 (long side lower right) | 30.8 / 43.7 | 1024 x 1024, anchor 512,832 | 0.925 / 0.925 | 36% / 16% / 48% / 0.0% | `fuel_stop/fuel_stop-r0..r3-{textured,bare}.png`, `fuel_stop/fuel_stop-r0..r3.json` |
 | Fuel pump (`fuel_pump`) | fuel-2026-10-11/fuel_pump-a1-r0.png (origin/art/325-fuel-pump) | 1 x 1 | 33.5 / 47.0 | 1024 x 1024, anchor 512,832 | 0.928 / 0.928 | 40% / 17% / 42% / 1.8% | `fuel_pump/fuel_pump-r0..r3-{textured,bare}.png`, `fuel_pump/fuel_pump-r0..r3.json` |
 
 Texture shares per view (painted / copied / cloned / healed or mean), r0, r1, r2, r3:
 - substation: 90/1/8/1, 27/10/61/2, 9/16/73/2, 49/6/39/6 per cent
-- fuel_stop: 82/2/13/3, 45/6/43/7, 6/26/59/10, 25/27/41/7 per cent
+- fuel_stop: 82/2/16/0, 45/8/46/0, 6/29/66/0, 25/27/48/0 per cent
 - fuel_pump: 89/1/9/1, 26/22/51/0, 3/30/65/2, 49/14/36/2 per cent
 
 Silhouette areas (opaque px, alpha above 128), r0 to r3:
 - substation: 240533, 222147, 241779, 236182
-- fuel_stop: 284847, 281014, 282488, 282171
+- fuel_stop: 284432, 280874, 282532, 282171
 - fuel_pump: 122838, 115032, 123700, 116334
 
 Notes:
 
 - Battery: the painted slab is oblong (1.87 x 1.39 tiles at the painted scale), not the plan's 1.8 x 1.8; the blockout follows the painting. The left gantry foot stands about 0.35 tile outside the slab corner in the painting; it is kept on a small joined pad, so it overhangs the slab at r1 to r3. The outline polygons carry `hole_polygons_px` as well (the gap between the gantry legs and beam), without them the polygon would not match the mask (0.76 to 0.84); with them the polygon matches the mask at 0.989 to 0.996. Left/right wall brightness in variant B: r0 1.95, r1 0.85 (the left wall is not the brighter one there), r2 1.77, r3 1.94.
-- Coaling stage: the painting sits at about the plan scale (0.945); the sixth pier of the plan is modelled although the painting shows five. Texture at the painting camera: mean difference 5.5/255, PSNR 27.3 dB. Weak: the bin end faces are a flat yellow (mean colour), cloned coal tops, streaky timber, blotchy stone piers, the middle back pier is cloned. Extra check against the accepted r2 (attempt 8), scaled by 1024/1254 onto the plan canvas (`fuel_stop/extra-checks.json`, overlay `fuel_stop/extra-check-r2-overlay.png`): IoU 0.708 mapped 1:1, 0.859 with the best uniform scale (0.905) and shift. The aspect ratio matches (0.673 both); the accepted r2 is about 10 per cent larger and its leg and pier layout differs.
+- Coaling stage: the painting sits at about the plan scale (0.945); the sixth pier of the plan is modelled although the painting shows five. Texture at the painting camera: mean difference 5.5/255, PSNR 27.7 dB. The bin end faces (fix round 2) carry planks copied from the painted long face; weak: cloned coal tops, streaky timber, blotchy stone piers, the middle back pier is cloned. Extra check against the accepted r2 (attempt 8), scaled by 1024/1254 onto the plan canvas (`fuel_stop/extra-checks.json`, overlay `fuel_stop/extra-check-r2-overlay.png`): IoU 0.708 mapped 1:1, 0.859 with the best uniform scale (0.905) and shift. The aspect ratio matches (0.673 both); the accepted r2 is about 10 per cent larger and its leg and pier layout differs.
 - Fuel pump: the painted house is 1.0 x 0.5 (depth over length 0.5), not the plan's 0.78; the model is scaled so the long side of the base is 0.9 tile (the plan base is 0.70 x 0.90). Extra check against the accepted r1 (attempt 15) and r2 (attempt 11), scaled onto the plan canvas (`fuel_pump/extra-checks.json`, overlays `fuel_pump/extra-check-r{1,2}-overlay.png`): r1 0.711 mapped 1:1, 0.815 with the best scale (1.135) and shift; r2 0.738 and 0.810 (scale 1.07). The accepted views are 9 to 14 per cent wider and 6 to 18 per cent taller (bounding boxes 389 x 625 and 485 x 522 against the blockout's 342 x 529 and 445 x 490, same ground line). Differences in shape: in the accepted r1 the hose post is a long pipe leaning about 27 degrees to the right and reaching y=291 (the blockout's is vertical, reaching y=386); in the accepted r2 the arm is horizontal and the hose hangs about 25 px further right (the blockout's rises slightly). The accepted r3 (not accepted by the author) is 0.34 / 0.55. Weak: the back faces of the open truss story are grey slate-like clones (painted roof slate landed on the wood backing and was cloned), thin parts (hose, pipes, rail) are smeared.
 - Healed or mean colour = texels with no usable painted or cloned source (see batch A). What the painter fixes is as in the pilot.
 
@@ -104,34 +104,52 @@ Same method as the pilot and batch A (`renders/textured-blockout/`, batch B scri
 
 | Building | Source picture | Footprint at r0 | Painted camera, elevation / azimuth (deg) | Canvas | IoU, painting camera (1:1 / best fit) | Texture painted / mirrored / cloned / healed or mean colour | Files |
 |---|---|---|---|---|---|---|---|
-| Stone grinder (`grinder`) | base-v1/grinder.png | 1 x 1 | 24.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.955 / 0.957 | 41% / 12% / 48% / 0.0% | `grinder/grinder-r0..r3-{textured,bare}.png`, `grinder/grinder-r0..r3.json` |
+| Stone grinder (`grinder`) | base-v1/grinder.png | 1 x 1 | 24.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.955 / 0.958 | 41% / 4% / 55% / 0.0% | `grinder/grinder-r0..r3-{textured,bare}.png`, `grinder/grinder-r0..r3.json` |
 | Oil refinery (`refinery`) | base-v1/refinery.png | 1 x 1 | 24.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.923 / 0.923 | 29% / 8% / 55% / 7.7% | `refinery/refinery-r0..r3-{textured,bare}.png`, `refinery/refinery-r0..r3.json` |
-| Colliery (`colliery`) | base-v1/works-full-colliery.png | 2 x 2 | 23.5 / 45.0 | 1536 x 1024, anchor 768,760 | 0.932 / 0.934 | 36% / 14% / 45% / 5.3% | `colliery/colliery-r0..r3-{textured,bare}.png`, `colliery/colliery-r0..r3.json` |
-| Ironworks (`ironworks`) | base-v1/works-full-ironworks.png | 2 x 2 | 23.5 / 45.0 | 1536 x 1024, anchor 768,760 | 0.931 / 0.935 | 34% / 9% / 55% / 2.1% | `ironworks/ironworks-r0..r3-{textured,bare}.png`, `ironworks/ironworks-r0..r3.json` |
+| Colliery (`colliery`) | base-v1/works-full-colliery.png | 2 x 2 | 23.5 / 45.0 | 1536 x 1024, anchor 768,760 | 0.927 / 0.929 | 32% / 11% / 56% / 0.0% | `colliery/colliery-r0..r3-{textured,bare}.png`, `colliery/colliery-r0..r3.json` |
+| Ironworks (`ironworks`) | base-v1/works-full-ironworks.png | 2 x 2 | 23.5 / 45.0 | 1536 x 1024, anchor 768,760 | 0.932 / 0.936 | 35% / 7% / 57% / 2.0% | `ironworks/ironworks-r0..r3-{textured,bare}.png`, `ironworks/ironworks-r0..r3.json` |
 | Oil derrick (`oil_derrick`) | base-v1/works-full-oil-derrick.png | 2 x 1 | 25.0 / 45.5 | 1024 x 1024, anchor 512,800 | 0.902 / 0.904 | 25% / 7% / 54% / 14% | `oil_derrick/oil_derrick-r0..r3-{textured,bare}.png`, `oil_derrick/oil_derrick-r0..r3.json` |
 
 Texture shares per view (painted / copied / cloned / healed or mean), r0, r1, r2, r3:
-- grinder: 89/0/11/0, 31/17/53/0, 1/22/77/0, 50/8/41/0 per cent
+- grinder: 89/0/11/0, 31/3/66/0, 2/8/90/0, 50/5/45/0 per cent
 - refinery: 65/0/29/5, 18/10/60/12, 1/16/75/9, 36/7/47/10 per cent
-- colliery: 79/0/18/3, 32/13/50/5, 0/25/68/7, 34/17/43/6 per cent
-- ironworks: 74/0/23/3, 24/10/62/4, 1/14/83/1, 35/11/53/1 per cent
+- colliery: 78/0/21/1, 28/9/62/1, 0/19/80/0, 30/13/57/0 per cent
+- ironworks: 75/0/23/2, 24/8/64/3, 1/12/87/0, 37/8/55/0 per cent
 - oil_derrick: 57/1/37/5, 10/12/66/12, 1/9/68/22, 34/3/54/10 per cent
 
 Silhouette areas (opaque px, alpha above 128), r0 to r3:
-- grinder: 129605, 112172, 127637, 116003
+- grinder: 129538, 112172, 127637, 116003
 - refinery: 95734, 61895, 95306, 63500
-- colliery: 111452, 97720, 106547, 81544
-- ironworks: 215418, 185562, 219007, 182255
+- colliery: 114065, 110448, 115896, 96647
+- ironworks: 213434, 181948, 219812, 176229
 - oil_derrick: 249204, 235372, 268549, 233008
 
 Notes:
 
 - The outline polygons carry `hole_polygons_px` (the see-through gaps, area 60 px or more) next to `outline_polygon_px`; subtract them to get the mask (polygon against mask 0.98 to 0.999 with the holes subtracted; the lattices and the derrick's frame windows would not match without them).
 - Camera and scale: the paintings are close to orthographic at 23.5 to 25 degrees, not 30; the derrick is drawn at azimuth 45.5 (its two ground edges have slopes 0.43 and 0.41). k (painting px per tile) comes from the plan rule: the painted base from the left corner to the right corner is 0.9 of the footprint span after scaling to the plan canvas (grinder 700, refinery 738, colliery 558, ironworks 462, derrick 391). The painted shapes are not square, so the models are about 1.2 x 0.64 (grinder, with the lean-to shed), 1.19 x 0.78 (refinery), 1.8 x 1.0 (colliery), 2.15 x 1.6 (ironworks) and 2.1 x 0.86 tiles (derrick) inside their footprints.
-- Grinder: house, portal wall with two arches and the shed are measured from rectified front and gable views. Weak: the hopper sits in front of the roof eave and its far end passes through the roof, so in r1 and r2 a rubble and timber patch shows on the roof slope; the millstones are plain cylinders; the arch interiors and the gap between hopper and house are smeared at r1 to r3.
+- Grinder: house, portal wall with two arches and the shed are measured from rectified front and gable views. Fix round 2 (see the section at the end): the hopper no longer passes through the roof, the walls and the roof are clean at r1 to r3. Weak: the millstones are plain cylinders; the arch interiors and the gap between hopper and house are smeared at r1 to r3.
 - Refinery: tank, column with three railed platforms, furnace on its frame, vessels, chimney and the copper pipes are modelled; the frames carry dark infill panels at the back so they are not see-through, as in the painting. Weak: the yellow railings and the pipe backs are tiled from small painted patches (grey-brown, not yellow, at r1 to r3), the steel frames show cloned vertical streaks, the furnace's far side is cloned steel and corrugation. Healed or mean colour is 7.7 per cent because leftover thin groups copy tiled patches of the same material first (a tile pass added for this batch) and only then the mean.
-- Colliery: the painted building is about 1.8 x 1.0 tiles (head frame at -x, engine house at +x), narrower than the plan's 694 px base. The painting is not geometrically consistent, so parts are placed from pixels at the painting camera; the head frame is one front plane of legs and braces without back legs, so it looks thin at r1 and r3. A dark backing sheet under the hoppers keeps the silhouette solid and shows from behind at r2. The unseen sides of the wheels and the rope are mean colour (the 5 per cent). The outline polygon matches the mask at 0.988 to 0.995 with the holes subtracted.
-- Ironworks: the painting is only mostly orthographic; the tower's right-front base sits about 50 px higher than a Y = 0 ground line allows, so the plinth is notched under it (the blue band in the IoU difference). Weak: the copper boiler, the hoist chain and the fence are smeared at r1 to r3; the unseen sides are plain cloned brick, stone and slate (r2 shows 1 per cent painted).
+- Colliery: the painted building is about 1.8 x 1.0 tiles (head frame at -x, engine house at +x), narrower than the plan's 694 px base. The painting is not geometrically consistent, so parts are placed from pixels at the painting camera; the head frame (fix round 2) is a 3D frame: the painted front legs plus two inclined back legs hidden behind them at r0, a stone footing under every leg, ties between the planes, braces anchored on the legs, the rope ends on the wheel rim and on the cabin roof. A dark backing sheet under the hoppers keeps the silhouette solid and shows from behind at r2. The outline polygon matches the mask at 0.985 to 0.989 with the holes subtracted.
+- Ironworks: the painting is only mostly orthographic; the tower's right-front base sits about 50 px higher than a Y = 0 ground line allows, so the plinth is notched under it (the blue band in the IoU difference). Weak: the copper boiler, the hoist chain and the fence are smeared at r1 to r3; the unseen sides are cloned brick, stone and slate (r2 shows 1 per cent painted), with the roof and wall geometry of fix round 2.
 - Oil derrick: 0.902 is under the 0.92 target and just over the 0.90 skip line, after many correction rounds. The silhouette is right where a part is a plate (the beam and the horse head are plates whose outline is read from the painting's pixels on their plane; the base frame's two windows are cut from the painting's holes); what is not matched is the lattice of the Samson post (four faces of X braces, the painting's small gaps do not line up) and the thin parts of the wellhead. Weak: the back faces of the beam and the horse head are blocky clone patches, the tower lattice is smeared at r1 to r3, the flywheel and the pipes are thin and partly mean colour (14 per cent healed or mean, the highest of the batch).
 - Fill changes made during the batch (the grinder and the derrick got both, the refinery the tile pass only, the colliery and the ironworks ran before them and keep the earlier fill): a tile pass for texels that have no clone exemplar (patches of the same material's own painted texels instead of the flat mean colour), and a spill removal (painted texels that no r0 view sees and that are colour outliers of their material are re-cloned).
 - What the painter fixes is as in the pilot: cloned and mirrored patches are uniform and a little blocky, the thin parts are smeared by the projection, the painted highlights are baked in.
+
+## Fix round 2 (2026-10-22): grinder, quarry, colliery, ironworks, coaling stage
+
+Five blockouts were refused on review (broken turned views); the files above are re-rendered at the same paths. Cause, fix and the r0 match (IoU at the painting camera, 1:1; previous value in brackets; the bar is 0.92 or the previous value):
+
+| Building | What was wrong | Fix | IoU at r0 |
+|---|---|---|---|
+| Grinder | Holes in the walls and roof at r1 to r3: mirrored copies of the front wall carried the dark arch interiors, a hopper brace and a white streak onto the back wall; the hopper and its rubble passed through the lower roof slope and the painted rubble landed on the slate. The mesh itself was closed (one non-manifold edge where the left arch touched the wall top, now removed). | The roof's lower slope is cut by the hopper's own envelope (the roof wraps round it, nothing passes through); mirror sources must lie in a plain patch of their face (colour and variance near the face's median), so the back walls are cloned from clean stone; the left arch apex is 0.008 lower. | 0.9545 (0.9554) |
+| Quarry | The winch house had no back and no crane-side wall (an open frame): r2 and r3 looked through it at the mast and the drum; the cloned timber came from mixed frames. The crane is attached (jib, strut, rope, load) and nothing floats. | Plank walls on the two unseen sides (back, crane side) between the posts; same cleaner fill. | 0.9291 (0.9286) |
+| Colliery | The head frame was one flat plane of legs: from r2 and r3 the deck stood on a few slanted sticks; the two braces between the front legs and a ladder rung touched nothing, the rope ended in the air 0.09 tile before the cabin, one gantry post had no footing. | Real 3D head frame: two inclined back legs (the front legs moved along their own view rays, so r0 does not change), footings under every leg, ties and braces between the planes, braces anchored on the legs, rungs between the rails, iron corbels joining the leg tops to the deck, the rope ends on the rim of the wheel and on the cabin roof edge (both ends slid along their view rays), footing under the gantry post. Mesh check: no floating part. | 0.9272 (0.9320) |
+| Ironworks | Blocky unseen sides: a brick box climbed above the roofs behind the tower, the store's left roof passed through the tower roof, the clerestory stuck out past its roof, a blank back wall, 1 per cent painted at r2. | The hall block behind the roofs stops at the eave and its back is flush with the back wall; the store's lower roof starts at the tower wall (a clean valley against the tower roof); the clerestory roof and ridge cover the clerestory; the back wall has three arched windows with stone rings and a plinth band (the rhythm of the painted front). | 0.9324 (0.9305) |
+| Coaling stage | The bin end faces were a flat yellow: faces with no mirror partner fell to the tile pass or the mean colour. | The hidden long face is mirrored from the painted one; the short end (behind the winch and chute) is copied from the painted long face by plan position (same material); the clone step also tries small exemplar blocks before it tiles; two chain pieces reach their rings and the spout (mesh check: no floating part). | 0.9245 (0.9250) |
+
+Fill changes (all five): mirror sources must pass a plain-patch test per face group (window mean colour within 40 of the group's median, luminance variance not above 5 times the median plus 60); that test only filters sources, it does not change what is painted. The texture shares in the tables above are the new ones.
+
+Mesh sanity check (all 17 textured blockouts, closed solids per part, outward normals, no edge shared by more than two faces, every part touching the ground-connected set within 0.012 tile): the five above are clean after the fixes (open edges 0, inward 0, non-manifold 0, floating 0). On the branch the other 12 have no open or inward parts; one small floating part each (smaller than 0.2 tile: oil derrick, refinery, battery, town hall) is left as it is.
+
+Extra checks against the accepted paintings (`quarry/extra-checks.json`, `fuel_stop/extra-checks.json`, the r2 overlay) were made with the earlier blockouts; the silhouettes changed by less than 0.5 per cent of the area at r1 to r3, so the figures stand.

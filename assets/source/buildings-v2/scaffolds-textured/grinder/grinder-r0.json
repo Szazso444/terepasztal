@@ -356,40 +356,28 @@
     520
    ],
    [
-    425,
-    522
+    393,
+    577
    ],
    [
-    423,
-    527
+    393,
+    578
    ],
    [
-    418,
-    534
-   ],
-   [
-    416,
-    539
-   ],
-   [
-    411,
-    546
-   ],
-   [
-    409,
-    551
-   ],
-   [
-    401,
-    563
-   ],
-   [
-    387,
-    588
-   ],
-   [
-    385,
+    406,
     590
+   ],
+   [
+    404,
+    591
+   ],
+   [
+    396,
+    585
+   ],
+   [
+    394,
+    585
    ],
    [
     356,
@@ -441,26 +429,26 @@
    748,
    921
   ],
-  "area_px": 129605,
-  "polygon_vs_mask_iou": 0.99894,
+  "area_px": 129538,
+  "polygon_vs_mask_iou": 0.99897,
   "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
   "alpha_threshold": 128,
   "opened_holes_filled": false
  },
  "source_picture": "grinder.png (base-v1)",
  "quality": {
-  "iou_vs_painting_at_painting_camera": 0.9554,
+  "iou_vs_painting_at_painting_camera": 0.9545,
   "texture_share_of_needed_texels": {
    "painted": 0.406,
-   "mirrored": 0.116,
-   "cloned": 0.477,
+   "mirrored": 0.043,
+   "cloned": 0.551,
    "healed_or_mean": 0.0
   },
   "view_share": {
-   "visible": 407661,
-   "painted": 0.887,
-   "copied": 0.004,
-   "cloned": 0.109,
+   "visible": 407046,
+   "painted": 0.888,
+   "copied": 0.0,
+   "cloned": 0.111,
    "healed_or_mean": 0.0
   }
  },

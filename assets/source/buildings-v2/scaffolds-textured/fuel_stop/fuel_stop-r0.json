@@ -137,19 +137,7 @@
    ],
    [
     260,
-    609
-   ],
-   [
-    266,
-    612
-   ],
-   [
-    267,
-    614
-   ],
-   [
-    260,
-    618
+    619
    ],
    [
     258,
@@ -184,20 +172,12 @@
     630
    ],
    [
-    281,
-    622
-   ],
-   [
-    277,
-    617
-   ],
-   [
-    271,
-    613
+    282,
+    624
    ],
    [
     278,
-    609
+    619
    ],
    [
     278,
@@ -276,40 +256,28 @@
     759
    ],
    [
-    258,
-    765
-   ],
-   [
-    257,
+    262,
     766
    ],
    [
-    257,
-    813
+    264,
+    768
    ],
    [
-    253,
-    817
+    264,
+    809
    ],
    [
-    253,
-    821
+    260,
+    814
    ],
    [
-    252,
-    822
-   ],
-   [
-    253,
-    828
-   ],
-   [
-    256,
-    835
+    260,
+    824
    ],
    [
     262,
-    842
+    828
    ],
    [
     262,
@@ -821,6 +789,228 @@
    ]
   ]
  ],
+ "hole_polygons_px": [
+  [
+   [
+    500,
+    686
+   ],
+   [
+    501,
+    687
+   ],
+   [
+    501,
+    698
+   ],
+   [
+    497,
+    700
+   ],
+   [
+    496,
+    699
+   ],
+   [
+    496,
+    688
+   ],
+   [
+    498,
+    686
+   ]
+  ],
+  [
+   [
+    620,
+    626
+   ],
+   [
+    624,
+    630
+   ],
+   [
+    614,
+    647
+   ],
+   [
+    613,
+    646
+   ],
+   [
+    613,
+    629
+   ],
+   [
+    618,
+    626
+   ]
+  ],
+  [
+   [
+    267,
+    625
+   ],
+   [
+    272,
+    624
+   ],
+   [
+    274,
+    626
+   ],
+   [
+    276,
+    631
+   ],
+   [
+    276,
+    635
+   ],
+   [
+    274,
+    637
+   ],
+   [
+    271,
+    635
+   ],
+   [
+    268,
+    631
+   ],
+   [
+    266,
+    626
+   ]
+  ],
+  [
+   [
+    525,
+    620
+   ],
+   [
+    526,
+    622
+   ],
+   [
+    524,
+    624
+   ],
+   [
+    506,
+    633
+   ],
+   [
+    506,
+    650
+   ],
+   [
+    505,
+    651
+   ],
+   [
+    502,
+    649
+   ],
+   [
+    502,
+    646
+   ],
+   [
+    500,
+    645
+   ],
+   [
+    498,
+    646
+   ],
+   [
+    496,
+    644
+   ],
+   [
+    496,
+    637
+   ],
+   [
+    499,
+    635
+   ],
+   [
+    500,
+    632
+   ]
+  ],
+  [
+   [
+    613,
+    583
+   ],
+   [
+    618,
+    580
+   ],
+   [
+    620,
+    580
+   ],
+   [
+    635,
+    602
+   ],
+   [
+    633,
+    603
+   ],
+   [
+    619,
+    591
+   ],
+   [
+    619,
+    589
+   ],
+   [
+    617,
+    587
+   ],
+   [
+    614,
+    587
+   ],
+   [
+    613,
+    586
+   ]
+  ],
+  [
+   [
+    663,
+    557
+   ],
+   [
+    664,
+    558
+   ],
+   [
+    655,
+    573
+   ],
+   [
+    650,
+    566
+   ],
+   [
+    650,
+    564
+   ],
+   [
+    654,
+    561
+   ]
+  ]
+ ],
  "silhouette": {
   "bbox_px": [
    248,
@@ -828,11 +1018,28 @@
    761,
    956
   ],
-  "area_px": 284847,
-  "polygon_vs_mask_iou": 0.99698,
+  "area_px": 284432,
+  "polygon_vs_mask_iou": 0.99805,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
   "alpha_threshold": 128,
   "opened_holes_filled": false
  },
  "source_picture": "fuel_stop-a0-r0.png (buildings-v2, accepted r0)",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9245,
+  "texture_share_of_needed_texels": {
+   "painted": 0.356,
+   "mirrored": 0.163,
+   "cloned": 0.482,
+   "healed_or_mean": 0.0
+  },
+  "view_share": {
+   "visible": 585738,
+   "painted": 0.822,
+   "copied": 0.018,
+   "cloned": 0.161,
+   "healed_or_mean": 0.0
+  }
+ },
  "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
 }

@@ -725,6 +725,222 @@
    ]
   ]
  ],
+ "hole_polygons_px": [
+  [
+   [
+    526,
+    680
+   ],
+   [
+    527,
+    681
+   ],
+   [
+    527,
+    698
+   ],
+   [
+    525,
+    700
+   ],
+   [
+    522,
+    698
+   ],
+   [
+    522,
+    683
+   ]
+  ],
+  [
+   [
+    655,
+    668
+   ],
+   [
+    658,
+    671
+   ],
+   [
+    661,
+    678
+   ],
+   [
+    664,
+    682
+   ],
+   [
+    663,
+    683
+   ],
+   [
+    652,
+    678
+   ],
+   [
+    650,
+    676
+   ],
+   [
+    650,
+    674
+   ]
+  ],
+  [
+   [
+    633,
+    638
+   ],
+   [
+    634,
+    640
+   ],
+   [
+    620,
+    660
+   ],
+   [
+    619,
+    659
+   ],
+   [
+    619,
+    649
+   ]
+  ],
+  [
+   [
+    408,
+    622
+   ],
+   [
+    410,
+    623
+   ],
+   [
+    410,
+    646
+   ],
+   [
+    409,
+    647
+   ],
+   [
+    399,
+    630
+   ]
+  ],
+  [
+   [
+    497,
+    621
+   ],
+   [
+    499,
+    620
+   ],
+   [
+    523,
+    632
+   ],
+   [
+    524,
+    635
+   ],
+   [
+    527,
+    637
+   ],
+   [
+    527,
+    644
+   ],
+   [
+    523,
+    648
+   ],
+   [
+    518,
+    651
+   ],
+   [
+    517,
+    650
+   ],
+   [
+    517,
+    633
+   ],
+   [
+    499,
+    624
+   ]
+  ],
+  [
+   [
+    409,
+    582
+   ],
+   [
+    410,
+    583
+   ],
+   [
+    410,
+    586
+   ],
+   [
+    405,
+    591
+   ],
+   [
+    389,
+    603
+   ],
+   [
+    388,
+    602
+   ],
+   [
+    400,
+    585
+   ],
+   [
+    401,
+    582
+   ],
+   [
+    403,
+    580
+   ]
+  ],
+  [
+   [
+    360,
+    557
+   ],
+   [
+    373,
+    564
+   ],
+   [
+    373,
+    566
+   ],
+   [
+    368,
+    573
+   ],
+   [
+    362,
+    564
+   ],
+   [
+    359,
+    558
+   ]
+  ]
+ ],
  "silhouette": {
   "bbox_px": [
    262,
@@ -733,10 +949,27 @@
    956
   ],
   "area_px": 282171,
-  "polygon_vs_mask_iou": 0.99677,
+  "polygon_vs_mask_iou": 0.99823,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
   "alpha_threshold": 128,
   "opened_holes_filled": false
  },
  "source_picture": "fuel_stop-a0-r0.png (buildings-v2, accepted r0)",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9245,
+  "texture_share_of_needed_texels": {
+   "painted": 0.356,
+   "mirrored": 0.163,
+   "cloned": 0.482,
+   "healed_or_mean": 0.0
+  },
+  "view_share": {
+   "visible": 578225,
+   "painted": 0.246,
+   "copied": 0.271,
+   "cloned": 0.483,
+   "healed_or_mean": 0.0
+  }
+ },
  "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
 }

@@ -429,33 +429,7 @@
    ]
   ]
  ],
- "outline_holes_px": [
-  [
-   [
-    647,
-    629
-   ],
-   [
-    647,
-    641
-   ],
-   [
-    646,
-    642
-   ],
-   [
-    635,
-    637
-   ],
-   [
-    633,
-    635
-   ],
-   [
-    646,
-    628
-   ]
-  ],
+ "hole_polygons_px": [
   [
    [
     351,
@@ -634,31 +608,28 @@
    722,
    898
   ],
-  "area_px": 132322,
-  "inside_canvas": true,
-  "polygon_vs_mask_iou": 0.99441,
+  "area_px": 132413,
+  "polygon_vs_mask_iou": 0.99472,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
   "alpha_threshold": 128,
-  "holes_listed_separately": 4,
   "opened_holes_filled": false
  },
  "source_picture": "quarry-a0-r0.png (buildings-v2)",
- "blockout_vs_painting_r0": {
-  "iou_painting_camera": 0.9286,
-  "mean_abs_diff_rgb_0_255": 5.62,
-  "share_pixels_diff_gt24": 0.0608
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9293,
+  "texture_share_of_needed_texels": {
+   "painted": 0.457,
+   "mirrored": 0.123,
+   "cloned": 0.421,
+   "healed_or_mean": 0.0
+  },
+  "view_share": {
+   "visible": 286795,
+   "painted": 0.904,
+   "copied": 0.006,
+   "cloned": 0.089,
+   "healed_or_mean": 0.0
+  }
  },
- "texture_share_all_views": {
-  "painted": 0.455,
-  "mirrored": 0.191,
-  "cloned": 0.336,
-  "healed_or_mean_colour": 0.018,
-  "basis": "texels visible in at least one of r0..r3"
- },
- "texture_share_this_view": {
-  "painted": 0.904,
-  "mirrored": 0.011,
-  "cloned": 0.074,
-  "healed_or_mean_colour": 0.01
- },
- "note": "Textured blockout render: paint over the -textured.png; the outline_polygon_px (outer contours) minus outline_holes_px (enclosed gaps) equals the alpha of -textured.png and -bare.png. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+ "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
 }

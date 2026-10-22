@@ -409,18 +409,18 @@
  },
  "source_picture": "grinder.png (base-v1)",
  "quality": {
-  "iou_vs_painting_at_painting_camera": 0.9554,
+  "iou_vs_painting_at_painting_camera": 0.9545,
   "texture_share_of_needed_texels": {
    "painted": 0.406,
-   "mirrored": 0.116,
-   "cloned": 0.477,
+   "mirrored": 0.043,
+   "cloned": 0.551,
    "healed_or_mean": 0.0
   },
   "view_share": {
-   "visible": 404863,
-   "painted": 0.012,
-   "copied": 0.223,
-   "cloned": 0.766,
+   "visible": 405364,
+   "painted": 0.018,
+   "copied": 0.084,
+   "cloned": 0.897,
    "healed_or_mean": 0.0
   }
  },

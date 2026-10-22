@@ -341,15 +341,35 @@
    ],
    [
     890,
-    840
+    837
    ],
    [
-    959,
-    805
+    877,
+    831
    ],
    [
-    959,
-    672
+    875,
+    829
+   ],
+   [
+    877,
+    827
+   ],
+   [
+    938,
+    797
+   ],
+   [
+    940,
+    795
+   ],
+   [
+    940,
+    682
+   ],
+   [
+    942,
+    680
    ],
    [
     984,
@@ -589,6 +609,140 @@
    ]
   ]
  ],
+ "hole_polygons_px": [
+  [
+   [
+    560,
+    713
+   ],
+   [
+    563,
+    712
+   ],
+   [
+    566,
+    714
+   ],
+   [
+    568,
+    714
+   ],
+   [
+    571,
+    716
+   ],
+   [
+    573,
+    716
+   ],
+   [
+    576,
+    718
+   ],
+   [
+    578,
+    718
+   ],
+   [
+    581,
+    720
+   ],
+   [
+    583,
+    720
+   ],
+   [
+    586,
+    722
+   ],
+   [
+    588,
+    722
+   ],
+   [
+    591,
+    724
+   ],
+   [
+    593,
+    724
+   ],
+   [
+    596,
+    726
+   ],
+   [
+    598,
+    726
+   ],
+   [
+    601,
+    728
+   ],
+   [
+    620,
+    735
+   ],
+   [
+    622,
+    737
+   ],
+   [
+    622,
+    741
+   ],
+   [
+    618,
+    744
+   ],
+   [
+    618,
+    760
+   ],
+   [
+    620,
+    761
+   ],
+   [
+    569,
+    787
+   ],
+   [
+    560,
+    782
+   ]
+  ],
+  [
+   [
+    589,
+    666
+   ],
+   [
+    589,
+    677
+   ],
+   [
+    588,
+    678
+   ],
+   [
+    586,
+    678
+   ],
+   [
+    575,
+    672
+   ],
+   [
+    577,
+    670
+   ],
+   [
+    587,
+    665
+   ]
+  ]
+ ],
  "silhouette": {
   "bbox_px": [
    486,
@@ -596,26 +750,27 @@
    984,
    938
   ],
-  "area_px": 185562,
-  "polygon_vs_mask_iou": 0.98299,
+  "area_px": 181948,
+  "polygon_vs_mask_iou": 0.99802,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
   "alpha_threshold": 128,
   "opened_holes_filled": false
  },
  "source_picture": "works-full-ironworks.png (base-v1)",
  "quality": {
-  "iou_vs_painting_at_painting_camera": 0.9305,
+  "iou_vs_painting_at_painting_camera": 0.9324,
   "texture_share_of_needed_texels": {
-   "painted": 0.344,
-   "mirrored": 0.089,
-   "cloned": 0.545,
-   "healed_or_mean": 0.021
+   "painted": 0.347,
+   "mirrored": 0.069,
+   "cloned": 0.569,
+   "healed_or_mean": 0.015
   },
   "view_share": {
-   "visible": 803053,
-   "painted": 0.243,
-   "copied": 0.1,
-   "cloned": 0.62,
-   "healed_or_mean": 0.037
+   "visible": 778538,
+   "painted": 0.244,
+   "copied": 0.084,
+   "cloned": 0.643,
+   "healed_or_mean": 0.029
   }
  },
  "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."

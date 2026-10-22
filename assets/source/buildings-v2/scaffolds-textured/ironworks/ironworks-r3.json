@@ -104,12 +104,8 @@
     446
    ],
    [
-    875,
-    439
-   ],
-   [
-    875,
-    434
+    877,
+    437
    ],
    [
     873,
@@ -122,6 +118,30 @@
    [
     871,
     409
+   ],
+   [
+    860,
+    404
+   ],
+   [
+    858,
+    397
+   ],
+   [
+    846,
+    391
+   ],
+   [
+    843,
+    391
+   ],
+   [
+    840,
+    393
+   ],
+   [
+    838,
+    393
    ],
    [
     823,
@@ -144,32 +164,52 @@
     424
    ],
    [
-    676,
-    470
+    662,
+    477
    ],
    [
-    673,
-    470
+    662,
+    490
    ],
    [
-    654,
-    460
-   ],
-   [
-    650,
-    460
-   ],
-   [
-    578,
-    496
-   ],
-   [
-    576,
+    647,
     498
    ],
    [
-    576,
-    552
+    644,
+    498
+   ],
+   [
+    637,
+    494
+   ],
+   [
+    622,
+    502
+   ],
+   [
+    622,
+    522
+   ],
+   [
+    623,
+    523
+   ],
+   [
+    621,
+    525
+   ],
+   [
+    595,
+    538
+   ],
+   [
+    595,
+    541
+   ],
+   [
+    593,
+    543
    ],
    [
     566,
@@ -180,16 +220,16 @@
     565
    ],
    [
-    574,
-    561
+    594,
+    551
    ],
    [
-    576,
-    562
+    595,
+    552
    ],
    [
-    576,
-    680
+    595,
+    690
    ],
    [
     622,
@@ -377,6 +417,62 @@
    ]
   ]
  ],
+ "hole_polygons_px": [
+  [
+   [
+    971,
+    569
+   ],
+   [
+    975,
+    571
+   ],
+   [
+    975,
+    638
+   ],
+   [
+    966,
+    643
+   ],
+   [
+    948,
+    634
+   ],
+   [
+    946,
+    632
+   ],
+   [
+    946,
+    612
+   ],
+   [
+    948,
+    611
+   ],
+   [
+    953,
+    614
+   ],
+   [
+    953,
+    608
+   ],
+   [
+    933,
+    593
+   ],
+   [
+    930,
+    589
+   ],
+   [
+    969,
+    569
+   ]
+  ]
+ ],
  "silhouette": {
   "bbox_px": [
    551,
@@ -384,26 +480,27 @@
    1049,
    929
   ],
-  "area_px": 182255,
-  "polygon_vs_mask_iou": 0.98838,
+  "area_px": 176229,
+  "polygon_vs_mask_iou": 0.99765,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
   "alpha_threshold": 128,
   "opened_holes_filled": false
  },
  "source_picture": "works-full-ironworks.png (base-v1)",
  "quality": {
-  "iou_vs_painting_at_painting_camera": 0.9305,
+  "iou_vs_painting_at_painting_camera": 0.9324,
   "texture_share_of_needed_texels": {
-   "painted": 0.344,
-   "mirrored": 0.089,
-   "cloned": 0.545,
-   "healed_or_mean": 0.021
+   "painted": 0.347,
+   "mirrored": 0.069,
+   "cloned": 0.569,
+   "healed_or_mean": 0.015
   },
   "view_share": {
-   "visible": 779151,
-   "painted": 0.353,
-   "copied": 0.109,
-   "cloned": 0.526,
-   "healed_or_mean": 0.012
+   "visible": 752217,
+   "painted": 0.366,
+   "copied": 0.083,
+   "cloned": 0.547,
+   "healed_or_mean": 0.005
   }
  },
  "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
