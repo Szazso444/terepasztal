@@ -1,0 +1,476 @@
+{
+ "job": "grinder",
+ "view": "r3",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   273.92,
+   869.12
+  ],
+  "s": [
+   437.76,
+   951.04
+  ],
+  "e": [
+   750.08,
+   794.88
+  ],
+  "n": [
+   586.24,
+   712.96
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  1
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    568,
+    447
+   ],
+   [
+    565,
+    447
+   ],
+   [
+    557,
+    451
+   ],
+   [
+    556,
+    454
+   ],
+   [
+    553,
+    457
+   ],
+   [
+    544,
+    461
+   ],
+   [
+    544,
+    475
+   ],
+   [
+    550,
+    479
+   ],
+   [
+    550,
+    524
+   ],
+   [
+    548,
+    526
+   ],
+   [
+    450,
+    575
+   ],
+   [
+    447,
+    575
+   ],
+   [
+    434,
+    568
+   ],
+   [
+    418,
+    576
+   ],
+   [
+    418,
+    590
+   ],
+   [
+    419,
+    592
+   ],
+   [
+    416,
+    595
+   ],
+   [
+    409,
+    599
+   ],
+   [
+    349,
+    642
+   ],
+   [
+    349,
+    650
+   ],
+   [
+    353,
+    648
+   ],
+   [
+    356,
+    649
+   ],
+   [
+    356,
+    828
+   ],
+   [
+    367,
+    833
+   ],
+   [
+    369,
+    835
+   ],
+   [
+    369,
+    877
+   ],
+   [
+    392,
+    888
+   ],
+   [
+    394,
+    890
+   ],
+   [
+    394,
+    895
+   ],
+   [
+    410,
+    903
+   ],
+   [
+    412,
+    905
+   ],
+   [
+    412,
+    930
+   ],
+   [
+    442,
+    945
+   ],
+   [
+    468,
+    932
+   ],
+   [
+    469,
+    933
+   ],
+   [
+    472,
+    933
+   ],
+   [
+    497,
+    920
+   ],
+   [
+    500,
+    920
+   ],
+   [
+    510,
+    915
+   ],
+   [
+    513,
+    912
+   ],
+   [
+    559,
+    889
+   ],
+   [
+    562,
+    889
+   ],
+   [
+    574,
+    883
+   ],
+   [
+    575,
+    881
+   ],
+   [
+    623,
+    857
+   ],
+   [
+    626,
+    857
+   ],
+   [
+    638,
+    851
+   ],
+   [
+    639,
+    849
+   ],
+   [
+    691,
+    823
+   ],
+   [
+    691,
+    801
+   ],
+   [
+    694,
+    798
+   ],
+   [
+    705,
+    793
+   ],
+   [
+    705,
+    730
+   ],
+   [
+    704,
+    729
+   ],
+   [
+    704,
+    721
+   ],
+   [
+    700,
+    713
+   ],
+   [
+    700,
+    711
+   ],
+   [
+    695,
+    706
+   ],
+   [
+    695,
+    670
+   ],
+   [
+    696,
+    669
+   ],
+   [
+    699,
+    669
+   ],
+   [
+    699,
+    660
+   ],
+   [
+    690,
+    656
+   ],
+   [
+    688,
+    654
+   ],
+   [
+    690,
+    652
+   ],
+   [
+    701,
+    647
+   ],
+   [
+    701,
+    622
+   ],
+   [
+    685,
+    614
+   ],
+   [
+    683,
+    612
+   ],
+   [
+    675,
+    597
+   ],
+   [
+    667,
+    585
+   ],
+   [
+    665,
+    580
+   ],
+   [
+    660,
+    573
+   ],
+   [
+    658,
+    568
+   ],
+   [
+    643,
+    544
+   ],
+   [
+    641,
+    539
+   ],
+   [
+    636,
+    532
+   ],
+   [
+    634,
+    527
+   ],
+   [
+    622,
+    508
+   ],
+   [
+    626,
+    505
+   ],
+   [
+    626,
+    490
+   ],
+   [
+    606,
+    480
+   ],
+   [
+    586,
+    490
+   ],
+   [
+    586,
+    506
+   ],
+   [
+    584,
+    508
+   ],
+   [
+    583,
+    507
+   ],
+   [
+    583,
+    477
+   ],
+   [
+    586,
+    475
+   ],
+   [
+    586,
+    462
+   ],
+   [
+    578,
+    457
+   ],
+   [
+    578,
+    452
+   ]
+  ]
+ ],
+ "hole_polygons_px": [],
+ "silhouette": {
+  "bbox_px": [
+   349,
+   447,
+   705,
+   945
+  ],
+  "area_px": 116003,
+  "polygon_vs_mask_iou": 0.99879,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
+  "alpha_threshold": 128,
+  "opened_holes_filled": false
+ },
+ "source_picture": "grinder.png (base-v1)",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9554,
+  "texture_share_of_needed_texels": {
+   "painted": 0.406,
+   "mirrored": 0.116,
+   "cloned": 0.477,
+   "healed_or_mean": 0.0
+  },
+  "view_share": {
+   "visible": 374003,
+   "painted": 0.504,
+   "copied": 0.084,
+   "cloned": 0.411,
+   "healed_or_mean": 0.0
+  }
+ },
+ "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

@@ -1,0 +1,428 @@
+{
+ "job": "grinder",
+ "view": "r2",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   273.92,
+   794.88
+  ],
+  "s": [
+   586.24,
+   951.04
+  ],
+  "e": [
+   750.08,
+   869.12
+  ],
+  "n": [
+   437.76,
+   712.96
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  1
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    380,
+    485
+   ],
+   [
+    380,
+    490
+   ],
+   [
+    370,
+    495
+   ],
+   [
+    370,
+    508
+   ],
+   [
+    375,
+    511
+   ],
+   [
+    375,
+    546
+   ],
+   [
+    370,
+    553
+   ],
+   [
+    368,
+    558
+   ],
+   [
+    360,
+    570
+   ],
+   [
+    358,
+    575
+   ],
+   [
+    353,
+    582
+   ],
+   [
+    351,
+    587
+   ],
+   [
+    324,
+    632
+   ],
+   [
+    324,
+    642
+   ],
+   [
+    333,
+    646
+   ],
+   [
+    335,
+    648
+   ],
+   [
+    335,
+    654
+   ],
+   [
+    333,
+    656
+   ],
+   [
+    275,
+    685
+   ],
+   [
+    275,
+    693
+   ],
+   [
+    281,
+    693
+   ],
+   [
+    282,
+    694
+   ],
+   [
+    282,
+    774
+   ],
+   [
+    277,
+    777
+   ],
+   [
+    276,
+    779
+   ],
+   [
+    276,
+    792
+   ],
+   [
+    278,
+    794
+   ],
+   [
+    300,
+    805
+   ],
+   [
+    301,
+    804
+   ],
+   [
+    304,
+    804
+   ],
+   [
+    335,
+    820
+   ],
+   [
+    335,
+    824
+   ],
+   [
+    337,
+    826
+   ],
+   [
+    503,
+    909
+   ],
+   [
+    505,
+    909
+   ],
+   [
+    590,
+    866
+   ],
+   [
+    592,
+    866
+   ],
+   [
+    639,
+    890
+   ],
+   [
+    683,
+    868
+   ],
+   [
+    709,
+    881
+   ],
+   [
+    739,
+    866
+   ],
+   [
+    739,
+    760
+   ],
+   [
+    717,
+    749
+   ],
+   [
+    715,
+    747
+   ],
+   [
+    708,
+    735
+   ],
+   [
+    708,
+    697
+   ],
+   [
+    690,
+    688
+   ],
+   [
+    671,
+    661
+   ],
+   [
+    671,
+    655
+   ],
+   [
+    673,
+    652
+   ],
+   [
+    673,
+    650
+   ],
+   [
+    675,
+    647
+   ],
+   [
+    682,
+    628
+   ],
+   [
+    671,
+    624
+   ],
+   [
+    671,
+    622
+   ],
+   [
+    668,
+    616
+   ],
+   [
+    668,
+    613
+   ],
+   [
+    661,
+    610
+   ],
+   [
+    658,
+    610
+   ],
+   [
+    646,
+    606
+   ],
+   [
+    631,
+    603
+   ],
+   [
+    627,
+    601
+   ],
+   [
+    616,
+    599
+   ],
+   [
+    612,
+    597
+   ],
+   [
+    601,
+    595
+   ],
+   [
+    599,
+    593
+   ],
+   [
+    599,
+    578
+   ],
+   [
+    586,
+    571
+   ],
+   [
+    583,
+    571
+   ],
+   [
+    570,
+    578
+   ],
+   [
+    568,
+    578
+   ],
+   [
+    431,
+    509
+   ],
+   [
+    432,
+    507
+   ],
+   [
+    432,
+    494
+   ],
+   [
+    430,
+    492
+   ],
+   [
+    412,
+    483
+   ],
+   [
+    403,
+    487
+   ],
+   [
+    402,
+    484
+   ],
+   [
+    391,
+    479
+   ]
+  ]
+ ],
+ "hole_polygons_px": [],
+ "silhouette": {
+  "bbox_px": [
+   275,
+   479,
+   739,
+   909
+  ],
+  "area_px": 127637,
+  "polygon_vs_mask_iou": 0.99914,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
+  "alpha_threshold": 128,
+  "opened_holes_filled": false
+ },
+ "source_picture": "grinder.png (base-v1)",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9554,
+  "texture_share_of_needed_texels": {
+   "painted": 0.406,
+   "mirrored": 0.116,
+   "cloned": 0.477,
+   "healed_or_mean": 0.0
+  },
+  "view_share": {
+   "visible": 404863,
+   "painted": 0.012,
+   "copied": 0.223,
+   "cloned": 0.766,
+   "healed_or_mean": 0.0
+  }
+ },
+ "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

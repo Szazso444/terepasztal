@@ -97,3 +97,41 @@ For the Codex paint-over of `power_plant` (the textured blockout above is kept a
 | `materials/stone_quoin.png` | cream stone quoin blocks (chimney base) | 256 (4x) | 1254,590 to 1318,654 |
 | `materials/chimney_brick.png` | chimney brick, lit and dark face | 240 (2x) | 1214,368 to 1334,488 |
 | `materials/generator_metal.png` | generator and annex green sheet metal, fan grille | 300 (3x) | 1190,648 to 1290,748 |
+
+## Batch B (2026-10-22): stone grinder, oil refinery, colliery, ironworks, oil derrick
+
+Same method as the pilot and batch A (`renders/textured-blockout/`, batch B scripts in `tools_b/`, one `build_<job>.py` per building next to the `.blend`; not in the repository): measured blockout from the painted r0 through the painting's own orthographic camera, silhouette checked against the painting from that camera, painting projected from that camera, unseen faces mirrored or cloned from same-material painted texels (no generative fill), variant B (de-lit, game sun), r0 to r3 at the game camera (30 degrees, 2:1) on the review-2 plan canvas of the job. The thin parts (head frame, tower lattice, wheels, rods, pipes, railings, ladders, the chain and the fence of the ironworks) are real thin geometry, not slabs. Footprints follow F7 (grinder 1 x 1, refinery 1 x 1, colliery 2 x 2, ironworks 2 x 2, oil derrick 2 x 1); the plan JSONs agree with F7 everywhere. Grinder, refinery and oil derrick have no r0 plan, so the canvas, scale and anchor are those of their r1 plans (the same for every view).
+
+| Building | Source picture | Footprint at r0 | Painted camera, elevation / azimuth (deg) | Canvas | IoU, painting camera (1:1 / best fit) | Texture painted / mirrored / cloned / healed or mean colour | Files |
+|---|---|---|---|---|---|---|---|
+| Stone grinder (`grinder`) | base-v1/grinder.png | 1 x 1 | 24.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.955 / 0.957 | 41% / 12% / 48% / 0.0% | `grinder/grinder-r0..r3-{textured,bare}.png`, `grinder/grinder-r0..r3.json` |
+| Oil refinery (`refinery`) | base-v1/refinery.png | 1 x 1 | 24.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.923 / 0.923 | 29% / 8% / 55% / 7.7% | `refinery/refinery-r0..r3-{textured,bare}.png`, `refinery/refinery-r0..r3.json` |
+| Colliery (`colliery`) | base-v1/works-full-colliery.png | 2 x 2 | 23.5 / 45.0 | 1536 x 1024, anchor 768,760 | 0.932 / 0.934 | 36% / 14% / 45% / 5.3% | `colliery/colliery-r0..r3-{textured,bare}.png`, `colliery/colliery-r0..r3.json` |
+| Ironworks (`ironworks`) | base-v1/works-full-ironworks.png | 2 x 2 | 23.5 / 45.0 | 1536 x 1024, anchor 768,760 | 0.931 / 0.935 | 34% / 9% / 55% / 2.1% | `ironworks/ironworks-r0..r3-{textured,bare}.png`, `ironworks/ironworks-r0..r3.json` |
+| Oil derrick (`oil_derrick`) | base-v1/works-full-oil-derrick.png | 2 x 1 | 25.0 / 45.5 | 1024 x 1024, anchor 512,800 | 0.902 / 0.904 | 25% / 7% / 54% / 14% | `oil_derrick/oil_derrick-r0..r3-{textured,bare}.png`, `oil_derrick/oil_derrick-r0..r3.json` |
+
+Texture shares per view (painted / copied / cloned / healed or mean), r0, r1, r2, r3:
+- grinder: 89/0/11/0, 31/17/53/0, 1/22/77/0, 50/8/41/0 per cent
+- refinery: 65/0/29/5, 18/10/60/12, 1/16/75/9, 36/7/47/10 per cent
+- colliery: 79/0/18/3, 32/13/50/5, 0/25/68/7, 34/17/43/6 per cent
+- ironworks: 74/0/23/3, 24/10/62/4, 1/14/83/1, 35/11/53/1 per cent
+- oil_derrick: 57/1/37/5, 10/12/66/12, 1/9/68/22, 34/3/54/10 per cent
+
+Silhouette areas (opaque px, alpha above 128), r0 to r3:
+- grinder: 129605, 112172, 127637, 116003
+- refinery: 95734, 61895, 95306, 63500
+- colliery: 111452, 97720, 106547, 81544
+- ironworks: 215418, 185562, 219007, 182255
+- oil_derrick: 249204, 235372, 268549, 233008
+
+Notes:
+
+- The outline polygons carry `hole_polygons_px` (the see-through gaps, area 60 px or more) next to `outline_polygon_px`; subtract them to get the mask (polygon against mask 0.98 to 0.999 with the holes subtracted; the lattices and the derrick's frame windows would not match without them).
+- Camera and scale: the paintings are close to orthographic at 23.5 to 25 degrees, not 30; the derrick is drawn at azimuth 45.5 (its two ground edges have slopes 0.43 and 0.41). k (painting px per tile) comes from the plan rule: the painted base from the left corner to the right corner is 0.9 of the footprint span after scaling to the plan canvas (grinder 700, refinery 738, colliery 558, ironworks 462, derrick 391). The painted shapes are not square, so the models are about 1.2 x 0.64 (grinder, with the lean-to shed), 1.19 x 0.78 (refinery), 1.8 x 1.0 (colliery), 2.15 x 1.6 (ironworks) and 2.1 x 0.86 tiles (derrick) inside their footprints.
+- Grinder: house, portal wall with two arches and the shed are measured from rectified front and gable views. Weak: the hopper sits in front of the roof eave and its far end passes through the roof, so in r1 and r2 a rubble and timber patch shows on the roof slope; the millstones are plain cylinders; the arch interiors and the gap between hopper and house are smeared at r1 to r3.
+- Refinery: tank, column with three railed platforms, furnace on its frame, vessels, chimney and the copper pipes are modelled; the frames carry dark infill panels at the back so they are not see-through, as in the painting. Weak: the yellow railings and the pipe backs are tiled from small painted patches (grey-brown, not yellow, at r1 to r3), the steel frames show cloned vertical streaks, the furnace's far side is cloned steel and corrugation. Healed or mean colour is 7.7 per cent because leftover thin groups copy tiled patches of the same material first (a tile pass added for this batch) and only then the mean.
+- Colliery: the painted building is about 1.8 x 1.0 tiles (head frame at -x, engine house at +x), narrower than the plan's 694 px base. The painting is not geometrically consistent, so parts are placed from pixels at the painting camera; the head frame is one front plane of legs and braces without back legs, so it looks thin at r1 and r3. A dark backing sheet under the hoppers keeps the silhouette solid and shows from behind at r2. The unseen sides of the wheels and the rope are mean colour (the 5 per cent). The outline polygon matches the mask at 0.988 to 0.995 with the holes subtracted.
+- Ironworks: the painting is only mostly orthographic; the tower's right-front base sits about 50 px higher than a Y = 0 ground line allows, so the plinth is notched under it (the blue band in the IoU difference). Weak: the copper boiler, the hoist chain and the fence are smeared at r1 to r3; the unseen sides are plain cloned brick, stone and slate (r2 shows 1 per cent painted).
+- Oil derrick: 0.902 is under the 0.92 target and just over the 0.90 skip line, after many correction rounds. The silhouette is right where a part is a plate (the beam and the horse head are plates whose outline is read from the painting's pixels on their plane; the base frame's two windows are cut from the painting's holes); what is not matched is the lattice of the Samson post (four faces of X braces, the painting's small gaps do not line up) and the thin parts of the wellhead. Weak: the back faces of the beam and the horse head are blocky clone patches, the tower lattice is smeared at r1 to r3, the flywheel and the pipes are thin and partly mean colour (14 per cent healed or mean, the highest of the batch).
+- Fill changes made during the batch (the grinder and the derrick got both, the refinery the tile pass only, the colliery and the ironworks ran before them and keep the earlier fill): a tile pass for texels that have no clone exemplar (patches of the same material's own painted texels instead of the flat mean colour), and a spill removal (painted texels that no r0 view sees and that are colour outliers of their material are re-cloned).
+- What the painter fixes is as in the pilot: cloned and mirrored patches are uniform and a little blocky, the thin parts are smeared by the projection, the painted highlights are baked in.
