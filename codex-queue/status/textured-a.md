@@ -67,3 +67,5 @@
 - Refused attempts: r1attempt1 call refused at output moderation, violence; requestID1b51de0c-afe2-9c47-ace6-b909b1f2ea04. No image returned: measurements unavailable, no raw closest image exists.
 - Stop reason: a tool that refuses (README, Running the groups). Stopped immediately without retry or workaround.
 - Notes: All9fixedrenderfiles/metadata and acceptedr0hash passed preflight. Exact call/ref order and refusal recorded in assets/source/textured/quarry/prompts.json and REPORT.md. R0 untouched; r2/r3 not run. Queue header says each stop halts this building only; group scope awaiting orchestrator resolution because initial delegation says toolstophaltsgroup.
+
+- Scope resolved by orchestrator: the current TB2-quarry QUEUE header stops quarry only; no retry, rephrase or workaround; townhouse proceeds next with its own unchanged prompt and references.
