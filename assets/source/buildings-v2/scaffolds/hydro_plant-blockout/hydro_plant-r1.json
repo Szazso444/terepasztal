@@ -1,0 +1,239 @@
+{
+ "job": "hydro_plant",
+ "view": "r1",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "azimuth_off_45_deg": 0.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "plan_base_px": {
+  "w": [
+   316.75,
+   849.57
+  ],
+  "s": [
+   476.85,
+   929.63
+  ],
+  "e": [
+   707.25,
+   814.43
+  ],
+  "n": [
+   547.15,
+   734.37
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   316.75,
+   849.57
+  ],
+  "s": [
+   476.85,
+   929.63
+  ],
+  "e": [
+   707.25,
+   814.43
+  ],
+  "n": [
+   547.15,
+   734.37
+  ]
+ },
+ "model_base_tiles": [
+  0.6254,
+  0.9
+ ],
+ "footprint_tiles": [
+  1,
+  1
+ ],
+ "plan_file": "assets/source/buildings-v2/guides/review2/hydro_plant-r1-plan.json (branch claude/art-guides-review-2)",
+ "dimensions": {
+  "footprint_tiles": [
+   1,
+   1
+  ],
+  "base_tiles_r0": [
+   0.9,
+   0.6254
+  ],
+  "eaves_h_tiles": 1.0206207261596576,
+  "eaves_h_game_px": 40.0,
+  "ridge_h_tiles": 1.2594613793375975,
+  "ridge_h_game_px": 49.36060368190397,
+  "lantern_top_tiles": 1.3864613793375975,
+  "pitch_deg": 33,
+  "stone_base_h_tiles": 0.27,
+  "wall_thickness_tiles": 0.05,
+  "intake_top_tiles": 0.63,
+  "intake_wheel_top_tiles": 0.85,
+  "penstock_radius_tiles": 0.042,
+  "window_half_w_tiles": 0.105,
+  "window_top_tiles": 0.865,
+  "tailrace_top_tiles": 0.185,
+  "tailrace_floor": "opaque dark floor and sill (no see-through notch)"
+ },
+ "source": "modelled directly in Blender (no painted source): blockout of a brick turbine house with a stone intake and a penstock",
+ "outline_polygon_px": [
+  [
+   [
+    633,
+    377
+   ],
+   [
+    580,
+    391
+   ],
+   [
+    561,
+    372
+   ],
+   [
+    536,
+    372
+   ],
+   [
+    438,
+    421
+   ],
+   [
+    437,
+    425
+   ],
+   [
+    449,
+    426
+   ],
+   [
+    448,
+    451
+   ],
+   [
+    303,
+    523
+   ],
+   [
+    303,
+    534
+   ],
+   [
+    317,
+    531
+   ],
+   [
+    317,
+    849
+   ],
+   [
+    468,
+    924
+   ],
+   [
+    470,
+    932
+   ],
+   [
+    518,
+    956
+   ],
+   [
+    607,
+    911
+   ],
+   [
+    607,
+    887
+   ],
+   [
+    603,
+    884
+   ],
+   [
+    605,
+    864
+   ],
+   [
+    706,
+    814
+   ],
+   [
+    706,
+    508
+   ],
+   [
+    720,
+    501
+   ],
+   [
+    720,
+    489
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   303,
+   372,
+   720,
+   956
+  ],
+  "area_px": 182511,
+  "top_row_px": 372,
+  "bottom_row_px": 956,
+  "inside_canvas": true,
+  "lit_vs_bare_iou": 1.0,
+  "max_overshoot_beyond_plinth_px": 0.0
+ },
+ "fit_vs_plan": {
+  "model_base_corners_vs_plan_base_max_error_px": 0.005,
+  "footprint_corners_vs_plan_plinth_max_error_px": 0.0
+ },
+ "note": "Scaffold render: paint over the lit render, check the outline_polygon_px against the bare render. Canvas, anchor, footprint (1 x 1 plinth) and base (0.9 x 0.6254 tiles at r0, turned in r1 and r3) are the review-2 plan's; the camera is the game camera. The doorway of the tailrace arch is opaque: an opaque dark floor and interior, no transparent notch."
+}
