@@ -335,7 +335,7 @@ export function measure(file, job, view, eye = {}) {
       opening(raw, p.width, p.height, 2 * s0),
       p.width,
       p.height,
-      job === 'farm' ? Infinity : 60 * s0 * s0,
+      ['farm', 'townhouse'].includes(job) ? Infinity : 60 * s0 * s0,
     ),
     tw = p.width,
     th = Math.round(j.canvas[1] * s0),
