@@ -1,0 +1,1226 @@
+{
+  "job": "oil_derrick",
+  "renderReference": {
+    "r0": {
+      "wallRatio": 0.6051873198847262,
+      "baseWidth": 694,
+      "wallReading": {
+        "pivot": [484, 397],
+        "foot": [484, 817],
+        "baseLeft": 133,
+        "baseRight": 827,
+        "note": "Samson post same near foot to pivot, base excludes overhanging tank."
+      },
+      "lightBoxes": [
+        [300, 755, 314, 769],
+        [397, 773, 411, 786]
+      ],
+      "light": {
+        "left": 66.56755918367345,
+        "right": 47.776961538461556,
+        "ratio": 1.39329829775979,
+        "boxes": [
+          [300, 755, 314, 769],
+          [397, 773, 411, 786]
+        ]
+      }
+    },
+    "r1": {
+      "wallRatio": 0.6002747252747253,
+      "baseWidth": 728,
+      "wallReading": {
+        "pivot": [561, 412],
+        "foot": [561, 849],
+        "baseLeft": 163,
+        "baseRight": 891
+      },
+      "lightBoxes": [
+        [432, 685, 445, 699],
+        [703, 601, 715, 616]
+      ],
+      "light": {
+        "left": 62.87867142857139,
+        "right": 87.42503200000002,
+        "ratio": 0.7192296072430534,
+        "boxes": [
+          [432, 685, 445, 699],
+          [703, 601, 715, 616]
+        ]
+      }
+    },
+    "r2": {
+      "wallRatio": 0.6212338593974175,
+      "baseWidth": 697,
+      "wallReading": {
+        "pivot": [531, 432],
+        "foot": [516, 865],
+        "baseLeft": 194,
+        "baseRight": 891,
+        "note": "Base excludes tank overhang to904."
+      },
+      "lightBoxes": [
+        [433, 803, 445, 816],
+        [660, 825, 672, 838]
+      ],
+      "light": {
+        "left": 103.91190434782614,
+        "right": 57.63500641025637,
+        "ratio": 1.8029303858867032,
+        "boxes": [
+          [433, 803, 445, 816],
+          [660, 825, 672, 838]
+        ]
+      }
+    },
+    "r3": {
+      "wallRatio": 0.46016483516483514,
+      "baseWidth": 728,
+      "wallReading": {
+        "pivot": [421, 425],
+        "foot": [421, 760],
+        "baseLeft": 132,
+        "baseRight": 860,
+        "note": "Bare Samson support top plate/pivot at421,425; painted bearing texture farther along beam is not substituted for bare geometry."
+      },
+      "lightBoxes": [
+        [472, 829, 486, 843],
+        [555, 841, 569, 855]
+      ],
+      "light": {
+        "left": 87.68146836734691,
+        "right": 56.01216632653064,
+        "ratio": 1.565400414192083,
+        "boxes": [
+          [472, 829, 486, 843],
+          [555, 841, 569, 855]
+        ]
+      }
+    }
+  },
+  "attempts": [
+    {
+      "building": "oil_derrick",
+      "view": 0,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r0. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r0: the visible sides are the lower-left and the lower-right. What the building has where: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box (the left corner); the lattice Samson post with its pivot, and the walking beam that rests on it (the far (top) corner); the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes (the right corner); the long steel skid frame with its copper pipes along that side (the lower-left side). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r0-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png"
+      ],
+      "file": "raw/oil_derrick-r0-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r0-attempt-1.png",
+        "job": "oil_derrick",
+        "view": 0,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [127, 126, 1104, 1179],
+          "area": 473766,
+          "width": 978,
+          "height": 1054,
+          "overallRatio": 1.0777096114519427
+        },
+        "bareOpaque": {
+          "box": [119, 211, 827, 974],
+          "area": 249204,
+          "width": 709,
+          "height": 764,
+          "overallRatio": 1.077574047954866
+        },
+        "silhouette": {
+          "iouAtS0": 0.4645800154746663,
+          "f": 0.875,
+          "dx": 32.360000000000014,
+          "dy": 150.29999999999995,
+          "bestIoU": 0.9194840696286055,
+          "p95PictureToRender": 12.451003874837426,
+          "p95RenderToPicture": 12.52075794373088,
+          "maximum": 32.65014212069221,
+          "boundarySamples": [3179, 3197],
+          "worstPicture": {
+            "distance": 32.65014212069221,
+            "point": [785.5566188197768, 876.1977671451356]
+          },
+          "worstRender": {
+            "distance": 25.04151588746176,
+            "point": [814.9537480063796, 885.1802232854865]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.6234439834024896,
+          "renderWall": 0.6051873198847262,
+          "wallRelativeDifference": 0.030166963050780593,
+          "overall": 1.0777096114519427,
+          "renderOverall": 1.077574047954866,
+          "overallRelativeDifference": 0.000125804344800029,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 964,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 0.9593620331950208
+        },
+        "highlights": {
+          "nearWhite": 537,
+          "nearAmber": 1
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 77.34866400000004,
+          "right": 56.72946190476191,
+          "boxes": [
+            [410, 907, 425, 922],
+            [521, 912, 536, 926]
+          ],
+          "ratio": 1.3634654975196818,
+          "renderRatio": 1.39329829775979
+        },
+        "eye": {
+          "wallRatio": 0.6234439834024896,
+          "renderWallRatio": 0.6051873198847262,
+          "baseWidth": 964,
+          "leftBox": [410, 907, 425, 922],
+          "rightBox": [521, 912, 536, 926],
+          "wallReading": {
+            "pivot": [631, 375],
+            "foot": [672, 976],
+            "baseLeft": 140,
+            "baseRight": 1104
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "IoU0.91948 and p9512.45/12.52 pass, but max32.65014 exceeds32canvaspx at wellhead/base right edge.",
+      "sha256": "2a851dd6d3cd64ca6d82295b07c2f8b1bf3500125f40f640e9846e95d57968b5"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 0,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r0. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r0: the visible sides are the lower-left and the lower-right. What the building has where: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box (the left corner); the lattice Samson post with its pivot, and the walking beam that rests on it (the far (top) corner); the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes (the right corner); the long steel skid frame with its copper pipes along that side (the lower-left side). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Last silhouette nearly passed: IoU0.91948,p9512.45/12.52, but maximum32.65014 exceeds32 at the wellhead/right base edge. Keep FIRST IMAGE exact bbox119–827,211–974 on1024 and exact base/wellhead outline: reduce right protrusion, do not enlarge or reposition. Same narrow thin steel, original margins and transparent lattice/skid gaps; no added fittings.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r0-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png"
+      ],
+      "file": "raw/oil_derrick-r0-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r0-attempt-2.png",
+        "job": "oil_derrick",
+        "view": 0,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [151, 156, 1129, 1207],
+          "area": 465182,
+          "width": 979,
+          "height": 1052,
+          "overallRatio": 1.0745658835546477
+        },
+        "bareOpaque": {
+          "box": [119, 211, 827, 974],
+          "area": 249204,
+          "width": 709,
+          "height": 764,
+          "overallRatio": 1.077574047954866
+        },
+        "silhouette": {
+          "iouAtS0": 0.4836777020932033,
+          "f": 0.87,
+          "dx": 14.600000000000023,
+          "dy": 123.40999999999997,
+          "bestIoU": 0.8681521283803003,
+          "p95PictureToRender": 18.488387301397296,
+          "p95RenderToPicture": 18.889074484076758,
+          "maximum": 41.8180158679062,
+          "boundarySamples": [3130, 3197],
+          "worstPicture": {
+            "distance": 41.8180158679062,
+            "point": [777.390749601276, 870.481658692185]
+          },
+          "worstRender": {
+            "distance": 30.68824269859088,
+            "point": [823.1196172248804, 875.3811802232855]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.6256517205422315,
+          "renderWall": 0.6051873198847262,
+          "wallRelativeDifference": 0.03381498584835407,
+          "overall": 1.0745658835546477,
+          "renderOverall": 1.077574047954866,
+          "overallRelativeDifference": -0.0027916080625063344,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 959,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 0.9643639207507821
+        },
+        "highlights": {
+          "nearWhite": 756,
+          "nearAmber": 129
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 79.31270380952382,
+          "right": 46.077115306122465,
+          "boxes": [
+            [432, 934, 446, 949],
+            [548, 945, 562, 959]
+          ],
+          "ratio": 1.721303586012148,
+          "renderRatio": 1.39329829775979
+        },
+        "eye": {
+          "wallRatio": 0.6256517205422315,
+          "renderWallRatio": 0.6051873198847262,
+          "baseWidth": 959,
+          "leftBox": [432, 934, 446, 949],
+          "rightBox": [548, 945, 562, 959],
+          "wallReading": {
+            "pivot": [660, 411],
+            "foot": [692, 1011],
+            "baseLeft": 170,
+            "baseRight": 1129
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "IoU0.86815 below0.88, p9518.49/18.89 above16,max41.82 above32 at wellhead/base.",
+      "sha256": "72c44b0f90252d51785142f33e734b91cdf371dba035a3ada3082d2fded4fd61"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 0,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r0. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r0: the visible sides are the lower-left and the lower-right. What the building has where: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box (the left corner); the lattice Samson post with its pivot, and the walking beam that rests on it (the far (top) corner); the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes (the right corner); the long steel skid frame with its copper pipes along that side (the lower-left side). Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Last result missed silhouette IoU0.86815<0.88,p9518.49/18.89>16,max41.82>32 near wellhead/base. Paint EXACT FIRST IMAGE outline and small positions bbox119–827,211–974 on1024, retain all margins. Do not enlarge walking beam, tank or wellhead; preserve right base projection and polished rod position, same thin lattice and transparent skid openings.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r0-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png"
+      ],
+      "file": "raw/oil_derrick-r0-attempt-3.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r0-attempt-3.png",
+        "job": "oil_derrick",
+        "view": 0,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [105, 147, 1075, 1179],
+          "area": 455574,
+          "width": 971,
+          "height": 1033,
+          "overallRatio": 1.0638516992790936
+        },
+        "bareOpaque": {
+          "box": [119, 211, 827, 974],
+          "area": 249204,
+          "width": 709,
+          "height": 764,
+          "overallRatio": 1.077574047954866
+        },
+        "silhouette": {
+          "iouAtS0": 0.5442262096201168,
+          "f": 0.899,
+          "dx": 46,
+          "dy": 126.79999999999995,
+          "bestIoU": 0.9386507738556257,
+          "p95PictureToRender": 5.449968332703536,
+          "p95RenderToPicture": 5.449968332703536,
+          "maximum": 8.225260373880525,
+          "boundarySamples": [3163, 3197],
+          "worstPicture": {
+            "distance": 7.323174903053467,
+            "point": [133.103668261563, 690.8325358851674]
+          },
+          "worstRender": {
+            "distance": 8.225260373880525,
+            "point": [277.6395534290271, 791.2727272727273]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.6075550891920252,
+          "renderWall": 0.6051873198847262,
+          "wallRelativeDifference": 0.003912456903013117,
+          "overall": 1.0638516992790936,
+          "renderOverall": 1.077574047954866,
+          "overallRelativeDifference": -0.012734483260631757,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 953,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 0.9704354669464849
+        },
+        "highlights": {
+          "nearWhite": 740,
+          "nearAmber": 54
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 71.00833673469386,
+          "right": 41.7273989010989,
+          "boxes": [
+            [380, 906, 394, 920],
+            [508, 923, 521, 937]
+          ],
+          "ratio": 1.701719699878629,
+          "renderRatio": 1.39329829775979
+        },
+        "eye": {
+          "wallRatio": 0.6075550891920252,
+          "renderWallRatio": 0.6051873198847262,
+          "baseWidth": 953,
+          "leftBox": [380, 906, 394, 920],
+          "rightBox": [508, 923, 521, 937],
+          "wallReading": {
+            "pivot": [599, 394],
+            "foot": [631, 973],
+            "baseLeft": 122,
+            "baseRight": 1075
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "Accepted all tests: thin crisp repainted steel/copper, exact machinery and open gaps as render; IoU0.93865,p955.45/5.45,max8.23.",
+      "sha256": "d621c0bdd27b58467077a0e49b5201c0267d4b62b05fb33ea1bb9602a4df270a"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 1,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r1. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box stands at the far (top) corner; the lattice Samson post with its pivot, and the walking beam that rests on it stands at the right corner; the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes stands at the near (bottom) corner; the long steel skid frame with its copper pipes along that side stands at the upper-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r1-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png",
+        "G:/DEV/wt/codex-textured-b/assets/source/textured/oil_derrick/oil_derrick-r0.png"
+      ],
+      "file": "raw/oil_derrick-r1-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r1-attempt-1.png",
+        "job": "oil_derrick",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [182, 169, 1115, 1143],
+          "area": 396412,
+          "width": 934,
+          "height": 975,
+          "overallRatio": 1.04389721627409
+        },
+        "bareOpaque": {
+          "box": [163, 199, 891, 957],
+          "area": 235372,
+          "width": 729,
+          "height": 759,
+          "overallRatio": 1.0411522633744856
+        },
+        "silhouette": {
+          "iouAtS0": 0.6202952990989035,
+          "f": 0.949,
+          "dx": 28.925000000000068,
+          "dy": 85.30000000000007,
+          "bestIoU": 0.9198288175266522,
+          "p95PictureToRender": 8.117666610556197,
+          "p95RenderToPicture": 9.267555644917476,
+          "maximum": 23.232715374027556,
+          "boundarySamples": [3159, 3224],
+          "worstPicture": {
+            "distance": 13.874677002834703,
+            "point": [708.7974481658692, 599.3748006379585]
+          },
+          "worstRender": {
+            "distance": 23.232715374027556,
+            "point": [684.2998405103668, 594.475279106858]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.6109324758842444,
+          "renderWall": 0.6002747252747253,
+          "wallRelativeDifference": 0.017754788200754934,
+          "overall": 1.04389721627409,
+          "renderOverall": 1.0411522633744856,
+          "overallRelativeDifference": 0.0026364567375647407,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 933,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 0.9912379421221865
+        },
+        "highlights": {
+          "nearWhite": 531,
+          "nearAmber": 69
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 56.46382564102563,
+          "right": 34.56122692307689,
+          "boxes": [
+            [532, 761, 544, 774],
+            [795, 717, 807, 730]
+          ],
+          "ratio": 1.633733251620305,
+          "renderRatio": 0.7192296072430534
+        },
+        "eye": {
+          "wallRatio": 0.6109324758842444,
+          "renderWallRatio": 0.6002747252747253,
+          "baseWidth": 933,
+          "leftBox": [532, 761, 544, 774],
+          "rightBox": [795, 717, 807, 730],
+          "wallReading": {
+            "pivot": [642, 389],
+            "foot": [698, 959],
+            "baseLeft": 182,
+            "baseRight": 1115
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Machine tests pass but adds a loose spanner-shaped rod on front skid beside Samson foot and vent slots in beam end absent from render.",
+      "sha256": "cf578a414ab7c8d65ca0ce075dabe9d850e33e990dc981056ca77900c0f9758c"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 1,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r1. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box stands at the far (top) corner; the lattice Samson post with its pivot, and the walking beam that rests on it stands at the right corner; the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes stands at the near (bottom) corner; the long steel skid frame with its copper pipes along that side stands at the upper-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r1 machine shape passed (IoU0.91983,p958.12/9.27,max23.23) but added a loose spanner-shaped rod on the front skid by Samson foot, and vent slots in beam end: absent in FIRST IMAGE. Remove both added details; walking-beam end is solid steel/copper as render. Preserve first-image bbox163–891,199–957 on1024, exact base/lattice/machinery and transparent gaps.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r1-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png",
+        "G:/DEV/wt/codex-textured-b/assets/source/textured/oil_derrick/oil_derrick-r0.png"
+      ],
+      "file": "raw/oil_derrick-r1-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r1-attempt-2.png",
+        "job": "oil_derrick",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [182, 91, 1171, 1150],
+          "area": 451437,
+          "width": 990,
+          "height": 1060,
+          "overallRatio": 1.0707070707070707
+        },
+        "bareOpaque": {
+          "box": [163, 199, 891, 957],
+          "area": 235372,
+          "width": 729,
+          "height": 759,
+          "overallRatio": 1.0411522633744856
+        },
+        "silhouette": {
+          "iouAtS0": 0.5428369556219113,
+          "f": 0.888,
+          "dx": 42.914999999999964,
+          "dy": 154.255,
+          "bestIoU": 0.9007892498357972,
+          "p95PictureToRender": 15.304859211373584,
+          "p95RenderToPicture": 14.969675677836419,
+          "maximum": 45.9789933474144,
+          "boundarySamples": [3284, 3224],
+          "worstPicture": {
+            "distance": 28.64015219487725,
+            "point": [585.4928229665072, 402.57735247208933]
+          },
+          "worstRender": {
+            "distance": 45.9789933474144,
+            "point": [684.2998405103668, 594.475279106858]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.6390293225480284,
+          "renderWall": 0.6002747252747253,
+          "wallRelativeDifference": 0.06456143435918693,
+          "overall": 1.0707070707070707,
+          "renderOverall": 1.0411522633744856,
+          "overallRelativeDifference": 0.02838663312971601,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 989,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 0.9351112234580384
+        },
+        "highlights": {
+          "nearWhite": 240,
+          "nearAmber": 21
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 57.782034065934056,
+          "right": 74.69539053254438,
+          "boxes": [
+            [553, 743, 566, 757],
+            [854, 690, 867, 703]
+          ],
+          "ratio": 0.7735689398498925,
+          "renderRatio": 0.7192296072430534
+        },
+        "eye": {
+          "wallRatio": 0.6390293225480284,
+          "renderWallRatio": 0.6002747252747253,
+          "baseWidth": 989,
+          "leftBox": [553, 743, 566, 757],
+          "rightBox": [854, 690, 867, 703],
+          "wallReading": {
+            "pivot": [690, 348],
+            "foot": [739, 980],
+            "baseLeft": 182,
+            "baseRight": 1171
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "IoU0.90079,p9515.30/14.97 pass; maximum45.98 exceeds32 near rear tank footprint.",
+      "sha256": "66e393de523ed49262eed08a43a4e6b39c3eb1a64194442ff0ec42ff30acb3ec"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 1,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r1. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box stands at the far (top) corner; the lattice Samson post with its pivot, and the walking beam that rests on it stands at the right corner; the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes stands at the near (bottom) corner; the long steel skid frame with its copper pipes along that side stands at the upper-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Last maximum silhouette distance45.98>32 at the tank rear footprint (canvas684,594), although IoU0.90079 and p9515.30/14.97 pass. Keep FIRST IMAGE exact bbox163–891,199–957 on1024 and exact tank/beam/post/base positions, same transparent margins and outlines; do not enlarge or shift. Beam end stays solid, no loose rods, no added pipes or fittings.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r1-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png",
+        "G:/DEV/wt/codex-textured-b/assets/source/textured/oil_derrick/oil_derrick-r0.png"
+      ],
+      "file": "raw/oil_derrick-r1-attempt-3.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r1-attempt-3.png",
+        "job": "oil_derrick",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [215, 211, 1104, 1139],
+          "area": 364916,
+          "width": 890,
+          "height": 929,
+          "overallRatio": 1.043820224719101
+        },
+        "bareOpaque": {
+          "box": [163, 199, 891, 957],
+          "area": 235372,
+          "width": 729,
+          "height": 759,
+          "overallRatio": 1.0411522633744856
+        },
+        "silhouette": {
+          "iouAtS0": 0.7062358106124086,
+          "f": 0.996,
+          "dx": -11.904999999999973,
+          "dy": 36.754999999999995,
+          "bestIoU": 0.9270250158970682,
+          "p95PictureToRender": 10.658263036195821,
+          "p95RenderToPicture": 9.906483251155214,
+          "maximum": 14.318350897442025,
+          "boundarySamples": [3229, 3224],
+          "worstPicture": {
+            "distance": 14.318350897442025,
+            "point": [707.164274322169, 420.5422647527911]
+          },
+          "worstRender": {
+            "distance": 13.937728585794535,
+            "point": [694.0988835725677, 374.8133971291866]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.6209223847019123,
+          "renderWall": 0.6002747252747253,
+          "wallRelativeDifference": 0.03439701616245339,
+          "overall": 1.043820224719101,
+          "renderOverall": 1.0411522633744856,
+          "overallRelativeDifference": 0.002562508327041746,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 889,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 1.0402980877390327
+        },
+        "highlights": {
+          "nearWhite": 274,
+          "nearAmber": 43
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 95.60767142857141,
+          "right": 103.13936923076919,
+          "boxes": [
+            [550, 777, 563, 791],
+            [819, 740, 832, 754]
+          ],
+          "ratio": 0.926975529728653,
+          "renderRatio": 0.7192296072430534
+        },
+        "eye": {
+          "wallRatio": 0.6209223847019123,
+          "renderWallRatio": 0.6002747252747253,
+          "baseWidth": 889,
+          "leftBox": [550, 777, 563, 791],
+          "rightBox": [819, 740, 832, 754],
+          "wallReading": {
+            "pivot": [671, 427],
+            "foot": [723, 979],
+            "baseLeft": 215,
+            "baseRight": 1104
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Machine shape/height pass but reintroduces engraved vent slots at beam end and loose foot rod absent in first render. Closest refused r1 attempt3.",
+      "sha256": "42440b3bf9e7587958d2c74cb1d73061e2fe09c8541c1769215a751d3682ac91"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 2,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r2. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box stands at the right corner; the lattice Samson post with its pivot, and the walking beam that rests on it stands at the near (bottom) corner; the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes stands at the left corner; the long steel skid frame with its copper pipes along that side stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r2-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png",
+        "G:/DEV/wt/codex-textured-b/assets/source/textured/oil_derrick/oil_derrick-r0.png"
+      ],
+      "file": "raw/oil_derrick-r2-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r2-attempt-1.png",
+        "job": "oil_derrick",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [233, 27, 1101, 1224],
+          "area": 403632,
+          "width": 869,
+          "height": 1198,
+          "overallRatio": 1.378596087456847
+        },
+        "bareOpaque": {
+          "box": [196, 32, 904, 989],
+          "area": 268549,
+          "width": 709,
+          "height": 958,
+          "overallRatio": 1.3511988716502115
+        },
+        "silhouette": {
+          "iouAtS0": 0.8536286328466833,
+          "f": 0.997,
+          "dx": 7.669999999999959,
+          "dy": 6.2549999999999955,
+          "bestIoU": 0.8791144333936318,
+          "p95PictureToRender": 9.896546959027674,
+          "p95RenderToPicture": 10.64757270215751,
+          "maximum": 28.771654843215938,
+          "boundarySamples": [3384, 3443],
+          "worstPicture": {
+            "distance": 16.133296842743878,
+            "point": [654.0861244019138, 999.5023923444976]
+          },
+          "worstRender": {
+            "distance": 28.771654843215938,
+            "point": [732.4784688995215, 761.8755980861245]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.7108433734939759,
+          "renderWall": 0.6212338593974175,
+          "wallRelativeDifference": 0.14424441414619205,
+          "overall": 1.378596087456847,
+          "renderOverall": 1.3511988716502115,
+          "overallRelativeDifference": 0.020276227564618665,
+          "wallPass": false,
+          "overallPass": true
+        },
+        "base": {
+          "width": 830,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 1.1142469879518073
+        },
+        "highlights": {
+          "nearWhite": 494,
+          "nearAmber": 54
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 54.11678351648354,
+          "right": 73.61682087912088,
+          "boxes": [
+            [554, 991, 567, 1005],
+            [743, 995, 756, 1009]
+          ],
+          "ratio": 0.7351143783476268,
+          "renderRatio": 1.8029303858867032
+        },
+        "eye": {
+          "wallRatio": 0.7108433734939759,
+          "renderWallRatio": 0.6212338593974175,
+          "baseWidth": 830,
+          "leftBox": [554, 991, 567, 1005],
+          "rightBox": [743, 995, 756, 1009],
+          "wallReading": {
+            "pivot": [631, 472],
+            "foot": [617, 1062],
+            "baseLeft": 258,
+            "baseRight": 1088
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "IoU0.879114 below0.88 despite p959.90/10.65,max28.77 pass; post height/base0.71084 vs0.62123 too high.",
+      "sha256": "dc9d2e14b8aab39d407de30dfa5fdd4d10af286237c1291772ac3958823dc578"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 2,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r2. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box stands at the right corner; the lattice Samson post with its pivot, and the walking beam that rests on it stands at the near (bottom) corner; the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes stands at the left corner; the long steel skid frame with its copper pipes along that side stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Last IoU0.879114 just below0.88, p959.90/10.65/max28.77 pass, but post height/base0.71084 vs first render0.62123 exceeds8percent. Keep FIRST IMAGE exact Samson foot-to-pivot height and entire skid width, bbox196–904,32–989 on1024. Do not lengthen post or narrow base; same beam angle, tank, flywheel, existing pipes and transparent gaps.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r2-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png",
+        "G:/DEV/wt/codex-textured-b/assets/source/textured/oil_derrick/oil_derrick-r0.png"
+      ],
+      "file": "raw/oil_derrick-r2-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r2-attempt-2.png",
+        "job": "oil_derrick",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [230, 23, 1129, 1237],
+          "area": 421667,
+          "width": 900,
+          "height": 1215,
+          "overallRatio": 1.35
+        },
+        "bareOpaque": {
+          "box": [196, 32, 904, 989],
+          "area": 268549,
+          "width": 709,
+          "height": 958,
+          "overallRatio": 1.3511988716502115
+        },
+        "silhouette": {
+          "iouAtS0": 0.8192992721437626,
+          "f": 0.977,
+          "dx": 10.090000000000032,
+          "dy": 9.100000000000023,
+          "bestIoU": 0.853038252629146,
+          "p95PictureToRender": 13.477040405005257,
+          "p95RenderToPicture": 15.968138420295038,
+          "maximum": 42.75724533791381,
+          "boundarySamples": [3417, 3443],
+          "worstPicture": {
+            "distance": 20.094248818349012,
+            "point": [759.4258373205741, 681.0334928229665]
+          },
+          "worstRender": {
+            "distance": 42.75724533791381,
+            "point": [732.4784688995215, 761.8755980861245]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.6127167630057804,
+          "renderWall": 0.6212338593974175,
+          "wallRelativeDifference": -0.013709968094621439,
+          "overall": 1.35,
+          "renderOverall": 1.3511988716502115,
+          "overallRelativeDifference": -0.0008872651356992556,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 865,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 1.0691618497109827
+        },
+        "highlights": {
+          "nearWhite": 832,
+          "nearAmber": 37
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 127.96469523809522,
+          "right": 36.69448,
+          "boxes": [
+            [557, 1010, 569, 1024],
+            [745, 1024, 758, 1037]
+          ],
+          "ratio": 3.487300957476308,
+          "renderRatio": 1.8029303858867032
+        },
+        "eye": {
+          "wallRatio": 0.6127167630057804,
+          "renderWallRatio": 0.6212338593974175,
+          "baseWidth": 865,
+          "leftBox": [557, 1010, 569, 1024],
+          "rightBox": [745, 1024, 758, 1037],
+          "wallReading": {
+            "pivot": [638, 542],
+            "foot": [630, 1072],
+            "baseLeft": 246,
+            "baseRight": 1111
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Post and overall heights pass; IoU0.85304 below0.88,max42.76 above32 at rear tank edge.",
+      "sha256": "a0c7abf7f6f31070305f0acbbdf47b5aa44cdde9951ccbc97410247e0faf6f31"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 2,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r2. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box stands at the right corner; the lattice Samson post with its pivot, and the walking beam that rests on it stands at the near (bottom) corner; the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes stands at the left corner; the long steel skid frame with its copper pipes along that side stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Last post proportion now passes, but silhouette IoU0.85304<0.88,max42.76>32 at rear tank edge (canvas732,762); p9513.48/15.97 pass. Keep FIRST IMAGE exact tank position/size and base polygon bbox196–904,32–989 on1024; no enlargement or movement. Match first-image beam, horse head, post, tank, pipes and open gaps precisely while repainting surfaces.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r2-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png",
+        "G:/DEV/wt/codex-textured-b/assets/source/textured/oil_derrick/oil_derrick-r0.png"
+      ],
+      "file": "raw/oil_derrick-r2-attempt-3.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r2-attempt-3.png",
+        "job": "oil_derrick",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [222, 25, 1123, 1238],
+          "area": 437243,
+          "width": 902,
+          "height": 1214,
+          "overallRatio": 1.3458980044345898
+        },
+        "bareOpaque": {
+          "box": [196, 32, 904, 989],
+          "area": 268549,
+          "width": 709,
+          "height": 958,
+          "overallRatio": 1.3511988716502115
+        },
+        "silhouette": {
+          "iouAtS0": 0.8113637446557825,
+          "f": 0.96,
+          "dx": 27.399999999999977,
+          "dy": 29.25999999999999,
+          "bestIoU": 0.8792098506287834,
+          "p95PictureToRender": 10.826515310033264,
+          "p95RenderToPicture": 11.090615468712642,
+          "maximum": 34.03508605846687,
+          "boundarySamples": [3313, 3443],
+          "worstPicture": {
+            "distance": 14.028642213691137,
+            "point": [325.0015948963317, 48.995215311004785]
+          },
+          "worstRender": {
+            "distance": 34.03508605846687,
+            "point": [732.4784688995215, 761.8755980861245]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.7114716106604867,
+          "renderWall": 0.6212338593974175,
+          "wallRelativeDifference": 0.1452556873680353,
+          "overall": 1.3458980044345898,
+          "renderOverall": 1.3511988716502115,
+          "overallRelativeDifference": -0.003923084400705323,
+          "wallPass": false,
+          "overallPass": true
+        },
+        "base": {
+          "width": 863,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 1.0716396292004635
+        },
+        "highlights": {
+          "nearWhite": 537,
+          "nearAmber": 151
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 106.9469527472528,
+          "right": 29.522165680473357,
+          "boxes": [
+            [549, 1011, 562, 1025],
+            [744, 1025, 757, 1038]
+          ],
+          "ratio": 3.622598487684458,
+          "renderRatio": 1.8029303858867032
+        },
+        "eye": {
+          "wallRatio": 0.7114716106604867,
+          "renderWallRatio": 0.6212338593974175,
+          "baseWidth": 863,
+          "leftBox": [549, 1011, 562, 1025],
+          "rightBox": [744, 1025, 757, 1038],
+          "wallReading": {
+            "pivot": [626, 458],
+            "foot": [620, 1072],
+            "baseLeft": 242,
+            "baseRight": 1105
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": false,
+      "note": "Closest refused r2 attempt3: IoU0.879210<0.88,max34.04>32; post pivot raised too high relative base, height proportion fails.",
+      "sha256": "c5e1771ef5c420fd173582f2623500ddf49de068d0c0893f4b32cee0ae372e2b"
+    },
+    {
+      "building": "oil_derrick",
+      "view": 3,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's original painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Oil derrick (pumpjack) in the view r3. an oil pumpjack of dark grey riveted steel with weathered copper: a lattice A-frame Samson post of X-braced steel legs with rivets, carrying a long walking beam with a copper top edge, which ends at one side in a big curved copper-edged horse head with drilled openings and at the other in a pivot; a polished rod running down from the horse head through a flanged wellhead with copper rings; a grey cylindrical tank with copper bands at one end of the base; a crank, a spoked copper-rimmed flywheel and a rod on a steel engine box; copper pipes with elbows along the steel base frame; and the steel skid frame with corner plates and rivets that carries it all. r3: the building is turned 3 quarter turns clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the grey cylindrical tank with copper bands and the crank with its spoked flywheel on the steel engine box stands at the near (bottom) corner; the lattice Samson post with its pivot, and the walking beam that rests on it stands at the left corner; the curved horse head, the polished rod and the flanged wellhead with its copper rings and pipes stands at the far (top) corner; the long steel skid frame with its copper pipes along that side stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the original painting of this building as the game has it today, seen from the front at a slightly different camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and any dark glow round it are not used, and it is not to be copied: paint the SAME building at the size the first picture has it. The third is this same building in view r0, as already painted over its render (the kept picture): the same materials, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-b/oil_derrick-r3-textured.png",
+        "G:/DEV/wt/originals-textured-b/oil_derrick.png",
+        "G:/DEV/wt/codex-textured-b/assets/source/textured/oil_derrick/oil_derrick-r0.png"
+      ],
+      "file": "raw/oil_derrick-r3-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/oil_derrick/raw/oil_derrick-r3-attempt-1.png",
+        "job": "oil_derrick",
+        "view": 3,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [164, 39, 1061, 1205],
+          "area": 361938,
+          "width": 898,
+          "height": 1167,
+          "overallRatio": 1.299554565701559
+        },
+        "bareOpaque": {
+          "box": [132, 44, 860, 988],
+          "area": 233008,
+          "width": 729,
+          "height": 945,
+          "overallRatio": 1.2962962962962963
+        },
+        "silhouette": {
+          "iouAtS0": 0.8650723851553819,
+          "f": 0.993,
+          "dx": -4.5,
+          "dy": 18.5,
+          "bestIoU": 0.9444233944459348,
+          "p95PictureToRender": 6.262780179280997,
+          "p95RenderToPicture": 6.629943844758376,
+          "maximum": 14.361608755138224,
+          "boundarySamples": [3234, 3309],
+          "worstPicture": {
+            "distance": 10.00423833023409,
+            "point": [713.6969696969697, 54.71132376395534]
+          },
+          "worstRender": {
+            "distance": 14.361608755138224,
+            "point": [358.481658692185, 604.274322169059]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.44816053511705684,
+          "renderWall": 0.46016483516483514,
+          "wallRelativeDifference": -0.02608695652173909,
+          "overall": 1.299554565701559,
+          "renderOverall": 1.2962962962962963,
+          "overallRelativeDifference": 0.002513522112631339,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 897,
+          "renderWidth": 755.2,
+          "heldWidthAtReturned": 924.825,
+          "k": 1.031020066889632
+        },
+        "highlights": {
+          "nearWhite": 410,
+          "nearAmber": 24
+        },
+        "originalHighlights": {
+          "nearWhite": 20,
+          "nearAmber": 0
+        },
+        "wallLight": {
+          "left": 64.21140102040825,
+          "right": 63.38889081632652,
+          "boxes": [
+            [616, 981, 630, 995],
+            [713, 997, 727, 1011]
+          ],
+          "ratio": 1.0129756207040284,
+          "renderRatio": 1.565400414192083
+        },
+        "eye": {
+          "wallRatio": 0.44816053511705684,
+          "renderWallRatio": 0.46016483516483514,
+          "baseWidth": 897,
+          "leftBox": [616, 981, 630, 995],
+          "rightBox": [713, 997, 727, 1011],
+          "wallReading": {
+            "pivot": [515, 510],
+            "foot": [652, 912],
+            "baseLeft": 164,
+            "baseRight": 1061,
+            "note": "Same bare support top-plate/pivot to near support foot, excluding engine box; bearing painted farther along beam is separately visible and not substituted for support geometry."
+          }
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "renderLight": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "Accepted all tests: IoU0.94442,p956.26/6.63,max14.36; support proportion0.44816 vs0.46016, coherent back faces/beam/lattice and same machinery/light.",
+      "sha256": "b5779ed4f87f312c76a39ac755b9b1872f5e422ce45d07c30611e63d533aad54"
+    }
+  ],
+  "outcomes": {
+    "r0": {
+      "accepted": 3
+    },
+    "r1": {
+      "closestRefused": 3,
+      "kept": false
+    },
+    "r2": {
+      "closestRefused": 3,
+      "kept": false
+    },
+    "r3": {
+      "accepted": 1
+    }
+  }
+}

@@ -411,7 +411,7 @@ export function prepare(job, view, attempt, renderReference, correction = '') {
     refinery: 'Oil refinery',
     colliery: 'Colliery',
     ironworks: 'Ironworks',
-    oil_derrick: 'Oil derrick',
+    oil_derrick: 'Oil derrick (pumpjack)',
   };
   const building = src
     .split('THE BUILDING,')[1]
