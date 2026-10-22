@@ -1,0 +1,29 @@
+# fuel_pump textured route audit
+
+All PNGs remain byte-for-byte tool returns. All previews and input extraction stayed on G. Alpha-aware previews composite RGB by alpha; invisible RGB at alpha zero is not a visible glow.
+
+| View / attempt | Size      | IoU s0  | f / dx / dy                     | Best IoU | p95 picture/render    | Max       | Tank or wall / render | Overall / render  | Base / k            | White / amber | Selected |
+| -------------- | --------- | ------- | ------------------------------- | -------- | --------------------- | --------- | --------------------- | ----------------- | ------------------- | ------------- | -------- |
+| r1 #1          | 1254x1254 | 0.39890 | 0.85000 / -14.07500 / 199.32500 | 0.55186  | 156.83107 / 123.15213 | 198.36340 | 0.39728 / 0.35530     | 1.44134 / 1.54519 | 662.00000 / 0.66122 | 3294 / 1      | refused  |
+| r1 #2          | 1254x1254 | 0.61112 | 0.89800 / 54.10000 / 170.05000  | 0.97902  | 3.74930 / 4.06669     | 8.18406   | 0.42672 / 0.35530     | 1.56559 / 1.54519 | 464.00000 / 0.94337 | 1862 / 0      | refused  |
+| r1 #3          | 1254x1254 | 0.52121 | 0.85000 / 75.45000 / 180.20000  | 0.72074  | 84.03708 / 45.64038   | 122.55113 | 0.42561 / 0.35530     | 1.63903 / 1.54519 | 578.00000 / 0.75731 | 2190 / 2      | refused  |
+| r2 #1          | 1254x1254 | 0.39304 | 0.85000 / 134.80000 / 272.27500 | 0.55442  | 135.47099 / 86.51017  | 142.81691 | 0.42344 / 0.35530     | 1.12778 / 1.10090 | 640.00000 / 0.68394 | 2618 / 0      | refused  |
+| r2 #2          | 1254x1254 | 0.44248 | 0.85000 / 115.52500 / 209.67500 | 0.64941  | 104.19839 / 77.81000  | 127.69958 | 0.40609 / 0.35530     | 1.11381 / 1.10090 | 591.00000 / 0.74065 | 2868 / 4      | refused  |
+| r2 #3          | 1254x1254 | 0.67354 | 0.85800 / 84.41000 / 164.46000  | 0.95341  | 5.71040 / 6.09406     | 12.94497  | 0.38382 / 0.35530     | 1.10345 / 1.10090 | 482.00000 / 0.90814 | 4413 / 0      | refused  |
+| r3 #1          | 1254x1254 | 0.64800 | 0.85000 / 69.02500 / 161.52500  | 0.88384  | 23.09657 / 21.13519   | 32.66348  | 0.33781 / 0.35530     | 1.46552 / 1.44767 | 521.00000 / 0.84016 | 3771 / 5      | refused  |
+| r3 #2          | 1254x1254 | 0.48798 | 0.85000 / 32.62500 / 217.10000  | 0.69900  | 76.85524 / 71.73728   | 81.72648  | 0.36239 / 0.35530     | 1.49488 / 1.44767 | 585.00000 / 0.74825 | 1840 / 0      | refused  |
+| r3 #3          | 1254x1254 | 0.50394 | 0.85000 / 35.77500 / 223.17500  | 0.70309  | 72.05179 / 70.13041   | 79.89919  | 0.36303 / 0.35530     | 1.46141 / 1.44767 | 595.00000 / 0.73567 | 2924 / 1      | refused  |
+
+- r1 attempt 1: Refused IoU .5519 p95 156.83/123.15 max198.36; enlarged, added door on hiddenface and extended crane/hose; wall .3973 vs .3553 outside8%. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r1-attempt-1.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r1 attempt 2: Refused HEIGHT despite silhouettepass IoU .97902 p95 3.749/4.067 max8.184: brickwall .4267 vsrender .3553 differs20.1%, nearcorner reading; overallheightpasses. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r1-attempt-2.png. Eye: {"sameBuilding":true,"coherentPainting":true,"light":true,"noExtras":true}.
+- r1 attempt 3: Refused IoU .72074 p95 84.04/45.64 max122.55, addeddoor andalteredcrane; brickwall .4256 vs .3553 alsofails. Closest r1#2 rawonly, noacceptedfile. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r1-attempt-3.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r2 attempt 1: Refused IoU .5544 p95 135.47/86.51 max142.82; enlarged; wall .4234 vs .3553 outside8%. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r2-attempt-1.png. Eye: {"sameBuilding":true,"coherentPainting":true,"light":true,"noExtras":true}.
+- r2 attempt 2: Refused IoU .6494 p95 104.20/77.81 max127.70; enlarged; wall .4061 vs .3553 outside8%. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r2-attempt-2.png. Eye: {"sameBuilding":true,"coherentPainting":true,"light":true,"noExtras":true}.
+- r2 attempt 3: Refused HEIGHT marginally: wall185/482=.38382 vs127/357.44=.35530, about8.03%high; readinguncertainty5px crosseslimit, Coretodecide. Silhouettepasses .95341 p95 5.710/6.094 max12.945. Closest r2#3 retainedrawonly. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r2-attempt-3.png. Eye: {"sameBuilding":true,"coherentPainting":true,"light":true,"noExtras":true}.
+- r3 attempt 1: Refused silhouette IoU .88384 p95 23.10/21.14 max32.66; changed crane/nozzle outline, enlarged. Bothheight ratiospass. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r3-attempt-1.png. Eye: {"sameBuilding":true,"coherentPainting":true,"light":true,"noExtras":true}.
+- r3 attempt 2: Refused IoU .6990 p95 76.86/71.74 max81.73; enlargedandchangedfrontcranebracket. Heightpasses. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r3-attempt-2.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+- r3 attempt 3: Refused IoU .70309 p95 72.05/70.13 max79.90; enlarged, changedfrontcranebracket; heights pass. Closest r3#1 IoU .88384 rawonly. Raw: assets/source/textured/fuel_pump/raw/fuel_pump-r3-attempt-3.png. Eye: {"sameBuilding":false,"coherentPainting":true,"light":true,"noExtras":false}.
+
+Render reference, manual coordinate readings and uncertainty, wall sample coordinates, full prompts and ordered references, hashes and detailed machine measurements are in prompts.json. Highlights are reported only.
+
+No acceptedturnedviews after9calls: closest refusals r1#2 (height20.1%high despite .9790IoU), r2#3 (height8.03%high with5pxuncertainty despite .9534IoU), r3#1 (silhouette .8838) retainedrawonly. Metal, slate, brick andstone read ascoherent crisp painting, but body internalheights andcrane geometrydrifted andsomeedits exposedhidden doors. No consecutiveall-under-.80 stop fired; r0 original untouched.
