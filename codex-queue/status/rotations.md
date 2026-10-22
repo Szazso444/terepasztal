@@ -72,6 +72,7 @@
 - Stop reason: current C29a CORE REVIEW 1 says "at most three new attempts (4, 5, 6), then STOP" and after failure "do not try another way and do not loosen a test"; existing outcome is "fallback: blockout scaffold". Queue still labels C29a ready, but does not replace these limits.
 - Notes: Read current README, queue.json, CORE-REVIEW-1 and full C29a; own AGENTS read. Freshly fetched origin/claude/art-scaffolds-review-2 at eef723cf8053cd0a52a47c87c87c68918ce1355b has no hydro_plant scaffold paths. Current prompt remains free r0 stage1 and requires a new prompt after Core supplies the blockout. No image calls, extra attempts, stage2, new lane commits, or baseline test reruns. C18a/C22a/C19a/C20a skipped done; CR1-adopt/C24a/C25a/C26a/C27a/C28a/C30a/C31a/C32a/C33a skipped hold; C33b later not run. Worktree tracked-clean with only prior untracked .look previews; no local-only lane commits. Core must supply hydro blockout and replacement prompt before work can resume.
 
+
 ## C29a (2026-10-22 17:35:37 UTC, launch4, Core review2 blockout method)
 - Result: stopped at r3 tool reference limit; 2 views accepted, 2 generated attempts refused, 1 request rejected before generation. r2 unrun.
 - Lane commit: 0c75c175bdd232acc926914ee38b56ac4019f726 pushed to origin/art/535-rotations.
