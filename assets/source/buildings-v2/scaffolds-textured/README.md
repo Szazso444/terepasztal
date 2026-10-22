@@ -28,3 +28,32 @@ What the texture is not (what the painter fixes): the cloned and mirrored patche
 | Power plant (`power_plant`) | base-v1/power-plant.png | r3 | gable end with an arched window lower left, long wall with arched windows lower right, chimney behind | `power_plant/power_plant-r3-textured.png` | `power_plant/power_plant-r3-bare.png` | `power_plant/power_plant-r3.json` |
 
 Silhouette areas (opaque px, alpha above 128): warehouse 245950, 246366, 246467, 245848; pump 186018, 164853, 174742, 170017; power plant 174849, 151092, 168910, 153374 (r0 to r3).
+
+## Batch A (2026-10-22): station, town hall, big farm, house, small farm halt, quarry
+
+Same method as the pilot (`renders/textured-blockout/`, batch A scripts in `tools_a/`, one `build_<job>.py` and `measure-<job>.json` per building next to the `.blend`; not in the repository): the blockout is measured from the painted r0 through the painting's own orthographic camera, its silhouette is checked against the painting from that camera, the painting is projected from that camera, the unseen faces are mirrored or cloned from same-material painted texels (no generative fill), variant B is de-lit and relit with the game sun, and r0 to r3 are rendered at the game camera (30 degrees, 2:1) on the review-2 plan canvas of the job (8 canvas px per game px). File names follow the pilot: `<job>/<job>-r<v>-textured.png`, `<job>-r<v>-bare.png` (alpha = the textured render's alpha), `<job>-r<v>.json` (outline polygon, base corners, camera, canvas, anchor). Holes inside a silhouette (gaps between the crane and the building) are listed in `outline_holes_px`.
+
+| Building | Source picture | Footprint at r0 | Painted camera, elevation / azimuth (deg) | Canvas | IoU, painting camera (1:1 / best fit) | Texture painted / mirrored / cloned / healed or mean colour | Files |
+|---|---|---|---|---|---|---|---|
+| House (`townhouse`) | base-v1/house-cottage.png | 1 x 1 | 23.5 / 43.1 | 1024 x 1536, anchor 512,1344 | 0.963 / 0.969 | 45% / 25% / 29% / 2.0% | `townhouse/townhouse-r0..r3-{textured,bare}.png`, `townhouse/townhouse-r0..r3.json` |
+| Big station (`big_station`) | base-v1/station.png | 2 x 1 | 14.7 / 47.9 | 1024 x 1024, anchor 512,800 | 0.933 / 0.933 | 34% / 19% / 46% / 0.6% | `big_station/big_station-r0..r3-{textured,bare}.png`, `big_station/big_station-r0..r3.json` |
+| Town hall (`town`) | base-v1/townhouse-civic.png | 2 x 1 | 21.1 / 38.1 | 1024 x 1024, anchor 512,800 | 0.940 / 0.944 | 36% / 13% / 50% / 0.7% | `town/town-r0..r3-{textured,bare}.png`, `town/town-r0..r3.json` |
+| Big farm (`big_farm`) | base-v1/farm.png | 1 x 2 | 20.5 / 45.0 | 1024 x 1024, anchor 512,800 | 0.925 / 0.929 | 36% / 19% / 44% / 1.1% | `big_farm/big_farm-r0..r3-{textured,bare}.png`, `big_farm/big_farm-r0..r3.json` |
+| Small farm halt (`farm`) | buildings-v2/farm/farm-a0-r0.png | 1 x 1 | 24.4 / 47.3 | 1024 x 1024, anchor 512,832 | 0.954 / 0.964 | 42% / 19% / 37% / 1.2% | `farm/farm-r0..r3-{textured,bare}.png`, `farm/farm-r0..r3.json` |
+| Quarry (`quarry`) | buildings-v2/quarry/quarry-a0-r0.png | 1 x 1 | 30.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.929 / 0.930 | 46% / 19% / 34% / 1.8% | `quarry/quarry-r0..r3-{textured,bare}.png`, `quarry/quarry-r0..r3.json` |
+
+Silhouette areas (opaque px, alpha above 128), r0 to r3:
+- townhouse: 101711, 101854, 103420, 103170
+- big_station: 242481, 272567, 279170, 232631
+- town: 355442, 356216, 353028, 355306
+- big_farm: 302385, 266164, 302142, 287132
+- farm: 135907, 121986, 140498, 129354
+- quarry: 132322, 104562, 119298, 113363
+
+Notes:
+
+- The painted cameras are not the 30 degree game camera and several paintings are not strictly orthographic (a long base line falls at 0.32, the ridge at 0.26); where the lines disagree the blockout uses one compromise camera (big station 14.7 degrees, big farm 20.5, town hall 21.1), and the IoU above is for that camera. Camera numbers: `elevation / azimuth` as fitted from the base lines; `azimuth` is the proj-frame value, the renderer uses 90 minus it.
+- Long side of the base = 0.9 of the footprint's long side (the plan's 90 per cent rule); the other side follows the painted ratio (house 0.565, town hall 0.835, farm halt 0.845). The unseen sides are plain continuations; the silo of the farm halt and the farm are cylinders (their back is mirrored from the painted half).
+- Small farm halt, extra check against the existing buildings-v2 paintings of the same rotation (`farm/extra-checks.json`; the paintings are drawn about 1.3 to 1.4 times the plan scale, so the best uniform scale + shift is the fair figure): r1 0.83, r2 0.60, r3 0.66 (mapped 1:1 to the plan canvas 0.53, 0.31, 0.36). The existing r2 painting shows the same view as r0, not a half turn.
+- Quarry, extra check against the accepted r1 and r3 paintings (`quarry/extra-checks.json`): 0.27 and 0.41 mapped 1:1, 0.67 and 0.67 with the best scale and shift. The accepted r1 and r3 are not turns of the r0 shape (the crane is drawn at the left in every view, the paintings are 1.5 to 1.8 times the plan scale); the blockout follows r0.
+- Healed or mean colour = texels with no usable painted or cloned source, filled from the nearest texel or the material mean (1 to 2 per cent). What the painter fixes is as in the pilot: cloned and mirrored patches are uniform and a little blocky, thin parts (pipes, ropes, rails, the silo hoop bands) are smeared by the projection.

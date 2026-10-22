@@ -1,0 +1,33 @@
+{
+ "r2": {
+  "painting": "farm-a0-r2.png",
+  "iou_plan_canvas_mapping": 0.3122,
+  "iou_best_uniform_scale_shift": 0.596,
+  "best_scale": 1.42,
+  "best_shift_px_1254": [
+   40,
+   -140
+  ]
+ },
+ "r1": {
+  "painting": "farm-a0-r1.png",
+  "iou_plan_canvas_mapping": 0.5275,
+  "iou_best_uniform_scale_shift": 0.8339,
+  "best_scale": 1.33,
+  "best_shift_px_1254": [
+   0,
+   -108
+  ]
+ },
+ "r3": {
+  "painting": "farm-a0-r3.png",
+  "iou_plan_canvas_mapping": 0.3577,
+  "iou_best_uniform_scale_shift": 0.66,
+  "best_scale": 1.415,
+  "best_shift_px_1254": [
+   28,
+   -140
+  ]
+ },
+ "note": "Blockout (built from farm-a0-r0) bare silhouette against the existing buildings-v2 paintings of the same rotation (1254 px; the 1024 plan canvas mapped by x1254/1024). The existing paintings are drawn about 1.3 to 1.4 times larger than the plan scale, hence the low mapped IoU; with the best uniform scale and shift r1 fits 0.83, r3 0.66, r2 0.60. The existing r2 painting shows the same view as r0 (gable lower left, silo at the right), not a half turn, so r2 is weak evidence of the shape."
+}

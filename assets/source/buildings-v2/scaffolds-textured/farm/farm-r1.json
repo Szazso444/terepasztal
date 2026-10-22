@@ -1,0 +1,361 @@
+{
+ "job": "farm",
+ "view": "r1",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   288.64,
+   835.52
+  ],
+  "s": [
+   504.96,
+   943.68
+  ],
+  "e": [
+   735.36,
+   828.48
+  ],
+  "n": [
+   519.04,
+   720.32
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  1
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    423,
+    492
+   ],
+   [
+    418,
+    495
+   ],
+   [
+    416,
+    494
+   ],
+   [
+    414,
+    497
+   ],
+   [
+    410,
+    499
+   ],
+   [
+    410,
+    504
+   ],
+   [
+    399,
+    520
+   ],
+   [
+    398,
+    523
+   ],
+   [
+    383,
+    545
+   ],
+   [
+    375,
+    559
+   ],
+   [
+    367,
+    570
+   ],
+   [
+    366,
+    573
+   ],
+   [
+    358,
+    584
+   ],
+   [
+    350,
+    598
+   ],
+   [
+    310,
+    659
+   ],
+   [
+    310,
+    676
+   ],
+   [
+    313,
+    678
+   ],
+   [
+    313,
+    686
+   ],
+   [
+    327,
+    693
+   ],
+   [
+    329,
+    695
+   ],
+   [
+    328,
+    812
+   ],
+   [
+    347,
+    822
+   ],
+   [
+    349,
+    821
+   ],
+   [
+    440,
+    867
+   ],
+   [
+    440,
+    912
+   ],
+   [
+    502,
+    943
+   ],
+   [
+    506,
+    943
+   ],
+   [
+    567,
+    912
+   ],
+   [
+    567,
+    890
+   ],
+   [
+    711,
+    818
+   ],
+   [
+    713,
+    816
+   ],
+   [
+    713,
+    672
+   ],
+   [
+    715,
+    671
+   ],
+   [
+    737,
+    682
+   ],
+   [
+    737,
+    670
+   ],
+   [
+    631,
+    609
+   ],
+   [
+    631,
+    608
+   ],
+   [
+    635,
+    605
+   ],
+   [
+    635,
+    597
+   ],
+   [
+    631,
+    594
+   ],
+   [
+    631,
+    591
+   ],
+   [
+    633,
+    589
+   ],
+   [
+    638,
+    587
+   ],
+   [
+    638,
+    580
+   ],
+   [
+    617,
+    569
+   ],
+   [
+    617,
+    567
+   ],
+   [
+    621,
+    563
+   ],
+   [
+    621,
+    549
+   ],
+   [
+    617,
+    545
+   ],
+   [
+    612,
+    543
+   ],
+   [
+    599,
+    542
+   ],
+   [
+    598,
+    543
+   ],
+   [
+    594,
+    543
+   ],
+   [
+    588,
+    546
+   ],
+   [
+    585,
+    549
+   ],
+   [
+    585,
+    562
+   ],
+   [
+    586,
+    564
+   ],
+   [
+    589,
+    566
+   ],
+   [
+    589,
+    569
+   ],
+   [
+    586,
+    571
+   ],
+   [
+    584,
+    571
+   ],
+   [
+    427,
+    492
+   ]
+  ]
+ ],
+ "silhouette": {
+  "bbox_px": [
+   310,
+   492,
+   737,
+   943
+  ],
+  "area_px": 121986,
+  "inside_canvas": true,
+  "polygon_vs_mask_iou": 0.99871,
+  "alpha_threshold": 128,
+  "opened_holes_filled": false
+ },
+ "source_picture": "farm-a0-r0.png (buildings-v2, accepted a0 r0)",
+ "blockout_vs_painting_r0": {
+  "iou_painting_camera": 0.9544,
+  "mean_abs_diff_rgb_0_255": 6.57,
+  "share_pixels_diff_gt24": 0.0752
+ },
+ "texture_share_all_views": {
+  "painted": 0.423,
+  "mirrored": 0.193,
+  "cloned": 0.372,
+  "healed_or_mean_colour": 0.012,
+  "basis": "texels visible in at least one of r0..r3"
+ },
+ "texture_share_this_view": {
+  "painted": 0.445,
+  "mirrored": 0.242,
+  "cloned": 0.298,
+  "healed_or_mean_colour": 0.016
+ },
+ "note": "Textured blockout render: paint over the -textured.png; the outline_polygon_px equals the alpha of -textured.png and -bare.png. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

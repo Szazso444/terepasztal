@@ -1,0 +1,423 @@
+{
+ "job": "big_farm",
+ "view": "r1",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  800
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   800.0
+  ],
+  "anchor_px": [
+   512,
+   800
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   128.0,
+   736.0
+  ],
+  "s": [
+   640.0,
+   992.0
+  ],
+  "e": [
+   896.0,
+   864.0
+  ],
+  "n": [
+   384.0,
+   608.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   166.4,
+   742.4
+  ],
+  "s": [
+   627.2,
+   972.8
+  ],
+  "e": [
+   857.6,
+   857.6
+  ],
+  "n": [
+   396.8,
+   627.2
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  2
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    195,
+    543
+   ],
+   [
+    195,
+    559
+   ],
+   [
+    215,
+    569
+   ],
+   [
+    215,
+    575
+   ],
+   [
+    218,
+    577
+   ],
+   [
+    218,
+    670
+   ],
+   [
+    216,
+    672
+   ],
+   [
+    161,
+    699
+   ],
+   [
+    161,
+    714
+   ],
+   [
+    169,
+    719
+   ],
+   [
+    169,
+    740
+   ],
+   [
+    184,
+    747
+   ],
+   [
+    199,
+    739
+   ],
+   [
+    199,
+    735
+   ],
+   [
+    201,
+    734
+   ],
+   [
+    220,
+    744
+   ],
+   [
+    220,
+    760
+   ],
+   [
+    233,
+    767
+   ],
+   [
+    237,
+    767
+   ],
+   [
+    238,
+    768
+   ],
+   [
+    238,
+    780
+   ],
+   [
+    404,
+    863
+   ],
+   [
+    405,
+    865
+   ],
+   [
+    402,
+    867
+   ],
+   [
+    402,
+    885
+   ],
+   [
+    428,
+    898
+   ],
+   [
+    430,
+    900
+   ],
+   [
+    430,
+    955
+   ],
+   [
+    438,
+    960
+   ],
+   [
+    438,
+    965
+   ],
+   [
+    448,
+    970
+   ],
+   [
+    452,
+    968
+   ],
+   [
+    456,
+    968
+   ],
+   [
+    508,
+    994
+   ],
+   [
+    510,
+    1001
+   ],
+   [
+    520,
+    1006
+   ],
+   [
+    526,
+    1003
+   ],
+   [
+    537,
+    1009
+   ],
+   [
+    601,
+    977
+   ],
+   [
+    601,
+    963
+   ],
+   [
+    602,
+    962
+   ],
+   [
+    605,
+    964
+   ],
+   [
+    607,
+    964
+   ],
+   [
+    841,
+    847
+   ],
+   [
+    841,
+    769
+   ],
+   [
+    836,
+    766
+   ],
+   [
+    836,
+    633
+   ],
+   [
+    839,
+    632
+   ],
+   [
+    855,
+    640
+   ],
+   [
+    862,
+    642
+   ],
+   [
+    862,
+    628
+   ],
+   [
+    739,
+    566
+   ],
+   [
+    739,
+    553
+   ],
+   [
+    747,
+    548
+   ],
+   [
+    747,
+    538
+   ],
+   [
+    745,
+    536
+   ],
+   [
+    714,
+    521
+   ],
+   [
+    712,
+    519
+   ],
+   [
+    712,
+    515
+   ],
+   [
+    707,
+    511
+   ],
+   [
+    704,
+    511
+   ],
+   [
+    703,
+    510
+   ],
+   [
+    690,
+    511
+   ],
+   [
+    686,
+    513
+   ],
+   [
+    685,
+    519
+   ],
+   [
+    683,
+    521
+   ],
+   [
+    669,
+    528
+   ],
+   [
+    667,
+    528
+   ],
+   [
+    487,
+    438
+   ],
+   [
+    485,
+    436
+   ],
+   [
+    485,
+    433
+   ],
+   [
+    395,
+    388
+   ],
+   [
+    389,
+    389
+   ],
+   [
+    347,
+    368
+   ],
+   [
+    338,
+    373
+   ],
+   [
+    338,
+    382
+   ],
+   [
+    265,
+    488
+   ]
+  ]
+ ],
+ "outline_holes_px": [],
+ "silhouette": {
+  "bbox_px": [
+   161,
+   368,
+   862,
+   1009
+  ],
+  "area_px": 266164,
+  "inside_canvas": true,
+  "polygon_vs_mask_iou": 0.99863,
+  "alpha_threshold": 128,
+  "holes_listed_separately": 0,
+  "opened_holes_filled": false
+ },
+ "source_picture": "farm.png (base-v1)",
+ "blockout_vs_painting_r0": {
+  "iou_painting_camera": 0.9255,
+  "mean_abs_diff_rgb_0_255": 7.94,
+  "share_pixels_diff_gt24": 0.1029
+ },
+ "texture_share_all_views": {
+  "painted": 0.362,
+  "mirrored": 0.19,
+  "cloned": 0.437,
+  "healed_or_mean_colour": 0.011,
+  "basis": "texels visible in at least one of r0..r3"
+ },
+ "texture_share_this_view": {
+  "painted": 0.446,
+  "mirrored": 0.116,
+  "cloned": 0.42,
+  "healed_or_mean_colour": 0.018
+ },
+ "note": "Textured blockout render: paint over the -textured.png; the outline_polygon_px (outer contours) minus outline_holes_px (enclosed gaps) equals the alpha of -textured.png and -bare.png. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

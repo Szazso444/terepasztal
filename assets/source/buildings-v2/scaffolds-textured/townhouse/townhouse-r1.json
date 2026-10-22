@@ -1,0 +1,307 @@
+{
+ "job": "townhouse",
+ "view": "r1",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1536
+ ],
+ "anchor": [
+  512,
+  1344
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   1344.0
+  ],
+  "anchor_px": [
+   512,
+   1344
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   1344.0
+  ],
+  "s": [
+   512.0,
+   1472.0
+  ],
+  "e": [
+   768.0,
+   1344.0
+  ],
+  "n": [
+   512.0,
+   1216.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   324.53,
+   1365.47
+  ],
+  "s": [
+   469.07,
+   1437.73
+  ],
+  "e": [
+   699.47,
+   1322.53
+  ],
+  "n": [
+   554.93,
+   1250.27
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  1
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    631,
+    1059
+   ],
+   [
+    623,
+    1055
+   ],
+   [
+    620,
+    1055
+   ],
+   [
+    447,
+    1142
+   ],
+   [
+    445,
+    1141
+   ],
+   [
+    445,
+    1135
+   ],
+   [
+    451,
+    1132
+   ],
+   [
+    451,
+    1125
+   ],
+   [
+    433,
+    1116
+   ],
+   [
+    430,
+    1113
+   ],
+   [
+    430,
+    1098
+   ],
+   [
+    424,
+    1095
+   ],
+   [
+    416,
+    1095
+   ],
+   [
+    414,
+    1089
+   ],
+   [
+    408,
+    1086
+   ],
+   [
+    400,
+    1086
+   ],
+   [
+    395,
+    1088
+   ],
+   [
+    393,
+    1091
+   ],
+   [
+    393,
+    1113
+   ],
+   [
+    377,
+    1121
+   ],
+   [
+    377,
+    1129
+   ],
+   [
+    380,
+    1130
+   ],
+   [
+    383,
+    1133
+   ],
+   [
+    383,
+    1184
+   ],
+   [
+    365,
+    1197
+   ],
+   [
+    362,
+    1198
+   ],
+   [
+    351,
+    1206
+   ],
+   [
+    348,
+    1207
+   ],
+   [
+    334,
+    1217
+   ],
+   [
+    331,
+    1218
+   ],
+   [
+    302,
+    1237
+   ],
+   [
+    302,
+    1251
+   ],
+   [
+    322,
+    1241
+   ],
+   [
+    325,
+    1243
+   ],
+   [
+    325,
+    1365
+   ],
+   [
+    469,
+    1437
+   ],
+   [
+    698,
+    1322
+   ],
+   [
+    698,
+    1229
+   ],
+   [
+    714,
+    1221
+   ],
+   [
+    714,
+    1206
+   ],
+   [
+    687,
+    1161
+   ],
+   [
+    683,
+    1156
+   ],
+   [
+    673,
+    1138
+   ],
+   [
+    669,
+    1133
+   ],
+   [
+    656,
+    1110
+   ],
+   [
+    652,
+    1105
+   ],
+   [
+    642,
+    1087
+   ],
+   [
+    631,
+    1070
+   ]
+  ]
+ ],
+ "outline_holes_px": [],
+ "silhouette": {
+  "bbox_px": [
+   302,
+   1055,
+   714,
+   1437
+  ],
+  "area_px": 101854,
+  "inside_canvas": true,
+  "polygon_vs_mask_iou": 0.99933,
+  "alpha_threshold": 128,
+  "holes_listed_separately": 0,
+  "opened_holes_filled": false
+ },
+ "source_picture": "house-cottage.png (base-v1)",
+ "blockout_vs_painting_r0": {
+  "iou_painting_camera": 0.9625,
+  "mean_abs_diff_rgb_0_255": 5.37,
+  "share_pixels_diff_gt24": 0.054
+ },
+ "texture_share_all_views": {
+  "painted": 0.448,
+  "mirrored": 0.246,
+  "cloned": 0.286,
+  "healed_or_mean_colour": 0.02,
+  "basis": "texels visible in at least one of r0..r3"
+ },
+ "texture_share_this_view": {
+  "painted": 0.264,
+  "mirrored": 0.331,
+  "cloned": 0.387,
+  "healed_or_mean_colour": 0.018
+ },
+ "note": "Textured blockout render: paint over the -textured.png; the outline_polygon_px (outer contours) minus outline_holes_px (enclosed gaps) equals the alpha of -textured.png and -bare.png. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

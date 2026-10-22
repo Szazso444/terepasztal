@@ -1,0 +1,61 @@
+{
+ "r1": {
+  "painting": {
+   "iou_canvas_mapping_1254_to_1024": 0.2665,
+   "iou_best_uniform_scale_shift": 0.6717,
+   "best_scale_model_to_painting": 1.801,
+   "best_shift_px": [
+    24,
+    -138
+   ],
+   "painted_area_px": 377576,
+   "model_area_px": 104582
+  },
+  "fitted_by_codex": {
+   "iou_canvas_mapping_1254_to_1024": 0.5123,
+   "iou_best_uniform_scale_shift": 0.675,
+   "best_scale_model_to_painting": 1.255,
+   "best_shift_px": [
+    -32,
+    -30
+   ],
+   "painted_area_px": 186485,
+   "model_area_px": 104582
+  }
+ },
+ "r3": {
+  "painting": {
+   "iou_canvas_mapping_1254_to_1024": 0.4126,
+   "iou_best_uniform_scale_shift": 0.6741,
+   "best_scale_model_to_painting": 1.596,
+   "best_shift_px": [
+    28,
+    -116
+   ],
+   "painted_area_px": 260245,
+   "model_area_px": 113366
+  },
+  "fitted_by_codex": {
+   "iou_canvas_mapping_1254_to_1024": 0.6105,
+   "iou_best_uniform_scale_shift": 0.6712,
+   "best_scale_model_to_painting": 1.23,
+   "best_shift_px": [
+    20,
+    -42
+   ],
+   "painted_area_px": 157728,
+   "model_area_px": 113366
+  }
+ },
+ "all_rotation_pairs_best_uniform_scale_shift_iou": {
+  "painted_r1_vs_model_r0": 0.7382,
+  "painted_r1_vs_model_r1": 0.6717,
+  "painted_r1_vs_model_r2": 0.7073,
+  "painted_r1_vs_model_r3": 0.6803,
+  "painted_r3_vs_model_r0": 0.7124,
+  "painted_r3_vs_model_r1": 0.6516,
+  "painted_r3_vs_model_r2": 0.802,
+  "painted_r3_vs_model_r3": 0.6741
+ },
+ "note": "Accepted quarry-a0-r1/r3 paintings (1254 px; raw, and the Codex .fitted versions) vs the blockout r1/r3 silhouettes at the plan canvas (1024, 8 px per game px, anchor 512,832). Plain = 1254 resized to 1024; the paintings are 1.5-1.8x the plan scale (the plan fit shrinks them), so best uniform scale + shift is the fair figure: 0.67 for both. The matching rotation is not the same index: painted r1 fits model r0 best (0.74), painted r3 fits model r2 best (0.80): the painter drew the crane on the left in every view, so the accepted r1/r3 are not turns of the r0 shape."
+}
