@@ -131,7 +131,8 @@
   "portal_w_tiles": 0.44,
   "portal_h_game_px": 24.0,
   "footing_h_tiles": 0.12,
-  "wall_thickness_tiles": 0.05
+  "wall_thickness_tiles": 0.05,
+  "portal_floor": "opaque dark floor slab and sill"
  },
  "source": "modelled directly in Blender (no painted source): blockout of a single-track engine shed",
  "outline_polygon_px": [
@@ -217,12 +218,12 @@
     974
    ],
    [
-    704,
-    943
+    703,
+    944
    ],
    [
-    812,
-    889
+    810,
+    890
    ],
    [
     870,
@@ -325,7 +326,7 @@
    876,
    975
   ],
-  "area_px": 345824,
+  "area_px": 345877,
   "top_row_px": 197,
   "bottom_row_px": 975,
   "inside_canvas": true,
