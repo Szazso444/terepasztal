@@ -11,7 +11,8 @@ below have none.
 - `<view>-<arm>-p<pose>.png`: 32 guides, 1024 x 1536, transparent. `view` is `back` or `front`,
   `arm` is `swing`, `shoulder`, `block` or `yoke`, `pose` is 1 to 4.
 - `manifest.json`: for every guide the joints in body units and in canvas px, the ground point, the
-  top of the head and the first and last drawn rows.
+  top of the head, the first and last drawn rows and its `soleRow` (1440 in every guide; also at the top
+  of the file).
 - `identity/<strip>-upper.png`: 28 crops, 512 x 768 (the guide layout at half size), and
   `identity/identity.json`.
 

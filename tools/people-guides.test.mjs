@@ -66,6 +66,22 @@ describe('people pose guides', () => {
     }
   });
 
+  it('records the sole row of every guide in the manifest: 1440, the row the painted boot must reach', () => {
+    const m = manifestOf(guides);
+    expect(m.soleRow).toBe(SOLE_ROW);
+    expect(m.guides).toHaveLength(guides.length);
+    for (const e of m.guides) {
+      const g = byName.get(e.file.replace(/.png$/, ''));
+      // the field exists, is the sole proper of that guide's picture (not the foot box's corner)
+      // and is the row 1440 the painting is tested against (R7c-1 test 2)
+      expect(e.soleRow, e.file).toBe(soleRowOf(g.png));
+      expect(Math.abs(e.soleRow - SOLE_ROW), e.file).toBeLessThanOrEqual(1);
+      expect(e.bottom, e.file).toBeGreaterThanOrEqual(e.soleRow - 1);
+    }
+    const shoulderP1 = m.guides.find((e) => e.file === 'back-shoulder-p1.png');
+    expect(shoulderP1.soleRow).toBe(1440);
+  });
+
   it('is 960 px from the ground point to the top of the head, in every pose', () => {
     for (const g of guides) {
       expect(g.groundPoint[0]).toBe(CENTRE_X);

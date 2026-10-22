@@ -520,6 +520,7 @@ export function allGuides() {
           arm,
           pose,
           png: g.png,
+          soleRow: soleRowOf(g.png),
           headTop: g.headTop,
           groundPoint: g.cam.to([0, 0, 0]).map((n) => Math.round(n * 10) / 10),
           rows,
@@ -547,6 +548,8 @@ export function manifestOf(guides) {
       pose: g.pose,
       top: g.rows.top,
       bottom: g.rows.bottom,
+      // the sole proper (lowest row at least MIN_SOLE_PX wide); `bottom` is the foot box corner below it
+      soleRow: g.soleRow,
       headTop: g.headTop,
       groundPoint: g.groundPoint,
       body: Object.fromEntries(Object.entries(g.joints).map(([k, v]) => [k, round3(v)])),
