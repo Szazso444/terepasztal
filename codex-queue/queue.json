@@ -46,8 +46,8 @@
           "id": "TB2-quarry",
           "title": "Quarry: r1 to r3 painted over the textured renders (3 pictures)",
           "file": "codex-queue/prompts/TB2-quarry.md",
-          "status": "blocked",
-          "note": "blocked: blockout fix pending (Core). R2 and r3 are broken. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+          "status": "ready",
+          "note": "ready: blockout fixed, renders re-pushed to claude/art-scaffolds-review-2 at 80cfaba3 (the winch house is closed on its two unseen sides; r0 IoU 0.9291). The accepted r0 painting stays; r1 to r3 are painted over the textured renders. At most 3 attempts per view."
         },
         {
           "id": "TB2-townhouse",
@@ -72,8 +72,8 @@
           "id": "TB2-grinder",
           "title": "Stone grinder: r0 to r3 painted over the textured renders (4 pictures)",
           "file": "codex-queue/prompts/TB2-grinder.md",
-          "status": "blocked",
-          "note": "blocked: blockout fix pending (Core). Holes in the walls and roof at r1 to r3. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+          "status": "ready",
+          "note": "ready: blockout fixed, renders re-pushed to claude/art-scaffolds-review-2 at 80cfaba3 (hopper seated in the roof, back walls and roof clean at r1 to r3, mesh closed; r0 IoU 0.9545). Paint over the textured render and unify it into one painting in the style of the original; r0 too. At most 3 attempts per view; the closest refused attempt is kept in raw/."
         },
         {
           "id": "TB2-refinery",
@@ -86,15 +86,15 @@
           "id": "TB2-colliery",
           "title": "Colliery: r0 to r3 painted over the textured renders (4 pictures)",
           "file": "codex-queue/prompts/TB2-colliery.md",
-          "status": "blocked",
-          "note": "blocked: blockout fix pending (Core). R2 and r3 are broken; the head frame floats at r3. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+          "status": "ready",
+          "note": "ready: blockout fixed, renders re-pushed to claude/art-scaffolds-review-2 at 80cfaba3 (3D head frame with back legs and footings standing on the ground, rope ends on the wheel and on the cabin roof, no floating part; r0 IoU 0.9272, earlier 0.932; the 0.92 bar holds). Paint over the textured render and unify it into one painting in the style of the original; r0 too. At most 3 attempts per view; the closest refused attempt is kept in raw/."
         },
         {
           "id": "TB2-ironworks",
           "title": "Ironworks: r0 to r3 painted over the textured renders (4 pictures)",
           "file": "codex-queue/prompts/TB2-ironworks.md",
-          "status": "blocked",
-          "note": "blocked: blockout fix pending (Core). R2 and r3 are blocky. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+          "status": "ready",
+          "note": "ready: blockout fixed, renders re-pushed to claude/art-scaffolds-review-2 at 80cfaba3 (hall, roofs and clerestory closed off cleanly with a roof valley at the tower, back wall with arched windows; r0 IoU 0.9324). Paint over the textured render and unify it into one painting in the style of the original; r0 too. At most 3 attempts per view; the closest refused attempt is kept in raw/."
         },
         {
           "id": "TB2-oil_derrick",
@@ -133,8 +133,8 @@
           "id": "TB2-fuel_stop",
           "title": "Coaling stage (fuel_stop): r1 to r3 painted over the textured renders (3 pictures)",
           "file": "codex-queue/prompts/TB2-fuel_stop.md",
-          "status": "blocked",
-          "note": "blocked: blockout fix pending (Core). R2 and r3 have flat yellow ends. The group skips it and goes on with the next prompt; Core sets it back to ready when the fixed renders have landed."
+          "status": "ready",
+          "note": "ready: blockout fixed, renders re-pushed to claude/art-scaffolds-review-2 at 80cfaba3 (the bin end faces carry planks, no flat yellow; r0 IoU 0.9245). The accepted r0 painting stays; r1 to r3 are painted over the textured renders. At most 3 attempts per view."
         },
         {
           "id": "TB2-fuel_pump",
