@@ -1,0 +1,147 @@
+{
+  "measurements": {
+    "shapePass": true,
+    "width": 1024,
+    "height": 1536,
+    "bounds": {
+      "x": 282,
+      "y": 417,
+      "width": 496,
+      "height": 1034
+    },
+    "soleRow": 1450,
+    "figureHeight": 1034,
+    "feet": {
+      "right": {
+        "ylow": 1450,
+        "cx": 580.7877922077922,
+        "cy": 1425.202077922078,
+        "pixels": 3850,
+        "f": -0.003269890333234539
+      },
+      "left": {
+        "ylow": 1351,
+        "cx": 513.5362595419847,
+        "cy": 1327.7712044105174,
+        "pixels": 4716,
+        "f": 0.07102576311187117
+      }
+    },
+    "turn": {
+      "L": 495,
+      "R": 424,
+      "ratio": -0.07395833333333333
+    },
+    "caps": {
+      "white": 65,
+      "amber": 627,
+      "haze": 11226,
+      "status": "report only"
+    },
+    "rgba": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true
+    },
+    "groundPoint": [
+      512,
+      1388
+    ]
+  },
+  "tests": {
+    "1": {
+      "height": 1034,
+      "target": 1022,
+      "relativeError": 0.011741682974559797,
+      "pass": true
+    },
+    "2": {
+      "soleRow": 1450,
+      "target": 1440,
+      "difference": 10,
+      "pass": false
+    },
+    "3": {
+      "feet": {
+        "right": {
+          "ylow": 1450,
+          "cx": 580.7877922077922,
+          "cy": 1425.202077922078,
+          "pixels": 3850,
+          "f": -0.003269890333234539
+        },
+        "left": {
+          "ylow": 1351,
+          "cx": 513.5362595419847,
+          "cy": 1327.7712044105174,
+          "pixels": 4716,
+          "f": 0.07102576311187117
+        }
+      },
+      "slide": {
+        "side": "right",
+        "actual": 0.13867255164863876,
+        "target": 0.11734251597173156,
+        "difference": 0.021330035676907194
+      },
+      "pass": false,
+      "status": "checked"
+    },
+    "4": {
+      "contactOverlap": null,
+      "pass": true,
+      "status": "pair pending"
+    },
+    "5": {
+      "L": 495,
+      "R": 424,
+      "ratio": -0.07395833333333333,
+      "target": {
+        "L": 506,
+        "R": 509,
+        "ratio": 0.003125
+      },
+      "difference": -0.07708333333333334,
+      "rawColumnPass": false,
+      "pass": true,
+      "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+      "visualReview": {
+        "pass": true,
+        "shoulderRowsReadable": false,
+        "guideRows": null,
+        "pictureRows": null,
+        "reason": "The axe head and diagonal handle cover both shoulder-to-neck junctions in the painted figure and guide; exact shoulder rows cannot be isolated.",
+        "byEye": "The back of the head and right side are visible, with no front-facing face; turned three quarters as the guide.",
+        "comparison": "checks/p2-attempt-1-shoulders.png"
+      }
+    },
+    "6": {
+      "white": 65,
+      "amber": 627,
+      "haze": 11226,
+      "status": "report only"
+    },
+    "7": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true,
+      "shapePass": true
+    }
+  },
+  "failedTests": [
+    2,
+    3
+  ],
+  "unresolvedTests": [],
+  "pass": false
+}

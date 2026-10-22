@@ -1,0 +1,168 @@
+{
+  "measurements": {
+    "shapePass": true,
+    "width": 1024,
+    "height": 1536,
+    "bounds": {
+      "x": 285,
+      "y": 417,
+      "width": 483,
+      "height": 1024
+    },
+    "soleRow": 1440,
+    "figureHeight": 1024,
+    "feet": {
+      "right": {
+        "ylow": 1440,
+        "cx": 514.9980707395498,
+        "cy": 1417.4020900321543,
+        "pixels": 6220,
+        "f": -0.03598399471632443
+      },
+      "left": {
+        "ylow": 1349,
+        "cx": 530.650641025641,
+        "cy": 1328.440064102564,
+        "pixels": 3120,
+        "f": 0.07671781137663768
+      }
+    },
+    "turn": {
+      "L": 504,
+      "R": 451,
+      "ratio": -0.05520833333333333
+    },
+    "caps": {
+      "white": 0,
+      "amber": 808,
+      "haze": 8207,
+      "status": "report only"
+    },
+    "rgba": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true
+    },
+    "groundPoint": [
+      512,
+      1385
+    ]
+  },
+  "tests": {
+    "1": {
+      "height": 1024,
+      "target": 1018,
+      "relativeError": 0.005893909626718985,
+      "pass": true
+    },
+    "2": {
+      "soleRow": 1440,
+      "target": 1440,
+      "difference": 0,
+      "pass": true
+    },
+    "3": {
+      "feet": {
+        "right": {
+          "ylow": 1440,
+          "cx": 514.9980707395498,
+          "cy": 1417.4020900321543,
+          "pixels": 6220,
+          "f": -0.03598399471632443
+        },
+        "left": {
+          "ylow": 1349,
+          "cx": 530.650641025641,
+          "cy": 1328.440064102564,
+          "pixels": 3120,
+          "f": 0.07671781137663768
+        }
+      },
+      "slide": {
+        "side": "right",
+        "actual": 0.04821459778722952,
+        "target": 0.033523575636385854,
+        "difference": 0.014691022150843669
+      },
+      "pass": false,
+      "status": "checked"
+    },
+    "4": {
+      "contactOverlap": {
+        "intersection": 29096,
+        "union": 128129,
+        "iou": 0.22708364226677802,
+        "threshold": 0.45,
+        "pass": true,
+        "resolutionScale": 1,
+        "reference": {
+          "soleRow": 1436,
+          "hatTop": 471,
+          "figureHeight": 966,
+          "cropTop": 1051,
+          "pixels": 94460
+        },
+        "candidate": {
+          "soleRow": 1440,
+          "hatTop": 417,
+          "figureHeight": 1024,
+          "cropTop": 1032,
+          "pixels": 62765
+        },
+        "method": "Original alpha>128, lowest40% of each body height; candidate uniformly scaled to reference resolution, centre columns and measured soles aligned; no silhouette recentering or body-height normalization"
+      },
+      "pass": true,
+      "status": "checked"
+    },
+    "5": {
+      "L": 504,
+      "R": 451,
+      "ratio": -0.05520833333333333,
+      "target": {
+        "L": 503,
+        "R": 506,
+        "ratio": 0.003125
+      },
+      "difference": -0.058333333333333334,
+      "rawColumnPass": false,
+      "pass": true,
+      "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+      "visualReview": {
+        "pass": true,
+        "shoulderRowsReadable": false,
+        "guideRows": null,
+        "pictureRows": null,
+        "reason": "Axe head and handle obscure both shoulder junctions on the zoomed comparison; exact shoulder top rows cannot be isolated confidently.",
+        "byEye": "Back of head and right side visible, no face from front; three-quarter turn as guide.",
+        "comparison": "checks/p3-attempt-2-shoulders.png"
+      }
+    },
+    "6": {
+      "white": 0,
+      "amber": 808,
+      "haze": 8207,
+      "status": "report only"
+    },
+    "7": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true,
+      "shapePass": true
+    }
+  },
+  "failedTests": [
+    3
+  ],
+  "unresolvedTests": [],
+  "pass": false
+}

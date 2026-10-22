@@ -1,0 +1,3343 @@
+{
+  "promptId": "R7c-1",
+  "run": 5,
+  "guideFixMerge": "13ee29f76291aa93e86b73728531fa2f95e90248",
+  "preflight": {
+    "manifestSoleRowPresent": true,
+    "manifestSoleRow": 1440,
+    "expectedManifestSoleRow": 1440,
+    "computedSoleRowAtLeast36OpaquePixels": 1440,
+    "lowestOpaqueRow": 1451,
+    "expectedLowestOpaqueRange": [
+      1440,
+      1456
+    ],
+    "manifestEntry": {
+      "file": "back-shoulder-p1.png",
+      "view": "back",
+      "arm": "shoulder",
+      "pose": 1,
+      "top": 483,
+      "bottom": 1451,
+      "soleRow": 1440,
+      "headTop": 483,
+      "groundPoint": [
+        512,
+        1443
+      ],
+      "body": {
+        "pelvis": [
+          0,
+          0,
+          0.52
+        ],
+        "rightHip": [
+          0,
+          0.07,
+          0.52
+        ],
+        "rightKnee": [
+          0.096,
+          0.07,
+          0.294
+        ],
+        "rightAnkle": [
+          0.111,
+          0.07,
+          0.049
+        ],
+        "rightHeel": [
+          0.083,
+          0.07,
+          0
+        ],
+        "rightToe": [
+          0.238,
+          0.07,
+          0.041
+        ],
+        "rightStage": 1,
+        "leftHip": [
+          0,
+          -0.07,
+          0.52
+        ],
+        "leftKnee": [
+          0.041,
+          -0.07,
+          0.278
+        ],
+        "leftAnkle": [
+          -0.102,
+          -0.07,
+          0.079
+        ],
+        "leftHeel": [
+          -0.153,
+          -0.07,
+          0.055
+        ],
+        "leftToe": [
+          -0.003,
+          -0.07,
+          0
+        ],
+        "leftStage": 3,
+        "head": [
+          0,
+          0,
+          0.917
+        ],
+        "leftShoulder": [
+          0,
+          -0.135,
+          0.82
+        ],
+        "leftElbow": [
+          0.067,
+          -0.135,
+          0.653
+        ],
+        "leftWrist": [
+          0.194,
+          -0.135,
+          0.547
+        ],
+        "leftHand": [
+          0.224,
+          -0.135,
+          0.521
+        ],
+        "rightShoulder": [
+          0,
+          0.135,
+          0.82
+        ],
+        "rightElbow": [
+          0.124,
+          0.202,
+          0.707
+        ],
+        "rightWrist": [
+          0.083,
+          0.132,
+          0.851
+        ],
+        "rightHand": [
+          0.12,
+          0.13,
+          0.865
+        ]
+      },
+      "canvas": {
+        "pelvis": [
+          512,
+          943.8
+        ],
+        "rightHip": [
+          572.1,
+          973.9
+        ],
+        "rightKnee": [
+          654.5,
+          1149.6
+        ],
+        "rightAnkle": [
+          667.7,
+          1378.2
+        ],
+        "rightHeel": [
+          643.4,
+          1437.4
+        ],
+        "rightToe": [
+          776.1,
+          1331.3
+        ],
+        "rightStage": 1,
+        "leftHip": [
+          451.9,
+          913.7
+        ],
+        "leftKnee": [
+          487.3,
+          1128.4
+        ],
+        "leftAnkle": [
+          364.2,
+          1381.3
+        ],
+        "leftHeel": [
+          320.2,
+          1426.3
+        ],
+        "leftToe": [
+          449.3,
+          1414.2
+        ],
+        "leftStage": 3,
+        "head": [
+          512,
+          562.5
+        ],
+        "leftShoulder": [
+          396.1,
+          597.8
+        ],
+        "leftElbow": [
+          454,
+          729.1
+        ],
+        "leftWrist": [
+          562.5,
+          776.7
+        ],
+        "leftHand": [
+          588.8,
+          788.2
+        ],
+        "rightShoulder": [
+          627.9,
+          713.8
+        ],
+        "rightElbow": [
+          791.2,
+          797.5
+        ],
+        "rightWrist": [
+          695.9,
+          647.1
+        ],
+        "rightHand": [
+          726.7,
+          616.9
+        ]
+      }
+    },
+    "swingSlides": [
+      0.11734251597173156,
+      0.033523575636385854,
+      0.062072045741533924
+    ],
+    "swingOverlaps": [
+      0.22078216705940898,
+      0.5042659319045636
+    ]
+  },
+  "guideCalibration": {
+    "backSwing": {
+      "entries": [
+        {
+          "file": "back-swing-p1.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 1,
+          "top": 483,
+          "bottom": 1451,
+          "soleRow": 1440,
+          "headTop": 483,
+          "groundPoint": [
+            512,
+            1443
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.096,
+              0.07,
+              0.294
+            ],
+            "rightAnkle": [
+              0.111,
+              0.07,
+              0.049
+            ],
+            "rightHeel": [
+              0.083,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.238,
+              0.07,
+              0.041
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.041,
+              -0.07,
+              0.278
+            ],
+            "leftAnkle": [
+              -0.102,
+              -0.07,
+              0.079
+            ],
+            "leftHeel": [
+              -0.153,
+              -0.07,
+              0.055
+            ],
+            "leftToe": [
+              -0.003,
+              -0.07,
+              0
+            ],
+            "leftStage": 3,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.067,
+              -0.135,
+              0.653
+            ],
+            "leftWrist": [
+              0.194,
+              -0.135,
+              0.547
+            ],
+            "leftHand": [
+              0.224,
+              -0.135,
+              0.521
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              -0.062,
+              0.135,
+              0.651
+            ],
+            "rightWrist": [
+              -0.096,
+              0.135,
+              0.489
+            ],
+            "rightHand": [
+              -0.104,
+              0.135,
+              0.45
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              943.8
+            ],
+            "rightHip": [
+              572.1,
+              973.9
+            ],
+            "rightKnee": [
+              654.5,
+              1149.6
+            ],
+            "rightAnkle": [
+              667.7,
+              1378.2
+            ],
+            "rightHeel": [
+              643.4,
+              1437.4
+            ],
+            "rightToe": [
+              776.1,
+              1331.3
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              451.9,
+              913.7
+            ],
+            "leftKnee": [
+              487.3,
+              1128.4
+            ],
+            "leftAnkle": [
+              364.2,
+              1381.3
+            ],
+            "leftHeel": [
+              320.2,
+              1426.3
+            ],
+            "leftToe": [
+              449.3,
+              1414.2
+            ],
+            "leftStage": 3,
+            "head": [
+              512,
+              562.5
+            ],
+            "leftShoulder": [
+              396.1,
+              597.8
+            ],
+            "leftElbow": [
+              454,
+              729.1
+            ],
+            "leftWrist": [
+              562.5,
+              776.7
+            ],
+            "leftHand": [
+              588.8,
+              788.2
+            ],
+            "rightShoulder": [
+              627.9,
+              713.8
+            ],
+            "rightElbow": [
+              575.1,
+              902.6
+            ],
+            "rightWrist": [
+              545.6,
+              1072.2
+            ],
+            "rightHand": [
+              538.5,
+              1113.4
+            ]
+          }
+        },
+        {
+          "file": "back-swing-p2.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 2,
+          "top": 428,
+          "bottom": 1449,
+          "soleRow": 1440,
+          "headTop": 428,
+          "groundPoint": [
+            512,
+            1388
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.016,
+              0.07,
+              0.285
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.04
+            ],
+            "rightHeel": [
+              -0.04,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.12,
+              0.07,
+              0
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.113,
+              -0.07,
+              0.312
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.094
+            ],
+            "leftHeel": [
+              -0.043,
+              -0.07,
+              0.057
+            ],
+            "leftToe": [
+              0.117,
+              -0.07,
+              0.046
+            ],
+            "leftStage": 4,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.003,
+              0.135,
+              0.64
+            ],
+            "rightWrist": [
+              0.046,
+              0.135,
+              0.481
+            ],
+            "rightHand": [
+              0.056,
+              0.135,
+              0.442
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              879.2
+            ],
+            "rightHip": [
+              572.1,
+              909.3
+            ],
+            "rightKnee": [
+              585.6,
+              1137.7
+            ],
+            "rightAnkle": [
+              572.1,
+              1379.7
+            ],
+            "rightHeel": [
+              537.8,
+              1435.2
+            ],
+            "rightToe": [
+              675.1,
+              1366.5
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              451.9,
+              849.1
+            ],
+            "leftKnee": [
+              549.2,
+              1009.5
+            ],
+            "leftAnkle": [
+              451.9,
+              1267.2
+            ],
+            "leftHeel": [
+              415.2,
+              1321.2
+            ],
+            "leftToe": [
+              552.3,
+              1263.4
+            ],
+            "leftStage": 4,
+            "head": [
+              512,
+              507.5
+            ],
+            "leftShoulder": [
+              396.1,
+              542.8
+            ],
+            "leftElbow": [
+              398.8,
+              714.3
+            ],
+            "leftWrist": [
+              435.4,
+              848.9
+            ],
+            "leftHand": [
+              444.3,
+              881.6
+            ],
+            "rightShoulder": [
+              627.9,
+              658.8
+            ],
+            "rightElbow": [
+              630.6,
+              830.2
+            ],
+            "rightWrist": [
+              667.3,
+              964.9
+            ],
+            "rightHand": [
+              676.2,
+              997.5
+            ]
+          }
+        },
+        {
+          "file": "back-swing-p3.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 3,
+          "top": 425,
+          "bottom": 1442,
+          "soleRow": 1440,
+          "headTop": 425,
+          "groundPoint": [
+            512,
+            1385
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.041,
+              0.07,
+              0.278
+            ],
+            "rightAnkle": [
+              -0.102,
+              0.07,
+              0.079
+            ],
+            "rightHeel": [
+              -0.153,
+              0.07,
+              0.055
+            ],
+            "rightToe": [
+              -0.003,
+              0.07,
+              0
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.096,
+              -0.07,
+              0.294
+            ],
+            "leftAnkle": [
+              0.111,
+              -0.07,
+              0.049
+            ],
+            "leftHeel": [
+              0.083,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.238,
+              -0.07,
+              0.041
+            ],
+            "leftStage": 1,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              -0.062,
+              -0.135,
+              0.651
+            ],
+            "leftWrist": [
+              -0.096,
+              -0.135,
+              0.489
+            ],
+            "leftHand": [
+              -0.104,
+              -0.135,
+              0.45
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.067,
+              0.135,
+              0.653
+            ],
+            "rightWrist": [
+              0.194,
+              0.135,
+              0.547
+            ],
+            "rightHand": [
+              0.224,
+              0.135,
+              0.521
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              885.8
+            ],
+            "rightHip": [
+              572.1,
+              915.9
+            ],
+            "rightKnee": [
+              607.5,
+              1130.5
+            ],
+            "rightAnkle": [
+              484.5,
+              1383.4
+            ],
+            "rightHeel": [
+              440.4,
+              1428.4
+            ],
+            "rightToe": [
+              569.5,
+              1416.3
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              451.9,
+              855.7
+            ],
+            "leftKnee": [
+              534.2,
+              1031.5
+            ],
+            "leftAnkle": [
+              547.4,
+              1260.1
+            ],
+            "leftHeel": [
+              523.2,
+              1319.3
+            ],
+            "leftToe": [
+              655.9,
+              1213.2
+            ],
+            "leftStage": 1,
+            "head": [
+              512,
+              504.5
+            ],
+            "leftShoulder": [
+              396.1,
+              539.8
+            ],
+            "leftElbow": [
+              343.2,
+              728.7
+            ],
+            "leftWrist": [
+              313.8,
+              898.3
+            ],
+            "leftHand": [
+              306.6,
+              939.4
+            ],
+            "rightShoulder": [
+              627.9,
+              655.8
+            ],
+            "rightElbow": [
+              685.8,
+              787
+            ],
+            "rightWrist": [
+              794.3,
+              834.6
+            ],
+            "rightHand": [
+              820.7,
+              846.1
+            ]
+          }
+        },
+        {
+          "file": "back-swing-p4.png",
+          "view": "back",
+          "arm": "swing",
+          "pose": 4,
+          "top": 480,
+          "bottom": 1447,
+          "soleRow": 1440,
+          "headTop": 480,
+          "groundPoint": [
+            512,
+            1440
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.113,
+              0.07,
+              0.312
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.094
+            ],
+            "rightHeel": [
+              -0.043,
+              0.07,
+              0.057
+            ],
+            "rightToe": [
+              0.117,
+              0.07,
+              0.046
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.016,
+              -0.07,
+              0.285
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.04
+            ],
+            "leftHeel": [
+              -0.04,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.12,
+              -0.07,
+              0
+            ],
+            "leftStage": 2,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.003,
+              0.135,
+              0.64
+            ],
+            "rightWrist": [
+              0.046,
+              0.135,
+              0.481
+            ],
+            "rightHand": [
+              0.056,
+              0.135,
+              0.442
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              931.2
+            ],
+            "rightHip": [
+              572.1,
+              961.3
+            ],
+            "rightKnee": [
+              669.4,
+              1121.6
+            ],
+            "rightAnkle": [
+              572.1,
+              1379.4
+            ],
+            "rightHeel": [
+              535.4,
+              1433.3
+            ],
+            "rightToe": [
+              672.5,
+              1375.5
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              451.9,
+              901.1
+            ],
+            "leftKnee": [
+              465.3,
+              1129.6
+            ],
+            "leftAnkle": [
+              451.9,
+              1371.5
+            ],
+            "leftHeel": [
+              417.5,
+              1427.1
+            ],
+            "leftToe": [
+              554.9,
+              1358.4
+            ],
+            "leftStage": 2,
+            "head": [
+              512,
+              559.5
+            ],
+            "leftShoulder": [
+              396.1,
+              594.8
+            ],
+            "leftElbow": [
+              398.8,
+              766.3
+            ],
+            "leftWrist": [
+              435.4,
+              900.9
+            ],
+            "leftHand": [
+              444.3,
+              933.6
+            ],
+            "rightShoulder": [
+              627.9,
+              710.8
+            ],
+            "rightElbow": [
+              630.6,
+              882.2
+            ],
+            "rightWrist": [
+              667.3,
+              1016.9
+            ],
+            "rightHand": [
+              676.2,
+              1049.5
+            ]
+          }
+        }
+      ],
+      "measurements": [
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 290,
+            "y": 483,
+            "width": 516,
+            "height": 969
+          },
+          "soleRow": 1451,
+          "figureHeight": 969,
+          "feet": {
+            "right": {
+              "ylow": 1451,
+              "cx": 665.4211915535445,
+              "cy": 1424.7349170437406,
+              "pixels": 2652,
+              "f": 0.11059114896720042
+            },
+            "left": {
+              "ylow": 1440,
+              "cx": 389.7393072044235,
+              "cy": 1416.471621401854,
+              "pixels": 6149,
+              "f": -0.040291066371264866
+            }
+          },
+          "turn": {
+            "L": 561,
+            "R": 628,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1443
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 428,
+            "width": 366,
+            "height": 1022
+          },
+          "soleRow": 1449,
+          "figureHeight": 1022,
+          "feet": {
+            "right": {
+              "ylow": 1449,
+              "cx": 569.7104860898808,
+              "cy": 1422.6533170284317,
+              "pixels": 3271,
+              "f": -0.0067513670045311475
+            },
+            "left": {
+              "ylow": 1351,
+              "cx": 515.2507978723404,
+              "cy": 1326.6257978723404,
+              "pixels": 3760,
+              "f": 0.07335770966910783
+            }
+          },
+          "turn": {
+            "L": 506,
+            "R": 573,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1388
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 268,
+            "y": 425,
+            "width": 592,
+            "height": 1018
+          },
+          "soleRow": 1442,
+          "figureHeight": 1018,
+          "feet": {
+            "right": {
+              "ylow": 1442,
+              "cx": 509.867900032457,
+              "cy": 1418.522070756248,
+              "pixels": 6162,
+              "f": -0.040274942640917
+            },
+            "left": {
+              "ylow": 1349,
+              "cx": 530.9699392388872,
+              "cy": 1328.4502718260314,
+              "pixels": 3127,
+              "f": 0.07689182323406164
+            }
+          },
+          "turn": {
+            "L": 503,
+            "R": 570,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1385
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 480,
+            "width": 384,
+            "height": 968
+          },
+          "soleRow": 1447,
+          "figureHeight": 968,
+          "feet": {
+            "right": {
+              "ylow": 1447,
+              "cx": 572.713135240211,
+              "cy": 1420.6120522077201,
+              "pixels": 3601,
+              "f": 0.057923282967379364
+            },
+            "left": {
+              "ylow": 1447,
+              "cx": 498.265306122449,
+              "cy": 1420.4054281506417,
+              "pixels": 4753,
+              "f": 0.01481977749252772
+            }
+          },
+          "turn": {
+            "L": 558,
+            "R": 625,
+            "ratio": 0.06979166666666667
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1440
+          ]
+        }
+      ],
+      "slides": [
+        0.11734251597173156,
+        0.033523575636385854,
+        0.062072045741533924
+      ],
+      "overlaps": [
+        0.22078216705940898,
+        0.5042659319045636
+      ]
+    },
+    "backShoulder": {
+      "entries": [
+        {
+          "file": "back-shoulder-p1.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 1,
+          "top": 483,
+          "bottom": 1451,
+          "soleRow": 1440,
+          "headTop": 483,
+          "groundPoint": [
+            512,
+            1443
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.096,
+              0.07,
+              0.294
+            ],
+            "rightAnkle": [
+              0.111,
+              0.07,
+              0.049
+            ],
+            "rightHeel": [
+              0.083,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.238,
+              0.07,
+              0.041
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.041,
+              -0.07,
+              0.278
+            ],
+            "leftAnkle": [
+              -0.102,
+              -0.07,
+              0.079
+            ],
+            "leftHeel": [
+              -0.153,
+              -0.07,
+              0.055
+            ],
+            "leftToe": [
+              -0.003,
+              -0.07,
+              0
+            ],
+            "leftStage": 3,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.067,
+              -0.135,
+              0.653
+            ],
+            "leftWrist": [
+              0.194,
+              -0.135,
+              0.547
+            ],
+            "leftHand": [
+              0.224,
+              -0.135,
+              0.521
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              943.8
+            ],
+            "rightHip": [
+              572.1,
+              973.9
+            ],
+            "rightKnee": [
+              654.5,
+              1149.6
+            ],
+            "rightAnkle": [
+              667.7,
+              1378.2
+            ],
+            "rightHeel": [
+              643.4,
+              1437.4
+            ],
+            "rightToe": [
+              776.1,
+              1331.3
+            ],
+            "rightStage": 1,
+            "leftHip": [
+              451.9,
+              913.7
+            ],
+            "leftKnee": [
+              487.3,
+              1128.4
+            ],
+            "leftAnkle": [
+              364.2,
+              1381.3
+            ],
+            "leftHeel": [
+              320.2,
+              1426.3
+            ],
+            "leftToe": [
+              449.3,
+              1414.2
+            ],
+            "leftStage": 3,
+            "head": [
+              512,
+              562.5
+            ],
+            "leftShoulder": [
+              396.1,
+              597.8
+            ],
+            "leftElbow": [
+              454,
+              729.1
+            ],
+            "leftWrist": [
+              562.5,
+              776.7
+            ],
+            "leftHand": [
+              588.8,
+              788.2
+            ],
+            "rightShoulder": [
+              627.9,
+              713.8
+            ],
+            "rightElbow": [
+              791.2,
+              797.5
+            ],
+            "rightWrist": [
+              695.9,
+              647.1
+            ],
+            "rightHand": [
+              726.7,
+              616.9
+            ]
+          }
+        },
+        {
+          "file": "back-shoulder-p2.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 2,
+          "top": 428,
+          "bottom": 1449,
+          "soleRow": 1440,
+          "headTop": 428,
+          "groundPoint": [
+            512,
+            1388
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.016,
+              0.07,
+              0.285
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.04
+            ],
+            "rightHeel": [
+              -0.04,
+              0.07,
+              0
+            ],
+            "rightToe": [
+              0.12,
+              0.07,
+              0
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.113,
+              -0.07,
+              0.312
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.094
+            ],
+            "leftHeel": [
+              -0.043,
+              -0.07,
+              0.057
+            ],
+            "leftToe": [
+              0.117,
+              -0.07,
+              0.046
+            ],
+            "leftStage": 4,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              879.2
+            ],
+            "rightHip": [
+              572.1,
+              909.3
+            ],
+            "rightKnee": [
+              585.6,
+              1137.7
+            ],
+            "rightAnkle": [
+              572.1,
+              1379.7
+            ],
+            "rightHeel": [
+              537.8,
+              1435.2
+            ],
+            "rightToe": [
+              675.1,
+              1366.5
+            ],
+            "rightStage": 2,
+            "leftHip": [
+              451.9,
+              849.1
+            ],
+            "leftKnee": [
+              549.2,
+              1009.5
+            ],
+            "leftAnkle": [
+              451.9,
+              1267.2
+            ],
+            "leftHeel": [
+              415.2,
+              1321.2
+            ],
+            "leftToe": [
+              552.3,
+              1263.4
+            ],
+            "leftStage": 4,
+            "head": [
+              512,
+              507.5
+            ],
+            "leftShoulder": [
+              396.1,
+              542.8
+            ],
+            "leftElbow": [
+              398.8,
+              714.3
+            ],
+            "leftWrist": [
+              435.4,
+              848.9
+            ],
+            "leftHand": [
+              444.3,
+              881.6
+            ],
+            "rightShoulder": [
+              627.9,
+              658.8
+            ],
+            "rightElbow": [
+              791.2,
+              742.5
+            ],
+            "rightWrist": [
+              695.9,
+              592.1
+            ],
+            "rightHand": [
+              726.7,
+              561.9
+            ]
+          }
+        },
+        {
+          "file": "back-shoulder-p3.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 3,
+          "top": 425,
+          "bottom": 1442,
+          "soleRow": 1440,
+          "headTop": 425,
+          "groundPoint": [
+            512,
+            1385
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.52
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.52
+            ],
+            "rightKnee": [
+              0.041,
+              0.07,
+              0.278
+            ],
+            "rightAnkle": [
+              -0.102,
+              0.07,
+              0.079
+            ],
+            "rightHeel": [
+              -0.153,
+              0.07,
+              0.055
+            ],
+            "rightToe": [
+              -0.003,
+              0.07,
+              0
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              0,
+              -0.07,
+              0.52
+            ],
+            "leftKnee": [
+              0.096,
+              -0.07,
+              0.294
+            ],
+            "leftAnkle": [
+              0.111,
+              -0.07,
+              0.049
+            ],
+            "leftHeel": [
+              0.083,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.238,
+              -0.07,
+              0.041
+            ],
+            "leftStage": 1,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              -0.062,
+              -0.135,
+              0.651
+            ],
+            "leftWrist": [
+              -0.096,
+              -0.135,
+              0.489
+            ],
+            "leftHand": [
+              -0.104,
+              -0.135,
+              0.45
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              885.8
+            ],
+            "rightHip": [
+              572.1,
+              915.9
+            ],
+            "rightKnee": [
+              607.5,
+              1130.5
+            ],
+            "rightAnkle": [
+              484.5,
+              1383.4
+            ],
+            "rightHeel": [
+              440.4,
+              1428.4
+            ],
+            "rightToe": [
+              569.5,
+              1416.3
+            ],
+            "rightStage": 3,
+            "leftHip": [
+              451.9,
+              855.7
+            ],
+            "leftKnee": [
+              534.2,
+              1031.5
+            ],
+            "leftAnkle": [
+              547.4,
+              1260.1
+            ],
+            "leftHeel": [
+              523.2,
+              1319.3
+            ],
+            "leftToe": [
+              655.9,
+              1213.2
+            ],
+            "leftStage": 1,
+            "head": [
+              512,
+              504.5
+            ],
+            "leftShoulder": [
+              396.1,
+              539.8
+            ],
+            "leftElbow": [
+              343.2,
+              728.7
+            ],
+            "leftWrist": [
+              313.8,
+              898.3
+            ],
+            "leftHand": [
+              306.6,
+              939.4
+            ],
+            "rightShoulder": [
+              627.9,
+              655.8
+            ],
+            "rightElbow": [
+              791.2,
+              739.5
+            ],
+            "rightWrist": [
+              695.9,
+              589.1
+            ],
+            "rightHand": [
+              726.7,
+              558.9
+            ]
+          }
+        },
+        {
+          "file": "back-shoulder-p4.png",
+          "view": "back",
+          "arm": "shoulder",
+          "pose": 4,
+          "top": 480,
+          "bottom": 1447,
+          "soleRow": 1440,
+          "headTop": 480,
+          "groundPoint": [
+            512,
+            1440
+          ],
+          "body": {
+            "pelvis": [
+              0,
+              0,
+              0.53
+            ],
+            "rightHip": [
+              0,
+              0.07,
+              0.53
+            ],
+            "rightKnee": [
+              0.113,
+              0.07,
+              0.312
+            ],
+            "rightAnkle": [
+              0,
+              0.07,
+              0.094
+            ],
+            "rightHeel": [
+              -0.043,
+              0.07,
+              0.057
+            ],
+            "rightToe": [
+              0.117,
+              0.07,
+              0.046
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              0,
+              -0.07,
+              0.53
+            ],
+            "leftKnee": [
+              0.016,
+              -0.07,
+              0.285
+            ],
+            "leftAnkle": [
+              0,
+              -0.07,
+              0.04
+            ],
+            "leftHeel": [
+              -0.04,
+              -0.07,
+              0
+            ],
+            "leftToe": [
+              0.12,
+              -0.07,
+              0
+            ],
+            "leftStage": 2,
+            "head": [
+              0,
+              0,
+              0.917
+            ],
+            "leftShoulder": [
+              0,
+              -0.135,
+              0.82
+            ],
+            "leftElbow": [
+              0.003,
+              -0.135,
+              0.64
+            ],
+            "leftWrist": [
+              0.046,
+              -0.135,
+              0.481
+            ],
+            "leftHand": [
+              0.056,
+              -0.135,
+              0.442
+            ],
+            "rightShoulder": [
+              0,
+              0.135,
+              0.82
+            ],
+            "rightElbow": [
+              0.124,
+              0.202,
+              0.707
+            ],
+            "rightWrist": [
+              0.083,
+              0.132,
+              0.851
+            ],
+            "rightHand": [
+              0.12,
+              0.13,
+              0.865
+            ]
+          },
+          "canvas": {
+            "pelvis": [
+              512,
+              931.2
+            ],
+            "rightHip": [
+              572.1,
+              961.3
+            ],
+            "rightKnee": [
+              669.4,
+              1121.6
+            ],
+            "rightAnkle": [
+              572.1,
+              1379.4
+            ],
+            "rightHeel": [
+              535.4,
+              1433.3
+            ],
+            "rightToe": [
+              672.5,
+              1375.5
+            ],
+            "rightStage": 4,
+            "leftHip": [
+              451.9,
+              901.1
+            ],
+            "leftKnee": [
+              465.3,
+              1129.6
+            ],
+            "leftAnkle": [
+              451.9,
+              1371.5
+            ],
+            "leftHeel": [
+              417.5,
+              1427.1
+            ],
+            "leftToe": [
+              554.9,
+              1358.4
+            ],
+            "leftStage": 2,
+            "head": [
+              512,
+              559.5
+            ],
+            "leftShoulder": [
+              396.1,
+              594.8
+            ],
+            "leftElbow": [
+              398.8,
+              766.3
+            ],
+            "leftWrist": [
+              435.4,
+              900.9
+            ],
+            "leftHand": [
+              444.3,
+              933.6
+            ],
+            "rightShoulder": [
+              627.9,
+              710.8
+            ],
+            "rightElbow": [
+              791.2,
+              794.5
+            ],
+            "rightWrist": [
+              695.9,
+              644.1
+            ],
+            "rightHand": [
+              726.7,
+              613.9
+            ]
+          }
+        }
+      ],
+      "measurements": [
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 290,
+            "y": 483,
+            "width": 560,
+            "height": 969
+          },
+          "soleRow": 1451,
+          "figureHeight": 969,
+          "feet": {
+            "right": {
+              "ylow": 1451,
+              "cx": 665.4211915535445,
+              "cy": 1424.7349170437406,
+              "pixels": 2652,
+              "f": 0.11059114896720042
+            },
+            "left": {
+              "ylow": 1440,
+              "cx": 389.7393072044235,
+              "cy": 1416.471621401854,
+              "pixels": 6149,
+              "f": -0.040291066371264866
+            }
+          },
+          "turn": {
+            "L": 561,
+            "R": 564,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1443
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 428,
+            "width": 501,
+            "height": 1022
+          },
+          "soleRow": 1449,
+          "figureHeight": 1022,
+          "feet": {
+            "right": {
+              "ylow": 1449,
+              "cx": 569.7104860898808,
+              "cy": 1422.6533170284317,
+              "pixels": 3271,
+              "f": -0.0067513670045311475
+            },
+            "left": {
+              "ylow": 1351,
+              "cx": 515.2507978723404,
+              "cy": 1326.6257978723404,
+              "pixels": 3760,
+              "f": 0.07335770966910783
+            }
+          },
+          "turn": {
+            "L": 506,
+            "R": 509,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1388
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 268,
+            "y": 425,
+            "width": 582,
+            "height": 1018
+          },
+          "soleRow": 1442,
+          "figureHeight": 1018,
+          "feet": {
+            "right": {
+              "ylow": 1442,
+              "cx": 509.867900032457,
+              "cy": 1418.522070756248,
+              "pixels": 6162,
+              "f": -0.040274942640917
+            },
+            "left": {
+              "ylow": 1349,
+              "cx": 530.9699392388872,
+              "cy": 1328.4502718260314,
+              "pixels": 3127,
+              "f": 0.07689182323406164
+            }
+          },
+          "turn": {
+            "L": 503,
+            "R": 506,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1385
+          ]
+        },
+        {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 349,
+            "y": 480,
+            "width": 501,
+            "height": 968
+          },
+          "soleRow": 1447,
+          "figureHeight": 968,
+          "feet": {
+            "right": {
+              "ylow": 1447,
+              "cx": 572.713135240211,
+              "cy": 1420.6120522077201,
+              "pixels": 3601,
+              "f": 0.057923282967379364
+            },
+            "left": {
+              "ylow": 1447,
+              "cx": 498.265306122449,
+              "cy": 1420.4054281506417,
+              "pixels": 4753,
+              "f": 0.01481977749252772
+            }
+          },
+          "turn": {
+            "L": 558,
+            "R": 561,
+            "ratio": 0.003125
+          },
+          "caps": {
+            "white": 0,
+            "amber": 0,
+            "pass": true
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1440
+          ]
+        }
+      ],
+      "slides": [
+        0.11734251597173156,
+        0.033523575636385854,
+        0.062072045741533924
+      ],
+      "overlaps": [
+        0.2115685786631149,
+        0.5043955264883643
+      ]
+    }
+  },
+  "basePrompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. <POSE> IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.",
+  "poseLines": [
+    "Pose 1 of 4, contact: his right leg, on the picture's right, leads with the heel down and the toe up; his left leg trails on the picture's left, toe down and heel lifted; left arm forward, right arm back.",
+    "Pose 2 of 4, passing: his right leg is planted flat and standing; his left leg swings, thigh forward, knee bent, the foot clear of the ground; both arms near the body.",
+    "Pose 3 of 4, contact: his left leg leads with the heel down and the toe up; his right leg trails, toe down and heel lifted; right arm forward, left arm back.",
+    "Pose 4 of 4, passing: his left leg is planted flat and standing; his right leg swings, thigh forward, knee bent, the foot clear of the ground; both arms near the body."
+  ],
+  "attempts": [
+    {
+      "pose": 1,
+      "frame": 0,
+      "attempt": 1,
+      "file": "raw/lumberjack-back-walk-f0-attempt-1.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 1 of 4, contact: his right leg, on the picture's right, leads with the heel down and the toe up; his left leg trails on the picture's left, toe down and heel lifted; left arm forward, right arm back. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p1.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 274,
+            "y": 442,
+            "width": 549,
+            "height": 1007
+          },
+          "soleRow": 1448,
+          "figureHeight": 1007,
+          "feet": {
+            "right": {
+              "ylow": 1448,
+              "cx": 690.0504615384615,
+              "cy": 1425.0584615384616,
+              "pixels": 3250,
+              "f": 0.12455376016624256
+            },
+            "left": {
+              "ylow": 1446,
+              "cx": 416.90804846386845,
+              "cy": 1422.4340112505408,
+              "pixels": 4622,
+              "f": -0.03141591408780462
+            }
+          },
+          "turn": {
+            "L": 521,
+            "R": 452,
+            "ratio": -0.071875
+          },
+          "caps": {
+            "white": 98,
+            "amber": 9,
+            "haze": 10518,
+            "status": "report only"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1443
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 1007,
+            "target": 969,
+            "relativeError": 0.03921568627450989,
+            "pass": false
+          },
+          "2": {
+            "soleRow": 1448,
+            "target": 1440,
+            "difference": 8,
+            "pass": true
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1448,
+                "cx": 690.0504615384615,
+                "cy": 1425.0584615384616,
+                "pixels": 3250,
+                "f": 0.12455376016624256
+              },
+              "left": {
+                "ylow": 1446,
+                "cx": 416.90804846386845,
+                "cy": 1422.4340112505408,
+                "pixels": 4622,
+                "f": -0.03141591408780462
+              }
+            },
+            "slide": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "4": {
+            "contactOverlap": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "5": {
+            "L": 521,
+            "R": 452,
+            "ratio": -0.071875,
+            "target": {
+              "L": 561,
+              "R": 564,
+              "ratio": 0.003125
+            },
+            "difference": -0.075,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "pass": true,
+              "shoulderRowsReadable": false,
+              "guideRows": null,
+              "pictureRows": null,
+              "reason": "The axe head covers the left shoulder-to-neck junction and the handle crosses the right one; both shoulder tops cannot be isolated confidently in the zoomed comparison.",
+              "byEye": "Back of head and right side visible, no front face; upper body has the requested three-quarter turn.",
+              "comparison": "checks/p1-attempt-1-shoulders.png"
+            }
+          },
+          "6": {
+            "white": 98,
+            "amber": 9,
+            "haze": 10518,
+            "status": "report only"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [
+          1
+        ],
+        "unresolvedTests": [],
+        "pass": false
+      },
+      "kept": false,
+      "sha256": "9905558f409625de2877249f32903b90cea41deaf8e6109ee2e1377582ca4d60"
+    },
+    {
+      "pose": 1,
+      "frame": 0,
+      "attempt": 2,
+      "file": "raw/lumberjack-back-walk-f0-attempt-2.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 1 of 4, contact: his right leg, on the picture's right, leads with the heel down and the toe up; his left leg trails on the picture's left, toe down and heel lifted; left arm forward, right arm back. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.\n\nCorrection: your last figure was 1007 px high from its cap top to its lowest sole, while the original guide is 969 px high: 3.92 per cent taller, outside the 3 per cent limit. Keep the original guide's cap top, head and body sizes and boot positions exactly; do not enlarge the man or copy the half-size reference's pose. The lowest opaque sole was row 1448, the upper edge of the permitted 1432 to 1448 range: keep the guide's sole proper at row 1440.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p1.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 287,
+            "y": 471,
+            "width": 515,
+            "height": 966
+          },
+          "soleRow": 1436,
+          "figureHeight": 966,
+          "feet": {
+            "right": {
+              "ylow": 1431,
+              "cx": 673.787186091436,
+              "cy": 1407.6097875080488,
+              "pixels": 3106,
+              "f": 0.1354026613154042
+            },
+            "left": {
+              "ylow": 1436,
+              "cx": 400.4975238769013,
+              "cy": 1412.7067562787406,
+              "pixels": 5654,
+              "f": -0.029643682277934277
+            }
+          },
+          "turn": {
+            "L": 553,
+            "R": 488,
+            "ratio": -0.06770833333333333
+          },
+          "caps": {
+            "white": 45,
+            "amber": 142,
+            "haze": 11804,
+            "status": "report only"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1443
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 966,
+            "target": 969,
+            "relativeError": -0.003095975232198178,
+            "pass": true
+          },
+          "2": {
+            "soleRow": 1436,
+            "target": 1440,
+            "difference": -4,
+            "pass": true
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1431,
+                "cx": 673.787186091436,
+                "cy": 1407.6097875080488,
+                "pixels": 3106,
+                "f": 0.1354026613154042
+              },
+              "left": {
+                "ylow": 1436,
+                "cx": 400.4975238769013,
+                "cy": 1412.7067562787406,
+                "pixels": 5654,
+                "f": -0.029643682277934277
+              }
+            },
+            "slide": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "4": {
+            "contactOverlap": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "5": {
+            "L": 553,
+            "R": 488,
+            "ratio": -0.06770833333333333,
+            "target": {
+              "L": 561,
+              "R": 564,
+              "ratio": 0.003125
+            },
+            "difference": -0.07083333333333333,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "pass": true,
+              "shoulderRowsReadable": false,
+              "guideRows": null,
+              "pictureRows": null,
+              "reason": "Axe head obscures left shoulder-to-neck junction and handle covers right shoulder top; cannot isolate both accurately even on the zoomed guide comparison.",
+              "byEye": "Back of head and right side visible, no front face; three-quarter back turn matches guide.",
+              "comparison": "checks/p1-attempt-2-shoulders.png"
+            }
+          },
+          "6": {
+            "white": 45,
+            "amber": 142,
+            "haze": 11804,
+            "status": "report only"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [],
+        "unresolvedTests": [],
+        "pass": true
+      },
+      "kept": true,
+      "sha256": "3a3459a733ecf13b42ab674654e75e8b834fd1e364b2e838d0d235d792eea53b"
+    },
+    {
+      "pose": 2,
+      "frame": 1,
+      "attempt": 1,
+      "file": "raw/lumberjack-back-walk-f1-attempt-1.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 2 of 4, passing: his right leg is planted flat and standing; his left leg swings, thigh forward, knee bent, the foot clear of the ground; both arms near the body. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p2.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 282,
+            "y": 417,
+            "width": 496,
+            "height": 1034
+          },
+          "soleRow": 1450,
+          "figureHeight": 1034,
+          "feet": {
+            "right": {
+              "ylow": 1450,
+              "cx": 580.7877922077922,
+              "cy": 1425.202077922078,
+              "pixels": 3850,
+              "f": -0.003269890333234539
+            },
+            "left": {
+              "ylow": 1351,
+              "cx": 513.5362595419847,
+              "cy": 1327.7712044105174,
+              "pixels": 4716,
+              "f": 0.07102576311187117
+            }
+          },
+          "turn": {
+            "L": 495,
+            "R": 424,
+            "ratio": -0.07395833333333333
+          },
+          "caps": {
+            "white": 65,
+            "amber": 627,
+            "haze": 11226,
+            "status": "report only"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1388
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 1034,
+            "target": 1022,
+            "relativeError": 0.011741682974559797,
+            "pass": true
+          },
+          "2": {
+            "soleRow": 1450,
+            "target": 1440,
+            "difference": 10,
+            "pass": false
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1450,
+                "cx": 580.7877922077922,
+                "cy": 1425.202077922078,
+                "pixels": 3850,
+                "f": -0.003269890333234539
+              },
+              "left": {
+                "ylow": 1351,
+                "cx": 513.5362595419847,
+                "cy": 1327.7712044105174,
+                "pixels": 4716,
+                "f": 0.07102576311187117
+              }
+            },
+            "slide": {
+              "side": "right",
+              "actual": 0.13867255164863876,
+              "target": 0.11734251597173156,
+              "difference": 0.021330035676907194
+            },
+            "pass": false,
+            "status": "checked"
+          },
+          "4": {
+            "contactOverlap": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "5": {
+            "L": 495,
+            "R": 424,
+            "ratio": -0.07395833333333333,
+            "target": {
+              "L": 506,
+              "R": 509,
+              "ratio": 0.003125
+            },
+            "difference": -0.07708333333333334,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "pass": true,
+              "shoulderRowsReadable": false,
+              "guideRows": null,
+              "pictureRows": null,
+              "reason": "The axe head and diagonal handle cover both shoulder-to-neck junctions in the painted figure and guide; exact shoulder rows cannot be isolated.",
+              "byEye": "The back of the head and right side are visible, with no front-facing face; turned three quarters as the guide.",
+              "comparison": "checks/p2-attempt-1-shoulders.png"
+            }
+          },
+          "6": {
+            "white": 65,
+            "amber": 627,
+            "haze": 11226,
+            "status": "report only"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [
+          2,
+          3
+        ],
+        "unresolvedTests": [],
+        "pass": false
+      },
+      "kept": false,
+      "sha256": "7b686ddac5618828187d38f854f9cfaf8bc041859a35ec22efb2480bae45aa61"
+    },
+    {
+      "pose": 2,
+      "frame": 1,
+      "attempt": 2,
+      "file": "raw/lumberjack-back-walk-f1-attempt-2.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 2 of 4, passing: his right leg is planted flat and standing; his left leg swings, thigh forward, knee bent, the foot clear of the ground; both arms near the body. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.\n\nCorrection: your last P2 picture's lowest sole was on row 1450, while the guide's sole is row 1440, 10 px too low and outside the allowed 8 px. Its planted right foot also slid 0.13867 of the figure's height between P1 and P2, instead of the guide's 0.11734, an error of 0.02133 where the limit is 0.01: the standing boot was too far down and left for this step. Paint the standing leg and boot over the grey guide in their exact place, without lengthening the stride or lowering the foot. Your shirt's orange came out as strong as the selection amber (627 pixels); mute that orange.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p2.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 298,
+            "y": 431,
+            "width": 464,
+            "height": 1013
+          },
+          "soleRow": 1443,
+          "figureHeight": 1013,
+          "feet": {
+            "right": {
+              "ylow": 1443,
+              "cx": 594.0434680451128,
+              "cy": 1418.5180921052631,
+              "pixels": 4256,
+              "f": 0.012230603070905094
+            },
+            "left": {
+              "ylow": 1351,
+              "cx": 548.682561944834,
+              "cy": 1329.1912108461897,
+              "pixels": 2139,
+              "f": 0.08983473466025532
+            }
+          },
+          "turn": {
+            "L": 514,
+            "R": 450,
+            "ratio": -0.06666666666666667
+          },
+          "caps": {
+            "white": 19,
+            "amber": 2822,
+            "haze": 9308,
+            "status": "report only"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1388
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 1013,
+            "target": 1022,
+            "relativeError": -0.008806262230919737,
+            "pass": true
+          },
+          "2": {
+            "soleRow": 1443,
+            "target": 1440,
+            "difference": 3,
+            "pass": true
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1443,
+                "cx": 594.0434680451128,
+                "cy": 1418.5180921052631,
+                "pixels": 4256,
+                "f": 0.012230603070905094
+              },
+              "left": {
+                "ylow": 1351,
+                "cx": 548.682561944834,
+                "cy": 1329.1912108461897,
+                "pixels": 2139,
+                "f": 0.08983473466025532
+              }
+            },
+            "slide": {
+              "side": "right",
+              "actual": 0.12317205824449912,
+              "target": 0.11734251597173156,
+              "difference": 0.005829542272767552
+            },
+            "pass": true,
+            "status": "checked"
+          },
+          "4": {
+            "contactOverlap": null,
+            "pass": true,
+            "status": "pair pending"
+          },
+          "5": {
+            "L": 514,
+            "R": 450,
+            "ratio": -0.06666666666666667,
+            "target": {
+              "L": 506,
+              "R": 509,
+              "ratio": 0.003125
+            },
+            "difference": -0.06979166666666667,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "pass": true,
+              "shoulderRowsReadable": false,
+              "guideRows": null,
+              "pictureRows": null,
+              "reason": "Axe head and handle obscure the two shoulder-to-neck junctions; exact rows cannot be read confidently on the zoomed comparison.",
+              "byEye": "Back of head and right side visible with no front face; three-quarter turn as guide.",
+              "comparison": "checks/p2-attempt-2-shoulders.png"
+            }
+          },
+          "6": {
+            "white": 19,
+            "amber": 2822,
+            "haze": 9308,
+            "status": "report only"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [],
+        "unresolvedTests": [],
+        "pass": true
+      },
+      "kept": true,
+      "sha256": "b0f7dc0ed0089758994853dcceee3bb1154250d90338dfdb46fd65ae620e5530"
+    },
+    {
+      "pose": 3,
+      "frame": 2,
+      "attempt": 1,
+      "file": "raw/lumberjack-back-walk-f2-attempt-1.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 3 of 4, contact: his left leg leads with the heel down and the toe up; his right leg trails, toe down and heel lifted; right arm forward, left arm back. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p3.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 271,
+            "y": 396,
+            "width": 489,
+            "height": 1062
+          },
+          "soleRow": 1457,
+          "figureHeight": 1062,
+          "feet": {
+            "right": {
+              "ylow": 1457,
+              "cx": 523.2558737151248,
+              "cy": 1433.1784140969164,
+              "pixels": 5448,
+              "f": -0.049546433674142985
+            },
+            "left": {
+              "ylow": 1349,
+              "cx": 535.4432755189082,
+              "cy": 1328.657662780779,
+              "pixels": 3517,
+              "f": 0.07925474496818248
+            }
+          },
+          "turn": {
+            "L": 482,
+            "R": 416,
+            "ratio": -0.06875
+          },
+          "caps": {
+            "white": 0,
+            "amber": 10,
+            "haze": 9974,
+            "status": "report only"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1385
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 1062,
+            "target": 1018,
+            "relativeError": 0.043222003929273,
+            "pass": false
+          },
+          "2": {
+            "soleRow": 1457,
+            "target": 1440,
+            "difference": 17,
+            "pass": false
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1457,
+                "cx": 523.2558737151248,
+                "cy": 1433.1784140969164,
+                "pixels": 5448,
+                "f": -0.049546433674142985
+              },
+              "left": {
+                "ylow": 1349,
+                "cx": 535.4432755189082,
+                "cy": 1328.657662780779,
+                "pixels": 3517,
+                "f": 0.07925474496818248
+              }
+            },
+            "slide": {
+              "side": "right",
+              "actual": 0.06177703674504808,
+              "target": 0.033523575636385854,
+              "difference": 0.028253461108662226
+            },
+            "pass": false,
+            "status": "checked"
+          },
+          "4": {
+            "contactOverlap": {
+              "intersection": 34363,
+              "union": 131371,
+              "iou": 0.26157218868700094,
+              "threshold": 0.45,
+              "pass": true,
+              "resolutionScale": 1,
+              "reference": {
+                "soleRow": 1436,
+                "hatTop": 471,
+                "figureHeight": 966,
+                "cropTop": 1051,
+                "pixels": 94460
+              },
+              "candidate": {
+                "soleRow": 1457,
+                "hatTop": 396,
+                "figureHeight": 1062,
+                "cropTop": 1034,
+                "pixels": 71274
+              },
+              "method": "Original alpha>128, lowest40% of each body height; candidate uniformly scaled to reference resolution, centre columns and measured soles aligned; no silhouette recentering or body-height normalization"
+            },
+            "pass": true,
+            "status": "checked"
+          },
+          "5": {
+            "L": 482,
+            "R": 416,
+            "ratio": -0.06875,
+            "target": {
+              "L": 503,
+              "R": 506,
+              "ratio": 0.003125
+            },
+            "difference": -0.07187500000000001,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "pass": true,
+              "shoulderRowsReadable": false,
+              "guideRows": null,
+              "pictureRows": null,
+              "reason": "The axe head and diagonal handle cover both shoulder-to-neck junctions; exact rows cannot be isolated from this zoomed comparison.",
+              "byEye": "Back of head and right side remain visible, no front face, three-quarter back turn as guide.",
+              "comparison": "checks/p3-attempt-1-shoulders.png"
+            }
+          },
+          "6": {
+            "white": 0,
+            "amber": 10,
+            "haze": 9974,
+            "status": "report only"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [
+          1,
+          2,
+          3
+        ],
+        "unresolvedTests": [],
+        "pass": false
+      },
+      "kept": false,
+      "sha256": "21f716c085305a3e3915ea655a730fc64f40424b56949786f50dc1a461dc7b20"
+    },
+    {
+      "pose": 3,
+      "frame": 2,
+      "attempt": 2,
+      "file": "raw/lumberjack-back-walk-f2-attempt-2.png",
+      "prompt": "EDIT IMAGE1, a grey pose mannequin, into a finished painted game sprite of the man in IMAGE2. Return exactly 1024 x 1536 pixels, real transparent RGBA. Keep everything IMAGE1 says about the pose and the camera: the size of the figure, where the head, trunk, arms, legs and boots are, the lean, the 45 degree turn and the 2:1 isometric camera 30 degrees down. The legs are the grey legs: paint each trouser thigh, knee, shin and boot over the grey one, in the same place and at the same angles; do not re-pose, straighten, mirror, recentre, enlarge or shrink anything. He walks toward the upper right of the picture; we see his back and his right side in three quarters, never a face from the front. Pose 3 of 4, contact: his left leg leads with the heel down and the toe up; his right leg trails, toe down and heel lifted; right arm forward, left arm back. IMAGE2 shows only his upper body, cut off at the hips and at half the size: take from it his head, hair, beard, moss-green flat cap, rust-orange and forest-green checked flannel shirt with rolled sleeves, skin and build, as a painting at the guide's size. Paint his legs yourself: charcoal-grey work trousers with turned-up cuffs, dark brown leather boots. The grey bar on his right shoulder in IMAGE1 is his axe: paint it as his wood-handled felling axe resting on his right shoulder, held by his right hand where the guide's hand is, the head behind his shoulder; his left arm swings as the guide's does. No other tool. Style: painted, broad smooth clusters of three or four shades per material, one light from the upper left, dark only on the lower and side rims, no outline round the whole figure, muted natural colours; nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48. Alpha 0 background and an opaque figure; no ground, floor, shadow, glow, haze, text, border or extra object.\n\nCorrection: your last P3 figure was 1062 px high against the guide's 1018, 4.32 per cent taller where at most 3 per cent is allowed; its lowest sole was row 1457, 17 px below the guide's row 1440 where at most 8 px is allowed. The right planted-foot slide from P2 was 0.06178 of figure height against the guide's 0.03352, error 0.02825 where at most 0.01 is allowed: the trailing boot was too far down and left. Paint the guide's exact cap top, body height, thigh, shin and boot positions without enlarging, lengthening the step or moving the feet. An earlier shirt's orange came out as strong as selection amber; keep the orange muted.",
+      "references": [
+        "assets/source/people-v3-guides/back-shoulder-p3.png",
+        "assets/source/people-v3-guides/identity/lumberjack-back-walk-upper.png"
+      ],
+      "returned": [
+        1024,
+        1536
+      ],
+      "measured": {
+        "measurements": {
+          "shapePass": true,
+          "width": 1024,
+          "height": 1536,
+          "bounds": {
+            "x": 285,
+            "y": 417,
+            "width": 483,
+            "height": 1024
+          },
+          "soleRow": 1440,
+          "figureHeight": 1024,
+          "feet": {
+            "right": {
+              "ylow": 1440,
+              "cx": 514.9980707395498,
+              "cy": 1417.4020900321543,
+              "pixels": 6220,
+              "f": -0.03598399471632443
+            },
+            "left": {
+              "ylow": 1349,
+              "cx": 530.650641025641,
+              "cy": 1328.440064102564,
+              "pixels": 3120,
+              "f": 0.07671781137663768
+            }
+          },
+          "turn": {
+            "L": 504,
+            "R": 451,
+            "ratio": -0.05520833333333333
+          },
+          "caps": {
+            "white": 0,
+            "amber": 808,
+            "haze": 8207,
+            "status": "report only"
+          },
+          "rgba": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true
+          },
+          "groundPoint": [
+            512,
+            1385
+          ]
+        },
+        "tests": {
+          "1": {
+            "height": 1024,
+            "target": 1018,
+            "relativeError": 0.005893909626718985,
+            "pass": true
+          },
+          "2": {
+            "soleRow": 1440,
+            "target": 1440,
+            "difference": 0,
+            "pass": true
+          },
+          "3": {
+            "feet": {
+              "right": {
+                "ylow": 1440,
+                "cx": 514.9980707395498,
+                "cy": 1417.4020900321543,
+                "pixels": 6220,
+                "f": -0.03598399471632443
+              },
+              "left": {
+                "ylow": 1349,
+                "cx": 530.650641025641,
+                "cy": 1328.440064102564,
+                "pixels": 3120,
+                "f": 0.07671781137663768
+              }
+            },
+            "slide": {
+              "side": "right",
+              "actual": 0.04821459778722952,
+              "target": 0.033523575636385854,
+              "difference": 0.014691022150843669
+            },
+            "pass": false,
+            "status": "checked"
+          },
+          "4": {
+            "contactOverlap": {
+              "intersection": 29096,
+              "union": 128129,
+              "iou": 0.22708364226677802,
+              "threshold": 0.45,
+              "pass": true,
+              "resolutionScale": 1,
+              "reference": {
+                "soleRow": 1436,
+                "hatTop": 471,
+                "figureHeight": 966,
+                "cropTop": 1051,
+                "pixels": 94460
+              },
+              "candidate": {
+                "soleRow": 1440,
+                "hatTop": 417,
+                "figureHeight": 1024,
+                "cropTop": 1032,
+                "pixels": 62765
+              },
+              "method": "Original alpha>128, lowest40% of each body height; candidate uniformly scaled to reference resolution, centre columns and measured soles aligned; no silhouette recentering or body-height normalization"
+            },
+            "pass": true,
+            "status": "checked"
+          },
+          "5": {
+            "L": 504,
+            "R": 451,
+            "ratio": -0.05520833333333333,
+            "target": {
+              "L": 503,
+              "R": 506,
+              "ratio": 0.003125
+            },
+            "difference": -0.058333333333333334,
+            "rawColumnPass": false,
+            "pass": true,
+            "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+            "visualReview": {
+              "pass": true,
+              "shoulderRowsReadable": false,
+              "guideRows": null,
+              "pictureRows": null,
+              "reason": "Axe head and handle obscure both shoulder junctions on the zoomed comparison; exact shoulder top rows cannot be isolated confidently.",
+              "byEye": "Back of head and right side visible, no face from front; three-quarter turn as guide.",
+              "comparison": "checks/p3-attempt-2-shoulders.png"
+            }
+          },
+          "6": {
+            "white": 0,
+            "amber": 808,
+            "haze": 8207,
+            "status": "report only"
+          },
+          "7": {
+            "colourType": 6,
+            "corners": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "pass": true,
+            "shapePass": true
+          }
+        },
+        "failedTests": [
+          3
+        ],
+        "unresolvedTests": [],
+        "pass": false
+      },
+      "kept": false,
+      "sha256": "926fd14f1cd32502ce320916ad5193af63b985514b74fda1e15e5ab8c34ac3e7"
+    }
+  ],
+  "selection": {
+    "1": {
+      "attempt": 2,
+      "file": "raw/lumberjack-back-walk-f0-attempt-2.png"
+    },
+    "2": {
+      "attempt": 2,
+      "file": "raw/lumberjack-back-walk-f1-attempt-2.png"
+    }
+  },
+  "callsUsed": 6,
+  "callsLimit": 12,
+  "result": "stopped",
+  "stopReason": "If the same test fails on the same pose twice, stop there and report; the guide is then to be changed, not the prompt.",
+  "stopDetails": "P3 test3 right planted-foot slide failed twice: .0617770367 vs .0335235756 (difference .0282534611), then .0482145978 vs .0335235756 (difference .0146910222), allowed .01.",
+  "unrunPoses": [
+    4
+  ],
+  "closestRefused": {
+    "3": {
+      "attempt": 2,
+      "file": "raw/lumberjack-back-walk-f2-attempt-2.png"
+    }
+  }
+}

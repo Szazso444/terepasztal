@@ -1,0 +1,144 @@
+{
+  "measurements": {
+    "shapePass": true,
+    "width": 1024,
+    "height": 1536,
+    "bounds": {
+      "x": 298,
+      "y": 431,
+      "width": 464,
+      "height": 1013
+    },
+    "soleRow": 1443,
+    "figureHeight": 1013,
+    "feet": {
+      "right": {
+        "ylow": 1443,
+        "cx": 594.0434680451128,
+        "cy": 1418.5180921052631,
+        "pixels": 4256,
+        "f": 0.012230603070905094
+      },
+      "left": {
+        "ylow": 1351,
+        "cx": 548.682561944834,
+        "cy": 1329.1912108461897,
+        "pixels": 2139,
+        "f": 0.08983473466025532
+      }
+    },
+    "turn": {
+      "L": 514,
+      "R": 450,
+      "ratio": -0.06666666666666667
+    },
+    "caps": {
+      "white": 19,
+      "amber": 2822,
+      "haze": 9308,
+      "status": "report only"
+    },
+    "rgba": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true
+    },
+    "groundPoint": [
+      512,
+      1388
+    ]
+  },
+  "tests": {
+    "1": {
+      "height": 1013,
+      "target": 1022,
+      "relativeError": -0.008806262230919737,
+      "pass": true
+    },
+    "2": {
+      "soleRow": 1443,
+      "target": 1440,
+      "difference": 3,
+      "pass": true
+    },
+    "3": {
+      "feet": {
+        "right": {
+          "ylow": 1443,
+          "cx": 594.0434680451128,
+          "cy": 1418.5180921052631,
+          "pixels": 4256,
+          "f": 0.012230603070905094
+        },
+        "left": {
+          "ylow": 1351,
+          "cx": 548.682561944834,
+          "cy": 1329.1912108461897,
+          "pixels": 2139,
+          "f": 0.08983473466025532
+        }
+      },
+      "slide": {
+        "side": "right",
+        "actual": 0.12317205824449912,
+        "target": 0.11734251597173156,
+        "difference": 0.005829542272767552
+      },
+      "pass": true,
+      "status": "checked"
+    },
+    "4": {
+      "contactOverlap": null,
+      "pass": true,
+      "status": "pair pending"
+    },
+    "5": {
+      "L": 514,
+      "R": 450,
+      "ratio": -0.06666666666666667,
+      "target": {
+        "L": 506,
+        "R": 509,
+        "ratio": 0.003125
+      },
+      "difference": -0.06979166666666667,
+      "rawColumnPass": false,
+      "pass": true,
+      "status": "Requires visual isolation of shoulder tops when axe or cap intersects the columns",
+      "visualReview": {
+        "pass": true,
+        "shoulderRowsReadable": false,
+        "guideRows": null,
+        "pictureRows": null,
+        "reason": "Axe head and handle obscure the two shoulder-to-neck junctions; exact rows cannot be read confidently on the zoomed comparison.",
+        "byEye": "Back of head and right side visible with no front face; three-quarter turn as guide.",
+        "comparison": "checks/p2-attempt-2-shoulders.png"
+      }
+    },
+    "6": {
+      "white": 19,
+      "amber": 2822,
+      "haze": 9308,
+      "status": "report only"
+    },
+    "7": {
+      "colourType": 6,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pass": true,
+      "shapePass": true
+    }
+  },
+  "failedTests": [],
+  "unresolvedTests": [],
+  "pass": true
+}
