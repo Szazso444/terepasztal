@@ -293,7 +293,7 @@ export function measure(file, job, view, eye = {}) {
   const j = JSON.parse(readFileSync(`../scaffolds-textured-c/${job}-r${view}.json`)),
     p = png(file),
     bare = png(`../scaffolds-textured-c/${job}-r${view}-bare.png`),
-    original = png(`../originals-textured-c/${job}.png`),
+    original = job === 'power_plant' ? null : png(`../originals-textured-c/${job}.png`),
     s0 = p.width / j.canvas[0];
   // pictureOf parses file names rather than reading alpha; this job's custom names return null.
   const nameMetadata = pictureOf(file),
@@ -358,7 +358,7 @@ export function measure(file, job, view, eye = {}) {
       k: baseWidth ? (renderBaseWidth * s0) / baseWidth : null,
     },
     highlights: reports(p),
-    originalHighlights: reports(original),
+    originalHighlights: original ? reports(original) : null,
     wallLight: {
       left: wallMean(p, eye.leftBox),
       right: wallMean(p, eye.rightBox),
@@ -443,7 +443,8 @@ export function prepare(job, view, attempt, renderReference, correction = '') {
   if (!view || !r0) ref = ref.replace(/ The third is this same building[\s\S]*$/, '');
   const references = [
     'G:/DEV/wt/scaffolds-textured-c/' + job + '-r' + view + '-textured.png',
-    'G:/DEV/wt/originals-textured-c/' + job + '.png',
+    'G:/DEV/wt/originals-textured-c/' +
+      (job === 'power_plant' ? 'power_plant-materials-sheet.png' : job + '.png'),
   ];
   if (view && r0) references.push('G:/DEV/wt/codex-textured-c/' + root + '/' + job + '-r0.png');
   const b =
