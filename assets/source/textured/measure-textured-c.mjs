@@ -293,7 +293,12 @@ export function measure(file, job, view, eye = {}) {
   const j = JSON.parse(readFileSync(`../scaffolds-textured-c/${job}-r${view}.json`)),
     p = png(file),
     bare = png(`../scaffolds-textured-c/${job}-r${view}-bare.png`),
-    original = job === 'power_plant' ? null : png(`../originals-textured-c/${job}.png`),
+    original =
+      job === 'power_plant'
+        ? null
+        : png(
+            `../originals-textured-c/${job}${['fuel_stop', 'fuel_pump'].includes(job) ? '-r0' : ''}.png`,
+          ),
     s0 = p.width / j.canvas[0];
   // pictureOf parses file names rather than reading alpha; this job's custom names return null.
   const nameMetadata = pictureOf(file),
@@ -439,14 +444,18 @@ export function prepare(job, view, attempt, renderReference, correction = '') {
       ? JSON.parse(readFileSync(file))
       : { job, renderReference: {}, attempts: [] };
   if (renderReference) data.renderReference['r' + view] = renderReference;
-  const r0 = data.attempts.some((a) => a.view === 0 && a.kept);
-  if (!view || !r0) ref = ref.replace(/ The third is this same building[\s\S]*$/, '');
+  const pilotView = ['fuel_stop', 'fuel_pump'].includes(job) ? 1 : 0;
+  const r0 = data.attempts.some((a) => a.view === pilotView && a.kept);
+  if (view === pilotView || !r0) ref = ref.replace(/ The third is this same building[\s\S]*$/, '');
   const references = [
     'G:/DEV/wt/scaffolds-textured-c/' + job + '-r' + view + '-textured.png',
     'G:/DEV/wt/originals-textured-c/' +
-      (job === 'power_plant' ? 'power_plant-materials-sheet.png' : job + '.png'),
+      (job === 'power_plant'
+        ? 'power_plant-materials-sheet.png'
+        : job + (pilotView === 1 ? '-r0' : '') + '.png'),
   ];
-  if (view && r0) references.push('G:/DEV/wt/codex-textured-c/' + root + '/' + job + '-r0.png');
+  if (view !== pilotView && r0)
+    references.push('G:/DEV/wt/codex-textured-c/' + root + '/' + job + '-r' + pilotView + '.png');
   const b =
     'View. The building is the ' +
     name +

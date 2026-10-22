@@ -1,0 +1,923 @@
+{
+  "job": "fuel_stop",
+  "renderReference": {
+    "r1": {
+      "legFoot": [550, 836],
+      "rim": [550, 416],
+      "baseWidth": 499.77,
+      "wallRatio": 0.8403865778258,
+      "reading": "nearfront leg foot atop stone to top rim by eye2xbarecrop, excluding coal andstoneheight",
+      "uncertaintyPx": 6,
+      "wallLight": {
+        "boxes": [
+          [350, 512, 367, 525],
+          [622, 529, 640, 542]
+        ],
+        "left": 75.43734841628962,
+        "right": 70.00343076923075,
+        "ratio": 1.0776235905490406
+      }
+    },
+    "r2": {
+      "legFoot": [468, 836],
+      "rim": [468, 414],
+      "baseWidth": 499.77,
+      "wallRatio": 0.8443884186725894,
+      "reading": "near legfoot atop stone to toprim by eye2xbarecrop",
+      "uncertaintyPx": 6,
+      "wallLight": {
+        "boxes": [
+          [350, 500, 366, 515],
+          [565, 530, 581, 546]
+        ],
+        "left": 99.48176083333333,
+        "right": 65.81214375,
+        "ratio": 1.511601889329632
+      }
+    },
+    "r3": {
+      "legFoot": [550, 836],
+      "rim": [550, 416],
+      "baseWidth": 499.77,
+      "wallRatio": 0.8403865778258,
+      "reading": "nearlegfoot atop stone to toprim byeye2xbarecrop",
+      "uncertaintyPx": 6,
+      "wallLight": {
+        "boxes": [
+          [357, 490, 373, 505],
+          [685, 508, 698, 521]
+        ],
+        "left": 86.46637000000003,
+        "right": 58.102705325443765,
+        "ratio": 1.4881642690419705
+      }
+    }
+  },
+  "attempts": [
+    {
+      "building": "fuel_stop",
+      "view": 1,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Coaling stage in the view r1. a timber coaling stage: a big open-topped square bin of warm brown vertical planks with black iron straps and corner plates, heaped with black coal, standing high on six timber legs with X braces, each leg on a cream stone pier. On one side a winch drum with a rope and a hanging black iron chain; below it a timber chute lined with black iron with an iron mouth. The other faces of the bin are strapped plank walls. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the winch drum with its chain and the timber chute with its iron mouth, on the bin face and legs of that side stands at the upper-left side; the strapped plank face of the bin and the braced legs on that side stands at the lower-left side; the plank face of the bin and its braced legs on the back side (plain; as the render has it) stands at the lower-right side; the back side face of the bin (as the render has it) stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-c/fuel_stop-r1-textured.png",
+        "G:/DEV/wt/originals-textured-c/fuel_stop-r0.png"
+      ],
+      "file": "raw/fuel_stop-r1-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/fuel_stop/raw/fuel_stop-r1-attempt-1.png",
+        "job": "fuel_stop",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [274, 190, 937, 1123],
+          "area": 409009,
+          "width": 664,
+          "height": 934,
+          "overallRatio": 1.4066265060240963
+        },
+        "bareOpaque": {
+          "box": [211, 187, 761, 956],
+          "area": 280874,
+          "width": 551,
+          "height": 770,
+          "overallRatio": 1.397459165154265
+        },
+        "silhouette": {
+          "iouAtS0": 0.8123610980344071,
+          "f": 1.018,
+          "dx": -22.110000000000014,
+          "dy": 30.360000000000014,
+          "bestIoU": 0.9514100014124327,
+          "p95PictureToRender": 8.823630786199288,
+          "p95RenderToPicture": 81.9605551682567,
+          "maximum": 112.64400869766195,
+          "boundarySamples": [3036, 4123],
+          "worstPicture": {
+            "distance": 20.855854585561957,
+            "point": [271.92344497607655, 363.38118022328547]
+          },
+          "worstRender": {
+            "distance": 112.64400869766195,
+            "point": [497.30143540669854, 750.4433811802232]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.824212271973466,
+          "renderWall": 0.8403865778258,
+          "wallRelativeDifference": -0.019246268656716525,
+          "overall": 1.4066265060240963,
+          "renderOverall": 1.397459165154265,
+          "overallRelativeDifference": 0.006560006258801376,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 603,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 1.0149635611007461
+        },
+        "highlights": {
+          "nearWhite": 1682,
+          "nearAmber": 189
+        },
+        "originalHighlights": {
+          "nearWhite": 1933,
+          "nearAmber": 6
+        },
+        "wallLight": {
+          "left": 102.18112531969302,
+          "right": 82.47191435294123,
+          "boxes": [
+            [445, 573, 468, 590],
+            [753, 610, 778, 627]
+          ],
+          "ratio": 1.2389808836303422,
+          "render": {
+            "boxes": [
+              [350, 512, 367, 525],
+              [622, 529, 640, 542]
+            ],
+            "left": 75.43734841628962,
+            "right": 70.00343076923075,
+            "ratio": 1.0776235905490406
+          }
+        },
+        "eye": {
+          "baseWidth": 603,
+          "baseCorners": [
+            [334, 942],
+            [937, 978]
+          ],
+          "legFoot": [686, 972],
+          "rim": [686, 475],
+          "wallRatio": 0.824212271973466,
+          "renderWallRatio": 0.8403865778258,
+          "leftBox": [445, 573, 468, 590],
+          "rightBox": [753, 610, 778, 627],
+          "uncertaintyPx": 7
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Refused despite IoU .9514: render-to-picture p95 81.96 and maximum112.64 at lower leggap; opaque timber backing fills gap the render exposes. Otherp95 8.82. Returned1254square, unchangedbytes.",
+      "sha256": "c4a0c75b4ce86efae277968498c7e34446f640750d02bd2df4cfa562560e14f1",
+      "qualifies": false
+    },
+    {
+      "building": "fuel_stop",
+      "view": 1,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Coaling stage in the view r1. a timber coaling stage: a big open-topped square bin of warm brown vertical planks with black iron straps and corner plates, heaped with black coal, standing high on six timber legs with X braces, each leg on a cream stone pier. On one side a winch drum with a rope and a hanging black iron chain; below it a timber chute lined with black iron with an iron mouth. The other faces of the bin are strapped plank walls. r1: the building is turned 1 quarter turn clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the winch drum with its chain and the timber chute with its iron mouth, on the bin face and legs of that side stands at the upper-left side; the strapped plank face of the bin and the braced legs on that side stands at the lower-left side; the plank face of the bin and its braced legs on the back side (plain; as the render has it) stands at the lower-right side; the back side face of the bin (as the render has it) stands at the upper-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r1 missed silhouette: IoU0.9514 but render-to-picture p95 81.96 canvas px and maximum112.64, at gap between the legs around rendercoordinate497,750. Keep ALL see-through gaps and all six piers exactly as FIRST render; do not fill them with extra opaque wooden backing. Preserve the original shape and placements at its current canvas scale, and do not copy the reference layout.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-c/fuel_stop-r1-textured.png",
+        "G:/DEV/wt/originals-textured-c/fuel_stop-r0.png"
+      ],
+      "file": "raw/fuel_stop-r1-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/fuel_stop/raw/fuel_stop-r1-attempt-2.png",
+        "job": "fuel_stop",
+        "view": 1,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [255, 189, 936, 1131],
+          "area": 421894,
+          "width": 682,
+          "height": 943,
+          "overallRatio": 1.3826979472140764
+        },
+        "bareOpaque": {
+          "box": [211, 187, 761, 956],
+          "area": 280874,
+          "width": 551,
+          "height": 770,
+          "overallRatio": 1.397459165154265
+        },
+        "silhouette": {
+          "iouAtS0": 0.8259936439803541,
+          "f": 0.995,
+          "dx": 1.955000000000041,
+          "dy": 43.10000000000002,
+          "bestIoU": 0.9645952637092645,
+          "p95PictureToRender": 5.254982423385858,
+          "p95RenderToPicture": 5.254982423385858,
+          "maximum": 8.449524548075857,
+          "boundarySamples": [4029, 4123],
+          "worstPicture": {
+            "distance": 8.449524548075857,
+            "point": [496.4848484848485, 217.21212121212122]
+          },
+          "worstRender": {
+            "distance": 8.082862790058114,
+            "point": [503.0175438596491, 210.67942583732057]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.833063209076175,
+          "renderWall": 0.8403865778258,
+          "wallRelativeDifference": -0.008714285714285785,
+          "overall": 1.3826979472140764,
+          "renderOverall": 1.397459165154265,
+          "overallRelativeDifference": -0.010562897513044067,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 617,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 0.9919335937499999
+        },
+        "highlights": {
+          "nearWhite": 2701,
+          "nearAmber": 6
+        },
+        "originalHighlights": {
+          "nearWhite": 1933,
+          "nearAmber": 6
+        },
+        "wallLight": {
+          "left": 123.02533301435393,
+          "right": 92.48698288770052,
+          "boxes": [
+            [433, 560, 455, 579],
+            [747, 606, 769, 623]
+          ],
+          "ratio": 1.3301907919705163,
+          "render": {
+            "boxes": [
+              [350, 512, 367, 525],
+              [622, 529, 640, 542]
+            ],
+            "left": 75.43734841628962,
+            "right": 70.00343076923075,
+            "ratio": 1.0776235905490406
+          }
+        },
+        "eye": {
+          "baseWidth": 617,
+          "baseCorners": [
+            [319, 944],
+            [936, 990]
+          ],
+          "legFoot": [679, 981],
+          "rim": [679, 467],
+          "wallRatio": 0.833063209076175,
+          "renderWallRatio": 0.8403865778258,
+          "leftBox": [433, 560, 455, 579],
+          "rightBox": [747, 606, 769, 623],
+          "uncertaintyPx": 7
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "Accepted r1#2: IoU .96460 p95 5.255/5.255 max8.450; bothheight ratios within8%. Correct existing chute, sixleg/pier layout and open gaps; varied coal and crisp timber/iron/stone coherent with reference. Geometrywins overprose: bin planks horizontal asrender.",
+      "sha256": "85d254dbf1f1e4f05b9feee473cee5007978a8bcc27924b7ec0401874d5f59be",
+      "qualifies": true
+    },
+    {
+      "building": "fuel_stop",
+      "view": 2,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Coaling stage in the view r2. a timber coaling stage: a big open-topped square bin of warm brown vertical planks with black iron straps and corner plates, heaped with black coal, standing high on six timber legs with X braces, each leg on a cream stone pier. On one side a winch drum with a rope and a hanging black iron chain; below it a timber chute lined with black iron with an iron mouth. The other faces of the bin are strapped plank walls. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the winch drum with its chain and the timber chute with its iron mouth, on the bin face and legs of that side stands at the upper-right side; the strapped plank face of the bin and the braced legs on that side stands at the upper-left side; the plank face of the bin and its braced legs on the back side (plain; as the render has it) stands at the lower-left side; the back side face of the bin (as the render has it) stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it. The third is this same building in view r1, as already painted over its render (the kept picture): the same planks, stones, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-c/fuel_stop-r2-textured.png",
+        "G:/DEV/wt/originals-textured-c/fuel_stop-r0.png",
+        "G:/DEV/wt/codex-textured-c/assets/source/textured/fuel_stop/fuel_stop-r1.png"
+      ],
+      "file": "raw/fuel_stop-r2-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/fuel_stop/raw/fuel_stop-r2-attempt-1.png",
+        "job": "fuel_stop",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [310, 194, 967, 1169],
+          "area": 447259,
+          "width": 658,
+          "height": 976,
+          "overallRatio": 1.4832826747720365
+        },
+        "bareOpaque": {
+          "box": [262, 194, 775, 956],
+          "area": 282532,
+          "width": 514,
+          "height": 763,
+          "overallRatio": 1.4844357976653697
+        },
+        "silhouette": {
+          "iouAtS0": 0.8820967228141802,
+          "f": 0.971,
+          "dx": 18.154999999999973,
+          "dy": 39.94500000000005,
+          "bestIoU": 0.9531455262005547,
+          "p95PictureToRender": 8.409752027292273,
+          "p95RenderToPicture": 84.47511143703298,
+          "maximum": 120.30649235475965,
+          "boundarySamples": [3436, 4217],
+          "worstPicture": {
+            "distance": 21.074778175065852,
+            "point": [612.4401913875598, 245.792663476874]
+          },
+          "worstRender": {
+            "distance": 120.30649235475965,
+            "point": [528.3317384370016, 752.0765550239234]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.8019017432646592,
+          "renderWall": 0.8443884186725894,
+          "wallRelativeDifference": -0.05031650656071385,
+          "overall": 1.4832826747720365,
+          "renderOverall": 1.4844357976653697,
+          "overallRelativeDifference": -0.000776808869165535,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 631,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 0.9699255583894612
+        },
+        "highlights": {
+          "nearWhite": 2544,
+          "nearAmber": 437
+        },
+        "originalHighlights": {
+          "nearWhite": 1933,
+          "nearAmber": 6
+        },
+        "wallLight": {
+          "left": 136.6497447619046,
+          "right": 63.1004885869565,
+          "boxes": [
+            [422, 580, 443, 600],
+            [686, 624, 709, 640]
+          ],
+          "ratio": 2.1655893293693365,
+          "render": {
+            "boxes": [
+              [350, 500, 366, 515],
+              [565, 530, 581, 546]
+            ],
+            "left": 99.48176083333333,
+            "right": 65.81214375,
+            "ratio": 1.511601889329632
+          }
+        },
+        "eye": {
+          "baseWidth": 631,
+          "baseCorners": [
+            [310, 1014],
+            [941, 957]
+          ],
+          "legFoot": [570, 1010],
+          "rim": [570, 504],
+          "wallRatio": 0.8019017432646592,
+          "renderWallRatio": 0.8443884186725894,
+          "leftBox": [422, 580, 443, 600],
+          "rightBox": [686, 624, 709, 640],
+          "uncertaintyPx": 7
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Refused despite IoU .9531: p95 8.41/84.48 max120.31 at lower leggap, newly opaque backing. Winch visible perrender takesauthority overhiddenprose.",
+      "sha256": "6e7ede89bfe83dfcb99b1b070be5ab977b6152cf7a0c5d340f74abacaac69eb7",
+      "qualifies": false
+    },
+    {
+      "building": "fuel_stop",
+      "view": 2,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Coaling stage in the view r2. a timber coaling stage: a big open-topped square bin of warm brown vertical planks with black iron straps and corner plates, heaped with black coal, standing high on six timber legs with X braces, each leg on a cream stone pier. On one side a winch drum with a rope and a hanging black iron chain; below it a timber chute lined with black iron with an iron mouth. The other faces of the bin are strapped plank walls. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the winch drum with its chain and the timber chute with its iron mouth, on the bin face and legs of that side stands at the upper-right side; the strapped plank face of the bin and the braced legs on that side stands at the upper-left side; the plank face of the bin and its braced legs on the back side (plain; as the render has it) stands at the lower-left side; the back side face of the bin (as the render has it) stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it. The third is this same building in view r1, as already painted over its render (the kept picture): the same planks, stones, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r2 missed silhouette: bestIoU0.9531 but render-to-picture p95 84.48 and maximum120.31canvaspx, at gap betweenlegs near render528,752. Keep ALL large see-through spaces between leg/stone/brace exactly as first render. Do not close them with extra wooden backing. Every pier stays in place, including middle backpier. Keep render layout and its exact view.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-c/fuel_stop-r2-textured.png",
+        "G:/DEV/wt/originals-textured-c/fuel_stop-r0.png",
+        "G:/DEV/wt/codex-textured-c/assets/source/textured/fuel_stop/fuel_stop-r1.png"
+      ],
+      "file": "raw/fuel_stop-r2-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/fuel_stop/raw/fuel_stop-r2-attempt-2.png",
+        "job": "fuel_stop",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [310, 158, 950, 1129],
+          "area": 436525,
+          "width": 641,
+          "height": 972,
+          "overallRatio": 1.5163806552262091
+        },
+        "bareOpaque": {
+          "box": [262, 194, 775, 956],
+          "area": 282532,
+          "width": 514,
+          "height": 763,
+          "overallRatio": 1.4844357976653697
+        },
+        "silhouette": {
+          "iouAtS0": 0.8064583385983978,
+          "f": 0.986,
+          "dx": 11.100000000000023,
+          "dy": 58.370000000000005,
+          "bestIoU": 0.9441295174142511,
+          "p95PictureToRender": 13.708842491710723,
+          "p95RenderToPicture": 82.80572257848085,
+          "maximum": 115.26310525896375,
+          "boundarySamples": [3342, 4217],
+          "worstPicture": {
+            "distance": 21.114567185893627,
+            "point": [393.5948963317384, 297.237639553429]
+          },
+          "worstRender": {
+            "distance": 115.26310525896375,
+            "point": [521.799043062201, 748.8102073365231]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.8118022328548644,
+          "renderWall": 0.8443884186725894,
+          "wallRelativeDifference": -0.0385914646590626,
+          "overall": 1.5163806552262091,
+          "renderOverall": 1.4844357976653697,
+          "overallRelativeDifference": 0.021519864726436966,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 627,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 0.97611328125
+        },
+        "highlights": {
+          "nearWhite": 1892,
+          "nearAmber": 79
+        },
+        "originalHighlights": {
+          "nearWhite": 1933,
+          "nearAmber": 6
+        },
+        "wallLight": {
+          "left": 127.28654066496155,
+          "right": 66.17817894736842,
+          "boxes": [
+            [418, 575, 441, 592],
+            [685, 613, 708, 632]
+          ],
+          "ratio": 1.923391406194369,
+          "render": {
+            "boxes": [
+              [350, 500, 366, 515],
+              [565, 530, 581, 546]
+            ],
+            "left": 99.48176083333333,
+            "right": 65.81214375,
+            "ratio": 1.511601889329632
+          }
+        },
+        "eye": {
+          "baseWidth": 627,
+          "baseCorners": [
+            [310, 981],
+            [937, 924]
+          ],
+          "legFoot": [572, 981],
+          "rim": [572, 472],
+          "wallRatio": 0.8118022328548644,
+          "renderWallRatio": 0.8443884186725894,
+          "leftBox": [418, 575, 441, 592],
+          "rightBox": [685, 613, 708, 632],
+          "uncertaintyPx": 7
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Refused IoU .9441 p95 13.71/82.81 max115.26: rear stone/wood backing still closes lowerleggap, changed coal profile and rim.",
+      "sha256": "2a18081b27b2eb06d93bdbe15760e872dafe0aad663f24013f0b7ccdc4e637c7",
+      "qualifies": false
+    },
+    {
+      "building": "fuel_stop",
+      "view": 2,
+      "attempt": 3,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Coaling stage in the view r2. a timber coaling stage: a big open-topped square bin of warm brown vertical planks with black iron straps and corner plates, heaped with black coal, standing high on six timber legs with X braces, each leg on a cream stone pier. On one side a winch drum with a rope and a hanging black iron chain; below it a timber chute lined with black iron with an iron mouth. The other faces of the bin are strapped plank walls. r2: the building is turned 2 quarter turns (a half turn) clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the winch drum with its chain and the timber chute with its iron mouth, on the bin face and legs of that side stands at the upper-right side; the strapped plank face of the bin and the braced legs on that side stands at the upper-left side; the plank face of the bin and its braced legs on the back side (plain; as the render has it) stands at the lower-left side; the back side face of the bin (as the render has it) stands at the lower-right side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it. The third is this same building in view r1, as already painted over its render (the kept picture): the same planks, stones, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r2 failed render-to-picture p95 82.81 and maximum115.26canvaspx, at render522,749, though IoU .9441. Leave the gap between front centralleg and right middleleg open down to the two piers exactly as FIRST render. Do not bridge this opening with rear wood or stone, do not shift rearpiers. Keep coal stepped shape and every rim/post exactly where the first render shows, only repaint its surfaces.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-c/fuel_stop-r2-textured.png",
+        "G:/DEV/wt/originals-textured-c/fuel_stop-r0.png",
+        "G:/DEV/wt/codex-textured-c/assets/source/textured/fuel_stop/fuel_stop-r1.png"
+      ],
+      "file": "raw/fuel_stop-r2-attempt-3.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/fuel_stop/raw/fuel_stop-r2-attempt-3.png",
+        "job": "fuel_stop",
+        "view": 2,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [297, 148, 968, 1142],
+          "area": 477589,
+          "width": 672,
+          "height": 995,
+          "overallRatio": 1.4806547619047619
+        },
+        "bareOpaque": {
+          "box": [262, 194, 775, 956],
+          "area": 282532,
+          "width": 514,
+          "height": 763,
+          "overallRatio": 1.4844357976653697
+        },
+        "silhouette": {
+          "iouAtS0": 0.7765913920047438,
+          "f": 0.947,
+          "dx": 32.625,
+          "dy": 84.77499999999998,
+          "bestIoU": 0.9552037916872779,
+          "p95PictureToRender": 7.9499043603387145,
+          "p95RenderToPicture": 88.22350305204179,
+          "maximum": 124.6148161092578,
+          "boundarySamples": [3436, 4217],
+          "worstPicture": {
+            "distance": 14.27340939474844,
+            "point": [609.9904306220096, 236.81020733652312]
+          },
+          "worstRender": {
+            "distance": 124.6148161092578,
+            "point": [521.799043062201, 748.8102073365231]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.8282674772036475,
+          "renderWall": 0.8443884186725894,
+          "wallRelativeDifference": -0.019091855255765622,
+          "overall": 1.4806547619047619,
+          "renderOverall": 1.4844357976653697,
+          "overallRelativeDifference": -0.002547119765337391,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 658,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 0.9301261813734801
+        },
+        "highlights": {
+          "nearWhite": 2829,
+          "nearAmber": 177
+        },
+        "originalHighlights": {
+          "nearWhite": 1933,
+          "nearAmber": 6
+        },
+        "wallLight": {
+          "left": 133.19175708333367,
+          "right": 72.19729467787117,
+          "boxes": [
+            [415, 550, 439, 570],
+            [689, 591, 710, 608]
+          ],
+          "ratio": 1.8448303039276845,
+          "render": {
+            "boxes": [
+              [350, 500, 366, 515],
+              [565, 530, 581, 546]
+            ],
+            "left": 99.48176083333333,
+            "right": 65.81214375,
+            "ratio": 1.511601889329632
+          }
+        },
+        "eye": {
+          "baseWidth": 658,
+          "baseCorners": [
+            [297, 995],
+            [955, 937]
+          ],
+          "legFoot": [571, 994],
+          "rim": [571, 449],
+          "wallRatio": 0.8282674772036475,
+          "renderWallRatio": 0.8443884186725894,
+          "leftBox": [415, 550, 439, 570],
+          "rightBox": [689, 591, 710, 608],
+          "uncertaintyPx": 7
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Refused IoU .9552 p95 7.95/88.22 max124.61, lower leg opening closed by opaque rearstone/wood; closest byIoU r2#3 rawonly.",
+      "sha256": "77f279f29fdbd4acba02793997ee3dabb6a38ea4ab77f5417a3b6abcd5c4a465",
+      "qualifies": false
+    },
+    {
+      "building": "fuel_stop",
+      "view": 3,
+      "attempt": 1,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Coaling stage in the view r3. a timber coaling stage: a big open-topped square bin of warm brown vertical planks with black iron straps and corner plates, heaped with black coal, standing high on six timber legs with X braces, each leg on a cream stone pier. On one side a winch drum with a rope and a hanging black iron chain; below it a timber chute lined with black iron with an iron mouth. The other faces of the bin are strapped plank walls. r3: the building is turned 3 quarter turns clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the winch drum with its chain and the timber chute with its iron mouth, on the bin face and legs of that side stands at the lower-right side; the strapped plank face of the bin and the braced legs on that side stands at the upper-right side; the plank face of the bin and its braced legs on the back side (plain; as the render has it) stands at the upper-left side; the back side face of the bin (as the render has it) stands at the lower-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it. The third is this same building in view r1, as already painted over its render (the kept picture): the same planks, stones, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-c/fuel_stop-r3-textured.png",
+        "G:/DEV/wt/originals-textured-c/fuel_stop-r0.png",
+        "G:/DEV/wt/codex-textured-c/assets/source/textured/fuel_stop/fuel_stop-r1.png"
+      ],
+      "file": "raw/fuel_stop-r3-attempt-1.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/fuel_stop/raw/fuel_stop-r3-attempt-1.png",
+        "job": "fuel_stop",
+        "view": 3,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [329, 191, 994, 1094],
+          "area": 398573,
+          "width": 666,
+          "height": 904,
+          "overallRatio": 1.3573573573573574
+        },
+        "bareOpaque": {
+          "box": [262, 194, 812, 956],
+          "area": 282171,
+          "width": 551,
+          "height": 763,
+          "overallRatio": 1.3847549909255898
+        },
+        "silhouette": {
+          "iouAtS0": 0.7717763177813437,
+          "f": 1.032,
+          "dx": -24.345000000000027,
+          "dy": 40.22500000000002,
+          "bestIoU": 0.9466434204223017,
+          "p95PictureToRender": 13.818873540554513,
+          "p95RenderToPicture": 79.00786060333702,
+          "maximum": 112.59918229151901,
+          "boundarySamples": [3213, 4006],
+          "worstPicture": {
+            "distance": 20.890032320176587,
+            "point": [629.5885167464115, 298.8708133971292]
+          },
+          "worstRender": {
+            "distance": 112.59918229151901,
+            "point": [504.6507177033493, 746.3604465709728]
+          },
+          "pass": false
+        },
+        "height": {
+          "wall": 0.7973856209150327,
+          "renderWall": 0.8403865778258,
+          "wallRelativeDifference": -0.05116806722689082,
+          "overall": 1.3573573573573574,
+          "renderOverall": 1.3847549909255898,
+          "overallRelativeDifference": -0.01978518492279957,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 612,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 1.0000376263786763
+        },
+        "highlights": {
+          "nearWhite": 2459,
+          "nearAmber": 243
+        },
+        "originalHighlights": {
+          "nearWhite": 1933,
+          "nearAmber": 6
+        },
+        "wallLight": {
+          "left": 107.68512906178485,
+          "right": 69.72761785714292,
+          "boxes": [
+            [443, 551, 466, 570],
+            [862, 532, 876, 548]
+          ],
+          "ratio": 1.5443683919104882,
+          "render": {
+            "boxes": [
+              [357, 490, 373, 505],
+              [685, 508, 698, 521]
+            ],
+            "left": 86.46637000000003,
+            "right": 58.102705325443765,
+            "ratio": 1.4881642690419705
+          }
+        },
+        "eye": {
+          "baseWidth": 612,
+          "baseCorners": [
+            [329, 906],
+            [941, 976]
+          ],
+          "legFoot": [684, 938],
+          "rim": [684, 450],
+          "wallRatio": 0.7973856209150327,
+          "renderWallRatio": 0.8403865778258,
+          "leftBox": [443, 551, 466, 570],
+          "rightBox": [862, 532, 876, 548],
+          "uncertaintyPx": 7
+        },
+        "eyeTests": {
+          "sameBuilding": false,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": false
+        }
+      },
+      "kept": false,
+      "note": "Refused IoU .9466 p95 13.82/79.01 max112.60: lowerleggap closed. Base audit excludes chute aboveground: width612, height .7974vs.8404 passes; initial665 counted chute, preserved ininitialAssessment. Stillsilhouetterefused.",
+      "sha256": "dafc4e11f7a05862a1ec2ca6bdfc190911960dfc6ab6baa2cb6ceb284c4a63ea",
+      "initialAssessment": {
+        "note": "Refused IoU .9466 p95 13.82/79.01 max112.60: lowerleggap closed by extra rear timber/stone; bin/leg height .7338 vs .8404 also outside8%.",
+        "base": {
+          "width": 665,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 0.9203353794642857
+        },
+        "height": {
+          "wall": 0.7338345864661654,
+          "renderWall": 0.8403865778258,
+          "wallRelativeDifference": -0.12678925886143944,
+          "overall": 1.3573573573573574,
+          "renderOverall": 1.3847549909255898,
+          "overallRelativeDifference": -0.01978518492279957,
+          "wallPass": false,
+          "overallPass": true
+        }
+      },
+      "qualifies": false
+    },
+    {
+      "building": "fuel_stop",
+      "view": 3,
+      "attempt": 2,
+      "prompt": "Edit the first picture, a textured 3D render of a building, into ONE finished painting for a pastoral isometric railway game: the building named under View, the SAME building as in the second picture, in the view named under View. The first picture has the right shape, camera, proportions, layout and light, but its texture has fallen apart in places: cloned and mirrored patches that repeat the same bricks, stones or planks, smeared and stretched areas, seams where patches meet, blocky hidden sides, smeared pipes and round parts, blurred glazing and thin parts. Paint over it, surface by surface, so that the whole building becomes ONE coherent painting in the style and materials of the second picture, the building's accepted painting: take its colours, brushwork, level of detail and crispness (the way its bricks, stones, planks, slates, glazing, iron and fittings are painted) and apply them to every wall, roof, chimney and part of the first picture, including the sides the second picture never shows, which you paint as this same building would have them, in the same hand. Remove the cloned and smeared patches and the seams, paint the hidden sides crisp, paint the pipes, wheels, tanks and glazing round and crisp, and finish the thin parts (downpipes, gutters, bargeboards, posts, brackets, railings, ladders, ropes, window bars, finials, pots) as clean shapes. Keep, exactly as the first picture has them: the silhouette, the camera, the proportions and the position and size of every roof, wall, chimney, window, door, post, pipe and part, and every see-through gap; add nothing (no new window, door, lamp, sign, plant, crate, step or detail) and remove nothing. Light: the first picture's light is the game's sun from the upper left and stays as it is: the lit wall stays lit, the shaded wall stays shaded, roofs and tops lightest. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it that the first picture does not have; keep the foot of the walls plain and straight where the first picture has it, with nothing added in front of it.\n\nView. The building is the Coaling stage in the view r3. a timber coaling stage: a big open-topped square bin of warm brown vertical planks with black iron straps and corner plates, heaped with black coal, standing high on six timber legs with X braces, each leg on a cream stone pier. On one side a winch drum with a rope and a hanging black iron chain; below it a timber chute lined with black iron with an iron mouth. The other faces of the bin are strapped plank walls. r3: the building is turned 3 quarter turns clockwise seen from above, about the middle of its footprint, not mirrored; every part keeps its place on the building and moves with it, so: the winch drum with its chain and the timber chute with its iron mouth, on the bin face and legs of that side stands at the lower-right side; the strapped plank face of the bin and the braced legs on that side stands at the upper-right side; the plank face of the bin and its braced legs on the back side (plain; as the render has it) stands at the upper-left side; the back side face of the bin (as the render has it) stands at the lower-left side. What stands on the upper sides is hidden behind the building except where the render shows it. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the textured render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the accepted painting of this building in view r0, as the game has it today, at the game's camera on a larger canvas: take its materials, colours, brushwork and details from it and paint them over the first picture, surface by surface; its angle, canvas, footprint, shading and layout of the sides are not used, and it is not to be copied: paint the SAME building, in the view named above, at the size the first picture has it. The third is this same building in view r1, as already painted over its render (the kept picture): the same planks, stones, colours and brushwork must carry through, in this other view; it is not a pattern to copy and its angle is not this picture's.\n\nDo not paint the plinth itself: no ground, floor slab, pavement, grass or shadow under or around the building. A real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces, and transparent wherever the first picture is see-through. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, or loose objects standing apart from the building.\n\nCorrection: Your last r3 failed silhouette p95 13.82/79.01 max112.60canvaspx at lower gap near render505,746; bin+leg ratio .7338 versusrender .8404 failed8%. Keep ALL open spaces between legs and piers, do not fill them with rear timber or stone. Preserve exact render leg length and binrim height, every pier and brace at its render position. Repaint original surfaces only.\n\nOutput: 1024 x 1024 pixels, real RGBA PNG, transparent background.",
+      "references": [
+        "G:/DEV/wt/scaffolds-textured-c/fuel_stop-r3-textured.png",
+        "G:/DEV/wt/originals-textured-c/fuel_stop-r0.png",
+        "G:/DEV/wt/codex-textured-c/assets/source/textured/fuel_stop/fuel_stop-r1.png"
+      ],
+      "file": "raw/fuel_stop-r3-attempt-2.png",
+      "returned": [1254, 1254],
+      "measured": {
+        "file": "assets/source/textured/fuel_stop/raw/fuel_stop-r3-attempt-2.png",
+        "job": "fuel_stop",
+        "view": 3,
+        "returned": [1254, 1254],
+        "s0": 1.224609375,
+        "nameMetadata": null,
+        "opaque": {
+          "box": [323, 205, 992, 1131],
+          "area": 413912,
+          "width": 670,
+          "height": 927,
+          "overallRatio": 1.3835820895522388
+        },
+        "bareOpaque": {
+          "box": [262, 194, 812, 956],
+          "area": 282171,
+          "width": 551,
+          "height": 763,
+          "overallRatio": 1.3847549909255898
+        },
+        "silhouette": {
+          "iouAtS0": 0.8570077611834025,
+          "f": 1.012,
+          "dx": -10.075000000000045,
+          "dy": 23.825000000000045,
+          "bestIoU": 0.951912277863795,
+          "p95PictureToRender": 10.110479055330506,
+          "p95RenderToPicture": 9.74985901003023,
+          "maximum": 18.042923584921805,
+          "boundarySamples": [3993, 4006],
+          "worstPicture": {
+            "distance": 18.042923584921805,
+            "point": [620.6060606060606, 290.7049441786284]
+          },
+          "worstRender": {
+            "distance": 16.848651690281855,
+            "point": [652.4529505582137, 285.8054226475279]
+          },
+          "pass": true
+        },
+        "height": {
+          "wall": 0.8127035830618893,
+          "renderWall": 0.8403865778258,
+          "wallRelativeDifference": -0.03294078641228482,
+          "overall": 1.3835820895522388,
+          "renderOverall": 1.3847549909255898,
+          "overallRelativeDifference": -0.0008470100350149723,
+          "wallPass": true,
+          "overallPass": true
+        },
+        "base": {
+          "width": 614,
+          "renderWidth": 499.77,
+          "heldWidthAtReturned": 612.02302734375,
+          "k": 0.9967801748269544
+        },
+        "highlights": {
+          "nearWhite": 2074,
+          "nearAmber": 809
+        },
+        "originalHighlights": {
+          "nearWhite": 1933,
+          "nearAmber": 6
+        },
+        "wallLight": {
+          "left": 122.15779206349212,
+          "right": 75.89361833333335,
+          "boxes": [
+            [433, 571, 454, 589],
+            [892, 558, 907, 574]
+          ],
+          "ratio": 1.6095924103520969,
+          "render": {
+            "boxes": [
+              [357, 490, 373, 505],
+              [685, 508, 698, 521]
+            ],
+            "left": 86.46637000000003,
+            "right": 58.102705325443765,
+            "ratio": 1.4881642690419705
+          }
+        },
+        "eye": {
+          "baseWidth": 614,
+          "baseCorners": [
+            [323, 936],
+            [937, 974]
+          ],
+          "legFoot": [685, 981],
+          "rim": [685, 482],
+          "wallRatio": 0.8127035830618893,
+          "renderWallRatio": 0.8403865778258,
+          "leftBox": [433, 571, 454, 589],
+          "rightBox": [892, 558, 907, 574],
+          "uncertaintyPx": 7
+        },
+        "eyeTests": {
+          "sameBuilding": true,
+          "coherentPainting": true,
+          "light": true,
+          "noExtras": true
+        }
+      },
+      "kept": true,
+      "note": "Accepted r3#2: IoU .95191 p95 10.110/9.750 max18.043; bin+leg andoverall heights pass. Open lowergaps andpiers preserved; crisp timber, coal, rope,iron coherent withacceptedr1. Base width excludes overhangingchute.",
+      "sha256": "6f0685721dff7514193550b6af84f697eb81a84844ad4b6852d9ea2da6bd6e83",
+      "qualifies": true
+    }
+  ],
+  "verdict": "Accepted r1#2 andr3#2; r2#3 is closest refused byIoU, rawonly. Timber, coal, iron, rope andstone read asone coherenthand, correcting projectionseams andblockyhidden faces. r2 repeatedly closedlowerleg spaces despite matching overalloutline; exactopenings needCore review. Geometrywins: horizontalplanks andvisible far-side winch/chute followrender despiteprose."
+}
