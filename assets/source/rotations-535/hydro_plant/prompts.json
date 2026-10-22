@@ -377,5 +377,477 @@
       "design": "Three arched windows,vented lantern,tailrace,green penstock/sluice present; oblong hall distinct from pump; no chimney/flywheel; left wall lighter; no text/people/rails/smoke. Intake projects and disrupts plain rectangular ground foot."
     },
     "failure": "Machine camera3.5deg,slopes.59653/.51151; eye whole-base right foot not straight/parallel; height and footprint fail."
+  },
+  {
+    "stage": "blockout",
+    "kind": "renderReference",
+    "source": "origin/claude/art-scaffolds-review-2",
+    "coreReview": 2,
+    "renderReference": {
+      "r0": {
+        "foot": [547, 928],
+        "eave": [547, 621],
+        "baseWidth": 390.5,
+        "wallHeightRatio": 0.7861715749039693,
+        "overallHeightRatio": 1.2113289760348585,
+        "method": "by eye on 2x alpha-composited bare crop: wall foot to underside eave at near corner; model house base width excludes intake footing"
+      },
+      "r1": {
+        "foot": [477, 930],
+        "eave": [477, 621],
+        "baseWidth": 390.5,
+        "wallHeightRatio": 0.7912932138284251,
+        "overallHeightRatio": 1.4004796163069544,
+        "method": "2x bare crop; near house corner behind intake projected to its foot, underside eave; intake footing excluded"
+      },
+      "r3": {
+        "foot": [477, 930],
+        "eave": [477, 621],
+        "baseWidth": 390.5,
+        "wallHeightRatio": 0.7912932138284251,
+        "overallHeightRatio": 1.3357314148681054,
+        "method": "2x alpha-composited bare crop near wall foot to underside eave"
+      }
+    },
+    "note": "New Core review2 blockout budget: r0 starts7; others1; prior free-stage records retained. Tailrace opaque floor/sill. Old fallback superseded.",
+    "outcome": {
+      "status": "stopped",
+      "accepted": {
+        "r0": 8,
+        "r1": 2
+      },
+      "refusedImages": ["r0 attempt7 silhouette", "r1 attempt1 wall height"],
+      "toolRefusal": "r3 first request requires6refs; built-in max5; no image",
+      "skipped": ["r2"],
+      "nextAction": "Core revises reference plan within tool maximum5. No retry authorized by current queue."
+    }
+  },
+  {
+    "stage": "blockout",
+    "view": "r0",
+    "attempt": 7,
+    "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-7.png",
+    "prompt": "Edit the first picture, a plain 3D blockout of a building rendered in flat colours, into ONE finished building sprite for a pastoral isometric railway game: the Hydro plant, a small red-brick turbine house with one tall arched window, a stone intake chamber with a sluice, and a penstock pipe coming down its end wall (the Design paragraph below). The first picture has the right shape, camera, proportions, layout and light, and nothing else about it is painting: paint EVERY surface of it in the style of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. Take the green riveted pipe, the copper-banded flanges, the sluice and the handwheel from the third picture (the old hydro plant) and the red brick, cream quoins, cream-arched windows with forest-green glazing bars and slate from the fourth (the power plant): materials and details only, never their layout. Keep, exactly as the first picture has them: the silhouette, the camera, the light, the proportions and the position and size of every roof, wall, window, door, arch, vent, lantern, pipe, flange and the intake chamber; add nothing (no new window, door, chimney, wheel, lamp, sign, plant, crate, step or detail) and remove nothing. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left, as in the first picture: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it; the foot of the walls starts at the blockout's corners and stays plain and straight, with nothing added in front of it. The tailrace arch low in the stone base is solid in the first picture: paint its dark tunnel and its dark floor fully opaque; no part of it is transparent and there is no water.\n\nDesign, carried round every view. (1) The turbine house: a small hall of warm red brick on a rusticated limestone base, cream limestone quoins at its corners, a dark slate gable roof with its ridge along the long walls and a small forest-green vented lantern at the middle of the ridge, no chimney stack, and a round vent with a cream ring high in each gable end. (2) The long FRONT wall has ONE tall round-arched window with a cream arched surround and a cream sill, glazed dark teal-blue with forest-green glazing bars, and a small forest-green door with a cream lintel near one end; low in the stone base, at the other end, a cream-arched TAILRACE opening where the water leaves: inside it a dark tunnel with an opaque dark floor; paint no water. (3) On one end wall the PENSTOCK: one big riveted forest-green pipe with copper-banded flanges, coming diagonally down the end wall from a small cream-stone INTAKE chamber (a stone top slab, a forest-green sluice-gate housing and a copper handwheel on it) that stands on a stone footing at the house's back corner on the uphill side, and entering the wall above the stone base with a copper flange. (4) All of it is one building on the 1 x 1 plan: the intake and the pipe stand inside the plinth, nothing at ground level outside it. (5) It is NOT the Water pump: no flywheel, no elbow pipe with a strainer drum, no chimney stack, no small cottage; its silhouette is the brick house with the lantern, the one tall arched window, the penstock down the end wall and the intake chamber with its handwheel.\n\nView. The building is the Hydro plant in the view r0. r0, the front: the long lower-left wall is the FRONT: the tall arched window, the door near the near corner and the tailrace arch low at the far (left) end; the lower-right wall is the PENSTOCK end wall: the riveted pipe comes diagonally down it from the intake chamber at the back right (the chamber is partly behind the house, its right side, the handwheel and the sluice housing show beyond the wall) and enters the wall low; a round vent in the gable above. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the blockout render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the style board. The third is the old hydro-plant picture and the fourth the power plant: take materials and details from them, nothing of their layout, size or angle, and no glow. \n\nA real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, water, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.",
+    "references": [
+      "../scaffolds-535/hydro_plant-r0-lit.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/hydro-plant.png",
+      "assets/source/base-v1/power-plant.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-7.png",
+      "view": "r0",
+      "nameMetadata": null,
+      "returned": [1254, 1254],
+      "s0": 1.224609375,
+      "silhouette": {
+        "iouAtS0": 0.5573855837947844,
+        "bestFit": {
+          "f": 0.85,
+          "dx": 0,
+          "dy": 48,
+          "iou": 0.774293228139382
+        },
+        "directedBoundary": {
+          "pictureToScaffold": {
+            "max": 61.86659675834222,
+            "p95": 54.991770560990105,
+            "count": 2655
+          },
+          "scaffoldToPicture": {
+            "max": 56.51895208990603,
+            "p95": 53.43191730429462,
+            "count": 1624
+          }
+        },
+        "maximum": 61.86659675834222,
+        "p95": 54.991770560990105,
+        "limits": {
+          "iou": 0.92,
+          "p95": 16,
+          "max": 32
+        },
+        "pass": false,
+        "method": "256px grid coarse-to-fine IoU on filled/opened mask; directed Euclidean pixel-boundary distributions in scaffold canvas px; f maps picture to scaffold"
+      },
+      "opaqueBox": [287, 270, 1050, 1174],
+      "base": {
+        "sure": [true, true],
+        "slopes": [0.508993863462338, -0.5067015270036958],
+        "w": [300, 977.277652530987],
+        "s": [679.6855760668668, 1170.535280794185],
+        "e": [961, 1027.9928326191014],
+        "minX": 287,
+        "maxX": 1050,
+        "area": 506588
+      },
+      "baseWidthMachine": 661,
+      "heldWidth": 478.2099609375,
+      "kMachine": 0.7234643887102874,
+      "overallHeight": {
+        "ratio": 1.1847968545216252,
+        "reference": 1.2113289760348585,
+        "pass": true
+      },
+      "transparentShare": 0,
+      "light": {
+        "lowerLeft": 144.0908884615382,
+        "lowerRight": 111.87999743589701
+      },
+      "highlights": {
+        "nearWhite": 2010,
+        "nearAmber": 0
+      },
+      "baseWidthByEye": 661,
+      "k": 0.7234643887102874,
+      "wallHeight": {
+        "ratio": 0.735249621785174,
+        "reference": 0.7861715749039693,
+        "footY": 1173,
+        "eaveY": 687,
+        "pass": true,
+        "method": "by eye on alpha-composited zoom crop, same near corner/underside eave as bare reference"
+      }
+    },
+    "kept": false,
+    "note": "Refused silhouette: IoU .774293<.92, directed p95 54.992/53.432>16,max61.867>32. Enlarged render; materials/design present, floor and sill opaque on alpha composite. Near wall height486/661=.73525 vs bare307/390.5=.78617; overall1.18480vs1.21133. No visible glow on composite.",
+    "eye": {
+      "baseWidth": 661,
+      "footY": 1173,
+      "eaveY": 687,
+      "identity": true,
+      "solidDoorway": true,
+      "light": true,
+      "noExtras": true,
+      "note": "Refused silhouette: IoU .774293<.92, directed p95 54.992/53.432>16,max61.867>32. Enlarged render; materials/design present, floor and sill opaque on alpha composite. Near wall height486/661=.73525 vs bare307/390.5=.78617; overall1.18480vs1.21133. No visible glow on composite."
+    }
+  },
+  {
+    "stage": "blockout",
+    "view": "r0",
+    "attempt": 8,
+    "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-8.png",
+    "prompt": "Edit the first picture, a plain 3D blockout of a building rendered in flat colours, into ONE finished building sprite for a pastoral isometric railway game: the Hydro plant, a small red-brick turbine house with one tall arched window, a stone intake chamber with a sluice, and a penstock pipe coming down its end wall (the Design paragraph below). The first picture has the right shape, camera, proportions, layout and light, and nothing else about it is painting: paint EVERY surface of it in the style of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. Take the green riveted pipe, the copper-banded flanges, the sluice and the handwheel from the third picture (the old hydro plant) and the red brick, cream quoins, cream-arched windows with forest-green glazing bars and slate from the fourth (the power plant): materials and details only, never their layout. Keep, exactly as the first picture has them: the silhouette, the camera, the light, the proportions and the position and size of every roof, wall, window, door, arch, vent, lantern, pipe, flange and the intake chamber; add nothing (no new window, door, chimney, wheel, lamp, sign, plant, crate, step or detail) and remove nothing. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left, as in the first picture: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it; the foot of the walls starts at the blockout's corners and stays plain and straight, with nothing added in front of it. The tailrace arch low in the stone base is solid in the first picture: paint its dark tunnel and its dark floor fully opaque; no part of it is transparent and there is no water.\n\nDesign, carried round every view. (1) The turbine house: a small hall of warm red brick on a rusticated limestone base, cream limestone quoins at its corners, a dark slate gable roof with its ridge along the long walls and a small forest-green vented lantern at the middle of the ridge, no chimney stack, and a round vent with a cream ring high in each gable end. (2) The long FRONT wall has ONE tall round-arched window with a cream arched surround and a cream sill, glazed dark teal-blue with forest-green glazing bars, and a small forest-green door with a cream lintel near one end; low in the stone base, at the other end, a cream-arched TAILRACE opening where the water leaves: inside it a dark tunnel with an opaque dark floor; paint no water. (3) On one end wall the PENSTOCK: one big riveted forest-green pipe with copper-banded flanges, coming diagonally down the end wall from a small cream-stone INTAKE chamber (a stone top slab, a forest-green sluice-gate housing and a copper handwheel on it) that stands on a stone footing at the house's back corner on the uphill side, and entering the wall above the stone base with a copper flange. (4) All of it is one building on the 1 x 1 plan: the intake and the pipe stand inside the plinth, nothing at ground level outside it. (5) It is NOT the Water pump: no flywheel, no elbow pipe with a strainer drum, no chimney stack, no small cottage; its silhouette is the brick house with the lantern, the one tall arched window, the penstock down the end wall and the intake chamber with its handwheel.\n\nView. The building is the Hydro plant in the view r0. r0, the front: the long lower-left wall is the FRONT: the tall arched window, the door near the near corner and the tailrace arch low at the far (left) end; the lower-right wall is the PENSTOCK end wall: the riveted pipe comes diagonally down it from the intake chamber at the back right (the chamber is partly behind the house, its right side, the handwheel and the sluice housing show beyond the wall) and enters the wall low; a round vent in the gable above. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the blockout render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the style board. The third is the old hydro-plant picture and the fourth the power plant: take materials and details from them, nothing of their layout, size or angle, and no glow. \n\nA real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, water, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.\n\nCorrection: your last r0 enlarged the first picture, failing silhouette IoU 0.7743 (minimum 0.92), directed boundary p95 54.99 and 53.43 canvas px (maximum 16), and maximum 61.87 (limit 32). Paint the FIRST picture exactly where it stands: it is deliberately smaller and low on its 1024 canvas, outline x303–762 and y372–928 with large empty top and side margins. Keep that exact outline, every part's size and position, including its tall narrow walls and intake. Do not enlarge it to fill the image or copy the references' size; repaint only its surfaces crisply.",
+    "references": [
+      "../scaffolds-535/hydro_plant-r0-lit.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/hydro-plant.png",
+      "assets/source/base-v1/power-plant.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r0-attempt-8.png",
+      "view": "r0",
+      "nameMetadata": null,
+      "returned": [1254, 1254],
+      "s0": 1.224609375,
+      "silhouette": {
+        "iouAtS0": 0.9745054217366113,
+        "bestFit": {
+          "f": 0.992,
+          "dx": -1,
+          "dy": -1,
+          "iou": 0.9819963155250376
+        },
+        "directedBoundary": {
+          "pictureToScaffold": {
+            "max": 23.088042457339125,
+            "p95": 9.1875556224446,
+            "count": 2022
+          },
+          "scaffoldToPicture": {
+            "max": 13.40693036208258,
+            "p95": 7.025316194589583,
+            "count": 1624
+          }
+        },
+        "maximum": 23.088042457339125,
+        "p95": 9.1875556224446,
+        "limits": {
+          "iou": 0.92,
+          "p95": 16,
+          "max": 32
+        },
+        "pass": true,
+        "method": "256px grid coarse-to-fine IoU on filled/opened mask; directed Euclidean pixel-boundary distributions in scaffold canvas px; f maps picture to scaffold"
+      },
+      "opaqueBox": [369, 452, 937, 1141],
+      "base": {
+        "sure": [true, true],
+        "slopes": [0.5118027344761087, -0.5035865659950927],
+        "w": [381, 993.3368215274494],
+        "s": [669.2406626193836, 1140.8591808432554],
+        "e": [871, 1039.2558889743054],
+        "minX": 369,
+        "maxX": 937,
+        "area": 289797
+      },
+      "baseWidthMachine": 490,
+      "heldWidth": 478.2099609375,
+      "kMachine": 0.9759386957908164,
+      "overallHeight": {
+        "ratio": 1.2130281690140845,
+        "reference": 1.2113289760348585,
+        "pass": true
+      },
+      "transparentShare": 0.005069896692900024,
+      "light": {
+        "lowerLeft": 142.39254871794842,
+        "lowerRight": 115.19137692307663
+      },
+      "highlights": {
+        "nearWhite": 993,
+        "nearAmber": 0
+      },
+      "baseWidthByEye": 490,
+      "k": 0.9759386957908164,
+      "wallHeight": {
+        "ratio": 0.7836734693877551,
+        "reference": 0.7861715749039693,
+        "footY": 1141,
+        "eaveY": 757,
+        "pass": true,
+        "method": "by eye on alpha-composited zoom crop, same near corner/underside eave as bare reference"
+      }
+    },
+    "kept": true,
+    "note": "Accepted strict blockout tests: one tall front arch/window, green door, opaque dark tailrace floor/sill, diagonal riveted penstock and intake/handwheel, round gable vent, vented lantern, no chimney/flywheel/strainer. Crisp surfaces. Alpha-composited crop shows no glow/ground; left wall lighter. Wall384/490=.78367 vs bare307/390.5=.78617; overall1.21303 vs1.21133. Small silhouette transparent-share .00507 is outline discrepancy, not doorway notch.",
+    "eye": {
+      "baseWidth": 490,
+      "footY": 1141,
+      "eaveY": 757,
+      "identity": true,
+      "solidDoorway": true,
+      "light": true,
+      "noExtras": true,
+      "note": "Accepted strict blockout tests: one tall front arch/window, green door, opaque dark tailrace floor/sill, diagonal riveted penstock and intake/handwheel, round gable vent, vented lantern, no chimney/flywheel/strainer. Crisp surfaces. Alpha-composited crop shows no glow/ground; left wall lighter. Wall384/490=.78367 vs bare307/390.5=.78617; overall1.21303 vs1.21133. Small silhouette transparent-share .00507 is outline discrepancy, not doorway notch."
+    }
+  },
+  {
+    "stage": "blockout",
+    "view": "r1",
+    "attempt": 1,
+    "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r1-attempt-1.png",
+    "prompt": "Edit the first picture, a plain 3D blockout of a building rendered in flat colours, into ONE finished building sprite for a pastoral isometric railway game: the Hydro plant, a small red-brick turbine house with one tall arched window, a stone intake chamber with a sluice, and a penstock pipe coming down its end wall (the Design paragraph below). The first picture has the right shape, camera, proportions, layout and light, and nothing else about it is painting: paint EVERY surface of it in the style of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. Take the green riveted pipe, the copper-banded flanges, the sluice and the handwheel from the third picture (the old hydro plant) and the red brick, cream quoins, cream-arched windows with forest-green glazing bars and slate from the fourth (the power plant): materials and details only, never their layout. Keep, exactly as the first picture has them: the silhouette, the camera, the light, the proportions and the position and size of every roof, wall, window, door, arch, vent, lantern, pipe, flange and the intake chamber; add nothing (no new window, door, chimney, wheel, lamp, sign, plant, crate, step or detail) and remove nothing. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left, as in the first picture: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it; the foot of the walls starts at the blockout's corners and stays plain and straight, with nothing added in front of it. The tailrace arch low in the stone base is solid in the first picture: paint its dark tunnel and its dark floor fully opaque; no part of it is transparent and there is no water.\n\nDesign, carried round every view. (1) The turbine house: a small hall of warm red brick on a rusticated limestone base, cream limestone quoins at its corners, a dark slate gable roof with its ridge along the long walls and a small forest-green vented lantern at the middle of the ridge, no chimney stack, and a round vent with a cream ring high in each gable end. (2) The long FRONT wall has ONE tall round-arched window with a cream arched surround and a cream sill, glazed dark teal-blue with forest-green glazing bars, and a small forest-green door with a cream lintel near one end; low in the stone base, at the other end, a cream-arched TAILRACE opening where the water leaves: inside it a dark tunnel with an opaque dark floor; paint no water. (3) On one end wall the PENSTOCK: one big riveted forest-green pipe with copper-banded flanges, coming diagonally down the end wall from a small cream-stone INTAKE chamber (a stone top slab, a forest-green sluice-gate housing and a copper handwheel on it) that stands on a stone footing at the house's back corner on the uphill side, and entering the wall above the stone base with a copper flange. (4) All of it is one building on the 1 x 1 plan: the intake and the pipe stand inside the plinth, nothing at ground level outside it. (5) It is NOT the Water pump: no flywheel, no elbow pipe with a strainer drum, no chimney stack, no small cottage; its silhouette is the brick house with the lantern, the one tall arched window, the penstock down the end wall and the intake chamber with its handwheel.\n\nView. The building is the Hydro plant in the view r1. r1 (a quarter turn clockwise; the front faces the upper left, away from the camera): the lower-left wall is r0's penstock end wall, copied as it stands there, the pipe running along it; the lower-right wall is the BACK, a plain brick wall on its stone base with cream quoins (no window, no door, no pipe); the intake chamber stands at the near corner between the two walls, in front of both, with its sluice housing and handwheel on top. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the blockout render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the style board. The third is the old hydro-plant picture and the fourth the power plant: take materials and details from them, nothing of their layout, size or angle, and no glow. The next pictures are this same building in the views already painted over their blockouts (the kept pictures): the same bricks, stones, slate, colours and brushwork must carry through, in this other view; they are not patterns to copy and their angles are not this picture's.\n\nA real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, water, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.",
+    "references": [
+      "../scaffolds-535/hydro_plant-r1-lit.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/hydro-plant.png",
+      "assets/source/base-v1/power-plant.png",
+      "assets/source/rotations-535/hydro_plant/hydro_plant-r0.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r1-attempt-1.png",
+      "view": "r1",
+      "nameMetadata": null,
+      "returned": [1254, 1254],
+      "s0": 1.224609375,
+      "silhouette": {
+        "iouAtS0": 0.831115121437702,
+        "bestFit": {
+          "f": 0.9400000000000001,
+          "dx": -12,
+          "dy": 33,
+          "iou": 0.965287971677748
+        },
+        "directedBoundary": {
+          "pictureToScaffold": {
+            "max": 13.905658098126144,
+            "p95": 10.046592044171517,
+            "count": 2094
+          },
+          "scaffoldToPicture": {
+            "max": 13.349103500905317,
+            "p95": 9.665630536166496,
+            "count": 1602
+          }
+        },
+        "maximum": 13.905658098126144,
+        "p95": 10.046592044171517,
+        "limits": {
+          "iou": 0.92,
+          "p95": 16,
+          "max": 32
+        },
+        "pass": true,
+        "method": "256px grid coarse-to-fine IoU on filled/opened mask; directed Euclidean pixel-boundary distributions in scaffold canvas px; f maps picture to scaffold"
+      },
+      "opaqueBox": [364, 400, 911, 1162],
+      "base": {
+        "sure": [true, false],
+        "slopes": [0.5275273090426135, -0.5],
+        "w": [375, 1002.3507809202196],
+        "s": [667.5948696778745, 1156.702565161063],
+        "e": [763, 1109],
+        "minX": 364,
+        "maxX": 911,
+        "area": 311374
+      },
+      "baseWidthMachine": 388,
+      "heldWidth": 478.2099609375,
+      "kMachine": 1.2324998993234537,
+      "overallHeight": {
+        "ratio": 1.393053016453382,
+        "reference": 1.4004796163069544,
+        "pass": true
+      },
+      "transparentShare": 0.014062035804275827,
+      "light": {
+        "lowerLeft": 162.09481153846153,
+        "lowerRight": 120.19956410256424
+      },
+      "highlights": {
+        "nearWhite": 941,
+        "nearAmber": 0
+      },
+      "baseWidthByEye": 528,
+      "k": 0.90570068359375,
+      "wallHeight": {
+        "ratio": 0.7178030303030303,
+        "reference": 0.7912932138284251,
+        "footY": 1118,
+        "eaveY": 739,
+        "pass": false,
+        "method": "by eye on alpha-composited zoom crop, same near corner/underside eave as bare reference"
+      }
+    },
+    "kept": false,
+    "note": "Silhouette passes but wall height379/528=.71780 vs bare309/390.5=.79129 (-9.29%), outside8%. Automatic e corner lands on intake footing; by-eye house foot w375/near6001118/e903, intake excluded. Gable vent, horizontal penstock and near intake/sluice/handwheel, plain rear all match; opaque surfaces/no extras/left lighter on alpha-composited2x crop.",
+    "eye": {
+      "baseWidth": 528,
+      "footY": 1118,
+      "eaveY": 739,
+      "identity": true,
+      "solidDoorway": true,
+      "light": true,
+      "noExtras": true,
+      "note": "Silhouette passes but wall height379/528=.71780 vs bare309/390.5=.79129 (-9.29%), outside8%. Automatic e corner lands on intake footing; by-eye house foot w375/near6001118/e903, intake excluded. Gable vent, horizontal penstock and near intake/sluice/handwheel, plain rear all match; opaque surfaces/no extras/left lighter on alpha-composited2x crop."
+    }
+  },
+  {
+    "stage": "blockout",
+    "view": "r1",
+    "attempt": 2,
+    "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r1-attempt-2.png",
+    "prompt": "Edit the first picture, a plain 3D blockout of a building rendered in flat colours, into ONE finished building sprite for a pastoral isometric railway game: the Hydro plant, a small red-brick turbine house with one tall arched window, a stone intake chamber with a sluice, and a penstock pipe coming down its end wall (the Design paragraph below). The first picture has the right shape, camera, proportions, layout and light, and nothing else about it is painting: paint EVERY surface of it in the style of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. Take the green riveted pipe, the copper-banded flanges, the sluice and the handwheel from the third picture (the old hydro plant) and the red brick, cream quoins, cream-arched windows with forest-green glazing bars and slate from the fourth (the power plant): materials and details only, never their layout. Keep, exactly as the first picture has them: the silhouette, the camera, the light, the proportions and the position and size of every roof, wall, window, door, arch, vent, lantern, pipe, flange and the intake chamber; add nothing (no new window, door, chimney, wheel, lamp, sign, plant, crate, step or detail) and remove nothing. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left, as in the first picture: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it; the foot of the walls starts at the blockout's corners and stays plain and straight, with nothing added in front of it. The tailrace arch low in the stone base is solid in the first picture: paint its dark tunnel and its dark floor fully opaque; no part of it is transparent and there is no water.\n\nDesign, carried round every view. (1) The turbine house: a small hall of warm red brick on a rusticated limestone base, cream limestone quoins at its corners, a dark slate gable roof with its ridge along the long walls and a small forest-green vented lantern at the middle of the ridge, no chimney stack, and a round vent with a cream ring high in each gable end. (2) The long FRONT wall has ONE tall round-arched window with a cream arched surround and a cream sill, glazed dark teal-blue with forest-green glazing bars, and a small forest-green door with a cream lintel near one end; low in the stone base, at the other end, a cream-arched TAILRACE opening where the water leaves: inside it a dark tunnel with an opaque dark floor; paint no water. (3) On one end wall the PENSTOCK: one big riveted forest-green pipe with copper-banded flanges, coming diagonally down the end wall from a small cream-stone INTAKE chamber (a stone top slab, a forest-green sluice-gate housing and a copper handwheel on it) that stands on a stone footing at the house's back corner on the uphill side, and entering the wall above the stone base with a copper flange. (4) All of it is one building on the 1 x 1 plan: the intake and the pipe stand inside the plinth, nothing at ground level outside it. (5) It is NOT the Water pump: no flywheel, no elbow pipe with a strainer drum, no chimney stack, no small cottage; its silhouette is the brick house with the lantern, the one tall arched window, the penstock down the end wall and the intake chamber with its handwheel.\n\nView. The building is the Hydro plant in the view r1. r1 (a quarter turn clockwise; the front faces the upper left, away from the camera): the lower-left wall is r0's penstock end wall, copied as it stands there, the pipe running along it; the lower-right wall is the BACK, a plain brick wall on its stone base with cream quoins (no window, no door, no pipe); the intake chamber stands at the near corner between the two walls, in front of both, with its sluice housing and handwheel on top. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the blockout render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the style board. The third is the old hydro-plant picture and the fourth the power plant: take materials and details from them, nothing of their layout, size or angle, and no glow. The next pictures are this same building in the views already painted over their blockouts (the kept pictures): the same bricks, stones, slate, colours and brushwork must carry through, in this other view; they are not patterns to copy and their angles are not this picture's.\n\nA real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, water, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.\n\nCorrection: your last r1 passed the outline (IoU 0.9653, directed p95 10.05 and 9.67 canvas px, maximum 13.91), but the near house wall was too short in proportion to its base: foot to underside eave 379 / house base width 528 = 0.7178, against the blockout 309 / 390.5 = 0.7913, 9.3 percent short where 8 percent is the limit. Preserve the FIRST picture's exact wall height, width and roof/eave level and outline; do not squat or widen the house. Keep the intake and pipe exactly as the first picture shows them, at its near corner; the house base excludes that intake footing. Repaint the tall original shape in place, with the same materials as accepted r0.",
+    "references": [
+      "../scaffolds-535/hydro_plant-r1-lit.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/hydro-plant.png",
+      "assets/source/base-v1/power-plant.png",
+      "assets/source/rotations-535/hydro_plant/hydro_plant-r0.png"
+    ],
+    "returned": [1254, 1254],
+    "measured": {
+      "file": "assets/source/rotations-535/hydro_plant/raw/hydro_plant-r1-attempt-2.png",
+      "view": "r1",
+      "nameMetadata": null,
+      "returned": [1254, 1254],
+      "s0": 1.224609375,
+      "silhouette": {
+        "iouAtS0": 0.8629874117285846,
+        "bestFit": {
+          "f": 0.9400000000000001,
+          "dx": -4,
+          "dy": 24,
+          "iou": 0.9734213497785112
+        },
+        "directedBoundary": {
+          "pictureToScaffold": {
+            "max": 9.907083064234541,
+            "p95": 6.7374443160350435,
+            "count": 2069
+          },
+          "scaffoldToPicture": {
+            "max": 9.953499873092456,
+            "p95": 6.788511609947073,
+            "count": 1602
+          }
+        },
+        "maximum": 9.953499873092456,
+        "p95": 6.788511609947073,
+        "limits": {
+          "iou": 0.92,
+          "p95": 16,
+          "max": 32
+        },
+        "pass": true,
+        "method": "256px grid coarse-to-fine IoU on filled/opened mask; directed Euclidean pixel-boundary distributions in scaffold canvas px; f maps picture to scaffold"
+      },
+      "opaqueBox": [357, 409, 906, 1172],
+      "base": {
+        "sure": [true, true],
+        "slopes": [0.5471002681528997, -0.5268702744957616],
+        "w": [372, 1015.4604237867395],
+        "s": [597.2641045525755, 1138.7024757926765],
+        "e": [892, 983.4148936545378],
+        "minX": 357,
+        "maxX": 906,
+        "area": 310038
+      },
+      "baseWidthMachine": 520,
+      "heldWidth": 478.2099609375,
+      "kMachine": 0.919634540264423,
+      "overallHeight": {
+        "ratio": 1.389799635701275,
+        "reference": 1.4004796163069544,
+        "pass": true
+      },
+      "transparentShare": 0.011322249485602369,
+      "light": {
+        "lowerLeft": 171.6234346153842,
+        "lowerRight": 130.57557051282026
+      },
+      "highlights": {
+        "nearWhite": 643,
+        "nearAmber": 0
+      },
+      "baseWidthByEye": 520,
+      "k": 0.919634540264423,
+      "wallHeight": {
+        "ratio": 0.7538461538461538,
+        "reference": 0.7912932138284251,
+        "footY": 1139,
+        "eaveY": 747,
+        "pass": true,
+        "method": "by eye on alpha-composited zoom crop, same near corner/underside eave as bare reference"
+      }
+    },
+    "kept": true,
+    "note": "Accepted: house wall near corner behind intake projected from exposed straight wall feet,392/520=.75385vsbare.79129 (-4.73%); overall1.38980vs1.40048. Correct plain back, gable vent, near intake/sluice/copper handwheel and pipe, all crisp and same materials as r0; no window/door added to back. Alpha-composited2x crop: opaque surfaces, no ground/glow/water/extras, left wall lighter. Automatic width now on house foot, intake footing excluded.",
+    "eye": {
+      "baseWidth": 520,
+      "footY": 1139,
+      "eaveY": 747,
+      "identity": true,
+      "solidDoorway": true,
+      "light": true,
+      "noExtras": true,
+      "note": "Accepted: house wall near corner behind intake projected from exposed straight wall feet,392/520=.75385vsbare.79129 (-4.73%); overall1.38980vs1.40048. Correct plain back, gable vent, near intake/sluice/copper handwheel and pipe, all crisp and same materials as r0; no window/door added to back. Alpha-composited2x crop: opaque surfaces, no ground/glow/water/extras, left wall lighter. Automatic width now on house foot, intake footing excluded."
+    }
+  },
+  {
+    "stage": "blockout",
+    "view": "r3",
+    "attempt": 1,
+    "status": "tool-refused-before-generation",
+    "countsAgainstImageBudget": false,
+    "prompt": "Edit the first picture, a plain 3D blockout of a building rendered in flat colours, into ONE finished building sprite for a pastoral isometric railway game: the Hydro plant, a small red-brick turbine house with one tall arched window, a stone intake chamber with a sluice, and a penstock pipe coming down its end wall (the Design paragraph below). The first picture has the right shape, camera, proportions, layout and light, and nothing else about it is painting: paint EVERY surface of it in the style of the second picture, the style board: crisp pixel-art-inspired clustered shading, broad readable masses, three or four shades per material, restrained detail, a strong silhouette. Take the green riveted pipe, the copper-banded flanges, the sluice and the handwheel from the third picture (the old hydro plant) and the red brick, cream quoins, cream-arched windows with forest-green glazing bars and slate from the fourth (the power plant): materials and details only, never their layout. Keep, exactly as the first picture has them: the silhouette, the camera, the light, the proportions and the position and size of every roof, wall, window, door, arch, vent, lantern, pipe, flange and the intake chamber; add nothing (no new window, door, chimney, wheel, lamp, sign, plant, crate, step or detail) and remove nothing. The palette family of the whole game: forest green #294638, moss #78804C, oat cream #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42. Light from the upper left, as in the first picture: roofs and tops lightest, lower-left walls mid, lower-right walls darkest. Nothing at or above cursor white #ECE4D0 and nothing as strong as selection amber #E8AA48.\n\nCamera: keep the first picture's camera exactly: orthographic 2:1 isometric, 30 degrees down, ground edges two pixels across for each pixel down, vertical edges vertical, no perspective. Do not rotate, tilt, turn, resize, shift or reshape the building: its silhouette stays where the first picture's is, and the picture is checked against it. Show the whole building with the same margin all round as the first picture.\n\nGround: paint only the building. No plinth, ground, floor slab, grass, shadow or pad under it; the foot of the walls starts at the blockout's corners and stays plain and straight, with nothing added in front of it. The tailrace arch low in the stone base is solid in the first picture: paint its dark tunnel and its dark floor fully opaque; no part of it is transparent and there is no water.\n\nDesign, carried round every view. (1) The turbine house: a small hall of warm red brick on a rusticated limestone base, cream limestone quoins at its corners, a dark slate gable roof with its ridge along the long walls and a small forest-green vented lantern at the middle of the ridge, no chimney stack, and a round vent with a cream ring high in each gable end. (2) The long FRONT wall has ONE tall round-arched window with a cream arched surround and a cream sill, glazed dark teal-blue with forest-green glazing bars, and a small forest-green door with a cream lintel near one end; low in the stone base, at the other end, a cream-arched TAILRACE opening where the water leaves: inside it a dark tunnel with an opaque dark floor; paint no water. (3) On one end wall the PENSTOCK: one big riveted forest-green pipe with copper-banded flanges, coming diagonally down the end wall from a small cream-stone INTAKE chamber (a stone top slab, a forest-green sluice-gate housing and a copper handwheel on it) that stands on a stone footing at the house's back corner on the uphill side, and entering the wall above the stone base with a copper flange. (4) All of it is one building on the 1 x 1 plan: the intake and the pipe stand inside the plinth, nothing at ground level outside it. (5) It is NOT the Water pump: no flywheel, no elbow pipe with a strainer drum, no chimney stack, no small cottage; its silhouette is the brick house with the lantern, the one tall arched window, the penstock down the end wall and the intake chamber with its handwheel.\n\nView. The building is the Hydro plant in the view r3. r3 (three quarter turns; the front faces the lower right): the lower-right wall is the FRONT (the same wall as r0's front, turned: the tall window, the door at its far right end and the tailrace arch low at the near corner); the lower-left wall is the other END wall, plain brick on the stone base with the round gable vent and nothing else; the intake and the pipe are behind the house and do not show. Every part the first picture shows stands where the first picture puts it: paint it as shown, and do not add what the first picture does not carry.\n\nReferences: the first is the blockout render, the picture to paint over: its shape, angle, outline, proportions, light and layout do not change. The second is the style board. The third is the old hydro-plant picture and the fourth the power plant: take materials and details from them, nothing of their layout, size or angle, and no glow. The next pictures are this same building in the views already painted over their blockouts (the kept pictures): the same bricks, stones, slate, colours and brushwork must carry through, in this other view; they are not patterns to copy and their angles are not this picture's.\n\nA real RGBA PNG with a transparent background (alpha zero) and opaque building surfaces. Never: rails, trains, people, vehicles, smoke, lettering, signs with text, borders, glow, water, or loose objects standing apart from the building.\n\nOutput size: 1024 x 1024.",
+    "references": [
+      "G:/DEV/wt/scaffolds-535/hydro_plant-r3-lit.png",
+      "G:/DEV/wt/codex-rotations/docs/art-direction/images/03-theme-town-growth.png",
+      "G:/DEV/wt/codex-rotations/assets/source/base-v1/hydro-plant.png",
+      "G:/DEV/wt/codex-rotations/assets/source/base-v1/power-plant.png",
+      "G:/DEV/wt/codex-rotations/assets/source/rotations-535/hydro_plant/hydro_plant-r0.png",
+      "G:/DEV/wt/codex-rotations/assets/source/rotations-535/hydro_plant/hydro_plant-r1.png"
+    ],
+    "requiredReferenceCount": 6,
+    "toolReferenceLimit": 5,
+    "returned": null,
+    "measured": null,
+    "kept": false,
+    "note": "Exact tool rejection: `referenced_image_paths` must contain at most 5 paths. No image generated or returned bytes. Queue tool-refusal stop applies; r2 not run. Core must revise reference plan within maximum5; no reference dropped/combined/retry."
   }
 ]
