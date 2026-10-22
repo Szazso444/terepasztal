@@ -1,0 +1,97 @@
+{
+ "building": "power_plant",
+ "source": "assets/source/base-v1/power-plant.png (origin/develop), 1536 x 1024",
+ "note": "Square crops cut from the original painting; each shows one material or detail only, never the building as a whole or its outline. Only opaque pixels are read (alpha >= 200 over every rectangle); the orange glow of the source is at alpha 0 and is not in any crop. Crops are enlarged by an integer factor with nearest neighbour so each is 240 to 348 px; source_rect_px is the rectangle in the original and native_px its size there.",
+ "crops": [
+  {
+   "file": "brick_wall.png",
+   "material": "brick",
+   "description": "Brick wall: a brick pier on the hall front wall, the lit face and the dark side face, courses and mortar, no stone, no window.",
+   "size_px": 288,
+   "source_rect_px": [
+    740,
+    743,
+    884,
+    887
+   ],
+   "native_px": 144,
+   "enlarged": "2x, nearest neighbour",
+   "min_alpha_in_rect": 252
+  },
+  {
+   "file": "slate_roof.png",
+   "material": "slate",
+   "description": "Slate roof: the front roof slope between the eaves and the ridge, slate courses with the lighter slabs, no dormer, no edge.",
+   "size_px": 348,
+   "source_rect_px": [
+    519,
+    399,
+    693,
+    573
+   ],
+   "native_px": 174,
+   "enlarged": "2x, nearest neighbour",
+   "min_alpha_in_rect": 252
+  },
+  {
+   "file": "arched_window_green_frame.png",
+   "material": "window",
+   "description": "Arched window of the long wall: green frame, glazing bars, dark glass, the arch ring and a little brick beside it.",
+   "size_px": 256,
+   "source_rect_px": [
+    602,
+    686,
+    730,
+    814
+   ],
+   "native_px": 128,
+   "enlarged": "2x, nearest neighbour",
+   "min_alpha_in_rect": 252
+  },
+  {
+   "file": "stone_quoin.png",
+   "material": "stone",
+   "description": "Stone quoin: cream ashlar blocks of the chimney base (the same stone as the corner quoins, coping and sills).",
+   "size_px": 256,
+   "source_rect_px": [
+    1254,
+    590,
+    1318,
+    654
+   ],
+   "native_px": 64,
+   "enlarged": "4x, nearest neighbour",
+   "min_alpha_in_rect": 252
+  },
+  {
+   "file": "chimney_brick.png",
+   "material": "brick",
+   "description": "Chimney brick: the shaft, lit face and dark face, finer and darker brick than the wall.",
+   "size_px": 240,
+   "source_rect_px": [
+    1214,
+    368,
+    1334,
+    488
+   ],
+   "native_px": 120,
+   "enlarged": "2x, nearest neighbour",
+   "min_alpha_in_rect": 250
+  },
+  {
+   "file": "generator_metal.png",
+   "material": "metal",
+   "description": "Generator and annex metal: green painted sheet-metal housing and drum with the fan grille, dark pipe at the edge.",
+   "size_px": 300,
+   "source_rect_px": [
+    1190,
+    648,
+    1290,
+    748
+   ],
+   "native_px": 100,
+   "enlarged": "3x, nearest neighbour",
+   "min_alpha_in_rect": 252
+  }
+ ]
+}
