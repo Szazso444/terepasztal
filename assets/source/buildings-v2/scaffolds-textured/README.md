@@ -57,3 +57,43 @@ Notes:
 - Small farm halt, extra check against the existing buildings-v2 paintings of the same rotation (`farm/extra-checks.json`; the paintings are drawn about 1.3 to 1.4 times the plan scale, so the best uniform scale + shift is the fair figure): r1 0.83, r2 0.60, r3 0.66 (mapped 1:1 to the plan canvas 0.53, 0.31, 0.36). The existing r2 painting shows the same view as r0, not a half turn.
 - Quarry, extra check against the accepted r1 and r3 paintings (`quarry/extra-checks.json`): 0.27 and 0.41 mapped 1:1, 0.67 and 0.67 with the best scale and shift. The accepted r1 and r3 are not turns of the r0 shape (the crane is drawn at the left in every view, the paintings are 1.5 to 1.8 times the plan scale); the blockout follows r0.
 - Healed or mean colour = texels with no usable painted or cloned source, filled from the nearest texel or the material mean (1 to 2 per cent). What the painter fixes is as in the pilot: cloned and mirrored patches are uniform and a little blocky, thin parts (pipes, ropes, rails, the silo hoop bands) are smeared by the projection.
+
+## Batch C (2026-10-22): battery, coaling stage, fuel pump; power plant material crops
+
+Same method as the pilot and batch A (`renders/textured-blockout/`, one `build_<job>.py` and `measure-<job>.json` per building under `renders/blockout-pilot/<job>/`, not in the repository): blockout measured from the painted r0, painting projected from its own camera, unseen faces mirrored or cloned from the same material, variant B (de-lit, game sun). No generative fill.
+
+| Building | Source picture | Footprint at r0 | Painted camera, elevation / renderer azimuth (deg) | Canvas | IoU, painting camera (1:1 / best fit) | Texture painted / mirrored / cloned / healed or mean colour | Files |
+|---|---|---|---|---|---|---|---|
+| Battery (`substation`) | base-v1/substation.png | 2 x 2 | 27.6 / 45.0 | 1536 x 1024, anchor 768,760 | 0.928 / 0.931 | 42% / 10% / 45% / 3.8% | `substation/substation-r0..r3-{textured,bare}.png`, `substation/substation-r0..r3.json` |
+| Coaling stage (`fuel_stop`) | buildings-v2/fuel_stop/fuel_stop-a0-r0.png (accepted r0) | oblong, 0.864 x 1.136 (long side lower right) | 30.8 / 43.7 | 1024 x 1024, anchor 512,832 | 0.925 / 0.925 | 36% / 15% / 44% / 5.5% | `fuel_stop/fuel_stop-r0..r3-{textured,bare}.png`, `fuel_stop/fuel_stop-r0..r3.json` |
+| Fuel pump (`fuel_pump`) | fuel-2026-10-11/fuel_pump-a1-r0.png (origin/art/325-fuel-pump) | 1 x 1 | 33.5 / 47.0 | 1024 x 1024, anchor 512,832 | 0.928 / 0.928 | 40% / 17% / 42% / 1.8% | `fuel_pump/fuel_pump-r0..r3-{textured,bare}.png`, `fuel_pump/fuel_pump-r0..r3.json` |
+
+Texture shares per view (painted / copied / cloned / healed or mean), r0, r1, r2, r3:
+- substation: 90/1/8/1, 27/10/61/2, 9/16/73/2, 49/6/39/6 per cent
+- fuel_stop: 82/2/13/3, 45/6/43/7, 6/26/59/10, 25/27/41/7 per cent
+- fuel_pump: 89/1/9/1, 26/22/51/0, 3/30/65/2, 49/14/36/2 per cent
+
+Silhouette areas (opaque px, alpha above 128), r0 to r3:
+- substation: 240533, 222147, 241779, 236182
+- fuel_stop: 284847, 281014, 282488, 282171
+- fuel_pump: 122838, 115032, 123700, 116334
+
+Notes:
+
+- Battery: the painted slab is oblong (1.87 x 1.39 tiles at the painted scale), not the plan's 1.8 x 1.8; the blockout follows the painting. The left gantry foot stands about 0.35 tile outside the slab corner in the painting; it is kept on a small joined pad, so it overhangs the slab at r1 to r3. The outline polygons carry `hole_polygons_px` as well (the gap between the gantry legs and beam), without them the polygon would not match the mask (0.76 to 0.84); with them the polygon matches the mask at 0.989 to 0.996. Left/right wall brightness in variant B: r0 1.95, r1 0.85 (the left wall is not the brighter one there), r2 1.77, r3 1.94.
+- Coaling stage: the painting sits at about the plan scale (0.945); the sixth pier of the plan is modelled although the painting shows five. Texture at the painting camera: mean difference 5.5/255, PSNR 27.3 dB. Weak: the bin end faces are a flat yellow (mean colour), cloned coal tops, streaky timber, blotchy stone piers, the middle back pier is cloned. Extra check against the accepted r2 (attempt 8), scaled by 1024/1254 onto the plan canvas (`fuel_stop/extra-checks.json`, overlay `fuel_stop/extra-check-r2-overlay.png`): IoU 0.708 mapped 1:1, 0.859 with the best uniform scale (0.905) and shift. The aspect ratio matches (0.673 both); the accepted r2 is about 10 per cent larger and its leg and pier layout differs.
+- Fuel pump: the painted house is 1.0 x 0.5 (depth over length 0.5), not the plan's 0.78; the model is scaled so the long side of the base is 0.9 tile (the plan base is 0.70 x 0.90). Extra check against the accepted r1 (attempt 15) and r2 (attempt 11), scaled onto the plan canvas (`fuel_pump/extra-checks.json`, overlays `fuel_pump/extra-check-r{1,2}-overlay.png`): r1 0.711 mapped 1:1, 0.815 with the best scale (1.135) and shift; r2 0.738 and 0.810 (scale 1.07). The accepted views are 9 to 14 per cent wider and 6 to 18 per cent taller (bounding boxes 389 x 625 and 485 x 522 against the blockout's 342 x 529 and 445 x 490, same ground line). Differences in shape: in the accepted r1 the hose post is a long pipe leaning about 27 degrees to the right and reaching y=291 (the blockout's is vertical, reaching y=386); in the accepted r2 the arm is horizontal and the hose hangs about 25 px further right (the blockout's rises slightly). The accepted r3 (not accepted by the author) is 0.34 / 0.55. Weak: the back faces of the open truss story are grey slate-like clones (painted roof slate landed on the wood backing and was cloned), thin parts (hose, pipes, rail) are smeared.
+- Healed or mean colour = texels with no usable painted or cloned source (see batch A). What the painter fixes is as in the pilot.
+
+### Power plant: material crops (`power_plant/materials/`)
+
+For the Codex paint-over of `power_plant` (the textured blockout above is kept as it is). Square crops cut from the original painting (origin/develop `assets/source/base-v1/power-plant.png`), each showing one material or detail, never the whole building or its outline; `materials.json` names each crop, its source rectangle and its enlargement. Only opaque pixels are read: every rectangle has alpha 250 or more everywhere (the source's orange glow is at alpha 0 and is in no crop). The painting's brick, slate and stone patches are small (the stone blocks and brick piers are 40 to 140 px across), so each crop is the largest clean patch, enlarged by an integer factor with nearest neighbour (no resampling) to 240 to 348 px; `native_px` is the size in the original.
+
+| Crop | Material or detail | Size (px) | Source rectangle in the original |
+|---|---|---|---|
+| `materials/brick_wall.png` | brick wall (hall brick pier, lit and dark face) | 288 (2x) | 740,743 to 884,887 |
+| `materials/slate_roof.png` | slate roof, front slope | 348 (2x) | 519,399 to 693,573 |
+| `materials/arched_window_green_frame.png` | arched window, green frame, glazing bars, arch ring | 256 (2x) | 602,686 to 730,814 |
+| `materials/stone_quoin.png` | cream stone quoin blocks (chimney base) | 256 (4x) | 1254,590 to 1318,654 |
+| `materials/chimney_brick.png` | chimney brick, lit and dark face | 240 (2x) | 1214,368 to 1334,488 |
+| `materials/generator_metal.png` | generator and annex green sheet metal, fan grille | 300 (3x) | 1190,648 to 1290,748 |

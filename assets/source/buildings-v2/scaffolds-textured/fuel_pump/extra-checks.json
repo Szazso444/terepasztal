@@ -1,0 +1,74 @@
+{
+ "r1": {
+  "accepted": "fuel_pump-a1-r1.png (attempt 15)",
+  "iou_plan_placement_1to1": 0.7111,
+  "bbox_accepted_canvas_px": [
+   333,
+   291,
+   722,
+   916
+  ],
+  "bbox_blockout_canvas_px": [
+   337,
+   386,
+   679,
+   915
+  ],
+  "area_accepted": 150201,
+  "area_blockout": 115038,
+  "iou_best_uniform_scale_shift": 0.8151,
+  "best_scale_blockout_to_accepted": 1.135,
+  "best_shift_canvas_px": [
+   28,
+   -56
+  ]
+ },
+ "r2": {
+  "accepted": "fuel_pump-a1-r2.png (attempt 11)",
+  "iou_plan_placement_1to1": 0.7375,
+  "bbox_accepted_canvas_px": [
+   327,
+   390,
+   812,
+   912
+  ],
+  "bbox_blockout_canvas_px": [
+   343,
+   424,
+   788,
+   914
+  ],
+  "area_accepted": 149420,
+  "area_blockout": 123702,
+  "iou_best_uniform_scale_shift": 0.8099,
+  "best_scale_blockout_to_accepted": 1.07,
+  "best_shift_canvas_px": [
+   12,
+   -40
+  ]
+ },
+ "r3": {
+  "accepted": "fuel_pump-a1-r3.png (NOT accepted)",
+  "iou_plan_placement_1to1": 0.3378,
+  "bbox_accepted_canvas_px": [
+   243,
+   158,
+   885,
+   972
+  ],
+  "bbox_blockout_canvas_px": [
+   344,
+   418,
+   687,
+   915
+  ],
+  "area_accepted": 344406,
+  "area_blockout": 116341,
+  "iou_best_uniform_scale_shift": 0.5535,
+  "best_scale_blockout_to_accepted": 1.28,
+  "best_shift_canvas_px": [
+   -24,
+   -80
+  ]
+ }
+}
