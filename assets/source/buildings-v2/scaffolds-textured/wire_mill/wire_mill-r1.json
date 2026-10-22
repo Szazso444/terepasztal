@@ -1,0 +1,452 @@
+{
+ "job": "wire_mill",
+ "view": "r1",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1536,
+  1024
+ ],
+ "anchor": [
+  768,
+  760
+ ],
+ "scale_canvas_px_per_game_px": 6,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   192.0,
+   96.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   192.0,
+   -96.0
+  ],
+  "canvas_px_per_tile_of_height": 235.151,
+  "origin_px": [
+   768.0,
+   760.0
+  ],
+  "anchor_px": [
+   768,
+   760
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   384.0,
+   760.0
+  ],
+  "s": [
+   768.0,
+   952.0
+  ],
+  "e": [
+   1152.0,
+   760.0
+  ],
+  "n": [
+   768.0,
+   568.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   432.0,
+   764.8
+  ],
+  "s": [
+   758.4,
+   928.0
+  ],
+  "e": [
+   1104.0,
+   755.2
+  ],
+  "n": [
+   777.6,
+   592.0
+  ]
+ },
+ "footprint_tiles_r0": [
+  2,
+  2
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    636,
+    352
+   ],
+   [
+    622,
+    359
+   ],
+   [
+    622,
+    367
+   ],
+   [
+    480,
+    540
+   ],
+   [
+    480,
+    542
+   ],
+   [
+    484,
+    548
+   ],
+   [
+    487,
+    550
+   ],
+   [
+    484,
+    552
+   ],
+   [
+    484,
+    562
+   ],
+   [
+    498,
+    569
+   ],
+   [
+    498,
+    576
+   ],
+   [
+    503,
+    580
+   ],
+   [
+    503,
+    605
+   ],
+   [
+    469,
+    635
+   ],
+   [
+    466,
+    634
+   ],
+   [
+    461,
+    637
+   ],
+   [
+    461,
+    647
+   ],
+   [
+    489,
+    661
+   ],
+   [
+    492,
+    666
+   ],
+   [
+    492,
+    758
+   ],
+   [
+    489,
+    761
+   ],
+   [
+    472,
+    769
+   ],
+   [
+    472,
+    780
+   ],
+   [
+    484,
+    786
+   ],
+   [
+    487,
+    790
+   ],
+   [
+    503,
+    798
+   ],
+   [
+    508,
+    798
+   ],
+   [
+    560,
+    824
+   ],
+   [
+    563,
+    828
+   ],
+   [
+    581,
+    837
+   ],
+   [
+    584,
+    836
+   ],
+   [
+    642,
+    865
+   ],
+   [
+    643,
+    868
+   ],
+   [
+    661,
+    877
+   ],
+   [
+    664,
+    876
+   ],
+   [
+    724,
+    906
+   ],
+   [
+    726,
+    908
+   ],
+   [
+    726,
+    911
+   ],
+   [
+    743,
+    920
+   ],
+   [
+    746,
+    920
+   ],
+   [
+    762,
+    912
+   ],
+   [
+    765,
+    908
+   ],
+   [
+    815,
+    883
+   ],
+   [
+    815,
+    872
+   ],
+   [
+    781,
+    855
+   ],
+   [
+    780,
+    854
+   ],
+   [
+    781,
+    852
+   ],
+   [
+    847,
+    819
+   ],
+   [
+    850,
+    819
+   ],
+   [
+    885,
+    837
+   ],
+   [
+    887,
+    837
+   ],
+   [
+    931,
+    815
+   ],
+   [
+    931,
+    782
+   ],
+   [
+    928,
+    780
+   ],
+   [
+    929,
+    778
+   ],
+   [
+    1042,
+    722
+   ],
+   [
+    1042,
+    680
+   ],
+   [
+    1040,
+    678
+   ],
+   [
+    1040,
+    574
+   ],
+   [
+    1044,
+    571
+   ],
+   [
+    1044,
+    552
+   ],
+   [
+    1051,
+    549
+   ],
+   [
+    1051,
+    546
+   ],
+   [
+    1054,
+    540
+   ],
+   [
+    1055,
+    535
+   ],
+   [
+    1046,
+    530
+   ],
+   [
+    1025,
+    526
+   ],
+   [
+    912,
+    469
+   ],
+   [
+    912,
+    461
+   ],
+   [
+    906,
+    447
+   ],
+   [
+    906,
+    445
+   ],
+   [
+    895,
+    433
+   ],
+   [
+    888,
+    432
+   ],
+   [
+    887,
+    431
+   ],
+   [
+    876,
+    433
+   ],
+   [
+    865,
+    445
+   ],
+   [
+    863,
+    445
+   ],
+   [
+    777,
+    402
+   ],
+   [
+    775,
+    400
+   ],
+   [
+    777,
+    396
+   ],
+   [
+    768,
+    391
+   ],
+   [
+    654,
+    366
+   ],
+   [
+    651,
+    364
+   ],
+   [
+    651,
+    359
+   ],
+   [
+    638,
+    352
+   ]
+  ]
+ ],
+ "hole_polygons_px": [],
+ "silhouette": {
+  "bbox_px": [
+   461,
+   352,
+   1055,
+   920
+  ],
+  "area_px": 220638,
+  "polygon_vs_mask_iou": 0.99897,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
+  "alpha_threshold": 128,
+  "opened_holes_filled": false
+ },
+ "source_picture": "base-v1/works-full-wire-mill.png",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9233,
+  "texture_share_of_needed_texels": {
+   "painted": 0.313,
+   "mirrored": 0.051,
+   "cloned": 0.635,
+   "healed_or_mean": 0.001
+  },
+  "view_share": {
+   "visible": 1211625,
+   "painted": 0.33,
+   "copied": 0.082,
+   "cloned": 0.588,
+   "healed_or_mean": 0.001
+  }
+ },
+ "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

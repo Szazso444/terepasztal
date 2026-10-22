@@ -1,0 +1,42 @@
+{
+ "r0": {
+  "painting": "lumber-a0-r0.png",
+  "iou_plan_canvas_mapping": 0.1846,
+  "iou_best_uniform_scale_shift": 0.9091,
+  "best_scale": 2.16,
+  "best_shift_px_1254": [
+   15,
+   -198
+  ]
+ },
+ "r1": {
+  "painting": "lumber-a0-r1.png",
+  "iou_plan_canvas_mapping": 0.2163,
+  "iou_best_uniform_scale_shift": 0.7987,
+  "best_scale": 2.08,
+  "best_shift_px_1254": [
+   -54,
+   -147
+  ]
+ },
+ "r2": {
+  "painting": "lumber-a0-r2.png",
+  "iou_plan_canvas_mapping": 0.1849,
+  "iou_best_uniform_scale_shift": 0.8194,
+  "best_scale": 2.17,
+  "best_shift_px_1254": [
+   51,
+   -193
+  ]
+ },
+ "r3": {
+  "painting": "lumber-a0-r3.png",
+  "iou_plan_canvas_mapping": 0.1287,
+  "iou_best_uniform_scale_shift": 0.7557,
+  "best_scale": 2.59,
+  "best_shift_px_1254": [
+   -51,
+   -182
+  ]
+ }
+}

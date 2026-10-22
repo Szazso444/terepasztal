@@ -153,3 +153,75 @@ Fill changes (all five): mirror sources must pass a plain-patch test per face gr
 Mesh sanity check (all 17 textured blockouts, closed solids per part, outward normals, no edge shared by more than two faces, every part touching the ground-connected set within 0.012 tile): the five above are clean after the fixes (open edges 0, inward 0, non-manifold 0, floating 0). On the branch the other 12 have no open or inward parts; one small floating part each (smaller than 0.2 tile: oil derrick, refinery, battery, town hall) is left as it is.
 
 Extra checks against the accepted paintings (`quarry/extra-checks.json`, `fuel_stop/extra-checks.json`, the r2 overlay) were made with the earlier blockouts; the silhouettes changed by less than 0.5 per cent of the area at r1 to r3, so the figures stand.
+
+## Batch D (2026-10-22): charcoal kiln, diesel refinery, wire mill; station, lumber yard, depot, water tower (consistency checks)
+
+The author decided on 2026-10-22 that every player-placed building rotates, so each gets the textured blockout and a paint-over. Same method as the earlier batches (`renders/textured-blockout/`, frozen tools in `tools_fix/`, one `build_<job>.py` and `cams.json` per building next to the `.blend`; not in the repository): blockout measured from the painted r0, silhouette checked against it at the painting's own camera, painting projected from that camera, unseen faces mirrored or cloned from same-material texels (no generative fill), variant B (de-lit, game sun), r0 to r3 at the game camera (30 degrees, 2:1). Thin parts (pipes, rails, ladders, posts, braces, wheels and reels, truss members, bands) are real geometry. Mesh check on all seven: closed solids, outward normals, no edge shared by more than two faces, no floating part (open 0, inward 0, non-manifold 0, floating 0); a few coincident faces of touching parts remain, as before.
+
+**No review-2 plan exists for any of these jobs** (`guides/review2/` has none of them). Canvas, scale and anchor were made from the footprint with the conventions of `tools/building-guides.mjs`: 1 x 1 is 1024 x 1024 at scale 8, anchor 512,832; 2 x 2 is 1536 x 1024 at scale 6, anchor 768,760; the model base is 0.9 of the footprint's long side. The footprints are the game's (`loadInventory`): station, lumber yard and water tower 1 x 1, depot 2 x 2; kiln 1 x 1, diesel refinery and wire mill 2 x 2 as given for the batch.
+
+| Building | Source picture | Footprint | Painted camera, elevation / renderer azimuth (deg) | Canvas | IoU, painting camera (1:1 / best fit) | Texture painted / mirrored / cloned / healed or mean colour | Files |
+|---|---|---|---|---|---|---|---|
+| Charcoal kiln (`kiln`) | base-v1/kiln.png | 1 x 1 | 30.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.931 / 0.934 | 35% / 11% / 53% / 0.2% | `kiln/kiln-r0..r3-{textured,bare}.png`, `kiln/kiln-r0..r3.json` |
+| Diesel refinery (`diesel_refinery`) | base-v1/works-full-diesel-refinery.png | 2 x 2 | 23.0 / 45.0 | 1536 x 1024, anchor 768,760 | 0.924 / 0.926 | 36% / 9% / 55% / 0.5% | `diesel_refinery/diesel_refinery-r0..r3-{textured,bare}.png`, `.json` |
+| Wire mill (`wire_mill`) | base-v1/works-full-wire-mill.png | 2 x 2 | 18.0 / 45.0 | 1536 x 1024, anchor 768,760 | 0.923 / 0.929 | 31% / 5% / 64% / 0.1% | `wire_mill/wire_mill-r0..r3-{textured,bare}.png`, `.json` |
+| Small station (`station`) | buildings-v2/station/station-a0-r0.png | 1 x 1 | 27.5 / 48.3 | 1024 x 1024, anchor 512,832 | 0.929 / 0.937 | 42% / 6% / 49% / 2% | `station/station-r0..r3-{textured,bare}.png`, `.json`, `extra-checks.json` |
+| Lumber yard (`lumber`) | buildings-v2/lumber/lumber-a0-r0.png | 1 x 1 | 35.1 / 43.5 | 1024 x 1024, anchor 512,832 | 0.930 / 0.930 | 42% / 4% / 52% / 1% | `lumber/lumber-r0..r3-{textured,bare}.png`, `.json`, `extra-checks.json` |
+| Depot (`depot`) | buildings-v2/depot/depot-a0-r0.png | 2 x 2 | 34.5 / 46.5 | 1536 x 1024, anchor 768,760 | 0.927 / 0.932 | 37% / 15% / 46% / 3% | `depot/depot-r0..r3-{textured,bare}.png`, `.json`, `extra-checks.json` |
+| Water tower (`water_tower`) | buildings-v2/water_tower/water_tower-a0-r0.png (art/325-buildings-v2) | 1 x 1 | 30.0 / 45.0 | 1024 x 1024, anchor 512,832 | 0.924 / 0.932 | 38% / 16% / 46% / 0.3% | `water_tower/water_tower-r0..r3-{textured,bare}.png`, `.json`, `extra-checks.json` |
+
+Model base (tiles): kiln round, about 0.9 across; diesel refinery 1.8 x 1.35; wire mill 1.8 x 1.7; station 0.83 x 0.56 walls (0.9 x 0.6 with the canopy); lumber yard 0.47 x 0.90 (with the log cradle); depot 1.8 x 1.8; water tower 0.9 x 0.9.
+
+Texture shares per view (painted / copied / cloned / healed or mean colour, per cent), r0, r1, r2, r3:
+- kiln: 80/0/20/0, 34/8/58/0, 8/21/71/0, 39/18/43/0
+- diesel_refinery: 77/0/23/0, 26/11/63/0, 1/19/81/0, 33/10/56/1
+- wire_mill: 67/1/32/0, 33/8/59/0, 1/7/92/0, 21/3/76/0
+- station: 91/1/7/1, 27/5/67/1, 4/11/85/1, 48/10/40/3
+- lumber: 90/0/9/0, 57/2/41/0, 4/7/90/0, 21/7/69/3
+- depot: 91/1/7/1, 13/28/56/3, 1/20/75/3, 51/8/39/2
+- water_tower: 88/1/12/0, 41/15/43/0, 16/26/59/0, 39/14/47/0
+
+Silhouette areas (opaque px, alpha above 128), r0 to r3:
+- kiln: 95361, 96577, 94197, 97020
+- diesel_refinery: 161261, 115918, 153083, 133557
+- wire_mill: 237646, 220638, 227352, 210691
+- station: 92231, 84750, 92582, 93552
+- lumber: 59434, 58680, 58195, 57752
+- depot: 287811, 289900, 286957, 286900
+- water_tower: 293471, 296345, 296731, 296818
+
+### Consistency check of the buildings-v2 views (station, lumber yard, depot, water tower)
+
+These four families were painted freely, one view at a time. Each blockout follows its painted r0 (not bent to r1 to r3). Each existing painted view r0 to r3 (`buildings-v2/<family>/<family>-a0-r<v>.png`, 1254 px square on a plan canvas of 1024, depot 1536 x 1024) was then compared with the blockout's silhouette at the game camera: IoU as mapped (plan canvas scaled by 1254/1024) and IoU after the best uniform scale and shift (the fair figure: the paintings are drawn larger than the plan scale, depot 1.2 to 1.4, station and lumber yard about 1.8 to 2.6, water tower 1.0 to 1.1). A view below 0.88 is not a rotation of r0 and is repainted over the textured render; r0 is repainted too when its painted camera is more than 2 degrees from the game camera (30 / 45). The station and lumber yard searches were widened to scale 0.5 to 3.0 (the older `extra_cmp.py` stopped at 1.4). Details and overlays: `<family>/extra-checks.json`, `<family>/extra-check-r<v>-overlay.jpg` (painting outline red, blockout outline cyan after the best fit).
+
+| Family | View | IoU mapped 1:1 | IoU best uniform fit | Scale | Painted camera | Verdict |
+|---|---|---|---|---|---|---|
+| Station | r0 | 0.213 | 0.938 | 2.13 | 27.5 deg, 2.5 to 3.8 deg low | silhouette matches, camera off by more than 2 deg: repaint |
+| Station | r1 | 0.273 | 0.762 | 1.76 | | not a rotation of r0: repaint |
+| Station | r2 | 0.213 | 0.757 | 2.16 | | not a rotation of r0: repaint |
+| Station | r3 | 0.304 | 0.818 | 1.77 | | not a rotation of r0: repaint |
+| Lumber yard | r0 | 0.185 | 0.909 | 2.16 | 35.1 deg, 5.1 deg high | camera off: repaint |
+| Lumber yard | r1 | 0.216 | 0.799 | 2.08 | | not a rotation of r0 (a box house, no cradle or saw): repaint |
+| Lumber yard | r2 | 0.185 | 0.819 | 2.17 | | not a rotation of r0 (the window gable): repaint |
+| Lumber yard | r3 | 0.129 | 0.756 | 2.59 | | not a rotation of r0 (r0 mirrored, not turned): repaint |
+| Depot | r0 | 0.545 | 0.919 | 1.29 | 34.5 deg, 4.5 deg high | camera off: repaint |
+| Depot | r1 | 0.505 | 0.920 | 1.38 | | rotation of r0: keep |
+| Depot | r2 | 0.587 | 0.879 | 1.18 | | just below 0.88: repaint |
+| Depot | r3 | 0.561 | 0.898 | 1.32 | | rotation of r0 (accepted attempt 3): keep |
+| Water tower | r0 | 0.781 | 0.930 | 1.11 | 30.0 deg, 0 deg off | keep |
+| Water tower | r1 | 0.863 | 0.869 | 1.01 | | not a rotation of r0 (no pipe in the painted view): repaint |
+| Water tower | r2 | 0.864 | 0.896 | 1.01 | | rotation of r0: keep |
+| Water tower | r3 | 0.842 | 0.871 | 0.99 | | below 0.88: repaint |
+
+Views to repaint over the textured render: station r0 r1 r2 r3; lumber yard r0 r1 r2 r3; depot r0 and r2 (r1 and r3 stay); water tower r1 and r3 (r0 and r2 stay).
+
+Notes:
+
+- Kiln: the painted door sits about 22 degrees round the dome, not centred on a face; the model turns it the same. Dome, bands, collar and chimney are surfaces of revolution and rings; the door is a real recess with a dark floor and back wall; three buttress piers stand round the dome. Weak: cloned dome courses are blotchy at r2 and r3 (r2 is 8% painted), the door arch ring at r1 is jumbled, the plinth ledge is too light at r2 and r3.
+- Diesel refinery: the painting is not strictly orthographic (a compromise 23 degree camera). The painted wall pipes, the door with its awning and the cabinet are geometry, so they do not smear on the brick. A flat strip of about 5000 px along the hall base is not matched (the painted base lines are flatter than the skid). Weak: hidden brick walls are blocky clones, roof blotches at r2 and r3, tank ends and frame back panels cloned dark.
+- Wire mill: compromise 18 degree camera (the painting is not orthographic: ground lines slope 0.31 to 0.41, the ridge 0.23; the texture bake is off by 15 to 30 px in places). Hall 1.42 x 1.36 with the open shed to X 1.78 / Y 1.62. r1 is the only view where the left wall is not the brighter one (left/right 0.94). Weak: r2 is almost entirely cloned; shed posts, braces, lamp, drum flanges and wire coils, machine box and the clerestory window bars are smeared.
+- Station: the painted ridge climbs steeper than the walls (0.476 against 0.39), so the left end is a hip; a strip along the upper left ridge (1.7% of the silhouette) is not matched. Weak: r2 is almost all cloned; canopy underside, valance, brackets, clock hands and drainpipes are smeared.
+- Lumber yard: r1 to r3 of the blockout are consistent 3D turns of r0; the existing r1 to r3 paintings differ in shape, not just in camera. The open left bay shows through under the overhang, as in the painting.
+- Depot: back-end portal door leaves are left out (r0 shows none; with them IoU drops about 1 point): the back-end portals are real recesses without leaves, so a repainted r2 needs them added. The portal recess floors are cloned brick, not dark. `tb_project.py` flagged most visible texels as occluded at painting scales below about 450 px/tile; a private copy scaled the depth tolerance with k (this painting has 353 px/tile).
+- Water tower: the r0 spout hangs about 0.5 tile outside the footprint, as painted. The painted r1 and r2 show no pipe at all, so they are not rotations of r0.
+- What the painter fixes is as in the pilot: cloned and mirrored patches are uniform and a little blocky, thin parts are smeared by the projection, painted highlights are baked in.

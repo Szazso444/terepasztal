@@ -1,0 +1,42 @@
+{
+ "r0": {
+  "painting": "water_tower-a0-r0.png",
+  "iou_plan_canvas_mapping": 0.7812,
+  "iou_best_uniform_scale_shift": 0.9301,
+  "best_scale": 1.11,
+  "best_shift_px_1254": [
+   -4,
+   -44
+  ]
+ },
+ "r1": {
+  "painting": "water_tower-a0-r1.png",
+  "iou_plan_canvas_mapping": 0.863,
+  "iou_best_uniform_scale_shift": 0.8693,
+  "best_scale": 1.01,
+  "best_shift_px_1254": [
+   0,
+   -8
+  ]
+ },
+ "r2": {
+  "painting": "water_tower-a0-r2.png",
+  "iou_plan_canvas_mapping": 0.8642,
+  "iou_best_uniform_scale_shift": 0.8964,
+  "best_scale": 1.01,
+  "best_shift_px_1254": [
+   0,
+   -24
+  ]
+ },
+ "r3": {
+  "painting": "water_tower-a0-r3.png",
+  "iou_plan_canvas_mapping": 0.8416,
+  "iou_best_uniform_scale_shift": 0.8705,
+  "best_scale": 0.99,
+  "best_shift_px_1254": [
+   -12,
+   -12
+  ]
+ }
+}

@@ -1,0 +1,460 @@
+{
+ "job": "kiln",
+ "view": "r2",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   281.6,
+   832.0
+  ],
+  "s": [
+   512.0,
+   947.2
+  ],
+  "e": [
+   742.4,
+   832.0
+  ],
+  "n": [
+   512.0,
+   716.8
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  1
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    510,
+    526
+   ],
+   [
+    463,
+    550
+   ],
+   [
+    463,
+    569
+   ],
+   [
+    471,
+    573
+   ],
+   [
+    474,
+    576
+   ],
+   [
+    474,
+    595
+   ],
+   [
+    471,
+    598
+   ],
+   [
+    463,
+    603
+   ],
+   [
+    460,
+    603
+   ],
+   [
+    441,
+    610
+   ],
+   [
+    417,
+    623
+   ],
+   [
+    408,
+    631
+   ],
+   [
+    399,
+    633
+   ],
+   [
+    399,
+    638
+   ],
+   [
+    380,
+    661
+   ],
+   [
+    375,
+    671
+   ],
+   [
+    374,
+    678
+   ],
+   [
+    371,
+    683
+   ],
+   [
+    367,
+    685
+   ],
+   [
+    367,
+    691
+   ],
+   [
+    365,
+    698
+   ],
+   [
+    365,
+    720
+   ],
+   [
+    363,
+    722
+   ],
+   [
+    332,
+    722
+   ],
+   [
+    332,
+    750
+   ],
+   [
+    335,
+    752
+   ],
+   [
+    335,
+    840
+   ],
+   [
+    355,
+    840
+   ],
+   [
+    362,
+    856
+   ],
+   [
+    371,
+    867
+   ],
+   [
+    388,
+    880
+   ],
+   [
+    398,
+    885
+   ],
+   [
+    400,
+    887
+   ],
+   [
+    409,
+    890
+   ],
+   [
+    414,
+    893
+   ],
+   [
+    438,
+    901
+   ],
+   [
+    456,
+    904
+   ],
+   [
+    461,
+    906
+   ],
+   [
+    476,
+    907
+   ],
+   [
+    477,
+    908
+   ],
+   [
+    484,
+    908
+   ],
+   [
+    485,
+    909
+   ],
+   [
+    493,
+    909
+   ],
+   [
+    494,
+    910
+   ],
+   [
+    494,
+    920
+   ],
+   [
+    529,
+    920
+   ],
+   [
+    529,
+    910
+   ],
+   [
+    530,
+    909
+   ],
+   [
+    555,
+    907
+   ],
+   [
+    556,
+    906
+   ],
+   [
+    562,
+    906
+   ],
+   [
+    567,
+    904
+   ],
+   [
+    581,
+    902
+   ],
+   [
+    595,
+    897
+   ],
+   [
+    604,
+    895
+   ],
+   [
+    614,
+    890
+   ],
+   [
+    623,
+    887
+   ],
+   [
+    641,
+    876
+   ],
+   [
+    646,
+    871
+   ],
+   [
+    652,
+    867
+   ],
+   [
+    661,
+    856
+   ],
+   [
+    668,
+    840
+   ],
+   [
+    688,
+    840
+   ],
+   [
+    688,
+    752
+   ],
+   [
+    691,
+    750
+   ],
+   [
+    691,
+    722
+   ],
+   [
+    660,
+    722
+   ],
+   [
+    658,
+    720
+   ],
+   [
+    658,
+    698
+   ],
+   [
+    657,
+    697
+   ],
+   [
+    657,
+    692
+   ],
+   [
+    651,
+    680
+   ],
+   [
+    649,
+    678
+   ],
+   [
+    648,
+    671
+   ],
+   [
+    643,
+    661
+   ],
+   [
+    626,
+    640
+   ],
+   [
+    611,
+    627
+   ],
+   [
+    596,
+    617
+   ],
+   [
+    575,
+    607
+   ],
+   [
+    563,
+    603
+   ],
+   [
+    560,
+    603
+   ],
+   [
+    549,
+    595
+   ],
+   [
+    549,
+    576
+   ],
+   [
+    552,
+    573
+   ],
+   [
+    560,
+    569
+   ],
+   [
+    560,
+    550
+   ],
+   [
+    513,
+    526
+   ]
+  ]
+ ],
+ "hole_polygons_px": [],
+ "silhouette": {
+  "bbox_px": [
+   332,
+   526,
+   691,
+   920
+  ],
+  "area_px": 94197,
+  "polygon_vs_mask_iou": 0.9989,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
+  "alpha_threshold": 128,
+  "opened_holes_filled": false
+ },
+ "source_picture": "base-v1/kiln.png",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9305,
+  "texture_share_of_needed_texels": {
+   "painted": 0.353,
+   "mirrored": 0.112,
+   "cloned": 0.533,
+   "healed_or_mean": 0.002
+  },
+  "view_share": {
+   "visible": 252161,
+   "painted": 0.079,
+   "copied": 0.213,
+   "cloned": 0.706,
+   "healed_or_mean": 0.001
+  }
+ },
+ "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

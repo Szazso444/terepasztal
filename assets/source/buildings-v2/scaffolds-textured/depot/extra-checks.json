@@ -1,0 +1,46 @@
+{
+ "r0": {
+  "painting": "depot-a0-r0.png",
+  "iou_plan_canvas_mapping": 0.5453,
+  "iou_best_uniform_scale_shift": 0.9188,
+  "best_scale": 1.292,
+  "best_shift_px": [
+   -2,
+   -130
+  ],
+  "verdict": "rotation of r0 (keep)"
+ },
+ "r1": {
+  "painting": "depot-a0-r1.png",
+  "iou_plan_canvas_mapping": 0.5054,
+  "iou_best_uniform_scale_shift": 0.9196,
+  "best_scale": 1.379,
+  "best_shift_px": [
+   29,
+   -136
+  ],
+  "verdict": "rotation of r0 (keep)"
+ },
+ "r2": {
+  "painting": "depot-a0-r2.png",
+  "iou_plan_canvas_mapping": 0.5865,
+  "iou_best_uniform_scale_shift": 0.8793,
+  "best_scale": 1.179,
+  "best_shift_px": [
+   31,
+   -110
+  ],
+  "verdict": "NOT a rotation of r0 (repaint)"
+ },
+ "r3": {
+  "painting": "depot-a0-r3.png",
+  "iou_plan_canvas_mapping": 0.5607,
+  "iou_best_uniform_scale_shift": 0.8982,
+  "best_scale": 1.319,
+  "best_shift_px": [
+   38,
+   -99
+  ],
+  "verdict": "rotation of r0 (keep)"
+ }
+}

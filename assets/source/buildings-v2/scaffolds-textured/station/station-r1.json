@@ -1,0 +1,388 @@
+{
+ "job": "station",
+ "view": "r1",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   334.02,
+   849.57
+  ],
+  "s": [
+   476.86,
+   920.99
+  ],
+  "e": [
+   689.98,
+   814.43
+  ],
+  "n": [
+   547.14,
+   743.01
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  1
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    496,
+    554
+   ],
+   [
+    487,
+    554
+   ],
+   [
+    479,
+    558
+   ],
+   [
+    479,
+    566
+   ],
+   [
+    481,
+    568
+   ],
+   [
+    481,
+    579
+   ],
+   [
+    479,
+    580
+   ],
+   [
+    476,
+    578
+   ],
+   [
+    473,
+    578
+   ],
+   [
+    465,
+    582
+   ],
+   [
+    465,
+    593
+   ],
+   [
+    459,
+    605
+   ],
+   [
+    457,
+    607
+   ],
+   [
+    435,
+    652
+   ],
+   [
+    433,
+    654
+   ],
+   [
+    413,
+    695
+   ],
+   [
+    404,
+    701
+   ],
+   [
+    339,
+    734
+   ],
+   [
+    336,
+    739
+   ],
+   [
+    317,
+    748
+   ],
+   [
+    315,
+    750
+   ],
+   [
+    315,
+    764
+   ],
+   [
+    318,
+    765
+   ],
+   [
+    319,
+    767
+   ],
+   [
+    319,
+    772
+   ],
+   [
+    321,
+    773
+   ],
+   [
+    327,
+    769
+   ],
+   [
+    329,
+    769
+   ],
+   [
+    333,
+    766
+   ],
+   [
+    335,
+    766
+   ],
+   [
+    345,
+    761
+   ],
+   [
+    347,
+    759
+   ],
+   [
+    351,
+    758
+   ],
+   [
+    353,
+    756
+   ],
+   [
+    355,
+    757
+   ],
+   [
+    355,
+    854
+   ],
+   [
+    359,
+    856
+   ],
+   [
+    359,
+    862
+   ],
+   [
+    476,
+    921
+   ],
+   [
+    691,
+    814
+   ],
+   [
+    691,
+    806
+   ],
+   [
+    689,
+    804
+   ],
+   [
+    689,
+    705
+   ],
+   [
+    702,
+    698
+   ],
+   [
+    702,
+    691
+   ],
+   [
+    701,
+    689
+   ],
+   [
+    628,
+    606
+   ],
+   [
+    630,
+    604
+   ],
+   [
+    630,
+    593
+   ],
+   [
+    621,
+    588
+   ],
+   [
+    617,
+    588
+   ],
+   [
+    558,
+    618
+   ],
+   [
+    555,
+    618
+   ],
+   [
+    527,
+    604
+   ],
+   [
+    525,
+    602
+   ],
+   [
+    526,
+    600
+   ],
+   [
+    532,
+    597
+   ],
+   [
+    532,
+    586
+   ],
+   [
+    522,
+    581
+   ],
+   [
+    522,
+    579
+   ],
+   [
+    525,
+    574
+   ],
+   [
+    524,
+    568
+   ],
+   [
+    519,
+    565
+   ],
+   [
+    515,
+    565
+   ],
+   [
+    514,
+    564
+   ],
+   [
+    505,
+    565
+   ],
+   [
+    504,
+    564
+   ],
+   [
+    504,
+    559
+   ],
+   [
+    501,
+    556
+   ]
+  ]
+ ],
+ "hole_polygons_px": [],
+ "silhouette": {
+  "bbox_px": [
+   315,
+   554,
+   702,
+   921
+  ],
+  "area_px": 84750,
+  "polygon_vs_mask_iou": 0.99936,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
+  "alpha_threshold": 128,
+  "opened_holes_filled": false
+ },
+ "source_picture": "buildings-v2/station/station-a0-r0.png (Codex checkout, art/buildings-v2)",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.9286,
+  "texture_share_of_needed_texels": {
+   "painted": 0.423,
+   "mirrored": 0.065,
+   "cloned": 0.491,
+   "healed_or_mean": 0.022
+  },
+  "view_share": {
+   "visible": 263824,
+   "painted": 0.272,
+   "copied": 0.047,
+   "cloned": 0.673,
+   "healed_or_mean": 0.008
+  }
+ },
+ "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}

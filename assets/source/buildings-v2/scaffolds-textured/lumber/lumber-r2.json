@@ -1,0 +1,404 @@
+{
+ "job": "lumber",
+ "view": "r2",
+ "variant": "B (de-lit, relit with the game sun, upper left)",
+ "canvas": [
+  1024,
+  1024
+ ],
+ "anchor": [
+  512,
+  832
+ ],
+ "scale_canvas_px_per_game_px": 8,
+ "camera": {
+  "elevation_deg": 30.0,
+  "look_azimuth_deg_from_x": 135.0,
+  "ortho": true,
+  "canvas_px_per_tile_edge_along_x": [
+   256.0,
+   128.0
+  ],
+  "canvas_px_per_tile_edge_along_y": [
+   256.0,
+   -128.0
+  ],
+  "canvas_px_per_tile_of_height": 313.535,
+  "origin_px": [
+   512.0,
+   832.0
+  ],
+  "anchor_px": [
+   512,
+   832
+  ]
+ },
+ "footprint_px": {
+  "w": [
+   256.0,
+   832.0
+  ],
+  "s": [
+   512.0,
+   960.0
+  ],
+  "e": [
+   768.0,
+   832.0
+  ],
+  "n": [
+   512.0,
+   704.0
+  ]
+ },
+ "model_base_px": {
+  "w": [
+   336.72,
+   859.81
+  ],
+  "s": [
+   456.37,
+   919.64
+  ],
+  "e": [
+   687.28,
+   804.19
+  ],
+  "n": [
+   567.63,
+   744.36
+  ]
+ },
+ "footprint_tiles_r0": [
+  1,
+  1
+ ],
+ "outline_polygon_px": [
+  [
+   [
+    567,
+    620
+   ],
+   [
+    559,
+    616
+   ],
+   [
+    556,
+    616
+   ],
+   [
+    429,
+    680
+   ],
+   [
+    428,
+    679
+   ],
+   [
+    428,
+    673
+   ],
+   [
+    433,
+    670
+   ],
+   [
+    433,
+    660
+   ],
+   [
+    426,
+    657
+   ],
+   [
+    424,
+    655
+   ],
+   [
+    424,
+    638
+   ],
+   [
+    426,
+    637
+   ],
+   [
+    426,
+    630
+   ],
+   [
+    417,
+    625
+   ],
+   [
+    414,
+    625
+   ],
+   [
+    405,
+    630
+   ],
+   [
+    405,
+    636
+   ],
+   [
+    408,
+    639
+   ],
+   [
+    408,
+    655
+   ],
+   [
+    398,
+    661
+   ],
+   [
+    398,
+    670
+   ],
+   [
+    404,
+    674
+   ],
+   [
+    404,
+    691
+   ],
+   [
+    401,
+    694
+   ],
+   [
+    394,
+    697
+   ],
+   [
+    394,
+    707
+   ],
+   [
+    343,
+    738
+   ],
+   [
+    343,
+    747
+   ],
+   [
+    347,
+    745
+   ],
+   [
+    349,
+    746
+   ],
+   [
+    349,
+    834
+   ],
+   [
+    347,
+    836
+   ],
+   [
+    347,
+    864
+   ],
+   [
+    454,
+    918
+   ],
+   [
+    458,
+    918
+   ],
+   [
+    466,
+    914
+   ],
+   [
+    466,
+    911
+   ],
+   [
+    468,
+    909
+   ],
+   [
+    520,
+    883
+   ],
+   [
+    526,
+    884
+   ],
+   [
+    535,
+    879
+   ],
+   [
+    535,
+    851
+   ],
+   [
+    531,
+    848
+   ],
+   [
+    531,
+    820
+   ],
+   [
+    533,
+    818
+   ],
+   [
+    541,
+    814
+   ],
+   [
+    544,
+    814
+   ],
+   [
+    552,
+    829
+   ],
+   [
+    552,
+    831
+   ],
+   [
+    556,
+    839
+   ],
+   [
+    558,
+    839
+   ],
+   [
+    589,
+    823
+   ],
+   [
+    591,
+    823
+   ],
+   [
+    592,
+    824
+   ],
+   [
+    592,
+    841
+   ],
+   [
+    602,
+    846
+   ],
+   [
+    612,
+    840
+   ],
+   [
+    612,
+    812
+   ],
+   [
+    641,
+    797
+   ],
+   [
+    641,
+    787
+   ],
+   [
+    628,
+    761
+   ],
+   [
+    628,
+    754
+   ],
+   [
+    630,
+    752
+   ],
+   [
+    630,
+    718
+   ],
+   [
+    628,
+    716
+   ],
+   [
+    628,
+    707
+   ],
+   [
+    621,
+    703
+   ],
+   [
+    613,
+    707
+   ],
+   [
+    603,
+    706
+   ],
+   [
+    601,
+    704
+   ],
+   [
+    567,
+    633
+   ],
+   [
+    569,
+    631
+   ],
+   [
+    569,
+    622
+   ]
+  ]
+ ],
+ "hole_polygons_px": [],
+ "silhouette": {
+  "bbox_px": [
+   343,
+   616,
+   641,
+   918
+  ],
+  "area_px": 58195,
+  "polygon_vs_mask_iou": 0.99916,
+  "polygon_vs_mask_iou_note": "outline_polygon_px is the outer contour only; hole_polygons_px are the see-through gaps (area >= 60 px) to subtract; the iou is computed with the holes subtracted",
+  "alpha_threshold": 128,
+  "opened_holes_filled": false
+ },
+ "source_picture": "buildings-v2/lumber/lumber-a0-r0.png",
+ "quality": {
+  "iou_vs_painting_at_painting_camera": 0.93,
+  "texture_share_of_needed_texels": {
+   "painted": 0.419,
+   "mirrored": 0.044,
+   "cloned": 0.524,
+   "healed_or_mean": 0.014
+  },
+  "view_share": {
+   "visible": 211432,
+   "painted": 0.036,
+   "copied": 0.065,
+   "cloned": 0.896,
+   "healed_or_mean": 0.003
+  }
+ },
+ "note": "Textured blockout render: paint over the -textured.png; check the outline_polygon_px (equal to the alpha of -textured.png and -bare.png) against the bare render. canvas and anchor are the review-2 plan canvas; camera is the game camera."
+}
