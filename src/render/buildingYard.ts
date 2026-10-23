@@ -1,5 +1,6 @@
 import type { FrameGround, Side } from '../art/buildingGround';
 import { DIR_DX, DIR_DY } from '../engine/iso';
+import type { Span } from './footprintAnchor';
 import { Material } from './landscapeModel';
 import { surfaceColor, surfaceNoise } from './terrainMaterials';
 import type { PavingDoor } from './townPaving';
@@ -145,6 +146,13 @@ export interface YardSite {
   x: number;
   y: number;
   scale: number;
+  /**
+   * The footprint's width (along x) and depth (along y) as the game places it, where that is not
+   * the shape the frame's ground data records (a station of a two-tile span drawn from a picture
+   * measured on one tile). The picture is never changed; the tiles, the doors on them and the
+   * kerb follow this shape instead. Left out, the ground data's footprint is the footprint.
+   */
+  span?: Span;
   /** its tile's ground is sand or desert: a farm's earth is packed sand there */
   sandy: boolean;
 }
@@ -200,14 +208,16 @@ export function buildingYard(
     const [tx, ty] = groundTiles(px * k, py * k);
     foot.push(site.x + tx, site.y + ty);
   }
-  const { x: cx, y: cy } = cornerTile(ground, site.x, site.y);
+  const tiles = tilesOf(ground, site.span),
+    refit = tiles !== ground.footprint,
+    { x: cx, y: cy } = cornerTile(tiles, site.x, site.y);
   let kerb: Kerb | null = null;
   if (hasKerb(frame)) {
     const [ux, uy] = SIDE[ground.front.side];
     let edge = -Infinity,
       from = Infinity,
       to = -Infinity;
-    for (const [dx, dy] of ground.footprint)
+    for (const [dx, dy] of tiles)
       edge = Math.max(edge, (cx + dx - site.x) * ux + (cy + dy - site.y) * uy + 0.5);
     for (let i = 0; i < 8; i += 2) {
       const v = -(foot[i] - site.x) * uy + (foot[i + 1] - site.y) * ux;
@@ -247,10 +257,19 @@ export function buildingYard(
       [bx, by] = ground.foot[b],
       t = bx === ax ? 0.5 : Math.max(0, Math.min(1, (d.point[0] - ax) / (bx - ax))),
       [tx, ty] = groundTiles((ax + (bx - ax) * t) * k, (ay + (by - ay) * t) * k);
-    path(site.x + tx, site.y + ty, d.side, cx + d.reach[0], cy + d.reach[1]);
-    shown.add(`${cx + d.tile[0]},${cy + d.tile[1]},${d.side}`);
+    const at = { x: site.x + tx, y: site.y + ty };
+    // across the side the door opens on; a door of a differently shaped footprint is on the tile
+    // of that footprint nearest to where it stands, and opens onto the tile beyond it
+    const own = refit ? tileAt(tiles, cx, cy, at, d.side) : null,
+      reach = own
+        ? [own.x + SIDE[d.side][0], own.y + SIDE[d.side][1]]
+        : [cx + d.reach[0], cy + d.reach[1]];
+    path(at.x, at.y, d.side, reach[0], reach[1]);
+    shown.add(
+      own ? `${own.x},${own.y},${d.side}` : `${cx + d.tile[0]},${cy + d.tile[1]},${d.side}`,
+    );
   }
-  const inside = new Set(ground.footprint.map(([dx, dy]) => `${cx + dx},${cy + dy}`));
+  const inside = new Set(tiles.map(([dx, dy]) => `${cx + dx},${cy + dy}`));
   for (const d of doors) {
     const side = (['N', 'E', 'S', 'W'] as const)[d.side];
     if (!inside.has(`${d.tile.x},${d.tile.y}`) || shown.has(`${d.tile.x},${d.tile.y},${side}`))
@@ -261,21 +280,65 @@ export function buildingYard(
   return { kind, foot, margin, kerb, paths };
 }
 
+/**
+ * The tiles of a footprint, [dx, dy] from its corner tile: the ground data's, or the whole
+ * `span` where the game places a building on a footprint of another shape.
+ */
+function tilesOf(ground: FrameGround, span?: Span): readonly (readonly [number, number])[] {
+  if (!span || sameShape(ground, span)) return ground.footprint;
+  const out: [number, number][] = [];
+  for (let dy = 0; dy < span.h; dy++) for (let dx = 0; dx < span.w; dx++) out.push([dx, dy]);
+  return out;
+}
+/** Does the ground data's footprint have `span`'s width and depth? */
+function sameShape(ground: FrameGround, span: Span) {
+  let w = 0,
+    h = 0;
+  for (const [dx, dy] of ground.footprint) {
+    w = Math.max(w, dx + 1);
+    h = Math.max(h, dy + 1);
+  }
+  return w === span.w && h === span.h && ground.footprint.length === span.w * span.h;
+}
+/** The tile of `tiles` (from corner tile cx, cy) a door at map point `at` on `side` stands on. */
+function tileAt(
+  tiles: readonly (readonly [number, number])[],
+  cx: number,
+  cy: number,
+  at: { x: number; y: number },
+  side: Side,
+) {
+  // a step in from the wall, so a point on the line between two tiles falls on the one inside
+  const [ux, uy] = SIDE[side],
+    px = at.x - ux * 0.25,
+    py = at.y - uy * 0.25;
+  let best = { x: cx, y: cy },
+    nearest = Infinity;
+  for (const [dx, dy] of tiles) {
+    const d = (cx + dx - px) ** 2 + (cy + dy - py) ** 2;
+    if (d < nearest) {
+      nearest = d;
+      best = { x: cx + dx, y: cy + dy };
+    }
+  }
+  return best;
+}
 /** The footprint's corner tile (its lowest x and y) of a building anchored at map point (x, y). */
-function cornerTile(ground: FrameGround, x: number, y: number) {
+function cornerTile(tiles: readonly (readonly [number, number])[], x: number, y: number) {
   // the anchor is the middle of its tiles
   let mx = 0,
     my = 0;
-  for (const [dx, dy] of ground.footprint) {
-    mx += dx / ground.footprint.length;
-    my += dy / ground.footprint.length;
+  for (const [dx, dy] of tiles) {
+    mx += dx / tiles.length;
+    my += dy / tiles.length;
   }
   return { x: Math.round(x - mx), y: Math.round(y - my) };
 }
-/** The tiles a building anchored at map point (x, y) covers. */
-export function footprintTiles(ground: FrameGround, x: number, y: number) {
-  const corner = cornerTile(ground, x, y);
-  return ground.footprint.map(([dx, dy]) => ({ x: corner.x + dx, y: corner.y + dy }));
+/** The tiles a building anchored at map point (x, y) covers, on `span` where it has its own shape. */
+export function footprintTiles(ground: FrameGround, x: number, y: number, span?: Span) {
+  const tiles = tilesOf(ground, span),
+    corner = cornerTile(tiles, x, y);
+  return tiles.map(([dx, dy]) => ({ x: corner.x + dx, y: corner.y + dy }));
 }
 
 /** The foot's corners (n, e, s, w) that each side's wall runs between. */
