@@ -1,0 +1,166 @@
+{
+  "guide": "review2/warehouse-r1.png",
+  "job": "warehouse",
+  "name": "Warehouse",
+  "view": "r1",
+  "rotation": 1,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1024
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    800
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1254,
+    1254
+  ],
+  "toReturn": 1.2246,
+  "footprint": {
+    "tilesAtR0": [
+      2,
+      1
+    ],
+    "tiles": [
+      1,
+      2
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "lower right",
+    "longSideTiles": 2,
+    "corners": {
+      "w": [
+        128,
+        864
+      ],
+      "s": [
+        384,
+        992
+      ],
+      "e": [
+        896,
+        736
+      ],
+      "n": [
+        640,
+        608
+      ]
+    },
+    "spanPx": 768,
+    "drawnWidthPx": [
+      772,
+      945.3984
+    ],
+    "lowerLeftFootPx": 256,
+    "lowerRightFootPx": 512
+  },
+  "groundLine": {
+    "anchorRow": 800,
+    "nearCornerRow": 992,
+    "farCornerRow": 608,
+    "leftCornerRow": 864,
+    "rightCornerRow": 736,
+    "lowerLeft": [
+      [
+        128,
+        864
+      ],
+      [
+        384,
+        992
+      ]
+    ],
+    "lowerRight": [
+      [
+        384,
+        992
+      ],
+      [
+        896,
+        736
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "W",
+    "visible": false,
+    "visibleOn": null
+  },
+  "plan": {
+    "basis": "a plain box: 0.9 of each side of the footprint",
+    "baseTiles": [
+      0.9,
+      1.8
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.9,
+    "longSide": "lower right",
+    "lowerLeftOverLowerRight": 0.5,
+    "lowerLeftShare": 0.3333,
+    "lowerRightShare": 0.6667
+  },
+  "base": {
+    "corners": {
+      "w": [
+        166.4,
+        857.6
+      ],
+      "s": [
+        396.8,
+        972.8
+      ],
+      "e": [
+        857.6,
+        742.4
+      ],
+      "n": [
+        627.2,
+        627.2
+      ]
+    },
+    "spanPx": 691.2,
+    "lowerLeftFootPx": 230.4,
+    "lowerRightFootPx": 460.8,
+    "heightPx": 34,
+    "topFarCornerRow": 323.2,
+    "nearCornerRow": 972.8
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      694,
+      849.8789
+    ],
+    "minPx": [
+      659.3,
+      807.385
+    ],
+    "maxPx": [
+      728.7,
+      892.3729
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      772,
+      945.3984
+    ],
+    "longSideTiles": 1.8,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 772 px wide in the guide (945 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its long side (1.8 of 2 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 694 px wide in the guide (850 px), no wider than 729 px (892 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": false,
+    "note": "the front (W) is away from the camera: no front door in this view, on either visible wall"
+  }
+}

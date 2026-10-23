@@ -12,6 +12,8 @@
  * (`windmillFiles`).
  * The coaling stage (the `fuel_stop` family) has an oblong guide of its own for its three turned
  * views, with pier stubs, in the plan the painting must hold (`oblongGuide`, `oblongFiles`).
+ * The plan guides of the second review round (`PLAN_JOBS`, `planFiles`) are one per job and view,
+ * on the footprint the game gives the building, with a plan file of the numbers a prompt quotes.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -954,6 +956,432 @@ export function oblongFiles(height) {
   ]);
 }
 
+/**
+ * The plan guides of the second review round (issue #535): a camera and pose guide for each
+ * turned view that a repaint is wanted for, drawn on the footprint the game gives the building
+ * (gameplay room, in tiles at rotation 0: a quarter turn swaps its sides). Each is a flat plinth
+ * that is the footprint at that rotation, with a plain grey base on it that fills `PLAN.fill`
+ * (90 per cent) of the footprint's long side and stays inside it, and the front door marked on
+ * the front wall where the camera sees it. The painter spread the coaling stage 15 to 26 per
+ * cent wider than its plinth, and the fit then shrinks what is painted too wide, so each guide has
+ * a plan file with the numbers a prompt quotes: the canvas, the ground line, the footprint's
+ * corners and the width the painted base may have (`paintedWidth`, worded as the coaling stage's).
+ * The files are `guides/review2/<job>-r<view>.png` and `-plan.json`.
+ */
+export const PLAN = {
+  /** the base's share of the footprint's long side (and of its short side, for a plain box) */
+  fill: 0.9,
+  /** the painted base may be this much wider or narrower than the drawn one */
+  tolerance: 0.05,
+  /** the front door's mark: width in tiles along the wall, height in game px above the plinth */
+  door: { width: 0.2, height: 18 },
+  dir: `${ROOT}/guides/review2`,
+};
+
+/**
+ * The canvases: the sizes the painter is asked for, as the footprints' own, and one more, for a
+ * footprint of 3 x 2 tiles. `returned` is the size the image tool gives back (the 1024 px square
+ * came back 1254 px square, the 1536 x 1024 canvas of the depot came back as it was asked for; a
+ * tall house's canvas is taken to do the same).
+ */
+export const PLAN_CANVAS = {
+  t1: { ...FOOTPRINTS.t1, returned: [1254, 1254] },
+  t1x2: { ...FOOTPRINTS.t1x2, returned: [1254, 1254] },
+  t2x2: { ...FOOTPRINTS.t2x2, returned: [1536, 1024] },
+  t1tall: { ...FOOTPRINTS.t1tall, returned: [1024, 1536] },
+  t3x2: {
+    id: 't3x2',
+    canvas: [1536, 1024],
+    scale: 5,
+    centre: [768, 740],
+    tiles: [3, 2],
+    returned: [1536, 1024],
+  },
+};
+
+/**
+ * The jobs, in the order of the review: `id` (the family's or the building's own), `span` the
+ * footprint in tiles at rotation 0 (width along x, depth along y; the front is the S wall, along
+ * x), `canvas` one of PLAN_CANVAS, `height` the base's own height in game px above the plinth,
+ * `views` the rotations that are asked for, and `shares` (a 1 x 1 footprint only) the base's two
+ * sides at r0, lower left over lower right, where the finished r0 has an oblong plan that the
+ * turned views must keep: the long side then fills `PLAN.fill` and the short one its share of it.
+ */
+export const PLAN_JOBS = [
+  {
+    id: 'big_station',
+    name: 'Big station (the old station picture, base-v1 station.png)',
+    span: [2, 1],
+    canvas: 't1x2',
+    height: 36,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'town',
+    name: 'Town hall (the illustrated r0)',
+    span: [2, 1],
+    canvas: 't1x2',
+    height: 46,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'warehouse',
+    name: 'Warehouse',
+    span: [2, 1],
+    canvas: 't1x2',
+    height: 34,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'farm',
+    name: 'Small farm halt (buildings-v2, a0)',
+    span: [1, 1],
+    canvas: 't1',
+    height: 40,
+    views: [1, 3],
+    shares: [0.557, 0.443],
+    basis:
+      "farm-a0-r0.png's walls' feet, measured with measureBase of tools/building-fit.mjs: 532 px lower left, 422 px lower right of 954 px in a 1254 px picture",
+  },
+  {
+    id: 'big_farm',
+    name: 'Big farm (the old farm picture, base-v1 farm.png)',
+    span: [1, 2],
+    canvas: 't1x2',
+    height: 40,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'quarry',
+    name: 'Quarry (buildings-v2, a0)',
+    span: [1, 1],
+    canvas: 't1',
+    height: 40,
+    views: [2],
+    shares: [0.547, 0.453],
+    basis:
+      "quarry-a0-r0.png's walls' feet, measured with measureBase of tools/building-fit.mjs: 430 px lower left, 357 px lower right of 787 px in a 1254 px picture",
+  },
+  {
+    id: 'pump',
+    name: 'Water pump',
+    span: [1, 1],
+    canvas: 't1',
+    height: 30,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'grinder',
+    name: 'Stone grinder',
+    span: [1, 1],
+    canvas: 't1',
+    height: 40,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'refinery',
+    name: 'Oil refinery',
+    span: [1, 1],
+    canvas: 't1',
+    height: 50,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'power_plant',
+    name: 'Power plant',
+    span: [3, 2],
+    canvas: 't3x2',
+    height: 56,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'substation',
+    name: 'Battery (the `substation` id)',
+    span: [2, 2],
+    canvas: 't2x2',
+    height: 36,
+    views: [0, 1, 2, 3],
+  },
+  {
+    id: 'hydro_plant',
+    name: 'Hydro plant (a new design: an oblong powerhouse, apart from the square water pump)',
+    span: [1, 1],
+    canvas: 't1',
+    height: 40,
+    views: [0, 1, 2, 3],
+    shares: [0.59, 0.41],
+    basis:
+      "a design choice: a powerhouse 1.44 times as long as it is deep, so that its silhouette is not the water pump's square",
+  },
+  {
+    id: 'colliery',
+    name: 'Colliery',
+    span: [2, 2],
+    canvas: 't2x2',
+    height: 56,
+    views: [0, 1, 2, 3],
+  },
+  {
+    id: 'ironworks',
+    name: 'Ironworks',
+    span: [2, 2],
+    canvas: 't2x2',
+    height: 56,
+    views: [0, 1, 2, 3],
+  },
+  {
+    id: 'oil_derrick',
+    name: 'Oil derrick',
+    span: [2, 1],
+    canvas: 't1x2',
+    height: 24,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'townhouse',
+    name: 'House (townhouse)',
+    span: [1, 1],
+    canvas: 't1tall',
+    height: 40,
+    views: [1, 2, 3],
+  },
+  {
+    id: 'fuel_pump',
+    name: 'Fuel pump (the diesel-age tank on a brick house, #325)',
+    span: [1, 1],
+    canvas: 't1',
+    height: 44,
+    views: [1, 2, 3],
+    shares: [0.562, 0.438],
+    basis:
+      'fuel_pump-a1-r0.png of origin/art/325-fuel-pump, measured with measureBase of tools/building-fit.mjs: 441 px lower left, 344 px lower right of 785 px in a 1254 px picture; the r1 it has today measures 187 : 447 and is too thin',
+  },
+];
+
+/** Where a plan guide and its plan file are kept. */
+export const planGuideFile = (id, rot) => `${PLAN.dir}/${id}-r${rot}.png`;
+export const planFileOf = (id, rot) => `${PLAN.dir}/${id}-r${rot}-plan.json`;
+
+/** The footprint's width along x and depth along y in tiles, turned to `rot`. */
+export function planTiles(job, rot) {
+  const [w, h] = job.span;
+  return rot % 2 === 0 ? { w, h } : { w: h, h: w };
+}
+
+/**
+ * The base's extents along x and along y in tiles, turned to `rot`. At r0 the long side of the
+ * footprint is filled to `PLAN.fill`; for an oblong plan (`shares`) the other side of the base is
+ * its share of that, and a quarter turn swaps the sides.
+ */
+export function planBase(job, rot) {
+  const [w0, h0] = job.span;
+  let fx = PLAN.fill,
+    fy = PLAN.fill;
+  if (job.shares) {
+    const [a, b] = job.shares;
+    if (a >= b) fy = (PLAN.fill * b) / a;
+    else fx = (PLAN.fill * a) / b;
+  }
+  const bx = fx * w0,
+    by = fy * h0;
+  return rot % 2 === 0 ? { x: bx, y: by } : { x: by, y: bx };
+}
+
+/** The front door's mark on the wall the camera sees as the front, as a canvas outline; null where it cannot be seen. */
+export function planDoor(job, rot) {
+  const fp = PLAN_CANVAS[job.canvas];
+  const base = planBase(job, rot);
+  const x1 = base.x / 2,
+    y1 = base.y / 2;
+  const a = -PLAN.door.width / 2,
+    c = PLAN.door.width / 2;
+  const z0 = PLINTH,
+    z1 = PLINTH + PLAN.door.height;
+  for (const wall of ['S', 'E']) {
+    if (wallRole(wall, rot) !== 'front') continue;
+    return wall === 'S'
+      ? [
+          project(fp, a, y1, z0),
+          project(fp, c, y1, z0),
+          project(fp, c, y1, z1),
+          project(fp, a, y1, z1),
+        ]
+      : [
+          project(fp, x1, a, z0),
+          project(fp, x1, c, z0),
+          project(fp, x1, c, z1),
+          project(fp, x1, a, z1),
+        ];
+  }
+  return null;
+}
+
+/** The plan guide of `job` for the view `rot`: the plinth that is the footprint, the base, the front door. */
+export function drawPlan(job, rot, { plinth = true } = {}) {
+  const fp = PLAN_CANVAS[job.canvas];
+  const png = new PNG({ width: fp.canvas[0], height: fp.canvas[1] });
+  const { w, h } = planTiles(job, rot);
+  if (plinth)
+    drawBox(
+      png,
+      fp,
+      { x0: -w / 2, y0: -h / 2, x1: w / 2, y1: h / 2, z0: 0, z1: PLINTH },
+      { top: GREY.plinthTop, left: GREY.plinthLeft, right: GREY.plinthRight },
+    );
+  const base = planBase(job, rot);
+  drawBox(
+    png,
+    fp,
+    {
+      x0: -base.x / 2,
+      y0: -base.y / 2,
+      x1: base.x / 2,
+      y1: base.y / 2,
+      z0: PLINTH,
+      z1: PLINTH + job.height,
+    },
+    GREY,
+  );
+  const door = planDoor(job, rot);
+  if (door) {
+    fillPoly(png, door, GREY.opening);
+    strokePoly(png, door, GREY.line);
+  }
+  return png;
+}
+
+const sideName = (x, y) =>
+  Math.abs(x - y) < 1e-9 ? 'equal' : x > y ? 'lower left' : 'lower right';
+
+/**
+ * The plan file of `job` for the view `rot`: the numbers a prompt quotes, in canvas px of the guide
+ * and, second, of the picture the image tool returns (`toReturn` times as large).
+ */
+export function planFile(job, rot) {
+  const fp = PLAN_CANVAS[job.canvas];
+  const { w, h } = planTiles(job, rot);
+  const base = planBase(job, rot);
+  const toReturn = fp.returned[0] / fp.canvas[0];
+  const at = (v) => [round4(v), round4(v * toReturn)];
+  const ring4 = (x, y, z = 0) => ({
+    w: pair(project(fp, -x, y, z)),
+    s: pair(project(fp, x, y, z)),
+    e: pair(project(fp, x, -y, z)),
+    n: pair(project(fp, -x, -y, z)),
+  });
+  const foot = ring4(w / 2, h / 2);
+  const feet = ring4(base.x / 2, base.y / 2);
+  const baseOnly = drawnExtent(drawPlan(job, rot, { plinth: false }));
+  const whole = drawnExtent(drawPlan(job, rot));
+  const baseWidth = baseOnly.x1 - baseOnly.x0 + 1;
+  const footprintWidth = whole.x1 - whole.x0 + 1;
+  const [lo, hi] = [1 - PLAN.tolerance, 1 + PLAN.tolerance];
+  const maxWidth = Math.min(baseWidth * hi, footprintWidth);
+  const longTiles = Math.max(w, h);
+  const baseLong = Math.max(base.x, base.y);
+  const turn = ['S', 'W', 'N', 'E'][rot];
+  const door = planDoor(job, rot);
+  const shown = ['lower left', null, null, 'lower right'][rot];
+  const words = `Keep the base to the footprint: the grey plinth is the footprint, ${footprintWidth} px wide in the guide (${Math.round(footprintWidth * toReturn)} px in a ${fp.returned[0]} px wide picture), and the base stands on it and fills ${Math.round((100 * baseLong) / longTiles)} per cent of its long side (${round4(baseLong)} of ${longTiles} tiles). The painted base, the foot of the walls from the left corner to the right corner, is ${baseWidth} px wide in the guide (${Math.round(baseWidth * toReturn)} px), no wider than ${Math.round(maxWidth)} px (${Math.round(maxWidth * toReturn)} px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building.`;
+  return {
+    guide: `review2/${job.id}-r${rot}.png`,
+    job: job.id,
+    name: job.name,
+    view: `r${rot}`,
+    rotation: rot,
+    note: 'Written by tools/building-guides.mjs: do not edit by hand.',
+    canvas: fp.canvas,
+    scale: fp.scale,
+    anchor: fp.centre,
+    units:
+      "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+    returnSize: fp.returned,
+    toReturn: round4(toReturn),
+    footprint: {
+      tilesAtR0: job.span,
+      tiles: [w, h],
+      note: 'gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them',
+      longSide: sideName(w, h),
+      longSideTiles: longTiles,
+      corners: foot,
+      spanPx: round4((w + h) * 32 * fp.scale),
+      drawnWidthPx: at(footprintWidth),
+      lowerLeftFootPx: round4(w * 32 * fp.scale),
+      lowerRightFootPx: round4(h * 32 * fp.scale),
+    },
+    groundLine: {
+      anchorRow: fp.centre[1],
+      nearCornerRow: foot.s[1],
+      farCornerRow: foot.n[1],
+      leftCornerRow: foot.w[1],
+      rightCornerRow: foot.e[1],
+      lowerLeft: [foot.w, foot.s],
+      lowerRight: [foot.s, foot.e],
+      slope: 0.5,
+      note: "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them",
+    },
+    front: {
+      wall: turn,
+      visible: door !== null,
+      visibleOn: shown,
+    },
+    plan: {
+      basis: job.basis ?? `a plain box: ${PLAN.fill} of each side of the footprint`,
+      baseTiles: [round4(base.x), round4(base.y)],
+      fillOfLongSide: round4(baseLong / longTiles),
+      fillOfShortSide: round4(Math.min(base.x, base.y) / Math.min(w, h)),
+      longSide: sideName(base.x, base.y),
+      lowerLeftOverLowerRight: round4(base.x / base.y),
+      lowerLeftShare: round4(base.x / (base.x + base.y)),
+      lowerRightShare: round4(base.y / (base.x + base.y)),
+    },
+    base: {
+      corners: feet,
+      spanPx: round4((base.x + base.y) * 32 * fp.scale),
+      lowerLeftFootPx: round4(base.x * 32 * fp.scale),
+      lowerRightFootPx: round4(base.y * 32 * fp.scale),
+      heightPx: job.height,
+      topFarCornerRow: round4(project(fp, -base.x / 2, -base.y / 2, PLINTH + job.height)[1]),
+      nearCornerRow: feet.s[1],
+    },
+    paintedWidth: {
+      mustHoldPx: at(baseWidth),
+      minPx: at(baseWidth * lo),
+      maxPx: at(maxWidth),
+      tolerance: PLAN.tolerance,
+      footprintWidthPx: at(footprintWidth),
+      longSideTiles: round4(baseLong),
+      shareOfFootprintLongSide: round4(baseLong / longTiles),
+      insideFootprint: true,
+      measuredOvershoot: OBLONG.painted.overshoot,
+      note: 'the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)',
+      words,
+    },
+    door: door
+      ? {
+          visible: true,
+          outline: door.map(pair),
+          widthTiles: PLAN.door.width,
+          heightPx: PLAN.door.height,
+          note: `the front door, on the ${shown} wall, in the middle of the wall`,
+        }
+      : {
+          visible: false,
+          note: `the front (${turn}) is away from the camera: no front door in this view, on either visible wall`,
+        },
+  };
+}
+
+/** The plan guides' files, as `[path, bytes]`: for each job and view the picture, then its plan file. */
+export function planFiles() {
+  return PLAN_JOBS.flatMap((job) =>
+    job.views.flatMap((rot) => [
+      [planGuideFile(job.id, rot), PNG.sync.write(drawPlan(job, rot))],
+      [planFileOf(job.id, rot), Buffer.from(JSON.stringify(planFile(job, rot), null, 2) + '\n')],
+    ]),
+  );
+}
+
 /** The families that ask for a block of their own: `{ family, footprint, height }`. */
 export function familyBlocks(inventory, families) {
   return inventory
@@ -977,10 +1405,11 @@ export const windmillFamilies = (families) =>
  * when a family asks for that guide kind, and the coaling stage's oblong guides (`blocks` and
  * `windmill` stand in for them).
  */
-export function writeGuides(root = '.', blocks = null, windmill = null) {
+export function writeGuides(root = '.', blocks = null, windmill = null, plans = null) {
   const families = JSON.parse(readFileSync(join(ROOT, 'families.json'), 'utf8'));
   blocks ??= familyBlocks(loadInventory(), families);
   windmill ??= windmillFamilies(families).length > 0;
+  plans ??= true;
   const out = [];
   const write = (file, bytes) => {
     file = join(root, file);
@@ -1001,6 +1430,7 @@ export function writeGuides(root = '.', blocks = null, windmill = null) {
   for (const b of blocks)
     if (b.family === OBLONG.family)
       for (const [file, bytes] of oblongFiles(b.height)) write(file, bytes);
+  if (plans) for (const [file, bytes] of planFiles()) write(file, bytes);
   return out;
 }
 

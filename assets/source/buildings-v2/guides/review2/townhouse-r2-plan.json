@@ -1,0 +1,166 @@
+{
+  "guide": "review2/townhouse-r2.png",
+  "job": "townhouse",
+  "name": "House (townhouse)",
+  "view": "r2",
+  "rotation": 2,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    1344
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1024,
+    1536
+  ],
+  "toReturn": 1,
+  "footprint": {
+    "tilesAtR0": [
+      1,
+      1
+    ],
+    "tiles": [
+      1,
+      1
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "equal",
+    "longSideTiles": 1,
+    "corners": {
+      "w": [
+        256,
+        1344
+      ],
+      "s": [
+        512,
+        1472
+      ],
+      "e": [
+        768,
+        1344
+      ],
+      "n": [
+        512,
+        1216
+      ]
+    },
+    "spanPx": 512,
+    "drawnWidthPx": [
+      516,
+      516
+    ],
+    "lowerLeftFootPx": 256,
+    "lowerRightFootPx": 256
+  },
+  "groundLine": {
+    "anchorRow": 1344,
+    "nearCornerRow": 1472,
+    "farCornerRow": 1216,
+    "leftCornerRow": 1344,
+    "rightCornerRow": 1344,
+    "lowerLeft": [
+      [
+        256,
+        1344
+      ],
+      [
+        512,
+        1472
+      ]
+    ],
+    "lowerRight": [
+      [
+        512,
+        1472
+      ],
+      [
+        768,
+        1344
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "N",
+    "visible": false,
+    "visibleOn": null
+  },
+  "plan": {
+    "basis": "a plain box: 0.9 of each side of the footprint",
+    "baseTiles": [
+      0.9,
+      0.9
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.9,
+    "longSide": "equal",
+    "lowerLeftOverLowerRight": 1,
+    "lowerLeftShare": 0.5,
+    "lowerRightShare": 0.5
+  },
+  "base": {
+    "corners": {
+      "w": [
+        281.6,
+        1344
+      ],
+      "s": [
+        512,
+        1459.2
+      ],
+      "e": [
+        742.4,
+        1344
+      ],
+      "n": [
+        512,
+        1228.8
+      ]
+    },
+    "spanPx": 460.8,
+    "lowerLeftFootPx": 230.4,
+    "lowerRightFootPx": 230.4,
+    "heightPx": 40,
+    "topFarCornerRow": 876.8,
+    "nearCornerRow": 1459.2
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      464,
+      464
+    ],
+    "minPx": [
+      440.8,
+      440.8
+    ],
+    "maxPx": [
+      487.2,
+      487.2
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      516,
+      516
+    ],
+    "longSideTiles": 0.9,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 516 px wide in the guide (516 px in a 1024 px wide picture), and the base stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 464 px wide in the guide (464 px), no wider than 487 px (487 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": false,
+    "note": "the front (N) is away from the camera: no front door in this view, on either visible wall"
+  }
+}

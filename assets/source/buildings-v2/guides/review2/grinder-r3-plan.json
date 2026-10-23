@@ -1,0 +1,186 @@
+{
+  "guide": "review2/grinder-r3.png",
+  "job": "grinder",
+  "name": "Stone grinder",
+  "view": "r3",
+  "rotation": 3,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1024
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    832
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1254,
+    1254
+  ],
+  "toReturn": 1.2246,
+  "footprint": {
+    "tilesAtR0": [
+      1,
+      1
+    ],
+    "tiles": [
+      1,
+      1
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "equal",
+    "longSideTiles": 1,
+    "corners": {
+      "w": [
+        256,
+        832
+      ],
+      "s": [
+        512,
+        960
+      ],
+      "e": [
+        768,
+        832
+      ],
+      "n": [
+        512,
+        704
+      ]
+    },
+    "spanPx": 512,
+    "drawnWidthPx": [
+      516,
+      631.8984
+    ],
+    "lowerLeftFootPx": 256,
+    "lowerRightFootPx": 256
+  },
+  "groundLine": {
+    "anchorRow": 832,
+    "nearCornerRow": 960,
+    "farCornerRow": 704,
+    "leftCornerRow": 832,
+    "rightCornerRow": 832,
+    "lowerLeft": [
+      [
+        256,
+        832
+      ],
+      [
+        512,
+        960
+      ]
+    ],
+    "lowerRight": [
+      [
+        512,
+        960
+      ],
+      [
+        768,
+        832
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "E",
+    "visible": true,
+    "visibleOn": "lower right"
+  },
+  "plan": {
+    "basis": "a plain box: 0.9 of each side of the footprint",
+    "baseTiles": [
+      0.9,
+      0.9
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.9,
+    "longSide": "equal",
+    "lowerLeftOverLowerRight": 1,
+    "lowerLeftShare": 0.5,
+    "lowerRightShare": 0.5
+  },
+  "base": {
+    "corners": {
+      "w": [
+        281.6,
+        832
+      ],
+      "s": [
+        512,
+        947.2
+      ],
+      "e": [
+        742.4,
+        832
+      ],
+      "n": [
+        512,
+        716.8
+      ]
+    },
+    "spanPx": 460.8,
+    "lowerLeftFootPx": 230.4,
+    "lowerRightFootPx": 230.4,
+    "heightPx": 40,
+    "topFarCornerRow": 364.8,
+    "nearCornerRow": 947.2
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      464,
+      568.2188
+    ],
+    "minPx": [
+      440.8,
+      539.8078
+    ],
+    "maxPx": [
+      487.2,
+      596.6297
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      516,
+      631.8984
+    ],
+    "longSideTiles": 0.9,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 516 px wide in the guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 464 px wide in the guide (568 px), no wider than 487 px (597 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": true,
+    "outline": [
+      [
+        652.8,
+        844.8
+      ],
+      [
+        601.6,
+        870.4
+      ],
+      [
+        601.6,
+        726.4
+      ],
+      [
+        652.8,
+        700.8
+      ]
+    ],
+    "widthTiles": 0.2,
+    "heightPx": 18,
+    "note": "the front door, on the lower right wall, in the middle of the wall"
+  }
+}

@@ -10,6 +10,8 @@ import {
   METRE_PX,
   OBLONG,
   PIER_GREY,
+  PLAN_CANVAS,
+  PLAN_JOBS,
   SAILS_FACE,
   WINDMILL,
   WINDMILL_GREY,
@@ -26,6 +28,11 @@ import {
   oblongPlan,
   oblongPlanFile,
   openingsOf,
+  planBase,
+  planFileOf,
+  planFiles,
+  planGuideFile,
+  drawPlan,
   portalWall,
   windmillFamilies,
   windmillFiles,
@@ -264,7 +271,12 @@ describe("the coaling stage's oblong guides", { timeout: 30_000 }, () => {
       expect(Buffer.compare(bytes, readFileSync(file)), file).toBe(0);
     const root = mkdtempSync(join(tmpdir(), 'oblong-'));
     try {
-      const written = writeGuides(root, [{ family: 'fuel_stop', footprint: 't1', height }], false);
+      const written = writeGuides(
+        root,
+        [{ family: 'fuel_stop', footprint: 't1', height }],
+        false,
+        false,
+      );
       // the footprints' 16, the family's own 4, and the oblong guides' six files
       expect(written).toHaveLength(16 + 4 + 6);
       const names = written.slice(20).map((f) => f.slice(root.length + 1).replaceAll('\\', '/'));
@@ -478,7 +490,7 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     const root = mkdtempSync(join(tmpdir(), 'guides-'));
     try {
       // the footprints' guides (16) and then the windmill's nine, as written to disk
-      const written = writeGuides(root, [], true);
+      const written = writeGuides(root, [], true, false);
       expect(written).toHaveLength(16 + 9);
       const names = written.slice(16).map((f) => f.slice(root.length + 1));
       expect(names.map((f) => f.replaceAll('\\', '/'))).toEqual(windmillFiles().map(([f]) => f));
@@ -1026,5 +1038,345 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
       for (const r of views) expect(hubOf(r).cross.sailsFace).toEqual(hub.cross.sailsFace);
       expect(WINDMILL_TURNS).toHaveLength(4);
     });
+  });
+});
+
+describe('the plan guides of review 2 (#535)', { timeout: 60_000 }, () => {
+  const png = (id, rot) => PNG.sync.read(readFileSync(planGuideFile(id, rot)));
+  const plan = (id, rot) => JSON.parse(readFileSync(planFileOf(id, rot), 'utf8'));
+  const job = (id) => PLAN_JOBS.find((j) => j.id === id);
+  const all = PLAN_JOBS.flatMap((j) => j.views.map((r) => [j, r]));
+  const opaque = (img, x, y) => img.data[(y * img.width + x) * 4 + 3] > 0;
+  const rgbAt = (img, [x, y]) => {
+    const o = (Math.round(y) * img.width + Math.round(x)) * 4;
+    return [...img.data.subarray(o, o + 3)];
+  };
+  const round4 = (v) => Math.round(v * 1e4) / 1e4;
+  /** The first and last column and row that hold a pixel `pick` accepts (any opaque pixel by default). */
+  const extent = (img, pick = () => true) => {
+    let x0 = img.width,
+      x1 = -1,
+      y0 = img.height,
+      y1 = -1;
+    for (let y = 0; y < img.height; y++)
+      for (let x = 0; x < img.width; x++) {
+        const o = (y * img.width + x) * 4;
+        if (img.data[o + 3] && pick([...img.data.subarray(o, o + 3)])) {
+          x0 = Math.min(x0, x);
+          x1 = Math.max(x1, x);
+          y0 = Math.min(y0, y);
+          y1 = Math.max(y1, y);
+        }
+      }
+    return { x0, x1, y0, y1 };
+  };
+  const isGrey = (list) => (rgb) => list.some((g) => g.every((v, i) => v === rgb[i]));
+
+  it('is asked for what the review asks for: each job, its footprint and its views', () => {
+    expect(
+      PLAN_JOBS.map((j) => [j.id, j.span.join('x'), j.views.map((r) => `r${r}`).join(' ')]),
+    ).toEqual([
+      ['big_station', '2x1', 'r1 r2 r3'],
+      ['town', '2x1', 'r1 r2 r3'],
+      ['warehouse', '2x1', 'r1 r2 r3'],
+      ['farm', '1x1', 'r1 r3'],
+      ['big_farm', '1x2', 'r1 r2 r3'],
+      ['quarry', '1x1', 'r2'],
+      ['pump', '1x1', 'r1 r2 r3'],
+      ['grinder', '1x1', 'r1 r2 r3'],
+      ['refinery', '1x1', 'r1 r2 r3'],
+      ['power_plant', '3x2', 'r1 r2 r3'],
+      ['substation', '2x2', 'r0 r1 r2 r3'],
+      ['hydro_plant', '1x1', 'r0 r1 r2 r3'],
+      ['colliery', '2x2', 'r0 r1 r2 r3'],
+      ['ironworks', '2x2', 'r0 r1 r2 r3'],
+      ['oil_derrick', '2x1', 'r1 r2 r3'],
+      ['townhouse', '1x1', 'r1 r2 r3'],
+      ['fuel_pump', '1x1', 'r1 r2 r3'],
+    ]);
+    // the coaling stage has its oblong guides from #524 and gets nothing new here
+    expect(PLAN_JOBS.map((j) => j.id)).not.toContain('fuel_stop');
+    for (const r of OBLONG.views) {
+      expect(readFileSync(`${ROOT}/guides/fuel_stop-oblong-r${r}.png`).length).toBeGreaterThan(0);
+      expect(
+        JSON.parse(readFileSync(`${ROOT}/guides/fuel_stop-oblong-r${r}-plan.json`, 'utf8')).view,
+      ).toBe(`r${r}`);
+    }
+    // every job names a canvas, and an oblong plan is only for one tile
+    for (const j of PLAN_JOBS) {
+      expect(PLAN_CANVAS[j.canvas], j.id).toBeDefined();
+      if (j.shares) expect(j.span, j.id).toEqual([1, 1]);
+      expect(j.height, j.id).toBeGreaterThanOrEqual(20);
+      expect(j.height, j.id).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('keeps the files the repository holds: a picture and a plan file per job and view, as the tool draws them', () => {
+    const drawn = planFiles();
+    expect(all).toHaveLength(52);
+    expect(drawn).toHaveLength(2 * all.length);
+    expect(drawn.map(([file]) => file)).toEqual(
+      all.flatMap(([j, r]) => [planGuideFile(j.id, r), planFileOf(j.id, r)]),
+    );
+    for (const [file, bytes] of drawn)
+      expect(Buffer.compare(bytes, readFileSync(file)), file).toBe(0);
+    expect(planGuideFile('town', 2)).toBe(`${ROOT}/guides/review2/town-r2.png`);
+    expect(planFileOf('town', 2)).toBe(`${ROOT}/guides/review2/town-r2-plan.json`);
+    const root = mkdtempSync(join(tmpdir(), 'plans-'));
+    try {
+      const written = writeGuides(root, [], false, true);
+      expect(written).toHaveLength(16 + drawn.length);
+      expect(written.slice(16).map((f) => f.slice(root.length + 1).replaceAll('\\', '/'))).toEqual(
+        drawn.map(([f]) => f),
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('leaves the files the repository already held as they are: the footprints, the families, the earlier guides', () => {
+    const root = mkdtempSync(join(tmpdir(), 'plans-'));
+    try {
+      const written = writeGuides(root, [], false, false);
+      expect(written).toHaveLength(16);
+      for (const file of written) {
+        const name = file.slice(root.length + 1);
+        expect(Buffer.compare(readFileSync(file), readFileSync(name)), name).toBe(0);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('turns the footprint a quarter at a time: the sides swap, the plinth is the footprint', () => {
+    for (const [j, r] of all) {
+      const p = plan(j.id, r);
+      const fp = PLAN_CANVAS[j.canvas];
+      const [w0, h0] = j.span;
+      const tiles = r % 2 === 0 ? [w0, h0] : [h0, w0];
+      expect(p.footprint.tilesAtR0, `${j.id} r${r}`).toEqual(j.span);
+      expect(p.footprint.tiles, `${j.id} r${r}`).toEqual(tiles);
+      // its corners are the projected diamond, the near corner the lowest
+      const [w, h] = tiles;
+      const c = p.footprint.corners;
+      const corner = (x, y) => project(fp, x, y).map(round4);
+      expect(c.w).toEqual(corner(-w / 2, h / 2));
+      expect(c.s).toEqual(corner(w / 2, h / 2));
+      expect(c.e).toEqual(corner(w / 2, -h / 2));
+      expect(c.n).toEqual(corner(-w / 2, -h / 2));
+      expect(c.s[1]).toBeGreaterThan(Math.max(c.w[1], c.e[1]));
+      // 2:1 lines
+      expect((c.s[1] - c.w[1]) / (c.s[0] - c.w[0])).toBeCloseTo(0.5, 9);
+      expect(p.footprint.lowerLeftFootPx).toBeCloseTo(w * 32 * fp.scale, 6);
+      expect(p.footprint.lowerRightFootPx).toBeCloseTo(h * 32 * fp.scale, 6);
+      expect(p.footprint.longSide).toBe(w === h ? 'equal' : w > h ? 'lower left' : 'lower right');
+      // the canvas, the anchor and the ground line say what the drawing has
+      expect(p.canvas).toEqual(fp.canvas);
+      expect(p.anchor).toEqual(fp.centre);
+      expect(p.scale).toBe(fp.scale);
+      expect(p.groundLine.anchorRow).toBe(fp.centre[1]);
+      expect(p.groundLine.nearCornerRow).toBe(c.s[1]);
+      expect(p.groundLine.farCornerRow).toBe(c.n[1]);
+      expect(p.groundLine.lowerLeft).toEqual([c.w, c.s]);
+      expect(p.groundLine.lowerRight).toEqual([c.s, c.e]);
+      // the picture: the plinth's corners w and e are its extremes, with the 3 px outline
+      const img = png(j.id, r);
+      expect([img.width, img.height]).toEqual(fp.canvas);
+      const e = extent(img);
+      expect(e.x1 - e.x0 + 1).toBe(p.paintedWidth.footprintWidthPx[0]);
+      expect(Math.abs(e.x1 - e.x0 + 1 - (c.e[0] - c.w[0] + 3))).toBeLessThanOrEqual(1);
+      // the whole drawing stands inside the canvas with room to spare
+      for (const k of ['w', 's', 'e', 'n']) {
+        expect(c[k][0]).toBeGreaterThan(40);
+        expect(c[k][0]).toBeLessThan(fp.canvas[0] - 40);
+        expect(c[k][1]).toBeGreaterThan(40);
+        expect(c[k][1]).toBeLessThan(fp.canvas[1] - 16);
+      }
+      expect(p.base.topFarCornerRow).toBeGreaterThan(16);
+      // the returned picture is the image tool's
+      expect(p.returnSize).toEqual(fp.returned);
+      expect(p.toReturn).toBeCloseTo(fp.returned[0] / fp.canvas[0], 4);
+    }
+  });
+
+  it("fills 90 per cent of the footprint's long side and stays inside it", () => {
+    for (const [j, r] of all) {
+      const p = plan(j.id, r);
+      const fp = PLAN_CANVAS[j.canvas];
+      const [w, h] = p.footprint.tiles;
+      const [bx, by] = p.plan.baseTiles;
+      expect(p.plan.fillOfLongSide, `${j.id} r${r}`).toBeCloseTo(0.9, 4);
+      expect(p.paintedWidth.shareOfFootprintLongSide, `${j.id} r${r}`).toBeCloseTo(0.9, 4);
+      // inside: no side of the base is longer than the footprint's, the feet lie within its edges
+      expect(bx).toBeLessThanOrEqual(w);
+      expect(by).toBeLessThanOrEqual(h);
+      const f = p.footprint.corners,
+        b = p.base.corners;
+      expect(b.w[0]).toBeGreaterThan(f.w[0]);
+      expect(b.e[0]).toBeLessThan(f.e[0]);
+      expect(b.s[1]).toBeLessThan(f.s[1]);
+      expect(b.n[1]).toBeGreaterThan(f.n[1]);
+      // a plain box fills 90 per cent of both sides; an oblong plan of one tile has the short one in its share
+      if (!j.shares) expect(p.plan.fillOfShortSide).toBeCloseTo(0.9, 4);
+      else expect(p.plan.fillOfShortSide).toBeLessThan(0.9);
+      // the base's own feet run parallel to the plinth's edges: both 2:1
+      expect((b.s[1] - b.w[1]) / (b.s[0] - b.w[0])).toBeCloseTo(0.5, 5);
+      expect((b.s[1] - b.e[1]) / (b.s[0] - b.e[0])).toBeCloseTo(-0.5, 5);
+      expect(p.base.lowerLeftFootPx).toBeCloseTo(planBase(j, r).x * 32 * fp.scale, 3);
+      expect(p.base.lowerRightFootPx).toBeCloseTo(planBase(j, r).y * 32 * fp.scale, 3);
+    }
+  });
+
+  it("states the width the painted base must hold, measured on the drawn picture, and keeps it inside the footprint's", () => {
+    const faces = [GREY.top, GREY.left, GREY.right];
+    for (const [j, r] of all) {
+      const p = plan(j.id, r);
+      const img = png(j.id, r);
+      const { mustHoldPx, minPx, maxPx, tolerance, footprintWidthPx } = p.paintedWidth;
+      // the base's faces as the picture has them: the outline adds about 3 px
+      const f = extent(img, isGrey(faces));
+      expect(Math.abs(mustHoldPx[0] - (p.base.spanPx + 3)), `${j.id} r${r}`).toBeLessThanOrEqual(1);
+      expect(mustHoldPx[0] - (f.x1 - f.x0 + 1)).toBeLessThanOrEqual(10);
+      expect(mustHoldPx[0]).toBeGreaterThanOrEqual(f.x1 - f.x0 + 1);
+      const alone = extent(drawPlan(j, r, { plinth: false }));
+      expect(mustHoldPx[0]).toBe(alone.x1 - alone.x0 + 1);
+      // in the picture the image tool returns
+      for (const q of [mustHoldPx, minPx, maxPx, footprintWidthPx])
+        expect(q[1] / q[0]).toBeCloseTo(p.toReturn, 3);
+      expect(tolerance).toBe(0.05);
+      expect(minPx[0] / mustHoldPx[0]).toBeCloseTo(0.95, 3);
+      expect(maxPx[0]).toBeGreaterThan(mustHoldPx[0]);
+      expect(maxPx[0]).toBeLessThanOrEqual(mustHoldPx[0] * 1.05 + 1e-3);
+      // never wider than the footprint
+      expect(maxPx[0], `${j.id} r${r}`).toBeLessThanOrEqual(footprintWidthPx[0]);
+      expect(mustHoldPx[0]).toBeLessThan(footprintWidthPx[0]);
+      expect(p.paintedWidth.insideFootprint).toBe(true);
+      // the words a prompt quotes carry the same numbers
+      for (const n of [footprintWidthPx[0], footprintWidthPx[1], mustHoldPx[0], mustHoldPx[1]])
+        expect(p.paintedWidth.words, `${j.id} r${r} ${n}`).toContain(`${Math.round(n)} px`);
+      for (const n of maxPx)
+        expect(p.paintedWidth.words, `${j.id} r${r} ${n}`).toContain(`${Math.round(n)} px`);
+      expect(p.paintedWidth.words).toContain('per cent of its long side');
+    }
+  });
+
+  it('shows the front door on the front wall where the camera sees it, and nowhere else', () => {
+    for (const [j, r] of all) {
+      const p = plan(j.id, r);
+      const img = png(j.id, r);
+      const dark = extent(img, isGrey([GREY.opening]));
+      expect(p.front.wall).toBe(['S', 'W', 'N', 'E'][r]);
+      expect(p.front.visible).toBe(r === 0 || r === 3);
+      expect(p.door.visible).toBe(r === 0 || r === 3);
+      if (r === 0 || r === 3) {
+        const pts = p.door.outline;
+        const mid = [pts.reduce((s, q) => s + q[0], 0) / 4, pts.reduce((s, q) => s + q[1], 0) / 4];
+        expect(rgbAt(img, mid)).toEqual(GREY.opening);
+        // on the wall the front is on, in the middle of it
+        expect(p.front.visibleOn).toBe(r === 0 ? 'lower left' : 'lower right');
+        const b = p.base.corners;
+        const wall = r === 0 ? [b.w, b.s] : [b.s, b.e];
+        expect(mid[0]).toBeCloseTo((wall[0][0] + wall[1][0]) / 2, 0);
+        expect(dark.x1).toBeGreaterThan(dark.x0);
+      } else {
+        // no opening grey at all in a view whose front is away from the camera
+        expect(dark.x1).toBe(-1);
+        expect(p.door.note).toContain('away from the camera');
+      }
+    }
+  });
+
+  it("keeps the finished r0's plan where the turned views must match it, turned with the building", () => {
+    // the base's two sides at r0, lower left : lower right, as measured of the finished r0
+    const shares = {
+      farm: [0.557, 0.443],
+      quarry: [0.547, 0.453],
+      fuel_pump: [0.562, 0.438],
+      hydro_plant: [0.59, 0.41],
+    };
+    for (const [id, [ll, lr]] of Object.entries(shares)) {
+      expect(job(id).shares).toEqual([ll, lr]);
+      for (const r of job(id).views) {
+        const p = plan(id, r);
+        const even = r % 2 === 0;
+        // a quarter turn puts the short side where the long one was
+        expect(p.plan.lowerLeftShare, `${id} r${r}`).toBeCloseTo(even ? ll : lr, 3);
+        expect(p.plan.lowerRightShare, `${id} r${r}`).toBeCloseTo(even ? lr : ll, 3);
+        expect(p.plan.longSide).toBe(even ? 'lower left' : 'lower right');
+        // the same total width whatever the turn
+        expect(p.base.spanPx).toBeCloseTo((0.9 + (0.9 * lr) / ll) * 32 * PLAN_CANVAS.t1.scale, 2);
+        expect(p.plan.basis.length).toBeGreaterThan(20);
+      }
+    }
+    // the fuel pump's r1 of today (187 : 447, lower left over lower right) was too thin
+    expect(plan('fuel_pump', 1).plan.lowerLeftOverLowerRight).toBeGreaterThan(0.7);
+    expect(plan('fuel_pump', 1).plan.lowerLeftOverLowerRight).toBeLessThan(0.8);
+    expect(plan('fuel_pump', 2).plan.lowerLeftOverLowerRight).toBeCloseTo(1.2831, 3);
+    // the hydro plant is not the water pump's square
+    expect(job('pump').shares).toBeUndefined();
+    expect(plan('pump', 1).plan.longSide).toBe('equal');
+    expect(plan('hydro_plant', 0).plan.longSide).toBe('lower left');
+  });
+
+  it('puts the larger buildings on their tiles: the long side along the front at r0, across it at r1', () => {
+    for (const id of ['big_station', 'town', 'warehouse', 'oil_derrick']) {
+      expect(plan(id, 1).footprint.tiles).toEqual([1, 2]);
+      expect(plan(id, 1).footprint.longSide).toBe('lower right');
+      expect(plan(id, 2).footprint.tiles).toEqual([2, 1]);
+      expect(plan(id, 3).footprint.longSide).toBe('lower right');
+      expect(plan(id, 2).plan.baseTiles).toEqual([1.8, 0.9]);
+    }
+    // the farm is one tile wide and two long at r0
+    expect(plan('big_farm', 1).footprint.tiles).toEqual([2, 1]);
+    expect(plan('big_farm', 2).footprint.tiles).toEqual([1, 2]);
+    expect(plan('big_farm', 2).footprint.longSide).toBe('lower right');
+    // the 2 x 2: 4 tiles of diamond on a 1536 x 1024 canvas at 6 px per game px
+    for (const id of ['substation', 'colliery', 'ironworks'])
+      for (const r of [0, 1, 2, 3]) {
+        expect(plan(id, r).footprint.tiles).toEqual([2, 2]);
+        expect(plan(id, r).plan.baseTiles).toEqual([1.8, 1.8]);
+        expect(plan(id, r).footprint.spanPx).toBe(768);
+      }
+    // the 3 x 2 has a canvas of its own: 5 tiles of diamond at 5 px per game px
+    expect(plan('power_plant', 1).footprint.tiles).toEqual([2, 3]);
+    expect(plan('power_plant', 1).footprint.longSide).toBe('lower right');
+    expect(plan('power_plant', 2).footprint.tiles).toEqual([3, 2]);
+    expect(plan('power_plant', 2).plan.baseTiles).toEqual([2.7, 1.8]);
+    expect(plan('power_plant', 2).canvas).toEqual([1536, 1024]);
+    expect(plan('power_plant', 2).footprint.spanPx).toBe(800);
+    // one tile, on the square canvas, and the house's tall one
+    expect(plan('pump', 1).footprint.spanPx).toBe(512);
+    expect(plan('townhouse', 1).canvas).toEqual([1024, 1536]);
+  });
+
+  it('shades the base as the other guides do and stands it on the plinth that is the footprint', () => {
+    for (const [j, r] of all) {
+      const fp = PLAN_CANVAS[j.canvas];
+      const img = png(j.id, r);
+      const base = planBase(j, r);
+      const z1 = 4 + j.height;
+      expect(rgbAt(img, project(fp, 0, 0, z1))).toEqual(GREY.top);
+      expect(rgbAt(img, project(fp, base.x * 0.25, base.y / 2, z1 - 3))).toEqual(GREY.left);
+      expect(rgbAt(img, project(fp, base.x / 2, base.y * 0.25, z1 - 3))).toEqual(GREY.right);
+      // the plinth: its near corner is the lowest thing drawn, nothing is below it
+      const [w, h] = plan(j.id, r).footprint.tiles;
+      const s = project(fp, w / 2, h / 2);
+      expect(opaque(img, Math.round(s[0]), Math.round(s[1]) - 2)).toBe(true);
+      expect(opaque(img, Math.round(s[0]), Math.round(s[1]) + 6)).toBe(false);
+    }
+  });
+
+  it('draws the base alone for a stand-in picture, at the same place', () => {
+    const j = job('town');
+    const fp = PLAN_CANVAS[j.canvas];
+    const withPlinth = drawPlan(j, 1);
+    const alone = drawPlan(j, 1, { plinth: false });
+    const top = project(fp, 0, 0, 4 + j.height);
+    for (const img of [withPlinth, alone]) expect(at(img, top)).toEqual(solid(GREY.top));
+    // the plinth is the only thing that differs below the base's foot
+    const s = project(fp, 0.5, 1);
+    expect(at(withPlinth, [s[0], s[1] - 2])[3]).toBe(255);
+    expect(at(alone, [s[0], s[1] + 2])[3]).toBe(0);
+    expect(at(alone, [s[0], s[1] - 8])[3]).toBe(0);
   });
 });

@@ -1,0 +1,186 @@
+{
+  "guide": "review2/hydro_plant-r3.png",
+  "job": "hydro_plant",
+  "name": "Hydro plant (a new design: an oblong powerhouse, apart from the square water pump)",
+  "view": "r3",
+  "rotation": 3,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1024
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    832
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1254,
+    1254
+  ],
+  "toReturn": 1.2246,
+  "footprint": {
+    "tilesAtR0": [
+      1,
+      1
+    ],
+    "tiles": [
+      1,
+      1
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "equal",
+    "longSideTiles": 1,
+    "corners": {
+      "w": [
+        256,
+        832
+      ],
+      "s": [
+        512,
+        960
+      ],
+      "e": [
+        768,
+        832
+      ],
+      "n": [
+        512,
+        704
+      ]
+    },
+    "spanPx": 512,
+    "drawnWidthPx": [
+      516,
+      631.8984
+    ],
+    "lowerLeftFootPx": 256,
+    "lowerRightFootPx": 256
+  },
+  "groundLine": {
+    "anchorRow": 832,
+    "nearCornerRow": 960,
+    "farCornerRow": 704,
+    "leftCornerRow": 832,
+    "rightCornerRow": 832,
+    "lowerLeft": [
+      [
+        256,
+        832
+      ],
+      [
+        512,
+        960
+      ]
+    ],
+    "lowerRight": [
+      [
+        512,
+        960
+      ],
+      [
+        768,
+        832
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "E",
+    "visible": true,
+    "visibleOn": "lower right"
+  },
+  "plan": {
+    "basis": "a design choice: a powerhouse 1.44 times as long as it is deep, so that its silhouette is not the water pump's square",
+    "baseTiles": [
+      0.6254,
+      0.9
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.6254,
+    "longSide": "lower right",
+    "lowerLeftOverLowerRight": 0.6949,
+    "lowerLeftShare": 0.41,
+    "lowerRightShare": 0.59
+  },
+  "base": {
+    "corners": {
+      "w": [
+        316.7458,
+        849.5729
+      ],
+      "s": [
+        476.8542,
+        929.6271
+      ],
+      "e": [
+        707.2542,
+        814.4271
+      ],
+      "n": [
+        547.1458,
+        734.3729
+      ]
+    },
+    "spanPx": 390.5085,
+    "lowerLeftFootPx": 160.1085,
+    "lowerRightFootPx": 230.4,
+    "heightPx": 40,
+    "topFarCornerRow": 382.3729,
+    "nearCornerRow": 929.6271
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      394,
+      482.4961
+    ],
+    "minPx": [
+      374.3,
+      458.3713
+    ],
+    "maxPx": [
+      413.7,
+      506.6209
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      516,
+      631.8984
+    ],
+    "longSideTiles": 0.9,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 516 px wide in the guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 394 px wide in the guide (482 px), no wider than 414 px (507 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": true,
+    "outline": [
+      [
+        617.6542,
+        827.2271
+      ],
+      [
+        566.4542,
+        852.8271
+      ],
+      [
+        566.4542,
+        708.8271
+      ],
+      [
+        617.6542,
+        683.2271
+      ]
+    ],
+    "widthTiles": 0.2,
+    "heightPx": 18,
+    "note": "the front door, on the lower right wall, in the middle of the wall"
+  }
+}

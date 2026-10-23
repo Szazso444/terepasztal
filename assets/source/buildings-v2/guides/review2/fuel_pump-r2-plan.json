@@ -1,0 +1,166 @@
+{
+  "guide": "review2/fuel_pump-r2.png",
+  "job": "fuel_pump",
+  "name": "Fuel pump (the diesel-age tank on a brick house, #325)",
+  "view": "r2",
+  "rotation": 2,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1024
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    832
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1254,
+    1254
+  ],
+  "toReturn": 1.2246,
+  "footprint": {
+    "tilesAtR0": [
+      1,
+      1
+    ],
+    "tiles": [
+      1,
+      1
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "equal",
+    "longSideTiles": 1,
+    "corners": {
+      "w": [
+        256,
+        832
+      ],
+      "s": [
+        512,
+        960
+      ],
+      "e": [
+        768,
+        832
+      ],
+      "n": [
+        512,
+        704
+      ]
+    },
+    "spanPx": 512,
+    "drawnWidthPx": [
+      516,
+      631.8984
+    ],
+    "lowerLeftFootPx": 256,
+    "lowerRightFootPx": 256
+  },
+  "groundLine": {
+    "anchorRow": 832,
+    "nearCornerRow": 960,
+    "farCornerRow": 704,
+    "leftCornerRow": 832,
+    "rightCornerRow": 832,
+    "lowerLeft": [
+      [
+        256,
+        832
+      ],
+      [
+        512,
+        960
+      ]
+    ],
+    "lowerRight": [
+      [
+        512,
+        960
+      ],
+      [
+        768,
+        832
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "N",
+    "visible": false,
+    "visibleOn": null
+  },
+  "plan": {
+    "basis": "fuel_pump-a1-r0.png of origin/art/325-fuel-pump, measured with measureBase of tools/building-fit.mjs: 441 px lower left, 344 px lower right of 785 px in a 1254 px picture; the r1 it has today measures 187 : 447 and is too thin",
+    "baseTiles": [
+      0.9,
+      0.7014
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.7014,
+    "longSide": "lower left",
+    "lowerLeftOverLowerRight": 1.2831,
+    "lowerLeftShare": 0.562,
+    "lowerRightShare": 0.438
+  },
+  "base": {
+    "corners": {
+      "w": [
+        307.0178,
+        819.2911
+      ],
+      "s": [
+        537.4178,
+        934.4911
+      ],
+      "e": [
+        716.9822,
+        844.7089
+      ],
+      "n": [
+        486.5822,
+        729.5089
+      ]
+    },
+    "spanPx": 409.9644,
+    "lowerLeftFootPx": 230.4,
+    "lowerRightFootPx": 179.5644,
+    "heightPx": 44,
+    "topFarCornerRow": 345.5089,
+    "nearCornerRow": 934.4911
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      412,
+      504.5391
+    ],
+    "minPx": [
+      391.4,
+      479.3121
+    ],
+    "maxPx": [
+      432.6,
+      529.766
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      516,
+      631.8984
+    ],
+    "longSideTiles": 0.9,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 516 px wide in the guide (632 px in a 1254 px wide picture), and the base stands on it and fills 90 per cent of its long side (0.9 of 1 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 412 px wide in the guide (505 px), no wider than 433 px (530 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": false,
+    "note": "the front (N) is away from the camera: no front door in this view, on either visible wall"
+  }
+}

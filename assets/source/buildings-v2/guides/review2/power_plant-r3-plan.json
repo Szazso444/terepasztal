@@ -1,0 +1,186 @@
+{
+  "guide": "review2/power_plant-r3.png",
+  "job": "power_plant",
+  "name": "Power plant",
+  "view": "r3",
+  "rotation": 3,
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1536,
+    1024
+  ],
+  "scale": 5,
+  "anchor": [
+    768,
+    740
+  ],
+  "units": "canvas px are the guide picture's; the picture the image tool returns is `returnSize` px, `toReturn` times as large; a tile is 64 x 32 game px and a game px is `scale` canvas px",
+  "returnSize": [
+    1536,
+    1024
+  ],
+  "toReturn": 1,
+  "footprint": {
+    "tilesAtR0": [
+      3,
+      2
+    ],
+    "tiles": [
+      2,
+      3
+    ],
+    "note": "gameplay room: the width along x and the depth along y at rotation 0; a quarter turn swaps them",
+    "longSide": "lower right",
+    "longSideTiles": 3,
+    "corners": {
+      "w": [
+        368,
+        780
+      ],
+      "s": [
+        688,
+        940
+      ],
+      "e": [
+        1168,
+        700
+      ],
+      "n": [
+        848,
+        540
+      ]
+    },
+    "spanPx": 800,
+    "drawnWidthPx": [
+      804,
+      804
+    ],
+    "lowerLeftFootPx": 320,
+    "lowerRightFootPx": 480
+  },
+  "groundLine": {
+    "anchorRow": 740,
+    "nearCornerRow": 940,
+    "farCornerRow": 540,
+    "leftCornerRow": 780,
+    "rightCornerRow": 700,
+    "lowerLeft": [
+      [
+        368,
+        780
+      ],
+      [
+        688,
+        940
+      ]
+    ],
+    "lowerRight": [
+      [
+        688,
+        940
+      ],
+      [
+        1168,
+        700
+      ]
+    ],
+    "slope": 0.5,
+    "note": "the footprint's two visible edges at ground level, 2:1 lines; the base's feet are parallel to them, inside them"
+  },
+  "front": {
+    "wall": "E",
+    "visible": true,
+    "visibleOn": "lower right"
+  },
+  "plan": {
+    "basis": "a plain box: 0.9 of each side of the footprint",
+    "baseTiles": [
+      1.8,
+      2.7
+    ],
+    "fillOfLongSide": 0.9,
+    "fillOfShortSide": 0.9,
+    "longSide": "lower right",
+    "lowerLeftOverLowerRight": 0.6667,
+    "lowerLeftShare": 0.4,
+    "lowerRightShare": 0.6
+  },
+  "base": {
+    "corners": {
+      "w": [
+        408,
+        776
+      ],
+      "s": [
+        696,
+        920
+      ],
+      "e": [
+        1128,
+        704
+      ],
+      "n": [
+        840,
+        560
+      ]
+    },
+    "spanPx": 720,
+    "lowerLeftFootPx": 288,
+    "lowerRightFootPx": 432,
+    "heightPx": 56,
+    "topFarCornerRow": 260,
+    "nearCornerRow": 920
+  },
+  "paintedWidth": {
+    "mustHoldPx": [
+      724,
+      724
+    ],
+    "minPx": [
+      687.8,
+      687.8
+    ],
+    "maxPx": [
+      760.2,
+      760.2
+    ],
+    "tolerance": 0.05,
+    "footprintWidthPx": [
+      804,
+      804
+    ],
+    "longSideTiles": 2.7,
+    "shareOfFootprintLongSide": 0.9,
+    "insideFootprint": true,
+    "measuredOvershoot": [
+      0.15,
+      0.26
+    ],
+    "note": "the base is measured as the coaling stage was: the opaque width of the drawn base, its 3 px outline included; the numbers are [guide px, returned-picture px]; the painter has made a building 15 to 26 per cent wider than its plinth (review 2026-10-18)",
+    "words": "Keep the base to the footprint: the grey plinth is the footprint, 804 px wide in the guide (804 px in a 1536 px wide picture), and the base stands on it and fills 90 per cent of its long side (2.7 of 3 tiles). The painted base, the foot of the walls from the left corner to the right corner, is 724 px wide in the guide (724 px), no wider than 760 px (760 px) and never outside the footprint: the painter has spread a building 15 to 26 per cent wider than its plinth before, and the fit then shrinks the whole building."
+  },
+  "door": {
+    "visible": true,
+    "outline": [
+      [
+        928,
+        784
+      ],
+      [
+        896,
+        800
+      ],
+      [
+        896,
+        710
+      ],
+      [
+        928,
+        694
+      ]
+    ],
+    "widthTiles": 0.2,
+    "heightPx": 18,
+    "note": "the front door, on the lower right wall, in the middle of the wall"
+  }
+}

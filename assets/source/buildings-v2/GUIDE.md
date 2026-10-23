@@ -79,6 +79,9 @@ Everything is in `assets/source/buildings-v2/`.
   with pier stubs, `fuel_stop-oblong-r1.png` to `-r3.png`, each with a `-plan.json` that gives
   the plinth's width the painting must hold. Both are handed out by hand: the queue does not name
   them.
+  The review-2 plan guides are `guides/review2/<job>-r<view>.png`, each with a `-plan.json` that
+  gives the footprint, the ground line and the width the painted base must hold (it fills 90 per
+  cent of the footprint's long side and stays inside it). Also handed out by hand.
 - `<family>/<family>-a<age>-r<view>.png`: the pictures you make.
 - `<family>/<family>-a<age>-r<view>.rejected.png`: a picture that was given up, set aside by the
   tool for the user to look at. Never use one as a reference, and do not commit them.
