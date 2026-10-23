@@ -33,8 +33,11 @@ the stockpile, money, passengers, station boosts, weather and the clock (decisio
 
 ## 1. The twelve landmarks
 
-Footprint `W×D` is in tiles; `W` runs along the map's +x axis (screen down-right) in the painted
-orientation unless Art's calibration (task T6) records the other axis.
+Footprint `W×D` is in tiles; `W` runs along the map's +x axis (the lower-left wall in the
+picture), `D` along +y (the lower-right wall). The footprints follow the pictures (the author's
+decision, 2026-10-23, after an in-game review): each picture is drawn by the game's door rule
+(section 8), and its footprint is the ground its base covers at that size, read off the two wall
+bases that `measureBase` (`tools/building-fit.mjs`) finds, rounded to whole tiles.
 
 Every landmark has a **site rule**: the terrain it needs around its footprint. "Within r" means in
 the footprint grown by `r` tiles on every side; that whole window must lie inside the anchor chunk
@@ -50,24 +53,25 @@ the data must say so that the target comes out (section 2).
 
 | Id (data)                 | Name                    | Footprint | Site rule                                     | Target | Sites | Roll     |
 | ------------------------- | ----------------------- | --------- | --------------------------------------------- | ------ | ----- | -------- |
-| `merchants_last_stop`     | Merchant's Last Stop    | 3×2       | footprint all plains                          | 6%     | 82.4% | 7.29%    |
-| `overgrown_bathhouse`     | Overgrown Bathhouse     | 4×3       | fresh water within 3                          | 5%     | 94.9% | 5.27%    |
+| `merchants_last_stop`     | Merchant's Last Stop    | 2×2       | footprint all plains                          | 6%     | 84.5% | 7.10%    |
+| `overgrown_bathhouse`     | Overgrown Bathhouse     | 3×2       | fresh water within 3                          | 5%     | 95.8% | 5.22%    |
 | `bellkeepers_refuge`      | Bellkeeper's Refuge     | 1×1       | on a hill (level ≥ 2)                         | 4%     | 64.5% | 6.20%    |
-| `flooded_archive`         | Flooded Archive         | 4×4       | fresh water within 2                          | 3%     | 93.9% | 3.19%    |
-| `rootbound_workshop`      | Rootbound Workshop      | 2×2       | ≥ 8 forest tiles within 2                     | 3%     | 71.3% | 4.21%    |
-| `cliffside_cable_station` | Cliffside Cable Station | 3×2       | a tile 2+ levels higher within 2 (a cliff)    | 2.5%   | 71.0% | 3.52%    |
-| `stormglass_observatory`  | Stormglass Observatory  | 2×2       | on a hill (level ≥ 2)                         | 2%     | 55.5% | 3.60%    |
-| `ashen_conservatory`      | Ashen Conservatory      | 4×2       | desert within 3                               | 1.5%   | 44.4% | 3.38%    |
-| `inverted_manor`          | Inverted Manor          | 3×3       | none                                          | 1%     | 97.9% | 1.02%    |
-| `sleeping_foundry`        | Sleeping Foundry        | 5×4       | rock or mountain within 3 (ore)               | 0.75%  | 25.8% | 2.91%    |
-| `moonwell_pavilion`       | Moonwell Pavilion       | 2×2       | lake within 3 (the reflection)                | 0.5%   | 85.0% | 0.59%    |
-| `house_between_seasons`   | House Between Seasons   | 4×4       | plains, desert, forest and taiga all within 3 | 0.25%  | 0.27% | 10%/site |
+| `flooded_archive`         | Flooded Archive         | 2×2       | fresh water within 2                          | 3%     | 95.8% | 3.13%    |
+| `rootbound_workshop`      | Rootbound Workshop      | 1×1       | ≥ 8 forest tiles within 2                     | 3%     | 72.1% | 4.16%    |
+| `cliffside_cable_station` | Cliffside Cable Station | 2×2       | a tile 2+ levels higher within 2 (a cliff)    | 2.5%   | 71.3% | 3.51%    |
+| `stormglass_observatory`  | Stormglass Observatory  | 1×1       | on a hill (level ≥ 2)                         | 2%     | 64.5% | 3.10%    |
+| `ashen_conservatory`      | Ashen Conservatory      | 2×1       | desert within 3                               | 1.5%   | 46.2% | 3.25%    |
+| `inverted_manor`          | Inverted Manor          | 1×1       | none                                          | 1%     | 99.6% | 1.00%    |
+| `sleeping_foundry`        | Sleeping Foundry        | 3×2       | rock or mountain within 3 (ore)               | 0.75%  | 31.5% | 2.38%    |
+| `moonwell_pavilion`       | Moonwell Pavilion       | 1×1       | lake within 3 (the reflection)                | 0.5%   | 85.8% | 0.58%    |
+| `house_between_seasons`   | House Between Seasons   | 3×3       | plains, desert, forest and taiga all within 3 | 0.25%  | 0.12% | 23%/site |
 
 The House Between Seasons' four biomes are its four wings: spring is plains, summer desert, autumn
 forest, winter taiga. A desert and a taiga rarely lie close, as one is hot and the other cold, so
-a true four-way meeting is rare: 0.27% of chunks within 3 tiles (1.21% within 4, 5.15% within 6).
-It is placed where the meeting is, not in a rolled chunk (section 2), and appears at about one
-meeting in ten.
+a true four-way meeting is rare: with the 3×3 footprint, 0.12% of chunks have one within 3 tiles
+(measured over 150 seeds, 18 000 chunks; with the earlier 4×4 footprint it was 0.27%). It is
+placed where the meeting is, not in a rolled chunk (section 2), and appears at about one meeting
+in four (23%; it was one in ten with the larger footprint).
 
 Neighbouring tiles differ by at most one level (`tileLevels`), so a cliff is a tile two levels up
 within two tiles, not a sheer drop at the edge. The cable station's ravine crossing and far
@@ -83,12 +87,13 @@ expands in.
   (`src/world/chunks.ts`); likewise for `y`. These do not move when `expandSave` grows the map.
 - **Region.** World chunks are grouped into 3×3 regions: region `(floor(cx / 3), floor(cy / 3))`,
   with floor division for negative coordinates.
-  There are two ways a landmark is placed. Eleven are **rolled** per region; the House Between
-  Seasons is **site-led**: it is looked for wherever its site happens to be.
+
+There are two ways a landmark is placed. Eleven are **rolled** per region; the House Between
+Seasons is **site-led**: it is looked for wherever its site happens to be.
 
 - **Roll.** One roll per region (decision D2): `u = hash(seed, rx, ry, 'landmark')` in `[0, 1)`
   picks a rolled landmark by cumulative bands in data order, each band as wide as the landmark's
-  Roll in section 1, or none when `u` is past the last band (the bands add up to 40.2%). The roll
+  Roll in section 1, or none when `u` is past the last band (the bands add up to 39.6%). The roll
   is wider than the target because the anchor chunk may lack a site; target = roll × sites, so
   each landmark comes out at its target and all eleven together at about 29%. A tuning rule
   `landmarkChance` (0–3, default 1, in `src/sim/rules.ts`) scales every band and the site-led
@@ -97,8 +102,8 @@ expands in.
   appear only there.
 - **Site-led.** When a chunk is generated, every footprint in it that meets the House Between
   Seasons' rule is a site. If the chunk has one, `hash(seed, cx, cy, 'house_between_seasons')`
-  below 10% places the house on the first site in a seeded order. The 10% comes from the target:
-  0.25% per region is 0.028% per chunk, over 0.27% of chunks with a site. If the house and a rolled
+  below 23% places the house on the first site in a seeded order. The 23% comes from the target:
+  0.25% per region is 0.028% per chunk, over 0.12% of chunks with a site. If the house and a rolled
   landmark land in the same chunk, the house wins and the rolled one is not placed.
 - **Calibration.** The Sites and Roll columns are measured, not exact. A World test re-measures
   the sites on a fixed seed list and fails when roll × sites drifts more than a fifth from the
@@ -238,9 +243,22 @@ landmarks: {
 
 - Sources: the twelve PNGs listed in `final/manifest.json` on the art branch; never glob the folder.
   They are illustrated candidates, not projection-certified renders.
+- **Size: the game's door rule.** A landmark is drawn like every building
+  (`src/render/assetScale.ts`): scaled uniformly so that its door is `DOOR_PX` (13.2 world px).
+  The author approved this size on 2026-10-23 after seeing all twelve in a running game beside the
+  game's own buildings. It is about 0.62 of the pictures' own 4 m-per-tile scale. The door heights
+  used for that review were measured by eye (source px): merchant 135, bathhouse 97, bell tower
+  128, workshop 180, cable station 128, observatory 154, conservatory 128, manor 141, foundry 103,
+  house 103. The archive (arches, no door) and the pavilion (no door) took the median ratio. Art
+  measures them properly and records them, as the buildings' `DOOR_FRACTION` table does.
 - Art calibrates each one before export: ground-contact corners against the 64×32 grid, the
-  footprint's axis, the anchor, scale against the proposed 4 m per tile. A picture that does not
-  fit is **regenerated, never warped or stretched** (the author's rule).
+  footprint's axis, the anchor, the door. A footprint Art measures that differs from section 1 is
+  reported to Core, not changed in silence. A picture that does not fit is **regenerated, never
+  warped or stretched** (the author's rule).
+- Orientation: the pictures' long sides follow section 1's `W` (lower-left wall), except the
+  cable station's, whose picture faces the other way; its footprint is square, so only the anchor
+  is affected. The inverted manor's base is its upturned roof, so `measureBase` does not read it;
+  its 1×1 comes from its body's width.
 - Export to a new atlas group `landmarks` (`public/assets/landmarks.{png,json}`), keys
   `landmarks/<id>`, with a procedural placeholder generator in `src/art` so the game runs without
   the files. No existing group or key changes.
@@ -251,7 +269,7 @@ landmarks: {
 1. For 200 seeds, placement is identical whether the map grows ring by ring or all at once, and
    for any order of the `added` chunk batches (test in `src/world/landmarks.test.ts`).
 2. Over 20 000 seeded regions, each rolled landmark is picked within 3 standard errors of its roll
-   band, and the house's site-led draw succeeds within 3 standard errors of 10% of sites. On a
+   band, and the house's site-led draw succeeds within 3 standard errors of 23% of sites. On a
    fixed seed list, every landmark's placed rate per region is within a fifth of its target
    (section 1), scaled by `landmarkChance`; this is the calibration test.
 3. No placed footprint breaks a legality rule or its site rule, crosses its chunk's 3-tile margin,
@@ -284,6 +302,11 @@ answered (a) the same day:
   (28% of chunks), at 0.1%.
 - **D13 Site rules.** (a) the rules in section 1 as written — recommended; (b) the author changes
   some (any rule changes its measured share and roll, which Core re-measures).
+
+On 2026-10-23, after seeing all twelve in a running game, the author decided:
+
+- **D14 Size and footprints.** Landmarks are drawn by the game's door rule, like the buildings,
+  and their footprints follow the pictures at that size (sections 1 and 8).
 
 The original list, answered:
 
@@ -318,7 +341,8 @@ Filed on 2026-10-22 as sub-issues of #529; the issues carry the full briefs and 
 truth from now on. T1 #541, T2 #542, T3 #544, T4 #545, T5 #546, T6 #543, T7 #547, T8 #548,
 T9 #549. Every branch starts from `origin/develop`. All are blocked by this spec reaching
 `develop` (#540); the links below are the extra ones. The briefs here are the drafts they were
-filed from.
+filed from. On 2026-10-23 the footprints, the rolls and the door-rule size changed (sections 1, 2
+and 8); the issues were updated with them, the drafts below were not.
 
 ```
 T1 Gameplay — landmark content and rules
