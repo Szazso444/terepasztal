@@ -25,6 +25,7 @@ import {
   identityCrop,
   manifestOf,
   rowsOf,
+  soleRowOf,
 } from './people-guides.mjs';
 
 const sha = (png) => createHash('sha256').update(png.data).digest('hex');
@@ -46,7 +47,7 @@ describe('people pose guides', () => {
     expect(new Set(guides.map((g) => g.name)).size).toBe(32);
   });
 
-  it('draws each on the 1024 x 1536 canvas, transparent, with the lowest sole on row 1440', () => {
+  it('draws each on the 1024 x 1536 canvas, transparent, with the sole row on row 1440', () => {
     for (const g of guides) {
       expect([g.png.width, g.png.height]).toEqual(CANVAS);
       for (const [x, y] of [
@@ -56,8 +57,29 @@ describe('people pose guides', () => {
         [CANVAS[0] - 1, CANVAS[1] - 1],
       ])
         expect(alpha(g.png, x, y)).toBe(0);
-      expect(Math.abs(rowsOf(g.png).bottom - SOLE_ROW), g.name).toBeLessThanOrEqual(1);
+      // the sole row (lowest row at least MIN_SOLE_PX wide) is on 1440; the sharp corner of a
+      // foot box corner may stand at most 20 px below it, and nothing stands above it
+      expect(Math.abs(soleRowOf(g.png) - SOLE_ROW), g.name).toBeLessThanOrEqual(1);
+      const below = rowsOf(g.png).bottom - SOLE_ROW;
+      expect(below, g.name).toBeGreaterThanOrEqual(-1);
+      expect(below, g.name).toBeLessThanOrEqual(20);
     }
+  });
+
+  it('records the sole row of every guide in the manifest: 1440, the row the painted boot must reach', () => {
+    const m = manifestOf(guides);
+    expect(m.soleRow).toBe(SOLE_ROW);
+    expect(m.guides).toHaveLength(guides.length);
+    for (const e of m.guides) {
+      const g = byName.get(e.file.replace(/.png$/, ''));
+      // the field exists, is the sole proper of that guide's picture (not the foot box's corner)
+      // and is the row 1440 the painting is tested against (R7c-1 test 2)
+      expect(e.soleRow, e.file).toBe(soleRowOf(g.png));
+      expect(Math.abs(e.soleRow - SOLE_ROW), e.file).toBeLessThanOrEqual(1);
+      expect(e.bottom, e.file).toBeGreaterThanOrEqual(e.soleRow - 1);
+    }
+    const shoulderP1 = m.guides.find((e) => e.file === 'back-shoulder-p1.png');
+    expect(shoulderP1.soleRow).toBe(1440);
   });
 
   it('is 960 px from the ground point to the top of the head, in every pose', () => {
