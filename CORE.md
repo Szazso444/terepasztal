@@ -107,6 +107,7 @@ number in front of an item is its place; the Importance line of each epic issue 
 | 2026-10-10 | Roadmap order, most important first: #45, #46, #47, #74, #48, #49, #52, #51, #56, #50, #53, #54, #55                                                                  | author                             |
 | 2026-10-10 | Only `v0.1.0` is tagged; every release from now on is tagged by Core with a CHANGELOG entry; agents verify play-test checks                                           | author                             |
 | 2026-10-22 | Rare landmarks (#529): spec approved; deliveries and choices, no new player systems; terrain-bound sites; one painted view, no rotation                               | author                             |
+| 2026-10-23 | Rare landmarks are sized by the buildings' door rule; their footprints follow the pictures at that size                                                               | author                             |
 
 ## Open questions for the author
 
