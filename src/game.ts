@@ -114,7 +114,7 @@ import {
 } from './sim/save';
 import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, weeklyOutput } from './sim/stations';
+import { Station, resetStationIds, stationSpan, weeklyOutput } from './sim/stations';
 import { ensureStartDepot, startDepotKind } from './sim/startDepot';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
@@ -133,6 +133,7 @@ import {
   buildingFrame,
   buildingFromJSON,
   buildingFromLevel,
+  buildingSpan,
   buildingRecipe,
   buildingToJSON,
   type Building,
@@ -1578,11 +1579,17 @@ export class Game implements UiHost {
     } else {
       if (t === Terrain.Hill) this.world.setFlattened(b.x, b.y, true);
       this.world.removeProps(b.x, b.y);
+      // a works' picture stands with its anchor on its footprint's centre, sorted with its front tile
+      const { w, h } = buildingSpan(buildingDef(b.id), b.rot ?? 0);
+      const off = tileToWorld(-(w - 1) / 2, -(h - 1) / 2);
       this.world.setStructure(
         id,
-        b.x,
-        b.y,
+        b.x + w - 1,
+        b.y + h - 1,
         structureFrame(this.atlas, buildingFrame(b), b.rot ?? 0),
+        20,
+        off.y,
+        off.x,
       );
     }
     if (buildingDef(b.id).power || buildingDef(b.id).substation) this.rebuildPower();
@@ -1727,16 +1734,22 @@ export class Game implements UiHost {
           -HALF_H_PX,
         );
       } else {
+        // one picture on its footprint's centre, sorted with its front tile (a Town Hall of 2 x 1)
+        const { w, h } = stationSpan(s.def, s.rot);
+        const off = tileToWorld(-(w - 1) / 2, -(h - 1) / 2);
         const fam = `structures/${s.def.art}_${s.spriteLevel}`;
         this.world.setStructure(
           id,
-          s.x,
-          s.y,
+          s.x + w - 1,
+          s.y + h - 1,
           structureFrame(
             this.atlas,
             this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
             s.rot,
           ),
+          20,
+          off.y,
+          off.x,
         );
       }
       if (this.stationPanel.station === s) this.stationPanel.render();

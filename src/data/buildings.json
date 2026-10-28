@@ -73,14 +73,10 @@
       }
     },
     "perWeek": 20,
-    "span": {
-      "w": 2,
-      "h": 1
-    },
     "doors": [
       {
         "kind": "street",
-        "tile": [1, 0],
+        "tile": [0, 0],
         "side": "S"
       }
     ]
@@ -180,14 +176,10 @@
       "throughput": 3
     },
     "perWeek": 0,
-    "span": {
-      "w": 2,
-      "h": 2
-    },
     "doors": [
       {
         "kind": "street",
-        "tile": [0, 1],
+        "tile": [0, 0],
         "side": "S"
       }
     ]

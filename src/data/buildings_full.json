@@ -55,14 +55,10 @@
       }
     },
     "perWeek": 30,
-    "span": {
-      "w": 3,
-      "h": 2
-    },
     "doors": [
       {
         "kind": "street",
-        "tile": [1, 1],
+        "tile": [0, 0],
         "side": "S"
       }
     ]
@@ -121,7 +117,7 @@
     },
     "perWeek": 30,
     "span": {
-      "w": 2,
+      "w": 3,
       "h": 2
     },
     "doors": [

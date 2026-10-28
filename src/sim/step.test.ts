@@ -10,7 +10,7 @@ import { setSeasonOffset, seasonOf, productionMul, type Season, type WeatherKind
 import { resetTrainIds, type Train } from './trains';
 import { resetStationIds, type Station } from './stations';
 import { biomeAt, biomeDef } from './biomes';
-import { buildingDef, tickBuildings } from './buildings';
+import { buildingDef, buildingSpan, tickBuildings } from './buildings';
 import { SIM_STEP } from './time';
 import { LAST_AGE } from './ages';
 import {
@@ -1208,15 +1208,16 @@ const PLANT: Site = { x: 10, y: 24, w: 3, h: 2 };
 /** The row the line and its wire run along. */
 const WIRE_ROW = 20;
 /**
- * Substation (Battery) sites, each covering 2 x 2 tiles from its corner: two within two tiles of the
- * plant's footprint, (30, 24) at the end of the power line and (40, 26) out of every node's reach.
+ * Substation (Battery) sites, each covering its footprint from its corner (one tile since the 3D
+ * models, 2026-10-27): two within two tiles of the plant's footprint, (30, 24) at the end of the
+ * power line and (40, 26) out of every node's reach.
  */
 const SUBSTATIONS: readonly Site[] = [
   { x: 14, y: 24 },
   { x: 10, y: 27 },
   { x: 30, y: 24 },
   { x: 40, y: 26 },
-].map((s) => ({ ...s, w: 2, h: 2 }));
+].map((s) => ({ ...s, ...buildingSpan(buildingDef('substation'), 0) }));
 /**
  * Pole sites: a power line from the plant to the substation site at (30, 24), each pole within two
  * tiles of the one before, running along row 21 beside the wired row from x 14 to 28.

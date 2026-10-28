@@ -2,14 +2,21 @@ import type { Tool } from './toolbar';
 import type { StationDef } from '../data/content';
 import { structureFrame } from '../art/frames';
 import { BUILDING_ROTATIONS, nextRotation, rotationAxis } from '../sim/rotation';
-import { buildingDef } from '../sim/buildings';
+import { stationDef } from '../sim/stations';
 import { decorDef } from '../sim/build';
 import { rotationCount } from '../world/track';
 
+/** A station with a picture per axis (`_r0`, `_r1`): a depot of two tiles or a long station. */
+export function hasAxisPictures(def: StationDef) {
+  return (def.size ?? 1) > 1 || !!def.long;
+}
+
 /**
  * How many rotations R steps the tool in hand through: a track piece and a decor as many as they
- * have, every station and works the four building rotations. A bridge platform does not turn,
- * nor does any other tool; 1 means R keeps the tool at rotation 0.
+ * have, a station with a picture per axis (`hasAxisPictures`) the four building rotations. Any
+ * other station and every works do not turn for now (the author, 2026-10-27): each has one
+ * picture, and a turned footprint under an unturned picture stood it wrong. A bridge platform
+ * does not turn, nor does any other tool; 1 means R keeps the tool at rotation 0.
  */
 export function toolRotations(tool: Tool): number {
   switch (tool.kind) {
@@ -18,9 +25,7 @@ export function toolRotations(tool: Tool): number {
     case 'decor':
       return decorDef(tool.defId).rotations;
     case 'station':
-      return BUILDING_ROTATIONS;
-    case 'building':
-      return buildingDef(tool.defId).bridge ? 1 : BUILDING_ROTATIONS;
+      return hasAxisPictures(stationDef(tool.defId)) ? BUILDING_ROTATIONS : 1;
     default:
       return 1;
   }
@@ -45,7 +50,8 @@ export function stationGhostFrame(
   def: StationDef,
   rot: number,
 ): string {
-  const wide = (def.size ?? 1) > 1 || !!def.long;
-  const fam = wide ? `structures/${def.art}_r${rotationAxis(rot)}` : `structures/${def.art}_1`;
+  const fam = hasAxisPictures(def)
+    ? `structures/${def.art}_r${rotationAxis(rot)}`
+    : `structures/${def.art}_1`;
   return structureFrame(atlas, atlas.has(fam) ? fam : 'structures/station_1', rot);
 }

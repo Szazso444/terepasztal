@@ -74,7 +74,7 @@ describe('the building life file', () => {
     expect([...craneFrames()].sort()).toEqual([...keysOf(CRANE_GROUPS)].sort());
   });
 
-  it('covers every level of the families that have a chimney, and every level of the quarry', () => {
+  it('covers every level of the families that have a chimney', () => {
     const levels = [1, 2, 3, 4, 5];
     for (const family of ['town', 'station', 'warehouse', 'lumber', 'farm', 'pump'])
       for (const n of levels)
@@ -83,7 +83,9 @@ describe('the building life file', () => {
       expect(potsOf(`structures/${key}`), key).toBeDefined();
     for (const key of ['townhouse_s0', 'townhouse_s1', 'townhouse_s2'])
       expect(potsOf(`structures/${key}`), key).toBeDefined();
-    for (const n of levels) expect(craneOf(`structures/quarry_${n}`), `quarry_${n}`).toBeDefined();
+    // the quarry has no crane while its 3D model's crate is none `loadOf` can lift (`CRANE_GROUPS`)
+    for (const n of levels)
+      expect(craneOf(`structures/quarry_${n}`), `quarry_${n}`).toBeUndefined();
   });
 
   it('keeps the shape the reader promises', () => {
@@ -155,7 +157,8 @@ describe('every pot', () => {
           );
           measured++;
         }
-    expect(measured).toBeGreaterThanOrEqual(15);
+    // the townhouses and the pumping station: the other pictures the demo measured are 3D models now
+    expect(measured).toBeGreaterThanOrEqual(8);
   });
 
   it('is the same on frames that share a picture', () => {
@@ -170,31 +173,14 @@ describe('every pot', () => {
   });
 
   it('reads the issue as written on its frames', () => {
-    // issue #492: pot tops in picture pixels, [x, y], from the frame's own top-left
+    // issue #492: pot tops in picture pixels, [x, y], from the frame's own top-left, on the
+    // pictures still drawn: the town hall, station, warehouse, sawmill and farm the issue measured
+    // show their 3D models since 2026-10-27
     const asked = {
-      'structures/town_2': [
-        [54.5, 24],
-        [231, 95],
-      ],
-      'structures/town_3': [
-        [54.1, 23],
-        [228, 94],
-      ],
       'structures/townhouse': [[175.5, 6]],
       'structures/townhouse_3': [[175.5, 6]],
       'structures/townhouse_s0': [[121.5, 4]],
       'structures/townhouse_s2': [[142.4, 5]],
-      'structures/station_2': [
-        [64, 3],
-        [135, 24],
-        [200, 50],
-      ],
-      'structures/warehouse_1': [
-        [37, 3],
-        [138, 43],
-      ],
-      'structures/lumber_2': [[52.5, 4]],
-      'structures/farm_2': [[192.3, 6]],
       'structures/pump_1': [[120.3, 6]],
     };
     for (const [key, list] of Object.entries(asked)) {
@@ -209,7 +195,10 @@ describe('every pot', () => {
   });
 });
 
-describe('every crane', () => {
+// the demo's crane (issue #492) hung over the cart of the quarry's painted picture; the quarry
+// shows its 3D model since 2026-10-27, whose crate is no crane `loadOf` can lift out
+// (`CRANE_GROUPS` is empty). These come back with a crane for that picture.
+describe.skip('every crane', () => {
   it('has a load inside its frame that is one piece of the picture and touches the rest only at the pivot and the cart', () => {
     for (const [key, crane] of Object.entries(LIFE.cranes)) {
       const f = frames.get(key);

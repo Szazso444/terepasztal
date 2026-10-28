@@ -1,21 +1,21 @@
 {
   "pots": {
-    "structures/farm_1": [{ "dx": 13.4, "dy": -50.25, "work": false }],
-    "structures/farm_2": [{ "dx": 14.45, "dy": -50.25, "work": false }],
-    "structures/farm_3": [{ "dx": 15.48, "dy": -53.75, "work": false }],
-    "structures/farm_4": [{ "dx": 15.6, "dy": -55, "work": false }],
-    "structures/farm_5": [{ "dx": 15.6, "dy": -55, "work": false }],
-    "structures/lumber_1": [{ "dx": -11.92, "dy": -37, "work": true }],
-    "structures/lumber_2": [{ "dx": -13.3, "dy": -41.5, "work": true }],
-    "structures/lumber_3": [{ "dx": -19.87, "dy": -49.5, "work": true }],
+    "structures/farm_1": [{ "dx": 8.62, "dy": -55.35, "work": false }],
+    "structures/farm_2": [{ "dx": 8.62, "dy": -55.35, "work": false }],
+    "structures/farm_3": [{ "dx": 8.62, "dy": -55.35, "work": false }],
+    "structures/farm_4": [{ "dx": 8.62, "dy": -55.35, "work": false }],
+    "structures/farm_5": [{ "dx": 8.62, "dy": -55.35, "work": false }],
+    "structures/lumber_1": [{ "dx": 14.2, "dy": -38.47, "work": true }],
+    "structures/lumber_2": [{ "dx": 14.2, "dy": -38.47, "work": true }],
+    "structures/lumber_3": [{ "dx": 14.2, "dy": -38.47, "work": true }],
     "structures/lumber_3_r1": [{ "dx": 3.5, "dy": -44, "work": true }],
     "structures/lumber_3_r2": [{ "dx": -3.5, "dy": -44, "work": true }],
     "structures/lumber_3_r3": [{ "dx": 3.5, "dy": -44, "work": true }],
-    "structures/lumber_4": [{ "dx": -20.5, "dy": -50.5, "work": true }],
+    "structures/lumber_4": [{ "dx": 14.2, "dy": -38.47, "work": true }],
     "structures/lumber_4_r1": [{ "dx": 4, "dy": -44, "work": true }],
     "structures/lumber_4_r2": [{ "dx": -4, "dy": -44, "work": true }],
     "structures/lumber_4_r3": [{ "dx": 4, "dy": -44, "work": true }],
-    "structures/lumber_5": [{ "dx": -20.5, "dy": -50.5, "work": true }],
+    "structures/lumber_5": [{ "dx": 14.2, "dy": -38.47, "work": true }],
     "structures/lumber_5_r1": [{ "dx": 4, "dy": -44, "work": true }],
     "structures/lumber_5_r2": [{ "dx": -4, "dy": -44, "work": true }],
     "structures/lumber_5_r3": [{ "dx": 4, "dy": -44, "work": true }],
@@ -39,53 +39,33 @@
     "structures/pump_5_r1": [{ "dx": 0.5, "dy": -41, "work": true }],
     "structures/pump_5_r2": [{ "dx": -0.5, "dy": -41, "work": true }],
     "structures/pump_5_r3": [{ "dx": 0.5, "dy": -41, "work": true }],
-    "structures/station_1": [
-      { "dx": -13.85, "dy": -30.5, "work": false },
-      { "dx": 0.65, "dy": -26.5, "work": false },
-      { "dx": 14.28, "dy": -21, "work": false }
-    ],
-    "structures/station_2": [
-      { "dx": -20, "dy": -36, "work": false },
-      { "dx": -2.25, "dy": -30.75, "work": false },
-      { "dx": 14, "dy": -24.25, "work": false }
-    ],
+    "structures/station_1": [{ "dx": 6.69, "dy": -47.29, "work": false }],
+    "structures/station_2": [{ "dx": 6.69, "dy": -47.29, "work": false }],
     "structures/station_2_r1": [{ "dx": 1.5, "dy": -48, "work": false }],
     "structures/station_2_r2": [{ "dx": -1.5, "dy": -48, "work": false }],
     "structures/station_2_r3": [{ "dx": 1.5, "dy": -48, "work": false }],
-    "structures/station_3": [
-      { "dx": -20.68, "dy": -40.5, "work": false },
-      { "dx": -0.18, "dy": -35, "work": false },
-      { "dx": 17.45, "dy": -27.5, "work": false }
-    ],
-    "structures/station_4": [
-      { "dx": -21.24, "dy": -39.25, "work": false },
-      { "dx": -0.05, "dy": -33.5, "work": false },
-      { "dx": 18.08, "dy": -25.75, "work": false }
-    ],
-    "structures/station_5": [
-      { "dx": -21.24, "dy": -39.25, "work": false },
-      { "dx": -0.05, "dy": -33.5, "work": false },
-      { "dx": 18.08, "dy": -25.75, "work": false }
-    ],
+    "structures/station_3": [{ "dx": 6.69, "dy": -47.29, "work": false }],
+    "structures/station_4": [{ "dx": 6.69, "dy": -47.29, "work": false }],
+    "structures/station_5": [{ "dx": 6.69, "dy": -47.29, "work": false }],
     "structures/town_1": [
-      { "dx": -13.53, "dy": -31.5, "work": false },
-      { "dx": 11.22, "dy": -21.75, "work": false }
+      { "dx": -22.77, "dy": -84.78, "work": false },
+      { "dx": 34.23, "dy": -56.28, "work": false }
     ],
     "structures/town_2": [
-      { "dx": -21.12, "dy": -69.25, "work": false },
-      { "dx": 23, "dy": -51.5, "work": false }
+      { "dx": -22.77, "dy": -84.78, "work": false },
+      { "dx": 34.23, "dy": -56.28, "work": false }
     ],
     "structures/town_3": [
-      { "dx": -21.33, "dy": -68, "work": false },
-      { "dx": 22.15, "dy": -50.25, "work": false }
+      { "dx": -22.77, "dy": -84.78, "work": false },
+      { "dx": 34.23, "dy": -56.28, "work": false }
     ],
     "structures/town_4": [
-      { "dx": -21.91, "dy": -69.75, "work": false },
-      { "dx": 23.21, "dy": -51.5, "work": false }
+      { "dx": -22.77, "dy": -84.78, "work": false },
+      { "dx": 34.23, "dy": -56.28, "work": false }
     ],
     "structures/town_5": [
-      { "dx": -21.91, "dy": -69.75, "work": false },
-      { "dx": 23.21, "dy": -51.5, "work": false }
+      { "dx": -22.77, "dy": -84.78, "work": false },
+      { "dx": 34.23, "dy": -56.28, "work": false }
     ],
     "structures/townhouse": [{ "dx": 15.1, "dy": -49.25, "work": false }],
     "structures/townhouse_2": [{ "dx": 15.1, "dy": -49.25, "work": false }],
@@ -95,115 +75,25 @@
     "structures/townhouse_s1": [{ "dx": 10.4, "dy": -39, "work": false }],
     "structures/townhouse_s2": [{ "dx": 10.4, "dy": -39, "work": false }],
     "structures/warehouse_1": [
-      { "dx": -14.72, "dy": -34, "work": false },
-      { "dx": 10.53, "dy": -24, "work": false }
+      { "dx": -31.92, "dy": -63.19, "work": false },
+      { "dx": 24.39, "dy": -38.44, "work": false }
     ],
     "structures/warehouse_2": [
-      { "dx": -14.76, "dy": -39.5, "work": false },
-      { "dx": 14.18, "dy": -27.75, "work": false }
+      { "dx": -31.92, "dy": -63.19, "work": false },
+      { "dx": 24.39, "dy": -38.44, "work": false }
     ],
     "structures/warehouse_3": [
-      { "dx": -19.3, "dy": -52.5, "work": false },
-      { "dx": 16.51, "dy": -38, "work": false }
+      { "dx": -31.92, "dy": -63.19, "work": false },
+      { "dx": 24.39, "dy": -38.44, "work": false }
     ],
     "structures/warehouse_4": [
-      { "dx": -19.93, "dy": -54, "work": false },
-      { "dx": 17.07, "dy": -39, "work": false }
+      { "dx": -31.92, "dy": -63.19, "work": false },
+      { "dx": 24.39, "dy": -38.44, "work": false }
     ],
     "structures/warehouse_5": [
-      { "dx": -19.93, "dy": -54, "work": false },
-      { "dx": 17.07, "dy": -39, "work": false }
+      { "dx": -31.92, "dy": -63.19, "work": false },
+      { "dx": 24.39, "dy": -38.44, "work": false }
     ]
   },
-  "cranes": {
-    "structures/quarry_1": {
-      "pivot": [-17.7, -55.66],
-      "load": [
-        [-19.2, -55.41, -15.95, -42.66],
-        [-19.7, -42.66, -15.7, -40.66],
-        [-20.95, -40.66, -14.7, -38.66],
-        [-23.7, -38.66, -12.95, -36.66],
-        [-24.45, -36.66, -10.95, -34.66],
-        [-24.2, -34.66, -10.95, -32.66],
-        [-24.2, -32.66, -10.95, -30.66],
-        [-24.2, -30.66, -10.95, -29.66],
-        [-21.45, -29.66, -10.95, -29.16],
-        [-20.45, -29.16, -11.7, -28.66],
-        [-19.2, -28.66, -13.95, -28.16],
-        [-18.95, -28.16, -15.45, -27.41]
-      ]
-    },
-    "structures/quarry_2": {
-      "pivot": [-20.41, -62.61],
-      "load": [
-        [-21.54, -62.36, -18.54, -50.61],
-        [-21.79, -50.61, -18.54, -48.61],
-        [-22.29, -48.61, -18.04, -46.61],
-        [-22.54, -46.61, -18.04, -44.61],
-        [-24.54, -44.61, -16.29, -42.61],
-        [-27.29, -42.61, -14.29, -40.61],
-        [-27.54, -40.61, -12.29, -38.61],
-        [-27.54, -38.61, -12.29, -36.61],
-        [-27.29, -36.61, -12.29, -34.61],
-        [-27.29, -34.61, -12.29, -32.61],
-        [-23.54, -32.61, -13.04, -32.11],
-        [-22.54, -32.11, -15.29, -31.61],
-        [-21.29, -31.61, -17.04, -30.61]
-      ]
-    },
-    "structures/quarry_3": {
-      "pivot": [-20.73, -63],
-      "load": [
-        [-22.1, -62.75, -19.1, -50.75],
-        [-22.35, -50.75, -19.1, -48.75],
-        [-22.85, -48.75, -18.6, -46.75],
-        [-23.1, -46.75, -18.6, -44.75],
-        [-25.1, -44.75, -16.85, -42.75],
-        [-27.85, -42.75, -15.1, -40.75],
-        [-28.1, -40.75, -12.6, -38.75],
-        [-28.1, -38.75, -12.6, -36.75],
-        [-28.1, -36.75, -12.85, -34.75],
-        [-28.1, -34.75, -12.6, -32.75],
-        [-24.35, -32.75, -13.35, -31.75],
-        [-22.85, -31.75, -15.85, -30.75],
-        [-21.6, -30.75, -18.35, -30.25]
-      ]
-    },
-    "structures/quarry_4": {
-      "pivot": [-21.6, -64.75],
-      "load": [
-        [-23.35, -64.5, -19.6, -49],
-        [-23.6, -49, -19.35, -47],
-        [-24.6, -47, -18.6, -45],
-        [-26.6, -45, -16.85, -43],
-        [-29.35, -43, -14.85, -41],
-        [-29.35, -41, -13.1, -39],
-        [-29.1, -39, -13.1, -37],
-        [-29.1, -37, -13.35, -35],
-        [-29.1, -35, -13.1, -33],
-        [-25.1, -33, -13.85, -32.5],
-        [-24.1, -32.5, -16.1, -32],
-        [-23.1, -32, -17.6, -31],
-        [-22.1, -31, -19.6, -30.75]
-      ]
-    },
-    "structures/quarry_5": {
-      "pivot": [-21.6, -64.75],
-      "load": [
-        [-23.35, -64.5, -19.6, -49],
-        [-23.6, -49, -19.35, -47],
-        [-24.6, -47, -18.6, -45],
-        [-26.6, -45, -16.85, -43],
-        [-29.35, -43, -14.85, -41],
-        [-29.35, -41, -13.1, -39],
-        [-29.1, -39, -13.1, -37],
-        [-29.1, -37, -13.35, -35],
-        [-29.1, -35, -13.1, -33],
-        [-25.1, -33, -13.85, -32.5],
-        [-24.1, -32.5, -16.1, -32],
-        [-23.1, -32, -17.6, -31],
-        [-22.1, -31, -19.6, -30.75]
-      ]
-    }
-  }
+  "cranes": {}
 }

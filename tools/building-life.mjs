@@ -64,39 +64,14 @@ const names = (...list) => list.map((n) => `structures/${n}`);
  * `exact` seeds are the demo's numbers, taken as they stand.
  */
 export const POT_GROUPS = [
-  // town hall: a chimney on each gable, the cupola is no chimney
+  // the 3D models' pictures (assets/source/models-2026-10-27), every level the same picture:
+  // town hall, a chimney on each gable, the cupola is no chimney
   {
-    keys: names('town_1'),
+    keys: names('town_1', 'town_2', 'town_3', 'town_4', 'town_5'),
     work: false,
     at: [
-      [32.5, 13],
-      [131.5, 52],
-    ],
-  },
-  {
-    keys: names('town_2'),
-    work: false,
-    exact: true,
-    at: [
-      [54.5, 24],
-      [231, 95],
-    ],
-  },
-  {
-    keys: names('town_3'),
-    work: false,
-    exact: true,
-    at: [
-      [54.1, 23],
-      [228, 94],
-    ],
-  },
-  {
-    keys: names('town_4', 'town_5'),
-    work: false,
-    at: [
-      [56, 25],
-      [237, 99],
+      [91, 1],
+      [319, 115],
     ],
   },
   // townhouses
@@ -108,85 +83,29 @@ export const POT_GROUPS = [
   },
   { keys: names('townhouse_s0'), work: false, exact: true, at: [[121.5, 4]] },
   { keys: names('townhouse_s1', 'townhouse_s2'), work: false, exact: true, at: [[142.4, 5]] },
-  // stations: three stacks; a station's turned placeholder has a stove pipe at the back
+  // stations: one stack, the clock gable is none; a turned placeholder has a stove pipe at the back
   {
-    keys: names('station_1'),
+    keys: names('station_1', 'station_2', 'station_3', 'station_4', 'station_5'),
     work: false,
-    at: [
-      [55, 3],
-      [113, 19],
-      [167.5, 41],
-    ],
-  },
-  {
-    keys: names('station_2'),
-    work: false,
-    exact: true,
-    at: [
-      [64, 3],
-      [135, 24],
-      [200, 50],
-    ],
-  },
-  {
-    keys: names('station_3'),
-    work: false,
-    at: [
-      [71, 5],
-      [153, 26],
-      [223.5, 57],
-    ],
-  },
-  {
-    keys: names('station_4', 'station_5'),
-    work: false,
-    at: [
-      [73, 5],
-      [158, 27],
-      [230.5, 59.5],
-    ],
+    at: [[153.5, 1]],
   },
   { keys: names('station_2_r1', 'station_2_r3'), work: false, at: [[26.5, 1]] },
   { keys: names('station_2_r2'), work: false, at: [[19.5, 1]] },
-  // warehouses: two stacks; the vent between them has no pots
+  // warehouses: the two end stacks; the middle one is too broad to be told from the roof
   {
-    keys: names('warehouse_1'),
-    work: false,
-    exact: true,
-    at: [
-      [37, 3],
-      [138, 43],
-    ],
-  },
-  {
-    keys: names('warehouse_2'),
+    keys: names('warehouse_1', 'warehouse_2', 'warehouse_3', 'warehouse_4', 'warehouse_5'),
     work: false,
     at: [
-      [41.5, 4],
-      [157.5, 51],
-    ],
-  },
-  {
-    keys: names('warehouse_3'),
-    work: false,
-    at: [
-      [52.5, 5],
-      [195.5, 63],
-    ],
-  },
-  {
-    keys: names('warehouse_4', 'warehouse_5'),
-    work: false,
-    at: [
-      [54.5, 6],
-      [202.5, 65],
+      [91, 1],
+      [320.5, 100],
     ],
   },
   // sawmills: one works chimney, a brick stack from level 3 in the turns
-  { keys: names('lumber_1'), work: true, at: [[48.5, 4]] },
-  { keys: names('lumber_2'), work: true, exact: true, at: [[52.5, 4]] },
-  { keys: names('lumber_3'), work: true, at: [[59.5, 4]] },
-  { keys: names('lumber_4', 'lumber_5'), work: true, at: [[62, 5]] },
+  {
+    keys: names('lumber_1', 'lumber_2', 'lumber_3', 'lumber_4', 'lumber_5'),
+    work: true,
+    at: [[122.5, 1]],
+  },
   { keys: names('lumber_3_r1', 'lumber_3_r3'), work: true, at: [[32.5, 1]] },
   { keys: names('lumber_3_r2'), work: true, at: [[25.5, 1]] },
   {
@@ -196,10 +115,7 @@ export const POT_GROUPS = [
   },
   { keys: names('lumber_4_r2', 'lumber_5_r2'), work: true, at: [[26, 2]] },
   // farms: the farmhouse chimney, not the silo
-  { keys: names('farm_1'), work: false, at: [[188, 5]] },
-  { keys: names('farm_2'), work: false, exact: true, at: [[192.3, 6]] },
-  { keys: names('farm_3'), work: false, at: [[196.5, 5]] },
-  { keys: names('farm_4', 'farm_5'), work: false, at: [[201.5, 6]] },
+  { keys: names('farm_1', 'farm_2', 'farm_3', 'farm_4', 'farm_5'), work: false, at: [[180.5, 1]] },
   // pumping stations: one works chimney of twin pots
   { keys: names('pump_1'), work: true, exact: true, at: [[120.3, 6]] },
   { keys: names('pump_2'), work: true, at: [[136, 8]] },
@@ -217,14 +133,11 @@ export const POT_GROUPS = [
 
 /**
  * The quarry cranes, by picture: a texel inside the rope, and the pivot where the demo measured
- * one (`exact`; otherwise it is found from the rope).
+ * one (`exact`; otherwise it is found from the rope). None for now: the quarry's picture is its 3D
+ * model's since 2026-10-27, whose crate hangs over the stone block, not over a cart, and `loadOf`
+ * cannot lift it out of the picture whole.
  */
-export const CRANE_GROUPS = [
-  { keys: names('quarry_1'), rope: [39, 60] },
-  { keys: names('quarry_2'), rope: [45, 60], pivot: [44.5, 41] },
-  { keys: names('quarry_3'), rope: [45, 60] },
-  { keys: names('quarry_4', 'quarry_5'), rope: [47, 60] },
-];
+export const CRANE_GROUPS = [];
 
 /* ---------------------------------------------------------------- reading a frame */
 

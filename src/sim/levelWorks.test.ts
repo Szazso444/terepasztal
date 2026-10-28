@@ -249,9 +249,10 @@ describe('a bridge platform and an unturned works', () => {
   const toolTurn = (defId: string, held: number) =>
     toolRotations({ kind: 'building', defId }) > 1 ? held : 0;
 
-  it('the build tool turns a works with R and never a bridge platform', () => {
-    // the fact the next test rests on: BuildController places at `turns() ? this.rot : 0`
-    for (const d of WORKS) expect(toolTurn(d.id, 3), d.id).toBe(3);
+  it('the build tool turns neither a works nor a bridge platform with R', () => {
+    // the fact the next test rests on: BuildController places at `turns() ? this.rot : 0`; a works
+    // has one picture for now (the author, 2026-10-27), so it stays at r0 too
+    for (const d of WORKS) expect(toolTurn(d.id, 3), d.id).toBe(0);
     expect(BRIDGES.length, 'bridge definitions').toBeGreaterThan(0);
     for (const d of BRIDGES) expect(toolTurn(d.id, 3), d.id).toBe(0);
   });

@@ -117,8 +117,12 @@ const PAST = {
   houses: () => clone(PRE_92_HOUSES),
   stations: () => {
     const defs = clone(shipped.DEFAULT_CONTENT.stations.defs);
-    // before stations had doors (#406)
-    for (const d of defs) delete d.doors;
+    // before stations had doors (#406), and before one could cover tiles by a span of its own
+    // (the Town Hall and the warehouse, 2026-10-27)
+    for (const d of defs) {
+      delete d.doors;
+      delete d.span;
+    }
     // the pump before it had ground rules of its own (#320)
     const pump = defs.find((d) => d.id === 'pump')!;
     delete pump.standOn;

@@ -332,6 +332,31 @@ function targets(entry, inventory) {
   return pattern ? inventory.filter((f) => pattern.test(f.key)) : [];
 }
 
+/**
+ * The 3D models' game-camera renders (the author's pick, 2026-10-27): `models.json` names each
+ * picture's frames, every level of its building, and its anchor, the footprint's centre on the
+ * ground, in texels. A picture is already at DENSITY and its building's real size (measured
+ * against the walker), so it is packed as it is, through the cap pass only, and it takes its
+ * frames from the painting or the generator that had them.
+ */
+export const MODELS = 'assets/source/models-2026-10-27';
+
+function addModelFrames(groups, capped, report) {
+  const models = readJson(join(MODELS, 'models.json'));
+  const frames = groups.get('structures') ?? [];
+  for (const [id, m] of Object.entries(models)) {
+    const png = PNG.sync.read(readFileSync(join(MODELS, m.file)));
+    for (const key of m.frames) {
+      const frame = { key, png: capped({ key, group: 'structures' }, png), ax: m.ax, ay: m.ay };
+      const i = frames.findIndex((f) => f.key === key);
+      if (i >= 0) frames[i] = frame;
+      else frames.push(frame);
+    }
+    report.models.push({ id, source: join(MODELS, m.file), frames: m.frames });
+  }
+  groups.set('structures', frames);
+}
+
 const smoothedSources = new Map();
 /** Ground sources smoothed once each, as tools/terrain-surfaces.mjs does for the painter. */
 function smoothedGround(src, key) {
@@ -353,6 +378,7 @@ export function build(output = 'public/assets') {
       sourceDirectory: SOURCE,
       converted: [],
       deferred: [],
+      models: [],
       groups: {},
     };
   // the cap pass (tools/atlas-cap.mjs) on every frame, after resampling; what it changed, by group
@@ -498,6 +524,7 @@ export function build(output = 'public/assets') {
       frames: names,
     });
   }
+  addModelFrames(groups, capped, report);
   mkdirSync(output, { recursive: true });
   for (const [name, frames] of groups) {
     const packed = packFrames(frames);
