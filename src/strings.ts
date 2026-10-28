@@ -333,6 +333,7 @@ export const STR = {
     narrowLocked: 'Narrow gauge is not unlocked yet',
     /** a dragged run meets a curve or a switch: no crossing piece meets a line at an angle */
     crossAngle: 'Lines cross only at right angles',
+    crossTransition: 'No crossing on a class transition: cross the line beside it',
     /** a dragged run meets a line of a class it has no crossing piece with */
     crossApart: (run: string, line: string) =>
       `${run} track cannot cross ${line} track: it needs a bridge or an underpass`,

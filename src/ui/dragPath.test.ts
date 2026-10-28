@@ -116,7 +116,7 @@ function world(size = 30) {
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
   const builder = new Builder(map, regions, track, new Economy(), stock);
   for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
-  return { track, builder };
+  return { track, builder, stock };
 }
 
 describe('a turning run laid', () => {
@@ -139,6 +139,26 @@ describe('a turning run laid', () => {
     const again = planRun(builder, path, { kind: 'straight', cls: 'regular' });
     expect(again.steps.every((s) => s.stands)).toBe(true);
     expect(again.cost).toEqual({});
+  });
+
+  it('lays no second leg when the stock runs out at the curve', () => {
+    const { track, builder, stock } = world();
+    const path = turnPath({ x: 5, y: 5 }, { x: 12, y: 11 }, 'x', 'regular');
+    const turn = path.findIndex((p) => p.item);
+    const ample = planRun(builder, path, { kind: 'straight', cls: 'regular' });
+    const straight = ample.steps[0].cost,
+      curve = ample.steps[turn].cost;
+    // a resource the curve needs more of than a straight: the first leg leaves one short of the
+    // curve, still enough for the straights after it
+    const k = Object.keys(curve).find((r) => curve[r] > (straight[r] ?? 0) && straight[r])!;
+    expect(k).toBeDefined();
+    for (const r of new Set([...Object.keys(straight), ...Object.keys(curve)]))
+      stock.amounts.set(r, (straight[r] ?? 0) * turn + (r === k ? curve[r] - 1 : 1000));
+    const plan = planRun(builder, path, { kind: 'straight', cls: 'regular' });
+    expect(plan.end).toBe(path.length);
+    expect(layRun(builder, plan)).toBe(turn);
+    expect(track.get(11, 5)).toBeUndefined();
+    for (let y = 7; y <= 11; y++) expect(track.get(12, y), `12,${y}`).toBeUndefined();
   });
 
   it('stops at a curve with track in its way, and never cuts that track', () => {

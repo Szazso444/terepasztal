@@ -192,15 +192,21 @@ export class BuildController {
       else this.select(null);
     }
     // track, decor, stations and works turn; anything else keeps its rotation
-    // (during a track drag R turns the run instead: `updateTrackTool`)
-    const trackDrag = this.tool.kind === 'track' && this.dragStart;
-    if (inp.wasPressed('KeyR') && this.turns() && !trackDrag)
+    // (once a held track drag has set off, R turns the run instead: `updateTrackTool`)
+    const turningDrag =
+      this.tool.kind === 'track' && this.dragStart && this.dragAxis && inp.buttons.has(0);
+    if (inp.wasPressed('KeyR') && this.turns() && !turningDrag)
       this.rot = nextToolRotation(this.tool, this.rot);
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     this.updatePlacing(active, t, inMap);
     if (!active) {
-      // over a panel or outside the field: a stroke does not carry on to where the cursor returns
+      // over a panel or outside the field: a stroke does not carry on to where the cursor returns,
+      // and a drag let go there is dropped
       this.stroke.stop();
+      if (this.dragStart && !inp.buttons.has(0)) {
+        this.dragStart = null;
+        this.dragAxis = null;
+      }
       this.clearGhostVisibility(false);
       return;
     }
@@ -309,10 +315,11 @@ export class BuildController {
       }
       if (this.dragStart && inp.buttons.has(0)) {
         const a = this.dragStart;
+        // before the drag sets off, R turned the tool (`update`); after, it swaps the legs
+        const setOff = this.dragAxis;
         if (!this.dragAxis && (t.x !== a.x || t.y !== a.y))
           this.dragAxis = Math.abs(t.x - a.x) >= Math.abs(t.y - a.y) ? 'x' : 'y';
-        if (inp.wasPressed('KeyR') && this.dragAxis)
-          this.dragAxis = this.dragAxis === 'x' ? 'y' : 'x';
+        if (inp.wasPressed('KeyR') && setOff) this.dragAxis = setOff === 'x' ? 'y' : 'x';
         const line = this.runTiles(a, t, item);
         const plan = planRun(this.builder, line, item);
         this.showRunGhosts(plan);

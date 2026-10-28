@@ -32,7 +32,7 @@ function world(size = 24) {
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
   const builder = new Builder(map, regions, track, new Economy(), stock);
   for (const k of RES) stock.amounts.set(k, 1000);
-  return { track, builder };
+  return { track, builder, stock };
 }
 const straight = (cls: TrackClass): TrackItem => ({ kind: 'straight', cls });
 /** A north-south run at column x from row y0 to y1, as the track tool's drag gives it. */
@@ -94,8 +94,19 @@ describe('the crossing a run lays by itself', () => {
     // along the run: a junction, not a crossing
     expect(crossingFor('regular', 0, makePiece('straight', 0, 'regular'))).toBeNull();
     expect(crossingFor('regular', 1, makePiece('straight', 1, 'high_speed'))).toBeNull();
-    expect(crossingFor('regular', 0, makePiece('transition', 1))).toBeNull();
+    // a transition along the run is the ordinary rules' to judge
+    expect(crossingFor('regular', 0, makePiece('transition', 0))).toBeNull();
+    expect(crossingFor('regular', 1, makePiece('transition', 3))).toBeNull();
     expect(crossingFor('regular', 0, makePiece('bridge', 1))).toBeNull();
+  });
+
+  it('refuses a transition across the run: no crossing stands in for it', () => {
+    for (const rot of [0, 1])
+      for (const t of [rot + 1, rot + 3]) {
+        const pick = crossingFor('regular', rot, makePiece('transition', t % 4));
+        expect(pick).toEqual({ ok: false, why: 'transition', other: 'regular' });
+        expect(crossingRefusal('regular', pick as never)).toBe(STR.build.crossTransition);
+      }
   });
 
   it('refuses curves and switches: lines cross only at right angles', () => {
@@ -169,6 +180,34 @@ describe('a run laid across lines', () => {
     for (let y = 5; y < 10; y++) expect(track.get(9, y)?.cls).toBe('narrow');
     expect(track.get(9, 10)).toMatchObject({ kind: 'straight', cls: 'high_speed', rot: 1 });
     for (let y = 11; y <= 15; y++) expect(track.get(9, y)).toBeUndefined();
+  });
+
+  it('stops before a class transition across it, and never cuts that line', () => {
+    const { track, builder } = world();
+    ewLine(builder, 10, 4, 8);
+    expect(builder.placeTrack(9, 10, { kind: 'transition', cls: 'regular' }, 1)).toBe(true);
+    ewLine(builder, 10, 10, 14, 'high_speed');
+    const plan = planRun(builder, nsRun(9, 5, 15), straight('regular'));
+    expect(plan.end).toBe(5);
+    expect(plan.reason).toBe(STR.build.crossTransition);
+    layRun(builder, plan);
+    expect(track.get(9, 10)?.kind).toBe('transition');
+    expect(track.get(9, 11)).toBeUndefined();
+  });
+
+  it('stops laying at the first piece the stock can no longer pay, leaving no loose track', () => {
+    const { track, builder, stock } = world();
+    const line = nsRun(9, 5, 14);
+    const plan = planRun(builder, line, straight('regular'));
+    const one = plan.steps[0].cost;
+    // enough for four straights, judged one by one every piece looks affordable
+    for (const k of Object.keys(stock.amounts)) stock.amounts.set(k, 0);
+    for (const [k, v] of Object.entries(one)) stock.amounts.set(k, v * 4);
+    const judged = planRun(builder, line, straight('regular'));
+    expect(judged.steps.every((s) => s.ok)).toBe(true);
+    expect(layRun(builder, judged)).toBe(4);
+    for (let y = 5; y < 9; y++) expect(track.get(9, y)?.kind).toBe('straight');
+    expect(track.get(9, 9)).toBeUndefined();
   });
 
   it('stops at a curve it would meet at an angle', () => {

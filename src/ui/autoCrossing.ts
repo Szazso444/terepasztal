@@ -18,7 +18,7 @@ import {
  */
 export type CrossingPick =
   | { ok: true; item: TrackItem; rot: number }
-  | { ok: false; why: 'angle' | 'apart'; other: TrackClass };
+  | { ok: false; why: 'angle' | 'apart' | 'transition'; other: TrackClass };
 
 /** The class a piece presents along the axis a straight at `rot` runs (0: N–S, 1: E–W). */
 function axisClass(p: TrackPiece, rot: number): TrackClass {
@@ -34,7 +34,8 @@ function axisClass(p: TrackPiece, rot: number): TrackClass {
  * A straight or crossing across the run gets the crossing for the pair, from `items` (the game's
  * `TRACK_ITEMS`), turned so the run's class lies on the run's axis; a crossing at rotation 0 has its
  * first class on N–S, like a straight at rotation 0. A pair with no crossing piece is a pair of
- * separate worlds, and a curve or a switch meets the run at an angle: both are refused.
+ * separate worlds, and a curve or a switch meets the run at an angle: both are refused, and so is
+ * a class transition across the run, which no crossing piece can stand in for.
  */
 export function crossingFor(
   cls: TrackClass,
@@ -45,8 +46,13 @@ export function crossingFor(
   if (!existing) return null;
   if (existing.kind === 'curve' || existing.kind === 'switch')
     return { ok: false, why: 'angle', other: existing.cls };
-  if (existing.kind !== 'straight' && existing.kind !== 'crossing') return null;
   const across = (rot + 1) % 2;
+  // a transition lies along its rotation's axis, as a straight does (0, 2: N–S; 1, 3: E–W)
+  if (existing.kind === 'transition')
+    return existing.rot % 2 === across
+      ? { ok: false, why: 'transition', other: existing.cls }
+      : null;
+  if (existing.kind !== 'straight' && existing.kind !== 'crossing') return null;
   if (existing.kind === 'straight' && existing.rot % 2 !== across) return null;
   const other = axisClass(existing, across);
   const item = items.find(
@@ -69,9 +75,9 @@ export function crossingFor(
 /** The build status's reason for a refused crossing. */
 export function crossingRefusal(cls: TrackClass, pick: Extract<CrossingPick, { ok: false }>) {
   const name = (c: TrackClass) => STR.toolbar.trackClass[c] ?? c;
-  return pick.why === 'angle'
-    ? STR.build.crossAngle
-    : STR.build.crossApart(name(cls), name(pick.other).toLowerCase());
+  if (pick.why === 'angle') return STR.build.crossAngle;
+  if (pick.why === 'transition') return STR.build.crossTransition;
+  return STR.build.crossApart(name(cls), name(pick.other).toLowerCase());
 }
 
 /** One tile of a dragged run as its release would lay it. */
@@ -168,11 +174,18 @@ export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackIt
   return { steps, end, cost, crossings, curves, reason };
 }
 
-/** Lay what `plan` lets through, in order: the tiles before its end, skipping refused and standing ones. */
+/**
+ * Lay what `plan` lets through, in order: the tiles before its end, skipping refused and standing
+ * ones. A piece that fails to go down after all (the stock ran out on the way) stops the run there,
+ * so no track is laid beyond a gap. Returns the index the run stopped at.
+ */
 export function layRun(
   builder: { placeTrack(x: number, y: number, item: TrackItem, rot: number): boolean },
   plan: RunPlan,
-) {
-  for (const [i, s] of plan.steps.entries())
-    if (i < plan.end && s.ok && !s.stands) builder.placeTrack(s.x, s.y, s.item, s.rot);
+): number {
+  for (const [i, s] of plan.steps.entries()) {
+    if (i >= plan.end) return plan.end;
+    if (s.ok && !s.stands && !builder.placeTrack(s.x, s.y, s.item, s.rot)) return i;
+  }
+  return plan.end;
 }
