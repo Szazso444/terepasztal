@@ -333,7 +333,7 @@ describe('a building being upgraded', () => {
     expect(store.stored('wood')).toBe(30);
     // but nothing is delivered, and no contract is offered to bring it any
     expect([store.accepts('wood'), town.accepts('wheat')]).toEqual([false, false]);
-    expect(store.room).toBe(0);
+    expect(store.roomFor('stone')).toBe(0);
     expect(store.store('stone', 10)).toBe(0);
     expect(store.stored('stone')).toBe(0);
     expect(toTown()).toEqual([]);
@@ -341,7 +341,7 @@ describe('a building being upgraded', () => {
     w.builder.tickWorks(upgradeSeconds(2));
     expect([store.accepts('wood'), town.accepts('wheat')]).toEqual([true, true]);
     expect(toTown()).toEqual(['wheat']);
-    expect(store.room).toBe(store.capacity - 30);
+    expect(store.roomFor('stone')).toBe(store.capacity - 30);
     expect(store.store('stone', 10)).toBe(10);
   });
 
@@ -1101,7 +1101,7 @@ describe('a station being upgraded, of every kind', () => {
         const shut = make(true);
         const open = make(false);
         expect([shut.closed, open.closed]).toEqual([true, false]);
-        expect([shut.crew, shut.room], 'crew and room').toEqual([0, 0]);
+        expect([shut.crew, shut.roomFor('stone')], 'crew and room').toEqual([0, 0]);
         expect(open.crew, 'crew when open').toBe(LEVELS.crew[level - 1]);
         expect(cargos.filter((c) => shut.accepts(c))).toEqual([]);
         expect(cargos.filter((c) => open.accepts(c))).toEqual(

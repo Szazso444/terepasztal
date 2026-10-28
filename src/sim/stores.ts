@@ -21,6 +21,8 @@ export interface ResourceStore {
   readonly famine: boolean;
   get(id: string): number;
   cap(id: string): number;
+  /** Every good held and how much of it. */
+  held(): Iterable<[string, number]>;
   /** Add up to the cap; returns the amount actually stored. */
   add(id: string, amount: number): number;
   take(id: string, amount: number): number;
@@ -87,6 +89,9 @@ export class Store extends Ledger implements ResourceStore {
   cap(id: string) {
     return this.capOf(id);
   }
+  held() {
+    return this.amounts.entries();
+  }
   add(id: string, amount: number) {
     const cur = this.get(id);
     const n = Math.max(0, Math.min(amount, this.cap(id) - cur));
@@ -127,6 +132,12 @@ export class StorePool extends Ledger implements ResourceStore {
     let n = 0;
     for (const m of this.members) n += m.cap(id);
     return n;
+  }
+  held() {
+    const out = new Map<string, number>();
+    for (const m of this.members)
+      for (const [id, n] of m.amounts) out.set(id, (out.get(id) ?? 0) + n);
+    return out.entries();
   }
   add(id: string, amount: number) {
     let put = 0;
@@ -251,6 +262,8 @@ export class StoreRegistry {
       if (!heir) continue;
       for (const [id, n] of gone.amounts) if (n > 0) heir.add(id, n);
     }
+    // the stations learn where they dock
+    for (const s of builder.stations) s.dock = this.dockOf(s);
   }
 
   /** Every store, the grid first. */

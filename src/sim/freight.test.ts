@@ -9,6 +9,8 @@ import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
+import { StoreRegistry } from './stores';
+import { TownRegistry } from './towns';
 import { Train, DYNAMIC_MODES, defaultStop, resetTrainIds, type WagonSlot } from './trains';
 import { Fleet } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
@@ -260,7 +262,7 @@ describe('a loaded freight train choosing a stop', () => {
     const depot = put(w, 'depot', 70);
     const t = train(w, 30, [stoneFrom(src.id), stoneFrom(src.id)]);
     expect(w.fleet.chooseNext(t)).toBe(depot.id);
-    expect(near.room).toBeGreaterThan(5);
+    expect(near.roomFor('stone')).toBeGreaterThan(5);
   });
 
   it('takes goods from a warehouse to another warehouse only when no depot is reachable', () => {
@@ -562,6 +564,103 @@ describe('a freight train at a warehouse', () => {
   });
 });
 
+describe('a freight train unloading at a station with a store', () => {
+  /** The world's stations given the stores a game would make for them (`StoreRegistry.refresh`). */
+  function stored(w: World) {
+    const towns = new TownRegistry(w.builder);
+    const stores = new StoreRegistry();
+    stores.attach({ builder: w.builder, towns, track: w.track });
+    const sync = () => {
+      towns.refresh();
+      stores.refresh();
+    };
+    sync();
+    return { stores, sync };
+  }
+  const wood = (amount: number): WagonSlot => ({
+    ...empty(),
+    def: wagonDef('flatbed'),
+    cargo: 'wood',
+    amount,
+    origin: 0,
+  });
+  const flatbed = (): WagonSlot => ({ ...empty(), def: wagonDef('flatbed') });
+  /**
+   * Send the train to the station, then on to `then` (a train loads only for a stop to unload at),
+   * and run it; returns the most of each kind it held at any moment.
+   */
+  function visit(w: World, t: Train, at: Station, then: Station[] = [], seconds = 120) {
+    t.schedule = [at, ...then].map((s) => defaultStop(s.id));
+    expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+    t.onPathReady({ builder: w.builder });
+    let arrived = false;
+    const most = new Map<string, number>();
+    for (let i = 0, now = 0; i < seconds / GDT; i++) {
+      w.fleet.tick(GDT, (now += GDT));
+      if (t.atStation === at) arrived = true;
+      for (const [c, n] of aboard(t)) most.set(c, Math.max(most.get(c) ?? 0, n));
+    }
+    expect(arrived, 'it reached the station').toBe(true);
+    return most;
+  }
+
+  it('unloading at a depot fills the depot store', () => {
+    const w = world();
+    const q = put(w, 'quarry', 6);
+    const depot = put(w, 'depot', 75);
+    const { stores, sync } = stored(w);
+    sync();
+    expect(depot.dock).toBe(stores.dockOf(depot));
+    const t = train(w, 30, [stoneFrom(q.id)]);
+    visit(w, t, depot);
+    expect(stores.dockOf(depot)!.get('stone')).toBeCloseTo(20, 6);
+    expect(depot.stored('stone')).toBeCloseTo(20, 6);
+    expect(w.stock.get('stone'), 'and none reached the stockpile').toBe(0);
+    expect(aboard(t).get('stone') ?? 0).toBe(0);
+  });
+
+  it('unloading at a town warehouse fills the town store and a second warehouse can load it', () => {
+    const w = world();
+    put(w, 'town', 46);
+    const a = put(w, 'warehouse', 40);
+    const b = put(w, 'warehouse', 52);
+    const { stores, sync } = stored(w);
+    sync();
+    const store = stores.dockOf(a)!;
+    expect(store.key).toMatch(/^town:/);
+    expect(stores.dockOf(b)).toBe(store);
+    visit(w, train(w, 20, [wood(10), wood(10)]), a);
+    expect(store.get('wood')).toBeCloseTo(20, 6);
+    expect(b.stored('wood'), 'the other warehouse shows the same goods').toBeCloseTo(20, 6);
+    expect(b.availableCargo()).toContain('wood');
+    const loader = train(w, 70, [flatbed(), flatbed()], false);
+    const depot = put(w, 'depot', 10);
+    sync();
+    const most = visit(w, loader, b, [depot]);
+    // it takes in whole loads of the pile: what it holds came out of the store
+    expect(most.get('wood') ?? 0, 'the loading train took wood').toBeGreaterThan(15);
+    expect(store.get('wood') + (most.get('wood') ?? 0), 'and none was lost').toBeCloseTo(20, 6);
+  });
+
+  it('a full store refuses the unload', () => {
+    const w = world();
+    put(w, 'town', 46);
+    const a = put(w, 'warehouse', 40);
+    const { stores, sync } = stored(w);
+    sync();
+    const store = stores.dockOf(a)!;
+    // the Townhouse's 300 and 1000 for the warehouse
+    expect(store.cap('wood')).toBe(1300);
+    expect(store.add('wood', 1300)).toBe(1300);
+    expect(a.roomFor('wood')).toBe(0);
+    expect(a.roomFor('stone'), 'the cap is per resource').toBe(1300);
+    const t = train(w, 20, [wood(10), wood(10)]);
+    visit(w, t, a);
+    expect(store.get('wood')).toBe(1300);
+    expect(aboard(t).get('wood')).toBeCloseTo(20, 6);
+  });
+});
+
 describe('a freight train that put goods down at a stop', () => {
   it('says so in its save, and drops that on setting off', () => {
     const w = world();
@@ -695,11 +794,13 @@ function dumpsFor(w: World, t: Train) {
   if (fromStore) {
     if (depots.length) ok.push(...nearest(depots));
     else {
-      const roomy = houses.filter((s) => !sources.has(s.id) && s.room > 1);
+      const roomy = houses.filter((s) => !sources.has(s.id) && s.roomFor('stone') > 1);
       if (roomy.length) ok.push(...nearest(roomy));
     }
   } else {
-    const roomy = houses.filter((s) => !sources.has(s.id) && s.room >= Math.min(units, 5));
+    const roomy = houses.filter(
+      (s) => !sources.has(s.id) && s.roomFor('stone') >= Math.min(units, 5),
+    );
     if (!roomy.length) {
       if (depots.length) ok.push(...nearest(depots));
     } else {
@@ -752,7 +853,7 @@ describe('where a loaded freight train is bound, over generated lines', () => {
           'the stop',
         ).toContain(got);
         // a depot is bound for though a warehouse with room is nearer
-        const roomier = spec.houses.some((s) => s.room > 1 && !spec.sources.has(s.id));
+        const roomier = spec.houses.some((s) => s.roomFor('stone') > 1 && !spec.sources.has(s.id));
         if (roomier && spec.depots.length) seen.depotNotNearest++;
       },
       { seeds: SEEDS, shrink: shrinkLoaded },
@@ -1180,7 +1281,7 @@ describe('what a freight train takes on at the stations it serves', () => {
     t.wagons.push({ ...flat(), uid: 13 });
     const stone0 = w.stock.get('stone');
     launch(w, t);
-    expect(house.room).toBe(30);
+    expect(house.roomFor('stone')).toBe(30);
     const watch = new Watch(t);
     // to the moment it has left the warehouse
     let now = 0;
@@ -1212,7 +1313,7 @@ describe('what a freight train takes on at the stations it serves', () => {
     const q = put(w, 'quarry', 6);
     const house = put(w, 'warehouse', 45, { stone: 20, wheat: 10 });
     put(w, 'depot', 75);
-    expect(house.room).toBe(0);
+    expect(house.roomFor('stone')).toBe(0);
     const t = train(w, 30, [stoneFrom(q.id), flat()]);
     t.schedule = [defaultStop(house.id)];
     expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);

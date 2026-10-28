@@ -2409,7 +2409,7 @@ export class Train {
     }
     let busy = false;
     let budget = st.loadRate * st.loadBoost * rules.loadRateMul * gdt;
-    // unload: contract cargo is credited first, everything else enters the stockpile
+    // unload: contract cargo is credited first, everything else enters the station's store
     this.flowTimer += gdt;
     for (const w of this.wagons) {
       if (stop.unload === 'none') break;
@@ -2438,12 +2438,13 @@ export class Train {
         }
         continue;
       }
-      // where the load can go: the stockpile only at a depot, a warehouse's own store, or a
-      // station that wants it (contract or spot market)
-      const room = st.def.pool
+      // where the load can go: a depot's or a warehouse's store, or a station that wants it
+      // (contract or spot market); a depot with no store yet (`dock`) still feeds the stockpile
+      const toPile = st.def.pool && !st.dock;
+      const room = toPile
         ? Math.max(0, ctx.stockCap(w.cargo) - ctx.stockpile.get(w.cargo))
-        : st.def.stockpile
-          ? st.room
+        : st.def.pool || st.def.stockpile
+          ? st.roomFor(w.cargo)
           : 0;
       const contractable = !st.def.pool && !st.def.stockpile && st.accepts(w.cargo);
       if (!st.def.pool && !st.def.stockpile && !contractable) continue;
@@ -2462,7 +2463,7 @@ export class Train {
       n = credited + toStore;
       if (n <= 1e-6) continue;
       if (toStore > 0) {
-        if (st.def.pool) ctx.stockpile.add(w.cargo, toStore, Infinity);
+        if (toPile) ctx.stockpile.add(w.cargo, toStore, Infinity);
         else st.store(w.cargo, toStore);
         this.flowAcc[w.cargo] = (this.flowAcc[w.cargo] ?? 0) + toStore;
       }

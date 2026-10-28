@@ -737,15 +737,19 @@ export class Fleet {
     const dumpFor = (
       from: { x: number; y: number },
       loadUnits: number,
+      cargos: readonly string[],
       fromStore: boolean,
       not: ReadonlySet<number>,
     ) => {
+      // room for some of the goods: a store has its cap per kind
+      const roomy = (s: Station, enough: (room: number) => boolean) =>
+        cargos.some((c) => enough(s.roomFor(c)));
       const okDepots = depots.filter(ok);
       if (t.mode === 'freight' && !fromStore) {
-        const roomy = warehouses.filter(
-          (s) => ok(s) && !not.has(s.id) && s.room >= Math.min(loadUnits, 5),
+        const withRoom = warehouses.filter(
+          (s) => ok(s) && !not.has(s.id) && roomy(s, (r) => r >= Math.min(loadUnits, 5)),
         );
-        const w = this.nearest(roomy, from);
+        const w = this.nearest(withRoom, from);
         const d = this.nearest(okDepots, from);
         if (
           w &&
@@ -759,7 +763,7 @@ export class Fleet {
       return (
         this.nearest(okDepots, from) ??
         this.nearest(
-          warehouses.filter((s) => ok(s) && !not.has(s.id) && s.room > 1),
+          warehouses.filter((s) => ok(s) && !not.has(s.id) && roomy(s, (r) => r > 1)),
           from,
         )
       );
@@ -790,6 +794,7 @@ export class Fleet {
       const dump = dumpFor(
         head,
         units,
+        loaded.map((w) => w.cargo!),
         loaded.some((w) => isStore(w.origin)),
         origins,
       );
@@ -862,7 +867,13 @@ export class Fleet {
         if (!store && haul > 0 && haul < trainCap * 0.15 && s.productionPerWeek > 0)
           haul = Math.max(haul, Math.min(trainCap, s.totalStored()) + 0.25 * s.totalStored());
         if (haul < Math.min(trainCap * 0.15, 8)) continue;
-        const dump = dumpFor({ x: s.cx, y: s.cy }, haul, store, new Set([s.id]));
+        const dump = dumpFor(
+          { x: s.cx, y: s.cy },
+          haul,
+          s.availableCargo(),
+          store,
+          new Set([s.id]),
+        );
         const onward = dump ? between(dump, s) : 0;
         // fuller stations first, producer and warehouse alike: a producer near its cap is
         // throwing output away; distance counts at half weight so a full pile far away beats a

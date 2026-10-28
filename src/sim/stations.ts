@@ -10,6 +10,7 @@ import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
+import type { ResourceStore } from './stores';
 import { placeSpan } from './doors';
 
 export type { StationDef };
@@ -301,6 +302,9 @@ export function terrainFactorAt(map: GameMap, x: number, y: number, defId: strin
   return harvestBreakdown(map, x, y, defId, 1, 'spring', rules, FACTOR_CELLS)?.factor ?? 1;
 }
 
+/** The good a dock's cap is read for: ordinary goods all have the same cap. */
+const DOCK_PROBE = 'stone';
+
 /** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */
 export class Station {
   readonly id: number;
@@ -308,6 +312,11 @@ export class Station {
   name: string;
   level = 1;
   storage = new Map<string, number>();
+  /**
+   * The store a depot, or a warehouse, keeps its goods in (`StoreRegistry.refresh` binds it; not
+   * saved). While it is set the station's goods are the store's: `storage` is not used.
+   */
+  dock: ResourceStore | null = null;
   /** trains currently occupying a platform */
   occupants = new Set<number>();
   /** spot-market satiety per accepted cargo (0 = hungry, 1 = glutted) */
@@ -399,8 +408,12 @@ export class Station {
     const dy = Math.max(this.y - y, 0, y - (this.y + this.h - 1));
     return Math.max(dx, dy);
   }
-  /** Storage: produced goods for pickup; a warehouse holds whatever trains bring, per level. */
+  /**
+   * Storage: produced goods for pickup; a warehouse holds whatever trains bring, per level. With
+   * a dock, the dock's cap for one ordinary good (every good has the same cap but power).
+   */
   get capacity() {
+    if (this.dock) return this.dock.cap(DOCK_PROBE);
     if (this.def.stockpile) return Math.round(rules.warehouseCap * this.level);
     return Math.round(LEVELS.capacity[this.level - 1] * rules.capacityMul);
   }
@@ -415,18 +428,25 @@ export class Station {
   availableCargo(): string[] {
     const out = this.producedCargo();
     if (this.def.stockpile)
-      for (const [c, v] of this.storage) if (v >= 1 && !out.includes(c)) out.push(c);
+      for (const [c, v] of this.dock ? this.dock.held() : this.storage)
+        if (v >= 1 && !out.includes(c)) out.push(c);
     return out;
   }
-  /** Room a warehouse has for more goods: none while it is closed. */
-  get room() {
+  /**
+   * Room for more of the cargo: none while the station is closed. A dock has its cap per good;
+   * storage of its own has one cap for all goods together.
+   */
+  roomFor(cargo: string) {
     if (this.closed) return 0;
+    if (this.dock) return Math.max(0, this.dock.cap(cargo) - this.dock.get(cargo));
     return Math.max(0, this.capacity - this.totalStored());
   }
-  /** Put goods into a warehouse's store; returns what fitted (nothing while it is closed). */
+  /** Put goods into the station's store; returns what fitted (nothing while it is closed). */
   store(cargo: string, amount: number): number {
-    const n = Math.max(0, Math.min(amount, this.room));
-    if (n > 0) this.storage.set(cargo, this.stored(cargo) + n);
+    const n = Math.max(0, Math.min(amount, this.roomFor(cargo)));
+    if (n <= 0) return 0;
+    if (this.dock) return this.dock.add(cargo, n);
+    this.storage.set(cargo, this.stored(cargo) + n);
     return n;
   }
   /** nearby-resource multiplier, set when placed and after terrain edits */
@@ -460,15 +480,17 @@ export class Station {
     return scaleCost(this.def.cost, LEVELS.upgradeCostMul[this.level] * rules.buildCostMul);
   }
   stored(cargo: string) {
-    return this.storage.get(cargo) ?? 0;
+    return this.dock ? this.dock.get(cargo) : (this.storage.get(cargo) ?? 0);
   }
   totalStored() {
     let t = 0;
-    for (const v of this.storage.values()) t += v;
+    if (this.dock) for (const [, v] of this.dock.held()) t += v;
+    else for (const v of this.storage.values()) t += v;
     return t;
   }
   /** Take up to `amount` units of cargo out of storage; returns what was taken. */
   take(cargo: string, amount: number): number {
+    if (this.dock) return this.dock.take(cargo, Math.max(0, amount));
     const have = this.stored(cargo);
     const n = Math.max(0, Math.min(have, amount));
     if (n <= 0) return 0;

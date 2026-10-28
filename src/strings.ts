@@ -25,7 +25,6 @@ export const STR = {
     /** the prompt that ends the loading: the click starts the fade, the reveal and the music */
     begin: 'Click to begin',
     tips: [
-      'Only cargo unloaded at a Depot reaches your stockpile.',
       'Crews eat wheat every day. Run out and production halves and trains slow.',
       'Space pauses the game, and 1, 2 and 3 set the speed.',
       'M switches between the field view and the overview map.',
