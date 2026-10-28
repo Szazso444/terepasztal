@@ -909,7 +909,7 @@ export class Game implements UiHost {
     this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stores);
     this.towns = new TownRegistry(this.builder);
     this.stores.attach({ builder: this.builder, towns: this.towns, track: this.track });
-    this.houses = new HouseRegistry(this.builder, this.towns, this.stock);
+    this.houses = new HouseRegistry(this.builder, this.towns);
     this.towns.residentsAt = (x, y) => this.houses.residentsAt(x, y);
     this.houses.onMessage = (m, k) => this.toasts.push(m, k);
     // a house is turned the way its decor piece was placed
@@ -927,6 +927,7 @@ export class Game implements UiHost {
     this.builder.catenary = this.catenary;
     this.builder.onSupplyChanged = (x, y) => this.onSupplyChanged(x, y);
     this.stock.onMessage = (m, k) => this.toasts.push(m, k);
+    this.stores.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
     this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
@@ -2066,8 +2067,11 @@ export class Game implements UiHost {
     }
     if (this.lastFailedContract)
       tips.push({ key: 'failed', kind: 'warn', text: T.failed(this.lastFailedContract) });
-    if (this.stock.famine) tips.push({ key: 'famine', kind: 'bad', text: T.famine });
-    else if (this.stock.foodPerWeek() > 0 && this.stock.get('food') < this.stock.foodPerWeek() * 2)
+    // a famine at any store; else food in every store together against two weeks of eating
+    const food = this.stores.totals().get('food') ?? 0;
+    if (this.stores.all().some((s) => s.famine))
+      tips.push({ key: 'famine', kind: 'bad', text: T.famine });
+    else if (this.stock.foodPerWeek() > 0 && food < this.stock.foodPerWeek() * 2)
       tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat });
     if (b.stations.length === 0) tips.push({ key: 'nostations', kind: 'info', text: T.noStations });
     else if (b.stations.length === 1)
@@ -2347,7 +2351,6 @@ export class Game implements UiHost {
       this.notices.refresh({
         trains: this.fleet.trains,
         builder: this.builder,
-        stock: this.stock,
         power: this.power,
         stuck: this.traffic.stuckTrains(this.clock.time),
       });
@@ -2483,7 +2486,7 @@ export class Game implements UiHost {
       // the recipe it runs at its level
       recipe: buildingRecipe(b),
       altIn: def.altIn,
-      status: BuildingPanel.statusKind(b, this.stock),
+      status: BuildingPanel.statusKind(b, this.stores.worksStore(b)),
       work: b.work ? { to: b.work.to, hoursLeft: hoursLeft(b.work) } : null,
       rate: b.rate,
     };

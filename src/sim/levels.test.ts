@@ -11,7 +11,6 @@ import { MAX_LEVEL, levelCap, ageOfLevel } from './levels';
 import { LAST_AGE, ageDef } from './ages';
 import { Builder } from './build';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
 import {
   Station,
   STATION_DEFS,
@@ -55,18 +54,18 @@ const ageName = (age: number) => STR.ages.name[ageDef(age).id];
 /** A flat world in play mode, in `age`, with every resource in plenty. */
 function world(age = 0) {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
-    pile = new Stockpile(),
     economy = new Economy();
-  // the builder pays from a depot by the works; houses still pay from the stockpile
+  // the builder pays from a depot by the works, and so do the houses: the registry has no towns,
+  // so the depot stands in for every house's town store
   const { stores, depot: stock } = storeWith(
     { wood: 1e6, stone: 1e6, iron: 1e6 },
     { x: 10, y: 10 },
   );
+  stores.townStore = () => stores.poolOf(stock);
   const builder = new Builder(map, new RegionState(map), new TrackGraph(64, 64), economy, stores);
-  for (const k of ['wood', 'stone', 'iron']) pile.add(k, 1e6);
   economy.setAge(age);
   const towns = new TownRegistry(builder);
-  const houses = new HouseRegistry(builder, towns, pile);
+  const houses = new HouseRegistry(builder, towns);
   return { map, stock, economy, builder, houses };
 }
 

@@ -148,7 +148,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   const builder = new Builder(map, regions, track, economy, stores);
   const towns = new TownRegistry(builder);
   stores.attach({ builder, towns, track });
-  const houses = new HouseRegistry(builder, towns, stock);
+  const houses = new HouseRegistry(builder, towns);
   towns.residentsAt = (x, y) => houses.residentsAt(x, y);
   builder.onIndustryPlaced = (x, y) => houses.industryPlaced(x, y);
   const power = new PowerGrid(map);

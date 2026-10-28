@@ -21,11 +21,15 @@ import type { Economy } from './economy';
 import type { Catenary } from './catenary';
 import type { Roads } from './roads';
 import { CrossingWatch } from './crossings';
+import type { ResourceStore } from './stores';
 import type { RegionState } from '../world/regions';
 
-/** Production multiplier of every station while the crews starve (`Stockpile.famine`). */
+/**
+ * Production multiplier of a station or works while the crews at its store starve (`Store.famine`,
+ * set by `StoreRegistry.tickUpkeep`).
+ */
 export const FAMINE_PRODUCTION_MUL = 0.5;
-/** Speed multiplier of every train while the crews starve, on top of the weather's. */
+/** Speed multiplier of a train while its crew starves, on top of the weather's. */
 export const FAMINE_SPEED_MUL = 0.7;
 /**
  * Reach of a passenger station in tiles, as Chebyshev distance from its anchor tile: the residents
@@ -134,6 +138,23 @@ export interface StepHooks {
   dailyTicket?: () => void;
 }
 
+/**
+ * Who eats at which store this step: the residents of every house at its town's store, the crews
+ * of stations, works and services at the store that supplies their tile. A house outside every
+ * town and a crew with no store in reach eat nothing (and never starve). Train crews are not
+ * counted here.
+ */
+function eaters(houses: HouseRegistry, builder: Builder): Map<ResourceStore, number> {
+  const out = new Map<ResourceStore, number>();
+  const eat = (at: ResourceStore | null, n: number) => {
+    if (at && n > 0) out.set(at, (out.get(at) ?? 0) + n);
+  };
+  const stores = builder.stores;
+  for (const h of houses.houses.values()) eat(stores.townStore(h.x, h.y), h.residents);
+  for (const c of builder.crewSites()) eat(stores.supplierFor(c.x, c.y), c.crew);
+  return out;
+}
+
 /** Residents of finished houses within PASSENGER_CATCHMENT of the station's anchor. */
 function catchment(houses: Iterable<House>, s: Station): number {
   let n = 0;
@@ -211,9 +232,11 @@ export class SimStep {
     // which buildings are closed and which have just opened at their new level
     builder.tickWorks(gdt);
     houses.tickWorks(gdt);
+    const stores = builder.stores;
+    // the head counts the top bar and the age goals read
     stock.population = houses.residentsTotal();
     stock.workforce = builder.crewTotal() + fleet.crewTotal();
-    stock.tick(gdt);
+    stores.tickUpkeep(gdt, eaters(houses, builder));
     houses.tick(gdt, clock.time, play);
     if (clock.time >= this.nextCityCheck) {
       this.nextCityCheck = clock.time + CITY_CHECK_SECONDS;
@@ -232,23 +255,16 @@ export class SimStep {
         crossings.size ? crossings : null,
       );
     }
-    const famineMul = stock.famine ? FAMINE_PRODUCTION_MUL : 1;
+    // a station makes less while the crews at the store that supplies it starve
     for (const s of builder.stations) {
       if (s.def.id === 'station') s.passengerPopulation = catchment(houses.houses.values(), s);
-      s.tick(gdt * famineMul);
+      s.tick(gdt * (stores.supplierFor(s.x, s.y)?.famine ? FAMINE_PRODUCTION_MUL : 1));
     }
-    tickBuildings(
-      builder.buildings.values(),
-      stock,
-      gdt,
-      stock.famine,
-      builder.plantCount(),
-      builder.depotCount(),
-    );
+    tickBuildings(builder.buildings.values(), (b) => stores.worksStore(b), gdt);
     if (ctx.weather) weather.tick(clock.time, clock.day, gdt);
     else weather.updateWind(clock.time, false);
     this.hooks.season?.();
-    const speed = (ctx.weather ? weather.speedFactor() : 1) * (stock.famine ? FAMINE_SPEED_MUL : 1);
+    const speed = ctx.weather ? weather.speedFactor() : 1;
     fleet.tick(gdt, clock.time, speed);
     contracts.tick(clock.time);
     trade.tick(clock.time, stock, economy, ctx.stockCap);

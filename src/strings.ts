@@ -1498,7 +1498,14 @@ export const STR = {
     cheat: 'Cheat',
     cheated: '+$10,000 and every resource topped up',
   },
-  stores: { grid: 'Power grid' },
+  stores: {
+    grid: 'Power grid',
+    /** the eaters at a store went short for too long (`StoreRegistry.tickUpkeep`) */
+    famine: (name: string) =>
+      `${name}: the crews are out of food: production halved, trains slowed`,
+    /** a store in famine has food again, or nobody left to feed */
+    fed: (name: string) => `${name}: food is back; crews are fed again`,
+  },
   town: {
     title: 'Towns',
     none: 'No towns yet. Place a Townhouse, then a House and a warehouse within 7 tiles of it.',

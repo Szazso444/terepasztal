@@ -16,8 +16,6 @@ import { Inventory } from '../gacha/inventory';
 import { bridgeSpan, bridgeCapacity, BRIDGE_SLOW_FACTOR, BRIDGE_SLOW_SHARE } from './bridges';
 import { Signals } from './signals';
 import { tickBuildings, buildingRecipe, type Building } from './buildings';
-import { HouseRegistry } from './houses';
-import { TownRegistry } from './towns';
 import { cityTiles } from './city';
 import { weekSeconds, daySeconds, rules, DEFAULT_RULES } from './rules';
 import { TradeDesk } from './trade';
@@ -28,6 +26,7 @@ import { referencePath } from './compat';
 import { STR } from '../strings';
 import { upgradeSeconds } from './upgrade';
 import { storeWith } from '../testing/storeFixtures';
+import { simWorld, line, station } from '../testing/simWorld';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 function world() {
@@ -64,59 +63,112 @@ describe('weekly food economy and housing', () => {
   });
   it('validates all shipped cargo, recipes and passenger vehicles', () =>
     expect(validateContent(DEFAULT_CONTENT)).toEqual([]));
-  it('eats food once per weekly rate and leaves wheat for the mill', () => {
-    const s = new Stockpile();
-    s.population = 20;
-    s.workforce = 4;
-    s.add('food', 100);
-    s.add('wheat', 20);
-    for (let i = 0; i < 7; i++) s.tick(daySeconds());
-    expect(s.get('food')).toBeCloseTo(76);
-    expect(s.get('wheat')).toBe(20);
-  });
   it('processes a week at 1:5, improves to 1:11, and never spends inputs into a full output store', () => {
-    const s = new Stockpile();
-    s.add('wheat', 1000);
+    const { stores, depot } = storeWith({ wheat: 1000 });
+    const s = stores.poolOf(depot);
     const b: Building = { id: 'windmill', x: 1, y: 1, acc: 0, active: false, rate: 0 };
-    tickBuildings([b], s, weekSeconds(), false, 0, 0);
+    tickBuildings([b], () => s, weekSeconds());
     expect(s.get('food')).toBe(300);
     expect(s.get('wheat')).toBe(940);
     b.level = 4;
     expect(buildingRecipe(b).out.food).toBe(11);
-    s.add('food', 1000 - s.get('food'));
-    tickBuildings([b], s, weekSeconds(), false, 0, 0);
+    s.add('food', s.cap('food') - s.get('food'));
+    tickBuildings([b], () => s, weekSeconds());
     expect(s.get('wheat')).toBe(940);
   });
   it('grows only into completed, paid-for housing and stops without free upgrades or houses', () => {
-    const w = world(),
-      towns = new TownRegistry(w.builder),
-      houses = new HouseRegistry(w.builder, towns, w.stock);
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const hall = station(w, 'town', 36, 29);
+    const store = w.stores.townStore(hall.x, hall.y)!;
+    w.builder.free = true;
     const d = w.builder.spawnDecor(40, 29, 'townhouse', 0)!;
-    houses.sync(d, false);
-    houses.finishAll();
-    w.stock.add('food', 1000);
-    for (let i = 0; i < 100; i++) houses.tick(daySeconds(), i * daySeconds());
-    const h = houses.at(40, 29)!;
+    w.houses.finishAll();
+    store.add('food', 300);
+    for (let i = 0; i < 100; i++) w.houses.tick(daySeconds(), i * daySeconds());
+    const h = w.houses.at(d.x, d.y)!;
     expect(h.residents).toBe(20);
     expect(h.level).toBe(1);
-    expect(houses.houses.size).toBe(1);
+    expect(w.houses.houses.size).toBe(1);
     // the player pays for the second level, which the Diesel age opens
     w.builder.free = false;
-    w.stock.add('wood', 60);
-    w.stock.add('stone', 40);
-    const wood = w.stock.get('wood');
-    expect(houses.upgrade(h)).toBe(false);
+    store.add('wood', 60);
+    store.add('stone', 40);
+    const wood = store.get('wood');
+    expect(w.houses.upgrade(h)).toBe(false);
     w.economy.setAge(1);
-    expect(houses.upgrade(h)).toBe(true);
-    expect(w.stock.get('wood')).toBe(wood - 60);
+    expect(w.houses.upgrade(h)).toBe(true);
+    expect(store.get('wood')).toBe(wood - 60);
     // the work takes its game time; nobody moves in meanwhile
-    houses.tick(daySeconds() * 100, daySeconds() * 101);
+    w.houses.tick(daySeconds() * 100, daySeconds() * 101);
     expect([h.level, h.residents]).toEqual([1, 20]);
-    houses.tickWorks(upgradeSeconds(2));
+    w.houses.tickWorks(upgradeSeconds(2));
     expect(h.level).toBe(2);
-    houses.tick(daySeconds() * 100, daySeconds() * 200);
+    w.houses.tick(daySeconds() * 100, daySeconds() * 200);
     expect(h.residents).toBe(60);
     expect(h.level).toBe(2);
+  });
+  it("a house grows on its own town's food, not another's; outside every town it never starves", () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const hallA = station(w, 'town', 20, 29);
+    const hallB = station(w, 'town', 46, 29);
+    const storeA = w.stores.townStore(hallA.x, hallA.y)!;
+    const storeB = w.stores.townStore(hallB.x, hallB.y)!;
+    w.builder.free = true;
+    const inA = w.builder.spawnDecor(24, 29, 'townhouse', 0)!;
+    const alone = w.builder.spawnDecor(80, 20, 'townhouse', 0)!;
+    w.houses.finishAll();
+    const [a, b] = [w.houses.at(inA.x, inA.y)!, w.houses.at(alone.x, alone.y)!];
+    expect([w.houses.store(a), w.houses.store(b)]).toEqual([storeA, null]);
+    const start = [a.residents, b.residents];
+    storeB.add('food', 300);
+    for (let i = 0; i < 10; i++) w.houses.tick(daySeconds(), i * daySeconds());
+    expect(a.residents).toBe(start[0]);
+    expect(w.houses.growthDaysLeft(a)).toBeNull();
+    expect(b.residents).toBeGreaterThan(start[1]);
+    // fed from its own town's store, it grows; a famine there stops it again
+    storeA.add('food', 300);
+    expect(w.houses.growthDaysLeft(a)).not.toBeNull();
+    for (let i = 10; i < 20; i++) w.houses.tick(daySeconds(), i * daySeconds());
+    expect(a.residents).toBeGreaterThan(start[0]);
+    w.stores.byKey(storeA.key)!.famine = true;
+    expect(w.houses.foodOk(a)).toBe(false);
+  });
+  it('a house upgrade pays from its own town store', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const hallA = station(w, 'town', 20, 29);
+    const hallB = station(w, 'town', 46, 29);
+    const storeA = w.stores.townStore(hallA.x, hallA.y)!;
+    const storeB = w.stores.townStore(hallB.x, hallB.y)!;
+    w.builder.free = true;
+    const d = w.builder.spawnDecor(24, 29, 'townhouse', 0)!;
+    w.houses.finishAll();
+    w.builder.free = false;
+    w.economy.setAge(1);
+    const h = w.houses.at(d.x, d.y)!;
+    const cost = w.houses.upgradeCost(h)!;
+    expect(Object.keys(cost).length).toBeGreaterThan(0);
+    // the other town can pay, its own cannot: refused, with what its own store lacks
+    for (const [k, v] of Object.entries(cost)) storeB.add(k, v);
+    const refused = w.houses.canUpgrade(h);
+    expect(refused.ok).toBe(false);
+    expect(refused.reason).toBe(
+      STR.build.needResources(
+        Object.entries(cost)
+          .map(([k, v]) => `${v} ${k}`)
+          .join(', '),
+      ),
+    );
+    expect(w.houses.upgrade(h)).toBe(false);
+    // stocked, its own store pays and the other keeps its goods
+    for (const [k, v] of Object.entries(cost)) storeA.add(k, v);
+    expect(w.houses.upgrade(h)).toBe(true);
+    for (const [k, v] of Object.entries(cost)) {
+      expect(storeA.get(k), k).toBe(0);
+      expect(storeB.get(k), k).toBe(v);
+    }
   });
   it('separates passenger stops from the persistent town anchor', () => {
     const town = new Station('town', 2, 2),

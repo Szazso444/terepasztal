@@ -1,6 +1,5 @@
 import type { Train } from './trains';
 import type { Builder } from './build';
-import type { Stockpile } from './stockpile';
 import type { PowerGrid } from './power';
 import { buildingDef, missingInput } from './buildings';
 import { cargoName } from './cargo';
@@ -43,7 +42,6 @@ export class Notices {
   refresh(src: {
     trains: Train[];
     builder: Builder;
-    stock: Stockpile;
     power: PowerGrid;
     stuck?: { id: number; since: number }[];
   }) {
@@ -104,7 +102,7 @@ export class Notices {
           target,
         });
       else if (b.reason === 'inputs') {
-        const m = missingInput(def, src.stock);
+        const m = missingInput(def, src.builder.stores.worksStore(b));
         out.push({
           key: `b${b.x},${b.y}:in`,
           kind: 'warn',

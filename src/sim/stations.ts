@@ -317,6 +317,12 @@ export class Station {
    * saved). While it is set the station's goods are the store's: `storage` is not used.
    */
   dock: ResourceStore | null = null;
+  /**
+   * The town store a harvesting station in a town's reach makes into: its workers carry its output
+   * straight there (`StoreRegistry.refresh` binds it; not saved). While it is set `tick` adds to
+   * it, not to `storage`, which stays for stations outside every town.
+   */
+  outlet: ResourceStore | null = null;
   /** trains currently occupying a platform */
   occupants = new Set<number>();
   /** spot-market satiety per accepted cargo (0 = hungry, 1 = glutted) */
@@ -543,8 +549,9 @@ export class Station {
     this.market.set(cargo, Math.min(1, this.satiety(cargo) + amount / (this.capacity * 1.5)));
   }
   /**
-   * Produce goods over in-game seconds, nothing while closed; storage is shared across produced
-   * cargo types. The market's demand recovers either way.
+   * Produce goods over in-game seconds, nothing while closed: into the outlet when there is one (up
+   * to its cap per good), else into storage, which is shared across produced cargo types. The
+   * market's demand recovers either way.
    */
   tick(gameDt: number) {
     const decay = Math.exp(-gameDt / weekSeconds());
@@ -554,6 +561,10 @@ export class Station {
     if (!produced.length) return;
     const perType =
       ((this.productionPerWeek * this.productionMul) / weekSeconds() / produced.length) * gameDt;
+    if (this.outlet) {
+      for (const c of produced) this.outlet.add(c, perType);
+      return;
+    }
     for (const c of produced) {
       if (this.totalStored() >= this.capacity) break;
       const room = this.capacity - this.totalStored();

@@ -4,13 +4,17 @@ import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import type { Rng } from '../engine/rng';
 import { Terrain, terrainAt } from '../world/tiles';
 import { pieceCost } from '../world/track';
-import { rules, DEFAULT_RULES, daySeconds } from './rules';
+import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { setSeasonOffset, seasonOf, productionMul, type Season, type WeatherKind } from './weather';
 import { resetTrainIds, type Train } from './trains';
 import { resetStationIds, type Station } from './stations';
 import { biomeAt, biomeDef } from './biomes';
-import { buildingDef, buildingSpan, tickBuildings } from './buildings';
+import { buildingDef, buildingRate, buildingSpan, tickBuildings, type Building } from './buildings';
+import { depotWith } from '../testing/storeFixtures';
+import type { ResourceStore } from './stores';
+import { TOWN_RADIUS } from './towns';
+import { decorDef } from './build';
 import { SIM_STEP } from './time';
 import { LAST_AGE } from './ages';
 import {
@@ -71,21 +75,22 @@ function grass(): SimWorld {
 
 describe('SimStep: famine', () => {
   /**
-   * A quarry by the line (its crew eats), a step at 1x with rain forced to full strength, and the
-   * speed factor fleet.tick was called with. Starving: no food and the famine already declared;
-   * fed: a full larder.
+   * A quarry by the line (its crew eats at the depot beside it), a step at 1x with rain forced to
+   * full strength, and the speed factor fleet.tick was called with. Starving: the depot's store
+   * has no food and its famine already declared; fed: a full larder.
    */
   function once(starving: boolean, weather: boolean) {
     const w = grass();
     const quarry = station(w, 'quarry', 14, 19);
-    if (starving) w.stock.famine = true;
-    else w.stock.add('food', 1000);
+    const depot = depotWith(w, {}, { x: 8, y: 21 });
+    if (starving) depot.famine = true;
+    else depot.add('food', 1000);
     w.weather.load({ kind: 'rain', intensity: 1, nextChangeAt: 1e9, rng: w.weather.rng.state });
     const tick = vi.spyOn(w.fleet, 'tick');
     run(w, new SimStep(w), context(w, weather), 1);
     expect(tick, 'fleet.tick calls').toHaveBeenCalledTimes(1);
     return {
-      famine: w.stock.famine,
+      famine: depot.famine,
       stone: quarry.stored('stone'),
       speed: tick.mock.calls[0][2] ?? Number.NaN,
       weatherFactor: w.weather.speedFactor(),
@@ -98,20 +103,59 @@ describe('SimStep: famine', () => {
     expect(fed.famine, 'fed: famine').toBe(false);
     expect(starving.famine, 'starving: famine').toBe(true);
     expect(fed.stone, 'fed: stone made').toBeGreaterThan(0);
-    expect(starving.stone).toBeCloseTo(fed.stone * 0.5, 12);
+    expect(starving.stone).toBeCloseTo(fed.stone * FAMINE_PRODUCTION_MUL, 12);
   });
 
   it.each([true, false])(
-    'multiplies the speed factor fleet.tick gets by 0.7 (weather %s)',
+    'leaves the speed factor fleet.tick gets to the weather: hungry trains are their own (weather %s)',
     (weather) => {
       const fed = once(false, weather);
       const starving = once(true, weather);
       // rain at full strength slows trains by 12 % when the weather is on, not at all when off
       expect(fed.speed, 'fed: speed factor').toBeCloseTo(weather ? fed.weatherFactor : 1, 12);
       expect(fed.speed, 'fed: speed factor').toBeCloseTo(weather ? 0.88 : 1, 12);
-      expect(starving.speed, 'starving: speed factor').toBeCloseTo(fed.speed * 0.7, 12);
+      expect(starving.speed, 'starving: speed factor').toBeCloseTo(fed.speed, 12);
     },
   );
+
+  it('one town starves while the other is fed', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const hallA = station(w, 'town', 20, 29);
+    const hallB = station(w, 'town', 46, 29);
+    const storeA = w.stores.townStore(hallA.x, hallA.y)!;
+    const storeB = w.stores.townStore(hallB.x, hallB.y)!;
+    w.builder.free = true;
+    const kilnA = w.builder.placeBuilding(24, 25, 'kiln')!;
+    const kilnB = w.builder.placeBuilding(50, 25, 'kiln')!;
+    w.builder.free = false;
+    for (const [x, y] of [
+      [18, 33],
+      [44, 33],
+    ]) {
+      w.houses.sync({ id: 'townhouse', x, y, rot: 0 }, false);
+      Object.assign(w.houses.at(x, y)!, { progress: 1, residents: 8 });
+    }
+    storeA.add('food', 300);
+    storeA.add('wood', 300);
+    storeB.add('wood', 300);
+    const step = new SimStep(w);
+    const ctx = context(w, false);
+    run(w, step, ctx, Math.ceil(11 / SIM_STEP));
+    expect(w.clock.time, 'game time').toBeGreaterThan(11);
+    expect([storeA.famine, storeB.famine], 'famine A, B').toEqual([false, true]);
+    // one more step: how far each kiln comes, batches made and the batch under way together
+    const progress = (b: Building) => (b.made?.coal ?? 0) + b.acc;
+    const before = [progress(kilnA), progress(kilnB)];
+    run(w, step, ctx, 1);
+    const a = progress(kilnA) - before[0];
+    const b = progress(kilnB) - before[1];
+    expect(a, 'town A: full rate').toBeCloseTo(
+      (buildingRate(kilnA) * rules.productionMul * SIM_STEP) / weekSeconds(),
+      12,
+    );
+    expect(b, 'town B: famine rate').toBeCloseTo(a * FAMINE_PRODUCTION_MUL, 12);
+  });
 });
 
 describe('SimStep: passenger catchment', () => {
@@ -318,6 +362,7 @@ function state(w: SimWorld, step: SimStep) {
   return {
     fleet: JSON.stringify(w.fleet.trains.map((t) => t.toJSON())),
     stock: JSON.stringify(w.stock.toJSON()),
+    stores: JSON.stringify(w.stores.toJSON()),
     economy: JSON.stringify(w.economy.toJSON()),
     stations: JSON.stringify(w.builder.stations.map((s) => s.toJSON())),
     houses: JSON.stringify(w.houses.toJSON()),
@@ -494,7 +539,9 @@ interface Staged {
 /**
  * Builds a scene: a depot at (6, 20) and a line along row 20 to x 44, a quarry, a passenger
  * station and a town on it (a farm and a second passenger station when asked), the houses, the
- * buildings on row 41, a new game's stock with the scene's food, the clock, weather and season.
+ * buildings on row 41, a new game's stock in the stockpile (trains refuel from it) and in the
+ * depot's store (the works run from it), the scene's food and famine at every store, the clock,
+ * weather and season.
  * The season hook is the simulating half of Game.applySeason; the city and ticket hooks log.
  * Deliveries run inside fleet.tick, where a train's unloading would complete a contract.
  */
@@ -502,7 +549,7 @@ function stage(s: Scene): Staged {
   rules.daySeconds = s.daySeconds;
   setSeasonOffset(s.seasonOffset);
   const w = simWorld({ terrain: 'grass', size: 48 });
-  station(w, 'depot', 6, 20);
+  const depot = station(w, 'depot', 6, 20);
   line(w, 8, 20, 44);
   const quarry = station(w, 'quarry', 12, 19);
   station(w, 'station', 18, 21);
@@ -525,17 +572,22 @@ function stage(s: Scene): Staged {
     if (!w.builder.placeBuilding(10 + i * 8, 41, id)) throw new Error(`no ${id}`);
   w.builder.free = false;
   // the stock first: a new train fills its tanks from it
-  for (const [id, n] of Object.entries(startStock()))
+  const depotStore = w.stores.byKey(`st:${depot.id}`)!;
+  for (const [id, n] of Object.entries(startStock())) {
     w.stock.add(id, Math.round(n * rules.startStock));
+    depotStore.amounts.set(id, Math.round(n * rules.startStock));
+  }
   if (s.train) {
     const loco = w.inventory.add('adler', 0);
     const hopper = w.inventory.add('wood_hopper', 0);
     const t = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, town.id]);
     if (typeof t === 'string') throw new Error(`fleet.create: ${t}`);
   }
-  w.stock.take('food', w.stock.get('food'));
-  w.stock.add('food', s.food);
-  w.stock.famine = s.famine;
+  for (const st of w.stores.all()) {
+    if (st.kind === 'grid') continue;
+    st.amounts.set('food', s.food);
+    st.famine = s.famine;
+  }
   w.clock.time = s.startDays * s.daySeconds;
   w.weather.load({
     kind: s.sky.kind,
@@ -620,6 +672,7 @@ function fullState(w: SimWorld, clocks: [number, number, number], log: string[])
     clock: JSON.stringify([w.clock.time, w.clock.day]),
     fleet: JSON.stringify(w.fleet.trains.map((t) => t.toJSON())),
     stock: JSON.stringify([w.stock.toJSON(), w.stock.population, w.stock.workforce]),
+    stores: JSON.stringify(w.stores.toJSON()),
     economy: JSON.stringify(w.economy.toJSON()),
     stations: JSON.stringify(
       w.builder.stations.map((s) => [s.toJSON(), s.productionMul, s.passengerPopulation]),
@@ -707,6 +760,7 @@ describe('SimStep: one step', () => {
 
           const {
             stock,
+            stores,
             houses,
             builder,
             fleet,
@@ -736,11 +790,17 @@ describe('SimStep: one step', () => {
               expect(dt, 'houses.tickWorks: gdt').toBe(gdt);
             },
           );
-          stock.tick = watched(calls, 'stock.tick', stock.tick.bind(stock), (dt) => {
-            expect(dt, 'stock.tick: gdt').toBe(gdt);
-            expect(stock.population, 'population').toBe(houses.residentsTotal());
-            expect(stock.workforce, 'workforce').toBe(builder.crewTotal() + fleet.crewTotal());
-          });
+          stores.tickUpkeep = watched(
+            calls,
+            'stores.tickUpkeep',
+            stores.tickUpkeep.bind(stores),
+            (dt, eaters) => {
+              expect(dt, 'stores.tickUpkeep: gdt').toBe(gdt);
+              expect(eatersOf(eaters), 'stores.tickUpkeep: eaters').toEqual(eatersByHand(w));
+              expect(stock.population, 'population').toBe(houses.residentsTotal());
+              expect(stock.workforce, 'workforce').toBe(builder.crewTotal() + fleet.crewTotal());
+            },
+          );
           houses.tick = watched(
             calls,
             'houses.tick',
@@ -755,25 +815,23 @@ describe('SimStep: one step', () => {
           });
           for (const s of builder.stations)
             s.tick = watched(calls, `station ${s.id}`, s.tick.bind(s), (dt) => {
-              const mul = stock.famine ? FAMINE_PRODUCTION_MUL : 1;
+              const mul = stores.supplierFor(s.x, s.y)?.famine ? FAMINE_PRODUCTION_MUL : 1;
               expect(dt, `station ${s.id} (${s.def.id}): gdt`).toBe(gdt * mul);
               if (s.def.id === 'station')
                 expect(s.passengerPopulation, `station ${s.id}: catchment`).toBe(
                   catchmentByHand(w, s),
                 );
             });
-          vi.mocked(tickBuildings).mockImplementation((bs, st, dt, famine, plants, depots) => {
+          vi.mocked(tickBuildings).mockImplementation((bs, storeOf, dt) => {
             calls.push('tickBuildings');
             const list = [...bs];
             expect(list, 'tickBuildings: buildings').toEqual([...builder.buildings.values()]);
-            expect(st === stock, 'tickBuildings: the stockpile').toBe(true);
-            expect([dt, famine, plants, depots], 'tickBuildings').toEqual([
-              gdt,
-              stock.famine,
-              builder.plantCount(),
-              builder.depotCount(),
-            ]);
-            realTickBuildings(list, st, dt, famine, plants, depots);
+            for (const b of list)
+              expect(storeOf(b) === stores.worksStore(b), `tickBuildings: store of ${b.id}`).toBe(
+                true,
+              );
+            expect(dt, 'tickBuildings: gdt').toBe(gdt);
+            realTickBuildings(list, storeOf, dt);
           });
           weather.tick = watched(
             calls,
@@ -784,8 +842,7 @@ describe('SimStep: one step', () => {
             },
           );
           fleet.tick = watched(calls, 'fleet.tick', fleet.tick.bind(fleet), (dt, now, factor) => {
-            const want =
-              (ctx.weather ? weather.speedFactor() : 1) * (stock.famine ? FAMINE_SPEED_MUL : 1);
+            const want = ctx.weather ? weather.speedFactor() : 1;
             expect([dt, now, factor], 'fleet.tick').toEqual([gdt, clock.time, want]);
           });
           contracts.tick = watched(
@@ -831,7 +888,7 @@ describe('SimStep: one step', () => {
           expect(calls, 'calls').toEqual([
             'builder.tickWorks',
             'houses.tickWorks',
-            'stock.tick',
+            'stores.tickUpkeep',
             'houses.tick',
             ...(cityDue ? ['refreshCity'] : []),
             ...(play ? ['people.tick'] : []),
@@ -853,7 +910,7 @@ describe('SimStep: one step', () => {
             ageDue ? clock.time + daySeconds() / AGE_CHECKS_PER_DAY : before.nextAgeCheck,
           );
           expect(contracts.completedToday, 'completedToday').toBe(turns ? 0 : completedAtEnd);
-          if (stock.famine) seen.famine++;
+          if (stores.all().some((st) => st.famine)) seen.famine++;
           if (cityDue) seen.city++;
           if (ageDue) seen.age++;
           if (ticket) seen.ticket++;
@@ -867,6 +924,52 @@ describe('SimStep: one step', () => {
     },
   );
 });
+
+/** Eaters a step counted, by store key, in key order. */
+function eatersOf(eaters: Map<ResourceStore, number>): [string, number][] {
+  return [...eaters].map(([st, n]): [string, number] => [st.key, n]).sort(byKey);
+}
+const byKey = (a: [string, number], b: [string, number]) => (a[0] < b[0] ? -1 : 1);
+
+/**
+ * Who eats where, by store key, counted from the world: every house's residents at the store of
+ * the town whose Townhouse is nearest within its reach, every station's, service's and open works'
+ * crew at that town's store, else at the nearest store within reach of its anchor tile (ties to
+ * the lower key). Nobody eats where no store is.
+ */
+function eatersByHand(w: SimWorld): [string, number][] {
+  const out = new Map<string, number>();
+  const eat = (key: string | null, n: number) => {
+    if (key !== null && n > 0) out.set(key, (out.get(key) ?? 0) + n);
+  };
+  const town = (x: number, y: number) => {
+    let best: string | null = null;
+    let bd = Infinity;
+    for (const t of w.towns.towns) {
+      const hall = w.builder.stationById(t.stationId)!;
+      const d = hall.distTo(x, y);
+      if (d <= TOWN_RADIUS && d < bd) [best, bd] = [`town:${t.id}`, d];
+    }
+    return best;
+  };
+  const near = (x: number, y: number) => {
+    let best: string | null = null;
+    let bd = Infinity;
+    for (const st of w.stores.all()) {
+      if (st.kind === 'grid') continue;
+      const d = Math.max(Math.abs(st.anchor.x - x), Math.abs(st.anchor.y - y));
+      if (d <= rules.buildReach && (d < bd || (d === bd && st.key < best!)))
+        [best, bd] = [st.key, d];
+    }
+    return best;
+  };
+  for (const h of w.houses.houses.values()) eat(town(h.x, h.y), h.residents);
+  const crew = (x: number, y: number, n: number) => eat(town(x, y) ?? near(x, y), n);
+  for (const s of w.builder.stations) crew(s.x, s.y, s.crew);
+  for (const d of w.builder.decor.values()) crew(d.x, d.y, decorDef(d.id).crew);
+  for (const b of w.builder.buildings.values()) if (!b.work) crew(b.x, b.y, buildingDef(b.id).crew);
+  return [...out].sort(byKey);
+}
 
 /** Residents of finished houses on the 15 x 15 tiles centred on the station, tile by tile. */
 function catchmentByHand(w: SimWorld, s: Station) {
@@ -1041,6 +1144,7 @@ describe('SimStep: tickets, money and stock', () => {
         ageUps: 0,
         upkeep: 0,
         batches: 0,
+        harvest: 0,
       };
       forAll(
         (rng) => ({ ...genScene(rng, [200, 1500]), train: false }),
@@ -1063,9 +1167,10 @@ describe('SimStep: tickets, money and stock', () => {
           };
           w.trade.onSettled = (out) => settled.push(...out);
           w.economy.onAgeUp = (tier) => ages.push(tier);
-          // every stock movement and the domain call it happened in
+          // every movement of the stockpile ('stock') and of each store (its key), and the domain
+          // call it happened in
           let phase = 'the step';
-          const flows: { phase: string; id: string; n: number }[] = [];
+          const flows: { phase: string; where: string; id: string; n: number }[] = [];
           const within =
             <A extends unknown[], R>(name: string, f: (...a: A) => R) =>
             (...a: A): R => {
@@ -1081,15 +1186,30 @@ describe('SimStep: tickets, money and stock', () => {
           const take = w.stock.take.bind(w.stock);
           w.stock.add = (id, amount, cap) => {
             const n = add(id, amount, cap);
-            flows.push({ phase, id, n });
+            flows.push({ phase, where: 'stock', id, n });
             return n;
           };
           w.stock.take = (id, amount) => {
             const n = take(id, amount);
-            flows.push({ phase, id, n: -n });
+            flows.push({ phase, where: 'stock', id, n: -n });
             return n;
           };
-          w.stock.tick = within('upkeep', w.stock.tick.bind(w.stock));
+          for (const st of w.stores.all()) {
+            const storeAdd = st.add.bind(st);
+            const storeTake = st.take.bind(st);
+            st.add = (id, amount) => {
+              const n = storeAdd(id, amount);
+              flows.push({ phase, where: st.key, id, n });
+              return n;
+            };
+            st.take = (id, amount) => {
+              const n = storeTake(id, amount);
+              flows.push({ phase, where: st.key, id, n: -n });
+              return n;
+            };
+          }
+          w.stores.tickUpkeep = within('upkeep', w.stores.tickUpkeep.bind(w.stores));
+          for (const st of w.builder.stations) st.tick = within('stations', st.tick.bind(st));
           w.trade.tick = within('trade', w.trade.tick.bind(w.trade));
           vi.mocked(tickBuildings).mockImplementation(within('buildings', realTickBuildings));
 
@@ -1110,6 +1230,7 @@ describe('SimStep: tickets, money and stock', () => {
               money: w.economy.money,
               earned: w.economy.earned,
               stock: new Map(w.stock.amounts),
+              stores: new Map(w.stores.all().map((st) => [st.key, new Map(st.amounts)])),
             };
             completed = [];
             fines = [];
@@ -1151,18 +1272,37 @@ describe('SimStep: tickets, money and stock', () => {
             const earned = w.economy.earned - before.earned;
             expect(earned, `${where}: earned`).toBeCloseTo(payouts + sales, 6);
 
-            const ids = new Set([...before.stock.keys(), ...w.stock.amounts.keys()]);
-            for (const id of ids) {
-              const moved = sum(flows.filter((f) => f.id === id).map((f) => f.n));
-              const change = w.stock.get(id) - (before.stock.get(id) ?? 0);
-              expect(change, `${where}: ${id} against its recorded moves`).toBeCloseTo(moved, 9);
-            }
+            const holders: [string, Map<string, number>, Map<string, number>][] = [
+              ['stock', before.stock, w.stock.amounts],
+              ...w.stores
+                .all()
+                .map((st): [string, Map<string, number>, Map<string, number>] => [
+                  st.key,
+                  before.stores.get(st.key) ?? new Map(),
+                  st.amounts,
+                ]),
+            ];
+            for (const [at, was, now] of holders)
+              for (const id of new Set([...was.keys(), ...now.keys()])) {
+                const moved = sum(
+                  flows.filter((f) => f.where === at && f.id === id).map((f) => f.n),
+                );
+                const change = (now.get(id) ?? 0) - (was.get(id) ?? 0);
+                expect(change, `${where}: ${at} ${id} against its recorded moves`).toBeCloseTo(
+                  moved,
+                  9,
+                );
+              }
             for (const f of flows) {
               const named = f.phase === 'buildings' || f.phase === 'trade';
               const food = f.phase === 'upkeep' && f.id === 'food' && f.n <= 0;
-              if (!named && !food) throw new Error(`${where}: ${f.id} ${f.n} moved in ${f.phase}`);
+              // a harvester in a town's reach makes into the town's store
+              const made = f.phase === 'stations' && f.where.startsWith('town:') && f.n >= 0;
+              if (!named && !food && !made)
+                throw new Error(`${where}: ${f.id} ${f.n} moved in ${f.phase} at ${f.where}`);
               if (f.phase === 'upkeep' && f.n < 0) seen.upkeep++;
               if (f.phase === 'buildings' && f.n !== 0) seen.batches++;
+              if (made && f.n > 0) seen.harvest++;
             }
             seen.completions += completed.length;
             seen.failures += fines.length;

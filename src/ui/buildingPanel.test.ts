@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { simWorld, type SimWorld } from '../testing/simWorld';
-import { depotWith } from '../testing/storeFixtures';
+import { depotWith, storeWith } from '../testing/storeFixtures';
 import { STR } from '../strings';
 import { LAST_AGE } from '../sim/ages';
 import { rules, DEFAULT_RULES, weekSeconds } from '../sim/rules';
@@ -14,7 +14,7 @@ import {
   type BuildingDef,
 } from '../sim/buildings';
 import { cargoName } from '../sim/cargo';
-import { Stockpile } from '../sim/stockpile';
+import type { ResourceStore } from '../sim/stores';
 import { startWork, upgradeSeconds } from '../sim/upgrade';
 import { TERRAIN_NAMES, type PropKind } from '../world/tiles';
 import { BuildingPanel } from './buildingPanel';
@@ -38,9 +38,16 @@ function building(def: BuildingDef, reason: Building['reason'], busy: boolean): 
   return b;
 }
 
-/** `b` after one tick against an empty stockpile, as the game leaves it. */
+/** An empty store for a works to run from: a depot's, holding nothing. */
+function emptyStore(): ResourceStore {
+  const { stores, depot } = storeWith({});
+  return stores.poolOf(depot);
+}
+
+/** `b` after one tick against an empty store, as the game leaves it. */
 function ticked(b: Building): Building {
-  tickBuildings([b], new Stockpile(), weekSeconds() / 7, false, 0, 0);
+  const store = emptyStore();
+  tickBuildings([b], () => store, weekSeconds() / 7);
   return b;
 }
 
@@ -52,7 +59,7 @@ describe('the status line of a works or a bridge', () => {
   });
 
   it('never calls a bridge being strengthened closed: it reads as the same bridge without one', () => {
-    const stock = new Stockpile();
+    const stock = emptyStore();
     for (const def of bridges) {
       for (const reason of REASONS) {
         const busy = BuildingPanel.status(building(def, reason, true), stock);
@@ -70,7 +77,7 @@ describe('the status line of a works or a bridge', () => {
   });
 
   it('still says every works being upgraded is closed, whatever its last reason', () => {
-    const stock = new Stockpile();
+    const stock = emptyStore();
     const closed = { text: STR.upgrade.closed, cls: 'amber' };
     for (const def of works) {
       for (const reason of REASONS)
@@ -90,7 +97,7 @@ describe('the status line of a works or a bridge', () => {
 
 describe('the status kind the works tooltip is built from', () => {
   /** The words `status` gives a kind. */
-  const worded = (b: Building, stock: Stockpile) => {
+  const worded = (b: Building, stock: ResourceStore) => {
     const s = BuildingPanel.statusKind(b, stock);
     switch (s.kind) {
       case 'closed':
@@ -105,7 +112,7 @@ describe('the status kind the works tooltip is built from', () => {
   };
 
   it('is the status the panel words, for every reason, with and without an upgrade', () => {
-    const stock = new Stockpile();
+    const stock = emptyStore();
     for (const def of BUILDING_DEFS)
       for (const reason of REASONS)
         for (const busy of [false, true]) {
@@ -118,7 +125,7 @@ describe('the status kind the works tooltip is built from', () => {
 
   it('names the input a starved works is short of, and none once it is stocked', () => {
     const def = works.find((d) => Object.values(d.recipe.in).some((v) => v > 0))!;
-    const stock = new Stockpile();
+    const stock = emptyStore();
     const b = building(def, 'inputs', false);
     const short = BuildingPanel.statusKind(b, stock);
     expect(short.kind).toBe('starved');
@@ -129,7 +136,7 @@ describe('the status kind the works tooltip is built from', () => {
   });
 
   it('keeps a bridge being strengthened as it was, and closes a works being upgraded', () => {
-    const stock = new Stockpile();
+    const stock = emptyStore();
     for (const def of bridges)
       expect(BuildingPanel.statusKind(building(def, '', true), stock).kind).not.toBe('closed');
     for (const def of works)

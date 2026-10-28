@@ -68,3 +68,19 @@ export function depotWith(
   for (const [id, n] of Object.entries(amounts)) depot.amounts.set(id, n);
   return depot;
 }
+
+/**
+ * A Townhouse placed in a whole world (`simWorld`) at (x, y), through the builder in the editor's
+ * way, its town's store holding `amounts`, put in as given past its cap: the store the houses,
+ * works, crews and harvesters within the town's reach use.
+ */
+export function townWith(
+  w: SimWorld,
+  amounts: Record<string, number>,
+  at: { x: number; y: number },
+): Store {
+  const hall = station(w, 'town', at.x, at.y);
+  const town = w.stores.byKey(`town:${w.towns.byStation(hall.id)!.id}`)!;
+  for (const [id, n] of Object.entries(amounts)) town.amounts.set(id, n);
+  return town;
+}

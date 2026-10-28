@@ -345,7 +345,6 @@ export class Builder {
   isOrphaned(s: Station) {
     return this.platformTiles(s).length === 0;
   }
-  /** Crew of everything built (trains add their own). */
   decorHas(id: string) {
     for (const d of this.decor.values()) if (d.id === id) return true;
     return false;
@@ -354,12 +353,25 @@ export class Builder {
     for (const b of this.buildings.values()) if (b.id === id) return true;
     return false;
   }
+  /**
+   * Where the crews of everything built work, and how many there are: stations, works and the
+   * services beside the track, each at its anchor tile, those with no crew left out. A works being
+   * upgraded has no crew to feed (a closed station's crew is 0 already). Trains have their own.
+   */
+  crewSites(): { x: number; y: number; crew: number }[] {
+    const out: { x: number; y: number; crew: number }[] = [];
+    const add = (x: number, y: number, crew: number) => {
+      if (crew > 0) out.push({ x, y, crew });
+    };
+    for (const s of this.stations) add(s.x, s.y, s.crew);
+    for (const d of this.decor.values()) add(d.x, d.y, decorDef(d.id).crew);
+    for (const b of this.buildings.values()) if (!b.work) add(b.x, b.y, buildingDef(b.id).crew);
+    return out;
+  }
+  /** Crew of everything built, `crewSites` added up (trains add their own). */
   crewTotal() {
     let n = 0;
-    for (const s of this.stations) n += s.crew;
-    for (const d of this.decor.values()) n += decorDef(d.id).crew;
-    // a works being upgraded has no crew to feed (a closed station's crew is 0 already)
-    for (const b of this.buildings.values()) if (!b.work) n += buildingDef(b.id).crew;
+    for (const c of this.crewSites()) n += c.crew;
     return n;
   }
   warehouseLevels() {

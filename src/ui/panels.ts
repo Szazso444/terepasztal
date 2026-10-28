@@ -500,7 +500,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   toolbar.refresh();
   const buildingPanel = new BuildingPanel(
     d.builder,
-    d.stock,
     () => d.build.selectedBuilding && d.build.selectBuilding(null),
   );
   const decorPanel = new DecorPanel(d.builder, d.power, d.commands, toast, () => {

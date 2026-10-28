@@ -1,7 +1,8 @@
 import type { Cost } from '../data/content';
 import type { TrackGraph } from '../world/track';
 import type { Builder } from './build';
-import { rules } from './rules';
+import { rules, weekSeconds } from './rules';
+import { needsStore, type Building } from './buildings';
 import type { Station } from './stations';
 import type { TownRegistry } from './towns';
 import { STR } from '../strings';
@@ -9,8 +10,8 @@ import { STR } from '../strings';
 /**
  * Where goods are kept. Replaces the one global stockpile: every town, every depot, every
  * warehouse outside a town and the power grid holds its own goods, and building, upkeep and trains
- * work on the store nearest to them. Nothing here ticks; the callers (works, houses, trains, the
- * Builder) move goods in and out.
+ * work on the store nearest to them. The callers (works, houses, trains, the Builder) move goods in
+ * and out; the registry itself only settles the food of crews and residents (`tickUpkeep`).
  */
 
 /** What a caller needs of a place that keeps goods; one store, or a pool of stores that act as one. */
@@ -151,6 +152,58 @@ export class StorePool extends Ledger implements ResourceStore {
   }
 }
 
+/**
+ * What a works runs from: its supplier for every good but power, which comes from and goes to the
+ * grid. With no supplier it holds power alone (a hydro plant, a bridge, a substation). Its famine
+ * is its supplier's.
+ */
+class WorksStore extends Ledger implements ResourceStore {
+  constructor(
+    readonly base: ResourceStore | null,
+    readonly grid: ResourceStore,
+  ) {
+    super();
+  }
+  private of(id: string) {
+    return id === 'power' ? this.grid : this.base;
+  }
+  get key() {
+    return (this.base ?? this.grid).key;
+  }
+  get anchor() {
+    return (this.base ?? this.grid).anchor;
+  }
+  get famine() {
+    return this.base?.famine ?? false;
+  }
+  get(id: string) {
+    return this.of(id)?.get(id) ?? 0;
+  }
+  cap(id: string) {
+    return this.of(id)?.cap(id) ?? 0;
+  }
+  held() {
+    const out = new Map<string, number>(this.base ? [...this.base.held()] : []);
+    out.set('power', this.grid.get('power'));
+    return out.entries();
+  }
+  add(id: string, amount: number) {
+    return this.of(id)?.add(id, amount) ?? 0;
+  }
+  take(id: string, amount: number) {
+    return this.of(id)?.take(id, amount) ?? 0;
+  }
+}
+
+/** The stores a store or pool stands for: the members of a pool, a store itself. */
+function membersOf(r: ResourceStore): Store[] {
+  if (r instanceof StorePool) return r.members;
+  return r instanceof Store ? [r] : [];
+}
+
+/** Game seconds the eaters at a store may go short before its famine is declared. */
+const FAMINE_AFTER = 10;
+
 /** What a registry reads: the placed stations, the towns they belong to, and the rails. */
 interface StoreDeps {
   builder: Builder;
@@ -175,17 +228,31 @@ export class StoreRegistry {
   readonly grid: Store;
   /** the store the player looks at; the UI sets it */
   selected: ResourceStore | null = null;
+  /** a store's famine begins or ends (`tickUpkeep`) */
+  onMessage: ((msg: string, kind: 'info' | 'warn' | 'good') => void) | null = null;
   private deps: StoreDeps | null = null;
   private stores = new Map<string, Store>();
   private pools = new Map<string, StorePool>();
   /** power plants at work, counted by the last refresh */
   private plants = 0;
+  /**
+   * What the last refresh makes of a tile, worked out once and kept until the next (`townStore`,
+   * `supplierFor`), and what each supplier's works run from (`worksStore`): the step asks them
+   * for every house, crew and works.
+   */
+  private townAtTile = new Map<number, ResourceStore | null>();
+  private supplierAtTile = new Map<number, ResourceStore | null>();
+  private worksOf = new Map<ResourceStore, WorksStore>();
+  private readonly gridWorks: WorksStore;
+  /** game seconds the eaters at each pool have gone short, by the pool's key; not saved */
+  private short = new Map<string, number>();
 
   constructor() {
     this.grid = new Store('grid', 'grid', { x: 0, y: 0 }, (id) =>
       id === 'power' ? rules.powerCap + 100 * this.plants : 0,
     );
     this.stores.set(this.grid.key, this.grid);
+    this.gridWorks = new WorksStore(null, this.poolOf(this.grid));
   }
 
   private get d(): StoreDeps {
@@ -253,6 +320,10 @@ export class StoreRegistry {
     }
     this.stores = next;
     for (const key of [...this.pools.keys()]) if (!next.has(key)) this.pools.delete(key);
+    for (const key of [...this.short.keys()]) if (!next.has(key)) this.short.delete(key);
+    this.townAtTile.clear();
+    this.supplierAtTile.clear();
+    this.worksOf.clear();
 
     for (const [key, gone] of old) {
       if (next.has(key)) continue;
@@ -262,8 +333,11 @@ export class StoreRegistry {
       if (!heir) continue;
       for (const [id, n] of gone.amounts) if (n > 0) heir.add(id, n);
     }
-    // the stations learn where they dock
-    for (const s of builder.stations) s.dock = this.dockOf(s);
+    // the stations learn where they dock, and a harvester in a town where its workers carry to
+    for (const s of builder.stations) {
+      s.dock = this.dockOf(s);
+      s.outlet = s.def.terrain ? this.townStore(s.x, s.y) : null;
+    }
   }
 
   /** Every store, the grid first. */
@@ -283,11 +357,19 @@ export class StoreRegistry {
     return p;
   }
 
-  /** The store of the town whose reach covers the tile (the nearest Townhouse when reaches overlap). */
+  /**
+   * The store of the town whose reach covers the tile (the nearest Townhouse when reaches overlap).
+   * A whole tile's answer is kept until the next refresh.
+   */
   townStore(x: number, y: number): ResourceStore | null {
+    const k = tileKey(x, y);
+    const have = this.townAtTile.get(k);
+    if (have !== undefined) return have;
     const t = this.d.towns.townAt(x, y);
     const s = t && this.stores.get(`town:${t.id}`);
-    return s ? this.poolOf(s) : null;
+    const out = s ? this.poolOf(s) : null;
+    if (k >= 0) this.townAtTile.set(k, out);
+    return out;
   }
   /** Where a station's goods go in and out: a depot or warehouse, a warehouse in a town as the town. */
   dockOf(st: Station): ResourceStore | null {
@@ -306,9 +388,68 @@ export class StoreRegistry {
     found.sort((a, b) => a.d - b.d || (a.s.key < b.s.key ? -1 : 1));
     return found.map((f) => this.poolOf(f.s));
   }
-  /** Where a works at the tile gets its goods: its town's store, else the nearest in reach. */
+  /**
+   * Where a works or a crew at the tile gets its goods and food: its town's store, else the nearest
+   * in reach. A whole tile's answer is kept until the next refresh.
+   */
   supplierFor(x: number, y: number): ResourceStore | null {
-    return this.townStore(x, y) ?? this.nearest(x, y)[0] ?? null;
+    const k = tileKey(x, y);
+    const have = this.supplierAtTile.get(k);
+    if (have !== undefined) return have;
+    const out = this.townStore(x, y) ?? this.nearest(x, y)[0] ?? null;
+    if (k >= 0) this.supplierAtTile.set(k, out);
+    return out;
+  }
+  /**
+   * What a works runs from (`tickBuildings`): its supplier (`supplierFor` its corner tile), with
+   * power going to the grid. None when it has no supplier and moves goods other than power; one
+   * that moves none (a hydro plant, a bridge) runs on the grid alone.
+   */
+  worksStore(b: Building): ResourceStore | null {
+    const base = this.supplierFor(b.x, b.y);
+    if (!base) return needsStore(b) ? null : this.gridWorks;
+    let w = this.worksOf.get(base);
+    if (!w) {
+      w = new WorksStore(base, this.gridWorks.grid);
+      this.worksOf.set(base, w);
+    }
+    return w;
+  }
+
+  /**
+   * Food for one step of `gameDt` game seconds: the eaters at each pool (residents and crews, as
+   * the caller counts them) eat `rules.wheatPerCrew` a week each from it. A pool short for more
+   * than FAMINE_AFTER seconds has every member in famine; fed again, or with nobody left to eat
+   * there, it is out of it. Both are told through `onMessage`, under the pool's name.
+   */
+  tickUpkeep(gameDt: number, eaters: Map<ResourceStore, number>) {
+    const done = new Set<string>();
+    for (const [pool, n] of eaters) {
+      done.add(pool.key);
+      this.feed(pool, n, gameDt);
+    }
+    for (const s of this.stores.values()) {
+      const pool = this.poolOf(s);
+      if (done.has(pool.key)) continue;
+      done.add(pool.key);
+      if (pool.famine || this.short.has(pool.key)) this.feed(pool, 0, gameDt);
+    }
+  }
+  private feed(pool: ResourceStore, eaters: number, gameDt: number) {
+    const need = (eaters * rules.wheatPerCrew * gameDt) / weekSeconds();
+    const got = pool.take('food', need);
+    if (need > 0 && got < need * 0.999) {
+      const short = (this.short.get(pool.key) ?? 0) + gameDt;
+      this.short.set(pool.key, short);
+      if (pool.famine || short <= FAMINE_AFTER) return;
+      for (const m of membersOf(pool)) m.famine = true;
+      this.onMessage?.(STR.stores.famine(this.label(pool)), 'warn');
+      return;
+    }
+    this.short.delete(pool.key);
+    if (!pool.famine) return;
+    for (const m of membersOf(pool)) m.famine = false;
+    this.onMessage?.(STR.stores.fed(this.label(pool)), 'good');
   }
   /** The nearest store in reach that holds the whole cost. */
   payerFor(cost: Cost, x: number, y: number): ResourceStore | null {
@@ -375,4 +516,11 @@ export class StoreRegistry {
 
 function stationKey(s: Station) {
   return `st:${s.id}`;
+}
+
+/** A whole tile on the map as one number; -1 for anything else, which is then not kept. */
+function tileKey(x: number, y: number) {
+  return Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < 65536
+    ? y * 65536 + x
+    : -1;
 }

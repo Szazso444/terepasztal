@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
-import { rules, DEFAULT_RULES } from './rules';
+import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
 import { StoreRegistry } from './stores';
 import type { Station } from './stations';
+import { tickBuildings, type Building } from './buildings';
+import { depotWith } from '../testing/storeFixtures';
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
@@ -389,5 +391,154 @@ describe('saving stores', () => {
     expect(again.byKey(`st:${depot.id}`)!.famine).toBe(false);
     expect(again.grid.get('power')).toBe(40);
     expect(again.toJSON()).toEqual(saved);
+  });
+});
+
+describe('works and harvesters at their store', () => {
+  /** A world with the stores the builder keeps (`w.stores`) and two towns 26 tiles apart. */
+  function twoTowns() {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const a = station(w, 'town', 20, 29);
+    const b = station(w, 'town', 46, 29);
+    const storeA = w.stores.townStore(a.x, a.y)!;
+    const storeB = w.stores.townStore(b.x, b.y)!;
+    return { w, a, b, storeA, storeB };
+  }
+  /** Places a works through the builder in the editor's way. */
+  function works(w: SimWorld, id: string, x: number, y: number): Building {
+    w.builder.free = true;
+    const b = w.builder.placeBuilding(x, y, id);
+    w.builder.free = false;
+    if (!b) throw new Error(`no ${id} at ${x},${y}`);
+    return b;
+  }
+  const tick = (w: SimWorld, dt: number) =>
+    tickBuildings(w.builder.buildings.values(), (b) => w.stores.worksStore(b), dt);
+
+  it("a works runs from its town store and not from another town's", () => {
+    const { w, storeA, storeB } = twoTowns();
+    // town B's store is within the works' build reach, but the works is in town A
+    const kiln = works(w, 'kiln', 24, 25);
+    expect(w.stores.townStore(kiln.x, kiln.y)).toBe(storeA);
+    storeB.add('wood', 60);
+    tick(w, weekSeconds());
+    expect(storeA.get('coal')).toBe(0);
+    expect(storeB.get('wood')).toBe(60);
+    expect(kiln.reason).toBe('inputs');
+    // stocked, it runs from its own town
+    storeA.add('wood', 60);
+    tick(w, weekSeconds());
+    expect(storeA.get('coal')).toBeGreaterThan(0);
+    expect(storeB.get('wood')).toBe(60);
+  });
+
+  it('a works outside every town draws from the nearest store in reach', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const near = depotWith(w, { wood: 100 }, { x: 40, y: 24 });
+    const far = depotWith(w, { wood: 100 }, { x: 60, y: 24 });
+    const kiln = works(w, 'kiln', 48, 20);
+    expect(w.stores.townStore(kiln.x, kiln.y)).toBeNull();
+    tick(w, weekSeconds());
+    expect(near.get('wood')).toBeLessThan(100);
+    expect(near.get('coal')).toBe((100 - near.get('wood')) / 2);
+    expect(far.get('wood')).toBe(100);
+    expect(far.get('coal')).toBe(0);
+  });
+
+  it('a works with no store in reach does not run', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    const kiln = works(w, 'kiln', 48, 20);
+    expect(w.stores.worksStore(kiln)).toBeNull();
+    tick(w, weekSeconds());
+    expect([kiln.active, kiln.reason, kiln.acc, kiln.made]).toEqual([
+      false,
+      'inputs',
+      0,
+      undefined,
+    ]);
+  });
+
+  it("a power plant's power goes to the grid, its fuel comes from its store", () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    const depot = depotWith(w, { coal: 50, wood: 50, water: 50 }, { x: 40, y: 24 });
+    const plant = works(w, 'power_plant', 44, 20);
+    tick(w, daySeconds());
+    expect(depot.get('coal')).toBeLessThan(50);
+    expect(w.stores.grid.get('power')).toBe(plant.made?.power);
+    expect(w.stores.grid.get('power')).toBeGreaterThan(0);
+  });
+
+  it("a farm in a town's reach puts its wheat straight into the town store", () => {
+    const { w, a, storeA } = twoTowns();
+    const farm = station(w, 'farm', a.x + 5, a.y);
+    const alone = station(w, 'farm', 70, 29);
+    expect(farm.outlet).toBe(storeA);
+    expect(alone.outlet).toBeNull();
+    const day = (s: Station) =>
+      (s.productionPerWeek * s.productionMul * daySeconds()) / weekSeconds();
+    expect(day(farm)).toBeGreaterThan(0);
+    farm.tick(daySeconds());
+    alone.tick(daySeconds());
+    expect(farm.stored('wheat')).toBe(0);
+    expect(storeA.get('wheat')).toBeCloseTo(day(farm), 9);
+    // a farm outside every town still fills its own storage
+    expect(alone.stored('wheat')).toBeCloseTo(day(alone), 9);
+  });
+});
+
+describe('upkeep and famine per store', () => {
+  /** A depot store and a town store, each in a pool of one. */
+  function twoStores() {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const hall = station(w, 'town', 20, 29);
+    const depot = station(w, 'depot', 60, 24);
+    const town = w.stores.townStore(hall.x, hall.y)!;
+    const dock = w.stores.dockOf(depot)!;
+    const said: string[] = [];
+    w.stores.onMessage = (m, k) => said.push(`${k}: ${m}`);
+    return { w, town, dock, said, name: w.towns.byStation(hall.id)!.name };
+  }
+
+  it('eats food once per weekly rate and leaves wheat for the mill', () => {
+    const { w, town } = twoStores();
+    town.add('food', 100);
+    town.add('wheat', 20);
+    for (let i = 0; i < 7; i++) w.stores.tickUpkeep(daySeconds(), new Map([[town, 24]]));
+    expect(town.get('food')).toBeCloseTo(76);
+    expect(town.get('wheat')).toBe(20);
+    expect(town.famine).toBe(false);
+  });
+
+  it('starves a store after more than 10 s short, with its name in the message, and feeds it again', () => {
+    const { w, town, dock, said, name } = twoStores();
+    dock.add('food', 100);
+    const eaters = new Map([
+      [town, 10],
+      [dock, 10],
+    ]);
+    w.stores.tickUpkeep(10, eaters);
+    expect(town.famine).toBe(false);
+    w.stores.tickUpkeep(0.5, eaters);
+    expect([town.famine, dock.famine]).toEqual([true, false]);
+    expect(said).toEqual([
+      `warn: ${name}: the crews are out of food: production halved, trains slowed`,
+    ]);
+    // every member of the pool is marked
+    expect(w.stores.byKey(town.key)!.famine).toBe(true);
+    town.add('food', 50);
+    w.stores.tickUpkeep(1, eaters);
+    expect(town.famine).toBe(false);
+    expect(said[1]).toBe(`good: ${name}: food is back; crews are fed again`);
+  });
+
+  it('a store nobody eats at any more is fed', () => {
+    const { w, town } = twoStores();
+    w.stores.tickUpkeep(11, new Map([[town, 5]]));
+    expect(town.famine).toBe(true);
+    w.stores.tickUpkeep(1, new Map());
+    expect(town.famine).toBe(false);
   });
 });
