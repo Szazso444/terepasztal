@@ -2361,11 +2361,21 @@ export class Game implements UiHost {
     if (this.debug.open) this.updateDebug();
   }
 
+  /** The track tiles the minimap marks, listed again only when the track changes. */
+  private minimapTrack: {
+    track: TrackGraph;
+    version: number;
+    tiles: { x: number; y: number }[];
+  } | null = null;
   private minimapMarks() {
-    const track: { x: number; y: number }[] = [];
-    for (const t of this.track.tiles()) track.push({ x: t.x, y: t.y });
+    let kept = this.minimapTrack;
+    if (kept?.track !== this.track || kept.version !== this.track.version) {
+      const tiles: { x: number; y: number }[] = [];
+      for (const t of this.track.tiles()) tiles.push({ x: t.x, y: t.y });
+      kept = this.minimapTrack = { track: this.track, version: this.track.version, tiles };
+    }
     return {
-      track,
+      track: kept.tiles,
       stations: this.builder.stations.map((s) => ({ x: s.x, y: s.y })),
       trains: this.fleet.trains
         .filter((t) => t.poses.length)
