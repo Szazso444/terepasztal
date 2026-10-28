@@ -57,7 +57,7 @@ afterEach(() => vi.restoreAllMocks());
 const W = 64;
 const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
 const NARROW: TrackItem = { kind: 'straight', cls: 'narrow' };
-const MAIN: TrackItem = { kind: 'straight', cls: 'main' };
+const TRUNK: TrackItem = { kind: 'straight', cls: 'trunk' };
 /** A straight's turn: 0 runs north to south, 1 east to west. */
 const NS = 0;
 const EW = 1;
@@ -517,7 +517,7 @@ describe('a level crossing', () => {
     for (const rot of [NS, EW]) {
       const w = world();
       w.builder.free = true;
-      lay(w, 10, 10, MAIN, rot);
+      lay(w, 10, 10, TRUNK, rot);
       expect(refusal(w, 10, 10)).toBe(STR.build.crossingLine);
       expect(w.builder.placeRoad(10, 10)).toBe(false);
       expect(w.roads.size).toBe(0);
@@ -537,7 +537,7 @@ describe('a level crossing', () => {
     ]);
     // a line along the road is refused, across it is a level crossing
     expect(w.builder.checkTrack(10, 10, STRAIGHT, EW).reason).toBe(STR.build.crossingAlong);
-    expect(w.builder.checkTrack(10, 10, MAIN, NS).reason).toBe(STR.build.crossingLine);
+    expect(w.builder.checkTrack(10, 10, TRUNK, NS).reason).toBe(STR.build.crossingLine);
     expect(w.builder.checkTrack(10, 10, { kind: 'curve', cls: 'narrow' }, 0).reason).toBe(
       STR.build.crossingStraight,
     );
@@ -631,7 +631,7 @@ describe('the crossing keys', () => {
     expect(d.builder.roads.has(8, 11)).toBe(true);
   });
 
-  it('are the road tiles on a plain straight of Branch Line or Narrow Gauge, whatever a save put where', () => {
+  it('are the road tiles on a plain straight of a line with level crossings, whatever a save put where', () => {
     // A save is loaded without the build rules (`Roads.load`, the track as it was stored), so the
     // keys are read off the tiles, not off how they came to be: a road a rule would refuse, on a
     // curve, a switch or a Main Line straight, is no level crossing.
@@ -705,7 +705,7 @@ const ITEMS: TrackItem[] = [
   { kind: 'switch', cls: 'narrow' },
   { kind: 'crossing', cls: 'narrow', cls2: 'narrow' },
   // a line no road may cross on the level
-  { kind: 'straight', cls: 'main' },
+  { kind: 'straight', cls: 'trunk' },
 ];
 const SIDE = 14;
 function genOps(rng: Rng): { ground: number[]; ops: Op[] } {
@@ -737,7 +737,7 @@ function genOps(rng: Rng): { ground: number[]; ops: Op[] } {
       return { op: 'reclass', ...start, n, rot: l.rot, up };
     }
     if (r < 0.84) {
-      const cls = rng.pick(['branch', 'branch', 'narrow', 'main'] as const);
+      const cls = rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const);
       const rot = rng.int(0, 1);
       // as long as the map leaves room for, from 2 to 10 tiles
       const n = Math.min(rng.int(2, 10), SIDE - (rot === EW ? p.x : p.y));
@@ -771,10 +771,12 @@ function lineOf(o: Extract<Op, { op: 'line' }>): LinePiece[] {
 }
 /**
  * A piece a road may cross, as the issue words it, kept apart from `crossable` so the test does
- * not take the rule from the code it checks: a one-tile straight of Branch Line or Narrow Gauge.
+ * not take the rule from the code it checks: a one-tile straight of Narrow Gauge, Branch or Main Line.
  */
 const takesARoad = (p: TrackPiece) =>
-  p.kind === 'straight' && !p.unit && (p.cls === 'branch' || p.cls === 'narrow');
+  p.kind === 'straight' &&
+  !p.unit &&
+  (p.cls === 'branch' || p.cls === 'main' || p.cls === 'narrow');
 /** A small map to play the ops on, `ground` tiles of it water, rock or a mountain by turns. */
 function site(c: { ground: number[]; ops: Op[] }) {
   const map = emptyMap(3, SIDE, SIDE, Terrain.Grass);
@@ -846,7 +848,7 @@ function broken(w: ReturnType<typeof site>): string {
 describe('roads, whatever is built in whatever order', () => {
   // slow: seeded sites of builder steps, the roads judged after each, 0.6 s alone; the limit is
   // room for a busy machine
-  it('cross only plain straights of regular or narrow track at right angles, off every footprint', () => {
+  it('cross only plain straights of the lines with level crossings at right angles, off every footprint', () => {
     forAll(
       genOps,
       (c) => {
@@ -859,7 +861,10 @@ describe('roads, whatever is built in whatever order', () => {
         const keys = new Set<number>();
         for (const { x, y } of w.roads.list()) {
           const p = w.track.get(x, y);
-          if (p?.kind === 'straight' && (p.cls === 'branch' || p.cls === 'narrow'))
+          if (
+            p?.kind === 'straight' &&
+            (p.cls === 'branch' || p.cls === 'main' || p.cls === 'narrow')
+          )
             keys.add(w.track.key(x, y));
         }
         expect([...w.roads.crossingKeys()].sort((a, b) => a - b)).toEqual(

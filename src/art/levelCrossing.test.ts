@@ -24,15 +24,19 @@ import {
 } from './trackIllustrated';
 
 /** The decisions, written out: item 18, the rail offsets of #309 and #329's road width. */
-const RAIL = { branch: 0.16, narrow: 0.08 };
+const RAIL = { branch: 0.16, main: 0.16, narrow: 0.08 };
 const MARGIN = 0.1;
 const ROAD_WIDTH = 0.32;
 const EPS = 1e-9;
 
 describe('level crossing deck geometry', () => {
-  it('crosses the lines a road may cross on the level: Branch Line and Narrow Gauge', () => {
-    expect([...LEVEL_CROSSING_CLASSES].sort()).toEqual(['branch', 'narrow']);
-    expect(TRACK_CLASSES.filter((c) => LINES[c].roadCrossing).sort()).toEqual(['branch', 'narrow']);
+  it('crosses the lines a road may cross on the level: Narrow Gauge, Branch and Main Line', () => {
+    expect([...LEVEL_CROSSING_CLASSES].sort()).toEqual(['branch', 'main', 'narrow']);
+    expect(TRACK_CLASSES.filter((c) => LINES[c].roadCrossing).sort()).toEqual([
+      'branch',
+      'main',
+      'narrow',
+    ]);
   });
 
   it('reaches 0.1 tile outside each rail, inside the ballast bed, and half a road along', () => {
@@ -44,6 +48,7 @@ describe('level crossing deck geometry', () => {
       expect(LEVEL_CROSSING_ACROSS[cls], cls).toBeLessThan(BED_SHOULDER[cls]);
     }
     expect(LEVEL_CROSSING_ACROSS.branch).toBeCloseTo(0.26, 12);
+    expect(LEVEL_CROSSING_ACROSS.main).toBeCloseTo(0.26, 12);
     expect(LEVEL_CROSSING_ACROSS.narrow).toBeCloseTo(0.18, 12);
   });
 

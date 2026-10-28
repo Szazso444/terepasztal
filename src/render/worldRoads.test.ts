@@ -214,7 +214,7 @@ describe('the track under a road', () => {
     w.world.setTrack(5, 5, pieceFrame(makePiece('straight', 1)));
     expect(w.take()).toEqual([]);
     // Main Line track is no crossing: back to a plain road
-    w.world.setTrack(3, 3, pieceFrame(makePiece('straight', 0, 'main')));
+    w.world.setTrack(3, 3, pieceFrame(makePiece('straight', 0, 'trunk')));
     expect(w.take()).toEqual(
       sorted([
         [3, 3],
@@ -320,7 +320,7 @@ describe('the level-crossing deck', () => {
     { name: 'branch along x', piece: makePiece('straight', 1), deck: 'branch_1' },
     { name: 'narrow along y', piece: makePiece('straight', 0, 'narrow'), deck: 'narrow_0' },
     { name: 'narrow along x', piece: makePiece('straight', 1, 'narrow'), deck: 'narrow_1' },
-    { name: 'main line', piece: makePiece('straight', 0, 'main'), deck: null },
+    { name: 'trunk line', piece: makePiece('straight', 0, 'trunk'), deck: null },
     { name: 'narrow curve', piece: makePiece('curve', 1, 'narrow'), deck: null },
     { name: 'bridge', piece: makePiece('bridge', 0), deck: null },
     { name: 'crossing', piece: makePiece('crossing', 0), deck: null },
@@ -534,7 +534,7 @@ const CHOICES: TrackPiece[] = [
   makePiece('straight', 1),
   makePiece('straight', 0, 'narrow'),
   makePiece('straight', 1, 'narrow'),
-  makePiece('straight', 1, 'main'),
+  makePiece('straight', 1, 'trunk'),
   makePiece('curve', 2, 'narrow'),
   makePiece('crossing', 0),
   makePiece('bridge', 0),

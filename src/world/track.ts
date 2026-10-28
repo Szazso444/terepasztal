@@ -62,7 +62,7 @@ export const LINES: Record<TrackClass, LineDef> = {
     costMul: 1.5,
     age: 'diesel',
     curves: true,
-    roadCrossing: false,
+    roadCrossing: true,
   },
   trunk: {
     n: 4,

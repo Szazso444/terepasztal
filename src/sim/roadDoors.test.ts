@@ -558,7 +558,7 @@ describe('placing a place near a road', () => {
   });
 
   it('crosses a plain straight at right angles, and goes round what no road may cross', () => {
-    for (const cls of ['branch', 'narrow', 'main'] as const) {
+    for (const cls of ['branch', 'narrow', 'trunk'] as const) {
       const w = world();
       w.builder.free = true;
       // a line east to west along row 13, and a road beyond it, south of a house's door
@@ -569,7 +569,7 @@ describe('placing a place near a road', () => {
       pave(w, [{ x: 10, y: 15 }]);
       expect(w.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
       const spur = roadsOf(w).slice(1);
-      if (cls === 'main') {
+      if (cls === 'trunk') {
         // the way round either end of the line is longer than SPUR_REACH: no road
         expect(spur).toEqual([]);
         continue;
@@ -628,7 +628,7 @@ describe('placing a place away from every road', () => {
       w.builder.checkBuilding(t.x, t.y, 'windmill', rot).reason,
       w.builder.checkStation(t.x, t.y, 'depot', rot).reason,
       w.builder.checkTrack(t.x, t.y, { kind: 'curve', cls: 'branch' }, rot).reason,
-      w.builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'main' }, rot).reason,
+      w.builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'trunk' }, rot).reason,
     ];
     const road: (string | null)[] = [
       STR.build.roadInWay,
@@ -753,7 +753,7 @@ function genSite(rng: Rng) {
         ...p,
         n: rng.int(2, 12),
         across: rng.chance(0.5),
-        cls: rng.pick(['branch', 'branch', 'narrow', 'main'] as const),
+        cls: rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const),
       };
     if (r < 0.55)
       return {
@@ -947,7 +947,7 @@ function keptOffByHand(w: World): Set<number> {
     for (const g of s.gateTiles()) if (s.def.depot || w.track.has(g.x, g.y)) out.add(keyOf(g));
   return out;
 }
-/** A plain one-tile straight of Branch Line or Narrow Gauge: the one piece a road may cross. */
+/** A plain one-tile straight of Narrow Gauge, Branch or Main Line: the one piece a road may cross. */
 const plainStraight = (p: TrackPiece | undefined): p is TrackPiece =>
   !!p && p.kind === 'straight' && !p.unit && (p.cls === 'branch' || p.cls === 'narrow');
 
@@ -1091,7 +1091,7 @@ function genBox(rng: Rng) {
     return {
       ...inBox(),
       kind,
-      cls: rng.pick(['branch', 'branch', 'narrow', 'main'] as const),
+      cls: rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const),
       rot: kind === 'straight' ? rng.int(0, 1) : rng.int(0, 7),
     };
   });
@@ -1412,7 +1412,7 @@ function genPair(rng: Rng) {
       ...near(8),
       n: rng.int(3, 10),
       across: rng.chance(0.5),
-      cls: rng.pick(['branch', 'branch', 'narrow', 'main'] as const),
+      cls: rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const),
     })),
     free: rng.chance(0.3),
   };

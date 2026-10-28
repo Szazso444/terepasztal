@@ -117,16 +117,21 @@ export const RAIL_OFFSET: Readonly<Record<TrackClass, number>> = perClass((s) =>
 export const BED_SHOULDER: Readonly<Record<TrackClass, number>> = perClass((s) => s.shoulder);
 
 /** The lines a road crosses on the level (`LineDef.roadCrossing`). */
-export const LEVEL_CROSSING_CLASSES = ['branch', 'narrow'] as const satisfies readonly TrackClass[];
+export const LEVEL_CROSSING_CLASSES = [
+  'branch',
+  'main',
+  'narrow',
+] as const satisfies readonly TrackClass[];
 export type LevelCrossingClass = (typeof LEVEL_CROSSING_CLASSES)[number];
 /** How far a level crossing's deck reaches past each rail, in tiles (item 18). */
 export const LEVEL_CROSSING_MARGIN = 0.1;
 /**
  * Half a level crossing deck's size across the track, in tiles from the centre line: 0.1 tile
- * outside each rail (0.26 Branch, 0.18 Narrow), inside the line's ballast bed.
+ * outside each rail (0.26 Branch and Main, 0.18 Narrow), inside the line's ballast bed.
  */
 export const LEVEL_CROSSING_ACROSS: Readonly<Record<LevelCrossingClass, number>> = {
   branch: RAIL_OFFSET.branch + LEVEL_CROSSING_MARGIN,
+  main: RAIL_OFFSET.main + LEVEL_CROSSING_MARGIN,
   narrow: RAIL_OFFSET.narrow + LEVEL_CROSSING_MARGIN,
 };
 /** Half a level crossing deck's size along the track, in tiles: half the road's 0.32 (#329). */
@@ -484,7 +489,7 @@ function drawLevelCrossing(cls: LevelCrossingClass, rotation: number, seed: numb
   );
   c.closePath();
   c.clip();
-  if (cls === 'branch') {
+  if (cls !== 'narrow') {
     const joint = 0.006,
       pitch = 0.1;
     quad(-across, across, -along, along, SETT_JOINT);

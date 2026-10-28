@@ -462,7 +462,7 @@ export const STR = {
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
-      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Branch Line or Narrow Gauge track at right angles, as a level crossing.',
+      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {
       straight_branch: 'Branch Line straight. Drag to lay a run of straights.',

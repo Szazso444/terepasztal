@@ -4,13 +4,13 @@ import { levelCrossingFrame as deckFrame, type LevelCrossingClass } from '../art
  * A plain one-tile straight of a class a road crosses on the level (Q36 a), as `pieceFrame`
  * names it.
  */
-const CROSSABLE = /^track\/straight_(branch|narrow)_(\d+)$/;
+const CROSSABLE = /^track\/straight_(branch|main|narrow)_(\d+)$/;
 
 /**
  * The level-crossing deck a road lays over the track piece showing `trackFrame` (`pieceFrame`,
- * src/world/track.ts), as #309 names it: `track/level_crossing_<branch|narrow>_<rot>` over
- * `track/straight_<branch|narrow>_<rot>`, drawn at the same place with the same transform. Null
- * for every other piece: other lines, curves, switches, track crossings, bridges
+ * src/world/track.ts), as #309 names it: `track/level_crossing_<line>_<rot>` over
+ * `track/straight_<line>_<rot>` for Branch, Main and Narrow, drawn at the same place with the same
+ * transform. Null for every other piece: other lines, curves, switches, track crossings, bridges
  * and the members of a multi-tile piece take no road across them.
  */
 export function levelCrossingFrame(trackFrame: string): string | null {
