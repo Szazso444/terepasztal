@@ -1372,10 +1372,11 @@ export const STR = {
     income: 'Income',
     emergency: 'Emergency refuel (2x cost)',
     emergencyHint:
-      'Fills the tanks from the nearest store at double cost, wherever the train is; ' +
-      'its crew pays what it owes there.',
+      "Fills the tanks at double cost from the store in reach of the train: its town's, or the " +
+      'nearest one within building reach. Its crew pays what it owes there.',
     emergencyDone: (s: string) => `Delivered by road: ${s}`,
-    emergencyNone: 'Nothing in the nearest store to send',
+    emergencyNone: 'Nothing to send in the store in reach',
+    emergencyNoStore: 'No store in reach of the train to send from',
   },
   market: {
     title: 'Market',

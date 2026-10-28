@@ -247,11 +247,12 @@ export class StoreRegistry {
   private plants = 0;
   /**
    * What the last refresh makes of a tile, worked out once and kept until the next (`townStore`,
-   * `supplierFor`), and what each supplier's works run from (`worksStore`): the step asks them
+   * `supplierFor`, `fuelSupplierFor`), and what each supplier's works run from (`worksStore`): the step asks them
    * for every house, crew and works.
    */
   private townAtTile = new Map<number, ResourceStore | null>();
   private supplierAtTile = new Map<number, ResourceStore | null>();
+  private fuelAtTile = new Map<number, ResourceStore | null>();
   private worksOf = new Map<ResourceStore, WorksStore>();
   private readonly gridWorks: WorksStore;
   /** game seconds the eaters at each pool have gone short, by the pool's key; not saved */
@@ -333,6 +334,7 @@ export class StoreRegistry {
     for (const key of [...this.short.keys()]) if (!next.has(key)) this.short.delete(key);
     this.townAtTile.clear();
     this.supplierAtTile.clear();
+    this.fuelAtTile.clear();
     this.worksOf.clear();
 
     for (const [key, gone] of old) {
@@ -412,14 +414,17 @@ export class StoreRegistry {
   }
   /**
    * The tank of a coaling stage, a water tower or a supplied station at the tile, one that is no
-   * depot or warehouse: its town's store, else its supplier (`supplierFor`) when that stands within
-   * `rules.fuelReach` tiles; else none, and it fills nothing.
+   * depot or warehouse: its town's store, else the nearest store within `rules.fuelReach` tiles
+   * (each store measured, also one in a pool); else none, and it fills nothing. A whole tile's
+   * answer is kept until the next refresh.
    */
   fuelSupplierFor(x: number, y: number): ResourceStore | null {
-    const s = this.supplierFor(x, y);
-    if (!s || s === this.townStore(x, y)) return s;
-    const d = Math.max(Math.abs(s.anchor.x - x), Math.abs(s.anchor.y - y));
-    return d <= rules.fuelReach ? s : null;
+    const k = tileKey(x, y);
+    const have = this.fuelAtTile.get(k);
+    if (have !== undefined) return have;
+    const out = this.townStore(x, y) ?? this.nearest(x, y, rules.fuelReach)[0] ?? null;
+    if (k >= 0) this.fuelAtTile.set(k, out);
+    return out;
   }
   /**
    * What a works runs from (`tickBuildings`): its supplier (`supplierFor` its corner tile), with

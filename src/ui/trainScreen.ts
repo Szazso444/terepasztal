@@ -382,7 +382,11 @@ export class TrainScreen implements Screen {
           .map(([k, v]) => `${Math.round(v)} ${k}`)
           .join(', ');
         this.toast(
-          got ? STR.train.emergencyDone(got) : STR.train.emergencyNone,
+          got
+            ? STR.train.emergencyDone(got)
+            : this.fleet.supplierOf(t)
+              ? STR.train.emergencyNone
+              : STR.train.emergencyNoStore,
           got ? 'good' : 'warn',
         );
         this.render();

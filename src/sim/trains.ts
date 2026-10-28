@@ -176,6 +176,12 @@ export function stationStore(stores: StoreRegistry, st: Station): ResourceStore 
   return st.refuelsFuel || st.refuelsWater ? stores.fuelSupplierFor(st.x, st.y) : null;
 }
 
+/** What a train owes as its save holds it: optional, as a file written before has none. */
+function owedJSON(owed: { food: number; sand: number }): {
+  owed?: { food: number; sand: number };
+} {
+  return { owed: { ...owed } };
+}
 /** An amount owed as a file holds it: 0 unless a finite amount above 0. */
 const owedOf = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : 0);
 
@@ -2623,6 +2629,10 @@ export class Train {
     if (st) {
       st.occupants.delete(this.id);
       this.flushFlow(ctx, st);
+      // the crew pays for what it ate while it stood here: at the store it fills up from, else at
+      // the store of the town the station stands in
+      const store = stationStore(ctx.stores, st) ?? ctx.stores.townStore(st.x, st.y);
+      if (store) this.settle(store);
     }
     this.atStation = null;
     if (this.route.length < 1) {
@@ -3292,7 +3302,7 @@ export class Train {
       // v18: a freight train has put goods down at the stop it stands at
       dropped: this.dropped,
       // the food and sand it owes the next store; a file without them owes nothing
-      owed: { food: this.owed.food, sand: this.owed.sand },
+      ...owedJSON(this.owed),
     };
   }
 

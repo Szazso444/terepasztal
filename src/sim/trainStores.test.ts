@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
-import { townWith } from '../testing/storeFixtures';
+import { storesWith, townWith } from '../testing/storeFixtures';
+import { TrackGraph } from '../world/track';
 import { Dir } from '../engine/iso';
 import { locoDef, wagonDef } from '../gacha/items';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
@@ -14,6 +15,7 @@ import {
   type TickCtx,
 } from './trains';
 import type { Station } from './stations';
+import { StorePool } from './stores';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -47,14 +49,18 @@ const ctxOf = (w: SimWorld, now = 0) =>
   (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(now, 1);
 
 /**
- * A train of `loco` and an empty hopper on the line at column `x` facing west, in the fleet, with
+ * A train of `loco` and an empty `wagon` (a hopper unless named) on the line at column `x` facing west, in the fleet, with
  * the stops given (none: it stands where it is).
  */
-function onLine(w: SimWorld, loco: string, x: number, stops: Station[] = []) {
+function onLine(
+  w: SimWorld,
+  loco: string,
+  x: number,
+  stops: Station[] = [],
+  wagon = 'wood_hopper',
+) {
   const t = new Train([{ uid: 1, level: 1, def: locoDef(loco) }]);
-  t.wagons = [
-    { uid: 2, def: wagonDef('wood_hopper'), level: 1, cargo: null, amount: 0, origin: null },
-  ];
+  t.wagons = [{ uid: 2, def: wagonDef(wagon), level: 1, cargo: null, amount: 0, origin: null }];
   expect(t.spawnAt(w.track, x, ROW, Dir.E)).not.toBe(false);
   w.fleet.trains.push(t);
   if (stops.length) {
@@ -256,6 +262,98 @@ describe('trains and the stores', () => {
     expect(t.water).toBe(t.waterCap);
     expect(store.get('coal')).toBeCloseTo(1000 - t.coalCap, 9);
     expect(store.get('water')).toBeCloseTo(1000 - t.waterCap, 9);
+  });
+
+  it('a pooled store serves a trackside point when one of its stores is within reach', () => {
+    // two depot stores pooled as Simple mode will pool a rail network: the pool's anchor is its
+    // first member's, 20 tiles from the second
+    const { stores, depots } = storesWith([
+      { amounts: {}, at: { x: 0, y: 0 } },
+      { amounts: {}, at: { x: 20, y: 0 } },
+    ]);
+    const pool = new StorePool(depots);
+    stores.poolOf = () => pool;
+    expect(pool.anchor, 'premise: the anchor is the first member').toEqual({ x: 0, y: 0 });
+    // 5 tiles from the second member, 25 from the first
+    expect(stores.fuelSupplierFor(25, 0), 'the second member is in reach').toBe(pool);
+    // 3 tiles from the first, 17 from the second
+    expect(stores.fuelSupplierFor(3, 0), 'the first member is in reach').toBe(pool);
+    // 10 tiles from the second, 30 from the first: within building reach, not within fuelReach
+    expect(stores.supplierFor(30, 0), 'premise: it supplies the tile').toBe(pool);
+    expect(stores.fuelSupplierFor(30, 0), 'no member in reach').toBeNull();
+  });
+
+  /**
+   * Runs the train until it has called at `at` and left it: it must have stood there over a day.
+   * Then it is not hungry, owes almost nothing and `store` gave its crew's food for the stay (and
+   * for the way there, where it did not fill up on arrival).
+   */
+  function leavesFed(w: SimWorld, t: Train, at: Station, store: { get(id: string): number }) {
+    runUntil(w, () => t.atStation === at && t.state === 'loading');
+    const arrived = w.clock.time;
+    const food = store.get('food');
+    runUntil(w, () => t.atStation !== at);
+    const stay = w.clock.time - arrived;
+    expect(stay, 'premise: it stood there over a day').toBeGreaterThan(daySeconds());
+    expect(t.hungry, 'not hungry as it leaves').toBe(false);
+    expect(t.owed.food, 'owes no more than a tick of food').toBeLessThan(ration(t, 1));
+    expect(food - store.get('food'), 'the crew ate there').toBeGreaterThan(ration(t, stay) * 0.999);
+  }
+
+  it('a train standing long at a store pays for its crew there before it leaves', () => {
+    const w = grass();
+    const { depot } = depotLine(w);
+    const house = station(w, 'warehouse', 30, ROW - 1);
+    const store = w.stores.byKey(`st:${house.id}`)!;
+    store.amounts.set('food', 100);
+    const t = onLine(w, 'f7', 20, [house, depot]);
+    t.oil = t.oilCap;
+    // a stay of a day and a half: a warehouse makes nothing, so nobody waits there for full wagons
+    const stay = daySeconds() * 1.5;
+    t.schedule = [{ ...quiet(house.id), minDwell: stay, maxDwell: stay }, quiet(depot.id)];
+    leavesFed(w, t, house, store);
+  });
+
+  it('a train waiting for full wagons at a harvester in a town pays for its crew there', () => {
+    const w = grass();
+    const { depot } = depotLine(w);
+    const town = townWith(w, { food: 100 }, { x: 34, y: ROW - 1 });
+    const farm = station(w, 'farm', 38, ROW - 1);
+    expect(farm.outlet, 'premise: the farm makes into the town store').toBe(w.stores.poolOf(town));
+    const t = onLine(w, 'f7', 20, [farm, depot], 'flatbed');
+    t.oil = t.oilCap;
+    t.schedule = [{ ...defaultStop(farm.id), unload: 'none', waitFull: true }, quiet(depot.id)];
+    leavesFed(w, t, farm, town);
+  });
+
+  it('owes nothing after a load of a file without what it owes, and keeps what it owes', () => {
+    const track = new TrackGraph(8, 8);
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    t.owed = { food: 0.25, sand: 0.5 };
+    const j = t.toJSON();
+    expect(Train.fromJSON(j, track).owed).toEqual({ food: 0.25, sand: 0.5 });
+    delete j.owed;
+    expect(Train.fromJSON(j, track).owed).toEqual({ food: 0, sand: 0 });
+  });
+
+  it('with no store in reach, an emergency delivery sends nothing', () => {
+    const w = grass();
+    line(w, 2, ROW, 60);
+    const t = onLine(w, 'f7', 30);
+    expect(w.fleet.supplierOf(t)).toBeNull();
+    expect(w.fleet.emergencyRefuel(t)).toEqual({});
+    expect(t.oil).toBe(0);
+  });
+
+  it('a recalled train with no place on the map empties its tanks into the depot store', () => {
+    const w = grass();
+    const { store } = depotLine(w);
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    w.fleet.trains.push(t);
+    expect(t.headTile, 'premise: nowhere on the map').toBeNull();
+    t.oil = 40;
+    w.fleet.recall(t);
+    expect(store.get(t.oilKind)).toBeCloseTo(40, 9);
   });
 
   it('a recalled train empties its tanks into the store that supplies its tile', () => {

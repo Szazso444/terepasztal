@@ -587,8 +587,8 @@ export class Fleet {
   }
 
   /**
-   * Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents go to the store
-   * that supplies its tile, else the nearest store at all (the battery to the grid).
+   * Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents go to
+   * `drainStore` (the battery to the grid).
    */
   recall(t: Train): number {
     t.recall();
@@ -597,12 +597,7 @@ export class Fleet {
       if (w.cargo && w.amount > 0) salvage += w.amount * cargoDef(w.cargo).price * 0.4;
     salvage = Math.round(salvage);
     if (salvage > 0) this.economy.earn(salvage);
-    const head = t.headTile;
-    const stores = this.builder.stores;
-    const to = head
-      ? (stores.supplierFor(head.x, head.y) ?? stores.nearest(head.x, head.y, Infinity)[0] ?? null)
-      : null;
-    t.drainTo(to, stores.grid);
+    t.drainTo(this.drainStore(t), this.builder.stores.grid);
     const i = this.trains.indexOf(t);
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
@@ -610,6 +605,20 @@ export class Fleet {
     // its tiles are free at once: a train built right after (clock paused) must see the gate clear
     this.rebuildOccupancy();
     return salvage;
+  }
+
+  /**
+   * Where a recalled train's tanks go: the store that supplies the tile of its head (or of the
+   * station it stands at), else the nearest store at all; with no place on the map, the first
+   * depot's store.
+   */
+  private drainStore(t: Train): ResourceStore | null {
+    const stores = this.builder.stores;
+    const at = t.headTile ?? t.atStation;
+    if (at)
+      return stores.supplierFor(at.x, at.y) ?? stores.nearest(at.x, at.y, Infinity)[0] ?? null;
+    const depot = this.builder.stations.find((s) => s.def.depot);
+    return depot ? stores.dockOf(depot) : null;
   }
 
   /** Token working: a plain section may hold one train; another must wait outside it. */
