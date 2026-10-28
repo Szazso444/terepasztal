@@ -1540,15 +1540,28 @@ describe('car poses kept between ticks', () => {
   // Slow: steps the three-train traffic scenario 2400 times (about 1 s alone), so 20 s.
   it('are the poses worked out afresh from the trail, at every tick of the traffic scenario', () => {
     const s = buildTrafficScenario(3);
+    // trains that stood still through a whole tick: the trail as it was before the step
     let standing = 0;
+    const was = new Map<
+      number,
+      { last: unknown; n: number; reversed: boolean; vehicles: unknown }
+    >();
     for (let tick = 0; tick < 2400; tick++) {
       s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
       for (const t of s.fleet.trains) {
+        const trail = (t as unknown as { trail: unknown[] }).trail;
+        const prior = was.get(t.id);
+        if (
+          prior &&
+          prior.last === trail[trail.length - 1] &&
+          prior.n === trail.length &&
+          prior.reversed === t.reversed
+        ) {
+          // it stood through the step: the poses it had are kept, not worked out again
+          expect(t.vehiclePoses, `tick ${tick}, train ${t.id} stood`).toBe(prior.vehicles);
+          standing++;
+        }
         const kept = { poses: t.poses, vehicles: t.vehiclePoses };
-        const before = kept.vehicles;
-        // asked again with nothing changed, the poses stay as they are
-        t.updatePoses();
-        if (t.vehiclePoses === before) standing++;
         // forget what was kept (the lengths along the trail too) and work them out again
         const inner = t as unknown as { posedFor: unknown; trailLenOf: unknown };
         inner.posedFor = null;
@@ -1556,9 +1569,16 @@ describe('car poses kept between ticks', () => {
         t.updatePoses();
         expect(kept.vehicles, `tick ${tick}, train ${t.id}`).toEqual(t.vehiclePoses);
         expect(kept.poses).toEqual(t.poses);
+        was.set(t.id, {
+          last: trail[trail.length - 1],
+          n: trail.length,
+          reversed: t.reversed,
+          vehicles: t.vehiclePoses,
+        });
       }
     }
-    expect(standing).toBeGreaterThan(1000);
+    // 778 of the 7,200 train-ticks stand through the step
+    expect(standing).toBeGreaterThan(500);
   }, 20_000);
 });
 
