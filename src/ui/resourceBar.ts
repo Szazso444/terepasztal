@@ -14,6 +14,9 @@ import { RESOURCE_GROUPS, barGroups } from './resourceOrder';
 /** What the stockpile holds: these have a cap and open the market when clicked. */
 const STOCKPILED = new Set(RESOURCE_IDS);
 
+/** The cells overflow their box: tighten the spacing. */
+export const needsCompact = (scrollWidth: number, clientWidth: number) => scrollWidth > clientWidth;
+
 /**
  * Second row under the top bar: funds first, then the resources in their groups (`RESOURCE_GROUPS`),
  * each cell a term whose tooltip links the buildings that make and use it. A resource shows once its
@@ -22,6 +25,8 @@ const STOCKPILED = new Set(RESOURCE_IDS);
 export class ResourceBar {
   readonly root = el('div', { id: 'resbar', class: 'panel' });
   readonly right = el('div', { class: 'res-right' });
+  /** the groups and the famine warning: it shrinks and clips so `right` stays on screen */
+  private cellsBox = el('div', { class: 'res-cells' });
   /** each resource's value, and the term around its cell that is hidden or shown */
   private values = new Map<string, HTMLElement>();
   private cells = new Map<string, HTMLElement>();
@@ -66,13 +71,30 @@ export class ResourceBar {
         group.append(term);
       }
       const sep = i ? el('div', { class: 'res-sep' }) : null;
-      if (sep) this.root.append(sep);
-      this.root.append(group);
+      if (sep) this.cellsBox.append(sep);
+      this.cellsBox.append(group);
       this.groups.push({ root: group, sep });
     });
-    this.root.append(this.famine, el('div', { class: 'spacer' }), this.right);
+    this.cellsBox.append(this.famine);
+    this.root.append(this.cellsBox, this.right);
     this.famine.style.display = 'none';
     tooltip.bindTerms(this.root);
+    // a window resize changes the room
+    if (typeof ResizeObserver !== 'undefined')
+      new ResizeObserver(() => this.fit()).observe(this.root);
+  }
+
+  /**
+   * Normal spacing when the cells fit, the `compact` spacing when they would not. Measured with
+   * compact off, so the answer does not depend on the last one. Called only after a relayout, when
+   * a value gets longer, and on resize: never every frame.
+   */
+  private fit() {
+    const box = this.cellsBox;
+    // a hidden bar measures 0: keep the last answer
+    if (!box.clientWidth) return;
+    this.root.classList.remove('compact');
+    if (needsCompact(box.scrollWidth, box.clientWidth)) this.root.classList.add('compact');
   }
 
   /** What a cell's tooltip shows, read when it opens. */
@@ -131,6 +153,8 @@ export class ResourceBar {
       this.laidSupply = supplyMode();
       this.layout(stock);
     }
+    // a longer value can push the bar over too: a new digit, not every frame
+    let longer = relayout;
     const stats = this.stats?.();
     for (const [id, v] of this.values) {
       if (this.cells.get(id)!.style.display === 'none') continue;
@@ -139,17 +163,28 @@ export class ResourceBar {
           id === 'money'
             ? fmtMoney(money)
             : `${Math.floor(id === 'population' ? stock.population : (this.passengers?.() ?? 0))}`;
-        if (v.textContent !== text) v.textContent = text;
+        if (v.textContent !== text) {
+          longer ||= text.length !== v.textContent?.length;
+          v.textContent = text;
+        }
         continue;
       }
       const have = Math.floor(stock.get(id));
       const text = `${have}`;
-      if (v.textContent !== text) v.textContent = text;
+      if (v.textContent !== text) {
+        longer ||= text.length !== v.textContent?.length;
+        v.textContent = text;
+      }
       const net = (stats?.[id]?.produced ?? 0) - (stats?.[id]?.consumed ?? 0);
       v.classList.toggle('red', net < -0.01);
       v.classList.toggle('good', net > 0.01);
       v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= cap(id));
     }
-    this.famine.style.display = stock.famine ? '' : 'none';
+    const famine = stock.famine ? '' : 'none';
+    if (this.famine.style.display !== famine) {
+      this.famine.style.display = famine;
+      longer = true;
+    }
+    if (longer) this.fit();
   }
 }

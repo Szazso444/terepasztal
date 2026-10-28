@@ -1776,10 +1776,16 @@ input[type='range'] {
   border-top: none;
   cursor: pointer;
 }
-#resbar .spacer {
-  flex: 1;
+/* the cells shrink and clip before they push tickets and age off the right edge */
+#resbar .res-cells {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 #resbar .res-right {
+  flex: none;
   display: flex;
   align-items: stretch;
   margin-left: auto;
@@ -1818,6 +1824,14 @@ input[type='range'] {
   flex: none;
 }
 /* each cell is a term (its tooltip links the buildings), drawn as the cell, not as a link */
+/* when the cells would overflow: tighter padding, icon close to its value, narrower separators */
+#resbar.compact .res {
+  gap: 2px;
+  padding: 0 4px;
+}
+#resbar.compact .res-sep {
+  width: 4px;
+}
 #resbar .tt-term {
   display: flex;
   color: inherit;
