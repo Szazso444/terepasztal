@@ -52,6 +52,8 @@ export interface KeyHost {
   /** the piece in slot `index` (0-based) of the open category */
   selectPiece(index: number): void;
   setSpeed(speed: number): void;
+  /** one speed up (1) or down (-1), from pause one step from the speed it had */
+  stepSpeed(dir: 1 | -1): void;
   togglePause(): void;
   /** start recording stops for the picked train, or finish the recording */
   toggleRecording(): void;
@@ -84,6 +86,7 @@ export type KeyAction =
   | 'pause'
   | 'pieceOrSpeed'
   | 'speed'
+  | 'speedStep'
   | 'record'
   | 'finishRoute';
 
@@ -98,6 +101,15 @@ export interface KeyBinding {
 
 /** The slot or the speed a digit key stands for: 1 for Digit1. */
 const digitOf = (code: string) => Number(code.slice('Digit'.length));
+
+/** + steps the speed up and − down, on the main keys and on the numpad. */
+const SPEED_STEP = new Map<string, 1 | -1>([
+  ['Equal', 1],
+  ['NumpadAdd', 1],
+  ['Minus', -1],
+  ['NumpadSubtract', -1],
+]);
+const SPEED_STEP_KEYS = [...SPEED_STEP.keys()];
 
 /**
  * Each action returns true when the rest of the frame's input is left alone: Escape opened or
@@ -187,6 +199,10 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     h.setSpeed(digitOf(b.code));
     return false;
   },
+  speedStep: (h, b) => {
+    h.stepSpeed(SPEED_STEP.get(b.code)!);
+    return false;
+  },
   record: (h) => {
     if (h.overviewSettled) h.toggleRecording();
     return false;
@@ -229,6 +245,11 @@ export const KEYMAP: readonly KeyBinding[] = [
   { code: 'KeyE', context: 'play', action: 'nextType' },
   { code: 'Space', context: 'play', action: 'pause' },
   ...digits(9).map((code) => ({ code, context: 'play' as const, action: 'pieceOrSpeed' as const })),
+  ...SPEED_STEP_KEYS.map((code) => ({
+    code,
+    context: 'play' as const,
+    action: 'speedStep' as const,
+  })),
 
   { code: 'Backquote', context: 'overview', action: 'debug' },
   ...SCREEN_KEYS.map(([code, action]) => ({ code, context: 'overview' as const, action })),
@@ -236,6 +257,11 @@ export const KEYMAP: readonly KeyBinding[] = [
   { code: 'KeyM', context: 'overview', action: 'overview' },
   { code: 'Space', context: 'overview', action: 'pause' },
   ...digits(3).map((code) => ({ code, context: 'overview' as const, action: 'speed' as const })),
+  ...SPEED_STEP_KEYS.map((code) => ({
+    code,
+    context: 'overview' as const,
+    action: 'speedStep' as const,
+  })),
   { code: 'KeyR', context: 'overview', action: 'record' },
   { code: 'Enter', context: 'overview', action: 'finishRoute' },
 ];

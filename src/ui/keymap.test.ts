@@ -64,6 +64,7 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     cycleType: log('cycleType'),
     selectPiece: log('selectPiece'),
     setSpeed: log('setSpeed'),
+    stepSpeed: log('stepSpeed'),
     togglePause: log('togglePause'),
     toggleRecording: log('toggleRecording'),
     finishRecording: log('finishRecording'),
@@ -92,6 +93,14 @@ const screenCases = (name: string): Case[] => [
   { state: { mode: 'editor' }, calls: [] },
 ];
 const digit = (b: KeyBinding) => Number(b.code.replace('Digit', ''));
+/** + steps the speed up and − down, on the main keys and on the numpad. */
+const STEP_KEYS: [string, 1 | -1][] = [
+  ['Equal', 1],
+  ['NumpadAdd', 1],
+  ['Minus', -1],
+  ['NumpadSubtract', -1],
+];
+const stepDir = (b: KeyBinding) => STEP_KEYS.find(([code]) => code === b.code)![1];
 
 /** Every action, what it calls and what keeps it quiet. A new action without cases fails to compile. */
 const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
@@ -144,6 +153,7 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     { calls: digit(b) <= 3 ? [`setSpeed(${digit(b)})`] : [] },
   ],
   speed: (b) => [{ calls: [`setSpeed(${digit(b)})`] }],
+  speedStep: (b) => [{ calls: [`stepSpeed(${stepDir(b)})`] }],
   record: () => [
     { calls: ['toggleRecording'] },
     { state: { recording: true }, calls: ['toggleRecording'] },
@@ -184,6 +194,11 @@ const REQUIRED: [KeyContext, string, boolean?][] = [
   ...DIGITS(3).map((k): [KeyContext, string] => ['overview', k]),
   ['overview', 'KeyR'],
   ['overview', 'Enter'],
+  // + and − step the speed in both views
+  ...STEP_KEYS.flatMap(([k]): [KeyContext, string][] => [
+    ['play', k],
+    ['overview', k],
+  ]),
 ];
 
 describe('the play keymap', () => {

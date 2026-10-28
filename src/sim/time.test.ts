@@ -102,6 +102,48 @@ describe('GameClock.run', () => {
   );
 });
 
+describe('½× speed', () => {
+  it('runs one SIM_STEP every second loop tick', () => {
+    const clock = new GameClock();
+    clock.setSpeed(4);
+    expect(clock.speed).toBe(0.5);
+    const ran = [0, 0, 0, 0].map(() => clock.run(() => {}));
+    expect(ran.reduce((a, b) => a + b, 0)).toBeCloseTo(2 * SIM_STEP, 12);
+  });
+  it('gives the same time at ½× over twice the ticks as 1×', () => {
+    const a = new GameClock();
+    const b = new GameClock();
+    a.setSpeed(4);
+    b.setSpeed(1);
+    for (let i = 0; i < 40; i++) a.run(() => {});
+    for (let i = 0; i < 20; i++) b.run(() => {});
+    expect(a.time).toBeCloseTo(b.time, 12);
+  });
+});
+describe('stepSpeed', () => {
+  it('steps ½×, 1×, 2×, 3× and stops at the ends', () => {
+    const c = new GameClock(); // index 1, 1×
+    c.stepSpeed(-1);
+    expect(c.speed).toBe(0.5);
+    c.stepSpeed(-1);
+    expect(c.speed).toBe(0.5);
+    c.stepSpeed(1);
+    c.stepSpeed(1);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+  });
+  it('from pause, resumes one step from the speed it had', () => {
+    const c = new GameClock();
+    c.setSpeed(2);
+    c.togglePause();
+    expect(c.speed).toBe(0);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+  });
+});
+
 describe('the same game time gives the same outcome at every game speed', () => {
   /** The refuge scenario driven `ticks` loop ticks at `speed`, as the game loop will drive it. */
   function driveScenario(count: number, pinned: boolean, speed: number, ticks: number) {

@@ -875,6 +875,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     cycleType: (dir) => toolbar.cycleGroup(dir),
     selectPiece: (i) => toolbar.selectIndex(i),
     setSpeed: (s) => d.clock.setSpeed(s),
+    stepSpeed: (dir) => d.clock.stepSpeed(dir),
     togglePause: () => d.clock.togglePause(),
     toggleRecording: () => host.toggleRecording(),
     finishRecording: () => host.finishRecording(),
