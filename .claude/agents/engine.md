@@ -30,6 +30,7 @@ You write only these paths (`tools/agents/ownership.json`):
 - `eslint.config.js`
 - `.prettierrc`
 - `tools/traffic-dev.ts`
+- `tools/perf/**`
 - `src/strings.ts`
 
 `src/strings.ts` is UI/UX's file; you may add keys for text that `src/game.ts` shows, in the

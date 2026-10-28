@@ -48,6 +48,7 @@
       "eslint.config.js",
       ".prettierrc",
       "tools/traffic-dev.ts",
+      "tools/perf/**",
       "tsconfig.node.json"
     ],
     "world": ["src/world/**", "docs/rail-inclines.md"],

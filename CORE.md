@@ -43,8 +43,14 @@ number in front of an item is its place; the Importance line of each epic issue 
    - Prepared by: the headless step `SimStep.run` (`src/sim/step.ts`; A01, A02) and the fixed-step
      clock `GameClock.run` (`src/sim/time.ts`; A03) are in; the deterministic tests in
      `docs/process/verification.md` are the port's specification.
-   - Measure first. Part of today's cost does not depend on the language: a full-map scan in the
-     render loop every 0.12 s, quadratic per-tick signal evaluation, and a 939 kB main bundle.
+   - Measured on 2026-10-27 (`docs/superpowers/plans/2026-10-27-performance-measurement.md`):
+     rendering, not the simulation, takes most of the CPU (Pixi culling 27–41%, the game's
+     per-frame passes 14–31%, the simulation 0.5–25%); the simulation grows with route length and
+     superlinearly with trains for algorithmic reasons; boot is mostly atlas generation. Of the
+     2026-10-09 audit claims, the full-map scan every 0.12 s and the quadratic signal evaluation
+     hold; the main bundle is 1,338 kB (422 kB gzip), not 939 kB. A Rust/WASM core or a desktop
+     wrapper would not change these numbers now; the tasks are #552–#561, TypeScript fixes first,
+     with WASM decided at #561.
 2. **Gameplay loop, balance and fine tuning** (#46), including tuning presets.
 3. **Art and asset consistency** (#47).
    - **Locomotives** are rendered in 3D by the C-50/SW1 method (PNG → locomotive model → repeatable
