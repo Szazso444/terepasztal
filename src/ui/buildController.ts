@@ -624,10 +624,11 @@ export class BuildController {
   }
 
   /**
-   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile (`placeRoad`). The
-   * drag shows the build preview's diamond on each tile, red where the release would not lay a
-   * road, with the total cost and every reason a tile is refused in the status line. Before the
-   * press the one tile under the cursor shows, priced or refused.
+   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile, the whole run paid
+   * from its first tile (`placeRoads`). The drag shows the build preview's diamond on each tile,
+   * red where the release would not lay a road, with the total cost and every reason a tile is
+   * refused in the status line. Before the press the one tile under the cursor shows, priced or
+   * refused.
    */
   private updateRoadTool(t: Tile, inMap: boolean) {
     const inp = this.input;
@@ -646,7 +647,7 @@ export class BuildController {
       const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
       this.dragStart = null;
       for (const g of this.lineGhosts) g.visible = false;
-      for (const r of tiles) this.builder.placeRoad(r.x, r.y);
+      this.builder.placeRoads(tiles, tiles[0]);
       return;
     }
     // the button is up: a stroke whose release fell over a panel lays nothing, and is over

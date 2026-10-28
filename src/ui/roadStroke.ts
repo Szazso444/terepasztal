@@ -5,8 +5,8 @@ import { STR } from '../strings';
 
 /**
  * The road tool's drag (#328), DOM-free: the tiles a stroke covers, and what its release comes to,
- * judged tile by tile in the order the release lays them (`Builder.placeRoad`, one tile after
- * another). The rules are the builder's (`checkRoad`) and the roads' (`Roads.trackRefusal`); this
+ * judged tile by tile in the order the release lays them (`Builder.placeRoads`, one tile after
+ * another, the whole stroke paid by the store that pays it from its first tile). The rules are the builder's (`checkRoad`) and the roads' (`Roads.trackRefusal`); this
  * module only adds them up. The free spur the game lays to a street door after a tile (#408) is not
  * part of the stroke, nor of its price.
  */
@@ -127,9 +127,10 @@ export function judgeStroke(tiles: readonly Tile[], judge: StrokeJudge): RoadStr
  * (`Roads.trackRefusal`) once more on a copy of the roads that holds the stroke's tiles laid before
  * it, as the builder judges a spur (`Builder.laySpur`): a stroke that runs along a line of track
  * makes one crossing on it, and its release refuses the next tile of that line, which this shows.
- * A tile `checkRoad` refuses only for its price (no store in reach holds even that one tile) passes
- * here with that price, so `judgeStroke` says what the whole stroke is short of. The stroke pays
- * from its first tile, `from`: the store that pays there (`Builder.affordable`) pays all of it.
+ * A tile `checkRoad` refuses only for its price (no store in reach of it holds even that one tile)
+ * passes here with that price: the stroke pays from its first tile, `from`, and the store that
+ * pays the stroke so far from there (`Builder.affordable`) pays all of it, as `placeRoads` lays
+ * it, so `judgeStroke` says what the whole stroke is short of.
  */
 export function builderJudge(builder: Builder, from: Tile): StrokeJudge {
   const tried = builder.roads.copy();

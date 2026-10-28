@@ -9,9 +9,6 @@ import type { TownRegistry } from '../sim/towns';
 import { TrackGraph } from '../world/track';
 import { station, type SimWorld } from './simWorld';
 
-/** The fixture depot's station id: no station a test places has it, as ids start at 1. */
-const FIXTURE_DEPOT_ID = 0;
-
 /**
  * A store registry with one depot store, anchored at `at`, holding `amounts`. The registry is
  * attached to a world of its own that holds only that depot (no towns, no plants), so it can be
@@ -23,11 +20,23 @@ export function storeWith(
   amounts: Record<string, number>,
   at = { x: 0, y: 0 },
 ): { stores: StoreRegistry; depot: Store } {
-  const st = new Station('depot', at.x, at.y, undefined, FIXTURE_DEPOT_ID);
+  const { stores, depots } = storesWith([{ amounts, at }]);
+  return { stores, depot: depots[0] };
+}
+
+/**
+ * `storeWith` for several depots: a registry of one depot store for each, in the order given,
+ * anchored where it says and holding what it says. Their station ids are 0, -1, -2 and on: no
+ * station a test places has one, as ids start at 1.
+ */
+export function storesWith(
+  list: readonly { amounts: Record<string, number>; at: { x: number; y: number } }[],
+): { stores: StoreRegistry; depots: Store[] } {
+  const sts = list.map(({ at }, i) => new Station('depot', at.x, at.y, undefined, -i || 0));
   const builder = {
-    stations: [st],
+    stations: sts,
     plantCount: () => 0,
-    stationById: (id: number) => (id === st.id ? st : undefined),
+    stationById: (id: number) => sts.find((s) => s.id === id),
   };
   const towns = { towns: [], townAt: () => null, station: () => undefined, byId: () => undefined };
   const stores = new StoreRegistry();
@@ -37,9 +46,12 @@ export function storeWith(
     track: new TrackGraph(1, 1),
   });
   stores.refresh();
-  const depot = stores.byKey(`st:${st.id}`)!;
-  for (const [id, n] of Object.entries(amounts)) depot.amounts.set(id, n);
-  return { stores, depot };
+  const depots = sts.map((st, i) => {
+    const depot = stores.byKey(`st:${st.id}`)!;
+    for (const [id, n] of Object.entries(list[i].amounts)) depot.amounts.set(id, n);
+    return depot;
+  });
+  return { stores, depots };
 }
 
 /**

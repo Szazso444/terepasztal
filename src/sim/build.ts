@@ -1284,13 +1284,33 @@ export class Builder {
    * street door near it with no road gets its spur, free (`connectNear`).
    */
   placeRoad(x: number, y: number): boolean {
-    const c = this.checkRoad(x, y);
-    if (!c.ok || !this.pay(c, x, y)) return false;
-    this.roads.add(x, y);
-    this.onRoadChanged?.(x, y);
-    this.connectNear(x, y);
-    sfx('build.place');
-    return true;
+    return this.placeRoads([{ x, y }], { x, y }).length === 1;
+  }
+  /**
+   * Lay a stroke of road (#328), its tiles in order, the whole stroke paid by one store: the one
+   * that pays it from `from`, the stroke's first tile (`affordable`). Each tile is judged by
+   * `checkRoad`'s rules with the tiles before it laid, and laid while that store still pays for
+   * the stroke so far with it; a tile refused is left out and costs nothing. Each tile laid gets
+   * the spurs it brings (`connectNear`). Returns the tiles laid.
+   */
+  placeRoads(tiles: readonly { x: number; y: number }[], from: { x: number; y: number }) {
+    const laid: { x: number; y: number }[] = [];
+    let cost: Cost = {};
+    for (const t of tiles) {
+      if (this.roadRules(t.x, t.y)) continue;
+      const more: Cost = { ...cost };
+      for (const [k, v] of Object.entries(this.priced(roadCost(), 1))) more[k] = (more[k] ?? 0) + v;
+      if (!this.affordable(more, from.x, from.y).ok) continue;
+      cost = more;
+      this.roads.add(t.x, t.y);
+      this.onRoadChanged?.(t.x, t.y);
+      this.connectNear(t.x, t.y);
+      sfx('build.place');
+      laid.push(t);
+    }
+    // nothing was paid while laying, so the store that took the last tile pays the whole
+    if (laid.length) this.pay(this.affordable(cost, from.x, from.y), from.x, from.y);
+    return laid;
   }
   /** What `removeRoad` gives back: the refund share of a road's cost, each part rounded down. */
   roadRefund(): Cost {
