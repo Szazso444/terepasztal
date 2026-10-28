@@ -378,6 +378,13 @@ export class StoreRegistry {
     this.fuelAtTile.clear();
     this.worksOf.clear();
     if (this.labelledMode === 'simple') this.joinByRails();
+    // a shortage timer belongs to its network's first store, which may have changed
+    const carried = new Map<string, number>();
+    for (const [key, t] of this.short) {
+      const lead = this.nets.get(key)?.[0] ?? key;
+      if (this.stores.has(key)) carried.set(lead, Math.max(t, carried.get(lead) ?? 0));
+    }
+    this.short = carried;
     // a store on its own keeps its pool; the pools of a network are made again
     for (const [key, p] of [...this.pools])
       if (this.nets.has(key) || p.members.length > 1 || p.members[0] !== this.stores.get(key))
@@ -488,10 +495,12 @@ export class StoreRegistry {
     return [s, ...rest];
   }
   /**
-   * The pool that stands for a whole network where it counts as one place (food, famine): the pool
-   * of the network's first store. A store on no network is left as it is.
+   * The pool that stands for a whole network where it counts as one place (food, famine, a try-out
+   * of what the network can pay): the pool of the network's first store in registry order, which is
+   * a town's when the network has one (towns come first). The same object for any pool or store of
+   * the network until it is regrouped. A store on no network is left as it is.
    */
-  private networkPool(r: ResourceStore): ResourceStore {
+  networkPool(r: ResourceStore): ResourceStore {
     const first = this.nets.get(r.key)?.[0];
     const s = first ? this.stores.get(first) : undefined;
     return s ? this.poolOf(s) : r;
@@ -610,13 +619,13 @@ export class StoreRegistry {
       this.short.set(pool.key, short);
       if (pool.famine || short <= FAMINE_AFTER) return;
       for (const m of membersOf(pool)) m.famine = true;
-      this.onMessage?.(STR.stores.famine(this.label(pool)), 'warn');
+      this.onMessage?.(STR.stores.famine(this.networkLabel(pool)), 'warn');
       return;
     }
     this.short.delete(pool.key);
     if (!pool.famine) return;
     for (const m of membersOf(pool)) m.famine = false;
-    this.onMessage?.(STR.stores.fed(this.label(pool)), 'good');
+    this.onMessage?.(STR.stores.fed(this.networkLabel(pool)), 'good');
   }
   /** The nearest store in reach that holds the whole cost. */
   payerFor(cost: Cost, x: number, y: number): ResourceStore | null {
@@ -629,6 +638,11 @@ export class StoreRegistry {
     for (const s of this.stores.values())
       for (const [id, n] of s.amounts) if (n > 0) out.set(id, (out.get(id) ?? 0) + n);
     return out;
+  }
+  /** Who a network's food and famine are told under: its towns by name, else its first store. */
+  private networkLabel(pool: ResourceStore): string {
+    const towns = membersOf(pool).filter((m) => m.kind === 'town');
+    return towns.length > 1 ? towns.map((m) => this.label(m)).join(', ') : this.label(pool);
   }
   /** The town's name or the station's. */
   label(r: ResourceStore): string {

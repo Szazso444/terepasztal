@@ -112,11 +112,12 @@ export class Fleet {
    */
   refuelAll(trains: Train[]) {
     const valid = [...new Set(trains)].filter((t) => this.trains.includes(t));
-    // trains that share a supplier draw on one copy of it
+    // trains that share a supplier, or a rail network of stores, draw on one copy of it
     const copies = new Map<ResourceStore, ResourceStore>();
     const copyOf = (r: ResourceStore) => {
-      let c = copies.get(r);
-      if (!c) copies.set(r, (c = previewOf(r)));
+      const whole = this.builder.stores.networkPool(r);
+      let c = copies.get(whole);
+      if (!c) copies.set(whole, (c = previewOf(whole)));
       return c;
     };
     const grid = copyOf(this.builder.stores.grid);

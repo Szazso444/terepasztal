@@ -1,16 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
 import { Store, StorePool, StoreRegistry } from './stores';
 import { setSupplyMode } from './supply';
 import { levelMul } from '../gacha/items';
 import type { Station } from './stations';
-import { defaultStop, type StopPlan, type Train } from './trains';
+import { defaultStop, Train, type StopPlan } from './trains';
+import { content } from '../data/content';
+import { Dir } from '../engine/iso';
 import { SimStep, startStock, type StepContext } from './step';
 import { tickBuildings, type Building } from './buildings';
 import { depotWith } from '../testing/storeFixtures';
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
+// a test that sets the supply mode leaves it as it found it
+afterEach(() => setSupplyMode('simple'));
 
 /**
  * A flat world with a long line and a store registry attached, as Task 3 will wire it. Stores on
@@ -783,6 +787,90 @@ describe('pooling by rail network', () => {
       false,
     ]);
     expect(said).toHaveLength(2);
+  });
+});
+
+describe('a network that acts as one place', () => {
+  /** Depots A (x 20) and B (x 50) on one line, and a train at the platform of each. */
+  function trainsOnALine() {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    w.builder.free = true;
+    const a = station(w, 'depot', 20, 29);
+    const b = station(w, 'depot', 50, 29);
+    line(w, 22, 30, 49);
+    const mk = (x: number) => {
+      const t = new Train([
+        { uid: x, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },
+      ]);
+      t.spawnAt(w.track, x, 30, Dir.W);
+      w.fleet.trains.push(t);
+      return t;
+    };
+    const [ta, tb] = [mk(24), mk(46)];
+    const storeA = w.stores.byKey(`st:${a.id}`)!;
+    const storeB = w.stores.byKey(`st:${b.id}`)!;
+    // each train is supplied by the depot it stands next to
+    expect([w.fleet.supplierOf(ta)!.key, w.fleet.supplierOf(tb)!.key]).toEqual([
+      storeA.key,
+      storeB.key,
+    ]);
+    return { w, ta, tb, storeA, storeB };
+  }
+
+  it('refuels a group from the network stock once: all full, or none', () => {
+    const { w, ta, tb, storeA, storeB } = trainsOnALine();
+    // the network holds the oil of one train at twice the materials, not of two
+    storeA.add('oil', 2 * ta.oilCap);
+    expect(w.fleet.refuelAll([ta, tb])).toBe(false);
+    expect([ta.oil, tb.oil]).toEqual([0, 0]);
+    expect(storeA.get('oil')).toBe(2 * ta.oilCap);
+    storeB.add('oil', 2 * tb.oilCap);
+    expect(w.fleet.refuelAll([ta, tb])).toBe(true);
+    expect([ta.oil, tb.oil]).toEqual([ta.oilCap, tb.oilCap]);
+    expect(w.stores.poolOf(storeA).get('oil')).toBeCloseTo(0);
+  });
+
+  it('is one pool for any store on it, and the store itself when alone', () => {
+    const { w, storeA, storeB } = trainsOnALine();
+    expect(w.stores.networkPool(w.stores.poolOf(storeB))).toBe(w.stores.poolOf(storeA));
+    expect(w.stores.networkPool(storeB)).toBe(w.stores.poolOf(storeA));
+    const lone = station(w, 'depot', 40, 60);
+    const loneStore = w.stores.byKey(`st:${lone.id}`)!;
+    expect(w.stores.networkPool(w.stores.poolOf(loneStore))).toBe(w.stores.poolOf(loneStore));
+    expect(w.stores.networkPool(w.stores.grid)).toBe(w.stores.grid);
+  });
+
+  it('is told of under its towns when it has several', () => {
+    const { w, storeA } = trainsOnALine();
+    line(w, 2, 30, 19);
+    const hallA = station(w, 'town', 30, 29);
+    const hallB = station(w, 'town', 5, 29);
+    const names = [hallA, hallB].map((h) => w.towns.byStation(h.id)!.name);
+    const said: string[] = [];
+    w.stores.onMessage = (m) => said.push(m);
+    const pool = w.stores.poolOf(storeA);
+    expect((pool as StorePool).members.filter((m) => m.kind === 'town')).toHaveLength(2);
+    w.stores.tickUpkeep(11, new Map([[pool, 5]]));
+    expect(said).toHaveLength(1);
+    for (const n of names) expect(said[0]).toContain(n);
+    expect(said[0]).not.toContain(storeA.key);
+  });
+
+  it('carries a shortage timer to the first store of the regrouped network', () => {
+    const { w, storeA, storeB } = trainsOnALine();
+    const said: string[] = [];
+    w.stores.onMessage = (m) => said.push(m);
+    // cut: B leads itself and eats alone for 6 s with no food
+    w.builder.removeTrack(35, 30);
+    w.stores.refresh();
+    w.stores.tickUpkeep(6, new Map([[w.stores.poolOf(storeB), 5]]));
+    expect(said).toHaveLength(0);
+    // mended: A leads, and the 6 s count with it, so 5 s more is more than 10 s short
+    line(w, 35, 30, 35);
+    w.stores.refresh();
+    w.stores.tickUpkeep(5, new Map([[w.stores.poolOf(storeA), 5]]));
+    expect(said).toHaveLength(1);
+    expect([storeA.famine, storeB.famine]).toEqual([true, true]);
   });
 });
 
