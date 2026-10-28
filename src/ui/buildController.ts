@@ -1,5 +1,6 @@
 import type { WideClass } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
+import { layRun, planRun, type RunPlan, type RunStep } from './autoCrossing';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
@@ -298,22 +299,20 @@ export class BuildController {
     if (item.kind === 'straight' || item.kind === 'bridge') {
       if (inp.buttonPressed.has(0) && inMap) this.dragStart = { x: t.x, y: t.y };
       if (this.dragStart && inp.buttons.has(0)) {
-        const line = this.lineTiles(this.dragStart, t);
-        this.showLineGhosts(line, item);
+        const line = this.runTiles(this.dragStart, t);
+        const plan = planRun(this.builder, line, item);
+        this.showRunGhosts(plan);
         this.status(
-          line.length > 1
-            ? `${line.length} x ${item.kind}: ${fmtCost(this.lineCost(line, item))}`
-            : this.pieceStatus(t, item),
+          line.length > 1 ? this.runStatus(plan, item) : this.pieceStatus(t, item, plan.steps[0]),
         );
         return;
       }
       if (this.dragStart && inp.buttonReleased.has(0)) {
-        const line = this.lineTiles(this.dragStart, t);
+        const line = this.runTiles(this.dragStart, t);
         this.dragStart = null;
         for (const g of this.lineGhosts) g.destroy();
         this.lineGhosts = [];
-        if (line.length === 1) this.builder.placeTrack(t.x, t.y, item, this.rot);
-        else for (const l of line) this.builder.placeTrack(l.x, l.y, item, l.rot);
+        layRun(this.builder, planRun(this.builder, line, item));
         return;
       }
     } else {
@@ -326,8 +325,15 @@ export class BuildController {
       for (const g of this.lineGhosts) g.visible = false;
       return;
     }
-    const check = this.builder.checkTrack(t.x, t.y, item, this.rot);
-    const key = itemKey(item);
+    // a straight over a line across it previews the crossing it would lay there
+    const step =
+      item.kind === 'straight'
+        ? planRun(this.builder, [{ ...t, rot: this.rot }], item).steps[0]
+        : null;
+    const shown = step?.crossing ? step.item : item,
+      rot = step?.crossing ? step.rot : this.rot;
+    const check = step ?? this.builder.checkTrack(t.x, t.y, item, this.rot);
+    const key = itemKey(shown);
     if (isUnitKind(item.kind, item.cls)) {
       // one ghost per footprint tile
       if (this.ghost) this.ghost.visible = false;
@@ -338,10 +344,10 @@ export class BuildController {
       );
     } else {
       for (const g of this.lineGhosts) g.visible = false;
-      const g = this.ensureGhost(`track/${key}_${this.rot}`);
+      const g = this.ensureGhost(`track/${key}_${rot}`);
       this.placeGhostAt(g, t.x, t.y, check.ok);
       const existing = this.builder.track.get(t.x, t.y);
-      if (check.ok && existing) g.tint = REPLACE_TINT;
+      if (check.ok && existing && !step?.stands) g.tint = REPLACE_TINT;
     }
     this.world.setSpriteFrame(
       this.ghostDiamond,
@@ -349,19 +355,21 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.status(this.pieceStatus(t, item));
+    this.status(this.pieceStatus(t, item, step ?? undefined));
   }
 
-  private pieceStatus(t: { x: number; y: number }, item: TrackItem) {
-    const check = this.builder.checkTrack(t.x, t.y, item, this.rot);
+  /** The status line for one piece; `step` is a straight's tile as a run would lay it. */
+  private pieceStatus(t: { x: number; y: number }, item: TrackItem, step?: RunStep) {
+    const check = step ?? this.builder.checkTrack(t.x, t.y, item, this.rot);
     const existing = this.builder.track.get(t.x, t.y);
-    const replacing = !!existing && check.ok;
+    const replacing = !!existing && check.ok && !step?.crossing;
     const parts = [
       check.ok
         ? replacing
           ? STR.build.replace(existing!.kind, fmtCost(check.cost))
           : STR.build.cost(fmtCost(check.cost))
         : (check.reason ?? ''),
+      step?.crossing && check.ok ? STR.build.autoCrossings(1) : '',
       STR.build.rotate,
     ];
     if (item.kind === 'straight' || item.kind === 'bridge') parts.push(STR.build.dragHint);
@@ -369,7 +377,10 @@ export class BuildController {
   }
 
   /** Ghost sprites for several tiles at once (wide pieces, drag lines). */
-  private showGhosts(list: { x: number; y: number; frame: string; ok?: boolean }[], ok: boolean) {
+  private showGhosts(
+    list: { x: number; y: number; frame: string; ok?: boolean; tint?: number }[],
+    ok: boolean,
+  ) {
     this.ghostDiamond.visible = false;
     while (this.lineGhosts.length < list.length) {
       const g = this.world.makeOverlaySprite(list[0].frame);
@@ -385,6 +396,7 @@ export class BuildController {
       const l = list[i];
       this.world.setSpriteFrame(g, l.frame);
       this.placeGhostAt(g, l.x, l.y, l.ok ?? ok);
+      if (l.tint !== undefined && (l.ok ?? ok)) g.tint = l.tint;
     }
   }
 
@@ -402,24 +414,30 @@ export class BuildController {
     return out;
   }
 
-  private lineCost(line: { x: number; y: number; rot: number }[], item: TrackItem) {
-    const c: Record<string, number> = {};
-    for (const l of line) {
-      const ch = this.builder.checkTrack(l.x, l.y, item, l.rot);
-      if (ch.ok) for (const [k, v] of Object.entries(ch.cost)) c[k] = (c[k] ?? 0) + v;
-    }
-    return c;
+  /** The tiles a drag lays from `a` to `b`; a press released where it started is one piece at the tool's turn. */
+  private runTiles(a: { x: number; y: number }, b: { x: number; y: number }) {
+    const line = this.lineTiles(a, b);
+    return line.length === 1 ? [{ x: b.x, y: b.y, rot: this.rot }] : line;
   }
 
-  private showLineGhosts(line: { x: number; y: number; rot: number }[], item: TrackItem) {
+  /** A run's status: its pieces and price, the crossings it lays by itself, and where it stops. */
+  private runStatus(plan: RunPlan, item: TrackItem) {
+    const parts = [`${plan.end} x ${item.kind}: ${fmtCost(plan.cost)}`];
+    if (plan.crossings) parts.push(STR.build.autoCrossings(plan.crossings));
+    if (plan.reason) parts.push(plan.reason);
+    return parts.join('   ');
+  }
+
+  /** A run's ghosts: red where a tile is refused and from where the run stops, amber on its crossings. */
+  private showRunGhosts(plan: RunPlan) {
     if (this.ghost) this.ghost.visible = false;
-    const key = itemKey(item);
     this.showGhosts(
-      line.map((l) => ({
-        x: l.x,
-        y: l.y,
-        frame: `track/${key}_${l.rot}`,
-        ok: this.builder.checkTrack(l.x, l.y, item, l.rot).ok,
+      plan.steps.map((s, i) => ({
+        x: s.x,
+        y: s.y,
+        frame: `track/${itemKey(s.item)}_${s.rot}`,
+        ok: s.ok && i < plan.end,
+        tint: s.crossing && !s.stands ? REPLACE_TINT : undefined,
       })),
       true,
     );

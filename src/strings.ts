@@ -331,6 +331,14 @@ export const STR = {
     needTransition: 'Different track classes join through a transition piece',
     gaugeBreak: 'Narrow and wide gauge do not join: cross them with a crossing piece',
     narrowLocked: 'Narrow gauge is not unlocked yet',
+    /** a dragged run meets a curve or a switch: no crossing piece meets a line at an angle */
+    crossAngle: 'Lines cross only at right angles',
+    /** a dragged run meets a line of a class it has no crossing piece with */
+    crossApart: (run: string, line: string) =>
+      `${run} track cannot cross ${line} track: it needs a bridge or an underpass`,
+    /** crossings a dragged run lays by itself where it meets a line at right angles */
+    autoCrossings: (n: number) =>
+      `+${n} crossing${n === 1 ? '' : 's'}, laid automatically, turned to the run`,
     reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
     reclassFree: (what: string) => `${what}: free`,
     reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
