@@ -139,6 +139,61 @@ export class Signals {
     }
     return { tiles, next: null };
   }
+  /** Every post's own aspect by post key, as `postAspects` last left it. */
+  private shown = new Map<number, Aspect>();
+  /** tile key -> keys of the posts whose own aspect looks at it (its block and the next one) */
+  private watchers = new Map<number, number[]>();
+  /** the taken tiles `shown` was worked out for */
+  private shownTaken = new Set<number>();
+  private shownFor = { track: -1, posts: -1 };
+  /**
+   * Every post's own aspect (`aspect` without a path) by post key, for the tiles in `taken` (tile
+   * keys trains stand on). Kept between calls: only the posts whose block, or the block after it,
+   * holds a tile that was taken or freed since the last call are looked at again, and all of them
+   * once the track or the posts change.
+   */
+  postAspects(taken: {
+    has(key: number): boolean;
+    keys(): Iterable<number>;
+  }): ReadonlyMap<number, Aspect> {
+    const occupied = (x: number, y: number) => taken.has(this.key(x, y));
+    if (this.shownFor.track !== this.track.version || this.shownFor.posts !== this.postsBuilt) {
+      this.shownFor = { track: this.track.version, posts: this.postsBuilt };
+      this.shown.clear();
+      this.watchers.clear();
+      for (const [k, post] of this.posts) {
+        const b = this.walk(post.x, post.y, post.dir);
+        const tiles = b.next
+          ? [...b.tiles, ...this.walk(b.next.x, b.next.y, b.next.dir).tiles]
+          : b.tiles;
+        for (const t of tiles) {
+          const tk = this.key(t.x, t.y);
+          const list = this.watchers.get(tk);
+          if (!list) this.watchers.set(tk, [k]);
+          else if (list[list.length - 1] !== k) list.push(k);
+        }
+        this.shown.set(k, this.aspect(post, occupied));
+      }
+      this.shownTaken = new Set(taken.keys());
+      return this.shown;
+    }
+    const again = new Set<number>();
+    const changed = (tk: number) => {
+      for (const k of this.watchers.get(tk) ?? []) again.add(k);
+    };
+    for (const tk of taken.keys())
+      if (!this.shownTaken.has(tk)) {
+        this.shownTaken.add(tk);
+        changed(tk);
+      }
+    for (const tk of this.shownTaken)
+      if (!taken.has(tk)) {
+        this.shownTaken.delete(tk);
+        changed(tk);
+      }
+    for (const k of again) this.shown.set(k, this.aspect(this.posts.get(k)!, occupied));
+    return this.shown;
+  }
   /** Aspect a post shows for the route (a train's path, or the straight continuation). */
   aspect(
     post: SignalPost,

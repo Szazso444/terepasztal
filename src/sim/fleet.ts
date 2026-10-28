@@ -587,6 +587,14 @@ export class Fleet {
     }
     return false;
   }
+  /**
+   * Each semaphore's own aspect by tile key, for the trains where they stand now: what
+   * `signals.aspect(post, (x, y) => this.occupied(x, y, -1))` gives, kept between calls
+   * (`Signals.postAspects`).
+   */
+  postAspects() {
+    return this.signals.postAspects(this.occ);
+  }
   /** Is `tile` under any train other than `self`? Rebuilt each tick from car poses. */
   occupied(x: number, y: number, self: number) {
     const list = this.occ.get(y * this.map.w + x);

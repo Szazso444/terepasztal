@@ -1,9 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TrackGraph } from '../world/track';
 import { Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { forAll } from '../testing/property';
 import { Signals, type Aspect, type SignalPost } from './signals';
+import { rules, DEFAULT_RULES } from './rules';
+import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
+import { resetTrainIds } from './trains';
+import { SimStep } from './step';
+import { SIM_STEP } from './time';
+import { simWorld, line, station } from '../testing/simWorld';
+
+vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
+beforeEach(() => {
+  Object.assign(rules, DEFAULT_RULES);
+  setSupplyMode(DEFAULT_SUPPLY);
+  resetTrainIds();
+});
 
 type Step = { x: number; y: number; in: Dir; out: Dir; arc: number };
 
@@ -210,4 +223,121 @@ describe('signal evaluation', () => {
     // every tile of every block is looked at once: at most the run and the walk on from its end
     expect(calls).toBeLessThanOrEqual(path.length + W);
   });
+});
+
+describe('the aspects posts show', () => {
+  it('are every post’s own aspect after any run of trains taking and freeing tiles, track and post changes', () => {
+    forAll(
+      (rng) => {
+        const l = draw(rng);
+        // what changes between calls: tiles taken or freed, now and then a track tile or the posts
+        const steps = Array.from({ length: rng.int(1, 25) }, () => ({
+          take: Array.from({ length: rng.int(0, 3) }, () => rng.int(0, l.len + 1)),
+          free: Array.from({ length: rng.int(0, 3) }, () => rng.int(0, l.len + 1)),
+          track: rng.chance(0.1) ? rng.int(1, l.len) : null,
+          turn: rng.chance(0.05),
+        }));
+        return { l, steps };
+      },
+      ({ l, steps }) => {
+        const { track, signals } = build(structuredClone(l));
+        const posts = structuredClone(l.posts);
+        const taken = new Set<number>(l.taken.map((x) => 1 * W + x));
+        const removed = new Set<number>();
+        for (const st of steps) {
+          for (const x of st.take) taken.add(1 * W + x);
+          for (const x of st.free) taken.delete(1 * W + x);
+          if (st.track !== null) {
+            if (removed.has(st.track)) {
+              track.place(st.track, 1, 'straight', 1);
+              removed.delete(st.track);
+            } else {
+              track.remove(st.track, 1);
+              removed.add(st.track);
+            }
+          }
+          if (st.turn) {
+            for (const p of posts) p.dir = opposite(p.dir);
+            signals.rebuild(
+              posts.map((p) => ({ id: 'signal', x: p.x, y: p.y, rot: p.dir })) as never,
+            );
+          }
+          const shown = signals.postAspects(taken);
+          for (const p of posts) {
+            const post = signals.postAt(p.x, p.y)!;
+            expect(shown.get(signals.key(p.x, p.y))).toBe(
+              signals.aspect(post, (x, y) => taken.has(y * W + x)),
+            );
+          }
+          expect(shown.size).toBe(posts.length);
+        }
+      },
+    );
+  });
+
+  // Slow: 1,500 ticks of four signalled lines with two trains each (about 2 s alone), so 40 s.
+  it('are what the simulation gives each post after every tick of signalled lines', () => {
+    const w = simWorld({ size: 160, terrain: 'grass', seed: 4242 });
+    w.builder.free = true;
+    for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
+    w.stock.add('coal', 1e7, 1e9);
+    w.stock.add('water', 1e7, 1e9);
+    w.economy.money = 1e9;
+    const pending: {
+      at: number;
+      depot: number;
+      stops: number[];
+      loco: number;
+      hop: number;
+      done?: boolean;
+    }[] = [];
+    const onTrack = w.builder.onTrackChanged;
+    w.builder.onTrackChanged = () => {};
+    for (let k = 0; k < 4; k++) line(w, 4, 6 + 6 * k, 114);
+    w.builder.onTrackChanged = onTrack;
+    onTrack?.(4, 6);
+    for (let k = 0; k < 4; k++) {
+      const y = 6 + 6 * k;
+      const depot = station(w, 'depot', 2, y);
+      const q = station(w, 'quarry', 12, y - 1);
+      const wh = station(w, 'warehouse', 104, y - 1);
+      q.store('stone', 1000);
+      for (let x = 20; x < 110; x += 9) w.builder.placeDecor(x, y, 'signal', k % 2 ? Dir.W : Dir.E);
+      for (let t = 0; t < 2; t++)
+        pending.push({
+          at: t * 160,
+          depot: depot.id,
+          stops: t % 2 ? [wh.id, q.id] : [q.id, wh.id],
+          loco: w.inventory.add('mav375', 0).uid,
+          hop: w.inventory.add('wood_hopper', 0).uid,
+        });
+    }
+    w.fleet.signals.level = 'absolute_block';
+    const step = new SimStep(w);
+    const ctx = { mode: 'play' as const, weather: false, stockCap: () => 1e9 };
+    const posts = [...w.builder.decor.values()].filter((d) => d.id === 'signal');
+    expect(posts.length).toBeGreaterThan(30);
+    const seen = new Set<Aspect>();
+    for (let i = 0; i < 1500; i++) {
+      for (const p of pending) {
+        if (p.done || i < p.at) continue;
+        const tr = w.fleet.create([p.loco], [p.hop], p.stops, undefined, 'schedule', p.depot);
+        if (typeof tr === 'string') continue;
+        p.done = true;
+        tr.coal = tr.coalCap;
+        tr.water = 1000;
+      }
+      w.clock.time += SIM_STEP;
+      step.run(SIM_STEP, ctx);
+      const shown = w.fleet.postAspects();
+      for (const d of posts) {
+        const post = w.fleet.signals.postAt(d.x, d.y)!;
+        const want = w.fleet.signals.aspect(post, (x, y) => w.fleet.occupied(x, y, -1));
+        expect(shown.get(d.y * w.map.w + d.x), `tick ${i}, post ${d.x},${d.y}`).toBe(want);
+        seen.add(want);
+      }
+    }
+    // the trains ran past the posts: every aspect was shown
+    expect([...seen].sort()).toEqual(['green', 'red', 'yellow']);
+  }, 40_000);
 });
