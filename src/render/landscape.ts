@@ -223,6 +223,8 @@ export class Landscape {
   sharpPaintCount = 0;
   sharpPaintMilliseconds = 0;
   visibilityVersion = 0;
+  /** Edits that can move the surface (`invalidate`), for `surfaceVersion`. */
+  private reliefEdits = 0;
   private city: ReadonlySet<number> = new Set();
   /** The doorsteps of the street doors on paved tiles (`pavingDoorsteps`, townPaving.ts). */
   private doorsteps: readonly number[] = [];
@@ -726,6 +728,7 @@ export class Landscape {
     return null;
   }
   invalidate(x: number, y: number) {
+    this.reliefEdits++;
     // Off for good, nothing paints or queues; the relief the building rules read still follows
     // the terrain, rebuilt on the next question (`updateHeights`).
     if (this.failed) {
@@ -792,6 +795,13 @@ export class Landscape {
         late,
         `a paint worker gave no answer in ${JOB_TIMEOUT_MS / 1000} s (${late.job.id})`,
       );
+  }
+  /**
+   * Changes whenever the height of the surface may have changed: on every edit (`invalidate`), and
+   * when the landscape fails, as the per-tile ground then stands in for the relief.
+   */
+  get surfaceVersion() {
+    return this.reliefEdits * 2 + (this.failed ? 1 : 0);
   }
   elevation(x: number, y: number) {
     this.updateHeights();
