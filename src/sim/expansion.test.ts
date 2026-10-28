@@ -108,7 +108,7 @@ describe('weekly food economy and housing', () => {
     expect(h.residents).toBe(60);
     expect(h.level).toBe(2);
   });
-  it("a house grows on its own town's food, not another's; outside every town it never starves", () => {
+  it("a house grows on its own town's food, not another's, and not at all outside every town", () => {
     const w = simWorld({ terrain: 'grass', size: 96 });
     line(w, 2, 30, 90);
     const hallA = station(w, 'town', 20, 29);
@@ -126,12 +126,15 @@ describe('weekly food economy and housing', () => {
     for (let i = 0; i < 10; i++) w.houses.tick(daySeconds(), i * daySeconds());
     expect(a.residents).toBe(start[0]);
     expect(w.houses.growthDaysLeft(a)).toBeNull();
-    expect(b.residents).toBeGreaterThan(start[1]);
+    // with no store to eat from, nobody moves in (and nobody starves)
+    expect(b.residents).toBe(start[1]);
+    expect(w.houses.growthDaysLeft(b)).toBeNull();
     // fed from its own town's store, it grows; a famine there stops it again
     storeA.add('food', 300);
     expect(w.houses.growthDaysLeft(a)).not.toBeNull();
     for (let i = 10; i < 20; i++) w.houses.tick(daySeconds(), i * daySeconds());
     expect(a.residents).toBeGreaterThan(start[0]);
+    expect(b.residents).toBe(start[1]);
     w.stores.byKey(storeA.key)!.famine = true;
     expect(w.houses.foodOk(a)).toBe(false);
   });

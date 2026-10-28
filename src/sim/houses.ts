@@ -178,11 +178,11 @@ export class HouseRegistry {
   }
   /**
    * People only move in while their town's store has food and no famine. A house outside every town
-   * has no store to eat from: like a crew with no store in reach, it eats nothing and never starves.
+   * has no store to eat from: it eats nothing and starves never, but nobody moves in either.
    */
   foodOk(h: House) {
     const s = this.store(h);
-    return !s || (s.get('food') > 0 && !s.famine);
+    return !!s && s.get('food') > 0 && !s.famine;
   }
   /** A house being upgraded lets nobody in. */
   open(h: House) {

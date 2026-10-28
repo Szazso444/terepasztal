@@ -1738,10 +1738,11 @@ describe('a train standing at the platform by a level crossing, ten game minutes
   // gap, and the only walker a car may meet there.
   // slow: 12 000 steps of a whole world with a train and some forty walkers
   // seeds where a walker is on the crossing as the train sets off over it: with walks from and to
-  // the doors (#406), adler 4242 and f7 7 have none
+  // the doors (#406), adler 4242 and f7 7 have none; since a house in no town takes nobody in (it
+  // has no town store to eat from, and these houses stand in none), adler 1 and f7 1 have none
   it.each([
-    ['adler', 1],
-    ['f7', 1],
+    ['adler', 7],
+    ['f7', 4],
     ['mav375', 99],
   ] as const)(
     '%s, seed %i: closes exactly as the rule says, walkers cross in front of the standing train, and a car meets only a walker on the crossing before the train had its way over it',
@@ -1811,7 +1812,7 @@ describe('a train standing at the platform by a level crossing, ten game minutes
       }
       // not vacuous: walkers crossed in front of the train standing at the platform, it set off
       // over the crossing from there again and again, and walkers were on the crossing as it did
-      // (25 to 35 walkers in front, 3 or 4 departures and 1 to 9 walkers on it as it set off, over
+      // (19 to 21 walkers in front, 3 or 4 departures and 1 or 2 walkers on it as it set off, over
       // these three runs)
       expect(out.inFront).toBeGreaterThanOrEqual(15);
       expect(out.setOff).toBeGreaterThanOrEqual(3);

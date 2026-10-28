@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
 import { StoreRegistry } from './stores';
+import { levelMul } from '../gacha/items';
 import type { Station } from './stations';
+import { defaultStop, type StopPlan, type Train } from './trains';
+import { SimStep, startStock, type StepContext } from './step';
 import { tickBuildings, type Building } from './buildings';
 import { depotWith } from '../testing/storeFixtures';
 
@@ -481,8 +484,10 @@ describe('works and harvesters at their store', () => {
     expect(day(farm)).toBeGreaterThan(0);
     farm.tick(daySeconds());
     alone.tick(daySeconds());
-    expect(farm.stored('wheat')).toBe(0);
+    // its own storage stays empty; what it has on hand for trains is the town store's
+    expect(farm.storage.get('wheat') ?? 0).toBe(0);
     expect(storeA.get('wheat')).toBeCloseTo(day(farm), 9);
+    expect(farm.stored('wheat')).toBe(storeA.get('wheat'));
     // a farm outside every town still fills its own storage
     expect(alone.stored('wheat')).toBeCloseTo(day(alone), 9);
   });
@@ -540,5 +545,87 @@ describe('upkeep and famine per store', () => {
     expect(town.famine).toBe(true);
     w.stores.tickUpkeep(1, new Map());
     expect(town.famine).toBe(false);
+  });
+});
+
+describe('trains at a harvester in a town', () => {
+  /**
+   * A town at (20, 29) with a farm in its reach at (25, 29), a warehouse at the far end of the line
+   * and a depot at its west end, the stockpile holding a new game's stock (a train refuels from
+   * it), and a train of an Adler and a flatbed running farm, warehouse, with or without waiting
+   * for full wagons at the farm.
+   */
+  function farmLine(waitFull: boolean) {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    station(w, 'depot', 4, 30);
+    line(w, 6, 30, 90);
+    const hall = station(w, 'town', 20, 29);
+    const farm = station(w, 'farm', 25, 29);
+    const warehouse = station(w, 'warehouse', 80, 29);
+    for (const [k, n] of Object.entries(startStock())) w.stock.add(k, n);
+    const town = w.stores.townStore(hall.x, hall.y)!;
+    expect(farm.outlet).toBe(town);
+    const loco = w.inventory.add('adler', 0);
+    const flat = w.inventory.add('flatbed', 0);
+    const stop = (id: number): StopPlan => ({ ...defaultStop(id), unload: 'none', waitFull });
+    const t = w.fleet.create([loco.uid], [flat.uid], [stop(farm.id), stop(warehouse.id)]);
+    if (typeof t === 'string') throw new Error(`fleet.create: ${t}`);
+    return { w, farm, town, t };
+  }
+  /** Steps the world until the train has called at the farm and left it; the game time it left. */
+  function untilItLeaves(w: SimWorld, t: Train, farm: Station) {
+    const step = new SimStep(w);
+    const ctx: StepContext = {
+      mode: 'play',
+      weather: false,
+      stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
+    };
+    let called = false;
+    for (let i = 0; i < 20000; i++) {
+      w.clock.run((gdt) => step.run(gdt, ctx));
+      if (t.atStation === farm) called = true;
+      else if (called) return w.clock.time;
+    }
+    throw new Error('the train never left the farm');
+  }
+
+  it('loads its wheat from the town store', () => {
+    const { w, farm, town, t } = farmLine(false);
+    town.add('wheat', 12);
+    expect(farm.stored('wheat')).toBe(12);
+    expect(farm.availableCargo()).toEqual(['wheat']);
+    expect(farm.totalStored()).toBe(12);
+    untilItLeaves(w, t, farm);
+    const aboard = t.wagons[0].cargo === 'wheat' ? t.wagons[0].amount : 0;
+    expect(aboard).toBeGreaterThanOrEqual(12);
+    // what it took came out of the town store, the farm's own storage stays empty
+    expect(town.get('wheat')).toBeLessThan(1);
+    expect(farm.storage.get('wheat') ?? 0).toBe(0);
+  });
+
+  it('waiting for full wagons, leaves loaded when the town store holds the wheat', () => {
+    const { w, farm, town, t } = farmLine(true);
+    town.add('wheat', 200);
+    const cap = t.wagons[0].def.capacity * levelMul(t.wagons[0].level);
+    untilItLeaves(w, t, farm);
+    expect(t.wagons[0].cargo).toBe('wheat');
+    expect(t.wagons[0].amount).toBeCloseTo(cap, 6);
+    expect(town.get('wheat')).toBeGreaterThanOrEqual(200 - cap);
+    expect(town.get('wheat')).toBeLessThan(200);
+  });
+
+  it('a harvester with an outlet takes its own leftover storage first, and shows no other goods', () => {
+    const { farm, town } = farmLine(false);
+    farm.storage.set('wheat', 5);
+    town.add('wheat', 10);
+    town.add('stone', 40);
+    expect(farm.stored('wheat')).toBe(15);
+    expect(farm.stored('stone')).toBe(0);
+    expect(farm.totalStored()).toBe(15);
+    expect(farm.take('wheat', 8)).toBe(8);
+    expect([farm.storage.get('wheat') ?? 0, town.get('wheat')]).toEqual([0, 7]);
+    expect(farm.take('stone', 10)).toBe(0);
+    expect(town.get('stone')).toBe(40);
+    expect(farm.accepts('wheat')).toBe(false);
   });
 });

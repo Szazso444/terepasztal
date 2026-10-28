@@ -320,7 +320,9 @@ export class Station {
   /**
    * The town store a harvesting station in a town's reach makes into: its workers carry its output
    * straight there (`StoreRegistry.refresh` binds it; not saved). While it is set `tick` adds to
-   * it, not to `storage`, which stays for stations outside every town.
+   * it, not to `storage`, which stays for stations outside every town; and trains load the
+   * station's own goods from it (`stored`, `take`, `totalStored`), after whatever its storage
+   * still holds from before.
    */
   outlet: ResourceStore | null = null;
   /** trains currently occupying a platform */
@@ -485,14 +487,25 @@ export class Station {
     if (this.level >= MAX_LEVEL) return {};
     return scaleCost(this.def.cost, LEVELS.upgradeCostMul[this.level] * rules.buildCostMul);
   }
+  /**
+   * Units of the cargo on hand: a dock's, else its own storage's; with an outlet, also the
+   * outlet's stock of a cargo the station makes (of no other).
+   */
   stored(cargo: string) {
-    return this.dock ? this.dock.get(cargo) : (this.storage.get(cargo) ?? 0);
+    if (this.dock) return this.dock.get(cargo);
+    const own = this.storage.get(cargo) ?? 0;
+    return this.outletHolds(cargo) ? own + this.outlet!.get(cargo) : own;
   }
   totalStored() {
     let t = 0;
     if (this.dock) for (const [, v] of this.dock.held()) t += v;
     else for (const v of this.storage.values()) t += v;
+    if (!this.dock && this.outlet) for (const c of this.producedCargo()) t += this.outlet.get(c);
     return t;
+  }
+  /** Whether trains take this cargo from the outlet: one is bound, and the station makes it. */
+  private outletHolds(cargo: string) {
+    return !!this.outlet && this.producedCargo().includes(cargo);
   }
   /**
    * The amount to show against `capacity`: all goods together for storage of its own; with a dock
@@ -518,15 +531,21 @@ export class Station {
     for (const [c, v] of this.dock.held()) f = Math.max(f, v / Math.max(1, this.dock.cap(c)));
     return f;
   }
-  /** Take up to `amount` units of cargo out of storage; returns what was taken. */
+  /**
+   * Take up to `amount` units of cargo out of storage (the dock's; else its own, then the outlet's
+   * for a cargo the station makes); returns what was taken.
+   */
   take(cargo: string, amount: number): number {
     if (this.dock) return this.dock.take(cargo, Math.max(0, amount));
-    const have = this.stored(cargo);
+    const have = this.storage.get(cargo) ?? 0;
     const n = Math.max(0, Math.min(have, amount));
-    if (n <= 0) return 0;
-    if (have - n < 1e-9) this.storage.delete(cargo);
-    else this.storage.set(cargo, have - n);
-    return n;
+    if (n > 0) {
+      if (have - n < 1e-9) this.storage.delete(cargo);
+      else this.storage.set(cargo, have - n);
+    }
+    // what its own storage lacks comes from the outlet, for a cargo the station makes
+    const more = this.outletHolds(cargo) ? this.outlet!.take(cargo, Math.max(0, amount - n)) : 0;
+    return n + more;
   }
   hasFreePlatform() {
     return this.occupants.size < this.platforms;
