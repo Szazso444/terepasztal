@@ -228,6 +228,8 @@ export class SimStep {
     const { clock, stock, houses, builder, fleet, people, weather, contracts, trade, economy } =
       this.d;
     const play = ctx.mode === 'play';
+    // the stores follow the rails and the supply mode, so every dock this step is the current one
+    builder.stores.follow();
     // upgrades follow game time: the works under way advance first, so the rest of the step sees
     // which buildings are closed and which have just opened at their new level
     builder.tickWorks(gdt);

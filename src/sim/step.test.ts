@@ -152,7 +152,8 @@ describe('SimStep: famine', () => {
   });
 
   it('one town starves while the other is fed', () => {
-    const w = simWorld({ terrain: 'grass', size: 96 });
+    // Full mode: in Simple mode two towns on one line are one store
+    const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
     line(w, 2, 30, 90);
     const hallA = station(w, 'town', 20, 29);
     const hallB = station(w, 'town', 46, 29);

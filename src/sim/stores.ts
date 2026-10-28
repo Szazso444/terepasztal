@@ -2,6 +2,7 @@ import type { Cost } from '../data/content';
 import type { TrackGraph } from '../world/track';
 import type { Builder } from './build';
 import { rules, weekSeconds } from './rules';
+import { supplyMode, type SupplyMode } from './supply';
 import { needsStore, type Building } from './buildings';
 import type { Station } from './stations';
 import type { TownRegistry } from './towns';
@@ -109,7 +110,9 @@ export class Store extends Ledger implements ResourceStore {
 
 /**
  * Stores that act as one: their goods and caps add up, goods go in and out member by member in
- * order. A pool of one is a store (what Full mode uses); Simple mode will pool a rail network.
+ * order, so the first member is the one a caller stands at: it is taken from and filled first, the
+ * rest nearest first. A pool of one is a store (what Full mode uses); Simple mode pools the stores
+ * of a rail network, each seen from its own place (`StoreRegistry.poolOf`).
  */
 export class StorePool extends Ledger implements ResourceStore {
   constructor(readonly members: Store[]) {
@@ -142,12 +145,18 @@ export class StorePool extends Ledger implements ResourceStore {
   }
   add(id: string, amount: number) {
     let put = 0;
-    for (const m of this.members) put += m.add(id, amount - put);
+    for (const m of this.members) {
+      if (put >= amount) break;
+      put += m.add(id, amount - put);
+    }
     return put;
   }
   take(id: string, amount: number) {
     let got = 0;
-    for (const m of this.members) got += m.take(id, amount - got);
+    for (const m of this.members) {
+      if (got >= amount) break;
+      got += m.take(id, amount - got);
+    }
     return got;
   }
 }
@@ -243,6 +252,14 @@ export class StoreRegistry {
   private deps: StoreDeps | null = null;
   private stores = new Map<string, Store>();
   private pools = new Map<string, StorePool>();
+  /**
+   * The stores that share a rail network (Simple mode), in registry order, by each member's key; a
+   * store alone on its network has no entry. Worked out by `groupByRails`.
+   */
+  private nets = new Map<string, string[]>();
+  /** the supply mode and the rails (`TrackGraph.version`) `nets` was worked out for */
+  private labelledMode: SupplyMode | null = null;
+  private labelledRails = -1;
   /** power plants at work, counted by the last refresh */
   private plants = 0;
   /**
@@ -330,12 +347,8 @@ export class StoreRegistry {
       } else next.set(w.key, new Store(w.key, w.kind, w.anchor, w.capOf));
     }
     this.stores = next;
-    for (const key of [...this.pools.keys()]) if (!next.has(key)) this.pools.delete(key);
     for (const key of [...this.short.keys()]) if (!next.has(key)) this.short.delete(key);
-    this.townAtTile.clear();
-    this.supplierAtTile.clear();
-    this.fuelAtTile.clear();
-    this.worksOf.clear();
+    this.groupByRails();
 
     for (const [key, gone] of old) {
       if (next.has(key)) continue;
@@ -345,8 +358,97 @@ export class StoreRegistry {
       if (!heir) continue;
       for (const [id, n] of gone.amounts) if (n > 0) heir.add(id, n);
     }
-    // the stations learn where they dock, and a harvester in a town where its workers carry to
-    for (const s of builder.stations) {
+    this.bindStations();
+  }
+
+  /**
+   * Group the stores by rail network and drop what was cached of the old grouping: the pools and
+   * the tiles' answers. In Simple mode a town store sits on its Townhouse's platform tiles (and
+   * those of the warehouses in its reach), a depot or a warehouse outside every town on its own,
+   * and stores whose rails connect are one network; a store with no track is alone, and so is the
+   * grid. In Full mode every store is alone. One flood per network: `refresh` and `follow` run it,
+   * never a lookup.
+   */
+  private groupByRails() {
+    this.labelledMode = supplyMode();
+    this.labelledRails = this.d.track.version;
+    this.nets.clear();
+    this.townAtTile.clear();
+    this.supplierAtTile.clear();
+    this.fuelAtTile.clear();
+    this.worksOf.clear();
+    if (this.labelledMode === 'simple') this.joinByRails();
+    // a store on its own keeps its pool; the pools of a network are made again
+    for (const [key, p] of [...this.pools])
+      if (this.nets.has(key) || p.members.length > 1 || p.members[0] !== this.stores.get(key))
+        this.pools.delete(key);
+  }
+  /** Fill `nets`: the stores whose platforms lie on one network of rails. */
+  private joinByRails() {
+    const { builder, towns, track } = this.d;
+    const seeds = new Map<string, number[]>();
+    const seed = (key: string, st: Station) => {
+      if (!this.stores.has(key)) return;
+      const from = seeds.get(key) ?? [];
+      for (const p of builder.platformTiles(st)) from.push(p.y * track.w + p.x);
+      seeds.set(key, from);
+    };
+    for (const t of towns.towns) {
+      const hall = towns.station(t);
+      if (hall) seed(`town:${t.id}`, hall);
+    }
+    for (const st of builder.stations) {
+      if (st.def.depot) seed(stationKey(st), st);
+      else if (st.def.stockpile) {
+        const t = towns.townAt(st.x, st.y);
+        seed(t ? `town:${t.id}` : stationKey(st), st);
+      }
+    }
+    // a network is what the rails of its stores reach; a store joins the one its platforms lie
+    // on, and one that lies on several joins them
+    let comps: { tiles: Set<number>; keys: string[] }[] = [];
+    for (const key of this.stores.keys()) {
+      const from = seeds.get(key);
+      if (!from?.length) continue;
+      const hit = comps.filter((c) => from.some((k) => c.tiles.has(k)));
+      const into = hit[0] ?? { tiles: new Set<number>(), keys: [] };
+      if (!hit.length) comps.push(into);
+      for (const c of hit.slice(1)) {
+        for (const k of c.tiles) into.tiles.add(k);
+        into.keys.push(...c.keys);
+      }
+      comps = comps.filter((c) => c === into || !hit.includes(c));
+      // the platforms the network does not reach yet lead on to more of it
+      const fresh = from.filter((k) => !into.tiles.has(k));
+      if (fresh.length) for (const k of track.reach(fresh)) into.tiles.add(k);
+      into.keys.push(key);
+    }
+    const order = new Map([...this.stores.keys()].map((k, i) => [k, i]));
+    for (const c of comps) {
+      if (c.keys.length < 2) continue;
+      c.keys.sort((a, b) => order.get(a)! - order.get(b)!);
+      for (const key of c.keys) this.nets.set(key, c.keys);
+    }
+  }
+  /**
+   * The rails and the supply mode change outside `refresh` (a stroke of track, a loaded save): each
+   * lookup checks them first, and the step before it runs, and groups the stores again when they
+   * moved. One comparison when nothing did.
+   */
+  follow() {
+    if (!this.deps) return;
+    const mode = supplyMode();
+    if (
+      this.labelledMode !== mode ||
+      (mode === 'simple' && this.labelledRails !== this.deps.track.version)
+    ) {
+      this.groupByRails();
+      this.bindStations();
+    }
+  }
+  /** The stations learn where they dock, and a harvester in a town where its workers carry to. */
+  private bindStations() {
+    for (const s of this.d.builder.stations) {
       s.dock = this.dockOf(s);
       s.outlet = s.def.terrain ? this.townStore(s.x, s.y) : null;
     }
@@ -359,14 +461,40 @@ export class StoreRegistry {
   byKey(key: string): Store | undefined {
     return this.stores.get(key);
   }
-  /** What a caller works on in place of the store itself: a pool, here always of the store alone. */
+  /**
+   * What a caller works on in place of the store itself: a pool with the store first, then the
+   * other stores of its rail network (Simple mode) nearest first; the store alone in Full mode or
+   * with no track. The same object until the next refresh or change of the rails.
+   */
   poolOf(s: Store): ResourceStore {
+    this.follow();
     let p = this.pools.get(s.key);
     if (!p || p.members[0] !== s) {
-      p = new StorePool([s]);
+      p = new StorePool(this.networkFrom(s));
       this.pools.set(s.key, p);
     }
     return p;
+  }
+  /** The stores on `s`'s network: `s`, then the rest nearest to it first (ties by key). */
+  private networkFrom(s: Store): Store[] {
+    const keys = this.nets.get(s.key);
+    if (!keys) return [s];
+    const dist = (o: Store) =>
+      Math.max(Math.abs(o.anchor.x - s.anchor.x), Math.abs(o.anchor.y - s.anchor.y));
+    const rest = keys
+      .filter((k) => k !== s.key)
+      .map((k) => this.stores.get(k)!)
+      .sort((a, b) => dist(a) - dist(b) || (a.key < b.key ? -1 : 1));
+    return [s, ...rest];
+  }
+  /**
+   * The pool that stands for a whole network where it counts as one place (food, famine): the pool
+   * of the network's first store. A store on no network is left as it is.
+   */
+  private networkPool(r: ResourceStore): ResourceStore {
+    const first = this.nets.get(r.key)?.[0];
+    const s = first ? this.stores.get(first) : undefined;
+    return s ? this.poolOf(s) : r;
   }
 
   /**
@@ -374,6 +502,7 @@ export class StoreRegistry {
    * A whole tile's answer is kept until the next refresh.
    */
   townStore(x: number, y: number): ResourceStore | null {
+    this.follow();
     const k = tileKey(x, y);
     const have = this.townAtTile.get(k);
     if (have !== undefined) return have;
@@ -391,6 +520,7 @@ export class StoreRegistry {
   }
   /** Stores within `range` tiles (Chebyshev) of the tile, nearest first; the grid is no place to build from. */
   nearest(x: number, y: number, range = rules.buildReach): ResourceStore[] {
+    this.follow();
     const found: { s: Store; d: number }[] = [];
     for (const s of this.stores.values()) {
       if (s.kind === 'grid') continue;
@@ -405,6 +535,7 @@ export class StoreRegistry {
    * in reach. A whole tile's answer is kept until the next refresh.
    */
   supplierFor(x: number, y: number): ResourceStore | null {
+    this.follow();
     const k = tileKey(x, y);
     const have = this.supplierAtTile.get(k);
     if (have !== undefined) return have;
@@ -419,6 +550,7 @@ export class StoreRegistry {
    * answer is kept until the next refresh.
    */
   fuelSupplierFor(x: number, y: number): ResourceStore | null {
+    this.follow();
     const k = tileKey(x, y);
     const have = this.fuelAtTile.get(k);
     if (have !== undefined) return have;
@@ -432,6 +564,7 @@ export class StoreRegistry {
    * that moves none (a hydro plant, a bridge) runs on the grid alone.
    */
   worksStore(b: Building): ResourceStore | null {
+    this.follow();
     const base = this.supplierFor(b.x, b.y);
     if (!base) return needsStore(b) ? null : this.gridWorks;
     let w = this.worksOf.get(base);
@@ -444,18 +577,26 @@ export class StoreRegistry {
 
   /**
    * Food for one step of `gameDt` game seconds: the eaters at each pool (residents and crews, as
-   * the caller counts them) eat `rules.wheatPerCrew` a week each from it. A pool short for more
-   * than FAMINE_AFTER seconds has every member in famine; fed again, or with nobody left to eat
-   * there, it is out of it. Both are told through `onMessage`, under the pool's name.
+   * the caller counts them; those of every store on one rail network together) eat
+   * `rules.wheatPerCrew` a week each from it. A pool short for more than FAMINE_AFTER seconds has
+   * every member in famine; fed again, or with nobody left to eat there, it is out of it. Both are
+   * told through `onMessage`, under the pool's name.
    */
   tickUpkeep(gameDt: number, eaters: Map<ResourceStore, number>) {
-    const done = new Set<string>();
+    this.follow();
+    // the eaters of every store on a network eat from it together
+    const together = new Map<ResourceStore, number>();
     for (const [pool, n] of eaters) {
+      const at = this.networkPool(pool);
+      together.set(at, (together.get(at) ?? 0) + n);
+    }
+    const done = new Set<string>();
+    for (const [pool, n] of together) {
       done.add(pool.key);
       this.feed(pool, n, gameDt);
     }
     for (const s of this.stores.values()) {
-      const pool = this.poolOf(s);
+      const pool = this.networkPool(this.poolOf(s));
       if (done.has(pool.key)) continue;
       done.add(pool.key);
       if (pool.famine || this.short.has(pool.key)) this.feed(pool, 0, gameDt);

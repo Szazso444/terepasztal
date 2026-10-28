@@ -1423,6 +1423,11 @@ interface Seen {
  */
 function fleetRun(seed: number, consists: readonly Consist[]) {
   const { w } = crossingWorld(null, seed);
+  // The depot shares the line with the warehouse, so in Simple mode its minerals are the
+  // warehouse's too: the hoppers would always find some to haul. They are meant to roam with
+  // nothing to haul; every step fills their tanks anyway.
+  for (const st of w.stores.all())
+    if (st.kind === 'depot') for (const id of ['stone', 'iron', 'coal']) st.amounts.set(id, 0);
   const stationOf = (id: string) => w.builder.stations.find((s) => s.def.id === id)!.id;
   const stop = (id: number): StopPlan => ({
     ...defaultStop(id),

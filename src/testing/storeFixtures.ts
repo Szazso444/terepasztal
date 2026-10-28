@@ -36,6 +36,8 @@ export function storesWith(
   const builder = {
     stations: sts,
     plantCount: () => 0,
+    // these depots stand on no track: each is a pool of its own
+    platformTiles: () => [],
     stationById: (id: number) => sts.find((s) => s.id === id),
   };
   const towns = { towns: [], townAt: () => null, station: () => undefined, byId: () => undefined };

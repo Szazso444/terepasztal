@@ -25,6 +25,7 @@ import { AGE_DEFS } from './ages';
 import { referencePath } from './compat';
 import { STR } from '../strings';
 import { upgradeSeconds } from './upgrade';
+import { setSupplyMode } from './supply';
 import { storeWith, storesWith } from '../testing/storeFixtures';
 import { simWorld, line, station } from '../testing/simWorld';
 
@@ -47,7 +48,11 @@ function world(at: { x: number; y: number }[] = [{ x: 0, y: 0 }]) {
 function train(id = 'f7') {
   return new Train([{ uid: 1, level: 0, def: content.locomotives.find((d) => d.id === id)! }]);
 }
-beforeEach(() => Object.assign(rules, DEFAULT_RULES));
+beforeEach(() => {
+  Object.assign(rules, DEFAULT_RULES);
+  // a world built by hand leaves the mode as the last test set it
+  setSupplyMode('simple');
+});
 
 describe('weekly food economy and housing', () => {
   it('colors actual weekly stock movements, excludes initial stock, and expires old flows', () => {
@@ -113,7 +118,8 @@ describe('weekly food economy and housing', () => {
     expect(h.level).toBe(2);
   });
   it("a house grows on its own town's food, not another's, and not at all outside every town", () => {
-    const w = simWorld({ terrain: 'grass', size: 96 });
+    // Full mode: in Simple mode two towns on one line are one store
+    const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
     line(w, 2, 30, 90);
     const hallA = station(w, 'town', 20, 29);
     const hallB = station(w, 'town', 46, 29);
@@ -143,7 +149,8 @@ describe('weekly food economy and housing', () => {
     expect(w.houses.foodOk(a)).toBe(false);
   });
   it('a house upgrade pays from its own town store', () => {
-    const w = simWorld({ terrain: 'grass', size: 96 });
+    // Full mode: in Simple mode two towns on one line are one store
+    const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
     line(w, 2, 30, 90);
     const hallA = station(w, 'town', 20, 29);
     const hallB = station(w, 'town', 46, 29);

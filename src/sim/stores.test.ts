@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
-import { StoreRegistry } from './stores';
+import { Store, StorePool, StoreRegistry } from './stores';
+import { setSupplyMode } from './supply';
 import { levelMul } from '../gacha/items';
 import type { Station } from './stations';
 import { defaultStop, type StopPlan, type Train } from './trains';
@@ -11,9 +12,13 @@ import { depotWith } from '../testing/storeFixtures';
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
-/** A flat world with a long line and a store registry attached, as Task 3 will wire it. */
+/**
+ * A flat world with a long line and a store registry attached, as Task 3 will wire it. Stores on
+ * the one line share their goods in Simple mode; the tests of a single store's caps, docks and
+ * goods run in Full mode, where each stands alone.
+ */
 function world() {
-  const w = simWorld({ terrain: 'grass', size: 96 });
+  const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
   line(w, 2, 30, 90);
   const stores = new StoreRegistry();
   stores.attach({ builder: w.builder, towns: w.towns, track: w.track });
@@ -400,7 +405,8 @@ describe('saving stores', () => {
 describe('works and harvesters at their store', () => {
   /** A world with the stores the builder keeps (`w.stores`) and two towns 26 tiles apart. */
   function twoTowns() {
-    const w = simWorld({ terrain: 'grass', size: 96 });
+    // in Simple mode two towns on one line are one store; these are about each town's own
+    const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
     line(w, 2, 30, 90);
     const a = station(w, 'town', 20, 29);
     const b = station(w, 'town', 46, 29);
@@ -555,7 +561,10 @@ describe('trains at a harvester in a town', () => {
    */
   function farmLine(waitFull: boolean) {
     const w = simWorld({ terrain: 'grass', size: 96 });
-    depotWith(w, startStock(), { x: 4, y: 30 });
+    // the depot is on the town's line, so in Simple mode its stock is the town's: it holds no wheat
+    const stock = startStock();
+    stock.wheat = 0;
+    depotWith(w, stock, { x: 4, y: 30 });
     line(w, 6, 30, 90);
     const hall = station(w, 'town', 20, 29);
     const farm = station(w, 'farm', 25, 29);
@@ -615,6 +624,7 @@ describe('trains at a harvester in a town', () => {
     const { farm, town } = farmLine(false);
     farm.storage.set('wheat', 5);
     town.add('wheat', 10);
+    const stone = town.get('stone');
     town.add('stone', 40);
     expect(farm.stored('wheat')).toBe(15);
     expect(farm.stored('stone')).toBe(0);
@@ -622,7 +632,240 @@ describe('trains at a harvester in a town', () => {
     expect(farm.take('wheat', 8)).toBe(8);
     expect([farm.storage.get('wheat') ?? 0, town.get('wheat')]).toEqual([0, 7]);
     expect(farm.take('stone', 10)).toBe(0);
-    expect(town.get('stone')).toBe(40);
+    expect(town.get('stone')).toBe(stone + 40);
     expect(farm.accepts('wheat')).toBe(false);
+  });
+});
+
+describe('pooling by rail network', () => {
+  /**
+   * Depots A (x 20) and B (x 50) with the line between them: a shed has no track of its own, its
+   * gates are the rails each side of it, so the rails run 22..49 along row 30, and 2..19 beyond A.
+   */
+  function twoOnALine(supply?: 'full') {
+    const w = simWorld({ terrain: 'grass', size: 96, supply });
+    w.builder.free = true;
+    const a = station(w, 'depot', 20, 29);
+    const b = station(w, 'depot', 50, 29);
+    line(w, 22, 30, 49);
+    line(w, 2, 30, 19);
+    const storeA = w.stores.byKey(`st:${a.id}`)!;
+    const storeB = w.stores.byKey(`st:${b.id}`)!;
+    return { w, a, b, storeA, storeB };
+  }
+  const members = (w: SimWorld, s: Store) => (w.stores.poolOf(s) as StorePool).members;
+
+  it('simple: two depots on one line share their goods', () => {
+    const { w, storeA, storeB } = twoOnALine();
+    storeA.add('wood', 100);
+    storeA.add('stone', 20);
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(100);
+    expect(w.stores.poolOf(storeB).cap('wood')).toBe(2 * rules.depotCap);
+    // a farm built near B is paid from A's goods
+    w.builder.free = false;
+    w.regions.applyTier(99);
+    const farm = w.builder.placeStation(46, 29, 'farm', 0);
+    expect(farm).not.toBeNull();
+    expect(storeA.get('wood')).toBe(100 - 30);
+    expect(storeA.get('stone')).toBe(10);
+    expect(storeB.get('wood')).toBe(0);
+  });
+
+  it("simple: cutting the line splits the pool and keeps each store's goods", () => {
+    const { w, storeA, storeB } = twoOnALine();
+    storeA.add('wood', 100);
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(100);
+    expect(w.builder.removeTrack(35, 30)).toBe(true);
+    w.stores.refresh();
+    expect(w.stores.poolOf(storeA).get('wood')).toBe(100);
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(0);
+  });
+
+  it('simple: the pools follow the rails without a refresh', () => {
+    const { w, a, b, storeA, storeB } = twoOnALine();
+    storeA.add('wood', 100);
+    w.stores.follow();
+    expect(b.dock!.get('wood')).toBe(100);
+    w.builder.removeTrack(35, 30);
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(0);
+    expect(a.dock!.get('wood')).toBe(100);
+    expect(b.dock!.get('wood')).toBe(0);
+    line(w, 35, 30, 35);
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(100);
+    expect(b.dock!.get('wood')).toBe(100);
+  });
+
+  it('full: two depots on one line do not share', () => {
+    const { w, storeA, storeB } = twoOnALine('full');
+    storeA.add('wood', 100);
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(0);
+    expect(w.stores.poolOf(storeA).get('wood')).toBe(100);
+    expect(w.stores.poolOf(storeA).cap('wood')).toBe(rules.depotCap);
+  });
+
+  it('a change of supply mode pools or splits the stores at once', () => {
+    const { w, storeA, storeB } = twoOnALine();
+    storeA.add('wood', 100);
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(100);
+    setSupplyMode('full');
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(0);
+    setSupplyMode('simple');
+    expect(w.stores.poolOf(storeB).get('wood')).toBe(100);
+  });
+
+  it('a store with no track pools alone, and the grid pools with nothing', () => {
+    const { w, storeA } = twoOnALine();
+    const lone = station(w, 'depot', 40, 60);
+    const loneStore = w.stores.byKey(`st:${lone.id}`)!;
+    storeA.add('wood', 100);
+    expect(w.stores.poolOf(loneStore).get('wood')).toBe(0);
+    expect(members(w, loneStore)).toEqual([loneStore]);
+    expect(members(w, w.stores.grid)).toEqual([w.stores.grid]);
+  });
+
+  it("a town pools through its Townhouse's platform with the depots on the line", () => {
+    const { w, storeA, storeB } = twoOnALine();
+    const hall = station(w, 'town', 35, 29);
+    const town = w.stores.byKey(`town:${w.towns.byStation(hall.id)!.id}`)!;
+    expect(w.builder.platformTiles(hall).length).toBeGreaterThan(0);
+    storeA.add('stone', 40);
+    expect(w.stores.townStore(hall.x, hall.y)!.get('stone')).toBe(40);
+    expect(members(w, town).map((m) => m.key)).toEqual([town.key, storeA.key, storeB.key]);
+    // cut between the town and B: B is alone
+    w.builder.removeTrack(40, 30);
+    w.stores.refresh();
+    expect(w.stores.poolOf(storeB).get('stone')).toBe(0);
+    expect(w.stores.poolOf(town).get('stone')).toBe(40);
+  });
+
+  it('a pool is seen from its own store: that store first, the rest nearest first', () => {
+    const { w, storeA, storeB } = twoOnALine();
+    const c = station(w, 'depot', 80, 29);
+    line(w, 52, 30, 79);
+    const storeC = w.stores.byKey(`st:${c.id}`)!;
+    const keys = (s: Store) => members(w, s).map((m) => m.key);
+    expect(keys(storeA)).toEqual([storeA.key, storeB.key, storeC.key]);
+    expect(keys(storeB)).toEqual([storeB.key, storeA.key, storeC.key]);
+    expect(keys(storeC)).toEqual([storeC.key, storeB.key, storeA.key]);
+    expect(w.stores.poolOf(storeC).anchor).toBe(storeC.anchor);
+    expect(w.stores.poolOf(storeC)).toBe(w.stores.poolOf(storeC));
+  });
+
+  it('feeds one network from one stock with one famine verdict', () => {
+    const { w, storeA, storeB } = twoOnALine();
+    const said: string[] = [];
+    w.stores.onMessage = (m, k) => said.push(`${k}: ${m}`);
+    const pa = w.stores.poolOf(storeA);
+    const pb = w.stores.poolOf(storeB);
+    const eaters = new Map([
+      [pa, 12],
+      [pb, 12],
+    ]);
+    // the food is at A; the 24 eaters of both ends eat 24 in a week
+    storeA.add('food', 100);
+    for (let i = 0; i < 7; i++) w.stores.tickUpkeep(daySeconds(), eaters);
+    expect(storeA.get('food')).toBeCloseTo(76);
+    expect([pa.famine, pb.famine]).toEqual([false, false]);
+    // short for too long: told once, and the whole network is in famine
+    storeA.take('food', 76);
+    w.stores.tickUpkeep(11, eaters);
+    expect(said).toHaveLength(1);
+    expect([pa.famine, pb.famine, storeA.famine, storeB.famine]).toEqual([true, true, true, true]);
+    w.stores.tickUpkeep(1, eaters);
+    expect(said).toHaveLength(1);
+    // fed again from either end
+    storeB.add('food', 50);
+    w.stores.tickUpkeep(1, eaters);
+    expect([pa.famine, pb.famine, storeA.famine, storeB.famine]).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(said).toHaveLength(2);
+  });
+});
+
+describe('a pool of several stores', () => {
+  /** Three stores in a row: A at x 0, B at x 10, C at x 30, each holding up to `cap`. */
+  function pool(cap = 100) {
+    const mk = (key: string, x: number) =>
+      new Store(key, 'depot', { x, y: 0 }, (id) => (id === 'power' ? 0 : cap));
+    const [a, b, c] = [mk('st:1', 0), mk('st:2', 10), mk('st:3', 30)];
+    return { a, b, c, p: new StorePool([a, b, c]) };
+  }
+  const held = ({ a, b, c }: { a: Store; b: Store; c: Store }, id = 'wood') => [
+    a.get(id),
+    b.get(id),
+    c.get(id),
+  ];
+
+  it('holds the sum of its members and the sum of their caps', () => {
+    const s = pool();
+    s.a.add('wood', 30);
+    s.b.add('wood', 20);
+    s.c.add('wood', 5);
+    s.c.add('coal', 7);
+    expect(s.p.get('wood')).toBe(55);
+    expect(s.p.get('coal')).toBe(7);
+    expect(s.p.cap('wood')).toBe(300);
+    expect(s.p.cap('power')).toBe(0);
+    expect(new Map(s.p.held())).toEqual(
+      new Map([
+        ['wood', 55],
+        ['coal', 7],
+      ]),
+    );
+    expect(s.p.canAfford({ wood: 55 })).toBe(true);
+    expect(s.p.canAfford({ wood: 56 })).toBe(false);
+    expect([s.p.key, s.p.anchor]).toEqual(['st:1', s.a.anchor]);
+  });
+
+  it('takes from its first member, then the next nearest, across members', () => {
+    const s = pool();
+    s.a.add('wood', 30);
+    s.b.add('wood', 20);
+    s.c.add('wood', 5);
+    expect(s.p.take('wood', 10)).toBe(10);
+    expect(held(s)).toEqual([20, 20, 5]);
+    expect(s.p.take('wood', 40)).toBe(40);
+    expect(held(s)).toEqual([0, 0, 5]);
+    // more than there is: all of it
+    expect(s.p.take('wood', 100)).toBe(5);
+    expect(s.p.get('wood')).toBe(0);
+    // spend is all or nothing over the sum
+    s.a.add('wood', 30);
+    s.b.add('wood', 20);
+    expect(s.p.spend({ wood: 60 })).toBe(false);
+    expect(s.p.get('wood')).toBe(50);
+    expect(s.p.spend({ wood: 40 })).toBe(true);
+    expect(held(s)).toEqual([0, 10, 0]);
+  });
+
+  it('fills the receiving member to its cap, then overflows to the others nearest first', () => {
+    const s = pool();
+    s.a.add('wood', 90);
+    expect(s.p.add('wood', 30)).toBe(30);
+    expect(held(s)).toEqual([100, 20, 0]);
+    expect(s.p.add('wood', 100)).toBe(100);
+    expect(held(s)).toEqual([100, 100, 20]);
+    // what fits nowhere is not stored
+    expect(s.p.add('wood', 500)).toBe(80);
+    expect(s.p.get('wood')).toBe(300);
+    expect(s.p.add('wood', 1)).toBe(0);
+    // a refund is capped over the whole pool
+    s.p.take('wood', 5);
+    s.p.refund({ wood: 10 }, 1);
+    expect(s.p.get('wood')).toBe(300);
+  });
+
+  it('is in famine when a member is, as one verdict', () => {
+    const s = pool();
+    expect(s.p.famine).toBe(false);
+    s.b.famine = true;
+    expect(s.p.famine).toBe(true);
+    s.b.famine = false;
+    s.a.famine = true;
+    expect(s.p.famine).toBe(true);
   });
 });
