@@ -24,7 +24,7 @@ import { Fleet, MAX_LOCOS, MAX_WAGONS } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { gaugeOf } from './compat';
-import { Polyline, vehicleFronts, vehicleSpec, type BodyFields } from './body';
+import { Polyline, consistLength, vehicleFronts, vehicleSpec, type BodyFields } from './body';
 import { walkBack, type PathSegment } from '../world/pathfinding';
 import { content, type Gauge } from '../data/content';
 import { Inventory } from '../gacha/inventory';
@@ -1583,4 +1583,74 @@ describe('car poses from a saved trail', () => {
       }
     }
   }, 20_000);
+});
+
+describe('the bodies a consist is made of, kept between calls', () => {
+  const locos = ['f7', 'mav375'];
+  const wagons = ['wood_hopper', 'wooden_coach'];
+  const fresh = (t: Train) => {
+    const specs = [
+      ...t.locos.map((l) => vehicleSpec(l.def)),
+      ...t.wagons.map((w) => vehicleSpec(w.def)),
+    ];
+    return { specs, length: consistLength(specs.map((s) => s.L)) };
+  };
+  it('follow the consist as wagons are coupled, uncoupled and swapped and locos change', () => {
+    forAll(
+      (rng: Rng) =>
+        Array.from({ length: rng.int(1, 12) }, () => ({
+          op: rng.pick(['add', 'drop', 'swap', 'loco', 'replace'] as const),
+          id: rng.pick(wagons),
+          loco: rng.pick(locos),
+        })),
+      (ops) => {
+        const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+        let uid = 2;
+        const slot = (id: string) => ({
+          uid: uid++,
+          def: wagonDef(id),
+          level: 1,
+          cargo: null,
+          amount: 0,
+          origin: null,
+        });
+        for (const o of ops) {
+          if (o.op === 'add') t.wagons.push(slot(o.id));
+          else if (o.op === 'drop') t.wagons.pop();
+          else if (o.op === 'swap' && t.wagons.length) t.wagons[0] = slot(o.id);
+          else if (o.op === 'loco') (t.locos[0] as { def: unknown }).def = locoDef(o.loco);
+          else t.wagons = t.wagons.map((w) => slot(w.def.id));
+          const want = fresh(t);
+          expect(t.vehicleSpecs).toEqual(want.specs);
+          expect(t.length).toBe(want.length);
+          expect(t.carLengths).toEqual(want.specs.map((s) => s.L));
+        }
+      },
+    );
+  });
+});
+
+describe('the fullest a tank can be', () => {
+  it('is the least full tank, as the list of tanks gave it, for any caps and contents', () => {
+    const odd = [0, 1, -1, 0.5, 120, Infinity, -Infinity, NaN];
+    forAll(
+      (rng: Rng) =>
+        Array.from({ length: 6 }, () => (rng.chance(0.4) ? rng.pick(odd) : rng.range(0, 200))),
+      ([coalCap, coal, waterCap, water, oilCap, oil]) => {
+        const f: number[] = [];
+        if (coalCap > 0) f.push(coal / coalCap);
+        if (waterCap > 0) f.push(water / waterCap);
+        if (oilCap > 0) f.push(oil / oilCap);
+        const want = f.length ? Math.min(...f) : 1;
+        const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+        Object.defineProperties(t, {
+          coalCap: { value: coalCap },
+          waterCap: { value: waterCap },
+          oilCap: { value: oilCap },
+        });
+        Object.assign(t, { coal, water, oil });
+        expect(t.tankFraction).toBe(want);
+      },
+    );
+  });
 });

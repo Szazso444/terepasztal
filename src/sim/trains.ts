@@ -27,6 +27,7 @@ import {
   facingOf,
   type VehiclePose,
   type VehicleSpec,
+  type BodyFields,
 } from './body';
 import { dieselFuelId, sandPerTile, supplyMode } from './supply';
 
@@ -1080,17 +1081,32 @@ export class Train {
     return r <= 0.8 ? 1 : Math.max(0.4, 1 - (r - 0.8) * 0.6);
   }
   get length() {
-    return consistLength(this.carLengths);
+    return this.bodies().length;
   }
   get carLengths(): number[] {
     return this.vehicleSpecs.map((s) => s.L);
   }
-  /** Body geometry of every vehicle, loco first. */
+  /** Body geometry of every vehicle, loco first. Shared while the consist stays the same: read only. */
   get vehicleSpecs(): VehicleSpec[] {
-    return [
-      ...this.locos.map((l) => vehicleSpec(l.def)),
-      ...this.wagons.map((w) => vehicleSpec(w.def)),
-    ];
+    return this.bodies().specs;
+  }
+  /** The bodies of the consist and its length, kept while it is made of the same vehicles. */
+  private bodiesOf: { defs: BodyFields[]; specs: VehicleSpec[]; length: number } | null = null;
+  private bodies() {
+    const kept = this.bodiesOf;
+    const nl = this.locos.length;
+    if (kept && kept.defs.length === nl + this.wagons.length) {
+      let same = true;
+      for (let i = 0; i < nl && same; i++) same = kept.defs[i] === this.locos[i].def;
+      for (let i = 0; i < this.wagons.length && same; i++)
+        same = kept.defs[nl + i] === this.wagons[i].def;
+      if (same) return kept;
+    }
+    const defs: BodyFields[] = [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)];
+    const specs = defs.map((d) => vehicleSpec(d));
+    const built = { defs, specs, length: consistLength(specs.map((s) => s.L)) };
+    this.bodiesOf = built;
+    return built;
   }
   /** Poses of every body segment and bogie, in car order (loco first). */
   vehiclePoses: VehiclePose[] = [];
@@ -1233,11 +1249,22 @@ export class Train {
   }
   /** Lowest tank as a fraction of its capacity (1 for pure electric). */
   get tankFraction() {
-    const f: number[] = [];
-    if (this.coalCap > 0) f.push(this.coal / this.coalCap);
-    if (this.waterCap > 0) f.push(this.water / this.waterCap);
-    if (this.oilCap > 0) f.push(this.oil / this.oilCap);
-    return f.length ? Math.min(...f) : 1;
+    // the least full of the tanks the consist has (Math.min, so NaN wins as it did)
+    let f = Infinity;
+    let tanks = 0;
+    if (this.coalCap > 0) {
+      f = Math.min(f, this.coal / this.coalCap);
+      tanks++;
+    }
+    if (this.waterCap > 0) {
+      f = Math.min(f, this.water / this.waterCap);
+      tanks++;
+    }
+    if (this.oilCap > 0) {
+      f = Math.min(f, this.oil / this.oilCap);
+      tanks++;
+    }
+    return tanks ? f : 1;
   }
   /** Economy mode: a tank is low, so the train crawls and burns proportionally less. */
   get eco() {
