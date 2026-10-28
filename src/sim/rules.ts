@@ -25,6 +25,8 @@ export interface Rules {
   lineSpeedBranch: number;
   /** top speed on Narrow Gauge, locomotive speed units */
   lineSpeedNarrow: number;
+  /** extra route cost per line size a train runs above its own class's line (0.25 = +25 %) */
+  smallOnBigLine: number;
   /** 1: narrow track and the narrow depot can be built; the hook for a later unlock rule */
   narrowUnlocked: number;
   loadRateMul: number;
@@ -98,6 +100,7 @@ export const DEFAULT_RULES: Rules = {
   trainSpeedMul: 1,
   lineSpeedBranch: 2,
   lineSpeedNarrow: 1.2,
+  smallOnBigLine: 0.25,
   narrowUnlocked: 1,
   loadRateMul: 1,
   productionMul: 1,
@@ -332,6 +335,15 @@ export const RULE_META: RuleMeta[] = [
     min: 0.3,
     max: 5,
     step: 0.1,
+  },
+  {
+    key: 'smallOnBigLine',
+    label: 'Small train on big line',
+    group: 'Trains & stations',
+    min: 0,
+    max: 2,
+    step: 0.05,
+    hint: "extra route cost per line size above the train class's own; 0.25 = +25 %",
   },
   {
     key: 'narrowUnlocked',

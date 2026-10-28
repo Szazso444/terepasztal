@@ -21,6 +21,7 @@ import {
 } from '../world/track';
 import { Polyline, poseVehicle, vehicleSpec, TOL, type VehicleSpec } from './body';
 import { STR } from '../strings';
+import { rules } from './rules';
 
 export interface Verdict {
   ok: boolean;
@@ -142,6 +143,31 @@ export function trainClassOf(defs: { class?: TrainClass; gauge?: Gauge }[]): Tra
       best = tc;
   }
   return best;
+}
+
+/**
+ * Priority rank of a class where trains contest track: on the standard network its own line's
+ * size step (Frigate 1, Destroyer 2, Cruiser and Carrier 3), so the train that needs a bigger
+ * line goes first. A separate network meets the standard one only at a level crossing with
+ * Branch Line and ranks with the Frigates there.
+ */
+export function classRank(tc: TrainClass | null): number {
+  if (!tc) return 1;
+  const own = LINES[CLASS_LINE[tc]];
+  return own.network === 'standard' ? own.tier : 1;
+}
+
+/**
+ * Route cost multiplier for a train of class `tc` on a line: a smaller train pays
+ * `rules.smallOnBigLine` per line size above its own, so it keeps to its own line where it can
+ * and leaves the bigger line to the trains that need it.
+ */
+export function lineToll(tc: TrainClass | null, cls: TrackClass): number {
+  if (!tc) return 1;
+  const own = LINES[CLASS_LINE[tc]];
+  const line = LINES[cls];
+  if (own.network !== 'standard' || line.network !== 'standard') return 1;
+  return 1 + rules.smallOnBigLine * Math.max(0, line.tier - own.tier);
 }
 
 /** May this model use a line? By its train class. Returns the reason when not. */
