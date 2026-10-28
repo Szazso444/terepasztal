@@ -66,7 +66,7 @@ export class Signals {
    */
   blockBeyond(
     post: SignalPost,
-    path?: { x: number; y: number; in: Dir; out: Dir }[],
+    path?: readonly { x: number; y: number; in: Dir; out: Dir }[],
   ): { tiles: { x: number; y: number }[]; next: SignalPost | null } {
     const tiles: { x: number; y: number }[] = [];
     if (path) {
@@ -115,7 +115,7 @@ export class Signals {
   aspect(
     post: SignalPost,
     occupied: (x: number, y: number) => boolean,
-    path?: { x: number; y: number; in: Dir; out: Dir }[],
+    path?: readonly { x: number; y: number; in: Dir; out: Dir }[],
   ): Aspect {
     const b = this.blockBeyond(post, path);
     if (b.tiles.some((t) => occupied(t.x, t.y))) return 'red';
@@ -131,7 +131,7 @@ export class Signals {
    * train must be able to stop there).
    */
   ahead(
-    path: { x: number; y: number; in: Dir; out: Dir; arc: number }[],
+    path: readonly { x: number; y: number; in: Dir; out: Dir; arc: number }[],
     occupied: (x: number, y: number) => boolean,
   ): { stopArc: number | null; cautionArc: number | null } {
     let stopArc: number | null = null;
