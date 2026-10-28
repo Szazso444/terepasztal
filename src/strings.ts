@@ -420,6 +420,11 @@ export const STR = {
     free: 'free',
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
+    /** a dragged run's pieces before its curves */
+    runPieces: (n: number, kind: string) => `${n} x ${kind}`,
+    runCurves: (n: number) => `+${n} curve${n === 1 ? '' : 's'}`,
+    /** while a drag turns: R swaps which leg runs first */
+    dragTurn: 'R: turn at the other corner',
   },
   toolbar: {
     track: 'Track',

@@ -2,8 +2,10 @@ import { Dir } from '../engine/iso';
 import type { Cost } from '../data/content';
 import type { PlacementCheck } from '../sim/build';
 import { STR } from '../strings';
+import type { RunTile } from './dragPath';
 import {
   TRACK_ITEMS,
+  footprintOf,
   portClass,
   type TrackClass,
   type TrackItem,
@@ -91,6 +93,8 @@ export interface RunPlan {
   cost: Cost;
   /** crossings the run lays by itself */
   crossings: number;
+  /** curves the run lays at its turns */
+  curves: number;
   /** why the run stops at `end`, when it does */
   reason?: string;
 }
@@ -104,35 +108,36 @@ export interface RunWorld {
 /**
  * The run of `item` along `line`. Where it meets a line at right angles the crossing for the pair
  * goes down instead of the straight, and is priced as one. A crossing that is refused, by the pair
- * or by the rules of its tile, stops the run there: the line it meets is never cut. Any other
- * refused tile is skipped, as before; a piece that stands already costs nothing.
+ * or by the rules of its tile, stops the run there: the line it meets is never cut. A curve at a
+ * turn that cannot go down stops it too (the leg after it would lead nowhere), and so does track in
+ * its way, which a curve never replaces. Any other refused tile is skipped, as before; a piece that
+ * stands already costs nothing.
  */
-export function planRun(
-  world: RunWorld,
-  line: readonly { x: number; y: number; rot: number }[],
-  item: TrackItem,
-): RunPlan {
+export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackItem): RunPlan {
   const steps: RunStep[] = [];
   const cost: Cost = {};
   let end = line.length,
     crossings = 0,
+    curves = 0,
     reason: string | undefined;
   for (const l of line) {
     const existing = world.track.get(l.x, l.y);
-    const pick = item.kind === 'straight' ? crossingFor(item.cls, l.rot, existing) : null;
+    const own = l.item ?? item,
+      curve = own.kind === 'curve';
+    const pick = own.kind === 'straight' ? crossingFor(own.cls, l.rot, existing) : null;
     let step: RunStep;
     if (pick && !pick.ok) {
       step = {
         x: l.x,
         y: l.y,
-        item,
+        item: own,
         rot: l.rot,
         ok: false,
         cost: {},
-        reason: crossingRefusal(item.cls, pick),
+        reason: crossingRefusal(own.cls, pick),
       };
     } else {
-      const it = pick ? pick.item : item,
+      const it = pick ? pick.item : own,
         rot = pick ? pick.rot : l.rot;
       step = { x: l.x, y: l.y, item: it, rot, ...world.checkTrack(l.x, l.y, it, rot) };
       step.stands =
@@ -140,10 +145,15 @@ export function planRun(
         existing.kind === it.kind &&
         existing.cls === it.cls &&
         (existing.cls2 ?? existing.cls) === (it.cls2 ?? it.cls) &&
-        existing.rot === rot;
+        existing.rot === rot &&
+        (!existing.unit || (existing.unit.ax === l.x && existing.unit.ay === l.y));
+      const inWay = () =>
+        footprintOf(l.x, l.y, it.kind, rot, it.cls).some((f) => world.track.get(f.x, f.y));
+      if (curve && step.ok && !step.stands && inWay())
+        step = { ...step, ok: false, cost: {}, reason: STR.build.trackInWay };
     }
     if (pick) step.crossing = true;
-    if (end === line.length && pick && !step.ok) {
+    if (end === line.length && (pick || curve) && !step.ok) {
       end = steps.length;
       reason = step.reason;
     }
@@ -152,9 +162,10 @@ export function planRun(
   for (const [i, s] of steps.entries()) {
     if (i >= end || !s.ok || s.stands) continue;
     if (s.crossing) crossings++;
+    if (s.item.kind === 'curve') curves++;
     for (const [k, v] of Object.entries(s.cost)) cost[k] = (cost[k] ?? 0) + v;
   }
-  return { steps, end, cost, crossings, reason };
+  return { steps, end, cost, crossings, curves, reason };
 }
 
 /** Lay what `plan` lets through, in order: the tiles before its end, skipping refused and standing ones. */

@@ -1,6 +1,7 @@
 import type { WideClass } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
 import { layRun, planRun, type RunPlan, type RunStep } from './autoCrossing';
+import { lineTiles, turnPath } from './dragPath';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
@@ -81,6 +82,8 @@ export class BuildController {
   /** reach (Chebyshev tiles) highlighted around the cursor while placing; 0 = none */
   reach = 0;
   private dragStart: { x: number; y: number } | null = null;
+  /** a straight drag: the axis it set off along, its first leg (R swaps it) */
+  private dragAxis: 'x' | 'y' | null = null;
   private selectSprite: Sprite;
   selected: Station | null = null;
   onSelect: ((s: Station | null) => void) | null = null;
@@ -189,7 +192,10 @@ export class BuildController {
       else this.select(null);
     }
     // track, decor, stations and works turn; anything else keeps its rotation
-    if (inp.wasPressed('KeyR') && this.turns()) this.rot = nextToolRotation(this.tool, this.rot);
+    // (during a track drag R turns the run instead: `updateTrackTool`)
+    const trackDrag = this.tool.kind === 'track' && this.dragStart;
+    if (inp.wasPressed('KeyR') && this.turns() && !trackDrag)
+      this.rot = nextToolRotation(this.tool, this.rot);
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     this.updatePlacing(active, t, inMap);
     if (!active) {
@@ -297,9 +303,17 @@ export class BuildController {
     const inp = this.input;
     // drag-laying straights
     if (item.kind === 'straight' || item.kind === 'bridge') {
-      if (inp.buttonPressed.has(0) && inMap) this.dragStart = { x: t.x, y: t.y };
+      if (inp.buttonPressed.has(0) && inMap) {
+        this.dragStart = { x: t.x, y: t.y };
+        this.dragAxis = null;
+      }
       if (this.dragStart && inp.buttons.has(0)) {
-        const line = this.runTiles(this.dragStart, t);
+        const a = this.dragStart;
+        if (!this.dragAxis && (t.x !== a.x || t.y !== a.y))
+          this.dragAxis = Math.abs(t.x - a.x) >= Math.abs(t.y - a.y) ? 'x' : 'y';
+        if (inp.wasPressed('KeyR') && this.dragAxis)
+          this.dragAxis = this.dragAxis === 'x' ? 'y' : 'x';
+        const line = this.runTiles(a, t, item);
         const plan = planRun(this.builder, line, item);
         this.showRunGhosts(plan);
         this.status(
@@ -308,8 +322,9 @@ export class BuildController {
         return;
       }
       if (this.dragStart && inp.buttonReleased.has(0)) {
-        const line = this.runTiles(this.dragStart, t);
+        const line = this.runTiles(this.dragStart, t, item);
         this.dragStart = null;
+        this.dragAxis = null;
         for (const g of this.lineGhosts) g.destroy();
         this.lineGhosts = [];
         layRun(this.builder, planRun(this.builder, line, item));
@@ -401,44 +416,51 @@ export class BuildController {
   }
 
   private lineTiles(a: { x: number; y: number }, b: { x: number; y: number }) {
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const out: { x: number; y: number; rot: number }[] = [];
-    if (Math.abs(dx) >= Math.abs(dy)) {
-      const s = Math.sign(dx) || 1;
-      for (let i = 0; i <= Math.abs(dx); i++) out.push({ x: a.x + i * s, y: a.y, rot: 1 });
-    } else {
-      const s = Math.sign(dy) || 1;
-      for (let i = 0; i <= Math.abs(dy); i++) out.push({ x: a.x, y: a.y + i * s, rot: 0 });
-    }
-    return out;
+    return lineTiles(a, b);
   }
 
-  /** The tiles a drag lays from `a` to `b`; a press released where it started is one piece at the tool's turn. */
-  private runTiles(a: { x: number; y: number }, b: { x: number; y: number }) {
-    const line = this.lineTiles(a, b);
+  /**
+   * The tiles a drag lays from `a` to `b`: a straight run turns through a curve once the cursor
+   * leaves its first leg; a press released where it started is one piece at the tool's turn.
+   */
+  private runTiles(a: { x: number; y: number }, b: { x: number; y: number }, item: TrackItem) {
+    const line =
+      item.kind === 'straight' && this.dragAxis
+        ? turnPath(a, b, this.dragAxis, item.cls)
+        : lineTiles(a, b);
     return line.length === 1 ? [{ x: b.x, y: b.y, rot: this.rot }] : line;
   }
 
   /** A run's status: its pieces and price, the crossings it lays by itself, and where it stops. */
   private runStatus(plan: RunPlan, item: TrackItem) {
-    const parts = [`${plan.end} x ${item.kind}: ${fmtCost(plan.cost)}`];
+    const parts = [
+      `${STR.build.runPieces(plan.end - plan.curves, item.kind)}${plan.curves ? ` ${STR.build.runCurves(plan.curves)}` : ''}: ${fmtCost(plan.cost)}`,
+    ];
     if (plan.crossings) parts.push(STR.build.autoCrossings(plan.crossings));
     if (plan.reason) parts.push(plan.reason);
+    if (plan.steps.some((s) => s.item.kind === 'curve')) parts.push(STR.build.dragTurn);
     return parts.join('   ');
   }
 
-  /** A run's ghosts: red where a tile is refused and from where the run stops, amber on its crossings. */
+  /**
+   * A run's ghosts, one per tile (a curve shows its whole footprint): red where a piece is refused
+   * and from where the run stops, amber on its crossings.
+   */
   private showRunGhosts(plan: RunPlan) {
     if (this.ghost) this.ghost.visible = false;
     this.showGhosts(
-      plan.steps.map((s, i) => ({
-        x: s.x,
-        y: s.y,
-        frame: `track/${itemKey(s.item)}_${s.rot}`,
-        ok: s.ok && i < plan.end,
-        tint: s.crossing && !s.stands ? REPLACE_TINT : undefined,
-      })),
+      plan.steps.flatMap((s, i) => {
+        const ok = s.ok && i < plan.end,
+          tint = s.crossing && !s.stands ? REPLACE_TINT : undefined,
+          frame = `track/${itemKey(s.item)}_${s.rot}`;
+        if (!isUnitKind(s.item.kind, s.item.cls)) return [{ x: s.x, y: s.y, frame, ok, tint }];
+        return footprintOf(s.x, s.y, s.item.kind, s.rot, s.item.cls).map((f, m) => ({
+          x: f.x,
+          y: f.y,
+          frame: `${frame}_m${m}`,
+          ok,
+        }));
+      }),
       true,
     );
   }
