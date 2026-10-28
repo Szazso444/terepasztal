@@ -928,21 +928,33 @@ describe('the resource tooltips', () => {
         .map(blockText)
         .some((l) => l.startsWith(STR.res.takenAt)),
     ).toBe(true);
+    const coal = resourceTip({ id: 'coal', have: 0, cap: 0, produced: 0, consumed: 0, tier: 0 });
+    expect(lines(coal)).toContain(`${STR.res.takenAt}: Coaling Stage`);
+    expect(termsOf(coal).map((t) => t.term)).toContain('Coaling Stage');
   });
-  it('the funds read as money, with no cap, and say what they are for', () => {
-    const doc = resourceTip({
-      id: 'money',
-      have: 25000,
-      cap: Infinity,
-      produced: 0,
-      consumed: 0,
-      tier: 0,
-    });
-    const text = lines(doc);
+  it('the funds read as money, with no cap and no flows, and say what they are for', () => {
+    const text = lines(resourceTip({ id: 'money', have: 25000, cap: Infinity, tier: 0 }));
     expect(text[0]).toBe(STR.res.funds);
     expect(text).toContain(`${STR.res.funds}: ${fmtMoney(25000)}`);
     expect(text.join('\n')).not.toContain('Infinity');
+    expect(text.some((l) => l.startsWith(STR.res.producedDay))).toBe(false);
+    expect(text.some((l) => l.startsWith(STR.res.consumedDay))).toBe(false);
     expect(text).toContain(STR.res.fundsHint);
+  });
+  it('population counts the people and the food they eat, and nothing received', () => {
+    const doc = resourceTip({ id: 'population', have: 40, cap: Infinity, eats: 12, tier: 0 });
+    const text = lines(doc);
+    expect(text).toContain(`${STR.res.people}: 40`);
+    expect(text).toContain(`${STR.res.eats}: 12.0 food ${STR.res.perWeek}`);
+    const eats = doc.find((b) => blockText(b).startsWith(STR.res.eats))!;
+    expect(partsOf(eats)).toContainEqual({ res: 'food', name: cargoName('food') });
+    expect(text.some((l) => l.startsWith(STR.res.producedDay))).toBe(false);
+    expect(text.some((l) => l.startsWith(STR.res.consumedDay))).toBe(false);
+  });
+  it('passengers count those waiting at the stations, with no cap and no flows', () => {
+    const text = lines(resourceTip({ id: 'passengers', have: 7, cap: Infinity, tier: 0 }));
+    expect(text).toContain(`${STR.res.waiting}: 7`);
+    expect(text.some((l) => l.startsWith(STR.res.producedDay))).toBe(false);
   });
   it('a building whose age has come names no age, and lists its cost and recipe', () => {
     const mill = usersOf('wheat').find((r) => r.id === 'windmill')!;

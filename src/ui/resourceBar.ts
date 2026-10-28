@@ -30,6 +30,8 @@ export class ResourceBar {
   private famine = el('span', { class: 'value red', text: STR.res.famine });
   /** Supplied by the game: actual rolling weekly flows. */
   stats: (() => Record<string, ResourceStat>) | null = null;
+  /** Supplied by the game: the passengers waiting at the player's stations. */
+  passengers: (() => number) | null = null;
   private stock: Stockpile | null = null;
   private cap: (id: string) => number = () => Infinity;
   private money = 0;
@@ -47,8 +49,9 @@ export class ResourceBar {
       const group = el('div', { class: 'res-group' });
       for (const id of ids) {
         const v = el('span', { class: 'value' });
+        // a span: the term around it is one
         const cell = el(
-          'div',
+          'span',
           { class: 'res' },
           spriteImg(atlas, `icons/${id}`, 1, 'sprite-preview res-icon'),
           v,
@@ -76,18 +79,11 @@ export class ResourceBar {
   private snapshot(id: string): ResourceSnapshot {
     const tier = this.tier;
     const st = this.stock;
-    if (id === 'money')
-      return { id, have: this.money, cap: Infinity, produced: 0, consumed: 0, tier };
+    // nothing counts money, births or passengers in and out: those tooltips show no flows
+    if (id === 'money') return { id, have: this.money, cap: Infinity, tier };
     if (id === 'population')
-      // births are not counted anywhere yet; what the people eat is the week's food
-      return {
-        id,
-        have: st?.population ?? 0,
-        cap: Infinity,
-        produced: 0,
-        consumed: st?.foodPerWeek() ?? 0,
-        tier,
-      };
+      return { id, have: st?.population ?? 0, cap: Infinity, eats: st?.foodPerWeek() ?? 0, tier };
+    if (id === 'passengers') return { id, have: this.passengers?.() ?? 0, cap: Infinity, tier };
     const flow = this.stats?.()[id];
     return {
       id,
@@ -138,8 +134,11 @@ export class ResourceBar {
     const stats = this.stats?.();
     for (const [id, v] of this.values) {
       if (this.cells.get(id)!.style.display === 'none') continue;
-      if (id === 'money' || id === 'population') {
-        const text = id === 'money' ? fmtMoney(money) : `${stock.population}`;
+      if (!STOCKPILED.has(id)) {
+        const text =
+          id === 'money'
+            ? fmtMoney(money)
+            : `${Math.floor(id === 'population' ? stock.population : (this.passengers?.() ?? 0))}`;
         if (v.textContent !== text) v.textContent = text;
         continue;
       }

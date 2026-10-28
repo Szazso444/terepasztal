@@ -1404,6 +1404,11 @@ export const STR = {
     populationHint:
       'Residents live within the capacity of finished Houses. Residents and crews eat food each week; Windmills turn wheat into food.',
     people: 'People',
+    /** the population tooltip: food eaten, as "Eats: 12.0 food / week" */
+    eats: 'Eats',
+    perWeek: '/ week',
+    /** the passengers tooltip: travellers waiting at the player's stations */
+    waiting: 'Waiting at stations',
     famine: 'NO WHEAT',
     openMarket: 'Open the market',
     have: 'Stockpile / cap',

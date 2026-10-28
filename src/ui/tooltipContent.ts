@@ -112,17 +112,19 @@ export interface ChunkSnapshot {
 
 /**
  * A resource on the resource bar: a cargo id, `power`, `money` or `population`. For money `have` is
- * the funds and `cap` is `Infinity`; for population `produced` and `consumed` are births and food
- * eaten.
+ * the funds; for population the people; for passengers those waiting at the stations. Only what
+ * the game counts is given: funds and passengers have no flows, population has `eats` instead.
  */
 export interface ResourceSnapshot {
   id: string;
   have: number;
   /** `Infinity`: no cap, and the tooltip leaves it out */
   cap: number;
-  /** units received and spent over the last week */
-  produced: number;
-  consumed: number;
+  /** units received and spent over the last week; absent where nothing counts them */
+  produced?: number;
+  consumed?: number;
+  /** food eaten per week (population) */
+  eats?: number;
   /** the age the game is in, which says which of the linked buildings are still locked */
   tier: number;
 }
@@ -210,8 +212,9 @@ export function chunkTip(c: ChunkSnapshot): TipDoc {
 }
 
 /**
- * A resource on the bar: its stock, its last week in and out, then what makes it, what uses it and
- * where trains take it, each building a term that opens `buildingDefTip`, then what it is for.
+ * A resource on the bar: its stock, its last week in and out (or the food its people eat), then
+ * what makes it, what uses it and where trains take it, each building a term that opens
+ * `buildingDefTip`, then what it is for.
  */
 export function resourceTip(s: ResourceSnapshot): TipDoc {
   const have = s.id === 'money' ? fmtMoney(s.have) : Math.floor(s.have);
@@ -229,8 +232,11 @@ export function resourceTip(s: ResourceSnapshot): TipDoc {
   return [
     title(icon(s.id), resourceName(s.id)),
     row(STOCK_LABEL[s.id] ?? STR.res.have, stock),
-    row(STR.res.producedDay, num(s.produced.toFixed(1))),
-    row(STR.res.consumedDay, num(s.consumed.toFixed(1))),
+    ...(s.produced !== undefined ? [row(STR.res.producedDay, num(s.produced.toFixed(1)))] : []),
+    ...(s.consumed !== undefined ? [row(STR.res.consumedDay, num(s.consumed.toFixed(1)))] : []),
+    ...(s.eats !== undefined
+      ? [row(STR.res.eats, [num(s.eats.toFixed(1)), ' ', res('food'), ' ', STR.res.perWeek])]
+      : []),
     ...links(STR.res.madeBy, makersOf(s.id)),
     ...links(STR.res.usedBy, usersOf(s.id)),
     ...links(STR.res.takenAt, takenAt(s.id)),
@@ -291,6 +297,7 @@ const resourceName = (id: string) => RESOURCE_NAME[id] ?? cargoName(id);
 const STOCK_LABEL: Record<string, string> = {
   money: STR.res.funds,
   population: STR.res.people,
+  passengers: STR.res.waiting,
 };
 
 /** What funds and population are for; a cargo's is `STR.res.info`. */
