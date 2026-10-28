@@ -315,7 +315,7 @@ export class Game implements UiHost {
             : s.def.id === 'town'
               ? ('town' as const)
               : ('other' as const),
-        fill: s.def.stockpile ? s.totalStored() / Math.max(1, s.capacity) : undefined,
+        fill: s.def.stockpile ? s.fill() : undefined,
         color:
           s.def.id === 'town'
             ? TOWN_COLORS[(this.towns.byStation(s.id)?.color ?? 0) % TOWN_COLORS.length]
@@ -2462,7 +2462,7 @@ export class Game implements UiHost {
       name: st.name,
       level: st.level,
       work: st.work ? { to: st.work.to, hoursLeft: hoursLeft(st.work) } : null,
-      stored: st.totalStored(),
+      stored: st.fullest(),
       capacity: st.capacity,
       biome: biomeAt(this.map, st.x, st.y),
       weeklyAtLevel1: weeklyOutput(1, 1),
@@ -2521,7 +2521,7 @@ export class Game implements UiHost {
           kind: 'station',
           name: s.name,
           level: s.level,
-          stored: s.totalStored(),
+          stored: s.fullest(),
           capacity: s.capacity,
         };
     } else {

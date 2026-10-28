@@ -255,6 +255,117 @@ describe('a store', () => {
   });
 });
 
+describe('binding docks at refresh', () => {
+  it('gives depots and warehouses their dock and every other station none', () => {
+    const { w, stores } = world();
+    const hall = station(w, 'town', 20, 29);
+    const depot = station(w, 'depot', 30, 24);
+    const wh = station(w, 'warehouse', 60, 29);
+    wh.level = 2;
+    const producer = station(w, 'lumber', 40, 29);
+    sync(w, stores);
+    expect(hall.dock).toBeNull();
+    expect(producer.dock).toBeNull();
+    expect(depot.dock).toBe(stores.dockOf(depot));
+    expect(depot.dock!.key).toBe(`st:${depot.id}`);
+    expect(wh.dock).toBe(stores.dockOf(wh));
+    expect(wh.dock!.key).toBe(`st:${wh.id}`);
+    expect(wh.dock!.cap('wood')).toBe(rules.warehouseCap * 2);
+  });
+
+  it('rebinds a warehouse to the town store when a town grows round it', () => {
+    const { w, stores } = world();
+    const wh = station(w, 'warehouse', 24, 29);
+    sync(w, stores);
+    expect(wh.dock!.key).toBe(`st:${wh.id}`);
+    const hall = station(w, 'town', 20, 29);
+    sync(w, stores);
+    expect(wh.dock!.key).toBe(`town:${w.towns.byStation(hall.id)!.id}`);
+    expect(wh.dock).toBe(stores.townStore(hall.x, hall.y));
+  });
+});
+
+describe('a station with a dock', () => {
+  function town() {
+    const { w, stores } = world();
+    const hall = station(w, 'town', 20, 29);
+    const a = station(w, 'warehouse', 24, 29);
+    const b = station(w, 'warehouse', 28, 29);
+    sync(w, stores);
+    return { w, stores, hall, a, b };
+  }
+
+  it('stores, counts and gives back goods through the dock', () => {
+    const { a } = town();
+    expect(a.store('wood', 120)).toBe(120);
+    expect(a.stored('wood')).toBe(120);
+    expect(a.dock!.get('wood')).toBe(120);
+    expect(a.storage.size).toBe(0);
+    a.store('coal', 30);
+    expect(a.totalStored()).toBe(150);
+    expect(a.take('wood', 50)).toBe(50);
+    expect(a.take('wood', 500)).toBe(70);
+    expect(a.take('wood', 1)).toBe(0);
+    expect(a.totalStored()).toBe(30);
+  });
+
+  it('lists the goods another warehouse of the town unloaded', () => {
+    const { a, b } = town();
+    expect(b.availableCargo()).toEqual([]);
+    a.store('wood', 40);
+    a.store('coal', 0.5);
+    expect(b.availableCargo()).toEqual(['wood']);
+    expect(b.stored('wood')).toBe(40);
+    expect(b.take('wood', 15)).toBe(15);
+    expect(a.stored('wood')).toBe(25);
+  });
+
+  it('has room per good, not for all goods together', () => {
+    const { a } = town();
+    const cap = a.capacity;
+    expect(a.roomFor('wood')).toBe(cap);
+    a.store('wood', cap);
+    expect(a.roomFor('wood')).toBe(0);
+    expect(a.roomFor('coal')).toBe(cap);
+  });
+
+  it('is full by its fullest good, not by the sum of its goods', () => {
+    const { a, b } = town();
+    expect(a.fill()).toBe(0);
+    a.store('wood', a.capacity / 2);
+    a.store('coal', a.capacity / 4);
+    expect(a.totalStored()).toBe((a.capacity * 3) / 4);
+    expect(a.fill()).toBeCloseTo(0.5);
+    expect(a.fullest()).toBeCloseTo(a.capacity / 2);
+    expect(b.fill()).toBeCloseTo(0.5);
+    a.store('wood', a.capacity);
+    expect(a.fill()).toBe(1);
+    expect(a.fullest()).toBe(a.capacity);
+  });
+
+  it('is full by the sum of its goods when it has no dock', () => {
+    const { w } = world();
+    const mine = station(w, 'lumber', 40, 29);
+    expect(mine.dock).toBeNull();
+    mine.storage.set('wood', mine.capacity / 4);
+    mine.storage.set('coal', mine.capacity / 4);
+    expect(mine.fill()).toBeCloseTo(0.5);
+    expect(mine.fullest()).toBeCloseTo(mine.capacity / 2);
+  });
+
+  it('while closed refuses goods but lets them be taken', () => {
+    const { a, b } = town();
+    a.store('wood', 100);
+    a.work = { to: 2, left: 100, total: 100 };
+    expect(a.closed).toBe(true);
+    expect(a.roomFor('wood')).toBe(0);
+    expect(a.store('wood', 10)).toBe(0);
+    expect(a.stored('wood')).toBe(100);
+    expect(a.take('wood', 30)).toBe(30);
+    expect(b.stored('wood')).toBe(70);
+  });
+});
+
 describe('saving stores', () => {
   it('toJSON and load round-trip amounts and famine', () => {
     const { w, stores } = world();

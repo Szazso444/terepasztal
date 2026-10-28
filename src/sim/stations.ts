@@ -488,6 +488,30 @@ export class Station {
     else for (const v of this.storage.values()) t += v;
     return t;
   }
+  /**
+   * The amount to show against `capacity`: all goods together for storage of its own; with a dock
+   * the stock of the fullest good, since the cap is per good and a mixed pile is not a full one.
+   */
+  fullest(): number {
+    if (!this.dock) return this.totalStored();
+    let best = 0;
+    let ratio = -1;
+    for (const [c, v] of this.dock.held()) {
+      const r = v / Math.max(1, this.dock.cap(c));
+      if (r > ratio) {
+        ratio = r;
+        best = v;
+      }
+    }
+    return best;
+  }
+  /** How full the station is, 0 .. 1: `fullest()` against `capacity`. */
+  fill(): number {
+    if (!this.dock) return this.totalStored() / Math.max(1, this.capacity);
+    let f = 0;
+    for (const [c, v] of this.dock.held()) f = Math.max(f, v / Math.max(1, this.dock.cap(c)));
+    return f;
+  }
   /** Take up to `amount` units of cargo out of storage; returns what was taken. */
   take(cargo: string, amount: number): number {
     if (this.dock) return this.dock.take(cargo, Math.max(0, amount));

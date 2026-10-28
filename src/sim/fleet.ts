@@ -878,7 +878,7 @@ export class Fleet {
         // fuller stations first, producer and warehouse alike: a producer near its cap is
         // throwing output away; distance counts at half weight so a full pile far away beats a
         // thin one next door; stations left alone climb in priority
-        const fill = s.totalStored() / Math.max(1, s.capacity);
+        const fill = s.fill();
         const pressure = 1 + fill + (fill >= 0.8 ? 1 : 0);
         score =
           (pressure * this.neglect(s.id, now) * haul) / trainCap / (12 + 0.5 * (dist(s) + onward));
