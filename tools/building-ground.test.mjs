@@ -741,7 +741,9 @@ describe(`the ground data of the ${GROUP} frames`, () => {
    * (F6, #525: tiles are the room a works takes, not the size of its model) while their pictures
    * stayed as they were. The one-tile pictures of a works are near square, and their turned
    * placeholders (`_r1` to `_r3`) are no better. They are repainted to the footprint with the
-   * rest of the work on how a picture sits in it (F3, #510); the entry goes with its repaint.
+   * rest of the work on how a picture sits in it (F3, #510); the entry goes with its repaint. The
+   * Town Hall and the warehouse stand on 2 x 1 since their 3D models (2026-10-27) and do not turn
+   * for now; their old turned placeholders stay in the atlas, square.
    */
   const NOT_THE_FOOTPRINTS_SHAPE = [
     'structures/colliery_lv2_r1',
@@ -750,12 +752,24 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     'structures/colliery_r1',
     'structures/colliery_r2',
     'structures/colliery_r3',
-    'structures/grinder_r1',
-    'structures/grinder_r2',
-    'structures/grinder_r3',
     'structures/oil_derrick_r1',
     'structures/oil_derrick_r2',
     'structures/oil_derrick_r3',
+    'structures/town_1_r1',
+    'structures/town_1_r2',
+    'structures/town_1_r3',
+    'structures/warehouse_2_r1',
+    'structures/warehouse_2_r2',
+    'structures/warehouse_2_r3',
+    'structures/warehouse_3_r1',
+    'structures/warehouse_3_r2',
+    'structures/warehouse_3_r3',
+    'structures/warehouse_4_r1',
+    'structures/warehouse_4_r2',
+    'structures/warehouse_4_r3',
+    'structures/warehouse_5_r1',
+    'structures/warehouse_5_r2',
+    'structures/warehouse_5_r3',
   ];
 
   it('draws the longer side of a footprint as the longer wall of the foot', () => {
@@ -1043,7 +1057,10 @@ describe(`the ground data of the ${GROUP} frames`, () => {
     // the pipeline lays a picture on its footprint by this base (tools/building-fit.mjs), so it is
     // the independent measure of how much of the picture stands on the ground. The wall foot may
     // be shorter where a picture has stretches that are not walls (a conveyor, a cage), and
-    // longer by what the walls reach that the base's own lines do not.
+    // longer by what the walls reach that the base's own lines do not. The 3D models of the
+    // refinery, the diesel refinery and the ironworks (2026-10-27) stand their tanks, pipes and
+    // hoppers beside their walls on the ground, which the base takes in and the walls do not.
+    const machinery = /^structures\/(refinery|diesel_refinery|ironworks)(_lv\d)?$/;
     const short = [];
     const long = [];
     let illustrated = 0;
@@ -1054,7 +1071,7 @@ describe(`the ground data of the ${GROUP} frames`, () => {
       const base = measureBase({ width: frame.w, height: frame.h, data: frame.data });
       const d = frame.resolution;
       const [from, to] = [e.foot[3][0], e.foot[1][0]].map((x) => frame.ax + x * d);
-      if ((to - from) / (base.e[0] - base.w[0]) < 0.6) short.push(key);
+      if ((to - from) / (base.e[0] - base.w[0]) < 0.6 && !machinery.test(key)) short.push(key);
       if (to - base.e[0] > 20 * d || base.w[0] - from > 20 * d) long.push(key);
     }
     expect(illustrated).toBeGreaterThan(50);

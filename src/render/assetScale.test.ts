@@ -12,6 +12,7 @@ import {
   structureFamily,
   structureScale,
   hasScaleReference,
+  MODEL_FAMILIES,
   scaleReference,
   unturnedFrame,
   type FrameNames,
@@ -26,7 +27,7 @@ it("keeps a common door height across packed building levels, before the author'
   let checked = 0;
   for (const [key, frame] of Object.entries(atlas.frames) as [string, { h: number }][]) {
     const family = structureFamily(key);
-    if (!DOOR_FRACTION[family]) continue;
+    if (!DOOR_FRACTION[family] || MODELS.has(family)) continue;
     const height = frame.h / atlas.resolution;
     const door =
       (height * DOOR_FRACTION[family] * structureScale(key, height)) /
@@ -34,7 +35,7 @@ it("keeps a common door height across packed building levels, before the author'
     expect(door, key).toBeCloseTo(DOOR_PX, 5);
     checked++;
   }
-  expect(checked).toBeGreaterThan(20);
+  expect(checked).toBeGreaterThan(8);
 });
 
 /**
@@ -90,25 +91,33 @@ const BASELINE = {
  * editing the table cannot move them. A family not named here is drawn as the references give it.
  */
 const PICK: Record<string, number> = {
-  town: 1.2,
-  station: 0.9,
-  warehouse: 1.25,
-  farm: 0.75,
-  lumber: 0.9,
-  quarry: 0.8,
-  grinder: 0.8,
-  power_plant: 1.2,
-  substation: 0.9,
   colliery: 1.2,
-  ironworks: 1.2,
   water_tower: 1.3,
   fuel_stop: 1.25,
 };
-/** Frames exempt from their family's pick: Town Hall L1 is sized by another path (about 1.36 doors). */
-const EXEMPT: Record<string, number> = { town_1: 1 };
-/** The pick a frame has: its own exemption, else its family's multiplier, else none. */
-const pickOf = (frame: string) =>
-  EXEMPT[frame.replace('structures/', '')] ?? PICK[structureFamily(frame)] ?? 1;
+/**
+ * The families drawn from their 3D model at their real size (2026-10-27), pinned apart from
+ * `MODEL_FAMILIES`: their frames are packed at the size they are drawn, scale 1, and the measures
+ * and picks above no longer size them.
+ */
+const MODELS = new Set([
+  'farm',
+  'lumber',
+  'quarry',
+  'town',
+  'warehouse',
+  'station',
+  'kiln',
+  'grinder',
+  'refinery',
+  'power_plant',
+  'substation',
+  'ironworks',
+  'diesel_refinery',
+  'wire_mill',
+]);
+/** The pick a frame has: its family's multiplier, else none. */
+const pickOf = (frame: string) => PICK[structureFamily(frame)] ?? 1;
 /**
  * The scale a frame had before the pick, from the numbers above and the 2.1 m door beside the
  * 11 px person.
@@ -120,9 +129,12 @@ const referenceScale = (frame: string, illustratedHeight?: number) => {
     illustratedHeight && fraction ? illustratedHeight * fraction : BASELINE.doors[family];
   return door ? 13.2 / door : (BASELINE.declared[family] ?? 1);
 };
-/** The scale a frame has: what the references give, times the author's pick for its family. */
+/**
+ * The scale a frame has: what the references give, times the author's pick for its family; 1 for
+ * a family drawn from its 3D model.
+ */
 const baselineScale = (frame: string, illustratedHeight?: number) =>
-  referenceScale(frame, illustratedHeight) * pickOf(frame);
+  MODELS.has(structureFamily(frame)) ? 1 : referenceScale(frame, illustratedHeight) * pickOf(frame);
 
 describe('building scale', () => {
   /**
@@ -132,6 +144,7 @@ describe('building scale', () => {
    */
   const before = (frame: string, illustratedHeight?: number) => {
     const family = structureFamily(frame);
+    if (MODELS.has(family)) return 1;
     const door =
       illustratedHeight && DOOR_FRACTION[family]
         ? illustratedHeight * DOOR_FRACTION[family]
@@ -202,14 +215,22 @@ describe('building scale', () => {
 
   it("is a door's height over the door in the picture, whoever stands beside it", () => {
     expect(structureScale('structures/townhouse_s1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.townhouse);
-    expect(structureScale('structures/station_1')).toBe(
-      (DOOR_PX / DOOR_REFERENCE_PX.station) * AUTHOR_SCALE.station,
-    );
-    // a measured door: 36 of the station's 169 px, then the author's pick
-    expect(structureScale('structures/station_1', 169)).toBeCloseTo(
-      (DOOR_PX / 36) * AUTHOR_SCALE.station,
-      9,
-    );
+    expect(structureScale('structures/windmill_lv2')).toBe(DOOR_PX / DOOR_REFERENCE_PX.windmill);
+    // a measured door: 38 of the windmill's 240 px
+    expect(structureScale('structures/windmill', 240)).toBeCloseTo(DOOR_PX / 38, 9);
+  });
+
+  it("draws a 3D model's family at the size it is packed, at every level, height and pick", () => {
+    expect(MODEL_FAMILIES).toEqual(MODELS);
+    for (const family of MODELS) {
+      expect(AUTHOR_SCALE[family], family).toBeUndefined();
+      for (const suffix of ['', '_1', '_5', '_lv2', '_lv4'])
+        for (const height of [undefined, 40, 169, 300]) {
+          const frame = `structures/${family}${suffix}`;
+          expect(structureScale(frame, height), `${frame} at ${height}`).toBe(1);
+          expect(hasScaleReference(frame), frame).toBe(true);
+        }
+    }
   });
 });
 
@@ -217,42 +238,14 @@ describe("the author's size pick", () => {
   const frames: FrameNames = { has: () => false };
   /** One representative frame per listed family; the sizes are measured the way the game does. */
   const REPRESENTATIVE: Record<string, string> = {
-    town: 'structures/town_2',
-    station: 'structures/station_2',
-    warehouse: 'structures/warehouse_3',
-    farm: 'structures/farm_1',
-    lumber: 'structures/lumber_4',
-    quarry: 'structures/quarry_2',
-    grinder: 'structures/grinder_lv2',
-    power_plant: 'structures/power_plant',
-    substation: 'structures/substation_lv3',
     colliery: 'structures/colliery',
-    ironworks: 'structures/ironworks_lv4',
     water_tower: 'structures/water_tower',
     fuel_stop: 'structures/fuel_stop',
   };
 
-  it("pins the author's multipliers, family by family, and the frames exempt from them", () => {
-    expect(AUTHOR_SCALE).toEqual({ ...PICK, ...EXEMPT });
+  it("pins the author's multipliers, family by family", () => {
+    expect(AUTHOR_SCALE).toEqual(PICK);
     expect(Object.keys(REPRESENTATIVE).sort()).toEqual(Object.keys(PICK).sort());
-  });
-
-  it('exempts Town Hall L1 from the town pick, at every measure and turn, and no other town frame', () => {
-    for (const height of [undefined, 199, 250]) {
-      expect(structureScale('structures/town_1', height), `town_1 at ${height}`).toBe(
-        referenceScale('structures/town_1', height),
-      );
-      for (const n of [2, 3, 4, 5])
-        expect(
-          structureScale(`structures/town_${n}`, height),
-          `town_${n} at ${height}`,
-        ).toBeCloseTo(referenceScale(`structures/town_${n}`, height) * 1.2, 12);
-    }
-    const turned: FrameNames = { has: (k) => k === 'structures/town_1' };
-    expect(scaleReference(turned, 'structures/town_1_r2')).toEqual({
-      family: 'town',
-      scale: referenceScale('structures/town_1'),
-    });
   });
 
   it("is today's size times the multiplier for a frame of each listed family", () => {
@@ -279,24 +272,14 @@ describe("the author's size pick", () => {
           );
         }
     // a turn is sized by the frame it was turned from
-    const turned: FrameNames = { has: (k) => k === 'structures/town_2' };
-    expect(scaleReference(turned, 'structures/town_2_r1')?.scale).toBe(
-      structureScale('structures/town_2'),
+    const turned: FrameNames = { has: (k) => k === 'structures/colliery_lv2' };
+    expect(scaleReference(turned, 'structures/colliery_lv2_r1')?.scale).toBe(
+      structureScale('structures/colliery_lv2'),
     );
   });
 
   it('leaves a family it does not name as the references give it', () => {
-    for (const family of [
-      'townhouse',
-      'windmill',
-      'kiln',
-      'refinery',
-      'pump',
-      'hydro_plant',
-      'oil_derrick',
-      'diesel_refinery',
-      'wire_mill',
-    ]) {
+    for (const family of ['townhouse', 'windmill', 'pump', 'hydro_plant', 'oil_derrick']) {
       expect(AUTHOR_SCALE[family], family).toBeUndefined();
       const frame = `structures/${family}_lv2`;
       expect(structureScale(frame), frame).toBe(referenceScale(frame));
@@ -333,7 +316,10 @@ describe('the Fuel Pump', () => {
 });
 
 it('requires an explicit calibration or declared estimate for every illustrated structure', () => {
-  for (const key of Object.keys(atlas.frames)) expect(hasScaleReference(key), key).toBe(true);
+  // but the depot's: its 3D model's pictures are packed at the size they are drawn, and an axis
+  // frame or the plain `depot_1` has no reference (`keep a wide station's axis frames`)
+  for (const key of Object.keys(atlas.frames))
+    if (!/^structures\/depot_(r[01]|1$)/.test(key)) expect(hasScaleReference(key), key).toBe(true);
 });
 
 /** Node has no ImageData or canvas: enough of both for the atlas packer to run. */

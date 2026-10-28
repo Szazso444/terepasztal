@@ -52,31 +52,39 @@ export const EQUIPMENT_SCALE: Record<string, number> = {
  * above, for every level, age and turn of the family. It is the one place to tune a family's
  * size by eye; a family not named here is drawn as the references give it. A key that is a whole
  * frame name (`town_1`) overrides its family's multiplier for that frame. Pictures are only ever
- * scaled uniformly. Footprints and where a picture stands on them are not decided here.
+ * scaled uniformly. Footprints and where a picture stands on them are not decided here. The
+ * families drawn from a 3D model (`MODEL_FAMILIES`) lost their picks on 2026-10-27: they are drawn
+ * at their real size.
  */
 export const AUTHOR_SCALE: Record<string, number> = {
-  /** Town Hall */
-  town: 1.2,
-  /** Town Hall L1 is sized by another path and already lands near 1.36 doors: exempt from the town pick */
-  town_1: 1,
-  station: 0.9,
-  warehouse: 1.25,
-  /** Farm Halt */
-  farm: 0.75,
-  lumber: 0.9,
-  /** Quarry, shared by the Iron Mine, Sand Pit and Copper Mine */
-  quarry: 0.8,
-  grinder: 0.8,
-  power_plant: 1.2,
-  /** the Battery once it is renamed; the id stays */
-  substation: 0.9,
   colliery: 1.2,
-  ironworks: 1.2,
   /** proposal: "taller, increase its size" came with no number */
   water_tower: 1.3,
   /** the Coaling Stage; proposal: "also bigger" came with no number */
   fuel_stop: 1.25,
 };
+/**
+ * Families drawn from their 3D model's render at its real size, measured against the walker
+ * (the author, 2026-10-27; assets/source/models-2026-10-27, tools/illustrated-sprites.mjs): the
+ * frame is packed at the size it is drawn, so its scale is 1 and neither the references above
+ * nor the author's pick apply to it. Every level of a family shows the same picture.
+ */
+export const MODEL_FAMILIES: ReadonlySet<string> = new Set([
+  'farm',
+  'lumber',
+  'quarry',
+  'town',
+  'warehouse',
+  'station',
+  'kiln',
+  'grinder',
+  'refinery',
+  'power_plant',
+  'substation',
+  'ironworks',
+  'diesel_refinery',
+  'wire_mill',
+]);
 /** What can say whether a frame exists: the atlas registry, or a set of frame names in a test. */
 export interface FrameNames {
   has(key: string): boolean;
@@ -106,7 +114,12 @@ export function unturnedFrame(atlas: FrameNames, frame: string) {
 export function hasScaleReference(frame: string) {
   if (!frame.startsWith('structures/')) return false;
   const name = structureFamily(frame);
-  return name in DOOR_FRACTION || name in DOOR_REFERENCE_PX || name in EQUIPMENT_SCALE;
+  return (
+    MODEL_FAMILIES.has(name) ||
+    name in DOOR_FRACTION ||
+    name in DOOR_REFERENCE_PX ||
+    name in EQUIPMENT_SCALE
+  );
 }
 /**
  * Source measurements are visual estimates; new art must supply a measured reference. The size
@@ -114,6 +127,7 @@ export function hasScaleReference(frame: string) {
  */
 export function structureScale(frame: string, illustratedHeight?: number) {
   const name = structureFamily(frame);
+  if (MODEL_FAMILIES.has(name)) return 1;
   const door =
     illustratedHeight && DOOR_FRACTION[name]
       ? illustratedHeight * DOOR_FRACTION[name]

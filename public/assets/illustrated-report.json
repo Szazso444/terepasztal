@@ -1254,6 +1254,199 @@
       "reason": "Requires directional, layered, animated, semantic or connection-specific art; retain working procedural frames."
     }
   ],
+  "models": [
+    {
+      "id": "farm",
+      "source": "assets\\source\\models-2026-10-27\\farm.png",
+      "frames": [
+        "structures/farm_1",
+        "structures/farm_2",
+        "structures/farm_3",
+        "structures/farm_4",
+        "structures/farm_5"
+      ]
+    },
+    {
+      "id": "lumber",
+      "source": "assets\\source\\models-2026-10-27\\lumber.png",
+      "frames": [
+        "structures/lumber_1",
+        "structures/lumber_2",
+        "structures/lumber_3",
+        "structures/lumber_4",
+        "structures/lumber_5"
+      ]
+    },
+    {
+      "id": "quarry",
+      "source": "assets\\source\\models-2026-10-27\\quarry.png",
+      "frames": [
+        "structures/quarry_1",
+        "structures/quarry_2",
+        "structures/quarry_3",
+        "structures/quarry_4",
+        "structures/quarry_5"
+      ]
+    },
+    {
+      "id": "town",
+      "source": "assets\\source\\models-2026-10-27\\town.png",
+      "frames": [
+        "structures/town_1",
+        "structures/town_2",
+        "structures/town_3",
+        "structures/town_4",
+        "structures/town_5"
+      ]
+    },
+    {
+      "id": "warehouse",
+      "source": "assets\\source\\models-2026-10-27\\warehouse.png",
+      "frames": [
+        "structures/warehouse_1",
+        "structures/warehouse_2",
+        "structures/warehouse_3",
+        "structures/warehouse_4",
+        "structures/warehouse_5"
+      ]
+    },
+    {
+      "id": "station",
+      "source": "assets\\source\\models-2026-10-27\\station.png",
+      "frames": [
+        "structures/station_1",
+        "structures/station_2",
+        "structures/station_3",
+        "structures/station_4",
+        "structures/station_5"
+      ]
+    },
+    {
+      "id": "depot-r0",
+      "source": "assets\\source\\models-2026-10-27\\depot-r0.png",
+      "frames": [
+        "structures/depot_r0",
+        "structures/depot_r0_lv2",
+        "structures/depot_r0_lv3",
+        "structures/depot_r0_lv4",
+        "structures/depot_r0_lv5",
+        "structures/depot_1"
+      ]
+    },
+    {
+      "id": "depot-r1",
+      "source": "assets\\source\\models-2026-10-27\\depot-r1.png",
+      "frames": [
+        "structures/depot_r1",
+        "structures/depot_r1_lv2",
+        "structures/depot_r1_lv3",
+        "structures/depot_r1_lv4",
+        "structures/depot_r1_lv5"
+      ]
+    },
+    {
+      "id": "depot-r2",
+      "source": "assets\\source\\models-2026-10-27\\depot-r2.png",
+      "frames": [
+        "structures/depot_r0_r2",
+        "structures/depot_r0_lv2_r2",
+        "structures/depot_r0_lv3_r2",
+        "structures/depot_r0_lv4_r2",
+        "structures/depot_r0_lv5_r2"
+      ]
+    },
+    {
+      "id": "depot-r3",
+      "source": "assets\\source\\models-2026-10-27\\depot-r3.png",
+      "frames": [
+        "structures/depot_r1_r3",
+        "structures/depot_r1_lv2_r3",
+        "structures/depot_r1_lv3_r3",
+        "structures/depot_r1_lv4_r3",
+        "structures/depot_r1_lv5_r3"
+      ]
+    },
+    {
+      "id": "kiln",
+      "source": "assets\\source\\models-2026-10-27\\kiln.png",
+      "frames": [
+        "structures/kiln",
+        "structures/kiln_lv2",
+        "structures/kiln_lv3",
+        "structures/kiln_lv4"
+      ]
+    },
+    {
+      "id": "grinder",
+      "source": "assets\\source\\models-2026-10-27\\grinder.png",
+      "frames": [
+        "structures/grinder",
+        "structures/grinder_lv2",
+        "structures/grinder_lv3",
+        "structures/grinder_lv4"
+      ]
+    },
+    {
+      "id": "refinery",
+      "source": "assets\\source\\models-2026-10-27\\refinery.png",
+      "frames": [
+        "structures/refinery",
+        "structures/refinery_lv2",
+        "structures/refinery_lv3",
+        "structures/refinery_lv4"
+      ]
+    },
+    {
+      "id": "power_plant",
+      "source": "assets\\source\\models-2026-10-27\\power_plant.png",
+      "frames": [
+        "structures/power_plant",
+        "structures/power_plant_lv2",
+        "structures/power_plant_lv3",
+        "structures/power_plant_lv4"
+      ]
+    },
+    {
+      "id": "substation",
+      "source": "assets\\source\\models-2026-10-27\\substation.png",
+      "frames": [
+        "structures/substation",
+        "structures/substation_lv2",
+        "structures/substation_lv3",
+        "structures/substation_lv4"
+      ]
+    },
+    {
+      "id": "ironworks",
+      "source": "assets\\source\\models-2026-10-27\\ironworks.png",
+      "frames": [
+        "structures/ironworks",
+        "structures/ironworks_lv2",
+        "structures/ironworks_lv3",
+        "structures/ironworks_lv4"
+      ]
+    },
+    {
+      "id": "diesel_refinery",
+      "source": "assets\\source\\models-2026-10-27\\diesel_refinery.png",
+      "frames": [
+        "structures/diesel_refinery",
+        "structures/diesel_refinery_lv2",
+        "structures/diesel_refinery_lv3",
+        "structures/diesel_refinery_lv4"
+      ]
+    },
+    {
+      "id": "wire_mill",
+      "source": "assets\\source\\models-2026-10-27\\wire_mill.png",
+      "frames": [
+        "structures/wire_mill",
+        "structures/wire_mill_lv2",
+        "structures/wire_mill_lv3",
+        "structures/wire_mill_lv4"
+      ]
+    }
+  ],
   "groups": {
     "props": {
       "frames": 49,
@@ -1284,16 +1477,16 @@
       }
     },
     "structures": {
-      "frames": 92,
-      "uniqueImages": 59,
-      "width": 3993,
-      "height": 1142,
+      "frames": 113,
+      "uniqueImages": 36,
+      "width": 4082,
+      "height": 1135,
       "capped": {
-        "texels": 2982525,
-        "haze": 44267,
-        "solid": 2938155,
-        "white": 13774,
-        "amber": 966,
+        "texels": 3270127,
+        "haze": 171532,
+        "solid": 3065834,
+        "white": 42585,
+        "amber": 5359,
         "compressed": 0
       }
     },

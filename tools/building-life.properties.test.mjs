@@ -99,7 +99,9 @@ describe('every pot, judged on the pixels alone', () => {
   });
 
   it('is in the file for the frames the issue names, with the issue marking of work chimneys', () => {
-    // issue #492: pots per frame, `work` for lumber_2 and pump_1 only
+    // issue #492: pots per frame, `work` for lumber_2 and pump_1 only; the town hall, station,
+    // warehouse, sawmill and farm show their 3D models since 2026-10-27, one picture for every
+    // level: their stacks are this file's own (`POT_GROUPS`), the issue's numbers no longer theirs
     const named = {
       'structures/town_2': [2, false],
       'structures/town_3': [2, false],
@@ -109,7 +111,7 @@ describe('every pot, judged on the pixels alone', () => {
       'structures/townhouse_s0': [1, false],
       'structures/townhouse_s1': [1, false],
       'structures/townhouse_s2': [1, false],
-      'structures/station_2': [3, false],
+      'structures/station_2': [1, false],
       'structures/warehouse_1': [2, false],
       'structures/lumber_2': [1, true],
       'structures/farm_2': [1, false],
@@ -228,7 +230,10 @@ const cutOf = (f, crane) =>
     return [Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1)];
   });
 
-describe('every crane, judged on the pixels alone', () => {
+// the demo's crane (issue #492) hung over the cart of the quarry's painted picture; the quarry
+// shows its 3D model since 2026-10-27, whose crate hangs over the stone block and is no crane
+// `loadOf` can lift out (`CRANE_GROUPS` is empty). These come back with a crane for that picture.
+describe.skip('every crane, judged on the pixels alone', () => {
   it(
     'lifts out without splitting the picture, and touches the rest only at the pulley and the cart',
     () => {

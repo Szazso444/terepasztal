@@ -101,6 +101,30 @@ function launch(w: World, t: Train) {
 
 const reach = (a: Station, b: Station) => Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy);
 
+/**
+ * A quarry and a warehouse either side of a train whose head is at column `hx` (`s` 1: quarry
+ * west), each with a depot on the side facing the train, laid so that the way there and on to the
+ * depot is as long for both: the sum the ranking weighs (`Fleet.chooseNext`). The quarry is one
+ * tile, its middle 14 from the train and its depot's 3.5 on; the warehouse two along x (2 x 1),
+ * its middle half a tile further, 14.5, and its depot's half a tile nearer, 3.
+ */
+function flanks(
+  w: World,
+  hx: number,
+  s: number,
+  quarry: Record<string, number>,
+  house: Record<string, number>,
+) {
+  const q = put(w, 'quarry', Math.round(hx - s * 14), quarry);
+  const h = put(w, 'warehouse', Math.round(hx + s * 14) - (s < 0 ? 1 : 0), house);
+  put(w, 'depot', q.x + (s > 0 ? 3 : -4));
+  put(w, 'depot', h.x + (s > 0 ? -3 : 3));
+  const [d1, d2] = w.builder.stations.filter((x) => x.def.pool);
+  const way = (st: Station, d: Station) => Math.abs(st.cx - hx) + reach(d, st);
+  expect(way(q, d1), 'premise: as far there and on').toBe(way(h, d2));
+  return { q, house: h };
+}
+
 describe('the route modes', () => {
   it('are schedule and the dynamic freight, transport and contract', () => {
     expect(DYNAMIC_MODES).toEqual(['freight', 'transport', 'contract']);
@@ -129,9 +153,9 @@ describe('the route modes', () => {
 
 describe('an empty freight train choosing a stop', () => {
   /**
-   * A quarry and a warehouse, each holding 40 stone, the same distance either side of a train
-   * standing at column 30, each with a depot four tiles from it on the side facing the train, so
-   * that the way on to where the load would go (a depot for either) is as long for both too. The
+   * A quarry and a warehouse, each holding 40 stone, either side of a train standing at column
+   * 30, each with a depot on the side facing the train, the way there and on to the depot as long
+   * for both (`flanks`). The
    * quarry's room is `capacityMul` of 60 and the warehouse's `warehouseCap`, which sets how full
    * each is. `mirror` puts the quarry to the east instead of the west.
    */
@@ -142,14 +166,7 @@ describe('an empty freight train choosing a stop', () => {
     const t = train(w, 30);
     const hx = t.poses[0].x;
     const s = mirror ? -1 : 1;
-    const q = put(w, 'quarry', Math.round(hx - s * 14), { stone: 40 });
-    const house = put(w, 'warehouse', Math.round(hx + s * 14), { stone: 40 });
-    put(w, 'depot', q.x + (s > 0 ? 3 : -4));
-    put(w, 'depot', house.x + (s > 0 ? -4 : 3));
-    // the premise: equally far, and as far again to the depot that takes the load
-    expect(Math.abs(q.cx - hx)).toBe(Math.abs(house.cx - hx));
-    const [d1, d2] = w.builder.stations.filter((x) => x.def.pool);
-    expect(reach(d1, q)).toBe(reach(d2, house));
+    const { q, house } = flanks(w, hx, s, { stone: 40 }, { stone: 40 });
     return { w, t, q, house };
   }
 
@@ -847,9 +864,9 @@ describe('an empty freight train ranking a producer and a warehouse, over genera
     mirror: boolean;
   }
   /**
-   * A quarry and a warehouse the same distance either side of the train, each with a depot four
-   * tiles from it on the side facing the train: the way there, the way on, the haul and the time
-   * since a train last loaded are equal, and only how full each is differs.
+   * A quarry and a warehouse either side of the train, each with a depot on the side facing the
+   * train (`flanks`): the way there and on, the haul and the time since a train last loaded are
+   * equal, and only how full each is differs.
    */
   function pairAt(c: Pair) {
     rules.capacityMul = c.mul;
@@ -859,13 +876,7 @@ describe('an empty freight train ranking a producer and a warehouse, over genera
     const t = train(w, 30);
     const hx = t.poses[0].x;
     const s = c.mirror ? -1 : 1;
-    const q = put(w, 'quarry', Math.round(hx - s * 14), { stone: c.stored });
-    const house = put(w, 'warehouse', Math.round(hx + s * 14), { stone: c.stored });
-    put(w, 'depot', q.x + (s > 0 ? 3 : -4));
-    put(w, 'depot', house.x + (s > 0 ? -4 : 3));
-    const [d1, d2] = w.builder.stations.filter((x) => x.def.pool);
-    expect(Math.abs(q.cx - hx), 'premise: equally far').toBe(Math.abs(house.cx - hx));
-    expect(reach(d1, q), 'premise: as far on').toBe(reach(d2, house));
+    const { q, house } = flanks(w, hx, s, { stone: c.stored }, { stone: c.stored });
     return { w, t, q, house };
   }
   const fill = (s: Station) => s.totalStored() / s.capacity;

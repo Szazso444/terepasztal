@@ -5,7 +5,12 @@ import { BUILDING_DEFS } from '../sim/buildings';
 import { DECOR_DEFS } from '../sim/build';
 import { TRACK_ITEMS, rotationCount } from '../world/track';
 import type { Tool } from './toolbar';
-import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
+import {
+  hasAxisPictures,
+  nextToolRotation,
+  stationGhostFrame,
+  toolRotations,
+} from './toolRotation';
 
 /** 0 to n - 1. */
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
@@ -22,37 +27,35 @@ function cycle(tool: Tool): number[] {
   return seen;
 }
 
-/** A station covers more than one tile. */
-const wide = (def: StationDef) => {
+/** Tiles a station covers. */
+const tiles = (def: StationDef) => {
   const span = stationSpan(def, 0);
-  return span.w * span.h > 1;
+  return span.w * span.h;
 };
 
 describe('R in the build tools', () => {
-  it('turns every station, of every size, through the four building rotations', () => {
-    expect(STATION_DEFS.some(wide)).toBe(true);
-    expect(STATION_DEFS.some((d) => !wide(d))).toBe(true);
+  it('turns a station with a picture per axis through the four building rotations, any other not', () => {
+    expect(STATION_DEFS.some(hasAxisPictures)).toBe(true);
+    // a station wider than a tile without axis pictures (the Town Hall, 2 x 1) stays at r0
+    expect(STATION_DEFS.some((d) => !hasAxisPictures(d) && tiles(d) > 1)).toBe(true);
     for (const def of STATION_DEFS) {
       const tool: Tool = { kind: 'station', defId: def.id };
-      expect(toolRotations(tool), def.id).toBe(BUILDING_ROTATIONS);
-      expect(cycle(tool), def.id).toEqual(range(BUILDING_ROTATIONS));
+      const turns = hasAxisPictures(def);
+      const n = turns ? BUILDING_ROTATIONS : 1;
+      expect(toolRotations(tool), def.id).toBe(n);
+      expect(cycle(tool), def.id).toEqual(range(n));
       // a quarter turn clockwise each press, as a placed station counts its turns
-      for (const rot of range(BUILDING_ROTATIONS))
-        expect(nextToolRotation(tool, rot), def.id).toBe(nextRotation(rot));
+      if (turns)
+        for (const rot of range(BUILDING_ROTATIONS))
+          expect(nextToolRotation(tool, rot), def.id).toBe(nextRotation(rot));
     }
   });
 
-  it('turns every works through the four rotations and keeps a bridge platform at r0', () => {
-    expect(BUILDING_DEFS.some((d) => d.bridge)).toBe(true);
-    expect(BUILDING_DEFS.some((d) => !d.bridge)).toBe(true);
+  it('keeps every works at r0: it has one picture', () => {
     for (const def of BUILDING_DEFS) {
       const tool: Tool = { kind: 'building', defId: def.id };
-      const n = def.bridge ? 1 : BUILDING_ROTATIONS;
-      expect(toolRotations(tool), def.id).toBe(n);
-      expect(cycle(tool), def.id).toEqual(range(n));
-      if (!def.bridge)
-        for (const rot of range(BUILDING_ROTATIONS))
-          expect(nextToolRotation(tool, rot), def.id).toBe(nextRotation(rot));
+      expect(toolRotations(tool), def.id).toBe(1);
+      expect(cycle(tool), def.id).toEqual([0]);
     }
   });
 
@@ -88,13 +91,13 @@ describe('R in the build tools', () => {
 
 describe('the station ghost', () => {
   /**
-   * An atlas drawn the way `src/art/structures.ts` draws a family: a wide station's axis pictures
+   * An atlas drawn the way `src/art/structures.ts` draws a family: a station with axis pictures,
    * `_r0` and `_r1` with their half turns `_r0_r2` and `_r1_r3`, a one-tile station's `_1` with
    * all three turns. The plain station is always there.
    */
   function drawn(def: StationDef) {
     const fam = `structures/${def.art}`;
-    const keys = wide(def)
+    const keys = hasAxisPictures(def)
       ? [`${fam}_r0`, `${fam}_r1`, `${fam}_r0_r2`, `${fam}_r1_r3`]
       : [`${fam}_1`, `${fam}_1_r1`, `${fam}_1_r2`, `${fam}_1_r3`];
     keys.push('structures/station_1');
@@ -110,8 +113,8 @@ describe('the station ghost', () => {
     }
   });
 
-  it("draws a wide station from the picture of its rotation's axis", () => {
-    for (const def of STATION_DEFS.filter(wide)) {
+  it("draws a station with axis pictures from the picture of its rotation's axis", () => {
+    for (const def of STATION_DEFS.filter(hasAxisPictures)) {
       const atlas = drawn(def);
       for (const rot of range(BUILDING_ROTATIONS))
         expect(stationGhostFrame(atlas, def, rot), `${def.id} r${rot}`).toMatch(
@@ -127,7 +130,7 @@ describe('the station ghost', () => {
       const atlas = { has: (k: string) => unturned.includes(k) };
       for (const rot of range(BUILDING_ROTATIONS))
         expect(stationGhostFrame(atlas, def, rot), `${def.id} r${rot}`).toBe(
-          wide(def) ? `${fam}_r${rotationAxis(rot)}` : `${fam}_1`,
+          hasAxisPictures(def) ? `${fam}_r${rotationAxis(rot)}` : `${fam}_1`,
         );
     }
   });

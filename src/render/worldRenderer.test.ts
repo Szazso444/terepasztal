@@ -45,7 +45,6 @@ import {
   CELL_BLOCKED,
   CELL_FIELD,
   CELL_OPEN,
-  RUN_S,
   RUN_W,
   fieldPicture,
   readSite,
@@ -1600,13 +1599,14 @@ describe("a wheat field's picture (#444)", () => {
       world.updateFields(Infinity);
       const beside = shown();
       // each field round it is painted as the map reads with the farm halt's tile a footprint whose
-      // W and S sides it runs up to (it has no door path there)
+      // W side it runs up to (it has no door path there), but not its S side: the platform door's
+      // path leaves it there
       const site = (x: number, y: number) =>
         readSite(x, y, (cx, cy) =>
           cx < 0 || cy < 0 || cx >= 12 || cy >= 12
             ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: 0 }
             : cx === 5 && cy === 4
-              ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: RUN_W | RUN_S }
+              ? { kind: CELL_BLOCKED, variant: 0, level: 0, run: RUN_W }
               : AROUND_FARM.some(([fx, fy]) => fx === cx && fy === cy)
                 ? { kind: CELL_FIELD, variant: (cx * 7 + cy * 5) % 3, level: 0, run: 0 }
                 : { kind: CELL_OPEN, variant: 0, level: 0, run: 0 },

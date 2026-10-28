@@ -16,7 +16,7 @@ import { rules, DEFAULT_RULES } from './rules';
 import { setSeasonOffset } from './weather';
 import { content } from '../data/content';
 import { SUPPLY_KINDS, collectorCeiling } from './catenary';
-import type { Station } from './stations';
+import { stationDef, stationSpan, type Station } from './stations';
 import type { PathSegment } from '../world/pathfinding';
 import {
   TrackGraph,
@@ -458,9 +458,22 @@ function plan(line: Line) {
   return {
     puts,
     steps,
-    warehouse: { x: stop.x + DIR_DX[away], y: stop.y + DIR_DY[away] },
-    home: { x: DIR_DX[back], y: DIR_DY[back] },
+    warehouse: beside(stop, away),
+    home: beside({ x: 0, y: 0 }, back),
   };
+}
+
+/**
+ * The station a winding line stops at and comes home to: one of a single tile, so that its gates
+ * are the tiles round that one tile and a line coiled tight beside it is no second way in. The
+ * warehouse stands on two tiles (2 x 1) since the 3D models (2026-10-27).
+ */
+const STOP = 'station';
+
+/** The corner of a stop station standing beside tile `t` on side `d`, never over it. */
+function beside(t: { x: number; y: number }, d: Dir) {
+  const reach = stationSpan(stationDef(STOP), 0).w - 1;
+  return { x: t.x + DIR_DX[d] - (d === Dir.W ? reach : 0), y: t.y + DIR_DY[d] };
 }
 
 /** Where pieces and warehouses go: by the stop and, when given, by the first tile (`home`). */
@@ -493,8 +506,8 @@ function layDown(cls: TrackClass, p: Plan) {
         `no ${q.kind} at ${q.x + dx},${q.y + dy}: ${w.builder.checkTrack(q.x + dx, q.y + dy, item, q.rot).reason}`,
       );
   }
-  const stop = station(w, 'warehouse', p.warehouse.x + dx, p.warehouse.y + dy);
-  const home = p.home && station(w, 'warehouse', p.home.x + dx, p.home.y + dy);
+  const stop = station(w, STOP, p.warehouse.x + dx, p.warehouse.y + dy);
+  const home = p.home && station(w, STOP, p.home.x + dx, p.home.y + dy);
   return { w, stop, home, steps: p.steps.map((s) => ({ ...s, x: s.x + dx, y: s.y + dy })) };
 }
 

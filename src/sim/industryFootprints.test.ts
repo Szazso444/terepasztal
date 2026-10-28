@@ -10,11 +10,12 @@ import { doorsOf, placeSpan, spanProblems } from './doors';
 import { DEFAULT_RULES, rules } from './rules';
 import { PowerGrid } from './power';
 
-// Industries take the footprint the author chose (2026-10-18, F6): tiles are where it may stand,
-// how much room it takes and where it sits in that room, not how big its model is. At rotation 0 a
-// footprint's long axis is the picture's, which is x for every one of the nine (the foot of each
-// r0 frame in src/art/buildingGround.json), so the author's "1 x 2", "2 x 3" are w 2 x h 1 and
-// w 3 x h 2 here. A size class is named by its tiles, long side first.
+// Industries take the footprint the author chose (2026-10-18, F6; 2026-10-27, the 3D models at
+// their real size: the grinder, the substation and the ironworks on one tile, the diesel refinery
+// on 3 x 2): tiles are where it may stand, how much room it takes and where it sits in that room.
+// At rotation 0 a footprint's long axis is the picture's, which is x for every one of the six (the
+// foot of each r0 frame in src/art/buildingGround.json), so the author's "1 x 2", "2 x 3" are
+// w 2 x h 1 and w 3 x h 2 here. A size class is named by its tiles, long side first.
 interface Case {
   id: string;
   /** the footprint class: the size the author named */
@@ -24,15 +25,12 @@ interface Case {
   h: number;
 }
 const CASES: Case[] = [
-  { id: 'grinder', size: '1x2', w: 2, h: 1 },
   { id: 'oil_derrick', size: '1x2', w: 2, h: 1 },
   { id: 'refinery', size: '2x2', w: 2, h: 2 },
-  { id: 'diesel_refinery', size: '2x2', w: 2, h: 2 },
-  { id: 'substation', size: '2x2', w: 2, h: 2 },
   { id: 'wire_mill', size: '2x2', w: 2, h: 2 },
   { id: 'power_plant', size: '2x3', w: 3, h: 2 },
+  { id: 'diesel_refinery', size: '3x2', w: 3, h: 2 },
   { id: 'colliery', size: '3x2', w: 3, h: 2 },
-  { id: 'ironworks', size: '3x2', w: 3, h: 2 },
 ];
 
 const ROTS = [0, 1, 2, 3];
@@ -77,7 +75,7 @@ beforeEach(() => {
 });
 
 describe('the footprints the author chose', () => {
-  it('lists the nine, with the long side along x as the pictures have it', () => {
+  it('lists the six, with the long side along x as the pictures have it', () => {
     for (const c of CASES) {
       expect(placeSpan(buildingDef(c.id)), c.id).toEqual({ w: c.w, h: c.h });
     }

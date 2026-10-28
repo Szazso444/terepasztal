@@ -163,10 +163,14 @@
         "food"
       ],
       "art": "town",
+      "span": {
+        "w": 2,
+        "h": 1
+      },
       "doors": [
         {
           "kind": "platform",
-          "tile": [0, 0],
+          "tile": [1, 0],
           "side": "S"
         },
         {
@@ -207,6 +211,10 @@
       "fuel": true,
       "water": true,
       "contracts": false,
+      "span": {
+        "w": 2,
+        "h": 1
+      },
       "doors": [
         {
           "kind": "platform",

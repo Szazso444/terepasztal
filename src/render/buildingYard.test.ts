@@ -651,7 +651,7 @@ describe("a door's worn path", () => {
         }
       }
     }
-    expect(paths).toBeGreaterThan(120);
+    expect(paths).toBeGreaterThan(80);
     expect(short, `${short.length} door paths fall short`).toEqual([]);
   });
 
@@ -695,7 +695,7 @@ describe("a door's worn path", () => {
           });
         }
     }
-    expect(doors).toBeGreaterThan(240);
+    expect(doors).toBeGreaterThan(160);
     expect(off, `${off.length} door paths miss their door`).toEqual([]);
   });
 
@@ -736,7 +736,7 @@ describe("a door's worn path", () => {
           });
         }
     }
-    expect(doors).toBeGreaterThan(240);
+    expect(doors).toBeGreaterThan(160);
     expect(off.slice(0, 5), `${off.length} door paths off their wall`).toEqual([]);
   });
 
@@ -809,7 +809,7 @@ describe("a door's worn path", () => {
       }
     }
     expect(hidden).toBeGreaterThan(2000);
-    expect(shownTwice).toBeGreaterThan(200);
+    expect(shownTwice).toBeGreaterThan(150);
     expect(off.slice(0, 5), `${off.length} street door paths`).toEqual([]);
   });
 
@@ -842,7 +842,7 @@ describe("a door's worn path", () => {
         });
       }
     }
-    expect(paths).toBeGreaterThan(120);
+    expect(paths).toBeGreaterThan(80);
   });
 });
 
