@@ -2324,7 +2324,12 @@ export class Game implements UiHost {
     this.cursor.tint = this.world.harvest.outline;
     this.updateRtsTooltip();
     this.hud.update(this.economy);
-    this.resourceBar.update(this.stock, (id) => this.stockCap(id));
+    this.resourceBar.update(
+      this.stock,
+      (id) => this.stockCap(id),
+      this.economy.money,
+      this.economy.tier,
+    );
     this.hud.setFps(this.settings.showFps ? this.loop.fps : null);
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {

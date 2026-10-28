@@ -363,9 +363,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ),
       'info',
     );
-  const resourceBar = new ResourceBar(d.atlas, () => {
+  const resourceBar = new ResourceBar(d.atlas, d.tooltip, () => {
     if (host.mode === 'play' && !menuOpen()) d.screens.toggle(marketScreen);
   });
+  // the money is the bar's first cell; tickets and the age stay in the HUD's block at its end
   resourceBar.right.append(hud.funds);
   resourceBar.stats = () => resourceStats(d.stock, RESOURCE_IDS);
   const tuningScreen = new TuningScreen(

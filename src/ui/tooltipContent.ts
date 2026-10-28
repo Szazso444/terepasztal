@@ -5,20 +5,27 @@
  * tileTooltip.ts, which the tile redesign (#360) replaces.
  *
  * Each tooltip's lines are today's text, with every number in bold and every resource an icon with
- * its name underlined, and the biome named as a term.
+ * its name underlined, and the biome named as a term. The resource tooltips also read the content
+ * (src/data), which names what makes and uses each resource.
  */
-import type { Cost } from '../data/content';
+import { content, type Cost } from '../data/content';
+import { cargoName } from '../sim/cargo';
 import { STR } from '../strings';
 import type { Biome } from '../world/tiles';
 import { biomeTerm } from './biomeTooltip';
 import { fmtMoney } from './numberFormat';
+import { makersOf, takenAt, usersOf, type BuildRef } from './resourceOrder';
 import {
+  bad,
+  dim,
   fill,
   hint,
+  icon,
   num,
   res,
   richText,
   row,
+  term,
   text,
   title,
   type Block,
@@ -103,6 +110,23 @@ export interface ChunkSnapshot {
   price: number;
 }
 
+/**
+ * A resource on the resource bar: a cargo id, `power`, `money` or `population`. For money `have` is
+ * the funds and `cap` is `Infinity`; for population `produced` and `consumed` are births and food
+ * eaten.
+ */
+export interface ResourceSnapshot {
+  id: string;
+  have: number;
+  /** `Infinity`: no cap, and the tooltip leaves it out */
+  cap: number;
+  /** units received and spent over the last week */
+  produced: number;
+  consumed: number;
+  /** the age the game is in, which says which of the linked buildings are still locked */
+  tier: number;
+}
+
 // ---------------------------------------------------------------- shared lines
 
 /** A line of text out of a string from `STR`, its numbers in bold. */
@@ -185,6 +209,64 @@ export function chunkTip(c: ChunkSnapshot): TipDoc {
   return [title(STR.overview.chunkTitle), ...STR.overview.chunkLines(fmtMoney(c.price)).map(line)];
 }
 
+/**
+ * A resource on the bar: its stock, its last week in and out, then what makes it, what uses it and
+ * where trains take it, each building a term that opens `buildingDefTip`, then what it is for.
+ */
+export function resourceTip(s: ResourceSnapshot): TipDoc {
+  const have = s.id === 'money' ? fmtMoney(s.have) : Math.floor(s.have);
+  const stock = Number.isFinite(s.cap) ? [num(have), ' / ', num(s.cap)] : [num(have)];
+  const links = (label: string, refs: BuildRef[]): Block[] =>
+    refs.length
+      ? [
+          row(
+            label,
+            refs.flatMap((r, i) => [...(i ? [', '] : []), buildingTerm(r, s.tier)]),
+          ),
+        ]
+      : [];
+  const info = RESOURCE_INFO[s.id] ?? STR.res.info[s.id];
+  return [
+    title(icon(s.id), resourceName(s.id)),
+    row(STOCK_LABEL[s.id] ?? STR.res.have, stock),
+    row(STR.res.producedDay, num(s.produced.toFixed(1))),
+    row(STR.res.consumedDay, num(s.consumed.toFixed(1))),
+    ...links(STR.res.madeBy, makersOf(s.id)),
+    ...links(STR.res.usedBy, usersOf(s.id)),
+    ...links(STR.res.takenAt, takenAt(s.id)),
+    ...(info ? [line(info)] : []),
+  ];
+}
+
+/**
+ * A building a resource tooltip links to, as the build menu knows it: its name, its flavour, its
+ * cost, its recipe if it has one, and the age it waits for while `tier` is short of it.
+ */
+export function buildingDefTip(ref: BuildRef, tier: number): TipDoc {
+  const def = defOf(ref);
+  if (!def) return [title(ref.name)];
+  const recipe =
+    'recipe' in def
+      ? [
+          row(
+            STR.building.recipe,
+            fill(def.altIn ? STR.building.recipeAlt : STR.building.recipeLine, {
+              input: amounts(def.recipe.in),
+              alt: amounts(def.altIn ?? {}),
+              output: amounts(def.recipe.out),
+            }),
+          ),
+        ]
+      : [];
+  return [
+    title(def.name),
+    dim(def.flavor),
+    text(...fill(STR.build.cost('{cost}'), { cost: amounts(def.cost) })),
+    ...recipe,
+    ...(ref.tier > tier ? [bad(STR.build.tierLocked(ref.tier))] : []),
+  ];
+}
+
 // ---------------------------------------------------------------- parts
 
 function trainLines(t: TrainSnapshot): Block[] {
@@ -195,6 +277,42 @@ function trainLines(t: TrainSnapshot): Block[] {
     line(STR.depot.cargo(Math.round(t.cargo))),
     line(STR.train.weightPower(Math.round(t.weight), Math.round(t.power))),
   ];
+}
+
+/** What the bar's resources that are not cargo are called; a cargo goes by its own name. */
+const RESOURCE_NAME: Record<string, string> = {
+  money: STR.res.funds,
+  population: STR.res.population,
+  power: STR.res.power,
+};
+const resourceName = (id: string) => RESOURCE_NAME[id] ?? cargoName(id);
+
+/** The stock row's label where it is not a stockpile against its cap. */
+const STOCK_LABEL: Record<string, string> = {
+  money: STR.res.funds,
+  population: STR.res.people,
+};
+
+/** What funds and population are for; a cargo's is `STR.res.info`. */
+const RESOURCE_INFO: Record<string, string> = {
+  money: STR.res.fundsHint,
+  population: STR.res.populationHint,
+};
+
+/** A linked building: its name, opening its own tooltip. */
+function buildingTerm(ref: BuildRef, tier: number): Inline {
+  return term(ref.name, () => buildingDefTip(ref, tier));
+}
+
+/** The content def a link stands for. */
+function defOf(ref: BuildRef) {
+  const defs =
+    ref.kind === 'station'
+      ? content.stations.defs
+      : ref.kind === 'building'
+        ? content.buildings
+        : content.decor;
+  return defs.find((d) => d.id === ref.id);
 }
 
 /** "30 wood, 10 stone": each amount in bold, each resource with its icon. */

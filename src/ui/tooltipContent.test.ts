@@ -13,8 +13,10 @@ import { Biome, TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
 import { biomeTip, stationKindTip } from './biomeTooltip';
 import { fmtMoney } from './numberFormat';
 import {
+  buildingDefTip,
   chunkTip,
   pickTip,
+  resourceTip,
   stationTip,
   trainTip,
   worksTip,
@@ -37,6 +39,7 @@ import {
 } from './tooltipDoc';
 import { signedPercent } from './tooltipFormat';
 import { tileTip, type TileSnapshot } from './tileTooltip';
+import { makersOf, usersOf } from './resourceOrder';
 
 /** A biome by its id in src/data/biomes.json, which is its index. */
 const biomeId = (id: string) => {
@@ -893,5 +896,62 @@ describe('the words for stations and ground', () => {
     expect(slots(STR.train.toward)).toEqual(['state', 'station']);
     expect(slots(STR.building.recipeLine)).toEqual(['input', 'output']);
     expect(slots(STR.building.recipeAlt)).toEqual(['input', 'alt', 'output']);
+  });
+});
+
+describe('the resource tooltips', () => {
+  it('a resource tooltip names its stock, its week and links its buildings', () => {
+    const doc = resourceTip({
+      id: 'wheat',
+      have: 300,
+      cap: 1000,
+      produced: 6,
+      consumed: 2,
+      tier: 0,
+    });
+    const lines = doc.map(blockText);
+    expect(lines[0]).toContain(cargoName('wheat'));
+    expect(lines.some((l) => l.includes('300') && l.includes('1000'))).toBe(true);
+    expect(lines.some((l) => l.startsWith(STR.res.madeBy))).toBe(true);
+    expect(termsOf(doc).map((t) => t.term)).toEqual(
+      expect.arrayContaining(['Farm Halt', 'Windmill']),
+    );
+  });
+  it('a building tooltip from a resource says what it costs and when it unlocks', () => {
+    const ref = makersOf('oil')[0];
+    const lines = buildingDefTip(ref, 0).map(blockText);
+    expect(lines.some((l) => l.includes(STR.build.tierLocked(1)))).toBe(true);
+  });
+  it('water and coal say where trains take them', () => {
+    expect(
+      resourceTip({ id: 'water', have: 0, cap: 0, produced: 0, consumed: 0, tier: 0 })
+        .map(blockText)
+        .some((l) => l.startsWith(STR.res.takenAt)),
+    ).toBe(true);
+  });
+  it('the funds read as money, with no cap, and say what they are for', () => {
+    const doc = resourceTip({
+      id: 'money',
+      have: 25000,
+      cap: Infinity,
+      produced: 0,
+      consumed: 0,
+      tier: 0,
+    });
+    const text = lines(doc);
+    expect(text[0]).toBe(STR.res.funds);
+    expect(text).toContain(`${STR.res.funds}: ${fmtMoney(25000)}`);
+    expect(text.join('\n')).not.toContain('Infinity');
+    expect(text).toContain(STR.res.fundsHint);
+  });
+  it('a building whose age has come names no age, and lists its cost and recipe', () => {
+    const mill = usersOf('wheat').find((r) => r.id === 'windmill')!;
+    const text = lines(buildingDefTip(mill, 0));
+    expect(text[0]).toBe('Windmill');
+    expect(text.some((l) => l.startsWith('Cost '))).toBe(true);
+    expect(text.some((l) => l.startsWith(`${STR.building.recipe}: `) && l.includes('wheat'))).toBe(
+      true,
+    );
+    expect(text.join('\n')).not.toContain(STR.build.tierLocked(0));
   });
 });

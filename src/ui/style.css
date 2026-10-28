@@ -1808,15 +1808,21 @@ input[type='range'] {
   font-family: var(--font-mono);
   font-size: 12px;
 }
-#res-card {
-  position: fixed;
-  width: 260px;
-  z-index: 80;
-  pointer-events: none;
-  font-size: 11px;
+#resbar .res-group {
+  display: flex;
+  align-items: center;
 }
-#res-card .kv {
-  font-size: 11px;
+/* a gap between the groups: funds | materials | fuel and power | food | people */
+#resbar .res-sep {
+  width: 10px;
+  flex: none;
+}
+/* each cell is a term (its tooltip links the buildings), drawn as the cell, not as a link */
+#resbar .tt-term {
+  display: flex;
+  color: inherit;
+  border-bottom: none;
+  cursor: inherit;
 }
 #age-card {
   position: fixed;
