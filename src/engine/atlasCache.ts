@@ -15,7 +15,11 @@ import { isFrameDef, type AtlasImage, type FrameDef } from './atlas';
  *   none, so it never caches: art edited under it always shows at once.
  * - the content bundle the session runs on, overrides from the content editor included: rolling
  *   stock is drawn from it.
- * - the browser (its user agent): pictures are drawn with its canvas.
+ * - the browser: pictures are drawn with its canvas, so its user agent, and a fingerprint of what
+ *   its canvas draws (`canvasFingerprint`). The same browser can rasterise a path differently on
+ *   another day, on the GPU or in software, which moves the anti-aliased edge of a track sprite and
+ *   with it the sprite's trimmed size: such a browser draws a new version, as it would without a
+ *   cache.
  * - `ATLAS_CACHE_FORMAT`, the layout of a stored record.
  *
  * The shipped `public/assets` files are not part of it: they are never cached. A partial file is
@@ -70,11 +74,20 @@ export interface AtlasCodec {
  * `crypto.subtle` does not (a page served over plain http on the local network).
  */
 export function hashString(text: string): string {
+  return hashUnits(text.length, (i) => text.charCodeAt(i));
+}
+
+/** `hashString` over bytes, such as a canvas's pixels. */
+export function hashBytes(bytes: ArrayLike<number>): string {
+  return hashUnits(bytes.length, (i) => bytes[i]);
+}
+
+function hashUnits(length: number, at: (i: number) => number): string {
   const lane = (seed: number) => {
     let h1 = 0xdeadbeef ^ seed;
     let h2 = 0x41c6ce57 ^ seed;
-    for (let i = 0; i < text.length; i++) {
-      const c = text.charCodeAt(i);
+    for (let i = 0; i < length; i++) {
+      const c = at(i);
       h1 = Math.imul(h1 ^ c, 2654435761);
       h2 = Math.imul(h2 ^ c, 1597334677);
     }
@@ -93,13 +106,69 @@ export function atlasCacheVersion(parts: {
   content: unknown;
   /** the browser's user agent */
   agent: string;
+  /** what the browser's canvas draws (`canvasFingerprint`) */
+  canvas: string;
 }): string {
   return [
     `f${ATLAS_CACHE_FORMAT}`,
     parts.source,
     hashString(JSON.stringify(parts.content) ?? ''),
     hashString(parts.agent),
+    parts.canvas,
   ].join(':');
+}
+
+/**
+ * A hash of what this browser's canvas draws for the strokes the track art is made of: a clipped,
+ * scaled frame of the track sprites' size with a translucent fill, a fractional polygon and a
+ * round-joined line. Two browsers that rasterise these alike draw the generators' pictures alike.
+ * Empty where there is no canvas to ask, which only a browser without one would be.
+ */
+export function canvasFingerprint(
+  create: () => HTMLCanvasElement | null = () =>
+    typeof document === 'undefined' ? null : document.createElement('canvas'),
+): string {
+  try {
+    const canvas = create();
+    if (!canvas) return '';
+    // the size of a track sprite's canvas (`src/art/trackIllustrated.ts`): the browser may choose
+    // its rasteriser by canvas size
+    canvas.width = 288;
+    canvas.height = 176;
+    const c = canvas.getContext('2d');
+    if (!c) return '';
+    c.scale(4, 4);
+    c.beginPath();
+    c.moveTo(36, 3.7);
+    c.lineTo(68.6, 20);
+    c.lineTo(36, 36.3);
+    c.lineTo(3.4, 20);
+    c.closePath();
+    c.clip();
+    c.globalAlpha = 0.37;
+    c.fillStyle = '#6b5a3e';
+    c.fillRect(0, 0, 72, 44);
+    c.globalAlpha = 1;
+    c.beginPath();
+    c.moveTo(10.3, 12.15);
+    c.lineTo(61.7, 27.85);
+    c.lineTo(58.2, 31.1);
+    c.lineTo(13.9, 17.45);
+    c.closePath();
+    c.fillStyle = '#8a8478';
+    c.fill();
+    c.beginPath();
+    c.moveTo(7.25, 25.5);
+    c.lineTo(36.6, 11.2);
+    c.lineTo(64.1, 24.75);
+    c.strokeStyle = '#3b3229';
+    c.lineWidth = 1.35;
+    c.lineJoin = 'round';
+    c.stroke();
+    return hashBytes(c.getImageData(0, 0, canvas.width, canvas.height).data);
+  } catch {
+    return '';
+  }
 }
 
 /** `work`, or `fallback` once `ms` have passed without it settling. */
@@ -294,7 +363,7 @@ export function browserAtlasCache(content: unknown): AtlasCache | null {
   const agent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
   return new AtlasCache(
     openAtlasStore(),
-    atlasCacheVersion({ source, content, agent }),
+    atlasCacheVersion({ source, content, agent, canvas: canvasFingerprint() }),
     browserAtlasCodec,
   );
 }

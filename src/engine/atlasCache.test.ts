@@ -4,6 +4,8 @@ import {
   ATLAS_CACHE_FORMAT,
   AtlasCache,
   atlasCacheVersion,
+  canvasFingerprint,
+  hashBytes,
   hashString,
   isCachedAtlas,
   openAtlasStore,
@@ -79,18 +81,66 @@ describe('hashString', () => {
   });
 });
 
+describe('hashBytes', () => {
+  it('hashes bytes as hashString hashes the same code units', () => {
+    const bytes = new Uint8ClampedArray([0, 255, 17, 128, 3]);
+    expect(hashBytes(bytes)).toBe(hashString(String.fromCharCode(...bytes)));
+    expect(hashBytes(bytes)).not.toBe(hashBytes(new Uint8ClampedArray([0, 255, 17, 128, 4])));
+  });
+});
+
+describe('canvasFingerprint', () => {
+  /** A canvas whose 2D context reads back the given pixels and accepts every drawing call. */
+  function canvasReading(pixels: number[] | 'throws' | 'no context') {
+    const context = new Proxy(
+      {},
+      {
+        get: (_, name) =>
+          name === 'getImageData'
+            ? (_x: number, _y: number, w: number, h: number) => {
+                if (typeof pixels === 'string') throw new Error('SecurityError: tainted');
+                return { width: w, height: h, data: new Uint8ClampedArray(pixels) };
+              }
+            : () => undefined,
+        set: () => true,
+      },
+    );
+    return () =>
+      ({
+        width: 0,
+        height: 0,
+        getContext: () => (pixels === 'no context' ? null : context),
+      }) as unknown as HTMLCanvasElement;
+  }
+
+  it('is the hash of what the canvas reads back, so two rasterisers tell apart', () => {
+    const gpu = canvasFingerprint(canvasReading([0, 0, 0, 0, 40, 40, 30, 94]));
+    expect(gpu).toBe(hashBytes([0, 0, 0, 0, 40, 40, 30, 94]));
+    expect(canvasFingerprint(canvasReading([0, 0, 0, 0, 40, 40, 30, 94]))).toBe(gpu);
+    expect(canvasFingerprint(canvasReading([0, 0, 0, 0, 40, 41, 30, 95]))).not.toBe(gpu);
+  });
+
+  it('is empty, never a throw, where there is no canvas or it cannot be read', () => {
+    expect(canvasFingerprint(() => null)).toBe('');
+    expect(canvasFingerprint()).toBe('');
+    expect(canvasFingerprint(canvasReading('no context'))).toBe('');
+    expect(canvasFingerprint(canvasReading('throws'))).toBe('');
+  });
+});
+
 describe('atlasCacheVersion', () => {
   const parts = {
     source: '0123456789abcdef',
     content: { locos: [{ id: 'mav375', paint: 'green' }], wagons: [] },
     agent: 'Chrome/156',
+    canvas: '00112233aabbccdd',
   };
 
   it('is the same for the same build, content and browser', () => {
     expect(atlasCacheVersion(parts)).toBe(atlasCacheVersion(structuredClone(parts)));
   });
 
-  it('changes with the build source, with any content change, override or not, and with the browser', () => {
+  it('changes with the build source, with any content change, override or not, and with the browser and its canvas', () => {
     const v = atlasCacheVersion(parts);
     const changed = [
       { ...parts, source: 'fedcba9876543210' },
@@ -98,6 +148,8 @@ describe('atlasCacheVersion', () => {
       { ...parts, content: { ...parts.content, locos: [{ id: 'mav375', paint: 'red' }] } },
       { ...parts, content: { ...parts.content, wagons: [{ id: 'hopper' }] } },
       { ...parts, agent: 'Chrome/157' },
+      // the same browser rasterising in software instead of on the GPU
+      { ...parts, canvas: '00112233aabbccde' },
     ];
     const versions = changed.map(atlasCacheVersion);
     for (const other of versions) expect(other).not.toBe(v);
