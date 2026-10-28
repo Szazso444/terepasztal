@@ -26,6 +26,7 @@ import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
 import { STR } from '../strings';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -119,7 +120,7 @@ function world(island: boolean) {
     inventory = new Inventory();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, inventory, economy, stock);
   for (let x = 2; x < SIZE - 2; x++) track.place(x, ROW, 'straight', 1);
@@ -721,7 +722,13 @@ describe('Fleet sidings', () => {
         const track = new TrackGraph(SIZE, SIZE);
         const economy = new Economy();
         const stock = new Stockpile();
-        const builder = new Builder(map, new RegionState(map), track, economy, stock);
+        const builder = new Builder(
+          map,
+          new RegionState(map),
+          track,
+          economy,
+          storeWith({}).stores,
+        );
         const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
         const runs = layTangle(track, c);
         for (const s of c.stations) {

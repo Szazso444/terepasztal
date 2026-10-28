@@ -15,6 +15,7 @@ import { setSupplyMode, type SupplyMode } from '../sim/supply';
 import { GameClock } from '../sim/time';
 import { Economy } from '../sim/economy';
 import { Stockpile } from '../sim/stockpile';
+import { StoreRegistry } from '../sim/stores';
 import { Builder, type Decor } from '../sim/build';
 import { buildingDef, type Building } from '../sim/buildings';
 import { type Station, resetStationIds } from '../sim/stations';
@@ -60,6 +61,8 @@ export interface SimWorld {
   readonly builder: Builder;
   readonly economy: Economy;
   readonly stock: Stockpile;
+  /** every store; the builder pays from them */
+  readonly stores: StoreRegistry;
   readonly towns: TownRegistry;
   readonly houses: HouseRegistry;
   readonly power: PowerGrid;
@@ -105,10 +108,12 @@ export function mapParams(size: number): MapGenParams {
  * `builder` changes the rest of the world as in the game: track and bridges refresh bridge
  * capacity and `fleet.railBeds` (which Game refreshes before its next step), signals rebuild the
  * fleet's signals, decor syncs houses and towns, works refresh towns, power lines, plants and
- * substations rebuild power and catenary, supply changes rebuild the catenary, and a placed
- * station gets its season and biome production multiplier. Contract offers follow
- * DEFAULT_SETTINGS (every rarity asks, so an offer waits for `contracts.accept`) and the fleet's
- * signalling level is the default. Toasts, sounds, renderer updates and the notices Game pushes
+ * substations rebuild power and catenary, supply changes rebuild the catenary, and a station
+ * refreshes the towns, a placed one also getting its season and biome production multiplier. The
+ * store registry is attached to the builder, which derives the stores again after each station
+ * or power plant change; the stores start empty, so paid building needs goods put in one first.
+ * Contract offers follow DEFAULT_SETTINGS (every rarity asks, so an offer waits for
+ * `contracts.accept`) and the fleet's signalling level is the default. Toasts, sounds, renderer updates and the notices Game pushes
  * for the notice panel (junction alerts, a failed contract, an age-up) are left unset;
  * `builder.groundCheck` asks the renderer in the game and stays unset here, so all ground counts
  * as level.
@@ -128,6 +133,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   const economy = new Economy();
   const inventory = new Inventory();
   const stock = new Stockpile();
+  const stores = new StoreRegistry();
   const notices = new Notices();
   const trade = new TradeDesk();
   trade.seed = seed;
@@ -139,8 +145,9 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
       : generateMap(seed, mapParams(size), supply);
   const regions = new RegionState(map, 0);
   const track = new TrackGraph(map.w, map.h);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, stores);
   const towns = new TownRegistry(builder);
+  stores.attach({ builder, towns, track });
   const houses = new HouseRegistry(builder, towns, stock);
   towns.residentsAt = (x, y) => houses.residentsAt(x, y);
   builder.onIndustryPlaced = (x, y) => houses.industryPlaced(x, y);
@@ -177,6 +184,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
     refreshRails();
   };
   builder.onStationChanged = (s: Station, removed: boolean) => {
+    towns.refresh();
     if (removed) return;
     const biome = biomeDef(biomeAt(map, s.x, s.y)).production[s.def.id] ?? 1;
     // Game keeps the season of its last step, with weather on as in DEFAULT_SETTINGS
@@ -226,6 +234,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
     builder,
     economy,
     stock,
+    stores,
     towns,
     houses,
     power,

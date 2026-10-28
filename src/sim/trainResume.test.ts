@@ -10,6 +10,7 @@ import { Builder } from './build';
 import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, type StationJSON } from './stations';
+import type { StoreJSON } from './stores';
 import {
   Train,
   defaultStop,
@@ -37,6 +38,7 @@ import {
   SCENARIO_ROW,
   SCENARIO_TICK_RATE,
 } from '../testing/trafficScenario';
+import { storeWith } from '../testing/storeFixtures';
 
 // Trains carry on after a load (issue #81). A train saved while moving or loading, taken through
 // toJSON, JSON and fromJSON into a fresh fleet on the same track, runs on as the uninterrupted
@@ -131,7 +133,7 @@ function scene(): World {
   const regions = new RegionState(map);
   const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const quarry = new Station('quarry', 20, ROW - 1);
   quarry.storage.set('stone', 40);
@@ -176,7 +178,7 @@ function loaded(w: World, text: string, edit?: (j: { stations: StationJSON[] }) 
   stock.load(j.stock);
   const economy = new Economy();
   economy.load(j.economy);
-  const builder = new Builder(w.map, w.regions, w.track, economy, stock);
+  const builder = new Builder(w.map, w.regions, w.track, economy, storeWith({}).stores);
   builder.free = true;
   for (const s of j.stations) builder.stations.push(Station.fromJSON(s));
   for (const [key, d] of w.builder.decor) builder.decor.set(key, { ...d });
@@ -537,7 +539,7 @@ function layoutScene(c: Layout): World {
   const regions = new RegionState(map);
   const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const put = (kind: Kind, x: number, y: number, stocked: boolean) => {
     const s = new Station(kind, x, y);
@@ -1348,7 +1350,13 @@ function trafficLoaded(c: TrafficControl, tick: number): Fleet {
   const j = JSON.parse(c.texts[tick]) as { trains: TrainJSON[]; stations: StationJSON[] };
   const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(c.map, new RegionState(c.map), c.track, economy, stock);
+  const builder = new Builder(
+    c.map,
+    new RegionState(c.map),
+    c.track,
+    economy,
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (const s of j.stations) builder.stations.push(Station.fromJSON(s));
   const fleet = new Fleet(c.track, builder, c.map, new Inventory(), economy, stock);
@@ -1860,7 +1868,7 @@ function grownLoaded(c: TrafficControl, tick: number): Fleet {
   track.refreshSwitchForms();
   const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   for (const s of save.stations) builder.stations.push(Station.fromJSON(s));
   const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
@@ -2212,11 +2220,12 @@ function wantsThroughIdle(w: SimWorld): boolean {
   });
 }
 
-/** What a save keeps of an idle scene: its trains and stations, as JSON. */
+/** What a save keeps of an idle scene: its trains, stations and stores, as JSON. */
 const idleSaved = (w: SimWorld) =>
   JSON.stringify({
     trains: w.fleet.trains.map((t) => t.toJSON()),
     stations: w.builder.stations.map((s) => s.toJSON()),
+    stores: w.stores.toJSON(),
   });
 /**
  * The scene laid afresh with the stations read back and the trains through `Train.fromJSON`, as a
@@ -2224,9 +2233,15 @@ const idleSaved = (w: SimWorld) =>
  */
 function idleLoaded(sc: IdleScene, text: string): SimWorld {
   const { w } = sc.lay();
-  const j = JSON.parse(text) as { trains: TrainJSON[]; stations: StationJSON[] };
+  const j = JSON.parse(text) as {
+    trains: TrainJSON[];
+    stations: StationJSON[];
+    stores: StoreJSON[];
+  };
   const stations = j.stations.map((s) => Station.fromJSON(s));
   w.builder.stations.splice(0, w.builder.stations.length, ...stations);
+  // the stores follow the stations read back, and get their goods
+  w.stores.load(j.stores);
   w.fleet.trains = j.trains.map((t) => Train.fromJSON(t, w.track));
   return w;
 }

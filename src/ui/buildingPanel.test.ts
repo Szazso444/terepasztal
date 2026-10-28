@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { simWorld, type SimWorld } from '../testing/simWorld';
+import { depotWith } from '../testing/storeFixtures';
 import { STR } from '../strings';
 import { LAST_AGE } from '../sim/ages';
 import { rules, DEFAULT_RULES, weekSeconds } from '../sim/rules';
@@ -158,6 +159,8 @@ describe('the crew a works panel shows', () => {
     for (const def of crewed) {
       const [x, y] = [20, 20];
       const w = site(def, x, y);
+      // the store the upgrade is paid from, with its own crew counted before
+      const depot = depotWith(w, {}, { x: x - 10, y });
       const before = w.builder.crewTotal();
       // placed the way the editor places one, so the age and the production chain do not matter
       w.builder.free = true;
@@ -168,7 +171,7 @@ describe('the crew a works panel shows', () => {
       expect(BuildingPanel.crew(b!), def.id).toBe(def.crew);
       expect(crew(), def.id).toBe(BuildingPanel.crew(b!));
 
-      for (const [k, v] of Object.entries(buildingUpgradeCost(b!)!)) w.stock.add(k, v);
+      for (const [k, v] of Object.entries(buildingUpgradeCost(b!)!)) depot.add(k, v);
       expect(w.builder.upgradeBuilding(b!), def.id).toBe(true);
       expect(b!.work, def.id).toBeDefined();
       expect(BuildingPanel.crew(b!), def.id).toBe(0);

@@ -2439,13 +2439,8 @@ export class Train {
         continue;
       }
       // where the load can go: a depot's or a warehouse's store, or a station that wants it
-      // (contract or spot market); a depot with no store yet (`dock`) still feeds the stockpile
-      const toPile = st.def.pool && !st.dock;
-      const room = toPile
-        ? Math.max(0, ctx.stockCap(w.cargo) - ctx.stockpile.get(w.cargo))
-        : st.def.pool || st.def.stockpile
-          ? st.roomFor(w.cargo)
-          : 0;
+      // (contract or spot market)
+      const room = st.def.pool || st.def.stockpile ? st.roomFor(w.cargo) : 0;
       const contractable = !st.def.pool && !st.def.stockpile && st.accepts(w.cargo);
       if (!st.def.pool && !st.def.stockpile && !contractable) continue;
       let n = Math.min(w.amount, budget, contractable ? w.amount : room);
@@ -2463,8 +2458,7 @@ export class Train {
       n = credited + toStore;
       if (n <= 1e-6) continue;
       if (toStore > 0) {
-        if (toPile) ctx.stockpile.add(w.cargo, toStore, Infinity);
-        else st.store(w.cargo, toStore);
+        st.store(w.cargo, toStore);
         this.flowAcc[w.cargo] = (this.flowAcc[w.cargo] ?? 0) + toStore;
       }
       w.amount -= n;

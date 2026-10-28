@@ -38,6 +38,7 @@ import { bridgeCapacity } from './bridges';
 import { HouseRegistry, type House } from './houses';
 import { TownRegistry } from './towns';
 import { rules, DEFAULT_RULES, weekSeconds } from './rules';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -54,13 +55,18 @@ const ageName = (age: number) => STR.ages.name[ageDef(age).id];
 /** A flat world in play mode, in `age`, with every resource in plenty. */
 function world(age = 0) {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
-    stock = new Stockpile(),
+    pile = new Stockpile(),
     economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), new TrackGraph(64, 64), economy, stock);
-  for (const k of ['wood', 'stone', 'iron']) stock.add(k, 1e6);
+  // the builder pays from a depot by the works; houses still pay from the stockpile
+  const { stores, depot: stock } = storeWith(
+    { wood: 1e6, stone: 1e6, iron: 1e6 },
+    { x: 10, y: 10 },
+  );
+  const builder = new Builder(map, new RegionState(map), new TrackGraph(64, 64), economy, stores);
+  for (const k of ['wood', 'stone', 'iron']) pile.add(k, 1e6);
   economy.setAge(age);
   const towns = new TownRegistry(builder);
-  const houses = new HouseRegistry(builder, towns, stock);
+  const houses = new HouseRegistry(builder, towns, pile);
   return { map, stock, economy, builder, houses };
 }
 

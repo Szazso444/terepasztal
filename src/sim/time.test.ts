@@ -25,6 +25,7 @@ import {
   type TrafficScenario,
 } from '../testing/trafficScenario';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -53,7 +54,7 @@ function line() {
     track = new TrackGraph(96, 96),
     stock = new Stockpile(),
     economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);

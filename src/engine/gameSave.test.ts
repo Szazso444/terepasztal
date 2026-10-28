@@ -1104,6 +1104,7 @@ describe('roads through Game.snapshot and Game.applySave', () => {
       builder: w.builder,
       economy: w.economy,
       stock: w.stock,
+      stores: w.stores,
       towns: w.towns,
       houses: w.houses,
       power: w.power,
@@ -1246,10 +1247,12 @@ describe('roads through Game.snapshot and Game.applySave', () => {
     // nothing was paid back: the money and the stock are the control's, which took nothing off
     expect(treated.economy.money).toBe(control.economy.money);
     expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
-    // ... where taking a road up by hand does pay back, under this tuning
-    const stone = control.stock.get('stone');
+    expect(treated.stores.toJSON()).toEqual(control.stores.toJSON());
+    // ... where taking a road up by hand does pay back, under this tuning, to the depot
+    const depot = control.stores.nearest(16, 22, Infinity)[0];
+    const stone = depot.get('stone');
     expect(control.builder.removeRoad(16, 22)).toBe(true);
-    expect(control.stock.get('stone')).toBeGreaterThan(stone);
+    expect(depot.get('stone')).toBeGreaterThan(stone);
     // the repair took the roads off and bent no ground for them
     for (const [x, y, t] of spoilt) expect(treated.map.terrain[y * treated.map.w + x]).toBe(t);
   });

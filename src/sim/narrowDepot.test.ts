@@ -13,6 +13,7 @@ import { Station, stationFootprint } from './stations';
 import { locoDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -23,7 +24,7 @@ function world() {
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const inventory = new Inventory();
   const fleet = new Fleet(track, builder, map, inventory, economy, stock);

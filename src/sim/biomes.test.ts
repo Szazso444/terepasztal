@@ -19,6 +19,7 @@ import { lineSpeedCap } from './lineSpeed';
 import { setSupplyMode } from './supply';
 import { Inventory } from '../gacha/inventory';
 import { rules, DEFAULT_RULES } from './rules';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -181,10 +182,10 @@ describe('the Mountain biome on grass', () => {
   it('charges the grass price × 1.5 for track', () => {
     const map = emptyMap(4242, 48, 48, Terrain.Grass),
       track = new TrackGraph(48, 48),
-      stock = new Stockpile();
+      { stores, depot: stock } = storeWith({}, { x: 20, y: 22 });
     const regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-    const builder = new Builder(map, regions, track, new Economy(), stock);
+    const builder = new Builder(map, regions, track, new Economy(), stores);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
     map.biome[24 * map.w + 20] = MOUNTAIN;
     const item: TrackItem = { kind: 'straight', cls: 'regular' };
@@ -206,7 +207,7 @@ describe('the Mountain biome on grass', () => {
         track = new TrackGraph(96, 96),
         stock = new Stockpile(),
         economy = new Economy();
-      const builder = new Builder(map, new RegionState(map), track, economy, stock);
+      const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
       builder.free = true;
       const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
       for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
@@ -293,10 +294,10 @@ describe('every biome in the table', () => {
       (c) => {
         Object.assign(rules, DEFAULT_RULES, { buildCostMul: c.buildCost / 100 });
         const map = emptyMap(4242, 12, 12, c.terrain),
-          stock = new Stockpile(),
+          { stores, depot: stock } = storeWith({}, { x: 5, y: 5 }),
           regions = new RegionState(map);
         for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-        const builder = new Builder(map, regions, new TrackGraph(12, 12), new Economy(), stock);
+        const builder = new Builder(map, regions, new TrackGraph(12, 12), new Economy(), stores);
         const list = pieceCost(c.item.kind, c.item.cls, c.item.cls2);
         for (const k of Object.keys(list)) stock.amounts.set(k, 1e6);
         const name = TERRAIN_NAMES[c.terrain],
@@ -327,7 +328,7 @@ describe('every biome in the table', () => {
         stock = new Stockpile(),
         economy = new Economy();
       map.biome.fill(biome);
-      const builder = new Builder(map, new RegionState(map), track, economy, stock);
+      const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
       builder.free = true;
       const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
       for (let x = 2; x < 94; x++) track.place(x, 20, 'straight', 1);

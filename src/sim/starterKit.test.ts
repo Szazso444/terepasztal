@@ -39,6 +39,7 @@ import { CRAFT_TIERS, Crafting, craftPool, craftResources } from '../gacha/craft
 import { bannerPool } from '../gacha/gacha';
 import { itemDef, locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -76,7 +77,7 @@ function newGame(stock: Record<string, number> = plenty()) {
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stockpile);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const inventory = new Inventory();
   inventory.seedStarter(0);

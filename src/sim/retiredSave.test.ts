@@ -19,6 +19,7 @@ import { Inventory } from '../gacha/inventory';
 import { Gacha } from '../gacha/gacha';
 import { Crafting } from '../gacha/crafting';
 import { LOCOS, WAGONS, locoDef, wagonDef, type Item } from '../gacha/items';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -37,7 +38,7 @@ function world() {
     stock = new Stockpile(),
     economy = new Economy(),
     inventory = new Inventory();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, inventory, economy, stock);
   const gacha = new Gacha(new Rng(1), inventory);

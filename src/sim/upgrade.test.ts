@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
+import { depotWith } from '../testing/storeFixtures';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import type { Rng } from '../engine/rng';
 import { content } from '../data/content';
@@ -60,7 +61,10 @@ interface World extends SimWorld {
 function world(age: number, poor = false): World {
   const w = simWorld({ terrain: 'grass', size: 64 });
   w.economy.setAge(age);
-  if (!poor) for (const k of ['wood', 'stone', 'iron']) w.stock.add(k, 1e6);
+  // houses pay from the stockpile, the builder from the depot, in reach of all that stands here
+  const rich = { wood: 1e6, stone: 1e6, iron: 1e6 };
+  depotWith(w, poor ? {} : rich, { x: 14, y: 16 });
+  if (!poor) for (const [k, n] of Object.entries(rich)) w.stock.add(k, n);
   line(w, 2, 30, 30);
   const ups: Upgraded[] = [];
   w.builder.onUpgraded = (e) => ups.push(e);
@@ -93,8 +97,8 @@ function house(w: SimWorld, x: number, y: number): House {
   return w.houses.at(x, y)!;
 }
 
-/** What the stockpile holds, to compare before and after. */
-const holdings = (w: SimWorld) => JSON.stringify(w.stock.toJSON());
+/** What the stockpile and the stores hold, to compare before and after. */
+const holdings = (w: SimWorld) => JSON.stringify([w.stock.toJSON(), w.stores.toJSON()]);
 
 /** A farm, a windmill and a house, each one level 1. */
 function three(w: SimWorld) {
@@ -341,7 +345,8 @@ describe('a building being upgraded', () => {
     w.builder.tickWorks(upgradeSeconds(2));
     expect([store.accepts('wood'), town.accepts('wheat')]).toEqual([true, true]);
     expect(toTown()).toEqual(['wheat']);
-    expect(store.roomFor('stone')).toBe(store.capacity - 30);
+    // the warehouse keeps its goods in its own store, which has room per good
+    expect(store.roomFor('stone')).toBe(store.capacity - store.stored('stone'));
     expect(store.store('stone', 10)).toBe(10);
   });
 
@@ -500,7 +505,7 @@ describe('what may be upgraded', () => {
       w.houses.canUpgrade(home),
     ]) {
       expect(c.ok).toBe(false);
-      expect(c.reason).toMatch(/^Need /);
+      expect(c.reason).toMatch(/^(Need|No store within \d+ tiles holds) /);
     }
     expect(w.builder.upgradeStation(farm)).toBe(false);
     expect(w.builder.upgradeBuilding(mill)).toBe(false);
@@ -576,7 +581,7 @@ describe('what may be upgraded', () => {
     const read = readSaveText(text);
     if (!('save' in read)) throw new Error(`the save was refused as ${read.error}`);
     const { save } = read;
-    expect(save.stations[0].work).toEqual(work);
+    expect(save.stations.find((s) => s.defId === 'farm')!.work).toEqual(work);
     expect(save.buildings![0][5]).toEqual(work);
     expect(save.houses!.list[0].work).toEqual(work);
 
@@ -589,7 +594,7 @@ describe('what may be upgraded', () => {
     }
     house(v, 20, 25);
     v.houses.load(save.houses);
-    const farm2 = v.builder.stations[0];
+    const farm2 = v.builder.stations.find((s) => s.def.id === 'farm')!;
     const mill2 = v.builder.buildingAt(4, 10)!;
     const home2 = v.houses.at(20, 25)!;
     expect([farm2.work, mill2.work, home2.work]).toEqual([work, work, work]);

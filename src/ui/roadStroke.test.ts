@@ -5,7 +5,7 @@ import { Builder, type PlacementCheck } from '../sim/build';
 import { Economy } from '../sim/economy';
 import { roadCost } from '../sim/roads';
 import { DEFAULT_RULES, rules } from '../sim/rules';
-import { Stockpile, fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stockpile';
 import { STR } from '../strings';
 import { forAll } from '../testing/property';
 import { emptyMap } from '../world/mapgen';
@@ -20,6 +20,7 @@ import {
   strokeTiles,
   type StrokeJudge,
 } from './roadStroke';
+import { storeWith } from '../testing/storeFixtures';
 
 type Tile = { x: number; y: number };
 
@@ -172,8 +173,11 @@ function world(rng: Rng) {
   const regions = new RegionState(map);
   regions.load([true, false, false, false]);
   const track = new TrackGraph(W, W);
-  const stock = new Stockpile();
-  const builder = new Builder(map, regions, track, new Economy(), stock);
+  // one store, in reach of every tile: the preview pays from the stroke's first tile, the release
+  // from each tile's own nearest store, the same one here
+  rules.buildReach = W;
+  const { stores, depot: stock } = storeWith({}, { x: W / 2, y: W / 2 });
+  const builder = new Builder(map, regions, track, new Economy(), stores);
   const start = { x: rng.int(0, 40), y: rng.int(0, 40) };
   const end = { x: rng.int(0, W - 1), y: rng.int(0, W - 1) };
   const line = strokeTiles(start, end);
@@ -202,7 +206,7 @@ describe("a road drag's preview against its release", () => {
       (seed) => {
         const { builder, stock, start, end } = world(new Rng(seed));
         const tiles = strokeTiles(start, end);
-        const preview = judgeStroke(tiles, builderJudge(builder));
+        const preview = judgeStroke(tiles, builderJudge(builder, start));
         const before = new Set(builder.roads.list().map((t) => `${t.x},${t.y}`));
         const stone = stock.get('stone');
         // the release: every tile of the stroke in order, the builder deciding each
@@ -225,33 +229,41 @@ describe("a road drag's preview against its release", () => {
     const map = emptyMap(7, W, W, Terrain.Grass);
     const regions = new RegionState(map);
     regions.load([true, false, false, false]);
-    const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), new Stockpile());
+    const builder = new Builder(
+      map,
+      regions,
+      new TrackGraph(W, W),
+      new Economy(),
+      storeWith({}).stores,
+    );
     builder.free = true;
     for (let x = 8; x <= 12; x++) builder.placeTrack(x, 10, STRAIGHT.regular, 1);
     const tiles = strokeTiles({ x: 6, y: 10 }, { x: 14, y: 10 });
     for (const t of tiles) expect(builder.checkRoad(t.x, t.y).ok, `${t.x}`).toBe(true);
-    const c = judgeStroke(tiles, builderJudge(builder));
+    const c = judgeStroke(tiles, builderJudge(builder, tiles[0]));
     expect(c.refused).toBeGreaterThan(0);
     expect(c.reasons).toEqual([STR.build.crossingAlong]);
     const placed = tiles.map((t) => builder.placeRoad(t.x, t.y));
     expect(placed).toEqual(c.steps.map((s) => s.state === 'lay'));
   });
 
-  it('names what the whole drag is short of, when the stock pays for none of it', () => {
+  it('names what the whole drag is short of, when the store pays for none of it', () => {
     const map = emptyMap(7, W, W, Terrain.Grass);
     const regions = new RegionState(map);
     regions.load([true, false, false, false]);
-    const stock = new Stockpile();
-    const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), stock);
+    const { stores, depot: stock } = storeWith({}, { x: 4, y: 4 });
+    const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), stores);
     const tiles = strokeTiles({ x: 2, y: 2 }, { x: 7, y: 2 });
     // each tile alone is refused for its price
     for (const t of tiles) expect(builder.checkRoad(t.x, t.y).ok).toBe(false);
-    const c = judgeStroke(tiles, builderJudge(builder));
+    const c = judgeStroke(tiles, builderJudge(builder, tiles[0]));
     expect(c.laid).toBe(0);
     expect(c.refused).toBe(tiles.length);
     const whole: Cost = {};
     for (const [k, v] of Object.entries(roadCost())) whole[k] = v * tiles.length;
-    expect(c.reasons).toEqual([STR.build.needResources(fmtCost(stock.missing(whole)))]);
+    expect(c.reasons).toEqual([
+      STR.build.noStoreInReach(rules.buildReach, fmtCost(stock.missing(whole))),
+    ]);
     expect(tiles.map((t) => builder.placeRoad(t.x, t.y))).toEqual(tiles.map(() => false));
   });
 
@@ -259,10 +271,10 @@ describe("a road drag's preview against its release", () => {
     const map = emptyMap(7, W, W, Terrain.Grass);
     const regions = new RegionState(map);
     regions.load([true, false, false, false]);
-    const stock = new Stockpile();
-    stock.add('stone', 1000);
-    const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), stock);
-    const c = judgeStroke(strokeTiles({ x: 2, y: 2 }, { x: 2, y: 11 }), builderJudge(builder));
+    const { stores } = storeWith({ stone: 1000 }, { x: 2, y: 2 });
+    const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), stores);
+    const from = { x: 2, y: 2 };
+    const c = judgeStroke(strokeTiles(from, { x: 2, y: 11 }), builderJudge(builder, from));
     expect(c.laid).toBe(10);
     expect(c.cost).toEqual({ stone: 10 * roadCost().stone });
   });

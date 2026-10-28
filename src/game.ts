@@ -126,6 +126,7 @@ import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
 import { Crafting } from './gacha/crafting';
 import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
+import { StoreRegistry } from './sim/stores';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
 import {
@@ -225,6 +226,8 @@ export class Game implements UiHost {
   gacha!: Gacha;
   crafting!: Crafting;
   stock = new Stockpile();
+  /** every town's, depot's and warehouse's goods; building pays from them */
+  stores = new StoreRegistry();
   power!: PowerGrid;
   houses!: HouseRegistry;
   /** overview: train picked with a click, and a route being recorded for it */
@@ -577,6 +580,8 @@ export class Game implements UiHost {
     }
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
+    // the stations went in past the builder: the stores are derived from them once
+    this.stores.refresh();
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
   }
   applyLevelStart(level: LevelData) {
@@ -901,8 +906,9 @@ export class Game implements UiHost {
     this.camera.centerOn(c.x, c.y);
 
     this.track = new TrackGraph(this.map.w, this.map.h);
-    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stock);
+    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stores);
     this.towns = new TownRegistry(this.builder);
+    this.stores.attach({ builder: this.builder, towns: this.towns, track: this.track });
     this.houses = new HouseRegistry(this.builder, this.towns, this.stock);
     this.towns.residentsAt = (x, y) => this.houses.residentsAt(x, y);
     this.houses.onMessage = (m, k) => this.toasts.push(m, k);
@@ -1332,6 +1338,8 @@ export class Game implements UiHost {
     }
     if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
     this.towns.load(j.towns);
+    // the stations and towns went in past the builder: the stores are derived from them once
+    this.stores.refresh();
     this.refreshCity();
     this.ensureDepot();
     this.builder.refreshStationBoosts();

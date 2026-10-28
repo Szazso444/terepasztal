@@ -19,6 +19,7 @@ import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
 import { STR } from '../strings';
 import { forAll } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -48,7 +49,7 @@ function world() {
   const economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
   for (let x = 2; x < SIZE - 2; x++) track.place(x, ROW, 'straight', 1);
@@ -477,7 +478,7 @@ describe('a freight train at a warehouse', () => {
       const w = world();
       const q = put(w, 'quarry', 20, { stone: 40 });
       const house = put(w, 'warehouse', 45);
-      put(w, 'depot', 75);
+      const depot = put(w, 'depot', 75);
       const first = launch(w, train(w, 30));
       const watch = new Watch(first);
       const filled = run(w, [watch], 200, false);
@@ -491,7 +492,7 @@ describe('a freight train at a warehouse', () => {
       run(w, [watch, new Watch(second)], 300, false, filled);
       expect(watch.problems).toEqual([]);
       expect(house.stored('stone')).toBeLessThan(1);
-      expect(w.stock.get('stone')).toBeGreaterThan(30);
+      expect(depot.stored('stone')).toBeGreaterThan(30);
     },
   );
 
@@ -508,7 +509,7 @@ describe('a freight train at a warehouse', () => {
     }
     expect(atDepot, 'it reached the depot').toBe(true);
     expect(house.stored('stone')).toBeLessThan(60);
-    expect(w.stock.get('stone')).toBeGreaterThan(0);
+    expect(depot.stored('stone')).toBeGreaterThan(0);
   });
 
   it('holds for any layout, with one train or two', { timeout: 120_000 }, () => {
@@ -1246,26 +1247,26 @@ describe('what a freight train takes on at the stations it serves', () => {
   it('loads what a producer makes, as Production did', () => {
     const w = world();
     put(w, 'farm', 50, { wheat: 40 });
-    put(w, 'depot', 75);
+    const depot = put(w, 'depot', 75);
     const t = launch(w, train(w, 30, [empty(), flat()]));
-    const wheat0 = w.stock.get('wheat');
+    const wheat0 = depot.stored('wheat');
     const most = peak(w, t, 200);
     expect(most.get('wheat') ?? 0).toBeGreaterThan(10);
-    expect(w.stock.get('wheat') - wheat0).toBeGreaterThan(10);
+    expect(depot.stored('wheat') - wheat0).toBeGreaterThan(10);
   });
 
   it('loads every kind of goods a warehouse holds that the wagons take, as Collection did', () => {
     const w = world();
     const house = put(w, 'warehouse', 50, { stone: 60, wheat: 60 });
-    put(w, 'depot', 75);
+    const depot = put(w, 'depot', 75);
     const t = launch(w, train(w, 30, [empty(), flat()]));
-    const before = { stone: w.stock.get('stone'), wheat: w.stock.get('wheat') };
+    const before = { stone: depot.stored('stone'), wheat: depot.stored('wheat') };
     const most = peak(w, t, 200);
     expect(most.get('stone') ?? 0, 'stone aboard').toBeGreaterThan(10);
     expect(most.get('wheat') ?? 0, 'wheat aboard').toBeGreaterThan(10);
     expect(house.stored('stone') + house.stored('wheat')).toBeLessThan(120);
-    expect(w.stock.get('stone') - before.stone).toBeGreaterThan(10);
-    expect(w.stock.get('wheat') - before.wheat).toBeGreaterThan(10);
+    expect(depot.stored('stone') - before.stone).toBeGreaterThan(10);
+    expect(depot.stored('wheat') - before.wheat).toBeGreaterThan(10);
   });
 
   it('loads nothing at a warehouse while carrying goods from elsewhere, and unloads what it can', () => {
@@ -1276,10 +1277,10 @@ describe('what a freight train takes on at the stations it serves', () => {
     const w = world();
     const q = put(w, 'quarry', 6);
     const house = put(w, 'warehouse', 45, { stone: 0, wheat: 30 });
-    put(w, 'depot', 75);
+    const depot = put(w, 'depot', 75);
     const t = train(w, 30, [stoneFrom(q.id), stoneFrom(q.id)]);
     t.wagons.push({ ...flat(), uid: 13 });
-    const stone0 = w.stock.get('stone');
+    const stone0 = depot.stored('stone');
     launch(w, t);
     expect(house.roomFor('stone')).toBe(30);
     const watch = new Watch(t);
@@ -1302,7 +1303,7 @@ describe('what a freight train takes on at the stations it serves', () => {
     run(w, [watch], 150, false, now);
     expect(watch.problems).toEqual([]);
     // the 10 that did not fit reached the depot, and then the pile the train left behind
-    expect(w.stock.get('stone') - stone0, 'the rest reached the depot').toBeGreaterThanOrEqual(10);
+    expect(depot.stored('stone') - stone0, 'the rest reached the depot').toBeGreaterThanOrEqual(10);
   });
 
   it('takes nothing at a warehouse it could put none of its goods into, though it holds some', () => {

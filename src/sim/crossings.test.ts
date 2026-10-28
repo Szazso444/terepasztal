@@ -7,7 +7,6 @@ import { DESCENT_SPEED } from '../world/railProfile';
 import { Rng } from '../engine/rng';
 import { content } from '../data/content';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
 import {
@@ -54,6 +53,7 @@ import {
 } from './crossings';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -549,7 +549,7 @@ function field(seed = 1) {
     new RegionState(map),
     new TrackGraph(21, 21),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   builder.free = true;
   return { map, builder };

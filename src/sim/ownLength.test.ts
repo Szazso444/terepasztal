@@ -52,6 +52,7 @@ import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { buildTrafficScenario, SCENARIO_GDT } from '../testing/trafficScenario';
 import { Rng, hash2, hashString } from '../engine/rng';
 import { locoFrame, wagonFrame } from '../art/frames';
+import { storeWith } from '../testing/storeFixtures';
 
 // A locomotive is as long on the track as its own model (issue #344): an optional `length` on its
 // entry, in tiles over the buffers, wins over its size class's. Here: an entry without one is laid
@@ -348,7 +349,7 @@ describe('what reads a vehicle length', () => {
     const track = new TrackGraph(40, 24);
     const stock = new Stockpile();
     const economy = new Economy();
-    const builder = new Builder(map, new RegionState(map), track, economy, stock);
+    const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
     builder.free = true;
     const depot = new Station('depot', 10, ROW);
     builder.stations.push(depot);
@@ -629,7 +630,13 @@ describe('a depot gate', () => {
         const track = new TrackGraph(40, 24);
         const stock = new Stockpile();
         const economy = new Economy();
-        const builder = new Builder(map, new RegionState(map), track, economy, stock);
+        const builder = new Builder(
+          map,
+          new RegionState(map),
+          track,
+          economy,
+          storeWith({}).stores,
+        );
         builder.free = true;
         const depot = new Station('depot', 10, ROW);
         builder.stations.push(depot);
@@ -684,7 +691,7 @@ describe('a depot gate', () => {
     const track = new TrackGraph(40, 24);
     const stock = new Stockpile();
     const economy = new Economy();
-    const builder = new Builder(map, new RegionState(map), track, economy, stock);
+    const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
     builder.free = true;
     const depot = new Station('depot', 10, ROW);
     builder.stations.push(depot);
@@ -1183,7 +1190,7 @@ describe('a depot gate, before and after a short consist had to look past it', (
       const track = new TrackGraph(40, 24);
       const stock = new Stockpile();
       const economy = new Economy();
-      const builder = new Builder(map, new RegionState(map), track, economy, stock);
+      const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
       builder.free = true;
       const depot = new Station('depot', 10, ROW);
       builder.stations.push(depot);

@@ -30,6 +30,7 @@ import { content, type Gauge } from '../data/content';
 import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -115,7 +116,7 @@ function world() {
     inventory = new Inventory();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, inventory, economy, stock);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);

@@ -21,6 +21,7 @@ import { locoDef, wagonDef, type Item } from '../gacha/items';
 import { Commands, STATION_NAME_MAX } from './commands';
 import { STR } from '../strings';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -43,7 +44,7 @@ function world() {
     trade = new TradeDesk();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, inventory, economy, stock);
   const gacha = new Gacha(new Rng(7), inventory);

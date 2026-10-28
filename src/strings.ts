@@ -403,6 +403,9 @@ export const STR = {
     roadNotLaid: (tiles: number, reasons: readonly string[]) =>
       `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} not laid: ${reasons.join(' · ')}`,
     needResources: (m: string) => `Need ${m}`,
+    /** building: no store within the reach holds the cost; `missing` is the nearest one's shortfall */
+    noStoreInReach: (range: number, missing: string) =>
+      `No store within ${range} tiles holds ${missing}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
     upgradingNow: 'Already being upgraded',

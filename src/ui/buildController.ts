@@ -701,7 +701,7 @@ export class BuildController {
 
   /** The road stroke from `start` to the cursor on `t`, judged as its release would lay it. */
   private roadStroke(start: Tile, t: Tile): RoadStrokeCheck {
-    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder));
+    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder, start));
   }
 
   /** The build preview's tile diamond on each tile of a road stroke: red where it is refused. */

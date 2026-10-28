@@ -170,7 +170,9 @@ function build(w: SimWorld) {
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
   w.economy.setAge(1);
-  for (const [id, n] of Object.entries(quarry.upgradeCost())) w.stock.add(id, n);
+  // the depot pays for the upgrade
+  const store = w.stores.byKey(`st:${depot.id}`)!;
+  for (const [id, n] of Object.entries(quarry.upgradeCost())) store.add(id, n);
   w.economy.money += 1e5;
   if (!w.builder.upgradeStation(quarry)) throw new Error(`seed ${w.seed}: no upgrade`);
   if (!quarry.work) throw new Error(`seed ${w.seed}: the upgrade took no time`);

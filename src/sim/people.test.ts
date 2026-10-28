@@ -5,7 +5,6 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
 import { Builder, decorDef } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { buildingDef, type Building } from './buildings';
@@ -24,6 +23,7 @@ import { startWork } from './upgrade';
 import { streetDoor, type Door } from './doors';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
 import { simWorld, line, station as placeStation } from '../testing/simWorld';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -32,7 +32,7 @@ function world(seed = 4242) {
   const map = emptyMap(seed, 64, 64, Terrain.Grass),
     track = new TrackGraph(64, 64),
     economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, new Stockpile());
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   for (let x = 2; x < 60; x++) track.place(x, 30, 'straight', 1);
   const station = builder.placeStation(30, 31, 'station')!;
@@ -342,7 +342,13 @@ function layout(c: Case) {
     for (let y = p.y; y < Math.min(SIZE, p.y + p.h); y++)
       for (let x = p.x; x < Math.min(SIZE, p.x + p.w); x++) map.terrain[y * SIZE + x] = p.ground;
   const track = new TrackGraph(SIZE, SIZE);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (let x = 2; x < SIZE - 2; x++) track.place(x, LINE, 'straight', 1);
   const stations: Station[] = [];
@@ -414,7 +420,7 @@ function bare(seed: number, side = 8) {
     new RegionState(map),
     new TrackGraph(side, side),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   return { map, builder };
 }
@@ -923,7 +929,13 @@ const GATHER_GROUND: Record<string, Terrain> = {
 function flat(seed: number, w: number, h: number, row: number) {
   const map = emptyMap(seed, w, h, Terrain.Grass);
   const track = new TrackGraph(w, h);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (let x = 2; x < w - 2; x++) track.place(x, row, 'straight', 1);
   return { map, builder };
