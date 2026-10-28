@@ -528,9 +528,7 @@ describe('upkeep and famine per store', () => {
     expect(town.famine).toBe(false);
     w.stores.tickUpkeep(0.5, eaters);
     expect([town.famine, dock.famine]).toEqual([true, false]);
-    expect(said).toEqual([
-      `warn: ${name}: the crews are out of food: production halved, trains slowed`,
-    ]);
+    expect(said).toEqual([`warn: ${name}: the crews are out of food: production halved`]);
     // every member of the pool is marked
     expect(w.stores.byKey(town.key)!.famine).toBe(true);
     town.add('food', 50);
@@ -551,18 +549,17 @@ describe('upkeep and famine per store', () => {
 describe('trains at a harvester in a town', () => {
   /**
    * A town at (20, 29) with a farm in its reach at (25, 29), a warehouse at the far end of the line
-   * and a depot at its west end, the stockpile holding a new game's stock (a train refuels from
-   * it), and a train of an Adler and a flatbed running farm, warehouse, with or without waiting
-   * for full wagons at the farm.
+   * and a depot at its west end, its store holding a new game's stock (a new train fills its tanks
+   * from it), and a train of an Adler and a flatbed running farm, warehouse, with or without
+   * waiting for full wagons at the farm.
    */
   function farmLine(waitFull: boolean) {
     const w = simWorld({ terrain: 'grass', size: 96 });
-    station(w, 'depot', 4, 30);
+    depotWith(w, startStock(), { x: 4, y: 30 });
     line(w, 6, 30, 90);
     const hall = station(w, 'town', 20, 29);
     const farm = station(w, 'farm', 25, 29);
     const warehouse = station(w, 'warehouse', 80, 29);
-    for (const [k, n] of Object.entries(startStock())) w.stock.add(k, n);
     const town = w.stores.townStore(hall.x, hall.y)!;
     expect(farm.outlet).toBe(town);
     const loco = w.inventory.add('adler', 0);

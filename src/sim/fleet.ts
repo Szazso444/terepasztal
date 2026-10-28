@@ -32,7 +32,7 @@ import type { Inventory } from '../gacha/inventory';
 import { wagonDef, locoDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
 import { DIR_DX, DIR_DY, DIRS, type Dir } from '../engine/iso';
 import type { Economy } from './economy';
-import type { Stockpile } from './stockpile';
+import { previewOf, type ResourceStore } from './stores';
 import { cargoDef } from './cargo';
 import type { Station } from './stations';
 import { sfx } from '../engine/audio';
@@ -70,7 +70,6 @@ export class Fleet {
   gridFactor: (x: number, y: number) => number = () => 1;
   gridDraw: (x: number, y: number, u: number) => void = () => {};
   gridBegin: () => void = () => {};
-  stockCap: (id: string) => number = () => Infinity;
   /** a train entered or left service */
   onChanged: (() => void) | null = null;
 
@@ -80,7 +79,6 @@ export class Fleet {
     readonly map: GameMap,
     readonly inventory: Inventory,
     readonly economy: Economy,
-    readonly stock: Stockpile,
   ) {
     this.traffic = new Traffic(track, builder);
     this.signals = new Signals(track);
@@ -88,26 +86,55 @@ export class Fleet {
     this.traffic.junctionReport = () => this.junctions.report();
   }
 
+  /**
+   * The store that supplies the tile the train's head stands on (`StoreRegistry.supplierFor`):
+   * where an emergency delivery comes from, and its tanks go back to on a recall.
+   */
+  supplierOf(t: Train): ResourceStore | null {
+    const head = t.headTile;
+    return head ? this.builder.stores.supplierFor(head.x, head.y) : null;
+  }
+  /**
+   * Emergency refuel: carts bring every tank full from the train's supplier (`supplierOf`), the
+   * battery from the grid, at twice the materials; the crew settles what it owes there. With no
+   * supplier only the battery charges. Returns what was taken.
+   */
+  emergencyRefuel(t: Train): Record<string, number> {
+    const store = this.supplierOf(t);
+    const grid = this.builder.stores.grid;
+    if (!store) return t.refuel(grid, { fuel: true, water: false }, 2);
+    return t.fillUp(store, grid, { fuel: true, water: true }, 2);
+  }
+  /**
+   * Emergency refuel for every train of the group, or for none: each fills from its own supplier
+   * (`emergencyRefuel`), and it is done only when, tried out on copies of the stores first, every
+   * one of them would be full.
+   */
   refuelAll(trains: Train[]) {
     const valid = [...new Set(trains)].filter((t) => this.trains.includes(t));
-    const preview = new (this.stock.constructor as typeof Stockpile)();
-    preview.amounts = new Map(this.stock.amounts);
-    const clones = valid.map((t) => {
+    // trains that share a supplier draw on one copy of it
+    const copies = new Map<ResourceStore, ResourceStore>();
+    const copyOf = (r: ResourceStore) => {
+      let c = copies.get(r);
+      if (!c) copies.set(r, (c = previewOf(r)));
+      return c;
+    };
+    const grid = copyOf(this.builder.stores.grid);
+    for (const t of valid) {
+      const store = this.supplierOf(t);
       const c = Object.create(Object.getPrototypeOf(t)) as Train;
       Object.assign(c, t);
-      return c;
-    });
-    for (const t of clones) {
-      t.refuel(preview, { fuel: true, water: true }, 2);
+      if (store) c.refuel(copyOf(store), { fuel: true, water: true }, 2);
+      c.refuel(grid, { fuel: true, water: false }, 2);
       if (
-        t.coal < t.coalCap - 1e-6 ||
-        t.oil < t.oilCap - 1e-6 ||
-        t.water < t.waterCap - 1e-6 ||
-        t.battery < t.batteryCap - 1e-6
+        c.coal < c.coalCap - 1e-6 ||
+        c.oil < c.oilCap - 1e-6 ||
+        c.water < c.waterCap - 1e-6 ||
+        c.battery < c.batteryCap - 1e-6
       )
         return false;
     }
-    for (const t of valid) t.refuel(this.stock, { fuel: true, water: true }, 2);
+    for (const t of valid) this.emergencyRefuel(t);
     return true;
   }
   byId(id: number) {
@@ -482,8 +509,9 @@ export class Fleet {
     for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
     this.trains.push(t);
-    // tanks start with whatever the stockpile can spare
-    t.refuel(this.stock, { fuel: true, water: true });
+    // tanks start with whatever the depot's store can spare
+    const dock = this.builder.stores.dockOf(depot);
+    if (dock) t.fillUp(dock, this.builder.stores.grid, { fuel: true, water: true });
     sfx('train.dispatch');
     this.rebuildOccupancy();
     if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady(this.ctx(0, 1));
@@ -558,7 +586,10 @@ export class Fleet {
     t.idle();
   }
 
-  /** Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents return to the stockpile. */
+  /**
+   * Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents go to the store
+   * that supplies its tile, else the nearest store at all (the battery to the grid).
+   */
   recall(t: Train): number {
     t.recall();
     let salvage = 0;
@@ -566,7 +597,12 @@ export class Fleet {
       if (w.cargo && w.amount > 0) salvage += w.amount * cargoDef(w.cargo).price * 0.4;
     salvage = Math.round(salvage);
     if (salvage > 0) this.economy.earn(salvage);
-    t.drainTo(this.stock);
+    const head = t.headTile;
+    const stores = this.builder.stores;
+    const to = head
+      ? (stores.supplierFor(head.x, head.y) ?? stores.nearest(head.x, head.y, Infinity)[0] ?? null)
+      : null;
+    t.drainTo(to, stores.grid);
     const i = this.trains.indexOf(t);
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
@@ -617,8 +653,7 @@ export class Fleet {
       occupants: (x, y) => this.occ.get(y * this.map.w + x) ?? [],
       now,
       speedFactor,
-      stockpile: this.stock,
-      stockCap: (id) => this.stockCap(id),
+      stores: this.builder.stores,
       powered: (x, y) => this.powered(x, y),
       supplyAt: (x, y) => this.supplyAt(x, y),
       gridFactor: (x, y) => this.gridFactor(x, y),
@@ -865,7 +900,7 @@ export class Fleet {
         }
         // a producer that is filling up counts even before the pile is big
         if (!store && haul > 0 && haul < trainCap * 0.15 && s.productionPerWeek > 0)
-          haul = Math.max(haul, Math.min(trainCap, s.totalStored()) + 0.25 * s.totalStored());
+          haul = Math.max(haul, Math.min(trainCap, s.fullest()) + 0.25 * s.fullest());
         if (haul < Math.min(trainCap * 0.15, 8)) continue;
         const dump = dumpFor(
           { x: s.cx, y: s.cy },

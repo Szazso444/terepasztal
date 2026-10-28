@@ -29,8 +29,8 @@ import type { RegionState } from '../world/regions';
  * set by `StoreRegistry.tickUpkeep`).
  */
 export const FAMINE_PRODUCTION_MUL = 0.5;
-/** Speed multiplier of a train while its crew starves, on top of the weather's. */
-export const FAMINE_SPEED_MUL = 0.7;
+/** Speed multiplier of a hungry train (`Train.hungry`), on top of the weather's. */
+export { FAMINE_SPEED_MUL } from './trains';
 /**
  * Reach of a passenger station in tiles, as Chebyshev distance from its anchor tile: the residents
  * of finished houses (`progress >= 1`) this close are its passengers.
@@ -142,7 +142,7 @@ export interface StepHooks {
  * Who eats at which store this step: the residents of every house at its town's store, the crews
  * of stations, works and services at the store that supplies their tile. A house outside every
  * town and a crew with no store in reach eat nothing (and never starve). Train crews are not
- * counted here.
+ * counted here: they owe their food and pay it at the next store they fill up at (`Train.owed`).
  */
 function eaters(houses: HouseRegistry, builder: Builder): Map<ResourceStore, number> {
   const out = new Map<ResourceStore, number>();

@@ -10,7 +10,7 @@ import trackData from '../data/track.json';
 import { forAll } from '../testing/property';
 import { BIOME_DEFS, type BiomeDef } from './biomes';
 import { Builder } from './build';
-import { Stockpile, scaleCost } from './stockpile';
+import { scaleCost } from './stockpile';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Station, resetStationIds } from './stations';
@@ -205,11 +205,10 @@ describe('the Mountain biome on grass', () => {
     function freeSpeed(biome: number) {
       const map = emptyMap(4242, 96, 96, Terrain.Grass),
         track = new TrackGraph(96, 96),
-        stock = new Stockpile(),
         economy = new Economy();
       const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
       builder.free = true;
-      const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+      const fleet = new Fleet(track, builder, map, new Inventory(), economy);
       for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
       const t = new Train([
         { uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },
@@ -325,12 +324,11 @@ describe('every biome in the table', () => {
     function cruise(biome: number, seconds: number) {
       const map = emptyMap(4242, 96, 40, Terrain.Grass),
         track = new TrackGraph(96, 40),
-        stock = new Stockpile(),
         economy = new Economy();
       map.biome.fill(biome);
       const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
       builder.free = true;
-      const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+      const fleet = new Fleet(track, builder, map, new Inventory(), economy);
       for (let x = 2; x < 94; x++) track.place(x, 20, 'straight', 1);
       const t = new Train([
         { uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },

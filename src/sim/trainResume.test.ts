@@ -7,7 +7,6 @@ import type { PathSegment } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, type StationJSON } from './stations';
 import type { StoreJSON } from './stores';
@@ -106,7 +105,6 @@ interface World {
   map: GameMap;
   track: TrackGraph;
   regions: RegionState;
-  stock: Stockpile;
   economy: Economy;
   builder: Builder;
   fleet: Fleet;
@@ -116,7 +114,7 @@ interface World {
 
 /** A fleet over `builder`, reporting arrivals into the world's list. */
 function fleetOf(w: Omit<World, 'fleet'>): Fleet {
-  const fleet = new Fleet(w.track, w.builder, w.map, new Inventory(), w.economy, w.stock);
+  const fleet = new Fleet(w.track, w.builder, w.map, new Inventory(), w.economy);
   fleet.onArrive = (_t, s) => void w.arrivals.push(s.id);
   return fleet;
 }
@@ -131,7 +129,6 @@ function scene(): World {
   const track = new TrackGraph(SIZE, SIZE);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
   const regions = new RegionState(map);
-  const stock = new Stockpile();
   const economy = new Economy();
   const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
@@ -139,7 +136,7 @@ function scene(): World {
   quarry.storage.set('stone', 40);
   const warehouse = new Station('warehouse', 70, ROW - 1);
   builder.stations.push(quarry, warehouse);
-  const w = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
+  const w = { map, track, regions, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(w);
   const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
   t.wagons = [
@@ -152,38 +149,40 @@ function scene(): World {
   return { ...w, fleet };
 }
 
-/** What a save keeps of a world: its trains, stations, stockpile and economy, as JSON. */
+/** What a save keeps of a world: its trains, stations, stores and economy, as JSON. */
 function saved(w: World): string {
   return JSON.stringify({
     trains: w.fleet.trains.map((t) => t.toJSON()),
     stations: w.builder.stations.map((s) => s.toJSON()),
-    stock: w.stock.toJSON(),
+    stores: w.builder.stores.toJSON(),
     economy: w.economy.toJSON(),
   });
 }
 
 /**
- * The world a load builds from `text`: the same map, track and decor, the stations, stockpile and
- * economy read back, and the trains through `Train.fromJSON` into a fresh fleet.
+ * The world a load builds from `text`: the same map, track and decor, the stations, stores (a
+ * depot store where the world's stood) and economy read back, and the trains through
+ * `Train.fromJSON` into a fresh fleet.
  */
 function loaded(w: World, text: string, edit?: (j: { stations: StationJSON[] }) => void): World {
   const j = JSON.parse(text) as {
     trains: TrainJSON[];
     stations: StationJSON[];
-    stock: ReturnType<Stockpile['toJSON']>;
+    stores: StoreJSON[];
     economy: ReturnType<Economy['toJSON']>;
   };
   edit?.(j);
-  const stock = new Stockpile();
-  stock.load(j.stock);
+  const depot = w.builder.stores.all().find((s) => s.kind === 'depot')!;
+  const { stores } = storeWith({}, depot.anchor);
+  stores.load(j.stores);
   const economy = new Economy();
   economy.load(j.economy);
-  const builder = new Builder(w.map, w.regions, w.track, economy, storeWith({}).stores);
+  const builder = new Builder(w.map, w.regions, w.track, economy, stores);
   builder.free = true;
   for (const s of j.stations) builder.stations.push(Station.fromJSON(s));
   for (const [key, d] of w.builder.decor) builder.decor.set(key, { ...d });
   const { map, track, regions } = w;
-  const back = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
+  const back = { map, track, regions, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(back);
   for (const t of j.trains) fleet.trains.push(Train.fromJSON(t, track));
   return { ...back, fleet };
@@ -537,9 +536,16 @@ function layoutScene(c: Layout): World {
     for (let y = ROW + 2; y <= ROW + 9; y++) track.place(c.siding, y, 'straight', 0);
   }
   const regions = new RegionState(map);
-  const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
+  // a depot store by the fuel and water service, within its reach (`rules.fuelReach`), stocked
+  const { stores } =
+    c.service === undefined
+      ? storeWith({})
+      : storeWith(Object.fromEntries(['coal', dieselFuelId(), 'water'].map((id) => [id, 1000])), {
+          x: c.service,
+          y: ROW + 4,
+        });
+  const builder = new Builder(map, regions, track, economy, stores);
   builder.free = true;
   const put = (kind: Kind, x: number, y: number, stocked: boolean) => {
     const s = new Station(kind, x, y);
@@ -558,9 +564,8 @@ function layoutScene(c: Layout): World {
       ['water_tower', c.service + 1],
     ] as const)
       builder.decor.set((ROW + 2) * map.w + x, { id, x, y: ROW + 2, rot: 0 });
-    for (const id of ['coal', dieselFuelId(), 'water']) stock.add(id, 1000);
   }
-  const w = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
+  const w = { map, track, regions, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(w);
   const t = new Train([{ uid: 1, level: 1, def: locoDef(c.loco) }]);
   t.wagons = [
@@ -1348,7 +1353,6 @@ function trafficControl(c: TrafficCase): TrafficControl {
 /** The control's save after `tick`, loaded into a fresh fleet on the same track. */
 function trafficLoaded(c: TrafficControl, tick: number): Fleet {
   const j = JSON.parse(c.texts[tick]) as { trains: TrainJSON[]; stations: StationJSON[] };
-  const stock = new Stockpile();
   const economy = new Economy();
   const builder = new Builder(
     c.map,
@@ -1359,7 +1363,7 @@ function trafficLoaded(c: TrafficControl, tick: number): Fleet {
   );
   builder.free = true;
   for (const s of j.stations) builder.stations.push(Station.fromJSON(s));
-  const fleet = new Fleet(c.track, builder, c.map, new Inventory(), economy, stock);
+  const fleet = new Fleet(c.track, builder, c.map, new Inventory(), economy);
   for (const t of j.trains) fleet.trains.push(Train.fromJSON(t, c.track));
   return fleet;
 }
@@ -1866,12 +1870,11 @@ function grownLoaded(c: TrafficControl, tick: number): Fleet {
   for (const [x, y, kind, rot, cls, cls2] of save.track)
     track.place(x, y, kind, rot, cls ?? 'regular', cls2);
   track.refreshSwitchForms();
-  const stock = new Stockpile();
   const economy = new Economy();
   const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   for (const s of save.stations) builder.stations.push(Station.fromJSON(s));
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
   for (const t of save.trains as TrainJSON[]) fleet.trains.push(Train.fromJSON(t, track));
   return fleet;
 }
@@ -2959,7 +2962,7 @@ function clearCause(cause: Cause, w: World) {
   if (cause === 'noPower') {
     w.fleet.powered = () => true;
     w.fleet.supplyAt = () => 'catenary';
-    w.stock.add('power', 1e9);
+    w.builder.stores.grid.amounts.set('power', 1e9);
   } else Object.assign(w.fleet.trains[0].wagons[0], { cargo: null, amount: 0 });
 }
 /**

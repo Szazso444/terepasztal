@@ -40,7 +40,7 @@ function world() {
     inventory = new Inventory();
   const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   const gacha = new Gacha(new Rng(1), inventory);
   const crafting = new Crafting(new Rng(2), inventory, economy, stock);
   return { map, track, stock, economy, builder, fleet, inventory, gacha, crafting };

@@ -1328,7 +1328,7 @@ export const STR = {
     water: 'Water',
     oil: 'Oil',
     power: 'Power',
-    stockPower: (n: number) => `${n} in the battery`,
+    stockPower: (n: number) => `${n} on the grid`,
     battery: 'Battery carts',
     effort: 'Tractive effort',
     mass: 'Mass',
@@ -1371,9 +1371,11 @@ export const STR = {
     delivered: 'Delivered',
     income: 'Income',
     emergency: 'Emergency refuel (2x cost)',
-    emergencyHint: 'Fills the tanks from the stockpile at double cost, wherever the train is.',
+    emergencyHint:
+      'Fills the tanks from the nearest store at double cost, wherever the train is; ' +
+      'its crew pays what it owes there.',
     emergencyDone: (s: string) => `Delivered by road: ${s}`,
-    emergencyNone: 'Nothing in the stockpile to send',
+    emergencyNone: 'Nothing in the nearest store to send',
   },
   market: {
     title: 'Market',
@@ -1501,8 +1503,7 @@ export const STR = {
   stores: {
     grid: 'Power grid',
     /** the eaters at a store went short for too long (`StoreRegistry.tickUpkeep`) */
-    famine: (name: string) =>
-      `${name}: the crews are out of food: production halved, trains slowed`,
+    famine: (name: string) => `${name}: the crews are out of food: production halved`,
     /** a store in famine has food again, or nobody left to feed */
     fed: (name: string) => `${name}: food is back; crews are fed again`,
   },

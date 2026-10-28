@@ -25,20 +25,24 @@ import { AGE_DEFS } from './ages';
 import { referencePath } from './compat';
 import { STR } from '../strings';
 import { upgradeSeconds } from './upgrade';
-import { storeWith } from '../testing/storeFixtures';
+import { storeWith, storesWith } from '../testing/storeFixtures';
 import { simWorld, line, station } from '../testing/simWorld';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
-function world() {
+/**
+ * A grass world with a line along row 30, its builder paying from, and its trains filling up at,
+ * the depot stores at the places given (one empty store at the corner by default): `depots`.
+ */
+function world(at: { x: number; y: number }[] = [{ x: 0, y: 0 }]) {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
-    stock = new Stockpile(),
     economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
+  const { stores, depots } = storesWith(at.map((a) => ({ amounts: {}, at: a })));
+  const builder = new Builder(map, new RegionState(map), track, economy, stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
-  return { map, track, stock, economy, builder, fleet };
+  return { map, track, economy, builder, fleet, depots };
 }
 function train(id = 'f7') {
   return new Train([{ uid: 1, level: 0, def: content.locomotives.find((d) => d.id === id)! }]);
@@ -315,20 +319,47 @@ describe('bridges, reversing and refuelling', () => {
     expect(t.speed).toBeLessThanOrEqual(t.maxSpeed * t.loadFactor * BRIDGE_SLOW_FACTOR + 1e-6);
   });
   it('refuels a selected group atomically at twice the materials', () => {
-    const w = world(),
+    // both trains stand where the one depot store supplies them
+    const w = world([{ x: 45, y: 33 }]),
       a = train(),
       b = train();
+    const [depot] = w.depots;
+    a.spawnAt(w.track, 40, 30, Dir.W);
+    b.spawnAt(w.track, 50, 30, Dir.W);
     w.fleet.trains.push(a, b);
-    w.stock.add('oil', 2 * (a.oilCap + b.oilCap) - 1);
-    const have = w.stock.get('oil');
+    depot.add('oil', 2 * (a.oilCap + b.oilCap) - 1);
+    const have = depot.get('oil');
     expect(w.fleet.refuelAll([a, b])).toBe(false);
     expect(a.oil).toBe(0);
-    expect(w.stock.get('oil')).toBe(have);
-    w.stock.add('oil', 1);
+    expect(depot.get('oil')).toBe(have);
+    depot.add('oil', 1);
     expect(w.fleet.refuelAll([a, b])).toBe(true);
     expect(a.oil).toBe(a.oilCap);
     expect(b.oil).toBe(b.oilCap);
-    expect(w.stock.get('oil')).toBeCloseTo(0);
+    expect(depot.get('oil')).toBeCloseTo(0);
+  });
+  it('refuels each train of a group from the store that supplies it, or none of them', () => {
+    // the west store supplies the train at column 10, the east one the train at column 80
+    const w = world([
+        { x: 10, y: 33 },
+        { x: 80, y: 33 },
+      ]),
+      a = train(),
+      b = train();
+    const [west, east] = w.depots;
+    a.spawnAt(w.track, 10, 30, Dir.W);
+    b.spawnAt(w.track, 80, 30, Dir.W);
+    w.fleet.trains.push(a, b);
+    west.add('oil', 2 * (a.oilCap + b.oilCap));
+    expect(w.fleet.refuelAll([a, b]), 'the east store holds nothing').toBe(false);
+    expect(a.oil).toBe(0);
+    expect(west.get('oil')).toBe(2 * (a.oilCap + b.oilCap));
+    east.add('oil', 2 * b.oilCap);
+    expect(w.fleet.refuelAll([a, b])).toBe(true);
+    expect(a.oil).toBe(a.oilCap);
+    expect(b.oil).toBe(b.oilCap);
+    expect(west.get('oil')).toBeCloseTo(2 * b.oilCap);
+    expect(east.get('oil')).toBeCloseTo(0);
   });
   it.each(['mallard', 'f7', 'dda40x', 'big_boy', 'crocodile', 'gmam'])(
     'keeps %s segments in place when reversing on a curve',
@@ -355,7 +386,11 @@ describe('bridges, reversing and refuelling', () => {
     },
   );
   it('routes low reserves to the nearer reachable rail service and then resumes its destination', () => {
-    const w = world(),
+    // a store by each service: both are stocked
+    const w = world([
+        { x: 30, y: 34 },
+        { x: 60, y: 34 },
+      ]),
       t = train('mallard');
     t.spawnAt(w.track, 20, 30, Dir.W);
     const st = new Station('quarry', 80, 29);
@@ -367,8 +402,10 @@ describe('bridges, reversing and refuelling', () => {
     w.builder.placeDecor(30, 31, 'fuel_stop', 0);
     w.builder.placeDecor(60, 29, 'water_tower', 0);
     w.builder.placeDecor(60, 31, 'fuel_stop', 0);
-    w.stock.add('coal', 1000);
-    w.stock.add('water', 1000);
+    for (const d of w.depots) {
+      d.add('coal', 1000);
+      d.add('water', 1000);
+    }
     w.fleet.trains.push(t);
     const ctx = (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1);
     expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
@@ -380,7 +417,8 @@ describe('bridges, reversing and refuelling', () => {
     expect(t.route).toEqual([st.id]);
   });
   it('visits separate fuel and water services in order of the limiting reserve', () => {
-    const w = world(),
+    // one store within reach of both services
+    const w = world([{ x: 26, y: 34 }]),
       t = train('mallard');
     t.spawnAt(w.track, 20, 30, Dir.W);
     const st = new Station('quarry', 80, 29);
@@ -391,8 +429,8 @@ describe('bridges, reversing and refuelling', () => {
     t.water = t.waterRate * 35;
     w.builder.placeDecor(23, 29, 'fuel_stop', 0);
     w.builder.placeDecor(30, 29, 'water_tower', 0);
-    w.stock.add('coal', 1000);
-    w.stock.add('water', 1000);
+    w.depots[0].add('coal', 1000);
+    w.depots[0].add('water', 1000);
     w.fleet.trains.push(t);
     const ctx = (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1);
     expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);

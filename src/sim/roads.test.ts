@@ -40,7 +40,7 @@ import { repairBuiltRoads, repairBuiltTiles } from '../engine/loadRepair';
 import { bridgeSpan } from './bridges';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, line, station } from '../testing/simWorld';
-import { storeWith } from '../testing/storeFixtures';
+import { depotWith, storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -618,7 +618,7 @@ describe('a level crossing', () => {
       const play = (crossings: boolean) => {
         const w = simWorld({ terrain: 'grass', size: 48 });
         for (const [id, n] of Object.entries(startStock())) w.stock.add(id, n);
-        station(w, 'depot', 4, 20);
+        depotWith(w, startStock(), { x: 4, y: 20 });
         line(w, 6, 20, 40);
         const quarry = station(w, 'quarry', 10, 19);
         const warehouse = station(w, 'warehouse', 34, 19);

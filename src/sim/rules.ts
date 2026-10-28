@@ -55,6 +55,11 @@ export interface Rules {
   townStoreCap: number;
   /** tiles round a store within which building draws on it (Chebyshev) */
   buildReach: number;
+  /**
+   * tiles round a store within which a coaling stage, a water tower or a supplied station outside
+   * every town fills trains from it (Chebyshev; `StoreRegistry.fuelSupplierFor`)
+   */
+  fuelReach: number;
   /** units a warehouse holds per level (any goods, in total) */
   warehouseCap: number;
   /** stockpile cap added per depot */
@@ -128,6 +133,7 @@ export const DEFAULT_RULES: Rules = {
   stockpileCap: 1000,
   townStoreCap: 300,
   buildReach: 24,
+  fuelReach: 8,
   warehouseCap: 1000,
   depotCap: 3000,
   repeatCostStep: 0.2,
@@ -206,6 +212,15 @@ export const RULE_META: RuleMeta[] = [
     max: 100,
     step: 1,
     hint: 'tiles from a store',
+  },
+  {
+    key: 'fuelReach',
+    label: 'Trackside fuel draws from stores within',
+    group: 'Economy',
+    min: 0,
+    max: 50,
+    step: 1,
+    hint: 'tiles from a store, outside towns',
   },
   {
     key: 'warehouseCap',

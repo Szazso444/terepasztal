@@ -5,7 +5,6 @@ import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { Train, resetTrainIds, type CarPose } from './trains';
 import { Weather, setSeasonOffset } from './weather';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station } from './stations';
 import { Fleet } from './fleet';
@@ -52,11 +51,10 @@ const loopTicks = (seconds: number, speed: number) => Math.round(seconds / SIM_S
 function line() {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
-    stock = new Stockpile(),
     economy = new Economy();
   const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
   return { map, track, builder, fleet };
 }

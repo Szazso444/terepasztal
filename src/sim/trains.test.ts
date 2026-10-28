@@ -16,7 +16,6 @@ import { unitDef } from '../world/trackGeom';
 import { Dir, DIRS, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { Train, defaultStop, resetTrainIds, type RouteMode } from './trains';
@@ -111,14 +110,13 @@ function* shrinkClosing(c: Closing): Iterable<Closing> {
 function world() {
   const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
     track = new TrackGraph(SIZE, SIZE),
-    stock = new Stockpile(),
     economy = new Economy(),
     inventory = new Inventory();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
   const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
   return { map, track, builder, fleet };
 }

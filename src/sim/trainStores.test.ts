@@ -1,0 +1,269 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
+import { townWith } from '../testing/storeFixtures';
+import { Dir } from '../engine/iso';
+import { locoDef, wagonDef } from '../gacha/items';
+import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
+import { setSupplyMode, DEFAULT_SUPPLY, sandPerTile } from './supply';
+import {
+  Train,
+  defaultStop,
+  resetTrainIds,
+  FAMINE_SPEED_MUL,
+  type StopPlan,
+  type TickCtx,
+} from './trains';
+import type { Station } from './stations';
+
+vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
+
+// Trains and the stores (sub-project 1, task 5): a train fills its tanks from the store of the
+// depot or warehouse it stops at, or from the store that supplies a coaling stage or water tower
+// within `rules.fuelReach`; its crew's food and the sand it spreads are owed on the line and
+// settled at the next store it fills up at; electric trains draw from and brake into the grid.
+
+beforeEach(() => {
+  Object.assign(rules, DEFAULT_RULES);
+  setSupplyMode(DEFAULT_SUPPLY);
+  resetTrainIds();
+});
+
+const ROW = 20;
+const GDT = 0.05;
+
+/** A flat grass world, in the production chain given. */
+const grass = (supply?: 'simple' | 'full') => simWorld({ terrain: 'grass', size: 64, supply });
+
+/** A stop that loads and unloads nothing and does not wait. */
+const quiet = (id: number): StopPlan => ({
+  ...defaultStop(id),
+  load: 'none',
+  unload: 'none',
+  waitFull: false,
+});
+
+/** The context the fleet hands its trains in a tick at `now`. */
+const ctxOf = (w: SimWorld, now = 0) =>
+  (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(now, 1);
+
+/**
+ * A train of `loco` and an empty hopper on the line at column `x` facing west, in the fleet, with
+ * the stops given (none: it stands where it is).
+ */
+function onLine(w: SimWorld, loco: string, x: number, stops: Station[] = []) {
+  const t = new Train([{ uid: 1, level: 1, def: locoDef(loco) }]);
+  t.wagons = [
+    { uid: 2, def: wagonDef('wood_hopper'), level: 1, cargo: null, amount: 0, origin: null },
+  ];
+  expect(t.spawnAt(w.track, x, ROW, Dir.E)).not.toBe(false);
+  w.fleet.trains.push(t);
+  if (stops.length) {
+    t.schedule = stops.map((s) => quiet(s.id));
+    expect(t.dispatch(w.track, w.builder, w.map), 'a way to the first stop').toBe(true);
+    t.onPathReady(ctxOf(w));
+  }
+  return t;
+}
+
+/** Fleet ticks of GDT until `done` holds (at most `max`); the ticks run. */
+function runUntil(w: SimWorld, done: () => boolean, max = 40000) {
+  let n = 0;
+  for (; n < max && !done(); n++) w.fleet.tick(GDT, (w.clock.time += GDT));
+  expect(done(), `done within ${max} ticks`).toBe(true);
+  return n;
+}
+
+/** Food a train's crew eats in `seconds` of game time. */
+const ration = (t: Train, seconds: number) =>
+  (t.crew * rules.wheatPerCrew * seconds) / weekSeconds();
+
+/** A depot at the west end of a line along ROW, and its store. */
+function depotLine(w: SimWorld) {
+  const depot = station(w, 'depot', 4, ROW);
+  line(w, 6, ROW, 60);
+  return { depot, store: w.stores.byKey(`st:${depot.id}`)! };
+}
+
+describe('trains and the stores', () => {
+  it('a train refuels at a depot from the depot store', () => {
+    const w = grass();
+    const { depot, store } = depotLine(w);
+    const quarry = station(w, 'quarry', 40, ROW - 1);
+    store.amounts.set('coal', 1000);
+    store.amounts.set('water', 1000);
+    // a nearly empty tender: enough for the 16 tiles to the depot
+    const t = onLine(w, 'mallard', 20, [depot, quarry]);
+    t.coal = 10;
+    t.water = t.waterCap;
+    runUntil(w, () => t.coal >= t.coalCap - 1e-9);
+    const taken = t.trip.fuel['refuel_coal'] ?? 0;
+    expect(taken, 'coal taken').toBeGreaterThan(t.coalCap - 10 - 1e-9);
+    expect(1000 - store.get('coal'), 'the depot store gave what the tender took').toBeCloseTo(
+      taken,
+      9,
+    );
+  });
+
+  it('a coaling stage in a town draws from the town store', () => {
+    const w = grass();
+    line(w, 2, ROW, 60);
+    const town = townWith(w, { coal: 1000, water: 1000 }, { x: 34, y: ROW - 1 });
+    w.builder.free = true;
+    expect(w.builder.placeDecor(30, ROW + 1, 'fuel_stop', 0)).not.toBeNull();
+    expect(w.builder.placeDecor(32, ROW + 1, 'water_tower', 0)).not.toBeNull();
+    w.builder.free = false;
+    const quarry = station(w, 'quarry', 50, ROW - 1);
+    const t = onLine(w, 'mallard', 10, [quarry]);
+    t.coal = t.coalCap * 0.3;
+    t.water = t.waterCap * 0.3;
+    // eastward: the train turns to face the quarry
+    runUntil(w, () => t.coal > t.coalCap * 0.9 && t.water > t.waterCap * 0.9);
+    const coal = t.trip.fuel['refuel_coal'] ?? 0;
+    const water = t.trip.fuel['refuel_water'] ?? 0;
+    expect(coal, 'coal taken').toBeGreaterThan(0);
+    expect(1000 - town.get('coal'), 'from the town store').toBeCloseTo(coal, 9);
+    expect(1000 - town.get('water'), 'from the town store').toBeCloseTo(water, 9);
+  });
+
+  it('a coaling stage with no store within 8 tiles serves nothing', () => {
+    // the stage's service tiles run to column 32; a warehouse at column 32 + gap is that far
+    const plan = (gap: number) => {
+      const w = grass();
+      line(w, 2, ROW, 60);
+      const house = station(w, 'warehouse', 32 + gap, ROW - 1);
+      const store = w.stores.byKey(`st:${house.id}`)!;
+      store.amounts.set('coal', 500);
+      store.amounts.set('water', 500);
+      w.builder.free = true;
+      expect(w.builder.placeDecor(30, ROW + 1, 'fuel_stop', 0)).not.toBeNull();
+      expect(w.builder.placeDecor(30, ROW - 2, 'water_tower', 0)).not.toBeNull();
+      w.builder.free = false;
+      expect(w.stores.supplierFor(32, ROW), 'premise: it supplies the stage').toBe(
+        w.stores.poolOf(store),
+      );
+      const quarry = station(w, 'quarry', 56, ROW - 1);
+      const t = onLine(w, 'mallard', 10, [quarry]);
+      t.coal = t.coalCap * 0.3;
+      t.water = t.waterCap * 0.3;
+      return { planned: t.planFuelDetour(ctxOf(w)), end: t.pathAhead().at(-1) };
+    };
+    const near = plan(rules.fuelReach);
+    expect(rules.fuelReach).toBe(8);
+    expect(near.planned, 'a store 8 tiles away serves the stage').toBe(true);
+    expect(near.end?.x).toBeGreaterThanOrEqual(28);
+    expect(near.end?.x).toBeLessThanOrEqual(32);
+    expect(plan(rules.fuelReach + 1).planned, 'one 9 tiles away does not').toBe(false);
+  });
+
+  it('crew food is owed on the line and settled at the next store', () => {
+    const w = grass();
+    const { depot, store } = depotLine(w);
+    store.amounts.set('food', 100);
+    const t = onLine(w, 'f7', 12);
+    t.oil = t.oilCap;
+    // half a day standing on the line, no stop
+    const half = Math.round(daySeconds() / 2 / GDT);
+    for (let i = 0; i < half; i++) w.fleet.tick(GDT, (w.clock.time += GDT));
+    expect(t.owed.food, 'owed for half a day').toBeCloseTo(ration(t, half * GDT), 9);
+    expect(store.get('food'), 'nothing taken on the line').toBe(100);
+    t.schedule = [quiet(depot.id)];
+    expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+    t.onPathReady(ctxOf(w, w.clock.time));
+    const more = runUntil(w, () => store.get('food') < 100);
+    // half a day, and the few seconds to the depot
+    expect(more * GDT, 'premise: the depot is close').toBeLessThan(daySeconds() / 20);
+    expect(100 - store.get('food'), 'the half-day ration').toBeCloseTo(
+      ration(t, (half + more) * GDT),
+      9,
+    );
+    expect(t.owed.food, 'settled').toBe(0);
+  });
+
+  it('a train owed more than a day of food is slowed', () => {
+    const day = (t: Train) => ration(t, daySeconds());
+    const bare = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    bare.owed.food = day(bare);
+    expect(bare.hungry, 'a day owed').toBe(false);
+    bare.owed.food = day(bare) * 1.001;
+    expect(bare.hungry, 'more than a day owed').toBe(true);
+    const first = (share: number) => {
+      const w = grass();
+      line(w, 2, ROW, 60);
+      const quarry = station(w, 'quarry', 50, ROW - 1);
+      const t = onLine(w, 'f7', 10, [quarry]);
+      t.oil = t.oilCap;
+      t.owed.food = day(t) * share;
+      w.fleet.tick(GDT, GDT);
+      expect(t.state).toBe('moving');
+      return t;
+    };
+    const fed = first(0.9);
+    const hungry = first(1.1);
+    expect(fed.hungry).toBe(false);
+    expect(hungry.hungry).toBe(true);
+    expect(fed.freeSpeed).toBeGreaterThan(0);
+    expect(hungry.freeSpeed).toBeCloseTo(fed.freeSpeed * FAMINE_SPEED_MUL, 12);
+  });
+
+  it('sand is settled at a store in full mode', () => {
+    const w = grass('full');
+    expect(sandPerTile(), 'premise: trains spread sand').toBeGreaterThan(0);
+    const { depot, store } = depotLine(w);
+    store.amounts.set('sand', 100);
+    const t = onLine(w, 'f7', 40, [depot]);
+    t.oil = t.oilCap;
+    runUntil(w, () => t.distance > 10);
+    expect(store.get('sand'), 'none taken on the line').toBe(100);
+    expect(t.owed.sand, 'owed for the tiles run').toBeCloseTo(sandPerTile() * t.distance, 9);
+    runUntil(w, () => store.get('sand') < 100);
+    expect(100 - store.get('sand'), 'settled at the depot').toBeCloseTo(
+      sandPerTile() * t.distance,
+      9,
+    );
+    expect(t.owed.sand).toBe(0);
+  });
+
+  it('braking feeds the power grid', () => {
+    const w = grass();
+    line(w, 2, ROW, 60);
+    w.fleet.powered = () => true;
+    w.fleet.supplyAt = () => 'catenary';
+    const grid = w.stores.grid;
+    grid.amounts.set('power', 50);
+    const quarry = station(w, 'quarry', 50, ROW - 1);
+    const t = onLine(w, 'kando_v40', 10, [quarry]);
+    // running faster than it may: the tick brakes
+    t.speed = t.maxSpeed * 3;
+    const d0 = t.distance;
+    w.fleet.tick(GDT, GDT);
+    const step = t.distance - d0;
+    expect(step, 'it ran').toBeGreaterThan(0);
+    expect(t.speed, 'it braked').toBeLessThan(t.maxSpeed * 3);
+    // the motors draw the step's power from the grid, and braking gives 30 % of it back
+    expect(grid.get('power') - 50).toBeCloseTo(-t.powerRate * step + 0.3 * t.powerRate * step, 9);
+  });
+
+  it('a new train fills its tanks from its depot store', () => {
+    const w = grass();
+    const { depot, store } = depotLine(w);
+    const quarry = station(w, 'quarry', 40, ROW - 1);
+    store.amounts.set('coal', 1000);
+    store.amounts.set('water', 1000);
+    const loco = w.inventory.add('mallard', 0);
+    const t = w.fleet.create([loco.uid], [], [depot.id, quarry.id]);
+    if (typeof t === 'string') throw new Error(`fleet.create: ${t}`);
+    expect(t.coal).toBe(t.coalCap);
+    expect(t.water).toBe(t.waterCap);
+    expect(store.get('coal')).toBeCloseTo(1000 - t.coalCap, 9);
+    expect(store.get('water')).toBeCloseTo(1000 - t.waterCap, 9);
+  });
+
+  it('a recalled train empties its tanks into the store that supplies its tile', () => {
+    const w = grass();
+    const { store } = depotLine(w);
+    const t = onLine(w, 'f7', 12);
+    t.oil = 40;
+    w.fleet.recall(t);
+    expect(store.get(t.oilKind)).toBeCloseTo(40, 9);
+  });
+});

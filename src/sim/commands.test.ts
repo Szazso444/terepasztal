@@ -46,7 +46,7 @@ function world() {
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
   const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   const gacha = new Gacha(new Rng(7), inventory);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
   const commands = new Commands({ fleet, builder, economy, stock, trade, gacha, inventory });

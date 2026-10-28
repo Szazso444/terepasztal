@@ -335,7 +335,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     }
     sfx(sc ? 'ui.open' : 'ui.close');
   };
-  const trainScreen = new TrainScreen(d.fleet, d.builder, d.stock, d.commands, d.atlas, toast);
+  const trainScreen = new TrainScreen(d.fleet, d.builder, d.commands, d.atlas, toast);
   trainScreen.onLocate = (t) => host.focusTrain(t);
   const trainDetails = (t: Train) => {
     trainScreen.open(t);

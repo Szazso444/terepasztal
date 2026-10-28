@@ -201,6 +201,16 @@ function membersOf(r: ResourceStore): Store[] {
   return r instanceof Store ? [r] : [];
 }
 
+/**
+ * A detached copy of what a store or pool holds, with its caps read live from it: takes and adds
+ * on the copy are tried out without touching the store (`Fleet.refuelAll` previews on one).
+ */
+export function previewOf(r: ResourceStore): Store {
+  const copy = new Store(r.key, membersOf(r)[0]?.kind ?? 'depot', r.anchor, (id) => r.cap(id));
+  for (const [id, n] of r.held()) copy.amounts.set(id, n);
+  return copy;
+}
+
 /** Game seconds the eaters at a store may go short before its famine is declared. */
 const FAMINE_AFTER = 10;
 
@@ -399,6 +409,17 @@ export class StoreRegistry {
     const out = this.townStore(x, y) ?? this.nearest(x, y)[0] ?? null;
     if (k >= 0) this.supplierAtTile.set(k, out);
     return out;
+  }
+  /**
+   * The tank of a coaling stage, a water tower or a supplied station at the tile, one that is no
+   * depot or warehouse: its town's store, else its supplier (`supplierFor`) when that stands within
+   * `rules.fuelReach` tiles; else none, and it fills nothing.
+   */
+  fuelSupplierFor(x: number, y: number): ResourceStore | null {
+    const s = this.supplierFor(x, y);
+    if (!s || s === this.townStore(x, y)) return s;
+    const d = Math.max(Math.abs(s.anchor.x - x), Math.abs(s.anchor.y - y));
+    return d <= rules.fuelReach ? s : null;
   }
   /**
    * What a works runs from (`tickBuildings`): its supplier (`supplierFor` its corner tile), with

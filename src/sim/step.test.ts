@@ -7,7 +7,9 @@ import { pieceCost } from '../world/track';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { setSeasonOffset, seasonOf, productionMul, type Season, type WeatherKind } from './weather';
-import { resetTrainIds, type Train } from './trains';
+import { Train, defaultStop, resetTrainIds, type TickCtx } from './trains';
+import { Dir } from '../engine/iso';
+import { locoDef } from '../gacha/items';
 import { resetStationIds, type Station } from './stations';
 import { biomeAt, biomeDef } from './biomes';
 import { buildingDef, buildingRate, buildingSpan, tickBuildings, type Building } from './buildings';
@@ -107,7 +109,7 @@ describe('SimStep: famine', () => {
   });
 
   it.each([true, false])(
-    'leaves the speed factor fleet.tick gets to the weather: hungry trains are their own (weather %s)',
+    'leaves the speed factor fleet.tick gets to the weather, a store in famine or not (weather %s)',
     (weather) => {
       const fed = once(false, weather);
       const starving = once(true, weather);
@@ -117,6 +119,37 @@ describe('SimStep: famine', () => {
       expect(starving.speed, 'starving: speed factor').toBeCloseTo(fed.speed, 12);
     },
   );
+
+  /**
+   * How fast a diesel runs free on the line after one step, its crew owing `days` days of food,
+   * the store of the depot beside the line in famine or not.
+   */
+  function freeSpeed(days: number, famine: boolean) {
+    const w = grass();
+    const quarry = station(w, 'quarry', 28, 19);
+    depotWith(w, {}, { x: 8, y: 21 }).famine = famine;
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    expect(t.spawnAt(w.track, 12, 20, Dir.W)).not.toBe(false);
+    t.oil = t.oilCap;
+    t.schedule = [{ ...defaultStop(quarry.id), load: 'none', unload: 'none', waitFull: false }];
+    w.fleet.trains.push(t);
+    expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+    t.onPathReady((w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1));
+    t.owed.food = t.dailyFood * days;
+    run(w, new SimStep(w), context(w, false), 1);
+    expect(t.state, 'running').toBe('moving');
+    return { speed: t.freeSpeed, hungry: t.hungry };
+  }
+
+  it('slows a train owed more than a day of food, not one at a store in famine', () => {
+    const fed = freeSpeed(0.9, false);
+    const hungry = freeSpeed(1.1, false);
+    const atFamine = freeSpeed(0.9, true);
+    expect([fed.hungry, hungry.hungry, atFamine.hungry]).toEqual([false, true, false]);
+    expect(fed.speed, 'fed: running').toBeGreaterThan(0);
+    expect(hungry.speed).toBeCloseTo(fed.speed * FAMINE_SPEED_MUL, 12);
+    expect(atFamine.speed, 'a store in famine does not slow it').toBeCloseTo(fed.speed, 12);
+  });
 
   it('one town starves while the other is fed', () => {
     const w = simWorld({ terrain: 'grass', size: 96 });
@@ -327,15 +360,18 @@ function findSite(w: SimWorld): { x: number; y: number } {
 }
 
 /**
- * A new game's stock, a depot with a line east of it, a quarry and a warehouse with a train
- * between them, a passenger station among finished and unfinished houses, and the clock 20 game
- * seconds before the first day ends with one contract completed that day.
+ * A new game's stock (in the stockpile and in the depot's store, where the train fills its tanks),
+ * a depot with a line east of it, a quarry and a warehouse with a train between them, a passenger
+ * station among finished and unfinished houses, and the clock 20 game seconds before the first day
+ * ends with one contract completed that day.
  */
 function build(w: SimWorld) {
   const { x, y } = findSite(w);
-  for (const [id, n] of Object.entries(startStock()))
+  const depot = depotWith(w, {}, { x, y });
+  for (const [id, n] of Object.entries(startStock())) {
     w.stock.add(id, Math.round(n * rules.startStock));
-  station(w, 'depot', x, y);
+    depot.amounts.set(id, Math.round(n * rules.startStock));
+  }
   line(w, x + 2, y, x + 20);
   const quarry = station(w, 'quarry', x + 8, y - 1);
   const warehouse = station(w, 'warehouse', x + 18, y - 1);

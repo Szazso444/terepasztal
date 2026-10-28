@@ -942,14 +942,7 @@ export class Game implements UiHost {
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
-    this.fleet = new Fleet(
-      this.track,
-      this.builder,
-      this.map,
-      this.inventory,
-      this.economy,
-      this.stock,
-    );
+    this.fleet = new Fleet(this.track, this.builder, this.map, this.inventory, this.economy);
     this.fleet.powered = (x, y) => this.catenary.isLive(x, y);
     this.fleet.supplyAt = (x, y) => this.catenary.supplyAt(x, y);
     this.fleet.gridFactor = (x, y) => this.catenary.loadFactor(x, y);
@@ -957,7 +950,6 @@ export class Game implements UiHost {
     this.fleet.gridBegin = () => this.catenary.beginTick();
     this.fleet.signals.level = this.settings.signalling ?? 'auto';
     this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
-    this.fleet.stockCap = (id) => this.stockCap(id);
     this.fleet.junctions.onAlert = (a) =>
       this.notices.push(
         {

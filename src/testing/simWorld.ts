@@ -156,7 +156,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   builder.catenary = catenary;
   const weather = new Weather(new Rng(seed ^ 0x77ea));
   inventory.seedStarter(0);
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
 
   // The simulating halves of Game's onSupplyChanged, onBuildingChanged, onTrackChanged,
   // onDecorChanged, onStationChanged, rebuildPower and refreshRails.
@@ -204,7 +204,6 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   fleet.gridBegin = () => catenary.beginTick();
   fleet.signals.level = DEFAULT_SETTINGS.signalling ?? 'auto';
   fleet.onArrive = (_t, s) => houses.arrival(s, clock.time);
-  fleet.stockCap = (id) => stock.cap(id, builder.depotCount(), builder.plantCount());
   const people = new PeopleSim(map, builder);
   fleet.onPassengers = (st, n, boarding) => (boarding ? people.board(st, n) : people.alight(st, n));
   const contracts = new ContractBoard(new Rng(seed ^ 0x5eed), builder, economy);

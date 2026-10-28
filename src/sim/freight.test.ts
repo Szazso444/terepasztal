@@ -6,7 +6,6 @@ import { TrackGraph } from '../world/track';
 import { Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { StoreRegistry } from './stores';
@@ -45,15 +44,14 @@ const GDT = 0.05;
 function world() {
   const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass);
   const track = new TrackGraph(SIZE, SIZE);
-  const stock = new Stockpile();
   const economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
   const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
   for (let x = 2; x < SIZE - 2; x++) track.place(x, ROW, 'straight', 1);
-  return { map, track, stock, builder, fleet };
+  return { map, track, builder, fleet };
 }
 type World = ReturnType<typeof world>;
 
@@ -616,7 +614,7 @@ describe('a freight train unloading at a station with a store', () => {
     visit(w, t, depot);
     expect(stores.dockOf(depot)!.get('stone')).toBeCloseTo(20, 6);
     expect(depot.stored('stone')).toBeCloseTo(20, 6);
-    expect(w.stock.get('stone'), 'and none reached the stockpile').toBe(0);
+    expect(stores.totals().get('stone'), 'and no other store got any').toBeCloseTo(20, 6);
     expect(aboard(t).get('stone') ?? 0).toBe(0);
   });
 
@@ -1087,13 +1085,14 @@ function* shrinkRun(c: RunCase): Iterable<RunCase> {
       yield { ...c, sites: c.sites.map((s, k) => (k === i ? { ...s, held: 0 } : s)) };
 }
 
-/** Every unit of stone and wheat in the world: in stations, on trains and in the stockpile. */
+/** Every unit of stone and wheat in the world: in stations, on trains and in the stores. */
 function goods(w: World): Map<string, number> {
   const out = new Map<string, number>();
   const add = (c: string, n: number) => out.set(c, (out.get(c) ?? 0) + n);
   for (const s of w.builder.stations) for (const [c, n] of s.storage) add(c, n);
   for (const t of w.fleet.trains) for (const g of t.wagons) if (g.cargo) add(g.cargo, g.amount);
-  for (const c of ['stone', 'wheat']) add(c, w.stock.get(c));
+  const stored = w.builder.stores.totals();
+  for (const c of ['stone', 'wheat']) add(c, stored.get(c) ?? 0);
   return out;
 }
 
@@ -1220,7 +1219,7 @@ describe('freight trains running a generated line', () => {
           return JSON.stringify({
             trains: trains.map((t) => t.toJSON()),
             stations: w.builder.stations.map((s) => [s.id, [...s.storage]]),
-            stock: [...w.stock.amounts],
+            stores: w.builder.stores.toJSON(),
           });
         };
         expect(outcome()).toBe(outcome());

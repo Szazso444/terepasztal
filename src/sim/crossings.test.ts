@@ -53,7 +53,7 @@ import {
 } from './crossings';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
-import { storeWith } from '../testing/storeFixtures';
+import { depotWith, storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -1204,7 +1204,7 @@ const HOUSES: readonly (readonly [number, number])[] = [
 function crossingWorld(loco: string | null, seed: number): { w: SimWorld; train: Train | null } {
   const w = simWorld({ terrain: 'grass', size: SIDE, seed });
   for (const [k, n] of Object.entries(startStock())) w.stock.add(k, n);
-  station(w, 'depot', 4, ROW);
+  depotWith(w, startStock(), { x: 4, y: ROW });
   line(w, 6, ROW, 60);
   const quarry = station(w, 'quarry', 10, ROW - 1);
   const warehouse = station(w, 'warehouse', 53, ROW - 1);
