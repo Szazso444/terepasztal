@@ -78,17 +78,19 @@ const STYLE: Record<TrackClass, LineStyle> = {
   main: {
     ...BRANCH,
     shoulder: 0.35,
-    ballast: ['#8b8779', '#b6b09f', '#75726a', '#9d988a'],
-    tie: '#b9b3a0',
-    tieHi: '#d6d0bc',
+    // pale cool granite chips: clearly lighter than Branch's warm stone, far lighter than Trunk
+    ballast: ['#a9aaa7', '#d0d2ce', '#8b8d8a', '#babcb8'],
+    tie: '#cdc9bd',
+    tieHi: '#e6e2d7',
   },
   trunk: {
     ...BRANCH,
     sleeper: 0.255,
     shoulder: 0.38,
-    ballast: ['#4d4b49', '#6d6a65', '#363534', '#585653'],
-    tie: '#a19c8c',
-    tieHi: '#c4bfad',
+    // near-black basalt with darker concrete: the darkest bed of all
+    ballast: ['#3c3b3a', '#5a5855', '#2a2a29', '#474644'],
+    tie: '#8e8b83',
+    tieHi: '#aeaba2',
     widths: [1.5, 1.15, 0.48],
     railColors: ['#35332e', '#67635a', '#c2b89e'],
   },
