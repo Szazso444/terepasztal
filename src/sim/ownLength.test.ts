@@ -678,7 +678,10 @@ describe('a depot gate', () => {
     );
   }, 20_000);
 
-  /** A depot at (10, ROW), its east gate at (12, ROW), and `stub` straight tiles from the gate on. */
+  /**
+   * A depot at (10, ROW), its east gate at (12, ROW), and `stub` straight tiles of Trunk Line from
+   * the gate on: the line every regular train class runs on, so no consist is refused for its class.
+   */
   function gateStub(stub: number) {
     const map = emptyMap(4242, 40, 24, Terrain.Grass);
     const track = new TrackGraph(40, 24);
@@ -688,7 +691,7 @@ describe('a depot gate', () => {
     builder.free = true;
     const depot = new Station('depot', 10, ROW);
     builder.stations.push(depot);
-    for (let x = 12; x < 12 + stub; x++) track.place(x, ROW, 'straight', 1);
+    for (let x = 12; x < 12 + stub; x++) track.place(x, ROW, 'straight', 1, 'trunk');
     const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
     return { track, depot, fleet };
   }
@@ -762,12 +765,8 @@ describe('a depot gate', () => {
         }
 
         const gate = fleet.gateReport(t, depot).find((g) => g.x === 12 && g.y === ROW)!;
-        if (!t.access.classes.has('branch')) {
-          // a body too long for the curves of regular track is refused for its class first
-          expect(gate.ok).toBe(false);
-          expect(gate.run).toBe(0);
-          return;
-        }
+        // every regular class runs on Trunk Line: the gate answers for room alone
+        expect(t.access.classes.has('trunk')).toBe(true);
         const why = `${need} tiles of train, ${stub} of stub, ${usable} free: ${gate.reason}`;
         if (usable === 0) {
           seen.busy++;

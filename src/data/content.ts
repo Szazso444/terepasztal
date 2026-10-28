@@ -41,6 +41,13 @@ export type LocoType = 'steam' | 'diesel' | 'electric';
 export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
 /** Track gauge: narrow stock runs on narrow track only, regular stock never does. */
 export type Gauge = 'regular' | 'narrow';
+/**
+ * Train class: the smallest track line a vehicle runs on (specs/track-classes.md). Corvette on
+ * Narrow Gauge; Frigate, Destroyer and Cruiser on Branch, Main and Trunk Line and every bigger one
+ * of those; Carrier (nuclear trains) like a Cruiser; Hydrofoil on Maglev, Submarine in Hyperloop.
+ */
+export type TrainClass =
+  'corvette' | 'frigate' | 'destroyer' | 'cruiser' | 'carrier' | 'hydrofoil' | 'submarine';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 /**
  * Bogie sprites under a vehicle: one style for every bogie, or one per body part. A list goes over
@@ -107,6 +114,8 @@ export interface LocoDef {
   collector?: Collector;
   /** fitted with in-cab signalling equipment (runs at in-cab headway where the level has it) */
   inCab?: boolean;
+  /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
+  class?: TrainClass;
   /** track gauge (default regular) */
   gauge?: Gauge;
 }
@@ -137,6 +146,8 @@ export interface WagonDef {
   service?: 'coal' | 'fuel' | 'battery';
   /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
   serviceCap?: number;
+  /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
+  class?: TrainClass;
   /** track gauge (default regular) */
   gauge?: Gauge;
 }

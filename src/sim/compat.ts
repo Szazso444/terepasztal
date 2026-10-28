@@ -1,14 +1,17 @@
 /**
- * Which stock may run on which track line (spec §4 and §5). At load every vehicle model is run
- * once over a reference curve of each line (straight lead-in, quarter arc, straight lead-out)
- * and its peak bogie slide, sideways shift, residual gap and centre-bogie offset are compared to
- * the tolerances. Runtime only looks the verdict up. On top of the geometry sits one rule about
- * networks: narrow stock runs on Narrow Gauge only, regular-gauge stock on the standard lines
- * only. No stock runs on Maglev Guideway or Hyperloop Tube yet.
+ * Which stock may run on which track line. Every vehicle has a train class (specs/track-classes.md):
+ * the smallest line it runs on. On the standard network a class runs on its own line and every
+ * bigger one; a separate network (Narrow Gauge, Maglev, Hyperloop) takes only its own class.
+ *
+ * The geometry stays the check behind the classes: every vehicle model can be run over a
+ * reference curve of each line (straight lead-in, quarter arc, straight lead-out) and its peak
+ * bogie slide, sideways shift, residual gap and centre-bogie offset compared to the tolerances
+ * (`verdictOf`). The tests hold every vehicle to fitting its own class's line.
  */
-import { content, type Gauge, type LocoDef, type WagonDef } from '../data/content';
+import { content, type Gauge, type LocoDef, type TrainClass, type WagonDef } from '../data/content';
 import {
   BUILDABLE_CLASSES,
+  LINES,
   TRACK_CLASSES,
   classRadius,
   networkOf,
@@ -99,15 +102,55 @@ export function verdictOf(def: LocoDef | WagonDef, cls: TrackClass): Verdict {
   return v;
 }
 
+/** The smallest line of each train class. */
+export const CLASS_LINE: Record<TrainClass, TrackClass> = {
+  corvette: 'narrow',
+  frigate: 'branch',
+  destroyer: 'main',
+  cruiser: 'trunk',
+  carrier: 'trunk',
+  hydrofoil: 'maglev',
+  submarine: 'hyperloop',
+};
+/** Train classes, smallest first on each network. */
+export const TRAIN_CLASSES = Object.keys(CLASS_LINE) as TrainClass[];
+
+/** A vehicle's train class; a def without one is a Corvette on narrow gauge, else a Frigate. */
+export function classOf(def: { class?: TrainClass; gauge?: Gauge }): TrainClass {
+  return def.class ?? (gaugeOf(def) === 'narrow' ? 'corvette' : 'frigate');
+}
+/** Does a class run on a line: its own, or on the standard network any bigger one? */
+export function classRunsOn(tc: TrainClass, cls: TrackClass): boolean {
+  const own = LINES[CLASS_LINE[tc]];
+  const line = LINES[cls];
+  if (own.network !== line.network) return false;
+  return own.network === 'standard' ? line.tier >= own.tier : true;
+}
 /**
- * May this model use a line? Its network first, then the tolerance table. Returns the reason when
- * not.
+ * A consist's class: its biggest vehicle's (the one that needs the biggest line), null for none.
+ * Stock of two networks makes no train; the first vehicle's network wins here.
  */
+export function trainClassOf(defs: { class?: TrainClass; gauge?: Gauge }[]): TrainClass | null {
+  let best: TrainClass | null = null;
+  for (const d of defs) {
+    const tc = classOf(d);
+    if (!best) best = tc;
+    else if (
+      LINES[CLASS_LINE[tc]].network === LINES[CLASS_LINE[best]].network &&
+      LINES[CLASS_LINE[tc]].tier > LINES[CLASS_LINE[best]].tier
+    )
+      best = tc;
+  }
+  return best;
+}
+
+/** May this model use a line? By its train class. Returns the reason when not. */
 export function vehicleAccess(def: LocoDef | WagonDef, cls: TrackClass): string | null {
-  if (gaugeNetwork(gaugeOf(def)) !== networkOf(cls))
+  const tc = classOf(def);
+  if (classRunsOn(tc, cls)) return null;
+  if (networkOf(CLASS_LINE[tc]) !== networkOf(cls))
     return STR.compat.wrongNetwork(STR.toolbar.trackClass[cls]);
-  const v = verdictOf(def, cls);
-  return v.ok ? null : v.reason;
+  return STR.compat.tooBig(STR.trainClass[tc], STR.toolbar.trackClass[cls]);
 }
 
 export function gaugeOf(def: { gauge?: Gauge }): Gauge {
@@ -153,12 +196,12 @@ export function consistAccess(defs: (LocoDef | WagonDef)[]): ConsistAccess {
   return out;
 }
 
-/** One line for a vehicle's data sheet: the buildable lines it may run on. */
+/** One line for a vehicle's data sheet: its class and the buildable lines it may run on. */
 export function runsOn(def: LocoDef | WagonDef): string {
   const names = BUILDABLE_CLASSES.filter((cls) => !vehicleAccess(def, cls)).map(
     (cls) => STR.toolbar.trackClass[cls],
   );
-  return STR.compat.runsOn(names);
+  return STR.compat.runsOn(STR.trainClass[classOf(def)], names);
 }
 
 /** Class a piece presents when entered through `entry` (crossings differ per axis). */

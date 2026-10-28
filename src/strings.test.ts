@@ -52,8 +52,26 @@ describe('track names the player reads', () => {
   it('names the tuning value and the track a vehicle runs on', () => {
     expect(RULE_META.find((m) => m.key === 'lineSpeedBranch')!.label).toBe('Branch Line speed');
     const boxcar = content.wagons.find((w) => w.id === 'boxcar')!;
-    expect(runsOn(boxcar)).toBe('Runs on Branch Line, Main Line, Trunk Line');
+    expect(runsOn(boxcar)).toBe('Frigate · runs on Branch Line, Main Line, Trunk Line');
+    const blackFive = content.locomotives.find((l) => l.id === 'black_five')!;
+    expect(runsOn(blackFive)).toBe('Destroyer · runs on Main Line, Trunk Line');
     expect(STR.build.crossingLine).toBe('No level crossings on this line');
+  });
+
+  it('names the train classes and says which one is too big for a line', () => {
+    expect(STR.trainClass).toEqual({
+      corvette: 'Corvette',
+      frigate: 'Frigate',
+      destroyer: 'Destroyer',
+      cruiser: 'Cruiser',
+      carrier: 'Carrier',
+      hydrofoil: 'Hydrofoil',
+      submarine: 'Submarine',
+    });
+    expect(STR.compat.tooBig('Destroyer', 'Branch Line')).toBe(
+      'a Destroyer is too big for Branch Line',
+    );
+    expect(STR.compat.runsOn('Hydrofoil', [])).toBe('Hydrofoil · runs on no track yet');
   });
 });
 

@@ -32,6 +32,7 @@ import { simWorld } from '../testing/simWorld';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { STR } from '../strings';
+import { vehicleAccess } from './compat';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -2083,11 +2084,19 @@ function layRun(g: TrackGraph, track: RunCase['track']) {
   for (const l of track.lays) g.set(l.x, l.y, makePiece(l.kind, l.rot, l.cls, l.cls2));
   return g;
 }
-/** Locomotives of the gauge that run on their own tanks, no wire needed. */
+/** The line a run's train stands on: Narrow Gauge on combs and trees, Branch Line on sided lines. */
+const runLine = (narrow: boolean) => (narrow ? 'narrow' : 'branch');
+/** Locomotives that may use the run's line and run on their own tanks, no wire needed. */
 const runLocos = (narrow: boolean) =>
   content.locomotives
-    .filter((d) => (d.gauge === 'narrow') === narrow && (d.type === 'diesel' || d.type === 'steam'))
+    .filter(
+      (d) =>
+        vehicleAccess(d, runLine(narrow)) === null && (d.type === 'diesel' || d.type === 'steam'),
+    )
     .map((d) => d.id);
+/** Wagons that may use the run's line: a Destroyer or Cruiser wagon is too big for Branch Line. */
+const runWagons = (narrow: boolean) =>
+  content.wagons.filter((d) => vehicleAccess(d, runLine(narrow)) === null).map((d) => d.id);
 function runTrain(c: Pick<RunCase, 'loco' | 'wagons'>) {
   const t = rearTrain({ locos: [c.loco], wagons: c.wagons });
   t.oil = t.oilCap;
@@ -2149,7 +2158,7 @@ function runCase(rng: Rng): RunCase {
     if (!plain.length) continue;
     const at = rng.pick(plain);
     const narrow = track.kind !== 'line';
-    const wagons = STOCK(narrow).wagons;
+    const wagons = runWagons(narrow);
     // on narrow gauge, a Muki and five wagons an odd number of them tubs, half the time on a comb:
     // a whole number of tiles and a half long, its rear end on a tile edge where it stands to turn
     const edgy = narrow && rng.chance(track.kind === 'comb' ? 1 / 2 : 1 / 4);

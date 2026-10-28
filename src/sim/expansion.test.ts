@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
-import { TrackGraph } from '../world/track';
+import { TrackGraph, type TrackClass } from '../world/track';
 import { findPath } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import { content, validateContent, DEFAULT_CONTENT } from '../data/content';
@@ -29,7 +29,8 @@ import { STR } from '../strings';
 import { upgradeSeconds } from './upgrade';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
-function world() {
+/** A straight line along y = 30; a Destroyer (e.g. the Mallard) needs `main` to run on it. */
+function world(line: TrackClass = 'branch') {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
     stock = new Stockpile(),
@@ -37,7 +38,7 @@ function world() {
   const builder = new Builder(map, new RegionState(map), track, economy, stock);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
-  for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
+  for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1, line);
   return { map, track, stock, economy, builder, fleet };
 }
 function train(id = 'f7') {
@@ -204,7 +205,7 @@ describe('bridges, reversing and refuelling', () => {
     );
   });
   it('reverses tender segments and wagons without changing positions or interpolating a half-turn', () => {
-    const w = world(),
+    const w = world('main'),
       t = train('mallard');
     t.wagons.push({
       uid: 2,
@@ -294,7 +295,7 @@ describe('bridges, reversing and refuelling', () => {
     },
   );
   it('routes low reserves to the nearer reachable rail service and then resumes its destination', () => {
-    const w = world(),
+    const w = world('main'),
       t = train('mallard');
     t.spawnAt(w.track, 20, 30, Dir.W);
     const st = new Station('quarry', 80, 29);
@@ -319,7 +320,7 @@ describe('bridges, reversing and refuelling', () => {
     expect(t.route).toEqual([st.id]);
   });
   it('visits separate fuel and water services in order of the limiting reserve', () => {
-    const w = world(),
+    const w = world('main'),
       t = train('mallard');
     t.spawnAt(w.track, 20, 30, Dir.W);
     const st = new Station('quarry', 80, 29);
@@ -451,17 +452,14 @@ describe('semaphore boundaries and growing worlds', () => {
 });
 describe('line speed', () => {
   function runFast(cls: 'branch' | 'main') {
-    const w = world(),
-      t = new Train([
-        { uid: 1, level: 1, def: content.locomotives.find((d) => d.id === 'mallard')! },
-      ]);
-    if (cls === 'main') for (let x = 2; x < 90; x++) w.track.place(x, 30, 'straight', 1, cls);
+    // a fast Frigate, so the same engine runs on both lines
+    const w = world(cls),
+      t = new Train([{ uid: 1, level: 1, def: content.locomotives.find((d) => d.id === 'f7')! }]);
     t.spawnAt(w.track, 40, 30, Dir.E);
     const st = new Station('quarry', 85, 29);
     w.builder.stations.push(st);
     t.route = [st.id];
-    t.coal = t.coalCap;
-    t.water = t.waterCap;
+    t.oil = t.oilCap;
     t.speed = t.maxSpeed * t.loadFactor;
     w.fleet.trains.push(t);
     expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);

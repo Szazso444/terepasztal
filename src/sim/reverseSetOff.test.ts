@@ -15,11 +15,13 @@ import { locoDef, wagonDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSeasonOffset } from './weather';
 import { content } from '../data/content';
+import { CLASS_LINE, classOf, trainClassOf } from './compat';
 import { SUPPLY_KINDS, collectorCeiling } from './catenary';
 import { stationDef, stationSpan, type Station } from './stations';
 import type { PathSegment } from '../world/pathfinding';
 import {
   TrackGraph,
+  LINES,
   footprintOf,
   pieceLinks,
   rotationCount,
@@ -81,22 +83,30 @@ function straight(cls: TrackClass): Layout {
 }
 
 /**
- * East along row 20, a step down to row 24 through two 2×2 curves (east to south, then south to
- * east, one straight between), and east again, `gap` tiles more past the first, to the stop.
+ * East along row 20, a step down through two curves of the line (east to south, then south to
+ * east, one straight between: on Branch Line two 2×2 curves down to row 24), and east again, `gap`
+ * tiles more past the first, to the stop.
  */
-function wideStep(cls: TrackClass, gap: number): Layout {
+function wideStep(cls: StandardLine, gap: number): Layout {
+  const pieces: Lay[] = [...row(20, 2, 15)];
+  const down = bigCurve(Dir.W, Dir.S, cls);
+  pieces.push([16 + down.put.x, 20 + down.put.y, 'curve', down.put.rot]);
+  const mid = down.steps[down.steps.length - 1];
+  const x = 16 + mid.x;
+  const y = 20 + mid.y + 1;
+  pieces.push([x, y, 'straight', turnOf('straight', Dir.N, Dir.S)]);
+  const across = bigCurve(Dir.N, Dir.E, cls);
+  pieces.push([x + across.put.x, y + 1 + across.put.y, 'curve', across.put.rot]);
+  const end = across.steps[across.steps.length - 1];
+  const ex = x + end.x + 1;
+  const ey = y + 1 + end.y;
+  pieces.push(...row(ey, ex, 40));
   return {
     name: `${cls} curves ${gap + 1} tiles behind the stop`,
     cls,
-    pieces: [
-      ...row(20, 2, 15),
-      [16, 20, 'curve', 2],
-      [17, 22, 'straight', 0],
-      [17, 23, 'curve', 0],
-      ...row(24, 19, 40),
-    ],
+    pieces,
     start: { x: 8, y: 20 },
-    warehouse: { x: 19 + gap, y: 25 },
+    warehouse: { x: ex + gap, y: ey + 1 },
   };
 }
 
@@ -123,10 +133,18 @@ function narrowSteps(gap: number): Layout {
 }
 
 const GAPS = [0, 1, 2];
-const LAYOUTS: Record<'branch' | 'narrow', Layout[]> = {
-  branch: [straight('branch'), ...GAPS.map((g) => wideStep('branch', g))],
+/** The lines of the standard network. */
+type StandardLine = 'branch' | 'main' | 'trunk';
+const STANDARD_LINES: readonly StandardLine[] = ['branch', 'main', 'trunk'];
+/**
+ * The layouts of each line a locomotive is run on: the smallest line of its train class, the one
+ * with the tightest curves it may take (a Destroyer runs on Main Line, a Cruiser on Trunk Line).
+ */
+const LAYOUTS: Partial<Record<TrackClass, Layout[]>> = {
   narrow: [straight('narrow'), ...GAPS.map(narrowSteps)],
 };
+for (const cls of STANDARD_LINES)
+  LAYOUTS[cls] = [straight(cls), ...GAPS.map((g) => wideStep(cls, g))];
 
 /**
  * The wagons behind each locomotive: 0-4 wood hoppers on regular gauge; on narrow gauge 0-4 mine
@@ -298,7 +316,7 @@ describe('a train that ran to where it stands, reversing', () => {
       let onAnEdge = 0;
       for (const def of content.locomotives) {
         const narrow = def.gauge === 'narrow';
-        for (const layout of LAYOUTS[narrow ? 'narrow' : 'branch'])
+        for (const layout of LAYOUTS[CLASS_LINE[classOf(def)]]!)
           for (const wagons of consists(narrow)) {
             const { w, stop } = build(layout);
             const ran = run(w, stop.id, layout, def.id, wagons);
@@ -373,25 +391,28 @@ function turnOf(kind: TrackKind, a: Dir, b: Dir) {
 }
 
 /**
- * The 2×2 curve a train enters at (0, 0) through `entry` and leaves heading `to`: its anchor and
- * turn, and the tiles the train runs through it, found by laying each turn and anchor on a scratch
- * graph and following the rails in from the edge of the block.
+ * The curve of a standard line (2×2 on Branch Line, 3×3 on Main, 4×4 on Trunk) a train enters at
+ * (0, 0) through `entry` and leaves heading `to`: its anchor and turn, and the tiles the train runs
+ * through it, found by laying each turn and anchor on a scratch graph and following the rails in
+ * from the edge of the block.
  */
-function bigCurve(entry: Dir, to: Dir): { put: Put; steps: Step[] } {
+function bigCurve(entry: Dir, to: Dir, cls: StandardLine = 'branch'): { put: Put; steps: Step[] } {
+  const n = LINES[cls].n;
+  const o = n + 1;
   for (let rot = 0; rot < rotationCount('curve'); rot++)
-    for (let dy = 0; dy < 2; dy++)
-      for (let dx = 0; dx < 2; dx++) {
-        const g = new TrackGraph(8, 8);
-        g.place(3 - dx, 3 - dy, 'curve', rot, 'branch');
-        if (g.has(3 + DIR_DX[entry], 3 + DIR_DY[entry])) continue;
+    for (let dy = 0; dy < n; dy++)
+      for (let dx = 0; dx < n; dx++) {
+        const g = new TrackGraph(2 * o + 1, 2 * o + 1);
+        g.place(o - dx, o - dy, 'curve', rot, cls);
+        if (!g.has(o, o) || g.has(o + DIR_DX[entry], o + DIR_DY[entry])) continue;
         const steps: Step[] = [];
-        let x = 3;
-        let y = 3;
+        let x = o;
+        let y = o;
         let from = entry;
         for (;;) {
           const out = g.exits(x, y, from);
           if (out.length !== 1) break;
-          steps.push({ x: x - 3, y: y - 3, in: from, out: out[0] });
+          steps.push({ x: x - o, y: y - o, in: from, out: out[0] });
           x += DIR_DX[out[0]];
           y += DIR_DY[out[0]];
           if (!g.has(x, y)) {
@@ -401,7 +422,7 @@ function bigCurve(entry: Dir, to: Dir): { put: Put; steps: Step[] } {
           from = opposite(out[0]);
         }
       }
-  throw new Error(`no 2×2 curve turns from entry ${entry} to heading ${to}`);
+  throw new Error(`no ${cls} curve turns from entry ${entry} to heading ${to}`);
 }
 
 /**
@@ -409,7 +430,7 @@ function bigCurve(entry: Dir, to: Dir): { put: Put; steps: Step[] } {
  * class to the other of two headings at right angles.
  */
 interface Line {
-  cls: 'branch' | 'narrow';
+  cls: StandardLine | 'narrow';
   /** the heading of the first leg, and the one the line turns to and back from */
   first: Dir;
   side: Dir;
@@ -443,7 +464,7 @@ function plan(line: Line) {
       x += DIR_DX[to];
       y += DIR_DY[to];
     } else {
-      const c = bigCurve(opposite(heading), to);
+      const c = bigCurve(opposite(heading), to, line.cls);
       puts.push({ ...c.put, x: x + c.put.x, y: y + c.put.y });
       for (const s of c.steps) steps.push({ ...s, x: x + s.x, y: y + s.y });
       const last = c.steps[c.steps.length - 1];
@@ -538,18 +559,29 @@ function stockOf(narrow: boolean) {
   };
 }
 
+/**
+ * A winding case: narrow or regular stock, and the line laid for it the smallest line its train
+ * class runs on (Branch Line for a Frigate train, Main Line for one with a Destroyer in it, Trunk
+ * Line for one with a Cruiser), so each consist meets the tightest curves it may take.
+ */
 function winding(rng: Rng): Winding {
-  const cls = rng.chance(0.5) ? 'branch' : 'narrow';
+  const narrow = !rng.chance(0.5);
   const first = rng.pick(DIRS);
   const turns = rng.int(0, 4);
   const legs = Array.from({ length: turns + 1 }, (_, i) =>
     i === 0 ? rng.int(turns ? 2 : 3, 8) : rng.int(i === turns ? 1 : 0, 4),
   );
-  const stock = stockOf(cls === 'narrow');
+  const stock = stockOf(narrow);
+  const side = rotateDir(first, rng.chance(0.5) ? 1 : 3);
+  const loco = rng.pick(stock.locos);
+  const wagons = Array.from({ length: rng.int(0, 4) }, () => rng.pick(stock.wagons));
+  const cls = CLASS_LINE[
+    trainClassOf([locoDef(loco), ...wagons.map((id) => wagonDef(id))])!
+  ] as Line['cls'];
   return {
-    line: { cls, first, side: rotateDir(first, rng.chance(0.5) ? 1 : 3), legs },
-    loco: rng.pick(stock.locos),
-    wagons: Array.from({ length: rng.int(0, 4) }, () => rng.pick(stock.wagons)),
+    line: { cls, first, side, legs },
+    loco,
+    wagons,
     tick: rng.pick([0.05, 0.25, 0.8]),
     ticks: rng.int(1, 0x7fffffff),
     cut: rng.chance(0.4) ? rng.int(4, 120) : null,

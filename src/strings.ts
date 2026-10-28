@@ -1443,10 +1443,21 @@ export const STR = {
       wire: 'From the wire mill. Electrification is strung from it.',
     } as Record<string, string>,
   },
+  /** train classes (specs/track-classes.md): the smallest track line a vehicle runs on */
+  trainClass: {
+    corvette: 'Corvette',
+    frigate: 'Frigate',
+    destroyer: 'Destroyer',
+    cruiser: 'Cruiser',
+    carrier: 'Carrier',
+    hydrofoil: 'Hydrofoil',
+    submarine: 'Submarine',
+  } as Record<string, string>,
   compat: {
     wrongNetwork: (line: string) => `not built for ${line}`,
-    runsOn: (lines: string[]) =>
-      lines.length ? `Runs on ${lines.join(', ')}` : 'Runs on no track yet',
+    tooBig: (cls: string, line: string) => `a ${cls} is too big for ${line}`,
+    runsOn: (cls: string, lines: string[]) =>
+      lines.length ? `${cls} · runs on ${lines.join(', ')}` : `${cls} · runs on no track yet`,
     foreAft: (v: number, t: number) =>
       `bogies slide ${v.toFixed(2)} tiles along the body, limit ${t.toFixed(2)}`,
     gap: (v: number, t: number) =>

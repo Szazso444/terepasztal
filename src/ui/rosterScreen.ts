@@ -14,6 +14,7 @@ import {
   locoDef,
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
+import { runsOn } from '../sim/compat';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -171,6 +172,8 @@ export class RosterScreen implements Screen {
       );
       if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
     }
+    // its train class and the lines it may run on
+    stats.push(runsOn(d as LocoDef | WagonDef));
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
     const spares = this.inventory.spares(it).length;
     const lvl = el(

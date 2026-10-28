@@ -447,7 +447,7 @@ function switchFrom(
   c: Layout,
   given: (sc: Scene) => void = () => {},
 ) {
-  const sc = scene(c, recipe === 'noPower' ? 'taurus' : 'f7');
+  const sc = scene(c, recipe === 'noPower' ? 're460' : 'f7');
   const { t, w } = sc;
   const release = RECIPES[recipe](sc);
   given(sc);

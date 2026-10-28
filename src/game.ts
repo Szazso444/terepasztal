@@ -151,7 +151,6 @@ import { Notices, type Notice } from './sim/notices';
 import type { Tip } from './ui/advisor';
 import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
-import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
 import { biomeDef, biomeAt } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
@@ -885,7 +884,6 @@ export class Game implements UiHost {
       ATLAS_GROUPS,
       (settled, total) => void onProgress?.('pictures', settled / total),
     );
-    buildCompatTable();
     await onProgress?.('pictures', 1);
 
     if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);

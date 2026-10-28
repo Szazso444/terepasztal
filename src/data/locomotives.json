@@ -1,6 +1,7 @@
 [
   {
     "id": "rocket",
+    "class": "corvette",
     "name": "Stephenson's Rocket",
     "rarity": "N",
     "type": "steam",
@@ -21,6 +22,7 @@
   },
   {
     "id": "mav490",
+    "class": "corvette",
     "name": "MÁV 490",
     "rarity": "N",
     "type": "steam",
@@ -41,6 +43,7 @@
   },
   {
     "id": "orenstein_koppel",
+    "class": "corvette",
     "name": "Orenstein & Koppel",
     "rarity": "N",
     "type": "steam",
@@ -61,6 +64,7 @@
   },
   {
     "id": "bm50",
+    "class": "corvette",
     "name": "BM-50",
     "rarity": "N",
     "type": "diesel",
@@ -79,6 +83,7 @@
   },
   {
     "id": "muki",
+    "class": "corvette",
     "name": "Muki",
     "rarity": "N",
     "type": "diesel",
@@ -97,6 +102,7 @@
   },
   {
     "id": "c50",
+    "class": "corvette",
     "name": "MÁV C-50",
     "rarity": "N",
     "type": "diesel",
@@ -116,6 +122,7 @@
   },
   {
     "id": "adler",
+    "class": "frigate",
     "name": "Adler",
     "rarity": "N",
     "type": "steam",
@@ -135,6 +142,7 @@
   },
   {
     "id": "john_bull",
+    "class": "frigate",
     "name": "John Bull",
     "rarity": "N",
     "type": "steam",
@@ -154,6 +162,7 @@
   },
   {
     "id": "mav375",
+    "class": "frigate",
     "name": "MÁV 375",
     "rarity": "N",
     "type": "steam",
@@ -172,6 +181,7 @@
   },
   {
     "id": "general",
+    "class": "frigate",
     "name": "The General",
     "rarity": "R",
     "type": "steam",
@@ -190,6 +200,7 @@
   },
   {
     "id": "jupiter",
+    "class": "frigate",
     "name": "Jupiter",
     "rarity": "R",
     "type": "steam",
@@ -208,6 +219,7 @@
   },
   {
     "id": "mav424",
+    "class": "destroyer",
     "name": "MÁV 424 Bivaly",
     "rarity": "R",
     "type": "steam",
@@ -231,6 +243,7 @@
   },
   {
     "id": "k4s",
+    "class": "cruiser",
     "name": "PRR K4s",
     "rarity": "R",
     "type": "steam",
@@ -254,6 +267,7 @@
   },
   {
     "id": "drg01",
+    "class": "destroyer",
     "name": "DRG Class 01",
     "rarity": "SR",
     "type": "steam",
@@ -277,6 +291,7 @@
   },
   {
     "id": "flying_scotsman",
+    "class": "destroyer",
     "name": "Flying Scotsman",
     "rarity": "SR",
     "type": "steam",
@@ -300,6 +315,7 @@
   },
   {
     "id": "daylight",
+    "class": "destroyer",
     "name": "SP 4449 Daylight",
     "rarity": "SR",
     "type": "steam",
@@ -323,6 +339,7 @@
   },
   {
     "id": "mallard",
+    "class": "destroyer",
     "name": "Mallard",
     "rarity": "SSR",
     "type": "steam",
@@ -346,6 +363,7 @@
   },
   {
     "id": "big_boy",
+    "class": "cruiser",
     "name": "Big Boy 4014",
     "rarity": "SSR",
     "type": "steam",
@@ -370,6 +388,7 @@
   },
   {
     "id": "sw1",
+    "class": "frigate",
     "name": "EMD SW1",
     "rarity": "N",
     "type": "diesel",
@@ -387,6 +406,7 @@
   },
   {
     "id": "class08",
+    "class": "frigate",
     "name": "BR Class 08",
     "rarity": "N",
     "type": "diesel",
@@ -404,6 +424,7 @@
   },
   {
     "id": "m62",
+    "class": "frigate",
     "name": "M62 Szergej",
     "rarity": "R",
     "type": "diesel",
@@ -423,6 +444,7 @@
   },
   {
     "id": "f7",
+    "class": "frigate",
     "name": "EMD F7",
     "rarity": "R",
     "type": "diesel",
@@ -441,6 +463,7 @@
   },
   {
     "id": "sd40",
+    "class": "destroyer",
     "name": "EMD SD40-2",
     "rarity": "SR",
     "type": "diesel",
@@ -460,6 +483,7 @@
   },
   {
     "id": "deltic",
+    "class": "destroyer",
     "name": "Deltic Class 55",
     "rarity": "SR",
     "type": "diesel",
@@ -479,6 +503,7 @@
   },
   {
     "id": "dda40x",
+    "class": "cruiser",
     "name": "DDA40X Centennial",
     "rarity": "SSR",
     "type": "diesel",
@@ -501,6 +526,7 @@
   },
   {
     "id": "kando_v40",
+    "class": "frigate",
     "name": "Kandó V40",
     "rarity": "R",
     "type": "electric",
@@ -518,6 +544,7 @@
   },
   {
     "id": "v63",
+    "class": "frigate",
     "name": "V63 Gigant",
     "rarity": "R",
     "type": "electric",
@@ -537,6 +564,7 @@
   },
   {
     "id": "crocodile",
+    "class": "destroyer",
     "name": "SBB Ce 6/8 Crocodile",
     "rarity": "SR",
     "type": "electric",
@@ -562,6 +590,7 @@
   },
   {
     "id": "taurus",
+    "class": "destroyer",
     "name": "ÖBB 1116 Taurus",
     "rarity": "SR",
     "type": "electric",
@@ -580,6 +609,7 @@
   },
   {
     "id": "re460",
+    "class": "frigate",
     "name": "SBB Re 460",
     "rarity": "SR",
     "type": "electric",
@@ -598,6 +628,7 @@
   },
   {
     "id": "gg1",
+    "class": "cruiser",
     "name": "PRR GG1",
     "rarity": "SSR",
     "type": "electric",
@@ -622,6 +653,7 @@
   },
   {
     "id": "j94",
+    "class": "frigate",
     "name": "Saddle Tank J94",
     "rarity": "N",
     "type": "steam",
@@ -640,6 +672,7 @@
   },
   {
     "id": "black_five",
+    "class": "destroyer",
     "name": "LMS Black Five",
     "rarity": "R",
     "type": "steam",
@@ -663,6 +696,7 @@
   },
   {
     "id": "nine_f",
+    "class": "destroyer",
     "name": "BR 9F",
     "rarity": "SR",
     "type": "steam",
@@ -687,6 +721,7 @@
   },
   {
     "id": "gmam",
+    "class": "frigate",
     "name": "GMAM Garratt",
     "rarity": "SR",
     "type": "steam",
@@ -712,6 +747,7 @@
   },
   {
     "id": "tgv",
+    "class": "destroyer",
     "name": "TGV Sud-Est",
     "rarity": "SSR",
     "type": "electric",
@@ -731,6 +767,7 @@
   },
   {
     "id": "ice1",
+    "class": "destroyer",
     "name": "ICE 1",
     "rarity": "SR",
     "type": "electric",
@@ -750,6 +787,7 @@
   },
   {
     "id": "mk48",
+    "class": "corvette",
     "name": "MÁV Mk48",
     "rarity": "N",
     "type": "diesel",
