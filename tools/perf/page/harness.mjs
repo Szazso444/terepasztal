@@ -159,6 +159,12 @@
     po?.disconnect();
     const trace = profiler ? await profiler.stop() : null;
     frames.shift();
+    // no frame intervals: a hidden or throttled page draws none, and a short recording too few
+    if (frames.length === 0)
+      throw new Error(
+        `no frames recorded in ${Math.round(wall)} ms: the page drew fewer than two ` +
+          '(a hidden or throttled tab, or too short a recording)',
+      );
     const sorted = [...frames].sort((a, b) => a - b);
     const q = (p) => +sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))].toFixed(2);
     const timers = {};

@@ -29,6 +29,10 @@ import { SIM_STEP } from '../../src/sim/time';
 const out = {};
 const env = process.env;
 const TICKS = Number(env.PERF_TICKS ?? 600);
+if (!Number.isInteger(TICKS) || TICKS < 1)
+  throw new Error(
+    `PERF_TICKS must be a positive integer (timed ticks per case), not "${env.PERF_TICKS}"`,
+  );
 
 /** Mean ms per call of `fn`, called for at least `minMs`. */
 function time(fn, minMs = 300) {

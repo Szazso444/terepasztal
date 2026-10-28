@@ -41,7 +41,7 @@ the route length and the train count vary. A run takes two to four minutes. Envi
 | Variable     | Effect                                                                                                                                                                                        |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PERF_CASES` | case ids, comma separated, or `all`: the defaults `r130-t8` … `r450-t100`, and `m160-r130-t8` (the report's small map), `r450-t32`, `r450-t64-sig`, `r450-t100-sig` (a signal every 10 tiles) |
-| `PERF_TICKS` | timed ticks per case (default 600, after as many warm-up ticks)                                                                                                                               |
+| `PERF_TICKS` | timed ticks per case, a positive integer (default 600, after as many warm-up ticks)                                                                                                           |
 | `PERF_ONLY`  | `sim` skips the `Signals.ahead` and `findPath` tables                                                                                                                                         |
 | `PERF_OUT`   | writes all tables as JSON to this path                                                                                                                                                        |
 | `PERF_PROF`  | writes a V8 CPU profile of the timed ticks to this path (`summarize.mjs` reads it)                                                                                                            |
@@ -129,7 +129,9 @@ first half second of frames: the report's "boot to playable"), `loadedMs` (the l
 has finished and shows "Click to begin") and `readyMs` (the later of the two), then
 `domContentLoadedMs`, resources and their transfer size, the map, the GPU and the screen. Then it
 clicks "Click to begin" with a real mouse event, as a player would, and adds `begunMs` when the
-reveal has finished and the loading screen is gone; `--stay` leaves the screen up. A new game
+reveal has finished and the loading screen is gone; `--stay` leaves the screen up. The game runs
+under the screen, but the screen costs frame time while it is up (the 2026-10-27 numbers below
+were recorded with it up), so a before and an after must both click or both `--stay`. A new game
 starts paused, so `rec` needs `--speed`.
 
 `rec` wraps the game's methods with timers (`__perf.instrument`: `Game.update`, `SimStep.run`,
@@ -146,7 +148,10 @@ records for the given ms and prints the headline (`brief.mjs`):
 
 `--out` keeps the whole recording (every timer: ms per second, calls per second, ms per call, max);
 `node tools/perf/brief.mjs <file>` prints its headline again. `--speed <index>` sets the game speed
-first (an index into `SPEEDS` of `src/sim/time.ts`; 1 is 1×). The timers add about 2.6% (the
+first (an index into `SPEEDS` of `src/sim/time.ts`; 1 is 1×; an index past its end is an error and
+leaves the speed as it was). A flag without its value, or a length, `--speed` or `--settle` that is
+not a whole number, stops `rec` with a message; so does a recording in which the page drew no
+frame (a hidden or throttled tab). The timers add about 2.6% (the
 wrappers show in a flame graph). Pixi's culler runs before `renderer.render` inside Pixi's ticker
 and is not timed; the CPU profile shows it.
 
@@ -181,13 +186,20 @@ node tools/perf/cdp.mjs eval "game.fleet.trains.length"
 node tools/perf/mapsize.mjs dist/assets/index-<hash>.js
 ```
 
-`eval` runs an expression or a file (`@file.js`; with a `return` it is a function body) in the
-page, with the harness loaded, `await` allowed.
+`eval` runs source text or a file (`@file.js`) in the page, with the harness loaded, `await`
+allowed. Source that parses as one expression is run as one and its value is printed, whatever
+words it contains (`"'please return ' + game.map.w"` prints the string). Anything else
+(statements, `const`, `;`-separated steps) runs as the body of an async function, and what it
+`return`s is printed (nothing returned prints nothing). Chrome compiles the expression form first,
+without running it, to choose; a syntax error in the body form is printed as the error.
 
 ## Scenarios
 
 **S1**: a new game, seed 4242, 160×160 (the default `mapSize`), no trains, at 1×: steps 1 to 3
-above.
+above. The 2026-10-27 report recorded it with the loading screen up, showing "Click to begin":
+its scratch `ready` waited for the game loop's frame rate and never clicked. To reproduce the
+report's state use `ready --stay`; plain `ready` gives the game as a player sees it after the
+click, which is a different, cheaper state (see the numbers below).
 
 **S2**: the author's `engine-models-demo.json` save (140×140 level, 40 trains). It is not in the
 repository: load it through the game's own load screen, then `rec`.
@@ -229,12 +241,41 @@ The report has every number; these are its headline per-frame numbers.
 | S2 demo, 1× | 8.4 ms    | 25.1 | 38.8 | 0.34 ms | 2.67 ms   | 2.09 ms     |
 | S3 480², 3× | 8.4 ms    | 36.0 | 55.6 | 2.93 ms | 3.85 ms   | 1.41 ms     |
 
-These are that day's numbers. On 2026-10-28 the same harness on the same machine gave S1 at p50
-2.8 ms, p95 5.5–5.6, p99 5.6–8.3, update 0.004–0.008 ms, drawFrame 0.66–0.72 ms and Pixi render
-0.53–0.62 ms, and the report's own commit (f095a1c9), built and measured the same day the same way,
-gave the same (drawFrame 0.70–0.74, render 0.61–0.70). The difference is the machine's state on
-the day, not the code or the method. So do not compare a new number with this table; measure the
-before and the after yourself, in one session.
+The report's S1 was recorded with the loading screen up (its tools never clicked "Click to
+begin"; see Scenarios). Its S3 was set up the same way, with no click anywhere in its tools, so
+it most likely had the screen up too; S2 went through the game's load screen, and the report does
+not say whether its "Click to begin" was clicked.
+
+The report's own commit, f095a1c9, has the same "Click to begin" as today's code: `bootPlan` gives
+a `#seed=…&new` game `clickToBegin: true`, and `src/main.ts`, `src/engine/boot.ts`,
+`src/ui/loadingScreen.ts` and `src/ui/loadingMath.ts` are identical between f095a1c9 and the
+commit that added these tools. So the fair comparison with the report is screen up against screen
+up. On 2026-10-28, in one Chrome session, alternating the report's build of f095a1c9 and a build
+of the then-current develop, three recordings of each (10 s at 1×), S1 gave:
+
+| S1, 2026-10-28                       | p50 frame  | p95      | p99       | update         | drawFrame    | Pixi render  |
+| ------------------------------------ | ---------- | -------- | --------- | -------------- | ------------ | ------------ |
+| f095a1c9, `ready --stay` (screen up) | 5.4–5.5 ms | 8.3–8.4  | 11.2–13.8 | 0.012–0.015 ms | 0.81–0.97 ms | 0.91–1.06 ms |
+| develop, `ready --stay` (screen up)  | 5.5–5.6 ms | 8.3–11.1 | 11.1–16.6 | 0.012–0.017 ms | 0.85–1.01 ms | 0.92–1.14 ms |
+| f095a1c9, `ready` (clicked)          | 2.8–5.5 ms | 8.3–8.4  | 11.1–13.9 | 0.010–0.013 ms | 0.80–0.88 ms | 0.79–0.92 ms |
+| develop, `ready` (clicked)           | 2.8–2.9 ms | 5.7–8.3  | 8.4–11.2  | 0.010–0.011 ms | 0.79–0.85 ms | 0.75–0.85 ms |
+
+With the screen up the two commits agree, and the frame time matches the report's S1 (p50
+5.6 ms; its drawFrame 1.15 and render 1.11 are a little higher). Clicked, Pixi's render is a
+little cheaper and the p50 frame fell to 2.8 ms in four of the six runs; the other two, both
+f095a1c9, stayed at 5.5 ms with per-frame costs in the range of the rest; what held them there is
+not established, so record each side three times or more.
+
+"develop" is 1586dc42, the code under these tools. The recordings are
+`s1-fix1/{f095,head}-{stay,click}{1,2,3}.json` (with `.ready.json` beside each, the `ready`
+output) in the author's scratch folder `G:\DEV\wt\engine-553-scratch`, not committed. The
+f095a1c9 build is the report's own `dist/` from `G:\DEV\wt\perf-measure`, served with this
+folder's `vite.perf.config.ts` and `--outDir`. Earlier 2026-10-28 recordings in `s1/` there
+compared f095a1c9 with the screen up (`f095-stay*.json`) against develop clicked (`final*.json`),
+in separate Chrome sessions; they are not used here.
+
+So do not compare a new number with these tables; measure the before and the after yourself, in
+one session, in the same state (both `ready` or both `ready --stay`).
 
 Frame-time percentiles move between runs (the p99 of a 10 s recording rests on a few dozen frames):
 record each side two or three times and compare the medians. Measure before and after on the same
