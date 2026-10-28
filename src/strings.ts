@@ -1496,6 +1496,7 @@ export const STR = {
     cheat: 'Cheat',
     cheated: '+$10,000 and every resource topped up',
   },
+  stores: { grid: 'Power grid' },
   town: {
     title: 'Towns',
     none: 'No towns yet. Place a Townhouse, then a House and a warehouse within 7 tiles of it.',

@@ -51,6 +51,10 @@ export interface Rules {
   forestDensity: number;
   wheatPerCrew: number;
   stockpileCap: number;
+  /** units of each good a town's store holds before any warehouse */
+  townStoreCap: number;
+  /** tiles round a store within which building draws on it (Chebyshev) */
+  buildReach: number;
   /** units a warehouse holds per level (any goods, in total) */
   warehouseCap: number;
   /** stockpile cap added per depot */
@@ -122,6 +126,8 @@ export const DEFAULT_RULES: Rules = {
   forestDensity: 0.56,
   wheatPerCrew: 1,
   stockpileCap: 1000,
+  townStoreCap: 300,
+  buildReach: 24,
   warehouseCap: 1000,
   depotCap: 3000,
   repeatCostStep: 0.2,
@@ -184,6 +190,23 @@ export const RULE_META: RuleMeta[] = [
     step: 0.1,
   },
   { key: 'stockpileCap', label: 'Stockpile cap', group: 'Economy', min: 50, max: 5000, step: 50 },
+  {
+    key: 'townStoreCap',
+    label: 'Town store (Townhouse)',
+    group: 'Economy',
+    min: 0,
+    max: 5000,
+    step: 50,
+  },
+  {
+    key: 'buildReach',
+    label: 'Building draws from stores within',
+    group: 'Economy',
+    min: 0,
+    max: 100,
+    step: 1,
+    hint: 'tiles from a store',
+  },
   {
     key: 'warehouseCap',
     label: 'Warehouse store per level',
