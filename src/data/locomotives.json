@@ -243,7 +243,7 @@
   },
   {
     "id": "k4s",
-    "class": "cruiser",
+    "class": "destroyer",
     "name": "PRR K4s",
     "rarity": "R",
     "type": "steam",
@@ -628,7 +628,7 @@
   },
   {
     "id": "gg1",
-    "class": "cruiser",
+    "class": "destroyer",
     "name": "PRR GG1",
     "rarity": "SSR",
     "type": "electric",
