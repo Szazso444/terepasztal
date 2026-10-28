@@ -146,8 +146,15 @@ export function fmtCost(cost: Cost, mul = 1): string {
     .map(([k, v]) => `${Math.ceil(v * mul)} ${k}`);
   return parts.length ? parts.join(', ') : STR.build.free;
 }
+/**
+ * Each resource times `mul`, rounded up. A product a hair above a whole number from float error
+ * (5 × 1.5 × 0.4 = 3.0000000000000004) is that whole number, not the one above it.
+ */
 export function scaleCost(cost: Cost, mul: number): Cost {
   const out: Cost = {};
-  for (const [k, v] of Object.entries(cost)) out[k] = Math.ceil(v * mul);
+  for (const [k, v] of Object.entries(cost)) {
+    const x = v * mul;
+    out[k] = Math.ceil(x - Math.abs(x) * 1e-12);
+  }
   return out;
 }

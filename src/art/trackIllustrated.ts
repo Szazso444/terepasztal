@@ -39,9 +39,11 @@ export type RailPath = {
 };
 /**
  * Per line: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
- * ballast shoulder, sleeper colours and rail line widths. Narrow Gauge puts its rails half as far
- * apart on short, closely spaced timber sleepers laid straight on the ground, with no ballast,
- * like a forest or mine line.
+ * ballast shoulder and colours, sleeper colours, rail line widths and colours. Narrow Gauge puts
+ * its rails half as far apart on short, closely spaced timber sleepers laid straight on the
+ * ground, with no ballast, like a forest or mine line. Branch Line lies on timber in warm stone;
+ * Main Line on concrete sleepers in a wider, cleaner bed; Trunk Line has heavier, darker rail on
+ * wide concrete sleepers in deep dark basalt.
  */
 interface LineStyle {
   rail: number;
@@ -50,25 +52,47 @@ interface LineStyle {
   shoulder: number;
   /** a bed of ballast under the sleepers */
   bed: boolean;
+  /** the bed's fill, then its stones: light, dark and the rest */
+  ballast: [string, string, string, string];
   tie: string;
   tieHi: string;
   widths: [number, number, number];
+  /** the rail's foot, web and head (`RAIL_LINES`) */
+  railColors: [string, string, string];
 }
+const RAIL_STEEL: LineStyle['railColors'] = ['#4c4940', '#827d70', '#d1c7ac'];
 const BRANCH: LineStyle = {
   rail: 0.16,
   sleeper: 0.235,
   step: 0.14,
   shoulder: 0.29,
   bed: true,
+  ballast: ['#827b69', '#a99c82', '#6f695b', '#918570'],
   tie: '#725039',
   tieHi: '#a17c52',
   widths: [1.25, 0.95, 0.4],
+  railColors: RAIL_STEEL,
 };
 const STYLE: Record<TrackClass, LineStyle> = {
   branch: BRANCH,
-  // Main, Trunk, Maglev and Hyperloop have no pieces to draw yet: they take Branch's look
-  main: BRANCH,
-  trunk: BRANCH,
+  main: {
+    ...BRANCH,
+    shoulder: 0.35,
+    ballast: ['#8b8779', '#b6b09f', '#75726a', '#9d988a'],
+    tie: '#b9b3a0',
+    tieHi: '#d6d0bc',
+  },
+  trunk: {
+    ...BRANCH,
+    sleeper: 0.255,
+    shoulder: 0.38,
+    ballast: ['#4d4b49', '#6d6a65', '#363534', '#585653'],
+    tie: '#a19c8c',
+    tieHi: '#c4bfad',
+    widths: [1.5, 1.15, 0.48],
+    railColors: ['#35332e', '#67635a', '#c2b89e'],
+  },
+  // Maglev and Hyperloop have no pieces to draw yet: they take Branch's look
   maglev: BRANCH,
   hyperloop: BRANCH,
   narrow: {
@@ -77,9 +101,11 @@ const STYLE: Record<TrackClass, LineStyle> = {
     step: 0.115,
     shoulder: 0.19,
     bed: false,
+    ballast: BRANCH.ballast,
     tie: '#664631',
     tieHi: '#8f6c47',
     widths: [0.95, 0.72, 0.32],
+    railColors: RAIL_STEEL,
   },
 };
 
@@ -164,12 +190,12 @@ const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.
 
 /**
  * The three strokes of a rail, bottom to top: the dark foot dropped a little, the web, the lit
- * head raised a little. `width` indexes the class's `widths`, `dy` is in world px.
+ * head raised a little. `width` indexes the line's `widths` and `railColors`, `dy` is in world px.
  */
-const RAIL_LINES: { color: string; width: 0 | 1 | 2; dy: number }[] = [
-  { color: '#4c4940', width: 0, dy: 0.35 },
-  { color: '#827d70', width: 1, dy: 0 },
-  { color: '#d1c7ac', width: 2, dy: -0.3 },
+const RAIL_LINES: { width: 0 | 1 | 2; dy: number }[] = [
+  { width: 0, dy: 0.35 },
+  { width: 1, dy: 0 },
+  { width: 2, dy: -0.3 },
 ];
 
 /**
@@ -231,6 +257,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
   }));
   for (const { points, normals, cls } of rows) {
     if (!STYLE[cls].bed && !bridge) continue;
+    const [, light, dark, rest] = STYLE[cls].ballast;
     const shoulder = STYLE[cls].shoulder * scale;
     for (const [extra, alpha] of bridge
       ? [[0, 1]]
@@ -246,7 +273,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
           ...points.map((p, i) => offset(p, normals[i], shoulder + extra)),
           ...points.map((p, i) => offset(p, normals[i], -shoulder - extra)).reverse(),
         ],
-        bridge ? '#826446' : '#827b69',
+        bridge ? '#826446' : STYLE[cls].ballast[0],
       );
     }
     c.globalAlpha = 1;
@@ -261,10 +288,10 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
             ? '#997958'
             : '#72573e'
           : k > 0.72
-            ? '#a99c82'
+            ? light
             : k < 0.28
-              ? '#6f695b'
-              : '#918570';
+              ? dark
+              : rest;
         c.beginPath();
         c.ellipse(
           p.x + (k - 0.5) * 0.8,
@@ -323,7 +350,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
     const widths = st.widths.map((w) => w * Math.max(scale, 0.75));
     for (const side of [-st.rail * scale, st.rail * scale]) {
       const rail = points.map((p, i) => offset(p, normals[i], side));
-      for (const { color, width, dy } of RAIL_LINES) line(rail, color, widths[width], dy);
+      for (const { width, dy } of RAIL_LINES) line(rail, st.railColors[width], widths[width], dy);
     }
   }
   return image();

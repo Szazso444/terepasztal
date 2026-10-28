@@ -149,6 +149,17 @@ export const TRACK_ITEMS: TrackItem[] = [
   { kind: 'switch', cls: 'narrow' },
   { kind: 'crossing', cls: 'narrow', cls2: 'narrow' },
   { kind: 'crossing', cls: 'narrow', cls2: 'branch' },
+  { kind: 'straight', cls: 'main' },
+  { kind: 'curve', cls: 'main' },
+  { kind: 'switch', cls: 'main' },
+  { kind: 'crossing', cls: 'main', cls2: 'main' },
+  { kind: 'crossing', cls: 'branch', cls2: 'main' },
+  { kind: 'straight', cls: 'trunk' },
+  { kind: 'curve', cls: 'trunk' },
+  { kind: 'switch', cls: 'trunk' },
+  { kind: 'crossing', cls: 'trunk', cls2: 'trunk' },
+  { kind: 'crossing', cls: 'branch', cls2: 'trunk' },
+  { kind: 'crossing', cls: 'main', cls2: 'trunk' },
 ];
 /** Lines that have pieces to build. */
 export const BUILDABLE_CLASSES = TRACK_CLASSES.filter((c) => TRACK_ITEMS.some((i) => i.cls === c));

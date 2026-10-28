@@ -14,7 +14,7 @@ const item = (kind: TrackItem['kind'], cls: TrackItem['cls'], cls2?: TrackItem['
 
 describe('track types', () => {
   it('lists the types narrow first, bridges last', () => {
-    expect(TRACK_GROUPS).toEqual(['narrow', 'branch', 'bridges']);
+    expect(TRACK_GROUPS).toEqual(['narrow', 'branch', 'main', 'trunk', 'bridges']);
   });
 
   it('gives every piece a type and a slot of its own in it', () => {
@@ -77,8 +77,8 @@ describe('stepping between types', () => {
     expect(stepGroup(TRACK_GROUPS, 'narrow', -1, all)).toBe('bridges');
     // a type with nothing to offer is passed over
     const noBranch = (g: string) => g !== 'branch';
-    expect(stepGroup(TRACK_GROUPS, 'narrow', 1, noBranch)).toBe('bridges');
-    expect(stepGroup(TRACK_GROUPS, 'bridges', -1, noBranch)).toBe('narrow');
+    expect(stepGroup(TRACK_GROUPS, 'narrow', 1, noBranch)).toBe('main');
+    expect(stepGroup(TRACK_GROUPS, 'main', -1, noBranch)).toBe('narrow');
     // nowhere else to go: stay
     expect(stepGroup(TRACK_GROUPS, 'branch', 1, (g) => g === 'branch')).toBe('branch');
     // an unknown current type starts from the first

@@ -432,7 +432,7 @@ export const STR = {
     roadDesc:
       'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a run.',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
-    typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
+    typeHint: '1-6: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
     bridges: 'Bridges',
     bridgeDesc: (capacity: number, flavor: string) => `${capacity} t capacity. ${flavor}`,
     place: {
@@ -478,6 +478,26 @@ export const STR = {
       crossing_narrow_narrow: 'Two Narrow Gauge lines cross at grade.',
       crossing_narrow_branch:
         'A Narrow Gauge line crosses a Branch Line at grade without joining it. R swaps which line runs which way.',
+      straight_main:
+        'Main Line straight: concrete sleepers on a wide bed, for Destroyers and smaller. Joins Branch and Trunk Line directly. Drag to lay a run.',
+      curve_main:
+        'Three by three tiles, radius two and a half: long trains take it faster. The inner tiles are blocked. R rotates.',
+      switch_main:
+        'Three by three tiles: a Main Line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
+      crossing_main_main: 'Two Main Lines cross without connecting.',
+      crossing_branch_main:
+        'A Branch Line crosses a Main Line without connecting. R swaps which line runs which way.',
+      straight_trunk:
+        'Trunk Line straight: heavy rail on wide concrete sleepers and dark basalt, for every class. Joins Branch and Main Line directly. Drag to lay a run.',
+      curve_trunk:
+        'Four by four tiles, radius three and a half: room for the longest trains. The inner tiles are blocked. R rotates.',
+      switch_trunk:
+        'Four by four tiles: a Trunk Line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
+      crossing_trunk_trunk: 'Two Trunk Lines cross without connecting.',
+      crossing_branch_trunk:
+        'A Branch Line crosses a Trunk Line without connecting. R swaps which line runs which way.',
+      crossing_main_trunk:
+        'A Main Line crosses a Trunk Line without connecting. R swaps which line runs which way.',
     } as Record<string, string>,
     trackClass: {
       narrow: 'Narrow Gauge',

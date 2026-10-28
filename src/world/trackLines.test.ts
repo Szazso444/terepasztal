@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Dir } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import {
   BUILDABLE_CLASSES,
   CLASS_N,
@@ -32,8 +32,8 @@ describe('the six track lines', () => {
     );
     expect(mul).toEqual([0.6, 1, 1.5, 2.5, 4, 4]);
   });
-  it('has only Narrow Gauge and Branch Line to build for now', () => {
-    expect(BUILDABLE_CLASSES).toEqual(['narrow', 'branch']);
+  it('has Narrow Gauge and the three standard lines to build', () => {
+    expect(BUILDABLE_CLASSES).toEqual(['narrow', 'branch', 'main', 'trunk']);
     expect(TRACK_ITEMS.some((i) => (i.kind as string) === 'transition')).toBe(false);
   });
 });
@@ -70,13 +70,30 @@ describe('track saved before the six lines', () => {
 });
 
 describe('Upgrade and Downgrade', () => {
-  it('has no line to move to while Branch is the only standard line', () => {
-    expect(nextLine('branch', 'up')).toBeNull();
+  it('moves one standard line up or down, and no further', () => {
+    expect(nextLine('branch', 'up')).toBe('main');
+    expect(nextLine('main', 'up')).toBe('trunk');
+    expect(nextLine('trunk', 'down')).toBe('main');
     expect(nextLine('branch', 'down')).toBeNull();
+    expect(nextLine('trunk', 'up')).toBeNull();
     expect(nextLine('narrow', 'up')).toBeNull();
     const track = new TrackGraph(8, 8);
-    track.place(2, 2, 'straight', 0, 'branch');
+    track.place(2, 2, 'straight', 0, 'trunk');
     expect(planReclass(track, [{ x: 2, y: 2 }], 'up')).toEqual({ changes: [], reason: 'noLine' });
+  });
+  it('changes a straight in place', () => {
+    const track = new TrackGraph(8, 8);
+    track.place(2, 2, 'straight', 1, 'branch');
+    expect(planReclass(track, [{ x: 2, y: 2 }], 'up').changes).toEqual([
+      { x: 2, y: 2, kind: 'straight', rot: 1, cls: 'main' },
+    ]);
+  });
+  it('leaves a curve or switch of the other size as it is and says why', () => {
+    const track = new TrackGraph(12, 12);
+    track.place(2, 2, 'curve', 0, 'branch');
+    track.place(6, 6, 'switch', 3, 'main');
+    expect(planReclass(track, [{ x: 3, y: 3 }], 'up')).toEqual({ changes: [], reason: 'size' });
+    expect(planReclass(track, [{ x: 7, y: 7 }], 'down')).toEqual({ changes: [], reason: 'size' });
   });
   it('leaves Narrow Gauge alone and says why', () => {
     const track = new TrackGraph(8, 8);
@@ -95,4 +112,21 @@ describe('Upgrade and Downgrade', () => {
     expect(plan.reason).toBe('separate');
     expect(track.get(3, 3)!.links[0]).toContain(Dir.N);
   });
+});
+
+describe('Main and Trunk Line switches', () => {
+  for (const cls of ['main', 'trunk'] as const)
+    it(`${cls}: bends its branch into a parallel track beside a straight, else turns`, () => {
+      const g = new TrackGraph(32, 32);
+      g.place(10, 10, 'switch', 0, cls);
+      expect(g.unitTiles(10, 10)).toHaveLength(CLASS_N[cls] ** 2);
+      g.refreshSwitchForms();
+      expect(g.get(10, 10)!.form ?? 'turn').toBe('turn');
+      const s = g.switchExit(10, 10, 0, cls, 'parallel');
+      g.place(s.x, s.y, 'straight', s.out === Dir.N || s.out === Dir.S ? 0 : 1, cls);
+      g.refreshSwitchForms();
+      expect(g.get(10, 10)!.form).toBe('parallel');
+      // the parallel lane leaves the block onto that straight
+      expect(g.connected(s.x - DIR_DX[s.out], s.y - DIR_DY[s.out], s.out)).toBe(true);
+    });
 });

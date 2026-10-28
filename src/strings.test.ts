@@ -52,7 +52,7 @@ describe('track names the player reads', () => {
   it('names the tuning value and the track a vehicle runs on', () => {
     expect(RULE_META.find((m) => m.key === 'lineSpeedBranch')!.label).toBe('Branch Line speed');
     const boxcar = content.wagons.find((w) => w.id === 'boxcar')!;
-    expect(runsOn(boxcar)).toBe('Runs on Branch Line');
+    expect(runsOn(boxcar)).toBe('Runs on Branch Line, Main Line, Trunk Line');
     expect(STR.build.crossingLine).toBe('No level crossings on this line');
   });
 });

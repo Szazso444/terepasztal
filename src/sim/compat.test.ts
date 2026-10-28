@@ -37,8 +37,8 @@ describe('gauge access', () => {
 
   it('says which track a vehicle runs on', () => {
     const large = content.locomotives.find((d) => d.size === 'large' && d.gauge !== 'narrow')!;
-    expect(runsOn(large)).toBe('Runs on Branch Line');
-    expect(runsOn(wagon('boxcar'))).toBe('Runs on Branch Line');
+    expect(runsOn(large)).toBe('Runs on Branch Line, Main Line, Trunk Line');
+    expect(runsOn(wagon('boxcar'))).toBe('Runs on Branch Line, Main Line, Trunk Line');
     expect(runsOn(loco('mk48'))).toBe('Runs on Narrow Gauge');
     expect(runsOn(wagon('mine_tub'))).toBe('Runs on Narrow Gauge');
   });

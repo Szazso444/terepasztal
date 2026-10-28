@@ -18,12 +18,18 @@ export function trackGroupOf(item: TrackItem): TrackClass {
 }
 
 const SHAPE_SLOT: Partial<Record<TrackItem['kind'], number>> = { straight: 0, curve: 1, switch: 2 };
-/** Slot in its type: 0 straight, 1 curve, 2 switch, 3 its own crossing, 4 a crossing with another line. */
+/**
+ * Slot in its type: 0 straight, 1 curve, 2 switch, 3 its own crossing, then its crossings with
+ * the smaller lines, Branch Line first (4) and Main Line next (5).
+ */
 export function trackSlot(item: TrackItem): number {
   const shape = SHAPE_SLOT[item.kind];
   if (shape !== undefined) return shape;
-  if (item.kind === 'crossing' && (item.cls2 ?? item.cls) === item.cls) return 3;
-  return 4;
+  const other = item.cls2 ?? item.cls;
+  if (item.kind !== 'crossing') return 4;
+  if (other === item.cls) return 3;
+  const group = trackGroupOf(item);
+  return 3 + Math.max(1, LINES[group === item.cls ? other : item.cls].tier);
 }
 
 /** A piece's name on its button: the type is on the row above, so only what sets it apart stays. */
