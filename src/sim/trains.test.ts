@@ -1535,3 +1535,52 @@ describe('the path ahead', () => {
     expect(checked).toBeGreaterThan(1000);
   }, 20_000);
 });
+
+describe('car poses kept between ticks', () => {
+  // Slow: steps the three-train traffic scenario 2400 times (about 1 s alone), so 20 s.
+  it('are the poses worked out afresh from the trail, at every tick of the traffic scenario', () => {
+    const s = buildTrafficScenario(3);
+    let standing = 0;
+    for (let tick = 0; tick < 2400; tick++) {
+      s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+      for (const t of s.fleet.trains) {
+        const kept = { poses: t.poses, vehicles: t.vehiclePoses };
+        const before = kept.vehicles;
+        // asked again with nothing changed, the poses stay as they are
+        t.updatePoses();
+        if (t.vehiclePoses === before) standing++;
+        // forget what was kept (the lengths along the trail too) and work them out again
+        const inner = t as unknown as { posedFor: unknown; trailLenOf: unknown };
+        inner.posedFor = null;
+        inner.trailLenOf = null;
+        t.updatePoses();
+        expect(kept.vehicles, `tick ${tick}, train ${t.id}`).toEqual(t.vehiclePoses);
+        expect(kept.poses).toEqual(t.poses);
+      }
+    }
+    expect(standing).toBeGreaterThan(1000);
+  }, 20_000);
+});
+
+describe('car poses from a saved trail', () => {
+  // Slow: steps the three-train traffic scenario 1200 times (about 0.5 s alone), so 20 s.
+  it('are the poses the train had, and the ones worked out afresh, after its trail is restored', () => {
+    const s = buildTrafficScenario(3);
+    for (let tick = 0; tick < 1200; tick++) {
+      s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+      if (tick % 100 !== 99) continue;
+      for (const t of s.fleet.trains) {
+        const had = t.vehiclePoses;
+        const saved = (t.toJSON() as unknown as { trail: number[][] }).trail;
+        t.restoreTrail(saved, t.reversed);
+        expect(t.vehiclePoses, `tick ${tick}, train ${t.id}`).toEqual(had);
+        const restored = t.vehiclePoses;
+        const inner = t as unknown as { posedFor: unknown; trailLenOf: unknown };
+        inner.posedFor = null;
+        inner.trailLenOf = null;
+        t.updatePoses();
+        expect(restored).toEqual(t.vehiclePoses);
+      }
+    }
+  }, 20_000);
+});
