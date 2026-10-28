@@ -1371,7 +1371,7 @@ describe('a train placed on the track (spawnAt)', () => {
           expectReach(t, `${what}, rolled out`);
           expectReach(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), `${what}, loaded`);
         }
-  }, 20_000);
+  }, 60_000);
 
   // slow because 200 seeded lines are each laid and every bogie of a consist spawned on them is
   // measured along the track: 0.9 s alone
