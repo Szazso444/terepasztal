@@ -5,6 +5,7 @@
 **Goal:** Bring the HUD the user designed in the UI workshop into the game, one pull request at a time.
 
 **Architecture:**
+
 - The work is split into eleven PRs into `develop`. Each ships working software on its own and keeps the method names `src/game.ts` already calls on the panels, so `game.ts` changes only where a PR says so.
 - Logic goes into pure modules with Node tests: ordering, locks, history, curation, follow, key maps. DOM goes into thin panel classes that render from them.
 - Tooltips use the existing pure `TipDoc` path: `src/ui/tooltipDoc.ts`, `tooltipContent.ts`, and `renderTip` / `tipBuild` in `tooltipRender.ts`. Hover terms wire through `Tooltip.bindTerms`.
@@ -26,7 +27,7 @@
 - **Track lines:** the approved track-lines plan wins over the mock. Branch, Main and Trunk join directly, with no transition piece, and the Narrow × Branch level crossing stays (`docs/superpowers/plans/2026-10-28-track-lines.md`).
 - **Saves:** a new save field needs a `SAVE_VERSION` bump with a `MIGRATIONS` step (`CLAUDE.md`). Undo history is not saved.
 - **Hit testing:** every new HUD root is a direct child of `#ui-root`, because `input.ts` hit-tests with `closest('#ui-root > *')`.
-- **Gates and merging:** CI runs typecheck, lint, test, build and `prettier --check`. Merge only when the user says so.
+- **Gates and merging:** CI runs typecheck, lint, test, build and `npm run format:check` (which covers docs too). Merge only when the user says so.
 
 ## Review Focus
 
@@ -40,21 +41,22 @@
 
 ## Roadmap (one PR each, in this order)
 
-| PR | Branch (issue number added when opened) | Scope | Depends on |
-|---|---|---|---|
-| 1 | `ui/<n>-resource-bar` | Resource bar order, groups, hidden-until-unlocked, `TipDoc` tooltips with building links; funds become the bar's first cell | — |
-| 2 | `ui/<n>-date-speed-era` | Date and speed widget with pause, ½×, 1×, 2×, 3× and + / −; the era widget anchored left of it, with age icons and a goals tooltip from `ageStatus` (replaces `#age-card`); `AGE_ICONS` | — |
-| 3 | `ui/<n>-build-bar` | Category row at the bottom, type row with Q / E arrows, item tiles 1–9 with icon, name, cost, key and lock; the build info panel; locked items show age icon and unlock goals; new keymap (1–5 open categories, digits stop setting speed) | 2 (age icons, speed keys) |
-| 4 | `ui/<n>-undo` | Command history around `Commands` for build, remove, reclass, rename, recolour, station level; materials refunded on undo; Ctrl+Z / Ctrl+Y; buttons right of the menus | 3 |
-| 5 | `ui/<n>-outliner` | Outliner with Trains, Stations, Contracts, Works tabs, an In view filter, colour groups, cargo icons, from → to; a train colour code and name in the save (version bump); follow camera; train panel with Overview, Orders, Consist | 4 (rename and recolour go through history) |
-| 6 | `ui/<n>-alerts` | Curated alert bar with four severities, map pins and click-to-cycle; notification settings per type (popup, pause, pin, toast) | — |
-| 7 | `ui/<n>-station-panel` | Station panel with Overview, Cargo, Trains, Expansion and Timetable tabs, from what the sim has | 5 |
-| 8 | `ui/<n>-menu-bar` | Top bar menus Game, Fleet, Economy, View, Notifications in place of the screen buttons; a first grouping only, since the menu round may change it | 4, 6 |
-| 9 | `ui/<n>-hungarian` | A Hungarian table that mirrors `STR`, a language setting, and EN / HU in the top bar; switching reloads the UI | 8 |
-| 10 | `ui/<n>-hud-skin` | The workshop skin on every HUD panel (bevels, amber serif headings, wells) and positions from the saved layout | 1–8 |
-| 11 | `art/<n>-resource-icons` | Pack the ChatGPT icons into `icons.png` under the same keys | the user's icons |
+| PR  | Branch (issue number added when opened) | Scope                                                                                                                                                                                                                                      | Depends on                                 |
+| --- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| 1   | `ui/<n>-resource-bar`                   | Resource bar order, groups, hidden-until-unlocked, `TipDoc` tooltips with building links; funds become the bar's first cell                                                                                                                | —                                          |
+| 2   | `ui/<n>-date-speed-era`                 | Date and speed widget with pause, ½×, 1×, 2×, 3× and + / −; the era widget anchored left of it, with age icons and a goals tooltip from `ageStatus` (replaces `#age-card`); `AGE_ICONS`                                                    | —                                          |
+| 3   | `ui/<n>-build-bar`                      | Category row at the bottom, type row with Q / E arrows, item tiles 1–9 with icon, name, cost, key and lock; the build info panel; locked items show age icon and unlock goals; new keymap (1–5 open categories, digits stop setting speed) | 2 (age icons, speed keys)                  |
+| 4   | `ui/<n>-undo`                           | Command history around `Commands` for build, remove, reclass, rename, recolour, station level; materials refunded on undo; Ctrl+Z / Ctrl+Y; buttons right of the menus                                                                     | 3                                          |
+| 5   | `ui/<n>-outliner`                       | Outliner with Trains, Stations, Contracts, Works tabs, an In view filter, colour groups, cargo icons, from → to; a train colour code and name in the save (version bump); follow camera; train panel with Overview, Orders, Consist        | 4 (rename and recolour go through history) |
+| 6   | `ui/<n>-alerts`                         | Curated alert bar with four severities, map pins and click-to-cycle; notification settings per type (popup, pause, pin, toast)                                                                                                             | —                                          |
+| 7   | `ui/<n>-station-panel`                  | Station panel with Overview, Cargo, Trains, Expansion and Timetable tabs, from what the sim has                                                                                                                                            | 5                                          |
+| 8   | `ui/<n>-menu-bar`                       | Top bar menus Game, Fleet, Economy, View, Notifications in place of the screen buttons; a first grouping only, since the menu round may change it                                                                                          | 4, 6                                       |
+| 9   | `ui/<n>-hungarian`                      | A Hungarian table that mirrors `STR`, a language setting, and EN / HU in the top bar; switching reloads the UI                                                                                                                             | 8                                          |
+| 10  | `ui/<n>-hud-skin`                       | The workshop skin on every HUD panel (bevels, amber serif headings, wells) and positions from the saved layout                                                                                                                             | 1–8                                        |
+| 11  | `art/<n>-resource-icons`                | Pack the ChatGPT icons into `icons.png` under the same keys                                                                                                                                                                                | the user's icons                           |
 
 Not in this plan:
+
 - Automatic crossings, which has its own session.
 - The menu system round, the sounds round, events (the sim has none yet), and counties versus chunks, which is still open.
 
@@ -63,6 +65,7 @@ Not in this plan:
 ## PR 1: Resource bar
 
 **Files:**
+
 - Create: `src/ui/resourceOrder.ts`. The bar's groups, which resources show, and who makes and uses each one. Pure.
 - Create: `src/ui/resourceOrder.test.ts`.
 - Modify: `src/ui/tooltipContent.ts`, adding `resourceTip`, `buildingDefTip` and their snapshots.
@@ -76,6 +79,7 @@ Not in this plan:
 ### Task 1: The bar's order and locks, pure
 
 **Interfaces:**
+
 - Produces:
   - `RESOURCE_GROUPS: readonly (readonly string[])[]`
   - `barGroups(tier: number, has: (id: string) => number): string[][]`
@@ -92,8 +96,22 @@ import { RESOURCE_GROUPS, barGroups, makersOf, usersOf, takenAt } from './resour
 
 describe('resource bar order', () => {
   it('funds first, then building, fuel and power, food, people', () => {
-    expect(RESOURCE_GROUPS.map((g) => g[0])).toEqual(['money', 'wood', 'coal', 'wheat', 'passengers']);
-    expect(RESOURCE_GROUPS[1]).toEqual(['wood', 'stone', 'sand', 'iron_ore', 'iron', 'copper_ore', 'wire']);
+    expect(RESOURCE_GROUPS.map((g) => g[0])).toEqual([
+      'money',
+      'wood',
+      'coal',
+      'wheat',
+      'passengers',
+    ]);
+    expect(RESOURCE_GROUPS[1]).toEqual([
+      'wood',
+      'stone',
+      'sand',
+      'iron_ore',
+      'iron',
+      'copper_ore',
+      'wire',
+    ]);
     expect(RESOURCE_GROUPS[2]).toEqual(['coal', 'water', 'crude', 'oil', 'diesel', 'power']);
     expect(RESOURCE_GROUPS[3]).toEqual(['wheat', 'food']);
     expect(RESOURCE_GROUPS[4]).toEqual(['passengers', 'population']);
@@ -117,7 +135,9 @@ describe('resource bar order', () => {
   it('makers and users come from the content', () => {
     expect(makersOf('wheat').map((r) => r.id)).toContain('farm');
     expect(usersOf('wheat').map((r) => r.id)).toContain('windmill');
-    expect(makersOf('power').map((r) => r.id)).toEqual(expect.arrayContaining(['power_plant', 'hydro_plant']));
+    expect(makersOf('power').map((r) => r.id)).toEqual(
+      expect.arrayContaining(['power_plant', 'hydro_plant']),
+    );
     expect(takenAt('water').map((r) => r.id)).toContain('water_tower');
     expect(takenAt('coal').map((r) => r.id)).toContain('fuel_stop');
   });
@@ -156,6 +176,7 @@ git commit -m "UI: the resource bar's order, groups and unlocks as data"
 ### Task 2: Resource tooltips with building links, and the bar that uses them
 
 **Interfaces:**
+
 - Consumes: Task 1's `barGroups`, `makersOf`, `usersOf`, `takenAt`, `BuildRef`.
 - Produces:
   - `resourceTip(s: ResourceSnapshot): TipDoc` and `buildingDefTip(ref: BuildRef, tier: number): TipDoc`, in `tooltipContent.ts`.
@@ -172,7 +193,9 @@ it('a resource tooltip names its stock, its week and links its buildings', () =>
   expect(lines[0]).toContain(cargoName('wheat'));
   expect(lines.some((l) => l.includes('300') && l.includes('1000'))).toBe(true);
   expect(lines.some((l) => l.startsWith(STR.res.madeBy))).toBe(true);
-  expect(termsOf(doc).map((t) => t.term)).toEqual(expect.arrayContaining(['Farm Halt', 'Windmill']));
+  expect(termsOf(doc).map((t) => t.term)).toEqual(
+    expect.arrayContaining(['Farm Halt', 'Windmill']),
+  );
 });
 it('a building tooltip from a resource says what it costs and when it unlocks', () => {
   const ref = makersOf('oil')[0];
@@ -180,7 +203,11 @@ it('a building tooltip from a resource says what it costs and when it unlocks', 
   expect(lines.some((l) => l.includes(STR.build.tierLocked(1)))).toBe(true);
 });
 it('water and coal say where trains take them', () => {
-  expect(resourceTip({ id: 'water', have: 0, cap: 0, produced: 0, consumed: 0, tier: 0 }).map(blockText).some((l) => l.startsWith(STR.res.takenAt))).toBe(true);
+  expect(
+    resourceTip({ id: 'water', have: 0, cap: 0, produced: 0, consumed: 0, tier: 0 })
+      .map(blockText)
+      .some((l) => l.startsWith(STR.res.takenAt)),
+  ).toBe(true);
 });
 ```
 
@@ -224,7 +251,7 @@ Expected: PASS.
 
 - [ ] **Step 7: Run all gates**
 
-Run: `npm run typecheck && npm run lint && npm test && npm run build && npx prettier --check src index.html`
+Run: `npm run typecheck && npm run lint && npm test && npm run build && npm run format:check`
 Expected: all pass. If `panels.test.ts` reads the old `ResourceBar` wiring as text, update it to the new constructor call.
 
 - [ ] **Step 8: Commit, push, open the PR**

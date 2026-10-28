@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { RESOURCE_GROUPS, barGroups, makersOf, usersOf, takenAt } from './resourceOrder';
 import { DEFAULT_SUPPLY, setSupplyMode } from '../sim/supply';
 
+const FULL_CHAIN_IDS = ['sand', 'iron_ore', 'copper_ore', 'wire', 'crude', 'diesel'] as const;
+
 afterEach(() => setSupplyMode(DEFAULT_SUPPLY));
 
 describe('resource bar order', () => {
@@ -37,7 +39,8 @@ describe('resource bar order', () => {
   });
   it('full-chain cargo stays off the bar in the simple chain', () => {
     // with the simple chain active, full-chain ids are never listed
-    expect(barGroups(2, () => 0).flat()).not.toContain('iron_ore');
+    const flat = barGroups(2, () => 0).flat();
+    for (const id of FULL_CHAIN_IDS) expect(flat).not.toContain(id);
   });
   it('no empty group is left', () => {
     for (const g of barGroups(0, () => 0)) expect(g.length).toBeGreaterThan(0);
@@ -62,7 +65,13 @@ describe('resource bar order', () => {
     expect(groups.find((g) => g.includes('iron_ore'))).toEqual(
       expect.arrayContaining(['wood', 'iron_ore']),
     );
-    expect(groups.flat()).toEqual(expect.arrayContaining(['crude', 'diesel']));
+    expect(groups.flat()).toEqual(expect.arrayContaining([...FULL_CHAIN_IDS]));
+    for (const id of ['sand', 'iron_ore', 'copper_ore', 'wire']) {
+      expect(groups.find((g) => g.includes(id))?.[0]).toBe(RESOURCE_GROUPS[1][0]);
+    }
+    for (const id of ['crude', 'diesel']) {
+      expect(groups.find((g) => g.includes(id))?.[0]).toBe(RESOURCE_GROUPS[2][0]);
+    }
     expect(groups.flat()).not.toContain('oil');
   });
 });
