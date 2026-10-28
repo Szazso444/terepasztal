@@ -209,7 +209,7 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
     world: { kind: 'generated', seed: w.seed, params: mapParams(w.map.w) },
     supply: supplyMode(),
     rules: { ...rules },
-    stockpile: w.stock.toJSON(),
+    stores: w.stores.toJSON(),
     regions: w.regions.toJSON(),
     seasonOffset: getSeasonOffset(),
     towns: w.towns.toJSON(),

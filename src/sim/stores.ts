@@ -661,8 +661,11 @@ export class StoreRegistry {
     }));
   }
   /**
-   * Restore goods and famine. Call it once the stations and towns are loaded: the stores are
-   * derived from them first, and a saved key with no store is dropped.
+   * Restore goods and famine, in place of whatever the stores held. Call it once the stations and
+   * towns are loaded: the stores are derived from them first. A saved store with no place of its
+   * own now (a warehouse a town took in, a station that went, a stockpile the step from v20 found
+   * no place for) hands its goods and famine to the store that covers its place, else the nearest
+   * in reach, else the start depot's. A load keeps every good it brings, past the caps too.
    */
   load(list: StoreJSON[]) {
     this.refresh();
@@ -670,13 +673,60 @@ export class StoreRegistry {
       s.amounts.clear();
       s.famine = false;
     }
+    const homeless: StoreJSON[] = [];
     for (const j of list) {
+      // an entry that is no store, in a file no version wrote, is passed over
+      if (typeof j?.key !== 'string') continue;
       const s = this.stores.get(j.key);
-      if (!s) continue;
-      for (const [id, n] of Object.entries(j.amounts))
-        if (Number.isFinite(n) && n > 0) s.amounts.set(id, n);
-      s.famine = !!j.famine;
+      if (!s) homeless.push(j);
+      else {
+        for (const [id, n] of savedGoods(j)) s.amounts.set(id, n);
+        s.famine = !!j.famine;
+      }
     }
+    for (const j of homeless) {
+      const heir = this.heirOf(j.key);
+      if (!heir) continue;
+      for (const [id, n] of savedGoods(j)) heir.amounts.set(id, heir.get(id) + n);
+      if (j.famine) heir.famine = true;
+    }
+  }
+  /**
+   * Forget every store, what each held, the grid's goods and every famine and shortage, so that a
+   * load starts from nothing, whatever game ran before it. The stations bring their stores back at
+   * the next `refresh` (`load` runs one).
+   */
+  clear() {
+    this.stores = new Map([[this.grid.key, this.grid]]);
+    this.grid.amounts.clear();
+    this.grid.famine = false;
+    this.selected = null;
+    this.short.clear();
+    this.nets.clear();
+    for (const key of [...this.pools.keys()]) if (key !== this.grid.key) this.pools.delete(key);
+    this.townAtTile.clear();
+    this.supplierAtTile.clear();
+    this.fuelAtTile.clear();
+    this.worksOf.clear();
+    // the next lookup groups the stores again
+    this.labelledMode = null;
+    this.labelledRails = -1;
+    this.plants = 0;
+  }
+  /** The store a saved key with no store of its own hands its goods to (`load`). */
+  private heirOf(key: string): Store | undefined {
+    const at = this.placeOf(key);
+    const near = at && (this.townStore(at.x, at.y) ?? this.nearest(at.x, at.y)[0]);
+    if (near) return membersOf(near)[0];
+    return [...this.stores.values()].find((s) => s.kind === 'depot');
+  }
+  /** Where the station or the Townhouse a store key names stands; null for a key of no place. */
+  private placeOf(key: string): { x: number; y: number } | null {
+    const { builder, towns } = this.d;
+    const id = Number(key.slice(key.indexOf(':') + 1));
+    if (key.startsWith('st:')) return builder.stationById(id) ?? null;
+    const t = key.startsWith('town:') ? towns.byId(id) : undefined;
+    return (t && towns.station(t)) ?? null;
   }
 
   private storeOf(key: string): ResourceStore | null {
@@ -693,6 +743,15 @@ export class StoreRegistry {
     }
     return out;
   }
+}
+
+/** The goods a saved store holds: every finite amount above nothing. */
+function savedGoods(j: StoreJSON): [string, number][] {
+  const amounts: unknown = j.amounts;
+  if (typeof amounts !== 'object' || amounts === null) return [];
+  return Object.entries(amounts).filter(
+    (e): e is [string, number] => typeof e[1] === 'number' && Number.isFinite(e[1]) && e[1] > 0,
+  );
 }
 
 function stationKey(s: Station) {

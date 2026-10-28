@@ -404,6 +404,67 @@ describe('saving stores', () => {
     expect(again.grid.get('power')).toBe(40);
     expect(again.toJSON()).toEqual(saved);
   });
+
+  it('load starts from what was saved alone, however often and over whatever it runs', () => {
+    const { w, stores } = world();
+    const hall = station(w, 'town', 20, 29);
+    const depot = station(w, 'depot', 40, 24);
+    sync(w, stores);
+    const t = stores.byKey(stores.townStore(hall.x, hall.y)!.key)!;
+    t.add('food', 120);
+    stores.byKey(`st:${depot.id}`)!.add('coal', 800);
+    const saved = JSON.parse(JSON.stringify(stores.toJSON()));
+    // goods and a famine that came after the save
+    t.add('wood', 30);
+    t.famine = true;
+    stores.byKey(`st:${depot.id}`)!.add('coal', 100);
+    stores.grid.add('power', 40);
+    stores.load(saved);
+    expect(stores.toJSON()).toEqual(saved);
+    stores.load(saved);
+    expect(stores.toJSON()).toEqual(saved);
+  });
+
+  it('clear forgets every store, what each held and every famine', () => {
+    const { w, stores } = world();
+    station(w, 'depot', 40, 24);
+    sync(w, stores);
+    stores.all()[1].add('coal', 800);
+    stores.grid.add('power', 40);
+    stores.grid.famine = true;
+    stores.clear();
+    expect(stores.all()).toEqual([stores.grid]);
+    expect(stores.toJSON()).toEqual([{ key: 'grid', amounts: {}, famine: false }]);
+    // and the stations bring theirs back, empty
+    stores.refresh();
+    expect(stores.totals().size).toBe(0);
+    expect(stores.all().map((s) => s.kind)).toEqual(['grid', 'depot']);
+  });
+
+  it("load gives a saved store with no place of its own to the store that covers it, else the start depot's", () => {
+    const { w, stores } = world();
+    const hall = station(w, 'town', 20, 29);
+    const inTown = station(w, 'warehouse', 24, 29);
+    const depot = station(w, 'depot', 40, 24);
+    station(w, 'depot', 50, 24);
+    sync(w, stores);
+    const town = stores.townStore(hall.x, hall.y)!.key;
+    expect(stores.byKey(`st:${inTown.id}`), 'a warehouse in a town has no store').toBeUndefined();
+    stores.load([
+      { key: town, amounts: { food: 10 }, famine: false },
+      // past the town's cap: what a load brings is kept whole, as a store's own goods are
+      { key: `st:${inTown.id}`, amounts: { stone: 5000 }, famine: false },
+      { key: 'unplaced', amounts: { wood: 400 }, famine: true },
+      { key: 'st:999', amounts: { wood: 6, iron: 2 }, famine: false },
+    ]);
+    expect(stores.byKey(town)!.get('food')).toBe(10);
+    expect(stores.byKey(town)!.get('stone')).toBe(5000);
+    const start = stores.byKey(`st:${depot.id}`)!;
+    expect(Object.fromEntries(start.amounts)).toEqual({ wood: 406, iron: 2 });
+    // a famine goes with the goods; the next meal there ends it, as any famine
+    expect(start.famine).toBe(true);
+    expect(stores.byKey(town)!.famine).toBe(false);
+  });
 });
 
 describe('works and harvesters at their store', () => {

@@ -156,7 +156,7 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     weather: {},
     world,
     rules: {},
-    stockpile: { amounts: {} },
+    stores: [],
     buildings: [],
     regions: [true],
     seasonOffset: 0,

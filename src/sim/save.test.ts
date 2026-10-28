@@ -114,7 +114,10 @@ function fullParts(): SaveParts {
     weather: { kind: 'clear', intensity: 0, nextChangeAt: 5, rng: 9 },
     world: { kind: 'generated', seed: 777, params: { ...DEFAULT_MAP_PARAMS } },
     rules: { contractOfferCount: 1 },
-    stockpile: { amounts: { food: 600 }, famine: false },
+    stores: [
+      { key: 'town:1', amounts: { food: 600 }, famine: false },
+      { key: 'grid', amounts: { power: 40 }, famine: false },
+    ],
     buildings: [[7, 7, 'sawmill', 0.5, 2]],
     regions: [true, false],
     seasonOffset: 1,
@@ -191,6 +194,7 @@ describe('the migration registry', () => {
       [8, 'supply', (v) => typeof v === 'string'],
       [9, 'crafting', block],
       [19, 'roads', list],
+      [20, 'stores', list],
     ];
     for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
       const j = migrate({ ...oldestSave(), version });
@@ -248,7 +252,7 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   weather: true,
   world: true,
   rules: true,
-  stockpile: true,
+  stores: true,
   buildings: true,
   regions: true,
   seasonOffset: true,
@@ -813,7 +817,13 @@ describe('v11 to v12', () => {
     // the step to v15 then says the bridge is not being strengthened, and the step to v16 that it
     // stands at rotation 0
     expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0]);
-    expect(j.stockpile).toEqual({ amounts: { wheat: 200, coal: 50, food: 1000 }, famine: false });
+    // the step to v21 then moves the stockpile into the town: it has no depot and no warehouse
+    expect(j.stockpile).toBeUndefined();
+    expect(j.stores).toContainEqual({
+      key: 'town:7',
+      amounts: { wheat: 200, coal: 50, food: 1000 },
+      famine: false,
+    });
     expect(j.economy.money).toBe(1000);
   });
 
@@ -1657,6 +1667,93 @@ describe('v17 to v18', () => {
       const back = Train.fromJSON(asStored(read.save.trains[0]) as TrainJSON, track);
       expect(asStored(back.toJSON()), `dropped ${dropped}`).toEqual(saved);
     }
+  });
+});
+
+describe('v20 to v21', () => {
+  /** A v20 station of `defId` holding `storage`. */
+  const st = (id: number, defId: string, storage: Record<string, number> = {}): StationJSON => ({
+    id,
+    defId,
+    name: `S ${id}`,
+    x: id * 4,
+    y: 2,
+    level: 1,
+    storage,
+    rot: 0,
+    work: null,
+  });
+  /** A v20 file of `stations` whose global stockpile holds wood 400 and power 50, in famine. */
+  const v20 = (stations: StationJSON[], extra: Partial<SaveGame> = {}): SaveGame => ({
+    ...oldestSave(),
+    version: 20,
+    stations,
+    stockpile: { amounts: { wood: 400, power: 50 }, famine: true },
+    ...extra,
+  });
+  const grid = { key: 'grid', amounts: { power: 50 }, famine: false };
+
+  it('a v20 save keeps its stockpile in the start depot and its warehouse goods', () => {
+    const j = runStep(
+      20,
+      v20([
+        st(4, 'depot'),
+        st(2, 'narrow_depot'),
+        st(3, 'warehouse', { stone: 80 }),
+        st(5, 'farm', { wheat: 9 }),
+      ]),
+    );
+    expect(j.stockpile).toBeUndefined();
+    // the depot of the lowest id is the start depot; power goes to the grid
+    expect(j.stores).toEqual([
+      { key: 'st:2', amounts: { wood: 400 }, famine: true },
+      grid,
+      { key: 'st:3', amounts: { stone: 80 }, famine: false },
+    ]);
+    expect(j.stations.find((s) => s.id === 3)!.storage).toEqual({});
+    // a station that is no warehouse keeps what it holds
+    expect(j.stations.find((s) => s.id === 5)!.storage).toEqual({ wheat: 9 });
+  });
+
+  it('puts the stockpile of a save with no depot in its first warehouse, else its first town', () => {
+    const toWarehouse = runStep(
+      20,
+      v20([st(1, 'farm'), st(3, 'warehouse', { wood: 5, stone: 80 }), st(2, 'warehouse')]),
+    );
+    expect(toWarehouse.stores).toEqual([
+      { key: 'st:3', amounts: { wood: 405, stone: 80 }, famine: true },
+      grid,
+      { key: 'st:2', amounts: {}, famine: false },
+    ]);
+    const toTown = runStep(
+      20,
+      v20([st(1, 'farm'), st(6, 'town')], {
+        towns: [{ id: 9, name: 'Alder', stationId: 6, custom: false, color: 0 }],
+      }),
+    );
+    expect(toTown.stores).toEqual([{ key: 'town:9', amounts: { wood: 400 }, famine: true }, grid]);
+    // with no place at all, the goods wait for the depot a load grants (`StoreRegistry.load`)
+    const nowhere = runStep(20, v20([st(1, 'farm')]));
+    expect(nowhere.stores).toEqual([
+      { key: 'unplaced', amounts: { wood: 400 }, famine: true },
+      grid,
+    ]);
+  });
+
+  it('moves no goods it does not find, and copes with what no version wrote', () => {
+    const none = runStep(20, v20([st(3, 'warehouse', { stone: 80 })], { stockpile: undefined }));
+    expect(none.stores).toEqual([{ key: 'st:3', amounts: { stone: 80 }, famine: false }]);
+    const odd = v20([st(3, 'warehouse')], { stockpile: { amounts: 'none' } });
+    (odd.stations[0] as { storage: unknown }).storage = null;
+    expect(runStep(20, odd).stores).toEqual([{ key: 'st:3', amounts: {}, famine: false }]);
+    expect(odd.stockpile).toBeUndefined();
+  });
+
+  it('records its note', () => {
+    const j = migrate(v20([st(2, 'depot')]));
+    expect(j.migrationNotes).toEqual([
+      'v20→v21: the global stockpile moved into the start depot; each warehouse keeps its own goods',
+    ]);
   });
 });
 

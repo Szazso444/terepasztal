@@ -523,9 +523,6 @@ export class Game implements UiHost {
     this.applySeason(true);
     this.economy.money = start ? start.money : rules.startMoney;
     this.economy.tickets = start ? start.tickets : rules.startTickets;
-    const stockMul = start?.stockMul ?? 1;
-    for (const [id, n] of Object.entries(startStock()))
-      this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
       // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
       const d = this.ensureDepot(startDepotKind());
@@ -534,6 +531,14 @@ export class Game implements UiHost {
         this.camera.centerOn(p.x, p.y);
       }
     }
+    // the start stock waits in the start depot (a level's first depot), whole, past its cap too
+    const depot = this.builder.depots()[0];
+    const dock = depot ? this.stores.dockOf(depot) : null;
+    const store = dock ? this.stores.byKey(dock.key) : undefined;
+    const stockMul = start?.stockMul ?? 1;
+    if (store)
+      for (const [id, n] of Object.entries(startStock()))
+        store.amounts.set(id, store.get(id) + Math.round(n * rules.startStock * stockMul));
     if (start && start.tier > this.economy.tier) {
       this.economy.tier = Math.min(start.tier, LAST_AGE);
       // the land opens with the rail age, which stops at Electric
@@ -1199,7 +1204,7 @@ export class Game implements UiHost {
         world: this.spec,
         supply: supplyMode(),
         rules: { ...rules },
-        stockpile: this.stock.toJSON(),
+        stores: this.stores.toJSON(),
         regions: this.regions.toJSON(),
         seasonOffset: getSeasonOffset(),
         towns: this.towns.toJSON(),
@@ -1264,6 +1269,8 @@ export class Game implements UiHost {
   applySave(j: SaveGame) {
     // content the game no longer defines goes first, before anything looks it up
     const pruned = pruneUnknownContent(j);
+    // nothing the game held before the load stays in its stores
+    this.stores.clear();
     this.restoringWorld = true;
     this.saveExtra = {};
     for (const [k, v] of Object.entries(j)) if (!KNOWN_SAVE_KEYS.has(k)) this.saveExtra[k] = v;
@@ -1329,12 +1336,13 @@ export class Game implements UiHost {
       this.builder.buildings.set(b.y * this.map.w + b.x, b);
       this.onBuildingChanged(b, false);
     }
-    if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
     this.towns.load(j.towns);
-    // the stations and towns went in past the builder: the stores are derived from them once
-    this.stores.refresh();
-    this.refreshCity();
+    // every game has a depot; goods saved with no place of their own wait in it
     this.ensureDepot();
+    // the stations and towns went in past the builder: the stores are derived from them, then
+    // filled with what the save holds
+    this.stores.load(j.stores ?? []);
+    this.refreshCity();
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
     if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);

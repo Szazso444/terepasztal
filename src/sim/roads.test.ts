@@ -1279,14 +1279,15 @@ describe('roads and the save', () => {
       const j = migrate(oldSave(version));
       expect(j.roads, `from v${version}`).toEqual([]);
     }
+    // the step from v19 says so, and the steps after it say their own
     const v19 = migrate(oldSave(19));
-    expect(v19.migrationNotes).toEqual([
+    expect(v19.migrationNotes?.[0]).toBe(
       'v19→v20: no road had been built: the road list started empty',
-    ]);
+    );
     // the step only fills in: a list the file has is kept
     const kept = migrate({ ...oldSave(19), roads: [[1, 2]] });
     expect(kept.roads).toEqual([[1, 2]]);
-    const now = migrate({ ...oldSave(20), roads: [[4, 5]] });
+    const now = migrate({ ...oldSave(SAVE_VERSION), roads: [[4, 5]] });
     expect(now.roads).toEqual([[4, 5]]);
     expect(now.migrationNotes).toBeUndefined();
   });
