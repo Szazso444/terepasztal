@@ -164,8 +164,12 @@ const ENGINES = [
 const RECIPE_DRAW = [4000, 12000, 24000, 40000, 60000, 90000];
 
 // ---- Land ----
+const SITES_PER_CHUNK = Number(process.env.SITES ?? 4); // quarry, mine, pit or oil sites a chunk offers
 const CHUNK_SLOTS = 14; // buildings (not houses) a chunk holds
-const chunkCost = (n: number) => (n <= 9 ? 12000 : n <= 25 ? 19200 : 26400);
+/** the n-th chunk costs CHUNK_GROWTH times the one before; land is the late-game money sink */
+const CHUNK_BASE = 12000;
+const CHUNK_GROWTH = Number(process.env.CHUNK_GROWTH ?? 1.12);
+const chunkCost = (n: number) => Math.round(CHUNK_BASE * CHUNK_GROWTH ** (n - 2));
 
 // ---- Start (today's start stock, spec section 7) ----
 const START_MONEY = 40000;
@@ -204,6 +208,7 @@ interface State {
   blds: Bld[];
   engines: number[]; // count by age
   chunks: number;
+  sitesUsed: number; // deposit sites opened so far, worked out or not
   log: string[];
   sat: Res;
   cool: Res;
@@ -377,13 +382,21 @@ function build(s: State, d: Def): boolean {
       return true;
     }
   }
-  if (s.blds.length >= s.chunks * CHUNK_SLOTS) {
+  if (s.blds.length + sum(s.houses) / 4 >= s.chunks * CHUNK_SLOTS) {
+    const price = chunkCost(s.chunks + 1);
+    if (s.money < price) return false;
+    s.money -= price;
+    s.chunks++;
+  }
+  // a deposit site needs fresh ground: worked-out sites keep theirs, so new land must be bought
+  if (d.reserve !== undefined && s.sitesUsed >= s.chunks * SITES_PER_CHUNK) {
     const price = chunkCost(s.chunks + 1);
     if (s.money < price) return false;
     s.money -= price;
     s.chunks++;
   }
   if (!can(s, d.cost)) return short(s, d.cost);
+  if (d.reserve !== undefined) s.sitesUsed++;
   pay(s, d.cost);
   s.blds.push({ def: d, level: 1, left: d.reserve ?? Infinity });
   return true;
@@ -523,6 +536,7 @@ function run(hours: number) {
     blds: [],
     engines: [3, 0, 0, 0, 0, 0],
     chunks: 1,
+    sitesUsed: 0,
     log: [],
     sat: {},
     cool: {},

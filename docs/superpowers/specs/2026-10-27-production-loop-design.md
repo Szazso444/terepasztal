@@ -1,8 +1,8 @@
 # Production loop: works, resources, population and roads in one balanced loop
 
 Issue #306 (epic #46). Author: Zsolt, with Claude as Core. Date: 2026-10-27.
-Status: design approved section by section in chat on 2026-10-27. This file awaits the author's
-review. It changes no code.
+Status: approved by the author on 2026-10-27, with the answers to its open points (section 15).
+It changes no code.
 
 The numbers here come from a balance model, `2026-10-27-production-loop-model.ts` beside this file.
 Run it with `node docs/superpowers/specs/2026-10-27-production-loop-model.ts`. Every number quoted
@@ -58,8 +58,8 @@ The author's answers, 2026-10-27:
 | Q45 | More needs than food                      | one new need per age                                                      |
 | Q46 | Design target                             | the Full chain; Simple is a relaxed version derived from it               |
 | —   | Age goals                                 | from needs and population                                                 |
-| —   | A recipe switch on upgrade                | only where it makes sense, no filler recipes                              |
-| —   | Role of money                             | wages and upkeep in money; tickets go; financial buildings later          |
+| —   | A recipe switch on upgrade                | only where it makes sense, chosen in the building (section 8)             |
+| —   | Role of money                             | wages in money; land is the main late sink; tickets go; finance later     |
 | —   | Contracts                                 | "very little role": rare, optional, no penalty, only an advantage if done |
 
 The earlier rules stay: wood is no longer a locomotive fuel (#332), and roads are built by the
@@ -190,8 +190,8 @@ rate = base × staffing × trip factor × richness × season × biome
 | Magnetic | plastics    | **new works** (crude → plastics)                | 0.012                 |
 | Hyper    | luxury      | **new works** (electronics + plastics)          | 0.006                 |
 
-Magnetic's and Hyper's needs are placeholders until those ages are designed. Electronics gives
-wire, which has no consumer today, a use.
+The author kept plastics and luxury for Magnetic and Hyper (2026-10-27). Electronics gives wire,
+which has no consumer today, a use.
 
 **House levels:**
 
@@ -224,9 +224,18 @@ tickets.
 
 **Crafting follows the age.** Only recipes of the current or an earlier age can be drawn.
 
-**A recipe switch on upgrade** comes only where it makes sense. The author's example is the Kiln
-making power at its Electric level, which is also its last level (`lastTier: 2`). The list is made
-in sub-project 6 with the author; no filler recipes.
+**Recipe switches** (author, 2026-10-27). At the level named below, a works offers a second
+recipe. The player picks it in the building's panel and can switch back at any time:
+
+| Works           | From level          | Second recipe                 | Why                                         |
+| --------------- | ------------------- | ----------------------------- | ------------------------------------------- |
+| Kiln            | Electric (L3, last) | 6 wood → 8 power              | power from wood where there is no coal      |
+| Ironworks       | Electric            | 4 iron ore + 4 power → 3 iron | the electric arc furnace: iron without coal |
+| Power plant     | Diesel              | 3 crude + 3 water → 12 power  | oil firing; today's `altIn`, dead in Full   |
+| Diesel refinery | Magnetic            | 6 crude → 3 plastics          | petrochemicals for Magnetic's new need      |
+
+The author called these examples. More come only where a switch serves an age's need or
+technique, never as filler. A second recipe follows the level as any recipe does.
 
 ## 9. Market and contracts (sub-project 4)
 
@@ -274,7 +283,11 @@ store, at the town's price.
   income in every age (model, section 11).
 
 - **No track upkeep.**
-- **What else money buys:** land, recipe draws, in-cab fit-out, trade desk buys.
+- **Land is the main late-game sink** (author, 2026-10-27). Each chunk costs 12 % more than the
+  one before: the 2nd 12 000, the 10th about 30 000, the 20th about 92 000, the 46th about 1.76 M.
+  Deposits drive the buying: a chunk offers about 4 quarry, mine, pit or oil sites, and a
+  worked-out site keeps its ground. In the model land takes about 16 M over the game.
+- **What else money buys:** recipe draws, in-cab fit-out, trade desk buys.
 
 **In the red:**
 
@@ -350,14 +363,15 @@ starter engine carries for every 100 residents.
 | Electric | 539 000    | 139 000    | 26 %         |
 | Nuclear  | 1.84 M     | 421 000    | 23 %         |
 | Magnetic | 2.93 M     | 758 000    | 26 %         |
-| Hyper    | 5.36 M     | 1.17 M     | 22 %         |
+| Hyper    | 3.51 M     | 1.12 M     | 32 %         |
 
 ### Findings from the model
 
-1. **Money piles up after Electric.** The reference player holds 0.8 M at Nuclear and 10 M at Hyper,
-   while land, recipe draws and upkeep take little of it. Later money needs sinks that grow with the
-   age, for example land and recipe draws priced by age. The author's financial buildings belong
-   here too. Sub-project 5 sizes these sinks, and the author decides the form.
+1. **Land takes the late money.** With flat land prices the player held 10 M at Hyper and 20 M at
+   12 hours. With each chunk 12 % dearer and deposits needing fresh ground, it holds 0.7 M at
+   Nuclear, 3.4 M at Magnetic, 4.4 M at Hyper and about 0.2 M at 12 hours, and the tempo is
+   unchanged. At 0.8× and 1.25× town growth the ages move by at most 15 minutes. A 10 % step with
+   3 sites a chunk stops the player just short of Hyper, so these two numbers are the land's dials.
 2. **Old engines linger.** Steam engines cost no goods, so the player keeps building them after
    Diesel. Older engines should cost more upkeep in later ages, or their recipes should retire.
    This is decided in sub-project 6.
@@ -371,8 +385,9 @@ starter engine carries for every 100 residents.
   fuel where it is made.
 - The reference player plans by capacity (Anno ratios). When a cargo is made more slowly than it
   is wanted, it builds or upgrades that cargo's maker.
-- **Left out:** distances, roads, single towns, seasons' storage play, contracts, passengers and
-  chunks' terrain.
+- Land: 14 buildings a chunk (a house counts as a quarter) and 4 deposit sites a chunk.
+- **Left out:** distances, roads, single towns, seasons' storage play, contracts, passengers,
+  recipe switches and chunks' terrain.
 - **Sub-project 6** turns the model into a test on `src/testing/simWorld.ts` that checks the real
   simulation against these tables.
 
@@ -408,18 +423,18 @@ Each sub-project gets its own plan and issues. The order follows the dependencie
 | 2   | Workers and depletion                 | gameplay, world, rendering | 1     | Jobs filled from residents within 12/24 tiles; rate formula of section 7 shared by tick, panel and tooltip (fixes #308); deposits deplete and forests regrow; seams from terrain + seed |
 | 3   | Needs, house levels and age goals     | gameplay, uiux             | 1, 2  | Needs of section 8 consumed per house level; level-up and decline rules; new age goals; free draw per age; crafting gated by age                                                        |
 | 4   | Market and contracts                  | gameplay, uiux             | 1, 3  | Residents pay the town price of section 9; contracts rare, optional, without penalty, may start at works                                                                                |
-| 5   | Money, wages and the end of the gacha | gameplay, uiux, engine     | 2     | Wages per section 10; negative balance rule; gacha and tickets removed; late-game sinks sized with the author                                                                           |
-| 6   | Numbers                               | gameplay, verification     | 1–5   | All data tables set to section 11; the model becomes a simWorld test that holds the tempo within ±15 %; recipe switches agreed with the author                                          |
+| 5   | Money, wages and the end of the gacha | gameplay, uiux, engine     | 2     | Wages per section 10; negative balance rule; gacha and tickets removed; chunk price ×1.12 a chunk; deposit sites per chunk                                                              |
+| 6   | Numbers                               | gameplay, verification     | 1–5   | All data tables set to section 11; the model becomes a simWorld test that holds the tempo within ±15 %; the recipe switches of section 8                                                |
 
 #308 (town panel rate) and #377 (quarries count mountains) fold into sub-project 2. #332 (steam
 burns coal only) lands before sub-project 1.
 
-## 15. Open points for the author
+## 15. The author's answers to the open points (2026-10-27)
 
-1. **Late-game money sinks** (finding 1): priced-by-age land and recipe draws, financial buildings,
-   or something else?
-2. **Magnetic and Hyper needs** (plastics, luxury) are placeholders until those ages are designed.
-3. **Recipe switches on upgrade:** which works get one (sub-project 6).
+1. **Late-game money sinks:** mainly unlocking chunks (section 10, finding 1).
+2. **Magnetic and Hyper needs:** plastics and luxury stay.
+3. **Recipe switches:** the four of section 8, chosen in the building; more only where they make
+   sense.
 
 The choices Claude made and the author may overrule:
 
