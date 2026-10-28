@@ -39,7 +39,7 @@ describe('the editor over a bridge platform', () => {
     const { map, builder, editor } = harness();
     map.terrain[4 * W + 4] = Terrain.Water;
     expect(builder.placeBuilding(4, 4, 'bridge_wood')).not.toBeNull();
-    expect(builder.placeTrack(4, 4, { kind: 'straight', cls: 'regular' }, 1)).toBe(true);
+    expect(builder.placeTrack(4, 4, { kind: 'straight', cls: 'branch' }, 1)).toBe(true);
     editor.paint(4, 4, Terrain.Sand);
     expect(builder.track.has(4, 4)).toBe(false);
     expect(builder.buildingAt(4, 4)).toBeUndefined();

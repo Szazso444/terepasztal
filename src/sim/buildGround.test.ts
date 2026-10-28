@@ -106,7 +106,7 @@ describe('the ground each kind stands on, against the rule before the helper', (
         const { map, builder } = grassWorld();
         paint(map, stationFootprint(def.id, X, Y, 0), t);
         // the platform track on grass beside the station, and water on the far side
-        builder.track.place(X - 1, Y, 'straight', 1, 'regular');
+        builder.track.place(X - 1, Y, 'straight', 1, 'branch');
         if (def.needsWater) paint(map, [{ x: X + 1, y: Y }], Terrain.Water);
         const own =
           def.standOn && !(def.standOn as string[]).includes(name(t))
@@ -218,7 +218,7 @@ describe('the ground each kind stands on, against the rule before the helper', (
             const what = `${def.id} turned ${rot}, ${name(t)} at ${tile.x},${tile.y}`;
             const station = grassWorld();
             paint(station.map, [tile], t);
-            if (!def.depot) station.builder.track.place(X - 1, Y, 'straight', 1, 'regular');
+            if (!def.depot) station.builder.track.place(X - 1, Y, 'straight', 1, 'branch');
             expect(station.builder.checkStation(X, Y, def.id, rot).reason, what).toBe(
               unbuildable(t) ?? undefined,
             );
@@ -238,7 +238,7 @@ describe('the ground each kind stands on, against the rule before the helper', (
     for (const t of ALL) {
       const { map, builder } = grassWorld();
       paint(map, [{ x: X, y: Y }], t);
-      builder.track.place(X - 1, Y, 'straight', 1, 'regular');
+      builder.track.place(X - 1, Y, 'straight', 1, 'branch');
       const reasons = new Set([
         builder.checkStation(X, Y, 'farm').reason,
         builder.checkBuilding(X, Y, 'windmill').reason,

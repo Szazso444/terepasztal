@@ -187,7 +187,7 @@ describe('the Mountain biome on grass', () => {
     const builder = new Builder(map, regions, track, new Economy(), stock);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
     map.biome[24 * map.w + 20] = MOUNTAIN;
-    const item: TrackItem = { kind: 'straight', cls: 'regular' };
+    const item: TrackItem = { kind: 'straight', cls: 'branch' };
     const grass = builder.terrainMul(20, 20);
     expect(builder.terrainMul(20, 24)).toBe(grass * 1.5);
     const list = pieceCost(item.kind, item.cls);
@@ -246,9 +246,7 @@ const LAND = [Terrain.Grass, Terrain.Sand, Terrain.Forest, Terrain.Hill];
 /** Any palette piece on land, or a bridge on water, at any rotation and build cost slider step. */
 function priceCase(rng: Rng): PriceCase {
   const bridge = rng.chance(0.15);
-  const item: TrackItem = bridge
-    ? { kind: 'bridge', cls: 'regular' }
-    : { ...rng.pick(TRACK_ITEMS) };
+  const item: TrackItem = bridge ? { kind: 'bridge', cls: 'branch' } : { ...rng.pick(TRACK_ITEMS) };
   return {
     terrain: bridge ? Terrain.Water : rng.pick(LAND),
     item,
@@ -263,8 +261,8 @@ function* shrinkPrice(c: PriceCase): Iterable<PriceCase> {
   if (c.rot !== 0) yield { ...c, rot: 0 };
   if (c.terrain !== Terrain.Grass && c.terrain !== Terrain.Water)
     yield { ...c, terrain: Terrain.Grass };
-  if (c.item.kind !== 'bridge' && (c.item.kind !== 'straight' || c.item.cls !== 'regular'))
-    yield { ...c, item: { kind: 'straight', cls: 'regular' }, rot: 0 };
+  if (c.item.kind !== 'bridge' && (c.item.kind !== 'straight' || c.item.cls !== 'branch'))
+    yield { ...c, item: { kind: 'straight', cls: 'branch' }, rot: 0 };
 }
 
 /** A multiplier in whole hundredths; any finer value would make the exact oracle below inexact. */
@@ -349,7 +347,7 @@ describe('every biome in the table', () => {
     const plains = cruise(0, 8);
     // the biome shows in the speed only while the line speed leaves the train its own top speed
     expect(plains.speed).toBeGreaterThan(0);
-    expect(plains.speed).toBeLessThan(lineSpeedCap('regular'));
+    expect(plains.speed).toBeLessThan(lineSpeedCap('branch'));
     expect(plains.speed).toBe(plains.freeSpeed);
     BIOME_DEFS.forEach((d, b) => {
       const there = cruise(b, 8);

@@ -193,7 +193,7 @@ describe('the track under a road', () => {
     for (const x of [2, 3, 4]) w.lay(x, 3);
     w.lay(6, 6);
     w.take();
-    // a regular straight along y under the middle: a level crossing, which its neighbours meet in
+    // a Branch Line straight along y under the middle: a level crossing, which its neighbours meet in
     // the middle
     w.world.setTrack(3, 3, pieceFrame(makePiece('straight', 0)));
     expect(w.take()).toEqual(
@@ -213,8 +213,8 @@ describe('the track under a road', () => {
     // track on a tile with no road repaints no road
     w.world.setTrack(5, 5, pieceFrame(makePiece('straight', 1)));
     expect(w.take()).toEqual([]);
-    // high-speed track is no crossing: back to a plain road
-    w.world.setTrack(3, 3, pieceFrame(makePiece('straight', 0, 'high_speed')));
+    // Main Line track is no crossing: back to a plain road
+    w.world.setTrack(3, 3, pieceFrame(makePiece('straight', 0, 'main')));
     expect(w.take()).toEqual(
       sorted([
         [3, 3],
@@ -316,17 +316,16 @@ describe('the level-crossing deck', () => {
   });
 
   const PIECES: { name: string; piece: TrackPiece; deck: string | null }[] = [
-    { name: 'regular along y', piece: makePiece('straight', 0), deck: 'regular_0' },
-    { name: 'regular along x', piece: makePiece('straight', 1), deck: 'regular_1' },
+    { name: 'branch along y', piece: makePiece('straight', 0), deck: 'branch_0' },
+    { name: 'branch along x', piece: makePiece('straight', 1), deck: 'branch_1' },
     { name: 'narrow along y', piece: makePiece('straight', 0, 'narrow'), deck: 'narrow_0' },
     { name: 'narrow along x', piece: makePiece('straight', 1, 'narrow'), deck: 'narrow_1' },
-    { name: 'high speed', piece: makePiece('straight', 0, 'high_speed'), deck: null },
+    { name: 'main line', piece: makePiece('straight', 0, 'main'), deck: null },
     { name: 'narrow curve', piece: makePiece('curve', 1, 'narrow'), deck: null },
-    { name: 'transition', piece: makePiece('transition', 0), deck: null },
     { name: 'bridge', piece: makePiece('bridge', 0), deck: null },
     { name: 'crossing', piece: makePiece('crossing', 0), deck: null },
     {
-      name: 'regular curve member',
+      name: 'branch curve member',
       piece: { ...makePiece('curve', 0), unit: { ax: 3, ay: 3, member: 1 } },
       deck: null,
     },
@@ -409,7 +408,7 @@ describe('the level-crossing deck', () => {
       const d = deck.geometry.positions,
         t = track.geometry.positions;
       expect([...d]).toEqual([...t]);
-      expect(deck.texture).toBe(frameOf('track/level_crossing_regular_0').texture);
+      expect(deck.texture).toBe(frameOf('track/level_crossing_branch_0').texture);
       expect([deck.x, deck.y]).toEqual([track.x, track.y]);
       // and lifted to the profile: the rail climbs across the tile
       const lifts = new Set<number>();
@@ -535,10 +534,9 @@ const CHOICES: TrackPiece[] = [
   makePiece('straight', 1),
   makePiece('straight', 0, 'narrow'),
   makePiece('straight', 1, 'narrow'),
-  makePiece('straight', 1, 'high_speed'),
+  makePiece('straight', 1, 'main'),
   makePiece('curve', 2, 'narrow'),
   makePiece('crossing', 0),
-  makePiece('transition', 1),
   makePiece('bridge', 0),
   { ...makePiece('curve', 0), unit: { ax: 0, ay: 0, member: 2 } },
 ];

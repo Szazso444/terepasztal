@@ -726,7 +726,6 @@
     "powerPerTile": 0.2,
     "size": "medium",
     "controlClass": "sncf",
-    "highSpeed": true,
     "collector": "hv",
     "inCab": true
   },
@@ -746,7 +745,6 @@
     "powerPerTile": 0.19,
     "size": "medium",
     "controlClass": "db",
-    "highSpeed": true,
     "collector": "multi",
     "inCab": true
   },

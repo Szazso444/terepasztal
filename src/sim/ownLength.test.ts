@@ -357,7 +357,7 @@ describe('what reads a vehicle length', () => {
     const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
     const gate = (def: LocoDef) => {
       const t = new Train([{ uid: 1, level: 1, def }]);
-      expect(t.access.classes.has('regular'), `${def.id} ${t.length} on regular track`).toBe(true);
+      expect(t.access.classes.has('branch'), `${def.id} ${t.length} on regular track`).toBe(true);
       return fleet.gateReport(t, depot).find((g) => g.x === 12 && g.y === ROW)!;
     };
     // the same engine, its size two tiles long: room to spare, then not, by its own length alone
@@ -497,7 +497,7 @@ interface Standing {
 }
 
 function genStanding(rng: Rng): Standing {
-  const cls = rng.pick(TRACK_CLASSES);
+  const cls = rng.pick(['branch', 'main', 'narrow'] as const);
   const narrow = cls === 'narrow';
   return {
     line: { cls, legs: Array.from({ length: rng.int(2, 6) }, () => rng.int(1, 3)) },
@@ -653,7 +653,7 @@ describe('a depot gate', () => {
         }));
         const need = consistLengthOf([...locos.map((l) => l.length), ...wagons.map(wagonLength)]);
         const gate = fleet.gateReport(t, depot).find((g) => g.x === 12 && g.y === ROW)!;
-        if (!t.access.classes.has('regular')) {
+        if (!t.access.classes.has('branch')) {
           // a body too long for the curves of regular track is refused for its class, not for room
           expect(gate.ok).toBe(false);
           expect(gate.run).toBe(0);
@@ -762,7 +762,7 @@ describe('a depot gate', () => {
         }
 
         const gate = fleet.gateReport(t, depot).find((g) => g.x === 12 && g.y === ROW)!;
-        if (!t.access.classes.has('regular')) {
+        if (!t.access.classes.has('branch')) {
           // a body too long for the curves of regular track is refused for its class first
           expect(gate.ok).toBe(false);
           expect(gate.run).toBe(0);
@@ -914,7 +914,7 @@ describe('a save from before a model had a length', () => {
     forAll(
       (rng) => ({
         line: {
-          cls: 'regular' as TrackClass,
+          cls: 'branch' as TrackClass,
           legs: Array.from({ length: rng.int(2, 5) }, () => rng.int(1, 3)),
         },
         base: rng.pick(REGULAR_LOCOS).id,
@@ -1190,14 +1190,14 @@ describe('a depot gate, before and after a short consist had to look past it', (
       const covers = (x: number, y: number) => depot.covers(x, y);
       const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
 
-      // the shortest shipped model that may use each class of track, as shipped and at lengths of
+      // the shortest shipped model that may use each buildable line, as shipped and at lengths of
       // its own either side of a tile; the shortest regular one also with wagons behind it
       const lone = (def: LocoDef) => new Train([{ uid: 1, level: 1, def }]);
       const shortest = (cls: TrackClass) =>
         [...REGULAR_LOCOS, ...NARROW_LOCOS]
           .filter((d) => lone(d).access.classes.has(cls))
           .sort((a, b) => vehicleSpec(a).L - vehicleSpec(b).L)[0];
-      const bases = TRACK_CLASSES.map(shortest);
+      const bases = (['branch', 'narrow'] as const).map(shortest);
       const trains: Train[] = [];
       for (const base of bases) {
         trains.push(lone(base));

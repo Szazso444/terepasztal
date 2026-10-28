@@ -35,7 +35,7 @@ function partsOf(world: SaveParts['world']): SaveParts {
     seed: world.seed,
     clock: { time: 900, speedIndex: 1 },
     economy: { money: 5000, tickets: 2, tier: 1, granted: [0], earned: 100 },
-    track: [[3, 4, 'straight', 1, 'regular', 'regular']],
+    track: [[3, 4, 'straight', 1, 'branch', 'branch']],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
@@ -296,7 +296,7 @@ describe('the shop asks for a ring and the game grows by the rings that fit', ()
     const cam = tileToWorld(...(at() as [number, number]));
     return {
       ...buildSave(partsOf(worldOf(frame))),
-      track: [0, 1, 2].map(() => [...at(), 'straight', 1, 'regular']),
+      track: [0, 1, 2].map(() => [...at(), 'straight', 1, 'branch']),
       stations: [pt(), pt()],
       decor: [[...at(), 'townhouse', 0]],
       buildings: [[...at(), 'bridge_stone', 0.5, 3]],

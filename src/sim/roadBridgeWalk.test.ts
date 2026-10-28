@@ -69,7 +69,7 @@ function bridge(
     const t = rot === EW ? { x: x + i, y } : { x, y: y + i };
     pieces.push({ kind: 'platform', ...t, defId: id });
     if (carries === 'rail')
-      pieces.push({ kind: 'track', ...t, item: { kind: 'straight', cls: 'regular' }, rot });
+      pieces.push({ kind: 'track', ...t, item: { kind: 'straight', cls: 'branch' }, rot });
   }
   if (!w.builder.placeLine(pieces)) return false;
   // a road on each platform the line laid; on one already paved the builder refuses another

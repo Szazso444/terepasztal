@@ -1,12 +1,21 @@
 /**
- * Which stock may run on which track class (spec §4 and §5). At load every vehicle model is run
- * once over a reference curve of each class (straight lead-in, quarter arc, straight lead-out)
+ * Which stock may run on which track line (spec §4 and §5). At load every vehicle model is run
+ * once over a reference curve of each line (straight lead-in, quarter arc, straight lead-out)
  * and its peak bogie slide, sideways shift, residual gap and centre-bogie offset are compared to
  * the tolerances. Runtime only looks the verdict up. On top of the geometry sits one rule about
- * gauge: narrow stock runs on narrow track only, regular-gauge stock never on narrow track.
+ * networks: narrow stock runs on Narrow Gauge only, regular-gauge stock on the standard lines
+ * only. No stock runs on Maglev Guideway or Hyperloop Tube yet.
  */
 import { content, type Gauge, type LocoDef, type WagonDef } from '../data/content';
-import { TRACK_CLASSES, classRadius, type TrackClass, type TrackPiece } from '../world/track';
+import {
+  BUILDABLE_CLASSES,
+  TRACK_CLASSES,
+  classRadius,
+  networkOf,
+  type Network,
+  type TrackClass,
+  type TrackPiece,
+} from '../world/track';
 import { Polyline, poseVehicle, vehicleSpec, TOL, type VehicleSpec } from './body';
 import { STR } from '../strings';
 
@@ -91,18 +100,26 @@ export function verdictOf(def: LocoDef | WagonDef, cls: TrackClass): Verdict {
 }
 
 /**
- * May this model use a class? Its gauge first, then the tolerance table. Returns the reason when
+ * May this model use a line? Its network first, then the tolerance table. Returns the reason when
  * not.
  */
 export function vehicleAccess(def: LocoDef | WagonDef, cls: TrackClass): string | null {
-  const narrowTrack = cls === 'narrow';
-  if ((gaugeOf(def) === 'narrow') !== narrowTrack) return STR.compat.wrongGauge(narrowTrack);
+  if (gaugeNetwork(gaugeOf(def)) !== networkOf(cls))
+    return STR.compat.wrongNetwork(STR.toolbar.trackClass[cls]);
   const v = verdictOf(def, cls);
   return v.ok ? null : v.reason;
 }
 
 export function gaugeOf(def: { gauge?: Gauge }): Gauge {
   return def.gauge ?? 'regular';
+}
+/** The network a gauge's stock runs on: narrow on Narrow Gauge, regular on the standard lines. */
+export function gaugeNetwork(gauge: Gauge): Network {
+  return gauge === 'narrow' ? 'narrow' : 'standard';
+}
+/** The line a depot of this gauge lays across its gates. */
+export function gaugeLine(gauge: Gauge): TrackClass {
+  return gauge === 'narrow' ? 'narrow' : 'branch';
 }
 /** The gauge every vehicle shares, 'mixed' when they differ, null for none. */
 export function consistGauge(defs: { gauge?: Gauge }[]): Gauge | 'mixed' | null {
@@ -122,13 +139,8 @@ export interface ConsistAccess {
   blockedBy: Partial<Record<TrackClass, { name: string; reason: string }>>;
 }
 /** The most restrictive access across a consist. */
-export function consistAccess(defs: (LocoDef | WagonDef)[], inCab = true): ConsistAccess {
+export function consistAccess(defs: (LocoDef | WagonDef)[]): ConsistAccess {
   const out: ConsistAccess = { classes: new Set(TRACK_CLASSES), blockedBy: {} };
-  // high-speed lines have no lineside signals: without in-cab equipment there is no authority
-  if (!inCab) {
-    out.classes.delete('high_speed');
-    out.blockedBy.high_speed = { name: STR.compat.inCabName, reason: STR.compat.needInCab };
-  }
   for (const cls of TRACK_CLASSES)
     for (const d of defs) {
       const why = vehicleAccess(d, cls);
@@ -141,23 +153,12 @@ export function consistAccess(defs: (LocoDef | WagonDef)[], inCab = true): Consi
   return out;
 }
 
-/** One line for a vehicle's data sheet: the track classes it may run on. */
+/** One line for a vehicle's data sheet: the buildable lines it may run on. */
 export function runsOn(def: LocoDef | WagonDef): string {
-  const names = TRACK_CLASSES.filter((cls) => !vehicleAccess(def, cls)).map((cls) =>
-    STR.toolbar.trackClass[cls].toLowerCase(),
+  const names = BUILDABLE_CLASSES.filter((cls) => !vehicleAccess(def, cls)).map(
+    (cls) => STR.toolbar.trackClass[cls],
   );
   return STR.compat.runsOn(names);
-}
-
-/**
- * How many trains may not run on high-speed track: those with no in-cab signalling on any
- * locomotive, fitted or built into its type.
- */
-export function withoutInCab(
-  trains: readonly { locos: readonly { inCab?: boolean; def: { inCab?: boolean } }[] }[],
-): { barred: number; total: number } {
-  const barred = trains.filter((t) => !t.locos.some((l) => l.inCab || l.def.inCab)).length;
-  return { barred, total: trains.length };
 }
 
 /** Class a piece presents when entered through `entry` (crossings differ per axis). */

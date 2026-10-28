@@ -15,31 +15,122 @@ export type { SwitchForm };
 const trackData = content.track;
 
 /**
- * Track classes. A class's curve footprint is n×n and its radius n − 0.5. Regular and high speed
- * share the 2×2 curve; narrow gauge keeps the one-tile curve, and only narrow trains run on it.
+ * Track lines. Narrow Gauge, Maglev Guideway and Hyperloop Tube are networks of their own; Branch,
+ * Main and Trunk Line are tiers of the one standard network and join each other directly. A
+ * line's curves and switches span n×n tiles with radius n − 0.5; Hyperloop has straights only.
  */
-export type TrackClass = 'regular' | 'high_speed' | 'narrow';
-export const TRACK_CLASSES: TrackClass[] = ['regular', 'high_speed', 'narrow'];
-export const CLASS_N: Record<TrackClass, number> = { regular: 2, high_speed: 2, narrow: 1 };
+export type TrackClass = 'narrow' | 'branch' | 'main' | 'trunk' | 'maglev' | 'hyperloop';
+export type Network = 'standard' | 'narrow' | 'maglev' | 'hyperloop';
+export interface LineDef {
+  /** curve and switch footprint n×n */
+  n: number;
+  network: Network;
+  /** rank on the standard network (1 Branch, 2 Main, 3 Trunk); 0 off it */
+  tier: number;
+  /** multiplier on a piece's base cost */
+  costMul: number;
+  /** age the line is first built in */
+  age: 'steam' | 'diesel' | 'electric' | 'magnetic' | 'hyper';
+  /** curves and switches exist (Hyperloop runs straight only) */
+  curves: boolean;
+  /** a road may cross its plain straights on the level */
+  roadCrossing: boolean;
+}
+export const LINES: Record<TrackClass, LineDef> = {
+  narrow: {
+    n: 1,
+    network: 'narrow',
+    tier: 0,
+    costMul: 0.6,
+    age: 'steam',
+    curves: true,
+    roadCrossing: true,
+  },
+  branch: {
+    n: 2,
+    network: 'standard',
+    tier: 1,
+    costMul: 1,
+    age: 'steam',
+    curves: true,
+    roadCrossing: true,
+  },
+  main: {
+    n: 3,
+    network: 'standard',
+    tier: 2,
+    costMul: 1.5,
+    age: 'diesel',
+    curves: true,
+    roadCrossing: false,
+  },
+  trunk: {
+    n: 4,
+    network: 'standard',
+    tier: 3,
+    costMul: 2.5,
+    age: 'electric',
+    curves: true,
+    roadCrossing: false,
+  },
+  maglev: {
+    n: 5,
+    network: 'maglev',
+    tier: 0,
+    costMul: 4,
+    age: 'magnetic',
+    curves: true,
+    roadCrossing: false,
+  },
+  hyperloop: {
+    n: 1,
+    network: 'hyperloop',
+    tier: 0,
+    costMul: 4,
+    age: 'hyper',
+    curves: false,
+    roadCrossing: false,
+  },
+};
+export const TRACK_CLASSES = Object.keys(LINES) as TrackClass[];
+export const CLASS_N = Object.fromEntries(TRACK_CLASSES.map((c) => [c, LINES[c].n])) as Record<
+  TrackClass,
+  number
+>;
 export function classRadius(cls: TrackClass) {
   return CLASS_N[cls] - 0.5;
 }
-/** Cost multiplier of a class: regular 1, high speed half again per block tile, narrow 0.6. */
 export function classCostMul(cls: TrackClass) {
-  if (cls === 'narrow') return 0.6;
-  if (cls === 'regular') return 1;
-  return CLASS_N[cls] * 1.5;
+  return LINES[cls].costMul;
+}
+export function networkOf(cls: TrackClass): Network {
+  return LINES[cls].network;
+}
+/**
+ * The line of a piece saved before the six lines: regular and high-speed track became Branch
+ * Line (both had 2×2 curves); a line name stays as it is.
+ */
+export function legacyClass(cls: string | undefined): TrackClass {
+  return cls !== undefined && cls in LINES ? (cls as TrackClass) : 'branch';
 }
 
-export type TrackKind = 'straight' | 'curve' | 'switch' | 'crossing' | 'bridge' | 'transition';
-export const TRACK_KINDS: TrackKind[] = [
-  'straight',
-  'curve',
-  'switch',
-  'crossing',
-  'bridge',
-  'transition',
-];
+export type TrackKind = 'straight' | 'curve' | 'switch' | 'crossing' | 'bridge';
+export const TRACK_KINDS: TrackKind[] = ['straight', 'curve', 'switch', 'crossing', 'bridge'];
+
+/** A stored anchor piece: x, y, kind, rotation, line, second line of a crossing. */
+export type TrackTuple = [number, number, TrackKind, number, TrackClass?, TrackClass?];
+/**
+ * Stored track from before the six lines, in today's terms: every piece gets its line
+ * (`legacyClass`), and a transition, which joined wide and high-speed track, becomes the Branch
+ * Line straight on its axis. Track already in today's terms comes back as it was.
+ */
+export function liftLegacyTrack(track: TrackTuple[]): TrackTuple[] {
+  return track.map(([x, y, kind, rot, cls, cls2]): TrackTuple => {
+    const line = legacyClass(cls);
+    if ((kind as string) === 'transition') return [x, y, 'straight', rot % 2, line];
+    return cls2 == null ? [x, y, kind, rot, line] : [x, y, kind, rot, line, legacyClass(cls2)];
+  });
+}
 export type Link = [Dir, Dir];
 
 /** A buildable entry: kind plus class (crossings carry a class per axis). */
@@ -49,22 +140,18 @@ export interface TrackItem {
   cls2?: TrackClass;
 }
 export const TRACK_ITEMS: TrackItem[] = [
-  { kind: 'straight', cls: 'regular' },
-  { kind: 'curve', cls: 'regular' },
-  { kind: 'switch', cls: 'regular' },
-  { kind: 'crossing', cls: 'regular', cls2: 'regular' },
-  { kind: 'transition', cls: 'regular' },
-  { kind: 'straight', cls: 'high_speed' },
-  { kind: 'curve', cls: 'high_speed' },
-  { kind: 'switch', cls: 'high_speed' },
-  { kind: 'crossing', cls: 'regular', cls2: 'high_speed' },
-  { kind: 'crossing', cls: 'high_speed', cls2: 'high_speed' },
+  { kind: 'straight', cls: 'branch' },
+  { kind: 'curve', cls: 'branch' },
+  { kind: 'switch', cls: 'branch' },
+  { kind: 'crossing', cls: 'branch', cls2: 'branch' },
   { kind: 'straight', cls: 'narrow' },
   { kind: 'curve', cls: 'narrow' },
   { kind: 'switch', cls: 'narrow' },
   { kind: 'crossing', cls: 'narrow', cls2: 'narrow' },
-  { kind: 'crossing', cls: 'narrow', cls2: 'regular' },
+  { kind: 'crossing', cls: 'narrow', cls2: 'branch' },
 ];
+/** Lines that have pieces to build. */
+export const BUILDABLE_CLASSES = TRACK_CLASSES.filter((c) => TRACK_ITEMS.some((i) => i.cls === c));
 export function itemKey(it: TrackItem) {
   return it.kind === 'crossing'
     ? `${it.kind}_${it.cls}_${it.cls2 ?? it.cls}`
@@ -89,7 +176,6 @@ export interface TrackPiece {
 const BASE: Record<TrackKind, Link[][]> = {
   straight: [[[Dir.N, Dir.S]]],
   bridge: [[[Dir.N, Dir.S]]],
-  transition: [[[Dir.N, Dir.S]]],
   curve: [[[Dir.N, Dir.E]]],
   crossing: [
     [
@@ -111,15 +197,7 @@ const BASE: Record<TrackKind, Link[][]> = {
 };
 
 export function rotationCount(kind: TrackKind): number {
-  return trackData.pieces[kind]?.rotations ?? (kind === 'transition' ? 4 : 1);
-}
-/**
- * The turn of a transition whose high-speed half lies towards `hsEnd`. The piece is drawn wide
- * from its first link end and high speed towards its second; both ends join either class.
- */
-export function transitionRot(hsEnd: Dir): number {
-  for (let rot = 0; rot < 4; rot++) if (pieceLinks('transition', rot)[0][1] === hsEnd) return rot;
-  return 0;
+  return trackData.pieces[kind]?.rotations ?? 1;
 }
 
 export function pieceLinks(kind: TrackKind, rot: number): Link[] {
@@ -131,7 +209,7 @@ export function pieceLinks(kind: TrackKind, rot: number): Link[] {
   return fam.map(([a, b]) => [rotateDir(a, steps), rotateDir(b, steps)] as Link);
 }
 
-/** Curves and switches of classes above regular span n × n tiles. */
+/** Curves and switches of lines with n > 1 span n × n tiles. */
 export function isUnitKind(kind: TrackKind, cls: TrackClass) {
   return (kind === 'curve' || kind === 'switch') && CLASS_N[cls] > 1;
 }
@@ -139,7 +217,7 @@ export function isUnitKind(kind: TrackKind, cls: TrackClass) {
 export function makePiece(
   kind: TrackKind,
   rot: number,
-  cls: TrackClass = 'regular',
+  cls: TrackClass = 'branch',
   cls2?: TrackClass,
 ): TrackPiece {
   const p: TrackPiece = { kind, rot, cls, links: pieceLinks(kind, rot) };
@@ -148,7 +226,7 @@ export function makePiece(
 }
 
 /** Ratio matrix from track.json, scaled by class and the global track cost scale. */
-export function pieceCost(kind: TrackKind, cls: TrackClass = 'regular', cls2?: TrackClass): Cost {
+export function pieceCost(kind: TrackKind, cls: TrackClass = 'branch', cls2?: TrackClass): Cost {
   const base = trackData.pieces[kind]?.cost ?? trackData.pieces.straight.cost;
   const top = cls2 && classCostMul(cls2) > classCostMul(cls) ? cls2 : cls;
   const mul = classCostMul(top) * rules.trackCostScale;
@@ -161,20 +239,17 @@ export function isSwitch(p: TrackPiece) {
   return p.kind === 'switch';
 }
 
-/** Class a piece presents on edge `d`; transitions match anything. */
-export function portClass(p: TrackPiece, d: Dir): TrackClass | 'any' {
-  if (p.kind === 'transition') return 'any';
+/** Class a piece presents on edge `d` (crossings differ per axis). */
+export function portClass(p: TrackPiece, d: Dir): TrackClass {
   if (p.kind === 'crossing') {
     const second = p.links[1];
     if (second && (second[0] === d || second[1] === d)) return p.cls2 ?? p.cls;
   }
   return p.cls;
 }
-/** Like joins like; a transition joins regular and high speed, never narrow (another gauge). */
-export function classesJoin(a: TrackClass | 'any', b: TrackClass | 'any') {
-  if (a === 'any') return b !== 'narrow';
-  if (b === 'any') return a !== 'narrow';
-  return a === b;
+/** Lines of one network join: Branch, Main and Trunk with each other, every other line with itself. */
+export function classesJoin(a: TrackClass, b: TrackClass) {
+  return networkOf(a) === networkOf(b);
 }
 
 /** Tiles a piece would cover if its anchor were at (x,y). */
@@ -183,7 +258,7 @@ export function footprintOf(
   y: number,
   kind: TrackKind,
   rot: number,
-  cls: TrackClass = 'regular',
+  cls: TrackClass = 'branch',
 ): { x: number; y: number }[] {
   if (!isUnitKind(kind, cls)) return [{ x, y }];
   const def = unitDef(kind as 'curve' | 'switch', CLASS_N[cls], rot);
@@ -240,7 +315,7 @@ export class TrackGraph {
     y: number,
     kind: TrackKind,
     rot: number,
-    cls: TrackClass = 'regular',
+    cls: TrackClass = 'branch',
     cls2?: TrackClass,
     form: SwitchForm = 'turn',
   ): { x: number; y: number }[] {

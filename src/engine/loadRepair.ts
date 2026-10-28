@@ -87,7 +87,7 @@ function repairedGround(map: GameMap, built: BuiltObjects): Map<number, Terrain>
   // the tiles track stands on as rails, where a signal stands as its track does
   const rails = new Set<number>();
   for (const [x, y, kind, rot, cls] of built.track)
-    for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular')) {
+    for (const f of footprintOf(x, y, kind, rot, cls ?? 'branch')) {
       const i = f.y * map.w + f.x;
       const standing: Standing =
         kind === 'bridge' ? 'water' : platforms.has(i) ? 'platform' : 'rails';
@@ -149,7 +149,7 @@ export function repairBuiltRoads(map: GameMap, built: BuiltObjects): { x: number
   const decks = platformKeys(map, built);
   const railed = new Set<number>();
   for (const [x, y, kind, rot, cls] of built.track)
-    for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+    for (const f of footprintOf(x, y, kind, rot, cls ?? 'branch'))
       if (inBounds(map, f.x, f.y)) railed.add(f.y * map.w + f.x);
   const out: { x: number; y: number }[] = [];
   const met = new Set<number>();

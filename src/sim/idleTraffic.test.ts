@@ -51,7 +51,7 @@ const IDLE_NOTES: string[] = [
 /** Lays a piece through the builder, free of cost and region, as the game would. */
 function lay(w: SimWorld, x: number, y: number, kind: TrackKind, rot: number) {
   w.builder.free = true;
-  const ok = w.builder.placeTrack(x, y, { kind, cls: 'regular' }, rot);
+  const ok = w.builder.placeTrack(x, y, { kind, cls: 'branch' }, rot);
   w.builder.free = false;
   if (!ok) throw new Error(`no ${kind} at ${x},${y}`);
 }

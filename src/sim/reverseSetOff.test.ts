@@ -123,8 +123,8 @@ function narrowSteps(gap: number): Layout {
 }
 
 const GAPS = [0, 1, 2];
-const LAYOUTS: Record<'regular' | 'narrow', Layout[]> = {
-  regular: [straight('regular'), ...GAPS.map((g) => wideStep('regular', g))],
+const LAYOUTS: Record<'branch' | 'narrow', Layout[]> = {
+  branch: [straight('branch'), ...GAPS.map((g) => wideStep('branch', g))],
   narrow: [straight('narrow'), ...GAPS.map(narrowSteps)],
 };
 
@@ -298,7 +298,7 @@ describe('a train that ran to where it stands, reversing', () => {
       let onAnEdge = 0;
       for (const def of content.locomotives) {
         const narrow = def.gauge === 'narrow';
-        for (const layout of LAYOUTS[narrow ? 'narrow' : 'regular'])
+        for (const layout of LAYOUTS[narrow ? 'narrow' : 'branch'])
           for (const wagons of consists(narrow)) {
             const { w, stop } = build(layout);
             const ran = run(w, stop.id, layout, def.id, wagons);
@@ -382,7 +382,7 @@ function bigCurve(entry: Dir, to: Dir): { put: Put; steps: Step[] } {
     for (let dy = 0; dy < 2; dy++)
       for (let dx = 0; dx < 2; dx++) {
         const g = new TrackGraph(8, 8);
-        g.place(3 - dx, 3 - dy, 'curve', rot, 'regular');
+        g.place(3 - dx, 3 - dy, 'curve', rot, 'branch');
         if (g.has(3 + DIR_DX[entry], 3 + DIR_DY[entry])) continue;
         const steps: Step[] = [];
         let x = 3;
@@ -409,7 +409,7 @@ function bigCurve(entry: Dir, to: Dir): { put: Put; steps: Step[] } {
  * class to the other of two headings at right angles.
  */
 interface Line {
-  cls: 'regular' | 'narrow';
+  cls: 'branch' | 'narrow';
   /** the heading of the first leg, and the one the line turns to and back from */
   first: Dir;
   side: Dir;
@@ -539,7 +539,7 @@ function stockOf(narrow: boolean) {
 }
 
 function winding(rng: Rng): Winding {
-  const cls = rng.chance(0.5) ? 'regular' : 'narrow';
+  const cls = rng.chance(0.5) ? 'branch' : 'narrow';
   const first = rng.pick(DIRS);
   const turns = rng.int(0, 4);
   const legs = Array.from({ length: turns + 1 }, (_, i) =>

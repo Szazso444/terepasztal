@@ -143,7 +143,7 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     seed: world.seed,
     clock: { time: 900, speedIndex: 1 },
     economy: { money: 5000, tickets: 2, tier: 1, granted: [0], earned: 100 },
-    track: [[3, 4, 'straight', 1, 'regular', 'regular']],
+    track: [[3, 4, 'straight', 1, 'branch', 'branch']],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
@@ -774,11 +774,9 @@ describe('a world that grows', () => {
         const tiles = across(row!).map(at);
         for (const t of tiles) {
           const rot = axis === 'x' ? 1 : 0;
-          const check = builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'regular' }, rot);
+          const check = builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'branch' }, rot);
           expect(check.reason, `seed ${seed}: (${t.x}, ${t.y})`).toBeUndefined();
-          expect(builder.placeTrack(t.x, t.y, { kind: 'straight', cls: 'regular' }, rot)).toBe(
-            true,
-          );
+          expect(builder.placeTrack(t.x, t.y, { kind: 'straight', cls: 'branch' }, rot)).toBe(true);
           laid++;
         }
         // a train finds its way from the new ground onto the stored ground
@@ -962,7 +960,7 @@ describe('a world grown again and again, under another generator at every load',
 describe('the seams of a world grown under a changed generator', () => {
   // four worlds of 160 tiles a side, each seam row checked against the build rules: about 1 s alone
   it('take track on every row of ordinary ground across each of the four seams', () => {
-    const straight = { kind: 'straight', cls: 'regular' } as const;
+    const straight = { kind: 'straight', cls: 'branch' } as const;
     for (const seed of [1, 7412, 31337, 20260912]) {
       const world = worldOf(seed, { w: 96, h: 96 });
       groundOf(world, generatorOf('simple'));

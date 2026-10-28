@@ -583,7 +583,7 @@ interface Piece {
   y: number;
   kind: 'straight' | 'curve' | 'switch' | 'crossing';
   rot: number;
-  cls: 'regular' | 'narrow';
+  cls: 'branch' | 'narrow';
   len: number;
   arms: number[];
 }
@@ -603,7 +603,7 @@ function tangle(rng: Rng): Tangle {
         y: rng.int(4, 24),
         kind,
         rot: rng.int(0, rotationCount(kind) - 1),
-        cls: rng.chance(0.75) ? 'regular' : 'narrow',
+        cls: rng.chance(0.75) ? 'branch' : 'narrow',
         len: kind === 'straight' ? rng.int(1, 10) : 1,
         arms: kind === 'straight' ? [] : Array.from({ length: rng.int(1, 4) }, () => rng.int(0, 6)),
       };

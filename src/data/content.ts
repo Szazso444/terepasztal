@@ -103,11 +103,9 @@ export interface LocoDef {
   maxLateralPlay?: number;
   /** diesel and electric: units of the same control class work in multiple */
   controlClass?: string;
-  /** a high-speed type: needs HV catenary for its top speed */
-  highSpeed?: boolean;
   /** electric: which supply it can draw from */
   collector?: Collector;
-  /** fitted with in-cab signalling equipment (required on high-speed track) */
+  /** fitted with in-cab signalling equipment (runs at in-cab headway where the level has it) */
   inCab?: boolean;
   /** track gauge (default regular) */
   gauge?: Gauge;

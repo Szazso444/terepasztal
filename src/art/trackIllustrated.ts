@@ -9,6 +9,7 @@ import {
   type SwitchForm,
 } from '../world/trackGeom';
 import {
+  TRACK_CLASSES,
   TRACK_ITEMS,
   CLASS_N,
   itemKey,
@@ -27,10 +28,9 @@ const R = 4,
   OY = 20;
 /**
  * One rail line on a frame. A line the frame holds whole lays its sleepers over its own length.
- * `run` is for a line that is only part of a longer one drawn in several classes (the transition's
- * two halves): `start` is the distance along the whole run at which this part begins, `length`
- * the whole run's length and `cls` the class whose spacing the whole run takes, so the sleepers
- * keep one pitch across the change of class.
+ * `run` is for a line that is only part of a longer one drawn in several parts: `start` is the
+ * distance along the whole run at which this part begins, `length` the whole run's length and
+ * `cls` the line whose spacing the whole run takes, so the sleepers keep one pitch across the parts.
  */
 export type RailPath = {
   points: Vec2[];
@@ -38,45 +38,39 @@ export type RailPath = {
   run?: { start: number; length: number; cls: TrackClass };
 };
 /**
- * Per class: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
- * ballast shoulder, sleeper colours and rail line widths. Narrow gauge puts its rails half as far
+ * Per line: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
+ * ballast shoulder, sleeper colours and rail line widths. Narrow Gauge puts its rails half as far
  * apart on short, closely spaced timber sleepers laid straight on the ground, with no ballast,
  * like a forest or mine line.
  */
-const STYLE: Record<
-  TrackClass,
-  {
-    rail: number;
-    sleeper: number;
-    step: number;
-    shoulder: number;
-    /** a bed of ballast under the sleepers */
-    bed: boolean;
-    tie: string;
-    tieHi: string;
-    widths: [number, number, number];
-  }
-> = {
-  regular: {
-    rail: 0.16,
-    sleeper: 0.235,
-    step: 0.14,
-    shoulder: 0.29,
-    bed: true,
-    tie: '#725039',
-    tieHi: '#a17c52',
-    widths: [1.25, 0.95, 0.4],
-  },
-  high_speed: {
-    rail: 0.16,
-    sleeper: 0.235,
-    step: 0.14,
-    shoulder: 0.34,
-    bed: true,
-    tie: '#b9b3a0',
-    tieHi: '#d1cbb7',
-    widths: [1.25, 0.95, 0.4],
-  },
+interface LineStyle {
+  rail: number;
+  sleeper: number;
+  step: number;
+  shoulder: number;
+  /** a bed of ballast under the sleepers */
+  bed: boolean;
+  tie: string;
+  tieHi: string;
+  widths: [number, number, number];
+}
+const BRANCH: LineStyle = {
+  rail: 0.16,
+  sleeper: 0.235,
+  step: 0.14,
+  shoulder: 0.29,
+  bed: true,
+  tie: '#725039',
+  tieHi: '#a17c52',
+  widths: [1.25, 0.95, 0.4],
+};
+const STYLE: Record<TrackClass, LineStyle> = {
+  branch: BRANCH,
+  // Main, Trunk, Maglev and Hyperloop have no pieces to draw yet: they take Branch's look
+  main: BRANCH,
+  trunk: BRANCH,
+  maglev: BRANCH,
+  hyperloop: BRANCH,
   narrow: {
     rail: 0.08,
     sleeper: 0.14,
@@ -89,30 +83,24 @@ const STYLE: Record<
   },
 };
 
-const perClass = <T>(pick: (style: (typeof STYLE)[TrackClass]) => T) => ({
-  regular: pick(STYLE.regular),
-  high_speed: pick(STYLE.high_speed),
-  narrow: pick(STYLE.narrow),
-});
+const perClass = <T>(pick: (style: (typeof STYLE)[TrackClass]) => T) =>
+  Object.fromEntries(TRACK_CLASSES.map((c) => [c, pick(STYLE[c])])) as Record<TrackClass, T>;
 /** Each rail's offset from the centre line, per class, in tiles: half the gauge. */
 export const RAIL_OFFSET: Readonly<Record<TrackClass, number>> = perClass((s) => s.rail);
 /** How far the ballast bed reaches from the centre line, per class, in tiles. */
 export const BED_SHOULDER: Readonly<Record<TrackClass, number>> = perClass((s) => s.shoulder);
 
-/** The classes a road crosses on the level; never high speed (Q36 a). */
-export const LEVEL_CROSSING_CLASSES = [
-  'regular',
-  'narrow',
-] as const satisfies readonly TrackClass[];
+/** The lines a road crosses on the level (`LineDef.roadCrossing`). */
+export const LEVEL_CROSSING_CLASSES = ['branch', 'narrow'] as const satisfies readonly TrackClass[];
 export type LevelCrossingClass = (typeof LEVEL_CROSSING_CLASSES)[number];
 /** How far a level crossing's deck reaches past each rail, in tiles (item 18). */
 export const LEVEL_CROSSING_MARGIN = 0.1;
 /**
  * Half a level crossing deck's size across the track, in tiles from the centre line: 0.1 tile
- * outside each rail (0.26 regular, 0.18 narrow), inside the class's ballast bed.
+ * outside each rail (0.26 Branch, 0.18 Narrow), inside the line's ballast bed.
  */
 export const LEVEL_CROSSING_ACROSS: Readonly<Record<LevelCrossingClass, number>> = {
-  regular: RAIL_OFFSET.regular + LEVEL_CROSSING_MARGIN,
+  branch: RAIL_OFFSET.branch + LEVEL_CROSSING_MARGIN,
   narrow: RAIL_OFFSET.narrow + LEVEL_CROSSING_MARGIN,
 };
 /** Half a level crossing deck's size along the track, in tiles: half the road's 0.32 (#329). */
@@ -343,28 +331,13 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
 
 /**
  * The rail lines of a piece that fits one tile, in tile coordinates (the tile centre is the
- * origin), as `generateIllustratedTrackAtlas` draws them. A transition is one run of sleepers over
- * its whole length, drawn as a regular half and a high-speed half.
+ * origin), as `generateIllustratedTrackAtlas` draws them.
  */
 export function tilePaths(it: TrackItem, rotation: number): RailPath[] {
   const paths: RailPath[] = pieceLinks(it.kind, rotation).map((link, i) => ({
     points: linkPoints(link[0], link[1], 96),
     cls: it.kind === 'crossing' && i === 1 ? (it.cls2 ?? it.cls) : it.cls,
   }));
-  if (it.kind === 'transition') {
-    const points = paths[0].points,
-      mid = Math.floor(points.length / 2),
-      first = points.slice(0, mid + 1),
-      length = pathLength(points);
-    return [
-      { points: first, cls: 'regular', run: { start: 0, length, cls: 'regular' } },
-      {
-        points: points.slice(mid),
-        cls: 'high_speed',
-        run: { start: pathLength(first), length, cls: 'regular' },
-      },
-    ];
-  }
   return paths;
 }
 
@@ -484,7 +457,7 @@ function drawLevelCrossing(cls: LevelCrossingClass, rotation: number, seed: numb
   );
   c.closePath();
   c.clip();
-  if (cls === 'regular') {
+  if (cls === 'branch') {
     const joint = 0.006,
       pitch = 0.1;
     quad(-across, across, -along, along, SETT_JOINT);

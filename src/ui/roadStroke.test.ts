@@ -154,9 +154,9 @@ describe('what a road drag says', () => {
 
 const W = 64;
 const STRAIGHT: Record<string, TrackItem> = {
-  regular: { kind: 'straight', cls: 'regular' },
+  branch: { kind: 'straight', cls: 'branch' },
   narrow: { kind: 'straight', cls: 'narrow' },
-  high_speed: { kind: 'straight', cls: 'high_speed' },
+  main: { kind: 'straight', cls: 'main' },
 };
 
 /**
@@ -227,7 +227,7 @@ describe("a road drag's preview against its release", () => {
     regions.load([true, false, false, false]);
     const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), new Stockpile());
     builder.free = true;
-    for (let x = 8; x <= 12; x++) builder.placeTrack(x, 10, STRAIGHT.regular, 1);
+    for (let x = 8; x <= 12; x++) builder.placeTrack(x, 10, STRAIGHT.branch, 1);
     const tiles = strokeTiles({ x: 6, y: 10 }, { x: 14, y: 10 });
     for (const t of tiles) expect(builder.checkRoad(t.x, t.y).ok, `${t.x}`).toBe(true);
     const c = judgeStroke(tiles, builderJudge(builder));

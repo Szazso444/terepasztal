@@ -1015,27 +1015,19 @@ export class Train {
   /** Poses of every body segment and bogie, in car order (loco first). */
   vehiclePoses: VehiclePose[] = [];
   private accessCache: { key: string; access: ConsistAccess } | null = null;
-  /** Track classes every vehicle of the consist may use, and who bars the rest. */
+  /** Track lines every vehicle of the consist may use, and who bars the rest. */
   get access(): ConsistAccess {
     const key = [...this.locos.map((l) => l.def.id), ...this.wagons.map((w) => w.def.id)].join(',');
-    const inCab = this.locos.some((l) => l.inCab || l.def.inCab);
-    const fullKey = `${key}|${inCab ? 'cab' : ''}`;
-    if (!this.accessCache || this.accessCache.key !== fullKey)
+    if (!this.accessCache || this.accessCache.key !== key)
       this.accessCache = {
-        key: fullKey,
-        access: consistAccess(
-          [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)],
-          inCab,
-        ),
+        key,
+        access: consistAccess([...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)]),
       };
     return this.accessCache.access;
   }
   /** Pathfinding predicate: may the consist enter this piece through `entry`? */
   readonly canUse = (p: TrackPiece, entry: Dir) =>
     this.access.classes.has(pieceClassFor(p, entry)) && this.mass <= (p.bridgeCapacity ?? Infinity);
-  /** route cost multiplier: stock that is not built for speed keeps off high-speed lines when it can */
-  readonly tollOf = (p: TrackPiece) =>
-    p.cls === 'high_speed' && !this.locos.some((l) => l.def.highSpeed) ? 3 : 1;
   /** findPath with this consist's class access applied. */
   private pathTo(
     track: TrackGraph,
@@ -1044,7 +1036,7 @@ export class Train {
     maxCost = 100000,
     avoid?: (x: number, y: number) => boolean,
   ) {
-    return findPath(track, start, isTarget, maxCost, avoid, this.canUse, this.tollOf);
+    return findPath(track, start, isTarget, maxCost, avoid, this.canUse);
   }
   prevVehiclePoses: VehiclePose[] = [];
   /** Points along the consist every half tile from head to tail: what the train stands on. */
@@ -2130,7 +2122,7 @@ export class Train {
         cap = Math.min(cap, Math.sqrt(crossing * crossing + 2 * DECEL * Math.max(0, d - 0.25)));
       }
     }
-    // line speed: regular and narrow track cap top speed, braking ahead of a lower cap
+    // line speed: some lines cap top speed, braking ahead of a lower cap
     for (const s of this.pathAhead(12)) {
       const piece = ctx.track.get(s.x, s.y);
       if (!piece) continue;
@@ -2171,9 +2163,6 @@ export class Train {
     const from = this.pathPos;
     this.pathPos += step;
     this.distance += step;
-    // access charge: high-speed track costs money per tile run
-    if (step > 0 && headT && ctx.track.get(headT.x, headT.y)?.cls === 'high_speed')
-      ctx.spend(rules.hsAccessCharge * step);
     if (step > 0) {
       const problem = this.fuelProblem(ctx, step);
       if (problem) {

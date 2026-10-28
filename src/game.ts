@@ -62,7 +62,7 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { TrackGraph } from './world/track';
+import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
 import { BuildController } from './ui/buildController';
@@ -144,7 +144,7 @@ import { Floaters } from './render/floaters';
 import { Halos } from './render/halo';
 import { WorkBars } from './render/workBars';
 import { hoursLeft, type Upgraded } from './sim/upgrade';
-import type { WideClass } from './world/reclass';
+import type { ReclassDir } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
@@ -548,10 +548,12 @@ export class Game implements UiHost {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    const track = level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track);
+    const track = liftLegacyTrack(
+      level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track),
+    );
     for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
@@ -929,7 +931,7 @@ export class Game implements UiHost {
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
     this.builder.onUpgraded = (e) => this.onUpgraded(e);
     this.houses.onUpgraded = (e) => this.onUpgraded(e);
-    this.builder.onReclassed = (tiles, target) => this.onReclassed(tiles, target);
+    this.builder.onReclassed = (tiles, dir) => this.onReclassed(tiles, dir);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
     validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
@@ -1286,7 +1288,7 @@ export class Game implements UiHost {
     this.minimap.rebuildBase();
     this.toolbar.refresh();
     for (const [x, y, kind, rot, cls, cls2] of j.track) {
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     // switch forms follow the track around them: chosen again once every piece is down
@@ -1825,11 +1827,11 @@ export class Game implements UiHost {
       });
   }
   /**
-   * Track relaid as high speed shimmers piece by piece (`startPieceHalos`); going back to regular
-   * track does not. Each halo covers its whole piece, not only the anchor tile.
+   * Track raised to a bigger line shimmers piece by piece (`startPieceHalos`); track lowered does
+   * not. Each halo covers its whole piece, not only the anchor tile.
    */
-  private onReclassed(anchors: { x: number; y: number }[], target: WideClass) {
-    if (target === 'regular') return;
+  private onReclassed(anchors: { x: number; y: number }[], dir: ReclassDir) {
+    if (dir === 'down') return;
     for (const a of anchors) {
       const tiles = this.track.unitTiles(a.x, a.y);
       if (!tiles.length) continue;

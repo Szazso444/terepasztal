@@ -49,7 +49,7 @@ import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
-import { planReclass, type PieceChange, type WideClass } from '../world/reclass';
+import { planReclass, type PieceChange, type ReclassDir } from '../world/reclass';
 import { continuesLine, onRails, stone } from './mountainTrack';
 import {
   Roads,
@@ -194,9 +194,9 @@ export class Builder {
   onUpgraded: ((e: Upgraded) => void) | null = null;
   /**
    * fired once by `reclassTrack` after a stroke relaid track, with the anchor of every piece it
-   * relaid (neighbours turned into transitions included) and the class it converted to
+   * relaid and which way it moved them
    */
-  onReclassed: ((tiles: { x: number; y: number }[], target: WideClass) => void) | null = null;
+  onReclassed: ((tiles: { x: number; y: number }[], dir: ReclassDir) => void) | null = null;
 
   constructor(
     readonly map: GameMap,
@@ -502,7 +502,7 @@ export class Builder {
   /**
    * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that a piece on rock
    * or a mountain continues a line, the ground under it, then that each open edge meeting existing
-   * track joins a compatible class (a transition piece joins any).
+   * track joins a line of the same network.
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const c = this.trackRules(x, y, item, rot, true);
@@ -548,8 +548,7 @@ export class Builder {
       !continuesLine(this.track, probe, tiles)
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
-    // Straights, crossings and class transitions may climb. Curves and switches (regular and
-    // high speed) need smooth ground on every tile, or a bridge platform under every tile: then
+    // Straights and crossings may climb. Curves and switches need smooth ground on every tile, or a bridge platform under every tile: then
     // they sit at the deck, the level of the rails they meet off the bridge.
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
@@ -574,12 +573,9 @@ export class Builder {
           if (!q || !this.track.opensTo(nx, ny, opposite(d))) continue;
           const mine = portClass(p, d),
             theirs = portClass(q, opposite(d));
-          if (!classesJoin(mine, theirs)) {
-            // no piece joins the two gauges; only regular and high speed meet at a transition
-            const gauges = mine === 'narrow' || theirs === 'narrow';
-            const reason = gauges ? STR.build.gaugeBreak : STR.build.needTransition;
-            return { ok: false, cost: {}, reason };
-          }
+          // the standard lines join each other; a separate network joins only itself
+          if (!classesJoin(mine, theirs))
+            return { ok: false, cost: {}, reason: STR.build.gaugeBreak };
         }
     }
     let mul = 0;
@@ -640,16 +636,16 @@ export class Builder {
   }
 
   /**
-   * What converting the pieces on `tiles` to `target` would change and cost. An upgrade to high
-   * speed charges, piece by piece, what the new piece costs above the old one; a downgrade is free
-   * and returns nothing. `from` is the tile a stroke came from (it picks a crossing's line).
+   * What moving the pieces on `tiles` one line up or down would change and cost. An upgrade
+   * charges, piece by piece, what the new piece costs above the old one; a downgrade is free and
+   * returns nothing. `from` is the tile a stroke came from (it picks a crossing's line).
    */
   checkReclass(
     tiles: { x: number; y: number }[],
-    target: WideClass,
+    dir: ReclassDir,
     from?: { x: number; y: number },
   ): PlacementCheck & { changes: PieceChange[] } {
-    const plan = planReclass(this.track, tiles, target, from);
+    const plan = planReclass(this.track, tiles, dir, from);
     if (!plan.changes.length)
       return {
         ok: false,
@@ -660,7 +656,7 @@ export class Builder {
     const crossing = this.reclassCrossing(plan.changes);
     if (crossing) return { ok: false, cost: {}, changes: plan.changes, reason: crossing };
     const cost: Cost = {};
-    if (target === 'high_speed')
+    if (dir === 'up')
       for (const c of plan.changes) {
         const old = this.track.get(c.x, c.y)!;
         let mul = 0;
@@ -675,8 +671,8 @@ export class Builder {
     return { ...this.affordable(cost), changes: plan.changes };
   }
   /**
-   * Why converting would leave a level crossing on a piece no road may cross (high-speed track, a
-   * transition), or null when it would not: a road keeps its tile, so the piece laid there in the
+   * Why converting would leave a level crossing on a piece no road may cross (a line without
+   * level crossings), or null when it would not: a road keeps its tile, so the piece laid there in the
    * place of the old one has to take it (`crossingRefusal`).
    */
   private reclassCrossing(changes: readonly PieceChange[]): string | null {
@@ -690,13 +686,13 @@ export class Builder {
       }
     return null;
   }
-  /** Convert the pieces on `tiles` between wide and high-speed track, keeping the line joined. */
+  /** Move the pieces on `tiles` one standard line up or down. */
   reclassTrack(
     tiles: { x: number; y: number }[],
-    target: WideClass,
+    dir: ReclassDir,
     from?: { x: number; y: number },
   ): boolean {
-    const c = this.checkReclass(tiles, target, from);
+    const c = this.checkReclass(tiles, dir, from);
     if (!c.ok || !this.pay(c.cost)) return false;
     const laid: { x: number; y: number }[] = [];
     for (const p of c.changes)
@@ -705,19 +701,18 @@ export class Builder {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
     }
-    // switches keep the form they had: re-choosing it here could swing a branch over to a stub
-    // that only now matches its class, and part the lane it carried
+    // switches keep the form they had: the track around them did not change
     for (const t of laid) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     this.onReclassed?.(
       c.changes.map((p) => ({ x: p.x, y: p.y })),
-      target,
+      dir,
     );
     return true;
   }
-  /** Compatibility: lay a regular piece by kind. */
+  /** Compatibility: lay a Branch Line piece by kind. */
   placeTrackKind(x: number, y: number, kind: TrackKind, rot: number) {
-    return this.placeTrack(x, y, { kind, cls: 'regular', cls2: 'regular' }, rot);
+    return this.placeTrack(x, y, { kind, cls: 'branch', cls2: 'branch' }, rot);
   }
   removeTrack(x: number, y: number): boolean {
     const p = this.track.get(x, y);
@@ -1215,7 +1210,7 @@ export class Builder {
    * or a mountain) with no road on it yet, off every station's footprint and works and off the
    * tile of decor that stands off the rails (a house, a tower), as a road meets a building only at
    * a street door, from the tile outside it (#408); a signal or a pole may share its tile. On track
-   * it is a level crossing, which only a plain straight of regular or narrow track takes, the road
+   * it is a level crossing, which only a plain straight of a line with level crossings takes, the road
    * across it (`Roads.trackRefusal`). A bridge platform carries a road where it carries no rail,
    * on water as on land: one tile holds rail or road, never both, so a platform with rail on it
    * refuses the road (#493). Each tile costs `roadCost`, scaled by the build cost tuning, whatever

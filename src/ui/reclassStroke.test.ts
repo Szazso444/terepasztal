@@ -109,42 +109,37 @@ describe('a stroke on real track', () => {
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
     const builder = new Builder(map, regions, track, economy, stock);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 5000);
-    // a north-south line and a west-east line, crossing at (10, 10)
-    for (let y = 5; y <= 15; y++) if (y !== 10) track.place(10, y, 'straight', 0, 'regular');
-    for (let x = 5; x <= 15; x++) if (x !== 10) track.place(x, 10, 'straight', 1, 'regular');
-    track.place(10, 10, 'crossing', 0, 'regular', 'regular');
+    // a north-south and a west-east line of Main Line, crossing at (10, 10). Branch is the only
+    // standard line with pieces to build, so the Downgrade tool takes Main down to it; there is no
+    // Branch × Main crossing piece, so the crossing itself stays as it is
+    for (let y = 5; y <= 15; y++) if (y !== 10) track.place(10, y, 'straight', 0, 'main');
+    for (let x = 5; x <= 15; x++) if (x !== 10) track.place(x, 10, 'straight', 1, 'main');
+    track.place(10, 10, 'crossing', 0, 'main', 'main');
     return { track, builder };
   }
-  const lineOf = (track: TrackGraph, axis: 'ns' | 'ew') => {
-    const p = track.get(10, 10)!;
-    const northSouth = p.links[0].some((d) => d === 0 || d === 2) ? 0 : 1;
-    const i = axis === 'ns' ? northSouth : 1 - northSouth;
-    return i === 0 ? p.cls : (p.cls2 ?? p.cls);
-  };
 
-  it("upgrades only the stroke's line of a crossing when the hand wobbles beside it", () => {
+  it("converts only the stroke's line when the hand wobbles beside a crossing", () => {
     const { track, builder } = world();
     const crossing = (t: { x: number; y: number }) => track.get(t.x, t.y)?.kind === 'crossing';
     const s = new ReclassStroke();
     for (const t of [at(10, 7), at(10, 8), at(9, 9), at(10, 10), at(10, 11), at(10, 12)])
-      for (const step of s.move(t, crossing))
-        builder.reclassTrack([step.tile], 'high_speed', step.from);
-    expect(lineOf(track, 'ns')).toBe('high_speed');
-    expect(lineOf(track, 'ew')).toBe('regular');
-    // the cross line beside the crossing is untouched wide track
+      for (const step of s.move(t, crossing)) builder.reclassTrack([step.tile], 'down', step.from);
+    for (const y of [7, 8, 9, 11, 12])
+      expect(track.get(10, y), `10,${y}`).toMatchObject({ kind: 'straight', cls: 'branch' });
+    expect(track.get(10, 10)).toMatchObject({ kind: 'crossing', cls: 'main', cls2: 'main' });
+    // the cross line beside the crossing, which the cursor never touched, is untouched
     for (const x of [9, 11])
-      expect(track.get(x, 10)).toMatchObject({ kind: 'straight', cls: 'regular' });
-    expect(track.get(10, 9)).toMatchObject({ kind: 'straight', cls: 'high_speed' });
+      expect(track.get(x, 10)).toMatchObject({ kind: 'straight', cls: 'main' });
   });
 
-  it('upgrades the line a stroke leaves a crossing along when it starts on it', () => {
+  it('converts the line a stroke leaves a crossing along when it starts on it', () => {
     const { track, builder } = world();
     const crossing = (t: { x: number; y: number }) => track.get(t.x, t.y)?.kind === 'crossing';
     const s = new ReclassStroke();
     for (const t of [at(10, 10), at(11, 10), at(12, 10)])
-      for (const step of s.move(t, crossing))
-        builder.reclassTrack([step.tile], 'high_speed', step.from);
-    expect(lineOf(track, 'ew')).toBe('high_speed');
-    expect(lineOf(track, 'ns')).toBe('regular');
+      for (const step of s.move(t, crossing)) builder.reclassTrack([step.tile], 'down', step.from);
+    for (const x of [11, 12]) expect(track.get(x, 10)).toMatchObject({ cls: 'branch' });
+    for (const y of [9, 11]) expect(track.get(10, y)).toMatchObject({ cls: 'main' });
+    expect(track.get(10, 10)).toMatchObject({ kind: 'crossing', cls: 'main', cls2: 'main' });
   });
 });

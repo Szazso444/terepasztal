@@ -15,7 +15,7 @@ export interface PathSegment {
  * Dijkstra over (tile, entryEdge) states. A state means "inside tile, having entered through
  * that edge". Trains cannot reverse mid-tile, so this naturally handles switches and curves.
  * A step leaves a tile only where `TrackGraph.connected` joins it to the next, so a path never
- * crosses a class or gauge break that has no transition piece.
+ * crosses from one network to another.
  * Returns the segment list starting at the start tile, or null.
  */
 export function findPath(
@@ -103,7 +103,7 @@ export function findPath(
 
 /**
  * Walk backwards from a tile/heading to collect the tiles behind a spawn point. The walk stops
- * where the track ends or at a joint `TrackGraph.connected` refuses (a class or gauge break).
+ * where the track ends or at a joint `TrackGraph.connected` refuses (a break between networks).
  */
 export function walkBack(
   track: TrackGraph,

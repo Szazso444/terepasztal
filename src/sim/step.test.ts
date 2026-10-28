@@ -188,9 +188,9 @@ describe('startStock', () => {
       const craft = { wood: 40, stone: 10, iron: 30 };
       const want = (k: 'wood' | 'stone' | 'iron') =>
         Math.round(
-          ((pieceCost('straight', 'regular')[k] ?? 0) * 50 +
-            (pieceCost('curve', 'regular')[k] ?? 0) * 6 +
-            (pieceCost('switch', 'regular')[k] ?? 0) * 1 +
+          ((pieceCost('straight', 'branch')[k] ?? 0) * 50 +
+            (pieceCost('curve', 'branch')[k] ?? 0) * 6 +
+            (pieceCost('switch', 'branch')[k] ?? 0) * 1 +
             craft[k]) *
             scale,
         );
@@ -211,7 +211,7 @@ describe('startStock', () => {
     /** Wood, stone or iron by hand: straights, curves and the switch, then the crafting, scaled. */
     const byHand = (k: 'wood' | 'stone' | 'iron', scale: number) => {
       const pieces = (kind: 'straight' | 'curve' | 'switch') =>
-        (pieceCost(kind, 'regular')[k] ?? 0) * (count.get(kind) ?? 0);
+        (pieceCost(kind, 'branch')[k] ?? 0) * (count.get(kind) ?? 0);
       return Math.round(
         (pieces('straight') + pieces('curve') + pieces('switch') + START_CRAFT[k]) * scale,
       );

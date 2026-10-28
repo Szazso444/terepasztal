@@ -453,7 +453,7 @@ const showState = (s: State) => `(${s.x},${s.y}) in ${EDGE[s.in]}`;
 const showWay = (p: readonly PathSegment[]) =>
   p.map((s) => `(${s.x},${s.y}) ${EDGE[s.in]}->${EDGE[s.out]}`).join(' ');
 
-type OneTile = 'straight' | 'curve' | 'switch' | 'crossing' | 'transition';
+type OneTile = 'straight' | 'curve' | 'switch' | 'crossing';
 /** One 1×1 piece laid with `set`, of any class, so gauge and class breaks turn up between them. */
 interface Lay extends Tile {
   kind: OneTile;
@@ -462,7 +462,7 @@ interface Lay extends Tile {
   /** a crossing's second axis */
   cls2?: TrackClass;
 }
-/** A regular 2×2 curve or switch laid with `place`, before the 1×1 pieces. */
+/** A Branch Line 2×2 curve or switch laid with `place`, before the 1×1 pieces. */
 interface Unit extends Tile {
   kind: 'curve' | 'switch';
   rot: number;
@@ -472,15 +472,14 @@ interface Deny extends Tile {
   entry: Dir;
 }
 
-const CLASSES: readonly TrackClass[] = ['narrow', 'regular', 'high_speed'];
+const CLASSES: readonly TrackClass[] = ['narrow', 'branch', 'main'];
 /** Every 1×1 piece by its links. */
-const PIECES = (['straight', 'curve', 'switch', 'crossing', 'transition'] as const).flatMap(
-  (kind) =>
-    Array.from({ length: rotationCount(kind) }, (_, rot) => ({
-      kind,
-      rot,
-      links: pieceLinks(kind, rot),
-    })),
+const PIECES = (['straight', 'curve', 'switch', 'crossing'] as const).flatMap((kind) =>
+  Array.from({ length: rotationCount(kind) }, (_, rot) => ({
+    kind,
+    rot,
+    links: pieceLinks(kind, rot),
+  })),
 );
 /** The edges a piece has track on. */
 const edgesOf = (links: readonly (readonly Dir[])[]) =>
@@ -490,7 +489,7 @@ const hasLink = (links: readonly (readonly Dir[])[], a: Dir, b: Dir) =>
 
 function layOut(size: number, units: readonly Unit[], lays: readonly Lay[]) {
   const g = new TrackGraph(size, size);
-  for (const u of units) g.place(u.x, u.y, u.kind, u.rot, 'regular');
+  for (const u of units) g.place(u.x, u.y, u.kind, u.rot, 'branch');
   for (const l of lays) g.set(l.x, l.y, makePiece(l.kind, l.rot, l.cls, l.cls2));
   return g;
 }
@@ -504,7 +503,7 @@ function accessOf(g: TrackGraph, deny: readonly Deny[]) {
 
 /**
  * Track laid along random walks: each runs on or turns from tile to tile, mostly on plain track,
- * now and then through a switch, crossing or transition that carries its way, and keeps one
+ * now and then through a switch or crossing that carries its way, and keeps one
  * class but for the odd piece of another. Walks that meet overwrite each other, which makes
  * junctions, loops, dead ends and joints that do not connect.
  */
@@ -1131,7 +1130,7 @@ function layMain(c: Pick<RetreatCase, 'end' | 'sidings' | 'mine'>, g = new Track
     blocks.add(s.x).add(s.x + 1);
     for (const t of sidingTiles(s)) g.place(t.x, t.y, 'straight', 0);
   }
-  const cls = c.mine ? 'narrow' : 'regular';
+  const cls = c.mine ? 'narrow' : 'branch';
   for (let x = 1; x <= c.end; x++) if (!blocks.has(x)) g.place(x, MAIN, 'straight', 1, cls);
   return g;
 }

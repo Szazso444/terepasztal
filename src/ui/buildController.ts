@@ -1,4 +1,4 @@
-import type { WideClass } from '../world/reclass';
+import type { ReclassDir } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
@@ -87,8 +87,6 @@ export class BuildController {
   onToolChanged: ((t: Tool) => void) | null = null;
   /** Upgrade / Downgrade: the stroke under way while the button is held */
   private stroke = new ReclassStroke();
-  /** how many trains may not run on high-speed track, for the Upgrade tool's status line */
-  barredTrains: (() => { barred: number; total: number }) | null = null;
   hoverStation: Station | null = null;
   hoverBuilding: Building | null = null;
   selectedBuilding: Building | null = null;
@@ -724,7 +722,7 @@ export class BuildController {
    * converts the line the stroke runs along.
    */
   private updateReclassTool(t: { x: number; y: number }, inMap: boolean) {
-    const tool = this.tool as { kind: 'reclass'; target: WideClass };
+    const tool = this.tool as { kind: 'reclass'; dir: ReclassDir };
     const inp = this.input;
     const track = this.builder.track;
     if (this.ghost) this.ghost.visible = false;
@@ -732,7 +730,7 @@ export class BuildController {
     const convert = (
       steps: { tile: { x: number; y: number }; from?: { x: number; y: number } }[],
     ) => {
-      for (const s of steps) this.builder.reclassTrack([s.tile], tool.target, s.from);
+      for (const s of steps) this.builder.reclassTrack([s.tile], tool.dir, s.from);
     };
     const down = inp.buttons.has(0);
     if (!down) convert(this.stroke.release());
@@ -742,32 +740,26 @@ export class BuildController {
       return;
     }
     if (down) convert(this.stroke.move(t, isCrossing));
-    const upgrade = tool.target === 'high_speed';
-    const what = upgrade ? STR.toolbar.upgrade : STR.toolbar.downgrade;
-    // an upgrade bars every train without in-cab signalling from the line: say so before it is done
-    const trains = upgrade ? this.barredTrains?.() : null;
-    const warning = trains?.barred
-      ? ` · ${STR.build.reclassBarred(trains.barred, trains.total)}`
-      : '';
+    const what = tool.dir === 'up' ? STR.toolbar.upgrade : STR.toolbar.downgrade;
     const piece = track.get(t.x, t.y);
     if (!piece) {
       this.ghostDiamond.visible = false;
-      this.status(STR.build.reclassIdle(what) + warning);
+      this.status(STR.build.reclassIdle(what));
       return;
     }
     const from = down ? this.stroke.entry(t, piece.kind === 'crossing') : undefined;
-    const check = this.builder.checkReclass([t], tool.target, from);
+    const check = this.builder.checkReclass([t], tool.dir, from);
     // red only where something stops the conversion; track already converted is fine
     const fine = check.ok || check.reason === STR.build.reclass.nothing;
     this.world.setSpriteFrame(this.ghostDiamond, fine ? 'terrain/ghost_ok' : 'terrain/ghost_bad');
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
     this.status(
-      (check.changes.length
+      check.changes.length
         ? Object.keys(check.cost).length
           ? `${STR.build.reclassCost(what, fmtCost(check.cost))}${check.ok ? '' : ` (${check.reason})`}`
           : STR.build.reclassFree(what)
-        : (check.reason ?? '')) + warning,
+        : (check.reason ?? ''),
     );
   }
 

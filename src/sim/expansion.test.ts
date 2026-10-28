@@ -169,12 +169,7 @@ describe('bridges, reversing and refuelling', () => {
     for (let x = 40; x < 46; x++) {
       expect(w.builder.placeBuilding(x, 40, 'bridge_wood')).not.toBeNull();
       expect(
-        w.builder.placeTrack(
-          x,
-          40,
-          { kind: x === 43 ? 'transition' : 'straight', cls: x > 43 ? 'high_speed' : 'regular' },
-          1,
-        ),
+        w.builder.placeTrack(x, 40, { kind: 'straight', cls: x > 43 ? 'main' : 'branch' }, 1),
       ).toBe(true);
     }
     expect(bridgeSpan(w.builder, w.builder.buildingAt(42, 40)!)).toMatchObject({
@@ -278,7 +273,7 @@ describe('bridges, reversing and refuelling', () => {
     'keeps %s segments in place when reversing on a curve',
     (id) => {
       const t = train(id),
-        pl = referencePath('high_speed', 0.01);
+        pl = referencePath('branch', 0.01);
       const points: number[][] = [];
       for (let arc = 0; arc <= 6.4; arc += 0.01) {
         const p = pl.at(arc);
@@ -375,7 +370,7 @@ describe('semaphore boundaries and growing worlds', () => {
   it('shifts bridge levels, houses, wires, track classes, car trails, escapes, ways, wanted ways and service stops together during expansion', () => {
     const save = {
       world: { kind: 'generated', seed: 4242, params: { w: 96, h: 96 } },
-      track: [[20, 20, 'straight', 1, 'high_speed']],
+      track: [[20, 20, 'straight', 1, 'main']],
       stations: [],
       buildings: [[20, 20, 'bridge_stone', 0.5, 3]],
       decor: [[25, 25, 'townhouse', 0]],
@@ -419,7 +414,7 @@ describe('semaphore boundaries and growing worlds', () => {
       clock: { time: 500, speedIndex: 2 },
     } as unknown as SaveGame;
     const grown = expandSave(save);
-    expect(grown.track[0]).toEqual([52, 52, 'straight', 1, 'high_speed']);
+    expect(grown.track[0]).toEqual([52, 52, 'straight', 1, 'main']);
     expect(grown.buildings?.[0]).toEqual([52, 52, 'bridge_stone', 0.5, 3]);
     expect(grown.houses?.list[0]).toMatchObject({ x: 57, y: 57, residents: 100 });
     expect(grown.wires?.[0]).toEqual([52, 52, 'catenary']);
@@ -455,13 +450,12 @@ describe('semaphore boundaries and growing worlds', () => {
   });
 });
 describe('line speed', () => {
-  function runFast(cls: 'regular' | 'high_speed') {
+  function runFast(cls: 'branch' | 'main') {
     const w = world(),
       t = new Train([
         { uid: 1, level: 1, def: content.locomotives.find((d) => d.id === 'mallard')! },
       ]);
-    if (cls === 'high_speed') for (let x = 2; x < 90; x++) w.track.place(x, 30, 'straight', 1, cls);
-    for (const l of t.locos) l.inCab = true;
+    if (cls === 'main') for (let x = 2; x < 90; x++) w.track.place(x, 30, 'straight', 1, cls);
     t.spawnAt(w.track, 40, 30, Dir.E);
     const st = new Station('quarry', 85, 29);
     w.builder.stations.push(st);
@@ -476,22 +470,13 @@ describe('line speed', () => {
     for (let i = 0; i < 40; i++) t.tick(0.05, ctx);
     return t;
   }
-  it('holds an engine to the regular cap and lets it run free on high-speed track', () => {
+  it('holds an engine to the Branch Line cap and lets it run free on Main Line', () => {
     // a cap below what the engine runs at, so the cap is what binds
-    rules.lineSpeedRegular = 0.8;
-    const reg = runFast('regular');
-    expect(reg.speed).toBeLessThanOrEqual(0.8 * rules.trainSpeedMul + 1e-6);
-    const hs = runFast('high_speed');
-    expect(hs.speed).toBeGreaterThan(0.8 * rules.trainSpeedMul + 0.1);
-  });
-});
-describe('high speed without a quest', () => {
-  it('lets a player lay high-speed track from the start', () => {
-    const { builder, economy } = world();
-    builder.free = false;
-    economy.hsUnlocked = false;
-    const c = builder.checkTrack(40, 40, { kind: 'straight', cls: 'high_speed' }, 1);
-    expect(c.reason ?? '').not.toMatch(/not unlocked/i);
+    rules.lineSpeedBranch = 0.8;
+    const branch = runFast('branch');
+    expect(branch.speed).toBeLessThanOrEqual(0.8 * rules.trainSpeedMul + 1e-6);
+    const main = runFast('main');
+    expect(main.speed).toBeGreaterThan(0.8 * rules.trainSpeedMul + 0.1);
   });
 });
 

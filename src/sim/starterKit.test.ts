@@ -26,7 +26,7 @@ import {
   startDepotCentre,
   startDepotKind,
 } from './startDepot';
-import { gaugeOf, vehicleAccess } from './compat';
+import { gaugeLine, gaugeOf, vehicleAccess } from './compat';
 import { vehicleSpec } from './body';
 import { cargoDef } from './cargo';
 import type { TrackClass } from '../world/track';
@@ -97,9 +97,9 @@ function narrowLine(w: ReturnType<typeof newGame>) {
 }
 /** A regular depot on a regular line with two stops beside it, as an older game built it. */
 function regularLine(w: ReturnType<typeof newGame>) {
-  const ew = [0, 1].find((r) => makePiece('straight', r, 'regular').links[0].includes(Dir.E))!;
+  const ew = [0, 1].find((r) => makePiece('straight', r, 'branch').links[0].includes(Dir.E))!;
   const depot = w.builder.placeStation(20, 20, 'depot', 0)!;
-  for (let x = 22; x <= 50; x++) w.track.place(x, 20, 'straight', ew, 'regular');
+  for (let x = 22; x <= 50; x++) w.track.place(x, 20, 'straight', ew, 'branch');
   const near = w.builder.placeStation(28, 21, 'quarry', 0)!;
   const far = w.builder.placeStation(46, 21, 'quarry', 0)!;
   return { depot, near, far };
@@ -625,7 +625,7 @@ describe('the starter engines of a new game', () => {
 
 /** Every gate of the depot carries a straight of the depot's gauge that runs into the shed. */
 function expectServed(w: ReturnType<typeof newGame>, depot: Station) {
-  const cls: TrackClass = depot.def.gauge ?? 'regular';
+  const cls = gaugeLine(depot.def.gauge ?? 'regular');
   for (const g of depot.gateTiles()) {
     const p = w.track.get(g.x, g.y);
     expect(p, `gate ${g.x},${g.y}`).toBeDefined();
@@ -646,7 +646,7 @@ describe('the depot a new game starts with', () => {
     const gates = stationGates(defId, 20, 20, rot);
     const depot = grantDepot(w.builder, defId, 20, 20, rot)!;
     expect(depot).not.toBeNull();
-    const cls: TrackClass = depot.def.gauge ?? 'regular';
+    const cls = gaugeLine(depot.def.gauge ?? 'regular');
     return { depot, gates, cls };
   }
 
@@ -751,7 +751,7 @@ describe('the depot a new game starts with', () => {
   it('is a regular depot with regular gate track when an older save gets one on load', () => {
     const w = newGame();
     const { depot, cls } = firstDepot(w, 'depot', 0);
-    expect(cls).toBe('regular');
+    expect(cls).toBe('branch');
     expect(w.fleet.modelDeployReason(locoDef('adler'), depot)).toBeNull();
     expect(w.fleet.modelDeployReason(locoDef('rocket'), depot)).toBe(
       STR.fleet.wrongDepot(depot.name),
@@ -759,7 +759,7 @@ describe('the depot a new game starts with', () => {
   });
 });
 
-/** Is track of class `cls` in the gauge of depot `defId`: narrow, or regular and high speed? */
+/** Is track of line `cls` in the gauge of depot `defId`: Narrow Gauge, or a standard line? */
 const inDepotGauge = (defId: string, cls: TrackClass) =>
   (cls === 'narrow') === (stationDef(defId).gauge === 'narrow');
 
@@ -839,8 +839,8 @@ describe('the site a game is granted its depot on', () => {
   });
 
   it.each([
-    ['narrow_depot', 'regular'],
-    ['narrow_depot', 'high_speed'],
+    ['narrow_depot', 'branch'],
+    ['narrow_depot', 'main'],
     ['depot', 'narrow'],
   ] as const)(
     '%s: a %s straight on a gate of the first site gets the site skipped, and stays as it was',
@@ -868,8 +868,8 @@ describe('the site a game is granted its depot on', () => {
 
   it.each([
     ['narrow_depot', 'narrow'],
-    ['depot', 'regular'],
-    ['depot', 'high_speed'],
+    ['depot', 'branch'],
+    ['depot', 'main'],
   ] as const)(
     '%s: a %s straight already on a gate is kept as it is, and the site is taken',
     (defId, own) => {
@@ -885,13 +885,13 @@ describe('the site a game is granted its depot on', () => {
       const d = ensureStartDepot(w.builder, defId)!;
       expect([d.x, d.y, d.rot]).toEqual([x, y, 0]);
       expect(w.track.get(gate.x, gate.y)).toBe(piece);
-      // every other gate was bare and took the gate straight, of the depot's gauge
-      const gauge = d.def.gauge ?? 'regular';
+      // every other gate was bare and took the gate straight, of the depot's line
+      const line = gaugeLine(d.def.gauge ?? 'regular');
       for (const g of d.gateTiles()) {
         if (g.x === gate.x && g.y === gate.y) continue;
         expect([w.track.get(g.x, g.y)!.kind, w.track.get(g.x, g.y)!.cls]).toEqual([
           'straight',
-          gauge,
+          line,
         ]);
       }
       expect(w.track.pieces.size).toBe(d.gateTiles().length);
@@ -901,7 +901,12 @@ describe('the site a game is granted its depot on', () => {
   it.each(['narrow_depot', 'depot'])(
     '%s: a crossing on a gate counts by the axis that runs into the shed, not by its other axis',
     (defId) => {
-      const mixed = TRACK_ITEMS.filter((i) => i.kind === 'crossing' && i.cls !== i.cls2);
+      // the mixed crossings of the build list, and one of two standard lines laid straight into the
+      // graph (no piece of the list carries Main Line yet)
+      const mixed = [
+        ...TRACK_ITEMS.filter((i) => i.kind === 'crossing' && i.cls !== i.cls2),
+        { kind: 'crossing', cls: 'branch', cls2: 'main' } as const,
+      ];
       // each class pair in both orders: which axis is which is the crossing's turn to settle
       const pairs = mixed.flatMap((i) => [
         [i.cls, i.cls2!],
@@ -950,7 +955,7 @@ describe('the site a game is granted its depot on', () => {
     },
   );
 
-  it.each(['regular', 'high_speed'] as const)(
+  it.each(['branch', 'main'] as const)(
     'narrow_depot: the unused tile of a %s curve on a gate is other-gauge track',
     (cls) => {
       let tried = 0;
@@ -995,7 +1000,7 @@ describe('the site a game is granted its depot on', () => {
   );
 
   it.each([
-    ['narrow_depot', 'regular'],
+    ['narrow_depot', 'branch'],
     ['depot', 'narrow'],
   ] as const)(
     '%s: finds no site when the only one in reach has a %s straight on a gate, and leaves nothing',
@@ -1100,7 +1105,7 @@ describe('a depot granted at any of the four turns', () => {
     /** track already laid: straights of any class, crossings with a class per axis */
     rails: Laid[];
   }
-  const CLASSES: TrackClass[] = ['narrow', 'regular', 'high_speed'];
+  const CLASSES: TrackClass[] = ['narrow', 'branch', 'main'];
   const CROSSINGS = TRACK_ITEMS.filter((i) => i.kind === 'crossing');
   function genSite(rng: Rng): Site {
     const near = (): Near => [rng.int(-2, 3), rng.int(-2, 3)];
@@ -1237,7 +1242,7 @@ describe('a depot granted at any of the four turns', () => {
           if (hadTrack(g)) continue;
           const p = a.track.get(g.x, g.y);
           expect(p?.kind, `gate ${g.x},${g.y}`).toBe('straight');
-          expect(p!.cls, `gate ${g.x},${g.y}`).toBe(da.def.gauge ?? 'regular');
+          expect(p!.cls, `gate ${g.x},${g.y}`).toBe(gaugeLine(da.def.gauge ?? 'regular'));
           const toShed =
             s.rot % 2 === 0 ? (g.x < da.x ? Dir.E : Dir.W) : g.y < da.y ? Dir.S : Dir.N;
           expect(p!.links.flat(), `gate ${g.x},${g.y} runs into the shed`).toContain(toShed);

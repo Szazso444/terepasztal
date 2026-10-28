@@ -52,8 +52,8 @@ function spanLevel(s: RailSpan, t: number) {
 }
 
 /**
- * Pieces that may climb: every link runs straight through the tile (straight, crossing, class
- * transition, bridge piece). Their axes; empty for curves, switches and wide-piece members.
+ * Pieces that may climb: every link runs straight through the tile (straight, crossing,
+ * bridge piece). Their axes; empty for curves, switches and wide-piece members.
  */
 export function climbAxes(links: readonly (readonly [number, number])[]): ('x' | 'y')[] {
   if (!links.length || links.some(([a, b]) => a !== opposite(b as Dir))) return [];

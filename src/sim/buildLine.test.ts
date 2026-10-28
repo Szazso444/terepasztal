@@ -9,7 +9,6 @@ import {
   isUnitKind,
   itemKey,
   rotationCount,
-  transitionRot,
   type TrackClass,
   type TrackItem,
   type TrackPiece,
@@ -55,9 +54,9 @@ function world(size = 24) {
 }
 type World = ReturnType<typeof world>;
 
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
 /** A straight running east-west at (x, y). */
-const ew = (x: number, y: number, cls: TrackClass = 'regular'): LinePiece => ({
+const ew = (x: number, y: number, cls: TrackClass = 'branch'): LinePiece => ({
   kind: 'track',
   x,
   y,
@@ -202,10 +201,9 @@ describe('a line of track', () => {
   it('refuses a line over any other track and removes nothing', () => {
     const others: [TrackItem, number][] = [
       [STRAIGHT, 0],
-      [{ kind: 'straight', cls: 'high_speed' }, 0],
+      [{ kind: 'straight', cls: 'narrow' }, 0],
       [{ kind: 'curve', cls: 'narrow' }, 0],
-      [{ kind: 'crossing', cls: 'regular', cls2: 'regular' }, 0],
-      [{ kind: 'transition', cls: 'regular' }, transitionRot(Dir.E)],
+      [{ kind: 'crossing', cls: 'branch', cls2: 'branch' }, 0],
     ];
     for (const [item, rot] of others) {
       const w = world();
@@ -228,7 +226,7 @@ describe('a line of track', () => {
 
   it('refuses a line through a member of a wide piece', () => {
     const w = world();
-    expect(w.builder.placeTrack(7, 4, { kind: 'curve', cls: 'regular' }, 0)).toBe(true);
+    expect(w.builder.placeTrack(7, 4, { kind: 'curve', cls: 'branch' }, 0)).toBe(true);
     const line = run(4, 9, 5);
     const c = w.builder.checkLine(line);
     const hit = line.findIndex((p) => w.track.has(p.x, p.y));
@@ -261,23 +259,18 @@ describe('a line of track', () => {
 
   it("judges each piece with the line's earlier pieces standing", () => {
     const w = world();
-    const fast = ew(4, 5, 'high_speed');
-    // alone, the wide straight beside the high-speed one's tile could go
+    const first = ew(4, 5, 'narrow');
+    // alone, the wide straight beside the narrow one's tile could go
     expect(w.builder.checkTrack(5, 5, STRAIGHT, 1).ok).toBe(true);
-    expect(w.builder.checkLine([fast, ew(5, 5)])).toMatchObject({
+    expect(w.builder.checkLine([first, ew(5, 5)])).toMatchObject({
       ok: false,
       at: 1,
-      reason: STR.build.needTransition,
+      reason: STR.build.gaugeBreak,
     });
-    const through: LinePiece = {
-      kind: 'track',
-      x: 5,
-      y: 5,
-      item: { kind: 'transition', cls: 'regular' },
-      rot: transitionRot(Dir.W),
-    };
-    expect(w.builder.checkLine([fast, through, ew(6, 5)]).ok).toBe(true);
-    expect(w.builder.placeLine([fast, through, ew(6, 5)])).toBe(true);
+    // laid in the narrow gauge the line goes down, joined through
+    const narrow = [first, ew(5, 5, 'narrow'), ew(6, 5, 'narrow')];
+    expect(w.builder.checkLine(narrow).ok).toBe(true);
+    expect(w.builder.placeLine(narrow)).toBe(true);
     expect(w.track.connected(4, 5, Dir.E) && w.track.connected(5, 5, Dir.E)).toBe(true);
   });
 
@@ -421,10 +414,10 @@ describe('a bridge line', () => {
       kind: 'track',
       x: 6,
       y: 6,
-      item: { kind: 'curve', cls: 'regular' },
+      item: { kind: 'curve', cls: 'branch' },
       rot: 0,
     };
-    const tiles = footprintOf(6, 6, 'curve', 0, 'regular'),
+    const tiles = footprintOf(6, 6, 'curve', 0, 'branch'),
       decks = tiles.map((t) => platform(t.x, t.y));
     const uneven = new Set(tiles.map((t) => `${t.x},${t.y}`));
     w.builder.groundCheck = (x, y, need) => need === 'straight' || !uneven.has(`${x},${y}`);
@@ -484,7 +477,7 @@ const GROUND = [
   Terrain.Hill,
   Terrain.Rock,
 ];
-const CLASSES: TrackClass[] = ['regular', 'high_speed', 'narrow'];
+const CLASSES: TrackClass[] = ['branch', 'narrow'];
 
 /** A world of W x W tiles, track and platforms already laid, and a line to lay over it. */
 interface Case {

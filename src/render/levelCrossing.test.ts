@@ -45,13 +45,13 @@ function everyPiece(): TrackPiece[] {
 }
 
 describe('the deck a road lays over track', () => {
-  it('is the class and rotation of a plain straight of regular or narrow track, and none on any other piece', () => {
+  it('is the class and rotation of a plain straight of Branch Line or Narrow Gauge, and none on any other piece', () => {
     let decks = 0,
       none = 0;
     for (const p of everyPiece()) {
       const frame = pieceFrame(p),
         deck = levelCrossingFrame(frame);
-      if (p.kind === 'straight' && (p.cls === 'regular' || p.cls === 'narrow')) {
+      if (p.kind === 'straight' && (p.cls === 'branch' || p.cls === 'narrow')) {
         expect(deck, frame).toBe(`track/level_crossing_${p.cls}_${p.rot}`);
         expect(deck).toBe(deckFrame(p.cls, p.rot));
         decks++;
@@ -63,17 +63,19 @@ describe('the deck a road lays over track', () => {
     }
     expect(decks).toBe(4);
     expect(none).toBeGreaterThan(100);
-    // the members of a multi-tile piece, high speed and a switch's other form, named outright
+    // the members of a multi-tile piece, lines a road may not cross on the level and a switch's
+    // other form, named outright
     for (const frame of [
-      'track/straight_high_speed_0',
-      'track/straight_high_speed_1',
-      'track/curve_regular_0_m2',
+      'track/straight_main_0',
+      'track/straight_trunk_1',
+      'track/straight_maglev_0',
+      'track/straight_hyperloop_1',
+      'track/curve_branch_0_m2',
       'track/switch_narrow_3p',
-      'track/switch_regular_1p_m0',
-      'track/crossing_regular_narrow_0',
-      'track/transition_regular_2',
-      'track/bridge_regular_0',
-      'track/straight_regular_0_m0',
+      'track/switch_branch_1p_m0',
+      'track/crossing_branch_narrow_0',
+      'track/bridge_branch_0',
+      'track/straight_branch_0_m0',
     ])
       expect(levelCrossingFrame(frame), frame).toBeNull();
   });

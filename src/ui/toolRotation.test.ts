@@ -81,7 +81,7 @@ describe('R in the build tools', () => {
       { kind: 'none' },
       { kind: 'remove' },
       { kind: 'supply', supply: 'catenary' },
-      { kind: 'reclass', target: 'high_speed' },
+      { kind: 'reclass', dir: 'up' },
       { kind: 'road' },
       { kind: 'terrain', terrain: 0 },
     ];

@@ -27,7 +27,7 @@ const WORST_LEAN = (4 * Math.PI) / 180;
 describe('independent bogies', () => {
   it('keeps the full rigid frame and puts each drawn bogie on its own rail point', () => {
     const spec = vehicleSpec({ size: 'large', bogies: 3, bogieAxles: 3 });
-    const path = referencePath('high_speed');
+    const path = referencePath('branch');
     const pose = poseVehicle(path, 6.7, spec);
     expect(pose.segments).toHaveLength(1);
     expect(pose.segments[0].L).toBe(3);
@@ -48,7 +48,7 @@ describe('independent bogies', () => {
       expect(four.segments[0].bogie).toBe('bogie');
       expect(six.segments[0].bogie).toBe('bogie3');
       expect(vehicleSpec({ size, bogieAxles: 4 }).segments[0].bogie).toBe('bogie4');
-      for (const cls of ['regular', 'high_speed'] as const)
+      for (const cls of ['branch', 'main'] as const)
         expect(measure(four, cls)).toEqual(measure(six, cls));
     }
   });

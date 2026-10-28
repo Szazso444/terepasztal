@@ -9,7 +9,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AtlasBuilder } from '../engine/atlas';
 import { worldToTile, type Vec2 } from '../engine/iso';
-import { TRACK_CLASSES, pieceLinks, rotationCount } from '../world/track';
+import { LINES, TRACK_CLASSES, pieceLinks, rotationCount } from '../world/track';
 import { EDGE_MID } from '../world/trackGeom';
 import {
   BED_SHOULDER,
@@ -24,14 +24,15 @@ import {
 } from './trackIllustrated';
 
 /** The decisions, written out: item 18, the rail offsets of #309 and #329's road width. */
-const RAIL = { regular: 0.16, narrow: 0.08 };
+const RAIL = { branch: 0.16, narrow: 0.08 };
 const MARGIN = 0.1;
 const ROAD_WIDTH = 0.32;
 const EPS = 1e-9;
 
 describe('level crossing deck geometry', () => {
-  it('crosses regular and narrow track only, never high speed', () => {
-    expect([...LEVEL_CROSSING_CLASSES].sort()).toEqual(['narrow', 'regular']);
+  it('crosses the lines a road may cross on the level: Branch Line and Narrow Gauge', () => {
+    expect([...LEVEL_CROSSING_CLASSES].sort()).toEqual(['branch', 'narrow']);
+    expect(TRACK_CLASSES.filter((c) => LINES[c].roadCrossing).sort()).toEqual(['branch', 'narrow']);
   });
 
   it('reaches 0.1 tile outside each rail, inside the ballast bed, and half a road along', () => {
@@ -42,7 +43,7 @@ describe('level crossing deck geometry', () => {
       expect(LEVEL_CROSSING_ACROSS[cls], cls).toBeCloseTo(RAIL_OFFSET[cls] + MARGIN, 12);
       expect(LEVEL_CROSSING_ACROSS[cls], cls).toBeLessThan(BED_SHOULDER[cls]);
     }
-    expect(LEVEL_CROSSING_ACROSS.regular).toBeCloseTo(0.26, 12);
+    expect(LEVEL_CROSSING_ACROSS.branch).toBeCloseTo(0.26, 12);
     expect(LEVEL_CROSSING_ACROSS.narrow).toBeCloseTo(0.18, 12);
   });
 

@@ -89,7 +89,7 @@ const PLATEAU = { x: 20, y: 20 };
 
 /** A straight's turn along an axis: 1 runs east-west, 0 north-south. */
 const along = (d: Dir) => (d === Dir.E || d === Dir.W ? 1 : 0);
-const ew = (x: number, y: number, cls: TrackClass = 'regular'): LinePiece => ({
+const ew = (x: number, y: number, cls: TrackClass = 'branch'): LinePiece => ({
   kind: 'track',
   x,
   y,
@@ -106,7 +106,7 @@ function ports(x: number, y: number, item: TrackItem, rot: number) {
   probe.place(x, y, item.kind, rot, item.cls, item.cls2);
   const tiles = footprintOf(x, y, item.kind, rot, item.cls);
   const inside = (px: number, py: number) => tiles.some((t) => t.x === px && t.y === py);
-  const out: { x: number; y: number; d: Dir; cls: TrackClass | 'any' }[] = [];
+  const out: { x: number; y: number; d: Dir; cls: TrackClass }[] = [];
   for (const t of tiles) {
     const p = probe.get(t.x, t.y)!;
     for (const link of p.links)
@@ -125,7 +125,7 @@ function joinEveryEnd(w: Field, x: number, y: number, item: TrackItem, rot: numb
     const nx = p.x + DIR_DX[p.d],
       ny = p.y + DIR_DY[p.d];
     if (w.track.has(nx, ny)) continue;
-    w.track.place(nx, ny, 'straight', along(p.d), p.cls === 'any' ? 'regular' : p.cls);
+    w.track.place(nx, ny, 'straight', along(p.d), p.cls);
   }
 }
 /** Every piece of the palette (`TRACK_ITEMS`, which has no bridge piece), at every turn. */
@@ -203,13 +203,13 @@ describe('a piece on rock or a mountain', () => {
       expect(c.ok, `${where}: ${c.reason}`).toBe(true);
       met++;
     }
-    // the regular and high speed curves and switches, in their turns
+    // the Branch Line curves and switches, in their turns
     expect(met).toBeGreaterThan(8);
   });
 
   it('is refused beside track that runs past it: a neighbour must open back toward it', () => {
     for (const t of STONE)
-      for (const cls of ['regular', 'high_speed', 'narrow'] as const) {
+      for (const cls of ['branch', 'narrow'] as const) {
         const w = field();
         const at = t === Terrain.Rock ? FOOT : PLATEAU;
         expect(w.map.terrain[at.y * SIZE + at.x]).toBe(t);
@@ -240,7 +240,7 @@ describe('a piece on rock or a mountain', () => {
     expect(BIOME_DEFS[MOUNTAIN_BIOME].id).toBe('mountain');
     expect(BIOME_DEFS[MOUNTAIN_BIOME].trackCostMul).toBe(1.5);
     for (const buildCost of [1, 0.35, 2.5])
-      for (const cls of ['regular', 'high_speed', 'narrow'] as const)
+      for (const cls of ['branch', 'narrow'] as const)
         for (const [t, at] of [
           [Terrain.Rock, FOOT],
           [Terrain.Mountain, PLATEAU],
@@ -261,12 +261,12 @@ describe('a piece on rock or a mountain', () => {
             priceIn(list, terrainCost[name(t)], 1),
           );
         }
-    // a regular straight at the default build cost, in numbers: wood 2, stone 2, iron 1 listed
+    // a Branch Line straight at the default build cost, in numbers: wood 2, stone 2, iron 1 listed
     Object.assign(rules, DEFAULT_RULES);
     const w = field();
     w.track.place(FOOT.x - 1, FOOT.y, 'straight', 1);
     w.track.place(PLATEAU.x - 1, PLATEAU.y, 'straight', 1);
-    const straight: TrackItem = { kind: 'straight', cls: 'regular' };
+    const straight: TrackItem = { kind: 'straight', cls: 'branch' };
     expect(pieceCost('straight')).toEqual({ wood: 2, stone: 2, iron: 1 });
     // 2 × 1.35 × 1.5 = 4.05, 1 × 2.025; 2 × 1.65 × 1.5 = 4.95, 1 × 2.475: rounded up
     expect(w.builder.checkTrack(FOOT.x, FOOT.y, straight, 1).cost).toEqual({
@@ -292,8 +292,7 @@ describe('a piece on rock or a mountain', () => {
         const tiles = footprintOf(at.x, at.y, item.kind, rot, item.cls);
         const c = w.builder.checkTrack(at.x, at.y, item, rot);
         const where = `${what(item, rot)} at ${at.x},${at.y}`;
-        const climbs =
-          item.kind === 'straight' || item.kind === 'crossing' || item.kind === 'transition';
+        const climbs = item.kind === 'straight' || item.kind === 'crossing';
         const levelGround = tiles.every((t) => groundAllowsOn(w.map, t.x, t.y, 'level'));
         if (climbs || levelGround) {
           expect(c.ok, `${where}: ${c.reason}`).toBe(true);
@@ -343,7 +342,7 @@ describe('a line onto the mountain', () => {
     });
 
   it('drawn from a line end, lays all five mountain pieces; from the far end, none', () => {
-    for (const cls of ['regular', 'high_speed', 'narrow'] as const) {
+    for (const cls of ['branch', 'narrow'] as const) {
       const w = field();
       // up from the grass to the end of a line on the rock at the mountain's foot
       const foot = run(4, 9, 20).map(
@@ -400,7 +399,7 @@ describe('what stays off rock and mountain', () => {
       const w = field(true);
       // a joined line runs over the tile
       w.track.place(at.x - 1, at.y, 'straight', 1);
-      const bridgePiece = w.builder.checkTrack(at.x, at.y, { kind: 'bridge', cls: 'regular' }, 1);
+      const bridgePiece = w.builder.checkTrack(at.x, at.y, { kind: 'bridge', cls: 'branch' }, 1);
       expect(bridgePiece, `bridge piece on ${name(t)}`).toMatchObject({
         ok: false,
         reason: STR.build.bridgeOnWater,
@@ -415,7 +414,7 @@ describe('what stays off rock and mountain', () => {
         if (!d.onTrack || d.anyTile)
           expect(w.builder.checkDecor(beside.x, beside.y, d.id).reason, d.id).toBe(named);
       // on the line itself: platforms and power poles still not
-      expect(w.builder.placeTrack(at.x, at.y, { kind: 'straight', cls: 'regular' }, 1)).toBe(true);
+      expect(w.builder.placeTrack(at.x, at.y, { kind: 'straight', cls: 'branch' }, 1)).toBe(true);
       for (const d of BUILDING_DEFS.filter((b) => b.bridge))
         expect(w.builder.checkBuilding(at.x, at.y, d.id).reason, `${d.id} under the rail`).toBe(
           named,
@@ -430,7 +429,7 @@ describe('what stays off rock and mountain', () => {
       const w = field(true);
       w.builder.catenary = new Catenary(w.map);
       w.track.place(at.x - 1, at.y, 'straight', 1);
-      expect(w.builder.placeTrack(at.x, at.y, { kind: 'straight', cls: 'regular' }, 1)).toBe(true);
+      expect(w.builder.placeTrack(at.x, at.y, { kind: 'straight', cls: 'branch' }, 1)).toBe(true);
       expect(w.builder.checkDecor(at.x, at.y, 'signal'), name(t)).toMatchObject({ ok: true });
       expect(w.builder.placeDecor(at.x, at.y, 'signal', 1), name(t)).not.toBeNull();
       expect(w.builder.checkSupply(at.x, at.y, 'catenary'), name(t)).toMatchObject({ ok: true });
@@ -474,7 +473,7 @@ describe('a load', () => {
     expect(w.builder.removeTrack(BANK.x + 1, BANK.y)).toBe(true);
     expect(w.track.get(BANK.x, BANK.y)?.kind).toBe('straight');
     expect(
-      w.builder.checkTrack(BANK.x, BANK.y, { kind: 'straight', cls: 'regular' }, 1).reason,
+      w.builder.checkTrack(BANK.x, BANK.y, { kind: 'straight', cls: 'branch' }, 1).reason,
     ).toBe(STR.build.mountainLine);
     const terrain = [...w.map.terrain],
       levels = [...tileLevels(w.map)];
@@ -553,7 +552,7 @@ describe('mountain lines on generated maps', () => {
             kind: 'track',
             x,
             y,
-            item: { kind: 'straight', cls: 'regular' },
+            item: { kind: 'straight', cls: 'branch' },
             rot: along(d),
           });
       out.push(pieces);

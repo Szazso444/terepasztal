@@ -328,18 +328,16 @@ export const STR = {
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,
     sameSupply: 'Already electrified this way',
-    needTransition: 'Different track classes join through a transition piece',
-    gaugeBreak: 'Narrow and wide gauge do not join: cross them with a crossing piece',
+    gaugeBreak: 'Narrow Gauge does not join the standard lines: cross them with a crossing piece',
     narrowLocked: 'Narrow gauge is not unlocked yet',
     reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
     reclassFree: (what: string) => `${what}: free`,
     reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
-    reclassBarred: (barred: number, total: number) =>
-      `${barred} of ${total} train${total === 1 ? ' has' : 's have'} no in-cab signalling and cannot run on high-speed track`,
     reclass: {
-      narrow: 'Narrow track cannot be converted: its curves are a different size',
+      separate: 'Only Branch, Main and Trunk Line convert into each other',
+      size: 'This curve or switch is too small or too big for that line: lay it again',
+      noLine: 'No line to convert to that way',
       nothing: 'Nothing to convert here',
-      blocked: 'No straight beside this piece to carry the transition: lay one first',
     } as Record<string, string>,
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
@@ -390,12 +388,11 @@ export const STR = {
     roadOnBridge: 'A road on the bridge',
     /**
      * A road and track on one tile make a level crossing: the road crosses a plain straight of
-     * regular or narrow track at right angles (src/sim/roads.ts), whichever of the two is laid
+     * a line with level crossings at right angles (src/sim/roads.ts), whichever of the two is laid
      * second.
      */
-    crossingStraight:
-      'A road crosses only plain straight track: no curve, switch, crossing or transition',
-    crossingHighSpeed: 'No level crossings on high-speed track',
+    crossingStraight: 'A road crosses only plain straight track: no curve, switch or crossing',
+    crossingLine: 'No level crossings on this line',
     crossingAlong: 'A road crosses track at right angles, never along it',
     /** the road tool's drag (#328): how many tiles its release lays, and `cost` (`fmtCost`) */
     roadLine: (tiles: number, cost: string) =>
@@ -425,9 +422,9 @@ export const STR = {
     upgrade: 'Upgrade',
     downgrade: 'Downgrade',
     upgradeHint:
-      'Wide track to high speed: click a piece or drag along the line. Costs the difference. Trains need in-cab signalling to run on it. (U)',
+      'Raises track one line: Branch to Main, Main to Trunk. Click a piece or drag along the line. Costs the difference. (U)',
     downgradeHint:
-      'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
+      'Lowers track one line: Trunk to Main, Main to Branch. Click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
     /** the toolbar category of roads, and the road tool in it (#328) */
     roads: 'Roads',
@@ -465,38 +462,31 @@ export const STR = {
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
-      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight wide or narrow track at right angles, as a level crossing; never high-speed track.',
+      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Branch Line or Narrow Gauge track at right angles, as a level crossing.',
     },
     trackDesc: {
-      straight_regular: 'Plain rail. Drag to lay a run of straights.',
-      curve_regular:
+      straight_branch: 'Branch Line straight. Drag to lay a run of straights.',
+      curve_branch:
         'Two by two tiles, radius one and a half: room for long trains to turn. The inner corner tile is blocked. R rotates.',
-      switch_regular:
+      switch_branch:
         'Two by two tiles: one line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
-      crossing_regular_regular: 'Two wide lines cross without connecting.',
-      bridge_regular: 'Spans one tile of water. Only on water.',
-      transition_regular:
-        'Joins wide and high-speed track. Wide-track speed applies on the piece itself.',
-      straight_high_speed: 'High-speed straight: no speed limit. Drag to lay a run.',
-      curve_high_speed:
-        'Two by two tiles, radius one and a half, no speed limit. The inner corner tile is blocked. R rotates.',
-      switch_high_speed:
-        'Two by two tiles: a high-speed straight with a wide diverging arc that bends into a parallel track beside a straight. R rotates through both handings.',
-      crossing_regular_high_speed:
-        'A wide line crosses a high-speed line at grade. R swaps which line runs which way.',
-      crossing_high_speed_high_speed: 'Two high-speed lines cross at grade.',
-      bridge_high_speed: 'High-speed span over one tile of water.',
-      straight_narrow: 'Narrow-gauge straight. Only narrow trains run on it. Drag to lay a run.',
-      curve_narrow: 'Narrow-gauge quarter turn on one tile: for tight spaces. R rotates.',
-      switch_narrow: 'Narrow-gauge switch on one tile. R rotates through both handings.',
-      crossing_narrow_narrow: 'Two narrow lines cross at grade.',
-      crossing_narrow_regular:
-        'A narrow line crosses a wide line at grade. R swaps which line runs which way.',
+      crossing_branch_branch: 'Two Branch Lines cross without connecting.',
+      bridge_branch: 'Spans one tile of water. Only on water.',
+      straight_narrow: 'Narrow Gauge straight. Only narrow trains run on it. Drag to lay a run.',
+      curve_narrow: 'Narrow Gauge quarter turn on one tile: for tight spaces. R rotates.',
+      switch_narrow: 'Narrow Gauge switch on one tile. R rotates through both handings.',
+      crossing_narrow_narrow: 'Two Narrow Gauge lines cross at grade.',
+      crossing_narrow_branch:
+        'A Narrow Gauge line crosses a Branch Line at grade without joining it. R swaps which line runs which way.',
     } as Record<string, string>,
-    trackClass: { regular: 'Wide', high_speed: 'High-speed', narrow: 'Narrow' } as Record<
-      string,
-      string
-    >,
+    trackClass: {
+      narrow: 'Narrow Gauge',
+      branch: 'Branch Line',
+      main: 'Main Line',
+      trunk: 'Trunk Line',
+      maglev: 'Maglev Guideway',
+      hyperloop: 'Hyperloop Tube',
+    } as Record<string, string>,
     supply: {
       third_rail: 'Third rail',
       catenary: 'Catenary',
@@ -920,7 +910,7 @@ export const STR = {
     hint: 'Rotating isometric preview · drag to turn',
   },
   roster: {
-    help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, which high-speed track requires. Trains are put together in the Depot.',
+    help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, for the in-cab signalling level. Trains are put together in the Depot.',
     sizeLabel: 'Size',
     sizes: { tiny: 'Tiny', small: 'Small', medium: 'Medium', large: 'Large' } as Record<
       string,
@@ -928,7 +918,7 @@ export const STR = {
     >,
     fitInCab: (cost: number) => `Fit in-cab signalling ($${cost.toLocaleString()})`,
     fitInCabHint:
-      'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
+      'Where the line is worked by in-cab signalling, an equipped locomotive may follow closer behind the train ahead.',
     fitted: (n: string) => `${n} fitted with in-cab signalling`,
     hasInCab: 'in-cab signalling fitted',
     alreadyFitted: 'Already fitted with in-cab signalling',
@@ -1434,24 +1424,18 @@ export const STR = {
     } as Record<string, string>,
   },
   compat: {
-    wrongGauge: (narrowTrack: boolean) =>
-      narrowTrack
-        ? 'Wide gauge: cannot run on narrow track'
-        : 'Narrow gauge: runs on narrow track only',
-    runsOn: (classes: string[]) =>
-      classes.length ? `Runs on ${classes.join(' and ')} track` : 'Runs on no track',
-    needInCab: 'no in-cab signalling equipment on any locomotive',
-    inCabName: 'In-cab signalling',
+    wrongNetwork: (line: string) => `not built for ${line}`,
+    runsOn: (lines: string[]) =>
+      lines.length ? `Runs on ${lines.join(', ')}` : 'Runs on no track yet',
     foreAft: (v: number, t: number) =>
       `bogies slide ${v.toFixed(2)} tiles along the body, limit ${t.toFixed(2)}`,
     gap: (v: number, t: number) =>
       `body sits ${v.toFixed(2)} tiles off the rail, limit ${t.toFixed(2)}`,
     lateral: (v: number, t: number) =>
       `centre bogie sits ${v.toFixed(2)} tiles off its socket, limit ${t.toFixed(2)}`,
-    cannotUse: (name: string, cls: string, why: string) =>
-      `${name} cannot use ${cls} track: ${why}`,
+    cannotUse: (name: string, cls: string, why: string) => `${name} cannot run on ${cls}: ${why}`,
     gateClass: (x: number, y: number, present: string, name: string, needs: string) =>
-      `Gate ${x},${y}: ${present} track; ${name} needs ${needs}`,
+      `Gate ${x},${y}: ${present}; ${name} needs ${needs}`,
     gateNoTrack: (x: number, y: number) => `Gate ${x},${y}: no track`,
     gateStub: (x: number, y: number) => `Gate ${x},${y}: the track ends right after the gate`,
     gateRoom: (x: number, y: number, run: number, need: number) =>
@@ -1460,15 +1444,15 @@ export const STR = {
     gateNoRoute: (x: number, y: number, s: string) =>
       `Gate ${x},${y}: no route to ${s} the consist may use`,
     blockedAt: (name: string, x: number, y: number, cls: string) =>
-      `${name} cannot pass ${cls} track at ${x},${y}`,
+      `${name} cannot pass ${cls} at ${x},${y}`,
     deployable: 'Can roll out here',
   },
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
-    mixedGauge: 'A train cannot mix narrow and wide gauge.',
-    mixedGaugeTrain: 'narrow and wide gauge in one train: recall it and build it again',
+    mixedGauge: 'A train cannot mix Narrow Gauge and standard stock.',
+    mixedGaugeTrain: 'Narrow Gauge and standard stock in one train: recall it and build it again',
     wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
-    noNarrowDepot: 'Build a narrow depot first: narrow trains roll out of one',
+    noNarrowDepot: 'Build a Narrow Depot first: Narrow Gauge trains roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
     depotNoGate: (n: string) => `${n} has no track at its gates`,
     depotNoRoute: (d: string, s: string) =>

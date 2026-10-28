@@ -1856,7 +1856,7 @@ function grownLoaded(c: TrafficControl, tick: number): Fleet {
   const map = emptyMap(4242, w, h, Terrain.Grass);
   const track = new TrackGraph(w, h);
   for (const [x, y, kind, rot, cls, cls2] of save.track)
-    track.place(x, y, kind, rot, cls ?? 'regular', cls2);
+    track.place(x, y, kind, rot, cls ?? 'branch', cls2);
   track.refreshSwitchForms();
   const stock = new Stockpile();
   const economy = new Economy();
@@ -1991,7 +1991,7 @@ interface IdleLaid {
 /** Lays a piece through the builder, free of cost and region, as the game would. */
 function layPiece(w: SimWorld, x: number, y: number, kind: TrackKind, rot: number) {
   w.builder.free = true;
-  const ok = w.builder.placeTrack(x, y, { kind, cls: 'regular' }, rot);
+  const ok = w.builder.placeTrack(x, y, { kind, cls: 'branch' }, rot);
   w.builder.free = false;
   if (!ok) throw new Error(`no ${kind} at ${x},${y}`);
 }

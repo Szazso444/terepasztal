@@ -1,4 +1,4 @@
-import type { TrackClass, TrackItem } from '../world/track';
+import { BUILDABLE_CLASSES, LINES, type TrackClass, type TrackItem } from '../world/track';
 import { STR } from '../strings';
 
 /**
@@ -6,19 +6,19 @@ import { STR } from '../strings';
  * slot (the number key that picks it), so a key means the same shape in every type.
  */
 export type TrackGroupId = TrackClass | 'bridges';
-export const TRACK_GROUPS: TrackGroupId[] = ['narrow', 'regular', 'high_speed', 'bridges'];
+export const TRACK_GROUPS: TrackGroupId[] = [...BUILDABLE_CLASSES, 'bridges'];
 
-/** Rarer classes claim the pieces they share with wide track. */
-const RANK: Record<TrackClass, number> = { regular: 0, high_speed: 1, narrow: 2 };
+/** A bigger standard line, or a separate network, claims the pieces it shares with a smaller line. */
+const rank = (cls: TrackClass) => (LINES[cls].network === 'standard' ? LINES[cls].tier : 10);
 
-/** The type a piece is listed under: for a piece of two classes, the rarer one. */
+/** The type a piece is listed under: for a piece of two lines, the bigger or separate one. */
 export function trackGroupOf(item: TrackItem): TrackClass {
   const other = item.cls2 ?? item.cls;
-  return RANK[other] > RANK[item.cls] ? other : item.cls;
+  return rank(other) > rank(item.cls) ? other : item.cls;
 }
 
 const SHAPE_SLOT: Partial<Record<TrackItem['kind'], number>> = { straight: 0, curve: 1, switch: 2 };
-/** Slot in its type: 0 straight, 1 curve, 2 switch, 3 its own crossing, 4 the piece that joins it to wide track. */
+/** Slot in its type: 0 straight, 1 curve, 2 switch, 3 its own crossing, 4 a crossing with another line. */
 export function trackSlot(item: TrackItem): number {
   const shape = SHAPE_SLOT[item.kind];
   if (shape !== undefined) return shape;

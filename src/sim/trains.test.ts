@@ -1421,7 +1421,7 @@ describe('a train placed on the track (spawnAt)', () => {
   it('rolls out of a depot as it did: the head on the gate, the cars in line behind it', () => {
     const y = 60;
     const depots = [
-      { depotId: 'depot', cls: 'regular', train: ['f7', 'wood_hopper'] },
+      { depotId: 'depot', cls: 'branch', train: ['f7', 'wood_hopper'] },
       { depotId: 'narrow_depot', cls: 'narrow', train: ['mk48', 'mine_tub'] },
     ] as const;
     for (const { depotId, cls, train } of depots)

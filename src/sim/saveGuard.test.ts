@@ -684,7 +684,7 @@ function genFile(rng: Rng): Record<string, unknown> {
     },
     track: list(4, () => {
       const t: unknown[] = [rng.int(0, 63), rng.int(0, 63), 'straight', rng.int(0, 3)];
-      if (rng.chance(0.5)) t.push('regular');
+      if (rng.chance(0.5)) t.push('branch');
       return t;
     }),
     stations: list(4, (i) => genStation(rng, i)),

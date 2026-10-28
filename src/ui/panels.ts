@@ -24,7 +24,6 @@ import type { Train } from '../sim/trains';
 import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { resourceStats } from '../sim/stats';
-import { withoutInCab } from '../sim/compat';
 import { listRulePresets, stageNewGameTuning } from '../sim/rules';
 import { supplyMode, type SupplyMode } from '../sim/supply';
 import {
@@ -587,7 +586,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     label: (text, corner) => yieldLabel.show(text, corner),
     season,
   };
-  d.build.barredTrains = () => withoutInCab(d.fleet.trains);
   d.build.onToolChanged = (t) => {
     toolbar.setActive(t);
     buildInfo.show(toolbar.item(t));

@@ -2,8 +2,8 @@ import { el, btn } from './dom';
 import { fmtCost } from '../sim/stockpile';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
-import { TRACK_ITEMS, itemKey, pieceCost, type TrackItem } from '../world/track';
-import type { WideClass } from '../world/reclass';
+import { BUILDABLE_CLASSES, TRACK_ITEMS, itemKey, pieceCost, type TrackItem } from '../world/track';
+import { nextLine, type ReclassDir } from '../world/reclass';
 import { SUPPLY_KINDS, SUPPLY_DEFS, type SupplyKind } from '../sim/catenary';
 import { STATION_DEFS } from '../sim/stations';
 import { DECOR_DEFS, decorDef } from '../sim/build';
@@ -31,8 +31,8 @@ export type Tool =
   | { kind: 'decor'; defId: string }
   | { kind: 'terrain'; terrain: number }
   | { kind: 'building'; defId: string }
-  /** convert track under the cursor to a class: an upgrade to high speed or a downgrade to wide */
-  | { kind: 'reclass'; target: WideClass }
+  /** move track under the cursor one standard line up or down */
+  | { kind: 'reclass'; dir: ReclassDir }
   /** lay roads by dragging (#328) */
   | { kind: 'road' }
   | { kind: 'remove' };
@@ -77,6 +77,11 @@ interface Category {
   groups?: { id: string; label: string }[];
 }
 
+/** Are there two buildable standard lines for Upgrade and Downgrade to move between? */
+function reclassable() {
+  return BUILDABLE_CLASSES.some((c) => nextLine(c, 'up'));
+}
+
 function toolKey(t: Tool): string {
   switch (t.kind) {
     case 'track':
@@ -92,7 +97,7 @@ function toolKey(t: Tool): string {
     case 'building':
       return `building:${t.defId}`;
     case 'reclass':
-      return `reclass:${t.target}`;
+      return `reclass:${t.dir}`;
     case 'road':
       return 'road';
     case 'remove':
@@ -121,7 +126,7 @@ export class Toolbar {
   private hint = el('span', { class: 'tb-status dim', style: 'margin-left:auto' });
   readonly extra = el('div', { class: 'tb-group' });
   private removeBtn: HTMLButtonElement;
-  private reclassBtns: Record<WideClass, HTMLButtonElement>;
+  private reclassBtns: Record<ReclassDir, HTMLButtonElement>;
   open: CategoryId | null = null;
   active: Tool = { kind: 'none' };
   onHover: ((item: ToolItem | null) => void) | null = null;
@@ -150,9 +155,7 @@ export class Toolbar {
       const clsName =
         it.kind === 'crossing'
           ? `${STR.toolbar.trackClass[it.cls]} × ${STR.toolbar.trackClass[it.cls2 ?? it.cls]}`
-          : it.cls === 'regular'
-            ? ''
-            : STR.toolbar.trackClass[it.cls];
+          : STR.toolbar.trackClass[it.cls];
       return {
         key: `track:${k}`,
         tool: { kind: 'track', item: it },
@@ -305,21 +308,18 @@ export class Toolbar {
     }
     this.removeBtn = btn(STR.toolbar.remove, () => this.select({ kind: 'remove' }), 'tb-cat');
     this.removeBtn.title = STR.toolbar.removeHint;
-    const reclass = (target: WideClass, label: string, hint: string) => {
-      const b = btn(label, () => this.toggleReclass(target), 'tb-cat');
+    const reclass = (dir: ReclassDir, label: string, hint: string) => {
+      const b = btn(label, () => this.toggleReclass(dir), 'tb-cat');
       b.title = hint;
+      // shown once there are two standard lines to move between
+      if (!reclassable()) b.style.display = 'none';
       return b;
     };
     this.reclassBtns = {
-      high_speed: reclass('high_speed', STR.toolbar.upgrade, STR.toolbar.upgradeHint),
-      regular: reclass('regular', STR.toolbar.downgrade, STR.toolbar.downgradeHint),
+      up: reclass('up', STR.toolbar.upgrade, STR.toolbar.upgradeHint),
+      down: reclass('down', STR.toolbar.downgrade, STR.toolbar.downgradeHint),
     };
-    catRow.append(
-      this.removeBtn,
-      this.reclassBtns.high_speed,
-      this.reclassBtns.regular,
-      this.extra,
-    );
+    catRow.append(this.removeBtn, this.reclassBtns.up, this.reclassBtns.down, this.extra);
     this.itemRow.style.display = 'none';
     this.groupRow.style.display = 'none';
     this.root = el(
@@ -488,17 +488,18 @@ export class Toolbar {
     this.setActive(t);
   }
   /** The Upgrade or Downgrade tool: chosen, or put down again when it is the one in hand. */
-  toggleReclass(target: WideClass) {
-    const held = this.active.kind === 'reclass' && this.active.target === target;
-    this.select(held ? { kind: 'none' } : { kind: 'reclass', target });
+  toggleReclass(dir: ReclassDir) {
+    if (!reclassable()) return;
+    const held = this.active.kind === 'reclass' && this.active.dir === dir;
+    this.select(held ? { kind: 'none' } : { kind: 'reclass', dir });
   }
 
   /** Reflect the controller's tool: opens the matching category, closes on none. */
   setActive(t: Tool) {
     this.active = t;
     const key = toolKey(t);
-    for (const [target, b] of Object.entries(this.reclassBtns))
-      b.classList.toggle('active', t.kind === 'reclass' && t.target === target);
+    for (const [dir, b] of Object.entries(this.reclassBtns))
+      b.classList.toggle('active', t.kind === 'reclass' && t.dir === dir);
     if (t.kind === 'none') {
       if (this.open) this.closeCategory();
       this.removeBtn.classList.remove('active');

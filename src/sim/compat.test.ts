@@ -10,6 +10,7 @@ import {
 } from './compat';
 import { makePiece } from '../world/track';
 import { Dir } from '../engine/iso';
+import { STR } from '../strings';
 
 const loco = (id: string) => content.locomotives.find((d) => d.id === id)!;
 const wagon = (id: string) => content.wagons.find((d) => d.id === id)!;
@@ -18,23 +19,28 @@ describe('gauge access', () => {
   it('keeps narrow stock on narrow track and regular stock off it', () => {
     expect(gaugeOf(loco('mk48'))).toBe('narrow');
     expect(vehicleAccess(loco('mk48'), 'narrow')).toBeNull();
-    expect(vehicleAccess(loco('mk48'), 'regular')).not.toBeNull();
+    expect(vehicleAccess(loco('mk48'), 'branch')).not.toBeNull();
     expect(vehicleAccess(loco('f7'), 'narrow')).not.toBeNull();
     expect(vehicleAccess(wagon('mine_tub'), 'narrow')).toBeNull();
     expect(vehicleAccess(wagon('boxcar'), 'narrow')).not.toBeNull();
+    // regular stock runs on the whole standard network, and on no line of another network
+    expect(vehicleAccess(loco('f7'), 'main')).toBeNull();
+    expect(vehicleAccess(loco('f7'), 'trunk')).toBeNull();
+    expect(vehicleAccess(loco('f7'), 'maglev')).toBe(STR.compat.wrongNetwork('Maglev Guideway'));
+    expect(vehicleAccess(loco('mk48'), 'main')).toBe(STR.compat.wrongNetwork('Main Line'));
   });
 
-  it('no longer bars large stock from regular track', () => {
+  it('no longer bars large stock from Branch Line', () => {
     const large = content.locomotives.find((d) => d.size === 'large')!;
-    expect(vehicleAccess(large, 'regular')).toBeNull();
+    expect(vehicleAccess(large, 'branch')).toBeNull();
   });
 
   it('says which track a vehicle runs on', () => {
     const large = content.locomotives.find((d) => d.size === 'large' && d.gauge !== 'narrow')!;
-    expect(runsOn(large)).toBe('Runs on wide and high-speed track');
-    expect(runsOn(wagon('boxcar'))).toBe('Runs on wide and high-speed track');
-    expect(runsOn(loco('mk48'))).toBe('Runs on narrow track');
-    expect(runsOn(wagon('mine_tub'))).toBe('Runs on narrow track');
+    expect(runsOn(large)).toBe('Runs on Branch Line');
+    expect(runsOn(wagon('boxcar'))).toBe('Runs on Branch Line');
+    expect(runsOn(loco('mk48'))).toBe('Runs on Narrow Gauge');
+    expect(runsOn(wagon('mine_tub'))).toBe('Runs on Narrow Gauge');
   });
 
   it('names a consist of two gauges as mixed', () => {
@@ -46,9 +52,9 @@ describe('gauge access', () => {
   });
 
   it('lets each gauge use its own axis of a mixed crossing', () => {
-    const x = makePiece('crossing', 0, 'narrow', 'regular');
+    const x = makePiece('crossing', 0, 'narrow', 'branch');
     expect(pieceClassFor(x, Dir.N)).toBe('narrow');
-    expect(pieceClassFor(x, Dir.E)).toBe('regular');
+    expect(pieceClassFor(x, Dir.E)).toBe('branch');
     expect(consistAccess([loco('f7')]).classes.has(pieceClassFor(x, Dir.E))).toBe(true);
     expect(consistAccess([loco('f7')]).classes.has(pieceClassFor(x, Dir.N))).toBe(false);
     expect(consistAccess([loco('mk48')]).classes.has(pieceClassFor(x, Dir.N))).toBe(true);
