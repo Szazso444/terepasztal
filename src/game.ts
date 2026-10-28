@@ -1,5 +1,7 @@
 import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
+import { browserAtlasCache } from './engine/atlasCache';
+import { content } from './data/content';
 import type { BootProgressHook } from './engine/boot';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
@@ -188,7 +190,8 @@ const LIVE_TIPS: ReadonlySet<TipTarget['kind']> = new Set(['station', 'works', '
  */
 export class Game implements UiHost {
   app!: Application;
-  atlas = new AtlasRegistry();
+  /** generated groups come from the cache this build and content bundle drew them into last boot */
+  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(content));
   /** The sound bus, reachable from `window.game` for the debug panel and the art/audio scripts. */
   readonly audio = audio;
   input!: Input;
