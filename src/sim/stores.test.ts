@@ -55,6 +55,21 @@ describe('town stores', () => {
     expect(dock.cap('coal')).toBe(3000);
   });
 
+  it('a level-up raises the caps at the next refresh', () => {
+    const { w, stores } = world();
+    const hall = station(w, 'town', 20, 29);
+    const inTown = station(w, 'warehouse', 24, 29);
+    const alone = station(w, 'warehouse', 60, 29);
+    sync(w, stores);
+    const town = stores.townStore(hall.x, hall.y)!;
+    const own = stores.dockOf(alone)!;
+    expect([town.cap('wood'), own.cap('wood')]).toEqual([1300, 1000]);
+    inTown.level = 3;
+    alone.level = 2;
+    sync(w, stores);
+    expect([town.cap('wood'), own.cap('wood')]).toEqual([3300, 2000]);
+  });
+
   it('a depot is a store', () => {
     const { w, stores } = world();
     const depot = station(w, 'depot', 40, 24);

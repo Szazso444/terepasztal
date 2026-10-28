@@ -167,10 +167,12 @@ export class StoreRegistry {
   private deps: StoreDeps | null = null;
   private stores = new Map<string, Store>();
   private pools = new Map<string, StorePool>();
+  /** power plants at work, counted by the last refresh */
+  private plants = 0;
 
   constructor() {
     this.grid = new Store('grid', 'grid', { x: 0, y: 0 }, (id) =>
-      id === 'power' ? rules.powerCap + 100 * this.d.builder.plantCount() : 0,
+      id === 'power' ? rules.powerCap + 100 * this.plants : 0,
     );
     this.stores.set(this.grid.key, this.grid);
   }
@@ -185,24 +187,26 @@ export class StoreRegistry {
   }
 
   /**
-   * Re-derive the stores from the stations and towns. A store that survives keeps its goods; the
+   * Re-derive the stores from the stations and towns, caps included. A store that survives keeps its goods; the
    * goods of one that is gone (its anchor removed, or a warehouse that joined a town) go to the
    * store that now covers its anchor, else the nearest in reach, up to the cap. The rest is lost.
    */
   refresh() {
     const { builder, towns } = this.d;
     const want: StoreSpec[] = [];
+    // what the caps derive from the stations is counted here once; a level-up or a new warehouse
+    // takes effect at the next refresh
+    this.plants = builder.plantCount();
+    const levels = this.townWarehouseLevels();
     for (const t of towns.towns) {
       const hall = towns.station(t);
       if (!hall) continue;
+      const townCap = rules.townStoreCap + rules.warehouseCap * (levels.get(t.id) ?? 0);
       want.push({
         key: `town:${t.id}`,
         kind: 'town',
         anchor: { x: hall.x, y: hall.y },
-        capOf: (id) =>
-          id === 'power'
-            ? 0
-            : rules.townStoreCap + rules.warehouseCap * this.townWarehouseLevels(t.id),
+        capOf: (id) => (id === 'power' ? 0 : townCap),
       });
     }
     for (const s of builder.stations) {
@@ -214,14 +218,15 @@ export class StoreRegistry {
           anchor,
           capOf: (id) => (id === 'power' ? 0 : rules.depotCap),
         });
-      else if (s.def.stockpile && !towns.townAt(s.x, s.y))
+      else if (s.def.stockpile && !towns.townAt(s.x, s.y)) {
+        const level = s.level;
         want.push({
           key: stationKey(s),
           kind: 'warehouse',
           anchor,
-          capOf: (id) =>
-            id === 'power' ? 0 : rules.warehouseCap * (builder.stationById(s.id)?.level ?? 0),
+          capOf: (id) => (id === 'power' ? 0 : rules.warehouseCap * level),
         });
+      }
     }
 
     const old = this.stores;
@@ -343,13 +348,15 @@ export class StoreRegistry {
     const s = this.stores.get(key);
     return s ? this.poolOf(s) : null;
   }
-  /** Warehouse levels in the town's reach: they raise its cap. */
-  private townWarehouseLevels(townId: number) {
+  /** Warehouse levels in each town's reach (town id to sum): they raise its cap. */
+  private townWarehouseLevels() {
     const { builder, towns } = this.d;
-    let n = 0;
-    for (const s of builder.stations)
-      if (s.def.stockpile && towns.townAt(s.x, s.y)?.id === townId) n += s.level;
-    return n;
+    const out = new Map<number, number>();
+    for (const s of builder.stations) {
+      const t = s.def.stockpile ? towns.townAt(s.x, s.y) : null;
+      if (t) out.set(t.id, (out.get(t.id) ?? 0) + s.level);
+    }
+    return out;
   }
 }
 
