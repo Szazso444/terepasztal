@@ -235,6 +235,20 @@ describe('AtlasCache', () => {
     expect(store.records.has('h')).toBe(false);
   });
 
+  it('gives up on a picture that does not decode, after the decode wait', async () => {
+    vi.useFakeTimers();
+    const store = memoryStore();
+    await new AtlasCache(Promise.resolve(store), 'v1', jsonCodec).write('g', atlasOf('g'));
+    const stuck: AtlasCodec = { ...jsonCodec, decode: () => new Promise(() => {}) };
+    const cache = new AtlasCache(Promise.resolve(store), 'v1', stuck, 3000, 10_000);
+    let result: AtlasImage | null | 'pending' = 'pending';
+    void cache.read('g').then((r) => (result = r));
+    await vi.advanceTimersByTimeAsync(9999);
+    expect(result).toBe('pending');
+    await vi.advanceTimersByTimeAsync(1);
+    expect(result).toBeNull();
+  });
+
   it('gives up on a store that does not answer, after the wait', async () => {
     vi.useFakeTimers();
     const hanging: AtlasStore = { get: () => new Promise(() => {}), put: () => Promise.resolve() };

@@ -36,6 +36,11 @@ const DB_VERSION = 1;
 const STORE = 'groups';
 /** How long opening the database or reading a record may take before the boot generates instead. */
 export const CACHE_WAIT_MS = 3000;
+/**
+ * How long a stored picture may take to decode. Generous, as the track sheet is a few megabytes and
+ * a busy machine decodes slowly; it is there so that a decode that never settles cannot hold the boot.
+ */
+export const DECODE_WAIT_MS = 10_000;
 
 /** One generated group as stored. */
 export interface CachedAtlas {
@@ -203,6 +208,7 @@ export class AtlasCache {
     readonly version: string,
     private readonly codec: AtlasCodec,
     private readonly waitMs = CACHE_WAIT_MS,
+    private readonly decodeWaitMs = DECODE_WAIT_MS,
   ) {
     this.store = store.catch(() => null);
   }
@@ -214,7 +220,8 @@ export class AtlasCache {
       if (!store) return null;
       const record = await within(store.get(group), this.waitMs, undefined);
       if (!isCachedAtlas(record, this.version)) return null;
-      const image = await this.codec.decode(record.png);
+      const image = await within(this.codec.decode(record.png), this.decodeWaitMs, null);
+      if (!image) return null;
       // a picture that decodes to another size is not the one the frame table was packed on
       if (image.width !== record.width || image.height !== record.height) return null;
       return {
