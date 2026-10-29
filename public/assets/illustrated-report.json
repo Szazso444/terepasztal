@@ -1482,11 +1482,11 @@
       "width": 4032,
       "height": 1085,
       "capped": {
-        "texels": 6338932,
-        "haze": 162182,
-        "solid": 6168964,
-        "white": 44072,
-        "amber": 36243,
+        "texels": 6086227,
+        "haze": 162863,
+        "solid": 5913591,
+        "white": 43213,
+        "amber": 36280,
         "compressed": 0
       }
     },

@@ -91,7 +91,7 @@
  },
  "station": {
   "file": "station.png",
-  "ax": 116.88,
+  "ax": 117.88,
   "ay": 168.25,
   "frames": [
    "structures/station_1",
@@ -250,8 +250,8 @@
  },
  "substation": {
   "file": "substation.png",
-  "ax": 72.64,
-  "ay": 150.79,
+  "ax": 71.64,
+  "ay": 151.79,
   "frames": [
    "structures/substation",
    "structures/substation_lv2",
@@ -267,7 +267,7 @@
  },
  "ironworks": {
   "file": "ironworks.png",
-  "ax": 115.05,
+  "ax": 116.05,
   "ay": 134.27,
   "frames": [
    "structures/ironworks",
