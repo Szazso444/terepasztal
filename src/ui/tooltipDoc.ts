@@ -35,24 +35,27 @@ export interface DimPart {
 export type Inline = string | NumPart | ResPart | IconPart | TermPart | DimPart;
 export type Parts = readonly Inline[];
 
-export type Tone = 'good' | 'bad';
+/** green (good), red (bad) or amber (accent: the one that stands out, such as the current age) */
+export type Tone = 'good' | 'bad' | 'accent';
 
 export type Block =
   | { readonly kind: 'title'; readonly parts: Parts }
   | {
       readonly kind: 'text' | 'dim' | 'hint';
       readonly parts: Parts;
-      /** a line of text green (good) or red (bad) */
+      /** a line of text green (good), red (bad) or amber (accent) */
       readonly tone?: Tone;
     }
   | {
       readonly kind: 'row';
       readonly label: Parts;
       readonly value: Parts;
-      /** the whole row green (good) or red (bad) */
+      /** the whole row green (good), red (bad) or amber (accent) */
       readonly tone?: Tone;
       /** a total: a rule above it */
       readonly total?: boolean;
+      /** set in from the left, under the line it belongs to */
+      readonly indent?: boolean;
     };
 /** A tooltip: its title first, then its lines and rows. */
 export type TipDoc = readonly Block[];
@@ -93,6 +96,10 @@ export function text(...parts: Inline[]): Block {
 export function bad(...parts: Inline[]): Block {
   return { kind: 'text', parts, tone: 'bad' };
 }
+/** A line of text in green: what is met or done. */
+export function good(...parts: Inline[]): Block {
+  return { kind: 'text', parts, tone: 'good' };
+}
 export function dim(...parts: Inline[]): Block {
   return { kind: 'dim', parts };
 }
@@ -102,7 +109,7 @@ export function hint(...parts: Inline[]): Block {
 export function row(
   label: Inline | Parts,
   value: Inline | Parts,
-  look: { tone?: Tone; total?: boolean } = {},
+  look: { tone?: Tone; total?: boolean; indent?: boolean } = {},
 ): Block {
   return { kind: 'row', label: asParts(label), value: asParts(value), ...look };
 }

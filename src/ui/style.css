@@ -287,6 +287,48 @@ body {
 #topbar .actions .btn.cheat {
   color: var(--text-dim);
 }
+/* the screen buttons give way last, by clipping; the era widget and the date and speed never do */
+#topbar .actions {
+  min-width: 0;
+  overflow: hidden;
+}
+#topbar .datespeed,
+#topbar > .tt-term {
+  flex: none;
+}
+/* short of room (Hud.fit): tighter cells and buttons, no weather text, the era without its name */
+#topbar.compact .title {
+  padding: 0 6px;
+}
+#topbar.compact .stat {
+  gap: 4px;
+  padding: 0 5px;
+}
+#topbar.compact .btn.small,
+#topbar.compact .actions .btn {
+  padding: 1px 4px;
+}
+#topbar.compact .stat.weather,
+#topbar.compact .era-name {
+  display: none;
+}
+#topbar.compact .datespeed {
+  gap: 5px;
+  padding-right: 0;
+}
+#topbar.compact .datespeed .time {
+  gap: 3px;
+  padding: 0 6px 0 2px;
+}
+#topbar.compact .time .btn {
+  min-width: 26px;
+  padding: 1px 4px;
+}
+#topbar.compact .time .btn.pause {
+  min-width: 32px;
+  padding: 2px 6px;
+  margin-right: 2px;
+}
 
 /* ---- minimap ---- */
 #minimap {
@@ -416,6 +458,15 @@ body {
 .tt-bad,
 .tt-bad .tt-num {
   color: var(--text-bad);
+}
+/* the one that stands out, such as the current age: the amber of a title */
+.tt-accent,
+.tt-accent .tt-num {
+  color: var(--amber);
+}
+/* a row under the line it belongs to, such as the alternatives of a group */
+.tt-indent {
+  padding-left: 10px;
 }
 .tt-total {
   border-top: 1px solid var(--border-dark);

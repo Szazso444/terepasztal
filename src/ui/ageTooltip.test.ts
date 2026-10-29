@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ageName, ageProgress, ageTip, eraView } from './ageTooltip';
-import { blockText } from './tooltipDoc';
+import { blockText, plain } from './tooltipDoc';
 import { STR } from '../strings';
 import { fmtMoney } from './numberFormat';
 import { forAll } from '../testing/property';
@@ -90,6 +90,35 @@ describe('ageTip', () => {
     expect(lines).toContain(`${ageName('diesel')}: ${STR.ages.current}`);
     expect(lines).toContain(`${ageName('electric')}: ${STR.ages.locked}`);
     expect(doc[doc.length - 1]).toEqual({ kind: 'hint', parts: [STR.ages.hint] });
+  });
+  it('heads each age with its name, the current one in the accent tone', () => {
+    const ids = ['steam', 'diesel', 'electric'];
+    const doc = ageTip([
+      age('steam', [], false, true),
+      age('diesel', [], true, true),
+      age('electric', [goal('earned', 5, 10)], false, false),
+    ]);
+    const names = new Set(ids.map(ageName));
+    const heads = doc.filter((b) => b.kind === 'row' && names.has(plain(b.label)));
+    expect(heads.map((b) => (b.kind === 'row' ? plain(b.label) : null))).toEqual(ids.map(ageName));
+    expect(heads.map((b) => (b.kind === 'row' ? b.tone : null))).toEqual([
+      undefined,
+      'accent',
+      undefined,
+    ]);
+    expect(heads.every((b) => b.kind === 'row' && !b.indent)).toBe(true);
+  });
+  it('indents the alternatives of a group, and no plain goal', () => {
+    const doc = ageTip([
+      age(
+        'diesel',
+        [goal('population', 40, 100, 0), goal('chunks', 4, 9, 0), goal('depots', 1, 3)],
+        false,
+        false,
+      ),
+    ]);
+    const goals = doc.filter((b) => b.kind === 'row').slice(1);
+    expect(goals.map((b) => (b.kind === 'row' ? !!b.indent : null))).toEqual([true, true, false]);
   });
   it('says where every railway begins for an age with no goals', () => {
     const lines = ageTip([age('steam', [], true, true)]).map(blockText);

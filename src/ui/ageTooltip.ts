@@ -6,7 +6,7 @@
 import { STR } from '../strings';
 import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 import { fmtInt, fmtMoney } from './numberFormat';
-import { dim, hint, num, quiet, row, title, type Block, type TipDoc } from './tooltipDoc';
+import { dim, good, hint, num, quiet, row, title, type Block, type TipDoc } from './tooltipDoc';
 
 /** Display name of an age by data id. */
 export function ageName(id: string) {
@@ -64,25 +64,29 @@ function fmtGoal(kind: GoalKind, v: number) {
   return kind === 'earned' ? fmtMoney(Math.floor(v)) : fmtInt(Math.floor(v));
 }
 
-/** A goal: its name, then `current / target`, the whole row in the good tone once done. */
-function goalRow(g: GoalStatus): Block {
+/**
+ * A goal: its name, then `current / target`, the whole row in the good tone once done; an
+ * alternative of a group sits indented under the group's line.
+ */
+function goalRow(g: GoalStatus, indent: boolean): Block {
   return row(
     STR.ages.goal[g.kind],
     [num(fmtGoal(g.kind, g.current)), ' / ', num(fmtGoal(g.kind, g.target))],
-    g.done ? { tone: 'good' } : {},
+    { tone: g.done ? 'good' : undefined, indent },
   );
 }
 
 /**
- * Every age with its state (the current one plain, a reached one dim, one to come with its state
- * dim) and its goals. The alternatives of a group follow a "One of these" line, which says so in
- * the good tone once one of them is met. PR 3's "unlocks in the …" terms open this document too.
+ * Every age as a heading row, its name and its state (the current one in the accent tone, a reached
+ * one dim, one to come with its state dim), then its goals. The alternatives of a group sit indented
+ * under a "One of these" line, which says so in the good tone once one of them is met. PR 3's
+ * "unlocks in the …" terms open this document too.
  */
 export function ageTip(ages: AgeStatus[]): TipDoc {
   const out: Block[] = [title(STR.ages.title)];
   for (const a of ages) {
     const name = ageName(a.id);
-    if (a.current) out.push(row(name, STR.ages.current));
+    if (a.current) out.push(row(name, STR.ages.current, { tone: 'accent' }));
     else if (a.unlocked) out.push(row(quiet(name), quiet(STR.ages.reached)));
     else out.push(row(name, quiet(STR.ages.locked)));
     if (!a.goals.length) {
@@ -91,13 +95,9 @@ export function ageTip(ages: AgeStatus[]): TipDoc {
     }
     for (const r of goalRows(a.goals)) {
       // a group of one is a plain goal
-      if (r.length > 1)
-        out.push(
-          r.some((g) => g.done)
-            ? { kind: 'text', parts: [STR.ages.anyOfMet], tone: 'good' }
-            : dim(STR.ages.anyOf),
-        );
-      out.push(...r.map(goalRow));
+      const group = r.length > 1;
+      if (group) out.push(r.some((g) => g.done) ? good(STR.ages.anyOfMet) : dim(STR.ages.anyOf));
+      out.push(...r.map((g) => goalRow(g, group)));
     }
   }
   out.push(hint(STR.ages.hint));

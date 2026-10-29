@@ -52,6 +52,8 @@ export const STR = {
     resume: 'Resume (Space)',
     weatherToggle: 'Weather',
     weatherToggleHint: 'Toggle rain, fog and seasons',
+    /** the same, in a narrow top bar: the season and weather it no longer shows come first */
+    weatherToggleHintNow: (now: string) => `${now}\nToggle rain, fog and seasons`,
     dayToggle: 'Day/night',
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>

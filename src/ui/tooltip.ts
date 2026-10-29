@@ -131,10 +131,12 @@ export function ttHint(...parts: (Node | string)[]): HTMLElement {
 }
 
 export interface RowLook {
-  /** the whole row green (good) or red (bad) */
-  tone?: 'good' | 'bad';
+  /** the whole row green (good), red (bad) or amber (accent) */
+  tone?: 'good' | 'bad' | 'accent';
   /** a total: a rule above it */
   total?: boolean;
+  /** set in from the left, under the line it belongs to */
+  indent?: boolean;
 }
 
 /** A row: the label on the left, the value on the right. */
@@ -146,6 +148,7 @@ export function ttRow(
   const cls = ['tt-row'];
   if (look.tone) cls.push(`tt-${look.tone}`);
   if (look.total) cls.push('tt-total');
+  if (look.indent) cls.push('tt-indent');
   const part = (p: Node | string | (Node | string)[]) =>
     el('span', {}, ...(Array.isArray(p) ? p : [p]));
   return el('div', { class: cls.join(' ') }, part(label), part(value));

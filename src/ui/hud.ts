@@ -7,6 +7,7 @@ import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
 import { ageTip, eraView } from './ageTooltip';
 import { ageIcon } from './ageIcons';
+import { topbarCompact } from './fit';
 
 export interface HudModel {
   tickets: number;
@@ -20,6 +21,10 @@ export interface HudModel {
  * on it lists every age with its goals), then day, clock and speed as the last block. Tickets live
  * in `funds`, which the game places at the right end of the resource row (the money itself is the
  * resource bar's first cell).
+ *
+ * When the bar is short of room (`fit`) it goes `compact`: tighter spacing, the weather words in
+ * the Weather toggle's tooltip, the era widget without the age's name (its tooltip has it). The era
+ * widget and the date and speed never give way; past compact, the screen buttons are cut.
  */
 export class Hud {
   readonly root: HTMLElement;
@@ -27,7 +32,7 @@ export class Hud {
   /** the era widget: the age's icon and name, the bar toward the next age and its percent */
   private eraIcon = el('span', { class: 'era-icon' });
   private eraName = el('span', { class: 'era-name' });
-  private eraFill = el('div', { class: 'era-fill' });
+  private eraFill = el('div', { class: 'era-fill', style: 'width:0%' });
   private eraBar = el('div', { class: 'era-bar' }, this.eraFill);
   private eraPct = el('span', { class: 'era-pct' });
   /** the age whose icon is drawn */
@@ -49,6 +54,9 @@ export class Hud {
   private locked = false;
   private fps = el('span', { class: 'value dim' });
   private weather = el('span', { class: 'value' });
+  /** the spacing the bar has now (`fit`), and a fit waiting for the next frame */
+  private compact = false;
+  private fitQueued = false;
 
   constructor(
     private readonly clock: GameClock,
@@ -96,6 +104,49 @@ export class Hud {
       el('div', { class: 'stat datespeed' }, this.day, this.clockEl, time),
     );
     tooltip.bindTerms(this.root);
+    // a window resize, or a cell that grows or shrinks (an age, the weather, the advisor's badge, the
+    // editor hiding the screen buttons), changes the room; the observer fires on a change only
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => this.queueFit());
+      ro.observe(this.root);
+      for (const cell of this.root.children) ro.observe(cell);
+    }
+  }
+
+  /**
+   * Fit in the next frame, not inside the observer: the fit resizes the cells it observes, which
+   * the observer would report as a loop if it happened in its own callback.
+   */
+  private queueFit() {
+    if (this.fitQueued) return;
+    this.fitQueued = true;
+    requestAnimationFrame(() => {
+      this.fitQueued = false;
+      this.fit();
+    });
+  }
+
+  /**
+   * Normal spacing when everything fits, `compact` when, laid out without it, the bar would
+   * overflow or cut the screen buttons or the weather text (`topbarCompact`). Measured with compact
+   * off, so the answer does not depend on the last one.
+   */
+  private fit() {
+    const bar = this.root;
+    bar.classList.remove('compact');
+    // a hidden bar has no answer: keep the last one
+    const compact = topbarCompact(bar, [this.actions, this.weather]) ?? this.compact;
+    bar.classList.toggle('compact', compact);
+    if (compact === this.compact) return;
+    this.compact = compact;
+    this.titleWeather();
+  }
+
+  /** The Weather toggle's tooltip: in compact, the weather words the bar no longer shows. */
+  private titleWeather() {
+    const now = this.weather.textContent ?? '';
+    this.weatherBtn.title =
+      this.compact && now ? STR.hud.weatherToggleHintNow(now) : STR.hud.weatherToggleHint;
   }
 
   setToggles(weather: boolean, day: boolean) {
@@ -114,6 +165,7 @@ export class Hud {
     if (this.weather.textContent !== text) {
       this.weather.textContent = text;
       (this.weather.parentElement as HTMLElement).style.display = text ? '' : 'none';
+      this.titleWeather();
     }
   }
 

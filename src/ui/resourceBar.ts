@@ -10,12 +10,10 @@ import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
 import { resourceTip, type ResourceSnapshot } from './tooltipContent';
 import { RESOURCE_GROUPS, barGroups } from './resourceOrder';
+import { needsCompact } from './fit';
 
 /** What the stockpile holds: these have a cap and open the market when clicked. */
 const STOCKPILED = new Set(RESOURCE_IDS);
-
-/** The cells overflow their box: tighten the spacing. */
-export const needsCompact = (scrollWidth: number, clientWidth: number) => scrollWidth > clientWidth;
 
 /**
  * Second row under the top bar: funds first, then the resources in their groups (`RESOURCE_GROUPS`),
