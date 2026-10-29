@@ -1085,3 +1085,25 @@ describe('the selected store', () => {
     expect(stores.withGrid(store)).toBe(view);
   });
 });
+
+describe('the selected store on a rail network (Simple mode)', () => {
+  it('is the network under one name, whether it falls back, is clicked or is cycled to', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    w.builder.free = true;
+    const depot = station(w, 'depot', 20, 29);
+    line(w, 22, 30, 49);
+    line(w, 2, 30, 19);
+    const hall = station(w, 'town', 35, 29);
+    const town = `town:${w.towns.byStation(hall.id)!.id}`;
+    const [choice] = w.stores.choices();
+    expect(w.stores.choices()).toHaveLength(1);
+    expect(choice.key).toBe(town);
+    // the start depot's fallback, a click on the depot and the bar's choice: one key, one name
+    expect(w.stores.selected!.key).toBe(town);
+    w.stores.selected = w.stores.dockOf(depot);
+    expect(w.stores.selected!.key).toBe(town);
+    expect(w.stores.label(w.stores.selected!)).toBe(w.stores.label(choice));
+    w.stores.selected = choice;
+    expect(w.stores.selected).toBe(choice);
+  });
+});

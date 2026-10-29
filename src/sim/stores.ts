@@ -463,15 +463,17 @@ export class StoreRegistry {
 
   /**
    * The store the player looks at, which the top bar shows and crafting, the market and the trade
-   * desk use: the pool of the store the player picked last (a click on a town, a depot or a
-   * warehouse, or the top bar's button); while that store is gone, or none was picked, the start
-   * depot's; with no depot, the first store there is. Null when there is no store but the grid.
+   * desk use: the store the player picked last (a click on a town, a depot or a warehouse, or the
+   * top bar's button); while that store is gone, or none was picked, the start depot's; with no
+   * depot, the first store there is. Always its network's pool (`networkPool`), so a network in
+   * Simple mode is one store under one name however it was picked. Null when there is no store but
+   * the grid.
    */
   get selected(): ResourceStore | null {
     const picked = this.selectedKey !== null ? this.stores.get(this.selectedKey) : undefined;
     const s =
       picked ?? this.startDepot() ?? [...this.stores.values()].find((m) => m.kind !== 'grid');
-    return s ? this.poolOf(s) : null;
+    return s ? this.networkPool(this.poolOf(s)) : null;
   }
   set selected(r: ResourceStore | null) {
     this.selectedKey = r?.key ?? null;

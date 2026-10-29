@@ -26,8 +26,8 @@ export interface TradeSettlement {
   money: number;
 }
 
-/** What the desk asks of the stores: the store a key names, its pool, and the selected one. */
-export type DeskStores = Pick<StoreRegistry, 'byKey' | 'poolOf' | 'selected'>;
+/** What the desk asks of the stores: the store a key names, its network's pool, the selected one. */
+export type DeskStores = Pick<StoreRegistry, 'byKey' | 'poolOf' | 'networkPool' | 'selected'>;
 
 /**
  * Standing trade deals, settled once per cycle with one store: buy so much of a resource per
@@ -114,10 +114,10 @@ export class TradeDesk {
     }
     this.driftDay = day;
   }
-  /** The store the deals settle with now: `storeKey`'s, else the selected one. */
+  /** The store the deals settle with now: `storeKey`'s (its network's pool), else the selected one. */
   storeIn(stores: DeskStores): ResourceStore | null {
     const own = this.storeKey !== null ? stores.byKey(this.storeKey) : undefined;
-    return own ? stores.poolOf(own) : stores.selected;
+    return own ? stores.networkPool(stores.poolOf(own)) : stores.selected;
   }
   tick(now: number, stores: DeskStores, economy: Economy) {
     this.drift(now);

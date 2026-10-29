@@ -1631,12 +1631,6 @@ export class Game implements UiHost {
     this.overview.rebuildPower(this.power);
     this.powerLines.rebuild(this.power);
   }
-  /** The field tile under the pointer; null over a panel, a screen or the overview. */
-  get fieldTile(): { x: number; y: number } | null {
-    const t = this.hoverTile;
-    const onField = this.viewTarget === 0 && !this.input.overUi && !this.screens.current;
-    return onField && inBounds(this.map, t.x, t.y) ? t : null;
-  }
   /** Arm positions of every semaphore, stepped towards the aspect they should show. */
   private semaphoreArms = new Map<number, { m: number; d: number; frame: string }>();
   private semaphoreClock = 0;

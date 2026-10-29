@@ -163,8 +163,6 @@ export interface UiHost {
   readonly overviewTrainId: number | null;
   /** the live numbers the age goals are measured against */
   ageSnapshot(): AgeSnapshot;
-  /** the field tile under the pointer; null over a panel, a screen or the overview */
-  readonly fieldTile: { x: number; y: number } | null;
 
   // ------------------------------------------------------------ camera and view
   /** close the screens and look at the train */
@@ -378,7 +376,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     const all = stores.choices();
     if (!all.length) return;
     const now = stores.selected;
-    const at = now ? all.findIndex((c) => c.key === stores.networkPool(now).key) : -1;
+    const at = now ? all.findIndex((c) => c.key === now.key) : -1;
     stores.selected = all[(at + 1) % all.length];
   };
   const tuningScreen = new TuningScreen(
@@ -547,7 +545,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   trainSide.onDetails = trainDetails;
   trainSide.onLocate = (t) => host.focusTrain(t);
   trainSide.onHover = (t) => host.setHoverTrain(t);
-  const buildInfo = new BuildInfo(d.atlas, d.builder, () => host.fieldTile);
+  const buildInfo = new BuildInfo(d.atlas, d.builder, () => d.build.placement);
   buildInfo.onTrainDetails = trainDetails;
   buildInfo.onTrainLocate = (t) => host.focusTrain(t);
   buildInfo.onTrainClose = () => host.selectFieldTrain(null);
