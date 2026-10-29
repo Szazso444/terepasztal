@@ -71,6 +71,7 @@
       "art-src/**",
       "assets/**",
       "public/assets/*.{png,json}",
+      "public/assets/track-materials/**",
       "docs/art-direction/**",
       "docs/mcp-setup.md"
     ],
