@@ -6,6 +6,7 @@ import {
   pieceCost,
   footprintOf,
   isUnitKind,
+  memberClear,
   makePiece,
   portClass,
   classesJoin,
@@ -478,6 +479,7 @@ export class Builder {
     kind: TrackKind,
     anchor: boolean,
     replace: boolean,
+    clear = false,
   ): string | null {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
@@ -486,13 +488,17 @@ export class Builder {
       return STR.build.needBridge;
     if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
     const st = this.stationAt(x, y);
-    // a depot is a through-station: plain pieces may run through the shed
-    if ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
+    // a depot is a through-station: plain pieces may run through the shed. A clear member of a
+    // curve or switch (no rail on it) may go over whatever stands there.
+    if (
+      !clear &&
+      ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
+    )
       return STR.build.occupied;
     // a platform carries rail or a road, never both: no level crossing on a bridge (#493)
     if (this.bridgeAt(x, y) && this.roads.has(x, y)) return STR.build.bridgeCarriesRoad;
     const dec = this.decorAt(x, y);
-    if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
+    if (dec && !clear && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
     // a wide piece needs its whole footprint free of track; a one-tile piece may replace another
     // one-tile piece (outside a line) but never a member of a wide one
@@ -524,8 +530,9 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.narrowLocked };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
-    for (const t of tiles) {
-      const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace);
+    for (const [i, t] of tiles.entries()) {
+      const clear = wide && memberClear(kind, item.cls, rot, i);
+      const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace, clear);
       if (why) return { ok: false, cost: {}, reason: why };
     }
     // class compatibility with the neighbours the new piece would open onto
@@ -823,7 +830,7 @@ export class Builder {
       const bad = unbuildable(terrainAt(this.map, tx, ty));
       if (bad) return { ok: false, cost: {}, reason: bad };
       if (
-        this.track.has(tx, ty) ||
+        this.track.railOn(tx, ty) ||
         this.stationAt(tx, ty) ||
         this.decorAt(tx, ty) ||
         this.buildingAt(tx, ty)
@@ -995,12 +1002,12 @@ export class Builder {
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     if (onRails(defId)) {
-      if (!this.track.has(x, y)) return STR.build.needTrackHere;
+      if (!this.track.railOn(x, y)) return STR.build.needTrackHere;
     } else {
       const bad = unbuildable(terrainAt(this.map, x, y));
       if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
-      if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
+      if (!def.anyTile && this.track.railOn(x, y)) return STR.build.occupied;
       // a road keeps its tile from what stands off the rails; a pole goes beside it
       if (!def.anyTile && this.roads.has(x, y)) return STR.build.roadInWay;
       if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
@@ -1108,7 +1115,7 @@ export class Builder {
       if (!def.bridge && this.groundCheck && !this.groundCheck(tx, ty, 'level'))
         return { ok: false, cost: {}, reason: STR.build.notLevel };
       if (
-        this.track.has(tx, ty) ||
+        (def.bridge ? this.track.has(tx, ty) : this.track.railOn(tx, ty)) ||
         this.stationAt(tx, ty) ||
         this.decorAt(tx, ty) ||
         this.buildingAt(tx, ty)

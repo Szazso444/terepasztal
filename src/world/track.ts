@@ -276,6 +276,19 @@ export function footprintOf(
   return def.members.map((m) => ({ x: x + m.dx, y: y + m.dy }));
 }
 
+/**
+ * Is member `member` of a curve or switch clear of its rail? The block reserves the tile, but a
+ * building may stand on it. A switch counts in both forms, since laying or lifting track past its
+ * S exit turns it from one form into the other.
+ */
+export function memberClear(kind: TrackKind, cls: TrackClass, rot: number, member: number) {
+  if (!isUnitKind(kind, cls)) return false;
+  const forms: SwitchForm[] = kind === 'switch' ? ['turn', 'parallel'] : ['turn'];
+  return forms.every(
+    (f) => unitDef(kind as 'curve' | 'switch', CLASS_N[cls], rot, f).members[member].clear,
+  );
+}
+
 /** Frame name of a piece's sprite. */
 export function pieceFrame(p: TrackPiece): string {
   const formTag = p.kind === 'switch' && p.form === 'parallel' ? 'p' : '';
@@ -313,6 +326,11 @@ export class TrackGraph {
   }
   has(x: number, y: number) {
     return this.pieces.has(this.key(x, y));
+  }
+  /** Does the rail itself run on this tile? False for a clear member of a curve or switch block. */
+  railOn(x: number, y: number) {
+    const p = this.get(x, y);
+    return !!p && !(p.unit && memberClear(p.kind, p.cls, p.rot, p.unit.member));
   }
   inBounds(x: number, y: number) {
     return x >= 0 && y >= 0 && x < this.w && y < this.h;
