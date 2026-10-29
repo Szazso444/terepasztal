@@ -171,7 +171,7 @@ export class HouseRegistry {
     for (const h of this.houses.values()) n += h.residents;
     return n;
   }
-  /** The store of the town the house stands in, which feeds it and pays for its upgrades. */
+  /** The store of the town the house stands in, which feeds it. */
   store(h: House): ResourceStore | null {
     return this.builder.stores.townStore(h.x, h.y);
   }
@@ -200,8 +200,9 @@ export class HouseRegistry {
     return this.builder.free ? {} : scaleCost(c, rules.buildCostMul);
   }
   /**
-   * Whether the player may pay for the next level: built, opened by the age, affordable at its
-   * town's store (a house outside every town has none to pay from).
+   * Whether the player may pay for the next level: built, opened by the age, affordable at the
+   * nearest store in reach that holds the whole cost (`Builder.affordable`, as for any building
+   * work), which the check names (`payer`).
    */
   canUpgrade(h: House): PlacementCheck {
     if (h.work) return { ok: false, cost: {}, reason: STR.build.upgradingNow };
@@ -211,30 +212,18 @@ export class HouseRegistry {
     if (this.builder.free) return { ok: true, cost };
     const locked = levelLocked(HOUSE_FIRST_AGE, h.level + 1, this.builder.economy.tier);
     if (locked) return { ok: false, cost, reason: locked };
-    const store = this.store(h);
-    if (!store?.canAfford(cost)) {
-      const miss = store ? store.missing(cost) : cost;
-      return {
-        ok: false,
-        cost,
-        reason: STR.build.needResources(
-          Object.entries(miss)
-            .map(([k, v]) => `${v} ${k}`)
-            .join(', '),
-        ),
-      };
-    }
-    return { ok: true, cost };
+    return this.builder.affordable(cost, h.x, h.y);
   }
   /**
-   * The player pays for a bigger house from its town's store, and the work starts: the level rises
-   * when its time is up (`tickWorks`), at once in the editor or when upgrades take no time.
+   * The player pays for a bigger house from the store the check named, and the work starts: the
+   * level rises when its time is up (`tickWorks`), at once in the editor or when upgrades take no
+   * time.
    */
   upgrade(h: House) {
     if (this.at(h.x, h.y) !== h) return false;
     const c = this.canUpgrade(h);
     if (!c.ok) return false;
-    if (!this.builder.free && !this.store(h)?.spend(c.cost)) return false;
+    if (!this.builder.pay(c, h.x, h.y)) return false;
     sfx('station.upgrade');
     const work = this.builder.free ? null : startWork(h.level + 1);
     if (!work) {

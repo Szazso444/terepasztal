@@ -292,8 +292,8 @@ export class Builder {
       .join(', ');
     return { ok: false, cost, reason: STR.build.noStoreInReach(rules.buildReach, what) };
   }
-  /** Pay what a check approved for work at (x, y), from the store it named. */
-  private pay(c: PlacementCheck, x: number, y: number) {
+  /** Pay what a check approved for work at (x, y), from the store it named (`payer`). */
+  pay(c: PlacementCheck, x: number, y: number) {
     if (this.free || !hasPrice(c.cost)) return true;
     const payer = this.stores.nearest(x, y).find((s) => s.key === c.payer);
     return !!payer && payer.spend(c.cost);

@@ -1409,7 +1409,8 @@ describe("a house's finished upgrade", () => {
   }[] = [
     {
       name: 'cannot be paid for',
-      reason: /^Need /,
+      // no store in reach holds the cost (`Builder.affordable`)
+      reason: /^No store within /,
       make: () => {
         const w = world(5, true);
         return { w, h: house(w, AT.house.x, AT.house.y) };

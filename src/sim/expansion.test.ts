@@ -25,7 +25,8 @@ import { referencePath } from './compat';
 import { STR } from '../strings';
 import { upgradeSeconds } from './upgrade';
 import { setSupplyMode } from './supply';
-import { storeWith, storesWith } from '../testing/storeFixtures';
+import { depotWith, storeWith, storesWith } from '../testing/storeFixtures';
+import { fmtCost } from './stores';
 import { simWorld, line, station } from '../testing/simWorld';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -148,40 +149,47 @@ describe('weekly food economy and housing', () => {
     w.stores.byKey(storeA.key)!.famine = true;
     expect(w.houses.foodOk(a)).toBe(false);
   });
-  it('a house upgrade pays from its own town store', () => {
-    // Full mode: in Simple mode two towns on one line are one store
+  it('a house upgrade pays from the nearest store in reach that holds the cost', () => {
+    // Full mode: in Simple mode the town and the depot on one line are one store
     const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
     line(w, 2, 30, 90);
-    const hallA = station(w, 'town', 20, 29);
-    const hallB = station(w, 'town', 46, 29);
-    const storeA = w.stores.townStore(hallA.x, hallA.y)!;
-    const storeB = w.stores.townStore(hallB.x, hallB.y)!;
+    const hall = station(w, 'town', 20, 29);
+    const town = w.stores.townStore(hall.x, hall.y)!;
+    // 16 tiles from the house, within the 24 that building draws from
+    const depot = w.stores.poolOf(depotWith(w, {}, { x: 40, y: 24 }));
     w.builder.free = true;
     const d = w.builder.spawnDecor(24, 29, 'townhouse', 0)!;
+    const next = w.builder.spawnDecor(22, 27, 'townhouse', 0)!;
     w.houses.finishAll();
     w.builder.free = false;
     w.economy.setAge(1);
     const h = w.houses.at(d.x, d.y)!;
     const cost = w.houses.upgradeCost(h)!;
     expect(Object.keys(cost).length).toBeGreaterThan(0);
-    // the other town can pay, its own cannot: refused, with what its own store lacks
-    for (const [k, v] of Object.entries(cost)) storeB.add(k, v);
+    // no store in reach holds it: refused, with what the nearest (its town's) lacks
     const refused = w.houses.canUpgrade(h);
     expect(refused.ok).toBe(false);
-    expect(refused.reason).toBe(
-      STR.build.needResources(
-        Object.entries(cost)
-          .map(([k, v]) => `${v} ${k}`)
-          .join(', '),
-      ),
-    );
+    expect(refused.reason).toBe(STR.build.noStoreInReach(rules.buildReach, fmtCost(cost)));
     expect(w.houses.upgrade(h)).toBe(false);
-    // stocked, its own store pays and the other keeps its goods
-    for (const [k, v] of Object.entries(cost)) storeA.add(k, v);
+    // its town store is empty, the depot holds it: the depot pays
+    for (const [k, v] of Object.entries(cost)) depot.add(k, v);
+    expect(w.houses.canUpgrade(h)).toMatchObject({ ok: true, payer: depot.key });
     expect(w.houses.upgrade(h)).toBe(true);
+    for (const k of Object.keys(cost)) {
+      expect(depot.get(k), k).toBe(0);
+      expect(town.get(k), k).toBe(0);
+    }
+    // with both stocked, the nearer, its town store, pays
     for (const [k, v] of Object.entries(cost)) {
-      expect(storeA.get(k), k).toBe(0);
-      expect(storeB.get(k), k).toBe(v);
+      depot.add(k, v);
+      town.add(k, v);
+    }
+    const h2 = w.houses.at(next.x, next.y)!;
+    expect(w.houses.canUpgrade(h2)).toMatchObject({ ok: true, payer: town.key });
+    expect(w.houses.upgrade(h2)).toBe(true);
+    for (const [k, v] of Object.entries(cost)) {
+      expect(town.get(k), k).toBe(0);
+      expect(depot.get(k), k).toBe(v);
     }
   });
   it('separates passenger stops from the persistent town anchor', () => {
