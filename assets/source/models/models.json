@@ -109,8 +109,8 @@
  },
  "depot-r0": {
   "file": "depot-r0.png",
-  "ax": 239.78,
-  "ay": 311.26,
+  "ax": 238.78,
+  "ay": 314.26,
   "frames": [
    "structures/depot_r0",
    "structures/depot_r0_lv2",
@@ -128,8 +128,8 @@
  },
  "depot-r1": {
   "file": "depot-r1.png",
-  "ax": 219.69,
-  "ay": 284.73,
+  "ax": 220.69,
+  "ay": 283.73,
   "frames": [
    "structures/depot_r1",
    "structures/depot_r1_lv2",
@@ -146,7 +146,7 @@
  },
  "depot-r2": {
   "file": "depot-r2.png",
-  "ax": 234.74,
+  "ax": 239.74,
   "ay": 292.68,
   "frames": [
    "structures/depot_r0_r2",
@@ -164,8 +164,8 @@
  },
  "depot-r3": {
   "file": "depot-r3.png",
-  "ax": 256.84,
-  "ay": 298.21,
+  "ax": 257.84,
+  "ay": 301.21,
   "frames": [
    "structures/depot_r1_r3",
    "structures/depot_r1_lv2_r3",
