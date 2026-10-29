@@ -25,8 +25,20 @@ export interface PieceChange {
   cls2?: TrackClass;
   form?: SwitchForm;
 }
+/** A curve or switch left as it is: the next line's curves are another size. */
+export interface PieceLeft {
+  /** the piece's anchor */
+  x: number;
+  y: number;
+  /** the line it would have become, the side of its own square and of that line's curves */
+  to: TrackClass;
+  n: number;
+  need: number;
+}
 export interface ReclassPlan {
   changes: PieceChange[];
+  /** the curves and switches left as they are for their size */
+  left: PieceLeft[];
   /**
    * why nothing changes: track off the standard network, a curve or switch of the wrong size for
    * the next line, no buildable line that way, or nothing there
@@ -64,7 +76,7 @@ function crossingFor(ns: TrackClass, ew: TrackClass, prefer: number) {
  * Plan moving the pieces on `seeds` one standard line up or down. The lines of the standard
  * network join each other directly, so a straight simply changes line. A curve or switch keeps
  * its footprint, so it changes only where the next line's curves are the same size; otherwise
- * it stays as it is and the plan says why. A crossing converts by line: the one the stroke runs
+ * it stays as it is, and the plan lists it in `left` and says why. A crossing converts by line: the one the stroke runs
  * along (`from` is the tile it came from), both when clicked. Nothing is changed here; the
  * caller lays the pieces.
  */
@@ -75,6 +87,7 @@ export function planReclass(
   from?: Tile,
 ): ReclassPlan {
   const changes: PieceChange[] = [];
+  const left: PieceLeft[] = [];
   const seen = new Set<number>();
   const why = { separate: false, size: false, noLine: false };
   const step = (cls: TrackClass): TrackClass | null => {
@@ -117,6 +130,7 @@ export function planReclass(
     if (!to) continue;
     if ((piece.kind === 'curve' || piece.kind === 'switch') && CLASS_N[to] !== CLASS_N[piece.cls]) {
       why.size = true;
+      left.push({ x: a.x, y: a.y, to, n: CLASS_N[piece.cls], need: CLASS_N[to] });
       continue;
     }
     const change: PieceChange = { x: a.x, y: a.y, kind: piece.kind, rot: piece.rot, cls: to };
@@ -126,10 +140,10 @@ export function planReclass(
   if (changes.length) {
     // lay them in reading order: the same plan always lists the same way
     changes.sort((p, q) => p.y - q.y || p.x - q.x);
-    return { changes };
+    return { changes, left };
   }
   const reason = why.size ? 'size' : why.separate ? 'separate' : why.noLine ? 'noLine' : 'nothing';
-  return { changes, reason };
+  return { changes, left, reason };
 }
 
 /** The edge of tile `t` that faces the neighbouring tile `n`. */

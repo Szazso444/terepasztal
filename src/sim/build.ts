@@ -648,26 +648,40 @@ export class Builder {
   /**
    * What moving the pieces on `tiles` one line up or down would change and cost. An upgrade
    * charges, piece by piece, what the new piece costs above the old one; a downgrade is free and
-   * returns nothing. `from` is the tile a stroke came from (it picks a crossing's line).
+   * returns nothing. `from` is the tile a stroke came from (it picks a crossing's line). `left`
+   * holds the anchors of the pieces that stay as they are although the move would change them: a
+   * curve or switch of the wrong size, or anything the check refuses.
    */
   checkReclass(
     tiles: { x: number; y: number }[],
     dir: ReclassDir,
     from?: { x: number; y: number },
-  ): PlacementCheck & { changes: PieceChange[] } {
+  ): PlacementCheck & { changes: PieceChange[]; left: { x: number; y: number }[] } {
     const plan = planReclass(this.track, tiles, dir, from);
-    if (!plan.changes.length)
+    const sized = plan.left.map(({ x, y }) => ({ x, y }));
+    if (!plan.changes.length) {
+      const first = plan.left[0];
       return {
         ok: false,
         cost: {},
         changes: [],
-        reason: STR.build.reclass[plan.reason ?? 'nothing'],
+        left: sized,
+        reason: first
+          ? STR.build.reclassSize(STR.toolbar.trackClass[first.to], first.need, first.n)
+          : STR.build.reclass[plan.reason ?? 'nothing'],
       };
+    }
+    const refused = (reason: string) => ({
+      ok: false,
+      cost: {},
+      changes: plan.changes,
+      left: [...sized, ...plan.changes.map(({ x, y }) => ({ x, y }))],
+      reason,
+    });
     const locked = plan.changes.map(itemAge).find((age) => this.lineLocked(age));
-    if (locked !== undefined)
-      return { ok: false, cost: {}, changes: plan.changes, reason: STR.build.tierLocked(locked) };
+    if (locked !== undefined) return refused(STR.build.tierLocked(locked));
     const crossing = this.reclassCrossing(plan.changes);
-    if (crossing) return { ok: false, cost: {}, changes: plan.changes, reason: crossing };
+    if (crossing) return refused(crossing);
     const cost: Cost = {};
     if (dir === 'up')
       for (const c of plan.changes) {
@@ -681,7 +695,9 @@ export class Builder {
         for (const [k, v] of Object.entries(this.priced(pieceCost(c.kind, c.cls, c.cls2), mul)))
           if (v > (was[k] ?? 0)) cost[k] = (cost[k] ?? 0) + v - (was[k] ?? 0);
       }
-    return { ...this.affordable(cost), changes: plan.changes };
+    const paid = this.affordable(cost);
+    if (!paid.ok) return { ...refused(paid.reason ?? ''), cost };
+    return { ...paid, changes: plan.changes, left: sized };
   }
   /**
    * Why converting would leave a level crossing on a piece no road may cross (a line without

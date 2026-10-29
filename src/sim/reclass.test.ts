@@ -130,17 +130,58 @@ describe('curves and switches of another size', () => {
     track.place(9, 10, 'curve', 0, 'branch');
     const curve = builder.checkReclass([{ x: 9, y: 10 }], 'up');
     expect(curve.ok).toBe(false);
-    expect(curve.reason).toBe(STR.build.reclass.size);
-    expect(
-      builder.reclassTrack(
-        [
-          { x: 8, y: 10 },
-          { x: 9, y: 10 },
-        ],
-        'up',
-      ),
-    ).toBe(true);
+    expect(curve.reason).toBe(STR.build.reclassSize('Main Line', 3, 2));
+    // the whole curve is left, by its anchor, whichever of its tiles was pointed at
+    const anchor = track.anchorOf(9, 10);
+    for (const t of track.unitTiles(9, 10))
+      expect(builder.checkReclass([t], 'up').left).toEqual([anchor]);
+    const stroke = [
+      { x: 8, y: 10 },
+      { x: 9, y: 10 },
+    ];
+    const both = builder.checkReclass(stroke, 'up');
+    expect(both.ok).toBe(true);
+    expect(both.changes.map(({ x, y }) => ({ x, y }))).toEqual([{ x: 8, y: 10 }]);
+    expect(both.left).toEqual([anchor]);
+    expect(builder.reclassTrack(stroke, 'up')).toBe(true);
     expect(track.get(8, 10)!.cls).toBe('main');
     expect(track.get(9, 10)).toMatchObject({ kind: 'curve', cls: 'branch' });
+  });
+
+  it('converts a curve whose next line has curves of its size', () => {
+    const { builder, track } = world();
+    track.place(20, 20, 'curve', 0, 'main');
+    const check = builder.checkReclass([{ x: 20, y: 20 }], 'up');
+    expect(check.reason).toBe(STR.build.reclassSize('Trunk Line', 4, 3));
+    expect(builder.checkReclass([{ x: 20, y: 20 }], 'down').left).toEqual([track.anchorOf(20, 20)]);
+  });
+});
+
+describe('pieces a stroke must leave', () => {
+  it('lists every piece of a line not open yet', () => {
+    const { builder, track, run } = world();
+    Object.assign(builder.economy, { tier: 0 });
+    const check = builder.checkReclass(run, 'up');
+    expect(check.ok).toBe(false);
+    expect(check.left).toEqual(run);
+    for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('branch');
+  });
+
+  it('lists the pieces it cannot pay for, with the bill', () => {
+    const { builder, stock, run } = world();
+    stock.amounts.set('iron', 0);
+    const check = builder.checkReclass(run, 'up');
+    expect(check.ok).toBe(false);
+    expect(check.left).toEqual(run);
+    expect(Object.keys(check.cost).length).toBeGreaterThan(0);
+  });
+
+  it('lists nothing for track already converted or off the standard network', () => {
+    const { builder, track, run } = world();
+    track.place(5, 20, 'straight', 1, 'narrow');
+    expect(builder.checkReclass([{ x: 5, y: 20 }], 'up').left).toEqual([]);
+    builder.reclassTrack(run, 'up');
+    builder.reclassTrack(run, 'up');
+    expect(builder.checkReclass(run, 'up').left).toEqual([]);
   });
 });

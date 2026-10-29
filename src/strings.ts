@@ -333,6 +333,10 @@ export const STR = {
     reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
     reclassFree: (what: string) => `${what}: free`,
     reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
+    reclassSize: (line: string, need: number, n: number) =>
+      `${line} curves and switches are ${need}×${need}, this one is ${n}×${n}: lay it again with Track`,
+    reclassLeft: (what: string, n: number) =>
+      `${what}: ${n === 1 ? 'one piece' : `${n} pieces`} left as ${n === 1 ? 'it was' : 'they were'} (red)`,
     reclass: {
       separate: 'Only Branch, Main and Trunk Line convert into each other',
       size: 'This curve or switch is too small or too big for that line: lay it again',

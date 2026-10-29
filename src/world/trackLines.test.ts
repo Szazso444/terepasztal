@@ -79,7 +79,11 @@ describe('Upgrade and Downgrade', () => {
     expect(nextLine('narrow', 'up')).toBeNull();
     const track = new TrackGraph(8, 8);
     track.place(2, 2, 'straight', 0, 'trunk');
-    expect(planReclass(track, [{ x: 2, y: 2 }], 'up')).toEqual({ changes: [], reason: 'noLine' });
+    expect(planReclass(track, [{ x: 2, y: 2 }], 'up')).toEqual({
+      changes: [],
+      left: [],
+      reason: 'noLine',
+    });
   });
   it('changes a straight in place', () => {
     const track = new TrackGraph(8, 8);
@@ -92,8 +96,18 @@ describe('Upgrade and Downgrade', () => {
     const track = new TrackGraph(12, 12);
     track.place(2, 2, 'curve', 0, 'branch');
     track.place(6, 6, 'switch', 3, 'main');
-    expect(planReclass(track, [{ x: 3, y: 3 }], 'up')).toEqual({ changes: [], reason: 'size' });
-    expect(planReclass(track, [{ x: 7, y: 7 }], 'down')).toEqual({ changes: [], reason: 'size' });
+    const curve = track.anchorOf(3, 3),
+      sw = track.anchorOf(7, 7);
+    expect(planReclass(track, [{ x: 3, y: 3 }], 'up')).toEqual({
+      changes: [],
+      left: [{ ...curve, to: 'main', n: 2, need: 3 }],
+      reason: 'size',
+    });
+    expect(planReclass(track, [{ x: 7, y: 7 }], 'down')).toEqual({
+      changes: [],
+      left: [{ ...sw, to: 'branch', n: 3, need: 2 }],
+      reason: 'size',
+    });
   });
   it('leaves Narrow Gauge alone and says why', () => {
     const track = new TrackGraph(8, 8);
