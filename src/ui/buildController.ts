@@ -1,7 +1,7 @@
 import type { WideClass } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
 import { layRun, planRun, type RunPlan, type RunStep } from './autoCrossing';
-import { lineTiles, turnPath } from './dragPath';
+import { lineTiles, setOffAxis, turnPath } from './dragPath';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
@@ -317,8 +317,7 @@ export class BuildController {
         const a = this.dragStart;
         // before the drag sets off, R turned the tool (`update`); after, it swaps the legs
         const setOff = this.dragAxis;
-        if (!this.dragAxis && (t.x !== a.x || t.y !== a.y))
-          this.dragAxis = Math.abs(t.x - a.x) >= Math.abs(t.y - a.y) ? 'x' : 'y';
+        this.dragAxis ??= setOffAxis(a, t);
         if (inp.wasPressed('KeyR') && setOff) this.dragAxis = setOff === 'x' ? 'y' : 'x';
         const line = this.runTiles(a, t, item);
         const plan = planRun(this.builder, line, item);
@@ -386,12 +385,14 @@ export class BuildController {
     const existing = this.builder.track.get(t.x, t.y);
     const replacing = !!existing && check.ok && !step?.crossing;
     const parts = [
-      check.ok
-        ? replacing
-          ? STR.build.replace(existing!.kind, fmtCost(check.cost))
-          : STR.build.cost(fmtCost(check.cost))
-        : (check.reason ?? ''),
-      step?.crossing && check.ok ? STR.build.autoCrossings(1) : '',
+      step?.stands
+        ? STR.build.standsAlready
+        : check.ok
+          ? replacing
+            ? STR.build.replace(existing!.kind, fmtCost(check.cost))
+            : STR.build.cost(fmtCost(check.cost))
+          : (check.reason ?? ''),
+      step?.crossing && check.ok && !step.stands ? STR.build.autoCrossings(1) : '',
       STR.build.rotate,
     ];
     if (item.kind === 'straight' || item.kind === 'bridge') parts.push(STR.build.dragHint);
@@ -441,7 +442,7 @@ export class BuildController {
   /** A run's status: its pieces and price, the crossings it lays by itself, and where it stops. */
   private runStatus(plan: RunPlan, item: TrackItem) {
     const parts = [
-      `${STR.build.runPieces(plan.end - plan.curves, item.kind)}${plan.curves ? ` ${STR.build.runCurves(plan.curves)}` : ''}: ${fmtCost(plan.cost)}`,
+      `${STR.build.runPieces(plan.straights, item.kind)}${plan.curves ? ` ${STR.build.runCurves(plan.curves)}` : ''}: ${fmtCost(plan.cost)}`,
     ];
     if (plan.crossings) parts.push(STR.build.autoCrossings(plan.crossings));
     if (plan.reason) parts.push(plan.reason);
@@ -451,12 +452,13 @@ export class BuildController {
 
   /**
    * A run's ghosts, one per tile (a curve shows its whole footprint): red where a piece is refused
-   * and from where the run stops, amber on its crossings.
+   * and from where the run stops, amber on its crossings; none over a curve the run joins.
    */
   private showRunGhosts(plan: RunPlan) {
     if (this.ghost) this.ghost.visible = false;
     this.showGhosts(
       plan.steps.flatMap((s, i) => {
+        if (s.joins) return [];
         const ok = s.ok && i < plan.end,
           tint = s.crossing && !s.stands ? REPLACE_TINT : undefined,
           frame = `track/${itemKey(s.item)}_${s.rot}`;

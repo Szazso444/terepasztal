@@ -38,6 +38,17 @@ export function lineTiles(a: Tile, b: Tile): RunTile[] {
 /** How many tiles the cursor must leave the first leg's line before the run turns. */
 export const TURN_AFTER = 2;
 
+/**
+ * The axis a drag from `a` sets off along, once the cursor at `t` is `TURN_AFTER` tiles out (null
+ * before): the longer way it has gone by then, so a wobble on the first tile does not decide it.
+ */
+export function setOffAxis(a: Tile, t: Tile): Axis | null {
+  const dx = Math.abs(t.x - a.x),
+    dy = Math.abs(t.y - a.y);
+  if (Math.max(dx, dy) < TURN_AFTER) return null;
+  return dx >= dy ? 'x' : 'y';
+}
+
 /** The two open ends of a curve of class `cls` at `rot`: offsets from its anchor and the edge each opens by. */
 export function curveEnds(cls: TrackClass, rot: number): { dx: number; dy: number; dir: Dir }[] {
   const n = CLASS_N[cls];

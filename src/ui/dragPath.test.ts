@@ -17,7 +17,7 @@ import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { STR } from '../strings';
 import { layRun, planRun } from './autoCrossing';
-import { TURN_AFTER, lineTiles, turnPath, type RunTile } from './dragPath';
+import { TURN_AFTER, lineTiles, setOffAxis, turnPath, type RunTile } from './dragPath';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -95,6 +95,16 @@ describe('a drag that turns', () => {
     const down = turnPath(a, b, 'y', 'regular');
     expect(down[0]).toMatchObject({ x: 20, y: 20, rot: 0 });
     expect(down[down.length - 1]).toMatchObject({ x: 26, y: 25, rot: 1 });
+  });
+
+  it('sets off along the longer way once the cursor is two tiles out, not on its first tile', () => {
+    const a = { x: 20, y: 20 };
+    expect(setOffAxis(a, a)).toBeNull();
+    expect(setOffAxis(a, { x: 21, y: 20 })).toBeNull();
+    expect(setOffAxis(a, { x: 21, y: 21 })).toBeNull();
+    expect(setOffAxis(a, { x: 21, y: 22 })).toBe('y');
+    expect(setOffAxis(a, { x: 15, y: 21 })).toBe('x');
+    expect(setOffAxis(a, { x: 22, y: 18 })).toBe('x');
   });
 
   it('lays the straight line while the cursor stays near the first leg', () => {

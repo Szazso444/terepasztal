@@ -8,6 +8,7 @@ import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain } from '../world/tiles';
 import { TrackGraph } from '../world/track';
+import { STR } from '../strings';
 import { BuildController } from './buildController';
 
 type Tile = { x: number; y: number };
@@ -56,6 +57,8 @@ function harness() {
   let pointer: Tile = { x: 0, y: 0 };
   const b = new BuildController(input as never, builder, world as never, () => pointer);
   b.setTool({ kind: 'track', item: { kind: 'straight', cls: 'regular' } });
+  const status: string[] = [];
+  b.onStatus = (t) => status.push(t);
   /** One frame with the pointer on `t`; `active: false` is the pointer over a panel. */
   const frame = (
     t: Tile,
@@ -81,7 +84,7 @@ function harness() {
     frame(t, { press: true });
     frame(t, { release: true });
   };
-  return { track, frame, tap };
+  return { b, track, frame, tap, status };
 }
 
 describe('R while dragging track', () => {
@@ -102,6 +105,30 @@ describe('R while dragging track', () => {
     h.frame({ x: 5, y: 5 }, { r: true });
     h.frame({ x: 5, y: 5 }, { release: true });
     expect(h.track.get(5, 5)).toMatchObject({ kind: 'straight', rot: 1 });
+  });
+
+  it('keeps a first-tile wobble from setting the drag off: a long drag down stays straight', () => {
+    const h = harness();
+    h.frame({ x: 5, y: 5 }, { press: true });
+    h.frame({ x: 6, y: 5 });
+    h.frame({ x: 6, y: 15 });
+    h.frame({ x: 6, y: 15 }, { release: true });
+    for (let y = 5; y <= 15; y++) expect(h.track.get(5, y), `5,${y}`).toMatchObject({ rot: 0 });
+    expect([...h.track.pieces.values()].some((p) => p.kind === 'curve')).toBe(false);
+  });
+
+  it('says a crossing already there is laid, with no price and no crossing to come', () => {
+    const h = harness();
+    h.frame({ x: 3, y: 10 }, { press: true });
+    h.frame({ x: 8, y: 10 });
+    h.frame({ x: 8, y: 10 }, { release: true });
+    h.b.setTool({ kind: 'track', item: { kind: 'straight', cls: 'high_speed' } });
+    h.tap({ x: 5, y: 10 });
+    expect(h.track.get(5, 10)?.kind).toBe('crossing');
+    h.frame({ x: 5, y: 10 });
+    const last = h.status[h.status.length - 1];
+    expect(last).toContain(STR.build.standsAlready);
+    expect(last).not.toContain(STR.build.autoCrossings(1));
   });
 
   it('swaps which leg runs first once the drag has set off', () => {

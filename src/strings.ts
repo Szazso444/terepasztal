@@ -334,6 +334,9 @@ export const STR = {
     /** a dragged run meets a curve or a switch: no crossing piece meets a line at an angle */
     crossAngle: 'Lines cross only at right angles',
     crossTransition: 'No crossing on a class transition: cross the line beside it',
+    crossBridge: 'No crossing on a bridge: lines cross off the water',
+    /** a straight over the very crossing or straight it would lay */
+    standsAlready: 'Already laid here',
     /** a dragged run meets a line of a class it has no crossing piece with */
     crossApart: (run: string, line: string) =>
       `${run} track cannot cross ${line} track: it needs a bridge or an underpass`,
@@ -421,7 +424,7 @@ export const STR = {
     free: 'free',
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
-    /** a dragged run's pieces before its curves */
+    /** a dragged run's straights, its crossings and curves told apart */
     runPieces: (n: number, kind: string) => `${n} x ${kind}`,
     runCurves: (n: number) => `+${n} curve${n === 1 ? '' : 's'}`,
     /** while a drag turns: R swaps which leg runs first */

@@ -18,7 +18,7 @@ import { Stockpile } from '../sim/stockpile';
 import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { STR } from '../strings';
-import { crossingFor, crossingRefusal, layRun, planRun } from './autoCrossing';
+import { bridgeCrossing, crossingFor, crossingRefusal, layRun, planRun } from './autoCrossing';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -97,7 +97,31 @@ describe('the crossing a run lays by itself', () => {
     // a transition along the run is the ordinary rules' to judge
     expect(crossingFor('regular', 0, makePiece('transition', 0))).toBeNull();
     expect(crossingFor('regular', 1, makePiece('transition', 3))).toBeNull();
-    expect(crossingFor('regular', 0, makePiece('bridge', 1))).toBeNull();
+    expect(crossingFor('regular', 0, makePiece('bridge', 0))).toBeNull();
+  });
+
+  it('refuses a bridge across the run, and a bridge run across any line', () => {
+    expect(crossingFor('regular', 0, makePiece('bridge', 1))).toEqual({
+      ok: false,
+      why: 'bridge',
+      other: 'regular',
+    });
+    for (const [kind, rot] of [
+      ['straight', 1],
+      ['bridge', 1],
+      ['transition', 3],
+      ['crossing', 0],
+    ] as const)
+      expect(bridgeCrossing(0, makePiece(kind, rot)), `${kind} ${rot}`).toMatchObject({
+        ok: false,
+        why: 'bridge',
+      });
+    expect(bridgeCrossing(0, makePiece('curve', 0))).toMatchObject({ ok: false, why: 'angle' });
+    expect(bridgeCrossing(0, makePiece('bridge', 0))).toBeNull();
+    expect(bridgeCrossing(1, undefined)).toBeNull();
+    expect(crossingRefusal('regular', { ok: false, why: 'bridge', other: 'regular' })).toBe(
+      STR.build.crossBridge,
+    );
   });
 
   it('refuses a transition across the run: no crossing stands in for it', () => {
@@ -149,6 +173,8 @@ describe('a run laid across lines', () => {
     const plan = planRun(builder, line, straight('high_speed'));
     expect(plan.end).toBe(line.length);
     expect(plan.crossings).toBe(1);
+    // the status counts the crossing once, apart from the straights
+    expect(plan.straights).toBe(10);
     // ten straights and the crossing in place of the eleventh
     const crossing = pieceCost('crossing', 'regular', 'high_speed'),
       one = pieceCost('straight', 'high_speed');
@@ -208,6 +234,55 @@ describe('a run laid across lines', () => {
     expect(layRun(builder, judged)).toBe(4);
     for (let y = 5; y < 9; y++) expect(track.get(9, y)?.kind).toBe('straight');
     expect(track.get(9, 9)).toBeUndefined();
+  });
+
+  it('stops a bridge run before a bridge across it, and never cuts that bridge', () => {
+    const { track, builder } = world();
+    const map = builder.map;
+    for (let y = 6; y <= 14; y++)
+      for (let x = 5; x <= 13; x++) map.terrain[y * map.w + x] = Terrain.Water;
+    for (let x = 6; x <= 12; x++)
+      expect(builder.placeTrack(x, 10, { kind: 'bridge', cls: 'regular' }, 1)).toBe(true);
+    const plan = planRun(builder, nsRun(9, 7, 13), { kind: 'bridge', cls: 'regular' });
+    expect(plan.end).toBe(3);
+    expect(plan.reason).toBe(STR.build.crossBridge);
+    layRun(builder, plan);
+    expect(track.get(9, 10)).toMatchObject({ kind: 'bridge', rot: 1 });
+    expect(track.get(9, 11)).toBeUndefined();
+  });
+
+  it('joins a curve where the run starts or ends, and leaves it as it is', () => {
+    const { track, builder } = world();
+    expect(builder.placeTrack(9, 10, { kind: 'curve', cls: 'narrow' }, 2)).toBe(true);
+    for (const line of [nsRun(9, 10, 14), nsRun(9, 6, 10)]) {
+      const plan = planRun(builder, line, straight('narrow'));
+      expect(plan.end).toBe(line.length);
+      expect(plan.reason).toBeUndefined();
+      expect(plan.straights).toBe(4);
+      const at = line.findIndex((l) => l.y === 10);
+      expect(plan.steps[at]).toMatchObject({ joins: true, stands: true });
+      layRun(builder, plan);
+      expect(track.get(9, 10)).toMatchObject({ kind: 'curve', rot: 2 });
+    }
+    for (let y = 6; y <= 14; y++) if (y !== 10) expect(track.get(9, y)?.kind).toBe('straight');
+  });
+
+  it('climbs a mountain from its foot: each piece judged with the ones before it down', () => {
+    const { track, builder } = world();
+    const map = builder.map;
+    for (let y = 6; y <= 12; y++) map.terrain[y * map.w + 9] = Terrain.Rock;
+    for (let y = 3; y <= 5; y++)
+      expect(builder.placeTrack(9, y, straight('regular'), 0)).toBe(true);
+    const line = nsRun(9, 6, 12);
+    // alone, a rock tile beyond the foot does not continue a line yet
+    expect(builder.checkTrack(9, 8, straight('regular'), 0).reason).toBe(STR.build.mountainLine);
+    const plan = planRun(builder, line, straight('regular'));
+    expect(plan.steps.every((s) => s.ok)).toBe(true);
+    expect(plan.straights).toBe(line.length);
+    // judging changed nothing
+    expect(track.get(9, 6)).toBeUndefined();
+    expect(layRun(builder, plan)).toBe(line.length);
+    for (let y = 6; y <= 12; y++) expect(track.get(9, y)?.kind).toBe('straight');
   });
 
   it('stops at a curve it would meet at an angle', () => {

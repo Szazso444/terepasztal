@@ -18,7 +18,7 @@ import {
  */
 export type CrossingPick =
   | { ok: true; item: TrackItem; rot: number }
-  | { ok: false; why: 'angle' | 'apart' | 'transition'; other: TrackClass };
+  | { ok: false; why: 'angle' | 'apart' | 'transition' | 'bridge'; other: TrackClass };
 
 /** The class a piece presents along the axis a straight at `rot` runs (0: N–S, 1: E–W). */
 function axisClass(p: TrackPiece, rot: number): TrackClass {
@@ -35,7 +35,7 @@ function axisClass(p: TrackPiece, rot: number): TrackClass {
  * `TRACK_ITEMS`), turned so the run's class lies on the run's axis; a crossing at rotation 0 has its
  * first class on N–S, like a straight at rotation 0. A pair with no crossing piece is a pair of
  * separate worlds, and a curve or a switch meets the run at an angle: both are refused, and so is
- * a class transition across the run, which no crossing piece can stand in for.
+ * a class transition or a bridge across the run, which no crossing piece can stand in for.
  */
 export function crossingFor(
   cls: TrackClass,
@@ -48,9 +48,9 @@ export function crossingFor(
     return { ok: false, why: 'angle', other: existing.cls };
   const across = (rot + 1) % 2;
   // a transition lies along its rotation's axis, as a straight does (0, 2: N–S; 1, 3: E–W)
-  if (existing.kind === 'transition')
+  if (existing.kind === 'transition' || existing.kind === 'bridge')
     return existing.rot % 2 === across
-      ? { ok: false, why: 'transition', other: existing.cls }
+      ? { ok: false, why: existing.kind, other: existing.cls }
       : null;
   if (existing.kind !== 'straight' && existing.kind !== 'crossing') return null;
   if (existing.kind === 'straight' && existing.rot % 2 !== across) return null;
@@ -72,11 +72,27 @@ export function crossingFor(
   return { ok: true, item, rot: item.cls === cls ? rot % 2 : across };
 }
 
+/**
+ * What a bridge run at `rot` meets on a tile that holds `existing`: no crossing stands on a bridge,
+ * so any line across the run is refused, and a curve or switch meets it at an angle. Null for a
+ * piece along the run or an empty tile, which the ordinary rules judge.
+ */
+export function bridgeCrossing(rot: number, existing: TrackPiece | undefined): CrossingPick | null {
+  if (!existing) return null;
+  if (existing.kind === 'curve' || existing.kind === 'switch')
+    return { ok: false, why: 'angle', other: existing.cls };
+  const across = (rot + 1) % 2;
+  if (existing.kind === 'crossing' || existing.rot % 2 === across)
+    return { ok: false, why: 'bridge', other: axisClass(existing, across) };
+  return null;
+}
+
 /** The build status's reason for a refused crossing. */
 export function crossingRefusal(cls: TrackClass, pick: Extract<CrossingPick, { ok: false }>) {
   const name = (c: TrackClass) => STR.toolbar.trackClass[c] ?? c;
   if (pick.why === 'angle') return STR.build.crossAngle;
   if (pick.why === 'transition') return STR.build.crossTransition;
+  if (pick.why === 'bridge') return STR.build.crossBridge;
   return STR.build.crossApart(name(cls), name(pick.other).toLowerCase());
 }
 
@@ -90,6 +106,8 @@ export interface RunStep extends PlacementCheck {
   crossing?: boolean;
   /** the piece stands already: nothing to lay or pay */
   stands?: boolean;
+  /** a curve or switch at an end of the run: the run joins it and leaves it as it is */
+  joins?: boolean;
 }
 
 /** A run judged tile by tile. Tiles from `end` on are not laid: a crossing the run may not make. */
@@ -101,6 +119,8 @@ export interface RunPlan {
   crossings: number;
   /** curves the run lays at its turns */
   curves: number;
+  /** straights (or bridges) the run lays, its crossings and curves not counted */
+  straights: number;
   /** why the run stops at `end`, when it does */
   reason?: string;
 }
@@ -109,6 +129,10 @@ export interface RunPlan {
 export interface RunWorld {
   track: { get(x: number, y: number): TrackPiece | undefined };
   checkTrack(x: number, y: number, item: TrackItem, rot: number): PlacementCheck;
+  /** a copy of the world to judge the run on in order, laying each piece there unpaid (`Builder.runProbe`) */
+  runProbe?(): Omit<RunWorld, 'runProbe'> & {
+    lay(x: number, y: number, item: TrackItem, rot: number): void;
+  };
 }
 
 /**
@@ -116,8 +140,10 @@ export interface RunWorld {
  * goes down instead of the straight, and is priced as one. A crossing that is refused, by the pair
  * or by the rules of its tile, stops the run there: the line it meets is never cut. A curve at a
  * turn that cannot go down stops it too (the leg after it would lead nowhere), and so does track in
- * its way, which a curve never replaces. Any other refused tile is skipped, as before; a piece that
- * stands already costs nothing.
+ * its way, which a curve never replaces. A curve or switch where the run starts or ends is where it
+ * joins: left as it is. Any other refused tile is skipped, as before; a piece that stands already
+ * costs nothing. Each piece is judged with the run's pieces before it down (on the world's
+ * `runProbe`, when it has one), so a line climbs a mountain from its foot as it is laid.
  */
 export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackItem): RunPlan {
   const steps: RunStep[] = [];
@@ -125,13 +151,29 @@ export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackIt
   let end = line.length,
     crossings = 0,
     curves = 0,
+    straights = 0,
     reason: string | undefined;
-  for (const l of line) {
-    const existing = world.track.get(l.x, l.y);
+  const probe = line.length > 1 ? world.runProbe?.() : undefined;
+  const judge = probe ?? world;
+  for (const [i, l] of line.entries()) {
+    const existing = judge.track.get(l.x, l.y);
     const own = l.item ?? item,
       curve = own.kind === 'curve';
-    const pick = own.kind === 'straight' ? crossingFor(own.cls, l.rot, existing) : null;
+    let pick =
+      own.kind === 'straight'
+        ? crossingFor(own.cls, l.rot, existing)
+        : own.kind === 'bridge'
+          ? bridgeCrossing(l.rot, existing)
+          : null;
+    // one piece clicked over a curve is the ordinary rules' (a one-tile piece may replace another)
+    if (pick && !pick.ok && pick.why === 'angle' && line.length === 1) pick = null;
     let step: RunStep;
+    if (pick && !pick.ok && pick.why === 'angle' && (i === 0 || i === line.length - 1)) {
+      step = { x: l.x, y: l.y, item: own, rot: l.rot, ok: true, cost: {}, stands: true };
+      step.joins = true;
+      steps.push(step);
+      continue;
+    }
     if (pick && !pick.ok) {
       step = {
         x: l.x,
@@ -145,7 +187,7 @@ export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackIt
     } else {
       const it = pick ? pick.item : own,
         rot = pick ? pick.rot : l.rot;
-      step = { x: l.x, y: l.y, item: it, rot, ...world.checkTrack(l.x, l.y, it, rot) };
+      step = { x: l.x, y: l.y, item: it, rot, ...judge.checkTrack(l.x, l.y, it, rot) };
       step.stands =
         !!existing &&
         existing.kind === it.kind &&
@@ -154,7 +196,7 @@ export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackIt
         existing.rot === rot &&
         (!existing.unit || (existing.unit.ax === l.x && existing.unit.ay === l.y));
       const inWay = () =>
-        footprintOf(l.x, l.y, it.kind, rot, it.cls).some((f) => world.track.get(f.x, f.y));
+        footprintOf(l.x, l.y, it.kind, rot, it.cls).some((f) => judge.track.get(f.x, f.y));
       if (curve && step.ok && !step.stands && inWay())
         step = { ...step, ok: false, cost: {}, reason: STR.build.trackInWay };
     }
@@ -163,15 +205,18 @@ export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackIt
       end = steps.length;
       reason = step.reason;
     }
+    if (probe && end === line.length && step.ok && !step.stands)
+      probe.lay(step.x, step.y, step.item, step.rot);
     steps.push(step);
   }
   for (const [i, s] of steps.entries()) {
     if (i >= end || !s.ok || s.stands) continue;
     if (s.crossing) crossings++;
-    if (s.item.kind === 'curve') curves++;
+    else if (s.item.kind === 'curve') curves++;
+    else straights++;
     for (const [k, v] of Object.entries(s.cost)) cost[k] = (cost[k] ?? 0) + v;
   }
-  return { steps, end, cost, crossings, curves, reason };
+  return { steps, end, cost, crossings, curves, straights, reason };
 }
 
 /**
