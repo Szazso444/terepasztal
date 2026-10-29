@@ -2,8 +2,8 @@
 /**
  * Builds the Roster's vehicle portraits, `public/assets/portraits/<vehicle id>.png`, from the
  * model images: the 1536x1024 isometric pictures on a dark background that the locomotive table
- * (`locomotive-wheels-bogies-v9.xlsx`, column "Picture (model image)") shows, and the wagon
- * pictures of the same series.
+ * (`locomotive-wheels-bogies-v9.xlsx`, column "Picture (model image)") shows. Wagons have no
+ * approved model image yet: Codex paints them in the same camera and style.
  *
  *   node tools/roster-portraits.mjs --from <Images/organized>   writes public/assets/portraits/
  *
@@ -71,27 +71,6 @@ export const SOURCES = {
   nine_f: 'locomotives/4/loco-nine-f--8ae80382.png',
   sd40: 'locomotives/4/loco-sd40--6cbe0e61.png',
   big_boy: 'locomotives/5/loco-big-boy--7946d185.png',
-  // wagons: the same series, not in the table
-  water_cart: 'wagons/wagon-water-cart--b3e1e23d.png',
-  wood_hopper: 'wagons/wagon-wood-hopper--e1cbab44.png',
-  flatbed: 'wagons/wagon-flatbed--5cefe8c7.png',
-  riveted_tank: 'wagons/wagon-riveted-tank--c144c9b9.png',
-  steel_hopper: 'wagons/wagon-steel-hopper--6b184dae.png',
-  bolster_flat: 'wagons/wagon-bolster-flat--74163a0c.png',
-  welded_tank: 'wagons/wagon-welded-tank--9cf2397e.png',
-  bathtub: 'wagons/wagon-bathtub--3a5728e9.png',
-  bulkhead_flat: 'wagons/wagon-bulkhead-flat--633667f9.png',
-  pressure_tank: 'wagons/wagon-pressure-tank--26040e87.png',
-  dump_hopper: 'wagons/wagon-dump-hopper--719dd1e9.png',
-  heavy_flat: 'wagons/wagon-heavy-flat--23fa59a9.png',
-  wooden_coach: 'wagons/wagon-wooden-coach--7e416fd9.png',
-  steel_coach: 'wagons/wagon-steel-coach--b60920d1.png',
-  pullman: 'wagons/wagon-pullman--fb7e6303.png',
-  brake_van: 'wagons/wagon-brake-van--0005c498.png',
-  boxcar: 'wagons/wagon-boxcar--b5e70263.png',
-  coal_cart: 'wagons/wagon-coal-cart--00f055d9.png',
-  fuel_cart: 'wagons/wagon-fuel-cart--086ca5cc.png',
-  battery_cart: 'wagons/wagon-battery-cart--3353bb73.png',
 };
 
 const luma = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
