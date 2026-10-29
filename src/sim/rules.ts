@@ -29,6 +29,8 @@ export interface Rules {
   smallOnBigLine: number;
   /** 1: narrow track and the narrow depot can be built; the hook for a later unlock rule */
   narrowUnlocked: number;
+  /** 1: each line is built only from its age on (Main Diesel, Trunk Electric, ...); 0: every line at once */
+  lineAgeLocks: number;
   loadRateMul: number;
   productionMul: number;
   capacityMul: number;
@@ -102,6 +104,7 @@ export const DEFAULT_RULES: Rules = {
   lineSpeedNarrow: 1.2,
   smallOnBigLine: 0.25,
   narrowUnlocked: 1,
+  lineAgeLocks: 1,
   loadRateMul: 1,
   productionMul: 1,
   capacityMul: 1,
@@ -352,6 +355,15 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 1,
     step: 1,
+  },
+  {
+    key: 'lineAgeLocks',
+    label: 'Lines open by age (0 or 1)',
+    group: 'Trains & stations',
+    min: 0,
+    max: 1,
+    step: 1,
+    hint: 'Main Line from the Diesel Age, Trunk Line from the Electric Age; 0 opens every line at once',
   },
   {
     key: 'loadRateMul',

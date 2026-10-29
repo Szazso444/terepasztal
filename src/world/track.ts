@@ -1,6 +1,7 @@
 import { Dir, DIRS, rotateDir, opposite, DIR_DX, DIR_DY, type Vec2 } from '../engine/iso';
 import { content, type Cost } from '../data/content';
 import { rules } from '../sim/rules';
+import { AGE_DEFS } from '../sim/ages';
 import {
   linkPoints,
   linkLength,
@@ -102,6 +103,17 @@ export function classRadius(cls: TrackClass) {
 }
 export function classCostMul(cls: TrackClass) {
   return LINES[cls].costMul;
+}
+/** Index of the age (`economy.tier`) a line is first built in. */
+export function lineAge(cls: TrackClass): number {
+  return Math.max(
+    0,
+    AGE_DEFS.findIndex((a) => a.id === LINES[cls].age),
+  );
+}
+/** Age a track item needs: its line's, or the later of a crossing's two lines. */
+export function itemAge(item: { cls: TrackClass; cls2?: TrackClass }): number {
+  return Math.max(lineAge(item.cls), item.cls2 ? lineAge(item.cls2) : 0);
 }
 export function networkOf(cls: TrackClass): Network {
   return LINES[cls].network;

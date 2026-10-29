@@ -1,8 +1,16 @@
+import { rules } from '../sim/rules';
 import { el, btn } from './dom';
 import { fmtCost } from '../sim/stockpile';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
-import { BUILDABLE_CLASSES, TRACK_ITEMS, itemKey, pieceCost, type TrackItem } from '../world/track';
+import {
+  BUILDABLE_CLASSES,
+  TRACK_ITEMS,
+  itemAge,
+  itemKey,
+  pieceCost,
+  type TrackItem,
+} from '../world/track';
 import { nextLine, type ReclassDir } from '../world/reclass';
 import { SUPPLY_KINDS, SUPPLY_DEFS, type SupplyKind } from '../sim/catenary';
 import { STATION_DEFS } from '../sim/stations';
@@ -164,7 +172,10 @@ export class Toolbar {
         costNow: () => pieceCost(it.kind, it.cls, it.cls2),
         frame: `track/${k}_0`,
         desc: STR.toolbar.trackDesc[k] ?? '',
-        tier: 0,
+        // a line opens in its age (`rules.lineAgeLocks`)
+        get tier() {
+          return rules.lineAgeLocks ? itemAge(it) : 0;
+        },
         place: it.kind === 'bridge' ? STR.toolbar.place.bridge : STR.toolbar.place.track,
         group: trackGroupOf(it),
         slot: trackSlot(it),
@@ -448,6 +459,11 @@ export class Toolbar {
       for (const g of groups) {
         const b = btn(g.label, () => this.setGroup(g.id), 'tb-type');
         b.disabled = !enabledItems.some((i) => i.group === g.id);
+        // a line not open yet says from which age it is
+        if (b.disabled) {
+          const ages = items.filter((i) => i.group === g.id && i.tier > tier).map((i) => i.tier);
+          if (ages.length) b.title = STR.build.tierLocked(Math.min(...ages));
+        }
         b.classList.toggle('active', g.id === shown);
         this.groupRow.append(b);
       }

@@ -9,6 +9,9 @@ import { Economy } from './economy';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
 
+/** An economy in the Electric Age: Main and Trunk Line are open. */
+const electricAge = () => Object.assign(new Economy(), { tier: 2 });
+
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
@@ -16,7 +19,7 @@ function world(ground = Terrain.Grass) {
   const map = emptyMap(4242, 48, 48, ground),
     track = new TrackGraph(48, 48),
     stock = new Stockpile(),
-    economy = new Economy();
+    economy = electricAge();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
   const builder = new Builder(map, regions, track, economy, stock);

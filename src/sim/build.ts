@@ -6,6 +6,7 @@ import {
   pieceCost,
   footprintOf,
   isUnitKind,
+  itemAge,
   memberClear,
   makePiece,
   portClass,
@@ -528,6 +529,8 @@ export class Builder {
     const kind = item.kind;
     if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
       return { ok: false, cost: {}, reason: STR.build.narrowLocked };
+    if (this.lineLocked(itemAge(item)))
+      return { ok: false, cost: {}, reason: STR.build.tierLocked(itemAge(item)) };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
     for (const [i, t] of tiles.entries()) {
@@ -660,6 +663,9 @@ export class Builder {
         changes: [],
         reason: STR.build.reclass[plan.reason ?? 'nothing'],
       };
+    const locked = plan.changes.map(itemAge).find((age) => this.lineLocked(age));
+    if (locked !== undefined)
+      return { ok: false, cost: {}, changes: plan.changes, reason: STR.build.tierLocked(locked) };
     const crossing = this.reclassCrossing(plan.changes);
     if (crossing) return { ok: false, cost: {}, changes: plan.changes, reason: crossing };
     const cost: Cost = {};
@@ -692,6 +698,10 @@ export class Builder {
         if (why) return why;
       }
     return null;
+  }
+  /** Is a line of age `age` still closed? Main Line opens in the Diesel Age, Trunk Line in the Electric. */
+  private lineLocked(age: number) {
+    return !this.free && !!rules.lineAgeLocks && age > this.economy.tier;
   }
   /** Move the pieces on `tiles` one standard line up or down. */
   reclassTrack(

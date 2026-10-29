@@ -20,6 +20,9 @@ import { setSupplyMode } from './supply';
 import { Inventory } from '../gacha/inventory';
 import { rules, DEFAULT_RULES } from './rules';
 
+/** An economy in the Electric Age: Main and Trunk Line are open. */
+const electricAge = () => Object.assign(new Economy(), { tier: 2 });
+
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -184,7 +187,7 @@ describe('the Mountain biome on grass', () => {
       stock = new Stockpile();
     const regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-    const builder = new Builder(map, regions, track, new Economy(), stock);
+    const builder = new Builder(map, regions, track, electricAge(), stock);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
     map.biome[24 * map.w + 20] = MOUNTAIN;
     const item: TrackItem = { kind: 'straight', cls: 'branch' };
@@ -205,7 +208,7 @@ describe('the Mountain biome on grass', () => {
       const map = emptyMap(4242, 96, 96, Terrain.Grass),
         track = new TrackGraph(96, 96),
         stock = new Stockpile(),
-        economy = new Economy();
+        economy = electricAge();
       const builder = new Builder(map, new RegionState(map), track, economy, stock);
       builder.free = true;
       const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
@@ -294,7 +297,7 @@ describe('every biome in the table', () => {
           stock = new Stockpile(),
           regions = new RegionState(map);
         for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-        const builder = new Builder(map, regions, new TrackGraph(12, 12), new Economy(), stock);
+        const builder = new Builder(map, regions, new TrackGraph(12, 12), electricAge(), stock);
         const list = pieceCost(c.item.kind, c.item.cls, c.item.cls2);
         for (const k of Object.keys(list)) stock.amounts.set(k, 1e6);
         const name = TERRAIN_NAMES[c.terrain],
@@ -323,7 +326,7 @@ describe('every biome in the table', () => {
       const map = emptyMap(4242, 96, 40, Terrain.Grass),
         track = new TrackGraph(96, 40),
         stock = new Stockpile(),
-        economy = new Economy();
+        economy = electricAge();
       map.biome.fill(biome);
       const builder = new Builder(map, new RegionState(map), track, economy, stock);
       builder.free = true;

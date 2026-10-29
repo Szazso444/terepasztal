@@ -10,6 +10,9 @@ import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { ReclassStroke } from './reclassStroke';
 
+/** An economy in the Electric Age: Main and Trunk Line are open. */
+const electricAge = () => Object.assign(new Economy(), { tier: 2 });
+
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
@@ -104,7 +107,7 @@ describe('a stroke on real track', () => {
     const map = emptyMap(4242, 48, 48, Terrain.Grass),
       track = new TrackGraph(48, 48),
       stock = new Stockpile(),
-      economy = new Economy();
+      economy = electricAge();
     const regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
     const builder = new Builder(map, regions, track, economy, stock);
