@@ -1457,6 +1457,11 @@ export const STR = {
     hydrofoil: 'Hydrofoil',
     submarine: 'Submarine',
   } as Record<string, string>,
+  /** tooltips of the line and class badges (src/ui/lineBadge.ts) */
+  badge: {
+    line: (line: string, cls: string) => `${line}: built for ${cls} class trains`,
+    cls: (cls: string, line: string) => `${cls} class: needs ${line} or bigger`,
+  },
   compat: {
     wrongNetwork: (line: string) => `not built for ${line}`,
     tooBig: (cls: string, line: string) => `a ${cls} is too big for ${line}`,

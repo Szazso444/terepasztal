@@ -1,6 +1,7 @@
 import { wagonFrame } from '../art/frames';
 import { el, btn } from './dom';
 import { STR } from '../strings';
+import { classBadge } from './lineBadge';
 import type { Train } from '../sim/trains';
 import type { Builder } from '../sim/build';
 import type { Commands } from '../sim/commands';
@@ -121,7 +122,7 @@ export class TrainSide {
       el(
         'div',
         { class: 'ts-head' },
-        el('span', { class: 'name', text: t.name }),
+        el('span', { class: 'name' }, t.trainClass ? classBadge(t.trainClass) : null, t.name),
         el(
           'span',
           { class: 'row', style: 'margin:0;gap:3px' },

@@ -62,6 +62,7 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
+import { content } from './data/content';
 import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
@@ -2492,6 +2493,14 @@ export class Game implements UiHost {
       power: t.power,
     };
   }
+  /** The piece on a tile with its line, as the toolbar names it: "Curve (Main Line)". */
+  private trackName(x: number, y: number): string | null {
+    const p = this.track.get(x, y);
+    if (!p) return null;
+    const L = STR.toolbar.trackClass;
+    const line = p.cls2 && p.cls2 !== p.cls ? `${L[p.cls]} × ${L[p.cls2]}` : L[p.cls];
+    return `${content.track.pieces[p.kind]?.name ?? p.kind} (${line})`;
+  }
   private tileSnap(x: number, y: number): TileSnapshot {
     const dec = this.builder.decorAt(x, y);
     return {
@@ -2499,7 +2508,7 @@ export class Game implements UiHost {
       x,
       y,
       charted: this.regions.isTileUnlocked(x, y),
-      track: this.track.get(x, y)?.kind ?? null,
+      track: this.trackName(x, y),
       decor: dec
         ? {
             name: decorDefOf(dec.id).name,

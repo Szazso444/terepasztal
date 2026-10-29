@@ -1,5 +1,7 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
+import { classOf } from '../sim/compat';
+import { classBadge } from './lineBadge';
 import type { Screen } from './modal';
 import {
   DYNAMIC_MODES,
@@ -181,10 +183,12 @@ export class TrainScreen implements Screen {
         el(
           'div',
           { style: 'flex:1' },
-          el('div', {
-            class: `name rarity-${lo.def.rarity}`,
-            text: STR.train.locoLevel(lo.def.name, lo.level),
-          }),
+          el(
+            'div',
+            { class: `name rarity-${lo.def.rarity}` },
+            classBadge(classOf(lo.def)),
+            STR.train.locoLevel(lo.def.name, lo.level),
+          ),
           el('div', {
             class: 'sub',
             text: `${STR.roster.type[lo.def.type]} · ${Math.round(lo.def.power * levelMul(lo.level))} t · ${STR.roster.fuelLine(lo.def)}`,
@@ -311,7 +315,12 @@ export class TrainScreen implements Screen {
           el(
             'div',
             { style: 'flex:1' },
-            el('div', { class: `name rarity-${w.def.rarity}`, text: w.def.name }),
+            el(
+              'div',
+              { class: `name rarity-${w.def.rarity}` },
+              classBadge(classOf(w.def)),
+              w.def.name,
+            ),
             el('div', {
               class: 'sub',
               text: w.cargo

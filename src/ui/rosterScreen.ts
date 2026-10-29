@@ -14,7 +14,8 @@ import {
   locoDef,
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
-import { runsOn } from '../sim/compat';
+import { classOf, runsOn } from '../sim/compat';
+import { classBadge } from './lineBadge';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -224,7 +225,7 @@ export class RosterScreen implements Screen {
         'div',
         { class: 'rcard-head' },
         el('span', { class: `rarity-${d.rarity}`, text: d.rarity }),
-        el('span', { class: 'name', text: d.name }),
+        el('span', { class: 'name' }, classBadge(classOf(d)), d.name),
         el('span', { class: 'num', text: STR.roster.lv(it.level) }),
       ),
       el(

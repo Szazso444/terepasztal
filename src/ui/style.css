@@ -24,6 +24,20 @@
   --text-bright: #fff1d0;
   --text-good: #9cc06a;
   --text-bad: #e0675b;
+  /* track line badges (src/ui/lineBadge.ts): each line's bed colour and the ink of its bars */
+  --line-narrow: #7f8c4d;
+  --line-narrow-ink: #222c17;
+  --line-branch: #a98a61;
+  --line-branch-ink: #2a2015;
+  --line-main: #c9d1d5;
+  --line-main-ink: #2c373d;
+  --line-trunk: #32373b;
+  --line-trunk-ink: #dfe5e8;
+  --line-trunk-edge: #8f989e;
+  --line-maglev: #93b9c6;
+  --line-maglev-ink: #1b3540;
+  --line-hyperloop: #a99dc6;
+  --line-hyperloop-ink: #282042;
   --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
   --font-body: Verdana, Tahoma, 'DejaVu Sans', sans-serif;
   --font-mono: 'Lucida Console', Monaco, 'DejaVu Sans Mono', monospace;
@@ -2236,4 +2250,24 @@ table.market td {
 }
 #train-side .panel-title .num {
   margin-left: auto;
+}
+
+/* a track line's badge beside a name (src/ui/lineBadge.ts) */
+.line-badge {
+  display: inline-flex;
+  vertical-align: -2px;
+  line-height: 0;
+  flex: 0 0 auto;
+}
+.line-badge + .line-badge {
+  margin-left: 2px;
+}
+.btn.tb-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tb-name .line-badge,
+.name .line-badge {
+  margin-right: 4px;
 }

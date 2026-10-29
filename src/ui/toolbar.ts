@@ -5,12 +5,15 @@ import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
 import {
   BUILDABLE_CLASSES,
+  LINES,
   TRACK_ITEMS,
   itemAge,
   itemKey,
   pieceCost,
+  type TrackClass,
   type TrackItem,
 } from '../world/track';
+import { lineBadge } from './lineBadge';
 import { nextLine, type ReclassDir } from '../world/reclass';
 import { SUPPLY_KINDS, SUPPLY_DEFS, type SupplyKind } from '../sim/catenary';
 import { STATION_DEFS } from '../sim/stations';
@@ -83,6 +86,13 @@ interface Category {
   playOnly?: boolean;
   /** types the items are listed by; one is open at a time */
   groups?: { id: string; label: string }[];
+}
+
+/** The badges of a track piece's lines: one, or both of a crossing between two lines. */
+function pieceBadges(it: ToolItem): HTMLElement[] {
+  if (it.tool.kind !== 'track') return [];
+  const { cls, cls2 } = it.tool.item;
+  return cls2 && cls2 !== cls ? [lineBadge(cls), lineBadge(cls2)] : [lineBadge(cls)];
 }
 
 /** Are there two buildable standard lines for Upgrade and Downgrade to move between? */
@@ -458,6 +468,7 @@ export class Toolbar {
       this.groupRow.append(el('span', { class: 'tb-key', text: 'Q' }));
       for (const g of groups) {
         const b = btn(g.label, () => this.setGroup(g.id), 'tb-type');
+        if (g.id in LINES) b.prepend(lineBadge(g.id as TrackClass));
         b.disabled = !enabledItems.some((i) => i.group === g.id);
         // a line not open yet says from which age it is
         if (b.disabled) {
@@ -482,7 +493,12 @@ export class Toolbar {
         el(
           'span',
           { class: 'tb-text' },
-          el('span', { class: 'tb-name', text: shown !== null ? (it.label ?? it.name) : it.name }),
+          el(
+            'span',
+            { class: 'tb-name' },
+            ...pieceBadges(it),
+            shown !== null ? (it.label ?? it.name) : it.name,
+          ),
           el('span', { class: 'tb-cost', text: fmtCost(it.cost) }),
         ),
       ) as HTMLButtonElement;
