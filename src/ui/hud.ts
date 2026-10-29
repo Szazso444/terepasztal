@@ -1,51 +1,43 @@
-import { el, btn, fmtMoney, fmtInt } from './dom';
+import { el, btn, fmtInt } from './dom';
 import { STR } from '../strings';
 import { SPEED_ORDER, type GameClock } from '../sim/time';
-import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
+import type { AgeStatus } from '../sim/ages';
+import type { AtlasRegistry } from '../engine/atlas';
+import { ttTerm, type Tooltip } from './tooltip';
+import { tipBuild } from './tooltipRender';
+import { ageTip, eraView } from './ageTooltip';
+import { ageIcon } from './ageIcons';
 
 export interface HudModel {
   tickets: number;
-  /** current age index (0 steam, 1 diesel, 2 electric) */
+  /** current age index (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper) */
   tier: number;
 }
 
-/** Display name of an age by data id. */
-export function ageName(id: string) {
-  return STR.ages.name[id] ?? id;
-}
-
 /**
- * An age's goals as the card lists them: a plain goal on its own, the alternatives of one `anyOf`
- * group together (`ageStatus` lists them one after another, each carrying the group's index).
- */
-function goalRows(goals: GoalStatus[]): GoalStatus[][] {
-  const rows: GoalStatus[][] = [];
-  for (const g of goals) {
-    const last = rows[rows.length - 1];
-    if (g.anyOf !== undefined && last && last[0].anyOf === g.anyOf) last.push(g);
-    else rows.push([g]);
-  }
-  return rows;
-}
-
-/**
- * Top bar: title, menu and screen buttons on the left; weather/day toggles, season, clock and
- * speed on the right. Tickets and the current age live in `funds`, which the game places at the
- * right end of the resource row (the money itself is the resource bar's first cell); hovering the
- * age shows the goals of every age.
+ * Top bar: title, menu and screen buttons on the left; on the right the weather/day toggles, the
+ * season, the era widget (the current age's icon and name, and a bar toward the next age; resting
+ * on it lists every age with its goals), then day, clock and speed as the last block. Tickets live
+ * in `funds`, which the game places at the right end of the resource row (the money itself is the
+ * resource bar's first cell).
  */
 export class Hud {
   readonly root: HTMLElement;
   private tickets = el('span', { class: 'value' });
-  private age = el('span', { class: 'value' });
-  private ageCard = el('div', { id: 'age-card', class: 'panel' });
-  private ageHover = false;
+  /** the era widget: the age's icon and name, the bar toward the next age and its percent */
+  private eraIcon = el('span', { class: 'era-icon' });
+  private eraName = el('span', { class: 'era-name' });
+  private eraFill = el('div', { class: 'era-fill' });
+  private eraBar = el('div', { class: 'era-bar' }, this.eraFill);
+  private eraPct = el('span', { class: 'era-pct' });
+  /** the age whose icon is drawn */
+  private eraId: string | null = null;
   private day = el('span', { class: 'value' });
   private clockEl = el('span', { class: 'value' });
   private speedBtns: HTMLButtonElement[] = [];
   readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
   readonly menuBtn = btn(STR.menu.menuButton, () => this.onMenu?.(), 'small');
-  /** tickets / age block for the resource row */
+  /** the tickets block for the resource row */
   readonly funds: HTMLElement;
   /** slot for the advisor button and other top-right controls */
   readonly rightActions = el('div', { class: 'stat', style: 'gap:4px' });
@@ -60,8 +52,10 @@ export class Hud {
 
   constructor(
     private readonly clock: GameClock,
-    /** progress towards every age, read while the age card is open */
+    /** progress towards every age: read on every update, and when the era tooltip opens */
     private readonly ages: () => AgeStatus[],
+    atlas: AtlasRegistry,
+    tooltip: Tooltip,
   ) {
     const stat = (label: string, v: HTMLElement) =>
       el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), v);
@@ -80,23 +74,12 @@ export class Hud {
     }
     this.weatherBtn.title = STR.hud.weatherToggleHint;
     this.dayBtn.title = STR.hud.dayToggleHint;
-    const ageStat = stat(STR.hud.age, this.age);
-    ageStat.classList.add('age');
-    ageStat.addEventListener('mouseenter', () => {
-      this.ageHover = true;
-      const r = ageStat.getBoundingClientRect();
-      this.ageCard.style.left = `${Math.max(4, Math.min(window.innerWidth - 290, r.right - 280))}px`;
-      this.ageCard.style.top = `${r.bottom + 4}px`;
-      this.ageCard.style.display = '';
-      this.renderAges();
-    });
-    ageStat.addEventListener('mouseleave', () => {
-      this.ageHover = false;
-      this.ageCard.style.display = 'none';
-    });
-    this.ageCard.style.display = 'none';
-    document.body.append(this.ageCard);
-    this.funds = el('div', { class: 'funds' }, stat(STR.hud.tickets, this.tickets), ageStat);
+    this.funds = el('div', { class: 'funds' }, stat(STR.hud.tickets, this.tickets));
+    // the whole widget is the term: resting on it opens the ages tooltip
+    const era = ttTerm(
+      el('div', { class: 'stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
+      tipBuild(atlas, () => ageTip(this.ages())),
+    );
     this.root = el(
       'div',
       { id: 'topbar', class: 'panel' },
@@ -108,66 +91,11 @@ export class Hud {
       this.rightActions,
       el('div', { class: 'stat toggles' }, this.weatherBtn, this.dayBtn),
       el('div', { class: 'stat weather' }, this.weather),
-      // one block at the right end, so the era widget can sit just before it
+      era,
+      // one block at the right end, the era widget just before it
       el('div', { class: 'stat datespeed' }, this.day, this.clockEl, time),
     );
-  }
-
-  /**
-   * The age card: every age with its goals as progress bars. The alternatives of a group sit
-   * indented under a "One of these" heading, which says so once one of them is met.
-   */
-  private renderAges() {
-    const c = this.ageCard;
-    c.innerHTML = '';
-    const body = el('div', { class: 'panel-body' });
-    const fmt = (kind: GoalKind, v: number) =>
-      kind === 'earned' ? fmtMoney(Math.floor(v)) : fmtInt(Math.floor(v));
-    const bar = (g: GoalStatus) => {
-      // a target of 0 is met from the start
-      const pct = g.target > 0 ? Math.max(0, Math.min(100, (g.current / g.target) * 100)) : 100;
-      return el(
-        'div',
-        { class: 'bar' },
-        el('div', { class: `bar-fill ${g.done ? 'good' : ''}`, style: `width:${pct}%` }),
-        el('div', {
-          class: 'bar-label',
-          text: `${STR.ages.goal[g.kind]}: ${fmt(g.kind, g.current)} / ${fmt(g.kind, g.target)}`,
-        }),
-      );
-    };
-    for (const a of this.ages()) {
-      const state = a.current ? STR.ages.current : a.unlocked ? STR.ages.reached : STR.ages.locked;
-      body.append(
-        el(
-          'div',
-          { class: `kv ${a.current ? 'amber' : a.unlocked ? 'dim' : ''}` },
-          el('span', { class: 'k', text: ageName(a.id) }),
-          el('span', { class: 'v', text: state }),
-        ),
-      );
-      if (!a.goals.length) {
-        body.append(el('div', { class: 'sub dim', text: STR.ages.start }));
-        continue;
-      }
-      for (const row of goalRows(a.goals)) {
-        // a group of one is a plain goal
-        if (row.length === 1) {
-          body.append(bar(row[0]));
-          continue;
-        }
-        const met = row.some((g) => g.done);
-        body.append(
-          el('div', {
-            class: met ? 'cyan' : 'dim',
-            text: met ? STR.ages.anyOfMet : STR.ages.anyOf,
-          }),
-          el('div', { style: 'margin-left:10px' }, ...row.map(bar)),
-        );
-      }
-    }
-    body.append(el('div', { class: 'sub dim', text: STR.ages.hint }));
-    c.append(el('div', { class: 'panel-title', text: STR.ages.title }), body);
+    tooltip.bindTerms(this.root);
   }
 
   setToggles(weather: boolean, day: boolean) {
@@ -194,13 +122,27 @@ export class Hud {
     (this.fps.parentElement as HTMLElement).style.display = v === null ? 'none' : '';
   }
 
+  /** The era widget: written only where it changed, as this runs every frame. */
+  private updateEra(tier: number) {
+    const v = eraView(this.ages(), tier);
+    if (v.id !== this.eraId) {
+      this.eraId = v.id;
+      // fixed markup from ageIcons.ts, never from data
+      this.eraIcon.innerHTML = ageIcon(v.id);
+    }
+    if (this.eraName.textContent !== v.name) this.eraName.textContent = v.name;
+    // the last age has no next one: no bar, and the label says it is the current one
+    const bar = v.percent === undefined ? 'none' : '';
+    if (this.eraBar.style.display !== bar) this.eraBar.style.display = bar;
+    const width = `${v.percent ?? 100}%`;
+    if (this.eraFill.style.width !== width) this.eraFill.style.width = width;
+    const label = v.percent === undefined ? STR.ages.current : STR.hud.agePercent(v.percent);
+    if (this.eraPct.textContent !== label) this.eraPct.textContent = label;
+  }
+
   update(m: HudModel) {
     this.tickets.textContent = fmtInt(m.tickets);
-    const ages = this.ages();
-    const cur = ages[Math.min(m.tier, ages.length - 1)];
-    const label = cur ? ageName(cur.id) : String(m.tier);
-    if (this.age.textContent !== label) this.age.textContent = label;
-    if (this.ageHover) this.renderAges();
+    this.updateEra(m.tier);
     this.day.textContent = STR.hud.day(this.clock.day);
     this.clockEl.textContent = this.clock.formatClock();
     this.speedBtns.forEach((b, i) =>

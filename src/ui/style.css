@@ -220,6 +220,45 @@ body {
 #topbar .datespeed .time {
   padding: 0 10px 0 4px;
 }
+/* the era widget, just before the date: a term drawn as a cell, not as a link */
+#topbar .tt-term {
+  display: flex;
+  color: inherit;
+  border-bottom: none;
+}
+#topbar .era {
+  gap: 6px;
+}
+#topbar .era-icon {
+  display: flex;
+  color: var(--amber);
+}
+#topbar .era-icon svg {
+  width: 16px;
+  height: 16px;
+}
+#topbar .era-name {
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: bold;
+}
+#topbar .era-bar {
+  width: 44px;
+  height: 7px;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+#topbar .era-fill {
+  height: 100%;
+  background: var(--amber-dark);
+}
+#topbar .era-pct {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
 #topbar .time .btn {
   padding: 1px 7px;
   min-width: 30px;
@@ -1786,7 +1825,7 @@ input[type='range'] {
   border-top: none;
   cursor: pointer;
 }
-/* the cells shrink and clip before they push tickets and age off the right edge */
+/* the cells shrink and clip before they push the tickets off the right edge */
 #resbar .res-cells {
   flex: 1 1 0;
   min-width: 0;
@@ -1847,26 +1886,6 @@ input[type='range'] {
   color: inherit;
   border-bottom: none;
   cursor: inherit;
-}
-#age-card {
-  position: fixed;
-  width: 280px;
-  z-index: 80;
-  pointer-events: none;
-  font-size: 11px;
-}
-#age-card .kv {
-  font-size: 11px;
-}
-#age-card .kv.amber .v {
-  color: var(--amber);
-}
-#age-card .bar-fill.good {
-  background: var(--cyan-dark);
-}
-#topbar .stat.age,
-.funds .stat.age {
-  cursor: help;
 }
 #topbar .stat.toggles .btn.active {
   color: var(--cyan);

@@ -20,7 +20,7 @@ export const needsCompact = (scrollWidth: number, clientWidth: number) => scroll
 /**
  * Second row under the top bar: funds first, then the resources in their groups (`RESOURCE_GROUPS`),
  * each cell a term whose tooltip links the buildings that make and use it. A resource shows once its
- * age has come or it is in stock (`barGroups`); the famine warning and `right` (tickets, age) end it.
+ * age has come or it is in stock (`barGroups`); the famine warning and `right` (the tickets) end it.
  */
 export class ResourceBar {
   readonly root = el('div', { id: 'resbar', class: 'panel' });
