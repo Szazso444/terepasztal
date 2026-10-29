@@ -14,8 +14,7 @@ import {
 } from '../gacha/crafting';
 import { RARITIES, itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
 import type { Economy } from '../sim/economy';
-import { fmtCost } from '../sim/stockpile';
-import type { ResourceStore, StoreRegistry } from '../sim/stores';
+import { fmtCost, type ResourceStore, type StoreRegistry } from '../sim/stores';
 import type { Inventory } from '../gacha/inventory';
 import { cargoDef } from '../sim/cargo';
 import { sfx } from '../engine/audio';
@@ -35,7 +34,7 @@ const RECIPE_FILTERS = [
 ] as const;
 
 /**
- * Two-step workshop: pay money to draw recipe cards and keep one, then spend stockpile
+ * Two-step workshop: pay money to draw recipe cards and keep one, then spend stored
  * resources to build instances of known recipes.
  */
 export class CraftingScreen implements Screen {

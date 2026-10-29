@@ -1,6 +1,5 @@
 import { content, type StationDef, type Cost } from '../data/content';
 import type { LevelStation } from '../world/level';
-import { scaleCost } from './stockpile';
 import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import { rules, type Rules } from './rules';
@@ -10,7 +9,7 @@ import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
-import type { ResourceStore } from './stores';
+import { scaleCost, type ResourceStore } from './stores';
 import { placeSpan } from './doors';
 
 export type { StationDef };
@@ -337,7 +336,7 @@ export class Station {
   waterSupply = false;
   /** Residents within the passenger catchment, updated by the game. */
   passengerPopulation = 0;
-  /** a coaling stage stands within reach (engines refuel from the stockpile) */
+  /** a coaling stage stands within reach (engines refuel from a store) */
   fuelSupply = false;
   /** the upgrade under way (`Builder.upgradeStation`); null when none is */
   work: Work | null = null;

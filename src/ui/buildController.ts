@@ -10,7 +10,7 @@ import type { WorldRenderer } from '../render/worldRenderer';
 import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
 import { STR } from '../strings';
-import { fmtCost, scaleCost } from '../sim/stockpile';
+import { fmtCost, scaleCost } from '../sim/stores';
 import { buildingDef, type Building } from '../sim/buildings';
 import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';

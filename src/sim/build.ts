@@ -29,8 +29,7 @@ import {
 import { ageOfLevel, levelCap } from './levels';
 import { ageDef, LAST_AGE } from './ages';
 import type { Economy } from './economy';
-import { scaleCost } from './stockpile';
-import type { ResourceStore, StoreRegistry } from './stores';
+import { scaleCost, type ResourceStore, type StoreRegistry } from './stores';
 import {
   buildingDef,
   buildingLevel,

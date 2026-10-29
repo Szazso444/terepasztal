@@ -14,7 +14,6 @@ import { rules } from '../sim/rules';
 import { setSupplyMode, type SupplyMode } from '../sim/supply';
 import { GameClock } from '../sim/time';
 import { Economy } from '../sim/economy';
-import { Stockpile } from '../sim/stockpile';
 import { StoreRegistry } from '../sim/stores';
 import { Builder, type Decor } from '../sim/build';
 import { buildingDef, type Building } from '../sim/buildings';
@@ -60,7 +59,6 @@ export interface SimWorld {
   readonly track: TrackGraph;
   readonly builder: Builder;
   readonly economy: Economy;
-  readonly stock: Stockpile;
   /** every store; the builder pays from them */
   readonly stores: StoreRegistry;
   readonly towns: TownRegistry;
@@ -101,7 +99,7 @@ export function mapParams(size: number): MapGenParams {
  * Defaults: seed SIM_WORLD_SEED (4242), size `rules.mapSize` read at the call (160 unless a test
  * changed the rules), terrain `generated` (generateMap with the parameters a new game gets from
  * the rules), supply unset (simple). The clock stands at 0 and nothing is placed, paid or stocked:
- * `Game.startFresh` (money, stock, the first depot, a season from the wall clock) is not run.
+ * `Game.startFresh` (money, the start goods, the first depot, a season from the wall clock) is not run.
  *
  * Only callbacks between simulation objects are wired. Where Game wires a builder event to a
  * method that both draws and simulates, the simulating half is kept, so building through
@@ -132,7 +130,6 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   const clock = new GameClock();
   const economy = new Economy();
   const inventory = new Inventory();
-  const stock = new Stockpile();
   const stores = new StoreRegistry();
   const notices = new Notices();
   const trade = new TradeDesk();
@@ -232,7 +229,6 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
     track,
     builder,
     economy,
-    stock,
     stores,
     towns,
     houses,

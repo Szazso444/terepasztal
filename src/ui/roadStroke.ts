@@ -1,6 +1,6 @@
 import type { Cost } from '../data/content';
 import type { Builder, PlacementCheck } from '../sim/build';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { STR } from '../strings';
 
 /**

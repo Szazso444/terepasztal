@@ -736,10 +736,10 @@ export class Fleet {
   /**
    * Stops chosen on the fly. With cargo aboard: a contract's destination, else a town for
    * passengers, else where the goods go, after a top-up at another producer while room is left
-   * and the dump is not nearer. Goods taken from a warehouse go to the nearest depot (the only
-   * way into the stockpile), a warehouse with room only when no depot is reachable; goods taken
-   * only at producers go to the nearest warehouse with room that they did not come from, or to a
-   * depot when that is clearly nearer. Empty, a freight train picks the producer or warehouse with
+   * and the dump is not nearer. Goods taken from a warehouse go to the nearest depot, a warehouse
+   * with room only when no depot is reachable; goods taken only at producers go to the nearest
+   * warehouse with room that they did not come from, or to a depot when that is clearly nearer.
+   * Empty, a freight train picks the producer or warehouse with
    * the biggest load waiting, weighed against the way there and on to where it would go, the time
    * since a train last loaded there and how full the station is, producer and warehouse alike. A
    * warehouse is a candidate only once it holds `rules.collectMin` of something the train can

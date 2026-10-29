@@ -10,7 +10,7 @@ import { listLevels } from '../world/level';
 import { ageStatus, type AgeSnapshot } from '../sim/ages';
 import type { GameClock } from '../sim/time';
 import type { Economy } from '../sim/economy';
-import { RESOURCE_IDS, scaleCost, type Stockpile } from '../sim/stockpile';
+import { RESOURCE_IDS, scaleCost } from '../sim/stores';
 import type { Fleet } from '../sim/fleet';
 import type { Builder, Decor } from '../sim/build';
 import type { ContractBoard } from '../sim/contracts';
@@ -107,7 +107,6 @@ import { startNewGame } from './newGameTuning';
 export interface PlayUiDomains {
   clock: GameClock;
   economy: Economy;
-  stock: Stockpile;
   inventory: Inventory;
   fleet: Fleet;
   builder: Builder;
@@ -365,7 +364,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (host.mode === 'play' && !menuOpen()) d.screens.toggle(marketScreen);
   });
   resourceBar.right.append(hud.funds);
-  resourceBar.stats = () => resourceStats(d.stock, RESOURCE_IDS);
+  // the flows of the store the bar shows, with the grid's power beside it
+  resourceBar.stats = () => {
+    const shown = stores.selected ?? stores.grid;
+    return resourceStats(stores.withGrid(shown), RESOURCE_IDS);
+  };
   resourceBar.people = () => {
     const residents = d.houses.residentsTotal();
     const crews = d.builder.crewTotal() + d.fleet.crewTotal();

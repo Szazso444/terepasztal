@@ -10,7 +10,7 @@ import trackData from '../data/track.json';
 import { forAll } from '../testing/property';
 import { BIOME_DEFS, type BiomeDef } from './biomes';
 import { Builder } from './build';
-import { scaleCost } from './stockpile';
+import { scaleCost } from './stores';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Station, resetStationIds } from './stations';

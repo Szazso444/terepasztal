@@ -152,12 +152,10 @@ function findSite(w: SimWorld): { x: number; y: number } {
 function build(w: SimWorld) {
   const { x, y } = findSite(w);
   const depot = station(w, 'depot', x, y);
-  // the start stock in the stockpile and in the depot's store, where the train fills its tanks
+  // the start stock in the depot's store, where the train fills its tanks
   const store = w.stores.byKey(`st:${depot.id}`)!;
-  for (const [id, n] of Object.entries(startStock())) {
-    w.stock.add(id, Math.round(n * rules.startStock));
+  for (const [id, n] of Object.entries(startStock()))
     store.amounts.set(id, Math.round(n * rules.startStock));
-  }
   line(w, x + 2, y, x + 20);
   const quarry = station(w, 'quarry', x + 8, y - 1);
   const warehouse = station(w, 'warehouse', x + 18, y - 1);

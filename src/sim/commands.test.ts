@@ -468,7 +468,7 @@ describe('spotBuy', () => {
     }
   });
 
-  it('buys at the quoted price into the stockpile', () => {
+  it('buys at the quoted price into the store', () => {
     const w = world();
     const { buy } = w.trade.spotQuote('stone');
     w.economy.money = 10000;

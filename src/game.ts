@@ -125,8 +125,7 @@ import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
 import { Crafting } from './gacha/crafting';
-import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
-import { StoreRegistry, type ResourceStore } from './sim/stores';
+import { StoreRegistry, RESOURCE_IDS, type ResourceStore } from './sim/stores';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
 import {
@@ -225,7 +224,6 @@ export class Game implements UiHost {
   contractJobs!: ContractDispatcher;
   gacha!: Gacha;
   crafting!: Crafting;
-  stock = new Stockpile();
   /** every town's, depot's and warehouse's goods; building pays from them */
   stores = new StoreRegistry();
   power!: PowerGrid;
@@ -550,7 +548,7 @@ export class Game implements UiHost {
       }
       this.toolbar.refresh();
     }
-    this.stock.beginFlowHistory();
+    this.stores.beginFlowHistory();
     audio.setAge(ageDef(this.economy.tier).id);
   }
 
@@ -931,7 +929,6 @@ export class Game implements UiHost {
     this.catenary = new Catenary(this.map);
     this.builder.catenary = this.catenary;
     this.builder.onSupplyChanged = (x, y) => this.onSupplyChanged(x, y);
-    this.stock.onMessage = (m, k) => this.toasts.push(m, k);
     this.stores.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
@@ -1110,7 +1107,6 @@ export class Game implements UiHost {
     this.ui = createPlayUi(this, {
       clock: this.clock,
       economy: this.economy,
-      stock: this.stock,
       inventory: this.inventory,
       fleet: this.fleet,
       builder: this.builder,
@@ -1351,7 +1347,7 @@ export class Game implements UiHost {
     this.camera.zoomIndex = j.camera.zoomIndex;
     this.camera.zoom = ZOOM_STEPS[j.camera.zoomIndex];
     this.camera.centerOn(j.camera.x, j.camera.y);
-    this.stock.beginFlowHistory();
+    this.stores.beginFlowHistory();
     this.restoringWorld = false;
     this.refreshBridges();
     audio.setAge(ageDef(this.economy.tier).id);

@@ -1,8 +1,7 @@
 import type { Builder, Decor, PlacementCheck } from './build';
 import { decorDef, levelLocked } from './build';
 import type { Town, TownRegistry } from './towns';
-import { scaleCost } from './stockpile';
-import type { ResourceStore } from './stores';
+import { scaleCost, type ResourceStore } from './stores';
 import type { Station } from './stations';
 import { content, type Cost } from '../data/content';
 import { rules, daySeconds } from './rules';

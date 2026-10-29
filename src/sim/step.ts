@@ -8,7 +8,6 @@ import { pieceCost, type TrackKind } from '../world/track';
 import { tickBuildings } from './buildings';
 import type { AgeSnapshot } from './ages';
 import type { GameClock } from './time';
-import type { Stockpile } from './stockpile';
 import type { House, HouseRegistry } from './houses';
 import type { Builder } from './build';
 import type { Station } from './stations';
@@ -58,7 +57,7 @@ export const START_CRAFT = { wood: 40, stone: 10, iron: 30 } as const;
 export const START_SUPPLIES = { water: 600, wheat: 300, food: 600, coal: 240 } as const;
 
 /**
- * Starting stockpile for a brand-new game, before `rules.startStock` scaling. Wood, stone and
+ * Starting goods for a brand-new game, before `rules.startStock` scaling. Wood, stone and
  * iron are what START_TRACK costs at the current track prices plus START_CRAFT, multiplied by
  * `rules.startingResourceScale` and rounded; START_SUPPLIES follow as they are.
  */
@@ -83,7 +82,6 @@ export function startStock(): Record<string, number> {
  */
 export interface StepDomains {
   readonly clock: GameClock;
-  readonly stock: Stockpile;
   readonly houses: HouseRegistry;
   /** what is built, the roads and their level crossings among it (`builder.roads`) */
   readonly builder: Builder;
@@ -101,7 +99,7 @@ export interface StepDomains {
 /** The domains the age goals are measured in. */
 export type AgeDomains = Pick<
   StepDomains,
-  'builder' | 'stock' | 'economy' | 'catenary' | 'regions'
+  'builder' | 'houses' | 'economy' | 'catenary' | 'regions'
 >;
 
 /** The live numbers the age goals are measured against. */
@@ -110,7 +108,7 @@ export function ageSnapshot(d: AgeDomains): AgeSnapshot {
   for (const e of d.catenary.entries()) if (d.catenary.isLive(e.x, e.y)) wires++;
   return {
     depots: d.builder.depotsOf('regular').length,
-    population: d.stock.population,
+    population: d.houses.residentsTotal(),
     earned: d.economy.earned,
     substations: d.catenary.substations.filter((s) => s.powered).length,
     wires,
@@ -223,8 +221,7 @@ export class SimStep {
 
   /** Run one step of `gdt` game seconds; the clock already stands at the step's end. */
   run(gdt: number, ctx: StepContext): void {
-    const { clock, stock, houses, builder, fleet, people, weather, contracts, trade, economy } =
-      this.d;
+    const { clock, houses, builder, fleet, people, weather, contracts, trade, economy } = this.d;
     const play = ctx.mode === 'play';
     // the stores follow the rails and the supply mode, so every dock this step is the current one
     builder.stores.follow();
@@ -233,9 +230,6 @@ export class SimStep {
     builder.tickWorks(gdt);
     houses.tickWorks(gdt);
     const stores = builder.stores;
-    // the head counts the top bar and the age goals read
-    stock.population = houses.residentsTotal();
-    stock.workforce = builder.crewTotal() + fleet.crewTotal();
     stores.tickUpkeep(gdt, eaters(houses, builder));
     houses.tick(gdt, clock.time, play);
     if (clock.time >= this.nextCityCheck) {

@@ -153,7 +153,7 @@ export const DYNAMIC_MODES: RouteMode[] = ['freight', 'transport', 'contract'];
 export interface StopPlan {
   stationId: number;
   load: 'auto' | 'none';
-  /** auto: only at a warehouse (stockpile) or where a contract / passengers want it */
+  /** auto: only at a warehouse or where a contract / passengers want it */
   unload: 'auto' | 'all' | 'none';
   waitFull: boolean;
   refuel: boolean;

@@ -4,7 +4,7 @@ import { Builder } from '../sim/build';
 import { Economy } from '../sim/economy';
 import { roadCost } from '../sim/roads';
 import { DEFAULT_RULES, rules } from '../sim/rules';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { STR } from '../strings';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';

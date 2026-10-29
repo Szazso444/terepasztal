@@ -1,5 +1,5 @@
 import { el, btn } from './dom';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { STR } from '../strings';
 import { TRACK_ITEMS, itemKey, pieceCost, type TrackItem } from '../world/track';

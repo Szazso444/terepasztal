@@ -66,6 +66,27 @@ Atlas frame counts (2,839), atlas dimensions and anchors are unchanged, generati
 unchanged on the same machine, curve compatibility verdicts are byte-identical and map generation
 is untouched. Evidence and commands: `scratchpad/README.md`.
 
+### Local stores (replace the stockpile)
+
+- Goods are kept in local stores, not in one global stockpile: each town (its Townhouse holds 300 of
+  every good, and every Warehouse in the town's reach adds 1,000 per level), each depot (3,000),
+  each stand-alone Warehouse (1,000 per level) and the power grid (batteries). Trains unload into
+  them and take goods out of them.
+- Building pays from the nearest store that holds all the material, within 24 tiles of the spot; the
+  build card names the store and says what it lacks. Fuel buildings outside a town (coaling stage,
+  water tower) fill trains from the nearest store within 8 tiles.
+- Simple mode shares the stores on one rail network: a network is one place with one pool, named
+  after its towns. Full mode keeps every store alone.
+- Trains refuel at the stores, and crews and residents eat at the store of their town or of the
+  nearest store in reach. A store whose crews go hungry for ten seconds is in famine: production
+  there is halved and trains slow, and the top bar says so.
+- The top bar shows the selected store (click its name to step through the stores; clicking a town,
+  depot or warehouse also selects it). The weekly flow colours and the Received / Spent card follow
+  the shown store. Crafting and the market use it too.
+- Old saves load without error: the old stockpile moves into the start depot, and each warehouse
+  keeps its own goods. Saves now carry a `stores` part in place of `stockpile`.
+- The `stockpileCap` tuning is gone; the depot, warehouse and Townhouse caps are tuned on their own.
+
 ## v0.8.0
 
 Implements `docs/phase-spec-review.md` and the conflict resolutions; the choices left open are

@@ -7,7 +7,6 @@ import { findPath } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import { content, validateContent, DEFAULT_CONTENT } from '../data/content';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station } from './stations';
 import { Train, type TickCtx } from './trains';
@@ -55,19 +54,20 @@ beforeEach(() => {
 });
 
 describe('weekly food economy and housing', () => {
-  it('colors actual weekly stock movements, excludes initial stock, and expires old flows', () => {
-    const s = new Stockpile();
-    s.add('stone', 300);
+  it('colors actual weekly store movements, excludes initial goods, and expires old flows', () => {
+    const { stores, depot } = storeWith({ stone: 300 });
+    depot.capOf = () => 320;
+    const s = stores.poolOf(depot);
     expect(s.weeklyFlow('stone')).toEqual({ produced: 0, consumed: 0 });
-    s.tick(1);
-    s.add('stone', 50, 320);
+    stores.tickUpkeep(1, new Map());
+    s.add('stone', 50);
     s.spend({ stone: 10 });
     expect(s.weeklyFlow('stone')).toEqual({ produced: 20, consumed: 10 });
-    s.tick(weekSeconds());
+    stores.tickUpkeep(weekSeconds(), new Map());
     expect(s.weeklyFlow('stone')).toEqual({ produced: 0, consumed: 0 });
     s.take('stone', 5);
     expect(s.weeklyFlow('stone').consumed).toBe(5);
-    s.load(s.toJSON());
+    stores.beginFlowHistory();
     expect(s.weeklyFlow('stone').consumed).toBe(0);
   });
   it('validates all shipped cargo, recipes and passenger vehicles', () =>

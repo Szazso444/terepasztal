@@ -10,9 +10,8 @@ import {
   missingInput,
   type Building,
 } from '../sim/buildings';
-import type { ResourceStore } from '../sim/stores';
 import { rules } from '../sim/rules';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost, type ResourceStore } from '../sim/stores';
 import { cargoName } from '../sim/cargo';
 import { upgradeView } from './upgradeView';
 import { upgradeRow } from './upgradeRow';

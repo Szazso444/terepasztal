@@ -1086,7 +1086,6 @@ function gameOn(w: SimWorld): Game {
     track: w.track,
     builder: w.builder,
     economy: w.economy,
-    stock: w.stock,
     stores: w.stores,
     towns: w.towns,
     houses: w.houses,
@@ -1250,7 +1249,6 @@ describe('roads through Game.snapshot and Game.applySave', () => {
     expect([...treated.builder.roads.crossingKeys()]).toEqual([treated.track.key(24, 20)]);
     // nothing was paid back: the money and the stock are the control's, which took nothing off
     expect(treated.economy.money).toBe(control.economy.money);
-    expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
     expect(treated.stores.toJSON()).toEqual(control.stores.toJSON());
     // ... where taking a road up by hand does pay back, under this tuning, to the depot
     const depot = control.stores.nearest(16, 22, Infinity)[0];
@@ -1359,7 +1357,6 @@ describe('roads through Game.snapshot and Game.applySave', () => {
           expect(unbuildable(ground(x, y)), `${x},${y}`).toBeNull();
         // nothing was paid back
         expect(treated.economy.money).toBe(control.economy.money);
-        expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
         // the track under a level crossing stays; one the ground left no road on is no crossing
         expect(treated.track.pieces.size).toBe(control.track.pieces.size);
         const crossings = [...control.builder.roads.crossingKeys()];

@@ -6,7 +6,27 @@ import { supplyMode, type SupplyMode } from './supply';
 import { needsStore, type Building } from './buildings';
 import type { Station } from './stations';
 import type { TownRegistry } from './towns';
+import { CARGO } from './cargo';
 import { STR } from '../strings';
+
+/** Resource ids that can be kept: every cargo plus stored power. */
+export const RESOURCE_IDS: string[] = [
+  ...CARGO.filter((c) => c.class !== 'people').map((c) => c.id),
+  'power',
+];
+
+/** "30 wood, 10 stone" */
+export function fmtCost(cost: Cost, mul = 1): string {
+  const parts = Object.entries(cost)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${Math.ceil(v * mul)} ${k}`);
+  return parts.length ? parts.join(', ') : STR.build.free;
+}
+export function scaleCost(cost: Cost, mul: number): Cost {
+  const out: Cost = {};
+  for (const [k, v] of Object.entries(cost)) out[k] = Math.ceil(v * mul);
+  return out;
+}
 
 /**
  * Where goods are kept. Replaces the one global stockpile: every town, every depot, every
@@ -28,6 +48,8 @@ export interface ResourceStore {
   /** Add up to the cap; returns the amount actually stored. */
   add(id: string, amount: number): number;
   take(id: string, amount: number): number;
+  /** Actual units received and spent in the last seven days; the goods a game began with are not. */
+  weeklyFlow(id: string): Flow;
   canAfford(cost: Cost, mul?: number): boolean;
   /** What is missing to pay `cost` (empty when affordable). */
   missing(cost: Cost, mul?: number): Cost;
@@ -35,6 +57,57 @@ export interface ResourceStore {
   spend(cost: Cost, mul?: number): boolean;
   /** Give back floor(v * mul) of each good, capped; what does not fit is lost. */
   refund(cost: Cost, mul?: number): void;
+}
+
+/** Units received and spent over the last seven days. */
+export interface Flow {
+  produced: number;
+  consumed: number;
+}
+
+/** The game time the stores' flows are told by; the registry owns it and moves it on every step. */
+interface FlowClock {
+  time: number;
+  /** off until the start goods are in or a save is loaded, so those do not count as received */
+  tracking: boolean;
+}
+
+/** Quarter-day buckets keep the rolling history bounded even for continuous upkeep. */
+const BUCKETS_PER_WEEK = 28;
+
+/** What one store received and spent, in quarter-day buckets over the last week. */
+class FlowLog {
+  private flows = new Map<string, { at: number; produced: number; consumed: number }[]>();
+
+  constructor(private clock: FlowClock | null) {}
+
+  record(id: string, amount: number, kind: keyof Flow) {
+    if (!this.clock?.tracking || amount <= 0) return;
+    const buckets = this.flows.get(id) ?? [];
+    const at = Math.floor(this.clock.time / (weekSeconds() / BUCKETS_PER_WEEK));
+    let bucket = buckets[buckets.length - 1];
+    if (!bucket || bucket.at !== at) {
+      bucket = { at, produced: 0, consumed: 0 };
+      buckets.push(bucket);
+    }
+    bucket[kind] += amount;
+    while (buckets.length && buckets[0].at <= at - BUCKETS_PER_WEEK) buckets.shift();
+    this.flows.set(id, buckets);
+  }
+  weekly(id: string): Flow {
+    const total = { produced: 0, consumed: 0 };
+    if (!this.clock) return total;
+    const now = Math.floor(this.clock.time / (weekSeconds() / BUCKETS_PER_WEEK));
+    for (const b of this.flows.get(id) ?? [])
+      if (b.at > now - BUCKETS_PER_WEEK) {
+        total.produced += b.produced;
+        total.consumed += b.consumed;
+      }
+    return total;
+  }
+  clear() {
+    this.flows.clear();
+  }
 }
 
 export type StoreKind = 'town' | 'depot' | 'warehouse' | 'grid';
@@ -74,6 +147,7 @@ abstract class Ledger {
 export class Store extends Ledger implements ResourceStore {
   amounts = new Map<string, number>();
   famine = false;
+  private log: FlowLog;
 
   constructor(
     public key: string,
@@ -81,8 +155,11 @@ export class Store extends Ledger implements ResourceStore {
     public anchor: { x: number; y: number },
     /** the cap per resource, read live so a level-up or a new warehouse counts at once */
     public capOf: (id: string) => number,
+    /** the registry's clock; a store built on its own (a try-out copy) keeps no flows */
+    clock: FlowClock | null = null,
   ) {
     super();
+    this.log = new FlowLog(clock);
   }
 
   get(id: string) {
@@ -91,6 +168,12 @@ export class Store extends Ledger implements ResourceStore {
   cap(id: string) {
     return this.capOf(id);
   }
+  weeklyFlow(id: string) {
+    return this.log.weekly(id);
+  }
+  clearFlows() {
+    this.log.clear();
+  }
   held() {
     return this.amounts.entries();
   }
@@ -98,12 +181,14 @@ export class Store extends Ledger implements ResourceStore {
     const cur = this.get(id);
     const n = Math.max(0, Math.min(amount, this.cap(id) - cur));
     this.amounts.set(id, cur + n);
+    this.log.record(id, n, 'produced');
     return n;
   }
   take(id: string, amount: number) {
     const cur = this.get(id);
     const n = Math.max(0, Math.min(cur, amount));
     this.amounts.set(id, cur - n);
+    this.log.record(id, n, 'consumed');
     return n;
   }
 }
@@ -136,6 +221,15 @@ export class StorePool extends Ledger implements ResourceStore {
     let n = 0;
     for (const m of this.members) n += m.cap(id);
     return n;
+  }
+  weeklyFlow(id: string) {
+    const total = { produced: 0, consumed: 0 };
+    for (const m of this.members) {
+      const f = m.weeklyFlow(id);
+      total.produced += f.produced;
+      total.consumed += f.consumed;
+    }
+    return total;
   }
   held() {
     const out = new Map<string, number>();
@@ -190,6 +284,9 @@ class WorksStore extends Ledger implements ResourceStore {
   }
   cap(id: string) {
     return this.of(id)?.cap(id) ?? 0;
+  }
+  weeklyFlow(id: string) {
+    return this.of(id)?.weeklyFlow(id) ?? { produced: 0, consumed: 0 };
   }
   held() {
     const out = new Map<string, number>(this.base ? [...this.base.held()] : []);
@@ -248,6 +345,7 @@ export class StoreRegistry {
   /** a store's famine begins or ends (`tickUpkeep`) */
   onMessage: ((msg: string, kind: 'info' | 'warn' | 'good') => void) | null = null;
   private deps: StoreDeps | null = null;
+  private clock: FlowClock = { time: 0, tracking: false };
   private stores = new Map<string, Store>();
   private pools = new Map<string, StorePool>();
   /**
@@ -276,8 +374,12 @@ export class StoreRegistry {
   private selectedKey: string | null = null;
 
   constructor() {
-    this.grid = new Store('grid', 'grid', { x: 0, y: 0 }, (id) =>
-      id === 'power' ? rules.powerCap + 100 * this.plants : 0,
+    this.grid = new Store(
+      'grid',
+      'grid',
+      { x: 0, y: 0 },
+      (id) => (id === 'power' ? rules.powerCap + 100 * this.plants : 0),
+      this.clock,
     );
     this.stores.set(this.grid.key, this.grid);
     this.gridWorks = new WorksStore(null, this.poolOf(this.grid));
@@ -344,12 +446,15 @@ export class StoreRegistry {
         have.anchor = w.anchor;
         have.capOf = w.capOf;
         next.set(w.key, have);
-      } else next.set(w.key, new Store(w.key, w.kind, w.anchor, w.capOf));
+      } else next.set(w.key, new Store(w.key, w.kind, w.anchor, w.capOf, this.clock));
     }
     this.stores = next;
     for (const key of [...this.short.keys()]) if (!next.has(key)) this.short.delete(key);
     this.groupByRails();
 
+    // goods handed to an heir are not received: the flows stand still meanwhile
+    const tracking = this.clock.tracking;
+    this.clock.tracking = false;
     for (const [key, gone] of old) {
       if (next.has(key)) continue;
       const heir =
@@ -358,6 +463,7 @@ export class StoreRegistry {
       if (!heir) continue;
       for (const [id, n] of gone.amounts) if (n > 0) heir.add(id, n);
     }
+    this.clock.tracking = tracking;
     this.bindStations();
   }
 
@@ -632,6 +738,8 @@ export class StoreRegistry {
    */
   tickUpkeep(gameDt: number, eaters: Map<ResourceStore, number>) {
     this.follow();
+    this.clock.time += gameDt;
+    this.clock.tracking ||= gameDt > 0;
     // the eaters of every store on a network eat from it together
     const together = new Map<ResourceStore, number>();
     for (const [pool, n] of eaters) {
@@ -671,6 +779,16 @@ export class StoreRegistry {
     return this.nearest(x, y).find((s) => s.canAfford(cost)) ?? null;
   }
 
+  /**
+   * Begin the weekly flows over, once the start goods are in or a save is loaded (the goods a game
+   * begins with are not received), including construction that was paused when it was saved.
+   */
+  beginFlowHistory() {
+    for (const s of this.stores.values()) s.clearFlows();
+    this.clock.time = 0;
+    this.clock.tracking = true;
+  }
+
   /** Goods in every store together. */
   totals(): Map<string, number> {
     const out = new Map<string, number>();
@@ -702,7 +820,7 @@ export class StoreRegistry {
   /**
    * Restore goods and famine, in place of whatever the stores held. Call it once the stations and
    * towns are loaded: the stores are derived from them first. A saved store with no place of its
-   * own now (a warehouse a town took in, a station that went, a stockpile the step from v20 found
+   * own now (a warehouse a town took in, a station that went, the stockpile the step from v20 found
    * no place for) hands its goods and famine to the store that covers its place, else the nearest
    * in reach, else the start depot's. A load keeps every good it brings, past the caps too.
    */
@@ -738,7 +856,10 @@ export class StoreRegistry {
   clear() {
     this.stores = new Map([[this.grid.key, this.grid]]);
     this.grid.amounts.clear();
+    this.grid.clearFlows();
     this.grid.famine = false;
+    this.clock.time = 0;
+    this.clock.tracking = false;
     this.selectedKey = null;
     this.short.clear();
     this.nets.clear();

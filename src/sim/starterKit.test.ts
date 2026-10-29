@@ -76,14 +76,14 @@ function pileOf(amounts: Record<string, number>) {
 
 /**
  * A world the way `Game` sets one up for a new game: an inventory seeded with the starters, the
- * recipes of what it holds, and `stock` in the stockpile (plenty of everything unless given),
+ * recipes of what it holds, and `stock` in a loose store (plenty of everything unless given),
  * which crafting draws on; the first depot's store gets it too (`stocked`): the trains built
  * there fill their tanks from it.
  */
 function newGame(stock: Record<string, number> = plenty()) {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
     track = new TrackGraph(64, 64),
-    stockpile = looseStore(),
+    store = looseStore(),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
@@ -96,8 +96,8 @@ function newGame(stock: Record<string, number> = plenty()) {
   const fleet = new Fleet(track, builder, map, inventory, economy);
   const crafting = new Crafting(new Rng(1), inventory, economy);
   crafting.grantFromInventory();
-  for (const [id, n] of Object.entries(stock)) stockpile.add(id, n);
-  return { map, track, stock: stockpile, supplies: stock, builder, inventory, fleet, crafting };
+  for (const [id, n] of Object.entries(stock)) store.add(id, n);
+  return { map, track, stock: store, supplies: stock, builder, inventory, fleet, crafting };
 }
 /** The depot's store holds the world's stock, put in as given (past its cap); the depot back. */
 function stocked(w: ReturnType<typeof newGame>, depot: Station) {

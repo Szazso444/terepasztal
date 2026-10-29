@@ -50,7 +50,6 @@ export interface Rules {
   rockLevel: number;
   forestDensity: number;
   wheatPerCrew: number;
-  stockpileCap: number;
   /** units of each good a town's store holds before any warehouse */
   townStoreCap: number;
   /** tiles round a store within which building draws on it (Chebyshev) */
@@ -62,7 +61,7 @@ export interface Rules {
   fuelReach: number;
   /** units a warehouse holds per level (any goods, in total) */
   warehouseCap: number;
-  /** stockpile cap added per depot */
+  /** units of each good a depot holds */
   depotCap: number;
   /** each further station / service / works of the same kind costs this much more (fraction of base) */
   repeatCostStep: number;
@@ -130,7 +129,6 @@ export const DEFAULT_RULES: Rules = {
   rockLevel: 0.76,
   forestDensity: 0.56,
   wheatPerCrew: 1,
-  stockpileCap: 1000,
   townStoreCap: 300,
   buildReach: 24,
   fuelReach: 8,
@@ -195,7 +193,6 @@ export const RULE_META: RuleMeta[] = [
     max: 5,
     step: 0.1,
   },
-  { key: 'stockpileCap', label: 'Stockpile cap', group: 'Economy', min: 50, max: 5000, step: 50 },
   {
     key: 'townStoreCap',
     label: 'Town store (Townhouse)',
@@ -232,7 +229,7 @@ export const RULE_META: RuleMeta[] = [
   },
   {
     key: 'depotCap',
-    label: 'Stockpile cap per depot',
+    label: 'Depot store cap',
     group: 'Economy',
     min: 0,
     max: 20000,
@@ -305,7 +302,7 @@ export const RULE_META: RuleMeta[] = [
   { key: 'powerCap', label: 'Power battery', group: 'Economy', min: 0, max: 2000, step: 50 },
   {
     key: 'startStock',
-    label: 'Starting stockpile x',
+    label: 'Starting goods x',
     group: 'Start',
     min: 0,
     max: 10,

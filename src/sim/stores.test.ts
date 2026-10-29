@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
-import { Store, StorePool, StoreRegistry } from './stores';
+import { Store, StorePool, StoreRegistry, previewOf } from './stores';
 import { setSupplyMode } from './supply';
 import { levelMul } from '../gacha/items';
 import type { Station } from './stations';
@@ -11,7 +11,7 @@ import { Dir } from '../engine/iso';
 import { SimStep, startStock, type StepContext } from './step';
 import { buildingDef, tickBuildings, type Building } from './buildings';
 import { STR } from '../strings';
-import { depotWith } from '../testing/storeFixtures';
+import { depotWith, storesWith } from '../testing/storeFixtures';
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 // a test that sets the supply mode leaves it as it found it
@@ -1028,6 +1028,49 @@ describe('a pool of several stores', () => {
     s.b.famine = false;
     s.a.famine = true;
     expect(s.p.famine).toBe(true);
+  });
+
+  it('adds up the weekly flows of its members, and the grid and a store keep their own', () => {
+    const { stores, depots } = storesWith([
+      { amounts: { wood: 50 }, at: { x: 0, y: 0 } },
+      { amounts: { wood: 50 }, at: { x: 10, y: 0 } },
+    ]);
+    const [a, b] = depots;
+    const p = new StorePool([a, b]);
+    // the goods a game begins with are not received
+    expect(p.weeklyFlow('wood')).toEqual({ produced: 0, consumed: 0 });
+    stores.beginFlowHistory();
+    a.add('wood', 30);
+    b.add('wood', 5);
+    b.take('wood', 12);
+    p.take('wood', 4);
+    stores.grid.add('power', 9);
+    expect(a.weeklyFlow('wood')).toEqual({ produced: 30, consumed: 4 });
+    expect(b.weeklyFlow('wood')).toEqual({ produced: 5, consumed: 12 });
+    expect(p.weeklyFlow('wood')).toEqual({ produced: 35, consumed: 16 });
+    expect(p.weeklyFlow('power')).toEqual({ produced: 0, consumed: 0 });
+    // a works sees its store's flows, and the grid's for power
+    const works = stores.withGrid(p);
+    expect(works.weeklyFlow('wood')).toEqual(p.weeklyFlow('wood'));
+    expect(works.weeklyFlow('power')).toEqual({ produced: 9, consumed: 0 });
+    // a week on, the old flows are gone
+    stores.tickUpkeep(weekSeconds() * 1.01, new Map());
+    expect(p.weeklyFlow('wood')).toEqual({ produced: 0, consumed: 0 });
+  });
+
+  it('records no flow for a try-out copy, nor for goods an heir takes over', () => {
+    const { stores, depots, stations } = storesWith([
+      { amounts: { wood: 50 }, at: { x: 0, y: 0 } },
+      { amounts: { wood: 50 }, at: { x: 10, y: 0 } },
+    ]);
+    stores.beginFlowHistory();
+    const copy = previewOf(stores.poolOf(depots[0]));
+    copy.add('wood', 5);
+    expect(copy.weeklyFlow('wood')).toEqual({ produced: 0, consumed: 0 });
+    stations.pop();
+    stores.refresh();
+    expect(depots[0].get('wood')).toBe(100);
+    expect(depots[0].weeklyFlow('wood')).toEqual({ produced: 0, consumed: 0 });
   });
 });
 

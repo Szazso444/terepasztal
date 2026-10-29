@@ -485,7 +485,7 @@ interface Layout {
   tick: number;
   /**
    * the column of a coaling stage, with a water tower east of it, two rows south of the line, and
-   * coal, fuel and water in the stockpile for them to hand out; none when absent
+   * coal, fuel and water in the store for them to hand out; none when absent
    */
   service?: number;
 }

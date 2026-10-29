@@ -10,7 +10,7 @@ import { STATION_DEFS, Station, stationDef, type StationJSON } from './stations'
 import { BUILDING_DEFS, buildingDef } from './buildings';
 import { decorDef } from './build';
 import { CARGO } from './cargo';
-import { RESOURCE_IDS } from './stockpile';
+import { RESOURCE_IDS } from './stores';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { Train, defaultStop, jobStop, resetTrainIds, type StopPlan, type TrainJob } from './trains';

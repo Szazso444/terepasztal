@@ -6,7 +6,7 @@ import { AGE_DEFS } from './sim/ages';
 import { RULE_META } from './sim/rules';
 import { runsOn, withoutInCab } from './sim/compat';
 import { content, type Cost } from './data/content';
-import { fmtCost } from './sim/stockpile';
+import { fmtCost } from './sim/stores';
 import { DYNAMIC_MODES } from './sim/trains';
 
 // the train module plays sounds; this test only reads its list of modes
@@ -155,12 +155,8 @@ describe('what a cost reads', () => {
   });
 
   it('has no words of its own: the empty cost is a string from STR', () => {
-    const file = new URL('./sim/stockpile.ts', import.meta.url);
-    const sf = ts.createSourceFile(
-      'stockpile.ts',
-      readFileSync(file, 'utf8'),
-      ts.ScriptTarget.Latest,
-    );
+    const file = new URL('./sim/stores.ts', import.meta.url);
+    const sf = ts.createSourceFile('stores.ts', readFileSync(file, 'utf8'), ts.ScriptTarget.Latest);
     const fn = sf.statements.find(
       (s): s is ts.FunctionDeclaration => ts.isFunctionDeclaration(s) && s.name?.text === 'fmtCost',
     );

@@ -311,7 +311,7 @@ describe('startStock', () => {
           iron: byHand('iron', c.scale),
           ...START_SUPPLIES,
         });
-        // the order a new game adds them to its stockpile in
+        // the order a new game puts them in the start depot
         expect(Object.keys(got), 'keys').toEqual([
           'wood',
           'stone',
@@ -360,7 +360,7 @@ function findSite(w: SimWorld): { x: number; y: number } {
 }
 
 /**
- * A new game's stock (in the stockpile and in the depot's store, where the train fills its tanks),
+ * A new game's stock (in the depot's store, where the train fills its tanks),
  * a depot with a line east of it, a quarry and a warehouse with a train between them, a passenger
  * station among finished and unfinished houses, and the clock 20 game seconds before the first day
  * ends with one contract completed that day.
@@ -369,7 +369,6 @@ function build(w: SimWorld) {
   const { x, y } = findSite(w);
   const depot = depotWith(w, {}, { x, y });
   for (const [id, n] of Object.entries(startStock())) {
-    w.stock.add(id, Math.round(n * rules.startStock));
     depot.amounts.set(id, Math.round(n * rules.startStock));
   }
   line(w, x + 2, y, x + 20);
@@ -397,7 +396,6 @@ function build(w: SimWorld) {
 function state(w: SimWorld, step: SimStep) {
   return {
     fleet: JSON.stringify(w.fleet.trains.map((t) => t.toJSON())),
-    stock: JSON.stringify(w.stock.toJSON()),
     stores: JSON.stringify(w.stores.toJSON()),
     economy: JSON.stringify(w.economy.toJSON()),
     stations: JSON.stringify(w.builder.stations.map((s) => s.toJSON())),
@@ -575,8 +573,8 @@ interface Staged {
 /**
  * Builds a scene: a depot at (6, 20) and a line along row 20 to x 44, a quarry, a passenger
  * station and a town on it (a farm and a second passenger station when asked), the houses, the
- * buildings on row 41, a new game's stock in the stockpile (trains refuel from it) and in the
- * depot's store (the works run from it), the scene's food and famine at every store, the clock,
+ * buildings on row 41, a new game's stock in the depot's store (trains refuel from it, the works
+ * run from it), the scene's food and famine at every store, the clock,
  * weather and season.
  * The season hook is the simulating half of Game.applySeason; the city and ticket hooks log.
  * Deliveries run inside fleet.tick, where a train's unloading would complete a contract.
@@ -610,7 +608,6 @@ function stage(s: Scene): Staged {
   // the stock first: a new train fills its tanks from it
   const depotStore = w.stores.byKey(`st:${depot.id}`)!;
   for (const [id, n] of Object.entries(startStock())) {
-    w.stock.add(id, Math.round(n * rules.startStock));
     depotStore.amounts.set(id, Math.round(n * rules.startStock));
   }
   if (s.train) {
@@ -706,7 +703,6 @@ function fullState(w: SimWorld, clocks: [number, number, number], log: string[])
   return {
     clock: JSON.stringify([w.clock.time, w.clock.day]),
     fleet: JSON.stringify(w.fleet.trains.map((t) => t.toJSON())),
-    stock: JSON.stringify([w.stock.toJSON(), w.stock.population, w.stock.workforce]),
     stores: JSON.stringify(w.stores.toJSON()),
     economy: JSON.stringify(w.economy.toJSON()),
     stations: JSON.stringify(
@@ -794,7 +790,6 @@ describe('SimStep: one step', () => {
           at.step = -1; // no delivery in the watched step
 
           const {
-            stock,
             stores,
             houses,
             builder,
@@ -832,8 +827,6 @@ describe('SimStep: one step', () => {
             (dt, eaters) => {
               expect(dt, 'stores.tickUpkeep: gdt').toBe(gdt);
               expect(eatersOf(eaters), 'stores.tickUpkeep: eaters').toEqual(eatersByHand(w));
-              expect(stock.population, 'population').toBe(houses.residentsTotal());
-              expect(stock.workforce, 'workforce').toBe(builder.crewTotal() + fleet.crewTotal());
             },
           );
           houses.tick = watched(
@@ -1200,8 +1193,7 @@ describe('SimStep: tickets, money and stock', () => {
           };
           w.trade.onSettled = (out) => settled.push(...out);
           w.economy.onAgeUp = (tier) => ages.push(tier);
-          // every movement of the stockpile ('stock') and of each store (its key), and the domain
-          // call it happened in
+          // every movement of each store (its key), and the domain call it happened in
           let phase = 'the step';
           const flows: { phase: string; where: string; id: string; n: number }[] = [];
           const within =
@@ -1215,18 +1207,6 @@ describe('SimStep: tickets, money and stock', () => {
                 phase = was;
               }
             };
-          const add = w.stock.add.bind(w.stock);
-          const take = w.stock.take.bind(w.stock);
-          w.stock.add = (id, amount, cap) => {
-            const n = add(id, amount, cap);
-            flows.push({ phase, where: 'stock', id, n });
-            return n;
-          };
-          w.stock.take = (id, amount) => {
-            const n = take(id, amount);
-            flows.push({ phase, where: 'stock', id, n: -n });
-            return n;
-          };
           for (const st of w.stores.all()) {
             const storeAdd = st.add.bind(st);
             const storeTake = st.take.bind(st);
@@ -1262,7 +1242,6 @@ describe('SimStep: tickets, money and stock', () => {
               tickets: w.economy.tickets,
               money: w.economy.money,
               earned: w.economy.earned,
-              stock: new Map(w.stock.amounts),
               stores: new Map(w.stores.all().map((st) => [st.key, new Map(st.amounts)])),
             };
             completed = [];
@@ -1306,7 +1285,6 @@ describe('SimStep: tickets, money and stock', () => {
             expect(earned, `${where}: earned`).toBeCloseTo(payouts + sales, 6);
 
             const holders: [string, Map<string, number>, Map<string, number>][] = [
-              ['stock', before.stock, w.stock.amounts],
               ...w.stores
                 .all()
                 .map((st): [string, Map<string, number>, Map<string, number>] => [
@@ -1521,7 +1499,7 @@ describe('ageSnapshot against a count by hand', () => {
           for (let x = c.wires.from; x <= c.wires.to; x++)
             if (!w.builder.placeSupply(x, WIRE_ROW, 'catenary')) throw new Error(`wire at ${x}`);
           w.builder.free = false;
-          w.stock.population = c.population;
+          w.houses.residentsTotal = () => c.population;
           w.economy.earned = c.earned;
           for (const i of c.bought) if (!w.regions.own(i)) throw new Error(`chunk ${i}`);
 

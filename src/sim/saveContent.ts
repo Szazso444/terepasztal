@@ -8,7 +8,7 @@ import type { SaveGame } from './save';
 import type { StopPlan, TrainJob } from './trains';
 import { STATION_DEFS } from './stations';
 import { BUILDING_DEFS } from './buildings';
-import { RESOURCE_IDS } from './stockpile';
+import { RESOURCE_IDS } from './stores';
 import { content } from '../data/content';
 import { LOCOS, WAGONS } from '../gacha/items';
 
@@ -149,7 +149,7 @@ export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONT
         return false;
       });
     if (t.locos.length) continue;
-    // nothing left to pull it: the wagons go back to the inventory and unload into the stockpile
+    // nothing left to pull it: the wagons go back to the inventory and unload into a store
     offLine.add(t.id);
     for (const w of t.wagons) toStock(w.cargo, w.amount);
   }

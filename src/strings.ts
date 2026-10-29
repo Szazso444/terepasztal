@@ -464,9 +464,9 @@ export const STR = {
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
       building: 'On a free grass, forest, sand or level hill tile.',
       works:
-        'On a free grass, forest, sand or level hill tile. Runs from the stockpile; no track needed.',
+        'On a free grass, forest, sand or level hill tile. Runs from the nearest store; no track needed.',
       deposit: (k: string) =>
-        `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
+        `Only on a tile with a ${k} deposit (marked on the map). Runs from the nearest store; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight wide or narrow track at right angles, as a level crossing; never high-speed track.',
@@ -525,9 +525,9 @@ export const STR = {
     progress: 'Batch progress',
     crew: 'Crew',
     made: 'Produced so far',
-    inStock: (n: string) => `${n} in stockpile`,
+    inStock: (n: string) => `${n} in store`,
     running: 'Running',
-    full: 'Stopped: stockpile full',
+    full: 'Stopped: store full',
     starved: (n: string) => `Waiting for ${n}`,
     /**
      * The same status for the works tooltip, which shows the resource as an icon with its name
@@ -583,7 +583,7 @@ export const STR = {
     unwired: (n: string) => `${n}: no power line connected`,
     starved: (n: string, r: string) => `${n}: waiting for ${r}`,
     noStore: (n: string, range: number) => `${n}: no store within ${range} tiles`,
-    full: (n: string) => `${n}: stockpile full, output stopped`,
+    full: (n: string) => `${n}: store full, output stopped`,
     contractFailed: (n: string) => `Contract failed: ${n}`,
     contractDone: (n: string) => `Contract completed: ${n}`,
     contractNoTrain: (n: string) => `No train can work "${n}": wrong wagons, no rails or no range`,
@@ -612,7 +612,7 @@ export const STR = {
       famine:
         'The crews need food: production halved. Supply a Windmill or buy food on the Market (K).',
       outOfFuel: (n: string) =>
-        `${n} is out of fuel. Fill the stockpile (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
+        `${n} is out of fuel. Fill the store (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
       lowCoal:
         'Coal is short. Build a Charcoal Kiln (Works) to turn wood into coal, or buy coal on the Market.',
       noWater:
@@ -732,7 +732,6 @@ export const STR = {
     scheduleHint: 'Stops, loading and departure direction are edited in the train details.',
     scheduleLiveHint:
       'Changes apply at once. Each stop: what to load and unload, wait for full wagons, refuel, and which way to leave.',
-    stockpileTag: 'stockpile',
     fuelTag: 'refuel',
     waterTag: 'water',
     opt: {
@@ -1212,7 +1211,7 @@ export const STR = {
     supplyModes: { simple: 'Simple', full: 'Full' } as Record<string, string>,
     supplyHint: {
       simple:
-        'Kiln, grinder and refinery make coal, iron and oil from the stockpile; diesels burn oil; warehouses top up fuel from the stockpile.',
+        'Kiln, grinder and refinery make coal, iron and oil from stored goods; diesels burn oil; the stores on one rail network share their goods.',
       full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
     } as Record<string, string>,
   },

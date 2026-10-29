@@ -1203,7 +1203,6 @@ const HOUSES: readonly (readonly [number, number])[] = [
  */
 function crossingWorld(loco: string | null, seed: number): { w: SimWorld; train: Train | null } {
   const w = simWorld({ terrain: 'grass', size: SIDE, seed });
-  for (const [k, n] of Object.entries(startStock())) w.stock.add(k, n);
   depotWith(w, startStock(), { x: 4, y: ROW });
   line(w, 6, ROW, 60);
   const quarry = station(w, 'quarry', 10, ROW - 1);

@@ -617,7 +617,6 @@ describe('a level crossing', () => {
       /** A quarry and a warehouse on a line with a train between them; roads across it or none. */
       const play = (crossings: boolean) => {
         const w = simWorld({ terrain: 'grass', size: 48 });
-        for (const [id, n] of Object.entries(startStock())) w.stock.add(id, n);
         depotWith(w, startStock(), { x: 4, y: 20 });
         line(w, 6, 20, 40);
         const quarry = station(w, 'quarry', 10, 19);

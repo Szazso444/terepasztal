@@ -23,7 +23,7 @@ import {
 import { bridgeCapacity } from './bridges';
 import { HOUSE_ID, type House } from './houses';
 import { decorDef } from './build';
-import { SimStep, type StepContext } from './step';
+import { SimStep, eaters, type StepContext } from './step';
 import { SIM_STEP } from './time';
 import { SAVE_VERSION, readSaveText } from './save';
 import {
@@ -107,8 +107,8 @@ function house(w: World, x: number, y: number): House {
   return w.houses.at(x, y)!;
 }
 
-/** What the stockpile and the stores hold, to compare before and after. */
-const holdings = (w: SimWorld) => JSON.stringify([w.stock.toJSON(), w.stores.toJSON()]);
+/** What the stores hold, to compare before and after. */
+const holdings = (w: SimWorld) => JSON.stringify(w.stores.toJSON());
 
 /** A farm, a windmill and a house (in its town), each one level 1. */
 function three(w: World) {
@@ -303,6 +303,9 @@ describe('a building being upgraded', () => {
     const w = world(1);
     const farm = station(w, 'farm', 6, 29);
     const crew = w.builder.crewTotal();
+    // the crews the step feeds, at the stores that supply them
+    const fed = () => [...eaters(w.houses, w.builder).values()].reduce((a, n) => a + n, 0);
+    const eating = fed();
     w.builder.upgradeStation(farm);
     expect(farm.crew).toBe(0);
     expect(w.builder.crewTotal()).toBe(crew - LEVELS.crew[0]);
@@ -312,12 +315,12 @@ describe('a building being upgraded', () => {
     const run = stepper(w);
     run(upgradeSeconds(2) / 2);
     expect(farm.totalStored()).toBe(0);
-    expect(w.stock.workforce).toBe(crew - LEVELS.crew[0]);
+    expect(fed()).toBe(eating - LEVELS.crew[0]);
 
     run(upgradeSeconds(2) / 2);
     expect(farm.closed).toBe(false);
     expect(farm.crew).toBe(LEVELS.crew[1]);
-    expect(w.stock.workforce).toBe(crew - LEVELS.crew[0] + LEVELS.crew[1]);
+    expect(fed()).toBe(eating - LEVELS.crew[0] + LEVELS.crew[1]);
     farm.tick(weekSeconds());
     expect(farm.stored('wheat')).toBeGreaterThan(0);
   });
@@ -1507,7 +1510,7 @@ describe("a house's finished upgrade", () => {
       expect(told, 'what the registry told').toEqual([]);
       expect(h.level, 'the level').toBe(level);
       expect(!!h.work, 'a work under way').toBe(!!work);
-      expect(holdings(w), 'the stockpile').toBe(stock);
+      expect(holdings(w), 'the stores').toBe(stock);
       expect(w.ups, 'the reports the world recorded').toHaveLength(reported);
     });
 

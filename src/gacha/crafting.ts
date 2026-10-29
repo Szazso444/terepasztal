@@ -11,8 +11,7 @@ import type { Rng } from '../engine/rng';
 import { LOCOS, WAGONS, isRetired, itemDef, itemKind, type Item } from './items';
 import type { Inventory } from './inventory';
 import type { Economy } from '../sim/economy';
-import { scaleCost } from '../sim/stockpile';
-import type { ResourceStore } from '../sim/stores';
+import { scaleCost, type ResourceStore } from '../sim/stores';
 
 export type { CraftKind };
 export const CRAFT_CONFIG: CraftingConfig = content.crafting;

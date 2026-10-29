@@ -1,4 +1,4 @@
-import type { Stockpile } from './stockpile';
+import type { ResourceStore } from './stores';
 
 export interface ResourceStat {
   /** Actual units received during the rolling seven-day window. */
@@ -7,6 +7,7 @@ export interface ResourceStat {
   consumed: number;
 }
 
-export function resourceStats(stock: Stockpile, ids: string[]): Record<string, ResourceStat> {
-  return Object.fromEntries(ids.map((id) => [id, stock.weeklyFlow(id)]));
+/** The weekly flows of a store (or of a pool, which adds up its members') for each resource. */
+export function resourceStats(store: ResourceStore, ids: string[]): Record<string, ResourceStat> {
+  return Object.fromEntries(ids.map((id) => [id, store.weeklyFlow(id)]));
 }
