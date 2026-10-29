@@ -2259,6 +2259,11 @@ table.market td {
   line-height: 0;
   flex: 0 0 auto;
 }
+/* a class badge carries an engine: drawn a little taller so its size reads */
+.class-badge svg {
+  height: 18px;
+  width: auto;
+}
 .line-badge + .line-badge {
   margin-left: 2px;
 }

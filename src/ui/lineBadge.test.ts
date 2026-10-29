@@ -1,28 +1,52 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
-import { CLASS_LINE, TRAIN_CLASSES } from '../sim/compat';
+import { TRAIN_CLASSES } from '../sim/compat';
 import { TRACK_CLASSES } from '../world/track';
-import { badgeLook, badgeSvg, classBadgeTitle, lineBadgeTitle } from './lineBadge';
+import {
+  ENGINES,
+  LINE_LETTER,
+  classBadgeSvg,
+  classBadgeTitle,
+  lineBadgeSvg,
+  lineBadgeTitle,
+} from './lineBadge';
 
-const bars = (svg: string) => (svg.match(/<rect /g) ?? []).length - 1;
+const letterOf = (svg: string) => svg.match(/<text[^>]*>([^<]*)<\/text>/)?.[1];
+/** How far an engine reaches, tender to buffer beam. */
+const length = (e: (typeof ENGINES)[keyof typeof ENGINES]) =>
+  Math.max(e.boiler[1], e.pony ?? 0) - (e.tender?.[0] ?? e.cab[0]);
 
 describe('track line badges', () => {
-  it('gives the standard lines one to three bars and the separate networks an icon', () => {
-    expect(badgeLook('branch')).toMatchObject({ bars: 1, icon: null });
-    expect(badgeLook('main')).toMatchObject({ bars: 2, icon: null });
-    expect(badgeLook('trunk')).toMatchObject({ bars: 3, icon: null });
-    expect(badgeLook('narrow')).toMatchObject({ bars: 0, icon: 'rails' });
-    expect(badgeLook('maglev')).toMatchObject({ bars: 0, icon: 'wave' });
-    expect(badgeLook('hyperloop')).toMatchObject({ bars: 0, icon: 'ring' });
-    for (const line of ['branch', 'main', 'trunk'] as const)
-      expect(bars(badgeSvg(badgeLook(line))), line).toBe(badgeLook(line).bars);
+  it('marks every line with its own letter', () => {
+    const letters = TRACK_CLASSES.map((l) => LINE_LETTER[l]);
+    expect(new Set(letters).size).toBe(letters.length);
+    expect(letterOf(lineBadgeSvg('narrow'))).toBe('N');
+    expect(letterOf(lineBadgeSvg('branch'))).toBe('B');
+    expect(letterOf(lineBadgeSvg('main'))).toBe('M');
+    expect(letterOf(lineBadgeSvg('trunk'))).toBe('T');
   });
 
-  it('marks the Carrier with the atom on the Trunk Line badge', () => {
-    const svg = badgeSvg(badgeLook(CLASS_LINE.carrier, true));
-    expect(bars(svg)).toBe(3);
-    expect(svg).toContain('<ellipse');
-    expect(badgeSvg(badgeLook('trunk'))).not.toContain('<ellipse');
+  it("puts the letter of the line a class needs on the class's badge", () => {
+    expect(letterOf(classBadgeSvg('corvette'))).toBe('N');
+    expect(letterOf(classBadgeSvg('frigate'))).toBe('B');
+    expect(letterOf(classBadgeSvg('destroyer'))).toBe('M');
+    expect(letterOf(classBadgeSvg('cruiser'))).toBe('T');
+    expect(letterOf(classBadgeSvg('carrier'))).toBe('T');
+  });
+
+  it('draws a bigger engine for each bigger class', () => {
+    const order = ['corvette', 'frigate', 'destroyer', 'cruiser'] as const;
+    for (let i = 1; i < order.length; i++) {
+      const [a, b] = [ENGINES[order[i - 1]], ENGINES[order[i]]];
+      expect(length(b), order[i]).toBeGreaterThan(length(a));
+      expect(b.drivers[2], order[i]).toBeGreaterThanOrEqual(a.drivers[2]);
+    }
+    expect(length(ENGINES.cruiser)).toBeLessThanOrEqual(29);
+  });
+
+  it('marks the Carrier with the atom', () => {
+    expect(classBadgeSvg('carrier').match(/rotate/g)).toHaveLength(3);
+    expect(classBadgeSvg('cruiser')).not.toContain('rotate');
   });
 
   it('has a colour and an ink for every line in the stylesheet', () => {
