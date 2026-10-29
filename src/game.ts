@@ -529,10 +529,17 @@ export class Game implements UiHost {
         this.camera.centerOn(p.x, p.y);
       }
     }
-    // the start stock waits in the start depot (a level's first depot), whole, past its cap too
-    const depot = this.builder.depots()[0];
-    const dock = depot ? this.stores.dockOf(depot) : null;
-    const store = dock ? this.stores.byKey(dock.key) : undefined;
+    // the start stock waits in the first store there is, whole, past its cap too: the start depot
+    // (a level's first depot), else the store of a level's first warehouse, else its first
+    // town's; a level with none of them gets the start depot a new game gets
+    const firstStore = () => {
+      const st = this.builder.depots()[0] ?? this.builder.stations.find((s) => s.def.stockpile);
+      const dock = st ? this.stores.dockOf(st) : null;
+      if (dock) return this.stores.byKey(dock.key);
+      return this.stores.all().find((s) => s.kind === 'town');
+    };
+    let store = firstStore();
+    if (!store && this.ensureDepot(startDepotKind())) store = firstStore();
     const stockMul = start?.stockMul ?? 1;
     if (store)
       for (const [id, n] of Object.entries(startStock()))

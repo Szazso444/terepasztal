@@ -1511,4 +1511,39 @@ describe('stores through Game.snapshot and Game.applySave', () => {
     for (const [id, n] of Object.entries(startStock()))
       expect(dock.get(id), id).toBe(Math.round(n * rules.startStock));
   });
+
+  /** A level's start block: the default goods, in the first age. */
+  const levelStart = { money: 25000, tickets: 3, tier: 0, stockMul: 1 };
+  /** The start stock a level's start block brings, by good. */
+  const levelStock = () =>
+    Object.fromEntries(
+      Object.entries(startStock()).map(([id, n]) => [id, Math.round(n * rules.startStock)]),
+    );
+
+  it('a level with no stations starts with its stock in the depot it is granted', () => {
+    const w = fresh();
+    expect(w.builder.stations, 'premise: nothing stands').toEqual([]);
+    gameOn(w).startFresh(levelStart);
+    const depot = w.builder.depots()[0];
+    expect(depot, 'the start depot').toBeDefined();
+    expect(goods(w, `st:${depot.id}`)).toEqual(levelStock());
+  });
+
+  it("a level with a warehouse and no depot starts with its stock in the warehouse's store", () => {
+    const w = fresh();
+    line(w, 26, 31, 36);
+    const house = station(w, 'warehouse', 30, 30);
+    gameOn(w).startFresh(levelStart);
+    expect(w.builder.depots(), 'no depot is added').toEqual([]);
+    expect(goods(w, `st:${house.id}`)).toEqual(levelStock());
+  });
+
+  it('a level with only a town starts with its stock in the town store', () => {
+    const w = fresh();
+    line(w, 26, 31, 36);
+    const hall = station(w, 'town', 30, 30);
+    gameOn(w).startFresh(levelStart);
+    expect(w.builder.depots(), 'no depot is added').toEqual([]);
+    expect(goods(w, `town:${w.towns.byStation(hall.id)!.id}`)).toEqual(levelStock());
+  });
 });
