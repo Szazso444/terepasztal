@@ -69,7 +69,7 @@ const generated: Table = {};
 const owners = new Map<string, string[]>();
 let randomCalls = -1;
 
-beforeAll(() => {
+beforeAll(async () => {
   vi.stubGlobal('ImageData', FakeImageData);
   vi.stubGlobal('document', {
     createElement: () => ({ width: 0, height: 0, getContext: () => context }),
@@ -77,7 +77,7 @@ beforeAll(() => {
   const random = vi.spyOn(Math, 'random');
   try {
     for (const { name, generate } of ATLAS_GROUPS) {
-      const frames = generate().frames;
+      const frames = (await generate()).frames;
       frameDefs[name] = frames;
       generated[name] = {};
       for (const [key, f] of Object.entries(frames)) {

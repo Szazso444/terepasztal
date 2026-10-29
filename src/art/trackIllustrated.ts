@@ -20,6 +20,7 @@ import {
   type TrackItem,
 } from '../world/track';
 import { PAL, css, mix, shade, type RGB } from './palette';
+import { NO_MATERIALS, drawSprite, drawStrip, type TrackMaterials } from './trackMaterials';
 
 const R = 4,
   W = 72,
@@ -193,6 +194,14 @@ export function railSleepers(path: RailPath, scale = 1): number[] {
 }
 
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
+/** The painted materials the frames are drawn with (`generateIllustratedTrackAtlas`). */
+let MATERIALS: TrackMaterials = NO_MATERIALS;
+/** How far the painted shoulder reaches past the bed, and how far it tucks under it, in tiles. */
+const EDGE_OUT = 0.094,
+  EDGE_IN = 0.031;
+/** Spacing of the places a tuft may grow along the track, and the share of them that get one. */
+const TUFT_STEP = 0.07,
+  TUFT_SHARE = 0.32;
 const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.y * d });
 
 /**
@@ -262,7 +271,12 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
       return { x: -(b.y - a.y) / l, y: (b.x - a.x) / l };
     }),
   }));
-  for (const { points, normals, cls } of rows) {
+  for (const { points, normals, cls, run } of rows) {
+    const mat = bridge ? undefined : MATERIALS.lines[cls];
+    if (mat?.bed) {
+      paintedBed(c, points, normals, cls, run, seed, scale);
+      continue;
+    }
     if (!STYLE[cls].bed && !bridge) continue;
     const [, light, dark, rest] = STYLE[cls].ballast;
     const shoulder = STYLE[cls].shoulder * scale;
@@ -333,6 +347,22 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
         const n = normals[i],
           along = { x: n.y, y: -n.x },
           half = st.sleeper;
+        const painted = MATERIALS.lines[cls]?.sleeper;
+        if (painted && !bridge) {
+          const px = MATERIALS.pxPerTile;
+          drawSprite(
+            c,
+            { ox: OX, oy: OY },
+            painted,
+            p,
+            along,
+            n,
+            (painted.width / px) * scale,
+            (painted.height / px) * scale,
+          );
+          k++;
+          continue;
+        }
         const corners = [
           offset(offset(p, n, -half), along, -0.028),
           offset(offset(p, n, half), along, -0.028),
@@ -362,6 +392,79 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
   }
   return image();
 }
+
+/**
+ * The painted bed of one rail line: the ballast strip, the shoulder along both its edges and, on
+ * lines that have them, grass tufts. Along the line the strips repeat a whole number of times over
+ * the run, so every piece starts and ends on a repeat and meets the next one seamlessly.
+ */
+function paintedBed(
+  c: CanvasRenderingContext2D,
+  points: Vec2[],
+  normals: Vec2[],
+  cls: TrackClass,
+  run: RailPath['run'],
+  seed: number,
+  scale: number,
+) {
+  const mat = MATERIALS.lines[cls]!;
+  const px = MATERIALS.pxPerTile;
+  const pr = { ox: OX, oy: OY };
+  const own = pathLength(points),
+    start = run?.start ?? 0,
+    length = run?.length ?? own;
+  const repeats = Math.max(1, Math.round(length / scale));
+  const stretch = repeats / length;
+  const strip = (img: NonNullable<typeof mat.bed>, from: number, to: number) => {
+    // drawStrip starts its repeats at the start of `points`: shift them to the run's start
+    const shift = (start * stretch * px) % img.width;
+    drawStrip(c, pr, img, points, normals, from, to, px, stretch, 1.6, shift);
+  };
+  const half = (mat.bed!.height / px / 2) * scale;
+  strip(mat.bed!, half, -half);
+  if (mat.edge)
+    for (const side of [1, -1])
+      strip(mat.edge, side * (half + EDGE_OUT * scale), side * (half - EDGE_IN * scale));
+  if (!mat.tufts) return;
+  const cells = Math.max(1, Math.floor(mat.tufts.width / mat.tufts.height));
+  const cell = mat.tufts.height;
+  const size = (cell / px) * scale;
+  const sites = Math.floor(own / (TUFT_STEP * scale));
+  let distance = 0,
+    i = 1;
+  for (let s = 0; s < sites; s++) {
+    const d = (s + 0.5) * TUFT_STEP * scale;
+    const k = hash2(Math.floor((start + d) * 100), 7, seed + 31);
+    if (k > TUFT_SHARE) continue;
+    while (i < points.length - 1 && distance + segLen(points, i) < d)
+      distance += segLen(points, i++);
+    const a = points[i - 1],
+      b = points[i],
+      t = (d - distance) / (segLen(points, i) || 1);
+    const p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    const n = normals[i];
+    const along = { x: n.y, y: -n.x };
+    // narrow gauge grows grass anywhere across; branch line mostly in its shoulders
+    const u = hash2(s, 11, seed + 53) * 2 - 1;
+    const across =
+      cls === 'narrow' ? u * half * 0.95 : Math.sign(u || 1) * half * (0.55 + 0.4 * Math.abs(u));
+    const cellIndex = Math.floor(hash2(s, 17, seed + 71) * cells) % cells;
+    drawSprite(
+      c,
+      pr,
+      mat.tufts,
+      offset(p, n, across),
+      along,
+      n,
+      size,
+      size,
+      cellIndex * cell,
+      cell,
+    );
+  }
+}
+const segLen = (points: Vec2[], i: number) =>
+  Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
 
 /**
  * The rail lines of a piece that fits one tile, in tile coordinates (the tile centre is the
@@ -575,7 +678,15 @@ function drawLevelCrossing(cls: LevelCrossingClass, rotation: number, seed: numb
 }
 
 /** Source-inspired timber/steel materials on the real track polylines, in every orientation. */
-export function generateIllustratedTrackAtlas(): AtlasImage {
+/**
+ * Every track frame. With painted `materials` (`loadTrackMaterials`) the lines that have them are
+ * laid with their painted bed, shoulders, sleepers and tufts; the rest, and every line without
+ * them, keep the procedural look.
+ */
+export function generateIllustratedTrackAtlas(
+  materials: TrackMaterials = NO_MATERIALS,
+): AtlasImage {
+  MATERIALS = materials;
   const ab = new AtlasBuilder();
   for (const it of TRACK_ITEMS)
     for (let rotation = 0; rotation < rotationCount(it.kind); rotation++) {

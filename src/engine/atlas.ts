@@ -17,7 +17,7 @@ export interface AtlasImage {
   /** a file atlas that replaces only its own frames and keeps the generator for the rest */
   partial?: boolean;
 }
-export type AtlasGenerator = () => AtlasImage;
+export type AtlasGenerator = () => AtlasImage | Promise<AtlasImage>;
 
 export interface FrameInfo {
   image: HTMLCanvasElement | HTMLImageElement;
@@ -97,7 +97,7 @@ export class AtlasRegistry {
     const fromFile = await this.tryLoadFile(name);
     if (typeof fromFile !== 'string') {
       // generated first, so the file's frames win where the names collide
-      if (fromFile.partial) this.register(generate());
+      if (fromFile.partial) this.register(await generate());
       this.register(fromFile);
       this.images.set(name, fromFile.image);
       this.groupOrigin.set(name, fromFile.partial ? 'png+procedural' : 'png');
@@ -107,7 +107,7 @@ export class AtlasRegistry {
       this.warned.add(name);
       console.warn(`Atlas: ${name} falls back to procedural art: ${fromFile}`);
     }
-    const gen = generate();
+    const gen = await generate();
     this.register(gen);
     this.images.set(name, gen.image);
     this.groupOrigin.set(name, 'procedural');
