@@ -14,11 +14,13 @@ export interface ClickEvent {
 const TYPED_KEYS = new Set(['+', '-']);
 
 /**
- * The name a key press goes by in `pressed`: `Char+` or `Char-` when it types '+' or '-', else its
- * `KeyboardEvent.code`. So Shift+3 typing '+' is no `Digit3` press.
+ * The name a key press goes by in `pressed`: `Char+` or `Char-` when it types '+' or '-' with
+ * Shift held or on a key other than a digit, else its `KeyboardEvent.code`. So Shift+3 typing '+'
+ * (Hungarian) is no `Digit3` press, while an unshifted digit typing '-' (Digit6 on AZERTY) stays
+ * that digit and picks its piece.
  */
-const pressName = (e: Pick<KeyboardEvent, 'code' | 'key'>) =>
-  TYPED_KEYS.has(e.key) ? `Char${e.key}` : e.code;
+const pressName = (e: Pick<KeyboardEvent, 'code' | 'key' | 'shiftKey'>) =>
+  TYPED_KEYS.has(e.key) && (e.shiftKey || !e.code.startsWith('Digit')) ? `Char${e.key}` : e.code;
 
 export class Input {
   /** keys held down, by `KeyboardEvent.code`, so letting a key go clears it whatever it typed */

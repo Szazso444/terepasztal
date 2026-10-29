@@ -372,9 +372,9 @@ describe('+ and − as the browser types them', () => {
     vi.stubGlobal('document', { addEventListener: () => {} });
     const input = new Input({ addEventListener: () => {} } as unknown as HTMLElement);
     /** a key event with this `code` (where the key sits) and `key` (what it types) */
-    const fire = (type: 'keydown' | 'keyup', code: string, key: string) => {
+    const fire = (type: 'keydown' | 'keyup', code: string, key: string, shiftKey = false) => {
       for (const fn of handlers.get(type) ?? [])
-        fn({ code, key, target: null, preventDefault() {} });
+        fn({ code, key, shiftKey, target: null, preventDefault() {} });
     };
     return { input, fire };
   }
@@ -383,8 +383,8 @@ describe('+ and − as the browser types them', () => {
   /** What one key press calls in `context`, with Shift held first when `shift`. */
   function press(context: KeyContext, code: string, key: string, shift: boolean, state = {}) {
     const { input, fire } = browserInput();
-    if (shift) fire('keydown', 'ShiftLeft', 'Shift');
-    fire('keydown', code, key);
+    if (shift) fire('keydown', 'ShiftLeft', 'Shift', true);
+    fire('keydown', code, key, shift);
     const { host, calls } = fakeHost(context, state);
     handlePlayKeys(input, host);
     return calls;
@@ -408,6 +408,14 @@ describe('+ and − as the browser types them', () => {
         ).toEqual([`stepSpeed(${dir})`]);
   });
 
+  it('a − typed by an unshifted digit (Digit6 on AZERTY) is that digit: piece 6, no step', () => {
+    expect(press('play', 'Digit6', '-', false, { categoryOpen: true })).toEqual(['selectPiece(5)']);
+    expect(press('play', 'Digit6', '-', false)).toEqual([]);
+    expect(press('overview', 'Digit6', '-', false)).toEqual([]);
+    // and Shift+Digit6 types '6' there: the same piece
+    expect(press('play', 'Digit6', '6', true, { categoryOpen: true })).toEqual(['selectPiece(5)']);
+  });
+
   it('a + typed as Shift+3 is no digit 3: it picks no piece and sets no 3x', () => {
     expect(press('play', 'Digit3', '+', true, { categoryOpen: true })).not.toContain(
       'selectPiece(2)',
@@ -418,9 +426,9 @@ describe('+ and − as the browser types them', () => {
 
   it('the 3 key still picks piece 3 or 3x when it types a 3, after a + on it was let go', () => {
     const { input, fire } = browserInput();
-    fire('keydown', 'Digit3', '+');
+    fire('keydown', 'Digit3', '+', true);
     input.endFrame();
-    fire('keyup', 'Digit3', '+');
+    fire('keyup', 'Digit3', '+', true);
     fire('keydown', 'Digit3', '3');
     expect(input.isDown('Digit3')).toBe(true);
     const plain = fakeHost('play');
@@ -433,15 +441,15 @@ describe('+ and − as the browser types them', () => {
 
   it('holds the key that typed + down by where it sits, until it is let go', () => {
     const { input, fire } = browserInput();
-    fire('keydown', 'Digit3', '+');
+    fire('keydown', 'Digit3', '+', true);
     expect(input.wasPressed('Char+')).toBe(true);
     expect(input.wasPressed('Digit3')).toBe(false);
     expect(input.isDown('Digit3')).toBe(true);
     // a held key repeats: no second press
     input.endFrame();
-    fire('keydown', 'Digit3', '+');
+    fire('keydown', 'Digit3', '+', true);
     expect(input.wasPressed('Char+')).toBe(false);
-    fire('keyup', 'Digit3', '+');
+    fire('keyup', 'Digit3', '+', true);
     expect(input.isDown('Digit3')).toBe(false);
   });
 });
