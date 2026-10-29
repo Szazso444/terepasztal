@@ -173,28 +173,41 @@ describe('a changing set of stores', () => {
     return { w, stores, a, b };
   }
 
-  it('removing an anchor moves its goods to the nearest store in reach', () => {
+  it('removing an anchor moves all its goods to the nearest store in reach, past its cap', () => {
     const { w, stores, a, b } = twoDepots();
     stores.byKey(`st:${a.id}`)!.add('wood', 500);
-    // room for 400 more wood at B
+    // room for 400 more wood at B: the other 100 go in past its cap
     stores.byKey(`st:${b.id}`)!.add('wood', rules.depotCap - 400);
     expect(w.builder.removeStation(a)).toBe(true);
     sync(w, stores);
     expect(stores.byKey(`st:${a.id}`)).toBeUndefined();
-    expect(stores.byKey(`st:${b.id}`)!.get('wood')).toBe(rules.depotCap);
-    expect(stores.totals().get('wood')).toBe(rules.depotCap);
+    expect(stores.byKey(`st:${b.id}`)!.get('wood')).toBe(rules.depotCap + 100);
+    expect(stores.totals().get('wood')).toBe(rules.depotCap + 100);
   });
 
-  it('removing an anchor with no store in reach loses the goods', () => {
+  it('removing the start depot with no store in reach moves its goods to the nearest one further off', () => {
     const { w, stores } = world();
     const a = station(w, 'depot', 30, 24);
-    station(w, 'depot', 70, 24);
+    const far = station(w, 'warehouse', 70, 29);
+    const farther = station(w, 'depot', 88, 24);
+    sync(w, stores);
+    expect(far.distTo(a.x, a.y), 'premise: out of reach').toBeGreaterThan(rules.buildReach);
+    stores.byKey(`st:${a.id}`)!.add('wood', 500);
+    w.builder.removeStation(a);
+    sync(w, stores);
+    expect(stores.byKey(`st:${far.id}`)!.get('wood')).toBe(500);
+    expect(stores.byKey(`st:${farther.id}`)!.get('wood')).toBe(0);
+  });
+
+  it('removing the last store but the grid loses its goods: there is nowhere for them', () => {
+    const { w, stores } = world();
+    const a = station(w, 'depot', 30, 24);
     sync(w, stores);
     stores.byKey(`st:${a.id}`)!.add('wood', 500);
-    expect(stores.totals().get('wood')).toBe(500);
     w.builder.removeStation(a);
     sync(w, stores);
     expect(stores.totals().get('wood') ?? 0).toBe(0);
+    expect(stores.grid.get('wood')).toBe(0);
   });
 
   it('a warehouse store that joins a town merges into it', () => {
@@ -467,6 +480,22 @@ describe('saving stores', () => {
     // a famine goes with the goods; the next meal there ends it, as any famine
     expect(start.famine).toBe(true);
     expect(stores.byKey(town)!.famine).toBe(false);
+  });
+
+  it('load keeps the goods of a saved store with no place when no depot stands: the first store takes them', () => {
+    const { w, stores } = world();
+    const hall = station(w, 'town', 20, 29);
+    const alone = station(w, 'warehouse', 70, 29);
+    sync(w, stores);
+    const town = stores.townStore(hall.x, hall.y)!.key;
+    // the depot it was saved with is gone, and none stands in its place
+    stores.load([
+      { key: 'st:999', amounts: { wood: 60 }, famine: false },
+      { key: `st:${alone.id}`, amounts: { stone: 5 }, famine: false },
+    ]);
+    expect(stores.byKey(town)!.get('wood')).toBe(60);
+    expect(stores.byKey(`st:${alone.id}`)!.get('stone')).toBe(5);
+    expect(stores.totals().get('wood')).toBe(60);
   });
 });
 

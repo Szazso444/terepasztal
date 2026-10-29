@@ -112,12 +112,13 @@ describe('TradeDesk and its store', () => {
     expect(a.get('food'), 'its own store').toBe(10);
     expect(b.get('food'), 'not the selected one').toBe(0);
 
-    // the depot goes; its goods have nowhere in reach to go
+    // the depot goes; its goods go to the other store, out of reach as it is
     stations.splice(0, 1);
     stores.refresh();
     expect(stores.byKey(a.key)).toBeUndefined();
+    expect(b.get('food'), 'what the depot held').toBe(10);
     trade.tick(1 + 2 * week, stores, economy);
-    expect(b.get('food'), 'the selected store').toBe(10);
+    expect(b.get('food'), 'the selected store').toBe(20);
     expect(trade.storeKey, 'the desk keeps the key it was given').toBe(a.key);
   });
 

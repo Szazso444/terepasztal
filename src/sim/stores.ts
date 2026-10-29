@@ -427,9 +427,10 @@ export class StoreRegistry {
   }
 
   /**
-   * Re-derive the stores from the stations and towns, caps included. A store that survives keeps its goods; the
-   * goods of one that is gone (its anchor removed, or a warehouse that joined a town) go to the
-   * store that now covers its anchor, else the nearest in reach, up to the cap. The rest is lost.
+   * Re-derive the stores from the stations and towns, caps included. A store that survives keeps
+   * its goods; the goods of one that is gone (its anchor removed, or a warehouse that joined a
+   * town) go whole to its heir (`heirAt`), past the heir's cap too. They are lost only with no
+   * store left but the grid.
    */
   refresh() {
     const { builder, towns } = this.d;
@@ -484,18 +485,13 @@ export class StoreRegistry {
     for (const key of [...this.short.keys()]) if (!next.has(key)) this.short.delete(key);
     this.groupByRails();
 
-    // goods handed to an heir are not received: the flows stand still meanwhile
-    const tracking = this.clock.tracking;
-    this.clock.tracking = false;
+    // goods handed to an heir are put in as they are, not received: no flow counts them
     for (const [key, gone] of old) {
       if (next.has(key)) continue;
-      const heir =
-        this.townStore(gone.anchor.x, gone.anchor.y) ??
-        this.nearest(gone.anchor.x, gone.anchor.y)[0];
-      if (!heir) continue;
-      for (const [id, n] of gone.amounts) if (n > 0) heir.add(id, n);
+      const heir = this.heirAt(gone.anchor);
+      if (heir)
+        for (const [id, n] of gone.amounts) if (n > 0) heir.amounts.set(id, heir.get(id) + n);
     }
-    this.clock.tracking = tracking;
     this.bindStations();
   }
 
@@ -858,8 +854,8 @@ export class StoreRegistry {
    * Restore goods and famine, in place of whatever the stores held. Call it once the stations and
    * towns are loaded: the stores are derived from them first. A saved store with no place of its
    * own now (a warehouse a town took in, a station that went, the stockpile the step from v20 found
-   * no place for) hands its goods and famine to the store that covers its place, else the nearest
-   * in reach, else the start depot's. A load keeps every good it brings, past the caps too.
+   * no place for) hands its goods and famine to its heir (`heirAt` its place). A load keeps every
+   * good it brings, past the caps too.
    */
   load(list: StoreJSON[]) {
     this.refresh();
@@ -879,7 +875,7 @@ export class StoreRegistry {
       }
     }
     for (const j of homeless) {
-      const heir = this.heirOf(j.key);
+      const heir = this.heirAt(this.placeOf(j.key));
       if (!heir) continue;
       for (const [id, n] of savedGoods(j)) heir.amounts.set(id, heir.get(id) + n);
       if (j.famine) heir.famine = true;
@@ -910,12 +906,18 @@ export class StoreRegistry {
     this.labelledRails = -1;
     this.plants = 0;
   }
-  /** The store a saved key with no store of its own hands its goods to (`load`). */
-  private heirOf(key: string): Store | undefined {
-    const at = this.placeOf(key);
-    const near = at && (this.townStore(at.x, at.y) ?? this.nearest(at.x, at.y)[0]);
+  /**
+   * The store that takes the goods of a store with no place of its own any more (`refresh`,
+   * `load`), so that none are lost: the town store that covers its place, else the nearest store
+   * in reach, else the nearest at any distance; a store of no place at all (a station that went,
+   * a key of no place) the start depot's, else the first store there is. Undefined only with no
+   * store but the grid.
+   */
+  private heirAt(at: { x: number; y: number } | null): Store | undefined {
+    // the nearest at any distance is the nearest in reach when there is one
+    const near = at && (this.townStore(at.x, at.y) ?? this.nearest(at.x, at.y, Infinity)[0]);
     if (near) return membersOf(near)[0];
-    return this.startDepot();
+    return this.startDepot() ?? [...this.stores.values()].find((s) => s.kind !== 'grid');
   }
   /** The start depot's store: the first depot store in registry order. */
   private startDepot(): Store | undefined {
